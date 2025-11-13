@@ -14,6 +14,10 @@ export default function Breadcrumbs() {
     const routeMap = {
       '/': [{ label: 'Início', href: createPageUrl('Home') }],
       '/home': [{ label: 'Início', href: createPageUrl('Home') }],
+      '/cadastro': [
+        { label: 'Início', href: createPageUrl('Home') },
+        { label: 'Cadastro da Oficina', href: null }
+      ],
       '/questionario': [
         { label: 'Início', href: createPageUrl('Home') },
         { label: 'Questionário', href: createPageUrl('Questionario') }
