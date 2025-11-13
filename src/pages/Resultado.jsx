@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, TrendingUp, Users, BarChart3, Rocket, ArrowRight, PieChart as PieChartIcon, FileText } from "lucide-react";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import AIInsightsSummary from "../components/resultado/AIInsightsSummary";
+import ExecutiveSummary from "../components/resultado/ExecutiveSummary";
 
 export default function Resultado() {
   const navigate = useNavigate();
@@ -33,19 +33,21 @@ export default function Resultado() {
       const diagnostics = await base44.entities.Diagnostic.list();
       const diag = diagnostics.find(d => d.id === id);
       
-      if (diag) {
-        setDiagnostic(diag);
-        calculatePhaseDistribution(diag);
-        
-        // Carregar workshop se existir
-        if (diag.workshop_id) {
-          const workshops = await base44.entities.Workshop.list();
-          const ws = workshops.find(w => w.id === diag.workshop_id);
-          setWorkshop(ws);
-        }
-      } else {
+      if (!diag) {
         navigate(createPageUrl("Home"));
+        return;
       }
+
+      setDiagnostic(diag);
+
+      // Carregar workshop se existir
+      if (diag.workshop_id) {
+        const workshops = await base44.entities.Workshop.list();
+        const ws = workshops.find(w => w.id === diag.workshop_id);
+        setWorkshop(ws);
+      }
+
+      calculatePhaseDistribution(diag);
     } catch (error) {
       console.error(error);
     } finally {
@@ -54,7 +56,6 @@ export default function Resultado() {
   };
 
   const calculatePhaseDistribution = (diag) => {
-    // Mapeamento letra → fase
     const letterToPhase = {
       'D': 1,
       'A': 2,
@@ -62,7 +63,6 @@ export default function Resultado() {
       'B': 4
     };
 
-    // Contar respostas por fase
     const phaseCounts = { 1: 0, 2: 0, 3: 0, 4: 0 };
     
     diag.answers.forEach(answer => {
@@ -74,7 +74,6 @@ export default function Resultado() {
 
     const totalQuestions = diag.answers.length;
 
-    // Calcular percentuais
     const distribution = Object.keys(phaseCounts).map(phase => {
       const count = phaseCounts[phase];
       const percent = Math.round((count / totalQuestions) * 100);
@@ -158,14 +157,12 @@ export default function Resultado() {
 
   const DominantIcon = dominantPhase.icon;
 
-  // Dados para gráfico de barras
   const barChartData = phaseDistribution.map(p => ({
     name: `Fase ${p.phase}`,
     respostas: p.count,
     percentual: p.percent
   }));
 
-  // Dados para gráfico de pizza
   const pieChartData = phaseDistribution.map(p => ({
     name: `Fase ${p.phase} (${p.percent}%)`,
     value: p.count,
@@ -219,10 +216,10 @@ export default function Resultado() {
 
         {/* Resumo Executivo com IA */}
         <div className="mb-8">
-          <AIInsightsSummary 
+          <ExecutiveSummary 
             diagnostic={diagnostic}
-            phaseDistribution={phaseDistribution}
             workshop={workshop}
+            phaseDistribution={phaseDistribution}
           />
         </div>
 
@@ -339,7 +336,7 @@ export default function Resultado() {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name }) => name}
+                      label={({ name }) => `${name}`}
                       outerRadius={100}
                       fill="#8884d8"
                       dataKey="value"
@@ -412,7 +409,7 @@ export default function Resultado() {
           <Button
             variant="outline"
             onClick={() => navigate(createPageUrl("Home"))}
-            className="sm:w-auto py-6 px-8"
+            className="flex-1 py-6"
           >
             Voltar ao Início
           </Button>
