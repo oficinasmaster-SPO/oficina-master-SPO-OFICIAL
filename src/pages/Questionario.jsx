@@ -7,7 +7,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
 import { questions } from "../components/diagnostic/Questions";
-import { toast } from "sonner";
 
 export default function Questionario() {
   const navigate = useNavigate();
@@ -24,7 +23,7 @@ export default function Questionario() {
 
   const handleNext = () => {
     if (!answers[question.id]) {
-      toast.error("Por favor, selecione uma resposta");
+      alert("Por favor, selecione uma resposta");
       return;
     }
     
@@ -46,7 +45,6 @@ export default function Questionario() {
     try {
       const user = await base44.auth.me();
       
-      // Calcular letra dominante
       const letterCounts = { A: 0, B: 0, C: 0, D: 0 };
       Object.values(answers).forEach(letter => {
         letterCounts[letter]++;
@@ -56,11 +54,9 @@ export default function Questionario() {
         letterCounts[a] > letterCounts[b] ? a : b
       );
       
-      // Mapear letra para fase
       const phaseMap = { D: 1, A: 2, C: 3, B: 4 };
       const phase = phaseMap[dominantLetter];
       
-      // Criar diagnóstico
       const answersArray = Object.entries(answers).map(([id, letter]) => ({
         question_id: parseInt(id),
         selected_option: letter
@@ -74,11 +70,10 @@ export default function Questionario() {
         completed: true
       });
       
-      toast.success("Diagnóstico concluído!");
       navigate(createPageUrl("Resultado") + `?id=${diagnostic.id}`);
     } catch (error) {
       console.error(error);
-      toast.error("Erro ao salvar diagnóstico");
+      alert("Erro ao salvar diagnóstico");
     } finally {
       setIsSubmitting(false);
     }
@@ -87,7 +82,6 @@ export default function Questionario() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-8 px-4">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-2xl font-bold text-gray-900">
@@ -100,7 +94,6 @@ export default function Questionario() {
           <Progress value={progress} className="h-2" />
         </div>
 
-        {/* Question Card */}
         <Card className="shadow-xl border-2">
           <CardContent className="p-8">
             <div className="mb-8">
@@ -143,7 +136,6 @@ export default function Questionario() {
           </CardContent>
         </Card>
 
-        {/* Navigation */}
         <div className="mt-8 flex justify-between">
           <Button
             variant="outline"

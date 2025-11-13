@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { ShoppingCart, Users, DollarSign, Calendar, CheckCircle2, Circle, Clock, Plus, ChevronDown, ChevronUp } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { toast } from "sonner";
 import SubtaskList from "./SubtaskList";
 import AddSubtaskDialog from "./AddSubtaskDialog";
 
@@ -32,9 +31,6 @@ export default function ActionItem({ action, diagnosticId }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['actions']);
-      toast.success("Status atualizado!");
-      
-      // Criar notificação de status alterado
       createStatusNotification(action, action.status);
     }
   });
@@ -158,7 +154,6 @@ export default function ActionItem({ action, diagnosticId }) {
                 {action.description}
               </p>
 
-              {/* Subtasks Section */}
               <div className="mt-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <Button

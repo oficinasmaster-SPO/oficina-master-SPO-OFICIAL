@@ -13,7 +13,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "sonner";
 
 export default function AddSubtaskDialog({ open, onClose, actionId, diagnosticId }) {
   const queryClient = useQueryClient();
@@ -34,7 +33,6 @@ export default function AddSubtaskDialog({ open, onClose, actionId, diagnosticId
     mutationFn: async (data) => {
       const subtask = await base44.entities.Subtask.create(data);
       
-      // Criar notificação para o responsável
       if (data.responsible_user_id) {
         await base44.entities.Notification.create({
           user_id: data.responsible_user_id,
@@ -45,14 +43,12 @@ export default function AddSubtaskDialog({ open, onClose, actionId, diagnosticId
           is_read: false
         });
 
-        // Enviar e-mail
         const responsible = users.find(u => u.id === data.responsible_user_id);
         if (responsible?.email) {
           await base44.integrations.Core.SendEmail({
             to: responsible.email,
             subject: "Nova Tarefa Atribuída - Oficinas Master",
-            body: `
-Olá ${responsible.full_name || 'Colaborador'},
+            body: `Olá ${responsible.full_name || 'Colaborador'},
 
 Você recebeu uma nova tarefa:
 
@@ -64,8 +60,7 @@ ${data.description ? `Descrição: ${data.description}` : ''}
 Acesse o sistema para mais detalhes.
 
 Atenciosamente,
-Equipe Oficinas Master
-            `
+Equipe Oficinas Master`
           });
         }
       }
@@ -74,7 +69,6 @@ Equipe Oficinas Master
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['subtasks']);
-      toast.success("Subtarefa criada com sucesso!");
       onClose();
       setFormData({
         title: "",
@@ -82,10 +76,6 @@ Equipe Oficinas Master
         responsible_user_id: "",
         due_date: "",
       });
-    },
-    onError: (error) => {
-      console.error(error);
-      toast.error("Erro ao criar subtarefa");
     }
   });
 
@@ -93,7 +83,6 @@ Equipe Oficinas Master
     e.preventDefault();
     
     if (!formData.title.trim()) {
-      toast.error("Por favor, informe o título da subtarefa");
       return;
     }
 

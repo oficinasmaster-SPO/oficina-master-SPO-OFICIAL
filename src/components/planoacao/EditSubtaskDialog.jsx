@@ -13,7 +13,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "sonner";
 
 export default function EditSubtaskDialog({ open, onClose, subtask, actionId }) {
   const queryClient = useQueryClient();
@@ -53,12 +52,7 @@ export default function EditSubtaskDialog({ open, onClose, subtask, actionId }) 
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['subtasks']);
-      toast.success("Subtarefa atualizada!");
       onClose();
-    },
-    onError: (error) => {
-      console.error(error);
-      toast.error("Erro ao atualizar subtarefa");
     }
   });
 
@@ -66,7 +60,6 @@ export default function EditSubtaskDialog({ open, onClose, subtask, actionId }) 
     e.preventDefault();
     
     if (!formData.title.trim()) {
-      toast.error("Por favor, informe o título da subtarefa");
       return;
     }
 

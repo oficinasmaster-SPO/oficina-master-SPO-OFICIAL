@@ -5,10 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Bell, AlertTriangle, Clock, CheckCircle2, Trash2, Mail } from "lucide-react";
+import { Bell, AlertTriangle, Clock, CheckCircle2, Trash2 } from "lucide-react";
 import { format, isPast, isToday, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { toast } from "sonner";
 
 export default function Notificacoes() {
   const queryClient = useQueryClient();
@@ -16,13 +15,13 @@ export default function Notificacoes() {
 
   useEffect(() => {
     loadUser();
-    checkOverdueTasks();
   }, []);
 
   const loadUser = async () => {
     try {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
+      checkOverdueTasks(currentUser);
     } catch (error) {
       console.error(error);
     }
@@ -63,15 +62,14 @@ export default function Notificacoes() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['notifications']);
-      toast.success("Notificação removida");
     }
   });
 
-  const checkOverdueTasks = async () => {
-    if (!user) return;
+  const checkOverdueTasks = async (currentUser) => {
+    if (!currentUser) return;
 
     const allSubtasks = await base44.entities.Subtask.list();
-    const mySubtasks = allSubtasks.filter(s => s.responsible_user_id === user.id && s.status !== "concluido");
+    const mySubtasks = allSubtasks.filter(s => s.responsible_user_id === currentUser.id && s.status !== "concluido");
 
     for (const subtask of mySubtasks) {
       if (!subtask.due_date) continue;
@@ -80,7 +78,6 @@ export default function Notificacoes() {
       const today = new Date();
       const daysUntilDue = differenceInDays(dueDate, today);
 
-      // Criar notificação para tarefas que vencem em 3 dias ou menos
       if (daysUntilDue <= 3 && daysUntilDue >= 0) {
         const existingNotifications = await base44.entities.Notification.list();
         const alreadyNotified = existingNotifications.some(
@@ -89,7 +86,7 @@ export default function Notificacoes() {
 
         if (!alreadyNotified) {
           await base44.entities.Notification.create({
-            user_id: user.id,
+            user_id: currentUser.id,
             subtask_id: subtask.id,
             type: "prazo_proximo",
             title: "Prazo se aproximando",
@@ -99,7 +96,6 @@ export default function Notificacoes() {
         }
       }
 
-      // Criar notificação para tarefas atrasadas
       if (isPast(dueDate) && !isToday(dueDate)) {
         const existingNotifications = await base44.entities.Notification.list();
         const alreadyNotified = existingNotifications.some(
@@ -108,7 +104,7 @@ export default function Notificacoes() {
 
         if (!alreadyNotified) {
           await base44.entities.Notification.create({
-            user_id: user.id,
+            user_id: currentUser.id,
             subtask_id: subtask.id,
             type: "atrasada",
             title: "Tarefa atrasada",
@@ -116,13 +112,21 @@ export default function Notificacoes() {
             is_read: false
           });
 
-          // Atualizar flag de atrasada
           await base44.entities.Subtask.update(subtask.id, { is_overdue: true });
         }
       }
     }
 
     queryClient.invalidateQueries(['notifications']);
+  };
+
+  const getStatusLabel = (status) => {
+    const labels = {
+      'a_fazer': 'A Fazer',
+      'em_andamento': 'Em Andamento',
+      'concluido': 'Concluído'
+    };
+    return labels[status];
   };
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
@@ -146,10 +150,7 @@ export default function Notificacoes() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Carregando notificações...</p>
-        </div>
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
       </div>
     );
   }
@@ -157,7 +158,6 @@ export default function Notificacoes() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4">
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
             <Bell className="w-8 h-8 text-blue-600" />
@@ -175,7 +175,6 @@ export default function Notificacoes() {
           </p>
         </div>
 
-        {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card className="shadow-lg border-l-4 border-yellow-500">
             <CardContent className="p-6">
@@ -214,7 +213,6 @@ export default function Notificacoes() {
           </Card>
         </div>
 
-        {/* Tabs */}
         <Tabs defaultValue="all" className="space-y-6">
           <TabsList className="bg-white shadow-md">
             <TabsTrigger value="all">Todas</TabsTrigger>
@@ -323,7 +321,6 @@ export default function Notificacoes() {
           </TabsContent>
 
           <TabsContent value="tasks" className="space-y-6">
-            {/* Tarefas de Hoje */}
             {todayTasks.length > 0 && (
               <Card className="shadow-lg border-l-4 border-yellow-500">
                 <CardHeader className="bg-yellow-50">
@@ -355,7 +352,6 @@ export default function Notificacoes() {
               </Card>
             )}
 
-            {/* Tarefas Atrasadas */}
             {overdueTasks.length > 0 && (
               <Card className="shadow-lg border-l-4 border-red-500">
                 <CardHeader className="bg-red-50">

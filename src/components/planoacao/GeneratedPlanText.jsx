@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, Sparkles, RefreshCw } from "lucide-react";
 import ReactMarkdown from "react-markdown";
-import { toast } from "sonner";
 import { questions } from "../diagnostic/Questions";
 
 export default function GeneratedPlanText({ diagnostic, workshop, actions, subtasks }) {
@@ -20,7 +19,6 @@ export default function GeneratedPlanText({ diagnostic, workshop, actions, subta
   const generatePlan = async () => {
     setIsGenerating(true);
     try {
-      // Preparar dados das respostas
       const answersJson = diagnostic.answers.map(answer => {
         const question = questions.find(q => q.id === answer.question_id);
         const option = question?.options.find(opt => opt.letter === answer.selected_option);
@@ -33,7 +31,6 @@ export default function GeneratedPlanText({ diagnostic, workshop, actions, subta
         };
       });
 
-      // Preparar dados das ações
       const actionsJson = actions.map(action => ({
         id: action.id,
         title: action.title,
@@ -43,7 +40,6 @@ export default function GeneratedPlanText({ diagnostic, workshop, actions, subta
         due_date: action.due_date
       }));
 
-      // Preparar dados das subtarefas
       const users = await base44.entities.User.list();
       const subtasksJson = subtasks.map(subtask => ({
         id: subtask.id,
@@ -55,7 +51,6 @@ export default function GeneratedPlanText({ diagnostic, workshop, actions, subta
         due_date: subtask.due_date
       }));
 
-      // Montar o prompt
       const prompt = `A seguir estão os dados completos de um diagnóstico de oficina.
 Use APENAS essas informações para gerar um plano de ação personalizado.
 
@@ -126,7 +121,6 @@ IMPORTANTE:
       setGeneratedText(result);
     } catch (error) {
       console.error(error);
-      toast.error("Erro ao gerar plano personalizado");
     } finally {
       setIsGenerating(false);
     }

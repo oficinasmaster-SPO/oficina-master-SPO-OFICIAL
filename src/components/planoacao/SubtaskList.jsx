@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2, Circle, Clock, User, Calendar, Pencil, Trash2 } from "lucide-react";
 import { format, isPast } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { toast } from "sonner";
 import EditSubtaskDialog from "./EditSubtaskDialog";
 
 export default function SubtaskList({ subtasks, actionId }) {
@@ -29,9 +28,7 @@ export default function SubtaskList({ subtasks, actionId }) {
     },
     onSuccess: async (updatedSubtask) => {
       queryClient.invalidateQueries(['subtasks']);
-      toast.success("Status atualizado!");
       
-      // Criar notificação
       if (updatedSubtask.responsible_user_id) {
         await base44.entities.Notification.create({
           user_id: updatedSubtask.responsible_user_id,
@@ -51,7 +48,6 @@ export default function SubtaskList({ subtasks, actionId }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['subtasks']);
-      toast.success("Subtarefa removida!");
     }
   });
 
@@ -92,12 +88,9 @@ export default function SubtaskList({ subtasks, actionId }) {
   const isOverdue = (subtask) => {
     if (subtask.status === "concluido") return false;
     if (!subtask.due_date) return false;
-    return isPast(new Date(subtask.due_date)) && !isToday(new Date(subtask.due_date));
-  };
-
-  const isToday = (date) => {
     const today = new Date();
-    return date.toDateString() === today.toDateString();
+    const dueDate = new Date(subtask.due_date);
+    return isPast(dueDate) && dueDate.toDateString() !== today.toDateString();
   };
 
   if (subtasks.length === 0) {
@@ -162,7 +155,7 @@ export default function SubtaskList({ subtasks, actionId }) {
                         size="icon"
                         className="h-8 w-8"
                         onClick={() => {
-                          if (confirm("Tem certeza que deseja remover esta subtarefa?")) {
+                          if (window.confirm("Tem certeza que deseja remover esta subtarefa?")) {
                             deleteSubtaskMutation.mutate(subtask.id);
                           }
                         }}
