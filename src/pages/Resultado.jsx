@@ -5,12 +5,14 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, TrendingUp, Users, BarChart3, Rocket, ArrowRight, PieChart as PieChartIcon } from "lucide-react";
+import { Loader2, TrendingUp, Users, BarChart3, Rocket, ArrowRight, PieChart as PieChartIcon, FileText } from "lucide-react";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import AIInsightsSummary from "../components/resultado/AIInsightsSummary";
 
 export default function Resultado() {
   const navigate = useNavigate();
   const [diagnostic, setDiagnostic] = useState(null);
+  const [workshop, setWorkshop] = useState(null);
   const [loading, setLoading] = useState(true);
   const [phaseDistribution, setPhaseDistribution] = useState(null);
 
@@ -34,6 +36,13 @@ export default function Resultado() {
       if (diag) {
         setDiagnostic(diag);
         calculatePhaseDistribution(diag);
+        
+        // Carregar workshop se existir
+        if (diag.workshop_id) {
+          const workshops = await base44.entities.Workshop.list();
+          const ws = workshops.find(w => w.id === diag.workshop_id);
+          setWorkshop(ws);
+        }
       } else {
         navigate(createPageUrl("Home"));
       }
@@ -208,6 +217,15 @@ export default function Resultado() {
           </CardContent>
         </Card>
 
+        {/* Resumo Executivo com IA */}
+        <div className="mb-8">
+          <AIInsightsSummary 
+            diagnostic={diagnostic}
+            phaseDistribution={phaseDistribution}
+            workshop={workshop}
+          />
+        </div>
+
         {/* Dashboard de Distribuição */}
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
@@ -321,7 +339,7 @@ export default function Resultado() {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, percent }) => `${name}`}
+                      label={({ name }) => name}
                       outerRadius={100}
                       fill="#8884d8"
                       dataKey="value"
@@ -384,16 +402,17 @@ export default function Resultado() {
         <div className="flex flex-col sm:flex-row gap-4">
           <Button
             onClick={() => navigate(createPageUrl("PlanoAcao") + `?id=${diagnostic.id}`)}
-            className={`flex-1 bg-gradient-to-r ${dominantPhase.color} hover:opacity-90 text-white text-lg py-6`}
+            className={`flex-1 bg-gradient-to-r ${dominantPhase.color} hover:opacity-90 text-white text-lg py-6 shadow-lg`}
           >
-            Ver Plano de Ação Personalizado
+            <FileText className="w-5 h-5 mr-2" />
+            Ver Plano de Ação Completo e Detalhado
             <ArrowRight className="w-5 h-5 ml-2" />
           </Button>
           
           <Button
             variant="outline"
             onClick={() => navigate(createPageUrl("Home"))}
-            className="flex-1 py-6"
+            className="sm:w-auto py-6 px-8"
           >
             Voltar ao Início
           </Button>
