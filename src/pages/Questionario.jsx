@@ -1,18 +1,46 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Loader2 } from "lucide-react";
 import { questions } from "../components/diagnostic/Questions";
+import { toast } from "sonner";
 
 export default function Questionario() {
   const navigate = useNavigate();
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [workshop, setWorkshop] = useState(null);
+
+  useEffect(() => {
+    checkWorkshop();
+  }, []);
+
+  const checkWorkshop = async () => {
+    try {
+      const user = await base44.auth.me();
+      const workshops = await base44.entities.Workshop.list();
+      const userWorkshop = workshops.find(w => w.owner_id === user.id);
+      
+      if (!userWorkshop) {
+        toast.error("Você precisa cadastrar sua oficina antes de iniciar o diagnóstico");
+        navigate(createPageUrl("Cadastro"));
+        return;
+      }
+      
+      setWorkshop(userWorkshop);
+    } catch (error) {
+      toast.error("Você precisa estar logado para responder o questionário");
+      base44.auth.redirectToLogin(createPageUrl("Questionario"));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const progress = ((currentQuestion + 1) / questions.length) * 100;
   const question = questions[currentQuestion];
@@ -23,7 +51,7 @@ export default function Questionario() {
 
   const handleNext = () => {
     if (!answers[question.id]) {
-      alert("Por favor, selecione uma resposta");
+      toast.error("Por favor, selecione uma resposta");
       return;
     }
     
@@ -64,29 +92,46 @@ export default function Questionario() {
       
       const diagnostic = await base44.entities.Diagnostic.create({
         user_id: user.id,
+        workshop_id: workshop.id,
         answers: answersArray,
         phase: phase,
         dominant_letter: dominantLetter,
         completed: true
       });
       
+      toast.success("Diagnóstico concluído com sucesso!");
       navigate(createPageUrl("Resultado") + `?id=${diagnostic.id}`);
     } catch (error) {
       console.error(error);
-      alert("Erro ao salvar diagnóstico");
+      toast.error("Erro ao salvar diagnóstico");
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-8 px-4">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold text-gray-900">
-              Diagnóstico da Oficina
-            </h1>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Diagnóstico da Oficina
+              </h1>
+              {workshop && (
+                <p className="text-sm text-gray-600 mt-1">
+                  {workshop.name}
+                </p>
+              )}
+            </div>
             <div className="text-sm text-gray-600">
               Pergunta {currentQuestion + 1} de {questions.length}
             </div>
@@ -153,7 +198,14 @@ export default function Questionario() {
             className="px-6 bg-blue-600 hover:bg-blue-700"
           >
             {currentQuestion === questions.length - 1 ? (
-              isSubmitting ? "Processando..." : "Finalizar"
+              isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Processando...
+                </>
+              ) : (
+                "Finalizar"
+              )
             ) : (
               <>
                 Próxima

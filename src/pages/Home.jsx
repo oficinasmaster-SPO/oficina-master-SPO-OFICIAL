@@ -1,11 +1,49 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronRight, TrendingUp, Users, BarChart3, Rocket } from "lucide-react";
 
 export default function Home() {
+  const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+  const [hasWorkshop, setHasWorkshop] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    checkUserAndWorkshop();
+  }, []);
+
+  const checkUserAndWorkshop = async () => {
+    try {
+      const currentUser = await base44.auth.me();
+      setUser(currentUser);
+      
+      const workshops = await base44.entities.Workshop.list();
+      const userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
+      setHasWorkshop(!!userWorkshop);
+    } catch (error) {
+      console.log("User not authenticated");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStartDiagnostic = () => {
+    if (!user) {
+      base44.auth.redirectToLogin(createPageUrl("Cadastro"));
+      return;
+    }
+    
+    if (!hasWorkshop) {
+      navigate(createPageUrl("Cadastro"));
+    } else {
+      navigate(createPageUrl("Questionario"));
+    }
+  };
+
   const phases = [
     {
       phase: 1,
@@ -51,12 +89,15 @@ export default function Home() {
               Responda 12 perguntas rápidas e receba um plano de ação personalizado para aumentar lucro, 
               organização e crescimento da sua oficina.
             </p>
-            <Link to={createPageUrl("Questionario")}>
-              <Button size="lg" className="bg-white text-blue-700 hover:bg-blue-50 text-lg px-8 py-6 rounded-full shadow-xl hover:shadow-2xl transition-all">
-                Começar Diagnóstico
-                <ChevronRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
+            <Button 
+              onClick={handleStartDiagnostic}
+              disabled={loading}
+              size="lg" 
+              className="bg-white text-blue-700 hover:bg-blue-50 text-lg px-8 py-6 rounded-full shadow-xl hover:shadow-2xl transition-all"
+            >
+              Começar Diagnóstico
+              <ChevronRight className="ml-2 h-5 w-5" />
+            </Button>
           </div>
         </div>
       </div>
@@ -103,12 +144,15 @@ export default function Home() {
         </div>
 
         <div className="mt-16 text-center">
-          <Link to={createPageUrl("Questionario")}>
-            <Button size="lg" className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-lg px-8 py-6 rounded-full shadow-lg">
-              Iniciar Diagnóstico Agora
-              <ChevronRight className="ml-2 h-5 w-5" />
-            </Button>
-          </Link>
+          <Button 
+            onClick={handleStartDiagnostic}
+            disabled={loading}
+            size="lg" 
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-lg px-8 py-6 rounded-full shadow-lg"
+          >
+            Iniciar Diagnóstico Agora
+            <ChevronRight className="ml-2 h-5 w-5" />
+          </Button>
         </div>
       </div>
     </div>
