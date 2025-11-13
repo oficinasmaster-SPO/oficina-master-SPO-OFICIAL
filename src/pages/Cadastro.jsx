@@ -15,6 +15,7 @@ export default function Cadastro() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
+  const [existingWorkshop, setExistingWorkshop] = useState(null);
   const [formData, setFormData] = useState({
     // Dados da oficina
     name: "",
@@ -59,39 +60,41 @@ export default function Cadastro() {
       
       // Verificar se já tem workshop cadastrado
       const workshops = await base44.entities.Workshop.list();
-      const existingWorkshop = workshops.find(w => w.owner_id === currentUser.id);
+      const userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
       
-      if (existingWorkshop) {
+      if (userWorkshop) {
+        setExistingWorkshop(userWorkshop);
         // Se já tem workshop, preenche o formulário com os dados
         setFormData({
-          name: existingWorkshop.name || "",
-          cnpj: existingWorkshop.cnpj || "",
-          phone: existingWorkshop.phone || "",
-          whatsapp: existingWorkshop.whatsapp || "",
-          cep: existingWorkshop.cep || "",
-          street: existingWorkshop.street || "",
-          number: existingWorkshop.number || "",
-          complement: existingWorkshop.complement || "",
-          neighborhood: existingWorkshop.neighborhood || "",
-          city: existingWorkshop.city || "",
-          state: existingWorkshop.state || "",
-          country: existingWorkshop.country || "Brasil",
-          segment: existingWorkshop.segment || "",
-          segment_other: existingWorkshop.segment_other || "",
-          monthly_revenue: existingWorkshop.monthly_revenue || "",
-          employees_count: existingWorkshop.employees_count || "",
-          service_orders_per_month: existingWorkshop.service_orders_per_month || "",
-          boxes_count: existingWorkshop.boxes_count || "",
-          years_in_business: existingWorkshop.years_in_business || "",
-          services_offered: existingWorkshop.services_offered || [],
-          services_other: existingWorkshop.services_other || "",
-          has_erp: existingWorkshop.has_erp || false,
-          erp_name: existingWorkshop.erp_name || "",
-          main_challenge: existingWorkshop.main_challenge || "",
-          main_challenge_other: existingWorkshop.main_challenge_other || ""
+          name: userWorkshop.name || "",
+          cnpj: userWorkshop.cnpj || "",
+          phone: userWorkshop.phone || "",
+          whatsapp: userWorkshop.whatsapp || "",
+          cep: userWorkshop.cep || "",
+          street: userWorkshop.street || "",
+          number: userWorkshop.number || "",
+          complement: userWorkshop.complement || "",
+          neighborhood: userWorkshop.neighborhood || "",
+          city: userWorkshop.city || "",
+          state: userWorkshop.state || "",
+          country: userWorkshop.country || "Brasil",
+          segment: userWorkshop.segment || "",
+          segment_other: userWorkshop.segment_other || "",
+          monthly_revenue: userWorkshop.monthly_revenue || "",
+          employees_count: userWorkshop.employees_count || "",
+          service_orders_per_month: userWorkshop.service_orders_per_month || "",
+          boxes_count: userWorkshop.boxes_count || "",
+          years_in_business: userWorkshop.years_in_business || "",
+          services_offered: userWorkshop.services_offered || [],
+          services_other: userWorkshop.services_other || "",
+          has_erp: userWorkshop.has_erp || false,
+          erp_name: userWorkshop.erp_name || "",
+          main_challenge: userWorkshop.main_challenge || "",
+          main_challenge_other: userWorkshop.main_challenge_other || ""
         });
       }
     } catch (error) {
+      console.error("Erro ao carregar usuário:", error);
       toast.error("Você precisa estar logado para cadastrar uma oficina");
       base44.auth.redirectToLogin(createPageUrl("Cadastro"));
     }
@@ -100,20 +103,42 @@ export default function Cadastro() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Validação dos campos obrigatórios
     if (!formData.name || !formData.city || !formData.state || !formData.segment || 
         !formData.monthly_revenue || !formData.employees_count || !formData.years_in_business) {
-      toast.error("Preencha todos os campos obrigatórios");
+      toast.error("Preencha todos os campos obrigatórios marcados com *");
       return;
     }
 
     setLoading(true);
 
     try {
-      const workshops = await base44.entities.Workshop.list();
-      const existingWorkshop = workshops.find(w => w.owner_id === user.id);
-
       const workshopData = {
-        ...formData,
+        name: formData.name,
+        cnpj: formData.cnpj || "",
+        phone: formData.phone || "",
+        whatsapp: formData.whatsapp || "",
+        cep: formData.cep || "",
+        street: formData.street || "",
+        number: formData.number || "",
+        complement: formData.complement || "",
+        neighborhood: formData.neighborhood || "",
+        city: formData.city,
+        state: formData.state,
+        country: formData.country || "Brasil",
+        segment: formData.segment,
+        segment_other: formData.segment_other || "",
+        monthly_revenue: formData.monthly_revenue,
+        employees_count: formData.employees_count,
+        service_orders_per_month: formData.service_orders_per_month || "",
+        boxes_count: formData.boxes_count || 0,
+        years_in_business: formData.years_in_business,
+        services_offered: formData.services_offered || [],
+        services_other: formData.services_other || "",
+        has_erp: formData.has_erp || false,
+        erp_name: formData.erp_name || "",
+        main_challenge: formData.main_challenge || "",
+        main_challenge_other: formData.main_challenge_other || "",
         owner_id: user.id
       };
 
@@ -125,10 +150,14 @@ export default function Cadastro() {
         toast.success("Oficina cadastrada com sucesso!");
       }
 
-      navigate(createPageUrl("Questionario"));
+      // Aguardar um pouco antes de navegar para garantir que salvou
+      setTimeout(() => {
+        navigate(createPageUrl("Questionario"));
+      }, 500);
+
     } catch (error) {
-      console.error(error);
-      toast.error("Erro ao salvar dados da oficina");
+      console.error("Erro ao salvar oficina:", error);
+      toast.error("Erro ao salvar dados da oficina. Tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -144,7 +173,10 @@ export default function Cadastro() {
   };
 
   const searchCEP = async () => {
-    if (!formData.cep || formData.cep.length < 8) return;
+    if (!formData.cep || formData.cep.length < 8) {
+      toast.error("Digite um CEP válido");
+      return;
+    }
     
     try {
       const response = await fetch(`https://viacep.com.br/ws/${formData.cep.replace(/\D/g, '')}/json/`);
@@ -159,9 +191,12 @@ export default function Cadastro() {
           state: data.uf || prev.state
         }));
         toast.success("CEP encontrado!");
+      } else {
+        toast.error("CEP não encontrado");
       }
     } catch (error) {
-      console.error(error);
+      console.error("Erro ao buscar CEP:", error);
+      toast.error("Erro ao buscar CEP");
     }
   };
 
@@ -178,7 +213,7 @@ export default function Cadastro() {
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-3">
-            Cadastre sua oficina para gerar o diagnóstico
+            {existingWorkshop ? "Atualize os dados da sua oficina" : "Cadastre sua oficina para gerar o diagnóstico"}
           </h1>
           <p className="text-lg text-gray-600">
             Esses dados são importantes para personalizar seu plano de ação e comparar sua oficina com outras da sua região.
@@ -558,7 +593,7 @@ export default function Cadastro() {
               ) : (
                 <>
                   <CheckCircle2 className="w-5 h-5 mr-2" />
-                  Salvar cadastro e iniciar diagnóstico
+                  {existingWorkshop ? "Atualizar e continuar" : "Salvar cadastro e iniciar diagnóstico"}
                 </>
               )}
             </Button>
