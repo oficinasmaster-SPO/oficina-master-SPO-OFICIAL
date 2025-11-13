@@ -4,7 +4,7 @@ import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronRight, TrendingUp, Users, BarChart3, Rocket } from "lucide-react";
+import { ChevronRight, TrendingUp, Users, BarChart3, Rocket, Loader2 } from "lucide-react";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -95,8 +95,17 @@ export default function Home() {
               size="lg" 
               className="bg-white text-blue-700 hover:bg-blue-50 text-lg px-8 py-6 rounded-full shadow-xl hover:shadow-2xl transition-all"
             >
-              Começar Diagnóstico
-              <ChevronRight className="ml-2 h-5 w-5" />
+              {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  Carregando...
+                </>
+              ) : (
+                <>
+                  Começar Diagnóstico
+                  <ChevronRight className="ml-2 h-5 w-5" />
+                </>
+              )}
             </Button>
           </div>
         </div>
@@ -150,8 +159,17 @@ export default function Home() {
             size="lg" 
             className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-lg px-8 py-6 rounded-full shadow-lg"
           >
-            Iniciar Diagnóstico Agora
-            <ChevronRight className="ml-2 h-5 w-5" />
+            {loading ? (
+              <>
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                Carregando...
+              </>
+            ) : (
+              <>
+                Iniciar Diagnóstico Agora
+                <ChevronRight className="ml-2 h-5 w-5" />
+              </>
+            )}
           </Button>
         </div>
       </div>
