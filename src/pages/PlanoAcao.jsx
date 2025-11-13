@@ -5,10 +5,12 @@ import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, ArrowLeft, Download, FileText } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, ArrowLeft, Download, FileText, Sparkles, ListChecks } from "lucide-react";
 import { toast } from "sonner";
 import ActionItem from "../components/planoacao/ActionItem";
 import PDFPreview from "../components/planoacao/PDFPreview";
+import GeneratedPlanText from "../components/planoacao/GeneratedPlanText";
 
 export default function PlanoAcao() {
   const navigate = useNavigate();
@@ -198,16 +200,38 @@ export default function PlanoAcao() {
             </CardContent>
           </Card>
 
-          {/* Actions List */}
-          <div className="space-y-6">
-            {actions.map((action) => (
-              <ActionItem 
-                key={action.id} 
-                action={action}
-                diagnosticId={diagnostic.id}
+          {/* Tabs */}
+          <Tabs defaultValue="personalized" className="space-y-6">
+            <TabsList className="bg-white shadow-md">
+              <TabsTrigger value="personalized" className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4" />
+                Plano Personalizado
+              </TabsTrigger>
+              <TabsTrigger value="actions" className="flex items-center gap-2">
+                <ListChecks className="w-4 h-4" />
+                Ações e Tarefas
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="personalized">
+              <GeneratedPlanText
+                diagnostic={diagnostic}
+                workshop={workshop}
+                actions={actions}
+                subtasks={subtasks}
               />
-            ))}
-          </div>
+            </TabsContent>
+
+            <TabsContent value="actions" className="space-y-6">
+              {actions.map((action) => (
+                <ActionItem 
+                  key={action.id} 
+                  action={action}
+                  diagnosticId={diagnostic.id}
+                />
+              ))}
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
 
