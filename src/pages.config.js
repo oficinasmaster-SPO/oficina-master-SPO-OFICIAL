@@ -4,6 +4,7 @@ import Resultado from './pages/Resultado';
 import PlanoAcao from './pages/PlanoAcao';
 import Historico from './pages/Historico';
 import Dashboard from './pages/Dashboard';
+import Notificacoes from './pages/Notificacoes';
 import Layout from './Layout.jsx';
 
 
@@ -14,6 +15,7 @@ export const PAGES = {
     "PlanoAcao": PlanoAcao,
     "Historico": Historico,
     "Dashboard": Dashboard,
+    "Notificacoes": Notificacoes,
 }
 
 export const pagesConfig = {

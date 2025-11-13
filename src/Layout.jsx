@@ -2,8 +2,10 @@ import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
-import { Home, FileText, History, BarChart3, LogOut, Menu, X } from "lucide-react";
+import { Home, FileText, History, BarChart3, Bell, LogOut, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Layout({ children }) {
   const location = useLocation();
@@ -23,6 +25,17 @@ export default function Layout({ children }) {
     }
   };
 
+  const { data: unreadCount = 0 } = useQuery({
+    queryKey: ['unread-notifications', user?.id],
+    queryFn: async () => {
+      if (!user) return 0;
+      const notifications = await base44.entities.Notification.list();
+      return notifications.filter(n => n.user_id === user.id && !n.is_read).length;
+    },
+    enabled: !!user,
+    refetchInterval: 30000 // Atualizar a cada 30 segundos
+  });
+
   const handleLogout = async () => {
     await base44.auth.logout();
     window.location.href = createPageUrl("Home");
@@ -31,6 +44,7 @@ export default function Layout({ children }) {
   const navigation = [
     { name: "Início", href: createPageUrl("Home"), icon: Home, public: true },
     { name: "Histórico", href: createPageUrl("Historico"), icon: History, public: false },
+    { name: "Notificações", href: createPageUrl("Notificacoes"), icon: Bell, public: false, badge: unreadCount },
     { name: "Dashboard", href: createPageUrl("Dashboard"), icon: BarChart3, public: false, adminOnly: true }
   ];
 
@@ -67,7 +81,7 @@ export default function Layout({ children }) {
                   <Link
                     key={item.name}
                     to={item.href}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors relative ${
                       isActive
                         ? "bg-blue-50 text-blue-700 font-medium"
                         : "text-gray-700 hover:bg-gray-100"
@@ -75,6 +89,11 @@ export default function Layout({ children }) {
                   >
                     <Icon className="w-4 h-4" />
                     {item.name}
+                    {item.badge > 0 && (
+                      <Badge className="bg-red-500 text-white ml-1 h-5 min-w-5 px-1.5">
+                        {item.badge}
+                      </Badge>
+                    )}
                   </Link>
                 );
               })}
@@ -111,8 +130,13 @@ export default function Layout({ children }) {
               {/* Mobile menu button */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden p-2 rounded-lg hover:bg-gray-100"
+                className="md:hidden p-2 rounded-lg hover:bg-gray-100 relative"
               >
+                {unreadCount > 0 && (
+                  <Badge className="absolute -top-1 -right-1 bg-red-500 text-white h-5 min-w-5 px-1.5">
+                    {unreadCount}
+                  </Badge>
+                )}
                 {mobileMenuOpen ? (
                   <X className="w-6 h-6 text-gray-700" />
                 ) : (
@@ -135,14 +159,21 @@ export default function Layout({ children }) {
                     key={item.name}
                     to={item.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                    className={`flex items-center justify-between px-4 py-3 rounded-lg transition-colors ${
                       isActive
                         ? "bg-blue-50 text-blue-700 font-medium"
                         : "text-gray-700 hover:bg-gray-100"
                     }`}
                   >
-                    <Icon className="w-5 h-5" />
-                    {item.name}
+                    <div className="flex items-center gap-3">
+                      <Icon className="w-5 h-5" />
+                      {item.name}
+                    </div>
+                    {item.badge > 0 && (
+                      <Badge className="bg-red-500 text-white">
+                        {item.badge}
+                      </Badge>
+                    )}
                   </Link>
                 );
               })}
@@ -185,7 +216,7 @@ export default function Layout({ children }) {
       <main>{children}</main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 mt-auto">
+      <footer className="bg-white border-t border-gray-200 mt-auto print:hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-gray-600">

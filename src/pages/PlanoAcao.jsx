@@ -2,25 +2,48 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Calendar, ShoppingCart, Users, DollarSign, ArrowLeft, CheckCircle2 } from "lucide-react";
-import { actionPlanTemplates } from "../components/diagnostic/ActionPlans";
+import { Loader2, ArrowLeft, Download, FileText } from "lucide-react";
 import { toast } from "sonner";
+import ActionItem from "../components/planoacao/ActionItem";
+import PDFPreview from "../components/planoacao/PDFPreview";
 
 export default function PlanoAcao() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [diagnostic, setDiagnostic] = useState(null);
-  const [actionPlan, setActionPlan] = useState(null);
+  const [workshop, setWorkshop] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showPDFPreview, setShowPDFPreview] = useState(false);
 
   useEffect(() => {
     loadData();
   }, []);
+
+  const { data: actions = [], isLoading: loadingActions } = useQuery({
+    queryKey: ['actions', diagnostic?.id],
+    queryFn: async () => {
+      if (!diagnostic?.id) return [];
+      const allActions = await base44.entities.Action.list();
+      return allActions
+        .filter(a => a.diagnostic_id === diagnostic.id)
+        .sort((a, b) => (a.order || 0) - (b.order || 0));
+    },
+    enabled: !!diagnostic?.id
+  });
+
+  const { data: subtasks = [] } = useQuery({
+    queryKey: ['subtasks', diagnostic?.id],
+    queryFn: async () => {
+      if (!diagnostic?.id || actions.length === 0) return [];
+      const allSubtasks = await base44.entities.Subtask.list();
+      const actionIds = actions.map(a => a.id);
+      return allSubtasks.filter(s => actionIds.includes(s.action_id));
+    },
+    enabled: !!diagnostic?.id && actions.length > 0
+  });
 
   const loadData = async () => {
     try {
@@ -42,84 +65,62 @@ export default function PlanoAcao() {
 
       setDiagnostic(diag);
 
-      // Buscar ou criar plano de ação
-      const plans = await base44.entities.ActionPlan.list();
-      let plan = plans.find(p => p.diagnostic_id === id);
-      
-      if (!plan) {
-        const template = actionPlanTemplates[diag.phase];
-        plan = await base44.entities.ActionPlan.create({
-          diagnostic_id: id,
-          phase: diag.phase,
-          actions: template
-        });
+      // Carregar workshop
+      if (diag.workshop_id) {
+        const workshops = await base44.entities.Workshop.list();
+        const ws = workshops.find(w => w.id === diag.workshop_id);
+        setWorkshop(ws);
       }
-      
-      setActionPlan(plan);
+
+      // Verificar se já existem ações
+      const allActions = await base44.entities.Action.list();
+      const existingActions = allActions.filter(a => a.diagnostic_id === id);
+
+      // Se não existem ações, criar do template
+      if (existingActions.length === 0) {
+        await createActionsFromTemplate(id, diag.phase);
+      }
+
     } catch (error) {
       console.error(error);
-      toast.error("Erro ao carregar plano de ação");
+      toast.error("Erro ao carregar dados");
     } finally {
       setLoading(false);
     }
   };
 
-  const updateActionMutation = useMutation({
-    mutationFn: async ({ actionIndex, newStatus }) => {
-      const updatedActions = [...actionPlan.actions];
-      updatedActions[actionIndex].status = newStatus;
-      
-      return await base44.entities.ActionPlan.update(actionPlan.id, {
-        actions: updatedActions
+  const createActionsFromTemplate = async (diagnosticId, phase) => {
+    const { actionPlanTemplates } = await import("../components/diagnostic/ActionPlans");
+    const template = actionPlanTemplates[phase] || [];
+
+    for (let i = 0; i < template.length; i++) {
+      const action = template[i];
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + action.deadline_days);
+
+      await base44.entities.Action.create({
+        diagnostic_id: diagnosticId,
+        title: action.title,
+        description: action.description,
+        category: action.category,
+        status: "a_fazer",
+        deadline_days: action.deadline_days,
+        due_date: dueDate.toISOString().split('T')[0],
+        order: i
       });
-    },
-    onSuccess: (updated) => {
-      setActionPlan(updated);
-      queryClient.invalidateQueries(['actionPlans']);
-      toast.success("Status atualizado!");
     }
-  });
 
-  const handleStatusChange = (actionIndex, currentStatus) => {
-    const statusFlow = {
-      'a_fazer': 'em_andamento',
-      'em_andamento': 'concluido',
-      'concluido': 'a_fazer'
-    };
-    
-    const newStatus = statusFlow[currentStatus];
-    updateActionMutation.mutate({ actionIndex, newStatus });
+    queryClient.invalidateQueries(['actions']);
   };
 
-  const getCategoryInfo = (category) => {
-    const categories = {
-      vendas: { icon: ShoppingCart, label: "Vendas e Atendimento", color: "bg-blue-100 text-blue-700" },
-      prospeccao: { icon: Users, label: "Prospecção Ativa", color: "bg-purple-100 text-purple-700" },
-      precificacao: { icon: DollarSign, label: "Precificação e Rentabilidade", color: "bg-green-100 text-green-700" },
-      pessoas: { icon: Users, label: "Pessoas e Time", color: "bg-orange-100 text-orange-700" }
-    };
-    return categories[category] || categories.vendas;
+  const handlePrintPDF = () => {
+    setShowPDFPreview(true);
+    setTimeout(() => {
+      window.print();
+    }, 500);
   };
 
-  const getStatusColor = (status) => {
-    const colors = {
-      'a_fazer': 'bg-gray-100 text-gray-700 border-gray-300',
-      'em_andamento': 'bg-yellow-100 text-yellow-700 border-yellow-300',
-      'concluido': 'bg-green-100 text-green-700 border-green-300'
-    };
-    return colors[status];
-  };
-
-  const getStatusLabel = (status) => {
-    const labels = {
-      'a_fazer': 'A Fazer',
-      'em_andamento': 'Em Andamento',
-      'concluido': 'Concluído'
-    };
-    return labels[status];
-  };
-
-  if (loading) {
+  if (loading || loadingActions) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
@@ -127,138 +128,99 @@ export default function PlanoAcao() {
     );
   }
 
-  if (!actionPlan) return null;
+  if (!diagnostic) {
+    return null;
+  }
 
-  const completedCount = actionPlan.actions.filter(a => a.status === 'concluido').length;
-  const progressPercentage = (completedCount / actionPlan.actions.length) * 100;
+  const completedActions = actions.filter(a => a.status === "concluido").length;
+  const progressPercentage = actions.length > 0 ? Math.round((completedActions / actions.length) * 100) : 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4">
-      <div className="max-w-6xl mx-auto">
-        <Button
-          variant="outline"
-          onClick={() => navigate(createPageUrl("Resultado") + `?id=${diagnostic.id}`)}
-          className="mb-6"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Voltar ao Resultado
-        </Button>
+    <>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4 print:hidden">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+            <Button
+              variant="outline"
+              onClick={() => navigate(createPageUrl("Resultado") + `?id=${diagnostic.id}`)}
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar ao Resultado
+            </Button>
 
-        {/* Header */}
-        <Card className="shadow-xl mb-8">
-          <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-            <CardTitle className="text-3xl">
-              Plano de Ação Personalizado - Fase {diagnostic.phase}
-            </CardTitle>
-            <p className="text-blue-100 mt-2">
-              Siga estas ações estratégicas para evoluir sua oficina
-            </p>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Progresso Geral</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {completedCount} de {actionPlan.actions.length} ações concluídas
-                </p>
-              </div>
-              <div className="text-right">
-                <div className="text-4xl font-bold text-blue-600">
-                  {Math.round(progressPercentage)}%
+            <Button
+              onClick={handlePrintPDF}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Baixar Plano de Ação em PDF
+            </Button>
+          </div>
+
+          {/* Header */}
+          <Card className="shadow-xl mb-8">
+            <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+              <div className="flex items-center gap-3">
+                <FileText className="w-8 h-8" />
+                <div>
+                  <CardTitle className="text-3xl">
+                    Plano de Ação - Fase {diagnostic.phase}
+                  </CardTitle>
+                  {workshop && (
+                    <p className="text-blue-100 mt-1">
+                      {workshop.name} • {workshop.city}, {workshop.state}
+                    </p>
+                  )}
                 </div>
-                <p className="text-sm text-gray-600">Completo</p>
               </div>
-            </div>
-            <div className="mt-4 h-3 bg-gray-200 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-500"
-                style={{ width: `${progressPercentage}%` }}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Actions List */}
-        <div className="space-y-6">
-          {actionPlan.actions.map((action, index) => {
-            const categoryInfo = getCategoryInfo(action.category);
-            const CategoryIcon = categoryInfo.icon;
-            
-            return (
-              <Card key={index} className="shadow-lg hover:shadow-xl transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex items-start gap-4">
-                    <button
-                      onClick={() => handleStatusChange(index, action.status)}
-                      disabled={updateActionMutation.isLoading}
-                      className="flex-shrink-0 mt-1"
-                    >
-                      {action.status === 'concluido' ? (
-                        <CheckCircle2 className="w-6 h-6 text-green-600" />
-                      ) : (
-                        <div className="w-6 h-6 rounded-full border-2 border-gray-300 hover:border-blue-500 transition-colors" />
-                      )}
-                    </button>
-
-                    <div className="flex-1">
-                      <div className="flex flex-wrap items-center gap-2 mb-3">
-                        <Badge className={categoryInfo.color}>
-                          <CategoryIcon className="w-3 h-3 mr-1" />
-                          {categoryInfo.label}
-                        </Badge>
-                        <Badge variant="outline" className={`border-2 ${getStatusColor(action.status)}`}>
-                          {getStatusLabel(action.status)}
-                        </Badge>
-                        <Badge variant="outline" className="border-gray-300">
-                          <Calendar className="w-3 h-3 mr-1" />
-                          {action.deadline_days} dias
-                        </Badge>
-                      </div>
-
-                      <h3 className={`text-lg font-semibold mb-2 ${
-                        action.status === 'concluido' ? 'line-through text-gray-500' : 'text-gray-900'
-                      }`}>
-                        {action.title}
-                      </h3>
-
-                      <p className="text-gray-600 leading-relaxed">
-                        {action.description}
-                      </p>
-                    </div>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Progresso Geral</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {completedActions} de {actions.length} ações concluídas
+                  </p>
+                </div>
+                <div className="text-right">
+                  <div className="text-4xl font-bold text-blue-600">
+                    {progressPercentage}%
                   </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                  <p className="text-sm text-gray-600">Completo</p>
+                </div>
+              </div>
+              <div className="mt-4 h-3 bg-gray-200 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-500"
+                  style={{ width: `${progressPercentage}%` }}
+                />
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* Footer Actions */}
-        <Card className="mt-8 shadow-xl bg-gradient-to-r from-blue-50 to-indigo-50">
-          <CardContent className="p-6 text-center">
-            <h3 className="text-xl font-bold text-gray-900 mb-2">
-              Próximos Passos
-            </h3>
-            <p className="text-gray-600 mb-4">
-              Comece pelas ações de prazo mais curto e mantenha o foco nos seus objetivos
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button
-                onClick={() => navigate(createPageUrl("Home"))}
-                variant="outline"
-                className="px-6"
-              >
-                Fazer Novo Diagnóstico
-              </Button>
-              <Button
-                onClick={() => navigate(createPageUrl("Historico"))}
-                className="bg-blue-600 hover:bg-blue-700 px-6"
-              >
-                Ver Histórico
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+          {/* Actions List */}
+          <div className="space-y-6">
+            {actions.map((action) => (
+              <ActionItem 
+                key={action.id} 
+                action={action}
+                diagnosticId={diagnostic.id}
+              />
+            ))}
+          </div>
+        </div>
       </div>
-    </div>
+
+      {/* PDF Preview (hidden on screen, visible on print) */}
+      {showPDFPreview && (
+        <PDFPreview
+          diagnostic={diagnostic}
+          workshop={workshop}
+          actions={actions}
+          subtasks={subtasks}
+          onClose={() => setShowPDFPreview(false)}
+        />
+      )}
+    </>
   );
 }
