@@ -4,7 +4,7 @@ import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronRight, TrendingUp, Users, BarChart3, Rocket, Loader2, LogIn } from "lucide-react";
+import { ChevronRight, TrendingUp, Users, BarChart3, Rocket, Loader2, LogIn, FileText, Target } from "lucide-react";
 import OnboardingTour from "../components/onboarding/OnboardingTour";
 import OnboardingChecklist from "../components/onboarding/OnboardingChecklist";
 import ContextualTips from "../components/onboarding/ContextualTips";
