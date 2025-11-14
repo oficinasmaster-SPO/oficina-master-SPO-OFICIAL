@@ -5,12 +5,17 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronRight, TrendingUp, Users, BarChart3, Rocket, Loader2 } from "lucide-react";
+import OnboardingTour from "../components/onboarding/OnboardingTour";
+import OnboardingChecklist from "../components/onboarding/OnboardingChecklist";
+import ContextualTips from "../components/onboarding/ContextualTips";
 
 export default function Home() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [hasWorkshop, setHasWorkshop] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [userProgress, setUserProgress] = useState(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
     checkUserAndWorkshop();
@@ -21,13 +26,91 @@ export default function Home() {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
       
+      // Verificar se tem workshop
       const workshops = await base44.entities.Workshop.list();
       const userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
       setHasWorkshop(!!userWorkshop);
+
+      // Carregar ou criar UserProgress
+      await loadUserProgress(currentUser);
     } catch (error) {
       console.log("User not authenticated");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadUserProgress = async (currentUser) => {
+    try {
+      const progressList = await base44.entities.UserProgress.list();
+      let progress = progressList.find(p => p.user_id === currentUser.id);
+
+      if (!progress) {
+        // Criar novo registro de progresso
+        progress = await base44.entities.UserProgress.create({
+          user_id: currentUser.id,
+          onboarding_completed: false,
+          tour_completed: false,
+          tour_step: 0,
+          checklist_items: {
+            cadastrou_oficina: false,
+            fez_primeiro_diagnostico: false,
+            visualizou_resultado: false,
+            acessou_plano_acao: false,
+            explorou_dashboard: false
+          },
+          first_login_date: new Date().toISOString(),
+          last_login_date: new Date().toISOString()
+        });
+        setShowOnboarding(true);
+      } else {
+        // Atualizar último login
+        await base44.entities.UserProgress.update(progress.id, {
+          last_login_date: new Date().toISOString()
+        });
+
+        // Mostrar onboarding se não foi completado
+        setShowOnboarding(!progress.onboarding_completed);
+
+        // Atualizar checklist baseado em dados reais
+        await updateChecklist(progress, currentUser);
+      }
+
+      setUserProgress(progress);
+    } catch (error) {
+      console.error("Erro ao carregar progresso:", error);
+    }
+  };
+
+  const updateChecklist = async (progress, currentUser) => {
+    try {
+      const workshops = await base44.entities.Workshop.list();
+      const diagnostics = await base44.entities.Diagnostic.list();
+      
+      const userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
+      const userDiagnostics = diagnostics.filter(d => d.user_id === currentUser.id);
+
+      const updatedChecklist = {
+        cadastrou_oficina: !!userWorkshop,
+        fez_primeiro_diagnostico: userDiagnostics.length > 0,
+        visualizou_resultado: userDiagnostics.some(d => d.completed),
+        acessou_plano_acao: progress.checklist_items?.acessou_plano_acao || false,
+        explorou_dashboard: progress.checklist_items?.explorou_dashboard || false
+      };
+
+      // Atualizar se houver mudanças
+      const hasChanges = Object.keys(updatedChecklist).some(
+        key => updatedChecklist[key] !== progress.checklist_items?.[key]
+      );
+
+      if (hasChanges) {
+        await base44.entities.UserProgress.update(progress.id, {
+          checklist_items: updatedChecklist
+        });
+        setUserProgress({ ...progress, checklist_items: updatedChecklist });
+      }
+    } catch (error) {
+      console.error("Erro ao atualizar checklist:", error);
     }
   };
 
@@ -42,6 +125,10 @@ export default function Home() {
     } else {
       navigate(createPageUrl("Questionario"));
     }
+  };
+
+  const handleTourComplete = () => {
+    setShowOnboarding(true);
   };
 
   const phases = [
@@ -78,7 +165,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
       {/* Hero Section */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 text-white">
+      <div id="home-hero" className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 text-white">
         <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:20px_20px]" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="text-center space-y-8">
@@ -90,6 +177,7 @@ export default function Home() {
               organização e crescimento da sua oficina.
             </p>
             <Button 
+              id="start-diagnostic-button"
               onClick={handleStartDiagnostic}
               disabled={loading}
               size="lg" 
@@ -112,7 +200,7 @@ export default function Home() {
       </div>
 
       {/* Phases Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+      <div id="phases-section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-gray-900 mb-4">
             As 4 Fases de Evolução
@@ -173,6 +261,30 @@ export default function Home() {
           </Button>
         </div>
       </div>
+
+      {/* Onboarding Components */}
+      {user && userProgress && (
+        <>
+          {/* Tour Guiado */}
+          {!userProgress.tour_completed && (
+            <OnboardingTour user={user} onComplete={handleTourComplete} />
+          )}
+
+          {/* Checklist de Onboarding */}
+          {showOnboarding && !userProgress.onboarding_completed && (
+            <div className="fixed top-20 right-6 z-40 w-full max-w-md animate-in slide-in-from-right duration-500">
+              <OnboardingChecklist
+                user={user}
+                userProgress={userProgress}
+                onClose={() => setShowOnboarding(false)}
+              />
+            </div>
+          )}
+
+          {/* Dicas Contextuais */}
+          <ContextualTips page="home" />
+        </>
+      )}
     </div>
   );
 }
