@@ -53,6 +53,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       label: 'Gestão',
       items: [
         { 
+          id: 'sidebar-historico',
           name: 'Histórico', 
           href: createPageUrl('Historico'), 
           icon: History, 
@@ -60,6 +61,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           description: 'Meus diagnósticos'
         },
         { 
+          id: 'sidebar-notificacoes',
           name: 'Notificações', 
           href: createPageUrl('Notificacoes'), 
           icon: Bell, 
@@ -108,6 +110,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
 
       {/* Sidebar */}
       <aside 
+        id="sidebar-navigation"
         className={cn(
           "fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 z-50 transition-transform duration-300 flex flex-col print:hidden",
           isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
@@ -158,6 +161,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                         return (
                           <Link
                             key={item.name}
+                            id={item.id}
                             to={item.href}
                             onClick={onClose}
                             className={cn(
@@ -205,7 +209,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
 
         {/* User Info */}
         {user && (
-          <div className="p-4 border-t border-gray-200">
+          <div id="user-profile" className="p-4 border-t border-gray-200">
             <div className="flex items-center gap-3 px-3 py-2 bg-gray-50 rounded-lg">
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center">
                 <User className="w-5 h-5 text-white" />
