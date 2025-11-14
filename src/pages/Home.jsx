@@ -4,7 +4,7 @@ import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronRight, TrendingUp, Users, BarChart3, Rocket, Loader2 } from "lucide-react";
+import { ChevronRight, TrendingUp, Users, BarChart3, Rocket, Loader2, LogIn } from "lucide-react";
 import OnboardingTour from "../components/onboarding/OnboardingTour";
 import OnboardingChecklist from "../components/onboarding/OnboardingChecklist";
 import ContextualTips from "../components/onboarding/ContextualTips";
@@ -16,6 +16,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [userProgress, setUserProgress] = useState(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     checkUserAndWorkshop();
@@ -23,6 +24,15 @@ export default function Home() {
 
   const checkUserAndWorkshop = async () => {
     try {
+      // Verificar se está autenticado
+      const authenticated = await base44.auth.isAuthenticated();
+      setIsAuthenticated(authenticated);
+
+      if (!authenticated) {
+        setLoading(false);
+        return;
+      }
+
       const currentUser = await base44.auth.me();
       setUser(currentUser);
       
@@ -34,7 +44,8 @@ export default function Home() {
       // Carregar ou criar UserProgress
       await loadUserProgress(currentUser);
     } catch (error) {
-      console.log("User not authenticated");
+      console.log("User not authenticated or error:", error);
+      setIsAuthenticated(false);
     } finally {
       setLoading(false);
     }
@@ -115,8 +126,8 @@ export default function Home() {
   };
 
   const handleStartDiagnostic = () => {
-    if (!user) {
-      base44.auth.redirectToLogin(createPageUrl("Cadastro"));
+    if (!isAuthenticated) {
+      base44.auth.redirectToLogin(window.location.href);
       return;
     }
     
@@ -125,6 +136,10 @@ export default function Home() {
     } else {
       navigate(createPageUrl("Questionario"));
     }
+  };
+
+  const handleLogin = () => {
+    base44.auth.redirectToLogin(window.location.href);
   };
 
   const handleTourComplete = () => {
@@ -176,25 +191,36 @@ export default function Home() {
               Responda 12 perguntas rápidas e receba um plano de ação personalizado para aumentar lucro, 
               organização e crescimento da sua oficina.
             </p>
-            <Button 
-              id="start-diagnostic-button"
-              onClick={handleStartDiagnostic}
-              disabled={loading}
-              size="lg" 
-              className="bg-white text-blue-700 hover:bg-blue-50 text-lg px-8 py-6 rounded-full shadow-xl hover:shadow-2xl transition-all"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Carregando...
-                </>
-              ) : (
-                <>
-                  Começar Diagnóstico
-                  <ChevronRight className="ml-2 h-5 w-5" />
-                </>
-              )}
-            </Button>
+            
+            {loading ? (
+              <div className="flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-white" />
+              </div>
+            ) : !isAuthenticated ? (
+              <div className="flex flex-col items-center gap-4">
+                <Button 
+                  onClick={handleLogin}
+                  size="lg" 
+                  className="bg-white text-blue-700 hover:bg-blue-50 text-lg px-8 py-6 rounded-full shadow-xl hover:shadow-2xl transition-all"
+                >
+                  <LogIn className="mr-2 h-5 w-5" />
+                  Entrar para Começar
+                </Button>
+                <p className="text-sm text-blue-100">
+                  É grátis! Faça login para criar seu diagnóstico personalizado
+                </p>
+              </div>
+            ) : (
+              <Button 
+                id="start-diagnostic-button"
+                onClick={handleStartDiagnostic}
+                size="lg" 
+                className="bg-white text-blue-700 hover:bg-blue-50 text-lg px-8 py-6 rounded-full shadow-xl hover:shadow-2xl transition-all"
+              >
+                Começar Diagnóstico
+                <ChevronRight className="ml-2 h-5 w-5" />
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -241,29 +267,99 @@ export default function Home() {
         </div>
 
         <div className="mt-16 text-center">
-          <Button 
-            onClick={handleStartDiagnostic}
-            disabled={loading}
-            size="lg" 
-            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-lg px-8 py-6 rounded-full shadow-lg"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                Carregando...
-              </>
-            ) : (
-              <>
-                Iniciar Diagnóstico Agora
-                <ChevronRight className="ml-2 h-5 w-5" />
-              </>
-            )}
-          </Button>
+          {!isAuthenticated ? (
+            <Button 
+              onClick={handleLogin}
+              size="lg" 
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-lg px-8 py-6 rounded-full shadow-lg"
+            >
+              <LogIn className="mr-2 h-5 w-5" />
+              Fazer Login e Começar
+            </Button>
+          ) : (
+            <Button 
+              onClick={handleStartDiagnostic}
+              size="lg" 
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-lg px-8 py-6 rounded-full shadow-lg"
+            >
+              Iniciar Diagnóstico Agora
+              <ChevronRight className="ml-2 h-5 w-5" />
+            </Button>
+          )}
         </div>
       </div>
 
-      {/* Onboarding Components */}
-      {user && userProgress && (
+      {/* Benefits Section for Non-Authenticated Users */}
+      {!isAuthenticated && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl mb-20">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Por que fazer o diagnóstico?
+            </h2>
+            <p className="text-xl text-gray-600">
+              Veja o que você vai receber gratuitamente
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            <Card className="border-2 hover:shadow-xl transition-all">
+              <CardContent className="p-6 text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+                  <FileText className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  Diagnóstico Completo
+                </h3>
+                <p className="text-gray-600">
+                  Identificação precisa da fase atual da sua oficina baseada em metodologia testada
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-2 hover:shadow-xl transition-all">
+              <CardContent className="p-6 text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+                  <Target className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  Plano de Ação com IA
+                </h3>
+                <p className="text-gray-600">
+                  Recomendações personalizadas geradas por inteligência artificial para sua realidade
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-2 hover:shadow-xl transition-all">
+              <CardContent className="p-6 text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+                  <TrendingUp className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  Acompanhamento
+                </h3>
+                <p className="text-gray-600">
+                  Monitore sua evolução ao longo do tempo com múltiplos diagnósticos
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="text-center mt-12">
+            <Button 
+              onClick={handleLogin}
+              size="lg"
+              className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-xl px-12 py-8 rounded-full shadow-2xl"
+            >
+              <LogIn className="mr-3 h-6 w-6" />
+              Começar Agora - É Grátis!
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Onboarding Components - Only for authenticated users */}
+      {isAuthenticated && user && userProgress && (
         <>
           {/* Tour Guiado */}
           {!userProgress.tour_completed && (

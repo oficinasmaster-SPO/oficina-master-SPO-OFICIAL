@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
-import { Bell, LogOut, Menu, X } from "lucide-react";
+import { Bell, LogOut, Menu, X, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
@@ -13,6 +13,8 @@ export default function Layout({ children }) {
   const location = useLocation();
   const [user, setUser] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   useEffect(() => {
     loadUser();
@@ -20,10 +22,19 @@ export default function Layout({ children }) {
 
   const loadUser = async () => {
     try {
-      const currentUser = await base44.auth.me();
-      setUser(currentUser);
+      const authenticated = await base44.auth.isAuthenticated();
+      setIsAuthenticated(authenticated);
+
+      if (authenticated) {
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
+      }
     } catch (error) {
-      console.log("User not authenticated");
+      console.log("User not authenticated:", error);
+      setIsAuthenticated(false);
+      setUser(null);
+    } finally {
+      setIsCheckingAuth(false);
     }
   };
 
@@ -31,10 +42,15 @@ export default function Layout({ children }) {
     queryKey: ['unread-notifications', user?.id],
     queryFn: async () => {
       if (!user) return 0;
-      const notifications = await base44.entities.Notification.list();
-      return notifications.filter(n => n.user_id === user.id && !n.is_read).length;
+      try {
+        const notifications = await base44.entities.Notification.list();
+        return notifications.filter(n => n.user_id === user.id && !n.is_read).length;
+      } catch (error) {
+        console.error("Erro ao buscar notificações:", error);
+        return 0;
+      }
     },
-    enabled: !!user,
+    enabled: !!user && isAuthenticated,
     refetchInterval: 30000
   });
 
@@ -43,43 +59,51 @@ export default function Layout({ children }) {
     window.location.href = createPageUrl("Home");
   };
 
+  const handleLogin = () => {
+    base44.auth.redirectToLogin(window.location.href);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Sidebar */}
-      <Sidebar 
-        user={user}
-        unreadCount={unreadCount}
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-      />
+      {/* Sidebar - only show if authenticated */}
+      {isAuthenticated && (
+        <Sidebar 
+          user={user}
+          unreadCount={unreadCount}
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+        />
+      )}
 
       {/* Main Content Area */}
-      <div className="lg:pl-64 flex flex-col min-h-screen">
+      <div className={`${isAuthenticated ? 'lg:pl-64' : ''} flex flex-col min-h-screen`}>
         {/* Top Header */}
         <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30 print:hidden">
           <div className="px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
-              {/* Mobile Menu Button */}
-              <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
-              >
-                {sidebarOpen ? (
-                  <X className="w-6 h-6 text-gray-700" />
-                ) : (
-                  <Menu className="w-6 h-6 text-gray-700" />
-                )}
-              </button>
+              {/* Mobile Menu Button - only if authenticated */}
+              {isAuthenticated && (
+                <button
+                  onClick={() => setSidebarOpen(!sidebarOpen)}
+                  className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
+                >
+                  {sidebarOpen ? (
+                    <X className="w-6 h-6 text-gray-700" />
+                  ) : (
+                    <Menu className="w-6 h-6 text-gray-700" />
+                  )}
+                </button>
+              )}
 
-              {/* Logo for Mobile */}
-              <Link to={createPageUrl("Home")} className="lg:hidden flex items-center gap-2">
+              {/* Logo */}
+              <Link to={createPageUrl("Home")} className={`flex items-center gap-2 ${isAuthenticated ? 'lg:hidden' : ''}`}>
                 <div className="text-lg font-bold text-gray-900">Oficinas Master</div>
               </Link>
 
               {/* Right Side Actions */}
               <div className="flex items-center gap-4 ml-auto">
-                {/* Notifications Button */}
-                {user && (
+                {/* Notifications Button - only if authenticated */}
+                {isAuthenticated && user && (
                   <Link
                     to={createPageUrl("Notificacoes")}
                     className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors"
@@ -95,7 +119,9 @@ export default function Layout({ children }) {
 
                 {/* User Actions */}
                 <div className="flex items-center gap-3">
-                  {user ? (
+                  {isCheckingAuth ? (
+                    <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse" />
+                  ) : isAuthenticated && user ? (
                     <>
                       <div className="hidden md:block text-right">
                         <p className="text-sm font-medium text-gray-900">
@@ -117,10 +143,11 @@ export default function Layout({ children }) {
                     </>
                   ) : (
                     <Button
-                      onClick={() => base44.auth.redirectToLogin(createPageUrl("Home"))}
-                      className="hidden md:flex bg-blue-600 hover:bg-blue-700"
+                      onClick={handleLogin}
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
                       size="sm"
                     >
+                      <LogIn className="w-4 h-4 mr-2" />
                       Entrar
                     </Button>
                   )}
@@ -132,8 +159,8 @@ export default function Layout({ children }) {
 
         {/* Page Content */}
         <main className="flex-1">
-          <div className="px-4 sm:px-6 lg:px-8 py-6">
-            <Breadcrumbs />
+          <div className={`${isAuthenticated ? 'px-4 sm:px-6 lg:px-8 py-6' : ''}`}>
+            {isAuthenticated && <Breadcrumbs />}
             {children}
           </div>
         </main>
