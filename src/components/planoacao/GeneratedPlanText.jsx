@@ -1,190 +1,137 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, Sparkles, RefreshCw } from "lucide-react";
 import ReactMarkdown from "react-markdown";
-import { toast } from "sonner";
+import { questions } from "../diagnostic/Questions";
 
 export default function GeneratedPlanText({ diagnostic, workshop, actions, subtasks }) {
-  const [generatedPlan, setGeneratedPlan] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [generatedText, setGeneratedText] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
-    if (diagnostic && !generatedPlan) {
+    if (diagnostic && actions.length > 0) {
       generatePlan();
     }
-  }, [diagnostic]);
+  }, [diagnostic?.id, actions.length]);
 
   const generatePlan = async () => {
-    setLoading(true);
+    setIsGenerating(true);
     try {
-      const user = await base44.auth.me();
-
-      // Preparar dados das respostas do diagnóstico
-      const answersData = diagnostic.answers.map(a => ({
-        questao: a.question_id,
-        resposta: a.selected_option
-      }));
-
-      // Preparar dados das ações
-      const actionsData = actions.map(action => {
-        const actionSubtasks = subtasks.filter(s => s.action_id === action.id);
+      const answersJson = diagnostic.answers.map(answer => {
+        const question = questions.find(q => q.id === answer.question_id);
+        const option = question?.options.find(opt => opt.letter === answer.selected_option);
+        
         return {
-          titulo: action.title,
-          descricao: action.description,
-          categoria: getCategoryLabel(action.category),
-          prazo_dias: action.deadline_days,
-          subtarefas: actionSubtasks.map(s => ({
-            titulo: s.title,
-            descricao: s.description || "",
-            status: getStatusLabel(s.status)
-          }))
+          question_id: answer.question_id,
+          question_text: question?.question || "",
+          selected_option: answer.selected_option,
+          option_meaning: option?.text || ""
         };
       });
 
-      // Preparar dados da oficina
-      const workshopData = workshop ? {
-        nome: workshop.name,
-        cidade: workshop.city,
-        estado: workshop.state,
-        segmento: workshop.segment,
-        faturamento: workshop.monthly_revenue,
-        colaboradores: workshop.employees_count,
-        tempo_mercado: workshop.years_in_business,
-        principal_desafio: workshop.main_challenge
-      } : null;
+      const actionsJson = actions.map(action => ({
+        id: action.id,
+        title: action.title,
+        description: action.description,
+        pillar: getCategoryLabel(action.category),
+        status: getStatusLabel(action.status),
+        due_date: action.due_date
+      }));
 
-      const prompt = `Você é um consultor especializado em gestão de oficinas automotivas. Com base nos dados abaixo, crie um PLANO DE AÇÃO EXTREMAMENTE DETALHADO E PERSONALIZADO.
+      const users = await base44.entities.User.list();
+      const subtasksJson = subtasks.map(subtask => ({
+        id: subtask.id,
+        action_id: subtask.action_id,
+        title: subtask.title,
+        description: subtask.description || "",
+        responsible_name: users.find(u => u.id === subtask.responsible_user_id)?.full_name || "Não atribuído",
+        status: getStatusLabel(subtask.status),
+        due_date: subtask.due_date
+      }));
 
-DADOS DA OFICINA:
-${JSON.stringify(workshopData, null, 2)}
+      const prompt = `A seguir estão os dados completos de um diagnóstico de oficina.
+Use APENAS essas informações para gerar um plano de ação personalizado.
 
-FASE IDENTIFICADA: Fase ${diagnostic.phase}
-Letra predominante nas respostas: ${diagnostic.dominant_letter}
+DADOS DA OFICINA
 
-RESPOSTAS DO DIAGNÓSTICO:
-${JSON.stringify(answersData, null, 2)}
+Nome da oficina: ${workshop?.name || "Não informado"}
+Cidade/Estado: ${workshop?.city || "Não informado"} / ${workshop?.state || "Não informado"}
+Segmento: ${workshop?.segment ? workshop.segment.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : "Não informado"}
 
-AÇÕES JÁ DEFINIDAS:
-${JSON.stringify(actionsData, null, 2)}
+FASE DA OFICINA
 
-INSTRUÇÕES PARA O PLANO:
+Fase atual: ${diagnostic.phase}
+Letra predominante no diagnóstico: ${diagnostic.dominant_letter}
 
-1. **ANÁLISE SITUACIONAL COMPLETA** (mínimo 3 parágrafos):
-   - Análise profunda da fase atual da oficina
-   - Principais pontos fortes identificados
-   - Principais desafios e gargalos
-   - Oportunidades de crescimento específicas
+RESPOSTAS DO DIAGNÓSTICO
+(cada item contém id da pergunta, texto da pergunta, alternativa marcada e significado resumido)
 
-2. **OBJETIVOS ESTRATÉGICOS** (pelo menos 5 objetivos claros e mensuráveis):
-   - Objetivos de curto prazo (30-60 dias)
-   - Objetivos de médio prazo (3-6 meses)
-   - Objetivos de longo prazo (6-12 meses)
-   - Como medir o sucesso de cada objetivo
+${JSON.stringify(answersJson, null, 2)}
 
-3. **PLANO DE AÇÃO DETALHADO POR CATEGORIA**:
+PLANO DE AÇÃO ESTRUTURADO (AÇÕES E SUBTAREFAS)
+Aqui estão as ações e subtarefas já criadas no sistema para esse diagnóstico:
 
-   Para cada categoria (Vendas, Prospecção, Precificação, Pessoas):
-   
-   a) **Situação Atual**: Diagnóstico específico desta área
-   
-   b) **Ações Prioritárias** (pelo menos 3 ações por categoria):
-      - O que fazer EXATAMENTE (passo a passo)
-      - Por que fazer (justificativa e benefícios)
-      - Como fazer (metodologia detalhada)
-      - Quando fazer (cronograma específico)
-      - Recursos necessários
-      - Indicadores de sucesso
-   
-   c) **Dicas Práticas e Táticas**:
-      - Ferramentas recomendadas (gratuitas quando possível)
-      - Scripts, templates ou modelos prontos para usar
-      - Erros comuns a evitar
-      - Benchmarks do mercado
+{
+  "actions": ${JSON.stringify(actionsJson, null, 2)},
+  "subtasks": ${JSON.stringify(subtasksJson, null, 2)}
+}
 
-4. **ESTRATÉGIAS ESPECÍFICAS PARA OS DESAFIOS IDENTIFICADOS**:
-   ${workshop?.main_challenge ? `
-   Desafio principal informado: "${workshop.main_challenge}"
-   
-   Forneça:
-   - 5 estratégias específicas para resolver este desafio
-   - Casos de sucesso de outras oficinas
-   - Métricas para acompanhar a evolução
-   ` : ''}
+TAREFA: GERAR PLANO DE AÇÃO PERSONALIZADO
 
-5. **QUICK WINS - RESULTADOS RÁPIDOS** (primeiros 30 dias):
-   - Lista de 5-7 ações que podem gerar resultados imediatos
-   - Estimativa de impacto de cada ação
-   - Esforço necessário (baixo/médio/alto)
+Com base SOMENTE nos dados acima, escreva um documento em texto, com a seguinte estrutura:
 
-6. **ROADMAP DE IMPLEMENTAÇÃO**:
-   - Semana 1-2: O que fazer
-   - Semana 3-4: O que fazer
-   - Mês 2: O que fazer
-   - Mês 3: O que fazer
-   - Meses 4-6: O que fazer
-   - Meses 6-12: O que fazer
+1. Cabeçalho
+   - Nome da oficina, cidade/estado, segmento.
+   - Fase atual da oficina + 1 frase explicando essa fase.
 
-7. **RECURSOS E FERRAMENTAS RECOMENDADAS**:
-   - Softwares e aplicativos úteis
-   - Templates e modelos prontos
-   - Cursos e materiais educativos
-   - Comunidades e grupos de apoio
+2. Resumo do diagnóstico da sua oficina
+   - Explique, em linguagem simples, como está a situação da oficina HOJE, usando diretamente as respostas do diagnóstico.
+   - Cite explicitamente alguns pontos principais das respostas.
 
-8. **INDICADORES-CHAVE DE DESEMPENHO (KPIs)**:
-   - Quais KPIs monitorar mensalmente
-   - Como calcular cada KPI
-   - Metas sugeridas para cada KPI
-   - Como criar um dashboard simples
+3. Objetivo principal dos próximos 90 dias
+   - Defina 1 objetivo central coerente com a fase e com as respostas.
 
-9. **CHECKLIST DE IMPLEMENTAÇÃO**:
-   - Lista completa de todas as tarefas a fazer
-   - Ordem de prioridade
-   - Responsável sugerido (proprietário, gerente, equipe)
+4. Direcionamentos por pilar
+   Para cada pilar relevante (Vendas e Atendimento GPS, Prospecção Ativa P.A.V.E, Precificação R70/I30 + TCMP2, Pessoas e Time CESP):
+   - Descreva a situação atual com base nas respostas do diagnóstico.
+   - Conecte as ações e subtarefas desse pilar, explicando o que será feito.
 
-10. **RECOMENDAÇÕES FINAIS E PRÓXIMOS PASSOS**:
-    - Mensagem motivacional personalizada
-    - Principais mudanças de mindset necessárias
-    - Como manter a consistência na execução
-    - Quando revisar o plano
+5. Plano por prazo
+   - Organize as ações em: Curto prazo (até 30 dias), Médio prazo (31 a 90 dias), Longo prazo (acima de 90 dias).
 
-FORMATAÇÃO:
-- Use Markdown para estruturar o conteúdo
-- Use títulos (##, ###) para organizar as seções
-- Use listas numeradas e com marcadores
-- Use **negrito** para destacar pontos importantes
-- Use > para citações e dicas especiais
-- Seja EXTREMAMENTE DETALHADO e PRÁTICO
-- Evite generalidades - seja específico para a realidade da oficina
-- Use linguagem clara, direta e motivadora
-- Inclua números, percentuais e dados concretos sempre que possível
+6. Indicadores que você deve acompanhar
+   - Liste de 3 a 6 indicadores prioritários para essa oficina.
 
-IMPORTANTE: O plano deve ter no mínimo 3000 palavras e ser ULTRA DETALHADO. Cada seção deve ser rica em informações práticas e acionáveis.`;
+7. Próximos passos para esta semana
+   - Liste de 3 a 5 próximos passos práticos, baseados nas ações com prazo mais próximo.
 
-      const response = await base44.integrations.Core.InvokeLLM({
+IMPORTANTE:
+- Fale sempre em 2ª pessoa ("você", "sua oficina").
+- Não invente nenhum dado que não esteja nas informações fornecidas.
+- Deixe o texto fluido e fácil de ler.
+- Use markdown para formatação (títulos ##, listas -, negrito **).`;
+
+      const result = await base44.integrations.Core.InvokeLLM({
         prompt: prompt,
         add_context_from_internet: false
       });
 
-      setGeneratedPlan(response);
-      toast.success("Plano de ação detalhado gerado com sucesso!");
-
+      setGeneratedText(result);
     } catch (error) {
-      console.error("Erro ao gerar plano:", error);
-      toast.error("Erro ao gerar plano de ação");
-      setGeneratedPlan("Erro ao gerar o plano. Tente novamente.");
+      console.error(error);
     } finally {
-      setLoading(false);
+      setIsGenerating(false);
     }
   };
 
   const getCategoryLabel = (category) => {
     const labels = {
-      'vendas': 'Vendas',
-      'prospeccao': 'Prospecção',
-      'precificacao': 'Precificação',
-      'pessoas': 'Pessoas e Equipe'
+      vendas: "Vendas e Atendimento",
+      prospeccao: "Prospecção Ativa",
+      precificacao: "Precificação e Rentabilidade",
+      pessoas: "Pessoas e Time"
     };
     return labels[category] || category;
   };
@@ -195,119 +142,68 @@ IMPORTANTE: O plano deve ter no mínimo 3000 palavras e ser ULTRA DETALHADO. Cad
       'em_andamento': 'Em Andamento',
       'concluido': 'Concluído'
     };
-    return labels[status] || status;
+    return labels[status];
   };
 
-  return (
-    <Card className="shadow-xl border-2 border-purple-200">
-      <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 border-b-2 border-purple-200">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center">
-              <Sparkles className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <CardTitle className="text-2xl">Plano de Ação Personalizado com IA</CardTitle>
-              <p className="text-sm text-gray-600 mt-1">
-                Análise detalhada e recomendações específicas para sua oficina
-              </p>
-            </div>
+  if (isGenerating) {
+    return (
+      <Card className="shadow-lg">
+        <CardContent className="p-12">
+          <div className="text-center">
+            <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              Gerando seu plano personalizado...
+            </h3>
+            <p className="text-gray-600">
+              Estamos analisando seu diagnóstico e criando recomendações específicas para sua oficina.
+            </p>
           </div>
-          {generatedPlan && !loading && (
-            <Button
-              onClick={generatePlan}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Gerar Novamente
-            </Button>
-          )}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="shadow-lg border-2 border-blue-200">
+      <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-2xl">
+            <Sparkles className="w-6 h-6 text-blue-600" />
+            Plano de Ação Personalizado
+          </CardTitle>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={generatePlan}
+            disabled={isGenerating}
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Regerar
+          </Button>
         </div>
       </CardHeader>
-      
       <CardContent className="p-8">
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 className="w-16 h-16 animate-spin text-purple-600 mb-4" />
-            <p className="text-lg font-semibold text-gray-900 mb-2">
-              Gerando seu plano de ação personalizado...
-            </p>
-            <p className="text-sm text-gray-600 text-center max-w-md">
-              A IA está analisando seu diagnóstico e criando um plano ultra detalhado 
-              com estratégias específicas para sua oficina. Isso pode levar alguns segundos.
-            </p>
-          </div>
-        ) : generatedPlan ? (
-          <div className="prose prose-lg max-w-none">
-            <ReactMarkdown
-              components={{
-                h1: ({ children }) => (
-                  <h1 className="text-3xl font-bold text-gray-900 mt-8 mb-4 pb-3 border-b-2 border-purple-200">
-                    {children}
-                  </h1>
-                ),
-                h2: ({ children }) => (
-                  <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4 flex items-center gap-2">
-                    <span className="w-2 h-8 bg-gradient-to-b from-purple-500 to-indigo-600 rounded"></span>
-                    {children}
-                  </h2>
-                ),
-                h3: ({ children }) => (
-                  <h3 className="text-xl font-semibold text-gray-800 mt-6 mb-3">
-                    {children}
-                  </h3>
-                ),
-                p: ({ children }) => (
-                  <p className="text-gray-700 leading-relaxed mb-4">
-                    {children}
-                  </p>
-                ),
-                ul: ({ children }) => (
-                  <ul className="list-disc list-inside space-y-2 mb-4 ml-4">
-                    {children}
-                  </ul>
-                ),
-                ol: ({ children }) => (
-                  <ol className="list-decimal list-inside space-y-2 mb-4 ml-4">
-                    {children}
-                  </ol>
-                ),
-                li: ({ children }) => (
-                  <li className="text-gray-700 leading-relaxed">
-                    {children}
-                  </li>
-                ),
-                strong: ({ children }) => (
-                  <strong className="font-bold text-gray-900">
-                    {children}
-                  </strong>
-                ),
-                blockquote: ({ children }) => (
-                  <blockquote className="border-l-4 border-purple-500 bg-purple-50 pl-4 py-3 my-4 italic text-gray-700">
-                    {children}
-                  </blockquote>
-                ),
-                code: ({ inline, children }) => 
-                  inline ? (
-                    <code className="bg-gray-100 px-2 py-1 rounded text-sm text-purple-700">
-                      {children}
-                    </code>
-                  ) : (
-                    <code className="block bg-gray-900 text-gray-100 p-4 rounded-lg my-4 overflow-x-auto">
-                      {children}
-                    </code>
-                  )
-              }}
-            >
-              {generatedPlan}
-            </ReactMarkdown>
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <p className="text-gray-600">Nenhum plano gerado ainda.</p>
-          </div>
-        )}
+        <div className="prose prose-lg max-w-none">
+          <ReactMarkdown
+            components={{
+              h1: ({ children }) => <h1 className="text-3xl font-bold text-gray-900 mb-4 mt-6">{children}</h1>,
+              h2: ({ children }) => <h2 className="text-2xl font-bold text-gray-900 mb-3 mt-6 border-b-2 border-blue-200 pb-2">{children}</h2>,
+              h3: ({ children }) => <h3 className="text-xl font-semibold text-gray-900 mb-2 mt-4">{children}</h3>,
+              p: ({ children }) => <p className="text-gray-700 leading-relaxed mb-4">{children}</p>,
+              ul: ({ children }) => <ul className="list-disc list-inside space-y-2 mb-4 text-gray-700">{children}</ul>,
+              ol: ({ children }) => <ol className="list-decimal list-inside space-y-2 mb-4 text-gray-700">{children}</ol>,
+              li: ({ children }) => <li className="ml-4">{children}</li>,
+              strong: ({ children }) => <strong className="font-semibold text-gray-900">{children}</strong>,
+              blockquote: ({ children }) => (
+                <blockquote className="border-l-4 border-blue-500 pl-4 py-2 my-4 bg-blue-50 rounded-r-lg">
+                  {children}
+                </blockquote>
+              ),
+            }}
+          >
+            {generatedText}
+          </ReactMarkdown>
+        </div>
       </CardContent>
     </Card>
   );

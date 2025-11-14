@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, TrendingUp, Users, BarChart3, Rocket, ArrowRight, PieChart as PieChartIcon, FileText } from "lucide-react";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import ExecutiveSummary from "../components/resultado/ExecutiveSummary";
-import AIInsights from "../components/resultado/AIInsights";
 
 export default function Resultado() {
   const navigate = useNavigate();
@@ -218,15 +217,6 @@ export default function Resultado() {
         {/* Resumo Executivo com IA */}
         <div className="mb-8">
           <ExecutiveSummary 
-            diagnostic={diagnostic}
-            workshop={workshop}
-            phaseDistribution={phaseDistribution}
-          />
-        </div>
-
-        {/* Insights Inteligentes da IA */}
-        <div className="mb-8">
-          <AIInsights
             diagnostic={diagnostic}
             workshop={workshop}
             phaseDistribution={phaseDistribution}
