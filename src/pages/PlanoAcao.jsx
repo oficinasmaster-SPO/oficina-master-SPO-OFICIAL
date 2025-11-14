@@ -1,51 +1,27 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, ArrowLeft, Download, FileText, Sparkles, ListChecks } from "lucide-react";
-import { toast } from "sonner";
+import { ArrowLeft, FileDown, Loader2, Sparkles } from "lucide-react";
 import ActionItem from "../components/planoacao/ActionItem";
-import PDFPreview from "../components/planoacao/PDFPreview";
 import GeneratedPlanText from "../components/planoacao/GeneratedPlanText";
+import EnhancedPDFPreview from "../components/planoacao/EnhancedPDFPreview";
+import AIActionSuggestions from "../components/planoacao/AIActionSuggestions";
 
 export default function PlanoAcao() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [diagnostic, setDiagnostic] = useState(null);
   const [workshop, setWorkshop] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [showPDFPreview, setShowPDFPreview] = useState(false);
+  const [showPDF, setShowPDF] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState(null);
 
   useEffect(() => {
     loadData();
   }, []);
-
-  const { data: actions = [], isLoading: loadingActions } = useQuery({
-    queryKey: ['actions', diagnostic?.id],
-    queryFn: async () => {
-      if (!diagnostic?.id) return [];
-      const allActions = await base44.entities.Action.list();
-      return allActions
-        .filter(a => a.diagnostic_id === diagnostic.id)
-        .sort((a, b) => (a.order || 0) - (b.order || 0));
-    },
-    enabled: !!diagnostic?.id
-  });
-
-  const { data: subtasks = [] } = useQuery({
-    queryKey: ['subtasks', diagnostic?.id],
-    queryFn: async () => {
-      if (!diagnostic?.id || actions.length === 0) return [];
-      const allSubtasks = await base44.entities.Subtask.list();
-      const actionIds = actions.map(a => a.id);
-      return allSubtasks.filter(s => actionIds.includes(s.action_id));
-    },
-    enabled: !!diagnostic?.id && actions.length > 0
-  });
 
   const loadData = async () => {
     try {
@@ -73,56 +49,40 @@ export default function PlanoAcao() {
         const ws = workshops.find(w => w.id === diag.workshop_id);
         setWorkshop(ws);
       }
-
-      // Verificar se já existem ações
-      const allActions = await base44.entities.Action.list();
-      const existingActions = allActions.filter(a => a.diagnostic_id === id);
-
-      // Se não existem ações, criar do template
-      if (existingActions.length === 0) {
-        await createActionsFromTemplate(id, diag.phase);
-      }
-
     } catch (error) {
       console.error(error);
-      toast.error("Erro ao carregar dados");
     } finally {
       setLoading(false);
     }
   };
 
-  const createActionsFromTemplate = async (diagnosticId, phase) => {
-    const { actionPlanTemplates } = await import("../components/diagnostic/ActionPlans");
-    const template = actionPlanTemplates[phase] || [];
+  const { data: actions = [] } = useQuery({
+    queryKey: ['actions', diagnostic?.id],
+    queryFn: async () => {
+      if (!diagnostic) return [];
+      const allActions = await base44.entities.Action.list();
+      return allActions.filter(a => a.diagnostic_id === diagnostic.id).sort((a, b) => (a.order || 0) - (b.order || 0));
+    },
+    enabled: !!diagnostic
+  });
 
-    for (let i = 0; i < template.length; i++) {
-      const action = template[i];
-      const dueDate = new Date();
-      dueDate.setDate(dueDate.getDate() + action.deadline_days);
+  const { data: subtasks = [] } = useQuery({
+    queryKey: ['subtasks'],
+    queryFn: () => base44.entities.Subtask.list(),
+    initialData: []
+  });
 
-      await base44.entities.Action.create({
-        diagnostic_id: diagnosticId,
-        title: action.title,
-        description: action.description,
-        category: action.category,
-        status: "a_fazer",
-        deadline_days: action.deadline_days,
-        due_date: dueDate.toISOString().split('T')[0],
-        order: i
-      });
-    }
-
-    queryClient.invalidateQueries(['actions']);
-  };
-
-  const handlePrintPDF = () => {
-    setShowPDFPreview(true);
+  const handleDownloadPDF = () => {
+    setShowPDF(true);
     setTimeout(() => {
       window.print();
-    }, 500);
+      setTimeout(() => {
+        setShowPDF(false);
+      }, 1000);
+    }, 2000);
   };
 
-  if (loading || loadingActions) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
@@ -134,117 +94,153 @@ export default function PlanoAcao() {
     return null;
   }
 
-  const completedActions = actions.filter(a => a.status === "concluido").length;
-  const progressPercentage = actions.length > 0 ? Math.round((completedActions / actions.length) * 100) : 0;
+  const categorizedActions = {
+    vendas: actions.filter(a => a.category === 'vendas'),
+    prospeccao: actions.filter(a => a.category === 'prospeccao'),
+    precificacao: actions.filter(a => a.category === 'precificacao'),
+    pessoas: actions.filter(a => a.category === 'pessoas')
+  };
 
   return (
-    <>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4 print:hidden">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <Button
+            variant="outline"
+            onClick={() => navigate(createPageUrl("Resultado") + `?id=${diagnostic.id}`)}
+            className="mb-4"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Voltar para Resultado
+          </Button>
+          
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl font-bold text-gray-900 mb-2">
+                Plano de Ação Personalizado
+              </h1>
+              {workshop && (
+                <p className="text-lg text-gray-600">
+                  {workshop.name} - Fase {diagnostic.phase}
+                </p>
+              )}
+            </div>
             <Button
-              variant="outline"
-              onClick={() => navigate(createPageUrl("Resultado") + `?id=${diagnostic.id}`)}
+              onClick={handleDownloadPDF}
+              className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg"
             >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar ao Resultado
-            </Button>
-
-            <Button
-              onClick={handlePrintPDF}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Baixar Plano de Ação em PDF
+              <FileDown className="w-5 h-5 mr-2" />
+              Baixar PDF Completo
             </Button>
           </div>
-
-          {/* Header */}
-          <Card className="shadow-xl mb-8">
-            <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-              <div className="flex items-center gap-3">
-                <FileText className="w-8 h-8" />
-                <div>
-                  <CardTitle className="text-3xl">
-                    Plano de Ação - Fase {diagnostic.phase}
-                  </CardTitle>
-                  {workshop && (
-                    <p className="text-blue-100 mt-1">
-                      {workshop.name} • {workshop.city}, {workshop.state}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Progresso Geral</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {completedActions} de {actions.length} ações concluídas
-                  </p>
-                </div>
-                <div className="text-right">
-                  <div className="text-4xl font-bold text-blue-600">
-                    {progressPercentage}%
-                  </div>
-                  <p className="text-sm text-gray-600">Completo</p>
-                </div>
-              </div>
-              <div className="mt-4 h-3 bg-gray-200 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-500"
-                  style={{ width: `${progressPercentage}%` }}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Tabs */}
-          <Tabs defaultValue="personalized" className="space-y-6">
-            <TabsList className="bg-white shadow-md">
-              <TabsTrigger value="personalized" className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4" />
-                Plano Personalizado
-              </TabsTrigger>
-              <TabsTrigger value="actions" className="flex items-center gap-2">
-                <ListChecks className="w-4 h-4" />
-                Ações e Tarefas
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="personalized">
-              <GeneratedPlanText
-                diagnostic={diagnostic}
-                workshop={workshop}
-                actions={actions}
-                subtasks={subtasks}
-              />
-            </TabsContent>
-
-            <TabsContent value="actions" className="space-y-6">
-              {actions.map((action) => (
-                <ActionItem 
-                  key={action.id} 
-                  action={action}
-                  diagnosticId={diagnostic.id}
-                />
-              ))}
-            </TabsContent>
-          </Tabs>
         </div>
-      </div>
 
-      {/* PDF Preview (hidden on screen, visible on print) */}
-      {showPDFPreview && (
-        <PDFPreview
-          diagnostic={diagnostic}
-          workshop={workshop}
-          actions={actions}
-          subtasks={subtasks}
-          onClose={() => setShowPDFPreview(false)}
-        />
-      )}
-    </>
+        {/* Tabs */}
+        <Tabs defaultValue="ai-suggestions" className="space-y-6">
+          <TabsList className="bg-white shadow-md p-1">
+            <TabsTrigger value="ai-suggestions" className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4" />
+              Sugestões com IA
+            </TabsTrigger>
+            <TabsTrigger value="generated-plan">Plano Gerado</TabsTrigger>
+            <TabsTrigger value="actions">Ações Detalhadas</TabsTrigger>
+          </TabsList>
+
+          {/* Sugestões com IA */}
+          <TabsContent value="ai-suggestions">
+            <AIActionSuggestions
+              diagnostic={diagnostic}
+              workshop={workshop}
+              phase={diagnostic.phase}
+            />
+          </TabsContent>
+
+          {/* Plano Gerado */}
+          <TabsContent value="generated-plan">
+            <GeneratedPlanText
+              diagnostic={diagnostic}
+              workshop={workshop}
+              actions={actions}
+              subtasks={subtasks}
+            />
+          </TabsContent>
+
+          {/* Ações Detalhadas por Pilar */}
+          <TabsContent value="actions" className="space-y-8">
+            {/* Vendas e Atendimento */}
+            {categorizedActions.vendas.length > 0 && (
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <span className="w-3 h-3 bg-green-500 rounded-full"></span>
+                  Vendas e Atendimento GPS
+                </h2>
+                <div className="space-y-4">
+                  {categorizedActions.vendas.map(action => (
+                    <ActionItem key={action.id} action={action} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Prospecção Ativa */}
+            {categorizedActions.prospeccao.length > 0 && (
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <span className="w-3 h-3 bg-blue-500 rounded-full"></span>
+                  Prospecção Ativa P.A.V.E
+                </h2>
+                <div className="space-y-4">
+                  {categorizedActions.prospeccao.map(action => (
+                    <ActionItem key={action.id} action={action} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Precificação */}
+            {categorizedActions.precificacao.length > 0 && (
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <span className="w-3 h-3 bg-purple-500 rounded-full"></span>
+                  Precificação R70/I30 + TCMP2
+                </h2>
+                <div className="space-y-4">
+                  {categorizedActions.precificacao.map(action => (
+                    <ActionItem key={action.id} action={action} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Pessoas e Time */}
+            {categorizedActions.pessoas.length > 0 && (
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <span className="w-3 h-3 bg-orange-500 rounded-full"></span>
+                  Pessoas e Time CESP
+                </h2>
+                <div className="space-y-4">
+                  {categorizedActions.pessoas.map(action => (
+                    <ActionItem key={action.id} action={action} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+
+        {/* PDF Preview (hidden, só para impressão) */}
+        {showPDF && (
+          <EnhancedPDFPreview
+            diagnostic={diagnostic}
+            workshop={workshop}
+            actions={actions}
+            subtasks={subtasks}
+            aiSuggestions={aiSuggestions}
+          />
+        )}
+      </div>
+    </div>
   );
 }
