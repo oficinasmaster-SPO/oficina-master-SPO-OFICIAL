@@ -32,6 +32,8 @@ import AutoavaliacaoPessoas from './pages/AutoavaliacaoPessoas';
 import AutoavaliacaoFinanceiro from './pages/AutoavaliacaoFinanceiro';
 import AutoavaliacaoEmpresarial from './pages/AutoavaliacaoEmpresarial';
 import AutoavaliacaoMA3 from './pages/AutoavaliacaoMA3';
+import DescricoesCargo from './pages/DescricoesCargo';
+import CriarDescricaoCargo from './pages/CriarDescricaoCargo';
 import Layout from './Layout.jsx';
 
 
@@ -70,6 +72,8 @@ export const PAGES = {
     "AutoavaliacaoFinanceiro": AutoavaliacaoFinanceiro,
     "AutoavaliacaoEmpresarial": AutoavaliacaoEmpresarial,
     "AutoavaliacaoMA3": AutoavaliacaoMA3,
+    "DescricoesCargo": DescricoesCargo,
+    "CriarDescricaoCargo": CriarDescricaoCargo,
 }
 
 export const pagesConfig = {
