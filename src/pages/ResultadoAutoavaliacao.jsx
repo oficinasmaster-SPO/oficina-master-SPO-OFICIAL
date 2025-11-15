@@ -4,7 +4,7 @@ import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Loader2, Home, RotateCcw, TrendingUp, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Loader2, Home, RotateCcw, TrendingUp, AlertTriangle, CheckCircle2, Sparkles } from "lucide-react";
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer, Tooltip } from "recharts";
 import { assessmentCriteria } from "../components/assessment/AssessmentCriteria";
 import ReactMarkdown from "react-markdown";
