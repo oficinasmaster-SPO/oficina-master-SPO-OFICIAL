@@ -10,13 +10,26 @@ import {
   BarChart3, 
   User,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Database,
+  Wrench,
+  Target,
+  Users,
+  Brain,
+  GitBranch,
+  FolderOpen,
+  Heart,
+  GraduationCap,
+  Settings,
+  TrendingUp,
+  Building2,
+  ClipboardList
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
   const location = useLocation();
-  const [expandedGroups, setExpandedGroups] = React.useState(['main']);
+  const [expandedGroups, setExpandedGroups] = React.useState(['diagnosticos']);
 
   const toggleGroup = (groupId) => {
     setExpandedGroups(prev => 
@@ -28,60 +41,75 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
 
   const navigationGroups = [
     {
-      id: 'main',
-      label: 'Principal',
+      id: 'dashboard',
+      label: 'Dashboard & Rankings',
+      icon: BarChart3,
       items: [
         { 
-          name: 'Início', 
-          href: createPageUrl('Home'), 
-          icon: Home, 
-          public: true,
-          description: 'Página inicial'
-        },
-        { 
-          name: 'Fazer Diagnóstico', 
-          href: createPageUrl('Questionario'), 
-          icon: FileText, 
-          public: true,
-          description: 'Responder questionário',
-          highlight: true
+          name: 'Dashboard', 
+          href: createPageUrl('Dashboard'), 
+          icon: TrendingUp,
+          adminOnly: true,
+          description: 'Métricas e rankings'
         }
       ]
     },
     {
-      id: 'management',
-      label: 'Gestão',
+      id: 'cadastros',
+      label: 'Cadastros',
+      icon: Database,
       items: [
         { 
-          id: 'sidebar-historico',
-          name: 'Histórico', 
-          href: createPageUrl('Historico'), 
-          icon: History, 
-          public: false,
-          description: 'Meus diagnósticos'
+          name: 'Minha Oficina', 
+          href: createPageUrl('Cadastro'), 
+          icon: Building2,
+          description: 'Dados da oficina'
+        }
+      ]
+    },
+    {
+      id: 'diagnosticos',
+      label: 'Diagnósticos & IA',
+      icon: Brain,
+      items: [
+        { 
+          name: 'Fase da Oficina', 
+          href: createPageUrl('Questionario'), 
+          icon: FileText,
+          description: '4 Fases de evolução',
+          highlight: true
         },
         { 
-          id: 'sidebar-notificacoes',
+          name: 'Perfil do Empresário', 
+          href: createPageUrl('DiagnosticoEmpresario'), 
+          icon: User,
+          description: 'Aventureiro, Empreendedor, Gestor'
+        },
+        { 
+          name: 'Maturidade do Colaborador', 
+          href: createPageUrl('DiagnosticoMaturidade'), 
+          icon: Users,
+          description: 'Bebê, Criança, Adolescente, Adulto'
+        },
+        { 
+          name: 'Histórico de Diagnósticos', 
+          href: createPageUrl('Historico'), 
+          icon: History,
+          description: 'Todos os diagnósticos realizados'
+        }
+      ]
+    },
+    {
+      id: 'gestao',
+      label: 'Gestão & Notificações',
+      icon: Bell,
+      items: [
+        { 
           name: 'Notificações', 
           href: createPageUrl('Notificacoes'), 
-          icon: Bell, 
-          public: false, 
+          icon: Bell,
           badge: unreadCount,
           description: 'Alertas e prazos'
-        }
-      ]
-    },
-    {
-      id: 'reports',
-      label: 'Relatórios',
-      items: [
-        { 
-          name: 'Dashboard Consultoria', 
-          href: createPageUrl('Dashboard'), 
-          icon: BarChart3, 
-          public: false, 
-          adminOnly: true,
-          description: 'Métricas e análises'
         }
       ]
     }
@@ -100,7 +128,6 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
 
   return (
     <>
-      {/* Overlay para mobile */}
       {isOpen && (
         <div 
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
@@ -108,15 +135,12 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
         />
       )}
 
-      {/* Sidebar */}
       <aside 
-        id="sidebar-navigation"
         className={cn(
           "fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 z-50 transition-transform duration-300 flex flex-col print:hidden",
           isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
-        {/* Header da Sidebar */}
         <div className="p-6 border-b border-gray-200">
           <Link to={createPageUrl('Home')} className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center">
@@ -124,27 +148,46 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
             </div>
             <div>
               <h2 className="font-bold text-gray-900">Oficinas Master</h2>
-              <p className="text-xs text-gray-600">Diagnóstico</p>
+              <p className="text-xs text-gray-600">Sistema de Aceleração</p>
             </div>
           </Link>
         </div>
 
-        {/* Navegação */}
         <nav className="flex-1 overflow-y-auto p-4">
+          <div className="space-y-1 mb-6">
+            <Link
+              to={createPageUrl('Home')}
+              onClick={onClose}
+              className={cn(
+                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all",
+                isActive(createPageUrl('Home'))
+                  ? "bg-blue-50 text-blue-700 font-medium"
+                  : "text-gray-700 hover:bg-gray-100"
+              )}
+            >
+              <Home className="w-5 h-5" />
+              <span>Início</span>
+            </Link>
+          </div>
+
           <div className="space-y-6">
             {navigationGroups.map((group) => {
               const visibleItems = group.items.filter(canAccessItem);
               if (visibleItems.length === 0) return null;
 
               const isExpanded = expandedGroups.includes(group.id);
+              const GroupIcon = group.icon;
 
               return (
                 <div key={group.id}>
                   <button
                     onClick={() => toggleGroup(group.id)}
-                    className="flex items-center justify-between w-full px-2 py-1 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors"
+                    className="flex items-center justify-between w-full px-2 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors"
                   >
-                    <span>{group.label}</span>
+                    <div className="flex items-center gap-2">
+                      <GroupIcon className="w-4 h-4" />
+                      <span>{group.label}</span>
+                    </div>
                     {isExpanded ? (
                       <ChevronDown className="w-4 h-4" />
                     ) : (
@@ -153,7 +196,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                   </button>
 
                   {isExpanded && (
-                    <div className="space-y-1">
+                    <div className="space-y-1 mt-2">
                       {visibleItems.map((item) => {
                         const Icon = item.icon;
                         const active = isActive(item.href);
@@ -161,7 +204,6 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                         return (
                           <Link
                             key={item.name}
-                            id={item.id}
                             to={item.href}
                             onClick={onClose}
                             className={cn(
@@ -205,11 +247,17 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
               );
             })}
           </div>
+
+          <div className="mt-6 px-3 py-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+            <p className="text-xs font-semibold text-blue-900 mb-1">💡 Dica</p>
+            <p className="text-xs text-blue-700">
+              Complete os diagnósticos para receber planos de ação personalizados!
+            </p>
+          </div>
         </nav>
 
-        {/* User Info */}
         {user && (
-          <div id="user-profile" className="p-4 border-t border-gray-200">
+          <div className="p-4 border-t border-gray-200">
             <div className="flex items-center gap-3 px-3 py-2 bg-gray-50 rounded-lg">
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center">
                 <User className="w-5 h-5 text-white" />
