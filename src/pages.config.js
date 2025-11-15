@@ -35,6 +35,8 @@ import AutoavaliacaoMA3 from './pages/AutoavaliacaoMA3';
 import DescricoesCargo from './pages/DescricoesCargo';
 import CriarDescricaoCargo from './pages/CriarDescricaoCargo';
 import CadastroColaborador from './pages/CadastroColaborador';
+import DiagnosticoEndividamento from './pages/DiagnosticoEndividamento';
+import ResultadoEndividamento from './pages/ResultadoEndividamento';
 import Layout from './Layout.jsx';
 
 
@@ -76,6 +78,8 @@ export const PAGES = {
     "DescricoesCargo": DescricoesCargo,
     "CriarDescricaoCargo": CriarDescricaoCargo,
     "CadastroColaborador": CadastroColaborador,
+    "DiagnosticoEndividamento": DiagnosticoEndividamento,
+    "ResultadoEndividamento": ResultadoEndividamento,
 }
 
 export const pagesConfig = {

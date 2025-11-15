@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -24,7 +25,8 @@ import {
   UserCircle,
   Briefcase,
   Target,
-  ClipboardList
+  ClipboardList,
+  TrendingDown // Added TrendingDown icon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -152,6 +154,12 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('DiagnosticoCarga'), 
           icon: BarChart4,
           description: 'Distribuição e sobrecarga'
+        },
+        { 
+          name: 'Curva de Endividamento', // New item added
+          href: createPageUrl('DiagnosticoEndividamento'), 
+          icon: TrendingDown,
+          description: 'Análise 12 meses com IA'
         },
         { 
           name: 'Histórico de Diagnósticos', 
