@@ -17,7 +17,8 @@ import {
   Users,
   Brain,
   Calculator,
-  Award
+  Award,
+  BarChart4
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -96,6 +97,12 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('DiagnosticoProducao'), 
           icon: Calculator,
           description: 'Relação custo x produtividade'
+        },
+        { 
+          name: 'Carga de Trabalho', 
+          href: createPageUrl('DiagnosticoCarga'), 
+          icon: BarChart4,
+          description: 'Distribuição e sobrecarga'
         },
         { 
           name: 'Histórico de Diagnósticos', 
