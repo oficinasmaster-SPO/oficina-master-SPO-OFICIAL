@@ -16,7 +16,8 @@ import {
   Building2,
   Users,
   Brain,
-  Calculator
+  Calculator,
+  Award
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -83,6 +84,12 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('DiagnosticoMaturidade'), 
           icon: Users,
           description: 'Bebê, Criança, Adolescente, Adulto'
+        },
+        { 
+          name: 'Matriz de Desempenho', 
+          href: createPageUrl('DiagnosticoDesempenho'), 
+          icon: Award,
+          description: 'Competências técnicas e emocionais'
         },
         { 
           name: 'Produção vs Salário', 
