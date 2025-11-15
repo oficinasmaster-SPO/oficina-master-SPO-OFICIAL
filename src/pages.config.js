@@ -8,6 +8,8 @@ import Notificacoes from './pages/Notificacoes';
 import Cadastro from './pages/Cadastro';
 import DiagnosticoEmpresario from './pages/DiagnosticoEmpresario';
 import ResultadoEmpresario from './pages/ResultadoEmpresario';
+import DiagnosticoMaturidade from './pages/DiagnosticoMaturidade';
+import ResultadoMaturidade from './pages/ResultadoMaturidade';
 import Layout from './Layout.jsx';
 
 
@@ -22,6 +24,8 @@ export const PAGES = {
     "Cadastro": Cadastro,
     "DiagnosticoEmpresario": DiagnosticoEmpresario,
     "ResultadoEmpresario": ResultadoEmpresario,
+    "DiagnosticoMaturidade": DiagnosticoMaturidade,
+    "ResultadoMaturidade": ResultadoMaturidade,
 }
 
 export const pagesConfig = {
