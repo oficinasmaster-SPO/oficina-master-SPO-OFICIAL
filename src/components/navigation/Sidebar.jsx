@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -24,13 +23,13 @@ import {
   Smile,
   UserCircle,
   Briefcase,
-  Target // Added Target icon
+  Target,
+  ClipboardList
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
   const location = useLocation();
-  // Updated expandedGroups to include 'autoavaliacoes'
   const [expandedGroups, setExpandedGroups] = React.useState(['diagnosticos', 'cadastros', 'autoavaliacoes']);
 
   const toggleGroup = (groupId) => {
@@ -78,6 +77,12 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('Colaboradores'), 
           icon: Briefcase,
           description: 'Equipe e RH'
+        },
+        { 
+          name: 'Descrições de Cargo', 
+          href: createPageUrl('DescricoesCargo'), 
+          icon: ClipboardList,
+          description: 'Geração com IA - Modelo Oficinas Master'
         }
       ]
     },
