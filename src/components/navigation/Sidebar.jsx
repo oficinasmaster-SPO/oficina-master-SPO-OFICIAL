@@ -12,18 +12,11 @@ import {
   ChevronDown,
   ChevronRight,
   Database,
-  Wrench,
-  Target,
-  Users,
-  Brain,
-  GitBranch,
-  FolderOpen,
-  Heart,
-  GraduationCap,
-  Settings,
   TrendingUp,
   Building2,
-  ClipboardList
+  Users,
+  Brain,
+  Calculator
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -90,6 +83,12 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('DiagnosticoMaturidade'), 
           icon: Users,
           description: 'Bebê, Criança, Adolescente, Adulto'
+        },
+        { 
+          name: 'Produção vs Salário', 
+          href: createPageUrl('DiagnosticoProducao'), 
+          icon: Calculator,
+          description: 'Relação custo x produtividade'
         },
         { 
           name: 'Histórico de Diagnósticos', 

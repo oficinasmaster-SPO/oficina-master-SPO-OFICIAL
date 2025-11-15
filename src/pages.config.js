@@ -10,6 +10,8 @@ import DiagnosticoEmpresario from './pages/DiagnosticoEmpresario';
 import ResultadoEmpresario from './pages/ResultadoEmpresario';
 import DiagnosticoMaturidade from './pages/DiagnosticoMaturidade';
 import ResultadoMaturidade from './pages/ResultadoMaturidade';
+import DiagnosticoProducao from './pages/DiagnosticoProducao';
+import ResultadoProducao from './pages/ResultadoProducao';
 import Layout from './Layout.jsx';
 
 
@@ -26,6 +28,8 @@ export const PAGES = {
     "ResultadoEmpresario": ResultadoEmpresario,
     "DiagnosticoMaturidade": DiagnosticoMaturidade,
     "ResultadoMaturidade": ResultadoMaturidade,
+    "DiagnosticoProducao": DiagnosticoProducao,
+    "ResultadoProducao": ResultadoProducao,
 }
 
 export const pagesConfig = {
