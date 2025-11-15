@@ -19,7 +19,8 @@ import {
   Calculator,
   Award,
   BarChart4,
-  DollarSign
+  DollarSign,
+  Smile
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -80,6 +81,12 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('DiagnosticoEmpresario'), 
           icon: User,
           description: 'Aventureiro, Empreendedor, Gestor'
+        },
+        { 
+          name: 'Teste DISC', 
+          href: createPageUrl('DiagnosticoDISC'), 
+          icon: Smile,
+          description: 'Perfil comportamental DEUSA'
         },
         { 
           name: 'Maturidade do Colaborador', 
