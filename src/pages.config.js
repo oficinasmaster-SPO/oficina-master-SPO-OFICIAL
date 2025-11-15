@@ -12,6 +12,8 @@ import DiagnosticoMaturidade from './pages/DiagnosticoMaturidade';
 import ResultadoMaturidade from './pages/ResultadoMaturidade';
 import DiagnosticoProducao from './pages/DiagnosticoProducao';
 import ResultadoProducao from './pages/ResultadoProducao';
+import DiagnosticoDesempenho from './pages/DiagnosticoDesempenho';
+import ResultadoDesempenho from './pages/ResultadoDesempenho';
 import Layout from './Layout.jsx';
 
 
@@ -30,6 +32,8 @@ export const PAGES = {
     "ResultadoMaturidade": ResultadoMaturidade,
     "DiagnosticoProducao": DiagnosticoProducao,
     "ResultadoProducao": ResultadoProducao,
+    "DiagnosticoDesempenho": DiagnosticoDesempenho,
+    "ResultadoDesempenho": ResultadoDesempenho,
 }
 
 export const pagesConfig = {
