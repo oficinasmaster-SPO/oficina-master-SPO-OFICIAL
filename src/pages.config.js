@@ -26,6 +26,12 @@ import AutoavaliacaoVendas from './pages/AutoavaliacaoVendas';
 import ResultadoAutoavaliacao from './pages/ResultadoAutoavaliacao';
 import MissaoVisaoValores from './pages/MissaoVisaoValores';
 import Autoavaliacoes from './pages/Autoavaliacoes';
+import AutoavaliacaoComercial from './pages/AutoavaliacaoComercial';
+import AutoavaliacaoMarketing from './pages/AutoavaliacaoMarketing';
+import AutoavaliacaoPessoas from './pages/AutoavaliacaoPessoas';
+import AutoavaliacaoFinanceiro from './pages/AutoavaliacaoFinanceiro';
+import AutoavaliacaoEmpresarial from './pages/AutoavaliacaoEmpresarial';
+import AutoavaliacaoMA3 from './pages/AutoavaliacaoMA3';
 import Layout from './Layout.jsx';
 
 
@@ -58,6 +64,12 @@ export const PAGES = {
     "ResultadoAutoavaliacao": ResultadoAutoavaliacao,
     "MissaoVisaoValores": MissaoVisaoValores,
     "Autoavaliacoes": Autoavaliacoes,
+    "AutoavaliacaoComercial": AutoavaliacaoComercial,
+    "AutoavaliacaoMarketing": AutoavaliacaoMarketing,
+    "AutoavaliacaoPessoas": AutoavaliacaoPessoas,
+    "AutoavaliacaoFinanceiro": AutoavaliacaoFinanceiro,
+    "AutoavaliacaoEmpresarial": AutoavaliacaoEmpresarial,
+    "AutoavaliacaoMA3": AutoavaliacaoMA3,
 }
 
 export const pagesConfig = {
