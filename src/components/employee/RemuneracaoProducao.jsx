@@ -11,7 +11,7 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
     salary: employee.salary || 0,
     commission: employee.commission || 0,
     bonus: employee.bonus || 0,
-    benefits: employee.benefits || [],
+    benefits: Array.isArray(employee.benefits) ? employee.benefits : [],
     production_parts: employee.production_parts || 0,
     production_parts_sales: employee.production_parts_sales || 0,
     production_services: employee.production_services || 0
@@ -19,7 +19,7 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
 
   const handleSave = async () => {
     const totalCost = formData.salary + formData.commission + formData.bonus + 
-      formData.benefits.reduce((sum, b) => sum + (b.valor || 0), 0);
+      (Array.isArray(formData.benefits) ? formData.benefits.reduce((sum, b) => sum + (b.valor || 0), 0) : 0);
     
     const totalProduction = formData.production_parts + formData.production_parts_sales + formData.production_services;
     
@@ -35,7 +35,7 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
   const addBenefit = () => {
     setFormData({
       ...formData,
-      benefits: [...formData.benefits, { nome: "", valor: 0 }]
+      benefits: [...(Array.isArray(formData.benefits) ? formData.benefits : []), { nome: "", valor: 0 }]
     });
   };
 
@@ -51,7 +51,7 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
   };
 
   const totalCost = formData.salary + formData.commission + formData.bonus + 
-    formData.benefits.reduce((sum, b) => sum + (b.valor || 0), 0);
+    (Array.isArray(formData.benefits) ? formData.benefits.reduce((sum, b) => sum + (b.valor || 0), 0) : 0);
   
   const totalProduction = formData.production_parts + formData.production_parts_sales + formData.production_services;
   const productionPercentage = totalCost > 0 ? ((totalProduction / totalCost) * 100).toFixed(0) : 0;
@@ -116,7 +116,7 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
                 </Button>
               )}
             </div>
-            {formData.benefits.length === 0 ? (
+            {!Array.isArray(formData.benefits) || formData.benefits.length === 0 ? (
               <p className="text-sm text-gray-500">Nenhum benefício cadastrado</p>
             ) : (
               <div className="space-y-2">
