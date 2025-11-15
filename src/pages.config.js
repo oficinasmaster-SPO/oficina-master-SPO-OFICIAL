@@ -20,6 +20,8 @@ import DiagnosticoOS from './pages/DiagnosticoOS';
 import ResultadoOS from './pages/ResultadoOS';
 import DiagnosticoDISC from './pages/DiagnosticoDISC';
 import ResultadoDISC from './pages/ResultadoDISC';
+import Clientes from './pages/Clientes';
+import Colaboradores from './pages/Colaboradores';
 import Layout from './Layout.jsx';
 
 
@@ -46,6 +48,8 @@ export const PAGES = {
     "ResultadoOS": ResultadoOS,
     "DiagnosticoDISC": DiagnosticoDISC,
     "ResultadoDISC": ResultadoDISC,
+    "Clientes": Clientes,
+    "Colaboradores": Colaboradores,
 }
 
 export const pagesConfig = {

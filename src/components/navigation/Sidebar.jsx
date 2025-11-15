@@ -20,13 +20,15 @@ import {
   Award,
   BarChart4,
   DollarSign,
-  Smile
+  Smile,
+  UserCircle,
+  Briefcase
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
   const location = useLocation();
-  const [expandedGroups, setExpandedGroups] = React.useState(['diagnosticos']);
+  const [expandedGroups, setExpandedGroups] = React.useState(['diagnosticos', 'cadastros']);
 
   const toggleGroup = (groupId) => {
     setExpandedGroups(prev => 
@@ -61,6 +63,18 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('Cadastro'), 
           icon: Building2,
           description: 'Dados da oficina'
+        },
+        { 
+          name: 'Clientes', 
+          href: createPageUrl('Clientes'), 
+          icon: UserCircle,
+          description: 'Gestão de clientes'
+        },
+        { 
+          name: 'Colaboradores', 
+          href: createPageUrl('Colaboradores'), 
+          icon: Briefcase,
+          description: 'Equipe e RH'
         }
       ]
     },
