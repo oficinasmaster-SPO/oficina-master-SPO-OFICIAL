@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, DollarSign, TrendingUp, Percent, Building, Target, Users, Award, Zap, BarChart3 } from "lucide-react";
+import { Loader2, DollarSign, TrendingUp, Percent, Target, Users, Award, BarChart3 } from "lucide-react";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -71,12 +71,6 @@ export default function Dashboard() {
     enabled: isAuthorized
   });
 
-  const { data: areaGoals = [] } = useQuery({
-    queryKey: ['area-goals'],
-    queryFn: () => base44.entities.AreaGoal.list(),
-    enabled: isAuthorized
-  });
-
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
     queryFn: () => base44.entities.Employee.list(),
@@ -91,10 +85,43 @@ export default function Dashboard() {
     );
   }
 
-  // Filtrar workshops
+  // Função para filtrar por período
+  const filterByPeriod = (date) => {
+    if (!date) return false;
+    
+    const now = new Date();
+    const itemDate = new Date(date);
+    
+    switch (periodFilter) {
+      case 'week':
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        return itemDate >= weekAgo;
+      case 'month':
+        return itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear();
+      case 'quarter':
+        const currentQuarter = Math.floor(now.getMonth() / 3);
+        const itemQuarter = Math.floor(itemDate.getMonth() / 3);
+        return itemQuarter === currentQuarter && itemDate.getFullYear() === now.getFullYear();
+      case 'year':
+        return itemDate.getFullYear() === now.getFullYear();
+      default:
+        return true;
+    }
+  };
+
+  // Filtrar workshops por estado e segmento
   const filteredWorkshops = workshops.filter(w => {
     if (stateFilter !== "all" && w.state !== stateFilter) return false;
     if (segmentFilter !== "all" && w.segment !== segmentFilter) return false;
+    return true;
+  });
+
+  // Filtrar OSs por período
+  const filteredOSs = osAssessments.filter(os => filterByPeriod(os.created_date));
+
+  // Filtrar funcionários por período de contratação
+  const filteredEmployees = employees.filter(emp => {
+    if (emp.hire_date && !filterByPeriod(emp.hire_date)) return false;
     return true;
   });
 
@@ -110,7 +137,14 @@ export default function Dashboard() {
     outro: "Outro"
   };
 
-  // KPIs principais
+  const periodLabels = {
+    week: "Esta Semana",
+    month: "Este Mês",
+    quarter: "Este Trimestre",
+    year: "Este Ano"
+  };
+
+  // KPIs principais com filtros aplicados
   const totalRevenue = filteredWorkshops.reduce((sum, w) => 
     sum + (w.monthly_goals?.revenue_parts || 0) + (w.monthly_goals?.revenue_services || 0), 0
   );
@@ -123,17 +157,17 @@ export default function Dashboard() {
     ? filteredWorkshops.reduce((sum, w) => sum + (w.monthly_goals?.profit_percentage || 0), 0) / filteredWorkshops.length
     : 0;
 
-  const totalOS = osAssessments.length;
-  const perfectOS = osAssessments.filter(os => os.classification === 'perfeita').length;
+  const totalOS = filteredOSs.length;
+  const perfectOS = filteredOSs.filter(os => os.classification === 'perfeita').length;
 
-  // Calcular faturamento por técnico
+  // Calcular faturamento por técnico (com período aplicado)
   const technicians = employees.filter(emp => emp.area === 'tecnico' && emp.status === 'ativo');
   const totalTechProduction = technicians.reduce((sum, tech) => 
     sum + (tech.production_parts || 0) + (tech.production_services || 0), 0
   );
   const avgTechRevenue = technicians.length > 0 ? totalTechProduction / technicians.length : 0;
 
-  // Rankings
+  // Rankings com filtros aplicados
   const rankingFaturamento = filteredWorkshops
     .map(w => ({
       name: w.name,
@@ -156,18 +190,21 @@ export default function Dashboard() {
     .sort((a, b) => b.value - a.value)
     .slice(0, 50);
 
-  const rankingRentabilidade = osAssessments
+  const rankingRentabilidade = filteredOSs
     .filter(os => os.investment_percentage && os.revenue_percentage)
-    .map(os => ({
-      name: os.os_number,
-      state: "N/A",
-      segment: "Ordem de Serviço",
-      value: os.revenue_percentage
-    }))
+    .map(os => {
+      const workshop = workshops.find(w => w.id === os.workshop_id);
+      return {
+        name: os.os_number,
+        state: workshop?.state || "N/A",
+        segment: segmentLabels[workshop?.segment] || "N/A",
+        value: os.revenue_percentage
+      };
+    })
     .sort((a, b) => b.value - a.value)
     .slice(0, 20);
 
-  // Metas por área - usar dados reais se disponível
+  // Metas por área
   const metasPorArea = [
     { area: "Vendas", meta: 100000, realizado: 85000, cor: "#3b82f6" },
     { area: "Comercial", meta: 50000, realizado: 48000, cor: "#10b981" },
@@ -185,11 +222,11 @@ export default function Dashboard() {
   const aiInsights = [
     {
       type: "positive",
-      message: `${filteredWorkshops.length} oficinas ativas no dashboard. Faturamento: R$ ${(totalRevenue / 1000).toFixed(0)}k.`
+      message: `${filteredWorkshops.length} oficinas ativas no período ${periodLabels[periodFilter].toLowerCase()}. Faturamento: R$ ${(totalRevenue / 1000).toFixed(0)}k.`
     },
     {
       type: "up",
-      message: `${perfectOS} OSs com rentabilidade ideal (R70/I30) registradas.`
+      message: `${perfectOS} OSs com rentabilidade ideal (R70/I30) em ${totalOS} ordens analisadas.`
     },
     {
       type: "info",
@@ -219,43 +256,56 @@ export default function Dashboard() {
               </p>
             </div>
             
-            <div className="flex flex-wrap gap-4">
-              <Select value={stateFilter} onValueChange={setStateFilter}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Estado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">🌎 Todos os Estados</SelectItem>
-                  {uniqueStates.map(state => (
-                    <SelectItem key={state} value={state}>{state}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <Card className="shadow-lg bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <BarChart3 className="w-5 h-5 text-blue-600" />
+                  <h3 className="font-semibold text-gray-900">Filtros Ativos</h3>
+                </div>
+                <div className="flex flex-wrap gap-4">
+                  <Select value={periodFilter} onValueChange={setPeriodFilter}>
+                    <SelectTrigger className="w-48 bg-white">
+                      <SelectValue placeholder="Período" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="week">📅 Esta Semana</SelectItem>
+                      <SelectItem value="month">📅 Este Mês</SelectItem>
+                      <SelectItem value="quarter">📅 Este Trimestre</SelectItem>
+                      <SelectItem value="year">📅 Este Ano</SelectItem>
+                    </SelectContent>
+                  </Select>
 
-              <Select value={segmentFilter} onValueChange={setSegmentFilter}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Segmento" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">🏭 Todos Segmentos</SelectItem>
-                  {Object.entries(segmentLabels).map(([key, label]) => (
-                    <SelectItem key={key} value={key}>{label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                  <Select value={stateFilter} onValueChange={setStateFilter}>
+                    <SelectTrigger className="w-48 bg-white">
+                      <SelectValue placeholder="Estado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">🌎 Todos os Estados</SelectItem>
+                      {uniqueStates.map(state => (
+                        <SelectItem key={state} value={state}>{state}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
 
-              <Select value={periodFilter} onValueChange={setPeriodFilter}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Período" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="week">📅 Semana</SelectItem>
-                  <SelectItem value="month">📅 Mês</SelectItem>
-                  <SelectItem value="quarter">📅 Trimestre</SelectItem>
-                  <SelectItem value="year">📅 Ano</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+                  <Select value={segmentFilter} onValueChange={setSegmentFilter}>
+                    <SelectTrigger className="w-48 bg-white">
+                      <SelectValue placeholder="Segmento" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">🏭 Todos Segmentos</SelectItem>
+                      {Object.entries(segmentLabels).map(([key, label]) => (
+                        <SelectItem key={key} value={key}>{label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <p className="text-sm text-gray-600 mt-3">
+                  <strong>Período:</strong> {periodLabels[periodFilter]} | 
+                  <strong className="ml-2">Estado:</strong> {stateFilter === 'all' ? 'Todos' : stateFilter} | 
+                  <strong className="ml-2">Segmento:</strong> {segmentFilter === 'all' ? 'Todos' : segmentLabels[segmentFilter]}
+                </p>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
@@ -290,6 +340,7 @@ export default function Dashboard() {
             value={`R$ ${(totalRevenue / 1000).toFixed(0)}k`}
             icon={DollarSign}
             color="green"
+            subtitle={periodLabels[periodFilter]}
             trend="up"
             trendValue="+12%"
             badges={["Top 10 BR"]}
@@ -299,6 +350,7 @@ export default function Dashboard() {
             value={`R$ ${avgTicket.toFixed(0)}`}
             icon={TrendingUp}
             color="blue"
+            subtitle={`${filteredWorkshops.length} oficinas`}
             trend="up"
             trendValue="+8%"
           />
@@ -344,7 +396,9 @@ export default function Dashboard() {
                     <Award className="w-5 h-5 text-green-600" />
                     Top 50 - Faturamento
                   </CardTitle>
-                  <CardDescription>Maiores faturamentos do Brasil</CardDescription>
+                  <CardDescription>
+                    {periodLabels[periodFilter]} | {stateFilter === 'all' ? 'Brasil' : stateFilter} | {segmentFilter === 'all' ? 'Todos' : segmentLabels[segmentFilter]}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <RankingTable data={rankingFaturamento.slice(0, 10)} type="faturamento" />
@@ -357,7 +411,9 @@ export default function Dashboard() {
                     <Award className="w-5 h-5 text-blue-600" />
                     Top 50 - Ticket Médio
                   </CardTitle>
-                  <CardDescription>Maiores tickets médios</CardDescription>
+                  <CardDescription>
+                    {periodLabels[periodFilter]} | {stateFilter === 'all' ? 'Brasil' : stateFilter} | {segmentFilter === 'all' ? 'Todos' : segmentLabels[segmentFilter]}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <RankingTable data={rankingTicket.slice(0, 10)} type="ticket" />
@@ -370,7 +426,9 @@ export default function Dashboard() {
                     <Percent className="w-5 h-5 text-purple-600" />
                     Top 20 - Rentabilidade (R70/I30)
                   </CardTitle>
-                  <CardDescription>Melhores rentabilidades por OS</CardDescription>
+                  <CardDescription>
+                    {periodLabels[periodFilter]} - Melhores rentabilidades por OS
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <RankingTable data={rankingRentabilidade} type="percentage" />
@@ -392,7 +450,7 @@ export default function Dashboard() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Target className="w-5 h-5" />
-                  Acompanhamento de Metas - {periodFilter === 'month' ? 'Mês Atual' : 'Período'}
+                  Acompanhamento de Metas - {periodLabels[periodFilter]}
                 </CardTitle>
               </CardHeader>
               <CardContent>
