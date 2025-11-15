@@ -41,17 +41,16 @@ export default function Layout({ children }) {
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ['unread-notifications', user?.id],
     queryFn: async () => {
-      if (!user) return 0;
       try {
         const notifications = await base44.entities.Notification.list();
         return notifications.filter(n => n.user_id === user.id && !n.is_read).length;
       } catch (error) {
-        console.error("Erro ao buscar notificações:", error);
         return 0;
       }
     },
-    enabled: !!user && isAuthenticated,
-    refetchInterval: 30000
+    enabled: !!user && isAuthenticated && !isCheckingAuth,
+    refetchOnWindowFocus: false,
+    staleTime: 60000
   });
 
   const handleLogout = async () => {
@@ -65,7 +64,6 @@ export default function Layout({ children }) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Sidebar - only show if authenticated */}
       {isAuthenticated && (
         <Sidebar 
           user={user}
@@ -75,13 +73,10 @@ export default function Layout({ children }) {
         />
       )}
 
-      {/* Main Content Area */}
       <div className={`${isAuthenticated ? 'lg:pl-64' : ''} flex flex-col min-h-screen`}>
-        {/* Top Header */}
         <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30 print:hidden">
           <div className="px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
-              {/* Mobile Menu Button - only if authenticated */}
               {isAuthenticated && (
                 <button
                   onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -95,14 +90,11 @@ export default function Layout({ children }) {
                 </button>
               )}
 
-              {/* Logo */}
               <Link to={createPageUrl("Home")} className={`flex items-center gap-2 ${isAuthenticated ? 'lg:hidden' : ''}`}>
                 <div className="text-lg font-bold text-gray-900">Oficinas Master</div>
               </Link>
 
-              {/* Right Side Actions */}
               <div className="flex items-center gap-4 ml-auto">
-                {/* Notifications Button - only if authenticated */}
                 {isAuthenticated && user && (
                   <Link
                     to={createPageUrl("Notificacoes")}
@@ -117,7 +109,6 @@ export default function Layout({ children }) {
                   </Link>
                 )}
 
-                {/* User Actions */}
                 <div className="flex items-center gap-3">
                   {isCheckingAuth ? (
                     <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse" />
@@ -157,7 +148,6 @@ export default function Layout({ children }) {
           </div>
         </header>
 
-        {/* Page Content */}
         <main className="flex-1">
           <div className={`${isAuthenticated ? 'px-4 sm:px-6 lg:px-8 py-6' : ''}`}>
             {isAuthenticated && <Breadcrumbs />}
@@ -165,7 +155,6 @@ export default function Layout({ children }) {
           </div>
         </main>
 
-        {/* Footer */}
         <footer className="bg-white border-t border-gray-200 mt-auto print:hidden">
           <div className="px-4 sm:px-6 lg:px-8 py-6">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
