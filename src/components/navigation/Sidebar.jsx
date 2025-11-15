@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -26,7 +25,8 @@ import {
   Briefcase,
   Target,
   ClipboardList,
-  TrendingDown // Added TrendingDown icon
+  TrendingDown,
+  Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -62,6 +62,13 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       label: 'Cadastros',
       icon: Database,
       items: [
+        { 
+          name: 'Gestão da Oficina', 
+          href: createPageUrl('GestaoOficina'), 
+          icon: Settings,
+          description: 'Dados, serviços, metas e cultura',
+          highlight: true
+        },
         { 
           name: 'Minha Oficina', 
           href: createPageUrl('Cadastro'), 
@@ -156,7 +163,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           description: 'Distribuição e sobrecarga'
         },
         { 
-          name: 'Curva de Endividamento', // New item added
+          name: 'Curva de Endividamento',
           href: createPageUrl('DiagnosticoEndividamento'), 
           icon: TrendingDown,
           description: 'Análise 12 meses com IA'
