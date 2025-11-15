@@ -16,6 +16,8 @@ import DiagnosticoDesempenho from './pages/DiagnosticoDesempenho';
 import ResultadoDesempenho from './pages/ResultadoDesempenho';
 import DiagnosticoCarga from './pages/DiagnosticoCarga';
 import ResultadoCarga from './pages/ResultadoCarga';
+import DiagnosticoOS from './pages/DiagnosticoOS';
+import ResultadoOS from './pages/ResultadoOS';
 import Layout from './Layout.jsx';
 
 
@@ -38,6 +40,8 @@ export const PAGES = {
     "ResultadoDesempenho": ResultadoDesempenho,
     "DiagnosticoCarga": DiagnosticoCarga,
     "ResultadoCarga": ResultadoCarga,
+    "DiagnosticoOS": DiagnosticoOS,
+    "ResultadoOS": ResultadoOS,
 }
 
 export const pagesConfig = {

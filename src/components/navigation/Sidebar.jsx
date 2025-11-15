@@ -18,7 +18,8 @@ import {
   Brain,
   Calculator,
   Award,
-  BarChart4
+  BarChart4,
+  DollarSign
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -97,6 +98,12 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('DiagnosticoProducao'), 
           icon: Calculator,
           description: 'Relação custo x produtividade'
+        },
+        { 
+          name: 'OS - R70/I30 + TCMP²', 
+          href: createPageUrl('DiagnosticoOS'), 
+          icon: DollarSign,
+          description: 'Rentabilidade de Ordens de Serviço'
         },
         { 
           name: 'Carga de Trabalho', 
