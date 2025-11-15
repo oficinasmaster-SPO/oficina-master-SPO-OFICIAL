@@ -6,6 +6,8 @@ import Historico from './pages/Historico';
 import Dashboard from './pages/Dashboard';
 import Notificacoes from './pages/Notificacoes';
 import Cadastro from './pages/Cadastro';
+import DiagnosticoEmpresario from './pages/DiagnosticoEmpresario';
+import ResultadoEmpresario from './pages/ResultadoEmpresario';
 import Layout from './Layout.jsx';
 
 
@@ -18,6 +20,8 @@ export const PAGES = {
     "Dashboard": Dashboard,
     "Notificacoes": Notificacoes,
     "Cadastro": Cadastro,
+    "DiagnosticoEmpresario": DiagnosticoEmpresario,
+    "ResultadoEmpresario": ResultadoEmpresario,
 }
 
 export const pagesConfig = {
