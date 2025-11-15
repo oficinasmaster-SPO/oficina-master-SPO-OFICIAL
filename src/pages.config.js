@@ -34,6 +34,7 @@ import AutoavaliacaoEmpresarial from './pages/AutoavaliacaoEmpresarial';
 import AutoavaliacaoMA3 from './pages/AutoavaliacaoMA3';
 import DescricoesCargo from './pages/DescricoesCargo';
 import CriarDescricaoCargo from './pages/CriarDescricaoCargo';
+import CadastroColaborador from './pages/CadastroColaborador';
 import Layout from './Layout.jsx';
 
 
@@ -74,6 +75,7 @@ export const PAGES = {
     "AutoavaliacaoMA3": AutoavaliacaoMA3,
     "DescricoesCargo": DescricoesCargo,
     "CriarDescricaoCargo": CriarDescricaoCargo,
+    "CadastroColaborador": CadastroColaborador,
 }
 
 export const pagesConfig = {
