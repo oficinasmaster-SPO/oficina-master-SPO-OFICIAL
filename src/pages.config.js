@@ -39,6 +39,7 @@ import DiagnosticoEndividamento from './pages/DiagnosticoEndividamento';
 import ResultadoEndividamento from './pages/ResultadoEndividamento';
 import DetalhesColaborador from './pages/DetalhesColaborador';
 import EditarDescricaoCargo from './pages/EditarDescricaoCargo';
+import GestaoOficina from './pages/GestaoOficina';
 import Layout from './Layout.jsx';
 
 
@@ -84,6 +85,7 @@ export const PAGES = {
     "ResultadoEndividamento": ResultadoEndividamento,
     "DetalhesColaborador": DetalhesColaborador,
     "EditarDescricaoCargo": EditarDescricaoCargo,
+    "GestaoOficina": GestaoOficina,
 }
 
 export const pagesConfig = {
