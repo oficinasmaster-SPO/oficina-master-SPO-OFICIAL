@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -22,13 +23,15 @@ import {
   DollarSign,
   Smile,
   UserCircle,
-  Briefcase
+  Briefcase,
+  Target // Added Target icon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
   const location = useLocation();
-  const [expandedGroups, setExpandedGroups] = React.useState(['diagnosticos', 'cadastros']);
+  // Updated expandedGroups to include 'autoavaliacoes'
+  const [expandedGroups, setExpandedGroups] = React.useState(['diagnosticos', 'cadastros', 'autoavaliacoes']);
 
   const toggleGroup = (groupId) => {
     setExpandedGroups(prev => 
@@ -79,6 +82,20 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       ]
     },
     {
+      id: 'autoavaliacoes',
+      label: 'Autoavaliações',
+      icon: Target,
+      items: [
+        { 
+          name: 'Mapas de Autoavaliação', 
+          href: createPageUrl('Autoavaliacoes'), 
+          icon: Target,
+          description: 'Vendas, Comercial, Marketing, RH...',
+          highlight: true
+        }
+      ]
+    },
+    {
       id: 'diagnosticos',
       label: 'Diagnósticos & IA',
       icon: Brain,
@@ -87,8 +104,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           name: 'Fase da Oficina', 
           href: createPageUrl('Questionario'), 
           icon: FileText,
-          description: '4 Fases de evolução',
-          highlight: true
+          description: '4 Fases de evolução'
         },
         { 
           name: 'Perfil do Empresário', 

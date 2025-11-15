@@ -22,6 +22,10 @@ import DiagnosticoDISC from './pages/DiagnosticoDISC';
 import ResultadoDISC from './pages/ResultadoDISC';
 import Clientes from './pages/Clientes';
 import Colaboradores from './pages/Colaboradores';
+import AutoavaliacaoVendas from './pages/AutoavaliacaoVendas';
+import ResultadoAutoavaliacao from './pages/ResultadoAutoavaliacao';
+import MissaoVisaoValores from './pages/MissaoVisaoValores';
+import Autoavaliacoes from './pages/Autoavaliacoes';
 import Layout from './Layout.jsx';
 
 
@@ -50,6 +54,10 @@ export const PAGES = {
     "ResultadoDISC": ResultadoDISC,
     "Clientes": Clientes,
     "Colaboradores": Colaboradores,
+    "AutoavaliacaoVendas": AutoavaliacaoVendas,
+    "ResultadoAutoavaliacao": ResultadoAutoavaliacao,
+    "MissaoVisaoValores": MissaoVisaoValores,
+    "Autoavaliacoes": Autoavaliacoes,
 }
 
 export const pagesConfig = {

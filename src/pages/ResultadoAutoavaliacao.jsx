@@ -1,0 +1,208 @@
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
+import { base44 } from "@/api/base44Client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Loader2, Home, RotateCcw, TrendingUp, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer, Tooltip } from "recharts";
+import { assessmentCriteria } from "../components/assessment/AssessmentCriteria";
+import ReactMarkdown from "react-markdown";
+import { toast } from "sonner";
+
+export default function ResultadoAutoavaliacao() {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [assessment, setAssessment] = useState(null);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const assessmentId = urlParams.get("id");
+
+      if (!assessmentId) {
+        toast.error("Avaliação não encontrada");
+        navigate(createPageUrl("Home"));
+        return;
+      }
+
+      const assessments = await base44.entities.ProcessAssessment.list();
+      const current = assessments.find(a => a.id === assessmentId);
+
+      if (!current) {
+        toast.error("Avaliação não encontrada");
+        navigate(createPageUrl("Home"));
+        return;
+      }
+
+      setAssessment(current);
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao carregar resultado");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  if (!assessment) return null;
+
+  const criteriaConfig = assessmentCriteria[assessment.assessment_type];
+  
+  const radarData = Object.entries(assessment.scores).map(([key, value]) => {
+    const criterion = criteriaConfig.criteria.find(c => c.key === key);
+    return {
+      criterion: criterion?.label || key,
+      score: value
+    };
+  });
+
+  const healthStatus = assessment.average_score >= 8 ? "excelente" :
+                      assessment.average_score >= 6 ? "bom" :
+                      assessment.average_score >= 4 ? "atencao" : "critico";
+
+  const healthConfig = {
+    excelente: { color: "from-green-500 to-emerald-600", icon: CheckCircle2, text: "Excelente" },
+    bom: { color: "from-blue-500 to-blue-600", icon: CheckCircle2, text: "Bom" },
+    atencao: { color: "from-yellow-500 to-amber-600", icon: AlertTriangle, text: "Atenção" },
+    critico: { color: "from-red-500 to-red-600", icon: AlertTriangle, text: "Crítico" }
+  };
+
+  const config = healthConfig[healthStatus];
+  const Icon = config.icon;
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50 py-12 px-4">
+      <div className="max-w-6xl mx-auto space-y-6">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+            Resultado - {criteriaConfig.title}
+          </h1>
+          <p className="text-xl text-gray-600">Análise completa com recomendações IA</p>
+        </div>
+
+        {/* Status Geral */}
+        <Card className={`border-2 shadow-xl bg-gradient-to-br ${config.color}`}>
+          <CardContent className="p-8 text-white">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+                <Icon className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h2 className="text-3xl font-bold">Status: {config.text}</h2>
+                <p className="text-white/90 text-lg">Média Geral: {assessment.average_score.toFixed(1)}/10</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Radar Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Roda Empresarial</CardTitle>
+              <CardDescription>Visualização dos processos avaliados</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={400}>
+                <RadarChart data={radarData}>
+                  <PolarGrid />
+                  <PolarAngleAxis dataKey="criterion" tick={{ fontSize: 11 }} />
+                  <PolarRadiusAxis angle={90} domain={[0, 10]} />
+                  <Radar name="Nota" dataKey="score" stroke={criteriaConfig.color} fill={criteriaConfig.color} fillOpacity={0.6} />
+                  <Tooltip />
+                </RadarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Pontos Fortes e Fracos */}
+          <div className="space-y-4">
+            <Card className="border-2 border-green-200">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-green-900">
+                  <CheckCircle2 className="w-5 h-5" />
+                  Pontos Fortes
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {assessment.strengths?.length > 0 ? (
+                  <ul className="space-y-2">
+                    {assessment.strengths.map((strength, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="text-green-600 font-bold">✓</span>
+                        <span className="text-gray-700">{strength}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-gray-500 text-sm">Nenhum ponto forte destacado</p>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="border-2 border-red-200">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-red-900">
+                  <AlertTriangle className="w-5 h-5" />
+                  Gargalos Críticos
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {assessment.weaknesses?.length > 0 ? (
+                  <ul className="space-y-2">
+                    {assessment.weaknesses.map((weakness, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="text-red-600 font-bold">!</span>
+                        <span className="text-gray-700">{weakness}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-gray-500 text-sm">Nenhum gargalo identificado</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Análise IA */}
+        <Card className="border-2 border-purple-200">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="w-6 h-6 text-purple-600" />
+              Análise Detalhada & Recomendações IA
+            </CardTitle>
+            <CardDescription>Diagnóstico profissional baseado na metodologia Oficinas Master</CardDescription>
+          </CardHeader>
+          <CardContent className="prose max-w-none">
+            <ReactMarkdown>{assessment.ai_recommendations}</ReactMarkdown>
+          </CardContent>
+        </Card>
+
+        {/* Ações */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <Button variant="outline" onClick={() => navigate(createPageUrl("Home"))}>
+            <Home className="w-4 h-4 mr-2" />
+            Voltar ao Início
+          </Button>
+          <Button onClick={() => navigate(createPageUrl("AutoavaliacaoVendas"))} className="bg-green-600 hover:bg-green-700">
+            <RotateCcw className="w-4 h-4 mr-2" />
+            Nova Avaliação
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
