@@ -1,25 +1,21 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Users, DollarSign, TrendingUp, Award, Loader2, UserPlus } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom"; // Add useNavigate
+import { UserPlus, Loader2, Sparkles } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"; // Add Select components
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import AITrainingSuggestions from "../components/rh/AITrainingSuggestions";
 
 export default function Colaboradores() {
-  const navigate = useNavigate(); // Initialize useNavigate hook
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all"); // Renamed filterStatus to statusFilter
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   const { data: employees = [], isLoading } = useQuery({
     queryKey: ['employees'],
@@ -27,26 +23,26 @@ export default function Colaboradores() {
   });
 
   const statusColors = {
-    ativo: "bg-green-100 text-green-700", // Updated color
-    inativo: "bg-gray-100 text-gray-700", // Updated color
-    ferias: "bg-blue-100 text-blue-700" // Updated color
+    ativo: "bg-green-100 text-green-700",
+    inativo: "bg-gray-100 text-gray-700",
+    ferias: "bg-blue-100 text-blue-700"
   };
 
-  const filteredEmployees = employees.filter((employee) => { // Changed emp to employee
+  const filteredEmployees = employees.filter((employee) => {
     const matchesSearch = employee.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          employee.position.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || employee.status === statusFilter; // Changed filterStatus to statusFilter
+    const matchesStatus = statusFilter === "all" || employee.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  const getTotalCost = (employee) => { // Changed emp to employee
+  const getTotalCost = (employee) => {
     return employee.salary + (employee.commission || 0) + (employee.bonus || 0) +
-           (employee.benefits?.meal_voucher || 0) +
-           (employee.benefits?.transport_voucher || 0) +
+           (employee.benefits?.meal_voucher || 0) + 
+           (employee.benefits?.transport_voucher || 0) + 
            (employee.benefits?.health_insurance || 0);
   };
 
-  const getTotalProduction = (employee) => { // Changed emp to employee
+  const getTotalProduction = (employee) => {
     return (employee.production_parts || 0) + (employee.production_services || 0);
   };
 
@@ -59,33 +55,31 @@ export default function Colaboradores() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4"> {/* Updated gradient */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4">
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8"> {/* Updated layout */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Colaboradores</h1> {/* Updated title */}
-            <p className="text-gray-600">Gerencie sua equipe e monitore a produtividade</p> {/* Updated description */}
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">Colaboradores</h1>
+            <p className="text-gray-600">Gerencie sua equipe com inteligência artificial</p>
           </div>
           <Button
-            onClick={() => navigate(createPageUrl("CadastroColaborador"))} // Changed to Button with navigate
-            className="bg-blue-600 hover:bg-blue-700" // Updated button style
+            onClick={() => navigate(createPageUrl("CadastroColaborador"))}
+            className="bg-blue-600 hover:bg-blue-700"
           >
-            <UserPlus className="w-5 h-5 mr-2" /> {/* Updated icon */}
+            <UserPlus className="w-5 h-5 mr-2" />
             Novo Colaborador
           </Button>
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-col md:flex-row gap-4 mb-6"> {/* Updated filter layout */}
+        <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="flex-1">
             <Input
               placeholder="Buscar por nome ou cargo..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              // className="pl-10" removed as Search icon is gone
             />
           </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}> {/* Replaced with Shadcn Select */}
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-full md:w-48">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
@@ -101,7 +95,7 @@ export default function Colaboradores() {
         {filteredEmployees.length === 0 ? (
           <Card className="shadow-lg">
             <CardContent className="p-12 text-center">
-              <UserPlus className="w-16 h-16 text-gray-400 mx-auto mb-4" /> {/* Updated icon */}
+              <UserPlus className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-900 mb-2">
                 Nenhum colaborador encontrado
               </h3>
@@ -119,20 +113,20 @@ export default function Colaboradores() {
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredEmployees.map((employee) => { // Changed emp to employee
+            {filteredEmployees.map((employee) => {
               const totalCost = getTotalCost(employee);
               const totalProduction = getTotalProduction(employee);
-              const productivity = totalCost > 0 ? ((totalProduction / totalCost) * 100).toFixed(0) : 0; // Renamed productionPercentage to productivity
+              const productivity = totalCost > 0 ? ((totalProduction / totalCost) * 100).toFixed(0) : 0;
 
               return (
-                <Card key={employee.id} className="shadow-lg hover:shadow-xl transition-shadow"> {/* Added shadow */}
+                <Card key={employee.id} className="shadow-lg hover:shadow-xl transition-shadow">
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div>
-                        <CardTitle className="text-xl">{employee.full_name}</CardTitle> {/* Updated text size */}
-                        <p className="text-sm text-gray-600 mt-1">{employee.position}</p> {/* Updated text style */}
+                        <CardTitle className="text-xl">{employee.full_name}</CardTitle>
+                        <p className="text-sm text-gray-600 mt-1">{employee.position}</p>
                       </div>
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[employee.status]}`}> {/* Replaced Badge with span */}
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[employee.status]}`}>
                         {employee.status}
                       </span>
                     </div>
@@ -155,13 +149,24 @@ export default function Colaboradores() {
                           {productivity}%
                         </span>
                       </div>
-                      <Button
-                        variant="outline"
-                        className="w-full mt-4" // Updated margin
-                        size="sm"
-                      >
-                        Ver Detalhes
-                      </Button>
+                      
+                      <div className="flex gap-2 mt-4">
+                        <Button
+                          variant="outline"
+                          className="flex-1"
+                          size="sm"
+                        >
+                          Ver Detalhes
+                        </Button>
+                        <Button
+                          onClick={() => setSelectedEmployee(employee)}
+                          size="sm"
+                          className="bg-purple-600 hover:bg-purple-700"
+                        >
+                          <Sparkles className="w-4 h-4 mr-1" />
+                          IA
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -169,6 +174,17 @@ export default function Colaboradores() {
             })}
           </div>
         )}
+
+        <Dialog open={!!selectedEmployee} onOpenChange={() => setSelectedEmployee(null)}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            {selectedEmployee && (
+              <AITrainingSuggestions 
+                employee={selectedEmployee} 
+                onClose={() => setSelectedEmployee(null)} 
+              />
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

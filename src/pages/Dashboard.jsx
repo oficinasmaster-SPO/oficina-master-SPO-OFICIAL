@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
@@ -14,6 +15,7 @@ import LevelBadge from "../components/dashboard/LevelBadge";
 import BadgeCard from "../components/dashboard/BadgeCard";
 import RankingTable from "../components/dashboard/RankingTable";
 import AIInsight from "../components/dashboard/AIInsight";
+import HRInsights from "../components/dashboard/HRInsights"; // New import
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -63,6 +65,12 @@ export default function Dashboard() {
   const { data: areaGoals = [] } = useQuery({
     queryKey: ['area-goals'],
     queryFn: () => base44.entities.AreaGoal.list(),
+    enabled: isAuthorized
+  });
+
+  const { data: employees = [] } = useQuery({
+    queryKey: ['employees'],
+    queryFn: () => base44.entities.Employee.list(),
     enabled: isAuthorized
   });
 
@@ -309,6 +317,7 @@ export default function Dashboard() {
             <TabsTrigger value="operacional">⚙️ Sub-Rankings</TabsTrigger>
             <TabsTrigger value="evolucao">📈 Evolução</TabsTrigger>
             <TabsTrigger value="engajamento">⚡ Engajamento</TabsTrigger>
+            <TabsTrigger value="rh">👥 Insights RH</TabsTrigger> {/* New TabsTrigger */}
           </TabsList>
 
           {/* Rankings Brasil */}
@@ -522,6 +531,11 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          {/* Nova aba de Insights RH */}
+          <TabsContent value="rh" className="space-y-6">
+            <HRInsights employees={employees} />
           </TabsContent>
         </Tabs>
       </div>
