@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, BarChart4, Calendar, Plus, Trash2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2, BarChart4, Calendar, Plus, Trash2, Users, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 
 export default function DiagnosticoCarga() {
@@ -15,11 +16,24 @@ export default function DiagnosticoCarga() {
   const [submitting, setSubmitting] = useState(false);
   const [user, setUser] = useState(null);
   const [workshop, setWorkshop] = useState(null);
-  const [employees, setEmployees] = useState([]);
   
   const [periodStart, setPeriodStart] = useState("");
   const [periodEnd, setPeriodEnd] = useState("");
-  const [workloadData, setWorkloadData] = useState([]);
+  const [revenueTotal, setRevenueTotal] = useState(0);
+  const [revenueDesired, setRevenueDesired] = useState(0);
+  
+  // Estrutura conforme organograma
+  const [socios, setSocios] = useState([{ name: "", presence_percentage: 0, delivery_value: 0 }]);
+  const [gerentes, setGerentes] = useState([
+    { area: "Gerente Geral", employees: [{ name: "", presence_percentage: 0 }] },
+    { area: "Financeiro", employees: [{ name: "", presence_percentage: 0 }] },
+    { area: "Estoque", employees: [{ name: "", presence_percentage: 0 }] }
+  ]);
+  const [vendas, setVendas] = useState([{ name: "", delivery_value: 0, presence_percentage: 0 }]);
+  const [comercial, setComercial] = useState([{ name: "", delivery_value: 0, presence_percentage: 0 }]);
+  const [marketing, setMarketing] = useState([{ name: "", delivery_value: 0, presence_percentage: 0 }]);
+  const [tecnicos, setTecnicos] = useState([{ name: "", delivery_value: 0, presence_percentage: 0 }]);
+  const [auxiliares, setAuxiliares] = useState([{ name: "", delivery_value: 0, presence_percentage: 0 }]);
 
   useEffect(() => {
     loadData();
@@ -34,30 +48,10 @@ export default function DiagnosticoCarga() {
       const userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
       setWorkshop(userWorkshop);
 
-      const allEmployees = await base44.entities.Employee.list();
-      const activeEmployees = allEmployees.filter(e => 
-        e.status === "ativo" && (!userWorkshop || e.workshop_id === userWorkshop.id)
-      );
-      setEmployees(activeEmployees);
-
-      // Inicializar dados
-      const initialData = activeEmployees.map(emp => ({
-        employee_id: emp.id,
-        employee_name: emp.full_name,
-        position_title: emp.position || "",
-        weekly_hours_worked: 0,
-        ideal_weekly_hours: 40,
-        tasks_assigned: 0,
-        tasks_completed: 0,
-        quality_score: 5,
-        main_activities: []
-      }));
-      setWorkloadData(initialData);
-
-      // Definir período padrão (última semana)
+      // Definir período padrão (último mês)
       const now = new Date();
-      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      setPeriodStart(weekAgo.toISOString().split('T')[0]);
+      const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      setPeriodStart(monthAgo.toISOString().split('T')[0]);
       setPeriodEnd(now.toISOString().split('T')[0]);
     } catch (error) {
       toast.error("Você precisa estar logado");
@@ -67,75 +61,70 @@ export default function DiagnosticoCarga() {
     }
   };
 
-  const updateWorkloadData = (index, field, value) => {
-    const updated = [...workloadData];
+  const addItem = (setter, currentItems) => {
+    setter([...currentItems, { name: "", delivery_value: 0, presence_percentage: 0 }]);
+  };
+
+  const removeItem = (setter, currentItems, index) => {
+    const updated = currentItems.filter((_, i) => i !== index);
+    setter(updated);
+  };
+
+  const updateItem = (setter, currentItems, index, field, value) => {
+    const updated = [...currentItems];
     updated[index][field] = value;
-    setWorkloadData(updated);
+    setter(updated);
   };
 
-  const addActivity = (index) => {
-    const updated = [...workloadData];
-    if (!updated[index].main_activities) {
-      updated[index].main_activities = [];
-    }
-    updated[index].main_activities.push("");
-    setWorkloadData(updated);
+  const updateGerenteEmployee = (gerenteIndex, empIndex, field, value) => {
+    const updated = [...gerentes];
+    updated[gerenteIndex].employees[empIndex][field] = value;
+    setGerentes(updated);
   };
 
-  const updateActivity = (empIndex, actIndex, value) => {
-    const updated = [...workloadData];
-    updated[empIndex].main_activities[actIndex] = value;
-    setWorkloadData(updated);
+  const addGerenteEmployee = (gerenteIndex) => {
+    const updated = [...gerentes];
+    updated[gerenteIndex].employees.push({ name: "", presence_percentage: 0 });
+    setGerentes(updated);
   };
 
-  const removeActivity = (empIndex, actIndex) => {
-    const updated = [...workloadData];
-    updated[empIndex].main_activities.splice(actIndex, 1);
-    setWorkloadData(updated);
+  const removeGerenteEmployee = (gerenteIndex, empIndex) => {
+    const updated = [...gerentes];
+    updated[gerenteIndex].employees = updated[gerenteIndex].employees.filter((_, i) => i !== empIndex);
+    setGerentes(updated);
   };
 
   const analyzeWorkload = () => {
+    // Análise simplificada baseada em presença e entrega
+    const allEmployees = [
+      ...socios.map(s => ({ ...s, role: 'socio' })),
+      ...gerentes.flatMap(g => g.employees.map(e => ({ ...e, role: 'gerente', area: g.area }))),
+      ...vendas.map(v => ({ ...v, role: 'vendas' })),
+      ...comercial.map(c => ({ ...c, role: 'comercial' })),
+      ...marketing.map(m => ({ ...m, role: 'marketing' })),
+      ...tecnicos.map(t => ({ ...t, role: 'tecnico' })),
+      ...auxiliares.map(a => ({ ...a, role: 'auxiliar' }))
+    ].filter(emp => emp.name.trim() !== '');
+
     const overloaded = [];
     const underutilized = [];
-    const redistribution = [];
 
-    workloadData.forEach(emp => {
-      const utilization = (emp.weekly_hours_worked / emp.ideal_weekly_hours) * 100;
-      const completion = emp.tasks_assigned > 0 ? (emp.tasks_completed / emp.tasks_assigned) * 100 : 100;
-
-      if (utilization > 110) {
+    allEmployees.forEach(emp => {
+      if (emp.presence_percentage > 100) {
         overloaded.push({
-          employee_id: emp.employee_id,
-          overload_percentage: utilization - 100,
-          recommendation: `Colaborador está ${(utilization - 100).toFixed(0)}% acima da capacidade ideal. Recomenda-se redistribuir tarefas ou adicionar suporte à equipe.`
+          employee_id: emp.name,
+          overload_percentage: emp.presence_percentage - 100,
+          recommendation: `${emp.name} está com ${emp.presence_percentage}% de presença, acima do esperado. Revisar distribuição de responsabilidades.`
         });
-      } else if (utilization < 70 && emp.weekly_hours_worked > 0) {
+      } else if (emp.presence_percentage < 70 && emp.presence_percentage > 0) {
         underutilized.push({
-          employee_id: emp.employee_id,
-          utilization_percentage: utilization,
-          recommendation: `Colaborador está utilizando apenas ${utilization.toFixed(0)}% da capacidade. Considere alocar mais responsabilidades ou tarefas estratégicas.`
+          employee_id: emp.name,
+          utilization_percentage: emp.presence_percentage,
+          recommendation: `${emp.name} está com apenas ${emp.presence_percentage}% de presença. Considere aumentar participação ou revisar função.`
         });
       }
     });
 
-    // Sugestões de redistribuição
-    if (overloaded.length > 0 && underutilized.length > 0) {
-      overloaded.forEach(over => {
-        underutilized.forEach(under => {
-          const overEmp = workloadData.find(e => e.employee_id === over.employee_id);
-          const underEmp = workloadData.find(e => e.employee_id === under.employee_id);
-          
-          redistribution.push({
-            from_employee_id: over.employee_id,
-            to_employee_id: under.employee_id,
-            tasks_to_transfer: [`Transferir atividades de ${overEmp.employee_name} para ${underEmp.employee_name}`],
-            justification: `${overEmp.employee_name} está sobrecarregado enquanto ${underEmp.employee_name} tem capacidade disponível. Redistribuir tarefas equilibrará a carga de trabalho.`
-          });
-        });
-      });
-    }
-
-    // Determinar saúde geral
     let overallHealth = "excelente";
     if (overloaded.length > 0) {
       overallHealth = overloaded.length > 2 ? "critico" : "atencao";
@@ -146,7 +135,7 @@ export default function DiagnosticoCarga() {
     return {
       overloaded_employees: overloaded,
       underutilized_employees: underutilized,
-      redistribution_suggestions: redistribution.slice(0, 3),
+      redistribution_suggestions: [],
       overall_health: overallHealth
     };
   };
@@ -169,7 +158,15 @@ export default function DiagnosticoCarga() {
         evaluator_id: user.id,
         period_start: periodStart,
         period_end: periodEnd,
-        workload_data: workloadData,
+        revenue_total: revenueTotal,
+        revenue_desired: revenueDesired,
+        areas_data: {
+          socios,
+          gerentes,
+          operacional: { vendas, comercial, marketing },
+          tecnicos,
+          auxiliares
+        },
         analysis_results: analysisResults,
         overall_health: analysisResults.overall_health,
         completed: true
@@ -201,25 +198,26 @@ export default function DiagnosticoCarga() {
             <BarChart4 className="w-8 h-8 text-orange-600" />
           </div>
           <h1 className="text-4xl font-bold text-gray-900 mb-3">
-            Diagnóstico de Carga de Trabalho
+            Diagnóstico Gerencial das Áreas da Empresa
           </h1>
           <p className="text-lg text-gray-600">
-            Análise de distribuição de tarefas e identificação de sobrecarga/subutilização
+            Mapeie o organograma, presença e entrega de cada colaborador por área
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Período e Receita */}
           <Card>
             <CardHeader>
               <div className="flex items-center gap-3">
                 <Calendar className="w-6 h-6 text-orange-600" />
                 <div>
-                  <CardTitle>Período de Avaliação</CardTitle>
-                  <CardDescription>Defina o intervalo de tempo analisado</CardDescription>
+                  <CardTitle>Período e Resultados</CardTitle>
+                  <CardDescription>Defina período e metas financeiras</CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label>Data Início *</Label>
@@ -240,102 +238,466 @@ export default function DiagnosticoCarga() {
                   />
                 </div>
               </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>R/M Total (Receita Mensal Total)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={revenueTotal}
+                    onChange={(e) => setRevenueTotal(parseFloat(e.target.value) || 0)}
+                    placeholder="R$ 0,00"
+                  />
+                </div>
+                <div>
+                  <Label>R/Desejada (Receita Desejada)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={revenueDesired}
+                    onChange={(e) => setRevenueDesired(parseFloat(e.target.value) || 0)}
+                    placeholder="R$ 0,00"
+                  />
+                </div>
+              </div>
             </CardContent>
           </Card>
 
-          {workloadData.map((emp, index) => (
-            <Card key={emp.employee_id}>
-              <CardHeader>
-                <CardTitle className="text-lg">{emp.employee_name}</CardTitle>
-                <CardDescription>{emp.position_title}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* 1º Nível - Sócios */}
+          <Card className="border-2 border-blue-200">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <TrendingUp className="w-6 h-6 text-blue-600" />
                   <div>
-                    <Label>Horas Trabalhadas (Semana)</Label>
-                    <Input
-                      type="number"
-                      step="0.5"
-                      value={emp.weekly_hours_worked}
-                      onChange={(e) => updateWorkloadData(index, 'weekly_hours_worked', parseFloat(e.target.value) || 0)}
-                    />
-                  </div>
-                  <div>
-                    <Label>Horas Ideais (Semana)</Label>
-                    <Input
-                      type="number"
-                      value={emp.ideal_weekly_hours}
-                      onChange={(e) => updateWorkloadData(index, 'ideal_weekly_hours', parseFloat(e.target.value) || 40)}
-                    />
-                  </div>
-                  <div>
-                    <Label>Nota de Qualidade (0-10)</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      max="10"
-                      step="0.1"
-                      value={emp.quality_score}
-                      onChange={(e) => updateWorkloadData(index, 'quality_score', parseFloat(e.target.value) || 0)}
-                    />
+                    <CardTitle>1º Nível - Sócios</CardTitle>
+                    <CardDescription>Presença e entrega dos sócios</CardDescription>
                   </div>
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label>Tarefas Atribuídas</Label>
-                    <Input
-                      type="number"
-                      value={emp.tasks_assigned}
-                      onChange={(e) => updateWorkloadData(index, 'tasks_assigned', parseInt(e.target.value) || 0)}
-                    />
+                <Button type="button" variant="outline" size="sm" onClick={() => addItem(setSocios, socios)}>
+                  <Plus className="w-4 h-4 mr-1" />
+                  Adicionar Sócio
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {socios.map((socio, index) => (
+                <div key={index} className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                  <div className="flex items-start justify-between mb-3">
+                    <span className="text-sm font-semibold text-blue-900">Sócio {index + 1}</span>
+                    {socios.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeItem(setSocios, socios, index)}
+                      >
+                        <Trash2 className="w-4 h-4 text-red-500" />
+                      </Button>
+                    )}
                   </div>
-                  <div>
-                    <Label>Tarefas Concluídas</Label>
-                    <Input
-                      type="number"
-                      value={emp.tasks_completed}
-                      onChange={(e) => updateWorkloadData(index, 'tasks_completed', parseInt(e.target.value) || 0)}
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                      <Label className="text-xs">Nome</Label>
+                      <Input
+                        placeholder="Nome do sócio"
+                        value={socio.name}
+                        onChange={(e) => updateItem(setSocios, socios, index, 'name', e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Presença (%)</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={socio.presence_percentage}
+                        onChange={(e) => updateItem(setSocios, socios, index, 'presence_percentage', parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Entrega (R$)</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={socio.delivery_value}
+                        onChange={(e) => updateItem(setSocios, socios, index, 'delivery_value', parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
                   </div>
                 </div>
+              ))}
+            </CardContent>
+          </Card>
 
+          {/* 2º Nível - Gerentes */}
+          <Card className="border-2 border-purple-200">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <Users className="w-6 h-6 text-purple-600" />
                 <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <Label>Principais Atividades</Label>
+                  <CardTitle>2º Nível - Gerentes e Terceiros/Assessoria</CardTitle>
+                  <CardDescription>Gerente, Financeiro e Estoque</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {gerentes.map((gerente, gIndex) => (
+                <div key={gIndex} className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold text-purple-900">{gerente.area}</h3>
                     <Button
                       type="button"
-                      size="sm"
                       variant="outline"
-                      onClick={() => addActivity(index)}
+                      size="sm"
+                      onClick={() => addGerenteEmployee(gIndex)}
                     >
                       <Plus className="w-4 h-4 mr-1" />
                       Adicionar
                     </Button>
                   </div>
-                  <div className="space-y-2">
-                    {emp.main_activities?.map((activity, actIndex) => (
-                      <div key={actIndex} className="flex gap-2">
-                        <Input
-                          placeholder="Descreva a atividade"
-                          value={activity}
-                          onChange={(e) => updateActivity(index, actIndex, e.target.value)}
-                        />
-                        <Button
-                          type="button"
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => removeActivity(index, actIndex)}
-                        >
-                          <Trash2 className="w-4 h-4 text-red-500" />
-                        </Button>
+                  <div className="space-y-3">
+                    {gerente.employees.map((emp, eIndex) => (
+                      <div key={eIndex} className="grid grid-cols-1 md:grid-cols-3 gap-3 bg-white rounded p-3">
+                        <div className="md:col-span-2">
+                          <Label className="text-xs">Nome</Label>
+                          <Input
+                            placeholder={`Nome do ${gerente.area}`}
+                            value={emp.name}
+                            onChange={(e) => updateGerenteEmployee(gIndex, eIndex, 'name', e.target.value)}
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <div className="flex-1">
+                            <Label className="text-xs">Presença (%)</Label>
+                            <Input
+                              type="number"
+                              min="0"
+                              max="100"
+                              value={emp.presence_percentage}
+                              onChange={(e) => updateGerenteEmployee(gIndex, eIndex, 'presence_percentage', parseFloat(e.target.value) || 0)}
+                            />
+                          </div>
+                          {gerente.employees.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="mt-5"
+                              onClick={() => removeGerenteEmployee(gIndex, eIndex)}
+                            >
+                              <Trash2 className="w-4 h-4 text-red-500" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+              ))}
+            </CardContent>
+          </Card>
+
+          {/* Nível Operacional - Vendas/Comercial/Marketing */}
+          <Card className="border-2 border-green-200">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="w-6 h-6 text-green-600" />
+                Áreas Operacionais
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Vendas */}
+              <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-green-900">2º C/Vendas</h3>
+                  <Button type="button" variant="outline" size="sm" onClick={() => addItem(setVendas, vendas)}>
+                    <Plus className="w-4 h-4 mr-1" />
+                    Adicionar
+                  </Button>
+                </div>
+                <div className="space-y-3">
+                  {vendas.map((v, index) => (
+                    <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-3 bg-white rounded p-3">
+                      <div>
+                        <Label className="text-xs">Nome</Label>
+                        <Input
+                          placeholder="Nome"
+                          value={v.name}
+                          onChange={(e) => updateItem(setVendas, vendas, index, 'name', e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Entrega (R$)</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={v.delivery_value}
+                          onChange={(e) => updateItem(setVendas, vendas, index, 'delivery_value', parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Presença (%)</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={v.presence_percentage}
+                          onChange={(e) => updateItem(setVendas, vendas, index, 'presence_percentage', parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      <div className="flex items-end">
+                        {vendas.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeItem(setVendas, vendas, index)}
+                          >
+                            <Trash2 className="w-4 h-4 text-red-500" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Comercial */}
+              <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-green-900">2º Comercial</h3>
+                  <Button type="button" variant="outline" size="sm" onClick={() => addItem(setComercial, comercial)}>
+                    <Plus className="w-4 h-4 mr-1" />
+                    Adicionar
+                  </Button>
+                </div>
+                <div className="space-y-3">
+                  {comercial.map((c, index) => (
+                    <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-3 bg-white rounded p-3">
+                      <div>
+                        <Label className="text-xs">Nome</Label>
+                        <Input
+                          placeholder="Nome"
+                          value={c.name}
+                          onChange={(e) => updateItem(setComercial, comercial, index, 'name', e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Entrega (R$)</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={c.delivery_value}
+                          onChange={(e) => updateItem(setComercial, comercial, index, 'delivery_value', parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Presença (%)</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={c.presence_percentage}
+                          onChange={(e) => updateItem(setComercial, comercial, index, 'presence_percentage', parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      <div className="flex items-end">
+                        {comercial.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeItem(setComercial, comercial, index)}
+                          >
+                            <Trash2 className="w-4 h-4 text-red-500" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Marketing Digital */}
+              <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-green-900">2º Marketing Digital</h3>
+                  <Button type="button" variant="outline" size="sm" onClick={() => addItem(setMarketing, marketing)}>
+                    <Plus className="w-4 h-4 mr-1" />
+                    Adicionar
+                  </Button>
+                </div>
+                <div className="space-y-3">
+                  {marketing.map((m, index) => (
+                    <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-3 bg-white rounded p-3">
+                      <div>
+                        <Label className="text-xs">Nome</Label>
+                        <Input
+                          placeholder="Nome"
+                          value={m.name}
+                          onChange={(e) => updateItem(setMarketing, marketing, index, 'name', e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Entrega (R$)</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={m.delivery_value}
+                          onChange={(e) => updateItem(setMarketing, marketing, index, 'delivery_value', parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Presença (%)</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={m.presence_percentage}
+                          onChange={(e) => updateItem(setMarketing, marketing, index, 'presence_percentage', parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      <div className="flex items-end">
+                        {marketing.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeItem(setMarketing, marketing, index)}
+                          >
+                            <Trash2 className="w-4 h-4 text-red-500" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 3º Nível - Técnicos */}
+          <Card className="border-2 border-amber-200">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>3º Técnico/Eletricista/Mecânico/Funileiro</CardTitle>
+                  <CardDescription>Equipe técnica</CardDescription>
+                </div>
+                <Button type="button" variant="outline" size="sm" onClick={() => addItem(setTecnicos, tecnicos)}>
+                  <Plus className="w-4 h-4 mr-1" />
+                  Adicionar
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {tecnicos.map((t, index) => (
+                <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-3 bg-amber-50 rounded p-3 border border-amber-200">
+                  <div>
+                    <Label className="text-xs">Nome</Label>
+                    <Input
+                      placeholder="Nome do técnico"
+                      value={t.name}
+                      onChange={(e) => updateItem(setTecnicos, tecnicos, index, 'name', e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Entrega (R$)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={t.delivery_value}
+                      onChange={(e) => updateItem(setTecnicos, tecnicos, index, 'delivery_value', parseFloat(e.target.value) || 0)}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Presença (%)</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={t.presence_percentage}
+                      onChange={(e) => updateItem(setTecnicos, tecnicos, index, 'presence_percentage', parseFloat(e.target.value) || 0)}
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    {tecnicos.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeItem(setTecnicos, tecnicos, index)}
+                      >
+                        <Trash2 className="w-4 h-4 text-red-500" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          {/* 3º Nível - Auxiliares */}
+          <Card className="border-2 border-cyan-200">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>3º Auxiliar/M.Boy/Limpeza</CardTitle>
+                  <CardDescription>Equipe de apoio</CardDescription>
+                </div>
+                <Button type="button" variant="outline" size="sm" onClick={() => addItem(setAuxiliares, auxiliares)}>
+                  <Plus className="w-4 h-4 mr-1" />
+                  Adicionar
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {auxiliares.map((a, index) => (
+                <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-3 bg-cyan-50 rounded p-3 border border-cyan-200">
+                  <div>
+                    <Label className="text-xs">Nome</Label>
+                    <Input
+                      placeholder="Nome do auxiliar"
+                      value={a.name}
+                      onChange={(e) => updateItem(setAuxiliares, auxiliares, index, 'name', e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Entrega (R$)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={a.delivery_value}
+                      onChange={(e) => updateItem(setAuxiliares, auxiliares, index, 'delivery_value', parseFloat(e.target.value) || 0)}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Presença (%)</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={a.presence_percentage}
+                      onChange={(e) => updateItem(setAuxiliares, auxiliares, index, 'presence_percentage', parseFloat(e.target.value) || 0)}
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    {auxiliares.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeItem(setAuxiliares, auxiliares, index)}
+                      >
+                        <Trash2 className="w-4 h-4 text-red-500" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
 
           <div className="flex justify-center">
             <Button
