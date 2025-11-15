@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
@@ -152,11 +153,11 @@ export default function Colaboradores() {
                       
                       <div className="flex gap-2 mt-4">
                         <Button
-                          variant="outline"
+                          onClick={() => navigate(createPageUrl("DetalhesColaborador") + `?id=${employee.id}`)}
                           className="flex-1"
                           size="sm"
                         >
-                          Ver Detalhes
+                          Ver Completo
                         </Button>
                         <Button
                           onClick={() => setSelectedEmployee(employee)}

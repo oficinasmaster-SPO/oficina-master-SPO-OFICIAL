@@ -37,6 +37,7 @@ import CriarDescricaoCargo from './pages/CriarDescricaoCargo';
 import CadastroColaborador from './pages/CadastroColaborador';
 import DiagnosticoEndividamento from './pages/DiagnosticoEndividamento';
 import ResultadoEndividamento from './pages/ResultadoEndividamento';
+import DetalhesColaborador from './pages/DetalhesColaborador';
 import Layout from './Layout.jsx';
 
 
@@ -80,6 +81,7 @@ export const PAGES = {
     "CadastroColaborador": CadastroColaborador,
     "DiagnosticoEndividamento": DiagnosticoEndividamento,
     "ResultadoEndividamento": ResultadoEndividamento,
+    "DetalhesColaborador": DetalhesColaborador,
 }
 
 export const pagesConfig = {
