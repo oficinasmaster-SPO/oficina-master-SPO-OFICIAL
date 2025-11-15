@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
@@ -6,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, DollarSign, TrendingUp, Percent, Building, Target, Users, Award, Zap, BarChart3 } from "lucide-react";
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from "recharts";
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
@@ -15,7 +14,11 @@ import LevelBadge from "../components/dashboard/LevelBadge";
 import BadgeCard from "../components/dashboard/BadgeCard";
 import RankingTable from "../components/dashboard/RankingTable";
 import AIInsight from "../components/dashboard/AIInsight";
-import HRInsights from "../components/dashboard/HRInsights"; // New import
+import HRInsights from "../components/dashboard/HRInsights";
+import TechnicianRanking from "../components/dashboard/TechnicianRanking";
+import SalesRanking from "../components/dashboard/SalesRanking";
+import ManagerRanking from "../components/dashboard/ManagerRanking";
+import UsageTimeCard from "../components/dashboard/UsageTimeCard";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -62,6 +65,12 @@ export default function Dashboard() {
     enabled: isAuthorized
   });
 
+  const { data: userGameProfiles = [] } = useQuery({
+    queryKey: ['user-game-profiles'],
+    queryFn: () => base44.entities.UserGameProfile.list(),
+    enabled: isAuthorized
+  });
+
   const { data: areaGoals = [] } = useQuery({
     queryKey: ['area-goals'],
     queryFn: () => base44.entities.AreaGoal.list(),
@@ -93,12 +102,12 @@ export default function Dashboard() {
   const uniqueStates = [...new Set(workshops.map(w => w.state).filter(Boolean))].sort();
   
   const segmentLabels = {
-    motos: "Oficina de Motos",
-    centro_automotivo: "Centro Automotivo",
     mecanica_leve: "Mecânica Leve",
     mecanica_pesada: "Truck Pesado",
+    motos: "Oficina de Motos",
+    centro_automotivo: "Centro Automotivo",
     premium: "Oficina Premium",
-    funilaria: "Funilaria e Pintura"
+    outro: "Outro"
   };
 
   // KPIs principais
@@ -116,6 +125,13 @@ export default function Dashboard() {
 
   const totalOS = osAssessments.length;
   const perfectOS = osAssessments.filter(os => os.classification === 'perfeita').length;
+
+  // Calcular faturamento por técnico
+  const technicians = employees.filter(emp => emp.area === 'tecnico' && emp.status === 'ativo');
+  const totalTechProduction = technicians.reduce((sum, tech) => 
+    sum + (tech.production_parts || 0) + (tech.production_services || 0), 0
+  );
+  const avgTechRevenue = technicians.length > 0 ? totalTechProduction / technicians.length : 0;
 
   // Rankings
   const rankingFaturamento = filteredWorkshops
@@ -140,23 +156,23 @@ export default function Dashboard() {
     .sort((a, b) => b.value - a.value)
     .slice(0, 50);
 
-  const rankingLucro = filteredWorkshops
-    .map(w => ({
-      name: w.name,
-      state: w.state,
-      segment: segmentLabels[w.segment] || w.segment,
-      value: w.monthly_goals?.profit_percentage || 0
+  const rankingRentabilidade = osAssessments
+    .filter(os => os.investment_percentage && os.revenue_percentage)
+    .map(os => ({
+      name: os.os_number,
+      state: "N/A",
+      segment: "Ordem de Serviço",
+      value: os.revenue_percentage
     }))
-    .filter(w => w.value > 0)
     .sort((a, b) => b.value - a.value)
-    .slice(0, 50);
+    .slice(0, 20);
 
-  // Metas por área
+  // Metas por área - usar dados reais se disponível
   const metasPorArea = [
     { area: "Vendas", meta: 100000, realizado: 85000, cor: "#3b82f6" },
     { area: "Comercial", meta: 50000, realizado: 48000, cor: "#10b981" },
     { area: "Marketing", meta: 30000, realizado: 22000, cor: "#f59e0b" },
-    { area: "Técnico", meta: 120000, realizado: 110000, cor: "#8b5cf6" },
+    { area: "Técnico", meta: 120000, realizado: totalTechProduction, cor: "#8b5cf6" },
     { area: "Financeiro", meta: 200000, realizado: 180000, cor: "#ec4899" },
     { area: "Pessoas", meta: 80000, realizado: 75000, cor: "#06b6d4" }
   ].map(m => ({
@@ -169,15 +185,15 @@ export default function Dashboard() {
   const aiInsights = [
     {
       type: "positive",
-      message: `O faturamento total está em R$ ${(totalRevenue / 1000).toFixed(0)}k, acima da média nacional do setor.`
+      message: `${filteredWorkshops.length} oficinas ativas no dashboard. Faturamento: R$ ${(totalRevenue / 1000).toFixed(0)}k.`
     },
     {
       type: "up",
-      message: `${perfectOS} OSs com rentabilidade perfeita (R70/I30) foram registradas este mês.`
+      message: `${perfectOS} OSs com rentabilidade ideal (R70/I30) registradas.`
     },
     {
-      type: "down",
-      message: "A área de Marketing está 27% abaixo da meta. Sugerimos intensificar campanhas."
+      type: "info",
+      message: `Faturamento médio por técnico: R$ ${avgTechRevenue.toFixed(0)} no período.`
     }
   ];
 
@@ -199,7 +215,7 @@ export default function Dashboard() {
                 Dashboard Oficinas Master 2.0
               </h1>
               <p className="text-gray-600">
-                Rankings nacionais, gamificação e análise inteligente
+                Rankings nacionais, métricas em tempo real e análise inteligente
               </p>
             </div>
             
@@ -287,12 +303,11 @@ export default function Dashboard() {
             trendValue="+8%"
           />
           <MetricCard
-            title="Lucro Médio"
-            value={`${avgProfit.toFixed(1)}%`}
-            icon={Percent}
-            color="purple"
-            trend="down"
-            trendValue="-2%"
+            title="Faturamento/Técnico"
+            value={`R$ ${(avgTechRevenue / 1000).toFixed(1)}k`}
+            icon={Users}
+            color="cyan"
+            subtitle={`${technicians.length} técnicos ativos`}
           />
           <MetricCard
             title="OSs Perfeitas"
@@ -312,15 +327,15 @@ export default function Dashboard() {
         {/* Tabs */}
         <Tabs defaultValue="rankings" className="space-y-6">
           <TabsList className="bg-white shadow-md">
-            <TabsTrigger value="rankings">🏆 Rankings Brasil</TabsTrigger>
+            <TabsTrigger value="rankings">🏆 Rankings Empresas</TabsTrigger>
+            <TabsTrigger value="people">👥 Rankings Pessoas</TabsTrigger>
             <TabsTrigger value="metas">🎯 Metas por Área</TabsTrigger>
-            <TabsTrigger value="operacional">⚙️ Sub-Rankings</TabsTrigger>
             <TabsTrigger value="evolucao">📈 Evolução</TabsTrigger>
-            <TabsTrigger value="engajamento">⚡ Engajamento</TabsTrigger>
-            <TabsTrigger value="rh">👥 Insights RH</TabsTrigger> {/* New TabsTrigger */}
+            <TabsTrigger value="engajamento">⚡ Tempo de Uso</TabsTrigger>
+            <TabsTrigger value="rh">💼 Insights RH</TabsTrigger>
           </TabsList>
 
-          {/* Rankings Brasil */}
+          {/* Rankings Empresas */}
           <TabsContent value="rankings" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card className="shadow-lg">
@@ -348,7 +363,27 @@ export default function Dashboard() {
                   <RankingTable data={rankingTicket.slice(0, 10)} type="ticket" />
                 </CardContent>
               </Card>
+
+              <Card className="shadow-lg lg:col-span-2">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Percent className="w-5 h-5 text-purple-600" />
+                    Top 20 - Rentabilidade (R70/I30)
+                  </CardTitle>
+                  <CardDescription>Melhores rentabilidades por OS</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <RankingTable data={rankingRentabilidade} type="percentage" />
+                </CardContent>
+              </Card>
             </div>
+          </TabsContent>
+
+          {/* Rankings Pessoas */}
+          <TabsContent value="people" className="space-y-6">
+            <TechnicianRanking employees={employees} />
+            <SalesRanking employees={employees} />
+            <ManagerRanking employees={employees} />
           </TabsContent>
 
           {/* Metas por Área */}
@@ -413,53 +448,6 @@ export default function Dashboard() {
             </div>
           </TabsContent>
 
-          {/* Sub-Rankings Operacionais */}
-          <TabsContent value="operacional" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="shadow-lg">
-                <CardHeader>
-                  <CardTitle>🛒 Ranking Vendas</CardTitle>
-                  <CardDescription>Top consultores de vendas</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center font-bold">1</div>
-                        <div>
-                          <p className="font-medium">João Silva</p>
-                          <p className="text-xs text-gray-600">Ticket: R$ 850</p>
-                        </div>
-                      </div>
-                      <span className="font-bold text-green-600">+25%</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="shadow-lg">
-                <CardHeader>
-                  <CardTitle>🔧 Ranking Técnicos</CardTitle>
-                  <CardDescription>Top técnicos por produtividade</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center font-bold">1</div>
-                        <div>
-                          <p className="font-medium">Carlos Souza</p>
-                          <p className="text-xs text-gray-600">Produção: R$ 15k</p>
-                        </div>
-                      </div>
-                      <span className="font-bold text-green-600">120%</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
           {/* Evolução */}
           <TabsContent value="evolucao" className="space-y-6">
             <Card className="shadow-lg">
@@ -492,48 +480,12 @@ export default function Dashboard() {
             </Card>
           </TabsContent>
 
-          {/* Engajamento */}
+          {/* Tempo de Uso */}
           <TabsContent value="engajamento" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="shadow-lg">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Uso da Plataforma</p>
-                      <p className="text-3xl font-bold">45h</p>
-                    </div>
-                    <Zap className="w-12 h-12 text-yellow-500" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="shadow-lg">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Equipe Ativa</p>
-                      <p className="text-3xl font-bold">85%</p>
-                    </div>
-                    <Users className="w-12 h-12 text-blue-500" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="shadow-lg">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Diagnósticos</p>
-                      <p className="text-3xl font-bold">12</p>
-                    </div>
-                    <Target className="w-12 h-12 text-purple-500" />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+            <UsageTimeCard userProfiles={userGameProfiles} workshopProfiles={gameProfiles} />
           </TabsContent>
 
-          {/* Nova aba de Insights RH */}
+          {/* Insights RH */}
           <TabsContent value="rh" className="space-y-6">
             <HRInsights employees={employees} />
           </TabsContent>
