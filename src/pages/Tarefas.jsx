@@ -2,13 +2,15 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Loader2, Plus, Calendar, ListTodo } from "lucide-react";
+import { Loader2, Plus, Calendar, ListTodo, LayoutGrid, List } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { isPast, isToday, isThisWeek, startOfDay, endOfDay, startOfWeek, endOfWeek } from "date-fns";
+import { isPast, isToday, isThisWeek, startOfDay, endOfDay, startOfWeek, endOfWeek, subDays } from "date-fns";
 
 import TaskCard from "../components/tasks/TaskCard";
 import TaskForm from "../components/tasks/TaskForm";
 import TaskFilters from "../components/tasks/TaskFilters";
+import KanbanBoard from "../components/tasks/KanbanBoard";
 
 export default function Tarefas() {
   const queryClient = useQueryClient();
@@ -16,6 +18,7 @@ export default function Tarefas() {
   const [workshop, setWorkshop] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
+  const [viewMode, setViewMode] = useState("list");
 
   const [filters, setFilters] = useState({
     search: "",
@@ -31,6 +34,13 @@ export default function Tarefas() {
   useEffect(() => {
     loadUser();
   }, []);
+
+  useEffect(() => {
+    // Verificar e enviar lembretes
+    if (user && tasks.length > 0) {
+      checkReminders();
+    }
+  }, [user, tasks]);
 
   const loadUser = async () => {
     try {
@@ -63,6 +73,62 @@ export default function Tarefas() {
     enabled: !!user && (user.role === 'admin' || user.role === 'user')
   });
 
+  const checkReminders = async () => {
+    const now = new Date();
+    
+    for (const task of tasks) {
+      if (!task.due_date || task.status === 'concluida' || task.status === 'cancelada') continue;
+      if (!task.reminder_settings?.enabled) continue;
+
+      const dueDate = new Date(task.due_date);
+      const reminders = task.reminder_settings.reminder_before || [];
+
+      for (const reminder of reminders) {
+        let reminderDate;
+        if (reminder.unit === 'minutes') {
+          reminderDate = subDays(dueDate, 0);
+          reminderDate.setMinutes(dueDate.getMinutes() - reminder.value);
+        } else if (reminder.unit === 'hours') {
+          reminderDate = subDays(dueDate, 0);
+          reminderDate.setHours(dueDate.getHours() - reminder.value);
+        } else if (reminder.unit === 'days') {
+          reminderDate = subDays(dueDate, reminder.value);
+        }
+
+        // Verificar se está na hora de enviar lembrete
+        const diff = Math.abs(now - reminderDate);
+        if (diff < 60000) { // Dentro de 1 minuto
+          // Enviar notificação no app
+          if (task.reminder_settings.app_notification && task.assigned_to) {
+            for (const userId of task.assigned_to) {
+              await base44.entities.Notification.create({
+                user_id: userId,
+                type: "lembrete_tarefa",
+                title: "Lembrete de Tarefa",
+                message: `A tarefa "${task.title}" vence em breve!`,
+                is_read: false
+              });
+            }
+          }
+
+          // Enviar e-mail
+          if (task.reminder_settings.email_reminder && task.assigned_to) {
+            for (const userId of task.assigned_to) {
+              const assignedUser = employees.find(e => e.id === userId);
+              if (assignedUser?.email) {
+                await base44.integrations.Core.SendEmail({
+                  to: assignedUser.email,
+                  subject: `Lembrete: ${task.title}`,
+                  body: `Olá ${assignedUser.full_name},\n\nEsta é uma notificação de lembrete para a tarefa: "${task.title}"\n\nVencimento: ${new Date(task.due_date).toLocaleString('pt-BR')}\n\nDescrição: ${task.description || 'Sem descrição'}\n\nAcesse a plataforma para mais detalhes.`
+                });
+              }
+            }
+          }
+        }
+      }
+    }
+  };
+
   const createTaskMutation = useMutation({
     mutationFn: (data) => base44.entities.Task.create({
       ...data,
@@ -73,7 +139,6 @@ export default function Tarefas() {
       setShowForm(false);
       toast.success("Tarefa criada!");
 
-      // Enviar notificações
       if (task.assigned_to && task.assigned_to.length > 0) {
         for (const userId of task.assigned_to) {
           await base44.entities.Notification.create({
@@ -141,7 +206,6 @@ export default function Tarefas() {
 
     updateTaskMutation.mutate({ id, data: updateData });
 
-    // Notificar criador
     if (task.created_by && newStatus === 'concluida') {
       await base44.entities.Notification.create({
         user_id: task.created_by,
@@ -166,24 +230,16 @@ export default function Tarefas() {
     });
   };
 
-  // Aplicar filtros
   const filteredTasks = tasks.filter(task => {
-    // Busca
     if (filters.search && !task.title.toLowerCase().includes(filters.search.toLowerCase())) {
       return false;
     }
-
-    // Status
     if (filters.status !== "all" && task.status !== filters.status) {
       return false;
     }
-
-    // Prioridade
     if (filters.priority !== "all" && task.priority !== filters.priority) {
       return false;
     }
-
-    // Atribuído a
     if (filters.assignedTo !== "all") {
       if (filters.assignedTo === "me") {
         if (!task.assigned_to?.includes(user.id)) return false;
@@ -191,32 +247,22 @@ export default function Tarefas() {
         if (!task.assigned_to?.includes(filters.assignedTo)) return false;
       }
     }
-
-    // Oficina
     if (filters.workshop !== "all" && task.workshop_id !== filters.workshop) {
       return false;
     }
-
-    // Atrasadas
     if (filters.overdue && task.due_date) {
       const isTaskOverdue = isPast(new Date(task.due_date)) && task.status !== 'concluida';
       if (!isTaskOverdue) return false;
     }
-
-    // Vence hoje
     if (filters.dueToday && task.due_date) {
       if (!isToday(new Date(task.due_date))) return false;
     }
-
-    // Vence esta semana
     if (filters.dueThisWeek && task.due_date) {
       if (!isThisWeek(new Date(task.due_date))) return false;
     }
-
     return true;
   });
 
-  // Estatísticas
   const stats = {
     total: filteredTasks.length,
     pendente: filteredTasks.filter(t => t.status === 'pendente').length,
@@ -236,7 +282,6 @@ export default function Tarefas() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-8 px-4">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
@@ -247,19 +292,36 @@ export default function Tarefas() {
               Organize, atribua e acompanhe tarefas da sua equipe
             </p>
           </div>
-          <Button
-            onClick={() => {
-              setEditingTask(null);
-              setShowForm(true);
-            }}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Nova Tarefa
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant={viewMode === "list" ? "default" : "outline"}
+              onClick={() => setViewMode("list")}
+              size="sm"
+            >
+              <List className="w-4 h-4 mr-2" />
+              Lista
+            </Button>
+            <Button
+              variant={viewMode === "kanban" ? "default" : "outline"}
+              onClick={() => setViewMode("kanban")}
+              size="sm"
+            >
+              <LayoutGrid className="w-4 h-4 mr-2" />
+              Kanban
+            </Button>
+            <Button
+              onClick={() => {
+                setEditingTask(null);
+                setShowForm(true);
+              }}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Nova Tarefa
+            </Button>
+          </div>
         </div>
 
-        {/* Estatísticas */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
           <div className="bg-white rounded-lg p-4 shadow-sm border-2 border-gray-100">
             <p className="text-sm text-gray-600">Total</p>
@@ -283,7 +345,6 @@ export default function Tarefas() {
           </div>
         </div>
 
-        {/* Filtros */}
         <div className="mb-6">
           <TaskFilters
             filters={filters}
@@ -294,12 +355,12 @@ export default function Tarefas() {
           />
         </div>
 
-        {/* Form Modal */}
         {showForm && (
           <div className="mb-6">
             <TaskForm
               task={editingTask}
               employees={employees}
+              allTasks={tasks}
               onSubmit={handleSubmit}
               onCancel={() => {
                 setShowForm(false);
@@ -310,7 +371,6 @@ export default function Tarefas() {
           </div>
         )}
 
-        {/* Lista de Tarefas */}
         {filteredTasks.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-lg shadow-sm">
             <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -324,6 +384,14 @@ export default function Tarefas() {
               Criar primeira tarefa
             </Button>
           </div>
+        ) : viewMode === "kanban" ? (
+          <KanbanBoard
+            tasks={filteredTasks}
+            employees={employees}
+            allTasks={tasks}
+            onTaskUpdate={(id, data) => updateTaskMutation.mutate({ id, data })}
+            onTaskEdit={handleEdit}
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredTasks.map((task) => (
