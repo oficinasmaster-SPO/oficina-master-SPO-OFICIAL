@@ -8,6 +8,7 @@ import { ChevronRight, TrendingUp, Users, BarChart3, Rocket, Loader2, LogIn, Fil
 import OnboardingTour from "../components/onboarding/OnboardingTour";
 import OnboardingChecklist from "../components/onboarding/OnboardingChecklist";
 import ContextualTips from "../components/onboarding/ContextualTips";
+import DashboardHub from "../components/home/DashboardHub";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -24,7 +25,6 @@ export default function Home() {
 
   const checkUserAndWorkshop = async () => {
     try {
-      // Verificar se está autenticado
       const authenticated = await base44.auth.isAuthenticated();
       setIsAuthenticated(authenticated);
 
@@ -36,12 +36,10 @@ export default function Home() {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
       
-      // Verificar se tem workshop
       const workshops = await base44.entities.Workshop.list();
       const userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
       setHasWorkshop(!!userWorkshop);
 
-      // Carregar ou criar UserProgress
       await loadUserProgress(currentUser);
     } catch (error) {
       console.log("User not authenticated or error:", error);
@@ -57,7 +55,6 @@ export default function Home() {
       let progress = progressList.find(p => p.user_id === currentUser.id);
 
       if (!progress) {
-        // Criar novo registro de progresso
         progress = await base44.entities.UserProgress.create({
           user_id: currentUser.id,
           onboarding_completed: false,
@@ -75,15 +72,11 @@ export default function Home() {
         });
         setShowOnboarding(true);
       } else {
-        // Atualizar último login
         await base44.entities.UserProgress.update(progress.id, {
           last_login_date: new Date().toISOString()
         });
 
-        // Mostrar onboarding se não foi completado
         setShowOnboarding(!progress.onboarding_completed);
-
-        // Atualizar checklist baseado em dados reais
         await updateChecklist(progress, currentUser);
       }
 
@@ -109,7 +102,6 @@ export default function Home() {
         explorou_dashboard: progress.checklist_items?.explorou_dashboard || false
       };
 
-      // Atualizar se houver mudanças
       const hasChanges = Object.keys(updatedChecklist).some(
         key => updatedChecklist[key] !== progress.checklist_items?.[key]
       );
@@ -177,6 +169,45 @@ export default function Home() {
     }
   ];
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  // Dashboard para usuários autenticados
+  if (isAuthenticated && user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
+        <DashboardHub user={user} />
+
+        {/* Onboarding Components */}
+        {userProgress && (
+          <>
+            {!userProgress.tour_completed && (
+              <OnboardingTour user={user} onComplete={handleTourComplete} />
+            )}
+
+            {showOnboarding && !userProgress.onboarding_completed && (
+              <div className="fixed top-20 right-6 z-40 w-full max-w-md animate-in slide-in-from-right duration-500">
+                <OnboardingChecklist
+                  user={user}
+                  userProgress={userProgress}
+                  onClose={() => setShowOnboarding(false)}
+                />
+              </div>
+            )}
+
+            <ContextualTips page="home" />
+          </>
+        )}
+      </div>
+    );
+  }
+
+  // Landing page para usuários não autenticados
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
       {/* Hero Section */}
@@ -192,35 +223,19 @@ export default function Home() {
               organização e crescimento da sua oficina.
             </p>
             
-            {loading ? (
-              <div className="flex items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-white" />
-              </div>
-            ) : !isAuthenticated ? (
-              <div className="flex flex-col items-center gap-4">
-                <Button 
-                  onClick={handleLogin}
-                  size="lg" 
-                  className="bg-white text-blue-700 hover:bg-blue-50 text-lg px-8 py-6 rounded-full shadow-xl hover:shadow-2xl transition-all"
-                >
-                  <LogIn className="mr-2 h-5 w-5" />
-                  Entrar para Começar
-                </Button>
-                <p className="text-sm text-blue-100">
-                  É grátis! Faça login para criar seu diagnóstico personalizado
-                </p>
-              </div>
-            ) : (
+            <div className="flex flex-col items-center gap-4">
               <Button 
-                id="start-diagnostic-button"
-                onClick={handleStartDiagnostic}
+                onClick={handleLogin}
                 size="lg" 
                 className="bg-white text-blue-700 hover:bg-blue-50 text-lg px-8 py-6 rounded-full shadow-xl hover:shadow-2xl transition-all"
               >
-                Começar Diagnóstico
-                <ChevronRight className="ml-2 h-5 w-5" />
+                <LogIn className="mr-2 h-5 w-5" />
+                Entrar para Começar
               </Button>
-            )}
+              <p className="text-sm text-blue-100">
+                É grátis! Faça login para criar seu diagnóstico personalizado
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -267,120 +282,83 @@ export default function Home() {
         </div>
 
         <div className="mt-16 text-center">
-          {!isAuthenticated ? (
-            <Button 
-              onClick={handleLogin}
-              size="lg" 
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-lg px-8 py-6 rounded-full shadow-lg"
-            >
-              <LogIn className="mr-2 h-5 w-5" />
-              Fazer Login e Começar
-            </Button>
-          ) : (
-            <Button 
-              onClick={handleStartDiagnostic}
-              size="lg" 
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-lg px-8 py-6 rounded-full shadow-lg"
-            >
-              Iniciar Diagnóstico Agora
-              <ChevronRight className="ml-2 h-5 w-5" />
-            </Button>
-          )}
+          <Button 
+            onClick={handleLogin}
+            size="lg" 
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-lg px-8 py-6 rounded-full shadow-lg"
+          >
+            <LogIn className="mr-2 h-5 w-5" />
+            Fazer Login e Começar
+          </Button>
         </div>
       </div>
 
-      {/* Benefits Section for Non-Authenticated Users */}
-      {!isAuthenticated && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl mb-20">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Por que fazer o diagnóstico?
-            </h2>
-            <p className="text-xl text-gray-600">
-              Veja o que você vai receber gratuitamente
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            <Card className="border-2 hover:shadow-xl transition-all">
-              <CardContent className="p-6 text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full mx-auto mb-4 flex items-center justify-center">
-                  <FileText className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">
-                  Diagnóstico Completo
-                </h3>
-                <p className="text-gray-600">
-                  Identificação precisa da fase atual da sua oficina baseada em metodologia testada
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-2 hover:shadow-xl transition-all">
-              <CardContent className="p-6 text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full mx-auto mb-4 flex items-center justify-center">
-                  <Target className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">
-                  Plano de Ação com IA
-                </h3>
-                <p className="text-gray-600">
-                  Recomendações personalizadas geradas por inteligência artificial para sua realidade
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-2 hover:shadow-xl transition-all">
-              <CardContent className="p-6 text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full mx-auto mb-4 flex items-center justify-center">
-                  <TrendingUp className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">
-                  Acompanhamento
-                </h3>
-                <p className="text-gray-600">
-                  Monitore sua evolução ao longo do tempo com múltiplos diagnósticos
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="text-center mt-12">
-            <Button 
-              onClick={handleLogin}
-              size="lg"
-              className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-xl px-12 py-8 rounded-full shadow-2xl"
-            >
-              <LogIn className="mr-3 h-6 w-6" />
-              Começar Agora - É Grátis!
-            </Button>
-          </div>
+      {/* Benefits Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl mb-20">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            Por que fazer o diagnóstico?
+          </h2>
+          <p className="text-xl text-gray-600">
+            Veja o que você vai receber gratuitamente
+          </p>
         </div>
-      )}
 
-      {/* Onboarding Components - Only for authenticated users */}
-      {isAuthenticated && user && userProgress && (
-        <>
-          {/* Tour Guiado */}
-          {!userProgress.tour_completed && (
-            <OnboardingTour user={user} onComplete={handleTourComplete} />
-          )}
+        <div className="grid md:grid-cols-3 gap-8">
+          <Card className="border-2 hover:shadow-xl transition-all">
+            <CardContent className="p-6 text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+                <FileText className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                Diagnóstico Completo
+              </h3>
+              <p className="text-gray-600">
+                Identificação precisa da fase atual da sua oficina baseada em metodologia testada
+              </p>
+            </CardContent>
+          </Card>
 
-          {/* Checklist de Onboarding */}
-          {showOnboarding && !userProgress.onboarding_completed && (
-            <div className="fixed top-20 right-6 z-40 w-full max-w-md animate-in slide-in-from-right duration-500">
-              <OnboardingChecklist
-                user={user}
-                userProgress={userProgress}
-                onClose={() => setShowOnboarding(false)}
-              />
-            </div>
-          )}
+          <Card className="border-2 hover:shadow-xl transition-all">
+            <CardContent className="p-6 text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+                <Target className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                Plano de Ação com IA
+              </h3>
+              <p className="text-gray-600">
+                Recomendações personalizadas geradas por inteligência artificial para sua realidade
+              </p>
+            </CardContent>
+          </Card>
 
-          {/* Dicas Contextuais */}
-          <ContextualTips page="home" />
-        </>
-      )}
+          <Card className="border-2 hover:shadow-xl transition-all">
+            <CardContent className="p-6 text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+                <TrendingUp className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                Acompanhamento
+              </h3>
+              <p className="text-gray-600">
+                Monitore sua evolução ao longo do tempo com múltiplos diagnósticos
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="text-center mt-12">
+          <Button 
+            onClick={handleLogin}
+            size="lg"
+            className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-xl px-12 py-8 rounded-full shadow-2xl"
+          >
+            <LogIn className="mr-3 h-6 w-6" />
+            Começar Agora - É Grátis!
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
