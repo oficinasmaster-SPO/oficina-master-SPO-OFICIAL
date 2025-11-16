@@ -43,7 +43,8 @@ import GestaoOficina from './pages/GestaoOficina';
 import Tarefas from './pages/Tarefas';
 import Gamificacao from './pages/Gamificacao';
 import IAAnalytics from './pages/IAAnalytics';
-import Layout from './Layout.jsx';
+import AdminClientes from './pages/AdminClientes';
+import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
@@ -92,10 +93,11 @@ export const PAGES = {
     "Tarefas": Tarefas,
     "Gamificacao": Gamificacao,
     "IAAnalytics": IAAnalytics,
+    "AdminClientes": AdminClientes,
 }
 
 export const pagesConfig = {
     mainPage: "Home",
     Pages: PAGES,
-    Layout: Layout,
+    Layout: __Layout,
 };

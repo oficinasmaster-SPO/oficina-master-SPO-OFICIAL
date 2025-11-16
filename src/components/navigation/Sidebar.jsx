@@ -85,10 +85,18 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           highlight: true
         },
         { 
-          name: 'Clientes', 
+          name: 'Gestão de Clientes (Admin)', 
+          href: createPageUrl('AdminClientes'), 
+          icon: Shield,
+          description: 'Painel administrativo de clientes',
+          adminOnly: true
+        },
+        { 
+          name: 'Meus Clientes', 
           href: createPageUrl('Clientes'), 
           icon: UserCircle,
-          description: 'Gestão de clientes'
+          description: 'Clientes atribuídos',
+          consultorOnly: true
         },
         { 
           name: 'Minha Oficina', 
@@ -293,7 +301,8 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
   const canAccessItem = (item) => {
     if (item.public) return true;
     if (!user) return false;
-    if (item.adminOnly && user.role !== 'admin' && user.role !== 'user') return false;
+    if (item.adminOnly && user.role !== 'admin') return false;
+    if (item.consultorOnly && user.role !== 'user') return false;
     return true;
   };
 
