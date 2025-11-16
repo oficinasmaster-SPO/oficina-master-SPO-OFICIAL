@@ -155,20 +155,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           name: 'Colaboradores', 
           href: createPageUrl('Colaboradores'), 
           icon: Briefcase,
-          description: 'Gestão de equipe e RH'
-        },
-        { 
-          name: 'CDC - Conexão do Colaborador', 
-          href: createPageUrl('Colaboradores'), 
-          icon: Heart,
-          description: 'Conhecer e conectar com a equipe',
-          highlight: true
-        },
-        { 
-          name: 'COEX - Contrato Expectativa', 
-          href: createPageUrl('Colaboradores'), 
-          icon: FileText,
-          description: 'Alinhamento de metas e comportamentos',
+          description: 'Gestão de equipe e RH',
           highlight: true
         },
         { 
