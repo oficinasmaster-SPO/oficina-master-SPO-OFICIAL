@@ -3,15 +3,15 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Loader2, Plus, Calendar, ListTodo, LayoutGrid, List } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { isPast, isToday, isThisWeek, startOfDay, endOfDay, startOfWeek, endOfWeek, subDays } from "date-fns";
+import { isPast, isToday, isThisWeek, subDays } from "date-fns";
 
 import TaskCard from "../components/tasks/TaskCard";
 import TaskForm from "../components/tasks/TaskForm";
 import TaskFilters from "../components/tasks/TaskFilters";
 import KanbanBoard from "../components/tasks/KanbanBoard";
-import TasksTour from "../components/tasks/TasksTour";
+import GuidedTour from "../components/help/GuidedTour";
+import HelpButton from "../components/help/HelpButton";
 
 export default function Tarefas() {
   const queryClient = useQueryClient();
@@ -66,67 +66,6 @@ export default function Tarefas() {
     queryFn: () => base44.entities.Workshop.list(),
     enabled: !!user && (user.role === 'admin' || user.role === 'user')
   });
-
-  const checkReminders = async () => {
-    if (!tasks || tasks.length === 0) return;
-    
-    const now = new Date();
-    
-    for (const task of tasks) {
-      if (!task.due_date || task.status === 'concluida' || task.status === 'cancelada') continue;
-      if (!task.reminder_settings?.enabled) continue;
-
-      const dueDate = new Date(task.due_date);
-      const reminders = task.reminder_settings.reminder_before || [];
-
-      for (const reminder of reminders) {
-        let reminderDate;
-        if (reminder.unit === 'minutes') {
-          reminderDate = subDays(dueDate, 0);
-          reminderDate.setMinutes(dueDate.getMinutes() - reminder.value);
-        } else if (reminder.unit === 'hours') {
-          reminderDate = subDays(dueDate, 0);
-          reminderDate.setHours(dueDate.getHours() - reminder.value);
-        } else if (reminder.unit === 'days') {
-          reminderDate = subDays(dueDate, reminder.value);
-        }
-
-        const diff = Math.abs(now - reminderDate);
-        if (diff < 60000) {
-          if (task.reminder_settings.app_notification && task.assigned_to) {
-            for (const userId of task.assigned_to) {
-              await base44.entities.Notification.create({
-                user_id: userId,
-                type: "lembrete_tarefa",
-                title: "Lembrete de Tarefa",
-                message: `A tarefa "${task.title}" vence em breve!`,
-                is_read: false
-              });
-            }
-          }
-
-          if (task.reminder_settings.email_reminder && task.assigned_to) {
-            for (const userId of task.assigned_to) {
-              const assignedUser = employees.find(e => e.id === userId);
-              if (assignedUser?.email) {
-                await base44.integrations.Core.SendEmail({
-                  to: assignedUser.email,
-                  subject: `Lembrete: ${task.title}`,
-                  body: `Olá ${assignedUser.full_name},\n\nEsta é uma notificação de lembrete para a tarefa: "${task.title}"\n\nVencimento: ${new Date(task.due_date).toLocaleString('pt-BR')}\n\nDescrição: ${task.description || 'Sem descrição'}\n\nAcesse a plataforma para mais detalhes.`
-                });
-              }
-            }
-          }
-        }
-      }
-    }
-  };
-
-  useEffect(() => {
-    if (user && tasks && tasks.length > 0) {
-      checkReminders();
-    }
-  }, [user, tasks]);
 
   const createTaskMutation = useMutation({
     mutationFn: (data) => base44.entities.Task.create({
@@ -205,7 +144,7 @@ export default function Tarefas() {
 
     updateTaskMutation.mutate({ id, data: updateData });
 
-    if (task.created_by && newStatus === 'concluida') {
+    if (task?.created_by && newStatus === 'concluida') {
       await base44.entities.Notification.create({
         user_id: task.created_by,
         type: "status_alterado",
@@ -241,7 +180,7 @@ export default function Tarefas() {
     }
     if (filters.assignedTo !== "all") {
       if (filters.assignedTo === "me") {
-        if (!task.assigned_to?.includes(user.id)) return false;
+        if (!task.assigned_to?.includes(user?.id)) return false;
       } else {
         if (!task.assigned_to?.includes(filters.assignedTo)) return false;
       }
@@ -270,6 +209,62 @@ export default function Tarefas() {
     atrasadas: filteredTasks.filter(t => t.due_date && isPast(new Date(t.due_date)) && t.status !== 'concluida').length
   };
 
+  const tourSteps = [
+    {
+      target: "create-task-button",
+      title: "Criar Nova Tarefa",
+      description: "Clique aqui para criar uma nova tarefa. Você pode adicionar título, descrição, prioridade, data de vencimento e atribuir pessoas.",
+      position: "bottom"
+    },
+    {
+      target: "view-mode-buttons",
+      title: "Visualizações",
+      description: "Alterne entre visualização em lista ou Kanban drag-and-drop para organizar suas tarefas da forma que preferir.",
+      position: "bottom"
+    },
+    {
+      target: "stats-section",
+      title: "Estatísticas",
+      description: "Acompanhe em tempo real o total de tarefas, pendentes, em andamento, concluídas e atrasadas.",
+      position: "bottom"
+    },
+    {
+      target: "filters-section",
+      title: "Filtros Avançados",
+      description: "Use os filtros para encontrar tarefas específicas por status, prioridade, responsável ou prazo.",
+      position: "top"
+    },
+    {
+      target: "task-card",
+      title: "Cartão de Tarefa",
+      description: "Cada tarefa mostra prioridade, status, progresso, vencimento e responsáveis. Você pode editar, excluir ou mudar o status rapidamente.",
+      position: "top"
+    }
+  ];
+
+  const helpContent = {
+    title: "Gerenciamento de Tarefas",
+    description: "Este módulo permite criar, organizar e acompanhar tarefas da sua equipe com visualização Kanban, dependências entre tarefas e lembretes configuráveis.",
+    faqs: [
+      {
+        question: "Como criar uma nova tarefa?",
+        answer: "Clique no botão 'Nova Tarefa', preencha as informações e atribua responsáveis. Você pode configurar lembretes e dependências."
+      },
+      {
+        question: "O que é a visualização Kanban?",
+        answer: "Kanban permite arrastar tarefas entre colunas de status (Pendente, Em Andamento, Concluída) para atualização rápida."
+      },
+      {
+        question: "Como funcionam as dependências?",
+        answer: "Dependências impedem que uma tarefa seja concluída antes que outras tarefas vinculadas estejam finalizadas."
+      },
+      {
+        question: "Como configurar lembretes?",
+        answer: "Ao criar/editar uma tarefa, configure lembretes por e-mail ou notificação no app antes do vencimento."
+      }
+    ]
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -280,7 +275,8 @@ export default function Tarefas() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-8 px-4">
-      <TasksTour />
+      <GuidedTour tourId="tarefas" steps={tourSteps} autoStart={true} />
+      <HelpButton {...helpContent} />
       
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">

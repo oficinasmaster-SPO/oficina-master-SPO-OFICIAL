@@ -44,6 +44,7 @@ import Tarefas from './pages/Tarefas';
 import Gamificacao from './pages/Gamificacao';
 import IAAnalytics from './pages/IAAnalytics';
 import AdminClientes from './pages/AdminClientes';
+import GerenciarToursVideos from './pages/GerenciarToursVideos';
 import __Layout from './Layout.jsx';
 
 
@@ -94,6 +95,7 @@ export const PAGES = {
     "Gamificacao": Gamificacao,
     "IAAnalytics": IAAnalytics,
     "AdminClientes": AdminClientes,
+    "GerenciarToursVideos": GerenciarToursVideos,
 }
 
 export const pagesConfig = {

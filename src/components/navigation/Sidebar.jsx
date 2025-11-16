@@ -21,7 +21,6 @@ import {
   BarChart4,
   DollarSign,
   Smile,
-  UserCircle,
   Briefcase,
   Target,
   ClipboardList,
@@ -35,7 +34,8 @@ import {
   FileCheck,
   Heart,
   GraduationCap,
-  Shield
+  Shield,
+  Video
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -282,6 +282,13 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('AdminClientes'), 
           icon: Users,
           description: 'Painel administrativo de clientes',
+          adminOnly: true
+        },
+        { 
+          name: 'Gerenciar Tours e Vídeos', 
+          href: createPageUrl('GerenciarToursVideos'), 
+          icon: Video,
+          description: 'Configure ajuda e tours guiados',
           adminOnly: true
         }
       ]
