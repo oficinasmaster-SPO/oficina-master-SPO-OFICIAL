@@ -29,13 +29,19 @@ import {
   Settings,
   Trophy,
   ListTodo,
-  Sparkles
+  Sparkles,
+  Wrench,
+  Package,
+  FileCheck,
+  Heart,
+  GraduationCap,
+  Shield
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
   const location = useLocation();
-  const [expandedGroups, setExpandedGroups] = React.useState(['diagnosticos', 'cadastros', 'autoavaliacoes']);
+  const [expandedGroups, setExpandedGroups] = React.useState(['dashboard', 'cadastros']);
 
   const toggleGroup = (groupId) => {
     setExpandedGroups(prev => 
@@ -52,64 +58,31 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       icon: BarChart3,
       items: [
         { 
-          name: 'Dashboard', 
+          name: 'Dashboard Nacional', 
           href: createPageUrl('Dashboard'), 
           icon: TrendingUp,
-          adminOnly: true,
-          description: 'Métricas e rankings'
-        }
-      ]
-    },
-    {
-      id: 'ia',
-      label: 'IA & Análise Preditiva',
-      icon: Sparkles,
-      items: [
-        { 
-          name: 'IA Analytics', 
-          href: createPageUrl('IAAnalytics'), 
-          icon: Brain,
-          description: 'Previsões, gargalos e recomendações',
-          highlight: true
-        }
-      ]
-    },
-    {
-      id: 'gamificacao',
-      label: 'Gamificação',
-      icon: Trophy,
-      items: [
+          description: 'Métricas, rankings e KPIs',
+          adminOnly: true
+        },
         { 
           name: 'Desafios & Conquistas', 
           href: createPageUrl('Gamificacao'), 
           icon: Trophy,
           description: 'Rankings, desafios e recompensas'
-        },
-        { 
-          name: 'Tarefas', 
-          href: createPageUrl('Tarefas'), 
-          icon: ListTodo,
-          description: 'Gerenciamento de tarefas'
         }
       ]
     },
     {
       id: 'cadastros',
-      label: 'Cadastros',
+      label: 'Cadastros (Base de Dados)',
       icon: Database,
       items: [
         { 
           name: 'Gestão da Oficina', 
           href: createPageUrl('GestaoOficina'), 
-          icon: Settings,
+          icon: Building2,
           description: 'Dados, serviços, metas e cultura',
           highlight: true
-        },
-        { 
-          name: 'Minha Oficina', 
-          href: createPageUrl('Cadastro'), 
-          icon: Building2,
-          description: 'Dados da oficina'
         },
         { 
           name: 'Clientes', 
@@ -118,23 +91,30 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           description: 'Gestão de clientes'
         },
         { 
-          name: 'Colaboradores', 
-          href: createPageUrl('Colaboradores'), 
-          icon: Briefcase,
-          description: 'Equipe e RH'
-        },
-        { 
-          name: 'Descrições de Cargo', 
-          href: createPageUrl('DescricoesCargo'), 
-          icon: ClipboardList,
-          description: 'Geração com IA - Modelo Oficinas Master'
+          name: 'Minha Oficina', 
+          href: createPageUrl('Cadastro'), 
+          icon: Settings,
+          description: 'Cadastro básico da oficina'
         }
       ]
     },
     {
-      id: 'autoavaliacoes',
-      label: 'Autoavaliações',
-      icon: Target,
+      id: 'patio',
+      label: 'Pátio Operação (QGP)',
+      icon: Wrench,
+      items: [
+        { 
+          name: 'Tarefas Operacionais', 
+          href: createPageUrl('Tarefas'), 
+          icon: ListTodo,
+          description: 'Gestão de tarefas do dia a dia'
+        }
+      ]
+    },
+    {
+      id: 'resultados',
+      label: 'Resultados (OS, Metas, Finanças)',
+      icon: BarChart4,
       items: [
         { 
           name: 'Mapas de Autoavaliação', 
@@ -142,19 +122,43 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: Target,
           description: 'Vendas, Comercial, Marketing, RH...',
           highlight: true
+        },
+        { 
+          name: 'OS - R70/I30 + TCMP²', 
+          href: createPageUrl('DiagnosticoOS'), 
+          icon: DollarSign,
+          description: 'Rentabilidade de Ordens de Serviço'
+        },
+        { 
+          name: 'Produção vs Salário', 
+          href: createPageUrl('DiagnosticoProducao'), 
+          icon: Calculator,
+          description: 'Relação custo x produtividade'
+        },
+        { 
+          name: 'Curva de Endividamento',
+          href: createPageUrl('DiagnosticoEndividamento'), 
+          icon: TrendingDown,
+          description: 'Análise 12 meses com IA'
         }
       ]
     },
     {
-      id: 'diagnosticos',
-      label: 'Diagnósticos & IA',
-      icon: Brain,
+      id: 'pessoas',
+      label: 'Pessoas & RH (Colaboradores)',
+      icon: Users,
       items: [
         { 
-          name: 'Fase da Oficina', 
-          href: createPageUrl('Questionario'), 
-          icon: FileText,
-          description: '4 Fases de evolução'
+          name: 'Colaboradores', 
+          href: createPageUrl('Colaboradores'), 
+          icon: Briefcase,
+          description: 'Gestão de equipe e RH'
+        },
+        { 
+          name: 'Descrições de Cargo', 
+          href: createPageUrl('DescricoesCargo'), 
+          icon: ClipboardList,
+          description: 'Geração com IA'
         },
         { 
           name: 'Perfil do Empresário', 
@@ -181,28 +185,30 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           description: 'Competências técnicas e emocionais'
         },
         { 
-          name: 'Produção vs Salário', 
-          href: createPageUrl('DiagnosticoProducao'), 
-          icon: Calculator,
-          description: 'Relação custo x produtividade'
-        },
-        { 
-          name: 'OS - R70/I30 + TCMP²', 
-          href: createPageUrl('DiagnosticoOS'), 
-          icon: DollarSign,
-          description: 'Rentabilidade de Ordens de Serviço'
-        },
-        { 
           name: 'Carga de Trabalho', 
           href: createPageUrl('DiagnosticoCarga'), 
           icon: BarChart4,
           description: 'Distribuição e sobrecarga'
+        }
+      ]
+    },
+    {
+      id: 'diagnosticos',
+      label: 'Diagnósticos & IA',
+      icon: Brain,
+      items: [
+        { 
+          name: 'IA Analytics', 
+          href: createPageUrl('IAAnalytics'), 
+          icon: Sparkles,
+          description: 'Previsões, gargalos e recomendações',
+          highlight: true
         },
         { 
-          name: 'Curva de Endividamento',
-          href: createPageUrl('DiagnosticoEndividamento'), 
-          icon: TrendingDown,
-          description: 'Análise 12 meses com IA'
+          name: 'Fase da Oficina', 
+          href: createPageUrl('Questionario'), 
+          icon: FileText,
+          description: '4 Fases de evolução'
         },
         { 
           name: 'Histórico de Diagnósticos', 
@@ -213,9 +219,61 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       ]
     },
     {
-      id: 'gestao',
-      label: 'Gestão & Notificações',
-      icon: Bell,
+      id: 'processos',
+      label: 'Processos',
+      icon: Package,
+      items: [
+        { 
+          name: 'Em Desenvolvimento', 
+          href: createPageUrl('Home'), 
+          icon: Package,
+          description: 'Gestão de processos - em breve'
+        }
+      ]
+    },
+    {
+      id: 'documentos',
+      label: 'Documentos',
+      icon: FileCheck,
+      items: [
+        { 
+          name: 'Em Desenvolvimento', 
+          href: createPageUrl('Home'), 
+          icon: FileCheck,
+          description: 'Central de documentos - em breve'
+        }
+      ]
+    },
+    {
+      id: 'cultura',
+      label: 'Cultura',
+      icon: Heart,
+      items: [
+        { 
+          name: 'Missão, Visão e Valores', 
+          href: createPageUrl('MissaoVisaoValores'), 
+          icon: Heart,
+          description: 'Cultura organizacional'
+        }
+      ]
+    },
+    {
+      id: 'treinamentos',
+      label: 'Treinamentos',
+      icon: GraduationCap,
+      items: [
+        { 
+          name: 'Em Desenvolvimento', 
+          href: createPageUrl('Home'), 
+          icon: GraduationCap,
+          description: 'Cursos e capacitações - em breve'
+        }
+      ]
+    },
+    {
+      id: 'admin',
+      label: 'Administração & Planos',
+      icon: Shield,
       items: [
         { 
           name: 'Notificações', 
