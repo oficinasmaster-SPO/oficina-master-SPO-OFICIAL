@@ -41,6 +41,7 @@ import DetalhesColaborador from './pages/DetalhesColaborador';
 import EditarDescricaoCargo from './pages/EditarDescricaoCargo';
 import GestaoOficina from './pages/GestaoOficina';
 import Tarefas from './pages/Tarefas';
+import Gamificacao from './pages/Gamificacao';
 import Layout from './Layout.jsx';
 
 
@@ -88,6 +89,7 @@ export const PAGES = {
     "EditarDescricaoCargo": EditarDescricaoCargo,
     "GestaoOficina": GestaoOficina,
     "Tarefas": Tarefas,
+    "Gamificacao": Gamificacao,
 }
 
 export const pagesConfig = {
