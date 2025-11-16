@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -155,6 +156,20 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('Colaboradores'), 
           icon: Briefcase,
           description: 'Gestão de equipe e RH'
+        },
+        { 
+          name: 'CDC - Conexão do Colaborador', 
+          href: createPageUrl('Colaboradores'), 
+          icon: Heart,
+          description: 'Conhecer e conectar com a equipe',
+          highlight: true
+        },
+        { 
+          name: 'COEX - Contrato Expectativa', 
+          href: createPageUrl('Colaboradores'), 
+          icon: FileText,
+          description: 'Alinhamento de metas e comportamentos',
+          highlight: true
         },
         { 
           name: 'Descrições de Cargo', 
