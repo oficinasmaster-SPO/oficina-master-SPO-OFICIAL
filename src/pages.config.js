@@ -40,6 +40,7 @@ import ResultadoEndividamento from './pages/ResultadoEndividamento';
 import DetalhesColaborador from './pages/DetalhesColaborador';
 import EditarDescricaoCargo from './pages/EditarDescricaoCargo';
 import GestaoOficina from './pages/GestaoOficina';
+import Tarefas from './pages/Tarefas';
 import Layout from './Layout.jsx';
 
 
@@ -86,6 +87,7 @@ export const PAGES = {
     "DetalhesColaborador": DetalhesColaborador,
     "EditarDescricaoCargo": EditarDescricaoCargo,
     "GestaoOficina": GestaoOficina,
+    "Tarefas": Tarefas,
 }
 
 export const pagesConfig = {
