@@ -36,12 +36,6 @@ export default function Tarefas() {
     loadUser();
   }, []);
 
-  useEffect(() => {
-    if (user && tasks.length > 0) {
-      checkReminders();
-    }
-  }, [user, tasks]);
-
   const loadUser = async () => {
     try {
       const currentUser = await base44.auth.me();
@@ -74,6 +68,8 @@ export default function Tarefas() {
   });
 
   const checkReminders = async () => {
+    if (!tasks || tasks.length === 0) return;
+    
     const now = new Date();
     
     for (const task of tasks) {
@@ -125,6 +121,12 @@ export default function Tarefas() {
       }
     }
   };
+
+  useEffect(() => {
+    if (user && tasks && tasks.length > 0) {
+      checkReminders();
+    }
+  }, [user, tasks]);
 
   const createTaskMutation = useMutation({
     mutationFn: (data) => base44.entities.Task.create({
