@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -36,7 +35,8 @@ import {
   Heart,
   GraduationCap,
   Shield,
-  Video
+  Video,
+  FilePenLine
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -156,6 +156,20 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('Colaboradores'), 
           icon: Briefcase,
           description: 'Gestão de equipe e RH',
+          highlight: true
+        },
+        { 
+          name: 'CDC - Conexão do Colaborador', 
+          href: createPageUrl('CDCList'), 
+          icon: Heart,
+          description: 'Conhecer e conectar com a equipe',
+          highlight: true
+        },
+        { 
+          name: 'COEX - Contrato Expectativa', 
+          href: createPageUrl('COEXList'), 
+          icon: FilePenLine,
+          description: 'Alinhamento de metas e comportamentos',
           highlight: true
         },
         { 

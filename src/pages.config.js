@@ -47,6 +47,8 @@ import AdminClientes from './pages/AdminClientes';
 import GerenciarToursVideos from './pages/GerenciarToursVideos';
 import CDCForm from './pages/CDCForm';
 import COEXForm from './pages/COEXForm';
+import CDCList from './pages/CDCList';
+import COEXList from './pages/COEXList';
 import __Layout from './Layout.jsx';
 
 
@@ -100,6 +102,8 @@ export const PAGES = {
     "GerenciarToursVideos": GerenciarToursVideos,
     "CDCForm": CDCForm,
     "COEXForm": COEXForm,
+    "CDCList": CDCList,
+    "COEXList": COEXList,
 }
 
 export const pagesConfig = {
