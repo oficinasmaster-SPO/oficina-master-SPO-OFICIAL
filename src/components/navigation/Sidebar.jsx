@@ -28,7 +28,8 @@ import {
   TrendingDown,
   Settings,
   Trophy,
-  ListTodo
+  ListTodo,
+  Sparkles
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -60,6 +61,20 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       ]
     },
     {
+      id: 'ia',
+      label: 'IA & Análise Preditiva',
+      icon: Sparkles,
+      items: [
+        { 
+          name: 'IA Analytics', 
+          href: createPageUrl('IAAnalytics'), 
+          icon: Brain,
+          description: 'Previsões, gargalos e recomendações',
+          highlight: true
+        }
+      ]
+    },
+    {
       id: 'gamificacao',
       label: 'Gamificação',
       icon: Trophy,
@@ -68,8 +83,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           name: 'Desafios & Conquistas', 
           href: createPageUrl('Gamificacao'), 
           icon: Trophy,
-          description: 'Rankings, desafios e recompensas',
-          highlight: true
+          description: 'Rankings, desafios e recompensas'
         },
         { 
           name: 'Tarefas', 

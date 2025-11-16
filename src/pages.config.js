@@ -42,6 +42,7 @@ import EditarDescricaoCargo from './pages/EditarDescricaoCargo';
 import GestaoOficina from './pages/GestaoOficina';
 import Tarefas from './pages/Tarefas';
 import Gamificacao from './pages/Gamificacao';
+import IAAnalytics from './pages/IAAnalytics';
 import Layout from './Layout.jsx';
 
 
@@ -90,6 +91,7 @@ export const PAGES = {
     "GestaoOficina": GestaoOficina,
     "Tarefas": Tarefas,
     "Gamificacao": Gamificacao,
+    "IAAnalytics": IAAnalytics,
 }
 
 export const pagesConfig = {
