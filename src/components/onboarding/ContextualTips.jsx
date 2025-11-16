@@ -63,7 +63,7 @@ export default function ContextualTips({ page }) {
   };
 
   return (
-    <div className="fixed bottom-6 left-6 z-40 max-w-md animate-in slide-in-from-left duration-300">
+    <div className="fixed bottom-6 right-6 z-40 max-w-md animate-in slide-in-from-right duration-300 lg:left-auto lg:right-6">
       <Card className="shadow-2xl border-2 border-yellow-400 bg-gradient-to-br from-yellow-50 to-amber-50">
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
