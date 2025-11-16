@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Loader2, Target, Eye, Heart, Sparkles } from "lucide-react";
+import { Loader2, Target, Eye, Heart, Sparkles, CheckCircle2, Upload, Download, Edit2, Palette } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { valuesSuggestions } from "../components/assessment/AssessmentCriteria";
 import { toast } from "sonner";
@@ -19,6 +19,7 @@ export default function MissaoVisaoValores() {
   const [user, setUser] = useState(null);
   const [workshop, setWorkshop] = useState(null);
   const [step, setStep] = useState(1);
+  const [isEditing, setIsEditing] = useState(false);
 
   const [missionAnswers, setMissionAnswers] = useState({
     products_services: "",
@@ -43,6 +44,13 @@ export default function MissaoVisaoValores() {
   const [selectedValues, setSelectedValues] = useState([]);
   const [generatedMission, setGeneratedMission] = useState("");
   const [generatedVision, setGeneratedVision] = useState("");
+  const [generatedCoreValues, setGeneratedCoreValues] = useState([]);
+  
+  // Customização
+  const [logoUrl, setLogoUrl] = useState("");
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [primaryColor, setPrimaryColor] = useState("#3b82f6");
+  const [secondaryColor, setSecondaryColor] = useState("#8b5cf6");
 
   useEffect(() => {
     loadData();
@@ -56,11 +64,62 @@ export default function MissaoVisaoValores() {
       const workshops = await base44.entities.Workshop.list();
       const userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
       setWorkshop(userWorkshop);
+      
+      if (userWorkshop?.logo_url) {
+        setLogoUrl(userWorkshop.logo_url);
+      }
+      if (userWorkshop?.brand_colors) {
+        setPrimaryColor(userWorkshop.brand_colors.primary || "#3b82f6");
+        setSecondaryColor(userWorkshop.brand_colors.secondary || "#8b5cf6");
+      }
     } catch (error) {
       toast.error("Você precisa estar logado");
       base44.auth.redirectToLogin(createPageUrl("MissaoVisaoValores"));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLogoUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Arquivo muito grande. Máximo 5MB");
+      return;
+    }
+
+    setUploadingLogo(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setLogoUrl(file_url);
+      
+      if (workshop) {
+        await base44.entities.Workshop.update(workshop.id, { logo_url: file_url });
+      }
+      
+      toast.success("Logo carregado!");
+    } catch (error) {
+      toast.error("Erro ao fazer upload");
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
+  const handleColorChange = async (type, color) => {
+    if (type === "primary") {
+      setPrimaryColor(color);
+    } else {
+      setSecondaryColor(color);
+    }
+
+    if (workshop) {
+      await base44.entities.Workshop.update(workshop.id, {
+        brand_colors: {
+          primary: type === "primary" ? color : primaryColor,
+          secondary: type === "secondary" ? color : secondaryColor
+        }
+      });
     }
   };
 
@@ -125,7 +184,7 @@ A visão deve estabelecer onde quer chegar com prazo definido. Seja inspiradora 
     }
   };
 
-  const handleSubmit = async () => {
+  const handleGenerateValues = async () => {
     if (selectedValues.length < 4) {
       toast.error("Selecione de 4 a 7 valores");
       return;
@@ -173,6 +232,20 @@ Retorne em formato JSON com a estrutura:
         }
       });
 
+      setGeneratedCoreValues(response.values);
+      toast.success("Valores gerados!");
+      setStep(4);
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao gerar valores");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleSaveDocument = async () => {
+    setSubmitting(true);
+    try {
       await base44.entities.MissionVisionValues.create({
         workshop_id: workshop?.id || null,
         mission_answers: missionAnswers,
@@ -180,11 +253,11 @@ Retorne em formato JSON com a estrutura:
         vision_answers: visionAnswers,
         vision_statement: generatedVision,
         values_answers: valuesAnswers,
-        core_values: response.values,
+        core_values: generatedCoreValues,
         completed: true
       });
 
-      toast.success("Missão, Visão e Valores definidos!");
+      toast.success("Documento salvo com sucesso!");
       navigate(createPageUrl("Home"));
     } catch (error) {
       console.error(error);
@@ -192,6 +265,122 @@ Retorne em formato JSON com a estrutura:
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const exportToPDF = () => {
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Missão, Visão e Valores - ${workshop?.name || 'Oficina'}</title>
+          <style>
+            body { 
+              font-family: Arial, sans-serif; 
+              padding: 40px; 
+              color: #333;
+              background: linear-gradient(135deg, ${primaryColor}15 0%, ${secondaryColor}15 100%);
+            }
+            .header { 
+              text-align: center; 
+              margin-bottom: 40px; 
+              padding-bottom: 20px;
+              border-bottom: 3px solid ${primaryColor};
+            }
+            .logo { 
+              max-width: 200px; 
+              margin-bottom: 20px; 
+            }
+            .section { 
+              margin-bottom: 40px; 
+              background: white;
+              padding: 30px;
+              border-radius: 10px;
+              box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            }
+            h1 { 
+              color: ${primaryColor}; 
+              font-size: 28px; 
+            }
+            h2 { 
+              color: ${secondaryColor}; 
+              font-size: 22px; 
+              margin-bottom: 15px;
+              border-left: 4px solid ${primaryColor};
+              padding-left: 15px;
+            }
+            .statement { 
+              font-style: italic; 
+              font-size: 18px; 
+              line-height: 1.6; 
+              color: #555;
+              background: ${primaryColor}10;
+              padding: 20px;
+              border-radius: 8px;
+              margin: 15px 0;
+            }
+            .value-item { 
+              margin-bottom: 25px; 
+              padding: 20px;
+              background: ${secondaryColor}08;
+              border-radius: 8px;
+            }
+            .value-name { 
+              font-weight: bold; 
+              font-size: 18px; 
+              color: ${primaryColor};
+              margin-bottom: 10px;
+            }
+            .value-definition { 
+              margin-bottom: 10px; 
+              color: #666;
+            }
+            .evidence { 
+              margin-left: 20px; 
+              color: #555; 
+            }
+            .evidence li { 
+              margin-bottom: 8px; 
+            }
+            @media print {
+              body { background: white; }
+              .section { box-shadow: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            ${logoUrl ? `<img src="${logoUrl}" class="logo" alt="Logo" />` : ''}
+            <h1>${workshop?.name || 'Oficina'}</h1>
+            <p>Documento de Cultura Organizacional</p>
+          </div>
+          
+          <div class="section">
+            <h2>🎯 Missão</h2>
+            <div class="statement">${generatedMission}</div>
+          </div>
+          
+          <div class="section">
+            <h2>👁️ Visão</h2>
+            <div class="statement">${generatedVision}</div>
+          </div>
+          
+          <div class="section">
+            <h2>❤️ Valores</h2>
+            ${generatedCoreValues.map(value => `
+              <div class="value-item">
+                <div class="value-name">${value.name}</div>
+                <div class="value-definition">${value.definition}</div>
+                <ul class="evidence">
+                  ${value.behavioral_evidence.map(ev => `<li>${ev}</li>`).join('')}
+                </ul>
+              </div>
+            `).join('')}
+          </div>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
   };
 
   if (loading) {
@@ -209,7 +398,7 @@ Retorne em formato JSON com a estrutura:
           <h1 className="text-4xl font-bold text-gray-900 mb-3">
             Missão, Visão e Valores
           </h1>
-          <p className="text-lg text-gray-600">Defina a cultura e direção da sua oficina</p>
+          <p className="text-lg text-gray-600">Defina a cultura e direção da sua oficina com IA</p>
         </div>
 
         {/* Step 1: Missão */}
@@ -285,13 +474,30 @@ Retorne em formato JSON com a estrutura:
           <div className="space-y-6">
             <Card className="border-2 border-green-200">
               <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-3">
-                  <CheckCircle2 className="w-6 h-6 text-green-600" />
-                  <h3 className="font-bold text-lg">Missão Definida</h3>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2 className="w-6 h-6 text-green-600" />
+                    <h3 className="font-bold text-lg">Missão Definida</h3>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsEditing(!isEditing)}
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </Button>
                 </div>
-                <p className="text-gray-700 italic text-lg bg-green-50 p-4 rounded-lg border border-green-200">
-                  "{generatedMission}"
-                </p>
+                {isEditing ? (
+                  <Textarea
+                    value={generatedMission}
+                    onChange={(e) => setGeneratedMission(e.target.value)}
+                    className="text-lg italic"
+                  />
+                ) : (
+                  <p className="text-gray-700 italic text-lg bg-green-50 p-4 rounded-lg border border-green-200">
+                    "{generatedMission}"
+                  </p>
+                )}
               </CardContent>
             </Card>
 
@@ -325,7 +531,7 @@ Retorne em formato JSON com a estrutura:
                   />
                 </div>
                 <div>
-                  <Label>3. Quanto estou disposto a investir nisso? Qual a minha sede de crescimento? Onde realmente eu quero chegar?</Label>
+                  <Label>3. Quanto estou disposto a investir nisso? Qual a minha sede de crescimento?</Label>
                   <Textarea
                     value={visionAnswers.growth_ambition}
                     onChange={(e) => setVisionAnswers({...visionAnswers, growth_ambition: e.target.value})}
@@ -423,14 +629,14 @@ Retorne em formato JSON com a estrutura:
                 </div>
 
                 <Button
-                  onClick={handleSubmit}
+                  onClick={handleGenerateValues}
                   disabled={submitting || selectedValues.length < 4 || selectedValues.length > 7}
                   className="w-full bg-pink-600 hover:bg-pink-700"
                 >
                   {submitting ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Finalizando...
+                      Gerando Valores...
                     </>
                   ) : (
                     <>
@@ -441,6 +647,220 @@ Retorne em formato JSON com a estrutura:
                 </Button>
               </CardContent>
             </Card>
+          </div>
+        )}
+
+        {/* Step 4: Personalização e Preview */}
+        {step === 4 && (
+          <div className="space-y-6">
+            {/* Customização */}
+            <Card className="border-2" style={{ borderColor: primaryColor }}>
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center">
+                    <Palette className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <div>
+                    <CardTitle>4. Personalização do Documento</CardTitle>
+                    <CardDescription>Adicione logo e cores da sua marca</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div>
+                  <Label>Logo da Oficina</Label>
+                  <div className="flex items-center gap-4 mt-2">
+                    {logoUrl && (
+                      <img src={logoUrl} alt="Logo" className="w-24 h-24 object-contain rounded-lg border-2 border-gray-200" />
+                    )}
+                    <div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleLogoUpload}
+                        className="hidden"
+                        id="logo-upload"
+                        disabled={uploadingLogo}
+                      />
+                      <Button
+                        onClick={() => document.getElementById('logo-upload').click()}
+                        variant="outline"
+                        disabled={uploadingLogo}
+                      >
+                        {uploadingLogo ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Carregando...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-4 h-4 mr-2" />
+                            {logoUrl ? 'Trocar Logo' : 'Adicionar Logo'}
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Cor Primária</Label>
+                    <div className="flex gap-2 mt-2">
+                      <input
+                        type="color"
+                        value={primaryColor}
+                        onChange={(e) => handleColorChange('primary', e.target.value)}
+                        className="w-12 h-12 rounded-lg cursor-pointer"
+                      />
+                      <Input
+                        value={primaryColor}
+                        onChange={(e) => handleColorChange('primary', e.target.value)}
+                        placeholder="#3b82f6"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label>Cor Secundária</Label>
+                    <div className="flex gap-2 mt-2">
+                      <input
+                        type="color"
+                        value={secondaryColor}
+                        onChange={(e) => handleColorChange('secondary', e.target.value)}
+                        className="w-12 h-12 rounded-lg cursor-pointer"
+                      />
+                      <Input
+                        value={secondaryColor}
+                        onChange={(e) => handleColorChange('secondary', e.target.value)}
+                        placeholder="#8b5cf6"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Preview do Documento */}
+            <Card className="border-2" style={{ borderColor: primaryColor }}>
+              <CardHeader style={{ background: `linear-gradient(135deg, ${primaryColor}15 0%, ${secondaryColor}15 100%)` }}>
+                <div className="text-center">
+                  {logoUrl && (
+                    <img src={logoUrl} alt="Logo" className="w-32 h-32 object-contain mx-auto mb-4" />
+                  )}
+                  <h2 className="text-2xl font-bold" style={{ color: primaryColor }}>
+                    {workshop?.name || 'Oficina'}
+                  </h2>
+                  <p className="text-gray-600 mt-2">Documento de Cultura Organizacional</p>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6 mt-6">
+                {/* Missão */}
+                <div className="p-6 rounded-lg" style={{ background: `${primaryColor}10`, borderLeft: `4px solid ${primaryColor}` }}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Target className="w-5 h-5" style={{ color: primaryColor }} />
+                    <h3 className="font-bold text-xl" style={{ color: primaryColor }}>Missão</h3>
+                  </div>
+                  <Textarea
+                    value={generatedMission}
+                    onChange={(e) => setGeneratedMission(e.target.value)}
+                    className="text-lg italic border-0 bg-transparent resize-none"
+                    rows={3}
+                  />
+                </div>
+
+                {/* Visão */}
+                <div className="p-6 rounded-lg" style={{ background: `${secondaryColor}10`, borderLeft: `4px solid ${secondaryColor}` }}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Eye className="w-5 h-5" style={{ color: secondaryColor }} />
+                    <h3 className="font-bold text-xl" style={{ color: secondaryColor }}>Visão</h3>
+                  </div>
+                  <Textarea
+                    value={generatedVision}
+                    onChange={(e) => setGeneratedVision(e.target.value)}
+                    className="text-lg italic border-0 bg-transparent resize-none"
+                    rows={3}
+                  />
+                </div>
+
+                {/* Valores */}
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Heart className="w-5 h-5" style={{ color: primaryColor }} />
+                    <h3 className="font-bold text-xl" style={{ color: primaryColor }}>Valores</h3>
+                  </div>
+                  {generatedCoreValues.map((value, index) => (
+                    <div key={index} className="mb-6 p-4 rounded-lg" style={{ background: `${secondaryColor}08` }}>
+                      <Input
+                        value={value.name}
+                        onChange={(e) => {
+                          const updated = [...generatedCoreValues];
+                          updated[index].name = e.target.value;
+                          setGeneratedCoreValues(updated);
+                        }}
+                        className="font-bold text-lg mb-2 border-0 bg-transparent"
+                        style={{ color: primaryColor }}
+                      />
+                      <Textarea
+                        value={value.definition}
+                        onChange={(e) => {
+                          const updated = [...generatedCoreValues];
+                          updated[index].definition = e.target.value;
+                          setGeneratedCoreValues(updated);
+                        }}
+                        className="mb-2 border-0 bg-transparent resize-none"
+                        rows={2}
+                      />
+                      <ul className="space-y-1 text-sm text-gray-600">
+                        {value.behavioral_evidence.map((ev, evIndex) => (
+                          <li key={evIndex} className="flex items-start gap-2">
+                            <span style={{ color: primaryColor }}>•</span>
+                            <Input
+                              value={ev}
+                              onChange={(e) => {
+                                const updated = [...generatedCoreValues];
+                                updated[index].behavioral_evidence[evIndex] = e.target.value;
+                                setGeneratedCoreValues(updated);
+                              }}
+                              className="border-0 bg-transparent p-0 h-auto"
+                            />
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Ações */}
+            <div className="flex gap-4">
+              <Button
+                onClick={exportToPDF}
+                variant="outline"
+                className="flex-1"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Exportar PDF
+              </Button>
+              <Button
+                onClick={handleSaveDocument}
+                disabled={submitting}
+                className="flex-1"
+                style={{ background: primaryColor }}
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                    Salvar Documento Final
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         )}
       </div>
