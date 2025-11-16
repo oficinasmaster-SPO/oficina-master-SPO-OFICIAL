@@ -9,13 +9,15 @@ export default function HelpButton({ title, description, videoUrl, faqs, fullVid
 
   return (
     <>
-      <Button
+      {/* BOTÃO DE AJUDA BEM VISÍVEL */}
+      <button
         onClick={() => setOpen(true)}
-        className="fixed top-24 right-6 z-40 bg-blue-600 hover:bg-blue-700 text-white shadow-2xl rounded-full w-14 h-14 border-4 border-white"
-        title="Precisa de Ajuda?"
+        className="w-16 h-16 bg-blue-600 hover:bg-blue-700 text-white shadow-2xl rounded-full border-4 border-white flex items-center justify-center transition-all hover:scale-110 animate-bounce"
+        title="🆘 Precisa de Ajuda? Clique aqui!"
+        style={{ animationDuration: '2s' }}
       >
-        <HelpCircle className="w-7 h-7" />
-      </Button>
+        <HelpCircle className="w-8 h-8" />
+      </button>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">

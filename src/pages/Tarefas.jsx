@@ -20,7 +20,6 @@ export default function Tarefas() {
   const [showForm, setShowForm] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [viewMode, setViewMode] = useState("list");
-  const [showTour, setShowTour] = useState(false);
 
   const [filters, setFilters] = useState({
     search: "",
@@ -276,21 +275,26 @@ export default function Tarefas() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-8 px-4">
-      {/* Botão de Ajuda (?) */}
-      <HelpButton {...helpContent} />
-      
-      {/* Botão Tour Guiado */}
-      <Button
-        onClick={() => {
-          localStorage.removeItem('tour_tarefas_completed');
-          window.location.reload();
-        }}
-        className="fixed bottom-6 right-6 z-40 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-2xl"
-        size="lg"
-      >
-        <Play className="w-5 h-5 mr-2" />
-        Iniciar Tour Guiado
-      </Button>
+      {/* BOTÕES DE AJUDA E TOUR - SEMPRE VISÍVEIS */}
+      <div className="fixed top-24 right-6 z-[9999] flex flex-col gap-3">
+        {/* Botão de Ajuda (?) */}
+        <HelpButton {...helpContent} />
+      </div>
+
+      {/* Botão Tour Guiado - Canto inferior direito */}
+      <div className="fixed bottom-6 right-6 z-[9999]">
+        <Button
+          onClick={() => {
+            localStorage.removeItem('tour_tarefas_completed');
+            window.location.reload();
+          }}
+          className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-2xl text-white font-bold px-6 py-3 rounded-full animate-pulse"
+          size="lg"
+        >
+          <Play className="w-5 h-5 mr-2" />
+          Iniciar Tour Guiado
+        </Button>
+      </div>
 
       {/* Tour Guiado */}
       <GuidedTour tourId="tarefas" steps={tourSteps} autoStart={true} />
