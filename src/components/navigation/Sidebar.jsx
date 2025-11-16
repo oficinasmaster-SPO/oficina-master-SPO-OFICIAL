@@ -85,13 +85,6 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           highlight: true
         },
         { 
-          name: 'Gestão de Clientes', 
-          href: createPageUrl('AdminClientes'), 
-          icon: Shield,
-          description: 'Painel administrativo de clientes',
-          adminOnly: true
-        },
-        { 
           name: 'Minha Oficina', 
           href: createPageUrl('Cadastro'), 
           icon: Settings,
@@ -276,6 +269,13 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       label: 'Administração & Planos',
       icon: Shield,
       items: [
+        { 
+          name: 'Gestão de Clientes', 
+          href: createPageUrl('AdminClientes'), 
+          icon: Users,
+          description: 'Painel administrativo de clientes',
+          adminOnly: true
+        },
         { 
           name: 'Notificações', 
           href: createPageUrl('Notificacoes'), 
