@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Loader2, Plus, Calendar, ListTodo, LayoutGrid, List } from "lucide-react";
+import { Loader2, Plus, Calendar, ListTodo, LayoutGrid, List, HelpCircle, Play } from "lucide-react";
 import { toast } from "sonner";
 import { isPast, isToday, isThisWeek, subDays } from "date-fns";
 
@@ -20,6 +20,7 @@ export default function Tarefas() {
   const [showForm, setShowForm] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [viewMode, setViewMode] = useState("list");
+  const [showTour, setShowTour] = useState(false);
 
   const [filters, setFilters] = useState({
     search: "",
@@ -275,8 +276,24 @@ export default function Tarefas() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-8 px-4">
-      <GuidedTour tourId="tarefas" steps={tourSteps} autoStart={true} />
+      {/* Botão de Ajuda (?) */}
       <HelpButton {...helpContent} />
+      
+      {/* Botão Tour Guiado */}
+      <Button
+        onClick={() => {
+          localStorage.removeItem('tour_tarefas_completed');
+          window.location.reload();
+        }}
+        className="fixed bottom-6 right-6 z-40 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-2xl"
+        size="lg"
+      >
+        <Play className="w-5 h-5 mr-2" />
+        Iniciar Tour Guiado
+      </Button>
+
+      {/* Tour Guiado */}
+      <GuidedTour tourId="tarefas" steps={tourSteps} autoStart={true} />
       
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
