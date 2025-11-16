@@ -26,7 +26,9 @@ import {
   Target,
   ClipboardList,
   TrendingDown,
-  Settings
+  Settings,
+  Trophy,
+  ListTodo
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -54,6 +56,26 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: TrendingUp,
           adminOnly: true,
           description: 'Métricas e rankings'
+        }
+      ]
+    },
+    {
+      id: 'gamificacao',
+      label: 'Gamificação',
+      icon: Trophy,
+      items: [
+        { 
+          name: 'Desafios & Conquistas', 
+          href: createPageUrl('Gamificacao'), 
+          icon: Trophy,
+          description: 'Rankings, desafios e recompensas',
+          highlight: true
+        },
+        { 
+          name: 'Tarefas', 
+          href: createPageUrl('Tarefas'), 
+          icon: ListTodo,
+          description: 'Gerenciamento de tarefas'
         }
       ]
     },
