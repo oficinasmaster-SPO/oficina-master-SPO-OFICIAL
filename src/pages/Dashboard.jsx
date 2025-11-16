@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, DollarSign, TrendingUp, Percent, Target, Users, Award, BarChart3, Clock, Wrench, ShoppingCart, Calendar, CheckCircle } from "lucide-react";
+import { Loader2, DollarSign, TrendingUp, Percent, Target, Users, Award, BarChart3, Clock, Wrench, ShoppingCart, Calendar, CheckCircle, Calculator } from "lucide-react";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -514,7 +515,7 @@ export default function Dashboard() {
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Meta:</span>
-                        <span className="font-bold">R$ {(area.meta / 1000).toFixed(0)}k</span>
+                        <span className="font-bold">R$ ${(area.meta / 1000).toFixed(0)}k</span>
                       </div>
                     </div>
                   </CardContent>
