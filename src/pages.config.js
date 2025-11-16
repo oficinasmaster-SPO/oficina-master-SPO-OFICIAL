@@ -45,6 +45,8 @@ import Gamificacao from './pages/Gamificacao';
 import IAAnalytics from './pages/IAAnalytics';
 import AdminClientes from './pages/AdminClientes';
 import GerenciarToursVideos from './pages/GerenciarToursVideos';
+import CDCForm from './pages/CDCForm';
+import COEXForm from './pages/COEXForm';
 import __Layout from './Layout.jsx';
 
 
@@ -96,6 +98,8 @@ export const PAGES = {
     "IAAnalytics": IAAnalytics,
     "AdminClientes": AdminClientes,
     "GerenciarToursVideos": GerenciarToursVideos,
+    "CDCForm": CDCForm,
+    "COEXForm": COEXForm,
 }
 
 export const pagesConfig = {
