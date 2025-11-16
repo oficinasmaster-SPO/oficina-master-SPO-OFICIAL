@@ -101,7 +101,15 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           name: 'Tarefas Operacionais', 
           href: createPageUrl('Tarefas'), 
           icon: ListTodo,
-          description: 'Gestão de tarefas do dia a dia'
+          description: 'Gestão de tarefas do dia a dia',
+          highlight: true
+        },
+        { 
+          name: 'Notificações', 
+          href: createPageUrl('Notificacoes'), 
+          icon: Bell,
+          badge: unreadCount,
+          description: 'Alertas e prazos'
         }
       ]
     },
@@ -275,13 +283,6 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: Users,
           description: 'Painel administrativo de clientes',
           adminOnly: true
-        },
-        { 
-          name: 'Notificações', 
-          href: createPageUrl('Notificacoes'), 
-          icon: Bell,
-          badge: unreadCount,
-          description: 'Alertas e prazos'
         }
       ]
     }
