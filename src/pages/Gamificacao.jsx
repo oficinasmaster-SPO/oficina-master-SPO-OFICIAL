@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Trophy, Award, Target, Sparkles, Plus } from "lucide-react";
+import { Loader2, Trophy, Award, Target, Sparkles, Plus, Wrench } from "lucide-react";
 import { toast } from "sonner";
 
 import LevelBadge from "../components/dashboard/LevelBadge";
@@ -169,8 +169,9 @@ export default function Gamificacao() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-3">
-            🎮 Sistema de Gamificação
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-3 flex items-center justify-center gap-3">
+            <Wrench className="w-10 h-10 text-purple-600" />
+            Sistema de Gamificação
           </h1>
           <p className="text-lg text-gray-600">
             Desafios, Rankings e Reconhecimento
