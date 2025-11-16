@@ -11,6 +11,7 @@ import TaskCard from "../components/tasks/TaskCard";
 import TaskForm from "../components/tasks/TaskForm";
 import TaskFilters from "../components/tasks/TaskFilters";
 import KanbanBoard from "../components/tasks/KanbanBoard";
+import TasksTour from "../components/tasks/TasksTour";
 
 export default function Tarefas() {
   const queryClient = useQueryClient();
@@ -36,7 +37,6 @@ export default function Tarefas() {
   }, []);
 
   useEffect(() => {
-    // Verificar e enviar lembretes
     if (user && tasks.length > 0) {
       checkReminders();
     }
@@ -95,10 +95,8 @@ export default function Tarefas() {
           reminderDate = subDays(dueDate, reminder.value);
         }
 
-        // Verificar se está na hora de enviar lembrete
         const diff = Math.abs(now - reminderDate);
-        if (diff < 60000) { // Dentro de 1 minuto
-          // Enviar notificação no app
+        if (diff < 60000) {
           if (task.reminder_settings.app_notification && task.assigned_to) {
             for (const userId of task.assigned_to) {
               await base44.entities.Notification.create({
@@ -111,7 +109,6 @@ export default function Tarefas() {
             }
           }
 
-          // Enviar e-mail
           if (task.reminder_settings.email_reminder && task.assigned_to) {
             for (const userId of task.assigned_to) {
               const assignedUser = employees.find(e => e.id === userId);
@@ -281,6 +278,8 @@ export default function Tarefas() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-8 px-4">
+      <TasksTour />
+      
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
           <div>
@@ -292,23 +291,25 @@ export default function Tarefas() {
               Organize, atribua e acompanhe tarefas da sua equipe
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button
-              variant={viewMode === "list" ? "default" : "outline"}
-              onClick={() => setViewMode("list")}
-              size="sm"
-            >
-              <List className="w-4 h-4 mr-2" />
-              Lista
-            </Button>
-            <Button
-              variant={viewMode === "kanban" ? "default" : "outline"}
-              onClick={() => setViewMode("kanban")}
-              size="sm"
-            >
-              <LayoutGrid className="w-4 h-4 mr-2" />
-              Kanban
-            </Button>
+          <div id="create-task-button" className="flex gap-2">
+            <div id="view-mode-buttons" className="flex gap-2">
+              <Button
+                variant={viewMode === "list" ? "default" : "outline"}
+                onClick={() => setViewMode("list")}
+                size="sm"
+              >
+                <List className="w-4 h-4 mr-2" />
+                Lista
+              </Button>
+              <Button
+                variant={viewMode === "kanban" ? "default" : "outline"}
+                onClick={() => setViewMode("kanban")}
+                size="sm"
+              >
+                <LayoutGrid className="w-4 h-4 mr-2" />
+                Kanban
+              </Button>
+            </div>
             <Button
               onClick={() => {
                 setEditingTask(null);
@@ -322,7 +323,7 @@ export default function Tarefas() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+        <div id="stats-section" className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
           <div className="bg-white rounded-lg p-4 shadow-sm border-2 border-gray-100">
             <p className="text-sm text-gray-600">Total</p>
             <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
@@ -345,7 +346,7 @@ export default function Tarefas() {
           </div>
         </div>
 
-        <div className="mb-6">
+        <div id="filters-section" className="mb-6">
           <TaskFilters
             filters={filters}
             onFilterChange={setFilters}
@@ -394,15 +395,16 @@ export default function Tarefas() {
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredTasks.map((task) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                employees={employees}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                onStatusChange={handleStatusChange}
-              />
+            {filteredTasks.map((task, index) => (
+              <div key={task.id} id={index === 0 ? "task-card" : undefined}>
+                <TaskCard
+                  task={task}
+                  employees={employees}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  onStatusChange={handleStatusChange}
+                />
+              </div>
             ))}
           </div>
         )}
