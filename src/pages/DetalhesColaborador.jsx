@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, ArrowLeft, User, FileText, MessageSquare, AlertTriangle, Award, TrendingUp, FileCheck, Camera } from "lucide-react";
+import { Loader2, ArrowLeft, User, FileText, MessageSquare, AlertTriangle, Award, TrendingUp, FileCheck, Camera, Heart, FilePenLine } from "lucide-react";
 import { toast } from "sonner";
 import DadosPessoais from "../components/employee/DadosPessoais";
 import RemuneracaoProducao from "../components/employee/RemuneracaoProducao";
@@ -76,11 +77,28 @@ export default function DetalhesColaborador() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <Button variant="outline" onClick={() => navigate(createPageUrl("Colaboradores"))}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Voltar
           </Button>
+          
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => navigate(createPageUrl("CDCForm") + `?employee_id=${employee.id}`)}
+              className="bg-gradient-to-r from-pink-600 to-red-600 hover:from-pink-700 hover:to-red-700"
+            >
+              <Heart className="w-4 h-4 mr-2" />
+              {employee.cdc_completed ? 'Editar CDC' : 'Aplicar CDC'}
+            </Button>
+            <Button 
+              onClick={() => navigate(createPageUrl("COEXForm") + `?employee_id=${employee.id}`)}
+              className="bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700"
+            >
+              <FilePenLine className="w-4 h-4 mr-2" />
+              Criar COEX
+            </Button>
+          </div>
         </div>
 
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
@@ -97,6 +115,12 @@ export default function DetalhesColaborador() {
                 }`}>
                   {employee.status}
                 </span>
+                {employee.cdc_completed && (
+                  <span className="px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-sm flex items-center gap-1">
+                    <Heart className="w-3 h-3" />
+                    CDC Completo
+                  </span>
+                )}
               </div>
             </div>
             <div className="text-right">

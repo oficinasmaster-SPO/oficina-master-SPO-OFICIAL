@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { UserPlus, Loader2, Sparkles } from "lucide-react";
+import { UserPlus, Loader2, Sparkles, Heart, FilePenLine } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -21,6 +21,11 @@ export default function Colaboradores() {
   const { data: employees = [], isLoading } = useQuery({
     queryKey: ['employees'],
     queryFn: () => base44.entities.Employee.list('-created_date')
+  });
+
+  const { data: coexContracts = [] } = useQuery({
+    queryKey: ['coex-contracts'],
+    queryFn: () => base44.entities.COEXContract.list('-created_date')
   });
 
   const statusColors = {
@@ -45,6 +50,10 @@ export default function Colaboradores() {
 
   const getTotalProduction = (employee) => {
     return (employee.production_parts || 0) + (employee.production_services || 0);
+  };
+
+  const getActiveCOEX = (employeeId) => {
+    return coexContracts.find(c => c.employee_id === employeeId && c.status === 'ativo');
   };
 
   if (isLoading) {
@@ -118,6 +127,7 @@ export default function Colaboradores() {
               const totalCost = getTotalCost(employee);
               const totalProduction = getTotalProduction(employee);
               const productivity = totalCost > 0 ? ((totalProduction / totalCost) * 100).toFixed(0) : 0;
+              const activeCOEX = getActiveCOEX(employee.id);
 
               return (
                 <Card key={employee.id} className="shadow-lg hover:shadow-xl transition-shadow">
@@ -130,6 +140,20 @@ export default function Colaboradores() {
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[employee.status]}`}>
                         {employee.status}
                       </span>
+                    </div>
+                    <div className="flex gap-2 mt-3">
+                      {employee.cdc_completed && (
+                        <span className="px-2 py-1 bg-pink-100 text-pink-700 rounded text-xs flex items-center gap-1">
+                          <Heart className="w-3 h-3" />
+                          CDC ✓
+                        </span>
+                      )}
+                      {activeCOEX && (
+                        <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs flex items-center gap-1">
+                          <FilePenLine className="w-3 h-3" />
+                          COEX ✓
+                        </span>
+                      )}
                     </div>
                   </CardHeader>
                   <CardContent>
