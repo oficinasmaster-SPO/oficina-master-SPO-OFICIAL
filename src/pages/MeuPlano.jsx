@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
@@ -13,17 +14,19 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import DynamicHelpSystem from "@/components/help/DynamicHelpSystem";
+import QuickTipsBar from "@/components/help/QuickTipsBar";
 
 export default function MeuPlano() {
   const navigate = useNavigate();
   const [loadingUpgrade, setLoadingUpgrade] = useState(false);
 
-  const { data: user } = useQuery({
+  const { data: user, isLoading: isUserLoading } = useQuery({
     queryKey: ['current-user'],
     queryFn: () => base44.auth.me()
   });
 
-  const { data: workshops = [] } = useQuery({
+  const { data: workshops = [], isLoading: isWorkshopsLoading } = useQuery({
     queryKey: ['workshops', user?.id],
     queryFn: () => base44.entities.Workshop.filter({ owner_id: user.id }),
     enabled: !!user
@@ -31,7 +34,7 @@ export default function MeuPlano() {
 
   const workshop = workshops[0];
 
-  const { data: plans = [] } = useQuery({
+  const { data: plans = [], isLoading: isPlansLoading } = useQuery({
     queryKey: ['plans'],
     queryFn: () => base44.entities.Plan.list('ordem')
   });
@@ -45,6 +48,13 @@ export default function MeuPlano() {
   });
 
   const currentPlan = plans.find(p => p.nome === (workshop?.planoAtual || 'FREE'));
+
+  const meuPlanoTips = [
+    "Monitore o uso dos seus recursos para evitar atingir os limites do plano",
+    "Faça upgrade quando necessário para desbloquear recursos avançados",
+    "O histórico de pagamentos pode ser usado para comprovação fiscal",
+    "Entre em contato com o suporte se tiver problemas com pagamentos"
+  ];
 
   const getUsagePercentage = (used, limit) => {
     if (limit === -1) return 0; // ilimitado
@@ -73,7 +83,10 @@ export default function MeuPlano() {
     return labels[status] || status;
   };
 
-  if (!workshop || !currentPlan) {
+  // Determine overall loading state for initial data
+  const isLoading = isUserLoading || isWorkshopsLoading || isPlansLoading || !workshop || !currentPlan;
+
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
@@ -85,13 +98,20 @@ export default function MeuPlano() {
   const utilizados = workshop.limitesUtilizados || { diagnosticosMes: 0, colaboradores: 0, filiais: 0 };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4">
+      <DynamicHelpSystem pageName="MeuPlano" />
+      
       <div className="max-w-6xl mx-auto">
+        <QuickTipsBar tips={meuPlanoTips} pageName="meu-plano" />
+
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Meu Plano</h1>
+          <p className="text-gray-600">Gerencie sua assinatura e acompanhe o uso de recursos</p>
+        </div>
+
         <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Meu Plano</h1>
-            <p className="text-gray-600">Gerencie sua assinatura e acompanhe seu uso</p>
-          </div>
+          {/* This div was holding the h1 and p tags before, now moved outside this container */}
+          <div></div> 
           <Button 
             onClick={() => navigate(createPageUrl("Planos"))}
             className="bg-blue-600 hover:bg-blue-700"

@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
@@ -6,10 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, XCircle, Zap, Loader2, Crown } from "lucide-react";
 import CheckoutModal from "../components/plans/CheckoutModal";
+import DynamicHelpSystem from "@/components/help/DynamicHelpSystem";
+import QuickTipsBar from "@/components/help/QuickTipsBar";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 export default function Planos() {
   const [selectedPlan, setSelectedPlan] = useState(null);
-  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false); // Renamed for consistency with outline
 
   const { data: user } = useQuery({
     queryKey: ['current-user'],
@@ -35,12 +39,19 @@ export default function Planos() {
       return;
     }
     setSelectedPlan(plan);
-    setCheckoutOpen(true);
+    setIsCheckoutOpen(true); // Renamed for consistency with outline
   };
 
   const isCurrentPlan = (planName) => {
     return workshop?.planoAtual === planName;
   };
+
+  const planosTips = [
+    "Cada plano oferece limites diferentes de diagnósticos, colaboradores e recursos de IA",
+    "Planos superiores desbloqueiam ferramentas avançadas de RH e relatórios",
+    "Você pode fazer upgrade a qualquer momento - o valor será proporcional",
+    "Experimente o plano FREE para conhecer a plataforma antes de assinar"
+  ];
 
   if (isLoading) {
     return (
@@ -51,15 +62,19 @@ export default function Planos() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4">
+      <DynamicHelpSystem pageName="Planos" />
+      
       <div className="max-w-7xl mx-auto">
+        <QuickTipsBar tips={planosTips} pageName="planos" />
+
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Escolha o Plano Ideal para Sua Oficina
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            Escolha o Plano Ideal para sua Oficina
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Transforme sua oficina com inteligência artificial e ferramentas profissionais de gestão
+            Acelere o crescimento do seu negócio com as ferramentas certas
           </p>
         </div>
 
@@ -215,31 +230,47 @@ export default function Planos() {
           })}
         </div>
 
-        {/* FAQ ou informações adicionais */}
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle>Dúvidas Frequentes</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <h3 className="font-semibold mb-2">Posso mudar de plano a qualquer momento?</h3>
-              <p className="text-gray-600">Sim! Você pode fazer upgrade ou downgrade a qualquer momento.</p>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-2">Como funciona o período de cobrança?</h3>
-              <p className="text-gray-600">A cobrança é mensal e renovada automaticamente na data da assinatura.</p>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-2">Há garantia de reembolso?</h3>
-              <p className="text-gray-600">Sim, oferecemos garantia de 7 dias para todos os planos pagos.</p>
-            </div>
-          </CardContent>
-        </Card>
+        {/* FAQ Section */}
+        <div className="mt-16 max-w-3xl mx-auto" id="faq-planos">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
+            Perguntas Frequentes
+          </h2>
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="item-1">
+              <AccordionTrigger>Como funciona o período de teste?</AccordionTrigger>
+              <AccordionContent>
+                O plano FREE é gratuito para sempre e permite que você explore as funcionalidades básicas. 
+                Planos pagos podem ser testados com garantia de 7 dias.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-2">
+              <AccordionTrigger>Posso mudar de plano depois?</AccordionTrigger>
+              <AccordionContent>
+                Sim! Você pode fazer upgrade ou downgrade a qualquer momento. 
+                O valor será ajustado proporcionalmente ao período restante.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-3">
+              <AccordionTrigger>Quais formas de pagamento são aceitas?</AccordionTrigger>
+              <AccordionContent>
+                Aceitamos cartão de crédito, PIX e boleto bancário. 
+                Pagamentos mensais ou anuais (com desconto).
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-4">
+              <AccordionTrigger>O que acontece se eu exceder os limites?</AccordionTrigger>
+              <AccordionContent>
+                Você receberá notificações quando estiver próximo dos limites. 
+                Para continuar usando, será necessário fazer upgrade do plano.
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </div>
       </div>
 
       <CheckoutModal 
-        open={checkoutOpen}
-        onClose={() => setCheckoutOpen(false)}
+        isOpen={isCheckoutOpen} // Updated prop name
+        onClose={() => setIsCheckoutOpen(false)} // Updated setter
         plan={selectedPlan}
         workshop={workshop}
       />

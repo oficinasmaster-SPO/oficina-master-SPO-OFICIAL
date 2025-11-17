@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -7,49 +8,55 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronRight, TrendingUp, Users, BarChart3, Rocket, Loader2, LogIn, FileText, Target } from "lucide-react";
 import OnboardingTour from "../components/onboarding/OnboardingTour";
 import OnboardingChecklist from "../components/onboarding/OnboardingChecklist";
-import ContextualTips from "../components/onboarding/ContextualTips";
+import ContextualTips from "../components/onboarding/ContextualTips"; // This will be removed from authenticated view
 import DashboardHub from "../components/home/DashboardHub";
+import DynamicHelpSystem from "@/components/help/DynamicHelpSystem";
+import QuickTipsBar from "@/components/help/QuickTipsBar";
 
 export default function Home() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const [hasWorkshop, setHasWorkshop] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [workshop, setWorkshop] = useState(null); // New state for workshop
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true); // Granular loading state
+  const [isLoadingWorkshop, setIsLoadingWorkshop] = useState(false); // Granular loading state
+  const [isLoadingProgress, setIsLoadingProgress] = useState(false); // Granular loading state
   const [userProgress, setUserProgress] = useState(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    checkUserAndWorkshop();
+    const init = async () => {
+      setIsCheckingAuth(true); // Start checking authentication
+      try {
+        const authenticated = await base44.auth.isAuthenticated();
+        setIsAuthenticated(authenticated);
+
+        if (!authenticated) {
+          return; // If not authenticated, stop here
+        }
+
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
+
+        setIsLoadingWorkshop(true); // Start loading workshop
+        const workshops = await base44.entities.Workshop.list();
+        const userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
+        setWorkshop(userWorkshop); // Store the user's workshop
+        setIsLoadingWorkshop(false); // Finish loading workshop
+
+        await loadUserProgress(currentUser, userWorkshop); // Pass userWorkshop
+      } catch (error) {
+        console.log("User not authenticated or error:", error);
+        setIsAuthenticated(false);
+      } finally {
+        setIsCheckingAuth(false); // Finish checking authentication
+      }
+    };
+    init();
   }, []);
 
-  const checkUserAndWorkshop = async () => {
-    try {
-      const authenticated = await base44.auth.isAuthenticated();
-      setIsAuthenticated(authenticated);
-
-      if (!authenticated) {
-        setLoading(false);
-        return;
-      }
-
-      const currentUser = await base44.auth.me();
-      setUser(currentUser);
-      
-      const workshops = await base44.entities.Workshop.list();
-      const userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
-      setHasWorkshop(!!userWorkshop);
-
-      await loadUserProgress(currentUser);
-    } catch (error) {
-      console.log("User not authenticated or error:", error);
-      setIsAuthenticated(false);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadUserProgress = async (currentUser) => {
+  const loadUserProgress = async (currentUser, userWorkshop) => {
+    setIsLoadingProgress(true); // Start loading user progress
     try {
       const progressList = await base44.entities.UserProgress.list();
       let progress = progressList.find(p => p.user_id === currentUser.id);
@@ -70,32 +77,50 @@ export default function Home() {
           first_login_date: new Date().toISOString(),
           last_login_date: new Date().toISOString()
         });
-        setShowOnboarding(true);
+        setShowOnboarding(true); // Show onboarding for new users
       } else {
         await base44.entities.UserProgress.update(progress.id, {
           last_login_date: new Date().toISOString()
         });
 
-        setShowOnboarding(!progress.onboarding_completed);
-        await updateChecklist(progress, currentUser);
+        // Only show onboarding if not completed and tour not completed (or if checklist is still relevant)
+        setShowOnboarding(!progress.onboarding_completed); 
+        await updateChecklist(progress, currentUser, userWorkshop); // Pass userWorkshop
       }
 
       setUserProgress(progress);
     } catch (error) {
       console.error("Erro ao carregar progresso:", error);
+    } finally {
+      setIsLoadingProgress(false); // Finish loading user progress
     }
   };
 
-  const updateChecklist = async (progress, currentUser) => {
+  const updateProgress = async (updates) => {
+      if (!userProgress) {
+          console.warn("No user progress available for update.");
+          return;
+      }
+      try {
+          const updated = await base44.entities.UserProgress.update(userProgress.id, updates);
+          setUserProgress(updated); // Update local state
+          // If onboarding is completed, hide the onboarding section
+          if (updates.onboarding_completed === true) {
+              setShowOnboarding(false);
+          }
+      } catch (error) {
+          console.error("Failed to update user progress:", error);
+      }
+  };
+
+  const updateChecklist = async (progress, currentUser, userWorkshop) => {
     try {
-      const workshops = await base44.entities.Workshop.list();
       const diagnostics = await base44.entities.Diagnostic.list();
       
-      const userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
       const userDiagnostics = diagnostics.filter(d => d.user_id === currentUser.id);
 
       const updatedChecklist = {
-        cadastrou_oficina: !!userWorkshop,
+        cadastrou_oficina: !!userWorkshop, // Use passed userWorkshop
         fez_primeiro_diagnostico: userDiagnostics.length > 0,
         visualizou_resultado: userDiagnostics.some(d => d.completed),
         acessou_plano_acao: progress.checklist_items?.acessou_plano_acao || false,
@@ -107,10 +132,10 @@ export default function Home() {
       );
 
       if (hasChanges) {
-        await base44.entities.UserProgress.update(progress.id, {
+        const updatedProgress = await base44.entities.UserProgress.update(progress.id, {
           checklist_items: updatedChecklist
         });
-        setUserProgress({ ...progress, checklist_items: updatedChecklist });
+        setUserProgress(updatedProgress); // Update state with latest progress
       }
     } catch (error) {
       console.error("Erro ao atualizar checklist:", error);
@@ -123,7 +148,7 @@ export default function Home() {
       return;
     }
     
-    if (!hasWorkshop) {
+    if (!workshop) { // Check 'workshop' state instead of 'hasWorkshop'
       navigate(createPageUrl("Cadastro"));
     } else {
       navigate(createPageUrl("Questionario"));
@@ -132,10 +157,6 @@ export default function Home() {
 
   const handleLogin = () => {
     base44.auth.redirectToLogin(window.location.href);
-  };
-
-  const handleTourComplete = () => {
-    setShowOnboarding(true);
   };
 
   const phases = [
@@ -169,10 +190,17 @@ export default function Home() {
     }
   ];
 
-  if (loading) {
+  const dashboardTips = [
+    "Complete seu perfil da oficina para desbloquear mais funcionalidades",
+    "Faça diagnósticos regulares para acompanhar a evolução do seu negócio",
+    "Use o módulo de tarefas para organizar as ações recomendadas",
+    "A gamificação aumenta o engajamento da equipe em até 40%"
+  ];
+
+  if (isCheckingAuth || isLoadingWorkshop || isLoadingProgress) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        <Loader2 className="w-12 h-12 animate-spin text-blue-600" />
       </div>
     );
   }
@@ -180,29 +208,36 @@ export default function Home() {
   // Dashboard para usuários autenticados
   if (isAuthenticated && user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
-        <DashboardHub user={user} />
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+        <DynamicHelpSystem pageName="Home" autoStartTour={showOnboarding} />
+        
+        <div className="px-4 sm:px-6 lg:px-8 py-8">
+          <QuickTipsBar tips={dashboardTips} pageName="home-dashboard" />
 
-        {/* Onboarding Components */}
-        {userProgress && (
-          <>
-            {!userProgress.tour_completed && (
-              <OnboardingTour user={user} onComplete={handleTourComplete} />
-            )}
-
-            {showOnboarding && !userProgress.onboarding_completed && (
-              <div className="fixed top-20 right-6 z-40 w-full max-w-md animate-in slide-in-from-right duration-500">
-                <OnboardingChecklist
-                  user={user}
-                  userProgress={userProgress}
-                  onClose={() => setShowOnboarding(false)}
+          {showOnboarding && (
+            <>
+              {/* Onboarding Tour only if not completed */}
+              {userProgress && !userProgress.tour_completed && (
+                <OnboardingTour
+                  userId={user.id}
+                  onComplete={() => updateProgress({ tour_completed: true })} // Mark tour completed via updateProgress
                 />
-              </div>
-            )}
+              )}
 
-            <ContextualTips page="home" />
-          </>
-        )}
+              {/* Onboarding Checklist only if not completed */}
+              {userProgress && !userProgress.onboarding_completed && (
+                <div className="fixed top-20 right-6 z-40 w-full max-w-md animate-in slide-in-from-right duration-500">
+                  <OnboardingChecklist
+                    progress={userProgress}
+                    onUpdate={(updates) => updateProgress(updates)} // Use defined updateProgress
+                  />
+                </div>
+              )}
+            </>
+          )}
+
+          <DashboardHub user={user} workshop={workshop} />
+        </div>
       </div>
     );
   }

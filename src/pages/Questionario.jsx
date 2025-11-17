@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -8,13 +9,14 @@ import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, ArrowRight, CheckCircle2, Loader2 } from "lucide-react";
 import { questions } from "../components/diagnostic/Questions";
 import { toast } from "sonner";
+import DynamicHelpSystem from "@/components/help/DynamicHelpSystem";
 
 export default function Questionario() {
   const navigate = useNavigate();
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loadingWorkshop, setLoadingWorkshop] = useState(true);
   const [workshop, setWorkshop] = useState(null);
 
   useEffect(() => {
@@ -38,7 +40,7 @@ export default function Questionario() {
       toast.error("Você precisa estar logado para responder o questionário");
       base44.auth.redirectToLogin(createPageUrl("Questionario"));
     } finally {
-      setLoading(false);
+      setLoadingWorkshop(false);
     }
   };
 
@@ -109,16 +111,18 @@ export default function Questionario() {
     }
   };
 
-  if (loading) {
+  if (loadingWorkshop) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4">
+      <DynamicHelpSystem pageName="Questionario" autoStartTour={currentQuestion === 0} />
+      
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">

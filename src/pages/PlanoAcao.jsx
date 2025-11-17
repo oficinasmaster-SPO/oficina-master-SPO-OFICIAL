@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -10,6 +11,8 @@ import ActionItem from "../components/planoacao/ActionItem";
 import GeneratedPlanText from "../components/planoacao/GeneratedPlanText";
 import EnhancedPDFPreview from "../components/planoacao/EnhancedPDFPreview";
 import AIActionSuggestions from "../components/planoacao/AIActionSuggestions";
+import DynamicHelpSystem from "@/components/help/DynamicHelpSystem";
+import QuickTipsBar from "@/components/help/QuickTipsBar";
 
 export default function PlanoAcao() {
   const navigate = useNavigate();
@@ -56,7 +59,7 @@ export default function PlanoAcao() {
     }
   };
 
-  const { data: actions = [] } = useQuery({
+  const { data: actions = [], isLoading: loadingActions } = useQuery({
     queryKey: ['actions', diagnostic?.id],
     queryFn: async () => {
       if (!diagnostic) return [];
@@ -82,7 +85,14 @@ export default function PlanoAcao() {
     }, 2000);
   };
 
-  if (loading) {
+  const planoAcaoTips = [
+    "Organize as ações por prioridade e defina prazos realistas",
+    "Atribua responsáveis para garantir que as ações sejam executadas",
+    "Use subtarefas para quebrar ações complexas em etapas menores",
+    "Exporte o plano em PDF para compartilhar com sua equipe"
+  ];
+
+  if (loading || loadingActions) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
@@ -102,8 +112,12 @@ export default function PlanoAcao() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-8 px-4">
+      <DynamicHelpSystem pageName="PlanoAcao" autoStartTour={actions.length === 0} />
+      
       <div className="max-w-7xl mx-auto">
+        <QuickTipsBar tips={planoAcaoTips} pageName="plano-acao" />
+
         {/* Header */}
         <div className="mb-8">
           <Button

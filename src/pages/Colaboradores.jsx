@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
@@ -11,6 +10,8 @@ import { createPageUrl } from "@/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import AITrainingSuggestions from "../components/rh/AITrainingSuggestions";
+import DynamicHelpSystem from "../components/help/DynamicHelpSystem";
+import QuickTipsBar from "../components/help/QuickTipsBar";
 
 export default function Colaboradores() {
   const navigate = useNavigate();
@@ -56,6 +57,13 @@ export default function Colaboradores() {
     return coexContracts.find(c => c.employee_id === employeeId && c.status === 'ativo');
   };
 
+  const quickTips = [
+    "Use a IA para sugestões personalizadas de treinamento para cada colaborador",
+    "O CDC (Conexão e Diagnóstico) aumenta o salário emocional da sua equipe",
+    "COEX (Contrato de Expectativas) alinha expectativas e reduz turnover",
+    "Monitore a produtividade de cada colaborador para identificar necessidades de treinamento"
+  ];
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -66,7 +74,11 @@ export default function Colaboradores() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4">
+      <DynamicHelpSystem pageName="Colaboradores" autoStartTour={employees.length === 0} />
+      
       <div className="max-w-7xl mx-auto">
+        <QuickTipsBar tips={quickTips} pageName="colaboradores" />
+
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
           <div>
             <h1 className="text-4xl font-bold text-gray-900 mb-2">Colaboradores</h1>
@@ -75,13 +87,14 @@ export default function Colaboradores() {
           <Button
             onClick={() => navigate(createPageUrl("CadastroColaborador"))}
             className="bg-blue-600 hover:bg-blue-700"
+            id="btn-novo-colaborador"
           >
             <UserPlus className="w-5 h-5 mr-2" />
             Novo Colaborador
           </Button>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="flex flex-col md:flex-row gap-4 mb-6" id="filtros-colaboradores">
           <div className="flex-1">
             <Input
               placeholder="Buscar por nome ou cargo..."
@@ -122,7 +135,7 @@ export default function Colaboradores() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="lista-colaboradores">
             {filteredEmployees.map((employee) => {
               const totalCost = getTotalCost(employee);
               const totalProduction = getTotalProduction(employee);
