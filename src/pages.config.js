@@ -57,6 +57,10 @@ import GestaoMetas from './pages/GestaoMetas';
 import DesdobramentoMeta from './pages/DesdobramentoMeta';
 import PainelMetas from './pages/PainelMetas';
 import DiagnosticoGerencial from './pages/DiagnosticoGerencial';
+import CulturaOrganizacional from './pages/CulturaOrganizacional';
+import CronogramaAculturacao from './pages/CronogramaAculturacao';
+import PesquisaClima from './pages/PesquisaClima';
+import ResultadoClima from './pages/ResultadoClima';
 import __Layout from './Layout.jsx';
 
 
@@ -120,6 +124,10 @@ export const PAGES = {
     "DesdobramentoMeta": DesdobramentoMeta,
     "PainelMetas": PainelMetas,
     "DiagnosticoGerencial": DiagnosticoGerencial,
+    "CulturaOrganizacional": CulturaOrganizacional,
+    "CronogramaAculturacao": CronogramaAculturacao,
+    "PesquisaClima": PesquisaClima,
+    "ResultadoClima": ResultadoClima,
 }
 
 export const pagesConfig = {
