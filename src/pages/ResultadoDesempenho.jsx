@@ -5,7 +5,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Loader2, Home, RotateCcw, TrendingUp, AlertCircle, Award, Target } from "lucide-react";
-import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ZAxis, ReferenceLine, ReferenceArea, Label } from "recharts";
+import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ZAxis } from "recharts";
 import { classificationRules } from "../components/performance/PerformanceCriteria";
 import { toast } from "sonner";
 
@@ -85,13 +85,13 @@ export default function ResultadoDesempenho() {
   const matrixData = [{
     x: diagnostic.technical_average,
     y: diagnostic.emotional_average,
-    z: 500
+    z: 300
   }];
 
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-3 rounded-lg shadow-lg border-2 border-gray-300">
+        <div className="bg-white p-3 rounded-lg shadow-lg border">
           <p className="font-semibold">{employee?.full_name}</p>
           <p className="text-sm">Técnica: {payload[0].value.toFixed(1)}</p>
           <p className="text-sm">Emocional: {payload[1].value.toFixed(1)}</p>
@@ -99,23 +99,6 @@ export default function ResultadoDesempenho() {
       );
     }
     return null;
-  };
-
-  // Renderiza forma customizada (quadrado)
-  const renderCustomShape = (props) => {
-    const { cx, cy, fill } = props;
-    const size = 15;
-    return (
-      <rect
-        x={cx - size / 2}
-        y={cy - size / 2}
-        width={size}
-        height={size}
-        fill={fill}
-        stroke="#000"
-        strokeWidth={1.5}
-      />
-    );
   };
 
   return (
@@ -148,191 +131,113 @@ export default function ResultadoDesempenho() {
           </CardContent>
         </Card>
 
-        {/* Tabela de Competências */}
+        {/* Médias */}
+        <div className="grid md:grid-cols-2 gap-6">
+          <Card className="border-2 border-blue-200">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-blue-700">
+                <Target className="w-5 h-5" />
+                Competência Técnica
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center">
+                <div className="text-5xl font-bold text-blue-600 mb-2">
+                  {diagnostic.technical_average.toFixed(1)}
+                </div>
+                <div className="text-sm text-gray-600">de 10,0 pontos</div>
+                <div className="mt-4 h-3 bg-gray-200 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-blue-600 rounded-full transition-all"
+                    style={{ width: `${(diagnostic.technical_average / 10) * 100}%` }}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-2 border-purple-200">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-purple-700">
+                <TrendingUp className="w-5 h-5" />
+                Competência Emocional
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center">
+                <div className="text-5xl font-bold text-purple-600 mb-2">
+                  {diagnostic.emotional_average.toFixed(1)}
+                </div>
+                <div className="text-sm text-gray-600">de 10,0 pontos</div>
+                <div className="mt-4 h-3 bg-gray-200 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-purple-600 rounded-full transition-all"
+                    style={{ width: `${(diagnostic.emotional_average / 10) * 100}%` }}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Matriz de Decisão - Gráfico */}
         <Card>
           <CardHeader>
-            <CardTitle>Competências</CardTitle>
+            <CardTitle>Posicionamento na Matriz de Decisão</CardTitle>
+            <CardDescription>
+              Visualização do colaborador no gráfico de competências
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-gray-100">
-                    <th className="border border-gray-300 p-2 text-left font-semibold">Competência</th>
-                    <th className="border border-gray-300 p-2 text-center font-semibold bg-yellow-100">
-                      {employee?.full_name || "Colaborador"}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="bg-yellow-50">
-                    <td className="border border-gray-300 p-2 font-semibold">COMPETÊNCIA TÉCNICA</td>
-                    <td className="border border-gray-300 p-2 text-center font-bold text-lg">
-                      {diagnostic.technical_average.toFixed(1)}
-                    </td>
-                  </tr>
-                  <tr className="bg-yellow-50">
-                    <td className="border border-gray-300 p-2 font-semibold">COMPETÊNCIA EMOCIONAL</td>
-                    <td className="border border-gray-300 p-2 text-center font-bold text-lg">
-                      {diagnostic.emotional_average.toFixed(1)}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Matriz de Decisão */}
-        <Card className="border-2">
-          <CardHeader>
-            <CardTitle className="text-center text-2xl font-bold">MATRIZ DE DECISÃO</CardTitle>
-          </CardHeader>
-          <CardContent className="bg-white">
-            <ResponsiveContainer width="100%" height={600}>
-              <ScatterChart margin={{ top: 20, right: 100, bottom: 80, left: 100 }}>
-                {/* Grade completa */}
-                <CartesianGrid 
-                  strokeDasharray="0" 
-                  stroke="#d1d5db" 
-                  strokeWidth={0.5}
-                  verticalPoints={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
-                  horizontalPoints={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
-                />
-                
-                {/* Bordas retangulares das zonas */}
-                <ReferenceArea x1={7} x2={10} y1={6} y2={7} stroke="#000" strokeWidth={2} fill="none" />
-                <ReferenceArea x1={7} x2={10} y1={7} y2={10} stroke="#000" strokeWidth={2} fill="none" />
-                <ReferenceArea x1={8} x2={10} y1={8} y2={10} stroke="#000" strokeWidth={2} fill="none" />
-
+            <ResponsiveContainer width="100%" height={500}>
+              <ScatterChart margin={{ top: 20, right: 20, bottom: 40, left: 40 }}>
+                <CartesianGrid strokeDasharray="3 3" />
                 <XAxis 
                   type="number" 
                   dataKey="x" 
                   name="Técnica" 
                   domain={[0, 10]}
+                  label={{ value: 'Competências Técnicas - Habilidade/Conhecimento', position: 'bottom', offset: 20 }}
                   ticks={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
-                  tickLine={false}
-                  axisLine={{ stroke: '#000', strokeWidth: 2 }}
-                  tick={{ fontSize: 12 }}
-                >
-                  <Label 
-                    value="COMPETÊNCIAS TÉCNICAS - HABILIDADE/CONHECIMENTO" 
-                    position="bottom" 
-                    offset={50}
-                    style={{ fontSize: 13, fontWeight: 600, fill: '#000' }}
-                  />
-                </XAxis>
-                
+                />
                 <YAxis 
                   type="number" 
                   dataKey="y" 
                   name="Emocional" 
                   domain={[0, 10]}
+                  label={{ value: 'Competências Emocionais - Atitude/Caráter', angle: -90, position: 'left', offset: 10 }}
                   ticks={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
-                  tickLine={false}
-                  axisLine={{ stroke: '#000', strokeWidth: 2 }}
-                  tick={{ fontSize: 12 }}
-                >
-                  <Label 
-                    value="COMPETÊNCIAS EMOCIONAIS - ATITUDE/CARÁTER" 
-                    angle={-90} 
-                    position="left" 
-                    offset={70}
-                    style={{ fontSize: 13, fontWeight: 600, fill: '#000' }}
-                  />
-                </YAxis>
-
-                <ZAxis type="number" dataKey="z" range={[400, 600]} />
+                />
+                <ZAxis type="number" dataKey="z" range={[200, 400]} />
+                <Tooltip content={<CustomTooltip />} />
                 
-                <Tooltip content={<CustomTooltip />} cursor={{ strokeDasharray: '3 3' }} />
+                {/* Zonas de fundo */}
+                <rect x="0%" y="0%" width="50%" height="50%" fill="#fee2e2" opacity="0.3" />
+                <rect x="50%" y="0%" width="50%" height="30%" fill="#fef3c7" opacity="0.3" />
+                <rect x="0%" y="50%" width="50%" height="20%" fill="#fed7aa" opacity="0.3" />
+                <rect x="50%" y="30%" width="20%" height="20%" fill="#dbeafe" opacity="0.3" />
+                <rect x="70%" y="30%" width="30%" height="30%" fill="#d1fae5" opacity="0.3" />
+                <rect x="70%" y="60%" width="30%" height="40%" fill="#e9d5ff" opacity="0.3" />
 
-                {/* Linhas de Divisão Principais */}
-                <ReferenceLine 
-                  y={5} 
-                  stroke="#000" 
-                  strokeWidth={3}
-                />
-                <ReferenceLine 
-                  x={5} 
-                  stroke="#000" 
-                  strokeWidth={3}
-                />
-
-                {/* Linhas Secundárias */}
-                <ReferenceLine 
-                  y={6} 
-                  stroke="#000" 
-                  strokeWidth={1.5}
-                />
-                <ReferenceLine 
-                  y={7} 
-                  stroke="#000" 
-                  strokeWidth={1.5}
-                />
-                <ReferenceLine 
-                  x={7} 
-                  stroke="#000" 
-                  strokeWidth={1.5}
-                />
-
-                {/* Labels dos Quadrantes */}
-                <text x="20%" y="20%" fill="#333" fontSize="14" fontWeight="600" textAnchor="middle">
-                  TREINAMENTO TÉCNICO
-                </text>
-                <text x="17%" y="80%" fill="#333" fontSize="14" fontWeight="600" textAnchor="middle">
-                  DEMISSÃO
-                </text>
-                <text x="75%" y="80%" fill="#333" fontSize="14" fontWeight="600" textAnchor="middle">
-                  TREINAMENTO EMOCIONAL
-                </text>
-                <text x="65%" y="45%" fill="#333" fontSize="13" fontWeight="600" textAnchor="middle">
-                  OBSERVAÇÃO
-                </text>
-                <text x="78%" y="35%" fill="#333" fontSize="13" fontWeight="600" textAnchor="middle">
-                  RECONHECIMENTO
-                </text>
-                <text x="83%" y="20%" fill="#333" fontSize="13" fontWeight="600" textAnchor="middle">
-                  INVESTIMENTO
-                </text>
-                <text x="92%" y="88%" fill="#333" fontSize="13" fontWeight="600" textAnchor="middle">
-                  PROMOÇÃO
-                </text>
-
-                <Scatter 
-                  name="Colaborador" 
-                  data={matrixData} 
-                  fill={colorMap[classificationInfo.color]}
-                  shape={renderCustomShape}
-                />
+                <Scatter name="Colaborador" data={matrixData} fill={colorMap[classificationInfo.color]}>
+                  {matrixData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={colorMap[classificationInfo.color]} />
+                  ))}
+                </Scatter>
               </ScatterChart>
             </ResponsiveContainer>
 
-            {/* Legenda */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-6 p-4 bg-gray-50 rounded-lg border">
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-red-500 border border-gray-700" />
-                <span className="text-xs">Demissão</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-orange-500 border border-gray-700" />
-                <span className="text-xs">Treinamento Técnico</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-yellow-500 border border-gray-700" />
-                <span className="text-xs">Treinamento Emocional</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-blue-500 border border-gray-700" />
-                <span className="text-xs">Observação</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-green-500 border border-gray-700" />
-                <span className="text-xs">Reconhecimento</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-purple-500 border border-gray-700" />
-                <span className="text-xs">Investimento/Promoção</span>
-              </div>
+            {/* Legenda das zonas */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-6">
+              {Object.entries(classificationRules).map(([key, rule]) => (
+                <div key={key} className="flex items-center gap-2">
+                  <div 
+                    className="w-4 h-4 rounded" 
+                    style={{ backgroundColor: colorMap[rule.color] }}
+                  />
+                  <span className="text-sm">{rule.title}</span>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
