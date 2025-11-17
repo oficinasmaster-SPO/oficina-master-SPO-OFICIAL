@@ -56,6 +56,7 @@ import CadastroOficinaCompleto from './pages/CadastroOficinaCompleto';
 import GestaoMetas from './pages/GestaoMetas';
 import DesdobramentoMeta from './pages/DesdobramentoMeta';
 import PainelMetas from './pages/PainelMetas';
+import DiagnosticoGerencial from './pages/DiagnosticoGerencial';
 import __Layout from './Layout.jsx';
 
 
@@ -118,6 +119,7 @@ export const PAGES = {
     "GestaoMetas": GestaoMetas,
     "DesdobramentoMeta": DesdobramentoMeta,
     "PainelMetas": PainelMetas,
+    "DiagnosticoGerencial": DiagnosticoGerencial,
 }
 
 export const pagesConfig = {
