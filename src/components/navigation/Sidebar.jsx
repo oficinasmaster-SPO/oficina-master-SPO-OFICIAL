@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -303,7 +304,8 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           name: 'Cronograma de Aculturação', 
           href: createPageUrl('CronogramaAculturacao'), 
           icon: Calendar,
-          description: 'Atividades automáticas programadas'
+          description: 'Atividades automáticas programadas',
+          highlight: true
         },
         { 
           name: 'Pesquisa de Clima', 
@@ -451,7 +453,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                           >
                             <Icon className={cn(
                               "w-5 h-5 flex-shrink-0",
-                              active ? "text-blue-600" : "text-gray-500 group-hover:text-gray-700"
+                              active ? "text-blue-600" : item.highlight ? "text-blue-600" : "text-gray-500 group-hover:text-gray-700"
                             )} />
                             
                             <div className="flex-1 min-w-0">
