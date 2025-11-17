@@ -49,6 +49,8 @@ import CDCForm from './pages/CDCForm';
 import COEXForm from './pages/COEXForm';
 import CDCList from './pages/CDCList';
 import COEXList from './pages/COEXList';
+import MeuPlano from './pages/MeuPlano';
+import Planos from './pages/Planos';
 import __Layout from './Layout.jsx';
 
 
@@ -104,6 +106,8 @@ export const PAGES = {
     "COEXForm": COEXForm,
     "CDCList": CDCList,
     "COEXList": COEXList,
+    "MeuPlano": MeuPlano,
+    "Planos": Planos,
 }
 
 export const pagesConfig = {
