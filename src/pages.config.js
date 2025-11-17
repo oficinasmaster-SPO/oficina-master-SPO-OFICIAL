@@ -54,6 +54,8 @@ import Planos from './pages/Planos';
 import MonitoramentoRH from './pages/MonitoramentoRH';
 import CadastroOficinaCompleto from './pages/CadastroOficinaCompleto';
 import GestaoMetas from './pages/GestaoMetas';
+import DesdobramentoMeta from './pages/DesdobramentoMeta';
+import PainelMetas from './pages/PainelMetas';
 import __Layout from './Layout.jsx';
 
 
@@ -114,6 +116,8 @@ export const PAGES = {
     "MonitoramentoRH": MonitoramentoRH,
     "CadastroOficinaCompleto": CadastroOficinaCompleto,
     "GestaoMetas": GestaoMetas,
+    "DesdobramentoMeta": DesdobramentoMeta,
+    "PainelMetas": PainelMetas,
 }
 
 export const pagesConfig = {
