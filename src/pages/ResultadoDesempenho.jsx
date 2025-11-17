@@ -5,7 +5,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Loader2, Home, RotateCcw, TrendingUp, AlertCircle, Award, Target } from "lucide-react";
-import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ZAxis } from "recharts";
+import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ZAxis, ReferenceArea } from "recharts";
 import { classificationRules } from "../components/performance/PerformanceCriteria";
 import { toast } from "sonner";
 
@@ -191,6 +191,14 @@ export default function ResultadoDesempenho() {
           <CardContent>
             <ResponsiveContainer width="100%" height={500}>
               <ScatterChart margin={{ top: 20, right: 20, bottom: 40, left: 40 }}>
+                {/* Zonas de fundo coloridas */}
+                <ReferenceArea x1={0} x2={5} y1={0} y2={5} fill="#fee2e2" opacity={0.4} />
+                <ReferenceArea x1={0} x2={5} y1={5} y2={7} fill="#fed7aa" opacity={0.4} />
+                <ReferenceArea x1={5} x2={7} y1={0} y2={5} fill="#fef3c7" opacity={0.4} />
+                <ReferenceArea x1={5} x2={7} y1={5} y2={7} fill="#dbeafe" opacity={0.4} />
+                <ReferenceArea x1={7} x2={10} y1={5} y2={7} fill="#d1fae5" opacity={0.4} />
+                <ReferenceArea x1={7} x2={10} y1={7} y2={10} fill="#e9d5ff" opacity={0.4} />
+                
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis 
                   type="number" 
@@ -210,14 +218,6 @@ export default function ResultadoDesempenho() {
                 />
                 <ZAxis type="number" dataKey="z" range={[200, 400]} />
                 <Tooltip content={<CustomTooltip />} />
-                
-                {/* Zonas de fundo */}
-                <rect x="0%" y="0%" width="50%" height="50%" fill="#fee2e2" opacity="0.3" />
-                <rect x="50%" y="0%" width="50%" height="30%" fill="#fef3c7" opacity="0.3" />
-                <rect x="0%" y="50%" width="50%" height="20%" fill="#fed7aa" opacity="0.3" />
-                <rect x="50%" y="30%" width="20%" height="20%" fill="#dbeafe" opacity="0.3" />
-                <rect x="70%" y="30%" width="30%" height="30%" fill="#d1fae5" opacity="0.3" />
-                <rect x="70%" y="60%" width="30%" height="40%" fill="#e9d5ff" opacity="0.3" />
 
                 <Scatter name="Colaborador" data={matrixData} fill={colorMap[classificationInfo.color]}>
                   {matrixData.map((entry, index) => (
