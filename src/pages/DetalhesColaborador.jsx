@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, ArrowLeft, User, FileText, MessageSquare, AlertTriangle, Award, TrendingUp, FileCheck, Camera, Heart, FilePenLine } from "lucide-react";
+import { Loader2, ArrowLeft, User, FileText, MessageSquare, AlertTriangle, Award, TrendingUp, FileCheck, Heart, FilePenLine, Activity } from "lucide-react";
 import { toast } from "sonner";
 import DadosPessoais from "../components/employee/DadosPessoais";
 import RemuneracaoProducao from "../components/employee/RemuneracaoProducao";
@@ -14,6 +13,8 @@ import AdvertenciasSection from "../components/employee/AdvertenciasSection";
 import DiagnosticosVinculados from "../components/employee/DiagnosticosVinculados";
 import DocumentosAnexos from "../components/employee/DocumentosAnexos";
 import PainelProducao from "../components/employee/PainelProducao";
+import COEXCDCIntegration from "../components/rh/COEXCDCIntegration";
+import PerformanceMonitoring from "../components/rh/PerformanceMonitoring";
 
 export default function DetalhesColaborador() {
   const navigate = useNavigate();
@@ -82,23 +83,6 @@ export default function DetalhesColaborador() {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Voltar
           </Button>
-          
-          <div className="flex gap-2">
-            <Button 
-              onClick={() => navigate(createPageUrl("CDCForm") + `?employee_id=${employee.id}`)}
-              className="bg-gradient-to-r from-pink-600 to-red-600 hover:from-pink-700 hover:to-red-700"
-            >
-              <Heart className="w-4 h-4 mr-2" />
-              {employee.cdc_completed ? 'Editar CDC' : 'Aplicar CDC'}
-            </Button>
-            <Button 
-              onClick={() => navigate(createPageUrl("COEXForm") + `?employee_id=${employee.id}`)}
-              className="bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700"
-            >
-              <FilePenLine className="w-4 h-4 mr-2" />
-              Criar COEX
-            </Button>
-          </div>
         </div>
 
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
@@ -131,7 +115,7 @@ export default function DetalhesColaborador() {
         </div>
 
         <Tabs defaultValue="dados" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-7 bg-white shadow-md">
+          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-9 bg-white shadow-md">
             <TabsTrigger value="dados">
               <User className="w-4 h-4 mr-2" />
               Dados
@@ -139,6 +123,14 @@ export default function DetalhesColaborador() {
             <TabsTrigger value="remuneracao">
               <TrendingUp className="w-4 h-4 mr-2" />
               Produção
+            </TabsTrigger>
+            <TabsTrigger value="coex-cdc">
+              <Heart className="w-4 h-4 mr-2" />
+              CDC/COEX
+            </TabsTrigger>
+            <TabsTrigger value="desempenho">
+              <Activity className="w-4 h-4 mr-2" />
+              Desempenho
             </TabsTrigger>
             <TabsTrigger value="feedbacks">
               <MessageSquare className="w-4 h-4 mr-2" />
@@ -168,6 +160,14 @@ export default function DetalhesColaborador() {
 
           <TabsContent value="remuneracao">
             <RemuneracaoProducao employee={employee} onUpdate={handleUpdate} />
+          </TabsContent>
+
+          <TabsContent value="coex-cdc">
+            <COEXCDCIntegration employee={employee} />
+          </TabsContent>
+
+          <TabsContent value="desempenho">
+            <PerformanceMonitoring employee={employee} />
           </TabsContent>
 
           <TabsContent value="feedbacks">
