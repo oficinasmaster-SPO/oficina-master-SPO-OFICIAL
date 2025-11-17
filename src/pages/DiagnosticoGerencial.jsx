@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -8,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Building2, Percent, Save, Plus, Trash2, Calculator, Network } from "lucide-react";
+import { Loader2, Building2, Percent, Save, Plus, Trash2, Calculator, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import OrganizationChart from "../components/diagnostic/OrganizationChart";
 
@@ -412,7 +413,7 @@ export default function DiagnosticoGerencial() {
               Formulário
             </TabsTrigger>
             <TabsTrigger value="organograma" className="flex items-center gap-2">
-              <Network className="w-4 h-4" />
+              <Share2 className="w-4 h-4" />
               Organograma
             </TabsTrigger>
           </TabsList>
