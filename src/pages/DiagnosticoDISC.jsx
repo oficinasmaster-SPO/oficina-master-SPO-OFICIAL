@@ -20,6 +20,7 @@ export default function DiagnosticoDISC() {
   const [user, setUser] = useState(null);
   const [workshop, setWorkshop] = useState(null);
   const [employees, setEmployees] = useState([]);
+  const [shuffledQuestions, setShuffledQuestions] = useState([]);
   
   const [selectedEmployee, setSelectedEmployee] = useState("");
   const [isLeader, setIsLeader] = useState(false);
@@ -29,6 +30,15 @@ export default function DiagnosticoDISC() {
   useEffect(() => {
     loadData();
   }, []);
+
+  const shuffleArray = (array) => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
 
   const loadData = async () => {
     try {
@@ -44,6 +54,18 @@ export default function DiagnosticoDISC() {
         e.status === "ativo" && (!userWorkshop || e.workshop_id === userWorkshop.id)
       );
       setEmployees(activeEmployees);
+
+      // Embaralhar questões
+      const shuffled = discQuestions.map(q => ({
+        ...q,
+        shuffledTraits: shuffleArray([
+          { key: 'd', text: q.traits.d, label: 'Opção A' },
+          { key: 'i', text: q.traits.i, label: 'Opção B' },
+          { key: 's', text: q.traits.s, label: 'Opção C' },
+          { key: 'c', text: q.traits.c, label: 'Opção D' }
+        ])
+      }));
+      setShuffledQuestions(shuffled);
 
       // Inicializar respostas
       const initialAnswers = {};
@@ -62,7 +84,6 @@ export default function DiagnosticoDISC() {
   const updateAnswer = (questionId, profile, value) => {
     const numValue = parseInt(value) || 0;
     
-    // Validar que a soma dos 4 perfis seja exatamente 10 (1+2+3+4)
     const current = { ...answers[questionId], [profile]: numValue };
     const sum = current.d + current.i + current.s + current.c;
     
@@ -111,7 +132,6 @@ export default function DiagnosticoDISC() {
     setSubmitting(true);
 
     try {
-      // Calcular totais
       let totalD = 0, totalI = 0, totalS = 0, totalC = 0;
       
       const answersArray = Object.entries(answers).map(([questionId, scores]) => {
@@ -129,7 +149,6 @@ export default function DiagnosticoDISC() {
         };
       });
 
-      // Calcular percentuais
       const total = totalD + totalI + totalS + totalC;
       const profileScores = {
         executor_d: (totalD / total) * 100,
@@ -138,12 +157,10 @@ export default function DiagnosticoDISC() {
         analista_c: (totalC / total) * 100
       };
 
-      // Determinar perfil dominante
       const dominant = Object.keys(profileScores).reduce((a, b) => 
         profileScores[a] > profileScores[b] ? a : b
       );
 
-      // Recomendar funções
       const recommendedRoles = getRecommendedRoles(profileScores);
 
       const diagnostic = await base44.entities.DISCDiagnostic.create({
@@ -175,7 +192,6 @@ export default function DiagnosticoDISC() {
     const top1 = sorted[0][0];
     const top2 = sorted[1][0];
 
-    // Baseado nos perfis dominantes
     if (top1 === "executor_d" || top2 === "executor_d") {
       if (scores.executor_d > 30) {
         roles.push("Gerente Geral", "Líder de Equipe", "Coordenador de Produção");
@@ -236,7 +252,6 @@ export default function DiagnosticoDISC() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Seleção de Colaborador */}
           <Card className="border-2 border-indigo-200">
             <CardHeader>
               <CardTitle>Dados do Avaliado</CardTitle>
@@ -281,7 +296,6 @@ export default function DiagnosticoDISC() {
             </CardContent>
           </Card>
 
-          {/* Progresso */}
           <div className="bg-white rounded-lg p-4 border-2 border-indigo-200">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-gray-700">
@@ -292,14 +306,13 @@ export default function DiagnosticoDISC() {
             <Progress value={progress} className="h-2" />
           </div>
 
-          {/* Instruções */}
           <Card className="bg-amber-50 border-2 border-amber-300">
             <CardContent className="p-4">
               <div className="flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-amber-900">
-                  <strong>Como preencher:</strong> Para cada grupo de características, 
-                  distribua os números 1, 2, 3 e 4 (sem repetir) conforme o que mais se identifica com você:
+                  <strong>Como preencher:</strong> Para cada conjunto de características, 
+                  distribua os números 1, 2, 3 e 4 (sem repetir) conforme o que mais se identifica:
                   <br />• 4 = Característica mais forte
                   <br />• 3 = Segunda característica mais forte
                   <br />• 2 = Terceira característica
@@ -309,113 +322,38 @@ export default function DiagnosticoDISC() {
             </CardContent>
           </Card>
 
-          {/* Questões */}
-          {discQuestions.map((question) => (
+          {shuffledQuestions.map((question) => (
             <Card key={question.id} className="border-2">
               <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50">
                 <CardTitle className="text-lg">Conjunto {question.id}</CardTitle>
               </CardHeader>
               <CardContent className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {/* (D) Executor */}
-                  <div className="bg-red-50 rounded-lg p-4 border-2 border-red-200">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white font-bold">
-                        D
+                  {question.shuffledTraits.map((trait, index) => (
+                    <div key={index} className="bg-gray-50 rounded-lg p-4 border-2 border-gray-300">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center text-white font-bold">
+                          {index + 1}
+                        </div>
+                        <span className="font-semibold text-gray-900">{trait.label}</span>
                       </div>
-                      <span className="font-semibold text-red-900">Executor</span>
+                      <p className="text-sm text-gray-700 mb-3 min-h-[60px]">{trait.text}</p>
+                      <Select
+                        value={answers[question.id]?.[trait.key]?.toString() || ""}
+                        onValueChange={(value) => updateAnswer(question.id, trait.key, value)}
+                      >
+                        <SelectTrigger className="bg-white">
+                          <SelectValue placeholder="Nota" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">1</SelectItem>
+                          <SelectItem value="2">2</SelectItem>
+                          <SelectItem value="3">3</SelectItem>
+                          <SelectItem value="4">4</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <p className="text-sm text-gray-700 mb-3 min-h-[60px]">{question.traits.d}</p>
-                    <Select
-                      value={answers[question.id]?.d?.toString() || ""}
-                      onValueChange={(value) => updateAnswer(question.id, 'd', value)}
-                    >
-                      <SelectTrigger className="bg-white">
-                        <SelectValue placeholder="Nota" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">1</SelectItem>
-                        <SelectItem value="2">2</SelectItem>
-                        <SelectItem value="3">3</SelectItem>
-                        <SelectItem value="4">4</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* (I) Comunicador */}
-                  <div className="bg-amber-50 rounded-lg p-4 border-2 border-amber-200">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="w-8 h-8 bg-amber-500 rounded-full flex items-center justify-center text-white font-bold">
-                        I
-                      </div>
-                      <span className="font-semibold text-amber-900">Comunicador</span>
-                    </div>
-                    <p className="text-sm text-gray-700 mb-3 min-h-[60px]">{question.traits.i}</p>
-                    <Select
-                      value={answers[question.id]?.i?.toString() || ""}
-                      onValueChange={(value) => updateAnswer(question.id, 'i', value)}
-                    >
-                      <SelectTrigger className="bg-white">
-                        <SelectValue placeholder="Nota" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">1</SelectItem>
-                        <SelectItem value="2">2</SelectItem>
-                        <SelectItem value="3">3</SelectItem>
-                        <SelectItem value="4">4</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* (S) Planejador */}
-                  <div className="bg-green-50 rounded-lg p-4 border-2 border-green-200">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold">
-                        S
-                      </div>
-                      <span className="font-semibold text-green-900">Planejador</span>
-                    </div>
-                    <p className="text-sm text-gray-700 mb-3 min-h-[60px]">{question.traits.s}</p>
-                    <Select
-                      value={answers[question.id]?.s?.toString() || ""}
-                      onValueChange={(value) => updateAnswer(question.id, 's', value)}
-                    >
-                      <SelectTrigger className="bg-white">
-                        <SelectValue placeholder="Nota" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">1</SelectItem>
-                        <SelectItem value="2">2</SelectItem>
-                        <SelectItem value="3">3</SelectItem>
-                        <SelectItem value="4">4</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* (C) Analista */}
-                  <div className="bg-blue-50 rounded-lg p-4 border-2 border-blue-200">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
-                        C
-                      </div>
-                      <span className="font-semibold text-blue-900">Analista</span>
-                    </div>
-                    <p className="text-sm text-gray-700 mb-3 min-h-[60px]">{question.traits.c}</p>
-                    <Select
-                      value={answers[question.id]?.c?.toString() || ""}
-                      onValueChange={(value) => updateAnswer(question.id, 'c', value)}
-                    >
-                      <SelectTrigger className="bg-white">
-                        <SelectValue placeholder="Nota" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">1</SelectItem>
-                        <SelectItem value="2">2</SelectItem>
-                        <SelectItem value="3">3</SelectItem>
-                        <SelectItem value="4">4</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
