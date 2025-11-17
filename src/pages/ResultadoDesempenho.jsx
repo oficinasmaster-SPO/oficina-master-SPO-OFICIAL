@@ -5,7 +5,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Loader2, Home, RotateCcw, TrendingUp, AlertCircle, Award, Target } from "lucide-react";
-import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ZAxis, ReferenceLine, Label } from "recharts";
+import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ZAxis, ReferenceLine, ReferenceArea, Label } from "recharts";
 import { classificationRules } from "../components/performance/PerformanceCriteria";
 import { toast } from "sonner";
 
@@ -85,13 +85,13 @@ export default function ResultadoDesempenho() {
   const matrixData = [{
     x: diagnostic.technical_average,
     y: diagnostic.emotional_average,
-    z: 400
+    z: 500
   }];
 
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-3 rounded-lg shadow-lg border">
+        <div className="bg-white p-3 rounded-lg shadow-lg border-2 border-gray-300">
           <p className="font-semibold">{employee?.full_name}</p>
           <p className="text-sm">Técnica: {payload[0].value.toFixed(1)}</p>
           <p className="text-sm">Emocional: {payload[1].value.toFixed(1)}</p>
@@ -99,6 +99,23 @@ export default function ResultadoDesempenho() {
       );
     }
     return null;
+  };
+
+  // Renderiza forma customizada (quadrado)
+  const renderCustomShape = (props) => {
+    const { cx, cy, fill } = props;
+    const size = 15;
+    return (
+      <rect
+        x={cx - size / 2}
+        y={cy - size / 2}
+        width={size}
+        height={size}
+        fill={fill}
+        stroke="#000"
+        strokeWidth={1.5}
+      />
+    );
   };
 
   return (
@@ -167,15 +184,27 @@ export default function ResultadoDesempenho() {
         </Card>
 
         {/* Matriz de Decisão */}
-        <Card>
+        <Card className="border-2">
           <CardHeader>
-            <CardTitle className="text-center text-2xl">MATRIZ DE DECISÃO</CardTitle>
+            <CardTitle className="text-center text-2xl font-bold">MATRIZ DE DECISÃO</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="bg-white">
             <ResponsiveContainer width="100%" height={600}>
-              <ScatterChart margin={{ top: 20, right: 80, bottom: 60, left: 80 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#d1d5db" />
+              <ScatterChart margin={{ top: 20, right: 100, bottom: 80, left: 100 }}>
+                {/* Grade completa */}
+                <CartesianGrid 
+                  strokeDasharray="0" 
+                  stroke="#d1d5db" 
+                  strokeWidth={0.5}
+                  verticalPoints={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+                  horizontalPoints={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+                />
                 
+                {/* Bordas retangulares das zonas */}
+                <ReferenceArea x1={7} x2={10} y1={6} y2={7} stroke="#000" strokeWidth={2} fill="none" />
+                <ReferenceArea x1={7} x2={10} y1={7} y2={10} stroke="#000" strokeWidth={2} fill="none" />
+                <ReferenceArea x1={8} x2={10} y1={8} y2={10} stroke="#000" strokeWidth={2} fill="none" />
+
                 <XAxis 
                   type="number" 
                   dataKey="x" 
@@ -184,12 +213,13 @@ export default function ResultadoDesempenho() {
                   ticks={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
                   tickLine={false}
                   axisLine={{ stroke: '#000', strokeWidth: 2 }}
+                  tick={{ fontSize: 12 }}
                 >
                   <Label 
                     value="COMPETÊNCIAS TÉCNICAS - HABILIDADE/CONHECIMENTO" 
                     position="bottom" 
-                    offset={40}
-                    style={{ fontSize: 14, fontWeight: 600 }}
+                    offset={50}
+                    style={{ fontSize: 13, fontWeight: 600, fill: '#000' }}
                   />
                 </XAxis>
                 
@@ -201,104 +231,107 @@ export default function ResultadoDesempenho() {
                   ticks={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
                   tickLine={false}
                   axisLine={{ stroke: '#000', strokeWidth: 2 }}
+                  tick={{ fontSize: 12 }}
                 >
                   <Label 
                     value="COMPETÊNCIAS EMOCIONAIS - ATITUDE/CARÁTER" 
                     angle={-90} 
                     position="left" 
-                    offset={60}
-                    style={{ fontSize: 14, fontWeight: 600 }}
+                    offset={70}
+                    style={{ fontSize: 13, fontWeight: 600, fill: '#000' }}
                   />
                 </YAxis>
 
-                <ZAxis type="number" dataKey="z" range={[300, 500]} />
+                <ZAxis type="number" dataKey="z" range={[400, 600]} />
                 
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip content={<CustomTooltip />} cursor={{ strokeDasharray: '3 3' }} />
 
-                {/* Linhas de Divisão - Mais grossas e pretas */}
+                {/* Linhas de Divisão Principais */}
                 <ReferenceLine 
                   y={5} 
                   stroke="#000" 
                   strokeWidth={3}
-                  strokeOpacity={1}
                 />
                 <ReferenceLine 
                   x={5} 
                   stroke="#000" 
                   strokeWidth={3}
-                  strokeOpacity={1}
                 />
 
-                {/* Linha secundária em y=7 */}
+                {/* Linhas Secundárias */}
+                <ReferenceLine 
+                  y={6} 
+                  stroke="#000" 
+                  strokeWidth={1.5}
+                />
                 <ReferenceLine 
                   y={7} 
                   stroke="#000" 
-                  strokeWidth={2}
-                  strokeOpacity={0.5}
+                  strokeWidth={1.5}
+                />
+                <ReferenceLine 
+                  x={7} 
+                  stroke="#000" 
+                  strokeWidth={1.5}
                 />
 
-                {/* Textos dos quadrantes */}
-                <text x="20%" y="25%" fill="#666" fontSize="16" fontWeight="600" textAnchor="middle">
+                {/* Labels dos Quadrantes */}
+                <text x="20%" y="20%" fill="#333" fontSize="14" fontWeight="600" textAnchor="middle">
                   TREINAMENTO TÉCNICO
                 </text>
-                <text x="20%" y="75%" fill="#666" fontSize="16" fontWeight="600" textAnchor="middle">
+                <text x="17%" y="80%" fill="#333" fontSize="14" fontWeight="600" textAnchor="middle">
                   DEMISSÃO
                 </text>
-                <text x="75%" y="75%" fill="#666" fontSize="16" fontWeight="600" textAnchor="middle">
+                <text x="75%" y="80%" fill="#333" fontSize="14" fontWeight="600" textAnchor="middle">
                   TREINAMENTO EMOCIONAL
                 </text>
-                <text x="62%" y="42%" fill="#666" fontSize="14" fontWeight="600" textAnchor="middle">
+                <text x="65%" y="45%" fill="#333" fontSize="13" fontWeight="600" textAnchor="middle">
                   OBSERVAÇÃO
                 </text>
-                <text x="75%" y="32%" fill="#666" fontSize="14" fontWeight="600" textAnchor="middle">
+                <text x="78%" y="35%" fill="#333" fontSize="13" fontWeight="600" textAnchor="middle">
                   RECONHECIMENTO
                 </text>
-                <text x="85%" y="20%" fill="#666" fontSize="14" fontWeight="600" textAnchor="middle">
+                <text x="83%" y="20%" fill="#333" fontSize="13" fontWeight="600" textAnchor="middle">
                   INVESTIMENTO
                 </text>
-                <text x="90%" y="85%" fill="#666" fontSize="14" fontWeight="600" textAnchor="middle">
+                <text x="92%" y="88%" fill="#333" fontSize="13" fontWeight="600" textAnchor="middle">
                   PROMOÇÃO
                 </text>
 
-                <Scatter name="Colaborador" data={matrixData} fill={colorMap[classificationInfo.color]}>
-                  {matrixData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={colorMap[classificationInfo.color]} stroke="#000" strokeWidth={2} />
-                  ))}
-                </Scatter>
+                <Scatter 
+                  name="Colaborador" 
+                  data={matrixData} 
+                  fill={colorMap[classificationInfo.color]}
+                  shape={renderCustomShape}
+                />
               </ScatterChart>
             </ResponsiveContainer>
 
-            {/* Legenda das zonas */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-8 p-4 bg-gray-50 rounded-lg">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded bg-red-500" />
-                  <span className="text-sm font-medium">Demissão (&lt; 5 Técnica e &lt; 5 Emocional)</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded bg-orange-500" />
-                  <span className="text-sm font-medium">Treinamento Técnico (&lt; 5 Técnica, &gt; 5 Emocional)</span>
-                </div>
+            {/* Legenda */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-6 p-4 bg-gray-50 rounded-lg border">
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-red-500 border border-gray-700" />
+                <span className="text-xs">Demissão</span>
               </div>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded bg-yellow-500" />
-                  <span className="text-sm font-medium">Treinamento Emocional (&gt; 5 Técnica, &lt; 5 Emocional)</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded bg-blue-500" />
-                  <span className="text-sm font-medium">Observação (5-7 ambos)</span>
-                </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-orange-500 border border-gray-700" />
+                <span className="text-xs">Treinamento Técnico</span>
               </div>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded bg-green-500" />
-                  <span className="text-sm font-medium">Reconhecimento/Investimento (&gt; 7)</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded bg-purple-500" />
-                  <span className="text-sm font-medium">Promoção (&gt; 8 ambos)</span>
-                </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-yellow-500 border border-gray-700" />
+                <span className="text-xs">Treinamento Emocional</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-blue-500 border border-gray-700" />
+                <span className="text-xs">Observação</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-green-500 border border-gray-700" />
+                <span className="text-xs">Reconhecimento</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-purple-500 border border-gray-700" />
+                <span className="text-xs">Investimento/Promoção</span>
               </div>
             </div>
           </CardContent>
