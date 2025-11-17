@@ -413,11 +413,11 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                             to={item.href}
                             onClick={onClose}
                             className={cn(
-                              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group relative",
+                              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group relative select-none",
                               active 
                                 ? "bg-blue-50 text-blue-700 font-medium" 
-                                : "text-gray-700 hover:bg-gray-100",
-                              item.highlight && !active && "bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200"
+                                : "text-gray-700 hover:bg-gray-100 active:bg-gray-200",
+                              item.highlight && !active && "bg-gradient-to-r from-blue-50/50 to-indigo-50/50 border border-blue-100 hover:border-blue-200"
                             )}
                           >
                             <Icon className={cn(
@@ -483,3 +483,4 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
     </>
   );
 }
+
