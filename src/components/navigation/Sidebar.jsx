@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -36,7 +37,8 @@ import {
   GraduationCap,
   Shield,
   Video,
-  FilePenLine
+  FilePenLine,
+  GitBranch // Added GitBranch icon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -119,6 +121,14 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       label: 'Resultados (OS, Metas, Finanças)',
       icon: BarChart4,
       items: [
+        // New item added here
+        { 
+          name: 'Desdobramento de Metas', 
+          href: createPageUrl('DesdobramentoMeta'), 
+          icon: GitBranch,
+          description: 'Esforço e Resultado - Meta por área',
+          highlight: true
+        },
         { 
           name: 'Mapas de Autoavaliação', 
           href: createPageUrl('Autoavaliacoes'), 
