@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -38,7 +37,10 @@ import {
   Shield,
   Video,
   FilePenLine,
-  GitBranch // Added GitBranch icon
+  GitBranch,
+  BookOpen,
+  Calendar,
+  BarChart2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -121,7 +123,6 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       label: 'Resultados (OS, Metas, Finanças)',
       icon: BarChart4,
       items: [
-        // New item added here
         { 
           name: 'Desdobramento de Metas', 
           href: createPageUrl('DesdobramentoMeta'), 
@@ -153,6 +154,13 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('DiagnosticoEndividamento'), 
           icon: TrendingDown,
           description: 'Análise 12 meses com IA'
+        },
+        { 
+          name: 'Diagnóstico Gerencial', 
+          href: createPageUrl('DiagnosticoGerencial'), 
+          icon: Building2,
+          description: 'Análise de áreas da empresa',
+          highlight: true
         }
       ]
     },
@@ -281,7 +289,28 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           name: 'Missão, Visão e Valores', 
           href: createPageUrl('MissaoVisaoValores'), 
           icon: Heart,
-          description: 'Cultura organizacional'
+          description: 'Cultura organizacional',
+          highlight: true
+        },
+        { 
+          name: 'Manual da Cultura', 
+          href: createPageUrl('CulturaOrganizacional'), 
+          icon: BookOpen,
+          description: 'Pilares, expectativas e rituais',
+          highlight: true
+        },
+        { 
+          name: 'Cronograma de Aculturação', 
+          href: createPageUrl('CronogramaAculturacao'), 
+          icon: Calendar,
+          description: 'Atividades automáticas programadas'
+        },
+        { 
+          name: 'Pesquisa de Clima', 
+          href: createPageUrl('PesquisaClima'), 
+          icon: BarChart2,
+          description: 'Desempenho e satisfação da equipe',
+          highlight: true
         }
       ]
     },
@@ -483,4 +512,3 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
     </>
   );
 }
-
