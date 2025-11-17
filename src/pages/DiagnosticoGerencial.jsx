@@ -7,8 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Building2, Percent, Save, Plus, Trash2, Calculator, TrendingUp, Users as UsersIcon } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, Building2, Percent, Save, Plus, Trash2, Calculator, Sitemap } from "lucide-react";
 import { toast } from "sonner";
+import OrganizationChart from "../components/diagnostic/OrganizationChart";
 
 export default function DiagnosticoGerencial() {
   const navigate = useNavigate();
@@ -227,7 +229,6 @@ export default function DiagnosticoGerencial() {
 
     setSaving(true);
     try {
-      // Calcular totais para o GoalBreakdown
       const totalRevenue = 
         formData.partners.reduce((sum, p) => sum + (p.delivery_value || 0), 0) +
         calculateSectionTotal("operational", "sales") +
@@ -244,7 +245,6 @@ export default function DiagnosticoGerencial() {
         formData.technical.reduce((sum, p) => sum + (p.best_month_clients || 0), 0) +
         formData.auxiliary.reduce((sum, p) => sum + (p.best_month_clients || 0), 0);
 
-      // Criar GoalBreakdown automaticamente
       const growthFactor = 1 + (formData.growth_percentage / 100);
       const breakdown = await base44.entities.GoalBreakdown.create({
         workshop_id: workshop?.id || null,
@@ -302,7 +302,6 @@ export default function DiagnosticoGerencial() {
         status: "ativa"
       });
 
-      // Salvar o diagnóstico gerencial
       await base44.entities.ManagementDiagnostic.create({
         workshop_id: workshop?.id || null,
         ...formData,
@@ -403,258 +402,290 @@ export default function DiagnosticoGerencial() {
           <h1 className="text-4xl font-bold text-gray-900 mb-3">
             Diagnóstico Gerencial das Áreas
           </h1>
-          <p className="text-gray-600">Análise completa com cálculo automático e geração de metas</p>
+          <p className="text-gray-600">Mapeie o organograma, presença e entrega de cada colaborador por área</p>
         </div>
 
-        {/* Dados Globais */}
-        <Card className="border-2 border-blue-200">
-          <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50">
-            <CardTitle className="flex items-center gap-2">
-              <Calculator className="w-5 h-5 text-blue-600" />
-              Dados Gerais
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <Label>Mês de Referência *</Label>
-                <Input
-                  type="month"
-                  value={formData.reference_month}
-                  onChange={(e) => setFormData({ ...formData, reference_month: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>% de Crescimento Desejado</Label>
-                <Select 
-                  value={formData.growth_percentage.toString()} 
-                  onValueChange={(v) => setFormData({...formData, growth_percentage: parseInt(v)})}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="10">+10%</SelectItem>
-                    <SelectItem value="15">+15%</SelectItem>
-                    <SelectItem value="20">+20%</SelectItem>
-                    <SelectItem value="25">+25%</SelectItem>
-                    <SelectItem value="30">+30%</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>R/Desejada (R$)</Label>
-                <Input
-                  type="number"
-                  value={formData.desired_revenue}
-                  onChange={(e) => setFormData({ ...formData, desired_revenue: parseFloat(e.target.value) || 0 })}
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <Tabs defaultValue="formulario" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-6">
+            <TabsTrigger value="formulario" className="flex items-center gap-2">
+              <Calculator className="w-4 h-4" />
+              Formulário
+            </TabsTrigger>
+            <TabsTrigger value="organograma" className="flex items-center gap-2">
+              <Sitemap className="w-4 h-4" />
+              Organograma
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Sócios */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <div>
-                <span>1º - SÓCIOS</span>
-                <span className="ml-3 text-sm font-normal text-gray-600">
-                  Total: R$ {formData.partners.reduce((sum, p) => sum + (p.delivery_value || 0), 0).toFixed(2)}
-                </span>
-              </div>
-              <Button size="sm" onClick={addPartner}>
-                <Plus className="w-4 h-4 mr-2" /> Adicionar
-              </Button>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {formData.partners.map((partner, index) => (
-              <div key={index} className="grid grid-cols-12 gap-3 items-end bg-gradient-to-r from-purple-50 to-pink-50 p-3 rounded-lg border-2 border-purple-200">
-                <div className="col-span-4">
-                  <Label className="text-xs">Sócio</Label>
-                  <Select
-                    value={partner.employee_id}
-                    onValueChange={(v) => updatePartner(index, "employee_id", v)}
-                  >
-                    <SelectTrigger className="h-9">
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {employees.map(e => (
-                        <SelectItem key={e.id} value={e.id}>{e.full_name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+          <TabsContent value="formulario" className="space-y-6">
+            {/* Dados Globais */}
+            <Card className="border-2 border-blue-200">
+              <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50">
+                <CardTitle className="flex items-center gap-2">
+                  <Calculator className="w-5 h-5 text-blue-600" />
+                  Dados Gerais
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label>Mês de Referência *</Label>
+                    <Input
+                      type="month"
+                      value={formData.reference_month}
+                      onChange={(e) => setFormData({ ...formData, reference_month: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label>% de Crescimento Desejado</Label>
+                    <Select 
+                      value={formData.growth_percentage.toString()} 
+                      onValueChange={(v) => setFormData({...formData, growth_percentage: parseInt(v)})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="10">+10%</SelectItem>
+                        <SelectItem value="15">+15%</SelectItem>
+                        <SelectItem value="20">+20%</SelectItem>
+                        <SelectItem value="25">+25%</SelectItem>
+                        <SelectItem value="30">+30%</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>R/Desejada (R$)</Label>
+                    <Input
+                      type="number"
+                      value={formData.desired_revenue}
+                      onChange={(e) => setFormData({ ...formData, desired_revenue: parseFloat(e.target.value) || 0 })}
+                    />
+                  </div>
                 </div>
-                <div className="col-span-2">
-                  <Label className="text-xs">Faturamento (R$)</Label>
-                  <Input
-                    type="number"
-                    className="h-9"
-                    value={partner.delivery_value}
-                    onChange={(e) => updatePartner(index, "delivery_value", parseFloat(e.target.value) || 0)}
-                  />
-                </div>
-                <div className="col-span-2">
-                  <Label className="text-xs">Clientes</Label>
-                  <Input
-                    type="number"
-                    className="h-9"
-                    value={partner.best_month_clients}
-                    onChange={(e) => updatePartner(index, "best_month_clients", parseInt(e.target.value) || 0)}
-                  />
-                </div>
-                <div className="col-span-3">
-                  <Label className="text-xs flex items-center gap-1">
-                    <Percent className="w-3 h-3" />
-                    % (Auto)
-                  </Label>
-                  <Input
-                    type="text"
-                    className="h-9 bg-gradient-to-r from-purple-100 to-pink-100 font-bold text-purple-700"
-                    value={`${partner.presence_percentage.toFixed(1)}%`}
-                    disabled
-                  />
-                </div>
-                <div className="col-span-1">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-9 w-9 p-0 text-red-600"
-                    onClick={() => removePartner(index)}
-                  >
-                    <Trash2 className="w-4 h-4" />
+              </CardContent>
+            </Card>
+
+            {/* Sócios */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <div>
+                    <span>1º - SÓCIOS</span>
+                    <span className="ml-3 text-sm font-normal text-gray-600">
+                      Total: R$ {formData.partners.reduce((sum, p) => sum + (p.delivery_value || 0), 0).toFixed(2)}
+                    </span>
+                  </div>
+                  <Button size="sm" onClick={addPartner}>
+                    <Plus className="w-4 h-4 mr-2" /> Adicionar
                   </Button>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {formData.partners.map((partner, index) => (
+                  <div key={index} className="grid grid-cols-12 gap-3 items-end bg-gradient-to-r from-purple-50 to-pink-50 p-3 rounded-lg border-2 border-purple-200">
+                    <div className="col-span-4">
+                      <Label className="text-xs">Sócio</Label>
+                      <Select
+                        value={partner.employee_id}
+                        onValueChange={(v) => updatePartner(index, "employee_id", v)}
+                      >
+                        <SelectTrigger className="h-9">
+                          <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {employees.map(e => (
+                            <SelectItem key={e.id} value={e.id}>{e.full_name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="col-span-2">
+                      <Label className="text-xs">Faturamento (R$)</Label>
+                      <Input
+                        type="number"
+                        className="h-9"
+                        value={partner.delivery_value}
+                        onChange={(e) => updatePartner(index, "delivery_value", parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <Label className="text-xs">Clientes</Label>
+                      <Input
+                        type="number"
+                        className="h-9"
+                        value={partner.best_month_clients}
+                        onChange={(e) => updatePartner(index, "best_month_clients", parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+                    <div className="col-span-3">
+                      <Label className="text-xs flex items-center gap-1">
+                        <Percent className="w-3 h-3" />
+                        % (Auto)
+                      </Label>
+                      <Input
+                        type="text"
+                        className="h-9 bg-gradient-to-r from-purple-100 to-pink-100 font-bold text-purple-700"
+                        value={`${partner.presence_percentage.toFixed(1)}%`}
+                        disabled
+                      />
+                    </div>
+                    <div className="col-span-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-9 w-9 p-0 text-red-600"
+                        onClick={() => removePartner(index)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
 
-        {/* 2º - Vendas */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <div>
-                <span>2º C/VENDA</span>
-                <span className="ml-3 text-sm font-normal text-gray-600">
-                  Total: R$ {calculateSectionTotal("operational", "sales").toFixed(2)}
-                </span>
-              </div>
-              <Button size="sm" onClick={() => addToSection("operational", "sales")}>
-                <Plus className="w-4 h-4 mr-2" /> Adicionar
+            {/* 2º - Vendas */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <div>
+                    <span>2º C/VENDA</span>
+                    <span className="ml-3 text-sm font-normal text-gray-600">
+                      Total: R$ {calculateSectionTotal("operational", "sales").toFixed(2)}
+                    </span>
+                  </div>
+                  <Button size="sm" onClick={() => addToSection("operational", "sales")}>
+                    <Plus className="w-4 h-4 mr-2" /> Adicionar
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {formData.operational.sales.map((item, index) => (
+                  <EmployeeRow key={index} item={item} index={index} section="operational" subsection="sales" showDelivery />
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* 2º - Comercial */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <div>
+                    <span>2º COMERC.</span>
+                    <span className="ml-3 text-sm font-normal text-gray-600">
+                      Total: R$ {calculateSectionTotal("operational", "commercial").toFixed(2)}
+                    </span>
+                  </div>
+                  <Button size="sm" onClick={() => addToSection("operational", "commercial")}>
+                    <Plus className="w-4 h-4 mr-2" /> Adicionar
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {formData.operational.commercial.map((item, index) => (
+                  <EmployeeRow key={index} item={item} index={index} section="operational" subsection="commercial" showDelivery />
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* 2º - Marketing */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <div>
+                    <span>2º MKT DIGITAL</span>
+                    <span className="ml-3 text-sm font-normal text-gray-600">
+                      Total: R$ {calculateSectionTotal("operational", "marketing").toFixed(2)}
+                    </span>
+                  </div>
+                  <Button size="sm" onClick={() => addToSection("operational", "marketing")}>
+                    <Plus className="w-4 h-4 mr-2" /> Adicionar
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {formData.operational.marketing.map((item, index) => (
+                  <EmployeeRow key={index} item={item} index={index} section="operational" subsection="marketing" showDelivery />
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* 3º - Técnico */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <div>
+                    <span>3º TÉCNICO/ELET/MEC/FUNIL.</span>
+                    <span className="ml-3 text-sm font-normal text-gray-600">
+                      Total: R$ {calculateSectionTotal("technical").toFixed(2)}
+                    </span>
+                  </div>
+                  <Button size="sm" onClick={() => addToSection("technical")}>
+                    <Plus className="w-4 h-4 mr-2" /> Adicionar
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {formData.technical.map((item, index) => (
+                  <EmployeeRow key={index} item={item} index={index} section="technical" showDelivery />
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* 3º - Auxiliar */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <div>
+                    <span>3º AUXILIAR/M.BOY/LIMPE</span>
+                    <span className="ml-3 text-sm font-normal text-gray-600">
+                      Total: R$ {calculateSectionTotal("auxiliary").toFixed(2)}
+                    </span>
+                  </div>
+                  <Button size="sm" onClick={() => addToSection("auxiliary")}>
+                    <Plus className="w-4 h-4 mr-2" /> Adicionar
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {formData.auxiliary.map((item, index) => (
+                  <EmployeeRow key={index} item={item} index={index} section="auxiliary" showDelivery />
+                ))}
+              </CardContent>
+            </Card>
+
+            <div className="flex justify-center gap-4">
+              <Button variant="outline" onClick={() => navigate(createPageUrl("Home"))}>
+                Cancelar
               </Button>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {formData.operational.sales.map((item, index) => (
-              <EmployeeRow key={index} item={item} index={index} section="operational" subsection="sales" showDelivery />
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* 2º - Comercial */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <div>
-                <span>2º COMERC.</span>
-                <span className="ml-3 text-sm font-normal text-gray-600">
-                  Total: R$ {calculateSectionTotal("operational", "commercial").toFixed(2)}
-                </span>
-              </div>
-              <Button size="sm" onClick={() => addToSection("operational", "commercial")}>
-                <Plus className="w-4 h-4 mr-2" /> Adicionar
+              <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700 px-8">
+                {saving ? (
+                  <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Salvando...</>
+                ) : (
+                  <><Save className="w-5 h-5 mr-2" /> Salvar e Gerar Painel</>
+                )}
               </Button>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {formData.operational.commercial.map((item, index) => (
-              <EmployeeRow key={index} item={item} index={index} section="operational" subsection="commercial" showDelivery />
-            ))}
-          </CardContent>
-        </Card>
+            </div>
+          </TabsContent>
 
-        {/* 2º - Marketing */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <div>
-                <span>2º MKT DIGITAL</span>
-                <span className="ml-3 text-sm font-normal text-gray-600">
-                  Total: R$ {calculateSectionTotal("operational", "marketing").toFixed(2)}
-                </span>
-              </div>
-              <Button size="sm" onClick={() => addToSection("operational", "marketing")}>
-                <Plus className="w-4 h-4 mr-2" /> Adicionar
+          <TabsContent value="organograma">
+            <OrganizationChart formData={formData} />
+            
+            <div className="flex justify-center gap-4 mt-6">
+              <Button variant="outline" onClick={() => navigate(createPageUrl("Home"))}>
+                Cancelar
               </Button>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {formData.operational.marketing.map((item, index) => (
-              <EmployeeRow key={index} item={item} index={index} section="operational" subsection="marketing" showDelivery />
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* 3º - Técnico */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <div>
-                <span>3º TÉCNICO/ELET/MEC/FUNIL.</span>
-                <span className="ml-3 text-sm font-normal text-gray-600">
-                  Total: R$ {calculateSectionTotal("technical").toFixed(2)}
-                </span>
-              </div>
-              <Button size="sm" onClick={() => addToSection("technical")}>
-                <Plus className="w-4 h-4 mr-2" /> Adicionar
+              <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700 px-8">
+                {saving ? (
+                  <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Salvando...</>
+                ) : (
+                  <><Save className="w-5 h-5 mr-2" /> Salvar e Gerar Painel</>
+                )}
               </Button>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {formData.technical.map((item, index) => (
-              <EmployeeRow key={index} item={item} index={index} section="technical" showDelivery />
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* 3º - Auxiliar */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <div>
-                <span>3º AUXILIAR/M.BOY/LIMPE</span>
-                <span className="ml-3 text-sm font-normal text-gray-600">
-                  Total: R$ {calculateSectionTotal("auxiliary").toFixed(2)}
-                </span>
-              </div>
-              <Button size="sm" onClick={() => addToSection("auxiliary")}>
-                <Plus className="w-4 h-4 mr-2" /> Adicionar
-              </Button>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {formData.auxiliary.map((item, index) => (
-              <EmployeeRow key={index} item={item} index={index} section="auxiliary" showDelivery />
-            ))}
-          </CardContent>
-        </Card>
-
-        <div className="flex justify-center gap-4">
-          <Button variant="outline" onClick={() => navigate(createPageUrl("Home"))}>
-            Cancelar
-          </Button>
-          <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700 px-8">
-            {saving ? (
-              <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Salvando...</>
-            ) : (
-              <><Save className="w-5 h-5 mr-2" /> Salvar e Gerar Painel</>
-            )}
-          </Button>
-        </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
