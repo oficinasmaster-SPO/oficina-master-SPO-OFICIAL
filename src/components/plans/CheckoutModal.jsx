@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CreditCard, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -14,6 +15,7 @@ import { createPageUrl } from "@/utils";
 export default function CheckoutModal({ open, onClose, plan, workshop }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [gateway, setGateway] = useState("stripe");
   const [paymentMethod, setPaymentMethod] = useState("credit_card");
   const [cardData, setCardData] = useState({
     number: "",
@@ -24,43 +26,69 @@ export default function CheckoutModal({ open, onClose, plan, workshop }) {
 
   const checkoutMutation = useMutation({
     mutationFn: async (data) => {
-      // TODO: Aqui virá a integração com gateway de pagamento
-      // Por enquanto, simula o processo
+      // Verificar se backend functions está habilitado
+      const backendFunctionsEnabled = false; // TODO: Verificar no ambiente
       
-      // Simula delay de processamento
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Atualiza o workshop com novo plano
-      const updatedWorkshop = await base44.entities.Workshop.update(workshop.id, {
-        planoAtual: plan.nome,
-        dataAssinatura: new Date().toISOString(),
-        dataRenovacao: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+      if (!backendFunctionsEnabled) {
+        // Modo simulação
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        await base44.entities.Workshop.update(workshop.id, {
+          planoAtual: plan.nome,
+          dataAssinatura: new Date().toISOString(),
+          dataRenovacao: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        });
+
+        await base44.entities.PaymentHistory.create({
+          workshop_id: workshop.id,
+          plan_name: plan.nome,
+          amount: plan.preco || 0,
+          payment_method: data.paymentMethod,
+          payment_status: "approved",
+          gateway: data.gateway,
+          payment_date: new Date().toISOString(),
+          billing_period_start: new Date().toISOString(),
+          billing_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        });
+
+        return { success: true, mode: 'simulation' };
+      }
+
+      // Modo real com backend functions
+      const result = await base44.functions.createSubscription({
+        workshopId: workshop.id,
+        planId: plan.id,
+        paymentData: {
+          gateway: data.gateway,
+          paymentMethod: data.paymentMethod,
+          cardData: data.cardData,
+          customerEmail: workshop.owner_email,
+          customerName: workshop.owner_name
+        },
+        userId: workshop.owner_id
       });
 
-      // Cria registro de pagamento
-      const payment = await base44.entities.PaymentHistory.create({
-        workshop_id: workshop.id,
-        plan_name: plan.nome,
-        amount: plan.preco || 0,
-        payment_method: data.paymentMethod,
-        payment_status: "approved",
-        payment_date: new Date().toISOString(),
-        billing_period_start: new Date().toISOString(),
-        billing_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-      });
+      if (!result.success) {
+        throw new Error(result.error);
+      }
 
-      return { updatedWorkshop, payment };
+      return result;
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries(['workshops']);
       queryClient.invalidateQueries(['payment-history']);
-      toast.success("Plano atualizado com sucesso!");
+      
+      if (result.mode === 'simulation') {
+        toast.success("Plano atualizado (modo demonstração)");
+      } else {
+        toast.success("Plano atualizado com sucesso!");
+      }
+      
       onClose();
       navigate(createPageUrl("MeuPlano"));
     },
     onError: (error) => {
-      toast.error("Erro ao processar pagamento. Tente novamente.");
-      console.error(error);
+      toast.error(error.message || "Erro ao processar pagamento");
     }
   });
 
@@ -72,15 +100,14 @@ export default function CheckoutModal({ open, onClose, plan, workshop }) {
       return;
     }
 
-    // Validação básica
-    if (paymentMethod === "credit_card") {
+    if (paymentMethod === "credit_card" && plan.preco > 0) {
       if (!cardData.number || !cardData.name || !cardData.expiry || !cardData.cvv) {
         toast.error("Preencha todos os dados do cartão");
         return;
       }
     }
 
-    checkoutMutation.mutate({ paymentMethod, cardData });
+    checkoutMutation.mutate({ gateway, paymentMethod, cardData });
   };
 
   if (!plan) return null;
@@ -93,6 +120,27 @@ export default function CheckoutModal({ open, onClose, plan, workshop }) {
         </DialogHeader>
 
         <div className="space-y-6">
+          {/* Aviso Backend Functions */}
+          <div className="bg-orange-50 border-2 border-orange-300 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-orange-900 mb-1">
+                  ⚠️ Backend Functions Necessário
+                </p>
+                <p className="text-xs text-orange-800 mb-2">
+                  Para processar pagamentos reais, você precisa habilitar <strong>Backend Functions</strong> em:
+                </p>
+                <p className="text-xs text-orange-800 font-mono bg-orange-100 px-2 py-1 rounded">
+                  Dashboard → Settings → Backend Functions → Habilitar
+                </p>
+                <p className="text-xs text-orange-700 mt-2">
+                  Após habilitar, configure as chaves de API dos gateways nas variáveis de ambiente.
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Resumo do Plano */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
             <div className="flex items-center justify-between mb-4">
@@ -122,6 +170,21 @@ export default function CheckoutModal({ open, onClose, plan, workshop }) {
 
           {plan.preco > 0 && (
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Gateway de Pagamento */}
+              <div>
+                <Label className="text-lg font-semibold mb-3 block">Gateway de Pagamento</Label>
+                <Select value={gateway} onValueChange={setGateway}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="stripe">Stripe</SelectItem>
+                    <SelectItem value="mercadopago">Mercado Pago</SelectItem>
+                    <SelectItem value="pagarme">Pagar.me</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               {/* Método de Pagamento */}
               <div>
                 <Label className="text-lg font-semibold mb-3 block">Método de Pagamento</Label>
@@ -205,17 +268,6 @@ export default function CheckoutModal({ open, onClose, plan, workshop }) {
                   </p>
                 </div>
               )}
-
-              {/* Aviso sobre Backend Functions */}
-              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                <AlertCircle className="w-5 h-5 text-orange-600 mb-2" />
-                <p className="text-sm text-gray-700 font-medium mb-1">
-                  ⚠️ Integração de Pagamento em Desenvolvimento
-                </p>
-                <p className="text-xs text-gray-600">
-                  As funcionalidades de pagamento serão ativadas em breve. Por enquanto, este é um ambiente de demonstração.
-                </p>
-              </div>
 
               {/* Botões */}
               <div className="flex gap-3">
