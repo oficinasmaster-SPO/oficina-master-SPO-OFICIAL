@@ -4,18 +4,71 @@ import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Save, Sparkles } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Progress } from "@/components/ui/progress";
+import { Loader2, Save, ArrowLeft, ArrowRight, CheckCircle, FileText } from "lucide-react";
 import { toast } from "sonner";
-import AIJobDescriptionAssistant from "../components/rh/AIJobDescriptionAssistant";
 
 export default function CriarDescricaoCargo() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
   const [user, setUser] = useState(null);
   const [workshop, setWorkshop] = useState(null);
-  const [showAI, setShowAI] = useState(true);
-  const [formData, setFormData] = useState(null);
+  
+  const [formData, setFormData] = useState({
+    job_title: "",
+    previous_experience: [],
+    education: [],
+    knowledge: [],
+    clients: [],
+    main_activities: [],
+    main_responsibilities: "",
+    co_responsibilities: "",
+    personal_attributes: [],
+    inherent_risks: "",
+    equipment_tools: [],
+    managed_information: "",
+    working_conditions: "",
+    physical_effort: "",
+    mental_effort: "",
+    visual_effort: "",
+    financial_transactions: "",
+    third_party_safety: "",
+    contact_responsibilities: "",
+    indicators: [],
+    trainings: []
+  });
+
+  const [tempInput, setTempInput] = useState({ item: "", required: false, desired: false });
+
+  const questions = [
+    { id: "job_title", title: "1. Nome do Cargo", type: "text", hasRequiredDesired: false },
+    { id: "previous_experience", title: "2. Experiência Prévia", type: "list-checkbox", hasRequiredDesired: true },
+    { id: "education", title: "3. Formação Escolar", type: "list-checkbox", hasRequiredDesired: true },
+    { id: "knowledge", title: "4. Conhecimentos", type: "list-checkbox", hasRequiredDesired: true },
+    { id: "clients", title: "5. Clientes", type: "list-internal-external", hasRequiredDesired: false },
+    { id: "main_activities", title: "6. Principais Atividades do Cargo", type: "list-simple", hasRequiredDesired: false },
+    { id: "main_responsibilities", title: "7. Principais Responsabilidades", type: "textarea", hasRequiredDesired: false },
+    { id: "co_responsibilities", title: "8. Co-Responsabilidades", type: "textarea", hasRequiredDesired: false },
+    { id: "personal_attributes", title: "9. Atributos Pessoais", type: "list-checkbox", hasRequiredDesired: true },
+    { id: "inherent_risks", title: "10. Riscos Inerentes ao Cargo", type: "textarea", hasRequiredDesired: false },
+    { id: "equipment_tools", title: "11. Máquinas, Equipamentos e Ferramentas", type: "list-simple", hasRequiredDesired: false },
+    { id: "managed_information", title: "12. Informações Administradas pelo Cargo", type: "textarea", hasRequiredDesired: false },
+    { id: "working_conditions", title: "13. Condições de Trabalho", type: "textarea", hasRequiredDesired: false },
+    { id: "physical_effort", title: "14. Esforço Físico", type: "textarea", hasRequiredDesired: false },
+    { id: "mental_effort", title: "15. Esforço Mental", type: "textarea", hasRequiredDesired: false },
+    { id: "visual_effort", title: "16. Esforço Visual", type: "textarea", hasRequiredDesired: false },
+    { id: "financial_transactions", title: "17. Volume de Transações Financeiras", type: "textarea", hasRequiredDesired: false },
+    { id: "third_party_safety", title: "18. Responsabilidades pela Segurança de Terceiros", type: "textarea", hasRequiredDesired: false },
+    { id: "contact_responsibilities", title: "19. Responsabilidades por Contatos", type: "textarea", hasRequiredDesired: false },
+    { id: "indicators", title: "20. Indicadores", type: "list-checkbox", hasRequiredDesired: true },
+    { id: "trainings", title: "21. Treinamentos", type: "list-simple", hasRequiredDesired: false }
+  ];
 
   useEffect(() => {
     loadData();
@@ -40,25 +93,69 @@ export default function CriarDescricaoCargo() {
     }
   };
 
-  const handleAIGenerated = (data) => {
+  const currentQuestion = questions[currentStep];
+  const progress = ((currentStep + 1) / questions.length) * 100;
+
+  const addItem = () => {
+    if (!tempInput.item.trim()) return;
+
+    const field = currentQuestion.id;
+    
+    if (currentQuestion.type === "list-checkbox") {
+      setFormData({
+        ...formData,
+        [field]: [...formData[field], { item: tempInput.item, required: tempInput.required, desired: tempInput.desired }]
+      });
+    } else if (currentQuestion.type === "list-internal-external") {
+      setFormData({
+        ...formData,
+        [field]: [...formData[field], { item: tempInput.item, internal: tempInput.required, external: tempInput.desired }]
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [field]: [...formData[field], tempInput.item]
+      });
+    }
+    
+    setTempInput({ item: "", required: false, desired: false });
+  };
+
+  const removeItem = (index) => {
+    const field = currentQuestion.id;
     setFormData({
-      workshop_id: workshop.id,
-      ...data
+      ...formData,
+      [field]: formData[field].filter((_, i) => i !== index)
     });
-    setShowAI(false);
-    toast.success("Use o botão salvar para confirmar");
+  };
+
+  const handleNext = () => {
+    if (currentStep < questions.length - 1) {
+      setCurrentStep(currentStep + 1);
+      setTempInput({ item: "", required: false, desired: false });
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+      setTempInput({ item: "", required: false, desired: false });
+    }
   };
 
   const handleSubmit = async () => {
-    if (!formData) {
-      toast.error("Gere uma descrição primeiro");
+    if (!formData.job_title) {
+      toast.error("Nome do cargo é obrigatório");
       return;
     }
 
     setSubmitting(true);
 
     try {
-      await base44.entities.JobDescription.create(formData);
+      await base44.entities.JobDescription.create({
+        ...formData,
+        workshop_id: workshop?.id || null
+      });
       toast.success("Descrição de cargo salva!");
       navigate(createPageUrl("DescricoesCargo"));
     } catch (error) {
@@ -79,95 +176,173 @@ export default function CriarDescricaoCargo() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50 py-12 px-4">
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 rounded-full mb-4">
-            <Sparkles className="w-8 h-8 text-purple-600" />
+            <FileText className="w-8 h-8 text-purple-600" />
           </div>
           <h1 className="text-4xl font-bold text-gray-900 mb-3">
-            Criar Descrição de Cargo com IA
+            Formulário de Descrição de Cargos
           </h1>
-          <p className="text-gray-600">
-            Modelo Oficinas Master - Geração automatizada completa
-          </p>
+          <p className="text-gray-600">Oficinas Master - Preencha passo a passo</p>
         </div>
 
-        <div className="space-y-6">
-          {showAI ? (
-            <AIJobDescriptionAssistant onGenerated={handleAIGenerated} />
-          ) : (
-            <>
-              <Card className="shadow-lg border-2 border-green-200">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-green-900">
-                    ✅ Descrição Gerada com Sucesso!
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <p className="text-sm font-semibold text-gray-700">Cargo:</p>
-                      <p className="text-lg font-bold text-gray-900">{formData.job_title}</p>
-                    </div>
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm text-gray-600">
+              Pergunta {currentStep + 1} de {questions.length}
+            </span>
+            <span className="text-sm font-semibold text-purple-600">
+              {progress.toFixed(0)}% completo
+            </span>
+          </div>
+          <Progress value={progress} className="h-2" />
+        </div>
 
-                    <div>
-                      <p className="text-sm font-semibold text-gray-700">Principais Atividades:</p>
-                      <ul className="list-disc list-inside space-y-1">
-                        {formData.main_activities?.slice(0, 5).map((activity, i) => (
-                          <li key={i} className="text-sm text-gray-600">{activity}</li>
-                        ))}
-                        {formData.main_activities?.length > 5 && (
-                          <li className="text-sm text-gray-500 italic">
-                            ...e mais {formData.main_activities.length - 5} atividades
-                          </li>
-                        )}
-                      </ul>
-                    </div>
+        <Card className="shadow-xl border-2 border-purple-200">
+          <CardHeader className="bg-gradient-to-r from-purple-50 to-blue-50">
+            <CardTitle className="text-2xl">{currentQuestion.title}</CardTitle>
+          </CardHeader>
+          <CardContent className="p-6 min-h-[400px]">
+            {currentQuestion.type === "text" && (
+              <div>
+                <Label>Nome do Cargo *</Label>
+                <Input
+                  value={formData[currentQuestion.id]}
+                  onChange={(e) => setFormData({...formData, [currentQuestion.id]: e.target.value})}
+                  placeholder="Ex: Mecânico Líder"
+                  className="mt-2"
+                />
+              </div>
+            )}
 
-                    <div>
-                      <p className="text-sm font-semibold text-gray-700">Treinamentos Recomendados:</p>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {formData.trainings?.map((training, i) => (
-                          <span key={i} className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">
-                            {training}
-                          </span>
-                        ))}
+            {currentQuestion.type === "textarea" && (
+              <div>
+                <Textarea
+                  value={formData[currentQuestion.id]}
+                  onChange={(e) => setFormData({...formData, [currentQuestion.id]: e.target.value})}
+                  placeholder="Descreva aqui..."
+                  rows={8}
+                  className="mt-2"
+                />
+              </div>
+            )}
+
+            {(currentQuestion.type === "list-simple" || currentQuestion.type === "list-checkbox" || currentQuestion.type === "list-internal-external") && (
+              <div className="space-y-4">
+                <div className="space-y-3">
+                  <Label>Adicionar Item</Label>
+                  <Input
+                    value={tempInput.item}
+                    onChange={(e) => setTempInput({...tempInput, item: e.target.value})}
+                    placeholder="Digite o item..."
+                    onKeyPress={(e) => e.key === 'Enter' && addItem()}
+                  />
+                  
+                  {currentQuestion.hasRequiredDesired && (
+                    <div className="flex gap-6">
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          checked={tempInput.required}
+                          onCheckedChange={(v) => setTempInput({...tempInput, required: v})}
+                        />
+                        <Label className="text-sm font-semibold text-red-600">
+                          Requerido (Necessário para entrar)
+                        </Label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          checked={tempInput.desired}
+                          onCheckedChange={(v) => setTempInput({...tempInput, desired: v})}
+                        />
+                        <Label className="text-sm font-semibold text-blue-600">
+                          Desejado (Para desenvolvimento)
+                        </Label>
                       </div>
                     </div>
-
-                    <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
-                      <p className="text-sm text-purple-800">
-                        <strong>📋 Descrição completa gerada:</strong> Todos os campos do formulário Oficinas Master foram preenchidos pela IA.
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowAI(true);
-                    setFormData(null);
-                  }}
-                >
-                  <Sparkles className="w-5 h-5 mr-2" />
-                  Gerar Outra Descrição
-                </Button>
-                <Button
-                  onClick={handleSubmit}
-                  disabled={submitting}
-                  className="bg-green-600 hover:bg-green-700 px-8"
-                >
-                  {submitting ? (
-                    <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Salvando...</>
-                  ) : (
-                    <><Save className="w-5 h-5 mr-2" /> Salvar Descrição de Cargo</>
                   )}
-                </Button>
+
+                  {currentQuestion.type === "list-internal-external" && (
+                    <div className="flex gap-6">
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          checked={tempInput.required}
+                          onCheckedChange={(v) => setTempInput({...tempInput, required: v})}
+                        />
+                        <Label className="text-sm font-semibold text-purple-600">Interno</Label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          checked={tempInput.desired}
+                          onCheckedChange={(v) => setTempInput({...tempInput, desired: v})}
+                        />
+                        <Label className="text-sm font-semibold text-green-600">Externo</Label>
+                      </div>
+                    </div>
+                  )}
+
+                  <Button onClick={addItem} className="w-full">+ Adicionar Item</Button>
+                </div>
+
+                <div className="border-t pt-4">
+                  <Label className="text-sm text-gray-600">Itens Adicionados ({formData[currentQuestion.id]?.length || 0})</Label>
+                  <div className="space-y-2 mt-3 max-h-64 overflow-y-auto">
+                    {formData[currentQuestion.id]?.map((item, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900">
+                            {typeof item === 'string' ? item : item.item}
+                          </p>
+                          {typeof item === 'object' && currentQuestion.hasRequiredDesired && (
+                            <div className="flex gap-3 mt-1">
+                              {item.required && <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">Requerido</span>}
+                              {item.desired && <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">Desejado</span>}
+                            </div>
+                          )}
+                          {typeof item === 'object' && currentQuestion.type === "list-internal-external" && (
+                            <div className="flex gap-3 mt-1">
+                              {item.internal && <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">Interno</span>}
+                              {item.external && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Externo</span>}
+                            </div>
+                          )}
+                        </div>
+                        <Button variant="ghost" size="sm" onClick={() => removeItem(index)}>Remover</Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
-            </>
+            )}
+          </CardContent>
+        </Card>
+
+        <div className="flex justify-between mt-6">
+          <Button
+            variant="outline"
+            onClick={handleBack}
+            disabled={currentStep === 0}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Anterior
+          </Button>
+
+          {currentStep < questions.length - 1 ? (
+            <Button onClick={handleNext} className="bg-purple-600 hover:bg-purple-700">
+              Próxima
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          ) : (
+            <Button
+              onClick={handleSubmit}
+              disabled={submitting}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {submitting ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando...</>
+              ) : (
+                <><CheckCircle className="w-4 h-4 mr-2" /> Salvar Descrição</>
+              )}
+            </Button>
           )}
         </div>
       </div>
