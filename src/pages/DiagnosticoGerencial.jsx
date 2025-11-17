@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Building2, Users, Percent, Save, Plus, Trash2, Calculator } from "lucide-react";
+import { Loader2, Building2, Percent, Save, Plus, Trash2, Calculator } from "lucide-react";
 import { toast } from "sonner";
 
 export default function DiagnosticoGerencial() {
@@ -50,15 +50,38 @@ export default function DiagnosticoGerencial() {
     }
   };
 
-  // Calcula % de presença automaticamente baseado em dias úteis do mês
-  const calculatePresencePercentage = (employeeId) => {
-    // Busca histórico de presença se existir
-    const employee = employees.find(e => e.id === employeeId);
-    if (employee && employee.production_history) {
-      // Se tiver histórico, usa média de presença
-      return 100; // Por padrão 100%, pode ser ajustado com base em dados reais
+  // Calcula % de presença automaticamente baseado no faturamento da área
+  const calculatePresencePercentage = (employeeRevenue, sectionTotal) => {
+    if (sectionTotal === 0) return 0;
+    return (employeeRevenue / sectionTotal) * 100;
+  };
+
+  // Calcula o total de faturamento de uma seção
+  const calculateSectionTotal = (section, subsection = null) => {
+    if (subsection) {
+      return formData[section][subsection].reduce((sum, item) => sum + (item.delivery_value || 0), 0);
     }
-    return 100; // Padrão 100% de presença
+    return formData[section].reduce((sum, item) => sum + (item.delivery_value || 0), 0);
+  };
+
+  // Recalcula porcentagens de toda uma seção
+  const recalculatePercentages = (section, subsection = null) => {
+    const total = calculateSectionTotal(section, subsection);
+    
+    if (subsection) {
+      const updated = { ...formData[section] };
+      updated[subsection] = updated[subsection].map(item => ({
+        ...item,
+        presence_percentage: calculatePresencePercentage(item.delivery_value || 0, total)
+      }));
+      setFormData({ ...formData, [section]: updated });
+    } else {
+      const updated = formData[section].map(item => ({
+        ...item,
+        presence_percentage: calculatePresencePercentage(item.delivery_value || 0, total)
+      }));
+      setFormData({ ...formData, [section]: updated });
+    }
   };
 
   const addPartner = () => {
@@ -76,16 +99,39 @@ export default function DiagnosticoGerencial() {
       const emp = employees.find(e => e.id === value);
       if (emp) {
         updated[index].name = emp.full_name;
-        updated[index].presence_percentage = calculatePresencePercentage(value);
+        // Preencher automaticamente com dados históricos
+        const historicRevenue = (emp.production_parts || 0) + (emp.production_services || 0);
+        updated[index].delivery_value = historicRevenue;
       }
     }
 
     setFormData({ ...formData, partners: updated });
+
+    // Recalcular porcentagens se mudou o valor
+    if (field === "delivery_value") {
+      setTimeout(() => {
+        const total = formData.partners.reduce((sum, item) => sum + (item.delivery_value || 0), 0);
+        const recalculated = formData.partners.map(item => ({
+          ...item,
+          presence_percentage: calculatePresencePercentage(item.delivery_value || 0, total)
+        }));
+        setFormData({ ...formData, partners: recalculated });
+      }, 0);
+    }
   };
 
   const removePartner = (index) => {
     const updated = formData.partners.filter((_, i) => i !== index);
     setFormData({ ...formData, partners: updated });
+    
+    setTimeout(() => {
+      const total = updated.reduce((sum, item) => sum + (item.delivery_value || 0), 0);
+      const recalculated = updated.map(item => ({
+        ...item,
+        presence_percentage: calculatePresencePercentage(item.delivery_value || 0, total)
+      }));
+      setFormData({ ...formData, partners: recalculated });
+    }, 0);
   };
 
   const addToSection = (section, subsection = null) => {
@@ -110,11 +156,18 @@ export default function DiagnosticoGerencial() {
         const emp = employees.find(e => e.id === value);
         if (emp) {
           updated[subsection][index].name = emp.full_name;
-          updated[subsection][index].presence_percentage = calculatePresencePercentage(value);
+          // Preencher automaticamente com dados históricos
+          const historicRevenue = (emp.production_parts || 0) + (emp.production_services || 0);
+          updated[subsection][index].delivery_value = historicRevenue;
         }
       }
 
       setFormData({ ...formData, [section]: updated });
+
+      // Recalcular porcentagens
+      if (field === "delivery_value" || field === "employee_id") {
+        setTimeout(() => recalculatePercentages(section, subsection), 0);
+      }
     } else {
       const updated = [...formData[section]];
       updated[index][field] = value;
@@ -123,11 +176,18 @@ export default function DiagnosticoGerencial() {
         const emp = employees.find(e => e.id === value);
         if (emp) {
           updated[index].name = emp.full_name;
-          updated[index].presence_percentage = calculatePresencePercentage(value);
+          // Preencher automaticamente com dados históricos
+          const historicRevenue = (emp.production_parts || 0) + (emp.production_services || 0);
+          updated[index].delivery_value = historicRevenue;
         }
       }
 
       setFormData({ ...formData, [section]: updated });
+
+      // Recalcular porcentagens
+      if (field === "delivery_value" || field === "employee_id") {
+        setTimeout(() => recalculatePercentages(section), 0);
+      }
     }
   };
 
@@ -136,9 +196,13 @@ export default function DiagnosticoGerencial() {
       const updated = { ...formData[section] };
       updated[subsection] = updated[subsection].filter((_, i) => i !== index);
       setFormData({ ...formData, [section]: updated });
+      
+      setTimeout(() => recalculatePercentages(section, subsection), 0);
     } else {
       const updated = formData[section].filter((_, i) => i !== index);
       setFormData({ ...formData, [section]: updated });
+      
+      setTimeout(() => recalculatePercentages(section), 0);
     }
   };
 
@@ -206,12 +270,12 @@ export default function DiagnosticoGerencial() {
       <div className="col-span-3">
         <Label className="text-xs flex items-center gap-1">
           <Percent className="w-3 h-3" />
-          Presença (Auto)
+          % da Área (Auto)
         </Label>
         <Input
           type="text"
-          className="h-9 bg-green-50 font-semibold text-green-700"
-          value={`${item.presence_percentage}%`}
+          className="h-9 bg-gradient-to-r from-green-100 to-emerald-100 font-bold text-green-700"
+          value={`${item.presence_percentage.toFixed(1)}%`}
           disabled
         />
       </div>
@@ -238,7 +302,7 @@ export default function DiagnosticoGerencial() {
           <h1 className="text-4xl font-bold text-gray-900 mb-3">
             Diagnóstico Gerencial das Áreas
           </h1>
-          <p className="text-gray-600">Análise completa da estrutura organizacional</p>
+          <p className="text-gray-600">Análise completa da estrutura organizacional com cálculo automático</p>
         </div>
 
         {/* Dados Globais */}
@@ -309,24 +373,24 @@ export default function DiagnosticoGerencial() {
                   </Select>
                 </div>
                 <div className="col-span-3">
-                  <Label className="text-xs flex items-center gap-1">
-                    <Percent className="w-3 h-3" />
-                    Presença (Auto)
-                  </Label>
-                  <Input
-                    type="text"
-                    className="h-9 bg-purple-100 font-semibold text-purple-700"
-                    value={`${partner.presence_percentage}%`}
-                    disabled
-                  />
-                </div>
-                <div className="col-span-3">
                   <Label className="text-xs">Entrega (R$)</Label>
                   <Input
                     type="number"
                     className="h-9"
                     value={partner.delivery_value}
                     onChange={(e) => updatePartner(index, "delivery_value", parseFloat(e.target.value) || 0)}
+                  />
+                </div>
+                <div className="col-span-3">
+                  <Label className="text-xs flex items-center gap-1">
+                    <Percent className="w-3 h-3" />
+                    % (Auto)
+                  </Label>
+                  <Input
+                    type="text"
+                    className="h-9 bg-gradient-to-r from-purple-100 to-pink-100 font-bold text-purple-700"
+                    value={`${partner.presence_percentage.toFixed(1)}%`}
+                    disabled
                   />
                 </div>
                 <div className="col-span-1">
@@ -348,7 +412,12 @@ export default function DiagnosticoGerencial() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <span>2º C/VENDA</span>
+              <div>
+                <span>2º C/VENDA</span>
+                <span className="ml-3 text-sm font-normal text-gray-600">
+                  Total: R$ {calculateSectionTotal("operational", "sales").toFixed(2)}
+                </span>
+              </div>
               <Button size="sm" onClick={() => addToSection("operational", "sales")}>
                 <Plus className="w-4 h-4 mr-2" /> Adicionar
               </Button>
@@ -365,7 +434,12 @@ export default function DiagnosticoGerencial() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <span>2º COMERC.</span>
+              <div>
+                <span>2º COMERC.</span>
+                <span className="ml-3 text-sm font-normal text-gray-600">
+                  Total: R$ {calculateSectionTotal("operational", "commercial").toFixed(2)}
+                </span>
+              </div>
               <Button size="sm" onClick={() => addToSection("operational", "commercial")}>
                 <Plus className="w-4 h-4 mr-2" /> Adicionar
               </Button>
@@ -382,7 +456,12 @@ export default function DiagnosticoGerencial() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <span>2º MKT DIGITAL</span>
+              <div>
+                <span>2º MKT DIGITAL</span>
+                <span className="ml-3 text-sm font-normal text-gray-600">
+                  Total: R$ {calculateSectionTotal("operational", "marketing").toFixed(2)}
+                </span>
+              </div>
               <Button size="sm" onClick={() => addToSection("operational", "marketing")}>
                 <Plus className="w-4 h-4 mr-2" /> Adicionar
               </Button>
@@ -399,7 +478,12 @@ export default function DiagnosticoGerencial() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <span>3º TÉCNICO/ELET/MEC/FUNIL.</span>
+              <div>
+                <span>3º TÉCNICO/ELET/MEC/FUNIL.</span>
+                <span className="ml-3 text-sm font-normal text-gray-600">
+                  Total: R$ {calculateSectionTotal("technical").toFixed(2)}
+                </span>
+              </div>
               <Button size="sm" onClick={() => addToSection("technical")}>
                 <Plus className="w-4 h-4 mr-2" /> Adicionar
               </Button>
@@ -416,7 +500,12 @@ export default function DiagnosticoGerencial() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <span>3º AUXILIAR/M.BOY/LIMPE</span>
+              <div>
+                <span>3º AUXILIAR/M.BOY/LIMPE</span>
+                <span className="ml-3 text-sm font-normal text-gray-600">
+                  Total: R$ {calculateSectionTotal("auxiliary").toFixed(2)}
+                </span>
+              </div>
               <Button size="sm" onClick={() => addToSection("auxiliary")}>
                 <Plus className="w-4 h-4 mr-2" /> Adicionar
               </Button>
