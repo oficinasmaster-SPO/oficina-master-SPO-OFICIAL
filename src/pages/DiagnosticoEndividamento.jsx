@@ -24,7 +24,9 @@ export default function DiagnosticoEndividamento() {
       consorcio: 0,
       processos_judiciais: 0,
       investimento: 0,
-      receita_prevista: 0
+      receita_prevista: 0,
+      custo_previsto_pecas: 0,
+      custo_previsto_administrativo: 0
     }))
   );
 
@@ -88,6 +90,35 @@ export default function DiagnosticoEndividamento() {
     };
   };
 
+  const generateProjections = (calculatedMeses) => {
+    const projecoes = [];
+    
+    calculatedMeses.forEach((mes, index) => {
+      // Cenário Otimista: -15% comprometimento
+      projecoes.push({
+        mes: mes.mes,
+        cenario: "otimista",
+        comprometimento_projetado: Math.max(0, mes.comprometimento * 0.85)
+      });
+      
+      // Cenário Realista: mantém atual
+      projecoes.push({
+        mes: mes.mes,
+        cenario: "realista",
+        comprometimento_projetado: mes.comprometimento
+      });
+      
+      // Cenário Pessimista: +20% comprometimento
+      projecoes.push({
+        mes: mes.mes,
+        cenario: "pessimista",
+        comprometimento_projetado: Math.min(100, mes.comprometimento * 1.20)
+      });
+    });
+    
+    return projecoes;
+  };
+
   const handleSubmit = async () => {
     const hasInvalidData = meses.some(m => m.receita_prevista <= 0);
     if (hasInvalidData) {
@@ -104,6 +135,14 @@ export default function DiagnosticoEndividamento() {
         (sum, m) => sum + m.dividas_total, 0
       );
 
+      const custo_total_pecas_12m = calculatedMeses.reduce(
+        (sum, m) => sum + (m.custo_previsto_pecas || 0), 0
+      );
+
+      const custo_total_administrativo_12m = calculatedMeses.reduce(
+        (sum, m) => sum + (m.custo_previsto_administrativo || 0), 0
+      );
+
       const comprometimentos = calculatedMeses.map(m => m.comprometimento);
       const maxComp = Math.max(...comprometimentos);
       const minComp = Math.min(...comprometimentos);
@@ -118,12 +157,16 @@ export default function DiagnosticoEndividamento() {
       else if (avgComp > 30) risco_anual = "ATENCAO";
       else if (avgComp > 10) risco_anual = "SAUDAVEL";
 
+      const projecoes = generateProjections(calculatedMeses);
+
       // Gerar relatório IA
       const prompt = `
 Você é um consultor financeiro da metodologia Oficinas Master. Analise o diagnóstico de endividamento abaixo:
 
 RESUMO ANUAL:
 - Endividamento total 12 meses: R$ ${endividamento_total_12m.toFixed(2)}
+- Custo total com peças: R$ ${custo_total_pecas_12m.toFixed(2)}
+- Custo administrativo/operacional: R$ ${custo_total_administrativo_12m.toFixed(2)}
 - Média anual de comprometimento: ${avgComp.toFixed(2)}%
 - Risco anual: ${risco_anual}
 - Mês com maior comprometimento: Mês ${mes_maior_comprometimento} (${maxComp.toFixed(2)}%)
@@ -137,6 +180,8 @@ Mês ${m.mes}:
 - Consórcio: R$ ${m.consorcio.toFixed(2)}
 - Processos Judiciais: R$ ${m.processos_judiciais.toFixed(2)}
 - Investimento: R$ ${m.investimento.toFixed(2)}
+- Custo Previsto Peças: R$ ${(m.custo_previsto_pecas || 0).toFixed(2)}
+- Custo Administrativo: R$ ${(m.custo_previsto_administrativo || 0).toFixed(2)}
 - Total Dívidas: R$ ${m.dividas_total.toFixed(2)}
 - Receita Prevista: R$ ${m.receita_prevista.toFixed(2)}
 - Comprometimento: ${m.comprometimento.toFixed(2)}%
@@ -145,12 +190,13 @@ Mês ${m.mes}:
 
 Gere um relatório executivo completo contendo:
 
-1. DIAGNÓSTICO GERAL DA EMPRESA
-2. PONTOS DE ATENÇÃO E RISCOS
-3. ANÁLISE DOS MESES CRÍTICOS
-4. PLANO DE AÇÃO DETALHADO (priorizado)
-5. INSIGHTS COMPORTAMENTAIS DA OPERAÇÃO
-6. RECOMENDAÇÕES ESTRATÉGICAS
+1. DIAGNÓSTICO GERAL DA CURVA DE ENDIVIDAMENTO
+2. ANÁLISE DOS CUSTOS PREVISTOS (Peças e Administrativo)
+3. PONTOS DE ATENÇÃO E RISCOS FINANCEIROS
+4. ANÁLISE DOS MESES CRÍTICOS E OPORTUNIDADES
+5. PLANO DE AÇÃO DETALHADO E PRIORIZADO
+6. INSIGHTS COMPORTAMENTAIS DA OPERAÇÃO
+7. RECOMENDAÇÕES ESTRATÉGICAS COM FOCO EM FLUXO DE CAIXA
 
 Seja específico, use linguagem clara e forneça ações práticas.
 `;
@@ -165,10 +211,13 @@ Seja específico, use linguagem clara e forneça ações práticas.
         evaluator_id: user.id,
         meses: calculatedMeses,
         endividamento_total_12m: Number(endividamento_total_12m.toFixed(2)),
+        custo_total_pecas_12m: Number(custo_total_pecas_12m.toFixed(2)),
+        custo_total_administrativo_12m: Number(custo_total_administrativo_12m.toFixed(2)),
         mes_maior_comprometimento,
         mes_menor_comprometimento,
         media_anual_comprometimento: Number(avgComp.toFixed(2)),
         risco_anual,
+        projecoes,
         relatorio_ia,
         completed: true
       });
@@ -210,7 +259,7 @@ Seja específico, use linguagem clara e forneça ações práticas.
             Diagnóstico de Endividamento
           </h1>
           <p className="text-lg text-gray-600">
-            Análise da Curva de Endividamento dos Próximos 12 Meses
+            Análise Completa com Custos Previstos e Projeções
           </p>
         </div>
 
@@ -222,9 +271,10 @@ Seja específico, use linguagem clara e forneça ações práticas.
                 <h3 className="font-semibold text-blue-900 mb-2">Como funciona:</h3>
                 <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
                   <li>Preencha os valores de dívidas nas 5 categorias para cada mês</li>
+                  <li>Informe os custos previstos com peças e administrativos</li>
                   <li>Informe a receita prevista mínima de cada mês</li>
-                  <li>O sistema calcula automaticamente o % de comprometimento</li>
-                  <li>Classificação automática: 0-10% Excelente | 11-30% Saudável | 31-50% Atenção | 51-80% Alerta | >80% Crítico</li>
+                  <li>O sistema calcula automaticamente o % de comprometimento e gera projeções</li>
+                  <li>Classificação automática: 0-10% Excelente | 11-30% Saudável | 31-50% Atenção | 51-80% Alerta | &gt;80% Crítico</li>
                 </ul>
               </div>
             </div>
@@ -288,6 +338,27 @@ Seja específico, use linguagem clara e forneça ações práticas.
                       className="h-8"
                     />
                   </div>
+                  
+                  <div className="pt-2 border-t border-purple-200">
+                    <Label className="text-xs text-purple-700 font-semibold">Custo Previsto Peças (R$)</Label>
+                    <Input
+                      type="number"
+                      value={mes.custo_previsto_pecas}
+                      onChange={(e) => updateMes(index, 'custo_previsto_pecas', e.target.value)}
+                      className="h-8 border-purple-200"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label className="text-xs text-purple-700 font-semibold">Custo Adm/Op (R$)</Label>
+                    <Input
+                      type="number"
+                      value={mes.custo_previsto_administrativo}
+                      onChange={(e) => updateMes(index, 'custo_previsto_administrativo', e.target.value)}
+                      className="h-8 border-purple-200"
+                    />
+                  </div>
+                  
                   <div className="pt-2 border-t">
                     <Label className="text-xs font-bold">Receita Prevista (R$) *</Label>
                     <Input
@@ -317,7 +388,7 @@ Seja específico, use linguagem clara e forneça ações práticas.
             {submitting ? (
               <><Loader2 className="w-6 h-6 mr-2 animate-spin" /> Gerando Análise Completa...</>
             ) : (
-              "Gerar Relatório Inteligente com IA"
+              "Gerar Painel Inteligente com Projeções"
             )}
           </Button>
         </div>

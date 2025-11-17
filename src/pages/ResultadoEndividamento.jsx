@@ -4,8 +4,8 @@ import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Home, RotateCcw, TrendingDown, AlertTriangle, CheckCircle2, FileText } from "lucide-react";
-import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { Loader2, Home, RotateCcw, TrendingDown, AlertTriangle, CheckCircle2, FileText, DollarSign, Package, Briefcase } from "lucide-react";
+import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart } from "recharts";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 
@@ -57,10 +57,35 @@ export default function ResultadoEndividamento() {
 
   if (!analysis) return null;
 
-  const lineChartData = analysis.meses.map(m => ({
+  // Dados para gráficos
+  const curvaEndividamentoData = analysis.meses.map(m => ({
     mes: `Mês ${m.mes}`,
-    comprometimento: m.comprometimento
+    comprometimento: m.comprometimento,
+    dividas: m.dividas_total,
+    receita: m.receita_prevista
   }));
+
+  const custosPrevistos = analysis.meses.map(m => ({
+    mes: `Mês ${m.mes}`,
+    pecas: m.custo_previsto_pecas || 0,
+    administrativo: m.custo_previsto_administrativo || 0,
+    dividas: m.dividas_total
+  }));
+
+  const projecoesData = analysis.projecoes?.length > 0 
+    ? analysis.projecoes.reduce((acc, p) => {
+        const existing = acc.find(item => item.mes === `Mês ${p.mes}`);
+        if (existing) {
+          existing[p.cenario] = p.comprometimento_projetado;
+        } else {
+          acc.push({
+            mes: `Mês ${p.mes}`,
+            [p.cenario]: p.comprometimento_projetado
+          });
+        }
+        return acc;
+      }, [])
+    : [];
 
   const barChartData = [
     {
@@ -110,14 +135,17 @@ export default function ResultadoEndividamento() {
 
   const RiskIcon = riskIcons[analysis.risco_anual];
 
+  const totalCustoPecas = analysis.custo_total_pecas_12m || 0;
+  const totalCustoAdm = analysis.custo_total_administrativo_12m || 0;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-red-50 py-12 px-4">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="text-center">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            Resultado - Análise de Endividamento
+            Painel de Endividamento
           </h1>
-          <p className="text-xl text-gray-600">Curva dos Próximos 12 Meses</p>
+          <p className="text-xl text-gray-600">Análise Completa com Projeções e Custos</p>
         </div>
 
         {/* Status Geral */}
@@ -140,71 +168,150 @@ export default function ResultadoEndividamento() {
           </CardContent>
         </Card>
 
-        {/* KPIs */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* KPIs Principais */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <Card className="shadow-lg border-2 border-red-200">
-            <CardHeader>
-              <CardTitle className="text-lg">Mês Crítico</CardTitle>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <TrendingDown className="w-4 h-4 text-red-600" />
+                Endividamento Total
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold text-red-600">
-                Mês {analysis.mes_maior_comprometimento}
+              <p className="text-2xl font-bold text-red-600">
+                R$ {(analysis.endividamento_total_12m / 1000).toFixed(1)}k
               </p>
-              <p className="text-sm text-gray-600 mt-1">Maior comprometimento</p>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-lg border-2 border-green-200">
-            <CardHeader>
-              <CardTitle className="text-lg">Mês Saudável</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-green-600">
-                Mês {analysis.mes_menor_comprometimento}
-              </p>
-              <p className="text-sm text-gray-600 mt-1">Menor comprometimento</p>
             </CardContent>
           </Card>
 
           <Card className="shadow-lg border-2 border-blue-200">
-            <CardHeader>
-              <CardTitle className="text-lg">Total 12 Meses</CardTitle>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Package className="w-4 h-4 text-blue-600" />
+                Custos Peças
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold text-blue-600">
-                R$ {(analysis.endividamento_total_12m / 1000).toFixed(1)}k
+              <p className="text-2xl font-bold text-blue-600">
+                R$ {(totalCustoPecas / 1000).toFixed(1)}k
               </p>
-              <p className="text-sm text-gray-600 mt-1">Endividamento acumulado</p>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-lg border-2 border-purple-200">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Briefcase className="w-4 h-4 text-purple-600" />
+                Custos Adm/Op
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold text-purple-600">
+                R$ {(totalCustoAdm / 1000).toFixed(1)}k
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-lg border-2 border-orange-200">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Mês Crítico</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold text-orange-600">
+                Mês {analysis.mes_maior_comprometimento}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-lg border-2 border-green-200">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Mês Saudável</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold text-green-600">
+                Mês {analysis.mes_menor_comprometimento}
+              </p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Gráfico de Linha - Comprometimento Mensal */}
+        {/* Curva de Endividamento com Área */}
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle>Evolução do Comprometimento (%)</CardTitle>
+            <CardTitle>Curva Visual de Endividamento (%)</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={lineChartData}>
+            <ResponsiveContainer width="100%" height={350}>
+              <AreaChart data={curvaEndividamentoData}>
+                <defs>
+                  <linearGradient id="colorComprometimento" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="mes" />
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Line 
+                <Area 
                   type="monotone" 
                   dataKey="comprometimento" 
                   stroke="#ef4444" 
-                  strokeWidth={3}
+                  fillOpacity={1}
+                  fill="url(#colorComprometimento)"
                   name="% Comprometimento"
                 />
-              </LineChart>
+              </AreaChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        {/* Gráficos de Barras e Pizza */}
+        {/* Custos Previstos */}
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle>Custos Previstos Mensais (R$)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={custosPrevistos}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="mes" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="pecas" fill="#3b82f6" name="Peças" stackId="a" />
+                <Bar dataKey="administrativo" fill="#8b5cf6" name="Administrativo" stackId="a" />
+                <Bar dataKey="dividas" fill="#ef4444" name="Dívidas" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Projeções de Cenários */}
+        {projecoesData.length > 0 && (
+          <Card className="shadow-lg border-2 border-indigo-200">
+            <CardHeader>
+              <CardTitle>Projeções de Cenários Futuros</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={projecoesData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="mes" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="otimista" stroke="#10b981" strokeWidth={2} name="Otimista" />
+                  <Line type="monotone" dataKey="realista" stroke="#3b82f6" strokeWidth={2} name="Realista" />
+                  <Line type="monotone" dataKey="pessimista" stroke="#ef4444" strokeWidth={2} name="Pessimista" />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Gráficos de Distribuição */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="shadow-lg">
             <CardHeader>
