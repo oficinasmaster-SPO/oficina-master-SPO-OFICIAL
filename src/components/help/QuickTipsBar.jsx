@@ -3,11 +3,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Lightbulb, X, ChevronRight, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export default function QuickTipsBar({ tips, pageName }) {
+export default function QuickTipsBar({ tips = [], pageName }) {
   const [isVisible, setIsVisible] = useState(true);
   const [currentTip, setCurrentTip] = useState(0);
 
   useEffect(() => {
+    if (!pageName) return;
     const dismissed = localStorage.getItem(`tips_dismissed_${pageName}`);
     if (dismissed) {
       setIsVisible(false);
@@ -15,7 +16,9 @@ export default function QuickTipsBar({ tips, pageName }) {
   }, [pageName]);
 
   const handleDismiss = () => {
-    localStorage.setItem(`tips_dismissed_${pageName}`, 'true');
+    if (pageName) {
+      localStorage.setItem(`tips_dismissed_${pageName}`, 'true');
+    }
     setIsVisible(false);
   };
 
