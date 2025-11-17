@@ -7,70 +7,70 @@ import { TrendingUp, Phone, Megaphone, Users, DollarSign, Building2, LayoutGrid,
 
 export default function Autoavaliacoes() {
   const assessments = [
-    {
-      title: "Processos de Vendas",
-      description: "Controle, ticket médio, TCMP2, R70/I30, comissão e metas",
-      icon: TrendingUp,
-      color: "from-green-500 to-emerald-600",
-      href: "AutoavaliacaoVendas"
-    },
-    {
-      title: "Processos Comerciais",
-      description: "Ligações, agendamento, no show, pós-venda e indicações",
-      icon: Phone,
-      color: "from-blue-500 to-blue-600",
-      href: "AutoavaliacaoComercial"
-    },
-    {
-      title: "Processos de Marketing",
-      description: "Anúncios, Google Ads, Meta Ads, redes sociais e conteúdo",
-      icon: Megaphone,
-      color: "from-amber-500 to-orange-600",
-      href: "AutoavaliacaoMarketing"
-    },
-    {
-      title: "Processos de Pessoas",
-      description: "One-on-one, treinamento, CDC, feedbacks e plano de carreira",
-      icon: Users,
-      color: "from-purple-500 to-purple-600",
-      href: "AutoavaliacaoPessoas"
-    },
-    {
-      title: "Processos Financeiros",
-      description: "Controle, compras, geração de caixa, despesas e orçamento",
-      icon: DollarSign,
-      color: "from-green-500 to-teal-600",
-      href: "AutoavaliacaoFinanceiro"
-    },
-    {
-      title: "Avaliação Empresarial",
-      description: "Gestão, inovação, lucros, visão, clima e produtividade",
-      icon: Building2,
-      color: "from-pink-500 to-rose-600",
-      href: "AutoavaliacaoEmpresarial"
-    },
-    {
-      title: "Avaliação MA3 - Áreas",
-      description: "Vendas, comercial, financeiro, técnico, estoque e RH",
-      icon: LayoutGrid,
-      color: "from-cyan-500 to-blue-600",
-      href: "AutoavaliacaoMA3"
-    },
-    {
-      title: "Missão, Visão e Valores",
-      description: "Defina a cultura e direção estratégica da oficina",
-      icon: Target,
-      color: "from-indigo-500 to-violet-600",
-      href: "MissaoVisaoValores"
-    }
-  ];
+  {
+    title: "Processos de Vendas",
+    description: "Controle, ticket médio, TCMP2, R70/I30, comissão e metas",
+    icon: TrendingUp,
+    color: "from-green-500 to-emerald-600",
+    href: "AutoavaliacaoVendas"
+  },
+  {
+    title: "Processos Comerciais",
+    description: "Ligações, agendamento, no show, pós-venda e indicações",
+    icon: Phone,
+    color: "from-blue-500 to-blue-600",
+    href: "AutoavaliacaoComercial"
+  },
+  {
+    title: "Processos de Marketing",
+    description: "Anúncios, Google Ads, Meta Ads, redes sociais e conteúdo",
+    icon: Megaphone,
+    color: "from-amber-500 to-orange-600",
+    href: "AutoavaliacaoMarketing"
+  },
+  {
+    title: "Processos de Pessoas",
+    description: "One-on-one, treinamento, CDC, feedbacks e plano de carreira",
+    icon: Users,
+    color: "from-purple-500 to-purple-600",
+    href: "AutoavaliacaoPessoas"
+  },
+  {
+    title: "Processos Financeiros",
+    description: "Controle, compras, geração de caixa, despesas e orçamento",
+    icon: DollarSign,
+    color: "from-green-500 to-teal-600",
+    href: "AutoavaliacaoFinanceiro"
+  },
+  {
+    title: "Avaliação Empresarial",
+    description: "Gestão, inovação, lucros, visão, clima e produtividade",
+    icon: Building2,
+    color: "from-pink-500 to-rose-600",
+    href: "AutoavaliacaoEmpresarial"
+  },
+  {
+    title: "Avaliação MA3 - Áreas",
+    description: "Vendas, comercial, financeiro, técnico, estoque e RH",
+    icon: LayoutGrid,
+    color: "from-cyan-500 to-blue-600",
+    href: "AutoavaliacaoMA3"
+  },
+  {
+    title: "Missão, Visão e Valores",
+    description: "Defina a cultura e direção estratégica da oficina",
+    icon: Target,
+    color: "from-indigo-500 to-violet-600",
+    href: "MissaoVisaoValores"
+  }];
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-3">
-            Mapas de Autoavaliação Empresarial
+          <h1 className="text-4xl font-bold text-gray-900 mb-3">Mapa da Autoavaliação da Empresa
+
           </h1>
           <p className="text-xl text-gray-600">
             Avalie processos, identifique gargalos e receba planos de ação com IA
@@ -101,11 +101,11 @@ export default function Autoavaliacoes() {
                     </Button>
                   </CardContent>
                 </Card>
-              </Link>
-            );
+              </Link>);
+
           })}
         </div>
       </div>
-    </div>
-  );
+    </div>);
+
 }
