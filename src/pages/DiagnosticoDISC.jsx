@@ -74,41 +74,18 @@ export default function DiagnosticoDISC() {
     });
   };
 
-  const getQuestionSum = (questionId) => {
-    const answer = answers[questionId];
-    if (!answer) return 0;
-    
-    const d = parseInt(answer.d) || 0;
-    const i = parseInt(answer.i) || 0;
-    const s = parseInt(answer.s) || 0;
-    const c = parseInt(answer.c) || 0;
-    
-    return d + i + s + c;
-  };
-
-  const isQuestionValid = (questionId) => {
+  const isQuestionComplete = (questionId) => {
     const answer = answers[questionId];
     if (!answer) return false;
 
-    const values = [
-      parseInt(answer.d) || 0,
-      parseInt(answer.i) || 0,
-      parseInt(answer.s) || 0,
-      parseInt(answer.c) || 0
-    ];
-
-    const sum = values.reduce((a, b) => a + b, 0);
-    if (sum !== 10) return false;
-
-    // Verifica se usou exatamente 1, 2, 3 e 4
-    const sorted = [...values].sort();
-    return sorted[0] === 1 && sorted[1] === 2 && sorted[2] === 3 && sorted[3] === 4;
+    // Verifica se todos os 4 campos estão preenchidos
+    return answer.d !== "" && answer.i !== "" && answer.s !== "" && answer.c !== "";
   };
 
   const validateAnswers = () => {
     for (let i = 1; i <= 10; i++) {
-      if (!isQuestionValid(i)) {
-        toast.error(`Conjunto ${i}: Use exatamente 1, 2, 3 e 4 (sem repetir). A soma deve ser 10.`);
+      if (!isQuestionComplete(i)) {
+        toast.error(`Conjunto ${i}: Preencha todos os campos com números de 1 a 4`);
         return false;
       }
     }
@@ -223,7 +200,7 @@ export default function DiagnosticoDISC() {
   };
 
   const getFilledQuestions = () => {
-    return Object.keys(answers).filter(key => isQuestionValid(parseInt(key))).length;
+    return Object.keys(answers).filter(key => isQuestionComplete(parseInt(key))).length;
   };
 
   const progress = (getFilledQuestions() / 10) * 100;
@@ -311,52 +288,35 @@ export default function DiagnosticoDISC() {
               <div className="flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-amber-900">
-                  <strong>Instruções:</strong> Para cada conjunto, distribua os números <strong>1, 2, 3 e 4</strong> (sem repetir):
+                  <strong>Instruções:</strong> Para cada conjunto, preencha com números de <strong>1 a 4</strong>:
                   <br />• <strong>4</strong> = Característica que MAIS se identifica
                   <br />• <strong>3</strong> = Segunda característica
                   <br />• <strong>2</strong> = Terceira característica
                   <br />• <strong>1</strong> = Característica que MENOS se identifica
-                  <br /><br />
-                  ✓ A soma de cada linha deve ser <strong>10</strong> (1+2+3+4=10)
                 </div>
               </div>
             </CardContent>
           </Card>
 
           {discQuestions.map((question) => {
-            const sum = getQuestionSum(question.id);
-            const isValid = isQuestionValid(question.id);
-            const isFilled = sum > 0;
+            const isComplete = isQuestionComplete(question.id);
 
             return (
               <Card key={question.id} className={`border-2 ${
-                isValid ? 'border-green-300 bg-green-50' :
-                isFilled ? 'border-red-300 bg-red-50' :
-                'border-gray-300'
+                isComplete ? 'border-green-300 bg-green-50' : 'border-gray-300'
               }`}>
                 <CardHeader className={`${
-                  isValid ? 'bg-gradient-to-r from-green-50 to-emerald-50' :
-                  isFilled ? 'bg-gradient-to-r from-red-50 to-orange-50' :
+                  isComplete ? 'bg-gradient-to-r from-green-50 to-emerald-50' :
                   'bg-gradient-to-r from-indigo-50 to-purple-50'
                 }`}>
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg">Conjunto {question.id}</CardTitle>
-                    <div className="flex items-center gap-2">
-                      {isValid ? (
-                        <div className="flex items-center gap-1 text-green-600">
-                          <CheckCircle2 className="w-5 h-5" />
-                          <span className="text-sm font-semibold">Correto!</span>
-                        </div>
-                      ) : isFilled ? (
-                        <span className={`text-sm font-semibold ${
-                          sum === 10 ? 'text-orange-600' : 'text-red-600'
-                        }`}>
-                          Soma: {sum}/10
-                        </span>
-                      ) : (
-                        <span className="text-sm text-gray-500">Não preenchido</span>
-                      )}
-                    </div>
+                    {isComplete && (
+                      <div className="flex items-center gap-1 text-green-600">
+                        <CheckCircle2 className="w-5 h-5" />
+                        <span className="text-sm font-semibold">Completo</span>
+                      </div>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent className="p-6">
