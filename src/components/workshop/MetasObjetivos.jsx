@@ -8,7 +8,7 @@ import { Save, Target } from "lucide-react";
 export default function MetasObjetivos({ workshop, onUpdate }) {
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState({
-    monthly_goals: workshop.monthly_goals || {
+    monthly_goals: {
       revenue_parts: 0,
       revenue_services: 0,
       profitability_percentage: 0,
@@ -16,10 +16,29 @@ export default function MetasObjetivos({ workshop, onUpdate }) {
       average_ticket: 0,
       customer_volume: 0
     },
-    daily_goals: workshop.daily_goals || {},
-    weekly_goals: workshop.weekly_goals || {},
-    annual_goals: workshop.annual_goals || {}
+    daily_goals: {},
+    weekly_goals: {},
+    annual_goals: {}
   });
+
+  // Sincroniza formData quando workshop muda
+  React.useEffect(() => {
+    if (workshop) {
+      setFormData({
+        monthly_goals: workshop.monthly_goals || {
+          revenue_parts: 0,
+          revenue_services: 0,
+          profitability_percentage: 0,
+          profit_percentage: 0,
+          average_ticket: 0,
+          customer_volume: 0
+        },
+        daily_goals: workshop.daily_goals || {},
+        weekly_goals: workshop.weekly_goals || {},
+        annual_goals: workshop.annual_goals || {}
+      });
+    }
+  }, [workshop]);
 
   const handleSave = async () => {
     await onUpdate(formData);

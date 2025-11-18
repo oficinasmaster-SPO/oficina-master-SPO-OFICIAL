@@ -10,11 +10,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export default function ServicosEquipamentos({ workshop, onUpdate, showServicesOnly, showEquipmentOnly }) {
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState({
-    vehicle_types: workshop.vehicle_types || [],
-    fuel_types: workshop.fuel_types || [],
-    vehicle_categories: workshop.vehicle_categories || [],
-    services_offered: workshop.services_offered || [],
-    equipment: workshop.equipment || {
+    vehicle_types: [],
+    fuel_types: [],
+    vehicle_categories: [],
+    services_offered: [],
+    equipment: {
       elevators: 0,
       alignment_ramps: 0,
       balancing_machines: 0,
@@ -27,6 +27,30 @@ export default function ServicosEquipamentos({ workshop, onUpdate, showServicesO
       scanners: []
     }
   });
+
+  // Sincroniza formData quando workshop muda
+  React.useEffect(() => {
+    if (workshop) {
+      setFormData({
+        vehicle_types: workshop.vehicle_types || [],
+        fuel_types: workshop.fuel_types || [],
+        vehicle_categories: workshop.vehicle_categories || [],
+        services_offered: workshop.services_offered || [],
+        equipment: workshop.equipment || {
+          elevators: 0,
+          alignment_ramps: 0,
+          balancing_machines: 0,
+          disc_grinders: 0,
+          shock_tester: 0,
+          welding_machines: [],
+          pneumatic_wrench: 0,
+          paint_booth: 0,
+          lathe: 0,
+          scanners: []
+        }
+      });
+    }
+  }, [workshop]);
 
   const vehicleTypesOptions = [
     { value: 'auto', label: 'Auto' },

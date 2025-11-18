@@ -10,23 +10,47 @@ import { Save, Building2, Info } from "lucide-react";
 export default function DadosBasicosOficina({ workshop, onUpdate }) {
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState({
-    name: workshop.name || "",
-    razao_social: workshop.razao_social || "",
-    cnpj: workshop.cnpj || "",
-    city: workshop.city || "",
-    state: workshop.state || "",
-    endereco_completo: workshop.endereco_completo || "",
-    segment: workshop.segment || "",
-    tax_regime: workshop.tax_regime || "",
-    monthly_revenue: workshop.monthly_revenue || "",
-    employees_count: workshop.employees_count || "",
-    years_in_business: workshop.years_in_business || "",
-    observacoes_gerais: workshop.observacoes_gerais || "",
-    notas_manuais: workshop.notas_manuais || "",
-    capacidade_atendimento_dia: workshop.capacidade_atendimento_dia || 0,
-    tempo_medio_servico: workshop.tempo_medio_servico || 0,
-    horario_funcionamento: workshop.horario_funcionamento || { abertura: "", fechamento: "", dias_semana: [] }
+    name: "",
+    razao_social: "",
+    cnpj: "",
+    city: "",
+    state: "",
+    endereco_completo: "",
+    segment: "",
+    tax_regime: "",
+    monthly_revenue: "",
+    employees_count: "",
+    years_in_business: "",
+    observacoes_gerais: "",
+    notas_manuais: "",
+    capacidade_atendimento_dia: 0,
+    tempo_medio_servico: 0,
+    horario_funcionamento: { abertura: "", fechamento: "", dias_semana: [] }
   });
+
+  // Sincroniza formData quando workshop muda
+  React.useEffect(() => {
+    if (workshop) {
+      setFormData({
+        name: workshop.name || "",
+        razao_social: workshop.razao_social || "",
+        cnpj: workshop.cnpj || "",
+        city: workshop.city || "",
+        state: workshop.state || "",
+        endereco_completo: workshop.endereco_completo || "",
+        segment: workshop.segment || "",
+        tax_regime: workshop.tax_regime || "",
+        monthly_revenue: workshop.monthly_revenue || "",
+        employees_count: workshop.employees_count || "",
+        years_in_business: workshop.years_in_business || "",
+        observacoes_gerais: workshop.observacoes_gerais || "",
+        notas_manuais: workshop.notas_manuais || "",
+        capacidade_atendimento_dia: workshop.capacidade_atendimento_dia || 0,
+        tempo_medio_servico: workshop.tempo_medio_servico || 0,
+        horario_funcionamento: workshop.horario_funcionamento || { abertura: "", fechamento: "", dias_semana: [] }
+      });
+    }
+  }, [workshop]);
 
   const handleSave = async () => {
     await onUpdate(formData);

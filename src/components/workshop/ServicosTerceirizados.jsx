@@ -9,8 +9,17 @@ import { Save, Plus, Trash2 } from "lucide-react";
 export default function ServicosTerceirizados({ workshop, onUpdate }) {
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState({
-    third_party_services: Array.isArray(workshop.third_party_services) ? workshop.third_party_services : []
+    third_party_services: []
   });
+
+  // Sincroniza formData quando workshop muda
+  React.useEffect(() => {
+    if (workshop) {
+      setFormData({
+        third_party_services: Array.isArray(workshop.third_party_services) ? workshop.third_party_services : []
+      });
+    }
+  }, [workshop]);
 
   const handleSave = async () => {
     await onUpdate(formData);
