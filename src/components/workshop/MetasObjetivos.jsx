@@ -27,13 +27,14 @@ export default function MetasObjetivos({ workshop, onUpdate }) {
   };
 
   return (
-    <Card className="shadow-lg">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Target className="w-6 h-6 text-blue-600" />
-            <CardTitle>Metas Mensais</CardTitle>
-          </div>
+    <div className="space-y-6">
+      <Card className="shadow-lg">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Target className="w-6 h-6 text-blue-600" />
+              <CardTitle>Metas Mensais</CardTitle>
+            </div>
           {!editing ? (
             <Button onClick={() => setEditing(true)}>Editar</Button>
           ) : (
@@ -130,9 +131,9 @@ export default function MetasObjetivos({ workshop, onUpdate }) {
           </p>
         </div>
       </CardContent>
-    </Card>
+      </Card>
 
-    <Card className="shadow-lg bg-blue-50 border-2 border-blue-200">
+      <Card className="shadow-lg bg-blue-50 border-2 border-blue-200">
       <CardHeader>
         <CardTitle>Desdobramento Completo de Metas</CardTitle>
       </CardHeader>
@@ -148,7 +149,7 @@ export default function MetasObjetivos({ workshop, onUpdate }) {
           Abrir Desdobramento de Metas
         </Button>
       </CardContent>
-    </Card>
-  </div>
+      </Card>
+    </div>
   );
 }
