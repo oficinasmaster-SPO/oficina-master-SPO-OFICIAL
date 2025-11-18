@@ -32,6 +32,14 @@ export default function DocumentosProcessos({ workshop, onUpdate }) {
     }
   };
 
+  if (!workshop) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <p className="text-gray-500">Carregando dados...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <Card className="shadow-lg">

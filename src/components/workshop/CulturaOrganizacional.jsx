@@ -8,6 +8,14 @@ import { Sparkles, Target, Eye, Award, Users, TrendingUp, BookOpen } from "lucid
 export default function CulturaOrganizacional({ workshop }) {
   const navigate = useNavigate();
 
+  if (!workshop) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <p className="text-gray-500">Carregando dados...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <Card className="shadow-lg border-2 border-purple-200">
