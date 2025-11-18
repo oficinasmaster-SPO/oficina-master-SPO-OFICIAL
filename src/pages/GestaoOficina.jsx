@@ -29,26 +29,36 @@ export default function GestaoOficina() {
       setUser(currentUser);
 
       const workshops = await base44.entities.Workshop.list();
+      
+      if (!workshops || workshops.length === 0) {
+        toast.error("Nenhuma oficina cadastrada");
+        navigate(createPageUrl("Cadastro"));
+        setLoading(false);
+        return;
+      }
+
       let workshopToDisplay = workshops.find(w => w.owner_id === currentUser.id);
 
       // Se o usuário não possui oficina própria, mas é consultor/admin, mostra a primeira disponível
-      if (!workshopToDisplay && (currentUser.role === 'user' || currentUser.role === 'admin') && workshops.length > 0) {
+      if (!workshopToDisplay && (currentUser.role === 'user' || currentUser.role === 'admin')) {
         workshopToDisplay = workshops[0];
       }
 
       if (!workshopToDisplay) {
-        toast.error("Nenhuma oficina cadastrada");
+        toast.error("Nenhuma oficina disponível");
         navigate(createPageUrl("Cadastro"));
+        setLoading(false);
         return;
       }
 
+      // Garante que o workshop está totalmente carregado antes de setar
       setWorkshop(workshopToDisplay);
-    } catch (error) {
-      console.error(error);
-      toast.error("Erro ao carregar dados");
-      base44.auth.redirectToLogin();
-    } finally {
       setLoading(false);
+    } catch (error) {
+      console.error("Erro ao carregar oficina:", error);
+      toast.error("Erro ao carregar dados");
+      setLoading(false);
+      base44.auth.redirectToLogin();
     }
   };
 
@@ -71,7 +81,18 @@ export default function GestaoOficina() {
     );
   }
 
-  if (!workshop) return null;
+  if (!workshop) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600 mb-4">Nenhuma oficina encontrada</p>
+          <Button onClick={() => navigate(createPageUrl("Cadastro"))}>
+            Cadastrar Oficina
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4">
