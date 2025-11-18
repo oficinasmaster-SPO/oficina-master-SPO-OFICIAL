@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, Brain, AlertCircle } from "lucide-react";
+import { Loader2, Brain, AlertCircle, CheckCircle2 } from "lucide-react";
 import { discQuestions } from "../components/disc/DISCQuestions";
 import { toast } from "sonner";
 
@@ -20,7 +20,6 @@ export default function DiagnosticoDISC() {
   const [user, setUser] = useState(null);
   const [workshop, setWorkshop] = useState(null);
   const [employees, setEmployees] = useState([]);
-  const [shuffledQuestions, setShuffledQuestions] = useState([]);
   
   const [selectedEmployee, setSelectedEmployee] = useState("");
   const [isLeader, setIsLeader] = useState(false);
@@ -30,15 +29,6 @@ export default function DiagnosticoDISC() {
   useEffect(() => {
     loadData();
   }, []);
-
-  const shuffleArray = (array) => {
-    const shuffled = [...array];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    return shuffled;
-  };
 
   const loadData = async () => {
     try {
@@ -55,19 +45,7 @@ export default function DiagnosticoDISC() {
       );
       setEmployees(activeEmployees);
 
-      // Embaralhar questões
-      const shuffled = discQuestions.map(q => ({
-        ...q,
-        shuffledTraits: shuffleArray([
-          { key: 'd', text: q.traits.d, label: 'Opção A' },
-          { key: 'i', text: q.traits.i, label: 'Opção B' },
-          { key: 's', text: q.traits.s, label: 'Opção C' },
-          { key: 'c', text: q.traits.c, label: 'Opção D' }
-        ])
-      }));
-      setShuffledQuestions(shuffled);
-
-      // Inicializar respostas
+      // Inicializar respostas vazias
       const initialAnswers = {};
       discQuestions.forEach(q => {
         initialAnswers[q.id] = { d: "", i: "", s: "", c: "" };
@@ -82,6 +60,11 @@ export default function DiagnosticoDISC() {
   };
 
   const updateAnswer = (questionId, profile, value) => {
+    // Aceita apenas valores de 1 a 4 ou vazio
+    if (value !== "" && (isNaN(value) || parseInt(value) < 1 || parseInt(value) > 4)) {
+      return;
+    }
+
     setAnswers({
       ...answers,
       [questionId]: {
@@ -91,20 +74,41 @@ export default function DiagnosticoDISC() {
     });
   };
 
+  const getQuestionSum = (questionId) => {
+    const answer = answers[questionId];
+    if (!answer) return 0;
+    
+    const d = parseInt(answer.d) || 0;
+    const i = parseInt(answer.i) || 0;
+    const s = parseInt(answer.s) || 0;
+    const c = parseInt(answer.c) || 0;
+    
+    return d + i + s + c;
+  };
+
+  const isQuestionValid = (questionId) => {
+    const answer = answers[questionId];
+    if (!answer) return false;
+
+    const values = [
+      parseInt(answer.d) || 0,
+      parseInt(answer.i) || 0,
+      parseInt(answer.s) || 0,
+      parseInt(answer.c) || 0
+    ];
+
+    const sum = values.reduce((a, b) => a + b, 0);
+    if (sum !== 10) return false;
+
+    // Verifica se usou exatamente 1, 2, 3 e 4
+    const sorted = [...values].sort();
+    return sorted[0] === 1 && sorted[1] === 2 && sorted[2] === 3 && sorted[3] === 4;
+  };
+
   const validateAnswers = () => {
     for (let i = 1; i <= 10; i++) {
-      const answer = answers[i];
-      const values = [answer.d, answer.i, answer.s, answer.c].map(v => parseInt(v) || 0);
-      const sum = values.reduce((a, b) => a + b, 0);
-      
-      if (sum !== 10) {
-        toast.error(`Conjunto ${i}: A soma deve ser 10 (use 1, 2, 3 e 4 sem repetir)`);
-        return false;
-      }
-      
-      const sorted = [...values].sort();
-      if (sorted[0] !== 1 || sorted[1] !== 2 || sorted[2] !== 3 || sorted[3] !== 4) {
-        toast.error(`Conjunto ${i}: Use exatamente 1, 2, 3 e 4 (sem repetir)`);
+      if (!isQuestionValid(i)) {
+        toast.error(`Conjunto ${i}: Use exatamente 1, 2, 3 e 4 (sem repetir). A soma deve ser 10.`);
         return false;
       }
     }
@@ -219,11 +223,7 @@ export default function DiagnosticoDISC() {
   };
 
   const getFilledQuestions = () => {
-    return Object.values(answers).filter(a => {
-      const values = [a.d, a.i, a.s, a.c].map(v => parseInt(v) || 0);
-      const sum = values.reduce((x, y) => x + y, 0);
-      return sum === 10;
-    }).length;
+    return Object.keys(answers).filter(key => isQuestionValid(parseInt(key))).length;
   };
 
   const progress = (getFilledQuestions() / 10) * 100;
@@ -238,7 +238,7 @@ export default function DiagnosticoDISC() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 py-12 px-4">
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-100 rounded-full mb-4">
             <Brain className="w-8 h-8 text-indigo-600" />
@@ -247,7 +247,7 @@ export default function DiagnosticoDISC() {
             Teste DISC de Perfil Comportamental
           </h1>
           <p className="text-lg text-gray-600">
-            Avaliação baseada na metodologia DEUSA - Oficinas Master
+            Metodologia DEUSA - Oficinas Master
           </p>
         </div>
 
@@ -299,7 +299,7 @@ export default function DiagnosticoDISC() {
           <div className="bg-white rounded-lg p-4 border-2 border-indigo-200">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-gray-700">
-                Progresso: {getFilledQuestions()}/10 conjuntos
+                Progresso: {getFilledQuestions()}/10 conjuntos preenchidos
               </span>
               <span className="text-sm text-gray-600">{progress.toFixed(0)}%</span>
             </div>
@@ -311,68 +311,108 @@ export default function DiagnosticoDISC() {
               <div className="flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-amber-900">
-                  <strong>Como preencher:</strong> Para cada conjunto de características, 
-                  distribua os números 1, 2, 3 e 4 (sem repetir) conforme o que mais se identifica:
-                  <br />• 4 = Característica mais forte
-                  <br />• 3 = Segunda característica mais forte
-                  <br />• 2 = Terceira característica
-                  <br />• 1 = Característica menos presente
+                  <strong>Instruções:</strong> Para cada conjunto, distribua os números <strong>1, 2, 3 e 4</strong> (sem repetir):
+                  <br />• <strong>4</strong> = Característica que MAIS se identifica
+                  <br />• <strong>3</strong> = Segunda característica
+                  <br />• <strong>2</strong> = Terceira característica
+                  <br />• <strong>1</strong> = Característica que MENOS se identifica
+                  <br /><br />
+                  ✓ A soma de cada linha deve ser <strong>10</strong> (1+2+3+4=10)
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {shuffledQuestions.map((question) => (
-            <Card key={question.id} className="border-2">
-              <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50">
-                <CardTitle className="text-lg">Conjunto {question.id}</CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {question.shuffledTraits.map((trait, index) => (
-                    <div key={index} className="bg-gray-50 rounded-lg p-4 border-2 border-gray-300">
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center text-white font-bold">
-                          {String.fromCharCode(65 + index)}
-                        </div>
-                        <span className="font-semibold text-gray-900">{trait.label}</span>
-                      </div>
-                      <p className="text-sm text-gray-700 mb-3 min-h-[60px]">{trait.text}</p>
-                      <Input
-                        type="number"
-                        min="1"
-                        max="4"
-                        placeholder="1-4"
-                        value={answers[question.id]?.[trait.key] || ""}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (val === "" || (parseInt(val) >= 1 && parseInt(val) <= 4)) {
-                            updateAnswer(question.id, trait.key, val);
-                          }
-                        }}
-                        className="text-center text-lg font-bold"
-                      />
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-4 text-center">
-                  <span className={`text-sm font-medium ${
-                    Object.values(answers[question.id] || {}).map(v => parseInt(v) || 0).reduce((a, b) => a + b, 0) === 10
-                      ? 'text-green-600'
-                      : 'text-gray-500'
-                  }`}>
-                    Soma: {Object.values(answers[question.id] || {}).map(v => parseInt(v) || 0).reduce((a, b) => a + b, 0)} / 10
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+          {discQuestions.map((question) => {
+            const sum = getQuestionSum(question.id);
+            const isValid = isQuestionValid(question.id);
+            const isFilled = sum > 0;
 
-          <div className="flex justify-center">
+            return (
+              <Card key={question.id} className={`border-2 ${
+                isValid ? 'border-green-300 bg-green-50' :
+                isFilled ? 'border-red-300 bg-red-50' :
+                'border-gray-300'
+              }`}>
+                <CardHeader className={`${
+                  isValid ? 'bg-gradient-to-r from-green-50 to-emerald-50' :
+                  isFilled ? 'bg-gradient-to-r from-red-50 to-orange-50' :
+                  'bg-gradient-to-r from-indigo-50 to-purple-50'
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg">Conjunto {question.id}</CardTitle>
+                    <div className="flex items-center gap-2">
+                      {isValid ? (
+                        <div className="flex items-center gap-1 text-green-600">
+                          <CheckCircle2 className="w-5 h-5" />
+                          <span className="text-sm font-semibold">Correto!</span>
+                        </div>
+                      ) : isFilled ? (
+                        <span className={`text-sm font-semibold ${
+                          sum === 10 ? 'text-orange-600' : 'text-red-600'
+                        }`}>
+                          Soma: {sum}/10
+                        </span>
+                      ) : (
+                        <span className="text-sm text-gray-500">Não preenchido</span>
+                      )}
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {[
+                      { key: 'd', text: question.traits.d, label: 'Opção A', color: 'red' },
+                      { key: 'i', text: question.traits.i, label: 'Opção B', color: 'yellow' },
+                      { key: 's', text: question.traits.s, label: 'Opção C', color: 'green' },
+                      { key: 'c', text: question.traits.c, label: 'Opção D', color: 'blue' }
+                    ].map((trait, index) => {
+                      const bgColors = {
+                        red: 'bg-red-100',
+                        yellow: 'bg-yellow-100',
+                        green: 'bg-green-100',
+                        blue: 'bg-blue-100'
+                      };
+                      
+                      const badgeColors = {
+                        red: 'bg-red-500',
+                        yellow: 'bg-yellow-500',
+                        green: 'bg-green-500',
+                        blue: 'bg-blue-500'
+                      };
+
+                      return (
+                        <div key={index} className={`${bgColors[trait.color]} rounded-lg p-4 border-2 border-gray-300`}>
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className={`w-8 h-8 ${badgeColors[trait.color]} rounded-full flex items-center justify-center text-white font-bold text-sm`}>
+                              {String.fromCharCode(65 + index)}
+                            </div>
+                            <span className="font-semibold text-gray-900 text-sm">{trait.label}</span>
+                          </div>
+                          <p className="text-xs text-gray-700 mb-3 min-h-[48px] leading-tight">{trait.text}</p>
+                          <Input
+                            type="number"
+                            min="1"
+                            max="4"
+                            placeholder="1-4"
+                            value={answers[question.id]?.[trait.key] || ""}
+                            onChange={(e) => updateAnswer(question.id, trait.key, e.target.value)}
+                            className="text-center text-xl font-bold h-12"
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+
+          <div className="flex justify-center pt-6">
             <Button
               type="submit"
               disabled={submitting || getFilledQuestions() < 10}
-              className="bg-indigo-600 hover:bg-indigo-700 text-lg px-12 py-6"
+              className="bg-indigo-600 hover:bg-indigo-700 text-lg px-12 py-6 rounded-full shadow-lg"
             >
               {submitting ? (
                 <>
