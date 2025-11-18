@@ -70,7 +70,7 @@ export default function DiagnosticoDISC() {
       // Inicializar respostas
       const initialAnswers = {};
       discQuestions.forEach(q => {
-        initialAnswers[q.id] = { d: 0, i: 0, s: 0, c: 0 };
+        initialAnswers[q.id] = { d: "", i: "", s: "", c: "" };
       });
       setAnswers(initialAnswers);
     } catch (error) {
@@ -82,35 +82,29 @@ export default function DiagnosticoDISC() {
   };
 
   const updateAnswer = (questionId, profile, value) => {
-    const numValue = parseInt(value) || 0;
-    
-    const current = { ...answers[questionId], [profile]: numValue };
-    const sum = current.d + current.i + current.s + current.c;
-    
-    if (sum > 10) {
-      toast.error("A soma das pontuações deve ser 10 (use 1, 2, 3 e 4 sem repetir)");
-      return;
-    }
-    
     setAnswers({
       ...answers,
-      [questionId]: current
+      [questionId]: {
+        ...answers[questionId],
+        [profile]: value
+      }
     });
   };
 
   const validateAnswers = () => {
     for (let i = 1; i <= 10; i++) {
       const answer = answers[i];
-      const sum = answer.d + answer.i + answer.s + answer.c;
+      const values = [answer.d, answer.i, answer.s, answer.c].map(v => parseInt(v) || 0);
+      const sum = values.reduce((a, b) => a + b, 0);
       
       if (sum !== 10) {
-        toast.error(`Pergunta ${i}: A soma deve ser 10 (use 1, 2, 3 e 4 sem repetir)`);
+        toast.error(`Conjunto ${i}: A soma deve ser 10 (use 1, 2, 3 e 4 sem repetir)`);
         return false;
       }
       
-      const values = [answer.d, answer.i, answer.s, answer.c].sort();
-      if (values[0] !== 1 || values[1] !== 2 || values[2] !== 3 || values[3] !== 4) {
-        toast.error(`Pergunta ${i}: Use exatamente 1, 2, 3 e 4 (sem repetir)`);
+      const sorted = [...values].sort();
+      if (sorted[0] !== 1 || sorted[1] !== 2 || sorted[2] !== 3 || sorted[3] !== 4) {
+        toast.error(`Conjunto ${i}: Use exatamente 1, 2, 3 e 4 (sem repetir)`);
         return false;
       }
     }
@@ -135,17 +129,22 @@ export default function DiagnosticoDISC() {
       let totalD = 0, totalI = 0, totalS = 0, totalC = 0;
       
       const answersArray = Object.entries(answers).map(([questionId, scores]) => {
-        totalD += scores.d;
-        totalI += scores.i;
-        totalS += scores.s;
-        totalC += scores.c;
+        const d = parseInt(scores.d) || 0;
+        const i = parseInt(scores.i) || 0;
+        const s = parseInt(scores.s) || 0;
+        const c = parseInt(scores.c) || 0;
+        
+        totalD += d;
+        totalI += i;
+        totalS += s;
+        totalC += c;
         
         return {
           question_id: parseInt(questionId),
-          d_score: scores.d,
-          i_score: scores.i,
-          s_score: scores.s,
-          c_score: scores.c
+          d_score: d,
+          i_score: i,
+          s_score: s,
+          c_score: c
         };
       });
 
@@ -221,7 +220,8 @@ export default function DiagnosticoDISC() {
 
   const getFilledQuestions = () => {
     return Object.values(answers).filter(a => {
-      const sum = a.d + a.i + a.s + a.c;
+      const values = [a.d, a.i, a.s, a.c].map(v => parseInt(v) || 0);
+      const sum = values.reduce((x, y) => x + y, 0);
       return sum === 10;
     }).length;
   };
@@ -299,7 +299,7 @@ export default function DiagnosticoDISC() {
           <div className="bg-white rounded-lg p-4 border-2 border-indigo-200">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-gray-700">
-                Progresso: {getFilledQuestions()}/10 questões
+                Progresso: {getFilledQuestions()}/10 conjuntos
               </span>
               <span className="text-sm text-gray-600">{progress.toFixed(0)}%</span>
             </div>
@@ -332,28 +332,37 @@ export default function DiagnosticoDISC() {
                   {question.shuffledTraits.map((trait, index) => (
                     <div key={index} className="bg-gray-50 rounded-lg p-4 border-2 border-gray-300">
                       <div className="flex items-center gap-2 mb-3">
-                        <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center text-white font-bold">
-                          {index + 1}
+                        <div className="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center text-white font-bold">
+                          {String.fromCharCode(65 + index)}
                         </div>
                         <span className="font-semibold text-gray-900">{trait.label}</span>
                       </div>
                       <p className="text-sm text-gray-700 mb-3 min-h-[60px]">{trait.text}</p>
-                      <Select
-                        value={answers[question.id]?.[trait.key]?.toString() || ""}
-                        onValueChange={(value) => updateAnswer(question.id, trait.key, value)}
-                      >
-                        <SelectTrigger className="bg-white">
-                          <SelectValue placeholder="Nota" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="1">1</SelectItem>
-                          <SelectItem value="2">2</SelectItem>
-                          <SelectItem value="3">3</SelectItem>
-                          <SelectItem value="4">4</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <Input
+                        type="number"
+                        min="1"
+                        max="4"
+                        placeholder="1-4"
+                        value={answers[question.id]?.[trait.key] || ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === "" || (parseInt(val) >= 1 && parseInt(val) <= 4)) {
+                            updateAnswer(question.id, trait.key, val);
+                          }
+                        }}
+                        className="text-center text-lg font-bold"
+                      />
                     </div>
                   ))}
+                </div>
+                <div className="mt-4 text-center">
+                  <span className={`text-sm font-medium ${
+                    Object.values(answers[question.id] || {}).map(v => parseInt(v) || 0).reduce((a, b) => a + b, 0) === 10
+                      ? 'text-green-600'
+                      : 'text-gray-500'
+                  }`}>
+                    Soma: {Object.values(answers[question.id] || {}).map(v => parseInt(v) || 0).reduce((a, b) => a + b, 0)} / 10
+                  </span>
                 </div>
               </CardContent>
             </Card>
