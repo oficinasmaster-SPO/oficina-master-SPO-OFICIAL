@@ -3,11 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Save, UserPlus } from "lucide-react";
+import { Loader2, Save, UserPlus, User, DollarSign, TrendingUp, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function CadastroColaborador() {
@@ -20,19 +21,28 @@ export default function CadastroColaborador() {
   const [formData, setFormData] = useState({
     workshop_id: "",
     full_name: "",
-    position: "",
+    cpf: "",
+    rg: "",
+    data_nascimento: "",
+    telefone: "",
     email: "",
-    phone: "",
+    endereco: {
+      rua: "",
+      numero: "",
+      bairro: "",
+      cidade: "",
+      estado: "",
+      cep: ""
+    },
+    position: "",
+    area: "",
     hire_date: "",
     salary: 0,
     commission: 0,
     bonus: 0,
-    benefits: {
-      meal_voucher: 0,
-      transport_voucher: 0,
-      health_insurance: 0
-    },
+    benefits: [],
     production_parts: 0,
+    production_parts_sales: 0,
     production_services: 0,
     status: "ativo"
   });
@@ -61,6 +71,24 @@ export default function CadastroColaborador() {
     }
   };
 
+  const addBenefit = () => {
+    setFormData({
+      ...formData,
+      benefits: [...formData.benefits, { nome: "", valor: 0 }]
+    });
+  };
+
+  const removeBenefit = (index) => {
+    const newBenefits = formData.benefits.filter((_, i) => i !== index);
+    setFormData({ ...formData, benefits: newBenefits });
+  };
+
+  const updateBenefit = (index, field, value) => {
+    const newBenefits = [...formData.benefits];
+    newBenefits[index][field] = field === 'valor' ? parseFloat(value) || 0 : value;
+    setFormData({ ...formData, benefits: newBenefits });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -73,9 +101,9 @@ export default function CadastroColaborador() {
 
     try {
       const totalCost = formData.salary + formData.commission + formData.bonus + 
-        formData.benefits.meal_voucher + formData.benefits.transport_voucher + formData.benefits.health_insurance;
+        formData.benefits.reduce((sum, b) => sum + (b.valor || 0), 0);
       
-      const totalProduction = formData.production_parts + formData.production_services;
+      const totalProduction = formData.production_parts + formData.production_parts_sales + formData.production_services;
       const productionPercentage = totalCost > 0 ? (totalProduction / totalCost) * 100 : 0;
 
       await base44.entities.Employee.create({
@@ -93,6 +121,12 @@ export default function CadastroColaborador() {
     }
   };
 
+  const totalCost = formData.salary + formData.commission + formData.bonus + 
+    formData.benefits.reduce((sum, b) => sum + (b.valor || 0), 0);
+  
+  const totalProduction = formData.production_parts + formData.production_parts_sales + formData.production_services;
+  const productionPercentage = totalCost > 0 ? ((totalProduction / totalCost) * 100).toFixed(0) : 0;
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -103,7 +137,7 @@ export default function CadastroColaborador() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
             <UserPlus className="w-8 h-8 text-blue-600" />
@@ -120,7 +154,15 @@ export default function CadastroColaborador() {
           {/* Dados Pessoais */}
           <Card>
             <CardHeader>
-              <CardTitle>Dados Pessoais</CardTitle>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center">
+                  <User className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <CardTitle>Dados Pessoais</CardTitle>
+                  <CardDescription>Informações básicas do colaborador</CardDescription>
+                </div>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -133,16 +175,37 @@ export default function CadastroColaborador() {
                   />
                 </div>
                 <div>
-                  <Label>Cargo/Função *</Label>
+                  <Label>CPF</Label>
                   <Input
-                    value={formData.position}
-                    onChange={(e) => setFormData({...formData, position: e.target.value})}
-                    required
+                    value={formData.cpf}
+                    onChange={(e) => setFormData({...formData, cpf: e.target.value})}
+                    placeholder="000.000.000-00"
+                    maxLength={14}
                   />
                 </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>RG</Label>
+                  <Input
+                    value={formData.rg}
+                    onChange={(e) => setFormData({...formData, rg: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label>Data de Nascimento</Label>
+                  <Input
+                    type="date"
+                    value={formData.data_nascimento}
+                    onChange={(e) => setFormData({...formData, data_nascimento: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label>Telefone</Label>
+                  <Input
+                    value={formData.telefone}
+                    onChange={(e) => setFormData({...formData, telefone: e.target.value})}
+                    placeholder="(00) 00000-0000"
+                  />
+                </div>
                 <div>
                   <Label>Email</Label>
                   <Input
@@ -151,16 +214,92 @@ export default function CadastroColaborador() {
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
                   />
                 </div>
-                <div>
-                  <Label>Telefone</Label>
-                  <Input
-                    value={formData.phone}
-                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                  />
-                </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="pt-4 border-t">
+                <h3 className="font-semibold text-gray-900 mb-3">Endereço</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label>Rua</Label>
+                    <Input
+                      value={formData.endereco.rua}
+                      onChange={(e) => setFormData({...formData, endereco: {...formData.endereco, rua: e.target.value}})}
+                    />
+                  </div>
+                  <div>
+                    <Label>Número</Label>
+                    <Input
+                      value={formData.endereco.numero}
+                      onChange={(e) => setFormData({...formData, endereco: {...formData.endereco, numero: e.target.value}})}
+                    />
+                  </div>
+                  <div>
+                    <Label>Bairro</Label>
+                    <Input
+                      value={formData.endereco.bairro}
+                      onChange={(e) => setFormData({...formData, endereco: {...formData.endereco, bairro: e.target.value}})}
+                    />
+                  </div>
+                  <div>
+                    <Label>Cidade</Label>
+                    <Input
+                      value={formData.endereco.cidade}
+                      onChange={(e) => setFormData({...formData, endereco: {...formData.endereco, cidade: e.target.value}})}
+                    />
+                  </div>
+                  <div>
+                    <Label>Estado (UF)</Label>
+                    <Input
+                      value={formData.endereco.estado}
+                      onChange={(e) => setFormData({...formData, endereco: {...formData.endereco, estado: e.target.value.toUpperCase()}})}
+                      maxLength={2}
+                    />
+                  </div>
+                  <div>
+                    <Label>CEP</Label>
+                    <Input
+                      value={formData.endereco.cep}
+                      onChange={(e) => setFormData({...formData, endereco: {...formData.endereco, cep: e.target.value}})}
+                      placeholder="00000-000"
+                    />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Dados da Contratação */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Dados da Contratação</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label>Cargo/Função *</Label>
+                  <Input
+                    value={formData.position}
+                    onChange={(e) => setFormData({...formData, position: e.target.value})}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label>Área</Label>
+                  <Select value={formData.area} onValueChange={(value) => setFormData({...formData, area: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="vendas">Vendas</SelectItem>
+                      <SelectItem value="comercial">Comercial</SelectItem>
+                      <SelectItem value="marketing">Marketing</SelectItem>
+                      <SelectItem value="tecnico">Técnico</SelectItem>
+                      <SelectItem value="administrativo">Administrativo</SelectItem>
+                      <SelectItem value="financeiro">Financeiro</SelectItem>
+                      <SelectItem value="gerencia">Gerência</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div>
                   <Label>Data de Contratação</Label>
                   <Input
@@ -169,27 +308,22 @@ export default function CadastroColaborador() {
                     onChange={(e) => setFormData({...formData, hire_date: e.target.value})}
                   />
                 </div>
-                <div>
-                  <Label>Status</Label>
-                  <Select value={formData.status} onValueChange={(value) => setFormData({...formData, status: value})}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ativo">Ativo</SelectItem>
-                      <SelectItem value="inativo">Inativo</SelectItem>
-                      <SelectItem value="ferias">Férias</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Remuneração */}
+          {/* Remuneração e Benefícios */}
           <Card>
             <CardHeader>
-              <CardTitle>Remuneração</CardTitle>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
+                  <DollarSign className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <CardTitle>Remuneração e Benefícios</CardTitle>
+                  <CardDescription>Salário, comissões e vales</CardDescription>
+                </div>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -222,43 +356,46 @@ export default function CadastroColaborador() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <Label>Vale Alimentação (R$)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={formData.benefits.meal_voucher}
-                    onChange={(e) => setFormData({
-                      ...formData, 
-                      benefits: {...formData.benefits, meal_voucher: parseFloat(e.target.value) || 0}
-                    })}
-                  />
+              <div className="pt-4 border-t">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-gray-900">Vales e Benefícios</h3>
+                  <Button type="button" size="sm" onClick={addBenefit}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Adicionar
+                  </Button>
                 </div>
-                <div>
-                  <Label>Vale Transporte (R$)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={formData.benefits.transport_voucher}
-                    onChange={(e) => setFormData({
-                      ...formData, 
-                      benefits: {...formData.benefits, transport_voucher: parseFloat(e.target.value) || 0}
-                    })}
-                  />
-                </div>
-                <div>
-                  <Label>Plano de Saúde (R$)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={formData.benefits.health_insurance}
-                    onChange={(e) => setFormData({
-                      ...formData, 
-                      benefits: {...formData.benefits, health_insurance: parseFloat(e.target.value) || 0}
-                    })}
-                  />
-                </div>
+                {formData.benefits.length === 0 ? (
+                  <p className="text-sm text-gray-500">Nenhum benefício cadastrado</p>
+                ) : (
+                  <div className="space-y-2">
+                    {formData.benefits.map((benefit, index) => (
+                      <div key={index} className="flex gap-2 items-center">
+                        <Input
+                          placeholder="Nome do vale (ex: Alimentação)"
+                          value={benefit.nome}
+                          onChange={(e) => updateBenefit(index, 'nome', e.target.value)}
+                          className="flex-1"
+                        />
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="Valor"
+                          value={benefit.valor}
+                          onChange={(e) => updateBenefit(index, 'valor', e.target.value)}
+                          className="w-32"
+                        />
+                        <Button type="button" size="icon" variant="destructive" onClick={() => removeBenefit(index)}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-4 border-t bg-blue-50 rounded-lg p-4">
+                <p className="text-sm font-semibold text-blue-900">Custo Total Mensal</p>
+                <p className="text-2xl font-bold text-blue-600">R$ {totalCost.toFixed(2)}</p>
               </div>
             </CardContent>
           </Card>
@@ -266,12 +403,20 @@ export default function CadastroColaborador() {
           {/* Produção */}
           <Card>
             <CardHeader>
-              <CardTitle>Produção</CardTitle>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <CardTitle>Produção</CardTitle>
+                  <CardDescription>Valores de produção mensal</CardDescription>
+                </div>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <Label>Produção Peças (R$)</Label>
+                  <Label>Produção de Peças (R$)</Label>
                   <Input
                     type="number"
                     step="0.01"
@@ -280,13 +425,37 @@ export default function CadastroColaborador() {
                   />
                 </div>
                 <div>
-                  <Label>Produção Serviços (R$)</Label>
+                  <Label>Produção Vendas de Peças (R$)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.production_parts_sales}
+                    onChange={(e) => setFormData({...formData, production_parts_sales: parseFloat(e.target.value) || 0})}
+                  />
+                </div>
+                <div>
+                  <Label>Produção de Serviços (R$)</Label>
                   <Input
                     type="number"
                     step="0.01"
                     value={formData.production_services}
                     onChange={(e) => setFormData({...formData, production_services: parseFloat(e.target.value) || 0})}
                   />
+                </div>
+              </div>
+
+              <div className="pt-4 border-t bg-green-50 rounded-lg p-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-semibold text-green-900">Produção Total</p>
+                    <p className="text-2xl font-bold text-green-600">R$ {totalProduction.toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-green-900">% sobre Custos</p>
+                    <p className={`text-2xl font-bold ${productionPercentage >= 100 ? 'text-green-600' : 'text-orange-600'}`}>
+                      {productionPercentage}%
+                    </p>
+                  </div>
                 </div>
               </div>
             </CardContent>
