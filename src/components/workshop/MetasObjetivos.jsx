@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Save, Target } from "lucide-react";
 
 export default function MetasObjetivos({ workshop, onUpdate }) {
+  const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState({
     monthly_goals: {
@@ -170,7 +173,7 @@ export default function MetasObjetivos({ workshop, onUpdate }) {
           utilize a ferramenta completa de desdobramento.
         </p>
         <Button
-          onClick={() => window.location.href = '/desdobramento-meta'}
+          onClick={() => navigate(createPageUrl("DesdobramentoMeta"))}
           className="w-full bg-blue-600 hover:bg-blue-700"
         >
           Abrir Desdobramento de Metas
