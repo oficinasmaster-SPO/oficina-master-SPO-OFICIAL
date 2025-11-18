@@ -44,6 +44,14 @@ export default function ServicosTerceirizados({ workshop, onUpdate }) {
     setFormData({ ...formData, third_party_services: newServices });
   };
 
+  if (!workshop) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <p className="text-gray-500">Carregando dados...</p>
+      </div>
+    );
+  }
+
   const totalCost = formData.third_party_services.reduce((sum, s) => sum + (s.value || 0), 0);
 
   const serviceTypes = [

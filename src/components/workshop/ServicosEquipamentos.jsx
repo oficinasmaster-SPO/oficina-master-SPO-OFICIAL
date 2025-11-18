@@ -192,6 +192,14 @@ export default function ServicosEquipamentos({ workshop, onUpdate, showServicesO
   const shouldShowServices = !showEquipmentOnly;
   const shouldShowEquipment = !showServicesOnly;
 
+  if (!workshop) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <p className="text-gray-500">Carregando dados...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {shouldShowServices && (
