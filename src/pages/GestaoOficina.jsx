@@ -29,15 +29,20 @@ export default function GestaoOficina() {
       setUser(currentUser);
 
       const workshops = await base44.entities.Workshop.list();
-      const userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
+      let workshopToDisplay = workshops.find(w => w.owner_id === currentUser.id);
 
-      if (!userWorkshop) {
+      // Se o usuário não possui oficina própria, mas é consultor/admin, mostra a primeira disponível
+      if (!workshopToDisplay && (currentUser.role === 'user' || currentUser.role === 'admin') && workshops.length > 0) {
+        workshopToDisplay = workshops[0];
+      }
+
+      if (!workshopToDisplay) {
         toast.error("Nenhuma oficina cadastrada");
         navigate(createPageUrl("Cadastro"));
         return;
       }
 
-      setWorkshop(userWorkshop);
+      setWorkshop(workshopToDisplay);
     } catch (error) {
       console.error(error);
       toast.error("Erro ao carregar dados");
