@@ -9,8 +9,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Building2, CheckCircle2, FileText, MapPin, Wrench } from "lucide-react";
+import { Loader2, Building2, CheckCircle2, FileText, MapPin, Wrench, StickyNote, Lightbulb, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function Cadastro() {
   const navigate = useNavigate();
@@ -29,7 +30,9 @@ export default function Cadastro() {
     tax_regime: "",
     monthly_revenue: "",
     employees_count: "",
-    years_in_business: ""
+    years_in_business: "",
+    observacoes_gerais: "",
+    notas_manuais: ""
   });
 
   const servicesOptions = [
@@ -103,7 +106,9 @@ export default function Cadastro() {
           tax_regime: userWorkshop.tax_regime || "",
           monthly_revenue: userWorkshop.monthly_revenue || "",
           employees_count: userWorkshop.employees_count || "",
-          years_in_business: userWorkshop.years_in_business || ""
+          years_in_business: userWorkshop.years_in_business || "",
+          observacoes_gerais: userWorkshop.observacoes_gerais || "",
+          notas_manuais: userWorkshop.notas_manuais || ""
         });
       }
     } catch (error) {
@@ -122,6 +127,47 @@ export default function Cadastro() {
     });
   };
 
+  // Determina automaticamente se é auto center
+  const isAutoCenter = () => {
+    const hasAlinhamento = formData.services_offered.includes('alinhamento');
+    const hasBalanceamento = formData.services_offered.includes('balanceamento');
+    const isCentroAutomotivo = formData.segment === 'centro_automotivo';
+    
+    return isCentroAutomotivo && hasAlinhamento && hasBalanceamento;
+  };
+
+  // Gera sugestões baseadas nos serviços selecionados
+  const generateSuggestions = () => {
+    const suggestions = [];
+    const services = formData.services_offered;
+    
+    if (services.includes('alinhamento') && services.includes('balanceamento')) {
+      suggestions.push("Sua oficina oferece serviços de alinhamento e balanceamento - considere investir em equipamentos de ponta para aumentar a precisão.");
+    }
+    
+    if (services.includes('injecao_eletronica') && services.includes('motor')) {
+      suggestions.push("Com serviços de injeção eletrônica e motor, você pode se especializar em diagnósticos complexos - considere certificações específicas.");
+    }
+    
+    if (services.includes('pintura') && services.includes('funilaria')) {
+      suggestions.push("Oficina com pintura e funilaria tem grande potencial - considere parcerias com seguradoras para aumentar o volume de clientes.");
+    }
+    
+    if (services.includes('ar_condicionado') && services.includes('eletrica')) {
+      suggestions.push("Serviços elétricos e ar condicionado são complementares - ofereça pacotes promocionais combinados.");
+    }
+    
+    if (services.length > 15) {
+      suggestions.push("Você oferece uma ampla gama de serviços - considere criar especializações por equipe para otimizar a qualidade.");
+    }
+    
+    if (isAutoCenter()) {
+      suggestions.push("Sua oficina foi identificada como Auto Center - considere expandir para serviços express e atendimento sem agendamento.");
+    }
+    
+    return suggestions;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -134,6 +180,8 @@ export default function Cadastro() {
     setLoading(true);
 
     try {
+      const aiSuggestions = generateSuggestions();
+      
       const workshopData = {
         name: formData.name,
         razao_social: formData.razao_social,
@@ -147,6 +195,10 @@ export default function Cadastro() {
         monthly_revenue: formData.monthly_revenue,
         employees_count: formData.employees_count,
         years_in_business: formData.years_in_business,
+        is_autocenter: isAutoCenter(),
+        observacoes_gerais: formData.observacoes_gerais,
+        notas_manuais: formData.notas_manuais,
+        sugestoes_ia: aiSuggestions,
         owner_id: user.id
       };
 
@@ -177,6 +229,9 @@ export default function Cadastro() {
       </div>
     );
   }
+
+  const suggestions = generateSuggestions();
+  const isIdentifiedAsAutoCenter = isAutoCenter();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4">
@@ -252,6 +307,17 @@ export default function Cadastro() {
                     <SelectItem value="outro">Outro</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="observacoes_gerais">Observações Gerais</Label>
+                <Textarea
+                  id="observacoes_gerais"
+                  value={formData.observacoes_gerais}
+                  onChange={(e) => setFormData({...formData, observacoes_gerais: e.target.value})}
+                  placeholder="Descreva informações adicionais sobre sua oficina..."
+                  rows={3}
+                />
               </div>
             </CardContent>
           </Card>
@@ -347,6 +413,15 @@ export default function Cadastro() {
                 </p>
               </div>
 
+              {isIdentifiedAsAutoCenter && (
+                <Alert className="bg-blue-50 border-blue-200">
+                  <AlertCircle className="h-4 w-4 text-blue-600" />
+                  <AlertDescription className="text-blue-900">
+                    Sua oficina foi identificada automaticamente como <strong>Auto Center</strong> com base nos serviços selecionados.
+                  </AlertDescription>
+                </Alert>
+              )}
+
               <div>
                 <Label htmlFor="tax_regime">Regime Tributário</Label>
                 <Select value={formData.tax_regime} onValueChange={(value) => setFormData({...formData, tax_regime: value})}>
@@ -422,6 +497,58 @@ export default function Cadastro() {
                   </SelectContent>
                 </Select>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Recomendações da Plataforma */}
+          {suggestions.length > 0 && (
+            <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                    <Lightbulb className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle>Recomendações da Plataforma</CardTitle>
+                    <CardDescription>Sugestões baseadas no seu perfil</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {suggestions.map((suggestion, index) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <span className="text-purple-600 font-bold mt-0.5">•</span>
+                      <span className="text-sm text-gray-700">{suggestion}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Notas Internas */}
+          <Card className="border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-500 rounded-lg flex items-center justify-center">
+                  <StickyNote className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <CardTitle>Notas Internas do Proprietário</CardTitle>
+                  <CardDescription>Anotações pessoais sobre sua oficina</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Textarea
+                id="notas_manuais"
+                value={formData.notas_manuais}
+                onChange={(e) => setFormData({...formData, notas_manuais: e.target.value})}
+                placeholder="Anote aqui suas observações pessoais, ideias, planos futuros..."
+                rows={4}
+                className="bg-white"
+              />
             </CardContent>
           </Card>
 
