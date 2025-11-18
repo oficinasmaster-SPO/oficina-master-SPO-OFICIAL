@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Save, Building2, Info } from "lucide-react";
-import { NumberInput } from "@/components/ui/number-input";
 
 export default function DadosBasicosOficina({ workshop, onUpdate }) {
   const [editing, setEditing] = useState(false);
@@ -238,9 +237,11 @@ export default function DadosBasicosOficina({ workshop, onUpdate }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label>Capacidade de Atendimento/Dia</Label>
-              <NumberInput
+              <Input
+                type="number"
+                min="0"
                 value={formData.capacidade_atendimento_dia}
-                onChange={(e) => setFormData({...formData, capacidade_atendimento_dia: e.target.value})}
+                onChange={(e) => setFormData({...formData, capacidade_atendimento_dia: parseInt(e.target.value) || 0})}
                 disabled={!editing}
                 placeholder="Ex: 10"
               />

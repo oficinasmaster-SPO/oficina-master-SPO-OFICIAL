@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Settings, Package, Plus, Trash2, Save } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { NumberInput } from "@/components/ui/number-input";
 
 export default function ServicosEquipamentos({ workshop, onUpdate, showServicesOnly, showEquipmentOnly }) {
   const [editing, setEditing] = useState(false);
@@ -336,88 +335,104 @@ export default function ServicosEquipamentos({ workshop, onUpdate, showServicesO
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label>Elevadores</Label>
-                <NumberInput
+                <Input
+                  type="number"
+                  min="0"
                   value={formData.equipment.elevators}
                   onChange={(e) => setFormData({
                     ...formData,
-                    equipment: { ...formData.equipment, elevators: e.target.value }
+                    equipment: { ...formData.equipment, elevators: parseInt(e.target.value) || 0 }
                   })}
                   disabled={!editing}
                 />
               </div>
               <div>
                 <Label>Rampas de Alinhamento</Label>
-                <NumberInput
+                <Input
+                  type="number"
+                  min="0"
                   value={formData.equipment.alignment_ramps}
                   onChange={(e) => setFormData({
                     ...formData,
-                    equipment: { ...formData.equipment, alignment_ramps: e.target.value }
+                    equipment: { ...formData.equipment, alignment_ramps: parseInt(e.target.value) || 0 }
                   })}
                   disabled={!editing}
                 />
               </div>
               <div>
                 <Label>Balanceadoras</Label>
-                <NumberInput
+                <Input
+                  type="number"
+                  min="0"
                   value={formData.equipment.balancing_machines}
                   onChange={(e) => setFormData({
                     ...formData,
-                    equipment: { ...formData.equipment, balancing_machines: e.target.value }
+                    equipment: { ...formData.equipment, balancing_machines: parseInt(e.target.value) || 0 }
                   })}
                   disabled={!editing}
                 />
               </div>
               <div>
                 <Label>Retificadora de Disco</Label>
-                <NumberInput
+                <Input
+                  type="number"
+                  min="0"
                   value={formData.equipment.disc_grinders}
                   onChange={(e) => setFormData({
                     ...formData,
-                    equipment: { ...formData.equipment, disc_grinders: e.target.value }
+                    equipment: { ...formData.equipment, disc_grinders: parseInt(e.target.value) || 0 }
                   })}
                   disabled={!editing}
                 />
               </div>
               <div>
                 <Label>Teste de Amortecedores</Label>
-                <NumberInput
+                <Input
+                  type="number"
+                  min="0"
                   value={formData.equipment.shock_tester}
                   onChange={(e) => setFormData({
                     ...formData,
-                    equipment: { ...formData.equipment, shock_tester: e.target.value }
+                    equipment: { ...formData.equipment, shock_tester: parseInt(e.target.value) || 0 }
                   })}
                   disabled={!editing}
                 />
               </div>
               <div>
                 <Label>Parafusadeira Pneumática</Label>
-                <NumberInput
+                <Input
+                  type="number"
+                  min="0"
                   value={formData.equipment.pneumatic_wrench}
                   onChange={(e) => setFormData({
                     ...formData,
-                    equipment: { ...formData.equipment, pneumatic_wrench: e.target.value }
+                    equipment: { ...formData.equipment, pneumatic_wrench: parseInt(e.target.value) || 0 }
                   })}
                   disabled={!editing}
                 />
               </div>
               <div>
                 <Label>Cabine de Pintura</Label>
-                <NumberInput
+                <Input
+                  type="number"
+                  min="0"
                   value={formData.equipment.paint_booth}
                   onChange={(e) => setFormData({
                     ...formData,
-                    equipment: { ...formData.equipment, paint_booth: e.target.value }
+                    equipment: { ...formData.equipment, paint_booth: parseInt(e.target.value) || 0 }
                   })}
                   disabled={!editing}
                 />
               </div>
               <div>
                 <Label>Torno</Label>
-                <NumberInput
+                <Input
+                  type="number"
+                  min="0"
                   value={formData.equipment.lathe}
                   onChange={(e) => setFormData({
                     ...formData,
-                    equipment: { ...formData.equipment, lathe: e.target.value }
+                    equipment: { ...formData.equipment, lathe: parseInt(e.target.value) || 0 }
                   })}
                   disabled={!editing}
                 />
@@ -459,7 +474,9 @@ export default function ServicosEquipamentos({ workshop, onUpdate, showServicesO
                     </div>
                     <div className="w-24">
                       <Label>Qtd</Label>
-                      <NumberInput
+                      <Input
+                        type="number"
+                        min="1"
                         value={machine.quantity}
                         onChange={(e) => updateWeldingMachine(index, 'quantity', e.target.value)}
                         disabled={!editing}

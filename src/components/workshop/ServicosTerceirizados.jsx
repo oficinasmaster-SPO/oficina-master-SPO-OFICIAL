@@ -5,7 +5,6 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Save, Plus, Trash2 } from "lucide-react";
-import { CurrencyInput } from "@/components/ui/currency-input";
 
 export default function ServicosTerceirizados({ workshop, onUpdate }) {
   const [editing, setEditing] = useState(false);
@@ -136,8 +135,9 @@ export default function ServicosTerceirizados({ workshop, onUpdate }) {
                     ))}
                   </SelectContent>
                 </Select>
-                <div className="w-40">
-                  <CurrencyInput
+                <div className="w-32">
+                  <Input
+                    type="number"
                     placeholder="Valor"
                     value={service.value}
                     onChange={(e) => updateService(index, 'value', e.target.value)}
