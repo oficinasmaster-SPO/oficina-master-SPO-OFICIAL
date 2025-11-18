@@ -61,6 +61,7 @@ import CulturaOrganizacional from './pages/CulturaOrganizacional';
 import CronogramaAculturacao from './pages/CronogramaAculturacao';
 import PesquisaClima from './pages/PesquisaClima';
 import ResultadoClima from './pages/ResultadoClima';
+import RankingBrasil from './pages/RankingBrasil';
 import __Layout from './Layout.jsx';
 
 
@@ -128,6 +129,7 @@ export const PAGES = {
     "CronogramaAculturacao": CronogramaAculturacao,
     "PesquisaClima": PesquisaClima,
     "ResultadoClima": ResultadoClima,
+    "RankingBrasil": RankingBrasil,
 }
 
 export const pagesConfig = {

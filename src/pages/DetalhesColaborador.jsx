@@ -4,7 +4,7 @@ import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, ArrowLeft, User, FileText, MessageSquare, AlertTriangle, Award, TrendingUp, FileCheck, Heart, FilePenLine, Activity } from "lucide-react";
+import { Loader2, ArrowLeft, User, FileText, MessageSquare, AlertTriangle, Award, TrendingUp, FileCheck, Heart, FilePenLine, Activity, GraduationCap, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 import DadosPessoais from "../components/employee/DadosPessoais";
 import RemuneracaoProducao from "../components/employee/RemuneracaoProducao";
@@ -15,6 +15,9 @@ import DocumentosAnexos from "../components/employee/DocumentosAnexos";
 import PainelProducao from "../components/employee/PainelProducao";
 import COEXCDCIntegration from "../components/rh/COEXCDCIntegration";
 import PerformanceMonitoring from "../components/rh/PerformanceMonitoring";
+import EngajamentoCursos from "../components/employee/EngajamentoCursos";
+import EvolucaoMaturidade from "../components/employee/EvolucaoMaturidade";
+import ContratoTrabalho from "../components/employee/ContratoTrabalho";
 
 export default function DetalhesColaborador() {
   const navigate = useNavigate();
@@ -115,7 +118,7 @@ export default function DetalhesColaborador() {
         </div>
 
         <Tabs defaultValue="dados" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-9 bg-white shadow-md">
+          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-11 bg-white shadow-md">
             <TabsTrigger value="dados">
               <User className="w-4 h-4 mr-2" />
               Dados
@@ -123,6 +126,14 @@ export default function DetalhesColaborador() {
             <TabsTrigger value="remuneracao">
               <TrendingUp className="w-4 h-4 mr-2" />
               Produção
+            </TabsTrigger>
+            <TabsTrigger value="engajamento">
+              <GraduationCap className="w-4 h-4 mr-2" />
+              Cursos
+            </TabsTrigger>
+            <TabsTrigger value="contrato">
+              <FileText className="w-4 h-4 mr-2" />
+              Contrato
             </TabsTrigger>
             <TabsTrigger value="coex-cdc">
               <Heart className="w-4 h-4 mr-2" />
@@ -132,13 +143,17 @@ export default function DetalhesColaborador() {
               <Activity className="w-4 h-4 mr-2" />
               Desempenho
             </TabsTrigger>
+            <TabsTrigger value="evolucao">
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Evolução
+            </TabsTrigger>
             <TabsTrigger value="feedbacks">
               <MessageSquare className="w-4 h-4 mr-2" />
               Feedbacks
             </TabsTrigger>
             <TabsTrigger value="advertencias">
               <AlertTriangle className="w-4 h-4 mr-2" />
-              Advertências
+              Alertas
             </TabsTrigger>
             <TabsTrigger value="diagnosticos">
               <Award className="w-4 h-4 mr-2" />
@@ -146,11 +161,7 @@ export default function DetalhesColaborador() {
             </TabsTrigger>
             <TabsTrigger value="documentos">
               <FileText className="w-4 h-4 mr-2" />
-              Documentos
-            </TabsTrigger>
-            <TabsTrigger value="producao">
-              <FileCheck className="w-4 h-4 mr-2" />
-              Painel
+              Docs
             </TabsTrigger>
           </TabsList>
 
@@ -162,12 +173,24 @@ export default function DetalhesColaborador() {
             <RemuneracaoProducao employee={employee} onUpdate={handleUpdate} />
           </TabsContent>
 
+          <TabsContent value="engajamento">
+            <EngajamentoCursos employee={employee} onUpdate={handleUpdate} />
+          </TabsContent>
+
+          <TabsContent value="contrato">
+            <ContratoTrabalho employee={employee} onUpdate={handleUpdate} />
+          </TabsContent>
+
           <TabsContent value="coex-cdc">
             <COEXCDCIntegration employee={employee} />
           </TabsContent>
 
           <TabsContent value="desempenho">
             <PerformanceMonitoring employee={employee} />
+          </TabsContent>
+
+          <TabsContent value="evolucao">
+            <EvolucaoMaturidade employee={employee} />
           </TabsContent>
 
           <TabsContent value="feedbacks">
@@ -184,10 +207,6 @@ export default function DetalhesColaborador() {
 
           <TabsContent value="documentos">
             <DocumentosAnexos employee={employee} onUpdate={handleUpdate} />
-          </TabsContent>
-
-          <TabsContent value="producao">
-            <PainelProducao employee={employee} />
           </TabsContent>
         </Tabs>
       </div>

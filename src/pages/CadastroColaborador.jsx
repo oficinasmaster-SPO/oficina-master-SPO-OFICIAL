@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -17,6 +18,7 @@ export default function CadastroColaborador() {
   const [submitting, setSubmitting] = useState(false);
   const [user, setUser] = useState(null);
   const [workshop, setWorkshop] = useState(null);
+  const [jobDescriptions, setJobDescriptions] = useState([]);
   
   const [formData, setFormData] = useState({
     workshop_id: "",
@@ -44,7 +46,8 @@ export default function CadastroColaborador() {
     production_parts: 0,
     production_parts_sales: 0,
     production_services: 0,
-    status: "ativo"
+    status: "ativo",
+    job_description_id: ""
   });
 
   useEffect(() => {
@@ -63,6 +66,9 @@ export default function CadastroColaborador() {
         setWorkshop(userWorkshop);
         setFormData(prev => ({ ...prev, workshop_id: userWorkshop.id }));
       }
+
+      const descriptions = await base44.entities.JobDescription.list();
+      setJobDescriptions(descriptions.filter(d => !userWorkshop || d.workshop_id === userWorkshop.id));
     } catch (error) {
       toast.error("Você precisa estar logado");
       base44.auth.redirectToLogin(createPageUrl("CadastroColaborador"));
@@ -308,6 +314,26 @@ export default function CadastroColaborador() {
                     onChange={(e) => setFormData({...formData, hire_date: e.target.value})}
                   />
                 </div>
+              </div>
+
+              <div>
+                <Label>Descrição de Cargo (Opcional)</Label>
+                <Select 
+                  value={formData.job_description_id} 
+                  onValueChange={(value) => setFormData({...formData, job_description_id: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma descrição de cargo..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={null}>Nenhuma</SelectItem>
+                    {jobDescriptions.map(desc => (
+                      <SelectItem key={desc.id} value={desc.id}>
+                        {desc.cargo} - {desc.area}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </CardContent>
           </Card>
