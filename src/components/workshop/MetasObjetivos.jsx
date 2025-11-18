@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Save, Target } from "lucide-react";
+import { CurrencyInput } from "@/components/ui/currency-input";
+import { NumberInput } from "@/components/ui/number-input";
 
 export default function MetasObjetivos({ workshop, onUpdate }) {
   const navigate = useNavigate();
@@ -82,72 +84,66 @@ export default function MetasObjetivos({ workshop, onUpdate }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label>Faturamento Peças (R$)</Label>
-            <Input
-              type="number"
+            <CurrencyInput
               value={formData.monthly_goals.revenue_parts}
               onChange={(e) => setFormData({
                 ...formData,
-                monthly_goals: { ...formData.monthly_goals, revenue_parts: parseFloat(e.target.value) || 0 }
+                monthly_goals: { ...formData.monthly_goals, revenue_parts: e.target.value }
               })}
               disabled={!editing}
             />
           </div>
           <div>
             <Label>Faturamento Serviços (R$)</Label>
-            <Input
-              type="number"
+            <CurrencyInput
               value={formData.monthly_goals.revenue_services}
               onChange={(e) => setFormData({
                 ...formData,
-                monthly_goals: { ...formData.monthly_goals, revenue_services: parseFloat(e.target.value) || 0 }
+                monthly_goals: { ...formData.monthly_goals, revenue_services: e.target.value }
               })}
               disabled={!editing}
             />
           </div>
           <div>
             <Label>Rentabilidade (%)</Label>
-            <Input
-              type="number"
+            <CurrencyInput
               value={formData.monthly_goals.profitability_percentage}
               onChange={(e) => setFormData({
                 ...formData,
-                monthly_goals: { ...formData.monthly_goals, profitability_percentage: parseFloat(e.target.value) || 0 }
+                monthly_goals: { ...formData.monthly_goals, profitability_percentage: e.target.value }
               })}
               disabled={!editing}
             />
           </div>
           <div>
             <Label>Lucro (%)</Label>
-            <Input
-              type="number"
+            <CurrencyInput
               value={formData.monthly_goals.profit_percentage}
               onChange={(e) => setFormData({
                 ...formData,
-                monthly_goals: { ...formData.monthly_goals, profit_percentage: parseFloat(e.target.value) || 0 }
+                monthly_goals: { ...formData.monthly_goals, profit_percentage: e.target.value }
               })}
               disabled={!editing}
             />
           </div>
           <div>
             <Label>Ticket Médio (R$)</Label>
-            <Input
-              type="number"
+            <CurrencyInput
               value={formData.monthly_goals.average_ticket}
               onChange={(e) => setFormData({
                 ...formData,
-                monthly_goals: { ...formData.monthly_goals, average_ticket: parseFloat(e.target.value) || 0 }
+                monthly_goals: { ...formData.monthly_goals, average_ticket: e.target.value }
               })}
               disabled={!editing}
             />
           </div>
           <div>
             <Label>Volume de Clientes</Label>
-            <Input
-              type="number"
+            <NumberInput
               value={formData.monthly_goals.customer_volume}
               onChange={(e) => setFormData({
                 ...formData,
-                monthly_goals: { ...formData.monthly_goals, customer_volume: parseInt(e.target.value) || 0 }
+                monthly_goals: { ...formData.monthly_goals, customer_volume: e.target.value }
               })}
               disabled={!editing}
             />
