@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,7 +29,7 @@ export default function DadosBasicosOficina({ workshop, onUpdate }) {
   });
 
   // Sincroniza formData quando workshop muda
-  React.useEffect(() => {
+  useEffect(() => {
     if (workshop) {
       setFormData({
         name: workshop.name || "",

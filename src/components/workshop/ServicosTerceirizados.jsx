@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,7 +13,7 @@ export default function ServicosTerceirizados({ workshop, onUpdate }) {
   });
 
   // Sincroniza formData quando workshop muda
-  React.useEffect(() => {
+  useEffect(() => {
     if (workshop) {
       setFormData({
         third_party_services: Array.isArray(workshop.third_party_services) ? workshop.third_party_services : []
