@@ -24,41 +24,46 @@ export default function GestaoOficina() {
   }, []);
 
   const loadData = async () => {
+    setLoading(true);
     try {
       const currentUser = await base44.auth.me();
+      console.log("Usuário logado:", currentUser);
       setUser(currentUser);
 
       const workshops = await base44.entities.Workshop.list();
+      console.log("Oficinas carregadas:", workshops);
       
       if (!workshops || workshops.length === 0) {
-        toast.error("Nenhuma oficina cadastrada");
-        navigate(createPageUrl("Cadastro"));
+        console.log("Nenhuma oficina encontrada");
+        toast.error("Nenhuma oficina cadastrada no sistema");
         setLoading(false);
         return;
       }
 
+      // Prioriza oficina do próprio usuário
       let workshopToDisplay = workshops.find(w => w.owner_id === currentUser.id);
-
-      // Se o usuário não possui oficina própria, mas é consultor/admin, mostra a primeira disponível
-      if (!workshopToDisplay && (currentUser.role === 'user' || currentUser.role === 'admin')) {
+      
+      // Se não encontrou oficina própria, pega a primeira disponível
+      if (!workshopToDisplay && workshops.length > 0) {
         workshopToDisplay = workshops[0];
+        console.log("Usando primeira oficina disponível:", workshopToDisplay);
       }
 
       if (!workshopToDisplay) {
-        toast.error("Nenhuma oficina disponível");
-        navigate(createPageUrl("Cadastro"));
+        console.log("Nenhuma oficina selecionada");
+        toast.error("Não foi possível carregar oficina");
         setLoading(false);
         return;
       }
 
-      // Garante que o workshop está totalmente carregado antes de setar
+      console.log("Oficina selecionada:", workshopToDisplay);
       setWorkshop(workshopToDisplay);
-      setLoading(false);
+      
     } catch (error) {
-      console.error("Erro ao carregar oficina:", error);
-      toast.error("Erro ao carregar dados");
+      console.error("Erro detalhado ao carregar oficina:", error);
+      toast.error(`Erro: ${error.message || 'Falha ao carregar dados'}`);
+    } finally {
       setLoading(false);
-      base44.auth.redirectToLogin();
     }
   };
 
