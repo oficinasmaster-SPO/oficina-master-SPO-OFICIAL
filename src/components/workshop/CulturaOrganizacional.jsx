@@ -1,9 +1,9 @@
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Sparkles, Target, Eye, Award } from "lucide-react";
+import { Sparkles, Target, Eye, Award, Users, TrendingUp, BookOpen } from "lucide-react";
 
 export default function CulturaOrganizacional({ workshop }) {
   const navigate = useNavigate();
@@ -77,6 +77,71 @@ export default function CulturaOrganizacional({ workshop }) {
             <Button variant="secondary" onClick={() => navigate(createPageUrl("Questionario"))}>
               Avaliar Novamente
             </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-lg">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <Users className="w-6 h-6 text-green-600" />
+            <div>
+              <CardTitle>Relação com Colaboradores</CardTitle>
+              <CardDescription>Gestão de pessoas e equipe</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Button
+            onClick={() => navigate(createPageUrl("Colaboradores"))}
+            variant="outline"
+            className="w-full justify-start"
+          >
+            <Users className="w-4 h-4 mr-2" />
+            Gerenciar Colaboradores
+          </Button>
+          <Button
+            onClick={() => navigate(createPageUrl("CDCList"))}
+            variant="outline"
+            className="w-full justify-start"
+          >
+            <TrendingUp className="w-4 h-4 mr-2" />
+            CDC - Conexão e Diagnóstico
+          </Button>
+          <Button
+            onClick={() => navigate(createPageUrl("COEXList"))}
+            variant="outline"
+            className="w-full justify-start"
+          >
+            <BookOpen className="w-4 h-4 mr-2" />
+            COEX - Contratos de Expectativas
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-lg">
+        <CardHeader>
+          <CardTitle>Engajamento com Plataforma</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-700">Score de Engajamento</span>
+              <span className="text-2xl font-bold text-blue-600">{workshop.engagement_score || 0}%</span>
+            </div>
+            {workshop.certificados && workshop.certificados.length > 0 && (
+              <div>
+                <p className="text-sm font-semibold text-gray-700 mb-2">Certificados Conquistados</p>
+                <div className="space-y-2">
+                  {workshop.certificados.map((cert, index) => (
+                    <div key={index} className="flex items-center gap-2 text-sm">
+                      <Award className="w-4 h-4 text-yellow-500" />
+                      <span>{cert.nome}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

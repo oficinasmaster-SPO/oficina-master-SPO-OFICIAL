@@ -15,7 +15,10 @@ export default function MetasObjetivos({ workshop, onUpdate }) {
       profit_percentage: 0,
       average_ticket: 0,
       customer_volume: 0
-    }
+    },
+    daily_goals: workshop.daily_goals || {},
+    weekly_goals: workshop.weekly_goals || {},
+    annual_goals: workshop.annual_goals || {}
   });
 
   const handleSave = async () => {
@@ -121,12 +124,31 @@ export default function MetasObjetivos({ workshop, onUpdate }) {
         </div>
 
         <div className="pt-4 border-t bg-green-50 rounded-lg p-4">
-          <h3 className="font-semibold text-green-900 mb-2">Meta de Faturamento Total</h3>
+          <h3 className="font-semibold text-green-900 mb-2">Meta de Faturamento Total Mensal</h3>
           <p className="text-3xl font-bold text-green-600">
             R$ {((formData.monthly_goals.revenue_parts || 0) + (formData.monthly_goals.revenue_services || 0)).toFixed(2)}
           </p>
         </div>
       </CardContent>
     </Card>
+
+    <Card className="shadow-lg bg-blue-50 border-2 border-blue-200">
+      <CardHeader>
+        <CardTitle>Desdobramento Completo de Metas</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-gray-600 mb-4">
+          Para definir metas diárias, semanais e anuais por área (Vendas, Comercial, Pátio, Líderes, Pessoas, Financeiro), 
+          utilize a ferramenta completa de desdobramento.
+        </p>
+        <Button
+          onClick={() => window.location.href = '/desdobramento-meta'}
+          className="w-full bg-blue-600 hover:bg-blue-700"
+        >
+          Abrir Desdobramento de Metas
+        </Button>
+      </CardContent>
+    </Card>
+  </div>
   );
 }

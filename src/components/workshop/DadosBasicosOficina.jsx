@@ -1,22 +1,31 @@
 import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Save } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Save, Building2, Info } from "lucide-react";
 
 export default function DadosBasicosOficina({ workshop, onUpdate }) {
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: workshop.name || "",
+    razao_social: workshop.razao_social || "",
+    cnpj: workshop.cnpj || "",
     city: workshop.city || "",
     state: workshop.state || "",
+    endereco_completo: workshop.endereco_completo || "",
     segment: workshop.segment || "",
     tax_regime: workshop.tax_regime || "",
     monthly_revenue: workshop.monthly_revenue || "",
     employees_count: workshop.employees_count || "",
-    years_in_business: workshop.years_in_business || ""
+    years_in_business: workshop.years_in_business || "",
+    observacoes_gerais: workshop.observacoes_gerais || "",
+    notas_manuais: workshop.notas_manuais || "",
+    capacidade_atendimento_dia: workshop.capacidade_atendimento_dia || 0,
+    tempo_medio_servico: workshop.tempo_medio_servico || 0,
+    horario_funcionamento: workshop.horario_funcionamento || { abertura: "", fechamento: "", dias_semana: [] }
   });
 
   const handleSave = async () => {
@@ -24,50 +33,77 @@ export default function DadosBasicosOficina({ workshop, onUpdate }) {
     setEditing(false);
   };
 
+  const diasSemana = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+
   return (
-    <Card className="shadow-lg">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>Dados Básicos da Oficina</CardTitle>
-          {!editing ? (
-            <Button onClick={() => setEditing(true)}>Editar</Button>
-          ) : (
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setEditing(false)}>Cancelar</Button>
-              <Button onClick={handleSave}>
-                <Save className="w-4 h-4 mr-2" />
-                Salvar
-              </Button>
+    <div className="space-y-6">
+      <Card className="shadow-lg">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Building2 className="w-6 h-6 text-blue-600" />
+              <div>
+                <CardTitle>Dados Básicos da Oficina</CardTitle>
+                <CardDescription>Informações cadastrais e identificação</CardDescription>
+              </div>
             </div>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label>Nome da Oficina *</Label>
-            <Input
-              value={formData.name}
-              onChange={(e) => setFormData({...formData, name: e.target.value})}
-              disabled={!editing}
-            />
+            {!editing ? (
+              <Button onClick={() => setEditing(true)}>Editar</Button>
+            ) : (
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setEditing(false)}>Cancelar</Button>
+                <Button onClick={handleSave}>
+                  <Save className="w-4 h-4 mr-2" />
+                  Salvar
+                </Button>
+              </div>
+            )}
           </div>
-          <div>
-            <Label>Cidade *</Label>
-            <Input
-              value={formData.city}
-              onChange={(e) => setFormData({...formData, city: e.target.value})}
-              disabled={!editing}
-            />
-          </div>
-          <div>
-            <Label>Estado *</Label>
-            <Input
-              value={formData.state}
-              onChange={(e) => setFormData({...formData, state: e.target.value})}
-              disabled={!editing}
-            />
-          </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label>Nome Fantasia *</Label>
+              <Input
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                disabled={!editing}
+              />
+            </div>
+            <div>
+              <Label>Razão Social</Label>
+              <Input
+                value={formData.razao_social}
+                onChange={(e) => setFormData({...formData, razao_social: e.target.value})}
+                disabled={!editing}
+              />
+            </div>
+            <div>
+              <Label>CNPJ</Label>
+              <Input
+                value={formData.cnpj}
+                onChange={(e) => setFormData({...formData, cnpj: e.target.value})}
+                disabled={!editing}
+                placeholder="00.000.000/0000-00"
+              />
+            </div>
+            <div>
+              <Label>Cidade *</Label>
+              <Input
+                value={formData.city}
+                onChange={(e) => setFormData({...formData, city: e.target.value})}
+                disabled={!editing}
+              />
+            </div>
+            <div>
+              <Label>Estado (UF) *</Label>
+              <Input
+                value={formData.state}
+                onChange={(e) => setFormData({...formData, state: e.target.value.toUpperCase()})}
+                disabled={!editing}
+                maxLength={2}
+              />
+            </div>
           <div>
             <Label>Segmento</Label>
             <Select value={formData.segment} onValueChange={(value) => setFormData({...formData, segment: value})} disabled={!editing}>
@@ -140,8 +176,155 @@ export default function DadosBasicosOficina({ workshop, onUpdate }) {
               </SelectContent>
             </Select>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+          </div>
+
+          <div>
+            <Label>Endereço Completo</Label>
+            <Textarea
+              value={formData.endereco_completo}
+              onChange={(e) => setFormData({...formData, endereco_completo: e.target.value})}
+              disabled={!editing}
+              placeholder="Rua, número, bairro, CEP..."
+              rows={2}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-lg">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <Info className="w-6 h-6 text-purple-600" />
+            <div>
+              <CardTitle>Capacidade Operacional</CardTitle>
+              <CardDescription>Capacidade de atendimento e horários</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label>Capacidade de Atendimento/Dia</Label>
+              <Input
+                type="number"
+                min="0"
+                value={formData.capacidade_atendimento_dia}
+                onChange={(e) => setFormData({...formData, capacidade_atendimento_dia: parseInt(e.target.value) || 0})}
+                disabled={!editing}
+                placeholder="Ex: 10"
+              />
+            </div>
+            <div>
+              <Label>Tempo Médio de Serviço (horas)</Label>
+              <Input
+                type="number"
+                step="0.5"
+                min="0"
+                value={formData.tempo_medio_servico}
+                onChange={(e) => setFormData({...formData, tempo_medio_servico: parseFloat(e.target.value) || 0})}
+                disabled={!editing}
+                placeholder="Ex: 2.5"
+              />
+            </div>
+            <div>
+              <Label>Horário de Abertura</Label>
+              <Input
+                type="time"
+                value={formData.horario_funcionamento.abertura}
+                onChange={(e) => setFormData({
+                  ...formData,
+                  horario_funcionamento: { ...formData.horario_funcionamento, abertura: e.target.value }
+                })}
+                disabled={!editing}
+              />
+            </div>
+            <div>
+              <Label>Horário de Fechamento</Label>
+              <Input
+                type="time"
+                value={formData.horario_funcionamento.fechamento}
+                onChange={(e) => setFormData({
+                  ...formData,
+                  horario_funcionamento: { ...formData.horario_funcionamento, fechamento: e.target.value }
+                })}
+                disabled={!editing}
+              />
+            </div>
+          </div>
+          <div>
+            <Label className="mb-3 block">Dias de Funcionamento</Label>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              {diasSemana.map((dia) => (
+                <label key={dia} className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={(formData.horario_funcionamento.dias_semana || []).includes(dia)}
+                    onChange={(e) => {
+                      const dias = formData.horario_funcionamento.dias_semana || [];
+                      const newDias = e.target.checked
+                        ? [...dias, dia]
+                        : dias.filter(d => d !== dia);
+                      setFormData({
+                        ...formData,
+                        horario_funcionamento: { ...formData.horario_funcionamento, dias_semana: newDias }
+                      });
+                    }}
+                    disabled={!editing}
+                    className="rounded"
+                  />
+                  <span className="text-sm">{dia}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-lg bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200">
+        <CardHeader>
+          <CardTitle className="text-amber-900">Observações e Anotações</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label>Observações Gerais</Label>
+            <Textarea
+              value={formData.observacoes_gerais}
+              onChange={(e) => setFormData({...formData, observacoes_gerais: e.target.value})}
+              disabled={!editing}
+              placeholder="Observações sobre a oficina..."
+              rows={3}
+            />
+          </div>
+          <div>
+            <Label>Notas Internas do Proprietário</Label>
+            <Textarea
+              value={formData.notas_manuais}
+              onChange={(e) => setFormData({...formData, notas_manuais: e.target.value})}
+              disabled={!editing}
+              placeholder="Suas anotações pessoais..."
+              rows={4}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {workshop.sugestoes_ia && workshop.sugestoes_ia.length > 0 && (
+        <Card className="shadow-lg bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200">
+          <CardHeader>
+            <CardTitle className="text-purple-900">✨ Recomendações Inteligentes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2">
+              {workshop.sugestoes_ia.map((sugestao, index) => (
+                <li key={index} className="flex items-start gap-2">
+                  <span className="text-purple-600 font-bold mt-0.5">•</span>
+                  <span className="text-sm text-gray-700">{sugestao}</span>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 }
