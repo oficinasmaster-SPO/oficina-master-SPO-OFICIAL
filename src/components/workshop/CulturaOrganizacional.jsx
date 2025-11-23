@@ -7,6 +7,38 @@ import { Sparkles, Target, Eye, Award, Users, TrendingUp, BookOpen } from "lucid
 
 export default function CulturaOrganizacional({ workshop }) {
   const navigate = useNavigate();
+  const [exportingPDF, setExportingPDF] = useState(false);
+
+  const handleExportPDF = async () => {
+    if (!workshop?.id) {
+      toast.error("Oficina não encontrada");
+      return;
+    }
+
+    setExportingPDF(true);
+    try {
+      const response = await base44.functions.invoke('exportCultureManual', {
+        workshop_id: workshop.id
+      });
+
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Manual_Cultura_${workshop.name || 'Oficina'}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+      
+      toast.success("PDF exportado com sucesso!");
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao exportar PDF");
+    } finally {
+      setExportingPDF(false);
+    }
+  };
 
   if (!workshop) {
     return (
