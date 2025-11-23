@@ -42,40 +42,278 @@ const frequencyLabels = {
 };
 
 const defaultRituals = [
-  { name: "Ritual de Alinhamento Cultural", pillar: "rituais_cultura", frequency: "mensal" },
-  { name: "Ritual do Dono (Pensar Como Dono)", pillar: "postura_atitudes", frequency: "continuo" },
-  { name: "Ritual da Excelência", pillar: "foco_cliente", frequency: "continuo" },
-  { name: "Ritual de Clareza", pillar: "comunicacao_interna", frequency: "continuo" },
-  { name: "Ritual de Conexão", pillar: "identidade_pertencimento", frequency: "semanal" },
-  { name: "Ritual da Mesa Redonda", pillar: "lideranca", frequency: "mensal" },
-  { name: "Ritual do Start Diário", pillar: "rituais_cultura", frequency: "diario" },
-  { name: "Ritual da Entrega", pillar: "performance_responsabilidade", frequency: "continuo" },
-  { name: "Ritual da Responsabilidade", pillar: "performance_responsabilidade", frequency: "continuo" },
-  { name: "Ritual da Maturidade Profissional", pillar: "desenvolvimento_continuo", frequency: "trimestral" },
-  { name: "Ritual da Alta Performance", pillar: "performance_responsabilidade", frequency: "mensal" },
-  { name: "Ritual do Foco no Cliente", pillar: "foco_cliente", frequency: "continuo" },
-  { name: "Ritual da Confiança", pillar: "valores", frequency: "continuo" },
-  { name: "Ritual da Voz Ativa", pillar: "comunicacao_interna", frequency: "continuo" },
-  { name: "Ritual da Consistência", pillar: "valores", frequency: "continuo" },
-  { name: "Ritual da Cultura Viva", pillar: "rituais_cultura", frequency: "mensal" },
-  { name: "Ritual da Transparência", pillar: "valores", frequency: "continuo" },
-  { name: "Ritual da Ação Imediata", pillar: "postura_atitudes", frequency: "continuo" },
-  { name: "Ritual do Planejamento Vivo", pillar: "sistemas_regras", frequency: "semanal" },
-  { name: "Ritual de Abertura de Semana (Kick Off)", pillar: "rituais_cultura", frequency: "semanal" },
-  { name: "Ritual da Virada", pillar: "lideranca", frequency: "eventual" },
-  { name: "Ritual do Compromisso", pillar: "valores", frequency: "continuo" },
-  { name: "Ritual da Semana do Dono", pillar: "postura_atitudes", frequency: "semanal" },
-  { name: "Ritual do Checkpoint", pillar: "rituais_cultura", frequency: "semanal" },
-  { name: "Ritual do Feedback Contínuo", pillar: "rituais_cultura", frequency: "continuo" },
-  { name: "Ritual do Pulso da Cultura", pillar: "rituais_cultura", frequency: "mensal" },
-  { name: "Ritual do Norte Claro", pillar: "visao", frequency: "trimestral" },
-  { name: "Ritual da Postura", pillar: "postura_atitudes", frequency: "continuo" },
-  { name: "Ritual da Presença", pillar: "postura_atitudes", frequency: "diario" },
-  { name: "Ritual da Identidade", pillar: "identidade_pertencimento", frequency: "mensal" },
-  { name: "Ritual da Força Operacional", pillar: "performance_responsabilidade", frequency: "semanal" },
-  { name: "Ritual do Flow da Equipe", pillar: "lideranca", frequency: "semanal" },
-  { name: "Ritual do Compromisso Ativo", pillar: "valores", frequency: "continuo" },
-  { name: "Ritual das 3 Verdades (clareza – responsabilidade – entrega)", pillar: "rituais_cultura", frequency: "diario" }
+  { 
+    name: "Ritual de Alinhamento Cultural", 
+    pillar: "rituais_cultura", 
+    frequency: "mensal",
+    description: "Reunião mensal para alinhar os valores e práticas culturais da empresa com toda a equipe.",
+    responsible_role: "Líder/Dono",
+    implementation_steps: ["Reunir toda equipe", "Revisar missão, visão e valores", "Compartilhar histórias de sucesso", "Alinhar expectativas"]
+  },
+  { 
+    name: "Ritual do Dono (Pensar Como Dono)", 
+    pillar: "postura_atitudes", 
+    frequency: "continuo",
+    description: "Incentivar cada colaborador a pensar como dono do negócio, tomando decisões com responsabilidade e visão estratégica.",
+    responsible_role: "Todos",
+    implementation_steps: ["Incentivar autonomia", "Compartilhar números do negócio", "Envolver nas decisões", "Reconhecer iniciativas"]
+  },
+  { 
+    name: "Ritual da Excelência", 
+    pillar: "foco_cliente", 
+    frequency: "continuo",
+    description: "Buscar excelência em cada atendimento e serviço prestado ao cliente.",
+    responsible_role: "Todos",
+    implementation_steps: ["Padrão de qualidade definido", "Checklist de excelência", "Feedback do cliente", "Melhoria contínua"]
+  },
+  { 
+    name: "Ritual de Clareza", 
+    pillar: "comunicacao_interna", 
+    frequency: "continuo",
+    description: "Manter comunicação clara e objetiva em todas as interações da equipe.",
+    responsible_role: "Todos",
+    implementation_steps: ["Comunicar expectativas", "Confirmar entendimento", "Documentar acordos", "Revisar periodicamente"]
+  },
+  { 
+    name: "Ritual de Conexão", 
+    pillar: "identidade_pertencimento", 
+    frequency: "semanal",
+    description: "Momento semanal para fortalecer laços entre os membros da equipe.",
+    responsible_role: "Líder",
+    implementation_steps: ["Café da manhã em equipe", "Compartilhar conquistas pessoais", "Celebrar aniversários", "Integração"]
+  },
+  { 
+    name: "Ritual da Mesa Redonda", 
+    pillar: "lideranca", 
+    frequency: "mensal",
+    description: "Reunião mensal com líderes para alinhamento estratégico e tomada de decisões importantes.",
+    responsible_role: "Líderes",
+    implementation_steps: ["Revisar indicadores", "Discutir desafios", "Alinhar estratégias", "Definir ações"]
+  },
+  { 
+    name: "Ritual do Start Diário", 
+    pillar: "rituais_cultura", 
+    frequency: "diario",
+    description: "Reunião rápida no início do dia para alinhar prioridades e energizar a equipe.",
+    responsible_role: "Líder",
+    implementation_steps: ["Reunir equipe (5-10min)", "Revisar agenda do dia", "Alinhar prioridades", "Motivar equipe"]
+  },
+  { 
+    name: "Ritual da Entrega", 
+    pillar: "performance_responsabilidade", 
+    frequency: "continuo",
+    description: "Compromisso de entregar o que foi prometido, no prazo e com qualidade.",
+    responsible_role: "Todos",
+    implementation_steps: ["Definir prazos realistas", "Acompanhar progresso", "Comunicar impedimentos", "Entregar com qualidade"]
+  },
+  { 
+    name: "Ritual da Responsabilidade", 
+    pillar: "performance_responsabilidade", 
+    frequency: "continuo",
+    description: "Cada colaborador assume responsabilidade por suas ações e resultados.",
+    responsible_role: "Todos",
+    implementation_steps: ["Assumir compromissos", "Prestar contas", "Resolver problemas", "Aprender com erros"]
+  },
+  { 
+    name: "Ritual da Maturidade Profissional", 
+    pillar: "desenvolvimento_continuo", 
+    frequency: "trimestral",
+    description: "Avaliação trimestral do desenvolvimento profissional de cada colaborador.",
+    responsible_role: "Líder",
+    implementation_steps: ["Avaliar evolução", "Dar feedback", "Definir plano desenvolvimento", "Acompanhar metas"]
+  },
+  { 
+    name: "Ritual da Alta Performance", 
+    pillar: "performance_responsabilidade", 
+    frequency: "mensal",
+    description: "Reconhecimento mensal dos colaboradores que alcançaram alta performance.",
+    responsible_role: "Líder/Dono",
+    implementation_steps: ["Definir critérios", "Medir resultados", "Reconhecer publicamente", "Compartilhar práticas"]
+  },
+  { 
+    name: "Ritual do Foco no Cliente", 
+    pillar: "foco_cliente", 
+    frequency: "continuo",
+    description: "Todas as decisões consideram o impacto no cliente e na experiência dele.",
+    responsible_role: "Todos",
+    implementation_steps: ["Pensar do ponto de vista do cliente", "Resolver dores", "Superar expectativas", "Coletar feedback"]
+  },
+  { 
+    name: "Ritual da Confiança", 
+    pillar: "valores", 
+    frequency: "continuo",
+    description: "Construir e manter relações de confiança entre equipe, clientes e parceiros.",
+    responsible_role: "Todos",
+    implementation_steps: ["Cumprir promessas", "Ser transparente", "Admitir erros", "Construir reputação"]
+  },
+  { 
+    name: "Ritual da Voz Ativa", 
+    pillar: "comunicacao_interna", 
+    frequency: "continuo",
+    description: "Incentivar todos a expressarem opiniões e contribuírem com ideias.",
+    responsible_role: "Todos",
+    implementation_steps: ["Criar ambiente seguro", "Ouvir ativamente", "Valorizar contribuições", "Implementar ideias"]
+  },
+  { 
+    name: "Ritual da Consistência", 
+    pillar: "valores", 
+    frequency: "continuo",
+    description: "Manter consistência nas ações, decisões e na entrega de valor.",
+    responsible_role: "Todos",
+    implementation_steps: ["Seguir padrões", "Manter qualidade", "Ser previsível", "Criar rotinas"]
+  },
+  { 
+    name: "Ritual da Cultura Viva", 
+    pillar: "rituais_cultura", 
+    frequency: "mensal",
+    description: "Revisar e fortalecer a cultura organizacional mensalmente.",
+    responsible_role: "Líder/Dono",
+    implementation_steps: ["Revisar valores", "Compartilhar histórias", "Celebrar comportamentos", "Corrigir desvios"]
+  },
+  { 
+    name: "Ritual da Transparência", 
+    pillar: "valores", 
+    frequency: "continuo",
+    description: "Manter transparência nas comunicações, decisões e resultados.",
+    responsible_role: "Líderes",
+    implementation_steps: ["Compartilhar informações", "Explicar decisões", "Mostrar números", "Ser honesto"]
+  },
+  { 
+    name: "Ritual da Ação Imediata", 
+    pillar: "postura_atitudes", 
+    frequency: "continuo",
+    description: "Agir rapidamente diante de problemas e oportunidades.",
+    responsible_role: "Todos",
+    implementation_steps: ["Identificar urgências", "Decidir rápido", "Executar imediato", "Ajustar caminho"]
+  },
+  { 
+    name: "Ritual do Planejamento Vivo", 
+    pillar: "sistemas_regras", 
+    frequency: "semanal",
+    description: "Revisar e ajustar planejamento semanalmente baseado em resultados.",
+    responsible_role: "Líder",
+    implementation_steps: ["Revisar semana anterior", "Ajustar plano", "Definir prioridades", "Alocar recursos"]
+  },
+  { 
+    name: "Ritual de Abertura de Semana (Kick Off)", 
+    pillar: "rituais_cultura", 
+    frequency: "semanal",
+    description: "Reunião de abertura da semana para energizar e alinhar a equipe.",
+    responsible_role: "Líder",
+    implementation_steps: ["Reunir equipe", "Revisar metas da semana", "Motivar equipe", "Alinhar expectativas"]
+  },
+  { 
+    name: "Ritual da Virada", 
+    pillar: "lideranca", 
+    frequency: "eventual",
+    description: "Momento especial quando há mudança de padrão ou grande transformação.",
+    responsible_role: "Dono/Líder",
+    implementation_steps: ["Reconhecer momento", "Comunicar mudança", "Engajar equipe", "Celebrar conquista"]
+  },
+  { 
+    name: "Ritual do Compromisso", 
+    pillar: "valores", 
+    frequency: "continuo",
+    description: "Honrar todos os compromissos assumidos com clientes e equipe.",
+    responsible_role: "Todos",
+    implementation_steps: ["Assumir apenas o possível", "Comunicar impedimentos", "Cumprir prazos", "Renegociar quando necessário"]
+  },
+  { 
+    name: "Ritual da Semana do Dono", 
+    pillar: "postura_atitudes", 
+    frequency: "semanal",
+    description: "Cada colaborador age como dono do negócio durante toda a semana.",
+    responsible_role: "Todos",
+    implementation_steps: ["Pensar no resultado final", "Tomar iniciativa", "Resolver problemas", "Buscar eficiência"]
+  },
+  { 
+    name: "Ritual do Checkpoint", 
+    pillar: "rituais_cultura", 
+    frequency: "semanal",
+    description: "Ponto de verificação semanal de metas e entregas.",
+    responsible_role: "Líder",
+    implementation_steps: ["Revisar indicadores", "Verificar entregas", "Identificar desvios", "Ajustar rota"]
+  },
+  { 
+    name: "Ritual do Feedback Contínuo", 
+    pillar: "rituais_cultura", 
+    frequency: "continuo",
+    description: "Dar e receber feedback constante para melhoria contínua.",
+    responsible_role: "Todos",
+    implementation_steps: ["Criar cultura de feedback", "Dar feedback construtivo", "Receber com abertura", "Implementar melhorias"]
+  },
+  { 
+    name: "Ritual do Pulso da Cultura", 
+    pillar: "rituais_cultura", 
+    frequency: "mensal",
+    description: "Medir mensalmente a saúde da cultura organizacional.",
+    responsible_role: "Líder/Dono",
+    implementation_steps: ["Aplicar pesquisa", "Analisar resultados", "Identificar pontos atenção", "Agir"]
+  },
+  { 
+    name: "Ritual do Norte Claro", 
+    pillar: "visao", 
+    frequency: "trimestral",
+    description: "Revisar trimestralmente a visão e direção estratégica da empresa.",
+    responsible_role: "Dono/Líderes",
+    implementation_steps: ["Revisar visão", "Avaliar progresso", "Ajustar estratégia", "Comunicar time"]
+  },
+  { 
+    name: "Ritual da Postura", 
+    pillar: "postura_atitudes", 
+    frequency: "continuo",
+    description: "Manter postura profissional e alinhada aos valores em todas situações.",
+    responsible_role: "Todos",
+    implementation_steps: ["Definir padrões", "Dar exemplo", "Corrigir desvios", "Reconhecer boa postura"]
+  },
+  { 
+    name: "Ritual da Presença", 
+    pillar: "postura_atitudes", 
+    frequency: "diario",
+    description: "Estar presente e engajado em cada momento do trabalho.",
+    responsible_role: "Todos",
+    implementation_steps: ["Eliminar distrações", "Focar no momento", "Dar atenção plena", "Estar disponível"]
+  },
+  { 
+    name: "Ritual da Identidade", 
+    pillar: "identidade_pertencimento", 
+    frequency: "mensal",
+    description: "Fortalecer a identidade e pertencimento dos colaboradores à empresa.",
+    responsible_role: "Líder/Dono",
+    implementation_steps: ["Contar história empresa", "Valorizar contribuições", "Criar senso pertencimento", "Celebrar identidade"]
+  },
+  { 
+    name: "Ritual da Força Operacional", 
+    pillar: "performance_responsabilidade", 
+    frequency: "semanal",
+    description: "Revisar semanalmente a força operacional e produtividade da equipe.",
+    responsible_role: "Líder",
+    implementation_steps: ["Medir produtividade", "Identificar gargalos", "Otimizar processos", "Melhorar eficiência"]
+  },
+  { 
+    name: "Ritual do Flow da Equipe", 
+    pillar: "lideranca", 
+    frequency: "semanal",
+    description: "Garantir que a equipe está em sintonia e trabalhando em fluxo.",
+    responsible_role: "Líder",
+    implementation_steps: ["Observar dinâmica", "Remover obstáculos", "Facilitar colaboração", "Manter ritmo"]
+  },
+  { 
+    name: "Ritual do Compromisso Ativo", 
+    pillar: "valores", 
+    frequency: "continuo",
+    description: "Manter compromissos ativos e visíveis para todos.",
+    responsible_role: "Todos",
+    implementation_steps: ["Registrar compromissos", "Acompanhar status", "Comunicar progresso", "Cumprir ou renegociar"]
+  },
+  { 
+    name: "Ritual das 3 Verdades (clareza – responsabilidade – entrega)", 
+    pillar: "rituais_cultura", 
+    frequency: "diario",
+    description: "Prática diária das três verdades fundamentais: ter clareza do que fazer, assumir responsabilidade e entregar resultados.",
+    responsible_role: "Todos",
+    implementation_steps: ["Clareza: saber o que fazer", "Responsabilidade: assumir compromisso", "Entrega: executar com qualidade", "Revisar diariamente"]
+  }
 ];
 
 export default function Rituais() {
