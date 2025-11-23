@@ -17,7 +17,9 @@ export default function MetasObjetivos({ workshop, onUpdate }) {
       profitability_percentage: 0,
       profit_percentage: 0,
       average_ticket: 0,
-      customer_volume: 0
+      customer_volume: 0,
+      buy_target: 0,
+      product_cost_applied: 0
     },
     daily_goals: {},
     weekly_goals: {},
@@ -34,7 +36,9 @@ export default function MetasObjetivos({ workshop, onUpdate }) {
           profitability_percentage: 0,
           profit_percentage: 0,
           average_ticket: 0,
-          customer_volume: 0
+          customer_volume: 0,
+          buy_target: 0,
+          product_cost_applied: 0
         },
         daily_goals: workshop.daily_goals || {},
         weekly_goals: workshop.weekly_goals || {},
@@ -148,6 +152,30 @@ export default function MetasObjetivos({ workshop, onUpdate }) {
               onChange={(e) => setFormData({
                 ...formData,
                 monthly_goals: { ...formData.monthly_goals, customer_volume: parseInt(e.target.value) || 0 }
+              })}
+              disabled={!editing}
+            />
+          </div>
+          <div>
+            <Label>Meta de Compra (R$)</Label>
+            <Input
+              type="number"
+              value={formData.monthly_goals.buy_target}
+              onChange={(e) => setFormData({
+                ...formData,
+                monthly_goals: { ...formData.monthly_goals, buy_target: parseFloat(e.target.value) || 0 }
+              })}
+              disabled={!editing}
+            />
+          </div>
+          <div>
+            <Label>Custo de Produto Aplicado (R$)</Label>
+            <Input
+              type="number"
+              value={formData.monthly_goals.product_cost_applied}
+              onChange={(e) => setFormData({
+                ...formData,
+                monthly_goals: { ...formData.monthly_goals, product_cost_applied: parseFloat(e.target.value) || 0 }
               })}
               disabled={!editing}
             />
