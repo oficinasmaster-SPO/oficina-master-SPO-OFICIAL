@@ -34,8 +34,15 @@ export default function Layout({ children }) {
         const planSelected = localStorage.getItem('base44_plan_selected');
         const currentPath = window.location.pathname;
         const cadastroPath = createPageUrl("CadastroPlanos");
+        const homePath = createPageUrl("Home");
         
-        if (!planSelected && !currentPath.includes('CadastroPlanos')) {
+        // Permitir acesso livre à Home e CadastroPlanos
+        const isPublicPage = currentPath === homePath || currentPath === cadastroPath || 
+                            currentPath === '/' || currentPath.includes('CadastroPlanos');
+        
+        // Só redireciona para CadastroPlanos se não houver plano selecionado 
+        // e estiver tentando acessar uma página que não seja pública
+        if (!planSelected && !isPublicPage) {
           window.location.href = cadastroPath;
         }
       }
