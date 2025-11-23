@@ -4,7 +4,8 @@ import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Building2, Settings, Target, FileText, Users, TrendingUp, Package, DollarSign, BarChart3 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2, Building2, Settings, Target, FileText, Users, TrendingUp, Package, DollarSign, BarChart3, Calculator } from "lucide-react";
 import { toast } from "sonner";
 import DadosBasicosOficina from "../components/workshop/DadosBasicosOficina";
 import ServicosEquipamentos from "../components/workshop/ServicosEquipamentos";
@@ -18,6 +19,8 @@ export default function GestaoOficina() {
   const [loading, setLoading] = useState(true);
   const [workshop, setWorkshop] = useState(null);
   const [user, setUser] = useState(null);
+  const [tcmp2Value, setTcmp2Value] = useState(0);
+  const [loadingTcmp2, setLoadingTcmp2] = useState(true);
 
   useEffect(() => {
     loadData();
@@ -59,11 +62,37 @@ export default function GestaoOficina() {
       console.log("Oficina selecionada:", workshopToDisplay);
       setWorkshop(workshopToDisplay);
       
+      // Carregar TCMP2
+      loadTcmp2(workshopToDisplay.id);
+      
     } catch (error) {
       console.error("Erro detalhado ao carregar oficina:", error);
       toast.error(`Erro: ${error.message || 'Falha ao carregar dados'}`);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadTcmp2 = async (workshopId) => {
+    setLoadingTcmp2(true);
+    try {
+      const osAssessments = await base44.entities.ServiceOrderDiagnostic.filter(
+        { workshop_id: workshopId },
+        '-created_date',
+        10
+      );
+      
+      if (osAssessments && osAssessments.length > 0) {
+        const validAssessments = osAssessments.filter(os => os.ideal_hour_value > 0);
+        if (validAssessments.length > 0) {
+          const avgTcmp2 = validAssessments.reduce((sum, os) => sum + os.ideal_hour_value, 0) / validAssessments.length;
+          setTcmp2Value(avgTcmp2);
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao carregar TCMP2:", error);
+    } finally {
+      setLoadingTcmp2(false);
     }
   };
 
@@ -103,7 +132,7 @@ export default function GestaoOficina() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4">
       <div className="max-w-7xl mx-auto">
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <div className="flex items-start justify-between">
+          <div className="flex items-start justify-between mb-6">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">{workshop.name}</h1>
               <p className="text-lg text-gray-600 mt-1">
@@ -128,6 +157,55 @@ export default function GestaoOficina() {
               <p className="text-2xl font-bold text-blue-600">{workshop.engagement_score || 0}%</p>
             </div>
           </div>
+          
+          {/* TCMP² Card */}
+          <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-green-900">
+                <Calculator className="w-5 h-5" />
+                TCMP² - Valor Hora Ideal
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div>
+                  {loadingTcmp2 ? (
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="w-5 h-5 animate-spin text-green-600" />
+                      <span className="text-sm text-gray-600">Calculando...</span>
+                    </div>
+                  ) : tcmp2Value > 0 ? (
+                    <>
+                      <p className="text-4xl font-bold text-green-700">
+                        R$ {tcmp2Value.toFixed(2)}
+                      </p>
+                      <p className="text-xs text-gray-600 mt-1">
+                        Valor hora que transforma 100% das despesas em lucro
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Média das últimas 10 OSs diagnosticadas
+                      </p>
+                    </>
+                  ) : (
+                    <div>
+                      <p className="text-2xl font-bold text-gray-500">-</p>
+                      <p className="text-xs text-gray-600 mt-1">
+                        Nenhum diagnóstico de OS realizado ainda
+                      </p>
+                    </div>
+                  )}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate(createPageUrl("DiagnosticoOS"))}
+                  className="bg-white hover:bg-green-50"
+                >
+                  Fazer Diagnóstico
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <Tabs defaultValue="dados" className="space-y-6">
