@@ -29,20 +29,16 @@ export default function Layout({ children }) {
       if (authenticated) {
         const currentUser = await base44.auth.me();
         setUser(currentUser);
-        localStorage.removeItem('base44_plan_selected');
-      } else {
-        const planSelected = localStorage.getItem('base44_plan_selected');
+
+        // Verifica se o usuário tem oficina com plano escolhido
+        const workshops = await base44.entities.Workshop.list();
+        const userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
+        
         const currentPath = window.location.pathname;
         const cadastroPath = createPageUrl("CadastroPlanos");
-        const homePath = createPageUrl("Home");
         
-        // Permitir acesso livre à Home e CadastroPlanos
-        const isPublicPage = currentPath === homePath || currentPath === cadastroPath || 
-                            currentPath === '/' || currentPath.includes('CadastroPlanos');
-        
-        // Só redireciona para CadastroPlanos se não houver plano selecionado 
-        // e estiver tentando acessar uma página que não seja pública
-        if (!planSelected && !isPublicPage) {
+        // Se não tem oficina OU não tem plano escolhido, redireciona para CadastroPlanos
+        if ((!userWorkshop || !userWorkshop.planoAtual) && !currentPath.includes('CadastroPlanos')) {
           window.location.href = cadastroPath;
         }
       }

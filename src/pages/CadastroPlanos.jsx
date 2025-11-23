@@ -17,13 +17,30 @@ export default function CadastroPlanos() {
   const [selectedPlan, setSelectedPlan] = useState(null);
 
   useEffect(() => {
-    const checkAuth = async () => {
+    const checkAuthAndPlan = async () => {
       const authenticated = await base44.auth.isAuthenticated();
-      if (authenticated) {
-        navigate(createPageUrl("Home"));
+      
+      if (!authenticated) {
+        // Se não está autenticado, redireciona para login
+        base44.auth.redirectToLogin(window.location.href);
+        return;
+      }
+
+      // Se está autenticado, verifica se já tem plano escolhido
+      try {
+        const currentUser = await base44.auth.me();
+        const workshops = await base44.entities.Workshop.list();
+        const userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
+        
+        if (userWorkshop && userWorkshop.planoAtual) {
+          // Já tem plano escolhido, redireciona para Home
+          navigate(createPageUrl("Home"));
+        }
+      } catch (error) {
+        console.error("Erro ao verificar plano:", error);
       }
     };
-    checkAuth();
+    checkAuthAndPlan();
   }, [navigate]);
 
   const [formData, setFormData] = useState({
@@ -188,24 +205,33 @@ export default function CadastroPlanos() {
     setLoading(true);
 
     try {
-      // Salvar dados no localStorage para criar a oficina após o login
-      const pendingWorkshop = {
+      const currentUser = await base44.auth.me();
+      const workshops = await base44.entities.Workshop.list();
+      let userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
+
+      const workshopData = {
         name: formData.name,
         cnpj: formData.cnpj,
         city: formData.city,
         state: formData.state,
         segment: formData.segment,
         planoAtual: selectedPlan,
-        timestamp: new Date().toISOString()
+        dataAssinatura: new Date().toISOString(),
+        owner_id: currentUser.id
       };
 
-      localStorage.setItem('pending_workshop_data', JSON.stringify(pendingWorkshop));
-      localStorage.setItem('base44_plan_selected', selectedPlan);
-      
-      toast.success("Dados salvos! Agora crie sua conta");
-      
-      // Redirecionar para a página de registro do Base44
-      base44.auth.redirectToLogin(window.location.origin + createPageUrl("Home"));
+      if (userWorkshop) {
+        // Atualiza oficina existente
+        await base44.entities.Workshop.update(userWorkshop.id, workshopData);
+        toast.success("Plano escolhido com sucesso!");
+      } else {
+        // Cria nova oficina
+        await base44.entities.Workshop.create(workshopData);
+        toast.success("Oficina cadastrada e plano escolhido!");
+      }
+
+      // Redireciona para a Home do app
+      navigate(createPageUrl("Home"));
 
     } catch (error) {
       console.error(error);
