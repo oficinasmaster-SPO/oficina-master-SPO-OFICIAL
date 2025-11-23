@@ -23,6 +23,9 @@ Deno.serve(async (req) => {
     }
 
     const mvv = mvvList[0];
+    
+    // Buscar rituais
+    const rituals = await base44.entities.Ritual.filter({ workshop_id });
 
     // Criar PDF
     const doc = new jsPDF();
@@ -136,6 +139,134 @@ Deno.serve(async (req) => {
         }
 
         yPosition += 8;
+      });
+    }
+
+    // Rituais
+    if (rituals && rituals.length > 0) {
+      if (yPosition > 250) {
+        doc.addPage();
+        yPosition = 20;
+      }
+      
+      doc.setFontSize(16);
+      doc.setTextColor(234, 179, 8); // Yellow
+      doc.text('✨ Rituais Organizacionais', 20, yPosition);
+      
+      yPosition += 10;
+
+      const pillarLabels = {
+        proposito: "Propósito",
+        missao: "Missão",
+        visao: "Visão",
+        valores: "Valores",
+        postura_atitudes: "Postura e Atitudes",
+        comportamentos_inaceitaveis: "Comportamentos Inaceitáveis",
+        rituais_cultura: "Rituais de Cultura",
+        sistemas_regras: "Sistemas e Regras",
+        comunicacao_interna: "Comunicação Interna",
+        lideranca: "Liderança",
+        foco_cliente: "Foco no Cliente",
+        performance_responsabilidade: "Performance e Responsabilidade",
+        desenvolvimento_continuo: "Desenvolvimento Contínuo",
+        identidade_pertencimento: "Identidade e Pertencimento"
+      };
+
+      const frequencyLabels = {
+        diario: "Diário",
+        semanal: "Semanal",
+        quinzenal: "Quinzenal",
+        mensal: "Mensal",
+        continuo: "Contínuo",
+        trimestral: "Trimestral",
+        eventual: "Eventual"
+      };
+
+      // Agrupar rituais por pilar
+      const ritualsByPillar = {};
+      rituals.forEach(ritual => {
+        if (!ritualsByPillar[ritual.pillar]) {
+          ritualsByPillar[ritual.pillar] = [];
+        }
+        ritualsByPillar[ritual.pillar].push(ritual);
+      });
+
+      // Renderizar por pilar
+      Object.entries(ritualsByPillar).forEach(([pillar, pillarRituals]) => {
+        if (yPosition > 240) {
+          doc.addPage();
+          yPosition = 20;
+        }
+
+        // Nome do pilar
+        doc.setFontSize(13);
+        doc.setTextColor(139, 92, 246); // Purple
+        doc.setFont(undefined, 'bold');
+        doc.text(pillarLabels[pillar] || pillar, 20, yPosition);
+        doc.setFont(undefined, 'normal');
+        
+        yPosition += 8;
+
+        // Rituais do pilar
+        pillarRituals.forEach((ritual) => {
+          if (yPosition > 260) {
+            doc.addPage();
+            yPosition = 20;
+          }
+
+          // Nome do ritual
+          doc.setFontSize(11);
+          doc.setTextColor(59, 130, 246);
+          doc.setFont(undefined, 'bold');
+          doc.text(`• ${ritual.name}`, 25, yPosition);
+          doc.setFont(undefined, 'normal');
+          
+          yPosition += 6;
+
+          // Frequência
+          if (ritual.frequency) {
+            doc.setFontSize(9);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Frequência: ${frequencyLabels[ritual.frequency] || ritual.frequency}`, 30, yPosition);
+            yPosition += 5;
+          }
+
+          // Descrição
+          if (ritual.description) {
+            doc.setFontSize(9);
+            doc.setTextColor(80, 80, 80);
+            const descLines = doc.splitTextToSize(ritual.description, 155);
+            doc.text(descLines, 30, yPosition);
+            yPosition += (descLines.length * 4) + 3;
+          }
+
+          // Responsável
+          if (ritual.responsible_role) {
+            doc.setFontSize(8);
+            doc.setTextColor(120, 120, 120);
+            doc.text(`Responsável: ${ritual.responsible_role}`, 30, yPosition);
+            yPosition += 5;
+          }
+
+          // Passos de implementação
+          if (ritual.implementation_steps && ritual.implementation_steps.length > 0) {
+            doc.setFontSize(8);
+            doc.setTextColor(100, 100, 100);
+            ritual.implementation_steps.forEach((step, idx) => {
+              if (yPosition > 275) {
+                doc.addPage();
+                yPosition = 20;
+              }
+              const stepLines = doc.splitTextToSize(`  ${idx + 1}. ${step}`, 150);
+              doc.text(stepLines, 35, yPosition);
+              yPosition += (stepLines.length * 4) + 2;
+            });
+          }
+
+          yPosition += 5;
+        });
+
+        yPosition += 5;
       });
     }
 
