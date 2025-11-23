@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Save, Target, TrendingUp, Calendar } from "lucide-react";
-import { formatCurrency, formatNumber, formatInteger } from "@/components/utils/formatters";
+import { formatCurrency, formatNumber, formatInteger } from "../utils/formatters";
 
 export default function MetasObjetivos({ workshop, onUpdate }) {
   const navigate = useNavigate();
