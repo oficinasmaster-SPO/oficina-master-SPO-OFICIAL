@@ -62,6 +62,8 @@ import CronogramaAculturacao from './pages/CronogramaAculturacao';
 import PesquisaClima from './pages/PesquisaClima';
 import ResultadoClima from './pages/ResultadoClima';
 import RankingBrasil from './pages/RankingBrasil';
+import TreinamentoVendas from './pages/TreinamentoVendas';
+import DiagnosticoComercial from './pages/DiagnosticoComercial';
 import __Layout from './Layout.jsx';
 
 
@@ -130,6 +132,8 @@ export const PAGES = {
     "PesquisaClima": PesquisaClima,
     "ResultadoClima": ResultadoClima,
     "RankingBrasil": RankingBrasil,
+    "TreinamentoVendas": TreinamentoVendas,
+    "DiagnosticoComercial": DiagnosticoComercial,
 }
 
 export const pagesConfig = {
