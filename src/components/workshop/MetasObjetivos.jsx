@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Save, Target, TrendingUp, Calendar } from "lucide-react";
+import { formatCurrency, formatNumber, formatInteger } from "@/utils/formatters";
 
 export default function MetasObjetivos({ workshop, onUpdate }) {
   const navigate = useNavigate();
@@ -148,7 +149,7 @@ export default function MetasObjetivos({ workshop, onUpdate }) {
               <Label>Faturamento Total (Auto)</Label>
               <Input
                 type="text"
-                value={`R$ ${(formData.best_month_history.revenue_total || 0).toFixed(2)}`}
+                value={formatCurrency(formData.best_month_history.revenue_total || 0)}
                 disabled
                 className="bg-yellow-100 font-bold text-orange-700"
               />
@@ -189,7 +190,7 @@ export default function MetasObjetivos({ workshop, onUpdate }) {
               <Label>Ticket Médio (Auto)</Label>
               <Input
                 type="text"
-                value={`R$ ${(formData.best_month_history.average_ticket || 0).toFixed(2)}`}
+                value={formatCurrency(formData.best_month_history.average_ticket || 0)}
                 disabled
                 className="bg-yellow-100 font-bold text-orange-700"
               />
@@ -210,15 +211,15 @@ export default function MetasObjetivos({ workshop, onUpdate }) {
                 </div>
                 <div>
                   <p className="text-orange-700">Faturamento:</p>
-                  <p className="font-bold text-orange-900">R$ {(formData.best_month_history.revenue_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                  <p className="font-bold text-orange-900">{formatCurrency(formData.best_month_history.revenue_total || 0)}</p>
                 </div>
                 <div>
                   <p className="text-orange-700">Lucro:</p>
-                  <p className="font-bold text-orange-900">{formData.best_month_history.profit_percentage}%</p>
+                  <p className="font-bold text-orange-900">{formatNumber(formData.best_month_history.profit_percentage, 1)}%</p>
                 </div>
                 <div>
                   <p className="text-orange-700">Ticket Médio:</p>
-                  <p className="font-bold text-orange-900">R$ {(formData.best_month_history.average_ticket || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                  <p className="font-bold text-orange-900">{formatCurrency(formData.best_month_history.average_ticket || 0)}</p>
                 </div>
               </div>
             </div>
@@ -349,7 +350,7 @@ export default function MetasObjetivos({ workshop, onUpdate }) {
         <div className="pt-4 border-t bg-green-50 rounded-lg p-4">
           <h3 className="font-semibold text-green-900 mb-2">Meta de Faturamento Total Mensal</h3>
           <p className="text-3xl font-bold text-green-600">
-            R$ {((formData.monthly_goals.revenue_parts || 0) + (formData.monthly_goals.revenue_services || 0)).toFixed(2)}
+            {formatCurrency((formData.monthly_goals.revenue_parts || 0) + (formData.monthly_goals.revenue_services || 0))}
           </p>
         </div>
       </CardContent>
