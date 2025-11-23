@@ -348,34 +348,20 @@ export default function Rituais() {
     enabled: !!user
   });
 
-  const { data: rituals = [], isLoading: loadingRituals } = useQuery({
+  const { data: rituals = [], isLoading: loadingRituals, refetch } = useQuery({
     queryKey: ['rituals', workshop?.id],
     queryFn: async () => {
       if (!workshop?.id) return [];
-      const data = await base44.entities.Ritual.filter({ workshop_id: workshop.id });
-      
-      // Se não há rituais, importar automaticamente os padrões
-      if (!data || data.length === 0) {
-        toast.loading("Importando rituais padrão...");
-        const promises = defaultRituals.map(ritual => 
-          base44.entities.Ritual.create({
-            ...ritual,
-            workshop_id: workshop.id,
-            active: true,
-            order: 0
-          })
-        );
-        await Promise.all(promises);
-        toast.dismiss();
-        toast.success("34 rituais importados automaticamente!");
-        const newData = await base44.entities.Ritual.filter({ workshop_id: workshop.id });
-        return newData || [];
+      try {
+        const data = await base44.entities.Ritual.filter({ workshop_id: workshop.id });
+        console.log("Rituais carregados:", data?.length || 0);
+        return data || [];
+      } catch (error) {
+        console.error("Erro ao carregar rituais:", error);
+        return [];
       }
-      
-      return data || [];
     },
-    enabled: !!workshop?.id,
-    staleTime: 0
+    enabled: !!workshop?.id
   });
 
   const createMutation = useMutation({
@@ -448,32 +434,35 @@ export default function Rituais() {
   };
 
   const handleImportDefaults = async () => {
-    if (!workshop) {
+    if (!workshop?.id) {
       toast.error("Oficina não encontrada");
       return;
     }
 
-    toast.loading("Importando rituais...");
+    const loadingToast = toast.loading("Importando 34 rituais...");
 
     try {
-      const promises = defaultRituals.map(ritual => 
-        base44.entities.Ritual.create({
-          ...ritual,
-          workshop_id: workshop.id,
-          description: `${ritual.name} - implementar conforme a necessidade da oficina.`,
-          active: true,
-          order: 0
-        })
-      );
+      console.log("Iniciando importação de rituais para workshop:", workshop.id);
       
-      await Promise.all(promises);
-      await queryClient.invalidateQueries(['rituals']);
-      toast.dismiss();
-      toast.success("34 rituais importados com sucesso!");
+      // Importar todos os rituais em lote
+      const ritualsToCreate = defaultRituals.map(ritual => ({
+        ...ritual,
+        workshop_id: workshop.id,
+        active: true,
+        order: 0
+      }));
+      
+      await base44.entities.Ritual.bulkCreate(ritualsToCreate);
+      
+      console.log("Rituais criados, recarregando...");
+      await refetch();
+      
+      toast.dismiss(loadingToast);
+      toast.success("✅ 34 rituais importados com sucesso!");
     } catch (error) {
       console.error("Erro ao importar:", error);
-      toast.dismiss();
-      toast.error("Erro ao importar rituais: " + error.message);
+      toast.dismiss(loadingToast);
+      toast.error("Erro ao importar: " + error.message);
     }
   };
 
@@ -516,16 +505,14 @@ export default function Rituais() {
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Rituais Organizacionais</h1>
-            <p className="text-gray-600">Gerencie os rituais de cultura da sua oficina</p>
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">🔥 Rituais de Aculturamento</h1>
+            <p className="text-gray-600">34 rituais organizados em 14 pilares culturais</p>
           </div>
           <div className="flex gap-3">
-            {rituals.length === 0 && (
-              <Button onClick={handleImportDefaults} variant="outline">
-                <Sparkles className="w-4 h-4 mr-2" />
-                Importar Rituais Padrão
-              </Button>
-            )}
+            <Button onClick={handleImportDefaults} variant="outline" className="bg-yellow-50 border-yellow-300 hover:bg-yellow-100">
+              <Sparkles className="w-4 h-4 mr-2 text-yellow-600" />
+              {rituals.length === 0 ? 'Importar 34 Rituais' : 'Reimportar Rituais'}
+            </Button>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
                 <Button onClick={() => { resetForm(); setEditingRitual(null); }}>
@@ -642,25 +629,30 @@ export default function Rituais() {
           </Select>
         </div>
 
-        {rituals.length === 0 ? (
-          <Card className="border-2 border-dashed border-yellow-300 bg-yellow-50">
+        {loadingRituals ? (
+          <div className="flex items-center justify-center p-12">
+            <Loader2 className="w-8 h-8 animate-spin text-yellow-600 mr-3" />
+            <p className="text-gray-600">Carregando rituais...</p>
+          </div>
+        ) : rituals.length === 0 ? (
+          <Card className="border-2 border-dashed border-yellow-300 bg-gradient-to-br from-yellow-50 to-orange-50">
             <CardContent className="p-12 text-center">
-              <Sparkles className="w-16 h-16 mx-auto mb-4 text-yellow-600" />
-              <h3 className="text-2xl font-bold text-gray-900 mb-3">Implemente os Rituais na sua Oficina</h3>
-              <p className="text-gray-700 mb-6 max-w-2xl mx-auto">
-                Temos 34 rituais organizacionais prontos para você implementar, organizados em 14 pilares culturais.
-                Clique abaixo para importar todos os rituais e começar a fortalecer a cultura da sua empresa.
+              <Sparkles className="w-20 h-20 mx-auto mb-4 text-yellow-600" />
+              <h3 className="text-3xl font-bold text-gray-900 mb-3">🔥 Implemente os Rituais na sua Oficina</h3>
+              <p className="text-lg text-gray-700 mb-6 max-w-2xl mx-auto">
+                Temos <strong>34 rituais organizacionais</strong> prontos para você implementar, 
+                organizados em <strong>14 pilares culturais</strong>.
               </p>
               <Button 
                 onClick={handleImportDefaults} 
                 size="lg"
-                className="bg-yellow-600 hover:bg-yellow-700 text-white text-lg px-8 py-6"
+                className="bg-yellow-600 hover:bg-yellow-700 text-white text-xl px-12 py-8 shadow-lg"
               >
-                <Sparkles className="w-5 h-5 mr-2" />
-                Importar 34 Rituais Padrão
+                <Sparkles className="w-6 h-6 mr-3" />
+                Importar 34 Rituais Agora
               </Button>
-              <p className="text-sm text-gray-500 mt-4">
-                Você poderá editar, personalizar ou remover qualquer ritual depois
+              <p className="text-sm text-gray-500 mt-6">
+                ✅ Você poderá editar, personalizar ou remover qualquer ritual depois
               </p>
             </CardContent>
           </Card>
