@@ -69,7 +69,8 @@ export default function ServicosEquipamentos({ workshop, onUpdate, showServicesO
     { value: 'etanol', label: 'Etanol' },
     { value: 'eletrico', label: 'Elétrico' },
     { value: 'hibrido', label: 'Híbrido' },
-    { value: 'flex', label: 'Flex' }
+    { value: 'flex', label: 'Flex' },
+    { value: 'gnv', label: 'GNV' }
   ];
 
   const vehicleCategoriesOptions = [
@@ -78,53 +79,110 @@ export default function ServicosEquipamentos({ workshop, onUpdate, showServicesO
     { value: 'intermediarios', label: 'Intermediários' },
     { value: 'populares', label: 'Populares' },
     { value: 'utilitarios', label: 'Utilitários' },
-    { value: 'transporte', label: 'Transporte' }
+    { value: 'transporte', label: 'Transporte' },
+    { value: 'frotas', label: 'Frotas' },
+    { value: 'moto_entregadores', label: 'Moto-entregadores' },
+    { value: 'seguradoras', label: 'Seguradoras' },
+    { value: 'locadoras', label: 'Locadoras' }
   ];
 
-  const servicesOptions = [
-    { value: "luzes_instrumentos", label: "Luzes e Instrumentos" },
-    { value: "painel", label: "Painel" },
-    { value: "embreagem", label: "Embreagem" },
-    { value: "modulos", label: "Módulos" },
-    { value: "suspensao", label: "Suspensão" },
-    { value: "freio", label: "Freio" },
-    { value: "direcao", label: "Direção" },
-    { value: "truck", label: "Truck" },
-    { value: "diesel", label: "Diesel" },
-    { value: "eletrica", label: "Elétrica" },
-    { value: "hibrido", label: "Híbrido" },
-    { value: "flex", label: "Flex" },
-    { value: "airbag", label: "Airbag" },
-    { value: "pneus_50", label: "Pneus até 50%" },
-    { value: "pneus_100", label: "Pneus 100%" },
-    { value: "rodas", label: "Rodas" },
-    { value: "solda", label: "Solda" },
-    { value: "acessorios", label: "Acessórios" },
-    { value: "vidros", label: "Vidros" },
-    { value: "escapamento", label: "Escapamento" },
-    { value: "estetica", label: "Estética" },
-    { value: "pintura", label: "Pintura" },
-    { value: "funilaria", label: "Funilaria" },
-    { value: "polimento", label: "Polimento" },
-    { value: "injecao_eletronica", label: "Injeção Eletrônica" },
-    { value: "motor_partida", label: "Motor de Partida" },
-    { value: "alternador", label: "Alternador" },
-    { value: "remapeamento", label: "Remapeamento" },
-    { value: "alinhamento", label: "Alinhamento" },
-    { value: "balanceamento", label: "Balanceamento" },
-    { value: "motor", label: "Motor" },
-    { value: "tapeçaria", label: "Tapeçaria" },
-    { value: "higienizacao", label: "Higienização" },
-    { value: "turbo", label: "Turbo" },
-    { value: "cambio_manual", label: "Câmbio Manual" },
-    { value: "cambio_automatico", label: "Câmbio Automático" },
-    { value: "chassis", label: "Chassis" },
-    { value: "molas", label: "Molas" },
-    { value: "borracharia", label: "Borracharia" },
-    { value: "ar_condicionado", label: "Ar Condicionado" },
-    { value: "climatizador", label: "Climatizador" },
-    { value: "tacografo", label: "Tacógrafo" }
-  ];
+  const servicesOptions = {
+    "Sistema Elétrico & Eletrônico": [
+      { value: "luzes_iluminacao", label: "Luzes e Iluminação" },
+      { value: "instrumentos_painel", label: "Instrumentos / Painel" },
+      { value: "airbag", label: "Airbag" },
+      { value: "alternador", label: "Alternador" },
+      { value: "motor_partida", label: "Motor de Partida" },
+      { value: "injecao_eletronica", label: "Injeção Eletrônica" },
+      { value: "modulos_centrais", label: "Módulos e Centrais (ECU/TCU/BCM)" },
+      { value: "reprogramacao_remapeamento", label: "Reprogramação / Remapeamento" },
+      { value: "diagnostico_eletronico", label: "Diagnóstico Eletrônico" },
+      { value: "chicote_eletrico", label: "Chicote Elétrico" },
+      { value: "sensores_atuadores", label: "Sensores e Atuadores" },
+      { value: "abs_controle_tracao", label: "ABS / Controle de Tração" },
+      { value: "eletricidade_geral", label: "Eletricidade Geral" },
+      { value: "carros_hibridos_sistemas_auxiliares", label: "Carros Híbridos (Sistemas Auxiliares)" },
+      { value: "carros_eletricos_basico", label: "Carros Elétricos (Nível 1 Básico)" }
+    ],
+    "Mecânica Pesada & Motor": [
+      { value: "motor", label: "Motor" },
+      { value: "turbo", label: "Turbo" },
+      { value: "sistema_arrefecimento", label: "Sistema de Arrefecimento" },
+      { value: "juntas_retentores_vazamentos", label: "Juntas, Retentores e Vazamentos" },
+      { value: "sistema_admissao", label: "Sistema de Admissão" },
+      { value: "sistema_escapamento", label: "Sistema de Escapamento" },
+      { value: "correias_dentada_acessorios", label: "Correias (Dentada, Acessórios)" }
+    ],
+    "Transmissão & Direção": [
+      { value: "cambio_manual", label: "Câmbio Manual" },
+      { value: "cambio_automatico", label: "Câmbio Automático" },
+      { value: "direcao_hidraulica_eletrica", label: "Direção (Hidráulica, Elétrica)" },
+      { value: "semi_eixos_homocineticas", label: "Semi-eixos / Homocinéticas" },
+      { value: "embreagem", label: "Embreagem" },
+      { value: "diferencial", label: "Diferencial" }
+    ],
+    "Suspensão & Freios": [
+      { value: "suspensao_completa", label: "Suspensão Completa" },
+      { value: "amortecedores", label: "Amortecedores" },
+      { value: "bandejas_pivos", label: "Bandejas / Pivôs" },
+      { value: "buchas_coxins", label: "Buchas e Coxins" },
+      { value: "freio_disco_pastilha_fluido_pinca", label: "Freio (Disco, Pastilha, Fluido, Pinça)" }
+    ],
+    "Rodas, Pneus & Geometria": [
+      { value: "pneus_50", label: "Pneus 50% da Operação" },
+      { value: "pneus_100", label: "Pneus 100% da Operação" },
+      { value: "rodas_reparo", label: "Rodas / Reparo de Rodas" },
+      { value: "alinhamento", label: "Alinhamento" },
+      { value: "balanceamento", label: "Balanceamento" },
+      { value: "cambagem_caster", label: "Cambagem / Caster" }
+    ],
+    "Vidros & Acessórios": [
+      { value: "vidros_troca_reparo", label: "Vidros (Troca / Reparo)" },
+      { value: "acessorios_som_pelicula_internos_externos", label: "Acessórios (Som, Película, Internos/Externos)" },
+      { value: "fechaduras_travas_vidros_eletricos", label: "Fechaduras / Travas / Vidros Elétricos" },
+      { value: "chaves_codificacao", label: "Chaves e Codificação" }
+    ],
+    "Lataria & Pintura": [
+      { value: "pintura", label: "Pintura" },
+      { value: "chapeacao_funilaria", label: "Chapeação / Funilaria" },
+      { value: "polimento", label: "Polimento" },
+      { value: "estetica_automotiva", label: "Estética Automotiva" },
+      { value: "detailing_automotivo", label: "Detailing Automotivo" },
+      { value: "higienizacao_tecnica_lataria", label: "Higienização Técnica" },
+      { value: "recuperacao_parachoque", label: "Recuperação de Para-choque" },
+      { value: "reparos_rapidos_martelinho", label: "Reparos Rápidos (Martelinho)" }
+    ],
+    "Interiores & Conforto": [
+      { value: "tapecaria", label: "Tapeçaria" },
+      { value: "higienizacao_interna", label: "Higienização Interna" },
+      { value: "lavagem_tecnica", label: "Lavagem Técnica" },
+      { value: "tratamento_bancos", label: "Tratamento de Bancos (Couro/Tecido)" }
+    ],
+    "Sistemas de Alto Desempenho": [
+      { value: "instalacao_turbo_upgrades", label: "Instalação de Turbo / Upgrades" },
+      { value: "downpipe_escapamento_esportivo", label: "Downpipe / Escapamento Esportivo" },
+      { value: "preparacoes_leves", label: "Preparações Leves" },
+      { value: "intercooler", label: "Intercooler" },
+      { value: "programacao_cambio", label: "Programação de Câmbio" }
+    ],
+    "Ar-Condicionado & Climatização": [
+      { value: "higienizacao_ar", label: "Higienização" },
+      { value: "reparo_compressor", label: "Reparo de Compressor" },
+      { value: "troca_gas_ar", label: "Troca de Gás" },
+      { value: "linha_ar_condicionado_geral", label: "Linha de Ar-Condicionado Geral" }
+    ],
+    "Diagnóstico & Inspeções": [
+      { value: "checklist_geral", label: "Checklist Geral" },
+      { value: "vistoria_pre_compra", label: "Vistoria Pré-compra" },
+      { value: "inspecao_viagem", label: "Inspeção de Viagem" },
+      { value: "diagnostico_via_scanner", label: "Diagnóstico via Scanner" }
+    ],
+    "Outros Serviços": [
+      { value: "solda", label: "Solda" },
+      { value: "borracharia", label: "Borracharia" },
+      { value: "tacografo", label: "Tacógrafo" }
+    ]
+  };
 
   const toggleArrayItem = (array, item) => {
     return array.includes(item) ? array.filter(i => i !== item) : [...array, item];
@@ -289,30 +347,39 @@ export default function ServicosEquipamentos({ workshop, onUpdate, showServicesO
           <Card>
             <CardHeader>
               <CardTitle>Serviços Oferecidos</CardTitle>
-              <CardDescription>Selecione todos os serviços que sua oficina oferece</CardDescription>
+              <CardDescription>Selecione todos os serviços que sua oficina oferece (organizados por categoria)</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {servicesOptions.map((option) => (
-                  <div key={option.value} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`service-${option.value}`}
-                      checked={formData.services_offered.includes(option.value)}
-                      onCheckedChange={() => setFormData({
-                        ...formData,
-                        services_offered: toggleArrayItem(formData.services_offered, option.value)
-                      })}
-                      disabled={!editing}
-                    />
-                    <label htmlFor={`service-${option.value}`} className="text-sm cursor-pointer">
-                      {option.label}
-                    </label>
+            <CardContent className="space-y-6">
+              {Object.entries(servicesOptions).map(([category, services]) => (
+                <div key={category} className="space-y-3">
+                  <h3 className="text-sm font-semibold text-blue-900 bg-blue-50 px-3 py-2 rounded-lg">
+                    {category}
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 pl-2">
+                    {services.map((option) => (
+                      <div key={option.value} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`service-${option.value}`}
+                          checked={formData.services_offered.includes(option.value)}
+                          onCheckedChange={() => setFormData({
+                            ...formData,
+                            services_offered: toggleArrayItem(formData.services_offered, option.value)
+                          })}
+                          disabled={!editing}
+                        />
+                        <label htmlFor={`service-${option.value}`} className="text-sm cursor-pointer">
+                          {option.label}
+                        </label>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </div>
+              ))}
+              <div className="pt-4 border-t">
+                <p className="text-sm font-semibold text-gray-700">
+                  Total: {formData.services_offered.length} serviço(s) selecionado(s)
+                </p>
               </div>
-              <p className="text-sm text-gray-500 mt-4">
-                {formData.services_offered.length} serviço(s) selecionado(s)
-              </p>
             </CardContent>
           </Card>
         </>
