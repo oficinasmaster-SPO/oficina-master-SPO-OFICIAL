@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -258,19 +257,28 @@ export default function Home() {
               organização e crescimento da sua oficina.
             </p>
             
-            <div className="flex flex-col items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button 
-                onClick={handleLogin}
+                onClick={() => navigate(createPageUrl("CadastroPlanos"))}
                 size="lg" 
                 className="bg-white text-blue-700 hover:bg-blue-50 text-lg px-8 py-6 rounded-full shadow-xl hover:shadow-2xl transition-all"
               >
-                <LogIn className="mr-2 h-5 w-5" />
-                Entrar para Começar
+                <Rocket className="mr-2 h-5 w-5" />
+                Criar Conta Grátis
               </Button>
-              <p className="text-sm text-blue-100">
-                É grátis! Faça login para criar seu diagnóstico personalizado
-              </p>
+              <Button 
+                onClick={handleLogin}
+                size="lg" 
+                variant="outline"
+                className="bg-transparent border-2 border-white text-white hover:bg-white/10 text-lg px-8 py-6 rounded-full shadow-xl hover:shadow-2xl transition-all"
+              >
+                <LogIn className="mr-2 h-5 w-5" />
+                Já tenho conta
+              </Button>
             </div>
+            <p className="text-sm text-blue-100 mt-2">
+              Comece grátis e evolua conforme sua oficina cresce!
+            </p>
           </div>
         </div>
       </div>
@@ -318,12 +326,12 @@ export default function Home() {
 
         <div className="mt-16 text-center">
           <Button 
-            onClick={handleLogin}
+            onClick={() => navigate(createPageUrl("CadastroPlanos"))}
             size="lg" 
             className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-lg px-8 py-6 rounded-full shadow-lg"
           >
-            <LogIn className="mr-2 h-5 w-5" />
-            Fazer Login e Começar
+            <Rocket className="mr-2 h-5 w-5" />
+            Começar Agora Grátis
           </Button>
         </div>
       </div>
@@ -385,11 +393,11 @@ export default function Home() {
 
         <div className="text-center mt-12">
           <Button 
-            onClick={handleLogin}
+            onClick={() => navigate(createPageUrl("CadastroPlanos"))}
             size="lg"
             className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-xl px-12 py-8 rounded-full shadow-2xl"
           >
-            <LogIn className="mr-3 h-6 w-6" />
+            <Rocket className="mr-3 h-6 w-6" />
             Começar Agora - É Grátis!
           </Button>
         </div>
