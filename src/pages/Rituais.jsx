@@ -110,10 +110,14 @@ export default function Rituais() {
     enabled: !!user
   });
 
-  const { data: rituals = [], isLoading } = useQuery({
+  const { data: rituals = [], isLoading: loadingRituals } = useQuery({
     queryKey: ['rituals', workshop?.id],
-    queryFn: () => base44.entities.Ritual.filter({ workshop_id: workshop.id }),
-    enabled: !!workshop
+    queryFn: async () => {
+      if (!workshop?.id) return [];
+      const data = await base44.entities.Ritual.filter({ workshop_id: workshop.id });
+      return data || [];
+    },
+    enabled: !!workshop?.id
   });
 
   const createMutation = useMutation({
@@ -225,7 +229,7 @@ export default function Rituais() {
     return acc;
   }, {});
 
-  if (isLoading || loadingWorkshop) {
+  if (loadingRituals || loadingWorkshop) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
