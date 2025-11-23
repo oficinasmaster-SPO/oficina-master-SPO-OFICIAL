@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -239,6 +238,20 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('IAAnalytics'), 
           icon: Sparkles,
           description: 'Previsões, gargalos e recomendações',
+          highlight: true
+        },
+        { 
+          name: 'Treinamento de Vendas', 
+          href: createPageUrl('TreinamentoVendas'), 
+          icon: Award,
+          description: 'Pratique cenários com IA',
+          highlight: true
+        },
+        { 
+          name: 'Diagnóstico Comercial', 
+          href: createPageUrl('DiagnosticoComercial'), 
+          icon: TrendingUp,
+          description: 'Avaliação de processos comerciais',
           highlight: true
         },
         { 
