@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Save, Building2, Info, Store } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import SliderWithMax from "@/components/ui/slider-with-max";
 
 export default function DadosBasicosOficina({ workshop, onUpdate }) {
   const [editing, setEditing] = useState(false);
@@ -20,8 +21,8 @@ export default function DadosBasicosOficina({ workshop, onUpdate }) {
     segment: "",
     tax_regime: "",
     monthly_revenue: "",
-    employees_count: "",
-    years_in_business: "",
+    employees_count: 1,
+    years_in_business: 1,
     is_franchisee: false,
     franchisor_name: "",
     operates_franchise: false,
@@ -46,8 +47,8 @@ export default function DadosBasicosOficina({ workshop, onUpdate }) {
         segment: workshop.segment || "",
         tax_regime: workshop.tax_regime || "",
         monthly_revenue: workshop.monthly_revenue || "",
-        employees_count: workshop.employees_count || "",
-        years_in_business: workshop.years_in_business || "",
+        employees_count: workshop.employees_count || 1,
+        years_in_business: workshop.years_in_business || 1,
         is_franchisee: workshop.is_franchisee || false,
         franchisor_name: workshop.franchisor_name || "",
         operates_franchise: workshop.operates_franchise || false,
@@ -207,36 +208,25 @@ export default function DadosBasicosOficina({ workshop, onUpdate }) {
             </Select>
           </div>
           <div>
-            <Label>Quantidade de Funcionários</Label>
-            <Select value={formData.employees_count} onValueChange={(value) => setFormData({...formData, employees_count: value})} disabled={!editing}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1_5">1 a 5</SelectItem>
-                <SelectItem value="6_10">6 a 10</SelectItem>
-                <SelectItem value="11_20">11 a 20</SelectItem>
-                <SelectItem value="21_50">21 a 50</SelectItem>
-                <SelectItem value="51_100">51 a 100</SelectItem>
-                <SelectItem value="acima_100">Acima de 100</SelectItem>
-              </SelectContent>
-            </Select>
+            <SliderWithMax
+              value={formData.employees_count}
+              onChange={(value) => setFormData({...formData, employees_count: value})}
+              disabled={!editing}
+              label="Quantidade de Funcionários"
+              min={1}
+              max={100}
+            />
           </div>
           <div>
-            <Label>Tempo de Atuação</Label>
-            <Select value={formData.years_in_business} onValueChange={(value) => setFormData({...formData, years_in_business: value})} disabled={!editing}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="menos_1_ano">Menos de 1 ano</SelectItem>
-                <SelectItem value="1_3_anos">1 a 3 anos</SelectItem>
-                <SelectItem value="3_5_anos">3 a 5 anos</SelectItem>
-                <SelectItem value="5_10_anos">5 a 10 anos</SelectItem>
-                <SelectItem value="10_20_anos">10 a 20 anos</SelectItem>
-                <SelectItem value="acima_20_anos">Acima de 20 anos</SelectItem>
-              </SelectContent>
-            </Select>
+            <SliderWithMax
+              value={formData.years_in_business}
+              onChange={(value) => setFormData({...formData, years_in_business: value})}
+              disabled={!editing}
+              label="Tempo de Atuação no Mercado (anos)"
+              suffix=" anos"
+              min={1}
+              max={100}
+            />
           </div>
           </div>
 
