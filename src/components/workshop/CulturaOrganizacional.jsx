@@ -1,9 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Sparkles, Target, Eye, Award, Users, TrendingUp, BookOpen } from "lucide-react";
+import { base44 } from "@/api/base44Client";
+import { Sparkles, Target, Eye, Award, Users, TrendingUp, BookOpen, Download, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function CulturaOrganizacional({ workshop }) {
   const navigate = useNavigate();
@@ -94,13 +96,33 @@ export default function CulturaOrganizacional({ workshop }) {
             </div>
           ) : null}
 
-          <Button
-            onClick={() => navigate(createPageUrl("MissaoVisaoValores"))}
-            className="w-full bg-purple-600 hover:bg-purple-700"
-          >
-            <Sparkles className="w-4 h-4 mr-2" />
-            {workshop.mission ? "Editar com IA" : "Criar com IA"}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => navigate(createPageUrl("MissaoVisaoValores"))}
+              className="flex-1 bg-purple-600 hover:bg-purple-700"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              {workshop.mission ? "Editar com IA" : "Criar com IA"}
+            </Button>
+            <Button
+              onClick={handleExportPDF}
+              disabled={exportingPDF || !workshop.mission}
+              variant="outline"
+              className="flex-shrink-0"
+            >
+              {exportingPDF ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Exportando...
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4 mr-2" />
+                  PDF
+                </>
+              )}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
