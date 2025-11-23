@@ -323,7 +323,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <MetricCard
             title="Faturamento Total"
-            value={`R$ ${(totalRevenue / 1000).toFixed(0)}k`}
+            value={formatCurrency(totalRevenue / 1000) + 'k'}
             icon={DollarSign}
             color="green"
             subtitle={`${filteredWorkshops.length} oficinas`}
@@ -332,7 +332,7 @@ export default function Dashboard() {
           />
           <MetricCard
             title="Ticket Médio"
-            value={`R$ ${avgTicket.toFixed(0)}`}
+            value={formatCurrency(avgTicket)}
             icon={TrendingUp}
             color="blue"
             subtitle="Média nacional"
@@ -341,14 +341,14 @@ export default function Dashboard() {
           />
           <MetricCard
             title="Rentabilidade R70/I30"
-            value={`${avgRentability.toFixed(1)}%`}
+            value={formatPercent(avgRentability)}
             icon={Percent}
             color="purple"
             subtitle={`${totalOS} OSs analisadas`}
           />
           <MetricCard
             title="Lucro Médio"
-            value={`${avgProfit.toFixed(1)}%`}
+            value={formatPercent(avgProfit)}
             icon={Target}
             color="orange"
             subtitle="Margem líquida"
@@ -361,21 +361,21 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <MetricCard
             title="Faturamento/Técnico"
-            value={`R$ ${(avgTechRevenue / 1000).toFixed(1)}k`}
+            value={formatCurrency(avgTechRevenue / 1000) + 'k'}
             icon={Wrench}
             color="cyan"
             subtitle={`${technicians.length} técnicos ativos`}
           />
           <MetricCard
             title="TCMP² Médio"
-            value={`R$ ${avgTCMP2.toFixed(0)}`}
+            value={formatCurrency(avgTCMP2)}
             icon={Calculator}
             color="blue"
             subtitle="Valor hora ideal"
           />
           <MetricCard
             title="Taxa Conversão"
-            value={`${conversionRate.toFixed(1)}%`}
+            value={formatPercent(conversionRate)}
             icon={CheckCircle}
             color="green"
             subtitle={`${totalScheduled} agendados`}
@@ -467,7 +467,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <p className="text-3xl font-bold text-orange-600">
-                R$ {avgKitMaster.toFixed(0)}
+                {formatCurrency(avgKitMaster)}
               </p>
               <p className="text-sm text-gray-600 mt-2">Por oficina/mês</p>
             </CardContent>
@@ -482,7 +482,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <p className="text-3xl font-bold text-blue-600">
-                R$ {avgPneusSales.toFixed(0)}
+                {formatCurrency(avgPneusSales)}
               </p>
               <p className="text-sm text-gray-600 mt-2">Média mensal</p>
             </CardContent>
