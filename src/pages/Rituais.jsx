@@ -353,9 +353,29 @@ export default function Rituais() {
     queryFn: async () => {
       if (!workshop?.id) return [];
       const data = await base44.entities.Ritual.filter({ workshop_id: workshop.id });
+      
+      // Se não há rituais, importar automaticamente os padrões
+      if (!data || data.length === 0) {
+        toast.loading("Importando rituais padrão...");
+        const promises = defaultRituals.map(ritual => 
+          base44.entities.Ritual.create({
+            ...ritual,
+            workshop_id: workshop.id,
+            active: true,
+            order: 0
+          })
+        );
+        await Promise.all(promises);
+        toast.dismiss();
+        toast.success("34 rituais importados automaticamente!");
+        const newData = await base44.entities.Ritual.filter({ workshop_id: workshop.id });
+        return newData || [];
+      }
+      
       return data || [];
     },
-    enabled: !!workshop?.id
+    enabled: !!workshop?.id,
+    staleTime: 0
   });
 
   const createMutation = useMutation({
