@@ -4,12 +4,51 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
+import { useQuery } from "@tanstack/react-query";
+import { Badge } from "@/components/ui/badge";
 import { Sparkles, Target, Eye, Award, Users, TrendingUp, BookOpen, Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function CulturaOrganizacional({ workshop }) {
   const navigate = useNavigate();
   const [exportingPDF, setExportingPDF] = useState(false);
+
+  const { data: rituals = [], isLoading: loadingRituals } = useQuery({
+    queryKey: ['rituals', workshop?.id],
+    queryFn: async () => {
+      if (!workshop?.id) return [];
+      const data = await base44.entities.Ritual.filter({ workshop_id: workshop.id });
+      return data || [];
+    },
+    enabled: !!workshop?.id
+  });
+
+  const pillarLabels = {
+    proposito: "Propósito",
+    missao: "Missão",
+    visao: "Visão",
+    valores: "Valores",
+    postura_atitudes: "Postura e Atitudes",
+    comportamentos_inaceitaveis: "Comportamentos Inaceitáveis",
+    rituais_cultura: "Rituais de Cultura",
+    sistemas_regras: "Sistemas e Regras",
+    comunicacao_interna: "Comunicação Interna",
+    lideranca: "Liderança",
+    foco_cliente: "Foco no Cliente",
+    performance_responsabilidade: "Performance e Responsabilidade",
+    desenvolvimento_continuo: "Desenvolvimento Contínuo",
+    identidade_pertencimento: "Identidade e Pertencimento"
+  };
+
+  const frequencyLabels = {
+    diario: "Diário",
+    semanal: "Semanal",
+    quinzenal: "Quinzenal",
+    mensal: "Mensal",
+    continuo: "Contínuo",
+    trimestral: "Trimestral",
+    eventual: "Eventual"
+  };
 
   const handleExportPDF = async () => {
     if (!workshop?.id) {
@@ -145,25 +184,82 @@ export default function CulturaOrganizacional({ workshop }) {
 
       <Card className="shadow-lg border-2 border-yellow-200">
         <CardHeader>
-          <div className="flex items-center gap-3">
-            <Sparkles className="w-6 h-6 text-yellow-600" />
-            <div>
-              <CardTitle>Rituais Organizacionais</CardTitle>
-              <CardDescription>34 rituais prontos para implementar</CardDescription>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Sparkles className="w-6 h-6 text-yellow-600" />
+              <div>
+                <CardTitle>🔥 Rituais de Aculturamento</CardTitle>
+                <CardDescription>
+                  {loadingRituals ? "Carregando..." : `${rituals.length} rituais cadastrados`}
+                </CardDescription>
+              </div>
             </div>
+            <Button
+              onClick={() => navigate(createPageUrl("Rituais"))}
+              size="sm"
+              className="bg-yellow-600 hover:bg-yellow-700"
+            >
+              Ver Todos
+            </Button>
           </div>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <p className="text-sm text-gray-600">
-            Rituais são práticas consistentes que fortalecem a cultura organizacional e conectam a equipe aos valores da empresa.
-          </p>
-          <Button
-            onClick={() => navigate(createPageUrl("Rituais"))}
-            className="w-full bg-yellow-600 hover:bg-yellow-700"
-          >
-            <Sparkles className="w-4 h-4 mr-2" />
-            Gerenciar Rituais
-          </Button>
+        <CardContent className="space-y-4">
+          {loadingRituals ? (
+            <div className="flex items-center justify-center p-4">
+              <Loader2 className="w-5 h-5 animate-spin text-yellow-600" />
+            </div>
+          ) : rituals.length === 0 ? (
+            <>
+              <p className="text-sm text-gray-600">
+                Rituais são práticas consistentes que fortalecem a cultura organizacional e conectam a equipe aos valores da empresa.
+              </p>
+              <Button
+                onClick={() => navigate(createPageUrl("Rituais"))}
+                className="w-full bg-yellow-600 hover:bg-yellow-700"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                Importar 34 Rituais
+              </Button>
+            </>
+          ) : (
+            <>
+              <div className="max-h-96 overflow-y-auto space-y-3 pr-2">
+                {rituals.slice(0, 10).map((ritual) => (
+                  <div key={ritual.id} className="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1">
+                        <p className="font-semibold text-gray-900 text-sm">{ritual.name}</p>
+                        <div className="flex gap-2 mt-1 flex-wrap">
+                          <Badge variant="secondary" className="text-xs">
+                            {pillarLabels[ritual.pillar]}
+                          </Badge>
+                          <Badge variant="outline" className="text-xs">
+                            {frequencyLabels[ritual.frequency]}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                    {ritual.description && (
+                      <p className="text-xs text-gray-600 mt-2 line-clamp-2">{ritual.description}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {rituals.length > 10 && (
+                <p className="text-xs text-gray-500 text-center">
+                  + {rituals.length - 10} rituais adicionais
+                </p>
+              )}
+              <Button
+                onClick={() => navigate(createPageUrl("Rituais"))}
+                variant="outline"
+                className="w-full"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                Gerenciar Todos os Rituais
+              </Button>
+            </>
+          )}
         </CardContent>
       </Card>
 
