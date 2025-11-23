@@ -99,14 +99,15 @@ export default function Rituais() {
     queryFn: () => base44.auth.me()
   });
 
-  const { data: workshops } = useQuery({
-    queryKey: ['workshops'],
-    queryFn: () => base44.entities.Workshop.list(),
-    enabled: !!user,
-    onSuccess: (data) => {
+  const { data: workshops, isLoading: loadingWorkshop } = useQuery({
+    queryKey: ['workshops', user?.id],
+    queryFn: async () => {
+      const data = await base44.entities.Workshop.list();
       const userWorkshop = data.find(w => w.owner_id === user.id);
       setWorkshop(userWorkshop);
-    }
+      return data;
+    },
+    enabled: !!user
   });
 
   const { data: rituals = [], isLoading } = useQuery({
@@ -212,10 +213,26 @@ export default function Rituais() {
     return acc;
   }, {});
 
-  if (isLoading) {
+  if (isLoading || loadingWorkshop) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        <p className="ml-3 text-gray-600">Carregando rituais...</p>
+      </div>
+    );
+  }
+
+  if (!workshop) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="max-w-md">
+          <CardContent className="p-8 text-center">
+            <p className="text-gray-600 mb-4">Você precisa cadastrar uma oficina primeiro</p>
+            <Button onClick={() => navigate(createPageUrl("Cadastro"))}>
+              Cadastrar Oficina
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -352,11 +369,25 @@ export default function Rituais() {
         </div>
 
         {rituals.length === 0 ? (
-          <Card>
+          <Card className="border-2 border-dashed border-yellow-300 bg-yellow-50">
             <CardContent className="p-12 text-center">
-              <Sparkles className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Nenhum ritual cadastrado</h3>
-              <p className="text-gray-600 mb-4">Comece importando os rituais padrão ou criando um novo</p>
+              <Sparkles className="w-16 h-16 mx-auto mb-4 text-yellow-600" />
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">Implemente os Rituais na sua Oficina</h3>
+              <p className="text-gray-700 mb-6 max-w-2xl mx-auto">
+                Temos 34 rituais organizacionais prontos para você implementar, organizados em 14 pilares culturais.
+                Clique abaixo para importar todos os rituais e começar a fortalecer a cultura da sua empresa.
+              </p>
+              <Button 
+                onClick={handleImportDefaults} 
+                size="lg"
+                className="bg-yellow-600 hover:bg-yellow-700 text-white text-lg px-8 py-6"
+              >
+                <Sparkles className="w-5 h-5 mr-2" />
+                Importar 34 Rituais Padrão
+              </Button>
+              <p className="text-sm text-gray-500 mt-4">
+                Você poderá editar, personalizar ou remover qualquer ritual depois
+              </p>
             </CardContent>
           </Card>
         ) : (
@@ -374,38 +405,57 @@ export default function Rituais() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {pillarRituals.map((ritual) => (
-                      <Card key={ritual.id} className="hover:shadow-lg transition-shadow">
+                      <Card key={ritual.id} className="hover:shadow-lg transition-shadow border-l-4" style={{borderLeftColor: `var(--${pillarInfo.color}-500, #3b82f6)`}}>
                         <CardHeader>
-                          <CardTitle className="text-lg">{ritual.name}</CardTitle>
-                          <CardDescription>
-                            <Badge className="mt-2">{frequencyLabels[ritual.frequency]}</Badge>
-                          </CardDescription>
+                          <div className="flex items-start justify-between">
+                            <CardTitle className="text-lg flex-1">{ritual.name}</CardTitle>
+                            <div className="flex gap-1">
+                              <Button size="sm" variant="ghost" onClick={() => handleEdit(ritual)}>
+                                <Edit2 className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                onClick={() => {
+                                  if (confirm("Remover este ritual?")) {
+                                    deleteMutation.mutate(ritual.id);
+                                  }
+                                }}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                          <div className="flex gap-2 mt-2">
+                            <Badge variant="secondary">{frequencyLabels[ritual.frequency]}</Badge>
+                            {ritual.responsible_role && (
+                              <Badge variant="outline">{ritual.responsible_role}</Badge>
+                            )}
+                          </div>
                         </CardHeader>
                         <CardContent>
                           {ritual.description && (
-                            <p className="text-sm text-gray-600 mb-4">{ritual.description}</p>
+                            <p className="text-sm text-gray-600 mb-3 line-clamp-3">{ritual.description}</p>
                           )}
-                          {ritual.responsible_role && (
-                            <p className="text-xs text-gray-500 mb-3">
-                              Responsável: {ritual.responsible_role}
-                            </p>
+                          {ritual.implementation_steps && ritual.implementation_steps.length > 0 && (
+                            <div className="mt-3 pt-3 border-t">
+                              <p className="text-xs font-semibold text-gray-500 mb-2">Passos:</p>
+                              <ul className="text-xs text-gray-600 space-y-1">
+                                {ritual.implementation_steps.slice(0, 2).map((step, idx) => (
+                                  <li key={idx} className="flex items-start">
+                                    <span className="mr-2">•</span>
+                                    <span className="line-clamp-1">{step}</span>
+                                  </li>
+                                ))}
+                                {ritual.implementation_steps.length > 2 && (
+                                  <li className="text-gray-400 italic">
+                                    +{ritual.implementation_steps.length - 2} mais...
+                                  </li>
+                                )}
+                              </ul>
+                            </div>
                           )}
-                          <div className="flex gap-2">
-                            <Button size="sm" variant="outline" onClick={() => handleEdit(ritual)}>
-                              <Edit2 className="w-3 h-3" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => {
-                                if (confirm("Remover este ritual?")) {
-                                  deleteMutation.mutate(ritual.id);
-                                }
-                              }}
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </Button>
-                          </div>
                         </CardContent>
                       </Card>
                     ))}
