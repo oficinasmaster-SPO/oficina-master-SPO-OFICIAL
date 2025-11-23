@@ -182,26 +182,26 @@ export default function DadosBasicosOficina({ workshop, onUpdate }) {
                 <SelectValue placeholder="Selecione..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ate_20k">Até R$ 20 mil</SelectItem>
-                <SelectItem value="20k_40k">R$ 20-40 mil</SelectItem>
-                <SelectItem value="40k_60k">R$ 40-60 mil</SelectItem>
-                <SelectItem value="60k_80k">R$ 60-80 mil</SelectItem>
-                <SelectItem value="80k_100k">R$ 80-100 mil</SelectItem>
-                <SelectItem value="100k_130k">R$ 100-130 mil</SelectItem>
-                <SelectItem value="130k_160k">R$ 130-160 mil</SelectItem>
-                <SelectItem value="160k_190k">R$ 160-190 mil</SelectItem>
-                <SelectItem value="190k_220k">R$ 190-220 mil</SelectItem>
-                <SelectItem value="220k_270k">R$ 220-270 mil</SelectItem>
-                <SelectItem value="270k_320k">R$ 270-320 mil</SelectItem>
-                <SelectItem value="320k_370k">R$ 320-370 mil</SelectItem>
-                <SelectItem value="370k_420k">R$ 370-420 mil</SelectItem>
-                <SelectItem value="420k_470k">R$ 420-470 mil</SelectItem>
-                <SelectItem value="470k_520k">R$ 470-520 mil</SelectItem>
-                <SelectItem value="520k_620k">R$ 520-620 mil</SelectItem>
-                <SelectItem value="620k_720k">R$ 620-720 mil</SelectItem>
-                <SelectItem value="720k_820k">R$ 720-820 mil</SelectItem>
-                <SelectItem value="820k_920k">R$ 820-920 mil</SelectItem>
-                <SelectItem value="920k_1020k">R$ 920-1.020 mil</SelectItem>
+                <SelectItem value="0_20k">R$ 0 - 20 mil</SelectItem>
+                <SelectItem value="20k_40k">R$ 20 - 40 mil</SelectItem>
+                <SelectItem value="40k_60k">R$ 40 - 60 mil</SelectItem>
+                <SelectItem value="60k_80k">R$ 60 - 80 mil</SelectItem>
+                <SelectItem value="80k_100k">R$ 80 - 100 mil</SelectItem>
+                <SelectItem value="100k_130k">R$ 100 - 130 mil</SelectItem>
+                <SelectItem value="130k_160k">R$ 130 - 160 mil</SelectItem>
+                <SelectItem value="160k_190k">R$ 160 - 190 mil</SelectItem>
+                <SelectItem value="190k_200k">R$ 190 - 200 mil</SelectItem>
+                <SelectItem value="200k_250k">R$ 200 - 250 mil</SelectItem>
+                <SelectItem value="250k_300k">R$ 250 - 300 mil</SelectItem>
+                <SelectItem value="300k_350k">R$ 300 - 350 mil</SelectItem>
+                <SelectItem value="350k_400k">R$ 350 - 400 mil</SelectItem>
+                <SelectItem value="400k_450k">R$ 400 - 450 mil</SelectItem>
+                <SelectItem value="450k_500k">R$ 450 - 500 mil</SelectItem>
+                <SelectItem value="500k_600k">R$ 500 - 600 mil</SelectItem>
+                <SelectItem value="600k_700k">R$ 600 - 700 mil</SelectItem>
+                <SelectItem value="700k_800k">R$ 700 - 800 mil</SelectItem>
+                <SelectItem value="800k_900k">R$ 800 - 900 mil</SelectItem>
+                <SelectItem value="900k_1m">R$ 900 mil - 1 milhão</SelectItem>
                 <SelectItem value="acima_1m">Acima de R$ 1 milhão</SelectItem>
               </SelectContent>
             </Select>
