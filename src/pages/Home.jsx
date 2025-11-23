@@ -39,7 +39,28 @@ export default function Home() {
 
         setIsLoadingWorkshop(true); // Start loading workshop
         const workshops = await base44.entities.Workshop.list();
-        const userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
+        let userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
+        
+        // Verificar se há dados de oficina pendentes no localStorage
+        if (!userWorkshop) {
+          const pendingData = localStorage.getItem('pending_workshop_data');
+          if (pendingData) {
+            try {
+              const workshopData = JSON.parse(pendingData);
+              // Criar a oficina com os dados salvos
+              userWorkshop = await base44.entities.Workshop.create({
+                ...workshopData,
+                owner_id: currentUser.id
+              });
+              // Limpar os dados do localStorage
+              localStorage.removeItem('pending_workshop_data');
+              console.log('Oficina criada automaticamente:', userWorkshop);
+            } catch (error) {
+              console.error('Erro ao criar oficina pendente:', error);
+            }
+          }
+        }
+        
         setWorkshop(userWorkshop); // Store the user's workshop
         setIsLoadingWorkshop(false); // Finish loading workshop
 

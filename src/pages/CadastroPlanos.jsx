@@ -170,44 +170,33 @@ export default function CadastroPlanos() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.name || !formData.cnpj || !formData.city || !formData.state || !formData.segment) {
+    if (!formData.name || !formData.city || !formData.state || !formData.segment) {
       toast.error("Preencha todos os dados da oficina");
-      return;
-    }
-
-    if (!formData.email || !formData.password) {
-      toast.error("Preencha e-mail e senha para criar sua conta");
       return;
     }
 
     setLoading(true);
 
     try {
-      // Registrar usuário no Base44
-      // Nota: Base44 usa base44.auth para registro, mas não tem método direto de signup na SDK
-      // O registro será feito através do sistema padrão do Base44
-      
-      // Por enquanto, vamos simular o fluxo de registro
-      // Em produção, você precisará usar o sistema de registro do Base44
-      
-      // Criar a oficina
-      const workshopData = {
+      // Salvar dados no localStorage para criar a oficina após o login
+      const pendingWorkshop = {
         name: formData.name,
         cnpj: formData.cnpj,
         city: formData.city,
         state: formData.state,
         segment: formData.segment,
         planoAtual: selectedPlan,
-        owner_id: "TEMP_USER_ID" // Será substituído pelo ID real do usuário após registro
+        timestamp: new Date().toISOString()
       };
 
-      toast.info("Por favor, complete o registro no Base44 primeiro");
+      localStorage.setItem('pending_workshop_data', JSON.stringify(pendingWorkshop));
       
-      // Redirecionar para login do Base44 para criar a conta
-      base44.auth.redirectToLogin(window.location.href);
-
-      // Após o registro, o usuário será redirecionado de volta
-      // e aí sim poderemos criar a oficina vinculada ao user.id real
+      toast.success("Dados salvos! Agora crie sua conta no Base44");
+      
+      // Redirecionar para a página de registro do Base44
+      // Após o registro, o usuário será redirecionado de volta para Home
+      // onde a oficina será criada automaticamente
+      window.location.href = "https://oficina-master-b2bc845b.base44.app/login?signup=true";
 
     } catch (error) {
       console.error(error);
@@ -338,12 +327,11 @@ export default function CadastroPlanos() {
                     </div>
 
                     <div>
-                      <Label>CNPJ *</Label>
+                      <Label>CNPJ (opcional)</Label>
                       <Input
                         value={formData.cnpj}
                         onChange={(e) => setFormData({...formData, cnpj: e.target.value})}
                         placeholder="00.000.000/0000-00"
-                        required
                       />
                     </div>
 
@@ -387,46 +375,13 @@ export default function CadastroPlanos() {
                     </div>
                   </div>
 
-                  {/* Dados de Login */}
-                  <div className="space-y-4">
-                    <h3 className="font-semibold text-lg text-gray-900 border-b pb-2">
-                      Criar sua Conta de Acesso
+                  <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+                    <h3 className="font-semibold text-blue-900 mb-2">
+                      📋 Próximo Passo
                     </h3>
-                    
-                    <div>
-                      <Label>Nome Completo</Label>
-                      <Input
-                        value={formData.full_name}
-                        onChange={(e) => setFormData({...formData, full_name: e.target.value})}
-                        placeholder="Seu nome completo"
-                      />
-                    </div>
-
-                    <div>
-                      <Label>E-mail *</Label>
-                      <Input
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => setFormData({...formData, email: e.target.value})}
-                        placeholder="seu@email.com"
-                        required
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Este será seu login para acessar a plataforma
-                      </p>
-                    </div>
-
-                    <div>
-                      <Label>Senha *</Label>
-                      <Input
-                        type="password"
-                        value={formData.password}
-                        onChange={(e) => setFormData({...formData, password: e.target.value})}
-                        placeholder="Mínimo 6 caracteres"
-                        required
-                        minLength={6}
-                      />
-                    </div>
+                    <p className="text-sm text-blue-800">
+                      Após confirmar esses dados, você será direcionado para criar sua conta de acesso de forma segura no Base44.
+                    </p>
                   </div>
 
                   {/* Ações */}
@@ -450,7 +405,7 @@ export default function CadastroPlanos() {
                           Processando...
                         </>
                       ) : (
-                        selectedPlan === 'FREE' ? 'Criar Conta Grátis' : 'Prosseguir para Pagamento'
+                        'Continuar para Registro'
                       )}
                     </Button>
                   </div>
