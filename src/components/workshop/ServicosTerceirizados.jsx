@@ -156,7 +156,9 @@ export default function ServicosTerceirizados({ workshop, onUpdate }) {
 
         <div className="pt-4 border-t bg-blue-50 rounded-lg p-4">
           <p className="text-sm font-semibold text-blue-900">Custo Total Mensal</p>
-          <p className="text-2xl font-bold text-blue-600">R$ {totalCost.toFixed(2)}</p>
+          <p className="text-2xl font-bold text-blue-600">
+            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalCost)}
+          </p>
         </div>
       </CardContent>
     </Card>

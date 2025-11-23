@@ -8,6 +8,7 @@ import { Loader2, DollarSign, TrendingUp, Percent, Target, Users, Award, BarChar
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { formatCurrency, formatPercent } from "../components/utils/formatters";
 
 import MetricCard from "../components/dashboard/MetricCard";
 import RankingTable from "../components/dashboard/RankingTable";
