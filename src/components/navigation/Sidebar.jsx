@@ -348,6 +348,14 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       icon: Shield,
       items: [
         { 
+          name: 'Gerenciar Planos', 
+          href: createPageUrl('GerenciarPlanos'), 
+          icon: Shield,
+          description: 'Controle de permissões e recursos por plano',
+          adminOnly: true,
+          highlight: true
+        },
+        { 
           name: 'Gestão de Clientes', 
           href: createPageUrl('AdminClientes'), 
           icon: Users,
