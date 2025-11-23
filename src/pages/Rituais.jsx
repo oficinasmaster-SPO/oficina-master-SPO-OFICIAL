@@ -186,20 +186,32 @@ export default function Rituais() {
   };
 
   const handleImportDefaults = async () => {
-    if (!workshop) return;
+    if (!workshop) {
+      toast.error("Oficina não encontrada");
+      return;
+    }
+
+    toast.loading("Importando rituais...");
 
     try {
-      for (const ritual of defaultRituals) {
-        await base44.entities.Ritual.create({
+      const promises = defaultRituals.map(ritual => 
+        base44.entities.Ritual.create({
           ...ritual,
           workshop_id: workshop.id,
-          description: `${ritual.name} - implementar conforme a necessidade da oficina.`
-        });
-      }
-      queryClient.invalidateQueries(['rituals']);
-      toast.success("Rituais padrão importados!");
+          description: `${ritual.name} - implementar conforme a necessidade da oficina.`,
+          active: true,
+          order: 0
+        })
+      );
+      
+      await Promise.all(promises);
+      await queryClient.invalidateQueries(['rituals']);
+      toast.dismiss();
+      toast.success("34 rituais importados com sucesso!");
     } catch (error) {
-      toast.error("Erro ao importar rituais");
+      console.error("Erro ao importar:", error);
+      toast.dismiss();
+      toast.error("Erro ao importar rituais: " + error.message);
     }
   };
 

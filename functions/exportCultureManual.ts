@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
     const mvv = mvvList[0];
     
     // Buscar rituais
-    const rituals = await base44.entities.Ritual.filter({ workshop_id });
+    const rituals = await base44.asServiceRole.entities.Ritual.filter({ workshop_id });
 
     // Criar PDF
     const doc = new jsPDF();
