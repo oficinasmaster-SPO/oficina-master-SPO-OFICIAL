@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Building2, Settings, Target, FileText, Users, TrendingUp, Package, DollarSign, BarChart3, Calculator } from "lucide-react";
 import { toast } from "sonner";
+import { formatCurrency } from "../components/utils/formatters";
 import DadosBasicosOficina from "../components/workshop/DadosBasicosOficina";
 import ServicosEquipamentos from "../components/workshop/ServicosEquipamentos";
 import ServicosTerceirizados from "../components/workshop/ServicosTerceirizados";
@@ -177,7 +178,7 @@ export default function GestaoOficina() {
                   ) : tcmp2Value > 0 ? (
                     <>
                       <p className="text-4xl font-bold text-green-700">
-                        R$ {tcmp2Value.toFixed(2)}
+                        {formatCurrency(tcmp2Value)}
                       </p>
                       <p className="text-xs text-gray-600 mt-1">
                         Valor hora que transforma 100% das despesas em lucro

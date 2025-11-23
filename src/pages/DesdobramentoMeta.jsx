@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Target, TrendingUp, Users, Save, Calculator, Percent } from "lucide-react";
 import { toast } from "sonner";
+import { formatCurrency, formatNumber } from "../components/utils/formatters";
 
 export default function DesdobramentoMeta() {
   const navigate = useNavigate();
@@ -313,7 +314,7 @@ export default function DesdobramentoMeta() {
                 <Label>Ticket Médio (Automático)</Label>
                 <Input
                   type="text"
-                  value={`R$ ${globalMetrics.best_avg_ticket.toFixed(2)}`}
+                  value={formatCurrency(globalMetrics.best_avg_ticket)}
                   disabled
                   className="bg-gray-100 font-semibold"
                 />
@@ -355,7 +356,7 @@ export default function DesdobramentoMeta() {
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 text-sm">
                 <div>
                   <p className="text-gray-600">Faturamento +%</p>
-                  <p className="text-lg font-bold text-green-700">R$ {globalMetrics.target_revenue.toFixed(2)}</p>
+                  <p className="text-lg font-bold text-green-700">{formatCurrency(globalMetrics.target_revenue)}</p>
                 </div>
                 <div>
                   <p className="text-gray-600">Qtd Clientes +%</p>
@@ -363,19 +364,19 @@ export default function DesdobramentoMeta() {
                 </div>
                 <div>
                   <p className="text-gray-600">Média Diária</p>
-                  <p className="text-lg font-bold text-green-700">{globalMetrics.target_daily_clients.toFixed(1)}</p>
+                  <p className="text-lg font-bold text-green-700">{formatNumber(globalMetrics.target_daily_clients, 1)}</p>
                 </div>
                 <div>
                   <p className="text-gray-600">Ticket Médio +%</p>
-                  <p className="text-lg font-bold text-green-700">R$ {globalMetrics.target_avg_ticket.toFixed(2)}</p>
+                  <p className="text-lg font-bold text-green-700">{formatCurrency(globalMetrics.target_avg_ticket)}</p>
                 </div>
                 <div>
                   <p className="text-gray-600">Diferença Ticket M</p>
-                  <p className="text-lg font-bold text-orange-600">R$ {globalMetrics.ticket_difference.toFixed(2)}</p>
+                  <p className="text-lg font-bold text-orange-600">{formatCurrency(globalMetrics.ticket_difference)}</p>
                 </div>
                 <div>
                   <p className="text-gray-600">Bonificação Global</p>
-                  <p className="text-lg font-bold text-purple-600">R$ {globalMetrics.ticket_difference.toFixed(2)}</p>
+                  <p className="text-lg font-bold text-purple-600">{formatCurrency(globalMetrics.ticket_difference)}</p>
                 </div>
               </div>
             </div>
@@ -395,7 +396,7 @@ export default function DesdobramentoMeta() {
                   <Users className="w-5 h-5 text-blue-600" />
                   Área de {areaNames[areaKey]}
                   <span className="ml-auto text-sm font-normal text-gray-600">
-                    Melhor Mês: R$ {formData.areas[areaKey].best_revenue.toFixed(2)} | {formData.areas[areaKey].best_clients} clientes
+                    Melhor Mês: {formatCurrency(formData.areas[areaKey].best_revenue)} | {formData.areas[areaKey].best_clients} clientes
                   </span>
                 </CardTitle>
               </CardHeader>
@@ -404,7 +405,7 @@ export default function DesdobramentoMeta() {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div>
                       <p className="text-gray-600">Faturamento +{formData.growth_percentage}%</p>
-                      <p className="font-bold text-blue-700">R$ {areaMetrics.target_revenue.toFixed(2)}</p>
+                      <p className="font-bold text-blue-700">{formatCurrency(areaMetrics.target_revenue)}</p>
                     </div>
                     <div>
                       <p className="text-gray-600">Clientes +{formData.growth_percentage}%</p>
@@ -412,11 +413,11 @@ export default function DesdobramentoMeta() {
                     </div>
                     <div>
                       <p className="text-gray-600">Ticket Médio +%</p>
-                      <p className="font-bold text-blue-700">R$ {areaMetrics.target_avg_ticket.toFixed(2)}</p>
+                      <p className="font-bold text-blue-700">{formatCurrency(areaMetrics.target_avg_ticket)}</p>
                     </div>
                     <div>
                       <p className="text-gray-600">Bonificação Área</p>
-                      <p className="font-bold text-purple-600">R$ {areaMetrics.area_bonus.toFixed(2)}</p>
+                      <p className="font-bold text-purple-600">{formatCurrency(areaMetrics.area_bonus)}</p>
                     </div>
                   </div>
                 </div>
@@ -499,7 +500,7 @@ export default function DesdobramentoMeta() {
                             </Label>
                             <Input
                               type="text"
-                              value={`${emp.percentage.toFixed(1)}%`}
+                              value={formatNumber(emp.percentage, 1) + '%'}
                               disabled
                               className="bg-gradient-to-r from-purple-100 to-pink-100 font-bold text-purple-700"
                             />
@@ -511,7 +512,7 @@ export default function DesdobramentoMeta() {
                             <div className="flex gap-6 text-sm flex-wrap">
                               <div>
                                 <span className="text-gray-600">Faturamento +{formData.growth_percentage}%: </span>
-                                <strong className="text-green-600">R$ {empMetrics.target_revenue.toFixed(2)}</strong>
+                                <strong className="text-green-600">{formatCurrency(empMetrics.target_revenue)}</strong>
                               </div>
                               <div>
                                 <span className="text-gray-600">Qtd Clientes +%: </span>
@@ -519,11 +520,11 @@ export default function DesdobramentoMeta() {
                               </div>
                               <div>
                                 <span className="text-gray-600">Ticket Médio +%: </span>
-                                <strong className="text-indigo-600">R$ {empMetrics.target_avg_ticket.toFixed(2)}</strong>
+                                <strong className="text-indigo-600">{formatCurrency(empMetrics.target_avg_ticket)}</strong>
                               </div>
                               <div>
                                 <span className="text-gray-600">Bonificação: </span>
-                                <strong className="text-purple-600">R$ {empMetrics.bonus.toFixed(2)}</strong>
+                                <strong className="text-purple-600">{formatCurrency(empMetrics.bonus)}</strong>
                               </div>
                             </div>
                             <Button size="sm" variant="destructive" onClick={() => removeEmployee(areaKey, index)}>
@@ -537,11 +538,11 @@ export default function DesdobramentoMeta() {
                                 <div>
                                   <p className="text-xs text-gray-600 mb-1">💰 Projeção de Comissão Total</p>
                                   <p className="text-2xl font-bold text-green-700">
-                                    R$ {empMetrics.total_projected_commission.toFixed(2)}
+                                    {formatCurrency(empMetrics.total_projected_commission)}
                                   </p>
                                   <p className="text-xs text-gray-500 mt-1">
-                                    Comissão ({emp.commission_percentage}%): R$ {empMetrics.commission_value.toFixed(2)} + 
-                                    Bonificação: R$ {(empMetrics.bonus * empMetrics.target_clients).toFixed(2)}
+                                    Comissão ({formatNumber(emp.commission_percentage, 1)}%): {formatCurrency(empMetrics.commission_value)} + 
+                                    Bonificação: {formatCurrency(empMetrics.bonus * empMetrics.target_clients)}
                                   </p>
                                 </div>
                               </div>

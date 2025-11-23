@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Loader2, Home, Target, TrendingUp, Users, DollarSign, AlertTriangle, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
+import { formatCurrency, formatNumber, formatPercent } from "../components/utils/formatters";
 
 export default function PainelMetas() {
   const navigate = useNavigate();
@@ -89,13 +90,13 @@ export default function PainelMetas() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-green-600">
-                R$ {breakdown.target_revenue.toFixed(2)}
+                {formatCurrency(breakdown.target_revenue)}
               </div>
               <p className="text-sm text-gray-600 mt-1">
-                Realizado: R$ {breakdown.current_revenue.toFixed(2)}
+                Realizado: {formatCurrency(breakdown.current_revenue || 0)}
               </p>
               <Progress value={achievementPercentage} className="mt-3 h-2" />
-              <p className="text-xs text-gray-500 mt-1">{achievementPercentage.toFixed(1)}% atingido</p>
+              <p className="text-xs text-gray-500 mt-1">{formatNumber(achievementPercentage, 1)}% atingido</p>
             </CardContent>
           </Card>
 
@@ -129,10 +130,10 @@ export default function PainelMetas() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-purple-600">
-                R$ {breakdown.target_avg_ticket.toFixed(2)}
+                {formatCurrency(breakdown.target_avg_ticket)}
               </div>
               <p className="text-sm text-gray-600 mt-1">
-                Atual: R$ {currentAvgTicket.toFixed(2)}
+                Atual: {formatCurrency(currentAvgTicket)}
               </p>
               <div className={`mt-3 text-sm font-semibold ${currentAvgTicket >= breakdown.target_avg_ticket ? 'text-green-600' : 'text-red-600'}`}>
                 {currentAvgTicket >= breakdown.target_avg_ticket ? '✓ No alvo' : '✗ Abaixo do alvo'}
@@ -178,7 +179,7 @@ export default function PainelMetas() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                   <div>
                     <p className="text-sm text-gray-600">Meta Faturamento</p>
-                    <p className="text-lg font-bold text-indigo-700">R$ {area.target_revenue.toFixed(2)}</p>
+                    <p className="text-lg font-bold text-indigo-700">{formatCurrency(area.target_revenue)}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Meta Clientes</p>
@@ -186,11 +187,11 @@ export default function PainelMetas() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Média Diária</p>
-                    <p className="text-lg font-bold text-green-700">{area.target_daily_clients.toFixed(1)}</p>
+                    <p className="text-lg font-bold text-green-700">{formatNumber(area.target_daily_clients, 1)}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Ticket Médio</p>
-                    <p className="text-lg font-bold text-purple-700">R$ {area.target_avg_ticket.toFixed(2)}</p>
+                    <p className="text-lg font-bold text-purple-700">{formatCurrency(area.target_avg_ticket)}</p>
                   </div>
                 </div>
 
@@ -203,14 +204,14 @@ export default function PainelMetas() {
                           <div className="flex-1">
                             <p className="font-semibold text-gray-900">{emp.employee_name}</p>
                             <div className="flex gap-4 text-sm text-gray-600 mt-1">
-                              <span>Meta: <strong className="text-green-600">R$ {emp.target_revenue.toFixed(2)}</strong></span>
+                              <span>Meta: <strong className="text-green-600">{formatCurrency(emp.target_revenue)}</strong></span>
                               <span>Clientes: <strong className="text-blue-600">{emp.target_clients}</strong></span>
-                              <span>Ticket: <strong className="text-purple-600">R$ {emp.target_avg_ticket.toFixed(2)}</strong></span>
+                              <span>Ticket: <strong className="text-purple-600">{formatCurrency(emp.target_avg_ticket)}</strong></span>
                             </div>
                           </div>
                           <div className="text-right">
                             <p className="text-xs text-gray-600">Bônus</p>
-                            <p className="text-lg font-bold text-green-600">R$ {emp.bonus.toFixed(2)}</p>
+                            <p className="text-lg font-bold text-green-600">{formatCurrency(emp.bonus)}</p>
                           </div>
                         </div>
                       ))}
