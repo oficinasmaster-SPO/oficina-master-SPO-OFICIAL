@@ -64,6 +64,7 @@ import ResultadoClima from './pages/ResultadoClima';
 import RankingBrasil from './pages/RankingBrasil';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import DiagnosticoComercial from './pages/DiagnosticoComercial';
+import Rituais from './pages/Rituais';
 import __Layout from './Layout.jsx';
 
 
@@ -134,6 +135,7 @@ export const PAGES = {
     "RankingBrasil": RankingBrasil,
     "TreinamentoVendas": TreinamentoVendas,
     "DiagnosticoComercial": DiagnosticoComercial,
+    "Rituais": Rituais,
 }
 
 export const pagesConfig = {

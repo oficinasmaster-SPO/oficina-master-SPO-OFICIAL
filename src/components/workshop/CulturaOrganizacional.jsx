@@ -146,6 +146,27 @@ export default function CulturaOrganizacional({ workshop }) {
       <Card className="shadow-lg">
         <CardHeader>
           <div className="flex items-center gap-3">
+            <Sparkles className="w-6 h-6 text-yellow-600" />
+            <div>
+              <CardTitle>Rituais Organizacionais</CardTitle>
+              <CardDescription>Gerencie os rituais de cultura</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Button
+            onClick={() => navigate(createPageUrl("Rituais"))}
+            className="w-full bg-yellow-600 hover:bg-yellow-700"
+          >
+            <Sparkles className="w-4 h-4 mr-2" />
+            Ver Rituais
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-lg">
+        <CardHeader>
+          <div className="flex items-center gap-3">
             <Users className="w-6 h-6 text-green-600" />
             <div>
               <CardTitle>Relação com Colaboradores</CardTitle>
