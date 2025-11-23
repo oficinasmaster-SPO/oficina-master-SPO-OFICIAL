@@ -29,6 +29,15 @@ export default function Layout({ children }) {
       if (authenticated) {
         const currentUser = await base44.auth.me();
         setUser(currentUser);
+        localStorage.removeItem('base44_plan_selected');
+      } else {
+        const planSelected = localStorage.getItem('base44_plan_selected');
+        const currentPath = window.location.pathname;
+        const cadastroPath = createPageUrl("CadastroPlanos");
+        
+        if (!planSelected && !currentPath.includes('CadastroPlanos')) {
+          window.location.href = cadastroPath;
+        }
       }
     } catch (error) {
       console.log("User not authenticated:", error);

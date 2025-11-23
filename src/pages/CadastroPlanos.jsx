@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
@@ -15,6 +15,16 @@ export default function CadastroPlanos() {
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1); // 1: Plano, 2: Dados
   const [selectedPlan, setSelectedPlan] = useState(null);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const authenticated = await base44.auth.isAuthenticated();
+      if (authenticated) {
+        navigate(createPageUrl("Home"));
+      }
+    };
+    checkAuth();
+  }, [navigate]);
 
   const [formData, setFormData] = useState({
     // Dados da oficina
@@ -190,13 +200,12 @@ export default function CadastroPlanos() {
       };
 
       localStorage.setItem('pending_workshop_data', JSON.stringify(pendingWorkshop));
+      localStorage.setItem('base44_plan_selected', selectedPlan);
       
-      toast.success("Dados salvos! Agora crie sua conta no Base44");
+      toast.success("Dados salvos! Agora crie sua conta");
       
       // Redirecionar para a página de registro do Base44
-      // Após o registro, o usuário será redirecionado de volta para Home
-      // onde a oficina será criada automaticamente
-      window.location.href = "https://oficina-master-b2bc845b.base44.app/login?signup=true";
+      base44.auth.redirectToLogin(window.location.origin + createPageUrl("Home"));
 
     } catch (error) {
       console.error(error);
