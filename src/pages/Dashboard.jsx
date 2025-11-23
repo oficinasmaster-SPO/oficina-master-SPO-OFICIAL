@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, DollarSign, TrendingUp, Percent, Target, Users, Award, BarChart3, Clock, Wrench, ShoppingCart, Calendar, CheckCircle, Calculator } from "lucide-react";
+import { Loader2, DollarSign, TrendingUp, Percent, Target, Users, Award, BarChart3, Clock, Wrench, ShoppingCart, Calendar, CheckCircle, Calculator, UserCheck } from "lucide-react";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -23,6 +22,7 @@ export default function Dashboard() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [stateFilter, setStateFilter] = useState("all");
   const [segmentFilter, setSegmentFilter] = useState("all");
+  const [showUsageAsPercentage, setShowUsageAsPercentage] = useState(true);
 
   useEffect(() => {
     checkAuth();
@@ -76,6 +76,25 @@ export default function Dashboard() {
   const { data: areaGoals = [] } = useQuery({
     queryKey: ['area-goals'],
     queryFn: () => base44.entities.AreaGoal.list(),
+    enabled: isAuthorized
+  });
+
+  const { data: allUsers = [] } = useQuery({
+    queryKey: ['all-users'],
+    queryFn: async () => {
+      try {
+        const users = await base44.entities.User.list();
+        return users;
+      } catch (error) {
+        return [];
+      }
+    },
+    enabled: isAuthorized
+  });
+
+  const { data: userProgress = [] } = useQuery({
+    queryKey: ['user-progress'],
+    queryFn: () => base44.entities.UserProgress.list(),
     enabled: isAuthorized
   });
 
@@ -226,6 +245,24 @@ export default function Dashboard() {
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
 
+  // Cálculos de uso da plataforma
+  const totalUsers = allUsers.length;
+  const activeUsers = userProgress.filter(up => {
+    const lastLogin = up.last_login_date ? new Date(up.last_login_date) : null;
+    if (!lastLogin) return false;
+    const daysSinceLastLogin = (new Date() - lastLogin) / (1000 * 60 * 60 * 24);
+    return daysSinceLastLogin <= 30; // Ativo nos últimos 30 dias
+  }).length;
+  
+  const usersWithDiagnostic = userProgress.filter(up => up.checklist_items?.fez_primeiro_diagnostico).length;
+  const usersWithWorkshop = workshops.length;
+  
+  const platformUsagePercentage = totalUsers > 0 ? (activeUsers / totalUsers) * 100 : 0;
+  const diagnosticUsagePercentage = totalUsers > 0 ? (usersWithDiagnostic / totalUsers) * 100 : 0;
+  const workshopUsagePercentage = totalUsers > 0 ? (usersWithWorkshop / totalUsers) * 100 : 0;
+
+  const showAsPercentage = totalUsers < 1000 || showUsageAsPercentage;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 py-8 px-4">
       <div className="max-w-7xl mx-auto">
@@ -351,6 +388,73 @@ export default function Dashboard() {
             subtitle={`${metasAtingidas}/${totalMetas} metas`}
           />
         </div>
+
+        {/* Uso da Plataforma */}
+        <Card className="shadow-lg mb-8 bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-indigo-200">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <UserCheck className="w-6 h-6 text-indigo-600" />
+                <CardTitle>Uso da Plataforma</CardTitle>
+              </div>
+              {totalUsers >= 1000 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowUsageAsPercentage(!showUsageAsPercentage)}
+                  className="bg-white"
+                >
+                  {showUsageAsPercentage ? '👥 Ver Usuários' : '📊 Ver %'}
+                </Button>
+              )}
+            </div>
+            <CardDescription>
+              Métricas de engajamento e adoção da plataforma
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-white rounded-lg p-4 shadow-sm">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-gray-600">Usuários Ativos (30d)</span>
+                  <Users className="w-4 h-4 text-indigo-600" />
+                </div>
+                <p className="text-3xl font-bold text-indigo-600">
+                  {showAsPercentage ? `${platformUsagePercentage.toFixed(1)}%` : activeUsers}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {showAsPercentage ? `${activeUsers} de ${totalUsers} usuários` : `${platformUsagePercentage.toFixed(1)}% do total`}
+                </p>
+              </div>
+
+              <div className="bg-white rounded-lg p-4 shadow-sm">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-gray-600">Fizeram Diagnóstico</span>
+                  <CheckCircle className="w-4 h-4 text-green-600" />
+                </div>
+                <p className="text-3xl font-bold text-green-600">
+                  {showAsPercentage ? `${diagnosticUsagePercentage.toFixed(1)}%` : usersWithDiagnostic}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {showAsPercentage ? `${usersWithDiagnostic} usuários` : `${diagnosticUsagePercentage.toFixed(1)}% do total`}
+                </p>
+              </div>
+
+              <div className="bg-white rounded-lg p-4 shadow-sm">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-gray-600">Oficinas Cadastradas</span>
+                  <Wrench className="w-4 h-4 text-blue-600" />
+                </div>
+                <p className="text-3xl font-bold text-blue-600">
+                  {showAsPercentage ? `${workshopUsagePercentage.toFixed(1)}%` : usersWithWorkshop}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {showAsPercentage ? `${usersWithWorkshop} oficinas` : `${workshopUsagePercentage.toFixed(1)}% do total`}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Kit Master e Pneus */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
