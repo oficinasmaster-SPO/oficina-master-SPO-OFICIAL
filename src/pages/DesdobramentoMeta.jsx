@@ -55,8 +55,8 @@ export default function DesdobramentoMeta() {
     const growthFactor = 1 + (formData.growth_percentage / 100);
     const target_revenue = formData.best_month_revenue * growthFactor;
     const target_clients = Math.round(formData.best_month_clients * growthFactor);
-    const best_avg_ticket = formData.best_month_revenue / formData.best_month_clients;
-    const target_avg_ticket = target_revenue / target_clients;
+    const best_avg_ticket = formData.best_month_clients > 0 ? formData.best_month_revenue / formData.best_month_clients : 0;
+    const target_avg_ticket = target_clients > 0 ? target_revenue / target_clients : 0;
     const ticket_difference = target_avg_ticket - best_avg_ticket;
     const target_daily_clients = target_clients / 22;
 
@@ -93,14 +93,12 @@ export default function DesdobramentoMeta() {
     };
   };
 
-  // NOVA FUNÇÃO: Calcular porcentagem automaticamente
   const calculateEmployeePercentage = (areaKey, employeeRevenue) => {
     const areaRevenue = formData.areas[areaKey].best_revenue;
     if (areaRevenue === 0) return 0;
     return (employeeRevenue / areaRevenue) * 100;
   };
 
-  // NOVA FUNÇÃO: Recalcular total da área baseado nos colaboradores
   const recalculateAreaFromEmployees = (areaKey) => {
     const area = formData.areas[areaKey];
     const totalRevenue = area.employees.reduce((sum, emp) => sum + (emp.best_revenue || 0), 0);
@@ -120,7 +118,8 @@ export default function DesdobramentoMeta() {
       employee_name: "",
       best_revenue: 0,
       best_clients: 0,
-      percentage: 0
+      percentage: 0,
+      commission_percentage: 0
     });
     setFormData({ ...formData, areas: updatedAreas });
   };
@@ -133,7 +132,6 @@ export default function DesdobramentoMeta() {
       const emp = employees.find(e => e.id === value);
       if (emp) {
         updatedAreas[areaKey].employees[index].employee_name = emp.full_name;
-        // Preencher automaticamente com dados históricos se existir
         if (emp.production_parts || emp.production_services) {
           const historicRevenue = (emp.production_parts || 0) + (emp.production_services || 0);
           updatedAreas[areaKey].employees[index].best_revenue = historicRevenue;
@@ -141,7 +139,6 @@ export default function DesdobramentoMeta() {
       }
     }
 
-    // Recalcular porcentagem automaticamente quando mudar o faturamento
     if (field === "best_revenue") {
       const percentage = calculateEmployeePercentage(areaKey, parseFloat(value) || 0);
       updatedAreas[areaKey].employees[index].percentage = percentage;
@@ -149,7 +146,6 @@ export default function DesdobramentoMeta() {
 
     setFormData({ ...formData, areas: updatedAreas });
 
-    // Recalcular total da área
     if (field === "best_revenue" || field === "best_clients") {
       setTimeout(() => recalculateAreaFromEmployees(areaKey), 0);
     }
@@ -171,6 +167,10 @@ export default function DesdobramentoMeta() {
     const target_avg_ticket = target_clients > 0 ? target_revenue / target_clients : 0;
     const ticket_difference = target_avg_ticket - best_avg_ticket;
     const target_daily_clients = target_clients / 22;
+    
+    // Cálculo da comissão projetada
+    const commission_value = (target_revenue * (employee.commission_percentage || 0)) / 100;
+    const total_projected_commission = commission_value + (ticket_difference * target_clients);
 
     return {
       ...employee,
@@ -180,7 +180,9 @@ export default function DesdobramentoMeta() {
       target_avg_ticket,
       ticket_difference,
       target_daily_clients,
-      bonus: ticket_difference
+      bonus: ticket_difference,
+      commission_value,
+      total_projected_commission
     };
   };
 
@@ -267,7 +269,7 @@ export default function DesdobramentoMeta() {
           <h1 className="text-4xl font-bold text-gray-900 mb-3">
             Desdobramento de Metas
           </h1>
-          <p className="text-gray-600">Metodologia Oficinas Master - Esforço e Resultado</p>
+          <p className="text-gray-600">Matriz de Meta - Esforço e Resultado</p>
         </div>
 
         {/* Dados Globais */}
@@ -275,7 +277,7 @@ export default function DesdobramentoMeta() {
           <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50">
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-green-600" />
-              Dados do Melhor Mês da Empresa
+              Dados do Melhor Mês
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6 space-y-4">
@@ -292,13 +294,14 @@ export default function DesdobramentoMeta() {
                 <Label>Faturamento Total (R$) *</Label>
                 <Input
                   type="number"
+                  step="0.01"
                   value={formData.best_month_revenue}
                   onChange={(e) => setFormData({...formData, best_month_revenue: parseFloat(e.target.value) || 0})}
                   placeholder="Ex: 200000"
                 />
               </div>
               <div>
-                <Label>Total de Clientes *</Label>
+                <Label>Quantidade de Clientes *</Label>
                 <Input
                   type="number"
                   value={formData.best_month_clients}
@@ -307,7 +310,7 @@ export default function DesdobramentoMeta() {
                 />
               </div>
               <div>
-                <Label>Ticket Médio (Auto)</Label>
+                <Label>Ticket Médio (Automático)</Label>
                 <Input
                   type="text"
                   value={`R$ ${globalMetrics.best_avg_ticket.toFixed(2)}`}
@@ -327,7 +330,7 @@ export default function DesdobramentoMeta() {
                 />
               </div>
               <div>
-                <Label>% de Crescimento Desejado *</Label>
+                <Label>Adicionar % Crescimento (Meta) *</Label>
                 <Select value={formData.growth_percentage.toString()} onValueChange={(v) => setFormData({...formData, growth_percentage: parseInt(v)})}>
                   <SelectTrigger>
                     <SelectValue />
@@ -347,15 +350,15 @@ export default function DesdobramentoMeta() {
             <div className="bg-green-50 rounded-lg p-4 border-2 border-green-300">
               <h3 className="font-bold text-green-900 mb-3 flex items-center gap-2">
                 <Calculator className="w-5 h-5" />
-                Metas Calculadas Automaticamente:
+                Resultados Calculados Automaticamente:
               </h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 text-sm">
                 <div>
-                  <p className="text-gray-600">Faturamento Meta</p>
+                  <p className="text-gray-600">Faturamento +%</p>
                   <p className="text-lg font-bold text-green-700">R$ {globalMetrics.target_revenue.toFixed(2)}</p>
                 </div>
                 <div>
-                  <p className="text-gray-600">Clientes Necessários</p>
+                  <p className="text-gray-600">Qtd Clientes +%</p>
                   <p className="text-lg font-bold text-green-700">{globalMetrics.target_clients}</p>
                 </div>
                 <div>
@@ -363,8 +366,16 @@ export default function DesdobramentoMeta() {
                   <p className="text-lg font-bold text-green-700">{globalMetrics.target_daily_clients.toFixed(1)}</p>
                 </div>
                 <div>
-                  <p className="text-gray-600">Novo Ticket Médio</p>
+                  <p className="text-gray-600">Ticket Médio +%</p>
                   <p className="text-lg font-bold text-green-700">R$ {globalMetrics.target_avg_ticket.toFixed(2)}</p>
+                </div>
+                <div>
+                  <p className="text-gray-600">Diferença Ticket M</p>
+                  <p className="text-lg font-bold text-orange-600">R$ {globalMetrics.ticket_difference.toFixed(2)}</p>
+                </div>
+                <div>
+                  <p className="text-gray-600">Bonificação Global</p>
+                  <p className="text-lg font-bold text-purple-600">R$ {globalMetrics.ticket_difference.toFixed(2)}</p>
                 </div>
               </div>
             </div>
@@ -382,9 +393,9 @@ export default function DesdobramentoMeta() {
               <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50">
                 <CardTitle className="flex items-center gap-2">
                   <Users className="w-5 h-5 text-blue-600" />
-                  Área {areaNames[areaKey]}
+                  Área de {areaNames[areaKey]}
                   <span className="ml-auto text-sm font-normal text-gray-600">
-                    Total: R$ {formData.areas[areaKey].best_revenue.toFixed(2)} | {formData.areas[areaKey].best_clients} clientes
+                    Melhor Mês: R$ {formData.areas[areaKey].best_revenue.toFixed(2)} | {formData.areas[areaKey].best_clients} clientes
                   </span>
                 </CardTitle>
               </CardHeader>
@@ -392,20 +403,20 @@ export default function DesdobramentoMeta() {
                 <div className="bg-blue-50 rounded-lg p-4 border border-blue-300">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div>
-                      <p className="text-gray-600">Meta Faturamento</p>
+                      <p className="text-gray-600">Faturamento +{formData.growth_percentage}%</p>
                       <p className="font-bold text-blue-700">R$ {areaMetrics.target_revenue.toFixed(2)}</p>
                     </div>
                     <div>
-                      <p className="text-gray-600">Meta Clientes</p>
+                      <p className="text-gray-600">Clientes +{formData.growth_percentage}%</p>
                       <p className="font-bold text-blue-700">{areaMetrics.target_clients}</p>
                     </div>
                     <div>
-                      <p className="text-gray-600">Média Diária</p>
-                      <p className="font-bold text-blue-700">{areaMetrics.target_daily_clients.toFixed(1)}</p>
+                      <p className="text-gray-600">Ticket Médio +%</p>
+                      <p className="font-bold text-blue-700">R$ {areaMetrics.target_avg_ticket.toFixed(2)}</p>
                     </div>
                     <div>
-                      <p className="text-gray-600">Ticket Meta</p>
-                      <p className="font-bold text-blue-700">R$ {areaMetrics.target_avg_ticket.toFixed(2)}</p>
+                      <p className="text-gray-600">Bonificação Área</p>
+                      <p className="font-bold text-purple-600">R$ {areaMetrics.area_bonus.toFixed(2)}</p>
                     </div>
                   </div>
                 </div>
@@ -430,9 +441,9 @@ export default function DesdobramentoMeta() {
                     const empMetrics = calculateEmployeeMetrics(emp);
                     return (
                       <div key={index} className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg p-4 mb-3 border-2 border-gray-200">
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
+                        <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-3">
                           <div>
-                            <Label className="text-xs font-semibold">Colaborador *</Label>
+                            <Label className="text-xs font-semibold">Nome do Colaborador *</Label>
                             <Select
                               value={emp.employee_id}
                               onValueChange={(v) => updateEmployeeData(areaKey, index, "employee_id", v)}
@@ -451,6 +462,7 @@ export default function DesdobramentoMeta() {
                             <Label className="text-xs font-semibold">Faturamento Melhor Mês (R$) *</Label>
                             <Input
                               type="number"
+                              step="0.01"
                               className="bg-white"
                               value={emp.best_revenue}
                               onChange={(e) => updateEmployeeData(areaKey, index, "best_revenue", parseFloat(e.target.value) || 0)}
@@ -458,13 +470,26 @@ export default function DesdobramentoMeta() {
                             />
                           </div>
                           <div>
-                            <Label className="text-xs font-semibold">Clientes Melhor Mês *</Label>
+                            <Label className="text-xs font-semibold">Quantidade Clientes *</Label>
                             <Input
                               type="number"
                               className="bg-white"
                               value={emp.best_clients}
                               onChange={(e) => updateEmployeeData(areaKey, index, "best_clients", parseInt(e.target.value) || 0)}
                               placeholder="Ex: 50"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs font-semibold">% Comissão</Label>
+                            <Input
+                              type="number"
+                              step="0.1"
+                              min="0"
+                              max="100"
+                              className="bg-white"
+                              value={emp.commission_percentage || 0}
+                              onChange={(e) => updateEmployeeData(areaKey, index, "commission_percentage", parseFloat(e.target.value) || 0)}
+                              placeholder="Ex: 5"
                             />
                           </div>
                           <div>
@@ -481,28 +506,47 @@ export default function DesdobramentoMeta() {
                           </div>
                         </div>
                         
-                        <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
-                          <div className="flex gap-6 text-sm">
-                            <div>
-                              <span className="text-gray-600">Meta: </span>
-                              <strong className="text-green-600">R$ {empMetrics.target_revenue.toFixed(2)}</strong>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                            <div className="flex gap-6 text-sm flex-wrap">
+                              <div>
+                                <span className="text-gray-600">Faturamento +{formData.growth_percentage}%: </span>
+                                <strong className="text-green-600">R$ {empMetrics.target_revenue.toFixed(2)}</strong>
+                              </div>
+                              <div>
+                                <span className="text-gray-600">Qtd Clientes +%: </span>
+                                <strong className="text-blue-600">{empMetrics.target_clients}</strong>
+                              </div>
+                              <div>
+                                <span className="text-gray-600">Ticket Médio +%: </span>
+                                <strong className="text-indigo-600">R$ {empMetrics.target_avg_ticket.toFixed(2)}</strong>
+                              </div>
+                              <div>
+                                <span className="text-gray-600">Bonificação: </span>
+                                <strong className="text-purple-600">R$ {empMetrics.bonus.toFixed(2)}</strong>
+                              </div>
                             </div>
-                            <div>
-                              <span className="text-gray-600">Clientes: </span>
-                              <strong className="text-blue-600">{empMetrics.target_clients}</strong>
-                            </div>
-                            <div>
-                              <span className="text-gray-600">Ticket: </span>
-                              <strong className="text-indigo-600">R$ {empMetrics.target_avg_ticket.toFixed(2)}</strong>
-                            </div>
-                            <div>
-                              <span className="text-gray-600">Bônus: </span>
-                              <strong className="text-purple-600">R$ {empMetrics.bonus.toFixed(2)}</strong>
-                            </div>
+                            <Button size="sm" variant="destructive" onClick={() => removeEmployee(areaKey, index)}>
+                              Remover
+                            </Button>
                           </div>
-                          <Button size="sm" variant="destructive" onClick={() => removeEmployee(areaKey, index)}>
-                            Remover
-                          </Button>
+                          
+                          {(emp.commission_percentage || 0) > 0 && (
+                            <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4 border-2 border-green-300">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="text-xs text-gray-600 mb-1">💰 Projeção de Comissão Total</p>
+                                  <p className="text-2xl font-bold text-green-700">
+                                    R$ {empMetrics.total_projected_commission.toFixed(2)}
+                                  </p>
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    Comissão ({emp.commission_percentage}%): R$ {empMetrics.commission_value.toFixed(2)} + 
+                                    Bonificação: R$ {(empMetrics.bonus * empMetrics.target_clients).toFixed(2)}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
