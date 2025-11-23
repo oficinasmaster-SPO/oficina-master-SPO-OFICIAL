@@ -65,6 +65,7 @@ import RankingBrasil from './pages/RankingBrasil';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import DiagnosticoComercial from './pages/DiagnosticoComercial';
 import Rituais from './pages/Rituais';
+import CadastroPlanos from './pages/CadastroPlanos';
 import __Layout from './Layout.jsx';
 
 
@@ -136,6 +137,7 @@ export const PAGES = {
     "TreinamentoVendas": TreinamentoVendas,
     "DiagnosticoComercial": DiagnosticoComercial,
     "Rituais": Rituais,
+    "CadastroPlanos": CadastroPlanos,
 }
 
 export const pagesConfig = {
