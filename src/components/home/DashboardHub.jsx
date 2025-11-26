@@ -22,43 +22,91 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export default function DashboardHub({ user }) {
+export default function DashboardHub({ user, workshop }) {
   const { data: diagnostics = [] } = useQuery({
-    queryKey: ['user-diagnostics', user.id],
-    queryFn: () => base44.entities.Diagnostic.list('-created_date'),
+    queryKey: ['user-diagnostics', user?.id],
+    queryFn: async () => {
+      try {
+        const result = await base44.entities.Diagnostic.list('-created_date');
+        return Array.isArray(result) ? result : [];
+      } catch (error) {
+        console.log("Error fetching diagnostics:", error);
+        return [];
+      }
+    },
+    enabled: !!user?.id,
+    retry: 1
   });
 
   const { data: tasks = [] } = useQuery({
-    queryKey: ['user-tasks', user.id],
-    queryFn: () => base44.entities.Task.list(),
-  });
-
-  const { data: workshops = [] } = useQuery({
-    queryKey: ['user-workshop', user.id],
-    queryFn: () => base44.entities.Workshop.list(),
+    queryKey: ['user-tasks', user?.id],
+    queryFn: async () => {
+      try {
+        const result = await base44.entities.Task.list();
+        return Array.isArray(result) ? result : [];
+      } catch (error) {
+        console.log("Error fetching tasks:", error);
+        return [];
+      }
+    },
+    enabled: !!user?.id,
+    retry: 1
   });
 
   const { data: notifications = [] } = useQuery({
-    queryKey: ['user-notifications', user.id],
-    queryFn: () => base44.entities.Notification.list(),
+    queryKey: ['user-notifications', user?.id],
+    queryFn: async () => {
+      try {
+        const result = await base44.entities.Notification.list();
+        return Array.isArray(result) ? result : [];
+      } catch (error) {
+        console.log("Error fetching notifications:", error);
+        return [];
+      }
+    },
+    enabled: !!user?.id,
+    retry: 1
   });
 
   const { data: gameProfile } = useQuery({
-    queryKey: ['user-game-profile', user.id],
+    queryKey: ['user-game-profile', user?.id],
     queryFn: async () => {
-      const profiles = await base44.entities.UserGameProfile.list();
-      return profiles.find(p => p.user_id === user.id);
+      try {
+        const profiles = await base44.entities.UserGameProfile.list();
+        const profilesArray = Array.isArray(profiles) ? profiles : [];
+        return profilesArray.find(p => p.user_id === user?.id) || null;
+      } catch (error) {
+        console.log("Error fetching game profile:", error);
+        return null;
+      }
     },
+    enabled: !!user?.id,
+    retry: 1
   });
 
-  const lastDiagnostic = diagnostics[0];
-  const userWorkshop = workshops.find(w => w.owner_id === user.id);
-  const pendingTasks = tasks.filter(t => t.status !== 'concluida' && t.assigned_to?.includes(user.id));
+  // Guard against null user
+  if (!user?.id) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="text-center">
+          <p className="text-gray-600">Carregando dados do usuário...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const lastDiagnostic = diagnostics?.[0] || null;
+  const userWorkshop = workshop || null;
+  const pendingTasks = Array.isArray(tasks) 
+    ? tasks.filter(t => t.status !== 'concluida' && t.assigned_to?.includes(user.id))
+    : [];
   const overdueTasks = pendingTasks.filter(t => {
     if (!t.due_date) return false;
     return new Date(t.due_date) < new Date();
   });
-  const unreadNotifications = notifications.filter(n => n.user_id === user.id && !n.is_read);
+  const unreadNotifications = Array.isArray(notifications)
+    ? notifications.filter(n => n.user_id === user.id && !n.is_read)
+    : [];
 
   const phaseColors = {
     1: "from-red-500 to-orange-500",

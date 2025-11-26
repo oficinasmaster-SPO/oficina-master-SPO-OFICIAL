@@ -27,8 +27,13 @@ export default function Layout({ children }) {
       setIsAuthenticated(authenticated);
 
       if (authenticated) {
-        const currentUser = await base44.auth.me();
-        setUser(currentUser);
+        try {
+          const currentUser = await base44.auth.me();
+          setUser(currentUser);
+        } catch (userError) {
+          console.log("Error fetching user:", userError);
+          setUser(null);
+        }
       }
     } catch (error) {
       console.log("User not authenticated:", error);
@@ -44,14 +49,18 @@ export default function Layout({ children }) {
     queryFn: async () => {
       try {
         const notifications = await base44.entities.Notification.list();
-        return notifications.filter(n => n.user_id === user.id && !n.is_read).length;
+        return Array.isArray(notifications) 
+          ? notifications.filter(n => n.user_id === user?.id && !n.is_read).length 
+          : 0;
       } catch (error) {
+        console.log("Error fetching notifications:", error);
         return 0;
       }
     },
-    enabled: !!user && isAuthenticated && !isCheckingAuth,
+    enabled: !!user?.id && isAuthenticated && !isCheckingAuth,
     refetchOnWindowFocus: false,
-    staleTime: 60000
+    staleTime: 60000,
+    retry: 1
   });
 
   const handleLogout = async () => {
