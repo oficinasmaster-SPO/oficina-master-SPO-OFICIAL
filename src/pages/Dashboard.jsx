@@ -46,38 +46,92 @@ export default function Dashboard() {
 
   const { data: workshops = [], isLoading: loadingWorkshops } = useQuery({
     queryKey: ['workshops'],
-    queryFn: () => base44.entities.Workshop.list(),
-    enabled: isAuthorized
+    queryFn: async () => {
+      try {
+        const result = await base44.entities.Workshop.list();
+        return Array.isArray(result) ? result : [];
+      } catch (error) {
+        console.log("Error fetching workshops:", error);
+        return [];
+      }
+    },
+    enabled: isAuthorized,
+    retry: 1
   });
 
   const { data: osAssessments = [] } = useQuery({
     queryKey: ['os-assessments'],
-    queryFn: () => base44.entities.ServiceOrderDiagnostic.list('-created_date'),
-    enabled: isAuthorized
+    queryFn: async () => {
+      try {
+        const result = await base44.entities.ServiceOrderDiagnostic.list('-created_date');
+        return Array.isArray(result) ? result : [];
+      } catch (error) {
+        console.log("Error fetching OS assessments:", error);
+        return [];
+      }
+    },
+    enabled: isAuthorized,
+    retry: 1
   });
 
   const { data: gameProfiles = [] } = useQuery({
     queryKey: ['game-profiles'],
-    queryFn: () => base44.entities.WorkshopGameProfile.list(),
-    enabled: isAuthorized
+    queryFn: async () => {
+      try {
+        const result = await base44.entities.WorkshopGameProfile.list();
+        return Array.isArray(result) ? result : [];
+      } catch (error) {
+        console.log("Error fetching game profiles:", error);
+        return [];
+      }
+    },
+    enabled: isAuthorized,
+    retry: 1
   });
 
   const { data: userGameProfiles = [] } = useQuery({
     queryKey: ['user-game-profiles'],
-    queryFn: () => base44.entities.UserGameProfile.list(),
-    enabled: isAuthorized
+    queryFn: async () => {
+      try {
+        const result = await base44.entities.UserGameProfile.list();
+        return Array.isArray(result) ? result : [];
+      } catch (error) {
+        console.log("Error fetching user game profiles:", error);
+        return [];
+      }
+    },
+    enabled: isAuthorized,
+    retry: 1
   });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
-    queryFn: () => base44.entities.Employee.list(),
-    enabled: isAuthorized
+    queryFn: async () => {
+      try {
+        const result = await base44.entities.Employee.list();
+        return Array.isArray(result) ? result : [];
+      } catch (error) {
+        console.log("Error fetching employees:", error);
+        return [];
+      }
+    },
+    enabled: isAuthorized,
+    retry: 1
   });
 
   const { data: areaGoals = [] } = useQuery({
     queryKey: ['area-goals'],
-    queryFn: () => base44.entities.AreaGoal.list(),
-    enabled: isAuthorized
+    queryFn: async () => {
+      try {
+        const result = await base44.entities.AreaGoal.list();
+        return Array.isArray(result) ? result : [];
+      } catch (error) {
+        console.log("Error fetching area goals:", error);
+        return [];
+      }
+    },
+    enabled: isAuthorized,
+    retry: 1
   });
 
   const { data: allUsers = [] } = useQuery({
@@ -85,18 +139,29 @@ export default function Dashboard() {
     queryFn: async () => {
       try {
         const users = await base44.entities.User.list();
-        return users;
+        return Array.isArray(users) ? users : [];
       } catch (error) {
+        console.log("Error fetching users:", error);
         return [];
       }
     },
-    enabled: isAuthorized
+    enabled: isAuthorized,
+    retry: 1
   });
 
   const { data: userProgress = [] } = useQuery({
     queryKey: ['user-progress'],
-    queryFn: () => base44.entities.UserProgress.list(),
-    enabled: isAuthorized
+    queryFn: async () => {
+      try {
+        const result = await base44.entities.UserProgress.list();
+        return Array.isArray(result) ? result : [];
+      } catch (error) {
+        console.log("Error fetching user progress:", error);
+        return [];
+      }
+    },
+    enabled: isAuthorized,
+    retry: 1
   });
 
   if (!isAuthorized || loadingWorkshops) {
@@ -108,14 +173,16 @@ export default function Dashboard() {
   }
 
   // Filtrar workshops
-  const filteredWorkshops = workshops.filter(w => {
+  const workshopsArray = Array.isArray(workshops) ? workshops : [];
+  const filteredWorkshops = workshopsArray.filter(w => {
+    if (!w) return false;
     if (stateFilter !== "all" && w.state !== stateFilter) return false;
     if (segmentFilter !== "all" && w.segment !== segmentFilter) return false;
     return true;
   });
 
   // Estados e segmentos
-  const uniqueStates = [...new Set(workshops.map(w => w.state).filter(Boolean))].sort();
+  const uniqueStates = [...new Set(workshopsArray.map(w => w?.state).filter(Boolean))].sort();
   
   const segmentLabels = {
     mecanica_leve: "Mecânica Auto",
@@ -149,7 +216,8 @@ export default function Dashboard() {
     : 0;
 
   // Faturamento por técnico
-  const technicians = employees.filter(emp => emp.area === 'tecnico' && emp.status === 'ativo');
+  const employeesArray = Array.isArray(employees) ? employees : [];
+  const technicians = employeesArray.filter(emp => emp?.area === 'tecnico' && emp?.status === 'ativo');
   const totalTechProduction = technicians.reduce((sum, tech) => 
     sum + (tech.production_parts || 0) + (tech.production_services || 0), 0
   );

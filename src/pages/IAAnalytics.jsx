@@ -23,30 +23,55 @@ export default function IAAnalytics() {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
-      const workshops = await base44.entities.Workshop.list();
-      const userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
-      
-      if (!userWorkshop) {
-        navigate(createPageUrl("Cadastro"));
-        return;
-      }
+      try {
+        const workshops = await base44.entities.Workshop.list();
+        const workshopsArray = Array.isArray(workshops) ? workshops : [];
+        const userWorkshop = workshopsArray.find(w => w.owner_id === currentUser.id);
+        
+        if (!userWorkshop) {
+          navigate(createPageUrl("Cadastro"));
+          return;
+        }
 
-      setWorkshop(userWorkshop);
+        setWorkshop(userWorkshop);
+      } catch (workshopError) {
+        console.log("Error fetching workshops:", workshopError);
+        navigate(createPageUrl("Cadastro"));
+      }
     } catch (error) {
+      console.log("Error loading user:", error);
       navigate(createPageUrl("Home"));
     }
   };
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
-    queryFn: () => base44.entities.Employee.list(),
-    enabled: !!workshop
+    queryFn: async () => {
+      try {
+        const result = await base44.entities.Employee.list();
+        return Array.isArray(result) ? result : [];
+      } catch (error) {
+        console.log("Error fetching employees:", error);
+        return [];
+      }
+    },
+    enabled: !!workshop,
+    retry: 1
   });
 
   const { data: osAssessments = [] } = useQuery({
     queryKey: ['os-assessments'],
-    queryFn: () => base44.entities.ServiceOrderDiagnostic.list(),
-    enabled: !!workshop
+    queryFn: async () => {
+      try {
+        const result = await base44.entities.ServiceOrderDiagnostic.list();
+        return Array.isArray(result) ? result : [];
+      } catch (error) {
+        console.log("Error fetching OS assessments:", error);
+        return [];
+      }
+    },
+    enabled: !!workshop,
+    retry: 1
   });
 
   if (!workshop) {

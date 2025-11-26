@@ -31,15 +31,18 @@ export default function GestaoOficina() {
     setLoading(true);
     try {
       const currentUser = await base44.auth.me();
-      console.log("Usuário logado:", currentUser);
       setUser(currentUser);
 
-      const workshops = await base44.entities.Workshop.list();
-      console.log("Oficinas carregadas:", workshops);
+      let workshops = [];
+      try {
+        const result = await base44.entities.Workshop.list();
+        workshops = Array.isArray(result) ? result : [];
+      } catch (workshopError) {
+        console.log("Error fetching workshops:", workshopError);
+        workshops = [];
+      }
       
-      if (!workshops || workshops.length === 0) {
-        console.log("Nenhuma oficina encontrada");
-        toast.error("Nenhuma oficina cadastrada no sistema");
+      if (workshops.length === 0) {
         setLoading(false);
         return;
       }
@@ -50,25 +53,20 @@ export default function GestaoOficina() {
       // Se não encontrou oficina própria, pega a primeira disponível
       if (!workshopToDisplay && workshops.length > 0) {
         workshopToDisplay = workshops[0];
-        console.log("Usando primeira oficina disponível:", workshopToDisplay);
       }
 
       if (!workshopToDisplay) {
-        console.log("Nenhuma oficina selecionada");
-        toast.error("Não foi possível carregar oficina");
         setLoading(false);
         return;
       }
 
-      console.log("Oficina selecionada:", workshopToDisplay);
       setWorkshop(workshopToDisplay);
       
       // Carregar TCMP2
       loadTcmp2(workshopToDisplay.id);
       
     } catch (error) {
-      console.error("Erro detalhado ao carregar oficina:", error);
-      toast.error(`Erro: ${error.message || 'Falha ao carregar dados'}`);
+      console.log("Error loading data:", error);
     } finally {
       setLoading(false);
     }
@@ -83,15 +81,16 @@ export default function GestaoOficina() {
         10
       );
       
-      if (osAssessments && osAssessments.length > 0) {
-        const validAssessments = osAssessments.filter(os => os.ideal_hour_value > 0);
+      const assessmentsArray = Array.isArray(osAssessments) ? osAssessments : [];
+      if (assessmentsArray.length > 0) {
+        const validAssessments = assessmentsArray.filter(os => os?.ideal_hour_value > 0);
         if (validAssessments.length > 0) {
           const avgTcmp2 = validAssessments.reduce((sum, os) => sum + os.ideal_hour_value, 0) / validAssessments.length;
           setTcmp2Value(avgTcmp2);
         }
       }
     } catch (error) {
-      console.error("Erro ao carregar TCMP2:", error);
+      console.log("Error loading TCMP2:", error);
     } finally {
       setLoadingTcmp2(false);
     }
