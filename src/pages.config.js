@@ -67,6 +67,7 @@ import DiagnosticoComercial from './pages/DiagnosticoComercial';
 import Rituais from './pages/Rituais';
 import CadastroPlanos from './pages/CadastroPlanos';
 import GerenciarPlanos from './pages/GerenciarPlanos';
+import RituaisAculturamento from './pages/RituaisAculturamento';
 import __Layout from './Layout.jsx';
 
 
@@ -140,6 +141,7 @@ export const PAGES = {
     "Rituais": Rituais,
     "CadastroPlanos": CadastroPlanos,
     "GerenciarPlanos": GerenciarPlanos,
+    "RituaisAculturamento": RituaisAculturamento,
 }
 
 export const pagesConfig = {

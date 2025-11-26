@@ -41,7 +41,8 @@ import {
   BookOpen,
   Calendar,
   BarChart2,
-  Crown
+  Crown,
+  Flame
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -312,6 +313,13 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('CulturaOrganizacional'), 
           icon: BookOpen,
           description: 'Pilares, expectativas e rituais',
+          highlight: true
+        },
+        { 
+          name: 'Rituais de Aculturamento', 
+          href: createPageUrl('RituaisAculturamento'), 
+          icon: Flame,
+          description: '34 rituais para fortalecer a cultura',
           highlight: true
         },
         { 
