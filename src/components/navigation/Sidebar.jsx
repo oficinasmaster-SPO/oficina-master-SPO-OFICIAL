@@ -40,7 +40,8 @@ import {
   GitBranch,
   BookOpen,
   Calendar,
-  BarChart2
+  BarChart2,
+  Crown
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -511,6 +512,24 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
             <p className="text-xs text-blue-700">
               Complete os diagnósticos para receber planos de ação personalizados!
             </p>
+          </div>
+
+          {/* Item fixo: Escolha seu Plano */}
+          <div className="mt-6 border-t border-gray-200 pt-4">
+            <Link
+              to={createPageUrl('CadastroPlanos')}
+              onClick={onClose}
+              className={cn(
+                "flex items-center gap-3 px-3 py-3 rounded-lg transition-all",
+                "bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 shadow-md"
+              )}
+            >
+              <Crown className="w-5 h-5" />
+              <div className="flex-1">
+                <span className="text-sm font-semibold">Escolha seu Plano</span>
+                <p className="text-xs text-purple-100">Upgrade ou altere seu plano</p>
+              </div>
+            </Link>
           </div>
         </nav>
 

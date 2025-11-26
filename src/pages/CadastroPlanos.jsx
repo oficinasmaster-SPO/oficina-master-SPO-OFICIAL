@@ -7,41 +7,43 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Check, Sparkles, Target, Crown, Rocket, Zap } from "lucide-react";
+import { Loader2, Check, Sparkles, Target, Crown, Rocket, Zap, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
 export default function CadastroPlanos() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const [step, setStep] = useState(1); // 1: Plano, 2: Dados
   const [selectedPlan, setSelectedPlan] = useState(null);
+  const [currentWorkshop, setCurrentWorkshop] = useState(null);
 
   useEffect(() => {
-    const checkAuthAndPlan = async () => {
+    const checkAuth = async () => {
       const authenticated = await base44.auth.isAuthenticated();
       
       if (!authenticated) {
-        // Se não está autenticado, redireciona para login
         base44.auth.redirectToLogin(window.location.href);
         return;
       }
 
-      // Se está autenticado, verifica se já tem plano escolhido
       try {
         const currentUser = await base44.auth.me();
         const workshops = await base44.entities.Workshop.list();
         const userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
         
-        if (userWorkshop && userWorkshop.planoAtual) {
-          // Já tem plano escolhido, redireciona para Home
-          navigate(createPageUrl("Home"));
+        if (userWorkshop) {
+          setCurrentWorkshop(userWorkshop);
+          setSelectedPlan(userWorkshop.planoAtual);
         }
       } catch (error) {
         console.error("Erro ao verificar plano:", error);
+      } finally {
+        setCheckingAuth(false);
       }
     };
-    checkAuthAndPlan();
-  }, [navigate]);
+    checkAuth();
+  }, []);
 
   const [formData, setFormData] = useState({
     // Dados da oficina
@@ -191,7 +193,29 @@ export default function CadastroPlanos() {
 
   const handlePlanSelect = (planId) => {
     setSelectedPlan(planId);
-    setStep(2);
+    // Se já tem oficina, apenas atualiza o plano
+    if (currentWorkshop) {
+      handleUpdatePlan(planId);
+    } else {
+      setStep(2);
+    }
+  };
+
+  const handleUpdatePlan = async (planId) => {
+    setLoading(true);
+    try {
+      await base44.entities.Workshop.update(currentWorkshop.id, {
+        planoAtual: planId,
+        dataAssinatura: new Date().toISOString()
+      });
+      toast.success("Plano atualizado com sucesso!");
+      navigate(createPageUrl("Home"));
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao atualizar plano");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -241,31 +265,28 @@ export default function CadastroPlanos() {
     }
   };
 
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-12 h-12 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="text-2xl font-bold text-blue-600">Oficinas Master</div>
-            </div>
-            <Button variant="outline" onClick={() => base44.auth.redirectToLogin()}>
-              Já tenho conta
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 py-12">
+      <div className="max-w-7xl mx-auto px-4 py-8">
         {step === 1 && (
           <div>
             <div className="text-center mb-12">
               <h1 className="text-4xl font-bold text-gray-900 mb-4">
-                Escolha seu Plano
+                {currentWorkshop?.planoAtual ? 'Alterar Plano' : 'Escolha seu Plano'}
               </h1>
               <p className="text-xl text-gray-600">
-                Comece grátis e evolua conforme sua oficina cresce
+                {currentWorkshop?.planoAtual 
+                  ? `Seu plano atual: ${plans.find(p => p.id === currentWorkshop.planoAtual)?.name || currentWorkshop.planoAtual}`
+                  : 'Comece grátis e evolua conforme sua oficina cresce'
+                }
               </p>
             </div>
 
@@ -317,8 +338,17 @@ export default function CadastroPlanos() {
                       <Button 
                         className={`w-full ${plan.id === 'FREE' ? 'bg-gray-600 hover:bg-gray-700' : 'bg-blue-600 hover:bg-blue-700'}`}
                         onClick={() => handlePlanSelect(plan.id)}
+                        disabled={loading || (currentWorkshop?.planoAtual === plan.id)}
                       >
-                        {plan.id === 'FREE' ? 'Começar Grátis' : 'Assinar Agora'}
+                        {loading ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : currentWorkshop?.planoAtual === plan.id ? (
+                          'Plano Atual'
+                        ) : plan.id === 'FREE' ? (
+                          'Começar Grátis'
+                        ) : (
+                          'Selecionar Plano'
+                        )}
                       </Button>
                     </CardContent>
                   </Card>
