@@ -26,36 +26,78 @@ export default function Gamificacao() {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
-      const profiles = await base44.entities.UserGameProfile.list();
-      const profile = profiles.find(p => p.user_id === currentUser.id);
-      setUserProfile(profile);
+      try {
+        const profiles = await base44.entities.UserGameProfile.list();
+        const profilesArray = Array.isArray(profiles) ? profiles : [];
+        const profile = profilesArray.find(p => p.user_id === currentUser.id);
+        setUserProfile(profile || null);
+      } catch (profileError) {
+        console.log("Error fetching profiles:", profileError);
+        setUserProfile(null);
+      }
     } catch (error) {
-      toast.error("Erro ao carregar dados");
+      console.log("Error loading user:", error);
     }
   };
 
   const { data: challenges = [], isLoading: loadingChallenges } = useQuery({
     queryKey: ['challenges'],
-    queryFn: () => base44.entities.Challenge.list('-created_date'),
-    enabled: !!user
+    queryFn: async () => {
+      try {
+        const result = await base44.entities.Challenge.list('-created_date');
+        return Array.isArray(result) ? result : [];
+      } catch (error) {
+        console.log("Error fetching challenges:", error);
+        return [];
+      }
+    },
+    enabled: !!user,
+    retry: 1
   });
 
   const { data: rewards = [], isLoading: loadingRewards } = useQuery({
     queryKey: ['rewards'],
-    queryFn: () => base44.entities.Reward.list('-awarded_date'),
-    enabled: !!user
+    queryFn: async () => {
+      try {
+        const result = await base44.entities.Reward.list('-awarded_date');
+        return Array.isArray(result) ? result : [];
+      } catch (error) {
+        console.log("Error fetching rewards:", error);
+        return [];
+      }
+    },
+    enabled: !!user,
+    retry: 1
   });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
-    queryFn: () => base44.entities.Employee.list(),
-    enabled: !!user
+    queryFn: async () => {
+      try {
+        const result = await base44.entities.Employee.list();
+        return Array.isArray(result) ? result : [];
+      } catch (error) {
+        console.log("Error fetching employees:", error);
+        return [];
+      }
+    },
+    enabled: !!user,
+    retry: 1
   });
 
   const { data: workshops = [] } = useQuery({
     queryKey: ['workshops'],
-    queryFn: () => base44.entities.Workshop.list(),
-    enabled: !!user
+    queryFn: async () => {
+      try {
+        const result = await base44.entities.Workshop.list();
+        return Array.isArray(result) ? result : [];
+      } catch (error) {
+        console.log("Error fetching workshops:", error);
+        return [];
+      }
+    },
+    enabled: !!user,
+    retry: 1
   });
 
   const createChallengeMutation = useMutation({
@@ -146,15 +188,15 @@ export default function Gamificacao() {
   });
 
   // Desafios ativos
-  const activeChallenges = challenges.filter(c => c.status === 'ativo');
+  const activeChallenges = Array.isArray(challenges) ? challenges.filter(c => c.status === 'ativo') : [];
 
   // Progresso do usuário nos desafios
   const getUserProgress = (challenge) => {
-    return challenge.participants?.find(p => p.user_id === user?.id);
+    return challenge?.participants?.find(p => p.user_id === user?.id);
   };
 
   // Minhas recompensas
-  const myRewards = rewards.filter(r => r.user_id === user?.id);
+  const myRewards = Array.isArray(rewards) ? rewards.filter(r => r.user_id === user?.id) : [];
 
   if (loadingChallenges || loadingRewards) {
     return (

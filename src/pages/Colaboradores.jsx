@@ -21,12 +21,30 @@ export default function Colaboradores() {
 
   const { data: employees = [], isLoading } = useQuery({
     queryKey: ['employees'],
-    queryFn: () => base44.entities.Employee.list('-created_date')
+    queryFn: async () => {
+      try {
+        const result = await base44.entities.Employee.list('-created_date');
+        return Array.isArray(result) ? result : [];
+      } catch (error) {
+        console.log("Error fetching employees:", error);
+        return [];
+      }
+    },
+    retry: 1
   });
 
   const { data: coexContracts = [] } = useQuery({
     queryKey: ['coex-contracts'],
-    queryFn: () => base44.entities.COEXContract.list('-created_date')
+    queryFn: async () => {
+      try {
+        const result = await base44.entities.COEXContract.list('-created_date');
+        return Array.isArray(result) ? result : [];
+      } catch (error) {
+        console.log("Error fetching COEX contracts:", error);
+        return [];
+      }
+    },
+    retry: 1
   });
 
   const statusColors = {
@@ -35,12 +53,13 @@ export default function Colaboradores() {
     ferias: "bg-blue-100 text-blue-700"
   };
 
-  const filteredEmployees = employees.filter((employee) => {
+  const filteredEmployees = Array.isArray(employees) ? employees.filter((employee) => {
+    if (!employee?.full_name || !employee?.position) return false;
     const matchesSearch = employee.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          employee.position.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || employee.status === statusFilter;
     return matchesSearch && matchesStatus;
-  });
+  }) : [];
 
   const getTotalCost = (employee) => {
     return employee.salary + (employee.commission || 0) + (employee.bonus || 0) +
@@ -54,6 +73,7 @@ export default function Colaboradores() {
   };
 
   const getActiveCOEX = (employeeId) => {
+    if (!Array.isArray(coexContracts)) return null;
     return coexContracts.find(c => c.employee_id === employeeId && c.status === 'ativo');
   };
 

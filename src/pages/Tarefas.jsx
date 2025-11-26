@@ -41,30 +41,63 @@ export default function Tarefas() {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
-      const workshops = await base44.entities.Workshop.list();
-      const userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
-      setWorkshop(userWorkshop);
+      try {
+        const workshops = await base44.entities.Workshop.list();
+        const workshopsArray = Array.isArray(workshops) ? workshops : [];
+        const userWorkshop = workshopsArray.find(w => w.owner_id === currentUser.id);
+        setWorkshop(userWorkshop || null);
+      } catch (workshopError) {
+        console.log("Error fetching workshops:", workshopError);
+        setWorkshop(null);
+      }
     } catch (error) {
-      toast.error("Erro ao carregar dados do usuário");
+      console.log("Error loading user:", error);
     }
   };
 
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ['tasks'],
-    queryFn: () => base44.entities.Task.list('-created_date'),
-    enabled: !!user
+    queryFn: async () => {
+      try {
+        const result = await base44.entities.Task.list('-created_date');
+        return Array.isArray(result) ? result : [];
+      } catch (error) {
+        console.log("Error fetching tasks:", error);
+        return [];
+      }
+    },
+    enabled: !!user,
+    retry: 1
   });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
-    queryFn: () => base44.entities.Employee.list(),
-    enabled: !!user
+    queryFn: async () => {
+      try {
+        const result = await base44.entities.Employee.list();
+        return Array.isArray(result) ? result : [];
+      } catch (error) {
+        console.log("Error fetching employees:", error);
+        return [];
+      }
+    },
+    enabled: !!user,
+    retry: 1
   });
 
   const { data: workshops = [] } = useQuery({
     queryKey: ['workshops'],
-    queryFn: () => base44.entities.Workshop.list(),
-    enabled: !!user && (user.role === 'admin' || user.role === 'user')
+    queryFn: async () => {
+      try {
+        const result = await base44.entities.Workshop.list();
+        return Array.isArray(result) ? result : [];
+      } catch (error) {
+        console.log("Error fetching workshops:", error);
+        return [];
+      }
+    },
+    enabled: !!user && (user.role === 'admin' || user.role === 'user'),
+    retry: 1
   });
 
   const createTaskMutation = useMutation({
@@ -168,7 +201,9 @@ export default function Tarefas() {
     });
   };
 
-  const filteredTasks = tasks.filter(task => {
+  const tasksArray = Array.isArray(tasks) ? tasks : [];
+  const filteredTasks = tasksArray.filter(task => {
+    if (!task?.title) return false;
     if (filters.search && !task.title.toLowerCase().includes(filters.search.toLowerCase())) {
       return false;
     }

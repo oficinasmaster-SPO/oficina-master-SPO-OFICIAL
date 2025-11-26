@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -31,21 +30,35 @@ export default function Notificacoes() {
   const { data: notifications = [], isLoading } = useQuery({
     queryKey: ['notifications', user?.id],
     queryFn: async () => {
-      if (!user) return [];
-      const allNotifications = await base44.entities.Notification.list('-created_date');
-      return allNotifications.filter(n => n.user_id === user.id);
+      if (!user?.id) return [];
+      try {
+        const allNotifications = await base44.entities.Notification.list('-created_date');
+        const notificationsArray = Array.isArray(allNotifications) ? allNotifications : [];
+        return notificationsArray.filter(n => n.user_id === user.id);
+      } catch (error) {
+        console.log("Error fetching notifications:", error);
+        return [];
+      }
     },
-    enabled: !!user
+    enabled: !!user?.id,
+    retry: 1
   });
 
   const { data: subtasks = [] } = useQuery({
     queryKey: ['my-subtasks', user?.id],
     queryFn: async () => {
-      if (!user) return [];
-      const allSubtasks = await base44.entities.Subtask.list();
-      return allSubtasks.filter(s => s.responsible_user_id === user.id);
+      if (!user?.id) return [];
+      try {
+        const allSubtasks = await base44.entities.Subtask.list();
+        const subtasksArray = Array.isArray(allSubtasks) ? allSubtasks : [];
+        return subtasksArray.filter(s => s.responsible_user_id === user.id);
+      } catch (error) {
+        console.log("Error fetching subtasks:", error);
+        return [];
+      }
     },
-    enabled: !!user
+    enabled: !!user?.id,
+    retry: 1
   });
 
   const markAsReadMutation = useMutation({
@@ -67,10 +80,12 @@ export default function Notificacoes() {
   });
 
   const checkOverdueTasks = async (currentUser) => {
-    if (!currentUser) return;
+    if (!currentUser?.id) return;
 
-    const allSubtasks = await base44.entities.Subtask.list();
-    const mySubtasks = allSubtasks.filter(s => s.responsible_user_id === currentUser.id && s.status !== "concluido");
+    try {
+      const allSubtasks = await base44.entities.Subtask.list();
+      const subtasksArray = Array.isArray(allSubtasks) ? allSubtasks : [];
+      const mySubtasks = subtasksArray.filter(s => s.responsible_user_id === currentUser.id && s.status !== "concluido");
 
     for (const subtask of mySubtasks) {
       if (!subtask.due_date) continue;
@@ -99,7 +114,8 @@ export default function Notificacoes() {
 
       if (isPast(dueDate) && !isToday(dueDate)) {
         const existingNotifications = await base44.entities.Notification.list();
-        const alreadyNotified = existingNotifications.some(
+        const existingArray = Array.isArray(existingNotifications) ? existingNotifications : [];
+        const alreadyNotified = existingArray.some(
           n => n.subtask_id === subtask.id && n.type === "atrasada" && !n.is_read
         );
 
@@ -119,6 +135,9 @@ export default function Notificacoes() {
     }
 
     queryClient.invalidateQueries(['notifications']);
+    } catch (error) {
+      console.log("Error checking overdue tasks:", error);
+    }
   };
 
   const getStatusLabel = (status) => {
