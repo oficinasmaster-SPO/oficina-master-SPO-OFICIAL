@@ -29,18 +29,6 @@ export default function Layout({ children }) {
       if (authenticated) {
         const currentUser = await base44.auth.me();
         setUser(currentUser);
-
-        // Verifica se o usuário tem oficina com plano escolhido
-        const workshops = await base44.entities.Workshop.list();
-        const userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
-        
-        const currentPath = window.location.pathname;
-        const cadastroPath = createPageUrl("CadastroPlanos");
-        
-        // Se não tem oficina OU não tem plano escolhido, redireciona para CadastroPlanos
-        if ((!userWorkshop || !userWorkshop.planoAtual) && !currentPath.includes('CadastroPlanos')) {
-          window.location.href = cadastroPath;
-        }
       }
     } catch (error) {
       console.log("User not authenticated:", error);
