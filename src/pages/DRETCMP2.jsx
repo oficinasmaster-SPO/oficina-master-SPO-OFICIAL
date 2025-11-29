@@ -60,7 +60,14 @@ export default function DRETCMP2() {
 
       const workshops = await base44.entities.Workshop.list();
       const workshopsArray = Array.isArray(workshops) ? workshops : [];
-      const userWorkshop = workshopsArray.find(w => w.owner_id === currentUser.id);
+      
+      // Prioriza a oficina do próprio usuário
+      let userWorkshop = workshopsArray.find(w => w.owner_id === currentUser.id);
+
+      // Se não tiver oficina própria e for consultor (role 'user'), usa a primeira disponível
+      if (!userWorkshop && currentUser.role === 'user' && workshopsArray.length > 0) {
+        userWorkshop = workshopsArray[0];
+      }
 
       if (!userWorkshop) {
         navigate(createPageUrl("Cadastro"));
