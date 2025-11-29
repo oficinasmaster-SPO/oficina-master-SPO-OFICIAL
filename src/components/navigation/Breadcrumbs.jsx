@@ -58,31 +58,37 @@ export default function Breadcrumbs() {
   }
 
   return (
-    <nav className="flex items-center gap-2 text-sm text-gray-600 mb-6 flex-wrap print:hidden">
-      <Link 
-        to={createPageUrl('Home')}
-        className="flex items-center gap-1 hover:text-blue-600 transition-colors"
-      >
-        <Home className="w-4 h-4" />
-      </Link>
+    <div className="print:hidden mb-4">
+      {/* Botão Voltar */}
+      <BackButton />
       
-      {breadcrumbs.map((crumb, index) => (
-        <React.Fragment key={index}>
-          <ChevronRight className="w-4 h-4 text-gray-400" />
-          {crumb.href ? (
-            <Link 
-              to={crumb.href}
-              className="hover:text-blue-600 transition-colors"
-            >
-              {crumb.label}
-            </Link>
-          ) : (
-            <span className="text-gray-900 font-medium">
-              {crumb.label}
-            </span>
-          )}
-        </React.Fragment>
-      ))}
-    </nav>
+      {/* Breadcrumbs */}
+      <nav className="flex items-center gap-2 text-sm text-gray-600 flex-wrap">
+        <Link 
+          to={createPageUrl('Home')}
+          className="flex items-center gap-1 hover:text-blue-600 transition-colors"
+        >
+          <Home className="w-4 h-4" />
+        </Link>
+        
+        {breadcrumbs.map((crumb, index) => (
+          <React.Fragment key={index}>
+            <ChevronRight className="w-4 h-4 text-gray-400" />
+            {crumb.href ? (
+              <Link 
+                to={crumb.href}
+                className="hover:text-blue-600 transition-colors"
+              >
+                {crumb.label}
+              </Link>
+            ) : (
+              <span className="text-gray-900 font-medium">
+                {crumb.label}
+              </span>
+            )}
+          </React.Fragment>
+        ))}
+      </nav>
+    </div>
   );
 }
