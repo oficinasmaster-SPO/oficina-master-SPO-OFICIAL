@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,66 +19,51 @@ import DocumentosProcessos from "../components/workshop/DocumentosProcessos";
 
 export default function GestaoOficina() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [workshop, setWorkshop] = useState(null);
+  const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
-  const [tcmp2Value, setTcmp2Value] = useState(0);
-  const [loadingTcmp2, setLoadingTcmp2] = useState(true);
+  const [workshopKey, setWorkshopKey] = useState(0); // Key para forçar re-render dos componentes
 
+  // Carregar usuário
   useEffect(() => {
-    loadData();
+    const loadUser = async () => {
+      try {
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
+      } catch (error) {
+        console.log("Error loading user:", error);
+      }
+    };
+    loadUser();
   }, []);
 
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const currentUser = await base44.auth.me();
-      setUser(currentUser);
-
-      let workshops = [];
-      try {
-        const result = await base44.entities.Workshop.list();
-        workshops = Array.isArray(result) ? result : [];
-      } catch (workshopError) {
-        console.log("Error fetching workshops:", workshopError);
-        workshops = [];
-      }
+  // Query para buscar oficina
+  const { data: workshop, isLoading: loadingWorkshop, refetch: refetchWorkshop } = useQuery({
+    queryKey: ['workshop-gestao', user?.id],
+    queryFn: async () => {
+      const workshops = await base44.entities.Workshop.list();
+      const workshopsArray = Array.isArray(workshops) ? workshops : [];
       
-      if (workshops.length === 0) {
-        setLoading(false);
-        return;
-      }
-
       // Prioriza oficina do próprio usuário
-      let workshopToDisplay = workshops.find(w => w.owner_id === currentUser.id);
+      let workshopToDisplay = workshopsArray.find(w => w.owner_id === user.id);
       
       // Se não encontrou oficina própria, pega a primeira disponível
-      if (!workshopToDisplay && workshops.length > 0) {
-        workshopToDisplay = workshops[0];
+      if (!workshopToDisplay && workshopsArray.length > 0) {
+        workshopToDisplay = workshopsArray[0];
       }
 
-      if (!workshopToDisplay) {
-        setLoading(false);
-        return;
-      }
+      return workshopToDisplay || null;
+    },
+    enabled: !!user?.id,
+    staleTime: 0, // Sempre buscar dados frescos
+    cacheTime: 0, // Não manter cache
+  });
 
-      setWorkshop(workshopToDisplay);
-      
-      // Carregar TCMP2
-      loadTcmp2(workshopToDisplay.id);
-      
-    } catch (error) {
-      console.log("Error loading data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadTcmp2 = async (workshopId) => {
-    setLoadingTcmp2(true);
-    try {
+  // Query para TCMP2
+  const { data: tcmp2Value = 0, isLoading: loadingTcmp2 } = useQuery({
+    queryKey: ['tcmp2-gestao', workshop?.id],
+    queryFn: async () => {
       const osAssessments = await base44.entities.ServiceOrderDiagnostic.filter(
-        { workshop_id: workshopId },
+        { workshop_id: workshop.id },
         '-created_date',
         10
       );
@@ -86,27 +72,44 @@ export default function GestaoOficina() {
       if (assessmentsArray.length > 0) {
         const validAssessments = assessmentsArray.filter(os => os?.ideal_hour_value > 0);
         if (validAssessments.length > 0) {
-          const avgTcmp2 = validAssessments.reduce((sum, os) => sum + os.ideal_hour_value, 0) / validAssessments.length;
-          setTcmp2Value(avgTcmp2);
+          return validAssessments.reduce((sum, os) => sum + os.ideal_hour_value, 0) / validAssessments.length;
         }
       }
-    } catch (error) {
-      console.log("Error loading TCMP2:", error);
-    } finally {
-      setLoadingTcmp2(false);
-    }
-  };
+      return 0;
+    },
+    enabled: !!workshop?.id,
+  });
 
-  const handleUpdate = async (data) => {
-    try {
-      await base44.entities.Workshop.update(workshop.id, data);
-      await loadData();
-      toast.success("Oficina atualizada!");
-    } catch (error) {
-      console.error(error);
-      toast.error("Erro ao atualizar");
+  // Mutation para atualizar oficina
+  const updateMutation = useMutation({
+    mutationFn: async (data) => {
+      return await base44.entities.Workshop.update(workshop.id, data);
+    },
+    onSuccess: async (updatedWorkshop) => {
+      // Invalida o cache e força re-fetch
+      await queryClient.invalidateQueries({ queryKey: ['workshop-gestao'] });
+      await queryClient.invalidateQueries({ queryKey: ['workshop'] });
+      await queryClient.invalidateQueries({ queryKey: ['shared-workshop'] });
+      
+      // Força refetch imediato
+      await refetchWorkshop();
+      
+      // Incrementa a key para forçar re-render dos componentes filhos
+      setWorkshopKey(prev => prev + 1);
+      
+      toast.success("Oficina atualizada com sucesso!");
+    },
+    onError: (error) => {
+      console.error("Error updating workshop:", error);
+      toast.error("Erro ao atualizar oficina");
     }
-  };
+  });
+
+  const handleUpdate = useCallback(async (data) => {
+    await updateMutation.mutateAsync(data);
+  }, [updateMutation]);
+
+  const loading = !user || loadingWorkshop;
 
   if (loading) {
     return (
@@ -246,31 +249,31 @@ export default function GestaoOficina() {
           </TabsList>
 
           <TabsContent value="dados">
-            <DadosBasicosOficina workshop={workshop} onUpdate={handleUpdate} />
+            <DadosBasicosOficina key={`dados-${workshopKey}`} workshop={workshop} onUpdate={handleUpdate} />
           </TabsContent>
 
           <TabsContent value="servicos">
-            <ServicosEquipamentos workshop={workshop} onUpdate={handleUpdate} showServicesOnly={true} />
+            <ServicosEquipamentos key={`servicos-${workshopKey}`} workshop={workshop} onUpdate={handleUpdate} showServicesOnly={true} />
           </TabsContent>
 
           <TabsContent value="equipamentos">
-            <EquipamentosCompletos workshop={workshop} onUpdate={handleUpdate} />
+            <EquipamentosCompletos key={`equipamentos-${workshopKey}`} workshop={workshop} onUpdate={handleUpdate} />
           </TabsContent>
 
           <TabsContent value="terceiros">
-            <ServicosTerceirizados workshop={workshop} onUpdate={handleUpdate} />
+            <ServicosTerceirizados key={`terceiros-${workshopKey}`} workshop={workshop} onUpdate={handleUpdate} />
           </TabsContent>
 
           <TabsContent value="metas">
-            <MetasObjetivosCompleto workshop={workshop} onUpdate={handleUpdate} />
+            <MetasObjetivosCompleto key={`metas-${workshopKey}`} workshop={workshop} onUpdate={handleUpdate} />
           </TabsContent>
 
           <TabsContent value="cultura">
-            <CulturaOrganizacional workshop={workshop} onUpdate={handleUpdate} />
+            <CulturaOrganizacional key={`cultura-${workshopKey}`} workshop={workshop} onUpdate={handleUpdate} />
           </TabsContent>
 
           <TabsContent value="processos">
-            <DocumentosProcessos workshop={workshop} onUpdate={handleUpdate} />
+            <DocumentosProcessos key={`processos-${workshopKey}`} workshop={workshop} onUpdate={handleUpdate} />
           </TabsContent>
 
           <TabsContent value="relatorios">
