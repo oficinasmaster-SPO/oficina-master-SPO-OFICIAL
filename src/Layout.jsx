@@ -14,6 +14,7 @@ import { SharedDataProvider } from "@/components/shared/SharedDataProvider";
 export default function Layout({ children }) {
   const location = useLocation();
   const [user, setUser] = useState(null);
+  const [workshop, setWorkshop] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
@@ -31,6 +32,11 @@ export default function Layout({ children }) {
         try {
           const currentUser = await base44.auth.me();
           setUser(currentUser);
+          
+          // Carregar oficina do usuário
+          const workshops = await base44.entities.Workshop.list();
+          const userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
+          setWorkshop(userWorkshop || null);
         } catch (userError) {
           console.log("Error fetching user:", userError);
           setUser(null);
@@ -164,7 +170,13 @@ export default function Layout({ children }) {
         <main className="flex-1">
           <div className={`${isAuthenticated ? 'px-4 sm:px-6 lg:px-8 py-6' : ''}`}>
             {isAuthenticated && <Breadcrumbs />}
-            {children}
+            {isAuthenticated && workshop ? (
+              <SharedDataProvider workshopId={workshop.id} userId={user?.id}>
+                {children}
+              </SharedDataProvider>
+            ) : (
+              children
+            )}
           </div>
         </main>
 
