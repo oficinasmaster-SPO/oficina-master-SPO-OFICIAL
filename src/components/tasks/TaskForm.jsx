@@ -6,9 +6,13 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { X, Plus, Loader2 } from "lucide-react";
 import ReminderSettings from "./ReminderSettings";
 import TaskDependencies from "./TaskDependencies";
+import RecurrenceSettings from "./RecurrenceSettings";
+import TimeTrackingSettings from "./TimeTrackingSettings";
+import QGPSettings from "./QGPSettings";
 
 export default function TaskForm({ task, employees, onSubmit, onCancel, submitting, allTasks = [] }) {
   const [formData, setFormData] = useState(task || {
@@ -27,7 +31,17 @@ export default function TaskForm({ task, employees, onSubmit, onCancel, submitti
       email_reminder: true,
       app_notification: true,
       reminder_before: []
-    }
+    },
+    // Novos campos
+    is_recurring: false,
+    recurrence_pattern: "",
+    recurrence_days: [],
+    recurrence_end_date: "",
+    predicted_time_minutes: 0,
+    actual_time_minutes: 0,
+    time_tracking: [],
+    task_type: "geral",
+    qgp_data: {}
   });
 
   const [newTag, setNewTag] = useState("");
@@ -64,6 +78,15 @@ export default function TaskForm({ task, employees, onSubmit, onCancel, submitti
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
+          <Tabs defaultValue="basico" className="w-full">
+            <TabsList className="grid w-full grid-cols-4 mb-4">
+              <TabsTrigger value="basico">Básico</TabsTrigger>
+              <TabsTrigger value="tempo">Tempo</TabsTrigger>
+              <TabsTrigger value="recorrencia">Recorrência</TabsTrigger>
+              <TabsTrigger value="qgp">QGP</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="basico" className="space-y-4">
           {/* Informações Básicas */}
           <div className="space-y-4">
             <div>
@@ -221,6 +244,50 @@ export default function TaskForm({ task, employees, onSubmit, onCancel, submitti
             settings={formData.reminder_settings}
             onChange={(settings) => setFormData({ ...formData, reminder_settings: settings })}
           />
+            </TabsContent>
+
+            <TabsContent value="tempo" className="space-y-4">
+              <TimeTrackingSettings
+                predictedTime={formData.predicted_time_minutes}
+                actualTime={formData.actual_time_minutes}
+                timeTracking={formData.time_tracking || []}
+                onChange={(timeData) => setFormData({
+                  ...formData,
+                  predicted_time_minutes: timeData.predicted_time_minutes,
+                  actual_time_minutes: timeData.actual_time_minutes,
+                  time_tracking: timeData.time_tracking
+                })}
+                isEditing={true}
+              />
+            </TabsContent>
+
+            <TabsContent value="recorrencia" className="space-y-4">
+              <RecurrenceSettings
+                settings={{
+                  is_recurring: formData.is_recurring,
+                  recurrence_pattern: formData.recurrence_pattern,
+                  recurrence_days: formData.recurrence_days,
+                  recurrence_end_date: formData.recurrence_end_date
+                }}
+                onChange={(recurrence) => setFormData({
+                  ...formData,
+                  is_recurring: recurrence.is_recurring,
+                  recurrence_pattern: recurrence.recurrence_pattern,
+                  recurrence_days: recurrence.recurrence_days,
+                  recurrence_end_date: recurrence.recurrence_end_date
+                })}
+              />
+            </TabsContent>
+
+            <TabsContent value="qgp" className="space-y-4">
+              <QGPSettings
+                taskType={formData.task_type}
+                qgpData={formData.qgp_data}
+                onTypeChange={(type) => setFormData({ ...formData, task_type: type })}
+                onDataChange={(data) => setFormData({ ...formData, qgp_data: data })}
+              />
+            </TabsContent>
+          </Tabs>
 
           <div className="flex gap-2 pt-4">
             <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
