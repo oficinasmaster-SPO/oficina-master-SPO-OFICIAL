@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Calendar, User, AlertCircle, CheckCircle2, Clock, Edit2, Trash2 } from "lucide-react";
+import { Calendar, User, AlertCircle, CheckCircle2, Clock, Edit2, Trash2, Repeat, Timer, Wrench, Car, RotateCcw } from "lucide-react";
 import { format, isPast } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -22,11 +22,31 @@ export default function TaskCard({ task, employees, onEdit, onDelete, onStatusCh
     cancelada: { color: "bg-gray-100 text-gray-800", icon: AlertCircle }
   };
 
+  const taskTypeConfig = {
+    geral: { color: "bg-gray-100 text-gray-700", icon: Wrench, label: "Geral" },
+    qgp_solicitacao_servico: { color: "bg-blue-100 text-blue-700", icon: Car, label: "Serviço" },
+    qgp_aviso_entrega: { color: "bg-green-100 text-green-700", icon: Clock, label: "Entrega" },
+    qgp_tcmp2: { color: "bg-purple-100 text-purple-700", icon: Timer, label: "TCMP²" },
+    qgp_retrabalho: { color: "bg-red-100 text-red-700", icon: RotateCcw, label: "Retrabalho" },
+    qgp_aguardando: { color: "bg-yellow-100 text-yellow-700", icon: AlertCircle, label: "Aguardando" }
+  };
+
+  const formatMinutes = (minutes) => {
+    if (!minutes) return null;
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hours > 0) return `${hours}h ${mins}min`;
+    return `${mins}min`;
+  };
+
   const priority = priorityConfig[task.priority] || priorityConfig.media;
   const status = statusConfig[task.status] || statusConfig.pendente;
   const StatusIcon = status.icon;
+  const taskType = taskTypeConfig[task.task_type] || taskTypeConfig.geral;
+  const TaskTypeIcon = taskType.icon;
 
   const isOverdue = task.due_date && isPast(new Date(task.due_date)) && task.status !== 'concluida';
+  const isQGP = task.task_type && task.task_type.startsWith("qgp_");
 
   const assignedUsers = employees.filter(e => task.assigned_to?.includes(e.id));
 
@@ -47,6 +67,18 @@ export default function TaskCard({ task, employees, onEdit, onDelete, onStatusCh
                 <Badge className="bg-red-100 text-red-700">
                   <AlertCircle className="w-3 h-3 mr-1" />
                   Atrasada
+                </Badge>
+              )}
+              {task.is_recurring && (
+                <Badge className="bg-purple-100 text-purple-700">
+                  <Repeat className="w-3 h-3 mr-1" />
+                  Recorrente
+                </Badge>
+              )}
+              {isQGP && (
+                <Badge className={taskType.color}>
+                  <TaskTypeIcon className="w-3 h-3 mr-1" />
+                  {taskType.label}
                 </Badge>
               )}
             </div>
@@ -84,6 +116,56 @@ export default function TaskCard({ task, employees, onEdit, onDelete, onStatusCh
             <span>
               Vencimento: {format(new Date(task.due_date), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
             </span>
+          </div>
+        )}
+
+        {/* Tempo previsto x executado */}
+        {(task.predicted_time_minutes > 0 || task.actual_time_minutes > 0) && (
+          <div className="flex items-center gap-3 text-sm">
+            <Timer className="w-4 h-4 text-gray-600" />
+            <div className="flex gap-2">
+              {task.predicted_time_minutes > 0 && (
+                <Badge variant="outline" className="text-xs">
+                  Prev: {formatMinutes(task.predicted_time_minutes)}
+                </Badge>
+              )}
+              {task.actual_time_minutes > 0 && (
+                <Badge 
+                  variant="outline" 
+                  className={`text-xs ${
+                    task.predicted_time_minutes && task.actual_time_minutes > task.predicted_time_minutes
+                      ? 'border-red-300 text-red-700'
+                      : 'border-green-300 text-green-700'
+                  }`}
+                >
+                  Exec: {formatMinutes(task.actual_time_minutes)}
+                </Badge>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Dados QGP */}
+        {isQGP && task.qgp_data && (
+          <div className="bg-orange-50 rounded-lg p-2 text-xs space-y-1">
+            {task.qgp_data.os_number && (
+              <div className="flex justify-between">
+                <span className="text-gray-600">O.S.:</span>
+                <span className="font-medium">{task.qgp_data.os_number}</span>
+              </div>
+            )}
+            {task.qgp_data.vehicle_plate && (
+              <div className="flex justify-between">
+                <span className="text-gray-600">Placa:</span>
+                <span className="font-medium">{task.qgp_data.vehicle_plate}</span>
+              </div>
+            )}
+            {task.qgp_data.client_name && (
+              <div className="flex justify-between">
+                <span className="text-gray-600">Cliente:</span>
+                <span className="font-medium">{task.qgp_data.client_name}</span>
+              </div>
+            )}
           </div>
         )}
 
