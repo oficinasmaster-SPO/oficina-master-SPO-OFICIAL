@@ -1,14 +1,20 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Save } from "lucide-react";
+import { Save, Upload, User, PenTool, Loader2, Camera } from "lucide-react";
 import { toast } from "sonner";
+import { base44 } from "@/api/base44Client";
 
 export default function DadosPessoais({ employee, onUpdate }) {
   const [editing, setEditing] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [uploadingSignature, setUploadingSignature] = useState(false);
+  const photoInputRef = useRef(null);
+  const signatureInputRef = useRef(null);
+  
   const [formData, setFormData] = useState({
     full_name: employee.full_name || "",
     cpf: employee.cpf || "",
@@ -20,12 +26,48 @@ export default function DadosPessoais({ employee, onUpdate }) {
     area: employee.area || "",
     hire_date: employee.hire_date || "",
     status: employee.status || "ativo",
-    endereco: employee.endereco || {}
+    endereco: employee.endereco || {},
+    profile_picture_url: employee.profile_picture_url || "",
+    digital_signature_url: employee.digital_signature_url || ""
   });
 
   const handleSave = async () => {
     await onUpdate(formData);
     setEditing(false);
+  };
+
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setUploadingPhoto(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setFormData({ ...formData, profile_picture_url: file_url });
+      await onUpdate({ ...formData, profile_picture_url: file_url });
+      toast.success("Foto de perfil atualizada!");
+    } catch (error) {
+      toast.error("Erro ao fazer upload da foto");
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  const handleSignatureUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setUploadingSignature(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setFormData({ ...formData, digital_signature_url: file_url });
+      await onUpdate({ ...formData, digital_signature_url: file_url });
+      toast.success("Assinatura digital salva!");
+    } catch (error) {
+      toast.error("Erro ao fazer upload da assinatura");
+    } finally {
+      setUploadingSignature(false);
+    }
   };
 
   return (
@@ -47,6 +89,92 @@ export default function DadosPessoais({ employee, onUpdate }) {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Foto de Perfil e Assinatura Digital */}
+        <div className="flex flex-col md:flex-row gap-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+          {/* Foto de Perfil */}
+          <div className="flex flex-col items-center gap-3">
+            <Label className="font-semibold text-gray-700">Foto de Perfil</Label>
+            <div className="relative">
+              {formData.profile_picture_url ? (
+                <img 
+                  src={formData.profile_picture_url} 
+                  alt="Foto de perfil"
+                  className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
+                />
+              ) : (
+                <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center border-4 border-white shadow-lg">
+                  <User className="w-16 h-16 text-gray-400" />
+                </div>
+              )}
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handlePhotoUpload}
+              />
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => photoInputRef.current?.click()}
+              disabled={uploadingPhoto}
+              className="gap-2"
+            >
+              {uploadingPhoto ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Camera className="w-4 h-4" />
+              )}
+              {uploadingPhoto ? "Enviando..." : "Alterar Foto"}
+            </Button>
+          </div>
+
+          {/* Assinatura Digital */}
+          <div className="flex flex-col items-center gap-3">
+            <Label className="font-semibold text-gray-700">Assinatura Digital</Label>
+            <div className="relative">
+              {formData.digital_signature_url ? (
+                <div className="w-48 h-24 bg-white rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden shadow">
+                  <img 
+                    src={formData.digital_signature_url} 
+                    alt="Assinatura digital"
+                    className="max-w-full max-h-full object-contain"
+                  />
+                </div>
+              ) : (
+                <div className="w-48 h-24 bg-white rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center shadow">
+                  <div className="text-center text-gray-400">
+                    <PenTool className="w-8 h-8 mx-auto mb-1" />
+                    <span className="text-xs">Sem assinatura</span>
+                  </div>
+                </div>
+              )}
+              <input
+                ref={signatureInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleSignatureUpload}
+              />
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => signatureInputRef.current?.click()}
+              disabled={uploadingSignature}
+              className="gap-2"
+            >
+              {uploadingSignature ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Upload className="w-4 h-4" />
+              )}
+              {uploadingSignature ? "Enviando..." : "Upload Assinatura"}
+            </Button>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label>Nome Completo *</Label>
