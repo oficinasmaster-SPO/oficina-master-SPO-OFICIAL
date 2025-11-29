@@ -31,7 +31,7 @@ export default function DadosBasicosOficina({ workshop, onUpdate }) {
     notas_manuais: "",
     capacidade_atendimento_dia: 0,
     tempo_medio_servico: 0,
-    horario_funcionamento: { abertura: "", fechamento: "", dias_semana: [] }
+    horario_funcionamento: { abertura: "", fechamento: "", almoco_inicio: "", almoco_fim: "", dias_semana: [] }
   });
 
   // Sincroniza formData quando workshop muda
@@ -57,7 +57,7 @@ export default function DadosBasicosOficina({ workshop, onUpdate }) {
         notas_manuais: workshop.notas_manuais || "",
         capacidade_atendimento_dia: workshop.capacidade_atendimento_dia || 0,
         tempo_medio_servico: workshop.tempo_medio_servico || 0,
-        horario_funcionamento: workshop.horario_funcionamento || { abertura: "", fechamento: "", dias_semana: [] }
+        horario_funcionamento: workshop.horario_funcionamento || { abertura: "", fechamento: "", almoco_inicio: "", almoco_fim: "", dias_semana: [] }
       });
     }
   }, [workshop]);
@@ -146,21 +146,17 @@ export default function DadosBasicosOficina({ workshop, onUpdate }) {
                 maxLength={2}
               />
             </div>
-          <div>
-            <Label>Segmento</Label>
-            <Select value={formData.segment} onValueChange={(value) => setFormData({...formData, segment: value})} disabled={!editing}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="mecanica_leve">Mecânica Leve</SelectItem>
-                <SelectItem value="mecanica_pesada">Mecânica Pesada</SelectItem>
-                <SelectItem value="motos">Motos</SelectItem>
-                <SelectItem value="centro_automotivo">Centro Automotivo</SelectItem>
-                <SelectItem value="premium">Premium</SelectItem>
-                <SelectItem value="outro">Outro</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="md:col-span-2">
+            <Label>Segmento (edição livre)</Label>
+            <Input
+              value={formData.segment}
+              onChange={(e) => setFormData({...formData, segment: e.target.value})}
+              disabled={!editing}
+              placeholder="Ex: Mecânica Geral, Auto Center, Elétrica Automotiva..."
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              O segmento também é calculado automaticamente com base nos serviços selecionados
+            </p>
           </div>
           <div>
             <Label>Enquadramento Tributário</Label>
@@ -366,6 +362,30 @@ export default function DadosBasicosOficina({ workshop, onUpdate }) {
                 onChange={(e) => setFormData({
                   ...formData,
                   horario_funcionamento: { ...formData.horario_funcionamento, fechamento: e.target.value }
+                })}
+                disabled={!editing}
+              />
+            </div>
+            <div>
+              <Label>Início do Almoço</Label>
+              <Input
+                type="time"
+                value={formData.horario_funcionamento.almoco_inicio || ""}
+                onChange={(e) => setFormData({
+                  ...formData,
+                  horario_funcionamento: { ...formData.horario_funcionamento, almoco_inicio: e.target.value }
+                })}
+                disabled={!editing}
+              />
+            </div>
+            <div>
+              <Label>Fim do Almoço</Label>
+              <Input
+                type="time"
+                value={formData.horario_funcionamento.almoco_fim || ""}
+                onChange={(e) => setFormData({
+                  ...formData,
+                  horario_funcionamento: { ...formData.horario_funcionamento, almoco_fim: e.target.value }
                 })}
                 disabled={!editing}
               />
