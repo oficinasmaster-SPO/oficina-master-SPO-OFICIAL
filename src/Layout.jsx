@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import Sidebar from "@/components/navigation/Sidebar";
 import Breadcrumbs from "@/components/navigation/Breadcrumbs";
 import UsageTracker from "@/components/tracking/UsageTracker";
+import { SharedDataProvider } from "@/components/shared/SharedDataProvider";
 
 export default function Layout({ children }) {
   const location = useLocation();
