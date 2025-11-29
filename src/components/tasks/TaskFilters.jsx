@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Filter, Search, X } from "lucide-react";
+import { Filter, Search, X, Repeat, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function TaskFilters({ 
@@ -113,6 +113,27 @@ export default function TaskFilters({
             </Select>
           </div>
 
+          {/* Tipo de Tarefa */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <Select
+              value={filters.taskType || "all"}
+              onValueChange={(value) => onFilterChange({ ...filters, taskType: value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Tipo de Tarefa" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os Tipos</SelectItem>
+                <SelectItem value="geral">Geral</SelectItem>
+                <SelectItem value="qgp_solicitacao_servico">QGP - Solicitação</SelectItem>
+                <SelectItem value="qgp_aviso_entrega">QGP - Entrega</SelectItem>
+                <SelectItem value="qgp_tcmp2">QGP - TCMP²</SelectItem>
+                <SelectItem value="qgp_retrabalho">QGP - Retrabalho</SelectItem>
+                <SelectItem value="qgp_aguardando">QGP - Aguardando</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Filtros rápidos */}
           <div className="flex flex-wrap gap-2">
             <Badge
@@ -135,6 +156,22 @@ export default function TaskFilters({
               onClick={() => onFilterChange({ ...filters, dueThisWeek: !filters.dueThisWeek })}
             >
               Vence esta Semana
+            </Badge>
+            <Badge
+              variant={filters.recurring ? "default" : "outline"}
+              className="cursor-pointer"
+              onClick={() => onFilterChange({ ...filters, recurring: !filters.recurring })}
+            >
+              <Repeat className="w-3 h-3 mr-1" />
+              Recorrentes
+            </Badge>
+            <Badge
+              variant={filters.qgpOnly ? "default" : "outline"}
+              className="cursor-pointer"
+              onClick={() => onFilterChange({ ...filters, qgpOnly: !filters.qgpOnly })}
+            >
+              <Wrench className="w-3 h-3 mr-1" />
+              Apenas QGP
             </Badge>
           </div>
         </div>
