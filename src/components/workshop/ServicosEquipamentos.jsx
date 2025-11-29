@@ -188,6 +188,47 @@ export default function ServicosEquipamentos({ workshop, onUpdate, showServicesO
     return array.includes(item) ? array.filter(i => i !== item) : [...array, item];
   };
 
+  const calculateSegment = (services, vehicleTypes) => {
+    const servicesList = services || [];
+    const vehicles = vehicleTypes || [];
+    
+    // Conta serviços por categoria
+    const hasElectrical = servicesList.some(s => 
+      ['luzes_iluminacao', 'instrumentos_painel', 'airbag', 'alternador', 'motor_partida', 
+       'injecao_eletronica', 'modulos_centrais', 'diagnostico_eletronico', 'chicote_eletrico',
+       'sensores_atuadores', 'abs_controle_tracao', 'eletricidade_geral'].includes(s)
+    );
+    
+    const hasMechanical = servicesList.some(s => 
+      ['motor', 'turbo', 'sistema_arrefecimento', 'cambio_manual', 'cambio_automatico',
+       'suspensao_completa', 'amortecedores', 'freio_disco_pastilha_fluido_pinca'].includes(s)
+    );
+    
+    const hasBodywork = servicesList.some(s => 
+      ['pintura', 'chapeacao_funilaria', 'polimento', 'estetica_automotiva', 'detailing_automotivo',
+       'reparos_rapidos_martelinho'].includes(s)
+    );
+    
+    const hasTires = servicesList.some(s => 
+      ['pneus_50', 'pneus_100', 'alinhamento', 'balanceamento', 'cambagem_caster'].includes(s)
+    );
+    
+    const hasTruck = vehicles.includes('truck');
+    const hasMotos = vehicles.includes('motos');
+
+    // Determina segmento
+    if (hasTruck && hasMechanical) return "Mecânica Diesel / Truck";
+    if (hasMotos && hasMechanical) return "Oficina de Motos";
+    if (hasBodywork && !hasMechanical) return "Funilaria e Pintura";
+    if (hasElectrical && !hasMechanical && !hasBodywork) return "Auto Elétrica";
+    if (hasTires && hasMechanical && hasElectrical) return "Auto Center";
+    if (hasMechanical && hasElectrical && hasBodywork) return "Centro Automotivo Completo";
+    if (hasMechanical && hasElectrical) return "Mecânica Geral";
+    if (hasMechanical) return "Mecânica Básica";
+    
+    return "Oficina Automotiva";
+  };
+
   const addWeldingMachine = () => {
     setFormData({
       ...formData,
@@ -375,10 +416,20 @@ export default function ServicosEquipamentos({ workshop, onUpdate, showServicesO
                   </div>
                 </div>
               ))}
-              <div className="pt-4 border-t">
+              <div className="pt-4 border-t space-y-3">
                 <p className="text-sm font-semibold text-gray-700">
                   Total: {formData.services_offered.length} serviço(s) selecionado(s)
                 </p>
+                {formData.services_offered.length > 0 && (
+                  <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <p className="text-sm font-semibold text-blue-900 mb-1">
+                      🏷️ Segmento Calculado Automaticamente:
+                    </p>
+                    <p className="text-lg font-bold text-blue-700">
+                      {calculateSegment(formData.services_offered, formData.vehicle_types)}
+                    </p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
