@@ -70,6 +70,9 @@ import GerenciarPlanos from './pages/GerenciarPlanos';
 import RituaisAculturamento from './pages/RituaisAculturamento';
 import HistoricoMetas from './pages/HistoricoMetas';
 import DRETCMP2 from './pages/DRETCMP2';
+import ConvidarColaborador from './pages/ConvidarColaborador';
+import PrimeiroAcesso from './pages/PrimeiroAcesso';
+import PortalColaborador from './pages/PortalColaborador';
 import __Layout from './Layout.jsx';
 
 
@@ -146,6 +149,9 @@ export const PAGES = {
     "RituaisAculturamento": RituaisAculturamento,
     "HistoricoMetas": HistoricoMetas,
     "DRETCMP2": DRETCMP2,
+    "ConvidarColaborador": ConvidarColaborador,
+    "PrimeiroAcesso": PrimeiroAcesso,
+    "PortalColaborador": PortalColaborador,
 }
 
 export const pagesConfig = {
