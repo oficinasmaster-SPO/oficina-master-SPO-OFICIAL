@@ -8,7 +8,7 @@ export function SharedDataProvider({ children, workshopId, userId }) {
   const queryClient = useQueryClient();
 
   // Dados da Oficina - fonte principal
-  const { data: workshop, isLoading: loadingWorkshop } = useQuery({
+  const { data: workshop, isLoading: loadingWorkshop, refetch: refetchWorkshop } = useQuery({
     queryKey: ['shared-workshop', workshopId],
     queryFn: async () => {
       if (!workshopId) return null;
@@ -16,7 +16,8 @@ export function SharedDataProvider({ children, workshopId, userId }) {
       return workshops.find(w => w.id === workshopId) || null;
     },
     enabled: !!workshopId,
-    staleTime: 5 * 60 * 1000, // 5 minutos
+    staleTime: 0, // Sempre buscar dados frescos
+    cacheTime: 0, // Não manter cache
   });
 
   // Dados TCMP² / DRE mais recente - fonte principal financeira
@@ -95,9 +96,10 @@ export function SharedDataProvider({ children, workshopId, userId }) {
   });
 
   // Função para invalidar e atualizar dados
-  const refreshData = (dataType) => {
+  const refreshData = async (dataType) => {
     const keyMap = {
       'workshop': ['shared-workshop', workshopId],
+      'workshop-gestao': ['workshop-gestao'],
       'dre': ['shared-dre', workshopId],
       'tcmp2': ['shared-os-diagnostic', workshopId],
       'employees': ['shared-employees', workshopId],
@@ -107,13 +109,31 @@ export function SharedDataProvider({ children, workshopId, userId }) {
     };
 
     if (dataType === 'all') {
-      Object.keys(keyMap).forEach(key => {
-        if (key !== 'all' && keyMap[key]) {
-          queryClient.invalidateQueries({ queryKey: keyMap[key] });
-        }
-      });
+      const invalidatePromises = Object.keys(keyMap)
+        .filter(key => key !== 'all' && keyMap[key])
+        .map(key => queryClient.invalidateQueries({ queryKey: keyMap[key] }));
+      
+      await Promise.all(invalidatePromises);
+      
+      // Também invalida queries de gestão de oficina
+      await queryClient.invalidateQueries({ queryKey: ['workshop-gestao'] });
+      await queryClient.invalidateQueries({ queryKey: ['workshop'] });
+      
+      // Força refetch da oficina
+      if (refetchWorkshop) {
+        await refetchWorkshop();
+      }
     } else if (keyMap[dataType]) {
-      queryClient.invalidateQueries({ queryKey: keyMap[dataType] });
+      await queryClient.invalidateQueries({ queryKey: keyMap[dataType] });
+    }
+    
+    // Para workshop, também invalida as queries relacionadas
+    if (dataType === 'workshop') {
+      await queryClient.invalidateQueries({ queryKey: ['workshop-gestao'] });
+      await queryClient.invalidateQueries({ queryKey: ['workshop'] });
+      if (refetchWorkshop) {
+        await refetchWorkshop();
+      }
     }
   };
 
