@@ -69,6 +69,7 @@ import CadastroPlanos from './pages/CadastroPlanos';
 import GerenciarPlanos from './pages/GerenciarPlanos';
 import RituaisAculturamento from './pages/RituaisAculturamento';
 import HistoricoMetas from './pages/HistoricoMetas';
+import DRETCMP2 from './pages/DRETCMP2';
 import __Layout from './Layout.jsx';
 
 
@@ -144,6 +145,7 @@ export const PAGES = {
     "GerenciarPlanos": GerenciarPlanos,
     "RituaisAculturamento": RituaisAculturamento,
     "HistoricoMetas": HistoricoMetas,
+    "DRETCMP2": DRETCMP2,
 }
 
 export const pagesConfig = {
