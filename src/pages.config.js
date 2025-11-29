@@ -68,6 +68,7 @@ import Rituais from './pages/Rituais';
 import CadastroPlanos from './pages/CadastroPlanos';
 import GerenciarPlanos from './pages/GerenciarPlanos';
 import RituaisAculturamento from './pages/RituaisAculturamento';
+import HistoricoMetas from './pages/HistoricoMetas';
 import __Layout from './Layout.jsx';
 
 
@@ -142,6 +143,7 @@ export const PAGES = {
     "CadastroPlanos": CadastroPlanos,
     "GerenciarPlanos": GerenciarPlanos,
     "RituaisAculturamento": RituaisAculturamento,
+    "HistoricoMetas": HistoricoMetas,
 }
 
 export const pagesConfig = {

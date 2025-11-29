@@ -10,8 +10,9 @@ import { toast } from "sonner";
 import { formatCurrency } from "../components/utils/formatters";
 import DadosBasicosOficina from "../components/workshop/DadosBasicosOficina";
 import ServicosEquipamentos from "../components/workshop/ServicosEquipamentos";
+import EquipamentosCompletos from "../components/workshop/EquipamentosCompletos";
 import ServicosTerceirizados from "../components/workshop/ServicosTerceirizados";
-import MetasObjetivos from "../components/workshop/MetasObjetivos";
+import MetasObjetivosCompleto from "../components/workshop/MetasObjetivosCompleto";
 import CulturaOrganizacional from "../components/workshop/CulturaOrganizacional";
 import DocumentosProcessos from "../components/workshop/DocumentosProcessos";
 
@@ -253,7 +254,7 @@ export default function GestaoOficina() {
           </TabsContent>
 
           <TabsContent value="equipamentos">
-            <ServicosEquipamentos workshop={workshop} onUpdate={handleUpdate} showEquipmentOnly={true} />
+            <EquipamentosCompletos workshop={workshop} onUpdate={handleUpdate} />
           </TabsContent>
 
           <TabsContent value="terceiros">
@@ -261,7 +262,7 @@ export default function GestaoOficina() {
           </TabsContent>
 
           <TabsContent value="metas">
-            <MetasObjetivos workshop={workshop} onUpdate={handleUpdate} />
+            <MetasObjetivosCompleto workshop={workshop} onUpdate={handleUpdate} />
           </TabsContent>
 
           <TabsContent value="cultura">
