@@ -42,7 +42,8 @@ import {
   Calendar,
   BarChart2,
   Crown,
-  Flame
+  Flame,
+  Receipt
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -147,7 +148,14 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           highlight: true
         },
         { 
-          name: 'OS - R70/I30 + TCMP²', 
+          name: 'DRE & TCMP²', 
+          href: createPageUrl('DRETCMP2'), 
+          icon: Calculator,
+          description: 'DRE mensal e cálculo TCMP²',
+          highlight: true
+        },
+        { 
+          name: 'OS - R70/I30', 
           href: createPageUrl('DiagnosticoOS'), 
           icon: DollarSign,
           description: 'Rentabilidade de Ordens de Serviço'
