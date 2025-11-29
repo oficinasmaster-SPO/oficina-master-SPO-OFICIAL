@@ -29,7 +29,10 @@ export default function Tarefas() {
     workshop: "all",
     overdue: false,
     dueToday: false,
-    dueThisWeek: false
+    dueThisWeek: false,
+    taskType: "all",
+    recurring: false,
+    qgpOnly: false
   });
 
   useEffect(() => {
@@ -197,7 +200,10 @@ export default function Tarefas() {
       workshop: "all",
       overdue: false,
       dueToday: false,
-      dueThisWeek: false
+      dueThisWeek: false,
+      taskType: "all",
+      recurring: false,
+      qgpOnly: false
     });
   };
 
@@ -232,6 +238,15 @@ export default function Tarefas() {
     }
     if (filters.dueThisWeek && task.due_date) {
       if (!isThisWeek(new Date(task.due_date))) return false;
+    }
+    if (filters.taskType !== "all" && task.task_type !== filters.taskType) {
+      return false;
+    }
+    if (filters.recurring && !task.is_recurring) {
+      return false;
+    }
+    if (filters.qgpOnly && (!task.task_type || !task.task_type.startsWith("qgp_"))) {
+      return false;
     }
     return true;
   });
