@@ -41,60 +41,19 @@ export default function PrimeiroAcesso() {
         return;
       }
 
-      // Buscar convite pelo token - usando list e filtrando manualmente para evitar problemas de auth
-      let foundInvite = null;
-      let allWorkshops = [];
+      // Validar token via backend (não precisa de autenticação)
+      const response = await base44.functions.invoke('validateInviteToken', { token });
       
-      try {
-        const invites = await base44.entities.EmployeeInvite.list();
-        const invitesArray = Array.isArray(invites) ? invites : [];
-        foundInvite = invitesArray.find(inv => inv.invite_token === token);
-      } catch (err) {
-        console.log("Erro ao buscar convites:", err);
-      }
-      
-      if (!foundInvite) {
-        setError("Convite não encontrado ou link inválido. Solicite um novo convite ao gestor.");
+      if (!response.data?.success) {
+        setError(response.data?.error || "Convite não encontrado ou inválido.");
         setLoading(false);
         return;
       }
 
-      // Verificar se expirou
-      if (foundInvite.expires_at && new Date(foundInvite.expires_at) < new Date()) {
-        setError("Este convite expirou. Solicite um novo convite ao gestor.");
-        setLoading(false);
-        return;
-      }
+      const { invite: foundInvite, workshop: foundWorkshop } = response.data;
 
-      // Verificar se já foi concluído
-      if (foundInvite.status === "concluido") {
-        setError("Este convite já foi utilizado. Faça login na sua conta.");
-        setLoading(false);
-        return;
-      }
-
-      // Marcar como acessado
-      if (foundInvite.status === "enviado") {
-        try {
-          await base44.entities.EmployeeInvite.update(foundInvite.id, {
-            status: "acessado",
-            accessed_at: new Date().toISOString()
-          });
-        } catch (updateErr) {
-          console.log("Aviso: não foi possível atualizar status do convite");
-        }
-      }
-
-      // Buscar oficina
-      try {
-        const workshops = await base44.entities.Workshop.list();
-        allWorkshops = Array.isArray(workshops) ? workshops : [];
-        const foundWorkshop = allWorkshops.find(w => w.id === foundInvite.workshop_id);
-        if (foundWorkshop) {
-          setWorkshop(foundWorkshop);
-        }
-      } catch (workshopErr) {
-        console.log("Aviso: não foi possível carregar dados da oficina");
+      if (foundWorkshop) {
+        setWorkshop(foundWorkshop);
       }
 
       setInvite(foundInvite);
