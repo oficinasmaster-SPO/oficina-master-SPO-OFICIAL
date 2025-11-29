@@ -136,37 +136,29 @@ export default function PrimeiroAcesso() {
     setSubmitting(true);
 
     try {
-      // Criar o colaborador
-      const employee = await base44.entities.Employee.create({
-        workshop_id: invite.workshop_id,
-        full_name: formData.name,
+      // Chamar função de backend para registrar colaborador
+      const response = await base44.functions.invoke('registerInvitedEmployee', {
+        token: invite.invite_token,
+        name: formData.name,
         email: formData.email,
-        telefone: formData.phone,
-        profile_picture_url: formData.profile_picture_url,
-        position: invite.position,
-        area: invite.area,
-        hire_date: new Date().toISOString().split('T')[0],
-        status: "ativo",
-        permission_level: invite.initial_permission
+        phone: formData.phone,
+        profile_picture_url: formData.profile_picture_url
       });
 
-      // Atualizar o convite
-      await base44.entities.EmployeeInvite.update(invite.id, {
-        status: "concluido",
-        completed_at: new Date().toISOString(),
-        employee_id: employee.id
-      });
-
-      toast.success("Cadastro concluído com sucesso!");
-      
-      // Redirecionar para login
-      setTimeout(() => {
-        base44.auth.redirectToLogin(createPageUrl("PortalColaborador"));
-      }, 1500);
+      if (response.data?.success) {
+        toast.success("Cadastro concluído! Redirecionando para login...");
+        
+        // Redirecionar para login
+        setTimeout(() => {
+          base44.auth.redirectToLogin(createPageUrl("PortalColaborador"));
+        }, 1500);
+      } else {
+        throw new Error(response.data?.error || "Erro ao finalizar cadastro");
+      }
 
     } catch (error) {
       console.error("Erro ao finalizar cadastro:", error);
-      toast.error("Erro ao finalizar cadastro. Tente novamente.");
+      toast.error(error.message || "Erro ao finalizar cadastro. Tente novamente.");
     } finally {
       setSubmitting(false);
     }
