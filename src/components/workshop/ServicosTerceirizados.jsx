@@ -29,7 +29,7 @@ export default function ServicosTerceirizados({ workshop, onUpdate }) {
   const addService = () => {
     setFormData({
       ...formData,
-      third_party_services: [...formData.third_party_services, { name: "", type: "", value: 0 }]
+      third_party_services: [...formData.third_party_services, { name: "", type: "", value: 0, phone: "", contact_person: "" }]
     });
   };
 
@@ -109,46 +109,75 @@ export default function ServicosTerceirizados({ workshop, onUpdate }) {
         {formData.third_party_services.length === 0 ? (
           <p className="text-center text-gray-500 py-8">Nenhum serviço terceirizado cadastrado</p>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {formData.third_party_services.map((service, index) => (
-              <div key={index} className="flex gap-2 items-center p-3 bg-gray-50 rounded-lg">
-                <Input
-                  placeholder="Nome do serviço"
-                  value={service.name}
-                  onChange={(e) => updateService(index, 'name', e.target.value)}
-                  disabled={!editing}
-                  className="flex-1"
-                />
-                <Select
-                  value={service.type}
-                  onValueChange={(value) => updateService(index, 'type', value)}
-                  disabled={!editing}
-                >
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Tipo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {serviceTypes.map((type) => (
-                      <SelectItem key={type.value} value={type.value}>
-                        {type.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <div className="w-32">
-                  <Input
-                    type="number"
-                    placeholder="Valor"
-                    value={service.value}
-                    onChange={(e) => updateService(index, 'value', e.target.value)}
-                    disabled={!editing}
-                  />
+              <div key={index} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div>
+                    <Label className="text-xs text-gray-600">Nome do Serviço</Label>
+                    <Input
+                      placeholder="Ex: Contabilidade XYZ"
+                      value={service.name}
+                      onChange={(e) => updateService(index, 'name', e.target.value)}
+                      disabled={!editing}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-600">Tipo</Label>
+                    <Select
+                      value={service.type}
+                      onValueChange={(value) => updateService(index, 'type', value)}
+                      disabled={!editing}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {serviceTypes.map((type) => (
+                          <SelectItem key={type.value} value={type.value}>
+                            {type.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-600">Valor Mensal (R$)</Label>
+                    <Input
+                      type="number"
+                      placeholder="0,00"
+                      value={service.value}
+                      onChange={(e) => updateService(index, 'value', e.target.value)}
+                      disabled={!editing}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-600">Contato (Nome)</Label>
+                    <Input
+                      placeholder="Nome do responsável"
+                      value={service.contact_person || ''}
+                      onChange={(e) => updateService(index, 'contact_person', e.target.value)}
+                      disabled={!editing}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-600">Telefone</Label>
+                    <Input
+                      placeholder="(00) 00000-0000"
+                      value={service.phone || ''}
+                      onChange={(e) => updateService(index, 'phone', e.target.value)}
+                      disabled={!editing}
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    {editing && (
+                      <Button size="sm" variant="destructive" onClick={() => removeService(index)} className="w-full">
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Remover
+                      </Button>
+                    )}
+                  </div>
                 </div>
-                {editing && (
-                  <Button size="icon" variant="destructive" onClick={() => removeService(index)}>
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                )}
               </div>
             ))}
           </div>
