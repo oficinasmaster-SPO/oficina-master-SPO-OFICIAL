@@ -36,24 +36,31 @@ export default function PrimeiroAcesso() {
       const token = urlParams.get("token");
 
       if (!token) {
-        setError("Token de convite não encontrado");
+        setError("Token de convite não encontrado. Verifique o link recebido por e-mail.");
         setLoading(false);
         return;
       }
 
-      // Buscar convite pelo token
-      const invites = await base44.entities.EmployeeInvite.filter({ invite_token: token });
+      // Buscar convite pelo token - usando list e filtrando manualmente para evitar problemas de auth
+      let foundInvite = null;
+      let allWorkshops = [];
       
-      if (!invites || invites.length === 0) {
-        setError("Convite não encontrado ou já utilizado");
+      try {
+        const invites = await base44.entities.EmployeeInvite.list();
+        const invitesArray = Array.isArray(invites) ? invites : [];
+        foundInvite = invitesArray.find(inv => inv.invite_token === token);
+      } catch (err) {
+        console.log("Erro ao buscar convites:", err);
+      }
+      
+      if (!foundInvite) {
+        setError("Convite não encontrado ou link inválido. Solicite um novo convite ao gestor.");
         setLoading(false);
         return;
       }
-
-      const foundInvite = invites[0];
 
       // Verificar se expirou
-      if (new Date(foundInvite.expires_at) < new Date()) {
+      if (foundInvite.expires_at && new Date(foundInvite.expires_at) < new Date()) {
         setError("Este convite expirou. Solicite um novo convite ao gestor.");
         setLoading(false);
         return;
@@ -68,28 +75,38 @@ export default function PrimeiroAcesso() {
 
       // Marcar como acessado
       if (foundInvite.status === "enviado") {
-        await base44.entities.EmployeeInvite.update(foundInvite.id, {
-          status: "acessado",
-          accessed_at: new Date().toISOString()
-        });
+        try {
+          await base44.entities.EmployeeInvite.update(foundInvite.id, {
+            status: "acessado",
+            accessed_at: new Date().toISOString()
+          });
+        } catch (updateErr) {
+          console.log("Aviso: não foi possível atualizar status do convite");
+        }
       }
 
       // Buscar oficina
-      const workshops = await base44.entities.Workshop.filter({ id: foundInvite.workshop_id });
-      if (workshops && workshops.length > 0) {
-        setWorkshop(workshops[0]);
+      try {
+        const workshops = await base44.entities.Workshop.list();
+        allWorkshops = Array.isArray(workshops) ? workshops : [];
+        const foundWorkshop = allWorkshops.find(w => w.id === foundInvite.workshop_id);
+        if (foundWorkshop) {
+          setWorkshop(foundWorkshop);
+        }
+      } catch (workshopErr) {
+        console.log("Aviso: não foi possível carregar dados da oficina");
       }
 
       setInvite(foundInvite);
       setFormData({
         ...formData,
-        name: foundInvite.name,
-        email: foundInvite.email
+        name: foundInvite.name || "",
+        email: foundInvite.email || ""
       });
 
     } catch (error) {
       console.error("Erro ao carregar convite:", error);
-      setError("Erro ao carregar convite. Tente novamente.");
+      setError("Erro ao carregar convite. Verifique sua conexão e tente novamente.");
     } finally {
       setLoading(false);
     }
