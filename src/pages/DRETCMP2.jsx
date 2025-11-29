@@ -113,9 +113,52 @@ export default function DRETCMP2() {
         notes: currentDRE.notes || ""
       });
     } else {
-      setFormData(getEmptyDRE());
+      // Preencher com dados do cadastro da oficina se disponível
+      const empty = getEmptyDRE();
+      
+      if (workshop) {
+        // Mapear técnicos
+        let technicians = 1;
+        if (typeof workshop.employees_count === 'number') {
+          technicians = workshop.employees_count;
+        } else if (typeof workshop.employees_count === 'string') {
+           if (workshop.employees_count === 'ate_3') technicians = 2;
+           else if (workshop.employees_count === '4_7') technicians = 5;
+           else if (workshop.employees_count === '8_15') technicians = 10;
+           else if (workshop.employees_count === 'acima_15') technicians = 15;
+        }
+        
+        // Mapear custos de terceiros do cadastro
+        const services = workshop.third_party_services || [];
+        let marketing = 0;
+        let administrative = 0;
+        let operational = 0;
+        let third_party = 0;
+
+        services.forEach(s => {
+          const val = Number(s.value) || 0;
+          if (s.type === 'marketing') marketing += val;
+          else if (['software_gestao', 'contabilidade', 'advocacia', 'consultoria_financeira'].includes(s.type)) administrative += val;
+          else if (['seguranca_predial', 'seguranca_trabalho', 'seguro_incendio', 'seguro_predial'].includes(s.type)) operational += val;
+          else third_party += val;
+        });
+
+        setFormData({
+          ...empty,
+          productive_technicians: technicians,
+          costs_tcmp2: {
+            ...empty.costs_tcmp2,
+            marketing,
+            administrative,
+            operational,
+            third_party
+          }
+        });
+      } else {
+        setFormData(empty);
+      }
     }
-  }, [currentDRE, selectedMonth]);
+  }, [currentDRE, selectedMonth, workshop]);
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
