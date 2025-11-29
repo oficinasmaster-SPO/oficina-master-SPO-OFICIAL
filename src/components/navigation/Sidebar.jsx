@@ -126,6 +126,13 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       icon: BarChart4,
       items: [
         { 
+          name: 'Histórico de Metas', 
+          href: createPageUrl('HistoricoMetas'), 
+          icon: BarChart2,
+          description: 'Relatórios e gráficos de metas',
+          highlight: true
+        },
+        { 
           name: 'Desdobramento de Metas', 
           href: createPageUrl('DesdobramentoMeta'), 
           icon: GitBranch,
