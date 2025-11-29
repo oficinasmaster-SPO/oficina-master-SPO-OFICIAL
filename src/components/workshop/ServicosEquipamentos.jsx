@@ -284,8 +284,12 @@ export default function ServicosEquipamentos({ workshop, onUpdate, showServicesO
   };
 
   const handleSave = async () => {
-    await onUpdate(formData);
-    setEditing(false);
+    try {
+      await onUpdate(formData);
+      setEditing(false);
+    } catch (error) {
+      console.error("Erro ao salvar:", error);
+    }
   };
 
   const shouldShowServices = !showEquipmentOnly;
