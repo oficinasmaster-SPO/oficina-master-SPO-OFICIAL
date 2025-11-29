@@ -194,6 +194,13 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           highlight: true
         },
         { 
+          name: 'Convidar Colaborador', 
+          href: createPageUrl('ConvidarColaborador'), 
+          icon: Users,
+          description: 'Enviar convite por e-mail',
+          highlight: true
+        },
+        { 
           name: 'CDC - Conexão do Colaborador', 
           href: createPageUrl('CDCList'), 
           icon: Heart,
