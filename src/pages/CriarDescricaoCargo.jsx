@@ -163,8 +163,6 @@ export default function CriarDescricaoCargo() {
 
       if (response) {
           toast.success("Descrição de cargo salva com sucesso!");
-          // Redirecionar para a lista, ou manter na tela se for "Salvar Rascunho"
-          // O usuário pediu para corrigir o salvamento. Vamos assumir redirecionamento para lista ou view.
           navigate(createPageUrl("DescricoesCargo")); 
       } else {
           throw new Error("Falha ao criar registro");
