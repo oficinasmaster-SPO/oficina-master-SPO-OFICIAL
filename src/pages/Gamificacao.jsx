@@ -4,7 +4,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Trophy, Award, Target, Sparkles, Plus, Wrench, RefreshCw } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2, Trophy, Award, Target, Sparkles, Plus, Wrench, RefreshCw, Filter } from "lucide-react";
 import { toast } from "sonner";
 
 import LevelBadge from "../components/dashboard/LevelBadge";
@@ -17,6 +18,8 @@ export default function Gamificacao() {
   const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
+  const [challengeTypeFilter, setChallengeTypeFilter] = useState("all");
+  const [challengeTargetFilter, setChallengeTargetFilter] = useState("all");
 
   useEffect(() => {
     loadUser();
@@ -262,8 +265,14 @@ export default function Gamificacao() {
     }
   });
 
-  // Desafios ativos
+  // Desafios ativos e filtrados
   const activeChallenges = Array.isArray(challenges) ? challenges.filter(c => c.status === 'ativo') : [];
+  
+  const filteredChallenges = activeChallenges.filter(challenge => {
+    const typeMatch = challengeTypeFilter === "all" || challenge.type === challengeTypeFilter;
+    const targetMatch = challengeTargetFilter === "all" || challenge.target_type === challengeTargetFilter;
+    return typeMatch && targetMatch;
+  });
 
   // Progresso do usuário nos desafios
   const getUserProgress = (challenge) => {
@@ -342,19 +351,84 @@ export default function Gamificacao() {
 
           {/* Desafios */}
           <TabsContent value="desafios" className="space-y-6">
+            
+            {/* Filtros de Desafios */}
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-wrap gap-4 items-center">
+                <div className="flex items-center gap-2 text-gray-600 mr-2">
+                    <Filter className="w-4 h-4" />
+                    <span className="text-sm font-medium">Filtrar por:</span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <Select value={challengeTypeFilter} onValueChange={setChallengeTypeFilter}>
+                        <SelectTrigger className="w-[160px]">
+                            <SelectValue placeholder="Período" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Todos os Períodos</SelectItem>
+                            <SelectItem value="diario">Diário</SelectItem>
+                            <SelectItem value="semanal">Semanal</SelectItem>
+                            <SelectItem value="mensal">Mensal</SelectItem>
+                            <SelectItem value="personalizado">Personalizado</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <Select value={challengeTargetFilter} onValueChange={setChallengeTargetFilter}>
+                        <SelectTrigger className="w-[160px]">
+                            <SelectValue placeholder="Participação" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Todos os Tipos</SelectItem>
+                            <SelectItem value="individual">Individual</SelectItem>
+                            <SelectItem value="equipe">Em Equipe</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                {(challengeTypeFilter !== "all" || challengeTargetFilter !== "all") && (
+                    <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => {
+                            setChallengeTypeFilter("all");
+                            setChallengeTargetFilter("all");
+                        }}
+                        className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                    >
+                        Limpar Filtros
+                    </Button>
+                )}
+            </div>
+
             <Card className="border-2 border-purple-200 bg-gradient-to-r from-purple-50 to-pink-50">
               <CardHeader>
-                <CardTitle>Desafios Ativos</CardTitle>
+                <CardTitle className="flex justify-between items-center">
+                    <span>Desafios Ativos</span>
+                    <span className="text-sm font-normal text-gray-500 bg-white/50 px-3 py-1 rounded-full">
+                        {filteredChallenges.length} desafio(s) encontrado(s)
+                    </span>
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                {activeChallenges.length === 0 ? (
+                {filteredChallenges.length === 0 ? (
                   <div className="text-center py-12">
                     <Target className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600">Nenhum desafio ativo no momento</p>
+                    <p className="text-gray-600">Nenhum desafio encontrado com os filtros atuais</p>
+                    <Button 
+                        variant="link" 
+                        onClick={() => {
+                            setChallengeTypeFilter("all");
+                            setChallengeTargetFilter("all");
+                        }}
+                    >
+                        Limpar filtros
+                    </Button>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {activeChallenges.map(challenge => (
+                    {filteredChallenges.map(challenge => (
                       <ChallengeCard
                         key={challenge.id}
                         challenge={challenge}
