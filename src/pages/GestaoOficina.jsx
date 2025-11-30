@@ -5,7 +5,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Building2, Settings, Target, FileText, Users, TrendingUp, Package, DollarSign, BarChart3, Calculator } from "lucide-react";
+import { Loader2, Building2, Settings, Target, FileText, Users, TrendingUp, Package, DollarSign, BarChart3, Calculator, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency } from "../components/utils/formatters";
 import DadosBasicosOficina from "../components/workshop/DadosBasicosOficina";
@@ -16,6 +16,7 @@ import MetasObjetivosCompleto from "../components/workshop/MetasObjetivosComplet
 import CulturaOrganizacional from "../components/workshop/CulturaOrganizacional";
 import DocumentosProcessos from "../components/workshop/DocumentosProcessos";
 import WorkshopLevelBadge from "../components/gamification/WorkshopLevelBadge";
+import AutomacaoIncentivos from "../components/workshop/AutomacaoIncentivos";
 
 export default function GestaoOficina() {
   const navigate = useNavigate();
@@ -277,6 +278,10 @@ export default function GestaoOficina() {
               <BarChart3 className="w-4 h-4 mr-1" />
               <span className="hidden sm:inline">Relatórios</span>
             </TabsTrigger>
+            <TabsTrigger value="automacao" className="text-xs md:text-sm">
+              <MessageCircle className="w-4 h-4 mr-1" />
+              <span className="hidden sm:inline">Automação</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="dados">
@@ -305,6 +310,10 @@ export default function GestaoOficina() {
 
           <TabsContent value="processos">
             <DocumentosProcessos workshop={workshop} onUpdate={handleUpdate} />
+          </TabsContent>
+
+          <TabsContent value="automacao">
+            <AutomacaoIncentivos workshop={workshop} />
           </TabsContent>
 
           <TabsContent value="relatorios">

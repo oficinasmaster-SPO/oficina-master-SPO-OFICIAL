@@ -439,6 +439,13 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           adminOnly: true
         },
         { 
+          name: 'Templates de Mensagem', 
+          href: createPageUrl('AdminMensagens'), 
+          icon: MessageCircle,
+          description: 'Configurar mensagens de incentivo',
+          adminOnly: true
+        },
+        { 
           name: 'Gestão de Clientes', 
           href: createPageUrl('AdminClientes'), 
           icon: Users,

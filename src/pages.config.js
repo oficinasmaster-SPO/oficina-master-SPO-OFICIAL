@@ -81,6 +81,7 @@ import AdminProdutividade from './pages/AdminProdutividade';
 import RegistroDiario from './pages/RegistroDiario';
 import AdminDesafios from './pages/AdminDesafios';
 import GestaoDesafios from './pages/GestaoDesafios';
+import AdminMensagens from './pages/AdminMensagens';
 import __Layout from './Layout.jsx';
 
 
@@ -168,6 +169,7 @@ export const PAGES = {
     "RegistroDiario": RegistroDiario,
     "AdminDesafios": AdminDesafios,
     "GestaoDesafios": GestaoDesafios,
+    "AdminMensagens": AdminMensagens,
 }
 
 export const pagesConfig = {
