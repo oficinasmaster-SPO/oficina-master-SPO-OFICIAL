@@ -20,6 +20,7 @@ export default function Gamificacao() {
   const [userProfile, setUserProfile] = useState(null);
   const [challengeTypeFilter, setChallengeTypeFilter] = useState("all");
   const [challengeTargetFilter, setChallengeTargetFilter] = useState("all");
+  const [challengeScopeFilter, setChallengeScopeFilter] = useState("all");
 
   useEffect(() => {
     loadUser();
@@ -271,7 +272,8 @@ export default function Gamificacao() {
   const filteredChallenges = activeChallenges.filter(challenge => {
     const typeMatch = challengeTypeFilter === "all" || challenge.type === challengeTypeFilter;
     const targetMatch = challengeTargetFilter === "all" || challenge.target_type === challengeTargetFilter;
-    return typeMatch && targetMatch;
+    const scopeMatch = challengeScopeFilter === "all" || challenge.scope === challengeScopeFilter;
+    return typeMatch && targetMatch && scopeMatch;
   });
 
   // Progresso do usuário nos desafios
@@ -383,17 +385,32 @@ export default function Gamificacao() {
                             <SelectItem value="all">Todos os Tipos</SelectItem>
                             <SelectItem value="individual">Individual</SelectItem>
                             <SelectItem value="equipe">Em Equipe</SelectItem>
+                            <SelectItem value="oficina">Oficina Inteira</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
 
-                {(challengeTypeFilter !== "all" || challengeTargetFilter !== "all") && (
+                <div className="flex items-center gap-2">
+                    <Select value={challengeScopeFilter} onValueChange={setChallengeScopeFilter}>
+                        <SelectTrigger className="w-[160px]">
+                            <SelectValue placeholder="Origem" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Todas as Origens</SelectItem>
+                            <SelectItem value="workshop">Apenas da Oficina</SelectItem>
+                            <SelectItem value="global">Nível Brasil (Global)</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                {(challengeTypeFilter !== "all" || challengeTargetFilter !== "all" || challengeScopeFilter !== "all") && (
                     <Button 
                         variant="ghost" 
                         size="sm" 
                         onClick={() => {
                             setChallengeTypeFilter("all");
                             setChallengeTargetFilter("all");
+                            setChallengeScopeFilter("all");
                         }}
                         className="text-red-500 hover:text-red-600 hover:bg-red-50"
                     >
