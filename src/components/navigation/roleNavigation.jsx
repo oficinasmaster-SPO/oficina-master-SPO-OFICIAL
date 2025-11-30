@@ -18,7 +18,8 @@ import {
   Shield,
   Wrench, 
   Filter, 
-  UserPlus
+  UserPlus,
+  Building2
 } from "lucide-react";
 import { createPageUrl } from "@/utils";
 
