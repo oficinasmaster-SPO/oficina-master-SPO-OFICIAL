@@ -13,18 +13,20 @@ import {
   Sparkles, 
   Trophy, 
   Clock, 
-  CheckCircle,
-  AlertTriangle,
-  ArrowRight,
-  FileText,
-  Brain,
-  Award,
-  Building2,
-  Plus,
-  Bell,
-  Megaphone,
+  CheckCircle, 
+  AlertTriangle, 
+  ArrowRight, 
+  FileText, 
+  Brain, 
+  Award, 
+  Building2, 
+  Plus, 
+  Bell, 
+  Megaphone, 
+  BarChart3,
   Lightbulb,
-  Edit
+  Edit,
+  Rocket
 } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
@@ -198,18 +200,25 @@ export default function DashboardHub({ user, workshop }) {
 
   const quickActions = [
     {
-      title: "IA Analytics",
-      description: "Previsões e recomendações",
-      icon: Sparkles,
-      href: createPageUrl("IAAnalytics"),
-      color: "from-purple-500 to-pink-500"
+      title: "Nível 1 - Iniciante",
+      description: "Ver progresso do nível",
+      icon: Award,
+      href: createPageUrl("Gamificacao"),
+      color: "from-orange-500 to-red-500"
     },
     {
-      title: "Novo Diagnóstico",
-      description: "Avaliar evolução da oficina",
-      icon: FileText,
+      title: "Fase Oficina 1,2,3,4",
+      description: "Diagnóstico de fase",
+      icon: BarChart3,
       href: createPageUrl("SelecionarDiagnostico"),
       color: "from-blue-500 to-indigo-500"
+    },
+    {
+      title: "IA Analytics",
+      description: "Nova análise inteligente",
+      icon: Brain,
+      href: createPageUrl("IAAnalytics"),
+      color: "from-purple-500 to-pink-500"
     },
     {
       title: "Gestão de Equipe",
@@ -219,7 +228,7 @@ export default function DashboardHub({ user, workshop }) {
       color: "from-green-500 to-emerald-500"
     },
     {
-      title: "Desafios",
+      title: "Desafios Ranking",
       description: "Ver conquistas e rankings",
       icon: Trophy,
       href: createPageUrl("Gamificacao"),
