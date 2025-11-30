@@ -17,6 +17,7 @@ import CulturaOrganizacional from "../components/workshop/CulturaOrganizacional"
 import DocumentosProcessos from "../components/workshop/DocumentosProcessos";
 import WorkshopLevelBadge from "../components/gamification/WorkshopLevelBadge";
 import AutomacaoIncentivos from "../components/workshop/AutomacaoIncentivos";
+import GrowthDashboard from "../components/management/GrowthDashboard";
 
 export default function GestaoOficina() {
   const navigate = useNavigate();
@@ -282,7 +283,15 @@ export default function GestaoOficina() {
               <MessageCircle className="w-4 h-4 mr-1" />
               <span className="hidden sm:inline">Automação</span>
             </TabsTrigger>
+            <TabsTrigger value="crescimento" className="text-xs md:text-sm bg-green-50 text-green-700 data-[state=active]:bg-green-100 data-[state=active]:text-green-900">
+              <TrendingUp className="w-4 h-4 mr-1" />
+              <span className="hidden sm:inline">Crescimento</span>
+            </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="crescimento">
+            <GrowthDashboard workshop={workshop} />
+          </TabsContent>
 
           <TabsContent value="dados">
             <DadosBasicosOficina workshop={workshop} onUpdate={handleUpdate} />
