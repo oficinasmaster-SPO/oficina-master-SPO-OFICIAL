@@ -44,7 +44,16 @@ export default function GerenciarPermissoes() {
     { id: "processos", label: "Processos" },
     { id: "documentos", label: "Documentos" },
     { id: "cultura", label: "Cultura" },
-    { id: "treinamentos", label: "Treinamentos" }
+    { id: "treinamentos", label: "Treinamentos" },
+    // Itens do Dashboard / Acesso Rápido
+    { id: "home_metas", label: "Home: Metas (Situação)" },
+    { id: "home_ranking", label: "Home: Ranking Colaboradores" },
+    { id: "home_tarefas", label: "Home: Tarefas Pendentes" },
+    { id: "home_tcmp2", label: "Home: TCMP2 Tempo Real" },
+    { id: "home_r70i30", label: "Home: R70/I30 Tempo Real" },
+    { id: "home_gps", label: "Home: GPS Aplicados" },
+    { id: "home_kit_master", label: "Home: Kit Master Convertido" },
+    { id: "home_pave", label: "Home: PAVE Agendamento" }
   ];
 
   // Carregar configurações atuais
