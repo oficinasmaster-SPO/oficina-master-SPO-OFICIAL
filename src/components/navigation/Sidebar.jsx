@@ -92,12 +92,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           description: 'Dados, serviços, metas e cultura',
           highlight: true
         },
-        { 
-          name: 'Minha Oficina', 
-          href: createPageUrl('Cadastro'), 
-          icon: Settings,
-          description: 'Cadastro básico da oficina'
-        }
+
       ]
     },
     {

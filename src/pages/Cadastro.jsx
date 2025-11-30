@@ -93,23 +93,9 @@ export default function Cadastro() {
       const userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
       
       if (userWorkshop) {
-        setExistingWorkshop(userWorkshop);
-        setFormData({
-          name: userWorkshop.name || "",
-          razao_social: userWorkshop.razao_social || "",
-          cnpj: userWorkshop.cnpj || "",
-          city: userWorkshop.city || "",
-          state: userWorkshop.state || "",
-          endereco_completo: userWorkshop.endereco_completo || "",
-          segment: userWorkshop.segment || "",
-          services_offered: userWorkshop.services_offered || [],
-          tax_regime: userWorkshop.tax_regime || "",
-          monthly_revenue: userWorkshop.monthly_revenue || "",
-          employees_count: userWorkshop.employees_count || "",
-          years_in_business: userWorkshop.years_in_business || "",
-          observacoes_gerais: userWorkshop.observacoes_gerais || "",
-          notas_manuais: userWorkshop.notas_manuais || ""
-        });
+        // Se já tem oficina cadastrada, redireciona para Gestão da Oficina
+        navigate(createPageUrl("GestaoOficina"));
+        return;
       }
     } catch (error) {
       console.error("Erro ao carregar usuário:", error);
