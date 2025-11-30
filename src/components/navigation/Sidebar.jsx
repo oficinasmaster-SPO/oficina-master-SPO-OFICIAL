@@ -36,6 +36,7 @@ import {
   GraduationCap,
   Shield,
   LayoutDashboard,
+  Lightbulb,
   Video,
   FilePenLine,
   GitBranch,
