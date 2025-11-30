@@ -69,17 +69,35 @@ export default function PortalColaborador() {
   };
 
   const menuItems = [
-    { id: "perfil", label: "Meu Perfil", icon: User },
-    { id: "tarefas", label: "Minhas Tarefas", icon: ListTodo },
-    { id: "metas", label: "Minhas Metas", icon: Target },
-    { id: "feedbacks", label: "Meus Feedbacks", icon: MessageSquare },
-    { id: "desempenho", label: "Desempenho", icon: BarChart3 },
-    { id: "documentos", label: "Documentos", icon: FileText },
-    { id: "gamificacao", label: "Gamificação", icon: Trophy },
-    { id: "qgp", label: "QGP Pessoal", icon: Gauge },
-    { id: "agenda", label: "Agenda", icon: Calendar },
-    { id: "crm", label: "CRM Pessoal", icon: Phone }
+    { id: "perfil", label: "Meu Perfil", icon: User, roles: ["all"] },
+    { id: "tarefas", label: "Minhas Tarefas", icon: ListTodo, roles: ["all"] },
+    { id: "equipe", label: "Minha Equipe", icon: Users, roles: ["diretor", "supervisor_loja", "gerente", "lider_tecnico", "rh"] },
+    { id: "financeiro", label: "Financeiro", icon: TrendingUp, roles: ["diretor", "supervisor_loja", "financeiro"] },
+    { id: "comercial", label: "Vendas & CRM", icon: Phone, roles: ["diretor", "supervisor_loja", "gerente", "comercial", "consultor_vendas", "marketing"] },
+    { id: "metas", label: "Minhas Metas", icon: Target, roles: ["all"] },
+    { id: "feedbacks", label: "Meus Feedbacks", icon: MessageSquare, roles: ["all"] },
+    { id: "desempenho", label: "Desempenho", icon: BarChart3, roles: ["all"] },
+    { id: "documentos", label: "Documentos", icon: FileText, roles: ["all"] },
+    { id: "gamificacao", label: "Gamificação", icon: Trophy, roles: ["all"] },
+    { id: "qgp", label: "QGP Pessoal", icon: Gauge, roles: ["all"] },
+    { id: "estoque", label: "Estoque", icon: Package, roles: ["diretor", "supervisor_loja", "gerente", "estoque"] },
+    { id: "agenda", label: "Agenda", icon: Calendar, roles: ["all"] }
   ];
+
+  const filterMenuItems = () => {
+    if (!employee || !employee.job_role) return menuItems.filter(i => i.roles.includes("all"));
+    
+    const role = employee.job_role;
+    return menuItems.filter(item => {
+      if (item.roles.includes("all")) return true;
+      if (item.roles.includes(role)) return true;
+      // Fallback para administradores do sistema verem tudo
+      if (user.role === 'admin') return true;
+      return false;
+    });
+  };
+
+  const filteredMenuItems = filterMenuItems();
 
   const pendingTasks = tasks.filter(t => t.status === 'pendente').length;
   const inProgressTasks = tasks.filter(t => t.status === 'em_andamento').length;
@@ -375,15 +393,64 @@ export default function PortalColaborador() {
           </Card>
         );
 
-      case "crm":
+      case "comercial":
         return (
-          <Card>
-            <CardContent className="py-12 text-center text-gray-500">
-              <Phone className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-              <p>CRM Pessoal</p>
-              <p className="text-sm mt-2">Seus clientes e histórico de atendimento</p>
-            </CardContent>
-          </Card>
+          <div className="space-y-4">
+            <Card>
+              <CardContent className="py-12 text-center text-gray-500">
+                <Phone className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                <p>Módulo Comercial</p>
+                <p className="text-sm mt-2">CRM, Funil de Vendas e Metas Comerciais</p>
+                <Button variant="outline" className="mt-4">Acessar CRM Completo</Button>
+              </CardContent>
+            </Card>
+          </div>
+        );
+
+      case "financeiro":
+        return (
+          <div className="space-y-4">
+            <Card>
+              <CardContent className="py-12 text-center text-gray-500">
+                <TrendingUp className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                <p>Módulo Financeiro</p>
+                <p className="text-sm mt-2">Fluxo de Caixa, DRE e Contas a Pagar/Receber</p>
+                <Button variant="outline" className="mt-4">Ver Relatórios</Button>
+              </CardContent>
+            </Card>
+          </div>
+        );
+
+      case "equipe":
+        return (
+          <div className="space-y-4">
+             <Card>
+              <CardHeader>
+                <CardTitle>Minha Equipe</CardTitle>
+              </CardHeader>
+              <CardContent className="py-8 text-center text-gray-500">
+                <Users className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                <p>Gestão de Equipe</p>
+                <p className="text-sm mt-2">Visualize o desempenho e tarefas da sua equipe</p>
+                <Button variant="outline" className="mt-4" onClick={() => window.location.href = createPageUrl('Colaboradores')}>
+                  Gerenciar Colaboradores
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        );
+
+      case "estoque":
+        return (
+          <div className="space-y-4">
+            <Card>
+              <CardContent className="py-12 text-center text-gray-500">
+                <Package className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                <p>Controle de Estoque</p>
+                <p className="text-sm mt-2">Gestão de peças e inventário</p>
+              </CardContent>
+            </Card>
+          </div>
         );
 
       default:
@@ -432,7 +499,7 @@ export default function PortalColaborador() {
 
         {/* Menu */}
         <nav className="p-4 space-y-1">
-          {menuItems.map(item => {
+          {filteredMenuItems.map(item => {
             const Icon = item.icon;
             return (
               <button
@@ -473,7 +540,7 @@ export default function PortalColaborador() {
         {/* Header */}
         <header className="bg-white shadow-sm border-b p-4 lg:p-6">
           <h1 className="text-xl lg:text-2xl font-bold text-gray-900 ml-12 lg:ml-0">
-            {menuItems.find(m => m.id === activeSection)?.label}
+            {menuItems.find(m => m.id === activeSection)?.label || "Portal"}
           </h1>
         </header>
 
