@@ -63,6 +63,9 @@ export default function DashboardHub({ user, workshop }) {
     }
   });
 
+  // Se a oficina tiver dicas personalizadas, use-as prioritariamente
+  const displayTips = workshop?.quick_tips || tipsSetting?.value || "Bem-vindo ao Oficinas Master! Complete seu perfil e comece seus diagnósticos.";
+
   // Busca configurações de permissão
   const { data: permissionsConfig } = useQuery({
     queryKey: ['system-setting-permissions'],
@@ -316,11 +319,12 @@ export default function DashboardHub({ user, workshop }) {
                 <div>
                     <h3 className="font-bold text-indigo-900 text-lg mb-1">Dicas Rápidas</h3>
                     <p className="text-indigo-800 whitespace-pre-line">
-                        {tipsSetting?.value || "Bem-vindo ao Oficinas Master! Complete seu perfil e comece seus diagnósticos."}
+                        {displayTips}
                     </p>
                 </div>
             </div>
-            {user.role === 'admin' && (
+            {/* Botão de edição movido para a página dedicada DicasOperacao para gestores */}
+            {user.role === 'admin' && !workshop && (
                 <Dialog open={isTipsDialogOpen} onOpenChange={setIsTipsDialogOpen}>
                     <DialogTrigger asChild>
                         <Button variant="ghost" size="icon" className="text-indigo-400 hover:text-indigo-600">
@@ -329,7 +333,7 @@ export default function DashboardHub({ user, workshop }) {
                     </DialogTrigger>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>Editar Dicas Rápidas</DialogTitle>
+                            <DialogTitle>Editar Dicas Globais (Admin)</DialogTitle>
                         </DialogHeader>
                         <div className="py-4">
                             <Label>Texto das Dicas</Label>
@@ -345,6 +349,13 @@ export default function DashboardHub({ user, workshop }) {
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
+            )}
+            {workshop && (user.role === 'admin' || user.id === workshop.owner_id) && (
+                 <Link to={createPageUrl("DicasOperacao")}>
+                    <Button variant="ghost" size="icon" className="text-indigo-400 hover:text-indigo-600">
+                        <Edit className="w-4 h-4" />
+                    </Button>
+                 </Link>
             )}
         </CardContent>
       </Card>

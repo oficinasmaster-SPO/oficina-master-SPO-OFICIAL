@@ -370,6 +370,20 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       ]
     },
     {
+      id: 'gestao',
+      label: 'Gestão da Operação',
+      icon: Lightbulb,
+      items: [
+        { 
+          name: 'Dicas da Operação', 
+          href: createPageUrl('DicasOperacao'), 
+          icon: Lightbulb,
+          description: 'Mural de avisos para a equipe',
+          highlight: true
+        }
+      ]
+    },
+    {
       id: 'admin',
       label: 'Administração & Planos',
       icon: Shield,

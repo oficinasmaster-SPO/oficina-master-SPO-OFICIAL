@@ -76,6 +76,7 @@ import PortalColaborador from './pages/PortalColaborador';
 import SelecionarDiagnostico from './pages/SelecionarDiagnostico';
 import GerenciarPermissoes from './pages/GerenciarPermissoes';
 import GerenciarTelaInicial from './pages/GerenciarTelaInicial';
+import DicasOperacao from './pages/DicasOperacao';
 import __Layout from './Layout.jsx';
 
 
@@ -158,6 +159,7 @@ export const PAGES = {
     "SelecionarDiagnostico": SelecionarDiagnostico,
     "GerenciarPermissoes": GerenciarPermissoes,
     "GerenciarTelaInicial": GerenciarTelaInicial,
+    "DicasOperacao": DicasOperacao,
 }
 
 export const pagesConfig = {
