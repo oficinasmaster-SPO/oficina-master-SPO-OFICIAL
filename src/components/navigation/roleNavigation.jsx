@@ -22,13 +22,23 @@ import {
   Building2,
   BrainCircuit,
   Sparkles,
-  BookOpen
+  BookOpen,
+  Stethoscope,
+  Activity,
+  PieChart,
+  Briefcase,
+  Thermometer,
+  ClipboardCheck,
+  Users2,
+  Layers
 } from "lucide-react";
 import { createPageUrl } from "@/utils";
 
 // Definição dos grupos de navegação
 export const MENU_GROUPS = {
   DASHBOARD: 'Dashboard & KPIs',
+  DIAGNOSTICS: 'Diagnósticos & Auditorias',
+  PLANNING: 'Planos & Ação',
   OPERATIONAL: 'Operacional',
   COMMERCIAL: 'Comercial',
   FINANCIAL: 'Financeiro',
@@ -48,6 +58,19 @@ const ALL_MENUS = {
   TASKS: { name: 'Minhas Tarefas', href: createPageUrl('Tarefas'), icon: ListTodo, description: 'Gestão de atividades' },
   MY_OS: { name: 'Minhas OS/Checklists', href: createPageUrl('HomeOperacional'), icon: ClipboardList, description: 'Ordens de Serviço' },
   
+  // Diagnósticos (Novos adicionados para visão completa)
+  DIAG_MATURITY: { name: 'Maturidade', href: createPageUrl('DiagnosticoMaturidade'), icon: Activity, description: 'Nível da Oficina' },
+  DIAG_DEBT: { name: 'Endividamento', href: createPageUrl('DiagnosticoEndividamento'), icon: PieChart, description: 'Saúde Financeira' },
+  DIAG_PRODUCTION: { name: 'Produção', href: createPageUrl('DiagnosticoProducao'), icon: Wrench, description: 'Eficiência' },
+  DIAG_PERFORMANCE: { name: 'Desempenho', href: createPageUrl('DiagnosticoDesempenho'), icon: BarChart2, description: 'Indicadores Individuais' },
+  DIAG_COMMERCIAL: { name: 'Comercial', href: createPageUrl('DiagnosticoComercial'), icon: TrendingUp, description: 'Funil de Vendas' },
+  DIAG_ENTREPRENEUR: { name: 'Perfil Empresário', href: createPageUrl('DiagnosticoEmpresario'), icon: Briefcase, description: 'Análise de Perfil' },
+  DIAG_CLIMATE: { name: 'Pesquisa de Clima', href: createPageUrl('PesquisaClima'), icon: Thermometer, description: 'Ambiente de Trabalho' },
+  
+  // Planos & Ação
+  ACTION_PLAN: { name: 'Plano de Ação', href: createPageUrl('PlanoAcao'), icon: Layers, description: 'Estratégia' },
+  RITUALS: { name: 'Rituais de Gestão', href: createPageUrl('Rituais'), icon: Calendar, description: 'Rotina' },
+
   // Diretor / Gerente
   DRE: { name: 'DRE & TCMP²', href: createPageUrl('DRETCMP2'), icon: Calculator, description: 'Financeiro Estratégico' },
   GENERAL_DASHBOARD: { name: 'Dashboard Nacional', href: createPageUrl('Dashboard'), icon: TrendingUp, description: 'Visão Macro' },
@@ -84,7 +107,7 @@ const ALL_MENUS = {
   ADMIN_MASTER: { name: 'Tela Master', href: createPageUrl('AdminMaster'), icon: Building2, description: 'Admin Only', adminOnly: true },
 };
 
-// Estrutura Completa (Dono / Sócio / Admin / Master)
+// Estrutura Completa (Dono / Sócio / Admin / Master) - RESTAURADA "COM MUITO MAIS COISAS"
 const FULL_SIDEBAR = [
   { 
     group: MENU_GROUPS.DASHBOARD, 
@@ -95,6 +118,25 @@ const FULL_SIDEBAR = [
       ALL_MENUS.GOALS,
       ALL_MENUS.GAMIFICATION
     ] 
+  },
+  {
+    group: MENU_GROUPS.DIAGNOSTICS,
+    items: [
+      ALL_MENUS.DIAG_MATURITY,
+      ALL_MENUS.DIAG_PRODUCTION,
+      ALL_MENUS.DIAG_PERFORMANCE,
+      ALL_MENUS.DIAG_COMMERCIAL,
+      ALL_MENUS.DIAG_DEBT,
+      ALL_MENUS.DIAG_CLIMATE,
+      ALL_MENUS.DIAG_ENTREPRENEUR
+    ]
+  },
+  {
+    group: MENU_GROUPS.PLANNING,
+    items: [
+      ALL_MENUS.ACTION_PLAN,
+      ALL_MENUS.RITUALS
+    ]
   },
   { 
     group: MENU_GROUPS.FINANCIAL, 
@@ -145,12 +187,13 @@ const FULL_SIDEBAR = [
 
 // Configuração de Menus por Função
 export const ROLE_MENUS = {
-  // Diretor / Sócio / Dono agora veem TUDO
+  // Diretor / Sócio / Dono agora veem TUDO (Restaurado)
   diretor: FULL_SIDEBAR,
   
   // Gerente (Visão Operacional Ampla)
   gerente: [
     { group: MENU_GROUPS.OPERATIONAL, items: [ALL_MENUS.HOME, ALL_MENUS.IA_ANALYTICS_GESTAO, ALL_MENUS.TASKS, ALL_MENUS.MY_OS] },
+    { group: MENU_GROUPS.DIAGNOSTICS, items: [ALL_MENUS.DIAG_PRODUCTION, ALL_MENUS.DIAG_PERFORMANCE] },
     { group: MENU_GROUPS.PEOPLE, items: [ALL_MENUS.TEAM_MANAGEMENT, ALL_MENUS.FEEDBACKS] },
     { group: MENU_GROUPS.COMMERCIAL, items: [ALL_MENUS.LEADS] },
     { group: MENU_GROUPS.CULTURE, items: [ALL_MENUS.CULTURE] }
@@ -180,6 +223,7 @@ export const ROLE_MENUS = {
   // Financeiro
   financeiro: [
     { group: MENU_GROUPS.FINANCIAL, items: [ALL_MENUS.HOME, ALL_MENUS.IA_ANALYTICS_OPERACIONAL, ALL_MENUS.DRE, ALL_MENUS.FINANCIAL_REPORTS] },
+    { group: MENU_GROUPS.DIAGNOSTICS, items: [ALL_MENUS.DIAG_DEBT] },
     { group: MENU_GROUPS.OPERATIONAL, items: [ALL_MENUS.TASKS] },
     { group: MENU_GROUPS.CULTURE, items: [ALL_MENUS.CULTURE] }
   ],
@@ -187,6 +231,7 @@ export const ROLE_MENUS = {
   // RH
   rh: [
     { group: MENU_GROUPS.PEOPLE, items: [ALL_MENUS.HOME, ALL_MENUS.IA_ANALYTICS_OPERACIONAL, ALL_MENUS.TEAM_MANAGEMENT, ALL_MENUS.RECRUITMENT, ALL_MENUS.EVALUATIONS] },
+    { group: MENU_GROUPS.DIAGNOSTICS, items: [ALL_MENUS.DIAG_CLIMATE, ALL_MENUS.DIAG_PERFORMANCE] },
     { group: MENU_GROUPS.CULTURE, items: [ALL_MENUS.CULTURE, ALL_MENUS.TASKS] }
   ],
   
