@@ -10,8 +10,18 @@ import Sidebar from "@/components/navigation/Sidebar";
 import Breadcrumbs from "@/components/navigation/Breadcrumbs";
 import UsageTracker from "@/components/tracking/UsageTracker";
 import { SharedDataProvider } from "@/components/shared/SharedDataProvider";
+import { AdminSessionProvider } from "@/context/AdminSessionContext";
+import AdminBanner from "@/components/admin/AdminBanner";
 
 export default function Layout({ children }) {
+  return (
+    <AdminSessionProvider>
+      <LayoutContent>{children}</LayoutContent>
+    </AdminSessionProvider>
+  );
+}
+
+function LayoutContent({ children }) {
   const location = useLocation();
   const [user, setUser] = useState(null);
   const [workshop, setWorkshop] = useState(null);
@@ -81,6 +91,7 @@ export default function Layout({ children }) {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <AdminBanner />
       {isAuthenticated && user && <UsageTracker user={user} />}
       
       {isAuthenticated && (

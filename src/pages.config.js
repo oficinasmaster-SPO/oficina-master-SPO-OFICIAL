@@ -73,6 +73,7 @@ import DRETCMP2 from './pages/DRETCMP2';
 import ConvidarColaborador from './pages/ConvidarColaborador';
 import PrimeiroAcesso from './pages/PrimeiroAcesso';
 import PortalColaborador from './pages/PortalColaborador';
+import AdminMaster from './pages/AdminMaster';
 import __Layout from './Layout.jsx';
 
 
@@ -152,6 +153,7 @@ export const PAGES = {
     "ConvidarColaborador": ConvidarColaborador,
     "PrimeiroAcesso": PrimeiroAcesso,
     "PortalColaborador": PortalColaborador,
+    "AdminMaster": AdminMaster,
 }
 
 export const pagesConfig = {
