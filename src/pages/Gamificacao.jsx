@@ -14,6 +14,7 @@ import DynamicRanking from "../components/gamification/DynamicRanking";
 import RewardsWall from "../components/gamification/RewardsWall";
 import RankingSection from "@/components/gamification/RankingSection";
 import EvidenceSubmission from "@/components/gamification/EvidenceSubmission";
+import QualityDashboard from "@/components/gamification/QualityDashboard";
 
 export default function Gamificacao() {
   const queryClient = useQueryClient();
@@ -336,7 +337,7 @@ export default function Gamificacao() {
         )}
 
         <Tabs defaultValue="desafios" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 bg-white shadow-md">
+          <TabsList className="grid w-full grid-cols-5 bg-white shadow-md">
             <TabsTrigger value="desafios">
               <Target className="w-4 h-4 mr-2" />
               Desafios
@@ -352,6 +353,10 @@ export default function Gamificacao() {
             <TabsTrigger value="mural">
               <Sparkles className="w-4 h-4 mr-2" />
               Mural Público
+            </TabsTrigger>
+            <TabsTrigger value="qualidade">
+              <Star className="w-4 h-4 mr-2 text-yellow-500" />
+              Qualidade
             </TabsTrigger>
           </TabsList>
 
@@ -559,6 +564,16 @@ export default function Gamificacao() {
           {/* Mural Público */}
           <TabsContent value="mural">
             <RewardsWall rewards={rewards} employees={employees} />
+          </TabsContent>
+
+          {/* Qualidade */}
+          <TabsContent value="qualidade">
+            {currentWorkshop && (
+              <QualityDashboard 
+                workshopId={currentWorkshop.id} 
+                employees={employees} 
+              />
+            )}
           </TabsContent>
         </Tabs>
       </div>
