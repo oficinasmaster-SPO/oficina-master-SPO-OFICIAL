@@ -74,6 +74,7 @@ import ConvidarColaborador from './pages/ConvidarColaborador';
 import PrimeiroAcesso from './pages/PrimeiroAcesso';
 import PortalColaborador from './pages/PortalColaborador';
 import SelecionarDiagnostico from './pages/SelecionarDiagnostico';
+import GerenciarPermissoes from './pages/GerenciarPermissoes';
 import __Layout from './Layout.jsx';
 
 
@@ -154,6 +155,7 @@ export const PAGES = {
     "PrimeiroAcesso": PrimeiroAcesso,
     "PortalColaborador": PortalColaborador,
     "SelecionarDiagnostico": SelecionarDiagnostico,
+    "GerenciarPermissoes": GerenciarPermissoes,
 }
 
 export const pagesConfig = {

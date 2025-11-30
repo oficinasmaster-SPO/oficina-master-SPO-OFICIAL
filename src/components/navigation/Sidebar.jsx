@@ -43,7 +43,8 @@ import {
   BarChart2,
   Crown,
   Flame,
-  Receipt
+  Receipt,
+  CreditCard
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -373,12 +374,19 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       icon: Shield,
       items: [
         { 
-          name: 'Gerenciar Planos', 
-          href: createPageUrl('GerenciarPlanos'), 
+          name: 'Gerenciar Permissões', 
+          href: createPageUrl('GerenciarPermissoes'), 
           icon: Shield,
-          description: 'Controle de permissões e recursos por plano',
+          description: 'Controle de acesso por cargo',
           adminOnly: true,
           highlight: true
+        },
+        { 
+          name: 'Gerenciar Planos', 
+          href: createPageUrl('GerenciarPlanos'), 
+          icon: CreditCard,
+          description: 'Controle de permissões e recursos por plano',
+          adminOnly: true
         },
         { 
           name: 'Gestão de Clientes', 
