@@ -78,6 +78,7 @@ import GerenciarPermissoes from './pages/GerenciarPermissoes';
 import GerenciarTelaInicial from './pages/GerenciarTelaInicial';
 import DicasOperacao from './pages/DicasOperacao';
 import AdminProdutividade from './pages/AdminProdutividade';
+import RegistroDiario from './pages/RegistroDiario';
 import __Layout from './Layout.jsx';
 
 
@@ -162,6 +163,7 @@ export const PAGES = {
     "GerenciarTelaInicial": GerenciarTelaInicial,
     "DicasOperacao": DicasOperacao,
     "AdminProdutividade": AdminProdutividade,
+    "RegistroDiario": RegistroDiario,
 }
 
 export const pagesConfig = {
