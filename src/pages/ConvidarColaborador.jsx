@@ -27,8 +27,51 @@ export default function ConvidarColaborador() {
     email: "",
     position: "",
     area: "",
+    job_role: "outros",
     initial_permission: "colaborador"
   });
+
+  const jobRoles = [
+    { value: "diretor", label: "Diretor" },
+    { value: "supervisor_loja", label: "Supervisor de Loja" },
+    { value: "gerente", label: "Gerente" },
+    { value: "lider_tecnico", label: "Líder Técnico" },
+    { value: "financeiro", label: "Financeiro" },
+    { value: "rh", label: "Recursos Humanos" },
+    { value: "tecnico", label: "Técnico" },
+    { value: "funilaria_pintura", label: "Funilaria e Pintura" },
+    { value: "comercial", label: "Comercial" },
+    { value: "consultor_vendas", label: "Consultor de Vendas" },
+    { value: "marketing", label: "Marketing" },
+    { value: "estoque", label: "Estoque" },
+    { value: "administrativo", label: "Administrativo" },
+    { value: "motoboy", label: "Motoboy" },
+    { value: "lavador", label: "Lavador" },
+    { value: "outros", label: "Outros" }
+  ];
+
+  const checkExistingEmployee = async (email) => {
+    if (!email || !email.includes('@')) return;
+    
+    try {
+      // Busca colaboradores com este email na oficina atual
+      const employees = await base44.entities.Employee.filter({ email: email, workshop_id: workshop.id });
+      
+      if (employees && employees.length > 0) {
+        const emp = employees[0];
+        setFormData(prev => ({
+          ...prev,
+          name: emp.full_name || prev.name,
+          position: emp.position || prev.position,
+          area: emp.area || prev.area,
+          job_role: emp.job_role || prev.job_role
+        }));
+        toast.success("Dados do colaborador encontrados e preenchidos!");
+      }
+    } catch (error) {
+      console.log("Erro ao buscar colaborador:", error);
+    }
+  };
 
   useEffect(() => {
     loadUser();
@@ -123,7 +166,7 @@ export default function ConvidarColaborador() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employee-invites'] });
-      setFormData({ name: "", email: "", position: "", area: "", initial_permission: "colaborador" });
+      setFormData({ name: "", email: "", position: "", area: "", job_role: "outros", initial_permission: "colaborador" });
       toast.success("Convite enviado com sucesso!");
     },
     onError: (error) => {
@@ -258,6 +301,7 @@ export default function ConvidarColaborador() {
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    onBlur={(e) => checkExistingEmployee(e.target.value)}
                     placeholder="email@exemplo.com"
                   />
                 </div>
@@ -286,6 +330,22 @@ export default function ConvidarColaborador() {
                       <SelectItem value="administrativo">Administrativo</SelectItem>
                       <SelectItem value="financeiro">Financeiro</SelectItem>
                       <SelectItem value="gerencia">Gerência</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="job_role">Função do Sistema *</Label>
+                  <Select value={formData.job_role} onValueChange={(value) => setFormData({ ...formData, job_role: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a função" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {jobRoles.map((role) => (
+                        <SelectItem key={role.value} value={role.value}>
+                          {role.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -350,7 +410,7 @@ export default function ConvidarColaborador() {
                           <p className="font-medium text-gray-900">{invite.name}</p>
                           <p className="text-sm text-gray-600">{invite.email}</p>
                           <p className="text-xs text-gray-500 mt-1">
-                            {invite.position} • {invite.area}
+                            {invite.position} • {invite.area} • {invite.job_role ? invite.job_role.replace('_', ' ') : ''}
                           </p>
                         </div>
                         {getStatusBadge(invite)}

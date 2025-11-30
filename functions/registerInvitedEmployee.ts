@@ -37,6 +37,7 @@ Deno.serve(async (req) => {
       profile_picture_url: profile_picture_url || '',
       position: invite.position,
       area: invite.area,
+      job_role: invite.job_role || 'outros',
       hire_date: new Date().toISOString().split('T')[0],
       status: 'ativo',
       permission_level: invite.initial_permission || 'colaborador'
