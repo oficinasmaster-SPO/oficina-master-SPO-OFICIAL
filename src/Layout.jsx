@@ -10,7 +10,7 @@ import Sidebar from "@/components/navigation/Sidebar";
 import Breadcrumbs from "@/components/navigation/Breadcrumbs";
 import UsageTracker from "@/components/tracking/UsageTracker";
 import { SharedDataProvider } from "@/components/shared/SharedDataProvider";
-import { AdminSessionProvider } from "@/context/AdminSessionContext";
+import { AdminSessionProvider } from "@/components/admin/AdminSessionContext";
 import AdminBanner from "@/components/admin/AdminBanner";
 
 export default function Layout({ children }) {

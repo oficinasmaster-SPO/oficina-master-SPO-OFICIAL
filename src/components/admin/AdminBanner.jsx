@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAdminSession } from '@/context/AdminSessionContext';
+import { useAdminSession } from '@/components/admin/AdminSessionContext';
 import { Button } from '@/components/ui/button';
 import { X, ExternalLink } from 'lucide-react';
 import { createPageUrl } from '@/utils';
