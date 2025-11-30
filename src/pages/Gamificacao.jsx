@@ -107,24 +107,49 @@ export default function Gamificacao() {
 
   const myEmployeeRecord = employees.find(e => e.email === user?.email);
 
-  const { data: productivityRankings = [], refetch: refetchRankings } = useQuery({
-    queryKey: ['productivity-rankings', currentWorkshop?.id],
+  const period = new Date().toISOString().slice(0, 7);
+
+  const { data: internalRankings = [], refetch: refetchRankings } = useQuery({
+    queryKey: ['productivity-rankings-internal', currentWorkshop?.id, period],
     queryFn: async () => {
         if (!currentWorkshop?.id) return [];
-        // Fetch rankings for current period
-        const period = new Date().toISOString().slice(0, 7);
         const ranks = await base44.entities.ProductivityRanking.filter({ 
             workshop_id: currentWorkshop.id,
             period 
         });
-        
-        // Join with employees
+
         return ranks.map(rank => ({
             ...rank,
             employee: employees.find(e => e.id === rank.employee_id)
         }));
     },
     enabled: !!currentWorkshop?.id && employees.length > 0
+  });
+
+  const { data: nationalRankings = [] } = useQuery({
+      queryKey: ['productivity-rankings-national', period],
+      queryFn: async () => {
+          // Fetch all rankings for the period (assuming RLS allows it for "National" view)
+          // In a real scenario with many records, this should be a backend aggregation function
+          const ranks = await base44.entities.ProductivityRanking.filter({ period });
+
+          // We need to enrich with employee names even for other workshops
+          // Since we might not have all employees loaded, we rely on what's available or fetch if needed.
+          // For now, we assume 'employees' contains needed data or we map what we can.
+          // Note: In a production app with thousands of users, we would fetch only top N records via backend function.
+
+          // For national ranking, we also need workshop names.
+          return ranks.map(rank => {
+              const emp = employees.find(e => e.id === rank.employee_id);
+              const ws = workshops.find(w => w.id === rank.workshop_id);
+              return {
+                  ...rank,
+                  employee: emp || { full_name: 'Usuário Externo', profile_picture_url: null }, // Fallback
+                  workshop_name: ws?.name || 'Oficina Externa'
+              };
+          });
+      },
+      enabled: !!user
   });
 
   const calculateRankingsMutation = useMutation({
@@ -364,8 +389,10 @@ export default function Gamificacao() {
                     </div>
                     
                     <RankingSection 
-                        rankings={productivityRankings} 
+                        internalRankings={internalRankings}
+                        nationalRankings={nationalRankings}
                         userEmployee={myEmployeeRecord}
+                        currentWorkshop={currentWorkshop}
                     />
                 </div>
 

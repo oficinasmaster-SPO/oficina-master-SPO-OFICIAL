@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Medal, Star, TrendingUp, BookOpen, CalendarCheck, Users, Briefcase, Crown } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Trophy, Medal, Star, TrendingUp, BookOpen, CalendarCheck, Users, Briefcase, Crown, Building2, Map, User, Target } from "lucide-react";
 
 const STANDARD_AREAS = [
     { id: 'vendas', label: 'Vendas' },
@@ -14,31 +16,10 @@ const STANDARD_AREAS = [
     { id: 'gerencia', label: 'Gerência' }
 ];
 
-export default function RankingSection({ rankings, userEmployee }) {
-    if (!rankings) return null; // Allow empty array to render structure
+export default function RankingSection({ internalRankings, nationalRankings, userEmployee, currentWorkshop }) {
+    if (!internalRankings) return null;
 
-    // Filter rankings
-    const myArea = userEmployee?.area;
-
-    // 1. Top 3 Global
-    const topGlobal = [...rankings].sort((a, b) => b.total_score - a.total_score).slice(0, 3);
-
-    // 2. Top 3 My Area (if user has area)
-    const topArea = myArea 
-        ? rankings.filter(r => r.area === myArea).sort((a, b) => b.total_score - a.total_score).slice(0, 3)
-        : [];
-
-    // 3. First of Each Area (Map standard areas to their leader)
-    const leadersByArea = STANDARD_AREAS.map(areaDef => {
-        const areaRankings = rankings
-            .filter(r => r.area === areaDef.id || r.area === areaDef.label || (r.area && r.area.toLowerCase() === areaDef.id))
-            .sort((a, b) => b.total_score - a.total_score);
-        
-        return {
-            areaLabel: areaDef.label,
-            leader: areaRankings[0] || null
-        };
-    });
+    const [nationalFilter, setNationalFilter] = useState("geral");
 
     // Helper for Engagement Classification
     const getEngagementLevel = (score) => {
@@ -48,7 +29,8 @@ export default function RankingSection({ rankings, userEmployee }) {
         return { label: "Iniciante", color: "bg-gray-100 text-gray-800" };
     };
 
-    const RankingCard = ({ title, items, icon: Icon, colorClass, emptyMessage }) => (
+    // Generic Ranking Card
+    const RankingCard = ({ title, items, icon: Icon, colorClass, emptyMessage, isNational }) => (
         <Card className="h-full hover:shadow-md transition-shadow border-none shadow-sm bg-white">
             <CardHeader className="pb-2 border-b border-gray-100 bg-gray-50/50 rounded-t-xl">
                 <div className="flex items-center gap-2">
@@ -61,25 +43,40 @@ export default function RankingSection({ rankings, userEmployee }) {
             <CardContent className="pt-4">
                 <div className="space-y-3">
                     {items.map((item, index) => (
-                        <div key={item.id || index} className="flex items-center justify-between p-2.5 rounded-xl bg-white border border-gray-100 hover:border-blue-100 hover:bg-blue-50/30 transition-all">
-                            <div className="flex items-center gap-3">
-                                <div className={`w-7 h-7 flex items-center justify-center rounded-full font-bold text-xs shadow-sm ${
+                        <div key={item.id || index} className={`flex items-center justify-between p-2.5 rounded-xl border transition-all ${
+                            isNational && item.workshop_id === currentWorkshop?.id 
+                                ? 'bg-blue-50 border-blue-200 shadow-sm' 
+                                : 'bg-white border-gray-100 hover:border-blue-100 hover:bg-blue-50/30'
+                        }`}>
+                            <div className="flex items-center gap-3 overflow-hidden">
+                                <div className={`w-7 h-7 flex items-center justify-center rounded-full font-bold text-xs flex-shrink-0 shadow-sm ${
                                     index === 0 ? 'bg-yellow-100 text-yellow-700 ring-2 ring-yellow-200' :
                                     index === 1 ? 'bg-gray-100 text-gray-700 ring-2 ring-gray-200' :
                                     index === 2 ? 'bg-orange-100 text-orange-700 ring-2 ring-orange-200' : 'bg-slate-50 text-slate-600'
                                 }`}>
                                     {index + 1}º
                                 </div>
-                                <Avatar className="w-9 h-9 border-2 border-white shadow-sm">
+                                <Avatar className="w-9 h-9 border-2 border-white shadow-sm flex-shrink-0">
                                     <AvatarImage src={item.employee?.profile_picture_url} />
                                     <AvatarFallback className="bg-blue-100 text-blue-700">{item.employee?.full_name?.substring(0, 2).toUpperCase()}</AvatarFallback>
                                 </Avatar>
-                                <div>
-                                    <p className="text-sm font-semibold text-gray-900 leading-none">{item.employee?.full_name}</p>
-                                    <p className="text-[11px] text-gray-500 mt-1 capitalize">{item.area}</p>
+                                <div className="min-w-0">
+                                    <p className="text-sm font-semibold text-gray-900 leading-none truncate">
+                                        {item.employee?.full_name}
+                                        {isNational && item.workshop_id === currentWorkshop?.id && <span className="ml-2 text-[10px] bg-blue-100 text-blue-700 px-1.5 rounded-full">Você/Sua Oficina</span>}
+                                    </p>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <p className="text-[11px] text-gray-500 capitalize truncate max-w-[100px]">{item.area}</p>
+                                        {isNational && (
+                                            <span className="text-[10px] text-gray-400 flex items-center gap-0.5 border-l pl-2 border-gray-200 truncate max-w-[120px]">
+                                                <Building2 className="w-3 h-3" />
+                                                {item.workshop_name}
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
-                            <div className="text-right bg-gray-50 px-2 py-1 rounded-lg">
+                            <div className="text-right bg-gray-50 px-2 py-1 rounded-lg flex-shrink-0 ml-2">
                                 <span className="text-sm font-bold text-gray-900">{item.total_score?.toFixed(0)}</span>
                                 <p className="text-[9px] text-gray-500 font-medium uppercase">pts</p>
                             </div>
@@ -98,12 +95,12 @@ export default function RankingSection({ rankings, userEmployee }) {
                     <div className="p-2 rounded-lg bg-purple-500">
                         <Crown className="w-5 h-5 text-white" />
                     </div>
-                    <CardTitle className="text-lg text-gray-800">Líderes por Área</CardTitle>
+                    <CardTitle className="text-lg text-gray-800">Líderes por Área (Interno)</CardTitle>
                 </div>
             </CardHeader>
             <CardContent className="pt-4">
                 <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1 custom-scrollbar">
-                    {leaders.map((item, index) => (
+                    {leaders.map((item) => (
                         <div key={item.areaLabel} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100">
                             <div className="flex items-center gap-3 min-w-0">
                                 <div className="w-8 h-8 rounded-full bg-purple-50 flex items-center justify-center flex-shrink-0 text-purple-600">
@@ -180,52 +177,204 @@ export default function RankingSection({ rankings, userEmployee }) {
         );
     };
 
-    const userRanking = rankings.find(r => r.employee_id === userEmployee?.id);
+    // INTERNAL DATA PROCESSING
+    const myArea = userEmployee?.area;
+    const internalTopGlobal = [...internalRankings].sort((a, b) => b.total_score - a.total_score).slice(0, 3);
+    const internalTopArea = myArea 
+        ? internalRankings.filter(r => r.area === myArea).sort((a, b) => b.total_score - a.total_score).slice(0, 3)
+        : [];
+    
+    const internalLeadersByArea = STANDARD_AREAS.map(areaDef => {
+        const areaRankings = internalRankings
+            .filter(r => r.area === areaDef.id || r.area === areaDef.label || (r.area && r.area.toLowerCase() === areaDef.id))
+            .sort((a, b) => b.total_score - a.total_score);
+        return { areaLabel: areaDef.label, leader: areaRankings[0] || null };
+    });
+    
+    const userRanking = internalRankings.find(r => r.employee_id === userEmployee?.id);
+
+    // NATIONAL DATA PROCESSING
+    const getNationalList = () => {
+        if (nationalFilter === "oficinas") {
+            // Aggregate by workshop
+            const workshopStats = {};
+            nationalRankings.forEach(rank => {
+                if (!workshopStats[rank.workshop_id]) {
+                    workshopStats[rank.workshop_id] = {
+                        id: rank.workshop_id,
+                        workshop_id: rank.workshop_id,
+                        workshop_name: rank.workshop_name,
+                        total_score: 0,
+                        count: 0,
+                        employee: { full_name: rank.workshop_name, profile_picture_url: null }, // Mock for UI
+                        area: "Oficina"
+                    };
+                }
+                workshopStats[rank.workshop_id].total_score += rank.total_score;
+                workshopStats[rank.workshop_id].count += 1;
+            });
+
+            // Average score per workshop
+            return Object.values(workshopStats)
+                .map(ws => ({ ...ws, total_score: ws.total_score / ws.count }))
+                .sort((a, b) => b.total_score - a.total_score)
+                .slice(0, 10);
+        }
+
+        let filtered = [...nationalRankings];
+        if (nationalFilter !== "geral") {
+            filtered = filtered.filter(r => r.area === nationalFilter || (r.area && r.area.toLowerCase() === nationalFilter));
+        }
+        return filtered.sort((a, b) => b.total_score - a.total_score).slice(0, 10);
+    };
+
+    const nationalList = getNationalList();
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Engagement Card Always Visible */}
             {userRanking && (
                 <div className="mb-6">
                     <EngagementCard ranking={userRanking} />
                 </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* 1. Top 3 My Area */}
-                <div className="h-full">
-                    {myArea ? (
-                        <RankingCard 
-                            title={`Top 3 - ${myArea}`}
-                            items={topArea}
-                            icon={Users} 
-                            colorClass="bg-blue-600"
-                            emptyMessage={`Seja o primeiro a pontuar em ${myArea}!`}
-                        />
-                    ) : (
-                         <Card className="h-full flex items-center justify-center bg-gray-50 border-dashed">
-                            <CardContent className="text-center py-10">
-                                <Briefcase className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-                                <p className="text-gray-500">Complete seu cadastro para ver o ranking da sua área</p>
-                            </CardContent>
-                        </Card>
-                    )}
+            <Tabs defaultValue="interno" className="w-full">
+                <div className="flex items-center justify-between mb-6">
+                     <TabsList className="grid w-[400px] grid-cols-2 bg-gray-100 p-1 rounded-xl">
+                        <TabsTrigger value="interno" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                            <Building2 className="w-4 h-4 mr-2" />
+                            Ranking Interno
+                        </TabsTrigger>
+                        <TabsTrigger value="nacional" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                            <Map className="w-4 h-4 mr-2" />
+                            Ranking Nacional
+                        </TabsTrigger>
+                    </TabsList>
                 </div>
 
-                {/* 2. Top 3 Global */}
-                <div className="h-full">
-                    <RankingCard 
-                        title="Top 3 Global"
-                        items={topGlobal}
-                        icon={Trophy}
-                        colorClass="bg-yellow-500"
-                    />
-                </div>
+                <TabsContent value="interno" className="mt-0">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {/* 1. Top 3 My Area */}
+                        <div className="h-full">
+                            {myArea ? (
+                                <RankingCard 
+                                    title={`Top 3 - Minha Área (${myArea})`}
+                                    items={internalTopArea}
+                                    icon={Users} 
+                                    colorClass="bg-blue-600"
+                                    emptyMessage={`Seja o primeiro a pontuar em ${myArea}!`}
+                                    isNational={false}
+                                />
+                            ) : (
+                                <Card className="h-full flex items-center justify-center bg-gray-50 border-dashed border-2">
+                                    <CardContent className="text-center py-10">
+                                        <Briefcase className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                                        <p className="text-gray-500">Complete seu cadastro para ver o ranking da sua área</p>
+                                    </CardContent>
+                                </Card>
+                            )}
+                        </div>
 
-                {/* 3. First of Each Area */}
-                <div className="h-full">
-                    <AreaLeadersCard leaders={leadersByArea} />
-                </div>
-            </div>
+                        {/* 2. Top 3 Internal Global */}
+                        <div className="h-full">
+                            <RankingCard 
+                                title="Top 3 da Oficina (Geral)"
+                                items={internalTopGlobal}
+                                icon={Trophy}
+                                colorClass="bg-yellow-500"
+                                isNational={false}
+                            />
+                        </div>
+
+                        {/* 3. Leaders by Area */}
+                        <div className="h-full">
+                            <AreaLeadersCard leaders={internalLeadersByArea} />
+                        </div>
+                    </div>
+                </TabsContent>
+
+                <TabsContent value="nacional" className="mt-0">
+                     <div className="flex flex-col space-y-6">
+                         {/* National Filters */}
+                         <div className="flex items-center gap-2 bg-white p-3 rounded-xl shadow-sm border border-gray-100 w-fit">
+                            <span className="text-sm font-medium text-gray-600 pl-2">Categoria:</span>
+                            <Select value={nationalFilter} onValueChange={setNationalFilter}>
+                                <SelectTrigger className="w-[200px] border-none shadow-none bg-gray-50 h-9">
+                                    <SelectValue placeholder="Selecione a categoria" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="geral">Geral (Todos)</SelectItem>
+                                    <SelectItem value="oficinas">🏆 Melhores Oficinas</SelectItem>
+                                    <SelectItem value="tecnico">Técnicos</SelectItem>
+                                    <SelectItem value="vendas">Vendas</SelectItem>
+                                    <SelectItem value="gerencia">Gerentes</SelectItem>
+                                    <SelectItem value="comercial">Comercial</SelectItem>
+                                    <SelectItem value="administrativo">Administrativo</SelectItem>
+                                </SelectContent>
+                            </Select>
+                         </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                             {/* Main National List */}
+                            <div className="lg:col-span-2 h-full">
+                                <RankingCard 
+                                    title={
+                                        nationalFilter === "geral" ? "Top 10 Nacional - Geral" :
+                                        nationalFilter === "oficinas" ? "Top 10 Oficinas do Brasil" :
+                                        `Top 10 Nacional - ${nationalFilter.charAt(0).toUpperCase() + nationalFilter.slice(1)}`
+                                    }
+                                    items={nationalList}
+                                    icon={Map}
+                                    colorClass="bg-indigo-600"
+                                    isNational={true}
+                                />
+                            </div>
+
+                            {/* My Position / Summary Card */}
+                            <div className="space-y-6">
+                                <Card className="bg-gradient-to-br from-indigo-900 to-slate-900 text-white border-none">
+                                    <CardHeader>
+                                        <CardTitle className="text-lg flex items-center gap-2">
+                                            <Target className="w-5 h-5 text-indigo-300" />
+                                            Sua Posição Nacional
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="text-center py-4">
+                                            <div className="text-4xl font-bold text-white mb-1">
+                                                #{nationalRankings.filter(r => r.total_score > (userRanking?.total_score || 0)).length + 1}
+                                            </div>
+                                            <p className="text-indigo-200 text-sm">entre {nationalRankings.length} profissionais</p>
+                                        </div>
+                                        
+                                        <div className="mt-4 pt-4 border-t border-white/10 space-y-3">
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-indigo-200">Sua pontuação:</span>
+                                                <span className="font-bold">{userRanking?.total_score?.toFixed(0) || 0}</span>
+                                            </div>
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-indigo-200">Média Nacional:</span>
+                                                <span className="font-bold">
+                                                    {(nationalRankings.reduce((acc, curr) => acc + curr.total_score, 0) / (nationalRankings.length || 1)).toFixed(0)}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+
+                                <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-sm text-blue-800">
+                                    <p className="font-bold mb-1 flex items-center gap-2">
+                                        <TrendingUp className="w-4 h-4" />
+                                        Dica para subir:
+                                    </p>
+                                    <p>Mantenha a constância nos registros diários. Oficinas no Top 10 possuem média de 95% de preenchimento.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </TabsContent>
+            </Tabs>
         </div>
     );
 }
