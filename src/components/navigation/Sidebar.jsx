@@ -209,12 +209,12 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           description: 'Alinhamento de metas e comportamentos',
           highlight: true
         },
-        { 
-          name: 'Descrições de Cargo', 
-          href: createPageUrl('DescricoesCargo'), 
-          icon: ClipboardList,
-          description: 'Geração com IA'
-        },
+// { 
+        //   name: 'Descrições de Cargo', 
+        //   href: createPageUrl('DescricoesCargo'), 
+        //   icon: ClipboardList,
+        //   description: 'Geração com IA'
+        // },
         { 
           name: 'Perfil do Empresário', 
           href: createPageUrl('DiagnosticoEmpresario'), 
@@ -319,18 +319,17 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       icon: Heart,
       items: [
         { 
-          name: 'Missão, Visão e Valores', 
-          href: createPageUrl('MissaoVisaoValores'), 
-          icon: Heart,
-          description: 'Cultura organizacional',
-          highlight: true
-        },
-        { 
           name: 'Manual da Cultura', 
           href: createPageUrl('CulturaOrganizacional'), 
           icon: BookOpen,
           description: 'Pilares, expectativas e rituais',
           highlight: true
+        },
+        { 
+          name: 'Missão, Visão e Valores', 
+          href: createPageUrl('MissaoVisaoValores'), 
+          icon: Heart,
+          description: 'Cultura organizacional'
         },
         { 
           name: 'Rituais de Aculturamento', 
