@@ -13,6 +13,9 @@ export default function MetricForm({ metric, onSave, onCancel, isSaving }) {
         name: "",
         category: "vendas",
         data_type: "number",
+        aggregation_type: "sum",
+        optimization_direction: "higher_is_better",
+        vehicle_category_filter: "all",
         description: "",
         requires_evidence: false,
         is_active: true
@@ -36,6 +39,26 @@ export default function MetricForm({ metric, onSave, onCancel, isSaving }) {
         { value: "text", label: "Texto" },
         { value: "boolean", label: "Sim/Não" },
         { value: "percentage", label: "Percentual (%)" }
+    ];
+
+    const aggregationTypes = [
+        { value: "sum", label: "Soma (Total)" },
+        { value: "avg", label: "Média" },
+        { value: "count", label: "Contagem" },
+        { value: "max", label: "Máximo" },
+        { value: "min", label: "Mínimo" }
+    ];
+
+    const directions = [
+        { value: "higher_is_better", label: "Maior é melhor (Produtividade)" },
+        { value: "lower_is_better", label: "Menor é melhor (Erros/Custo)" }
+    ];
+
+    const vehicleFilters = [
+        { value: "all", label: "Todos os Veículos" },
+        { value: "moto", label: "Motos" },
+        { value: "car", label: "Carros/Utilitários" },
+        { value: "truck", label: "Caminhões/Truck" }
     ];
 
     return (
@@ -84,6 +107,52 @@ export default function MetricForm({ metric, onSave, onCancel, isSaving }) {
                     <SelectContent>
                         {types.map(t => (
                             <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+                <div>
+                    <Label>Agregação</Label>
+                    <Select 
+                        value={formData.aggregation_type} 
+                        onValueChange={(v) => setFormData({...formData, aggregation_type: v})}
+                    >
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                            {aggregationTypes.map(t => (
+                                <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div>
+                    <Label>Direção da Meta</Label>
+                    <Select 
+                        value={formData.optimization_direction} 
+                        onValueChange={(v) => setFormData({...formData, optimization_direction: v})}
+                    >
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                            {directions.map(d => (
+                                <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
+
+            <div>
+                <Label>Filtro de Veículo (Opcional)</Label>
+                <Select 
+                    value={formData.vehicle_category_filter} 
+                    onValueChange={(v) => setFormData({...formData, vehicle_category_filter: v})}
+                >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                        {vehicleFilters.map(f => (
+                            <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
                         ))}
                     </SelectContent>
                 </Select>

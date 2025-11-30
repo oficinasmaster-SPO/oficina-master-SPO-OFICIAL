@@ -25,6 +25,7 @@ export default function AdminDesafios() {
     target_type: "individual",
     target_area: "todos",
     metric: "produtividade",
+    metric_target_direction: "higher_is_better",
     goal_value: 0,
     reward_xp: 100,
     additional_reward_type: "none",
@@ -35,6 +36,15 @@ export default function AdminDesafios() {
   };
 
   const [formData, setFormData] = useState(initialFormState);
+
+  // Carregar métricas disponíveis
+  const { data: availableMetrics = [] } = useQuery({
+    queryKey: ['available-metrics'],
+    queryFn: async () => {
+      const result = await base44.entities.ProductivityMetric.list();
+      return Array.isArray(result) ? result.filter(m => m.is_active !== false) : [];
+    }
+  });
 
   // Carregar desafios globais
   const { data: challenges = [], isLoading } = useQuery({
@@ -267,14 +277,24 @@ export default function AdminDesafios() {
                     <Label>Métrica</Label>
                     <Select 
                       value={formData.metric} 
-                      onValueChange={v => setFormData({...formData, metric: v})}
+                      onValueChange={v => {
+                        setFormData({...formData, metric: v});
+                        // Auto-set direction based on metric
+                        const selectedMetric = availableMetrics.find(m => m.code === v);
+                        if (selectedMetric?.optimization_direction) {
+                           setFormData(prev => ({...prev, metric_target_direction: selectedMetric.optimization_direction}));
+                        }
+                      }}
                     >
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder="Selecione o indicador" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="produtividade">Produtividade (Pontos)</SelectItem>
-                        <SelectItem value="faturamento">Faturamento (R$)</SelectItem>
-                        <SelectItem value="qualidade">Qualidade/NPS</SelectItem>
-                        <SelectItem value="eficiencia">Eficiência</SelectItem>
+                        {availableMetrics.length > 0 ? availableMetrics.map(m => (
+                          <SelectItem key={m.code} value={m.code}>
+                            {m.name} ({m.category}) {m.optimization_direction === 'lower_is_better' ? '▼' : '▲'}
+                          </SelectItem>
+                        )) : (
+                          <SelectItem value="produtividade">Carregando métricas...</SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>

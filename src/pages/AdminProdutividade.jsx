@@ -131,7 +131,27 @@ export default function AdminProdutividade() {
             { code: "l02", name: "Retrabalho", category: "lava_jato", data_type: "number", description: "Lavagens refeitas" },
             { code: "l03", name: "Kit Master", category: "lava_jato", data_type: "number", description: "Venda de Kit Master no lavador" },
             { code: "l04", name: "Faturado", category: "lava_jato", data_type: "currency", description: "Receita do lava jato" },
-            { code: "l05", name: "Motivo", category: "lava_jato", data_type: "text", description: "Observações" }
+            { code: "l05", name: "Motivo", category: "lava_jato", data_type: "text", description: "Observações" },
+
+            // --- NOVAS MÉTRICAS PADRÃO (Solicitadas) ---
+            // Geral / Cross-Functional
+            { code: "g_ticket_medio_pecas", name: "Ticket Médio (Peças)", category: "gestao", data_type: "currency", aggregation_type: "avg", description: "Valor médio de peças por venda/OS" },
+            { code: "g_ticket_medio_servicos", name: "Ticket Médio (Serviços)", category: "gestao", data_type: "currency", aggregation_type: "avg", description: "Valor médio de serviços por venda/OS" },
+            
+            // Vendas (Específicas por tipo de veículo)
+            { code: "v_faturamento_moto", name: "Faturamento (Motos)", category: "vendas", data_type: "currency", vehicle_category_filter: "moto", description: "Faturamento exclusivo de motos" },
+            { code: "v_faturamento_carro", name: "Faturamento (Carros)", category: "vendas", data_type: "currency", vehicle_category_filter: "car", description: "Faturamento exclusivo de carros/leves" },
+            { code: "v_faturamento_truck", name: "Faturamento (Truck)", category: "vendas", data_type: "currency", vehicle_category_filter: "truck", description: "Faturamento exclusivo de caminhões/pesados" },
+
+            // Funilaria e Pintura (Técnico Específico)
+            { code: "t_pecas_pintadas", name: "Peças Pintadas", category: "tecnico", data_type: "number", description: "Quantidade de peças pintadas" },
+            { code: "t_pecas_polidas", name: "Peças Polidas", category: "tecnico", data_type: "number", description: "Quantidade de peças polidas" },
+            { code: "t_pecas_desmontadas", name: "Peças Desmontadas", category: "tecnico", data_type: "number", description: "Quantidade de peças desmontadas" },
+            { code: "t_pecas_chapeadas", name: "Peças Chapeadas/Funilaria", category: "tecnico", data_type: "number", description: "Quantidade de peças trabalhadas na funilaria" },
+
+            // Qualidade (Negativas)
+            { code: "q_reclamacoes", name: "Reclamações de Cliente", category: "qualidade", data_type: "number", optimization_direction: "lower_is_better", description: "Número de reclamações recebidas" },
+            { code: "q_retrabalho_geral", name: "Retrabalho Geral", category: "qualidade", data_type: "number", optimization_direction: "lower_is_better", description: "Total de retrabalhos registrados" }
         ];
 
         try {
