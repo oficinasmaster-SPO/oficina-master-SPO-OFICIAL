@@ -25,14 +25,18 @@ export default function PerformanceForecast({ workshop }) {
 
       // Gerar previsão com IA
       const prompt = `
-Baseado nos dados históricos abaixo, faça uma previsão para os próximos 3 meses:
+ATENÇÃO: Você está falando com a equipe OPERACIONAL da oficina.
+NÃO use termos estratégicos complexos ou genéricos.
+Seja DIRETO, PRÁTICO e dê um PASSO A PASSO de execução.
+
+Baseado nos dados históricos abaixo da oficina mecânica, faça uma previsão para os próximos 3 meses:
 ${JSON.stringify(historicalData, null, 2)}
 
-Analise tendências, sazonalidade e forneça:
+Analise tendências e forneça:
 1. Valores previstos de faturamento, ticket médio e lucro
-2. Nível de confiança da previsão
-3. Análise de tendências
-4. Recomendações para manter ou melhorar performance
+2. Nível de confiança
+3. Análise de tendências (explicação simples)
+4. Recomendações PRÁTICAS e EXECUTÁVEIS para o dia a dia do chão de oficina (ex: "Verificar estoque de óleo", "Oferecer alinhamento em toda revisão").
 `;
 
       const response = await base44.integrations.Core.InvokeLLM({

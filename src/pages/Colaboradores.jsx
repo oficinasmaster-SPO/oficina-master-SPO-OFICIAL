@@ -48,9 +48,23 @@ export default function Colaboradores() {
   });
 
   const statusColors = {
-    ativo: "bg-green-100 text-green-700",
-    inativo: "bg-gray-100 text-gray-700",
-    ferias: "bg-blue-100 text-blue-700"
+  ativo: "bg-green-100 text-green-700",
+  inativo: "bg-gray-100 text-gray-700",
+  ferias: "bg-blue-100 text-blue-700"
+  };
+
+  const maturityColors = {
+  bebe: "bg-yellow-100 text-yellow-800 border-yellow-200",
+  crianca: "bg-orange-100 text-orange-800 border-orange-200",
+  adolescente: "bg-blue-100 text-blue-800 border-blue-200",
+  adulto: "bg-purple-100 text-purple-800 border-purple-200"
+  };
+
+  const maturityLabels = {
+  bebe: "Bebê",
+  crianca: "Criança",
+  adolescente: "Adolescente",
+  adulto: "Adulto"
   };
 
   const filteredEmployees = Array.isArray(employees) ? employees.filter((employee) => {
@@ -174,15 +188,20 @@ export default function Colaboradores() {
                         {employee.status}
                       </span>
                     </div>
-                    <div className="flex gap-2 mt-3">
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {employee.current_maturity_level && (
+                        <span className={`px-2 py-1 rounded text-xs font-medium border flex items-center gap-1 ${maturityColors[employee.current_maturity_level] || "bg-gray-100 text-gray-700"}`}>
+                          {maturityLabels[employee.current_maturity_level] || employee.current_maturity_level}
+                        </span>
+                      )}
                       {employee.cdc_completed && (
-                        <span className="px-2 py-1 bg-pink-100 text-pink-700 rounded text-xs flex items-center gap-1">
+                        <span className="px-2 py-1 bg-pink-100 text-pink-700 rounded text-xs flex items-center gap-1 border border-pink-200">
                           <Heart className="w-3 h-3" />
                           CDC ✓
                         </span>
                       )}
                       {activeCOEX && (
-                        <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs flex items-center gap-1">
+                        <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs flex items-center gap-1 border border-orange-200">
                           <FilePenLine className="w-3 h-3" />
                           COEX ✓
                         </span>

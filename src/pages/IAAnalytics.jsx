@@ -26,17 +26,18 @@ export default function IAAnalytics() {
       try {
         const workshops = await base44.entities.Workshop.list();
         const workshopsArray = Array.isArray(workshops) ? workshops : [];
-        const userWorkshop = workshopsArray.find(w => w.owner_id === currentUser.id);
+        // Tenta encontrar oficina do usuário (dono ou vinculado)
+        const userWorkshop = workshopsArray.find(w => w.owner_id === currentUser.id) || workshopsArray[0];
         
-        if (!userWorkshop) {
-          navigate(createPageUrl("Cadastro"));
-          return;
+        if (userWorkshop) {
+            setWorkshop(userWorkshop);
+        } else {
+             console.log("Nenhuma oficina encontrada para este usuário");
+             // Não redireciona forçadamente, apenas não seta o workshop
+             // O render vai tratar o estado de !workshop de forma amigável
         }
-
-        setWorkshop(userWorkshop);
       } catch (workshopError) {
         console.log("Error fetching workshops:", workshopError);
-        navigate(createPageUrl("Cadastro"));
       }
     } catch (error) {
       console.log("Error loading user:", error);
@@ -76,8 +77,14 @@ export default function IAAnalytics() {
 
   if (!workshop) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-cyan-50 py-8 px-4 flex items-center justify-center">
+         <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Nenhuma Oficina Encontrada</h1>
+            <p className="text-gray-600 mb-4">Você precisa ter uma oficina cadastrada para usar o IA Analytics.</p>
+            <Button onClick={() => navigate(createPageUrl("Cadastro"))}>
+                Cadastrar Oficina
+            </Button>
+         </div>
       </div>
     );
   }

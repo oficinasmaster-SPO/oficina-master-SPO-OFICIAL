@@ -81,15 +81,19 @@ export default function BottleneckDetector({ workshop, employees, osAssessments 
       // Usar IA para análise de causa raiz e sugestões
       for (const bottleneck of detected) {
         const prompt = `
-Analise este gargalo operacional:
+ATENÇÃO: Responda para o LÍDER OPERACIONAL da oficina.
+Linguagem simples, direta e focada em AÇÃO IMEDIATA. Nada de "planejamento estratégico" abstrato.
+Diga exatamente O QUE FAZER no chão da oficina amanhã cedo.
+
+Analise este gargalo operacional identificado:
 Área: ${bottleneck.area}
 Tipo: ${bottleneck.type}
 Descrição: ${bottleneck.description}
 Métricas: ${JSON.stringify(bottleneck.metrics)}
 
 Forneça:
-1. Análise de causa raiz
-2. Ações sugeridas com prioridade e impacto estimado
+1. Causa raiz (explicada de forma simples)
+2. Ações sugeridas (PASSO A PASSO OPERACIONAL CLARO) com prioridade e impacto
 `;
 
         const analysis = await base44.integrations.Core.InvokeLLM({

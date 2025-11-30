@@ -26,17 +26,21 @@ export default function ServiceRecommender({ workshop }) {
     setLoading(true);
     try {
       const prompt = `
-Baseado nas informações do veículo:
+ATENÇÃO: Você é o CHEFE DE OFICINA orientando os mecânicos.
+Seja EXTREMAMENTE OPERACIONAL e TÉCNICO.
+Diga exatamente quais serviços executar e porquê, de forma simples e direta.
+
+Baseado no veículo:
 - Marca: ${vehicleInfo.brand}
 - Modelo: ${vehicleInfo.model}
 - Ano: ${vehicleInfo.year}
 - Quilometragem: ${vehicleInfo.mileage} km
 
-Você é um especialista automotivo. Forneça:
-1. Serviços recomendados (urgente, recomendado, preventivo) com justificativa
-2. Manutenção preventiva baseada na quilometragem
-3. Oportunidades de upsell (produtos/serviços adicionais)
-4. Valor estimado para cada recomendação
+Forneça:
+1. Serviços recomendados (urgente, recomendado, preventivo) com justificativa técnica simples
+2. Manutenção preventiva OBRIGATÓRIA para esta km
+3. Oportunidades de venda (upsell) fáceis de explicar para o cliente
+4. Valor estimado
 `;
 
       const response = await base44.integrations.Core.InvokeLLM({
