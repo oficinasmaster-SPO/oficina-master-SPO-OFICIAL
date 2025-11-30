@@ -183,6 +183,11 @@ export default function Colaboradores() {
                       <div>
                         <CardTitle className="text-xl">{employee.full_name}</CardTitle>
                         <p className="text-sm text-gray-600 mt-1">{employee.position}</p>
+                        {employee.job_role && (
+                          <span className="text-xs text-gray-500 mt-0.5 block capitalize">
+                            {employee.job_role.replace('_', ' ')}
+                          </span>
+                        )}
                       </div>
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[employee.status]}`}>
                         {employee.status}
