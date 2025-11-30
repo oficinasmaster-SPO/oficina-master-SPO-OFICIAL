@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Building2, CheckCircle2, FileText, MapPin, Wrench, StickyNote, Lightbulb, AlertCircle } from "lucide-react";
+import { Loader2, Building2, CheckCircle2, FileText, MapPin, Wrench, StickyNote, Lightbulb, AlertCircle, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -93,9 +93,23 @@ export default function Cadastro() {
       const userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
       
       if (userWorkshop) {
-        // Se já tem oficina cadastrada, redireciona para Gestão da Oficina
-        navigate(createPageUrl("GestaoOficina"));
-        return;
+        setExistingWorkshop(userWorkshop);
+        setFormData({
+          name: userWorkshop.name,
+          razao_social: userWorkshop.razao_social || "",
+          cnpj: userWorkshop.cnpj || "",
+          city: userWorkshop.city,
+          state: userWorkshop.state,
+          endereco_completo: userWorkshop.endereco_completo || "",
+          segment: userWorkshop.segment || "",
+          services_offered: userWorkshop.services_offered || [],
+          tax_regime: userWorkshop.tax_regime || "",
+          monthly_revenue: userWorkshop.monthly_revenue || "",
+          employees_count: userWorkshop.employees_count || "",
+          years_in_business: userWorkshop.years_in_business || "",
+          observacoes_gerais: userWorkshop.observacoes_gerais || "",
+          notas_manuais: userWorkshop.notas_manuais || ""
+        });
       }
     } catch (error) {
       console.error("Erro ao carregar usuário:", error);
@@ -222,6 +236,14 @@ export default function Cadastro() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4">
       <div className="max-w-4xl mx-auto">
+        <Button 
+          variant="ghost" 
+          onClick={() => navigate(-1)}
+          className="mb-6"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Voltar
+        </Button>
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-3">
             {existingWorkshop ? "Atualize os dados da sua oficina" : "Cadastre sua oficina"}
