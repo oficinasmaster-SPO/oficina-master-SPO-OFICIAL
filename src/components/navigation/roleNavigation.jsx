@@ -84,16 +84,69 @@ const ALL_MENUS = {
   ADMIN_MASTER: { name: 'Tela Master', href: createPageUrl('AdminMaster'), icon: Building2, description: 'Admin Only', adminOnly: true },
 };
 
+// Estrutura Completa (Dono / Sócio / Admin / Master)
+const FULL_SIDEBAR = [
+  { 
+    group: MENU_GROUPS.DASHBOARD, 
+    items: [
+      ALL_MENUS.HOME, 
+      ALL_MENUS.IA_ANALYTICS_GESTAO, 
+      ALL_MENUS.GENERAL_DASHBOARD, 
+      ALL_MENUS.GOALS,
+      ALL_MENUS.GAMIFICATION
+    ] 
+  },
+  { 
+    group: MENU_GROUPS.FINANCIAL, 
+    items: [
+      ALL_MENUS.DRE, 
+      ALL_MENUS.FINANCIAL_REPORTS
+    ] 
+  },
+  { 
+    group: MENU_GROUPS.PEOPLE, 
+    items: [
+      ALL_MENUS.TEAM_MANAGEMENT, 
+      ALL_MENUS.EVALUATIONS, 
+      ALL_MENUS.RECRUITMENT,
+      ALL_MENUS.FEEDBACKS
+    ] 
+  },
+  { 
+    group: MENU_GROUPS.OPERATIONAL, 
+    items: [
+      ALL_MENUS.TASKS,
+      ALL_MENUS.MY_OS,
+      ALL_MENUS.INVENTORY,
+      ALL_MENUS.DOCUMENTS,
+      ALL_MENUS.AGENDA
+    ] 
+  },
+  { 
+    group: MENU_GROUPS.COMMERCIAL, 
+    items: [
+      ALL_MENUS.LEADS,
+      ALL_MENUS.SALES_TRAINING
+    ] 
+  },
+  { 
+    group: MENU_GROUPS.CULTURE, 
+    items: [
+      ALL_MENUS.CULTURE
+    ] 
+  },
+  { 
+    group: MENU_GROUPS.CONFIG, 
+    items: [
+      ALL_MENUS.WORKSHOP_MANAGEMENT
+    ] 
+  }
+];
+
 // Configuração de Menus por Função
 export const ROLE_MENUS = {
-  // Diretor / Sócio (Visão Completa)
-  diretor: [
-    { group: MENU_GROUPS.DASHBOARD, items: [ALL_MENUS.HOME, ALL_MENUS.IA_ANALYTICS_GESTAO, ALL_MENUS.GENERAL_DASHBOARD, ALL_MENUS.GOALS] },
-    { group: MENU_GROUPS.FINANCIAL, items: [ALL_MENUS.DRE, ALL_MENUS.FINANCIAL_REPORTS] },
-    { group: MENU_GROUPS.PEOPLE, items: [ALL_MENUS.TEAM_MANAGEMENT, ALL_MENUS.EVALUATIONS, ALL_MENUS.RECRUITMENT] },
-    { group: MENU_GROUPS.CULTURE, items: [ALL_MENUS.CULTURE] },
-    { group: MENU_GROUPS.CONFIG, items: [ALL_MENUS.WORKSHOP_MANAGEMENT] }
-  ],
+  // Diretor / Sócio / Dono agora veem TUDO
+  diretor: FULL_SIDEBAR,
   
   // Gerente (Visão Operacional Ampla)
   gerente: [
@@ -165,13 +218,17 @@ const normalizeRole = (role) => {
 };
 
 export const getMenusForRole = (role, isPartner = false) => {
-  // Sócios sempre têm visão de diretor, a menos que especificado
-  if (isPartner && !role) return ROLE_MENUS.diretor;
+  // Sócios sempre têm visão completa (diretor/full)
+  if (isPartner) return ROLE_MENUS.diretor;
   
+  // Donos também (se role explícito for dono)
+  if (role === 'dono' || role === 'diretor') return ROLE_MENUS.diretor;
+
   const normalized = normalizeRole(role);
   return ROLE_MENUS[normalized] || ROLE_MENUS.operacional; // Fallback seguro
 };
 
+// Retorna os menus de admin (Tela Master etc)
 export const getAdminMenus = () => {
     return [
         { 
@@ -180,3 +237,6 @@ export const getAdminMenus = () => {
         }
     ];
 };
+
+// Exporta full menus para uso direto se necessário (ex: consultoria_owner em sessão)
+export const getFullMenus = () => FULL_SIDEBAR;

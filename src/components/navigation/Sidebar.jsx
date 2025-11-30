@@ -4,9 +4,11 @@ import { createPageUrl } from "@/utils";
 import { Badge } from "@/components/ui/badge";
 import { ChevronDown, ChevronRight, FileText, Crown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getMenusForRole, getAdminMenus } from "./roleNavigation";
+import { getMenusForRole, getAdminMenus, getFullMenus } from "./roleNavigation";
+import { useAdminSession } from "@/components/admin/AdminSessionContext";
 
 export default function Sidebar({ user, employeeRecord, unreadCount, isOpen, onClose }) {
+  const { session: adminSession } = useAdminSession();
   const location = useLocation();
   // Iniciar com o primeiro grupo expandido por padrão
   const [expandedGroups, setExpandedGroups] = React.useState(['Dashboard & KPIs', 'Administração']);
@@ -23,23 +25,34 @@ export default function Sidebar({ user, employeeRecord, unreadCount, isOpen, onC
   const menus = React.useMemo(() => {
     let roleMenus = [];
     
-    // 1. Menus Administrativos Globais (Admin/Consultoria)
-    if (user?.role === 'admin' || user?.platform_role === 'consultoria_owner') {
+    // 1. Consultoria Owner: Comportamento Especial
+    if (user?.platform_role === 'consultoria_owner') {
+        // Se tem sessão ativa, mostra tudo da oficina
+        if (adminSession) {
+             roleMenus = [...roleMenus, ...getFullMenus()];
+        }
+        // Sempre mostra menus admin
         roleMenus = [...roleMenus, ...getAdminMenus()];
+        return roleMenus;
     }
 
-    // 2. Menus da Oficina (Baseado no Employee Record)
+    // 2. Admin da Plataforma (vendo oficina)
+    if (user?.role === 'admin') {
+        return [...getAdminMenus(), ...getFullMenus()];
+    }
+
+    // 3. Menus da Oficina (Baseado no Employee Record)
     if (employeeRecord) {
         const employeeMenus = getMenusForRole(employeeRecord.workshop_role, employeeRecord.is_partner);
         roleMenus = [...roleMenus, ...employeeMenus];
     } else if (user?.role === 'user' && !employeeRecord) {
         // Fallback: Se for usuário mas não tiver employee record (ex: acabou de criar conta e é dono)
-        // Assume-se 'diretor' para o dono inicial até que se crie o employee record formalmente
+        // Assume-se 'diretor' (visão completa)
         roleMenus = [...roleMenus, ...getMenusForRole('diretor', true)];
     }
 
     return roleMenus;
-  }, [user, employeeRecord]);
+  }, [user, employeeRecord, adminSession]);
 
   const isActive = (href) => {
     return location.pathname.toLowerCase() === href.toLowerCase();
