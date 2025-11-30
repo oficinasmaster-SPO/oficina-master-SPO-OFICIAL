@@ -405,6 +405,13 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           adminOnly: true
         },
         { 
+          name: 'Config. Produtividade', 
+          href: createPageUrl('AdminProdutividade'), 
+          icon: Target,
+          description: 'Métricas e desafios globais',
+          adminOnly: true
+        },
+        { 
           name: 'Gerenciar Planos', 
           href: createPageUrl('GerenciarPlanos'), 
           icon: CreditCard,
