@@ -2,16 +2,54 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Badge } from "@/components/ui/badge";
-import { ChevronDown, ChevronRight, FileText, Crown } from "lucide-react";
+import { 
+  Home, 
+  FileText, 
+  History, 
+  Bell, 
+  BarChart3, 
+  User,
+  ChevronDown,
+  ChevronRight,
+  Database,
+  TrendingUp,
+  Building2,
+  Users,
+  Brain,
+  Calculator,
+  Award,
+  BarChart4,
+  DollarSign,
+  Smile,
+  Briefcase,
+  Target,
+  ClipboardList,
+  TrendingDown,
+  Settings,
+  Trophy,
+  ListTodo,
+  Sparkles,
+  Wrench,
+  Package,
+  FileCheck,
+  Heart,
+  GraduationCap,
+  Shield,
+  Video,
+  FilePenLine,
+  GitBranch,
+  BookOpen,
+  Calendar,
+  BarChart2,
+  Crown,
+  Flame,
+  Receipt
+} from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getMenusForRole, getAdminMenus, getFullMenus } from "./roleNavigation";
-import { useAdminSession } from "@/components/admin/AdminSessionContext";
 
-export default function Sidebar({ user, employeeRecord, unreadCount, isOpen, onClose }) {
-  const { session: adminSession } = useAdminSession();
+export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
   const location = useLocation();
-  // Iniciar com o primeiro grupo expandido por padrão
-  const [expandedGroups, setExpandedGroups] = React.useState(['Dashboard & KPIs', 'Administração']);
+  const [expandedGroups, setExpandedGroups] = React.useState(['dashboard', 'cadastros']);
 
   const toggleGroup = (groupId) => {
     setExpandedGroups(prev => 
@@ -21,41 +59,360 @@ export default function Sidebar({ user, employeeRecord, unreadCount, isOpen, onC
     );
   };
 
-  // Determinar menus baseados no papel
-  const menus = React.useMemo(() => {
-    let roleMenus = [];
-    
-    // 1. Consultoria Owner: Comportamento Especial
-    if (user?.platform_role === 'consultoria_owner') {
-        // Se tem sessão ativa, mostra tudo da oficina
-        if (adminSession) {
-             roleMenus = [...roleMenus, ...getFullMenus()];
+  const navigationGroups = [
+    {
+      id: 'dashboard',
+      label: 'Dashboard & Rankings',
+      icon: BarChart3,
+      items: [
+        { 
+          name: 'Dashboard Nacional', 
+          href: createPageUrl('Dashboard'), 
+          icon: TrendingUp,
+          description: 'Métricas, rankings e KPIs',
+          adminOnly: true
+        },
+        { 
+          name: 'Desafios & Conquistas', 
+          href: createPageUrl('Gamificacao'), 
+          icon: Trophy,
+          description: 'Rankings, desafios e recompensas'
         }
-        // Sempre mostra menus admin
-        roleMenus = [...roleMenus, ...getAdminMenus()];
-        return roleMenus;
+      ]
+    },
+    {
+      id: 'cadastros',
+      label: 'Cadastros (Base de Dados)',
+      icon: Database,
+      items: [
+        { 
+          name: 'Gestão da Oficina', 
+          href: createPageUrl('GestaoOficina'), 
+          icon: Building2,
+          description: 'Dados, serviços, metas e cultura',
+          highlight: true
+        },
+        { 
+          name: 'Minha Oficina', 
+          href: createPageUrl('Cadastro'), 
+          icon: Settings,
+          description: 'Cadastro básico da oficina'
+        }
+      ]
+    },
+    {
+      id: 'patio',
+      label: 'Pátio Operação (QGP)',
+      icon: Wrench,
+      items: [
+        { 
+          name: 'Tarefas Operacionais', 
+          href: createPageUrl('Tarefas'), 
+          icon: ListTodo,
+          description: 'Gestão de tarefas do dia a dia',
+          highlight: true
+        },
+        { 
+          name: 'Notificações', 
+          href: createPageUrl('Notificacoes'), 
+          icon: Bell,
+          badge: unreadCount,
+          description: 'Alertas e prazos'
+        }
+      ]
+    },
+    {
+      id: 'resultados',
+      label: 'Resultados (OS, Metas, Finanças)',
+      icon: BarChart4,
+      items: [
+        { 
+          name: 'Histórico de Metas', 
+          href: createPageUrl('HistoricoMetas'), 
+          icon: BarChart2,
+          description: 'Relatórios e gráficos de metas',
+          highlight: true
+        },
+        { 
+          name: 'Desdobramento de Metas', 
+          href: createPageUrl('DesdobramentoMeta'), 
+          icon: GitBranch,
+          description: 'Esforço e Resultado - Meta por área',
+          highlight: true
+        },
+        { 
+          name: 'Mapas de Autoavaliação', 
+          href: createPageUrl('Autoavaliacoes'), 
+          icon: Target,
+          description: 'Vendas, Comercial, Marketing, RH...',
+          highlight: true
+        },
+        { 
+          name: 'DRE & TCMP²', 
+          href: createPageUrl('DRETCMP2'), 
+          icon: Calculator,
+          description: 'DRE mensal e cálculo TCMP²',
+          highlight: true
+        },
+        { 
+          name: 'OS - R70/I30', 
+          href: createPageUrl('DiagnosticoOS'), 
+          icon: DollarSign,
+          description: 'Rentabilidade de Ordens de Serviço'
+        },
+        { 
+          name: 'Produção vs Salário', 
+          href: createPageUrl('DiagnosticoProducao'), 
+          icon: Calculator,
+          description: 'Relação custo x produtividade'
+        },
+        { 
+          name: 'Curva de Endividamento',
+          href: createPageUrl('DiagnosticoEndividamento'), 
+          icon: TrendingDown,
+          description: 'Análise 12 meses com IA'
+        },
+        { 
+          name: 'Diagnóstico Gerencial', 
+          href: createPageUrl('DiagnosticoGerencial'), 
+          icon: Building2,
+          description: 'Análise de áreas da empresa',
+          highlight: true
+        }
+      ]
+    },
+    {
+      id: 'pessoas',
+      label: 'Pessoas & RH (Colaboradores)',
+      icon: Users,
+      items: [
+        { 
+          name: 'Colaboradores', 
+          href: createPageUrl('Colaboradores'), 
+          icon: Briefcase,
+          description: 'Gestão de equipe e RH',
+          highlight: true
+        },
+        { 
+          name: 'Convidar Colaborador', 
+          href: createPageUrl('ConvidarColaborador'), 
+          icon: Users,
+          description: 'Enviar convite por e-mail',
+          highlight: true
+        },
+        { 
+          name: 'CDC - Conexão do Colaborador', 
+          href: createPageUrl('CDCList'), 
+          icon: Heart,
+          description: 'Conhecer e conectar com a equipe',
+          highlight: true
+        },
+        { 
+          name: 'COEX - Contrato Expectativa', 
+          href: createPageUrl('COEXList'), 
+          icon: FilePenLine,
+          description: 'Alinhamento de metas e comportamentos',
+          highlight: true
+        },
+        { 
+          name: 'Descrições de Cargo', 
+          href: createPageUrl('DescricoesCargo'), 
+          icon: ClipboardList,
+          description: 'Geração com IA'
+        },
+        { 
+          name: 'Perfil do Empresário', 
+          href: createPageUrl('DiagnosticoEmpresario'), 
+          icon: User,
+          description: 'Aventureiro, Empreendedor, Gestor'
+        },
+        { 
+          name: 'Teste DISC', 
+          href: createPageUrl('DiagnosticoDISC'), 
+          icon: Smile,
+          description: 'Perfil comportamental DEUSA'
+        },
+        { 
+          name: 'Maturidade do Colaborador', 
+          href: createPageUrl('DiagnosticoMaturidade'), 
+          icon: Users,
+          description: 'Bebê, Criança, Adolescente, Adulto'
+        },
+        { 
+          name: 'Matriz de Desempenho', 
+          href: createPageUrl('DiagnosticoDesempenho'), 
+          icon: Award,
+          description: 'Competências técnicas e emocionais'
+        },
+        { 
+          name: 'Carga de Trabalho', 
+          href: createPageUrl('DiagnosticoCarga'), 
+          icon: BarChart4,
+          description: 'Distribuição e sobrecarga'
+        }
+      ]
+    },
+    {
+      id: 'diagnosticos',
+      label: 'Diagnósticos & IA',
+      icon: Brain,
+      items: [
+        { 
+          name: 'IA Analytics', 
+          href: createPageUrl('IAAnalytics'), 
+          icon: Sparkles,
+          description: 'Previsões, gargalos e recomendações',
+          highlight: true
+        },
+        { 
+          name: 'Treinamento de Vendas', 
+          href: createPageUrl('TreinamentoVendas'), 
+          icon: Award,
+          description: 'Pratique cenários com IA',
+          highlight: true
+        },
+        { 
+          name: 'Diagnóstico Comercial', 
+          href: createPageUrl('DiagnosticoComercial'), 
+          icon: TrendingUp,
+          description: 'Avaliação de processos comerciais',
+          highlight: true
+        },
+        { 
+          name: 'Fase da Oficina', 
+          href: createPageUrl('Questionario'), 
+          icon: FileText,
+          description: '4 Fases de evolução'
+        },
+        { 
+          name: 'Histórico de Diagnósticos', 
+          href: createPageUrl('Historico'), 
+          icon: History,
+          description: 'Todos os diagnósticos realizados'
+        }
+      ]
+    },
+    {
+      id: 'processos',
+      label: 'Processos',
+      icon: Package,
+      items: [
+        { 
+          name: 'Em Desenvolvimento', 
+          href: createPageUrl('Home'), 
+          icon: Package,
+          description: 'Gestão de processos - em breve'
+        }
+      ]
+    },
+    {
+      id: 'documentos',
+      label: 'Documentos',
+      icon: FileCheck,
+      items: [
+        { 
+          name: 'Em Desenvolvimento', 
+          href: createPageUrl('Home'), 
+          icon: FileCheck,
+          description: 'Central de documentos - em breve'
+        }
+      ]
+    },
+    {
+      id: 'cultura',
+      label: 'Cultura',
+      icon: Heart,
+      items: [
+        { 
+          name: 'Missão, Visão e Valores', 
+          href: createPageUrl('MissaoVisaoValores'), 
+          icon: Heart,
+          description: 'Cultura organizacional',
+          highlight: true
+        },
+        { 
+          name: 'Manual da Cultura', 
+          href: createPageUrl('CulturaOrganizacional'), 
+          icon: BookOpen,
+          description: 'Pilares, expectativas e rituais',
+          highlight: true
+        },
+        { 
+          name: 'Rituais de Aculturamento', 
+          href: createPageUrl('RituaisAculturamento'), 
+          icon: Flame,
+          description: '34 rituais para fortalecer a cultura',
+          highlight: true
+        },
+        { 
+          name: 'Cronograma de Aculturação', 
+          href: createPageUrl('CronogramaAculturacao'), 
+          icon: Calendar,
+          description: 'Atividades automáticas programadas',
+          highlight: true
+        },
+        { 
+          name: 'Pesquisa de Clima', 
+          href: createPageUrl('PesquisaClima'), 
+          icon: BarChart2,
+          description: 'Desempenho e satisfação da equipe',
+          highlight: true
+        }
+      ]
+    },
+    {
+      id: 'treinamentos',
+      label: 'Treinamentos',
+      icon: GraduationCap,
+      items: [
+        { 
+          name: 'Em Desenvolvimento', 
+          href: createPageUrl('Home'), 
+          icon: GraduationCap,
+          description: 'Cursos e capacitações - em breve'
+        }
+      ]
+    },
+    {
+      id: 'admin',
+      label: 'Administração & Planos',
+      icon: Shield,
+      items: [
+        { 
+          name: 'Gerenciar Planos', 
+          href: createPageUrl('GerenciarPlanos'), 
+          icon: Shield,
+          description: 'Controle de permissões e recursos por plano',
+          adminOnly: true,
+          highlight: true
+        },
+        { 
+          name: 'Gestão de Clientes', 
+          href: createPageUrl('AdminClientes'), 
+          icon: Users,
+          description: 'Painel administrativo de clientes',
+          adminOnly: true
+        },
+        { 
+          name: 'Gerenciar Tours e Vídeos', 
+          href: createPageUrl('GerenciarToursVideos'), 
+          icon: Video,
+          description: 'Configure ajuda e tours guiados',
+          adminOnly: true
+        }
+      ]
     }
-
-    // 2. Admin da Plataforma (vendo oficina)
-    if (user?.role === 'admin') {
-        return [...getAdminMenus(), ...getFullMenus()];
-    }
-
-    // 3. Menus da Oficina (Baseado no Employee Record)
-    if (employeeRecord) {
-        const employeeMenus = getMenusForRole(employeeRecord.workshop_role, employeeRecord.is_partner);
-        roleMenus = [...roleMenus, ...employeeMenus];
-    } else if (user?.role === 'user' && !employeeRecord) {
-        // Fallback: Se for usuário mas não tiver employee record (ex: acabou de criar conta e é dono)
-        // Assume-se 'diretor' (visão completa)
-        roleMenus = [...roleMenus, ...getMenusForRole('diretor', true)];
-    }
-
-    return roleMenus;
-  }, [user, employeeRecord, adminSession]);
+  ];
 
   const isActive = (href) => {
     return location.pathname.toLowerCase() === href.toLowerCase();
+  };
+
+  const canAccessItem = (item) => {
+    if (item.public) return true;
+    if (!user) return false;
+    if (item.adminOnly && user.role !== 'admin') return false;
+    return true;
   };
 
   return (
@@ -80,28 +437,46 @@ export default function Sidebar({ user, employeeRecord, unreadCount, isOpen, onC
             </div>
             <div>
               <h2 className="font-bold text-gray-900">Oficinas Master</h2>
-              <p className="text-xs text-gray-600">
-                {employeeRecord?.workshop_role 
-                    ? <span className="capitalize">{employeeRecord.workshop_role.replace('_', ' ')}</span> 
-                    : 'Sistema de Aceleração'}
-              </p>
+              <p className="text-xs text-gray-600">Sistema de Aceleração</p>
             </div>
           </Link>
         </div>
 
         <nav className="flex-1 overflow-y-auto p-4">
+          <div className="space-y-1 mb-6">
+            <Link
+              to={createPageUrl('Home')}
+              onClick={onClose}
+              className={cn(
+                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all",
+                isActive(createPageUrl('Home'))
+                  ? "bg-blue-50 text-blue-700 font-medium"
+                  : "text-gray-700 hover:bg-gray-100"
+              )}
+            >
+              <Home className="w-5 h-5" />
+              <span>Início</span>
+            </Link>
+          </div>
+
           <div className="space-y-6">
-            {menus.map((group, idx) => {
-              const groupId = group.group;
-              const isExpanded = expandedGroups.includes(groupId);
-              
+            {navigationGroups.map((group) => {
+              const visibleItems = group.items.filter(canAccessItem);
+              if (visibleItems.length === 0) return null;
+
+              const isExpanded = expandedGroups.includes(group.id);
+              const GroupIcon = group.icon;
+
               return (
-                <div key={`${groupId}-${idx}`}>
+                <div key={group.id}>
                   <button
-                    onClick={() => toggleGroup(groupId)}
+                    onClick={() => toggleGroup(group.id)}
                     className="flex items-center justify-between w-full px-2 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors"
                   >
-                    <span>{group.group}</span>
+                    <div className="flex items-center gap-2">
+                      <GroupIcon className="w-4 h-4" />
+                      <span>{group.label}</span>
+                    </div>
                     {isExpanded ? (
                       <ChevronDown className="w-4 h-4" />
                     ) : (
@@ -111,37 +486,42 @@ export default function Sidebar({ user, employeeRecord, unreadCount, isOpen, onC
 
                   {isExpanded && (
                     <div className="space-y-1 mt-2">
-                      {group.items.map((item, itemIdx) => {
+                      {visibleItems.map((item) => {
                         const Icon = item.icon;
                         const active = isActive(item.href);
-                        const badgeCount = item.name === 'Notificações' ? unreadCount : 0;
 
                         return (
                           <Link
-                            key={`${item.name}-${itemIdx}`}
+                            key={item.name}
                             to={item.href}
                             onClick={onClose}
                             className={cn(
                               "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group relative select-none",
                               active 
                                 ? "bg-blue-50 text-blue-700 font-medium" 
-                                : "text-gray-700 hover:bg-gray-100 active:bg-gray-200"
+                                : "text-gray-700 hover:bg-gray-100 active:bg-gray-200",
+                              item.highlight && !active && "bg-gradient-to-r from-blue-50/50 to-indigo-50/50 border border-blue-100 hover:border-blue-200"
                             )}
                           >
                             <Icon className={cn(
                               "w-5 h-5 flex-shrink-0",
-                              active ? "text-blue-600" : "text-gray-500 group-hover:text-gray-700"
+                              active ? "text-blue-600" : item.highlight ? "text-blue-600" : "text-gray-500 group-hover:text-gray-700"
                             )} />
                             
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between">
                                 <span className="text-sm truncate">{item.name}</span>
-                                {badgeCount > 0 && (
+                                {item.badge > 0 && (
                                   <Badge className="bg-red-500 text-white ml-2 h-5 min-w-5 px-1.5">
-                                    {badgeCount}
+                                    {item.badge}
                                   </Badge>
                                 )}
                               </div>
+                              {item.description && !active && (
+                                <p className="text-xs text-gray-500 mt-0.5 truncate">
+                                  {item.description}
+                                </p>
+                              )}
                             </div>
 
                             {active && (
@@ -157,26 +537,49 @@ export default function Sidebar({ user, employeeRecord, unreadCount, isOpen, onC
             })}
           </div>
 
-          {/* Item fixo: Escolha seu Plano (apenas se for diretor ou sem papel definido) */}
-          {(!employeeRecord || employeeRecord.is_partner || employeeRecord.workshop_role === 'diretor') && (
-             <div className="mt-6 border-t border-gray-200 pt-4">
-                <Link
-                  to={createPageUrl('CadastroPlanos')}
-                  onClick={onClose}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-3 rounded-lg transition-all",
-                    "bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 shadow-md"
-                  )}
-                >
-                  <Crown className="w-5 h-5" />
-                  <div className="flex-1">
-                    <span className="text-sm font-semibold">Escolha seu Plano</span>
-                    <p className="text-xs text-purple-100">Upgrade ou altere seu plano</p>
-                  </div>
-                </Link>
+          <div className="mt-6 px-3 py-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+            <p className="text-xs font-semibold text-blue-900 mb-1">💡 Dica</p>
+            <p className="text-xs text-blue-700">
+              Complete os diagnósticos para receber planos de ação personalizados!
+            </p>
+          </div>
+
+          {/* Item fixo: Escolha seu Plano */}
+          <div className="mt-6 border-t border-gray-200 pt-4">
+            <Link
+              to={createPageUrl('CadastroPlanos')}
+              onClick={onClose}
+              className={cn(
+                "flex items-center gap-3 px-3 py-3 rounded-lg transition-all",
+                "bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 shadow-md"
+              )}
+            >
+              <Crown className="w-5 h-5" />
+              <div className="flex-1">
+                <span className="text-sm font-semibold">Escolha seu Plano</span>
+                <p className="text-xs text-purple-100">Upgrade ou altere seu plano</p>
               </div>
-          )}
+            </Link>
+          </div>
         </nav>
+
+        {user && (
+          <div className="p-4 border-t border-gray-200">
+            <div className="flex items-center gap-3 px-3 py-2 bg-gray-50 rounded-lg">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center">
+                <User className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">
+                  {user.full_name || user.email}
+                </p>
+                <p className="text-xs text-gray-600 capitalize">
+                  {user.role === 'admin' ? 'Administrador' : user.role === 'user' ? 'Consultor' : 'Usuário'}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </aside>
     </>
   );

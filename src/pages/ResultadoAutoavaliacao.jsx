@@ -30,8 +30,8 @@ export default function ResultadoAutoavaliacao() {
         return;
       }
 
-      const assessments = await base44.entities.ProcessAssessment.filter({ id: assessmentId });
-      const current = assessments && assessments.length > 0 ? assessments[0] : null;
+      const assessments = await base44.entities.ProcessAssessment.list();
+      const current = assessments.find(a => a.id === assessmentId);
 
       if (!current) {
         toast.error("Avaliação não encontrada");

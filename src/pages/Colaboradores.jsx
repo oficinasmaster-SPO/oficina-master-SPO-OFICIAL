@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -19,47 +19,10 @@ export default function Colaboradores() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedEmployee, setSelectedEmployee] = useState(null);
 
-  // Determinar role do usuário logado (idealmente viria de um context, mas vamos buscar aqui por enquanto)
-  const [userEmployeeRecord, setUserEmployeeRecord] = useState(null);
-  const [currentUser, setCurrentUser] = useState(null);
-
-  useEffect(() => {
-     const loadUserRole = async () => {
-        try {
-            const user = await base44.auth.me();
-            setCurrentUser(user);
-            // Buscar se este user tem registro de employee
-            // Assumindo que temos a oficina do user disponível ou vamos buscar todas
-            const workshops = await base44.entities.Workshop.list();
-            // Tenta achar oficina onde ele é dono
-            const userWorkshop = workshops.find(w => w.owner_id === user.id); 
-            
-            if (userWorkshop) {
-               // Se for dono, assume partner. 
-               // Mas também buscamos se ele tem um employee record explicit (caso seja sócio convidado)
-               const emp = await base44.entities.Employee.filter({ user_id: user.id, workshop_id: userWorkshop.id });
-               if(emp.length > 0) setUserEmployeeRecord(emp[0]);
-               else setUserEmployeeRecord({ is_partner: true, workshop_role: 'diretor' }); // Fallback para dono sem registro
-            } else {
-               // Se não é dono de nenhuma, deve ser colaborador. Precisa achar onde ele trabalha.
-               // Como não temos workshop_id no contexto global fácil aqui sem prop drilling, 
-               // vamos assumir que o Employee.list vai trazer os dados da oficina dele (via RLS).
-               // Ou buscamos o employee record dele globalmente (menos performático sem workshop_id, mas funcional se RLS filtrar por user_id)
-               const myRecords = await base44.entities.Employee.filter({ user_id: user.id });
-               if(myRecords.length > 0) setUserEmployeeRecord(myRecords[0]);
-            }
-        } catch (e) {
-            console.error("Erro ao carregar perfil", e);
-        }
-     };
-     loadUserRole();
-  }, []);
-
   const { data: employees = [], isLoading } = useQuery({
     queryKey: ['employees'],
     queryFn: async () => {
       try {
-        // Buscar todos e filtrar no frontend ou aplicar filtro de RLS se possível
         const result = await base44.entities.Employee.list('-created_date');
         return Array.isArray(result) ? result : [];
       } catch (error) {
@@ -91,18 +54,9 @@ export default function Colaboradores() {
   };
 
   const filteredEmployees = Array.isArray(employees) ? employees.filter((employee) => {
-    if (!employee?.full_name) return false;
-    
-    // Filtro de RLS simulado no Frontend (Regra: Gerente não vê sócios)
-    if (userEmployeeRecord && userEmployeeRecord.workshop_role === 'gerente' && employee.is_partner) {
-        return false;
-    }
-    
-    // Filtro de busca
-    const position = employee.position || employee.workshop_role || '';
+    if (!employee?.full_name || !employee?.position) return false;
     const matchesSearch = employee.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         position.toLowerCase().includes(searchTerm.toLowerCase());
-    
+                         employee.position.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || employee.status === statusFilter;
     return matchesSearch && matchesStatus;
   }) : [];
@@ -151,7 +105,7 @@ export default function Colaboradores() {
             <p className="text-gray-600">Gerencie sua equipe com inteligência artificial</p>
           </div>
           <Button
-            onClick={() => navigate(createPageUrl("CadastroColaborador"))} // Alterado para a nova tela de convite se necessário, mas mantendo compatibilidade
+            onClick={() => navigate(createPageUrl("CadastroColaborador"))}
             className="bg-blue-600 hover:bg-blue-700"
             id="btn-novo-colaborador"
           >
@@ -214,9 +168,7 @@ export default function Colaboradores() {
                     <div className="flex items-start justify-between">
                       <div>
                         <CardTitle className="text-xl">{employee.full_name}</CardTitle>
-                        <p className="text-sm text-gray-600 mt-1">
-                            {employee.position || employee.workshop_role}
-                        </p>
+                        <p className="text-sm text-gray-600 mt-1">{employee.position}</p>
                       </div>
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[employee.status]}`}>
                         {employee.status}

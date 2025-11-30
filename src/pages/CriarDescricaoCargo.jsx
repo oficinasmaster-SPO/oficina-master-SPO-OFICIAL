@@ -152,25 +152,15 @@ export default function CriarDescricaoCargo() {
     setSubmitting(true);
 
     try {
-      // Remover campos vazios que podem causar erro de schema ou sujeira
-      const cleanData = { ...formData };
-      
-      // Salvar no banco
-      const response = await base44.entities.JobDescription.create({
-        ...cleanData,
+      await base44.entities.JobDescription.create({
+        ...formData,
         workshop_id: workshop?.id || null
       });
-
-      if (response) {
-          toast.success("Descrição de cargo salva com sucesso!");
-          navigate(createPageUrl("DescricoesCargo")); 
-      } else {
-          throw new Error("Falha ao criar registro");
-      }
-
+      toast.success("Descrição de cargo salva!");
+      navigate(createPageUrl("DescricoesCargo"));
     } catch (error) {
-      console.error("Erro ao salvar JobDescription:", error);
-      toast.error("Erro ao salvar. Verifique os campos e tente novamente.");
+      console.error(error);
+      toast.error("Erro ao salvar");
     } finally {
       setSubmitting(false);
     }

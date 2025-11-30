@@ -10,18 +10,8 @@ import Sidebar from "@/components/navigation/Sidebar";
 import Breadcrumbs from "@/components/navigation/Breadcrumbs";
 import UsageTracker from "@/components/tracking/UsageTracker";
 import { SharedDataProvider } from "@/components/shared/SharedDataProvider";
-import { AdminSessionProvider } from "@/components/admin/AdminSessionContext";
-import AdminBanner from "@/components/admin/AdminBanner";
 
 export default function Layout({ children }) {
-  return (
-    <AdminSessionProvider>
-      <LayoutContent>{children}</LayoutContent>
-    </AdminSessionProvider>
-  );
-}
-
-function LayoutContent({ children }) {
   const location = useLocation();
   const [user, setUser] = useState(null);
   const [workshop, setWorkshop] = useState(null);
@@ -32,8 +22,6 @@ function LayoutContent({ children }) {
   useEffect(() => {
     loadUser();
   }, []);
-
-  const [employeeRecord, setEmployeeRecord] = useState(null);
 
   const loadUser = async () => {
     try {
@@ -49,22 +37,6 @@ function LayoutContent({ children }) {
           const workshops = await base44.entities.Workshop.list();
           const userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
           setWorkshop(userWorkshop || null);
-
-          // Carregar registro do colaborador (para saber a função)
-          if (userWorkshop) {
-             try {
-                const employees = await base44.entities.Employee.filter({ 
-                    user_id: currentUser.id,
-                    workshop_id: userWorkshop.id
-                });
-                if (employees && employees.length > 0) {
-                    setEmployeeRecord(employees[0]);
-                }
-             } catch (e) {
-                 console.error("Erro ao carregar dados do colaborador", e);
-             }
-          }
-
         } catch (userError) {
           console.log("Error fetching user:", userError);
           setUser(null);
@@ -114,7 +86,6 @@ function LayoutContent({ children }) {
       {isAuthenticated && (
         <Sidebar 
           user={user}
-          employeeRecord={employeeRecord}
           unreadCount={unreadCount}
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
@@ -122,8 +93,6 @@ function LayoutContent({ children }) {
       )}
 
       <div className={`${isAuthenticated ? 'lg:pl-64' : ''} flex flex-col min-h-screen`}>
-        <AdminBanner />
-        
         <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30 print:hidden">
           <div className="px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">

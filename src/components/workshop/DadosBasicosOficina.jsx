@@ -63,12 +63,8 @@ export default function DadosBasicosOficina({ workshop, onUpdate }) {
   }, [workshop]);
 
   const handleSave = async () => {
-    try {
-      await onUpdate(formData);
-      setEditing(false);
-    } catch (error) {
-      console.error("Erro ao salvar:", error);
-    }
+    await onUpdate(formData);
+    setEditing(false);
   };
 
   const diasSemana = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];

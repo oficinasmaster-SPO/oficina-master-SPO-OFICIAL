@@ -1,31 +1,11 @@
 import React from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, Phone, Megaphone, Users, DollarSign, Building2, LayoutGrid, Target, ArrowRight, History, FileText, Calendar } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
-import { format } from "date-fns";
+import { TrendingUp, Phone, Megaphone, Users, DollarSign, Building2, LayoutGrid, Target, ArrowRight } from "lucide-react";
 
 export default function Autoavaliacoes() {
-  const navigate = useNavigate();
-
-  const { data: history = [] } = useQuery({
-    queryKey: ['assessments-history'],
-    queryFn: async () => {
-      try {
-        const user = await base44.auth.me();
-        if (!user) return [];
-        // Filter by evaluator_id to show only user's assessments
-        const results = await base44.entities.ProcessAssessment.filter({ evaluator_id: user.id }, '-created_date');
-        return Array.isArray(results) ? results : [];
-      } catch (error) {
-        console.error("Erro ao carregar histórico:", error);
-        return [];
-      }
-    }
-  });
   const assessments = [
   {
     title: "Processos de Vendas",
@@ -122,56 +102,10 @@ export default function Autoavaliacoes() {
                   </CardContent>
                 </Card>
               </Link>);
+
           })}
         </div>
-
-        {/* Histórico de Avaliações */}
-        {history.length > 0 && (
-          <div className="mt-16">
-            <div className="flex items-center gap-3 mb-6">
-              <History className="w-8 h-8 text-blue-600" />
-              <h2 className="text-3xl font-bold text-gray-900">Minhas Avaliações Realizadas</h2>
-            </div>
-            
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
-              <div className="grid gap-4 p-6">
-                {history.map((item) => (
-                  <div 
-                    key={item.id} 
-                    className="flex items-center justify-between p-4 rounded-lg bg-gray-50 hover:bg-blue-50 transition-colors border border-gray-200 cursor-pointer group"
-                    onClick={() => navigate(createPageUrl("ResultadoAutoavaliacao") + `?id=${item.id}`)}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition-colors">
-                        <FileText className="w-5 h-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-900 capitalize">
-                          Avaliação {item.assessment_type?.replace('_', ' ')}
-                        </h3>
-                        <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
-                            {item.created_date ? format(new Date(item.created_date), 'dd/MM/yyyy HH:mm') : 'Data N/A'}
-                          </span>
-                          <span className={`font-medium ${
-                            item.average_score >= 8 ? 'text-green-600' : 
-                            item.average_score >= 6 ? 'text-blue-600' : 'text-orange-600'
-                          }`}>
-                            Nota: {item.average_score?.toFixed(1)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="sm" className="text-blue-600 group-hover:bg-blue-100">
-                      Ver Relatório <ArrowRight className="w-4 h-4 ml-1" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>);
+
 }

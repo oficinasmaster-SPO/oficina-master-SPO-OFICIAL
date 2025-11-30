@@ -96,12 +96,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
   }, [workshop]);
 
   const handleSave = async () => {
-    try {
-      await onUpdate(formData);
-      setEditing(false);
-    } catch (error) {
-      console.error("Erro ao salvar:", error);
-    }
+    await onUpdate(formData);
+    setEditing(false);
   };
 
   const calculateTotals = () => {
