@@ -19,7 +19,10 @@ import {
   Wrench, 
   Filter, 
   UserPlus,
-  Building2
+  Building2,
+  BrainCircuit,
+  Sparkles,
+  BookOpen
 } from "lucide-react";
 import { createPageUrl } from "@/utils";
 
@@ -38,6 +41,9 @@ export const MENU_GROUPS = {
 const ALL_MENUS = {
   // Globais / Comuns
   HOME: { name: 'Início', href: createPageUrl('Home'), icon: Home, description: 'Visão Geral' },
+  IA_ANALYTICS_GESTAO: { name: 'IA Analytics', href: createPageUrl('IAAnalyticsGestao'), icon: BrainCircuit, description: 'Insights Táticos' },
+  IA_ANALYTICS_OPERACIONAL: { name: 'IA Analytics', href: createPageUrl('IAAnalyticsOperacional'), icon: Sparkles, description: 'Assistente Operacional' },
+  CULTURE: { name: 'Manual da Cultura', href: createPageUrl('ManualCultura'), icon: BookOpen, description: 'Identidade e Normas' },
   NOTIFICATIONS: { name: 'Notificações', href: createPageUrl('Notificacoes'), icon: Bell, description: 'Alertas' },
   TASKS: { name: 'Minhas Tarefas', href: createPageUrl('Tarefas'), icon: ListTodo, description: 'Gestão de atividades' },
   MY_OS: { name: 'Minhas OS/Checklists', href: createPageUrl('HomeOperacional'), icon: ClipboardList, description: 'Ordens de Serviço' },
@@ -82,47 +88,53 @@ const ALL_MENUS = {
 export const ROLE_MENUS = {
   // Diretor / Sócio (Visão Completa)
   diretor: [
-    { group: MENU_GROUPS.DASHBOARD, items: [ALL_MENUS.HOME, ALL_MENUS.GENERAL_DASHBOARD, ALL_MENUS.GOALS] },
+    { group: MENU_GROUPS.DASHBOARD, items: [ALL_MENUS.HOME, ALL_MENUS.IA_ANALYTICS_GESTAO, ALL_MENUS.GENERAL_DASHBOARD, ALL_MENUS.GOALS] },
     { group: MENU_GROUPS.FINANCIAL, items: [ALL_MENUS.DRE, ALL_MENUS.FINANCIAL_REPORTS] },
     { group: MENU_GROUPS.PEOPLE, items: [ALL_MENUS.TEAM_MANAGEMENT, ALL_MENUS.EVALUATIONS, ALL_MENUS.RECRUITMENT] },
+    { group: MENU_GROUPS.CULTURE, items: [ALL_MENUS.CULTURE] },
     { group: MENU_GROUPS.CONFIG, items: [ALL_MENUS.WORKSHOP_MANAGEMENT] }
   ],
   
   // Gerente (Visão Operacional Ampla)
   gerente: [
-    { group: MENU_GROUPS.OPERATIONAL, items: [ALL_MENUS.HOME, ALL_MENUS.TASKS, ALL_MENUS.MY_OS] },
+    { group: MENU_GROUPS.OPERATIONAL, items: [ALL_MENUS.HOME, ALL_MENUS.IA_ANALYTICS_GESTAO, ALL_MENUS.TASKS, ALL_MENUS.MY_OS] },
     { group: MENU_GROUPS.PEOPLE, items: [ALL_MENUS.TEAM_MANAGEMENT, ALL_MENUS.FEEDBACKS] },
-    { group: MENU_GROUPS.COMMERCIAL, items: [ALL_MENUS.LEADS] }
+    { group: MENU_GROUPS.COMMERCIAL, items: [ALL_MENUS.LEADS] },
+    { group: MENU_GROUPS.CULTURE, items: [ALL_MENUS.CULTURE] }
   ],
 
   // Líder Técnico
   lider_tecnico: [
-    { group: MENU_GROUPS.OPERATIONAL, items: [ALL_MENUS.TECHNICAL_HOME, ALL_MENUS.TASKS, ALL_MENUS.MY_OS] },
-    { group: MENU_GROUPS.PEOPLE, items: [ALL_MENUS.TEAM_MANAGEMENT] } // Filtrado para operacional
+    { group: MENU_GROUPS.OPERATIONAL, items: [ALL_MENUS.TECHNICAL_HOME, ALL_MENUS.IA_ANALYTICS_OPERACIONAL, ALL_MENUS.TASKS, ALL_MENUS.MY_OS] },
+    { group: MENU_GROUPS.PEOPLE, items: [ALL_MENUS.TEAM_MANAGEMENT] }, // Filtrado para operacional
+    { group: MENU_GROUPS.CULTURE, items: [ALL_MENUS.CULTURE] }
   ],
 
   // Operacionais (Técnicos, Pintores, etc)
   operacional: [
-    { group: MENU_GROUPS.OPERATIONAL, items: [ALL_MENUS.TECHNICAL_HOME, ALL_MENUS.TASKS, ALL_MENUS.MY_OS] },
-    { group: MENU_GROUPS.DASHBOARD, items: [ALL_MENUS.GAMIFICATION] }
+    { group: MENU_GROUPS.OPERATIONAL, items: [ALL_MENUS.TECHNICAL_HOME, ALL_MENUS.IA_ANALYTICS_OPERACIONAL, ALL_MENUS.TASKS, ALL_MENUS.MY_OS] },
+    { group: MENU_GROUPS.DASHBOARD, items: [ALL_MENUS.GAMIFICATION] },
+    { group: MENU_GROUPS.CULTURE, items: [ALL_MENUS.CULTURE] }
   ],
 
   // Comercial
   comercial: [
-    { group: MENU_GROUPS.COMMERCIAL, items: [ALL_MENUS.HOME, ALL_MENUS.LEADS, ALL_MENUS.TASKS, ALL_MENUS.SALES_TRAINING] },
-    { group: MENU_GROUPS.DASHBOARD, items: [ALL_MENUS.GAMIFICATION] }
+    { group: MENU_GROUPS.COMMERCIAL, items: [ALL_MENUS.HOME, ALL_MENUS.IA_ANALYTICS_OPERACIONAL, ALL_MENUS.LEADS, ALL_MENUS.TASKS, ALL_MENUS.SALES_TRAINING] },
+    { group: MENU_GROUPS.DASHBOARD, items: [ALL_MENUS.GAMIFICATION] },
+    { group: MENU_GROUPS.CULTURE, items: [ALL_MENUS.CULTURE] }
   ],
 
   // Financeiro
   financeiro: [
-    { group: MENU_GROUPS.FINANCIAL, items: [ALL_MENUS.HOME, ALL_MENUS.DRE, ALL_MENUS.FINANCIAL_REPORTS] },
-    { group: MENU_GROUPS.OPERATIONAL, items: [ALL_MENUS.TASKS] }
+    { group: MENU_GROUPS.FINANCIAL, items: [ALL_MENUS.HOME, ALL_MENUS.IA_ANALYTICS_OPERACIONAL, ALL_MENUS.DRE, ALL_MENUS.FINANCIAL_REPORTS] },
+    { group: MENU_GROUPS.OPERATIONAL, items: [ALL_MENUS.TASKS] },
+    { group: MENU_GROUPS.CULTURE, items: [ALL_MENUS.CULTURE] }
   ],
 
   // RH
   rh: [
-    { group: MENU_GROUPS.PEOPLE, items: [ALL_MENUS.HOME, ALL_MENUS.TEAM_MANAGEMENT, ALL_MENUS.RECRUITMENT, ALL_MENUS.EVALUATIONS] },
-    { group: MENU_GROUPS.CULTURE, items: [ALL_MENUS.TASKS] }
+    { group: MENU_GROUPS.PEOPLE, items: [ALL_MENUS.HOME, ALL_MENUS.IA_ANALYTICS_OPERACIONAL, ALL_MENUS.TEAM_MANAGEMENT, ALL_MENUS.RECRUITMENT, ALL_MENUS.EVALUATIONS] },
+    { group: MENU_GROUPS.CULTURE, items: [ALL_MENUS.CULTURE, ALL_MENUS.TASKS] }
   ],
   
   // Estoque
