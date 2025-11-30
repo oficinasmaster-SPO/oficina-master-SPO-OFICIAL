@@ -15,7 +15,19 @@ Deno.serve(async (req) => {
         const base44 = createClientFromRequest(req);
         const body = await req.json();
         
-        const { workshop_id, nps_score, sales_service_clarity_score, comment, customer_name, customer_phone, area, employee_id } = body;
+        const { 
+            workshop_id, 
+            nps_score, 
+            sales_service_clarity_score, 
+            technical_service_score, 
+            infrastructure_score, 
+            delight_score, 
+            comment, 
+            customer_name, 
+            customer_phone, 
+            area, 
+            employee_id 
+        } = body;
 
         if (!workshop_id || nps_score === undefined) {
             return Response.json({ error: 'Workshop ID and NPS Score are required' }, { status: 400 });
@@ -27,6 +39,9 @@ Deno.serve(async (req) => {
             workshop_id,
             nps_score: parseInt(nps_score),
             sales_service_clarity_score: sales_service_clarity_score !== undefined ? parseInt(sales_service_clarity_score) : null,
+            technical_service_score: technical_service_score !== undefined ? parseInt(technical_service_score) : null,
+            infrastructure_score: infrastructure_score !== undefined ? parseInt(infrastructure_score) : null,
+            delight_score: delight_score !== undefined ? parseInt(delight_score) : null,
             comment: comment || "",
             customer_name: customer_name || "Anônimo",
             customer_phone: customer_phone || "",

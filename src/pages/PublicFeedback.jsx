@@ -79,11 +79,15 @@ export default function PublicFeedback() {
     const [formData, setFormData] = useState({
         nps_score: null,
         sales_service_clarity_score: null,
+        technical_service_score: null,
+        infrastructure_score: null,
+        delight_score: null,
         comment: "",
         customer_name: "",
         customer_phone: "",
         area: "geral"
     });
+    const [workshop, setWorkshop] = useState(null);
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -104,6 +108,14 @@ export default function PublicFeedback() {
             customer_phone: phone || "",
             area: area || "geral"
         }));
+
+        if (wid) {
+            base44.entities.Workshop.filter({ id: wid }).then(res => {
+                if (res && res.length > 0) {
+                    setWorkshop(res[0]);
+                }
+            });
+        }
     }, []);
 
     const submitMutation = useMutation({
@@ -156,6 +168,23 @@ export default function PublicFeedback() {
                             Sua avaliação foi recebida com sucesso. 
                             Valorizamos muito sua opinião para melhorarmos nossos serviços.
                         </p>
+                        
+                        {workshop?.google_business_link && (
+                            <div className="mt-6 p-4 bg-yellow-50 border border-yellow-100 rounded-lg">
+                                <p className="text-sm font-medium text-yellow-800 mb-3">
+                                    Gostaria de ganhar um brinde especial ou desconto na próxima visita?
+                                </p>
+                                <p className="text-xs text-yellow-700 mb-4">
+                                    Avalie-nos também no Google e mostre o print na recepção!
+                                </p>
+                                <Button 
+                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                                    onClick={() => window.open(workshop.google_business_link, '_blank')}
+                                >
+                                    Avaliar no Google
+                                </Button>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             </div>
@@ -199,14 +228,46 @@ export default function PublicFeedback() {
                             </div>
                         </div>
 
-                        <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 space-y-3">
-                            <Label className="text-base font-semibold text-center block text-blue-900">
-                                Vendas - Atendimento e as informações sobre o serviço foram claras?
-                            </Label>
-                            <EmojiScale 
-                                value={formData.sales_service_clarity_score}
-                                onChange={(val) => setFormData({...formData, sales_service_clarity_score: val})}
-                            />
+                        <div className="space-y-4">
+                            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 space-y-3">
+                                <Label className="text-base font-semibold text-center block text-blue-900">
+                                    Vendas - Atendimento e as informações sobre o serviço foram claras?
+                                </Label>
+                                <EmojiScale 
+                                    value={formData.sales_service_clarity_score}
+                                    onChange={(val) => setFormData({...formData, sales_service_clarity_score: val})}
+                                />
+                            </div>
+
+                            <div className="bg-purple-50 p-4 rounded-lg border border-purple-100 space-y-3">
+                                <Label className="text-base font-semibold text-center block text-purple-900">
+                                    Produção - As informações técnicas e o serviço entregue atendeu suas expectativas?
+                                </Label>
+                                <EmojiScale 
+                                    value={formData.technical_service_score}
+                                    onChange={(val) => setFormData({...formData, technical_service_score: val})}
+                                />
+                            </div>
+
+                            <div className="bg-orange-50 p-4 rounded-lg border border-orange-100 space-y-3">
+                                <Label className="text-base font-semibold text-center block text-orange-900">
+                                    Estrutura - As salas, ambientes e banheiros atenderam suas expectativas?
+                                </Label>
+                                <EmojiScale 
+                                    value={formData.infrastructure_score}
+                                    onChange={(val) => setFormData({...formData, infrastructure_score: val})}
+                                />
+                            </div>
+
+                            <div className="bg-pink-50 p-4 rounded-lg border border-pink-100 space-y-3">
+                                <Label className="text-base font-semibold text-center block text-pink-900">
+                                    Encantamento - O serviço entregue foi além do combinado ou satisfatório?
+                                </Label>
+                                <EmojiScale 
+                                    value={formData.delight_score}
+                                    onChange={(val) => setFormData({...formData, delight_score: val})}
+                                />
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-1 gap-4">
@@ -231,12 +292,12 @@ export default function PublicFeedback() {
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="comment">Deixe um comentário (Opcional)</Label>
+                            <Label htmlFor="comment">Recomendação Livre / Comentário (Opcional)</Label>
                             <Textarea 
                                 id="comment"
                                 value={formData.comment}
                                 onChange={(e) => setFormData({...formData, comment: e.target.value})}
-                                placeholder="Conte-nos mais sobre sua experiência..."
+                                placeholder="Deixe sua recomendação ou comentário livre aqui..."
                                 className="min-h-[100px]"
                             />
                         </div>

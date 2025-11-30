@@ -62,6 +62,7 @@ export default function QualityDashboard({ workshopId, employees }) {
     const queryClient = useQueryClient();
     const [linkDialog, setLinkDialog] = useState(false);
     const [linkConfig, setLinkConfig] = useState({ employee_id: "all", area: "geral" });
+    const [googleLink, setGoogleLink] = useState("");
     const [feedbackForm, setFeedbackForm] = useState({
         customer_name: "",
         customer_phone: "",
@@ -69,6 +70,31 @@ export default function QualityDashboard({ workshopId, employees }) {
         comment: "",
         area: "geral",
         employee_id: ""
+    });
+    
+    // Fetch Workshop details for Google Link
+    const { data: workshopDetails, refetch: refetchWorkshop } = useQuery({
+        queryKey: ['workshop-details', workshopId],
+        queryFn: async () => {
+             const res = await base44.entities.Workshop.filter({ id: workshopId });
+             return res[0];
+        },
+        enabled: !!workshopId
+    });
+
+    // Initialize local state when data loads
+    React.useEffect(() => {
+        if (workshopDetails?.google_business_link) {
+            setGoogleLink(workshopDetails.google_business_link);
+        }
+    }, [workshopDetails]);
+
+    const saveGoogleLinkMutation = useMutation({
+        mutationFn: (link) => base44.entities.Workshop.update(workshopId, { google_business_link: link }),
+        onSuccess: () => {
+            toast.success("Link do Google atualizado!");
+            refetchWorkshop();
+        }
     });
 
     const { data: feedbacks = [], isLoading: isLoadingFeedbacks } = useQuery({
@@ -199,6 +225,28 @@ export default function QualityDashboard({ workshopId, employees }) {
                             <p className="text-xs text-gray-500 text-center">
                                 Dica: Envie este link pelo WhatsApp ao finalizar um serviço.
                             </p>
+                            
+                            <div className="pt-4 border-t">
+                                <Label className="mb-2 block">Link do Google Meu Negócio</Label>
+                                <div className="flex gap-2">
+                                    <Input 
+                                        placeholder="https://g.page/..." 
+                                        value={googleLink}
+                                        onChange={(e) => setGoogleLink(e.target.value)}
+                                        className="text-xs"
+                                    />
+                                    <Button 
+                                        size="sm" 
+                                        onClick={() => saveGoogleLinkMutation.mutate(googleLink)}
+                                        disabled={saveGoogleLinkMutation.isPending}
+                                    >
+                                        Salvar
+                                    </Button>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Configurar este link fará com que ele apareça na tela final de agradecimento com incentivo à avaliação.
+                                </p>
+                            </div>
                         </div>
                     </DialogContent>
                 </Dialog>
@@ -309,15 +357,32 @@ export default function QualityDashboard({ workshopId, employees }) {
                                         </div>
                                     </div>
                                     
-                                    {feedback.sales_service_clarity_score !== undefined && feedback.sales_service_clarity_score !== null && (
-                                        <div className="mb-2 flex items-center gap-2 text-sm text-gray-700 bg-blue-50 px-2 py-1 rounded border border-blue-100 w-fit">
-                                            <span className="font-semibold">Clareza Vendas:</span>
-                                            <span>{feedback.sales_service_clarity_score}/10</span>
-                                            <span>
-                                                {feedback.sales_service_clarity_score >= 9 ? "😍" : feedback.sales_service_clarity_score >= 7 ? "🙂" : feedback.sales_service_clarity_score >= 5 ? "😐" : "😟"}
-                                            </span>
-                                        </div>
-                                    )}
+                                    <div className="flex flex-wrap gap-2 mb-2">
+                                        {feedback.sales_service_clarity_score !== undefined && feedback.sales_service_clarity_score !== null && (
+                                            <div className="flex items-center gap-1 text-xs text-blue-800 bg-blue-50 px-2 py-1 rounded border border-blue-100">
+                                                <span className="font-semibold">Vendas:</span>
+                                                <span>{feedback.sales_service_clarity_score}</span>
+                                            </div>
+                                        )}
+                                        {feedback.technical_service_score !== undefined && feedback.technical_service_score !== null && (
+                                            <div className="flex items-center gap-1 text-xs text-purple-800 bg-purple-50 px-2 py-1 rounded border border-purple-100">
+                                                <span className="font-semibold">Técnico:</span>
+                                                <span>{feedback.technical_service_score}</span>
+                                            </div>
+                                        )}
+                                        {feedback.infrastructure_score !== undefined && feedback.infrastructure_score !== null && (
+                                            <div className="flex items-center gap-1 text-xs text-orange-800 bg-orange-50 px-2 py-1 rounded border border-orange-100">
+                                                <span className="font-semibold">Estrutura:</span>
+                                                <span>{feedback.infrastructure_score}</span>
+                                            </div>
+                                        )}
+                                        {feedback.delight_score !== undefined && feedback.delight_score !== null && (
+                                            <div className="flex items-center gap-1 text-xs text-pink-800 bg-pink-50 px-2 py-1 rounded border border-pink-100">
+                                                <span className="font-semibold">Encantamento:</span>
+                                                <span>{feedback.delight_score}</span>
+                                            </div>
+                                        )}
+                                    </div>
 
                                     {feedback.comment && (
                                         <div className="bg-gray-50 p-3 rounded-md mt-2 text-sm text-gray-700 italic border-l-4 border-gray-300">
