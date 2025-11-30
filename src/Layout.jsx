@@ -33,6 +33,8 @@ function LayoutContent({ children }) {
     loadUser();
   }, []);
 
+  const [employeeRecord, setEmployeeRecord] = useState(null);
+
   const loadUser = async () => {
     try {
       const authenticated = await base44.auth.isAuthenticated();
@@ -47,6 +49,22 @@ function LayoutContent({ children }) {
           const workshops = await base44.entities.Workshop.list();
           const userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
           setWorkshop(userWorkshop || null);
+
+          // Carregar registro do colaborador (para saber a função)
+          if (userWorkshop) {
+             try {
+                const employees = await base44.entities.Employee.filter({ 
+                    user_id: currentUser.id,
+                    workshop_id: userWorkshop.id
+                });
+                if (employees && employees.length > 0) {
+                    setEmployeeRecord(employees[0]);
+                }
+             } catch (e) {
+                 console.error("Erro ao carregar dados do colaborador", e);
+             }
+          }
+
         } catch (userError) {
           console.log("Error fetching user:", userError);
           setUser(null);
@@ -96,6 +114,7 @@ function LayoutContent({ children }) {
       {isAuthenticated && (
         <Sidebar 
           user={user}
+          employeeRecord={employeeRecord}
           unreadCount={unreadCount}
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}

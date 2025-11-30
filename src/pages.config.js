@@ -74,6 +74,8 @@ import ConvidarColaborador from './pages/ConvidarColaborador';
 import PrimeiroAcesso from './pages/PrimeiroAcesso';
 import PortalColaborador from './pages/PortalColaborador';
 import AdminMaster from './pages/AdminMaster';
+import HomeOperacional from './pages/HomeOperacional';
+import HomeGerente from './pages/HomeGerente';
 import __Layout from './Layout.jsx';
 
 
@@ -154,6 +156,8 @@ export const PAGES = {
     "PrimeiroAcesso": PrimeiroAcesso,
     "PortalColaborador": PortalColaborador,
     "AdminMaster": AdminMaster,
+    "HomeOperacional": HomeOperacional,
+    "HomeGerente": HomeGerente,
 }
 
 export const pagesConfig = {
