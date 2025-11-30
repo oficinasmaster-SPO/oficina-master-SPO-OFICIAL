@@ -73,6 +73,13 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           adminOnly: true
         },
         { 
+          name: 'Tela Master (Oficinas)', 
+          href: createPageUrl('AdminMaster'), 
+          icon: Building2,
+          description: 'Gestão global de oficinas',
+          adminOnly: true
+        },
+        { 
           name: 'Desafios & Conquistas', 
           href: createPageUrl('Gamificacao'), 
           icon: Trophy,
@@ -411,7 +418,12 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
   const canAccessItem = (item) => {
     if (item.public) return true;
     if (!user) return false;
-    if (item.adminOnly && user.role !== 'admin') return false;
+    if (item.adminOnly) {
+      // Permitir admin e consultoria_owner
+      if (user.role === 'admin') return true;
+      if (user.platform_role === 'consultoria_owner') return true;
+      return false;
+    }
     return true;
   };
 

@@ -74,6 +74,7 @@ import ConvidarColaborador from './pages/ConvidarColaborador';
 import PrimeiroAcesso from './pages/PrimeiroAcesso';
 import PortalColaborador from './pages/PortalColaborador';
 import AdminMaster from './pages/AdminMaster';
+import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
@@ -158,4 +159,5 @@ export const PAGES = {
 export const pagesConfig = {
     mainPage: "Home",
     Pages: PAGES,
+    Layout: __Layout,
 };
