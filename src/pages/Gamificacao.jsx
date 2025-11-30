@@ -91,8 +91,7 @@ export default function Gamificacao() {
     retry: 1
   });
 
-  // Find the current user's employee record correctly using user.email or user.id if mapped
-  const myEmployeeRecord = employees.find(e => e.email === user?.email); // This assumes email matching which is standard
+
 
 
   const { data: workshops = [] } = useQuery({
