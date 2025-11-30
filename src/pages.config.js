@@ -76,6 +76,10 @@ import PortalColaborador from './pages/PortalColaborador';
 import AdminMaster from './pages/AdminMaster';
 import HomeOperacional from './pages/HomeOperacional';
 import HomeGerente from './pages/HomeGerente';
+import IAAnalyticsGestao from './pages/IAAnalyticsGestao';
+import IAAnalyticsOperacional from './pages/IAAnalyticsOperacional';
+import SeletorDiagnosticos from './pages/SeletorDiagnosticos';
+import ManualCultura from './pages/ManualCultura';
 import __Layout from './Layout.jsx';
 
 
@@ -158,6 +162,10 @@ export const PAGES = {
     "AdminMaster": AdminMaster,
     "HomeOperacional": HomeOperacional,
     "HomeGerente": HomeGerente,
+    "IAAnalyticsGestao": IAAnalyticsGestao,
+    "IAAnalyticsOperacional": IAAnalyticsOperacional,
+    "SeletorDiagnosticos": SeletorDiagnosticos,
+    "ManualCultura": ManualCultura,
 }
 
 export const pagesConfig = {
