@@ -4,7 +4,7 @@ import { createPageUrl } from "@/utils";
 import { Badge } from "@/components/ui/badge";
 import { ChevronDown, ChevronRight, FileText, Crown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getMenusForRole, getAdminMenus } from "@/utils/roleNavigation";
+import { getMenusForRole, getAdminMenus } from "./roleNavigation";
 
 export default function Sidebar({ user, employeeRecord, unreadCount, isOpen, onClose }) {
   const location = useLocation();
