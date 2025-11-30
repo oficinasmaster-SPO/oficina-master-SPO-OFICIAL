@@ -4,13 +4,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Trophy, Award, Target, Sparkles, Plus, Wrench } from "lucide-react";
+import { Loader2, Trophy, Award, Target, Sparkles, Plus, Wrench, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 import LevelBadge from "../components/dashboard/LevelBadge";
 import ChallengeCard from "../components/gamification/ChallengeCard";
 import DynamicRanking from "../components/gamification/DynamicRanking";
 import RewardsWall from "../components/gamification/RewardsWall";
+import RankingSection from "@/components/gamification/RankingSection";
 
 export default function Gamificacao() {
   const queryClient = useQueryClient();
@@ -99,6 +100,55 @@ export default function Gamificacao() {
     enabled: !!user,
     retry: 1
   });
+
+  // Workshop do usuário atual
+  const currentWorkshop = workshops.find(w => w.owner_id === user?.id) || 
+    workshops.find(w => employees.find(e => e.email === user?.email && e.workshop_id === w.id));
+
+  const myEmployeeRecord = employees.find(e => e.email === user?.email);
+
+  const { data: productivityRankings = [], refetch: refetchRankings } = useQuery({
+    queryKey: ['productivity-rankings', currentWorkshop?.id],
+    queryFn: async () => {
+        if (!currentWorkshop?.id) return [];
+        // Fetch rankings for current period
+        const period = new Date().toISOString().slice(0, 7);
+        const ranks = await base44.entities.ProductivityRanking.filter({ 
+            workshop_id: currentWorkshop.id,
+            period 
+        });
+        
+        // Join with employees
+        return ranks.map(rank => ({
+            ...rank,
+            employee: employees.find(e => e.id === rank.employee_id)
+        }));
+    },
+    enabled: !!currentWorkshop?.id && employees.length > 0
+  });
+
+  const calculateRankingsMutation = useMutation({
+    mutationFn: async () => {
+        return await base44.functions.invoke('calculateRankings', { 
+            workshop_id: currentWorkshop.id,
+            period: new Date().toISOString().slice(0, 7)
+        });
+    },
+    onSuccess: () => {
+        refetchRankings();
+        toast.success("Rankings atualizados com sucesso!");
+    },
+    onError: (error) => {
+        toast.error("Erro ao atualizar rankings: " + error.message);
+    }
+  });
+
+  useEffect(() => {
+    if (currentWorkshop?.id) {
+        // Attempt to calculate/refresh on load
+        calculateRankingsMutation.mutate();
+    }
+  }, [currentWorkshop?.id]);
 
   const createChallengeMutation = useMutation({
     mutationFn: async () => {
@@ -294,7 +344,41 @@ export default function Gamificacao() {
 
           {/* Rankings */}
           <TabsContent value="rankings">
-            <DynamicRanking employees={employees} workshops={workshops} />
+             <div className="grid gap-6">
+                {/* Productivity Rankings Section */}
+                <div className="mb-4">
+                    <div className="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 className="text-lg font-bold text-gray-900">Rankings de Produtividade</h3>
+                            <p className="text-sm text-gray-500">Baseado nos registros diários e engajamento</p>
+                        </div>
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => calculateRankingsMutation.mutate()}
+                            disabled={calculateRankingsMutation.isPending}
+                        >
+                            {calculateRankingsMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+                            Atualizar
+                        </Button>
+                    </div>
+                    
+                    <RankingSection 
+                        rankings={productivityRankings} 
+                        userEmployee={myEmployeeRecord}
+                    />
+                </div>
+
+                {/* XP General Ranking */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Ranking Geral (XP)</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <DynamicRanking employees={employees} workshops={workshops} />
+                  </CardContent>
+                </Card>
+            </div>
           </TabsContent>
 
           {/* Minhas Recompensas */}
