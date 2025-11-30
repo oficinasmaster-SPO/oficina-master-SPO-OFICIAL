@@ -46,7 +46,8 @@ import {
   Crown,
   Flame,
   Receipt,
-  CreditCard
+  CreditCard,
+  MessageCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
