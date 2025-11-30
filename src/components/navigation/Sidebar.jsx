@@ -388,6 +388,12 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: Lightbulb,
           description: 'Mural de avisos para a equipe',
           highlight: true
+        },
+        { 
+          name: 'Criar Desafios Internos', 
+          href: createPageUrl('GestaoDesafios'), 
+          icon: Target,
+          description: 'Crie competições para sua equipe'
         }
       ]
     },
@@ -415,7 +421,14 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           name: 'Config. Produtividade', 
           href: createPageUrl('AdminProdutividade'), 
           icon: Target,
-          description: 'Métricas e desafios globais',
+          description: 'Métricas e KPIs globais',
+          adminOnly: true
+        },
+        { 
+          name: 'Gestão Desafios Globais', 
+          href: createPageUrl('AdminDesafios'), 
+          icon: Trophy,
+          description: 'Desafios nível Brasil',
           adminOnly: true
         },
         { 

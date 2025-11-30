@@ -79,6 +79,8 @@ import GerenciarTelaInicial from './pages/GerenciarTelaInicial';
 import DicasOperacao from './pages/DicasOperacao';
 import AdminProdutividade from './pages/AdminProdutividade';
 import RegistroDiario from './pages/RegistroDiario';
+import AdminDesafios from './pages/AdminDesafios';
+import GestaoDesafios from './pages/GestaoDesafios';
 import __Layout from './Layout.jsx';
 
 
@@ -164,6 +166,8 @@ export const PAGES = {
     "DicasOperacao": DicasOperacao,
     "AdminProdutividade": AdminProdutividade,
     "RegistroDiario": RegistroDiario,
+    "AdminDesafios": AdminDesafios,
+    "GestaoDesafios": GestaoDesafios,
 }
 
 export const pagesConfig = {
