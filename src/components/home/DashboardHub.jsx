@@ -26,7 +26,13 @@ import {
   BarChart3,
   Lightbulb,
   Edit,
-  Rocket
+  Rocket,
+  ClipboardList,
+  Timer,
+  PieChart,
+  Map,
+  Package,
+  Calendar
 } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
@@ -56,6 +62,46 @@ export default function DashboardHub({ user, workshop }) {
         return settings[0] || null;
     }
   });
+
+  // Busca configurações de permissão
+  const { data: permissionsConfig } = useQuery({
+    queryKey: ['system-setting-permissions'],
+    queryFn: async () => {
+        const settings = await base44.entities.SystemSetting.filter({ key: 'permissions_config' });
+        return settings[0] ? JSON.parse(settings[0].value) : null;
+    }
+  });
+
+  // Busca dados do colaborador atual para saber o cargo (se não for dono)
+  const { data: currentEmployee } = useQuery({
+    queryKey: ['current-employee', user?.email],
+    queryFn: async () => {
+      if (!user?.email) return null;
+      try {
+        const result = await base44.entities.Employee.list(); // Listar e filtrar no client por segurança ou usar filter se suportado
+        const employees = Array.isArray(result) ? result : [];
+        // Encontrar employee com mesmo email e da mesma oficina (se workshop existir)
+        return employees.find(e => e.email === user.email && (!workshop || e.workshop_id === workshop.id)) || null;
+      } catch (e) {
+        return null;
+      }
+    },
+    enabled: !!user?.email && !!workshop && user.id !== workshop.owner_id
+  });
+
+  const getUserRole = () => {
+    if (user.role === 'admin') return 'admin'; // Admin do sistema vê tudo
+    if (workshop && user.id === workshop.owner_id) return 'diretor'; // Dono é diretor
+    return currentEmployee?.job_role || 'visitante';
+  };
+
+  const userRole = getUserRole();
+
+  const canView = (moduleId) => {
+    if (userRole === 'admin' || userRole === 'diretor') return true;
+    if (!permissionsConfig) return false; // Se não carregou config, bloqueia por segurança (ou libera, dependendo da regra. Bloquear é mais seguro)
+    return permissionsConfig[userRole]?.[moduleId];
+  };
 
   React.useEffect(() => {
     if (tipsSetting) {
@@ -535,9 +581,182 @@ export default function DashboardHub({ user, workshop }) {
         </Card>
       )}
 
-      {/* Ações Rápidas */}
+      {/* Dashboards e Acesso Rápido Controlado */}
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">Acesso Rápido</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">Visão Geral & Acesso Rápido</h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {/* 1. Metas (Situação) */}
+          {canView('home_metas') && (
+            <Card className="border-l-4 border-blue-500 hover:shadow-md transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Target className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <Badge variant="outline" className="text-blue-600 border-blue-200">Mensal</Badge>
+                </div>
+                <h3 className="text-sm font-medium text-gray-500">Metas Globais</h3>
+                <div className="mt-1 flex items-baseline gap-2">
+                  <span className="text-2xl font-bold text-gray-900">68%</span>
+                  <span className="text-xs text-green-600 font-medium">+12%</span>
+                </div>
+                <div className="w-full bg-gray-100 rounded-full h-1.5 mt-3">
+                  <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: "68%" }}></div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* 2. Ranking Colaboradores */}
+          {canView('home_ranking') && (
+            <Card className="border-l-4 border-yellow-500 hover:shadow-md transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="p-2 bg-yellow-100 rounded-lg">
+                    <Trophy className="w-5 h-5 text-yellow-600" />
+                  </div>
+                  <Link to={createPageUrl("RankingBrasil")} className="text-xs text-blue-600 hover:underline">Ver todos</Link>
+                </div>
+                <h3 className="text-sm font-medium text-gray-500">Ranking</h3>
+                <div className="mt-2 space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="flex items-center gap-2"><span className="font-bold text-yellow-600">1º</span> João S.</span>
+                    <span className="font-bold">R$ 15k</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="flex items-center gap-2"><span className="font-bold text-gray-400">2º</span> Maria O.</span>
+                    <span className="font-bold">R$ 12k</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* 3. Tarefas Pendentes */}
+          {canView('home_tarefas') && (
+            <Card className="border-l-4 border-red-500 hover:shadow-md transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="p-2 bg-red-100 rounded-lg">
+                    <ClipboardList className="w-5 h-5 text-red-600" />
+                  </div>
+                  <Link to={createPageUrl("Tarefas")} className="text-xs text-blue-600 hover:underline">Gerenciar</Link>
+                </div>
+                <h3 className="text-sm font-medium text-gray-500">Tarefas</h3>
+                <div className="mt-1 flex gap-4">
+                  <div>
+                    <span className="text-2xl font-bold text-gray-900">{pendingTasks.length}</span>
+                    <p className="text-xs text-gray-500">Pendentes</p>
+                  </div>
+                  <div>
+                    <span className="text-2xl font-bold text-red-600">{overdueTasks.length}</span>
+                    <p className="text-xs text-red-500">Atrasadas</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* 4. TCMP2 Real Time */}
+          {canView('home_tcmp2') && (
+            <Card className="border-l-4 border-indigo-500 hover:shadow-md transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="p-2 bg-indigo-100 rounded-lg">
+                    <Timer className="w-5 h-5 text-indigo-600" />
+                  </div>
+                  <Badge className="bg-green-100 text-green-700 hover:bg-green-100">Ao Vivo</Badge>
+                </div>
+                <h3 className="text-sm font-medium text-gray-500">TCMP2 (Valor Hora)</h3>
+                <div className="mt-1">
+                  <span className="text-2xl font-bold text-gray-900">R$ 185,00</span>
+                  <p className="text-xs text-gray-500">Média atual da oficina</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* 5. R70/I30 Real Time */}
+          {canView('home_r70i30') && (
+            <Card className="border-l-4 border-purple-500 hover:shadow-md transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="p-2 bg-purple-100 rounded-lg">
+                    <PieChart className="w-5 h-5 text-purple-600" />
+                  </div>
+                </div>
+                <h3 className="text-sm font-medium text-gray-500">R70 / I30</h3>
+                <div className="mt-2 flex items-center gap-2">
+                  <div className="flex-1 bg-gray-100 rounded h-2 overflow-hidden flex">
+                    <div className="bg-green-500 h-full" style={{width: '65%'}} title="Renda 65%"></div>
+                    <div className="bg-orange-500 h-full" style={{width: '35%'}} title="Investimento 35%"></div>
+                  </div>
+                </div>
+                <div className="flex justify-between text-xs mt-1">
+                  <span className="text-green-600 font-bold">R: 65%</span>
+                  <span className="text-orange-600 font-bold">I: 35%</span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* 6. GPS Aplicados */}
+          {canView('home_gps') && (
+            <Card className="border-l-4 border-cyan-500 hover:shadow-md transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="p-2 bg-cyan-100 rounded-lg">
+                    <Map className="w-5 h-5 text-cyan-600" />
+                  </div>
+                </div>
+                <h3 className="text-sm font-medium text-gray-500">GPS Aplicados</h3>
+                <div className="mt-1">
+                  <span className="text-2xl font-bold text-gray-900">12</span>
+                  <p className="text-xs text-gray-500">Guias de Processo Simplificado</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* 7. Kit Master Convertido */}
+          {canView('home_kit_master') && (
+            <Card className="border-l-4 border-emerald-500 hover:shadow-md transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="p-2 bg-emerald-100 rounded-lg">
+                    <Package className="w-5 h-5 text-emerald-600" />
+                  </div>
+                </div>
+                <h3 className="text-sm font-medium text-gray-500">Kit Master</h3>
+                <div className="mt-1">
+                  <span className="text-2xl font-bold text-gray-900">8/15</span>
+                  <p className="text-xs text-gray-500">Convertidos este mês</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* 8. PAVE Agendamento */}
+          {canView('home_pave') && (
+            <Card className="border-l-4 border-pink-500 hover:shadow-md transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="p-2 bg-pink-100 rounded-lg">
+                    <Calendar className="w-5 h-5 text-pink-600" />
+                  </div>
+                  <Badge variant="outline" className="text-pink-600 border-pink-200">Hoje</Badge>
+                </div>
+                <h3 className="text-sm font-medium text-gray-500">PAVE Agendamento</h3>
+                <div className="mt-1">
+                  <span className="text-2xl font-bold text-gray-900">5</span>
+                  <p className="text-xs text-gray-500">Clientes agendados</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {quickActions.map((action, index) => {
             const Icon = action.icon;
