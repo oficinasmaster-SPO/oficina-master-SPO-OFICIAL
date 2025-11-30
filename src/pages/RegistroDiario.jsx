@@ -27,6 +27,8 @@ export default function RegistroDiario() {
   const [evidences, setEvidences] = useState({});
   const [notes, setNotes] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [monthlyTotalCommission, setMonthlyTotalCommission] = useState(0);
+  const [estimatedDailyCommission, setEstimatedDailyCommission] = useState(0);
 
   // Carregar usuário e colaborador vinculado
   useEffect(() => {
@@ -57,6 +59,9 @@ export default function RegistroDiario() {
                setSelectedCategory(areaMap[employees[0].area]);
              }
           }
+
+          // Carregar acumulado do mês para projeção de salário
+          loadMonthlyStats(employees[0].id);
         }
       } catch (error) {
         console.error("Erro ao carregar usuário:", error);
@@ -89,6 +94,41 @@ export default function RegistroDiario() {
     enabled: !!employee,
   });
 
+  const loadMonthlyStats = async (employeeId) => {
+      try {
+          const startOfMonth = format(new Date(date.getFullYear(), date.getMonth(), 1), 'yyyy-MM-dd');
+          const endOfMonth = format(new Date(date.getFullYear(), date.getMonth() + 1, 0), 'yyyy-MM-dd');
+          
+          // Em um app real, idealmente usaríamos uma função de backend para agregar.
+          // Aqui vamos buscar e somar no cliente (limitado a 100 logs para performance, ou usar paginação se necessário)
+          const logs = await base44.entities.DailyProductivityLog.filter({
+              employee_id: employeeId,
+              // data maior que startOfMonth... a query simples da entidade pode não suportar range complexo,
+              // então filtramos no cliente se necessário ou assumimos que pegamos os recentes
+          });
+
+          // Filtrar logs do mês atual
+          const monthLogs = logs.filter(l => l.date >= startOfMonth && l.date <= endOfMonth && l.id !== existingLog?.id);
+          
+          // Calcular comissão acumulada (precisa recalcular baseada nas regras atuais do colaborador)
+          // Nota: Isso assume que as regras não mudaram drasticamente ou que recalculamos sempre com a regra atual.
+          // Se precisasse histórico de regra, teríamos que salvar o valor da comissão no log.
+          // Para simplificar, vamos recalcular com a regra atual.
+          
+          // Mas espere! O log não tem o valor calculado da comissão.
+          // Vamos precisar da função calculateCommission para processar esses logs.
+          // Como calculateCommission depende do estado 'employee', precisamos garantir que ele esteja atualizado.
+          // Vamos deixar para calcular no render ou useEffect quando 'employee' estiver disponível.
+          // Vou guardar os logs do mês no estado.
+          setMonthlyLogs(monthLogs);
+
+      } catch (e) {
+          console.error("Erro ao carregar estatísticas mensais", e);
+      }
+  };
+
+  const [monthlyLogs, setMonthlyLogs] = useState([]);
+
   // Atualizar form quando carregar registro existente
   useEffect(() => {
     if (existingLog) {
@@ -111,6 +151,50 @@ export default function RegistroDiario() {
       setNotes("");
     }
   }, [existingLog, date]);
+
+  // Calcular estimativas financeiras sempre que o formulário ou logs mudarem
+  useEffect(() => {
+      if (!employee || !employee.commission_rules) return;
+
+      // 1. Calcular Estimativa Diária (Baseada no Form Atual)
+      let dailyTotal = 0;
+      Object.entries(formData).forEach(([code, value]) => {
+          const rule = employee.commission_rules.find(r => r.metric_code === code);
+          if (rule && value) {
+              const numValue = parseFloat(value) || 0;
+              if (numValue >= (rule.min_threshold || 0)) {
+                  if (rule.type === 'percentage') {
+                      // Percentual sobre o valor (assumindo que o input é monetário ou valor base)
+                      dailyTotal += numValue * (rule.value / 100);
+                  } else if (rule.type === 'fixed_per_unit') {
+                      // Valor fixo por unidade (ex: R$ 10 por peça)
+                      dailyTotal += numValue * rule.value;
+                  }
+              }
+          }
+      });
+      setEstimatedDailyCommission(dailyTotal);
+
+      // 2. Calcular Acumulado do Mês (Baseado nos Logs Anteriores)
+      let monthlyTotal = 0;
+      monthlyLogs.forEach(log => {
+          log.entries.forEach(entry => {
+             const rule = employee.commission_rules.find(r => r.metric_code === entry.metric_code);
+             if (rule && entry.value) {
+                 const numValue = parseFloat(entry.value) || 0;
+                 if (numValue >= (rule.min_threshold || 0)) {
+                     if (rule.type === 'percentage') {
+                         monthlyTotal += numValue * (rule.value / 100);
+                     } else if (rule.type === 'fixed_per_unit') {
+                         monthlyTotal += numValue * rule.value;
+                     }
+                 }
+             }
+          });
+      });
+      setMonthlyTotalCommission(monthlyTotal);
+
+  }, [formData, employee, monthlyLogs]);
 
   const handleInputChange = (code, value) => {
     setFormData(prev => ({ ...prev, [code]: value }));
@@ -247,6 +331,34 @@ export default function RegistroDiario() {
         </div>
       </div>
 
+      {employee && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+                <CardContent className="p-4">
+                    <p className="text-sm text-green-700 font-medium mb-1">Comissão Hoje (Estimada)</p>
+                    <p className="text-2xl font-bold text-green-800">R$ {estimatedDailyCommission.toFixed(2)}</p>
+                    <p className="text-xs text-green-600 mt-1">Baseado no preenchimento atual</p>
+                </CardContent>
+            </Card>
+            <Card className="bg-white border-gray-200">
+                <CardContent className="p-4">
+                    <p className="text-sm text-gray-500 font-medium mb-1">Comissão Mês (Acumulada)</p>
+                    <p className="text-2xl font-bold text-gray-800">R$ {(monthlyTotalCommission + estimatedDailyCommission).toFixed(2)}</p>
+                    <p className="text-xs text-gray-500 mt-1">Soma até o momento</p>
+                </CardContent>
+            </Card>
+            <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+                <CardContent className="p-4">
+                    <p className="text-sm text-blue-700 font-medium mb-1">Salário Estimado do Mês</p>
+                    <p className="text-2xl font-bold text-blue-800">
+                        R$ {((employee.salary || 0) + monthlyTotalCommission + estimatedDailyCommission).toFixed(2)}
+                    </p>
+                    <p className="text-xs text-blue-600 mt-1">Salário Fixo + Comissões</p>
+                </CardContent>
+            </Card>
+        </div>
+      )}
+
       <Card className="mb-8 shadow-md border-t-4 border-t-blue-600">
         <CardHeader>
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
@@ -339,10 +451,26 @@ export default function RegistroDiario() {
                              input { padding-left: 2.5rem; }
                            `}</style>
                          )}
-                      </div>
-                    )}
+                         </div>
+                         )}
 
-                    {metric.requires_evidence && (
+                         {/* Feedback visual de impacto na comissão */}
+                         {(() => {
+                         const rule = employee?.commission_rules?.find(r => r.metric_code === metric.code);
+                         if (rule) {
+                           return (
+                               <div className="mt-1 flex items-center gap-1 text-xs text-green-600 font-medium">
+                                   <span className="bg-green-100 px-1.5 py-0.5 rounded">
+                                       +{rule.type === 'percentage' ? `${rule.value}%` : `R$ ${rule.value}`}
+                                   </span>
+                                   <span>de comissão</span>
+                               </div>
+                           );
+                         }
+                         return null;
+                         })()}
+
+                         {metric.requires_evidence && (
                       <div className="mt-2">
                         {evidences[metric.code] ? (
                           <div className="flex items-center gap-2 text-green-600 text-sm bg-green-50 p-2 rounded border border-green-100">
