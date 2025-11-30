@@ -54,9 +54,19 @@ export default function Home() {
         setIsLoadingWorkshop(true);
         try {
           const workshops = await base44.entities.Workshop.list();
-          const userWorkshop = Array.isArray(workshops) 
+          let userWorkshop = Array.isArray(workshops) 
             ? workshops.find(w => w.owner_id === currentUser.id) 
             : null;
+
+          // Se não encontrou como dono, tenta encontrar como colaborador
+          if (!userWorkshop) {
+              const employees = await base44.entities.Employee.filter({ email: currentUser.email });
+              const myEmployeeRecord = Array.isArray(employees) ? employees[0] : null;
+              if (myEmployeeRecord && myEmployeeRecord.workshop_id) {
+                  userWorkshop = workshops.find(w => w.id === myEmployeeRecord.workshop_id);
+              }
+          }
+
           setWorkshop(userWorkshop);
         } catch (workshopError) {
           console.log("Error fetching workshops:", workshopError);

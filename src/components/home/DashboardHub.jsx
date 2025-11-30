@@ -98,9 +98,24 @@ export default function DashboardHub({ user, workshop }) {
   const userRole = getUserRole();
 
   const canView = (moduleId) => {
+    // Admin e Diretor (Dono) sempre têm acesso total
     if (userRole === 'admin' || userRole === 'diretor') return true;
-    if (!permissionsConfig) return false; // Se não carregou config, bloqueia por segurança (ou libera, dependendo da regra. Bloquear é mais seguro)
-    return permissionsConfig[userRole]?.[moduleId];
+
+    // Verifica a configuração salva
+    const permission = permissionsConfig?.[userRole]?.[moduleId];
+    
+    // Se a permissão foi explicitamente definida (true ou false), respeita a configuração
+    if (permission !== undefined) return permission;
+
+    // Se não houver configuração (item novo ou primeira vez), define padrão:
+    // Itens da Home (Acesso Rápido) são visíveis por padrão para cargos de gestão
+    if (moduleId.startsWith('home_')) {
+        const managementRoles = ['gerente', 'supervisor_loja', 'lider_tecnico', 'comercial', 'rh', 'financeiro'];
+        return managementRoles.includes(userRole);
+    }
+
+    // Outros módulos padrão fechados se não configurados
+    return false;
   };
 
   React.useEffect(() => {
