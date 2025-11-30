@@ -13,6 +13,7 @@ import ChallengeCard from "../components/gamification/ChallengeCard";
 import DynamicRanking from "../components/gamification/DynamicRanking";
 import RewardsWall from "../components/gamification/RewardsWall";
 import RankingSection from "@/components/gamification/RankingSection";
+import EvidenceSubmission from "@/components/gamification/EvidenceSubmission";
 
 export default function Gamificacao() {
   const queryClient = useQueryClient();
@@ -89,6 +90,10 @@ export default function Gamificacao() {
     enabled: !!user,
     retry: 1
   });
+
+  // Find the current user's employee record correctly using user.email or user.id if mapped
+  const myEmployeeRecord = employees.find(e => e.email === user?.email); // This assumes email matching which is standard
+
 
   const { data: workshops = [] } = useQuery({
     queryKey: ['workshops'],
@@ -453,12 +458,20 @@ export default function Gamificacao() {
                       />
                     ))}
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+                  )}
+                  </CardContent>
+                  </Card>
 
-          {/* Rankings */}
+                  {/* Evidence Submission Section */}
+                  {myEmployeeRecord && (
+                  <EvidenceSubmission 
+                  activeChallenges={activeChallenges} 
+                  user={myEmployeeRecord} // Using employee record for consistent IDs (or user depending on backend logic, but logs use employee_id)
+                  />
+                  )}
+                  </TabsContent>
+
+                  {/* Rankings */}
           <TabsContent value="rankings">
              <div className="grid gap-6">
                 {/* Productivity Rankings Section */}
