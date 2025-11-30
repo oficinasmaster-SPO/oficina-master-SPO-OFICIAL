@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Plus, Trash2, Save, Target, Globe, Calendar, Award } from "lucide-react";
+import { Loader2, Plus, Trash2, Save, Target, Globe, Calendar, Award, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -55,6 +55,37 @@ export default function AdminDesafios() {
       resetForm();
     },
     onError: (e) => toast.error("Erro ao criar desafio: " + e.message)
+  });
+
+  const generateAiChallengeMutation = useMutation({
+    mutationFn: async () => {
+      const response = await base44.functions.invoke('generateChallengeAI', {
+        scope: 'global'
+      });
+      return response.data;
+    },
+    onSuccess: (data) => {
+      if (!data || data.error) {
+         toast.error("Erro ao gerar sugestão: " + (data?.error || "Resposta inválida"));
+         return;
+      }
+      // Converter as datas sugeridas ou usar padrão
+      const startDate = data.start_date ? new Date(data.start_date) : new Date();
+      const endDate = data.end_date ? new Date(data.end_date) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+      setFormData({
+        ...initialFormState,
+        ...data,
+        start_date: format(startDate, 'yyyy-MM-dd'),
+        end_date: format(endDate, 'yyyy-MM-dd')
+      });
+      setIsEditing(true);
+      toast.success("Sugestão Global da IA gerada com sucesso! Revise antes de salvar.");
+    },
+    onError: (error) => {
+      console.error(error);
+      toast.error("Erro ao gerar sugestão com IA.");
+    }
   });
 
   const updateMutation = useMutation({
@@ -118,9 +149,23 @@ export default function AdminDesafios() {
             </p>
           </div>
           {!isEditing && (
-            <Button onClick={() => setIsEditing(true)} className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="w-4 h-4 mr-2" /> Novo Desafio Global
-            </Button>
+            <div className="flex gap-2">
+                <Button 
+                  onClick={() => generateAiChallengeMutation.mutate()} 
+                  disabled={generateAiChallengeMutation.isPending}
+                  className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 border-0 shadow-md"
+                >
+                  {generateAiChallengeMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-4 h-4 mr-2 fill-yellow-300 text-yellow-100" />
+                  )}
+                  Gerar com IA
+                </Button>
+                <Button onClick={() => setIsEditing(true)} className="bg-blue-600 hover:bg-blue-700">
+                  <Plus className="w-4 h-4 mr-2" /> Novo Desafio Global
+                </Button>
+            </div>
           )}
         </div>
 
