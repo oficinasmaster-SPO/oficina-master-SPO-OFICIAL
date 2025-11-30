@@ -5,10 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Shield, Save, CheckCircle2 } from "lucide-react";
+import { Loader2, LayoutDashboard, Save, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
-export default function GerenciarPermissoes() {
+export default function GerenciarTelaInicial() {
   const queryClient = useQueryClient();
   const [permissions, setPermissions] = useState({});
   const [isSaving, setIsSaving] = useState(false);
@@ -33,18 +33,16 @@ export default function GerenciarPermissoes() {
     { id: "outros", label: "Outros" }
   ];
 
-  // Módulos do sistema (conforme Sidebar)
+  // Apenas itens da Tela Inicial
   const modules = [
-    { id: "dashboard", label: "Dashboard & Rankings" },
-    { id: "cadastros", label: "Cadastros (Oficina)" },
-    { id: "patio", label: "Pátio Operação (QGP)" },
-    { id: "resultados", label: "Resultados & Finanças" },
-    { id: "pessoas", label: "Pessoas & RH" },
-    { id: "diagnosticos", label: "Diagnósticos & IA" },
-    { id: "processos", label: "Processos" },
-    { id: "documentos", label: "Documentos" },
-    { id: "cultura", label: "Cultura" },
-    { id: "treinamentos", label: "Treinamentos" }
+    { id: "home_metas", label: "Widget: Metas (Situação)" },
+    { id: "home_ranking", label: "Widget: Ranking Colaboradores" },
+    { id: "home_tarefas", label: "Widget: Tarefas Pendentes" },
+    { id: "home_tcmp2", label: "Widget: TCMP2 Tempo Real" },
+    { id: "home_r70i30", label: "Widget: R70/I30 Tempo Real" },
+    { id: "home_gps", label: "Widget: GPS Aplicados" },
+    { id: "home_kit_master", label: "Widget: Kit Master Convertido" },
+    { id: "home_pave", label: "Widget: PAVE Agendamento" }
   ];
 
   // Carregar configurações atuais
@@ -65,10 +63,8 @@ export default function GerenciarPermissoes() {
         setPermissions({});
       }
     } else {
-      // Padrão inicial: Diretor acessa tudo
-      setPermissions({
-        diretor: modules.reduce((acc, mod) => ({ ...acc, [mod.id]: true }), {})
-      });
+      // Se não existir, cria objeto vazio (ou padrão)
+      setPermissions({});
     }
   }, [settings]);
 
@@ -98,10 +94,10 @@ export default function GerenciarPermissoes() {
       }
       
       await queryClient.invalidateQueries(['system-setting-permissions']);
-      toast.success("Permissões atualizadas com sucesso!");
+      toast.success("Configurações da Tela Inicial atualizadas!");
     } catch (error) {
       console.error(error);
-      toast.error("Erro ao salvar permissões");
+      toast.error("Erro ao salvar configurações");
     } finally {
       setIsSaving(false);
     }
@@ -109,7 +105,8 @@ export default function GerenciarPermissoes() {
 
   const handleSelectAll = (roleId) => {
     const allSelected = modules.every(m => permissions[roleId]?.[m.id]);
-    const newRolePermissions = {};
+    const newRolePermissions = { ...(permissions[roleId] || {}) };
+    
     modules.forEach(m => {
       newRolePermissions[m.id] = !allSelected;
     });
@@ -134,11 +131,11 @@ export default function GerenciarPermissoes() {
         <div className="flex flex-col md:flex-row items-center justify-between mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-              <Shield className="w-8 h-8 text-blue-600" />
-              Gerenciar Permissões
+              <LayoutDashboard className="w-8 h-8 text-blue-600" />
+              Gerenciar Tela Inicial
             </h1>
             <p className="text-gray-600 mt-1">
-              Defina quais módulos cada cargo pode visualizar no sistema
+              Defina quais widgets e indicadores aparecem na Home para cada cargo
             </p>
           </div>
           <Button 
@@ -157,8 +154,8 @@ export default function GerenciarPermissoes() {
 
         <Card className="border-none shadow-lg">
           <CardHeader className="bg-white border-b">
-            <CardTitle>Matriz de Acesso</CardTitle>
-            <CardDescription>Marque os módulos visíveis para cada função</CardDescription>
+            <CardTitle>Visibilidade dos Widgets</CardTitle>
+            <CardDescription>Marque os itens que devem aparecer no dashboard inicial</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             <Tabs defaultValue={roles[0].id} className="w-full flex flex-col md:flex-row">
@@ -180,7 +177,7 @@ export default function GerenciarPermissoes() {
                     <div className="flex items-center justify-between mb-6 pb-4 border-b">
                       <div>
                         <h3 className="text-xl font-bold text-gray-800">{role.label}</h3>
-                        <p className="text-sm text-gray-500">Configurando acesso para {role.label}</p>
+                        <p className="text-sm text-gray-500">Configurando dashboard para {role.label}</p>
                       </div>
                       <Button variant="outline" size="sm" onClick={() => handleSelectAll(role.id)}>
                         Selecionar Todos
@@ -216,9 +213,9 @@ export default function GerenciarPermissoes() {
                       ))}
                     </div>
                     
-                    <div className="mt-8 p-4 bg-yellow-50 rounded-lg border border-yellow-200 text-sm text-yellow-800">
-                        <p className="font-semibold mb-1">Nota:</p>
-                        <p>As alterações terão efeito na próxima vez que os usuários desse cargo recarregarem a página.</p>
+                    <div className="mt-8 p-4 bg-blue-50 rounded-lg border border-blue-200 text-sm text-blue-800">
+                        <p className="font-semibold mb-1">Informação:</p>
+                        <p>Estes itens correspondem aos cartões coloridos na parte superior do Dashboard Inicial.</p>
                     </div>
                   </TabsContent>
                 ))}

@@ -35,6 +35,7 @@ import {
   Heart,
   GraduationCap,
   Shield,
+  LayoutDashboard,
   Video,
   FilePenLine,
   GitBranch,
@@ -374,12 +375,19 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       icon: Shield,
       items: [
         { 
+          name: 'Gerenciar Tela Inicial', 
+          href: createPageUrl('GerenciarTelaInicial'), 
+          icon: LayoutDashboard,
+          description: 'Widgets e indicadores da Home',
+          adminOnly: true,
+          highlight: true
+        },
+        { 
           name: 'Gerenciar Permissões', 
           href: createPageUrl('GerenciarPermissoes'), 
           icon: Shield,
-          description: 'Controle de acesso por cargo',
-          adminOnly: true,
-          highlight: true
+          description: 'Acesso aos módulos laterais',
+          adminOnly: true
         },
         { 
           name: 'Gerenciar Planos', 
