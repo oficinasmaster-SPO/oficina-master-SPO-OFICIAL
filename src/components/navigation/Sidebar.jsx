@@ -116,6 +116,13 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: Bell,
           badge: unreadCount,
           description: 'Alertas e prazos'
+        },
+        { 
+          name: 'Diário de Produção', 
+          href: createPageUrl('RegistroDiario'), 
+          icon: ClipboardList,
+          description: 'Registro diário de métricas',
+          highlight: true
         }
       ]
     },
