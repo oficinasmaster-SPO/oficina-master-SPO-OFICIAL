@@ -15,11 +15,13 @@ import ServicosTerceirizados from "../components/workshop/ServicosTerceirizados"
 import MetasObjetivosCompleto from "../components/workshop/MetasObjetivosCompleto";
 import CulturaOrganizacional from "../components/workshop/CulturaOrganizacional";
 import DocumentosProcessos from "../components/workshop/DocumentosProcessos";
+import WorkshopLevelBadge from "../components/gamification/WorkshopLevelBadge";
 
 export default function GestaoOficina() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [workshop, setWorkshop] = useState(null);
+  const [workshopGameProfile, setWorkshopGameProfile] = useState(null);
   const [user, setUser] = useState(null);
   const [tcmp2Value, setTcmp2Value] = useState(0);
   const [loadingTcmp2, setLoadingTcmp2] = useState(true);
@@ -65,6 +67,25 @@ export default function GestaoOficina() {
       
       // Carregar TCMP2
       loadTcmp2(workshopToDisplay.id);
+      
+      // Carregar Perfil de Jogo da Oficina
+      try {
+        const profiles = await base44.entities.WorkshopGameProfile.filter({ workshop_id: workshopToDisplay.id });
+        if (profiles && profiles.length > 0) {
+          setWorkshopGameProfile(profiles[0]);
+        } else {
+          // Criar perfil padrão se não existir (opcional, mas bom para garantir UI)
+          const newProfile = await base44.entities.WorkshopGameProfile.create({
+            workshop_id: workshopToDisplay.id,
+            level: 1,
+            level_name: 'Iniciante',
+            xp: 0
+          });
+          setWorkshopGameProfile(newProfile);
+        }
+      } catch (e) {
+        console.log("Error loading game profile:", e);
+      }
       
     } catch (error) {
       console.log("Error loading data:", error);
@@ -144,7 +165,7 @@ export default function GestaoOficina() {
                   {workshop.segment}
                 </span>
                 <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
-                  Nível {workshop.maturity_level || 1}
+                  Maturidade Nível {workshop.maturity_level || 1}
                 </span>
                 {workshop.is_autocenter && (
                   <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">
@@ -153,9 +174,22 @@ export default function GestaoOficina() {
                 )}
               </div>
             </div>
-            <div className="text-right">
-              <p className="text-sm text-gray-600">Engajamento</p>
-              <p className="text-2xl font-bold text-blue-600">{workshop.engagement_score || 0}%</p>
+            <div className="flex flex-col items-end gap-4">
+                {workshopGameProfile && (
+                    <div className="w-64">
+                        <WorkshopLevelBadge 
+                            level={workshopGameProfile.level} 
+                            levelName={workshopGameProfile.level_name}
+                            xp={workshopGameProfile.xp}
+                        />
+                    </div>
+                )}
+                {!workshopGameProfile && (
+                    <div className="text-right">
+                        <p className="text-sm text-gray-600">Engajamento</p>
+                        <p className="text-2xl font-bold text-blue-600">{workshop.engagement_score || 0}%</p>
+                    </div>
+                )}
             </div>
           </div>
           
