@@ -23,6 +23,7 @@ export default function DadosPessoais({ employee, onUpdate }) {
     telefone: employee.telefone || "",
     email: employee.email || "",
     position: employee.position || "",
+    job_role: employee.job_role || "outros",
     area: employee.area || "",
     hire_date: employee.hire_date || "",
     status: employee.status || "ativo",
@@ -227,12 +228,38 @@ export default function DadosPessoais({ employee, onUpdate }) {
             />
           </div>
           <div>
-            <Label>Cargo *</Label>
+            <Label>Cargo (Descrição) *</Label>
             <Input
               value={formData.position}
               onChange={(e) => setFormData({...formData, position: e.target.value})}
               disabled={!editing}
             />
+          </div>
+          <div>
+            <Label>Função do Sistema</Label>
+            <Select value={formData.job_role} onValueChange={(value) => setFormData({...formData, job_role: value})} disabled={!editing}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="diretor">Diretor</SelectItem>
+                <SelectItem value="supervisor_loja">Supervisor de Loja</SelectItem>
+                <SelectItem value="gerente">Gerente</SelectItem>
+                <SelectItem value="lider_tecnico">Líder Técnico</SelectItem>
+                <SelectItem value="financeiro">Financeiro</SelectItem>
+                <SelectItem value="rh">RH</SelectItem>
+                <SelectItem value="tecnico">Técnico / Mecânico / Eletricista</SelectItem>
+                <SelectItem value="funilaria_pintura">Funileiro / Pintor / Chapeador</SelectItem>
+                <SelectItem value="comercial">Comercial / Telemarketing</SelectItem>
+                <SelectItem value="consultor_vendas">Consultor de Vendas</SelectItem>
+                <SelectItem value="marketing">Marketing / Tráfego</SelectItem>
+                <SelectItem value="estoque">Estoque</SelectItem>
+                <SelectItem value="administrativo">Administrativo</SelectItem>
+                <SelectItem value="motoboy">Moto Boy</SelectItem>
+                <SelectItem value="lavador">Lavador</SelectItem>
+                <SelectItem value="outros">Outros</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label>Área</Label>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -37,6 +36,7 @@ export default function CadastroColaborador() {
       cep: ""
     },
     position: "",
+    job_role: "outros",
     area: "",
     hire_date: "",
     salary: 0,
@@ -282,12 +282,38 @@ export default function CadastroColaborador() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <Label>Cargo/Função *</Label>
+                  <Label>Cargo/Função (Descrição) *</Label>
                   <Input
                     value={formData.position}
                     onChange={(e) => setFormData({...formData, position: e.target.value})}
                     required
                   />
+                </div>
+                <div>
+                  <Label>Função do Sistema (Permissões)</Label>
+                  <Select value={formData.job_role} onValueChange={(value) => setFormData({...formData, job_role: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="diretor">Diretor</SelectItem>
+                      <SelectItem value="supervisor_loja">Supervisor de Loja</SelectItem>
+                      <SelectItem value="gerente">Gerente</SelectItem>
+                      <SelectItem value="lider_tecnico">Líder Técnico</SelectItem>
+                      <SelectItem value="financeiro">Financeiro</SelectItem>
+                      <SelectItem value="rh">RH</SelectItem>
+                      <SelectItem value="tecnico">Técnico / Mecânico / Eletricista</SelectItem>
+                      <SelectItem value="funilaria_pintura">Funileiro / Pintor / Chapeador</SelectItem>
+                      <SelectItem value="comercial">Comercial / Telemarketing</SelectItem>
+                      <SelectItem value="consultor_vendas">Consultor de Vendas</SelectItem>
+                      <SelectItem value="marketing">Marketing / Tráfego</SelectItem>
+                      <SelectItem value="estoque">Estoque</SelectItem>
+                      <SelectItem value="administrativo">Administrativo</SelectItem>
+                      <SelectItem value="motoboy">Moto Boy</SelectItem>
+                      <SelectItem value="lavador">Lavador</SelectItem>
+                      <SelectItem value="outros">Outros</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label>Área</Label>
