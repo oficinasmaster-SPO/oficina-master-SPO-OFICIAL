@@ -304,11 +304,21 @@ export default function QualityDashboard({ workshopId, employees }) {
                                         </div>
                                         <div className={`flex flex-col items-end`}>
                                             <span className={`text-lg font-bold px-3 py-1 rounded-lg ${feedback.nps_score >= 9 ? 'bg-green-100 text-green-800' : feedback.nps_score >= 7 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
-                                                {feedback.nps_score}
+                                                NPS {feedback.nps_score}
                                             </span>
                                         </div>
                                     </div>
                                     
+                                    {feedback.sales_service_clarity_score !== undefined && feedback.sales_service_clarity_score !== null && (
+                                        <div className="mb-2 flex items-center gap-2 text-sm text-gray-700 bg-blue-50 px-2 py-1 rounded border border-blue-100 w-fit">
+                                            <span className="font-semibold">Clareza Vendas:</span>
+                                            <span>{feedback.sales_service_clarity_score}/10</span>
+                                            <span>
+                                                {feedback.sales_service_clarity_score >= 9 ? "😍" : feedback.sales_service_clarity_score >= 7 ? "🙂" : feedback.sales_service_clarity_score >= 5 ? "😐" : "😟"}
+                                            </span>
+                                        </div>
+                                    )}
+
                                     {feedback.comment && (
                                         <div className="bg-gray-50 p-3 rounded-md mt-2 text-sm text-gray-700 italic border-l-4 border-gray-300">
                                             "{feedback.comment}"

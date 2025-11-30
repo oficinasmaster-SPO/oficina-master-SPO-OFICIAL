@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Smile, Frown, Meh, Send, CheckCircle2, Loader2 } from "lucide-react";
+import { Smile, Frown, Meh, Send, CheckCircle2, Loader2, Info } from "lucide-react";
 import { toast } from "sonner";
 
 const NpsButton = ({ value, selected, onClick }) => {
@@ -29,6 +29,48 @@ const NpsButton = ({ value, selected, onClick }) => {
     );
 };
 
+const EmojiScale = ({ value, onChange }) => {
+    const getEmoji = (score) => {
+        if (score === null) return "😶";
+        if (score <= 2) return "😭";
+        if (score <= 4) return "😟";
+        if (score <= 6) return "😐";
+        if (score <= 8) return "🙂";
+        return "😍";
+    };
+
+    return (
+        <div className="space-y-3">
+            <div className="flex justify-center mb-2">
+                <span className="text-4xl transition-all transform animate-in fade-in zoom-in duration-300">
+                    {getEmoji(value)}
+                </span>
+            </div>
+            <div className="flex flex-wrap justify-center gap-1">
+                {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((score) => (
+                    <button
+                        key={score}
+                        type="button"
+                        onClick={() => onChange(score)}
+                        className={`
+                            w-8 h-8 rounded-full text-sm font-medium transition-all
+                            ${value === score 
+                                ? 'bg-indigo-600 text-white scale-110 shadow-md' 
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}
+                        `}
+                    >
+                        {score}
+                    </button>
+                ))}
+            </div>
+            <div className="flex justify-between px-4 text-xs text-gray-400">
+                <span>Não foi claro</span>
+                <span>Extremamente claro</span>
+            </div>
+        </div>
+    );
+};
+
 export default function PublicFeedback() {
     const [submitted, setSubmitted] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -36,6 +78,7 @@ export default function PublicFeedback() {
     
     const [formData, setFormData] = useState({
         nps_score: null,
+        sales_service_clarity_score: null,
         comment: "",
         customer_name: "",
         customer_phone: "",
@@ -154,6 +197,16 @@ export default function PublicFeedback() {
                                 <span>Não recomendaria</span>
                                 <span>Com certeza recomendaria</span>
                             </div>
+                        </div>
+
+                        <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 space-y-3">
+                            <Label className="text-base font-semibold text-center block text-blue-900">
+                                Vendas - Atendimento e as informações sobre o serviço foram claras?
+                            </Label>
+                            <EmojiScale 
+                                value={formData.sales_service_clarity_score}
+                                onChange={(val) => setFormData({...formData, sales_service_clarity_score: val})}
+                            />
                         </div>
 
                         <div className="grid grid-cols-1 gap-4">
