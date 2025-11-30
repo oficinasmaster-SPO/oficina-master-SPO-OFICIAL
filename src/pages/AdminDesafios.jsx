@@ -27,6 +27,8 @@ export default function AdminDesafios() {
     metric: "produtividade",
     goal_value: 0,
     reward_xp: 100,
+    additional_reward_type: "none",
+    additional_reward_description: "",
     start_date: format(new Date(), 'yyyy-MM-dd'),
     end_date: format(new Date(new Date().setDate(new Date().getDate() + 7)), 'yyyy-MM-dd'),
     status: "ativo"
@@ -298,7 +300,36 @@ export default function AdminDesafios() {
                       />
                     </div>
                   </div>
-                  
+
+                  <div className="space-y-2">
+                    <Label>Tipo Recompensa Extra</Label>
+                    <Select 
+                      value={formData.additional_reward_type || 'none'} 
+                      onValueChange={v => setFormData({...formData, additional_reward_type: v})}
+                    >
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Nenhuma</SelectItem>
+                        <SelectItem value="money">Dinheiro (R$)</SelectItem>
+                        <SelectItem value="day_off">Folga</SelectItem>
+                        <SelectItem value="gift">Presente/Brinde</SelectItem>
+                        <SelectItem value="course">Curso/Treinamento</SelectItem>
+                        <SelectItem value="other">Outro</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {formData.additional_reward_type !== 'none' && (
+                    <div className="space-y-2 md:col-span-2">
+                      <Label>Descrição da Recompensa Extra</Label>
+                      <Input 
+                        value={formData.additional_reward_description || ''} 
+                        onChange={e => setFormData({...formData, additional_reward_description: e.target.value})}
+                        placeholder="Ex: R$ 500,00 via Pix para o vencedor, Vale jantar..."
+                      />
+                    </div>
+                  )}
+
                   <div className="space-y-2">
                     <Label>Status</Label>
                     <Select 
@@ -358,10 +389,16 @@ export default function AdminDesafios() {
                         </span>
                       </div>
                       <p className="text-gray-600 text-sm max-w-2xl">{challenge.description}</p>
-                      <div className="flex gap-4 text-sm text-gray-500 mt-2">
+                      <div className="flex gap-4 text-sm text-gray-500 mt-2 flex-wrap">
                         <span>Meta: <strong>{challenge.goal_value}</strong></span>
                         <span>XP: <strong>{challenge.reward_xp}</strong></span>
                         <span>Área: <strong>{challenge.target_area}</strong></span>
+                        {challenge.additional_reward_type && challenge.additional_reward_type !== 'none' && (
+                          <span className="flex items-center gap-1 text-indigo-600 font-medium bg-indigo-50 px-2 rounded-md">
+                            <Award className="w-3 h-3" />
+                            {challenge.additional_reward_description || 'Recompensa Especial'}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="flex gap-2">
