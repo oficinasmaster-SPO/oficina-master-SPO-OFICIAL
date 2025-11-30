@@ -18,11 +18,85 @@ import {
   ArrowRight,
   FileText,
   Brain,
-  Award
+  Award,
+  Building2,
+  Plus,
+  Bell,
+  Megaphone,
+  Lightbulb,
+  Edit
 } from "lucide-react";
+import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 export default function DashboardHub({ user, workshop }) {
+  const [isNoticeDialogOpen, setIsNoticeDialogOpen] = React.useState(false);
+  const [isTipsDialogOpen, setIsTipsDialogOpen] = React.useState(false);
+  const [newNotice, setNewNotice] = React.useState({ title: "", content: "", priority: "media" });
+  const [quickTips, setQuickTips] = React.useState("");
+
+  // Queries para Avisos e Configurações
+  const { data: notices = [], refetch: refetchNotices } = useQuery({
+    queryKey: ['internal-notices'],
+    queryFn: () => base44.entities.InternalNotice.filter({ active: true }),
+    retry: 1
+  });
+
+  const { data: tipsSetting, refetch: refetchTips } = useQuery({
+    queryKey: ['system-setting-tips'],
+    queryFn: async () => {
+        const settings = await base44.entities.SystemSetting.filter({ key: 'home_quick_tips' });
+        return settings[0] || null;
+    }
+  });
+
+  React.useEffect(() => {
+    if (tipsSetting) {
+        setQuickTips(tipsSetting.value);
+    }
+  }, [tipsSetting]);
+
+  const handleSaveNotice = async () => {
+    try {
+        await base44.entities.InternalNotice.create({
+            ...newNotice,
+            active: true,
+            target_app_roles: [] // Todos por enquanto
+        });
+        setIsNoticeDialogOpen(false);
+        setNewNotice({ title: "", content: "", priority: "media" });
+        refetchNotices();
+        toast.success("Aviso publicado!");
+    } catch (error) {
+        toast.error("Erro ao publicar aviso");
+    }
+  };
+
+  const handleSaveTips = async () => {
+    try {
+        if (tipsSetting) {
+            await base44.entities.SystemSetting.update(tipsSetting.id, { value: quickTips });
+        } else {
+            await base44.entities.SystemSetting.create({
+                key: 'home_quick_tips',
+                value: quickTips,
+                description: 'Dicas rápidas da tela inicial'
+            });
+        }
+        setIsTipsDialogOpen(false);
+        refetchTips();
+        toast.success("Dicas atualizadas!");
+    } catch (error) {
+        toast.error("Erro ao salvar dicas");
+    }
+  };
+
+
   const { data: diagnostics = [] } = useQuery({
     queryKey: ['user-diagnostics', user?.id],
     queryFn: async () => {
@@ -134,7 +208,7 @@ export default function DashboardHub({ user, workshop }) {
       title: "Novo Diagnóstico",
       description: "Avaliar evolução da oficina",
       icon: FileText,
-      href: createPageUrl("Questionario"),
+      href: createPageUrl("SelecionarDiagnostico"),
       color: "from-blue-500 to-indigo-500"
     },
     {
@@ -163,6 +237,157 @@ export default function DashboardHub({ user, workshop }) {
           Aqui está o resumo da sua oficina
         </p>
       </div>
+
+      {/* Dicas Rápidas (Admin Altera) */}
+      <Card className="mb-6 bg-gradient-to-r from-indigo-50 to-blue-50 border-l-4 border-indigo-500 shadow-sm">
+        <CardContent className="p-4 flex justify-between items-start">
+            <div className="flex gap-3">
+                <Lightbulb className="w-6 h-6 text-indigo-600 flex-shrink-0 mt-1" />
+                <div>
+                    <h3 className="font-bold text-indigo-900 text-lg mb-1">Dicas Rápidas</h3>
+                    <p className="text-indigo-800 whitespace-pre-line">
+                        {tipsSetting?.value || "Bem-vindo ao Oficinas Master! Complete seu perfil e comece seus diagnósticos."}
+                    </p>
+                </div>
+            </div>
+            {user.role === 'admin' && (
+                <Dialog open={isTipsDialogOpen} onOpenChange={setIsTipsDialogOpen}>
+                    <DialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="text-indigo-400 hover:text-indigo-600">
+                            <Edit className="w-4 h-4" />
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Editar Dicas Rápidas</DialogTitle>
+                        </DialogHeader>
+                        <div className="py-4">
+                            <Label>Texto das Dicas</Label>
+                            <Textarea 
+                                value={quickTips} 
+                                onChange={(e) => setQuickTips(e.target.value)} 
+                                rows={4} 
+                                placeholder="Digite as dicas que aparecerão para todos..." 
+                            />
+                        </div>
+                        <DialogFooter>
+                            <Button onClick={handleSaveTips}>Salvar</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+            )}
+        </CardContent>
+      </Card>
+
+      {/* Avisos Internos (Sistema de Avisos) */}
+      {notices.length > 0 && (
+        <div className="mb-6 space-y-4">
+            {notices.map((notice) => (
+                <Card key={notice.id} className="bg-yellow-50 border border-yellow-200">
+                    <CardContent className="p-4 flex gap-3">
+                        <Megaphone className="w-5 h-5 text-yellow-600 flex-shrink-0" />
+                        <div>
+                            <h4 className="font-bold text-yellow-900">{notice.title}</h4>
+                            <p className="text-sm text-yellow-800">{notice.content}</p>
+                        </div>
+                    </CardContent>
+                </Card>
+            ))}
+        </div>
+      )}
+
+      {/* Botão Admin para Criar Aviso */}
+      {user.role === 'admin' && (
+         <div className="mb-6 flex justify-end">
+            <Dialog open={isNoticeDialogOpen} onOpenChange={setIsNoticeDialogOpen}>
+                <DialogTrigger asChild>
+                    <Button variant="outline" className="border-yellow-500 text-yellow-700 hover:bg-yellow-50">
+                        <Plus className="w-4 h-4 mr-2" /> Novo Aviso
+                    </Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Criar Novo Aviso</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div>
+                            <Label>Título</Label>
+                            <Input 
+                                value={newNotice.title} 
+                                onChange={(e) => setNewNotice({...newNotice, title: e.target.value})} 
+                                placeholder="Ex: Manutenção Programada" 
+                            />
+                        </div>
+                        <div>
+                            <Label>Mensagem</Label>
+                            <Textarea 
+                                value={newNotice.content} 
+                                onChange={(e) => setNewNotice({...newNotice, content: e.target.value})} 
+                                placeholder="Digite o conteúdo do aviso..." 
+                            />
+                        </div>
+                        <div>
+                            <Label>Prioridade</Label>
+                            <Select 
+                                value={newNotice.priority} 
+                                onValueChange={(v) => setNewNotice({...newNotice, priority: v})}
+                            >
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="baixa">Baixa</SelectItem>
+                                    <SelectItem value="media">Média</SelectItem>
+                                    <SelectItem value="alta">Alta</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button onClick={handleSaveNotice}>Publicar</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+         </div>
+      )}
+
+      {/* Nível de Maturidade da Oficina */}
+      {userWorkshop && (
+        <Card className="mb-6 border-2 border-blue-100 hover:shadow-xl transition-shadow bg-white">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-blue-800">
+              <Building2 className="w-6 h-6" />
+              Fase Atual da Oficina
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="flex items-center gap-6">
+                <div className={cn(
+                  "w-24 h-24 rounded-full flex items-center justify-center text-4xl font-bold text-white shadow-lg",
+                  phaseColors[userWorkshop.maturity_level] || "bg-gray-500"
+                )}>
+                  {userWorkshop.maturity_level || 1}
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-900">
+                    {phaseLabels[userWorkshop.maturity_level || 1]}
+                  </h3>
+                  <p className="text-gray-600 mt-1 max-w-md">
+                    Sua oficina está na fase de {phaseLabels[userWorkshop.maturity_level || 1].toLowerCase()}. 
+                    Continue realizando diagnósticos para evoluir.
+                  </p>
+                </div>
+              </div>
+              <Link to={createPageUrl("SelecionarDiagnostico")}>
+                <Button size="lg" className="bg-blue-600 hover:bg-blue-700 shadow-md">
+                  <Rocket className="mr-2 w-5 h-5" />
+                  Evoluir de Nível
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
 
       {/* Alertas e Notificações */}
       {(overdueTasks.length > 0 || unreadNotifications.length > 0) && (
@@ -341,24 +566,26 @@ export default function DashboardHub({ user, workshop }) {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Link to={createPageUrl("MissaoVisaoValores")}>
-              <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-white transition-colors cursor-pointer">
+            <Link to={createPageUrl("CulturaOrganizacional")}>
+              <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-white transition-colors cursor-pointer border border-transparent hover:border-purple-200">
                 <Target className="w-8 h-8 text-purple-600" />
                 <div>
-                  <h4 className="font-semibold text-gray-900">Missão, Visão e Valores</h4>
-                  <p className="text-sm text-gray-600">Defina a cultura da sua oficina</p>
+                  <h4 className="font-semibold text-gray-900">Manual da Cultura</h4>
+                  <p className="text-sm text-gray-600">Pilares, expectativas e rituais</p>
                 </div>
               </div>
             </Link>
             
-            <Link to={createPageUrl("DescricoesCargo")}>
-              <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-white transition-colors cursor-pointer">
-                <FileText className="w-8 h-8 text-indigo-600" />
-                <div>
-                  <h4 className="font-semibold text-gray-900">Descrições de Cargo</h4>
-                  <p className="text-sm text-gray-600">Gere com IA para sua equipe</p>
+            {/* Descrição de cargo removida da tela inicial do gestor conforme solicitado */}
+            
+            <Link to={createPageUrl("MonitoramentoRH")}>
+                <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-white transition-colors cursor-pointer border border-transparent hover:border-purple-200">
+                    <Users className="w-8 h-8 text-indigo-600" />
+                    <div>
+                        <h4 className="font-semibold text-gray-900">Monitoramento RH</h4>
+                        <p className="text-sm text-gray-600">Acompanhe o clima da equipe</p>
+                    </div>
                 </div>
-              </div>
             </Link>
           </div>
         </CardContent>

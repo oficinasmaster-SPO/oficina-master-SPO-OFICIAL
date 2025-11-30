@@ -274,10 +274,10 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           highlight: true
         },
         { 
-          name: 'Fase da Oficina', 
-          href: createPageUrl('Questionario'), 
+          name: 'Selecionar Diagnóstico', 
+          href: createPageUrl('SelecionarDiagnostico'), 
           icon: FileText,
-          description: '4 Fases de evolução'
+          description: 'Central de diagnósticos'
         },
         { 
           name: 'Histórico de Diagnósticos', 
