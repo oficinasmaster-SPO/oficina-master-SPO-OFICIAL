@@ -192,7 +192,6 @@ export default function COEXForm() {
   };
 
   const handleExportPDF = () => {
-    const printWindow = window.open('', '_blank');
     if (!workshop || !user) {
       toast.error("Dados da oficina ou usuário não carregados para impressão.");
       return;

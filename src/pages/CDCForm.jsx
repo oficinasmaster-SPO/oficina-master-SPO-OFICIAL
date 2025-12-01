@@ -97,7 +97,6 @@ export default function CDCForm() {
   };
 
   const handleExportPDF = () => {
-    const printWindow = window.open('', '_blank');
     if (!workshop) {
       toast.error("Dados da oficina não carregados para impressão.");
       return;
