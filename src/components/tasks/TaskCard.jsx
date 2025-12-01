@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Calendar, User, AlertCircle, CheckCircle2, Clock, Edit2, Trash2, Repeat, Timer, Wrench, Car, RotateCcw } from "lucide-react";
+import { Calendar, User, AlertCircle, CheckCircle2, Clock, Edit2, Trash2, Repeat, Timer, Wrench, Car, RotateCcw, Shield, ListChecks, Target, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
+import { useState } from "react";
 import { format, isPast } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -49,6 +50,8 @@ export default function TaskCard({ task, employees, onEdit, onDelete, onStatusCh
   const isQGP = task.task_type && task.task_type.startsWith("qgp_");
 
   const assignedUsers = employees.filter(e => task.assigned_to?.includes(e.id));
+  const [showDetails, setShowDetails] = useState(false);
+  const hasAIDetails = task.ai_epi || task.ai_specificity || task.ai_success_indicator || (task.ai_steps && task.ai_steps.length > 0);
 
   return (
     <Card className={`hover:shadow-lg transition-all ${isOverdue ? 'border-red-300 border-2' : ''}`}>
@@ -205,6 +208,67 @@ export default function TaskCard({ task, employees, onEdit, onDelete, onStatusCh
                 {tag}
               </Badge>
             ))}
+          </div>
+        )}
+
+        {/* Detalhes IA */}
+        {hasAIDetails && (
+          <div className="pt-2 border-t">
+             <Button 
+              variant="ghost" 
+              size="sm" 
+              className="w-full justify-between text-purple-700 hover:text-purple-800 hover:bg-purple-50 h-8"
+              onClick={() => setShowDetails(!showDetails)}
+            >
+              <span className="flex items-center gap-1 text-xs font-medium">
+                <Sparkles className="w-3 h-3" /> Detalhes Operacionais
+              </span>
+              {showDetails ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+            </Button>
+            
+            {showDetails && (
+              <div className="mt-2 space-y-2 text-sm bg-purple-50 p-2 rounded border border-purple-100">
+                {task.ai_epi && (
+                  <div className="flex gap-2 items-start">
+                    <Shield className="w-3 h-3 text-purple-600 mt-0.5 shrink-0" />
+                    <div>
+                      <span className="font-semibold text-xs text-purple-900 block">EPI:</span>
+                      <span className="text-gray-700 text-xs">{task.ai_epi}</span>
+                    </div>
+                  </div>
+                )}
+                {task.ai_specificity && (
+                  <div className="flex gap-2 items-start">
+                    <AlertCircle className="w-3 h-3 text-purple-600 mt-0.5 shrink-0" />
+                    <div>
+                      <span className="font-semibold text-xs text-purple-900 block">Atenção:</span>
+                      <span className="text-gray-700 text-xs">{task.ai_specificity}</span>
+                    </div>
+                  </div>
+                )}
+                {task.ai_success_indicator && (
+                  <div className="flex gap-2 items-start">
+                    <Target className="w-3 h-3 text-purple-600 mt-0.5 shrink-0" />
+                    <div>
+                      <span className="font-semibold text-xs text-purple-900 block">Sucesso se:</span>
+                      <span className="text-gray-700 text-xs">{task.ai_success_indicator}</span>
+                    </div>
+                  </div>
+                )}
+                {task.ai_steps && task.ai_steps.length > 0 && (
+                  <div className="mt-1">
+                    <div className="flex items-center gap-1 font-semibold text-xs text-purple-900 mb-1">
+                      <ListChecks className="w-3 h-3" /> Passo a Passo:
+                    </div>
+                    <ul className="list-decimal list-inside space-y-0.5">
+                      {task.ai_steps.map((step, i) => (
+                        <li key={i} className="text-gray-700 text-xs pl-1">{step}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
