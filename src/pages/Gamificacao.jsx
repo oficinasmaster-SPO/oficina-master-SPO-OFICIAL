@@ -99,6 +99,8 @@ export default function Gamificacao() {
     queryKey: ['workshops'],
     queryFn: async () => {
       try {
+        // Otimização: listar apenas o necessário ou usar cache melhor
+        // Por enquanto mantemos list para rankings globais, mas com staleTime maior
         const result = await base44.entities.Workshop.list();
         return Array.isArray(result) ? result : [];
       } catch (error) {
@@ -107,6 +109,7 @@ export default function Gamificacao() {
       }
     },
     enabled: !!user,
+    staleTime: 1000 * 60 * 5, // 5 minutos de cache
     retry: 1
   });
 
@@ -177,12 +180,12 @@ export default function Gamificacao() {
     }
   });
 
-  useEffect(() => {
-    if (currentWorkshop?.id) {
-        // Attempt to calculate/refresh on load
-        calculateRankingsMutation.mutate();
-    }
-  }, [currentWorkshop?.id]);
+  // Removido auto-calculo ao carregar para evitar Rate Limit e loops
+  // useEffect(() => {
+  //   if (currentWorkshop?.id) {
+  //       calculateRankingsMutation.mutate();
+  //   }
+  // }, [currentWorkshop?.id]);
 
   const createChallengeMutation = useMutation({
     mutationFn: async () => {

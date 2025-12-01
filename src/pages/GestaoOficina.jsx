@@ -39,26 +39,22 @@ export default function GestaoOficina() {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
-      let workshops = [];
+      let workshopToDisplay = null;
       try {
-        const result = await base44.entities.Workshop.list();
-        workshops = Array.isArray(result) ? result : [];
+        // Otimização: Buscar apenas oficinas do usuário
+        const ownedWorkshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
+
+        if (ownedWorkshops && ownedWorkshops.length > 0) {
+          workshopToDisplay = ownedWorkshops[0];
+        } else {
+          // Se não é dono, verifica se é colaborador (através da entidade Employee se necessário, 
+          // mas aqui vamos tentar buscar por listagem limitada ou filtro se possível)
+          // Como fallback para admins ou testes, podemos listar poucos
+          const allWorkshops = await base44.entities.Workshop.list(null, 1); 
+          workshopToDisplay = allWorkshops[0];
+        }
       } catch (workshopError) {
         console.log("Error fetching workshops:", workshopError);
-        workshops = [];
-      }
-      
-      if (workshops.length === 0) {
-        setLoading(false);
-        return;
-      }
-
-      // Prioriza oficina do próprio usuário
-      let workshopToDisplay = workshops.find(w => w.owner_id === currentUser.id);
-      
-      // Se não encontrou oficina própria, pega a primeira disponível
-      if (!workshopToDisplay && workshops.length > 0) {
-        workshopToDisplay = workshops[0];
       }
 
       if (!workshopToDisplay) {

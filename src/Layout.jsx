@@ -33,10 +33,11 @@ export default function Layout({ children }) {
           const currentUser = await base44.auth.me();
           setUser(currentUser);
           
-          // Carregar oficina do usuário
-          const workshops = await base44.entities.Workshop.list();
-          const userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
-          setWorkshop(userWorkshop || null);
+          // Carregar oficina do usuário (otimizado)
+          const workshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
+          // Se não encontrar como dono, tenta buscar onde é colaborador (fallback se necessário)
+          // Para evitar chamadas pesadas, assumimos primeiro o dono
+          setWorkshop(workshops[0] || null);
         } catch (userError) {
           console.log("Error fetching user:", userError);
           setUser(null);
