@@ -289,49 +289,67 @@ Retorne em formato JSON com a estrutura:
         <head>
           <title>Missão, Visão e Valores - ${workshop?.name || 'Oficina'}</title>
           <style>
+            @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+            
             body { 
-              font-family: Arial, sans-serif; 
+              font-family: 'Poppins', sans-serif; 
               padding: 40px; 
               color: #333;
-              background: linear-gradient(135deg, ${primaryColor}15 0%, ${secondaryColor}15 100%);
+              background: white; /* Cleaner for print */
             }
             .header { 
               text-align: center; 
-              margin-bottom: 40px; 
+              margin-bottom: 30px; 
               padding-bottom: 20px;
-              border-bottom: 3px solid ${primaryColor};
+              border-bottom: 2px solid ${primaryColor};
             }
             .logo { 
-              max-width: 200px; 
-              margin-bottom: 20px; 
+              max-height: 100px; 
+              max-width: 200px;
+              object-fit: contain;
+              margin-bottom: 10px; 
+            }
+            .subtitle {
+              font-size: 12px;
+              color: #666;
+              text-transform: uppercase;
+              letter-spacing: 2px;
+              margin-top: 5px;
+              font-weight: 600;
             }
             .section { 
-              margin-bottom: 40px; 
-              background: white;
-              padding: 30px;
-              border-radius: 10px;
-              box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+              margin-bottom: 30px; 
+              background: #fff;
+              padding: 20px;
+              border-radius: 12px;
+              border: 1px solid #eee;
+              page-break-inside: avoid;
             }
             h1 { 
               color: ${primaryColor}; 
-              font-size: 28px; 
+              font-size: 26px; 
+              margin: 10px 0 5px 0;
             }
             h2 { 
               color: ${secondaryColor}; 
-              font-size: 22px; 
+              font-size: 20px; 
               margin-bottom: 15px;
-              border-left: 4px solid ${primaryColor};
-              padding-left: 15px;
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              border-bottom: 1px solid ${secondaryColor}30;
+              padding-bottom: 10px;
             }
             .statement { 
               font-style: italic; 
-              font-size: 18px; 
+              font-size: 16px; 
               line-height: 1.6; 
-              color: #555;
-              background: ${primaryColor}10;
+              color: #444;
+              background: ${primaryColor}08;
               padding: 20px;
               border-radius: 8px;
-              margin: 15px 0;
+              margin: 10px 0;
+              border-left: 4px solid ${primaryColor};
             }
             .value-item { 
               margin-bottom: 25px; 
