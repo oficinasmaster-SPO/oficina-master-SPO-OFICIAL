@@ -124,6 +124,18 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: ClipboardList,
           description: 'Registro diário de métricas',
           highlight: true
+        },
+        { 
+          name: 'Quadro QGP (TV)', 
+          href: createPageUrl('QGPBoard'), 
+          icon: Video,
+          description: 'Painel de gestão visual'
+        },
+        { 
+          name: 'Visão do Técnico', 
+          href: createPageUrl('TechnicianQGP'), 
+          icon: Wrench,
+          description: 'Interface para execução'
         }
       ]
     },
