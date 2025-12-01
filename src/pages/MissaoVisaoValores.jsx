@@ -246,8 +246,23 @@ Retorne em formato JSON com a estrutura:
   const handleSaveDocument = async () => {
     setSubmitting(true);
     try {
+      if (!workshop) {
+        toast.error("Nenhuma oficina encontrada para salvar o documento.");
+        return;
+      }
+
+      // Atualizar oficina com os dados de cultura
+      await base44.entities.Workshop.update(workshop.id, {
+        mission: generatedMission,
+        vision: generatedVision,
+        values: generatedCoreValues.map(v => v.name),
+        logo_url: logoUrl,
+        brand_colors: { primary: primaryColor, secondary: secondaryColor }
+      });
+
+      // Salvar histórico
       await base44.entities.MissionVisionValues.create({
-        workshop_id: workshop?.id || null,
+        workshop_id: workshop.id,
         mission_answers: missionAnswers,
         mission_statement: generatedMission,
         vision_answers: visionAnswers,
@@ -257,7 +272,7 @@ Retorne em formato JSON com a estrutura:
         completed: true
       });
 
-      toast.success("Documento salvo com sucesso!");
+      toast.success("Cultura organizacional salva com sucesso!");
       navigate(createPageUrl("Home"));
     } catch (error) {
       console.error(error);
@@ -350,8 +365,9 @@ Retorne em formato JSON com a estrutura:
         <body>
           <div class="header">
             ${logoUrl ? `<img src="${logoUrl}" class="logo" alt="Logo" />` : ''}
-            <h1>${workshop?.name || 'Oficina'}</h1>
-            <p>Documento de Cultura Organizacional</p>
+            <h1>${workshop?.name || 'Minha Oficina'}</h1>
+            <p class="subtitle">Oficinas Master Educação Empresarial</p>
+            <p style="margin-top: 10px; color: #666;">Documento de Cultura Organizacional</p>
           </div>
           
           <div class="section">
