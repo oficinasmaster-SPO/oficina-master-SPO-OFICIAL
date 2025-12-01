@@ -1,8 +1,16 @@
-import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useState, useEffect } from "react";
+import { base44 } from "@/api/base44Client";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { 
   Search, 
   Calendar, 
@@ -29,6 +37,89 @@ import {
 export default function RituaisAculturamento() {
   const [searchTerm, setSearchTerm] = useState("");
   const [frequencyFilter, setFrequencyFilter] = useState("all");
+  const [selectedRitual, setSelectedRitual] = useState(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [scheduleDate, setScheduleDate] = useState("");
+  const [scheduleTime, setScheduleTime] = useState("");
+  const [notes, setNotes] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [user, setUser] = useState(null);
+  const [workshop, setWorkshop] = useState(null);
+  const [scheduledRituals, setScheduledRituals] = useState([]);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      const currentUser = await base44.auth.me();
+      setUser(currentUser);
+      
+      const ownedWorkshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
+      const userWorkshop = ownedWorkshops[0];
+      setWorkshop(userWorkshop);
+
+      if (userWorkshop) {
+        loadScheduledRituals(userWorkshop.id);
+      }
+    } catch (error) {
+      console.error("Error loading data:", error);
+    }
+  };
+
+  const loadScheduledRituals = async (workshopId) => {
+    try {
+      const schedules = await base44.entities.ScheduledRitual.filter({ 
+        workshop_id: workshopId,
+        status: "agendado"
+      });
+      setScheduledRituals(schedules);
+    } catch (error) {
+      console.error("Error loading schedules:", error);
+    }
+  };
+
+  const handleSchedule = (ritual) => {
+    setSelectedRitual(ritual);
+    setScheduleDate("");
+    setScheduleTime("");
+    setNotes("");
+    setIsDialogOpen(true);
+  };
+
+  const saveSchedule = async () => {
+    if (!workshop) {
+      toast.error("Você precisa ter uma oficina cadastrada para agendar.");
+      return;
+    }
+    if (!scheduleDate || !scheduleTime) {
+      toast.error("Selecione data e hora.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const dateTime = new Date(`${scheduleDate}T${scheduleTime}`);
+      
+      await base44.entities.ScheduledRitual.create({
+        workshop_id: workshop.id,
+        ritual_name: selectedRitual.name,
+        scheduled_date: dateTime.toISOString(),
+        status: "agendado",
+        notes: notes
+      });
+
+      toast.success("Ritual agendado com sucesso!");
+      setIsDialogOpen(false);
+      loadScheduledRituals(workshop.id);
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao agendar ritual.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const rituais = [
     {
@@ -354,6 +445,16 @@ export default function RituaisAculturamento() {
                             {ritual.description}
                           </p>
                         </CardContent>
+                        <CardFooter className="pt-0">
+                          <Button 
+                            className="w-full bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200"
+                            variant="ghost"
+                            onClick={() => handleSchedule(ritual)}
+                          >
+                            <Calendar className="w-4 h-4 mr-2" />
+                            Agendar
+                          </Button>
+                        </CardFooter>
                       </Card>
                     );
                   })}
@@ -367,7 +468,7 @@ export default function RituaisAculturamento() {
               const Icon = ritual.icon;
               const freqInfo = frequencyLabels[ritual.frequency];
               return (
-                <Card key={index} className="bg-white hover:shadow-lg transition-all border-2 hover:border-purple-200">
+                <Card key={index} className="bg-white hover:shadow-lg transition-all border-2 hover:border-purple-200 flex flex-col h-full">
                   <CardHeader className="pb-2">
                     <div className="flex items-start gap-3">
                       <div className="w-10 h-10 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -381,14 +482,90 @@ export default function RituaisAculturamento() {
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="flex-grow">
                     <p className="text-sm text-gray-600 leading-relaxed">
                       {ritual.description}
                     </p>
                   </CardContent>
+                  <CardFooter className="pt-0">
+                    <Button 
+                      className="w-full bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200"
+                      variant="ghost"
+                      onClick={() => handleSchedule(ritual)}
+                    >
+                      <Calendar className="w-4 h-4 mr-2" />
+                      Agendar
+                    </Button>
+                  </CardFooter>
                 </Card>
               );
             })}
+          </div>
+        )}
+
+        {/* Dialog de Agendamento */}
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Agendar {selectedRitual?.name}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Data</Label>
+                  <Input 
+                    type="date" 
+                    value={scheduleDate} 
+                    onChange={(e) => setScheduleDate(e.target.value)} 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Hora</Label>
+                  <Input 
+                    type="time" 
+                    value={scheduleTime} 
+                    onChange={(e) => setScheduleTime(e.target.value)} 
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Observações</Label>
+                <Textarea 
+                  placeholder="Pauta, participantes ou notas..." 
+                  value={notes} 
+                  onChange={(e) => setNotes(e.target.value)} 
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+              <Button onClick={saveSchedule} disabled={saving}>
+                {saving ? "Salvando..." : "Confirmar Agendamento"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Lista de Agendamentos Futuros */}
+        {scheduledRituals.length > 0 && (
+          <div className="mt-12">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Próximos Rituais Agendados</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {scheduledRituals.map((schedule) => (
+                <Card key={schedule.id} className="bg-blue-50 border-l-4 border-blue-500">
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold text-gray-900">{schedule.ritual_name}</h3>
+                    <div className="flex items-center gap-2 text-sm text-gray-600 mt-2">
+                      <Calendar className="w-4 h-4" />
+                      {format(new Date(schedule.scheduled_date), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                    </div>
+                    {schedule.notes && (
+                      <p className="text-xs text-gray-500 mt-2 italic">"{schedule.notes}"</p>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
         )}
 

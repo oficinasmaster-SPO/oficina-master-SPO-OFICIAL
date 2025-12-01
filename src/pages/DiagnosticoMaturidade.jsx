@@ -31,14 +31,22 @@ export default function DiagnosticoMaturidade() {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
       
-      const workshops = await base44.entities.Workshop.list();
-      const userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
+      const ownedWorkshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
+      const userWorkshop = ownedWorkshops && ownedWorkshops.length > 0 ? ownedWorkshops[0] : null;
       setWorkshop(userWorkshop);
 
-      const allEmployees = await base44.entities.Employee.list();
-      const activeEmployees = allEmployees.filter(e => 
-        e.status === "ativo" && (!userWorkshop || e.workshop_id === userWorkshop.id)
-      );
+      let activeEmployees = [];
+      if (userWorkshop) {
+        activeEmployees = await base44.entities.Employee.filter({ 
+          workshop_id: userWorkshop.id, 
+          status: "ativo" 
+        });
+      } else {
+         // Fallback se não tiver oficina, tenta pegar todos (comportamento antigo, mas filtrado por status)
+         // Idealmente deveria redirecionar, mas vamos manter a lógica defensiva
+         const all = await base44.entities.Employee.list();
+         activeEmployees = all.filter(e => e.status === "ativo");
+      }
       setEmployees(activeEmployees);
     } catch (error) {
       toast.error("Você precisa estar logado");
