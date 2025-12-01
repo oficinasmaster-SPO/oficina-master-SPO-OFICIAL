@@ -43,23 +43,29 @@ export default function QGPBoard() {
     }
   };
 
-  // Fetch Tasks
+  // Fetch Workshop Settings for Lunch Time
+  const { data: workshop } = useQuery({
+    queryKey: ['workshop-settings'],
+    queryFn: async () => {
+        const u = await base44.auth.me();
+        const ws = await base44.entities.Workshop.filter({ owner_id: u.id });
+        return ws[0];
+    }
+  });
+
   const { data: tasks = [] } = useQuery({
     queryKey: ['qgp-tasks'],
     queryFn: async () => {
-      // Filter tasks that are relevant to QGP (not completed or completed today)
-      // For board we want active stuff mainly
       const allTasks = await base44.entities.Task.list();
       return allTasks.filter(t => 
         t.status !== 'concluida' && 
         t.status !== 'cancelada' &&
         (t.task_type?.startsWith('qgp') || t.priority === 'urgente' || t.task_type === 'geral')
-      ).sort((a, b) => new Date(a.created_date) - new Date(b.created_date)); // FIFO mostly
+      ).sort((a, b) => new Date(a.created_date) - new Date(b.created_date));
     },
-    refetchInterval: 30000 // Refresh every 30s for "TV" mode
+    refetchInterval: 30000
   });
 
-  // Fetch Employees for names
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
     queryFn: () => base44.entities.Employee.list()
@@ -70,29 +76,32 @@ export default function QGPBoard() {
     return emp ? emp.full_name.split(' ')[0] : 'N/A';
   };
 
-  // Calculate Predicted End Time logic
+  // Advanced End Time Calculation with Lunch Break
   const calculatePredictedEnd = (task) => {
     if (!task.predicted_time_minutes) return null;
-    
-    // Basic calculation: Now + Remaining time? Or Start + Predicted?
-    // Ideally: Start Time + Predicted Minutes + Lunch Break if overlaps
-    // If not started: Now + Predicted...
-    
-    // For simplification in this version:
-    // If in progress: Start Time + Predicted
-    // If pending: Now + Predicted
-    
-    // We need real "start_time" from time_tracking or logs. 
-    // Let's assume if status is 'em_andamento', we use the last status change or created_date if not avail.
-    // This is complex without dedicated 'actual_start_time' field, but we added it to Entity now!
-    // Let's use updated_date as a proxy if actual_start_time is missing for now, or created_date.
-    
-    const baseTime = task.status === 'em_andamento' ? new Date(task.updated_date) : new Date(); 
-    const predictedEnd = addMinutes(baseTime, task.predicted_time_minutes);
-    
-    // TODO: Add Lunch Logic here based on Workshop settings
-    
-    return predictedEnd;
+
+    const baseTime = task.status === 'em_andamento' ? new Date(task.updated_date) : new Date();
+    let endTime = addMinutes(baseTime, task.predicted_time_minutes);
+
+    // Lunch Logic
+    if (workshop?.operational_settings?.lunch_start && workshop?.operational_settings?.lunch_end) {
+        const [startH, startM] = workshop.operational_settings.lunch_start.split(':').map(Number);
+        const [endH, endM] = workshop.operational_settings.lunch_end.split(':').map(Number);
+
+        const lunchStart = set(new Date(baseTime), { hours: startH, minutes: startM, seconds: 0 });
+        const lunchEnd = set(new Date(baseTime), { hours: endH, minutes: endM, seconds: 0 });
+
+        // If the task interval overlaps with lunch
+        // Case 1: Starts before lunch, ends after lunch start -> Add lunch duration
+        // Case 2: Starts during lunch -> Push start to after lunch (not common if 'in progress' but possible if Pending)
+        
+        if (baseTime < lunchStart && endTime > lunchStart) {
+            const lunchDuration = differenceInMinutes(lunchEnd, lunchStart);
+            endTime = addMinutes(endTime, lunchDuration);
+        }
+    }
+
+    return endTime;
   };
 
   const filteredTasks = tasks.filter(t => 

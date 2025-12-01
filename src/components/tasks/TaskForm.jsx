@@ -47,8 +47,19 @@ export default function TaskForm({ task, employees, onSubmit, onCancel, submitti
     ai_epi: "",
     ai_specificity: "",
     ai_steps: [],
-    ai_success_indicator: ""
-  });
+    ai_success_indicator: "",
+    // QGP Defaults
+    task_type: "geral",
+    predicted_time_minutes: 0,
+    qgp_data: {
+        os_number: "",
+        vehicle_plate: "",
+        vehicle_model: "",
+        client_name: "",
+        os_file_url: ""
+    }
+    });
+    const [uploading, setUploading] = React.useState(false);
 
   const [newTag, setNewTag] = useState("");
   const [isEnhancing, setIsEnhancing] = useState(false);
