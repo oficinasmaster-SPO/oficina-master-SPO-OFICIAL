@@ -8,13 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { X, Plus, Loader2, Sparkles, Shield, Target, ListChecks, AlertTriangle } from "lucide-react";
+import { X, Plus, Loader2, Sparkles, Shield, Target, ListChecks, AlertTriangle, Upload, FileText } from "lucide-react";
 import { toast } from "sonner";
 import ReminderSettings from "./ReminderSettings";
 import TaskDependencies from "./TaskDependencies";
 import RecurrenceSettings from "./RecurrenceSettings";
 import TimeTrackingSettings from "./TimeTrackingSettings";
-import QGPSettings from "./QGPSettings";
+
 
 export default function TaskForm({ task, employees, onSubmit, onCancel, submitting, allTasks = [] }) {
   const [formData, setFormData] = useState(task || {
@@ -43,26 +43,42 @@ export default function TaskForm({ task, employees, onSubmit, onCancel, submitti
     actual_time_minutes: 0,
     time_tracking: [],
     task_type: "geral",
-    qgp_data: {},
+    qgp_data: {
+      os_number: "",
+      vehicle_plate: "",
+      vehicle_model: "",
+      client_name: "",
+      os_file_url: ""
+    },
     ai_epi: "",
     ai_specificity: "",
     ai_steps: [],
-    ai_success_indicator: "",
-    // QGP Defaults
-    task_type: "geral",
-    predicted_time_minutes: 0,
-    qgp_data: {
-        os_number: "",
-        vehicle_plate: "",
-        vehicle_model: "",
-        client_name: "",
-        os_file_url: ""
-    }
-    });
+    ai_success_indicator: ""
+  });
     const [uploading, setUploading] = React.useState(false);
 
   const [newTag, setNewTag] = useState("");
   const [isEnhancing, setIsEnhancing] = useState(false);
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        setFormData(prev => ({
+            ...prev,
+            qgp_data: { ...prev.qgp_data, os_file_url: file_url }
+        }));
+        toast.success("Arquivo anexado!");
+    } catch (error) {
+        console.error(error);
+        toast.error("Erro ao enviar arquivo.");
+    } finally {
+        setUploading(false);
+    }
+  };
 
   const handleEnhanceAI = async () => {
     if (!formData.title) {
@@ -148,10 +164,87 @@ export default function TaskForm({ task, employees, onSubmit, onCancel, submitti
           <Tabs defaultValue="basico" className="w-full">
             <TabsList className="grid w-full grid-cols-4 mb-4">
               <TabsTrigger value="basico">Básico</TabsTrigger>
+              <TabsTrigger value="qgp">QGP / O.S.</TabsTrigger>
               <TabsTrigger value="tempo">Tempo</TabsTrigger>
               <TabsTrigger value="recorrencia">Recorrência</TabsTrigger>
-              <TabsTrigger value="qgp">QGP</TabsTrigger>
             </TabsList>
+
+            <TabsContent value="qgp" className="space-y-4 mt-4">
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label>Número da O.S.</Label>
+                        <Input 
+                            value={formData.qgp_data?.os_number || ""}
+                            onChange={(e) => setFormData({...formData, task_type: 'qgp_solicitacao_servico', qgp_data: {...formData.qgp_data, os_number: e.target.value}})}
+                            placeholder="Ex: 1234"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Placa do Veículo</Label>
+                        <Input 
+                            value={formData.qgp_data?.vehicle_plate || ""}
+                            onChange={(e) => setFormData({...formData, qgp_data: {...formData.qgp_data, vehicle_plate: e.target.value.toUpperCase()}})}
+                            placeholder="ABC-1234"
+                        />
+                    </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Modelo do Veículo</Label>
+                        <Input 
+                            value={formData.qgp_data?.vehicle_model || ""}
+                            onChange={(e) => setFormData({...formData, qgp_data: {...formData.qgp_data, vehicle_model: e.target.value}})}
+                            placeholder="Ex: Civic 2020"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Cliente</Label>
+                        <Input 
+                            value={formData.qgp_data?.client_name || ""}
+                            onChange={(e) => setFormData({...formData, qgp_data: {...formData.qgp_data, client_name: e.target.value}})}
+                            placeholder="Nome do cliente"
+                        />
+                    </div>
+                </div>
+
+                <div className="space-y-2">
+                    <Label>Arquivo da O.S. (PDF ou Foto)</Label>
+                    <div className="flex items-center gap-2">
+                          <Input 
+                            type="file" 
+                            accept=".pdf,image/*"
+                            onChange={handleFileUpload}
+                            className="cursor-pointer"
+                        />
+                        {uploading && <span className="text-xs text-blue-600">Enviando...</span>}
+                    </div>
+                    {formData.qgp_data?.os_file_url && (
+                        <div className="flex items-center gap-2 bg-green-50 p-2 rounded border border-green-200 text-sm">
+                            <FileText className="w-4 h-4 text-green-600" />
+                            <span className="text-green-700 truncate flex-1">Arquivo anexado</span>
+                            <Button 
+                                type="button" variant="ghost" size="icon" className="h-6 w-6"
+                                onClick={() => setFormData({...formData, qgp_data: {...formData.qgp_data, os_file_url: ""}})}
+                            >
+                                <X className="w-3 h-3" />
+                            </Button>
+                        </div>
+                    )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 pt-2 border-t">
+                      <div className="space-y-2">
+                        <Label>Tempo Previsto (Minutos)</Label>
+                        <Input 
+                            type="number"
+                            value={formData.predicted_time_minutes || ""}
+                            onChange={(e) => setFormData({...formData, predicted_time_minutes: parseInt(e.target.value) || 0})}
+                            placeholder="Ex: 120 (2 horas)"
+                        />
+                        <p className="text-xs text-gray-500">Deixe 0 para o técnico definir</p>
+                    </div>
+                </div>
+            </TabsContent>
 
             <TabsContent value="basico" className="space-y-4">
           {/* Informações Básicas */}
@@ -436,14 +529,7 @@ export default function TaskForm({ task, employees, onSubmit, onCancel, submitti
               />
             </TabsContent>
 
-            <TabsContent value="qgp" className="space-y-4">
-              <QGPSettings
-                taskType={formData.task_type}
-                qgpData={formData.qgp_data}
-                onTypeChange={(type) => setFormData({ ...formData, task_type: type })}
-                onDataChange={(data) => setFormData({ ...formData, qgp_data: data })}
-              />
-            </TabsContent>
+
           </Tabs>
 
           <div className="flex gap-2 pt-4">
