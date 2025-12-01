@@ -83,9 +83,20 @@ export default function CDCForm() {
         cdc_data: data
       });
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      // Track engagement
+      try {
+        await base44.functions.invoke('trackEngagement', {
+          activityType: 'form_submission',
+          details: { form: 'CDC', employeeId },
+          workshopId: workshop?.id
+        });
+      } catch (err) {
+        console.error("Failed to track engagement", err);
+      }
+
       queryClient.invalidateQueries(['employee', employeeId]);
-      toast.success("CDC salvo com sucesso!");
+      toast.success("CDC salvo com sucesso! +50 XP");
       navigate(createPageUrl("DetalhesColaborador") + `?id=${employeeId}`);
     },
     onError: () => toast.error("Erro ao salvar CDC")

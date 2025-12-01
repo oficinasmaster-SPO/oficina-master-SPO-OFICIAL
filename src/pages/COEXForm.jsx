@@ -138,10 +138,21 @@ export default function COEXForm() {
 
       return contractResult;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      // Track engagement
+      try {
+        await base44.functions.invoke('trackEngagement', {
+          activityType: 'form_submission',
+          details: { form: 'COEX', employeeId, contractId },
+          workshopId: workshop?.id
+        });
+      } catch (err) {
+        console.error("Failed to track engagement", err);
+      }
+
       queryClient.invalidateQueries(['coex-contracts']);
       queryClient.invalidateQueries(['employee', employeeId]);
-      toast.success("COEX salvo com sucesso!");
+      toast.success("COEX salvo com sucesso! +50 XP");
       navigate(createPageUrl("DetalhesColaborador") + `?id=${employeeId}`);
     },
     onError: (error) => {
