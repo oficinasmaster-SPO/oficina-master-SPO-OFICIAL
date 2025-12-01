@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { X, Plus, Loader2 } from "lucide-react";
+import { X, Plus, Loader2, Sparkles, Shield, Target, ListChecks, AlertTriangle } from "lucide-react";
+import { toast } from "sonner";
 import ReminderSettings from "./ReminderSettings";
 import TaskDependencies from "./TaskDependencies";
 import RecurrenceSettings from "./RecurrenceSettings";
@@ -41,10 +43,64 @@ export default function TaskForm({ task, employees, onSubmit, onCancel, submitti
     actual_time_minutes: 0,
     time_tracking: [],
     task_type: "geral",
-    qgp_data: {}
+    qgp_data: {},
+    ai_epi: "",
+    ai_specificity: "",
+    ai_steps: [],
+    ai_success_indicator: ""
   });
 
   const [newTag, setNewTag] = useState("");
+  const [isEnhancing, setIsEnhancing] = useState(false);
+
+  const handleEnhanceAI = async () => {
+    if (!formData.title) {
+      toast.error("Por favor, preencha o título da tarefa primeiro.");
+      return;
+    }
+
+    setIsEnhancing(true);
+    try {
+      const { data } = await base44.functions.invoke('enhanceTaskAI', {
+        title: formData.title,
+        description: formData.description
+      });
+
+      setFormData(prev => ({
+        ...prev,
+        ai_epi: data.epi,
+        ai_specificity: data.specificity,
+        ai_steps: data.steps || [],
+        ai_success_indicator: data.success_indicator,
+        // If the AI suggests a deadline and we don't have one, we could potentially parse it, 
+        // but for now let's just keep it as a suggestion in description or ignore if not strict date
+        description: prev.description ? prev.description : (data.deadline_suggestion ? `${prev.description}\n\nPrazo sugerido: ${data.deadline_suggestion}` : prev.description)
+      }));
+      
+      toast.success("Tarefa melhorada com IA!");
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao gerar sugestões com IA.");
+    } finally {
+      setIsEnhancing(false);
+    }
+  };
+
+  const addStep = () => {
+    setFormData(prev => ({ ...prev, ai_steps: [...(prev.ai_steps || []), ""] }));
+  };
+
+  const updateStep = (index, value) => {
+    const newSteps = [...(formData.ai_steps || [])];
+    newSteps[index] = value;
+    setFormData(prev => ({ ...prev, ai_steps: newSteps }));
+  };
+
+  const removeStep = (index) => {
+    const newSteps = [...(formData.ai_steps || [])];
+    newSteps.splice(index, 1);
+    setFormData(prev => ({ ...prev, ai_steps: newSteps }));
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -107,7 +163,97 @@ export default function TaskForm({ task, employees, onSubmit, onCancel, submitti
                 placeholder="Descreva os detalhes da tarefa"
                 rows={3}
               />
+              <Button 
+                type="button" 
+                variant="secondary" 
+                size="sm" 
+                onClick={handleEnhanceAI}
+                disabled={isEnhancing || !formData.title}
+                className="mt-2 bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200"
+              >
+                {isEnhancing ? <Loader2 className="w-3 h-3 mr-2 animate-spin" /> : <Sparkles className="w-3 h-3 mr-2" />}
+                Melhorar Detalhes com IA
+              </Button>
             </div>
+
+            {(formData.ai_epi || formData.ai_specificity || formData.ai_success_indicator || (formData.ai_steps && formData.ai_steps.length > 0)) && (
+              <div className="bg-purple-50 p-4 rounded-md border border-purple-100 space-y-4 animate-in fade-in slide-in-from-top-2">
+                <div className="flex items-center gap-2 text-purple-800 font-semibold border-b border-purple-200 pb-2">
+                  <Sparkles className="w-4 h-4" />
+                  Detalhamento Inteligente
+                </div>
+                
+                <div>
+                  <Label className="text-purple-900 flex items-center gap-2">
+                    <Shield className="w-3 h-3" /> EPI Necessário
+                  </Label>
+                  <Input 
+                    value={formData.ai_epi} 
+                    onChange={(e) => setFormData({...formData, ai_epi: e.target.value})}
+                    className="bg-white mt-1"
+                    placeholder="Ex: Luvas, Óculos de proteção..."
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-purple-900 flex items-center gap-2">
+                    <AlertTriangle className="w-3 h-3" /> Especificidade / Atenção
+                  </Label>
+                  <Textarea 
+                    value={formData.ai_specificity} 
+                    onChange={(e) => setFormData({...formData, ai_specificity: e.target.value})}
+                    className="bg-white mt-1"
+                    rows={2}
+                    placeholder="Detalhes técnicos ou pontos de atenção..."
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-purple-900 flex items-center gap-2">
+                    <Target className="w-3 h-3" /> Indicador de Sucesso
+                  </Label>
+                  <Input 
+                    value={formData.ai_success_indicator} 
+                    onChange={(e) => setFormData({...formData, ai_success_indicator: e.target.value})}
+                    className="bg-white mt-1"
+                    placeholder="Como saber se ficou bom?"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <Label className="text-purple-900 flex items-center gap-2">
+                      <ListChecks className="w-3 h-3" /> Passo a Passo
+                    </Label>
+                    <Button type="button" size="sm" variant="ghost" onClick={addStep} className="h-6 px-2 text-purple-700">
+                      <Plus className="w-3 h-3" />
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    {formData.ai_steps?.map((step, idx) => (
+                      <div key={idx} className="flex gap-2">
+                        <div className="bg-purple-200 text-purple-800 w-6 h-8 flex items-center justify-center rounded text-xs font-bold shrink-0">
+                          {idx + 1}
+                        </div>
+                        <Input 
+                          value={step} 
+                          onChange={(e) => updateStep(idx, e.target.value)}
+                          className="bg-white"
+                        />
+                        <Button type="button" size="icon" variant="ghost" onClick={() => removeStep(idx)} className="shrink-0 h-8 w-8">
+                          <X className="w-3 h-3 text-red-400" />
+                        </Button>
+                      </div>
+                    ))}
+                    {(!formData.ai_steps || formData.ai_steps.length === 0) && (
+                      <div className="text-xs text-purple-400 italic p-2 text-center border border-dashed border-purple-200 rounded bg-white/50">
+                        Nenhum passo definido
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div>
