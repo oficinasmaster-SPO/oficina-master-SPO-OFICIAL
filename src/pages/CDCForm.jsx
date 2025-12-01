@@ -19,6 +19,8 @@ export default function CDCForm() {
   const [searchParams] = useSearchParams();
   const employeeId = searchParams.get('employee_id');
 
+  const [user, setUser] = useState(null);
+  const [workshop, setWorkshop] = useState(null);
   const [formData, setFormData] = useState({
     nickname: "",
     birth_date: "",
@@ -37,16 +39,40 @@ export default function CDCForm() {
     main_values: ""
   });
 
-  const { data: employee, isLoading } = useQuery({
+  const { data: employee, isLoading: loadingEmployee } = useQuery({
     queryKey: ['employee', employeeId],
-    queryFn: () => base44.entities.Employee.filter({ id: employeeId }),
+    queryFn: async () => {
+      const employees = await base44.entities.Employee.filter({ id: employeeId });
+      return employees[0];
+    },
     enabled: !!employeeId,
-    select: (data) => data[0]
   });
 
   useEffect(() => {
-    if (employee?.cdc_data) {
-      setFormData(employee.cdc_data);
+    const loadInitialData = async () => {
+      try {
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
+
+        const ownedWorkshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
+        const userWorkshop = ownedWorkshops && ownedWorkshops.length > 0 ? ownedWorkshops[0] : null;
+        setWorkshop(userWorkshop);
+
+      } catch (error) {
+        console.error("Erro ao carregar dados iniciais:", error);
+        toast.error("Erro ao carregar dados do usuário ou oficina.");
+      }
+    };
+    loadInitialData();
+  }, []);
+
+  useEffect(() => {
+    if (employee) {
+      const initialFormData = employee.cdc_data || {};
+      setFormData({
+        ...initialFormData,
+        birth_date: initialFormData.birth_date || employee.data_nascimento || "",
+      });
     }
   }, [employee]);
 
@@ -72,6 +98,12 @@ export default function CDCForm() {
 
   const handleExportPDF = () => {
     const printWindow = window.open('', '_blank');
+    if (!workshop) {
+      toast.error("Dados da oficina não carregados para impressão.");
+      return;
+    }
+
+    const printWindow = window.open('', '_blank');
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
@@ -79,19 +111,23 @@ export default function CDCForm() {
         <title>CDC - ${employee?.full_name}</title>
         <style>
           body { font-family: Arial, sans-serif; padding: 40px; }
-          h1 { color: #E31837; text-align: center; }
+          h1 { color: #E31837; text-align: center; margin-bottom: 20px; }
           .field { margin-bottom: 20px; }
           .field label { font-weight: bold; display: block; margin-bottom: 5px; }
           .field div { border: 1px solid #ddd; padding: 10px; background: #f9f9f9; }
           .header { text-align: center; margin-bottom: 30px; }
-          .logo { color: #E31837; font-size: 24px; font-weight: bold; }
+          .logo-img { max-height: 50px; margin-bottom: 10px; }
+          .workshop-name { font-size: 20px; font-weight: bold; color: #333; margin-bottom: 5px; }
+          .slogan { font-size: 14px; color: #666; margin-bottom: 20px; }
         </style>
       </head>
       <body>
         <div class="header">
-          <div class="logo">Oficinas Master</div>
+          ${workshop.logo_url ? `<img src="${workshop.logo_url}" alt="Logo da Oficina" class="logo-img"/>` : `<div class="workshop-name">${workshop.name}</div>`}
+          <div class="slogan">Oficinas Master Educação Empresarial</div>
           <h1>CDC - Conexão e Diagnóstico do Colaborador</h1>
-          <p><strong>Colaborador:</strong> ${employee?.full_name}</p>
+          <p><strong>Colaborador:</strong> ${employee?.full_name || '-'}</p>
+          <p><strong>Oficina:</strong> ${workshop.name || '-'}</p>
           <p><strong>Data:</strong> ${new Date().toLocaleDateString('pt-BR')}</p>
         </div>
         
@@ -227,6 +263,7 @@ export default function CDCForm() {
     ]
   };
 
+  const isLoading = loadingEmployee;
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">

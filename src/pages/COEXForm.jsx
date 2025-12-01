@@ -8,7 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Loader2, Save, Download, FileText, Plus, X } from "lucide-react";
+import { Loader2, Save, Download, FileText, Plus, X, AlertTriangle } from "lucide-react";
+import { differenceInMonths, addMonths, format } from "date-fns";
 import { toast } from "sonner";
 import GuidedTour from "../components/help/GuidedTour";
 import HelpButton from "../components/help/HelpButton";
@@ -21,6 +22,8 @@ export default function COEXForm() {
   const contractId = searchParams.get('id');
 
   const [user, setUser] = useState(null);
+  const [workshop, setWorkshop] = useState(null);
+  const [coexRestriction, setCoexRestriction] = useState({ restricted: false, nextDate: null });
   const [formData, setFormData] = useState({
     employee_id: employeeId || "",
     gestor_id: "",
@@ -35,18 +38,41 @@ export default function COEXForm() {
   });
 
   useEffect(() => {
-    loadUser();
-  }, []);
+    const loadInitialData = async () => {
+      try {
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
 
-  const loadUser = async () => {
-    try {
-      const currentUser = await base44.auth.me();
-      setUser(currentUser);
-      setFormData(prev => ({ ...prev, gestor_id: currentUser.id }));
-    } catch (error) {
-      console.error(error);
-    }
-  };
+        const ownedWorkshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
+        const userWorkshop = ownedWorkshops && ownedWorkshops.length > 0 ? ownedWorkshops[0] : null;
+        setWorkshop(userWorkshop);
+
+        setFormData(prev => ({ ...prev, gestor_id: currentUser.id }));
+
+        // Check restrictions
+        if (employeeId && !contractId) {
+          const contracts = await base44.entities.COEXContract.filter({ employee_id: employeeId });
+          if (contracts && contracts.length > 0) {
+            // Sort by creation date descending
+            const sortedContracts = contracts.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+            const lastContract = sortedContracts[0];
+            const lastDate = new Date(lastContract.created_date);
+            const monthsDiff = differenceInMonths(new Date(), lastDate);
+            
+            if (monthsDiff < 6) {
+              const nextAllowedDate = addMonths(lastDate, 6);
+              setCoexRestriction({ restricted: true, nextDate: nextAllowedDate });
+            }
+          }
+        }
+
+      } catch (error) {
+        console.error("Erro ao carregar dados iniciais:", error);
+        toast.error("Erro ao carregar dados do usuário ou oficina.");
+      }
+    };
+    loadInitialData();
+  }, [employeeId, contractId]);
 
   const { data: employee, isLoading: loadingEmployee } = useQuery({
     queryKey: ['employee', employeeId],
@@ -70,18 +96,58 @@ export default function COEXForm() {
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
+      let contractResult;
       if (contractId) {
-        return await base44.entities.COEXContract.update(contractId, data);
+        contractResult = await base44.entities.COEXContract.update(contractId, data);
       } else {
-        return await base44.entities.COEXContract.create(data);
+        contractResult = await base44.entities.COEXContract.create(data);
       }
+
+      // Atualizar o funcionário para marcar o COEX como completo
+      if (employeeId) {
+        await base44.entities.Employee.update(employeeId, { coex_completed: true });
+      }
+
+      // Criar lembretes mensais de feedback se for um novo contrato
+      if (!contractId && data.start_date && data.end_date && workshop) {
+        try {
+          const start = new Date(data.start_date);
+          const end = new Date(data.end_date);
+          const months = differenceInMonths(end, start);
+          
+          const reminders = [];
+          for (let i = 1; i <= months; i++) {
+            const reminderDate = addMonths(start, i);
+            reminders.push({
+              contract_id: contractResult.id,
+              employee_id: employeeId,
+              workshop_id: workshop.id,
+              due_date: format(reminderDate, 'yyyy-MM-dd'),
+              month_reference: format(reminderDate, 'yyyy-MM'),
+              status: 'pending',
+              target_roles: ['admin', 'rh', 'gestor']
+            });
+          }
+          
+          // Parallel creation of reminders
+          await Promise.all(reminders.map(r => base44.entities.COEXFeedbackReminder.create(r)));
+        } catch (e) {
+          console.error("Erro ao criar lembretes de feedback:", e);
+        }
+      }
+
+      return contractResult;
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['coex-contracts']);
+      queryClient.invalidateQueries(['employee', employeeId]);
       toast.success("COEX salvo com sucesso!");
       navigate(createPageUrl("DetalhesColaborador") + `?id=${employeeId}`);
     },
-    onError: () => toast.error("Erro ao salvar COEX")
+    onError: (error) => {
+      console.error(error);
+      toast.error("Erro ao salvar COEX");
+    }
   });
 
   const handleSubmit = (e) => {
@@ -127,6 +193,11 @@ export default function COEXForm() {
 
   const handleExportPDF = () => {
     const printWindow = window.open('', '_blank');
+    if (!workshop || !user) {
+      toast.error("Dados da oficina ou usuário não carregados para impressão.");
+      return;
+    }
+    const printWindow = window.open('', '_blank');
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
@@ -136,7 +207,9 @@ export default function COEXForm() {
           * { margin: 0; padding: 0; box-sizing: border-box; }
           body { font-family: Arial, sans-serif; padding: 40px; }
           .header { text-align: center; margin-bottom: 30px; }
-          .logo { color: #E31837; font-size: 28px; font-weight: bold; margin-bottom: 10px; }
+          .logo-img { max-height: 50px; margin-bottom: 10px; }
+          .workshop-name { font-size: 20px; font-weight: bold; color: #333; margin-bottom: 5px; }
+          .slogan { font-size: 14px; color: #666; margin-bottom: 20px; }
           h1 { color: #E31837; font-size: 24px; margin-bottom: 20px; }
           .info-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
           .info-item { border: 1px solid #ddd; padding: 8px; }
@@ -151,14 +224,13 @@ export default function COEXForm() {
           .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 40px; }
           .signature { text-align: center; }
           .signature-line { border-top: 2px solid #000; margin-top: 50px; padding-top: 10px; }
-          .logo-footer { text-align: center; margin-top: 30px; }
-          .logo-footer img { height: 40px; }
           @media print { body { padding: 20px; } }
         </style>
       </head>
       <body>
         <div class="header">
-          <div class="logo">Oficinas Master</div>
+          ${workshop.logo_url ? `<img src="${workshop.logo_url}" alt="Logo da Oficina" class="logo-img"/>` : `<div class="workshop-name">${workshop.name}</div>`}
+          <div class="slogan">Oficinas Master Educação Empresarial</div>
           <h1>Contrato de Expectativa</h1>
         </div>
         
@@ -228,8 +300,8 @@ export default function COEXForm() {
           </div>
         </div>
         
-        <div class="logo-footer">
-          <div class="logo">Oficinas Master</div>
+        <div class="logo-footer" style="text-align: center; margin-top: 30px;">
+          ${workshop.logo_url ? `<img src="${workshop.logo_url}" alt="Logo da Oficina" class="logo-img" style="max-height: 40px;"/>` : `<div class="workshop-name">${workshop.name}</div>`}
           <div style="font-size: 12px; color: #666; margin-top: 5px;">ACELERADORA</div>
         </div>
         
@@ -318,7 +390,24 @@ export default function COEXForm() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        {coexRestriction.restricted && (
+          <div className="mb-6 bg-orange-50 border-l-4 border-orange-500 p-4">
+            <div className="flex items-start">
+              <AlertTriangle className="h-5 w-5 text-orange-500 mr-3 mt-0.5" />
+              <div>
+                <h3 className="text-orange-800 font-bold">Criação de COEX Restrita</h3>
+                <p className="text-orange-700 text-sm mt-1">
+                  Este colaborador já possui um COEX recente. Um novo contrato só poderá ser criado a partir de <strong>{format(coexRestriction.nextDate, 'dd/MM/yyyy')}</strong> (6 meses após o anterior).
+                </p>
+                <p className="text-orange-700 text-sm mt-2">
+                  Recomendamos revisar o contrato vigente e realizar os feedbacks mensais.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className={`space-y-6 ${coexRestriction.restricted ? 'opacity-50 pointer-events-none' : ''}`}>
           <Card>
             <CardHeader>
               <CardTitle>Informações do Contrato</CardTitle>
