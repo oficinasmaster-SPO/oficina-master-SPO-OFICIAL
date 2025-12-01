@@ -231,7 +231,10 @@ export default function EquipamentosCompletos({ workshop, onUpdate }) {
             <Button onClick={() => setEditing(true)}>Editar</Button>
           ) : (
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setEditing(false)}>Cancelar</Button>
+              <Button variant="outline" onClick={() => {
+                setEditing(false);
+                setEquipmentList(workshop.equipment_list || []);
+              }}>Cancelar</Button>
               <Button onClick={handleSave} className="bg-purple-600 hover:bg-purple-700">
                 <Save className="w-4 h-4 mr-2" />
                 Salvar
@@ -278,22 +281,25 @@ export default function EquipamentosCompletos({ workshop, onUpdate }) {
                     const isSelected = isEquipmentSelected(categoryKey, equip);
                     const equipData = getEquipmentData(categoryKey, equip);
 
+                    if (!editing && !isSelected) return null;
+
                     return (
                       <div
                         key={equip}
                         className={`p-3 rounded-lg border-2 transition-all ${
-                          isSelected 
-                            ? 'border-green-500 bg-green-50' 
+                          isSelected
+                            ? (editing ? 'border-green-500 bg-green-50' : 'border-green-200 bg-green-50')
                             : 'border-gray-200 bg-white hover:border-gray-300'
                         }`}
                       >
                         <div className="flex items-start gap-3">
-                          <Checkbox
-                            checked={isSelected}
-                            onCheckedChange={() => toggleEquipment(categoryKey, equip, false)}
-                            disabled={!editing}
-                            className="mt-1"
-                          />
+                          {editing && (
+                            <Checkbox
+                              checked={isSelected}
+                              onCheckedChange={() => toggleEquipment(categoryKey, equip, false)}
+                              className="mt-1"
+                            />
+                          )}
                           <div className="flex-1">
                             <p className={`text-sm font-medium ${isSelected ? 'text-green-900' : 'text-gray-700'}`}>
                               {equip}
@@ -348,22 +354,25 @@ export default function EquipamentosCompletos({ workshop, onUpdate }) {
                     const isSelected = isEquipmentSelected(categoryKey, equip);
                     const equipData = getEquipmentData(categoryKey, equip);
 
+                    if (!editing && !isSelected) return null;
+
                     return (
                       <div
                         key={equip}
                         className={`p-3 rounded-lg border-2 transition-all ${
-                          isSelected 
-                            ? 'border-orange-500 bg-orange-50' 
+                          isSelected
+                            ? (editing ? 'border-orange-500 bg-orange-50' : 'border-orange-200 bg-orange-50')
                             : 'border-gray-200 bg-white hover:border-gray-300'
                         }`}
                       >
                         <div className="flex items-start gap-3">
-                          <Checkbox
-                            checked={isSelected}
-                            onCheckedChange={() => toggleEquipment(categoryKey, equip, true)}
-                            disabled={!editing}
-                            className="mt-1"
-                          />
+                          {editing && (
+                            <Checkbox
+                              checked={isSelected}
+                              onCheckedChange={() => toggleEquipment(categoryKey, equip, true)}
+                              className="mt-1"
+                            />
+                          )}
                           <div className="flex-1">
                             <p className={`text-sm font-medium ${isSelected ? 'text-orange-900' : 'text-gray-700'}`}>
                               {equip}
