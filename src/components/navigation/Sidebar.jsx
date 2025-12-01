@@ -304,10 +304,10 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       icon: Package,
       items: [
         { 
-          name: 'Em Desenvolvimento', 
-          href: createPageUrl('Home'), 
+          name: 'Meus Processos (MAPs)', 
+          href: createPageUrl('MeusProcessos'), 
           icon: Package,
-          description: 'Gestão de processos - em breve'
+          description: 'Biblioteca de processos padrão'
         }
       ]
     },
@@ -458,6 +458,13 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('GerenciarToursVideos'), 
           icon: Video,
           description: 'Configure ajuda e tours guiados',
+          adminOnly: true
+        },
+        { 
+          name: 'Gerenciar Processos', 
+          href: createPageUrl('GerenciarProcessos'), 
+          icon: FileText,
+          description: 'Upload e gestão de MAPs',
           adminOnly: true
         }
       ]
