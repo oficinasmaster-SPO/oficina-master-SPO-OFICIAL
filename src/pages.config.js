@@ -85,6 +85,8 @@ import AdminMensagens from './pages/AdminMensagens';
 import PublicFeedback from './pages/PublicFeedback';
 import GerenciarProcessos from './pages/GerenciarProcessos';
 import MeusProcessos from './pages/MeusProcessos';
+import QGPBoard from './pages/QGPBoard';
+import TechnicianQGP from './pages/TechnicianQGP';
 import __Layout from './Layout.jsx';
 
 
@@ -176,6 +178,8 @@ export const PAGES = {
     "PublicFeedback": PublicFeedback,
     "GerenciarProcessos": GerenciarProcessos,
     "MeusProcessos": MeusProcessos,
+    "QGPBoard": QGPBoard,
+    "TechnicianQGP": TechnicianQGP,
 }
 
 export const pagesConfig = {
