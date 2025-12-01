@@ -286,122 +286,272 @@ export default function GerenciarProcessos() {
             <DialogHeader>
               <DialogTitle>{editingDoc ? "Editar Processo" : "Novo Processo"}</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Título *</Label>
-                  <Input 
-                    value={formData.title} 
-                    onChange={e => setFormData({...formData, title: e.target.value})} 
-                    placeholder="Ex: Precificação R70/I30"
-                  />
-                </div>
-                <div>
-                  <Label>Código</Label>
-                  <Input 
-                    value={formData.code} 
-                    onChange={e => setFormData({...formData, code: e.target.value})} 
-                    placeholder="Ex: MAP.0003"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Categoria *</Label>
-                  <Select 
-                    value={formData.category} 
-                    onValueChange={value => setFormData({...formData, category: value})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map(cat => (
-                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Revisão</Label>
-                  <Input 
-                    value={formData.revision} 
-                    onChange={e => setFormData({...formData, revision: e.target.value})} 
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label>Descrição</Label>
-                <Textarea 
-                  value={formData.description} 
-                  onChange={e => setFormData({...formData, description: e.target.value})} 
-                  placeholder="Breve resumo do processo..."
-                />
-              </div>
-
-              <div>
-                <Label>Arquivo PDF *</Label>
-                <div className="flex gap-2 items-center mt-1">
-                  <Input 
-                    type="file" 
-                    accept=".pdf" 
-                    onChange={handleFileUpload}
-                    className="cursor-pointer"
-                  />
-                  {uploading && <Loader2 className="w-4 h-4 animate-spin text-blue-600" />}
-                </div>
-                {formData.pdf_url && (
-                  <p className="text-xs text-green-600 mt-1 flex items-center">
-                    <FileText className="w-3 h-3 mr-1" /> Arquivo carregado
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <Label className="mb-2 block">Planos com Acesso</Label>
-                <div className="flex flex-wrap gap-3">
-                  {plans.map(plan => (
-                    <div key={plan} className="flex items-center space-x-2">
-                      <Checkbox 
-                        id={`plan-${plan}`}
-                        checked={formData.plan_access.includes(plan)}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setFormData(prev => ({ ...prev, plan_access: [...prev.plan_access, plan] }));
-                          } else {
-                            setFormData(prev => ({ ...prev, plan_access: prev.plan_access.filter(p => p !== plan) }));
-                          }
-                        }}
+            <Tabs defaultValue="dados" className="mt-4 h-full flex flex-col">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="dados">Dados Básicos</TabsTrigger>
+                <TabsTrigger value="conteudo">Conteúdo do Processo</TabsTrigger>
+              </TabsList>
+              
+              <form onSubmit={handleSubmit} className="flex-1 overflow-hidden flex flex-col">
+                <TabsContent value="dados" className="space-y-4 mt-4 flex-1 overflow-y-auto px-1">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Título *</Label>
+                      <Input 
+                        value={formData.title} 
+                        onChange={e => setFormData({...formData, title: e.target.value})} 
+                        placeholder="Ex: Precificação R70/I30"
                       />
-                      <label htmlFor={`plan-${plan}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                        {plan}
-                      </label>
                     </div>
-                  ))}
+                    <div>
+                      <Label>Código</Label>
+                      <Input 
+                        value={formData.code} 
+                        onChange={e => setFormData({...formData, code: e.target.value})} 
+                        placeholder="Ex: MAP.0003"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Categoria *</Label>
+                      <Select 
+                        value={formData.category} 
+                        onValueChange={value => setFormData({...formData, category: value})}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map(cat => (
+                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Revisão</Label>
+                      <Input 
+                        value={formData.revision} 
+                        onChange={e => setFormData({...formData, revision: e.target.value})} 
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Descrição</Label>
+                    <Textarea 
+                      value={formData.description} 
+                      onChange={e => setFormData({...formData, description: e.target.value})} 
+                      placeholder="Breve resumo do processo..."
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Arquivo PDF (Referência)</Label>
+                    <div className="flex gap-2 items-center mt-1">
+                      <Input 
+                        type="file" 
+                        accept=".pdf" 
+                        onChange={handleFileUpload}
+                        className="cursor-pointer"
+                      />
+                      {uploading && <Loader2 className="w-4 h-4 animate-spin text-blue-600" />}
+                    </div>
+                    {formData.pdf_url && (
+                      <div className="flex items-center gap-2 mt-1">
+                        <p className="text-xs text-green-600 flex items-center">
+                          <FileText className="w-3 h-3 mr-1" /> Arquivo carregado
+                        </p>
+                        <a href={formData.pdf_url} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline">
+                          Visualizar
+                        </a>
+                      </div>
+                    )}
+                  </div>
+
+                  {user?.role === 'admin' && (
+                    <div>
+                      <Label className="mb-2 block">Planos com Acesso</Label>
+                      <div className="flex flex-wrap gap-3">
+                        {plans.map(plan => (
+                          <div key={plan} className="flex items-center space-x-2">
+                            <Checkbox 
+                              id={`plan-${plan}`}
+                              checked={formData.plan_access.includes(plan)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setFormData(prev => ({ ...prev, plan_access: [...prev.plan_access, plan] }));
+                                } else {
+                                  setFormData(prev => ({ ...prev, plan_access: prev.plan_access.filter(p => p !== plan) }));
+                                }
+                              }}
+                            />
+                            <label htmlFor={`plan-${plan}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                              {plan}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="is_template" 
+                      checked={formData.is_template}
+                      onCheckedChange={(checked) => setFormData({...formData, is_template: checked})}
+                      disabled={user?.role !== 'admin'}
+                    />
+                    <label htmlFor="is_template" className="text-sm font-medium">
+                      É um modelo padrão (Template)?
+                    </label>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="conteudo" className="space-y-6 mt-4 flex-1 overflow-y-auto pr-2">
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-base font-semibold">1. Objetivo</Label>
+                      <Textarea 
+                        value={formData.content_json?.objetivo || ""} 
+                        onChange={e => updateContent('objetivo', e.target.value)}
+                        placeholder="Objetivo do processo..."
+                        rows={3}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-base font-semibold">2. Campo de Aplicação</Label>
+                      <Textarea 
+                        value={formData.content_json?.campo_aplicacao || ""} 
+                        onChange={e => updateContent('campo_aplicacao', e.target.value)}
+                        placeholder="Quais áreas devem estar envolvidas..."
+                        rows={2}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-base font-semibold">3. Informações Complementares</Label>
+                      <Textarea 
+                        value={formData.content_json?.informacoes_complementares || ""} 
+                        onChange={e => updateContent('informacoes_complementares', e.target.value)}
+                        placeholder="Detalhes, condução, orientações..."
+                        rows={3}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-base font-semibold">4. Fluxo do Processo</Label>
+                      <Textarea 
+                        value={formData.content_json?.fluxo_processo || ""} 
+                        onChange={e => updateContent('fluxo_processo', e.target.value)}
+                        placeholder="Descrição textual do fluxo..."
+                        rows={4}
+                      />
+                    </div>
+
+                    <div className="border-t pt-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <Label className="text-base font-semibold">5. Atividades e Responsabilidades</Label>
+                        <Button type="button" size="sm" variant="outline" onClick={() => addArrayItem('atividades', { atividade: "", responsavel: "", ferramentas: "" })}>
+                          <Plus className="w-3 h-3 mr-1" /> Adicionar
+                        </Button>
+                      </div>
+                      {formData.content_json?.atividades?.map((item, idx) => (
+                        <div key={idx} className="grid grid-cols-12 gap-2 mb-2 items-start">
+                          <div className="col-span-5">
+                            <Textarea 
+                              placeholder="Atividade" 
+                              value={item.atividade} 
+                              onChange={e => updateArrayItem('atividades', idx, 'atividade', e.target.value)}
+                              rows={2}
+                              className="text-sm"
+                            />
+                          </div>
+                          <div className="col-span-3">
+                            <Input 
+                              placeholder="Responsável" 
+                              value={item.responsavel} 
+                              onChange={e => updateArrayItem('atividades', idx, 'responsavel', e.target.value)}
+                              className="text-sm"
+                            />
+                          </div>
+                          <div className="col-span-3">
+                            <Input 
+                              placeholder="Ferramentas/Docs" 
+                              value={item.ferramentas} 
+                              onChange={e => updateArrayItem('atividades', idx, 'ferramentas', e.target.value)}
+                              className="text-sm"
+                            />
+                          </div>
+                          <div className="col-span-1 flex justify-center">
+                            <Button type="button" size="icon" variant="ghost" onClick={() => removeArrayItem('atividades', idx)}>
+                              <Trash2 className="w-4 h-4 text-red-500" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="border-t pt-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <Label className="text-base font-semibold">6. Matriz de Riscos</Label>
+                        <Button type="button" size="sm" variant="outline" onClick={() => addArrayItem('matriz_riscos', { processo: "", identificacao: "", fonte: "", impacto: "", categoria: "", controle: "" })}>
+                          <Plus className="w-3 h-3 mr-1" /> Adicionar
+                        </Button>
+                      </div>
+                      {formData.content_json?.matriz_riscos?.map((item, idx) => (
+                        <div key={idx} className="bg-gray-50 p-2 rounded mb-2 relative">
+                          <Button type="button" size="icon" variant="ghost" className="absolute right-0 top-0" onClick={() => removeArrayItem('matriz_riscos', idx)}>
+                            <Trash2 className="w-4 h-4 text-red-500" />
+                          </Button>
+                          <div className="grid grid-cols-2 gap-2 pr-8">
+                            <Input placeholder="Identificação do Risco" value={item.identificacao} onChange={e => updateArrayItem('matriz_riscos', idx, 'identificacao', e.target.value)} className="text-sm" />
+                            <Input placeholder="Fonte Geradora" value={item.fonte} onChange={e => updateArrayItem('matriz_riscos', idx, 'fonte', e.target.value)} className="text-sm" />
+                            <Input placeholder="Impacto" value={item.impacto} onChange={e => updateArrayItem('matriz_riscos', idx, 'impacto', e.target.value)} className="text-sm" />
+                            <Input placeholder="Controle" value={item.controle} onChange={e => updateArrayItem('matriz_riscos', idx, 'controle', e.target.value)} className="text-sm" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="border-t pt-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <Label className="text-base font-semibold">8. Indicadores</Label>
+                        <Button type="button" size="sm" variant="outline" onClick={() => addArrayItem('indicadores', { indicador: "", meta: "", como_medir: "" })}>
+                          <Plus className="w-3 h-3 mr-1" /> Adicionar
+                        </Button>
+                      </div>
+                      {formData.content_json?.indicadores?.map((item, idx) => (
+                        <div key={idx} className="grid grid-cols-12 gap-2 mb-2 items-start">
+                          <div className="col-span-4">
+                            <Input placeholder="Indicador" value={item.indicador} onChange={e => updateArrayItem('indicadores', idx, 'indicador', e.target.value)} className="text-sm" />
+                          </div>
+                          <div className="col-span-3">
+                            <Input placeholder="Meta" value={item.meta} onChange={e => updateArrayItem('indicadores', idx, 'meta', e.target.value)} className="text-sm" />
+                          </div>
+                          <div className="col-span-4">
+                            <Input placeholder="Como Medir" value={item.como_medir} onChange={e => updateArrayItem('indicadores', idx, 'como_medir', e.target.value)} className="text-sm" />
+                          </div>
+                          <div className="col-span-1 flex justify-center">
+                            <Button type="button" size="icon" variant="ghost" onClick={() => removeArrayItem('indicadores', idx)}>
+                              <Trash2 className="w-4 h-4 text-red-500" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <div className="flex justify-end gap-2 mt-6 pt-4 border-t bg-white">
+                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+                  <Button type="submit" disabled={saveMutation.isPending || uploading} className="bg-green-600 hover:bg-green-700">
+                    {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                    Salvar Processo
+                  </Button>
                 </div>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="is_template" 
-                  checked={formData.is_template}
-                  onCheckedChange={(checked) => setFormData({...formData, is_template: checked})}
-                />
-                <label htmlFor="is_template" className="text-sm font-medium">
-                  É um modelo padrão (Template)?
-                </label>
-              </div>
-
-              <div className="flex justify-end gap-2 mt-6">
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
-                <Button type="submit" disabled={saveMutation.isPending || uploading}>
-                  {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                  Salvar Processo
-                </Button>
-              </div>
-            </form>
+              </form>
+            </Tabs>
           </DialogContent>
         </Dialog>
       </div>
