@@ -18,6 +18,7 @@ import DocumentosProcessos from "../components/workshop/DocumentosProcessos";
 import WorkshopLevelBadge from "../components/gamification/WorkshopLevelBadge";
 import AutomacaoIncentivos from "../components/workshop/AutomacaoIncentivos";
 import GrowthDashboard from "../components/management/GrowthDashboard";
+import WorkshopMilestones from "../components/management/WorkshopMilestones";
 
 export default function GestaoOficina() {
   const navigate = useNavigate();
@@ -287,10 +288,18 @@ export default function GestaoOficina() {
               <TrendingUp className="w-4 h-4 mr-1" />
               <span className="hidden sm:inline">Crescimento</span>
             </TabsTrigger>
+            <TabsTrigger value="conquistas" className="text-xs md:text-sm bg-yellow-50 text-yellow-700 data-[state=active]:bg-yellow-100 data-[state=active]:text-yellow-900">
+              <Trophy className="w-4 h-4 mr-1" />
+              <span className="hidden sm:inline">Conquistas</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="crescimento">
             <GrowthDashboard workshop={workshop} />
+          </TabsContent>
+
+          <TabsContent value="conquistas">
+            <WorkshopMilestones workshop={workshop} />
           </TabsContent>
 
           <TabsContent value="dados">

@@ -110,11 +110,27 @@ export default function GrowthDashboard({ workshop }) {
                 return await base44.entities.MonthlyGoalHistory.create(data);
             }
         },
-        onSuccess: () => {
+        onSuccess: async (data) => {
             toast.success("Dados de crescimento salvos!");
+            
+            // Check for milestones
+            if (data) {
+                const revenueTotal = Number(data.actual_revenue_parts || 0) + Number(data.actual_revenue_services || 0);
+                try {
+                    await base44.functions.invoke('checkMilestones', {
+                        workshop_id: workshop.id,
+                        revenue_total: revenueTotal,
+                        // units_count: workshop.units_count (se disponível no futuro)
+                    });
+                } catch (e) {
+                    console.error("Error checking milestones:", e);
+                }
+            }
+
             setIsEditing(false);
             refetch();
             queryClient.invalidateQueries(['monthly-history']);
+            queryClient.invalidateQueries(['workshop-milestones']);
         },
         onError: (err) => toast.error("Erro ao salvar: " + err.message)
     });
