@@ -7,10 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Loader2, Target, Eye, Heart, Sparkles, CheckCircle2, Upload, Download, Edit2, Palette } from "lucide-react";
+import { Loader2, Target, Eye, Heart, Sparkles, CheckCircle2, Upload, Download, Edit2, Palette, RefreshCw, Lock, Save } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { valuesSuggestions } from "../components/assessment/AssessmentCriteria";
 import { toast } from "sonner";
+import { differenceInMonths, format, addMonths } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export default function MissaoVisaoValores() {
   const navigate = useNavigate();
@@ -20,6 +22,10 @@ export default function MissaoVisaoValores() {
   const [workshop, setWorkshop] = useState(null);
   const [step, setStep] = useState(1);
   const [isEditing, setIsEditing] = useState(false);
+  
+  // Controle de regeneração e edição
+  const [lastGenerationDate, setLastGenerationDate] = useState(null);
+  const [isViewingExisting, setIsViewingExisting] = useState(false);
 
   const [missionAnswers, setMissionAnswers] = useState({
     products_services: "",
@@ -72,9 +78,43 @@ export default function MissaoVisaoValores() {
         setPrimaryColor(userWorkshop.brand_colors.primary || "#3b82f6");
         setSecondaryColor(userWorkshop.brand_colors.secondary || "#8b5cf6");
       }
+
+      // Verificar histórico de geração
+      if (userWorkshop) {
+        const history = await base44.entities.MissionVisionValues.filter({ workshop_id: userWorkshop.id }, '-created_date', 1);
+        if (history && history.length > 0) {
+          const lastDoc = history[0];
+          
+          // Se já existe um documento completo
+          if (lastDoc.completed) {
+            setGeneratedMission(lastDoc.mission_statement || userWorkshop.mission || "");
+            setGeneratedVision(lastDoc.vision_statement || userWorkshop.vision || "");
+            setGeneratedCoreValues(lastDoc.core_values || []);
+            
+            // Recuperar respostas anteriores
+            if (lastDoc.mission_answers) setMissionAnswers(lastDoc.mission_answers);
+            if (lastDoc.vision_answers) setVisionAnswers(lastDoc.vision_answers);
+            if (lastDoc.values_answers) setValuesAnswers(lastDoc.values_answers);
+            
+            setLastGenerationDate(lastDoc.created_date);
+            setIsViewingExisting(true);
+            setStep(4); // Pula para a tela de visualização/edição
+          }
+        } else if (userWorkshop.mission) {
+          // Fallback: oficina tem missão mas não achou histórico (migração ou dados antigos)
+          setGeneratedMission(userWorkshop.mission);
+          setGeneratedVision(userWorkshop.vision || "");
+          // Tenta reconstruir valores se possível, ou deixa vazio para edição manual
+          setGeneratedCoreValues([]); 
+          setIsViewingExisting(true);
+          setStep(4);
+        }
+      }
+
     } catch (error) {
-      toast.error("Você precisa estar logado");
-      base44.auth.redirectToLogin(createPageUrl("MissaoVisaoValores"));
+      console.error(error);
+      toast.error("Erro ao carregar dados");
+      // Se erro, permite tentar de novo ou redireciona se for auth
     } finally {
       setLoading(false);
     }
@@ -260,25 +300,58 @@ Retorne em formato JSON com a estrutura:
         brand_colors: { primary: primaryColor, secondary: secondaryColor }
       });
 
-      // Salvar histórico
-      await base44.entities.MissionVisionValues.create({
-        workshop_id: workshop.id,
-        mission_answers: missionAnswers,
-        mission_statement: generatedMission,
-        vision_answers: visionAnswers,
-        vision_statement: generatedVision,
-        values_answers: valuesAnswers,
-        core_values: generatedCoreValues,
-        completed: true
-      });
+      // Se for uma nova geração (não existente), cria histórico
+      // Se for edição de existente, podemos optar por criar um novo histórico ou atualizar o último.
+      // Para manter o rastro de alterações, vamos criar um novo registro de histórico se houve mudanças significativas ou apenas atualizar a oficina.
+      // O usuário pediu "editar isto", então atualizar a oficina é o principal.
+      
+      // Vamos atualizar o registro de histórico mais recente se estivermos editando, para manter sincronizado
+      if (isViewingExisting && lastGenerationDate) {
+        const history = await base44.entities.MissionVisionValues.filter({ workshop_id: workshop.id }, '-created_date', 1);
+        if (history && history.length > 0) {
+           await base44.entities.MissionVisionValues.update(history[0].id, {
+             mission_statement: generatedMission,
+             vision_statement: generatedVision,
+             core_values: generatedCoreValues
+           });
+        }
+      } else {
+        // Cria novo histórico se for a primeira vez
+        await base44.entities.MissionVisionValues.create({
+          workshop_id: workshop.id,
+          mission_answers: missionAnswers,
+          mission_statement: generatedMission,
+          vision_answers: visionAnswers,
+          vision_statement: generatedVision,
+          values_answers: valuesAnswers,
+          core_values: generatedCoreValues,
+          completed: true
+        });
+      }
 
-      toast.success("Cultura organizacional salva com sucesso!");
-      navigate(createPageUrl("Home"));
+      toast.success(isViewingExisting ? "Alterações salvas com sucesso!" : "Cultura organizacional criada com sucesso!");
+      // Não navegar para home se estiver editando, apenas confirma
+      if (!isViewingExisting) {
+        navigate(createPageUrl("Home"));
+      }
     } catch (error) {
       console.error(error);
       toast.error("Erro ao salvar");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleRegenerateAll = () => {
+    // Resetar tudo e voltar para o passo 1
+    if (window.confirm("Tem certeza? Isso apagará o documento atual e iniciará um novo processo com IA.")) {
+      setStep(1);
+      setIsViewingExisting(false);
+      setLastGenerationDate(null);
+      setGeneratedMission("");
+      setGeneratedVision("");
+      setGeneratedCoreValues([]);
+      setSelectedValues([]);
     }
   };
 
@@ -867,33 +940,64 @@ Retorne em formato JSON com a estrutura:
             </Card>
 
             {/* Ações */}
-            <div className="flex gap-4">
-              <Button
-                onClick={exportToPDF}
-                variant="outline"
-                className="flex-1"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Exportar PDF
-              </Button>
-              <Button
-                onClick={handleSaveDocument}
-                disabled={submitting}
-                className="flex-1"
-                style={{ background: primaryColor }}
-              >
-                {submitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Salvando...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="w-4 h-4 mr-2" />
-                    Salvar Documento Final
-                  </>
-                )}
-              </Button>
+            <div className="flex flex-col gap-4">
+              <div className="flex gap-4">
+                <Button
+                  onClick={exportToPDF}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Exportar PDF
+                </Button>
+                <Button
+                  onClick={handleSaveDocument}
+                  disabled={submitting}
+                  className="flex-1"
+                  style={{ background: primaryColor }}
+                >
+                  {submitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Salvando...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      {isViewingExisting ? "Salvar Alterações" : "Salvar Documento Final"}
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {isViewingExisting && lastGenerationDate && (
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <div className="flex items-center justify-between bg-gray-50 p-4 rounded-lg">
+                    <div>
+                      <h4 className="font-semibold text-sm text-gray-700">Regeneração com IA</h4>
+                      <p className="text-xs text-gray-500">
+                        Última geração: {format(new Date(lastGenerationDate), "dd/MM/yyyy", { locale: ptBR })}
+                      </p>
+                    </div>
+                    
+                    {differenceInMonths(new Date(), new Date(lastGenerationDate)) >= 6 ? (
+                      <Button
+                        onClick={handleRegenerateAll}
+                        variant="outline"
+                        className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                      >
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Refazer Documento com IA
+                      </Button>
+                    ) : (
+                      <div className="flex items-center gap-2 text-orange-600 bg-orange-50 px-3 py-2 rounded text-xs font-medium">
+                        <Lock className="w-3 h-3" />
+                        Disponível em {format(addMonths(new Date(lastGenerationDate), 6), "dd/MM/yyyy")}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
