@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import COEXFeedbackList from "./COEXFeedbackList";
 
 export default function COEXCDCIntegration({ employee }) {
   const navigate = useNavigate();
@@ -200,6 +201,11 @@ export default function COEXCDCIntegration({ employee }) {
           )}
         </CardContent>
       </Card>
+
+      {/* Feedback Mensal COEX */}
+      {activeCOEX && (
+        <COEXFeedbackList employeeId={employee.id} contractId={activeCOEX.id} />
+      )}
 
       {/* Histórico de Contratos */}
       {coexContracts.length > 1 && (
