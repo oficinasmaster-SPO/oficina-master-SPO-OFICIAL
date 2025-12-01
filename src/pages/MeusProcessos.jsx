@@ -6,11 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Search, FileText, Download, Eye, Filter, Briefcase, DollarSign, Settings, Users, BarChart3, Truck } from "lucide-react";
+import { Search, FileText, Download, Eye, Filter, Briefcase, DollarSign, Settings, Users, BarChart3, Truck, Copy, Loader2 } from "lucide-react";
 import { createPageUrl } from "@/utils";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export default function MeusProcessos() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
   const [workshop, setWorkshop] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -56,6 +60,34 @@ export default function MeusProcessos() {
                           (doc.code && doc.code.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesTab = activeTab === "Todos" || doc.category === activeTab;
     return matchesSearch && matchesTab;
+  });
+
+  const duplicateMutation = useMutation({
+    mutationFn: async (doc) => {
+      if (!workshop) throw new Error("Oficina não encontrada");
+      
+      const newDoc = {
+        title: `${doc.title} (Cópia)`,
+        code: doc.code,
+        revision: "1",
+        category: doc.category,
+        description: doc.description,
+        pdf_url: doc.pdf_url, // Inherit PDF initially
+        content_json: doc.content_json || {}, // Copy structured content
+        plan_access: doc.plan_access,
+        is_template: false,
+        workshop_id: workshop.id
+      };
+      
+      return await base44.entities.ProcessDocument.create(newDoc);
+    },
+    onSuccess: (newDoc) => {
+      toast.success("Modelo copiado com sucesso! Redirecionando...");
+      queryClient.invalidateQueries(['my-processes']);
+      // Redirect to manage page to edit the new document
+      navigate(createPageUrl('GerenciarProcessos') + `?edit=${newDoc.id}`);
+    },
+    onError: () => toast.error("Erro ao copiar modelo.")
   });
 
   const categories = [
@@ -169,9 +201,25 @@ export default function MeusProcessos() {
                           <Eye className="w-4 h-4 mr-2" />
                           Visualizar
                         </Button>
-                        <Button variant="outline" size="icon" onClick={() => window.open(doc.pdf_url, '_blank')}>
+                        <Button variant="outline" size="icon" onClick={() => window.open(doc.pdf_url, '_blank')} title="Baixar PDF">
                           <Download className="w-4 h-4" />
                         </Button>
+                        {doc.is_template && user?.role !== 'admin' && (
+                          <Button 
+                            variant="outline" 
+                            size="icon" 
+                            onClick={() => duplicateMutation.mutate(doc)}
+                            disabled={duplicateMutation.isPending}
+                            title="Usar como Modelo"
+                            className="text-blue-600 hover:text-blue-700 border-blue-200 hover:bg-blue-50"
+                          >
+                            {duplicateMutation.isPending ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Copy className="w-4 h-4" />
+                            )}
+                          </Button>
+                        )}
                       </CardFooter>
                     </Card>
                   );

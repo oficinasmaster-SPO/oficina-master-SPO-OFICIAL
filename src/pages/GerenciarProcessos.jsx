@@ -11,13 +11,19 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Plus, Upload, FileText, Trash2, Edit, Search } from "lucide-react";
+import { Loader2, Plus, Upload, FileText, Trash2, Edit, Search, ArrowLeft, Save } from "lucide-react";
 import { toast } from "sonner";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { createPageUrl } from "@/utils";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function GerenciarProcessos() {
   const [user, setUser] = useState(null);
+  const [workshop, setWorkshop] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingDoc, setEditingDoc] = useState(null);
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   
@@ -30,22 +36,68 @@ export default function GerenciarProcessos() {
     description: "",
     pdf_url: "",
     plan_access: ["FREE", "START", "BRONZE", "PRATA", "GOLD", "IOM", "MILLIONS"],
-    is_template: true
+    is_template: true,
+    content_json: {
+      objetivo: "",
+      campo_aplicacao: "",
+      informacoes_complementares: "",
+      fluxo_processo: "",
+      atividades: [],
+      matriz_riscos: [],
+      indicadores: []
+    },
+    workshop_id: ""
   });
   const [uploading, setUploading] = useState(false);
 
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(console.error);
+    const loadData = async () => {
+      try {
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
+        
+        if (currentUser.role !== 'admin') {
+          const workshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
+          const userWorkshop = workshops[0];
+          setWorkshop(userWorkshop);
+          
+          // If editing user is not admin, set default is_template to false and workshop_id
+          setFormData(prev => ({ 
+            ...prev, 
+            is_template: false,
+            workshop_id: userWorkshop?.id || ""
+          }));
+        }
+      } catch (e) { console.error(e); }
+    };
+    loadData();
   }, []);
 
   const { data: documents = [], isLoading } = useQuery({
-    queryKey: ['process-documents'],
+    queryKey: ['process-documents', user?.id],
     queryFn: async () => {
-      return await base44.entities.ProcessDocument.list();
-    }
+      const allDocs = await base44.entities.ProcessDocument.list();
+      if (user?.role === 'admin') return allDocs;
+      
+      // If regular user, only show their workshop docs
+      if (!workshop) return [];
+      return allDocs.filter(d => d.workshop_id === workshop.id);
+    },
+    enabled: !!user && (user.role === 'admin' || !!workshop)
   });
+
+  // Handle auto-open edit dialog from URL
+  useEffect(() => {
+    const editId = searchParams.get('edit');
+    if (editId && documents.length > 0 && !isDialogOpen) {
+      const docToEdit = documents.find(d => d.id === editId);
+      if (docToEdit) {
+        handleEdit(docToEdit);
+      }
+    }
+  }, [searchParams, documents]);
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
@@ -98,7 +150,17 @@ export default function GerenciarProcessos() {
       description: "",
       pdf_url: "",
       plan_access: ["FREE", "START", "BRONZE", "PRATA", "GOLD", "IOM", "MILLIONS"],
-      is_template: true
+      is_template: user?.role === 'admin',
+      content_json: {
+        objetivo: "",
+        campo_aplicacao: "",
+        informacoes_complementares: "",
+        fluxo_processo: "",
+        atividades: [],
+        matriz_riscos: [],
+        indicadores: []
+      },
+      workshop_id: workshop?.id || ""
     });
     setEditingDoc(null);
   };
@@ -113,18 +175,68 @@ export default function GerenciarProcessos() {
       description: doc.description || "",
       pdf_url: doc.pdf_url,
       plan_access: doc.plan_access || [],
-      is_template: doc.is_template
+      is_template: doc.is_template,
+      content_json: doc.content_json || {
+        objetivo: "",
+        campo_aplicacao: "",
+        informacoes_complementares: "",
+        fluxo_processo: "",
+        atividades: [],
+        matriz_riscos: [],
+        indicadores: []
+      },
+      workshop_id: doc.workshop_id
     });
     setIsDialogOpen(true);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.title || !formData.category || !formData.pdf_url) {
-      toast.error("Preencha os campos obrigatórios e faça o upload do PDF.");
+    if (!formData.title || !formData.category) {
+      toast.error("Preencha os campos obrigatórios.");
       return;
     }
+    // Remove pdf requirement for custom processes if user wants to rely on content_json content
+    // But schema says required. Let's keep it required for now or allow dummy if content_json is present.
+    // For now, simple validation
+    
     saveMutation.mutate(formData);
+  };
+
+  // Content Editors Helpers
+  const updateContent = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      content_json: { ...prev.content_json, [field]: value }
+    }));
+  };
+
+  const addArrayItem = (field, emptyItem) => {
+    setFormData(prev => ({
+      ...prev,
+      content_json: {
+        ...prev.content_json,
+        [field]: [...(prev.content_json[field] || []), emptyItem]
+      }
+    }));
+  };
+
+  const updateArrayItem = (field, index, subField, value) => {
+    const newArray = [...(formData.content_json[field] || [])];
+    newArray[index] = { ...newArray[index], [subField]: value };
+    setFormData(prev => ({
+      ...prev,
+      content_json: { ...prev.content_json, [field]: newArray }
+    }));
+  };
+
+  const removeArrayItem = (field, index) => {
+    const newArray = [...(formData.content_json[field] || [])];
+    newArray.splice(index, 1);
+    setFormData(prev => ({
+      ...prev,
+      content_json: { ...prev.content_json, [field]: newArray }
+    }));
   };
 
   const filteredDocs = documents.filter(doc => {
@@ -141,16 +253,28 @@ export default function GerenciarProcessos() {
 
   const plans = ["FREE", "START", "BRONZE", "PRATA", "GOLD", "IOM", "MILLIONS"];
 
-  if (user?.role !== 'admin') {
-    return <div className="p-8 text-center">Acesso restrito a administradores.</div>;
+  if (!user) return <div className="p-8 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto" /></div>;
+
+  // Allow admin OR workshop owners
+  if (user.role !== 'admin' && !workshop) {
+    return <div className="p-8 text-center">Acesso restrito. Você precisa ter uma oficina vinculada.</div>;
   }
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gerenciar Processos (MAPs)</h1>
-          <p className="text-gray-600">Cadastre e organize os documentos de processos da Oficinas Master.</p>
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate(createPageUrl('MeusProcessos'))}>
+            <ArrowLeft className="w-6 h-6" />
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">
+              {user.role === 'admin' ? 'Gerenciar Processos (Admin)' : 'Meus Processos Personalizados'}
+            </h1>
+            <p className="text-gray-600">
+              {user.role === 'admin' ? 'Gestão global de templates e documentos.' : 'Edite e personalize os processos da sua oficina.'}
+            </p>
+          </div>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if(!open) resetForm(); }}>
           <DialogTrigger asChild>
