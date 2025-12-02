@@ -41,17 +41,20 @@ export default function GestaoOficina() {
 
       let workshopToDisplay = null;
       try {
-        // Otimização: Buscar apenas oficinas do usuário
+        // 1. Buscar oficinas onde o usuário é dono
         const ownedWorkshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
 
         if (ownedWorkshops && ownedWorkshops.length > 0) {
           workshopToDisplay = ownedWorkshops[0];
         } else {
-          // Se não é dono, verifica se é colaborador (através da entidade Employee se necessário, 
-          // mas aqui vamos tentar buscar por listagem limitada ou filtro se possível)
-          // Como fallback para admins ou testes, podemos listar poucos
-          const allWorkshops = await base44.entities.Workshop.list(null, 1); 
-          workshopToDisplay = allWorkshops[0];
+          // 2. Se não é dono, verifica se é colaborador
+          const employees = await base44.entities.Employee.filter({ email: currentUser.email, status: 'ativo' });
+          const myEmployeeRecord = employees && employees.length > 0 ? employees[0] : null;
+          
+          if (myEmployeeRecord && myEmployeeRecord.workshop_id) {
+             const employeeWorkshop = await base44.entities.Workshop.get(myEmployeeRecord.workshop_id);
+             workshopToDisplay = employeeWorkshop;
+          }
         }
       } catch (workshopError) {
         console.log("Error fetching workshops:", workshopError);
