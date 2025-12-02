@@ -265,6 +265,12 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('DiagnosticoDesempenho'), 
           icon: Award,
           description: 'Competências técnicas e emocionais'
+        },
+        { 
+          name: 'Carga de Trabalho', 
+          href: createPageUrl('DiagnosticoCarga'), 
+          icon: BarChart4,
+          description: 'Distribuição e sobrecarga'
         }
       ]
     },
