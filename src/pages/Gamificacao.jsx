@@ -78,17 +78,19 @@ export default function Gamificacao() {
   });
 
   const { data: employees = [] } = useQuery({
-    queryKey: ['employees'],
+    queryKey: ['employees', currentWorkshop?.id],
     queryFn: async () => {
+      if (!currentWorkshop) return [];
       try {
-        const result = await base44.entities.Employee.list();
+        // Strict filtering by workshop_id
+        const result = await base44.entities.Employee.filter({ workshop_id: currentWorkshop.id });
         return Array.isArray(result) ? result : [];
       } catch (error) {
         console.log("Error fetching employees:", error);
         return [];
       }
     },
-    enabled: !!user,
+    enabled: !!currentWorkshop,
     retry: 1
   });
 

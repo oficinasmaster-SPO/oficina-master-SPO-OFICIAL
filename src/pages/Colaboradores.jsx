@@ -19,17 +19,36 @@ export default function Colaboradores() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedEmployee, setSelectedEmployee] = useState(null);
 
-  const { data: employees = [], isLoading } = useQuery({
-    queryKey: ['employees'],
+  // Fetch user first to get workshop context
+  const { data: user } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: () => base44.auth.me()
+  });
+
+  const { data: workshop } = useQuery({
+    queryKey: ['userWorkshop', user?.id],
     queryFn: async () => {
+        if (!user) return null;
+        const ws = await base44.entities.Workshop.filter({ owner_id: user.id });
+        return ws[0];
+    },
+    enabled: !!user
+  });
+
+  const { data: employees = [], isLoading } = useQuery({
+    queryKey: ['employees', workshop?.id],
+    queryFn: async () => {
+      if (!workshop) return [];
       try {
-        const result = await base44.entities.Employee.list('-created_date');
+        // Filter employees by the specific workshop ID
+        const result = await base44.entities.Employee.filter({ workshop_id: workshop.id }, '-created_date');
         return Array.isArray(result) ? result : [];
       } catch (error) {
         console.log("Error fetching employees:", error);
         return [];
       }
     },
+    enabled: !!workshop,
     retry: 1
   });
 
