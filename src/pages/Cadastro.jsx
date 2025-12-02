@@ -40,22 +40,24 @@ export default function Cadastro() {
       if (!userWorkshop) {
         // Cria uma oficina rascunho se não existir, para permitir o uso dos componentes de edição
         try {
-          // Tentativa com payload mínimo para isolar erros de validação
-          console.log("Tentando criar oficina com payload mínimo...");
+          // Payload completo para evitar erros de validação nos defaults
           userWorkshop = await base44.entities.Workshop.create({
             owner_id: user.id,
-            name: "Minha Nova Oficina",
+            name: "Minha Nova Oficina (Clique em Editar)",
             city: "A Definir",
             state: "UF",
-            status: "ativo" // Campo obrigatório no fluxo, mesmo que tenha default
+            status: "ativo",
+            employees_count: 1,
+            years_in_business: 1,
+            is_franchisee: false,
+            operates_franchise: false,
+            capacidade_atendimento_dia: 0,
+            tempo_medio_servico: 0
           });
           toast.success("Ambiente de cadastro iniciado!");
         } catch (createError) {
           console.error("Erro ao criar oficina rascunho:", createError);
-          console.error("Detalhes do erro de criação:", createError);
-          // Mostra o erro real na tela para facilitar debug
-          toast.error(`Falha na criação: ${JSON.stringify(createError.message || createError)}`, { duration: 10000 });
-          
+          toast.error(`Erro ao iniciar cadastro: ${createError.message || 'Erro desconhecido'}`);
           setLoading(false);
           return;
         }
@@ -105,8 +107,7 @@ export default function Cadastro() {
                     <Settings className="w-8 h-8 text-red-600" />
                 </div>
                 <h2 className="text-xl font-bold text-gray-900 mb-2">Não foi possível carregar sua oficina</h2>
-                <p className="text-gray-600 mb-6">Ocorreu um erro ao iniciar seu cadastro. Verifique sua conexão e tente novamente.</p>
-                <p className="text-xs text-red-500 mb-4">Se o erro persistir, contate o suporte.</p>
+                <p className="text-gray-600 mb-6">Ocorreu um erro ao iniciar seu cadastro. Por favor, tente novamente.</p>
                 <Button onClick={() => { setLoading(true); loadData(); }} className="w-full bg-blue-600 hover:bg-blue-700">
                     Tentar Novamente
                 </Button>
