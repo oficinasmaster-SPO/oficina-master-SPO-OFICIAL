@@ -15,6 +15,7 @@ export default function GerenciarPermissoes() {
 
   // Lista de cargos do sistema (conforme User.json)
   const roles = [
+    { id: "proprietario", label: "Proprietário" },
     { id: "diretor", label: "Diretor" },
     { id: "supervisor_loja", label: "Supervisor de Loja" },
     { id: "gerente", label: "Gerente" },
