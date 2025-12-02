@@ -100,6 +100,7 @@ import GerenciarModulo from './pages/GerenciarModulo';
 import GerenciarAula from './pages/GerenciarAula';
 import MeusTreinamentos from './pages/MeusTreinamentos';
 import AssistirAula from './pages/AssistirAula';
+import AcompanhamentoTreinamento from './pages/AcompanhamentoTreinamento';
 import __Layout from './Layout.jsx';
 
 
@@ -206,6 +207,7 @@ export const PAGES = {
     "GerenciarAula": GerenciarAula,
     "MeusTreinamentos": MeusTreinamentos,
     "AssistirAula": AssistirAula,
+    "AcompanhamentoTreinamento": AcompanhamentoTreinamento,
 }
 
 export const pagesConfig = {
