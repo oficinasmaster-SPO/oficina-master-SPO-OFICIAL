@@ -7,7 +7,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, User } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, User, Link as LinkIcon, History, Copy, X } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { maturityQuestions, answerMapping } from "../components/maturity/MaturityQuestions";
 import { toast } from "sonner";
 
@@ -21,6 +23,11 @@ export default function DiagnosticoMaturidade() {
   const [user, setUser] = useState(null);
   const [employees, setEmployees] = useState([]);
   const [workshop, setWorkshop] = useState(null);
+  
+  const [inviteLink, setInviteLink] = useState("");
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [generatingInvite, setGeneratingInvite] = useState(false);
+  const [candidateName, setCandidateName] = useState("");
 
   useEffect(() => {
     loadData();
@@ -87,6 +94,36 @@ export default function DiagnosticoMaturidade() {
     }
   };
 
+  const handleGenerateInvite = async () => {
+    setGeneratingInvite(true);
+    try {
+      const response = await base44.functions.invoke('generateDiagnosticInvite', {
+        workshop_id: workshop.id,
+        employee_id: selectedEmployee || null,
+        candidate_name: candidateName || null,
+        diagnostic_type: 'MATURITY'
+      });
+
+      if (response.data.success) {
+        const link = `${window.location.origin}/${response.data.path}?token=${response.data.invite_token}`;
+        setInviteLink(link);
+        setIsInviteModalOpen(true);
+      } else {
+        toast.error("Erro ao gerar link");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao gerar link");
+    } finally {
+      setGeneratingInvite(false);
+    }
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(inviteLink);
+    toast.success("Link copiado!");
+  };
+
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
@@ -113,6 +150,7 @@ export default function DiagnosticoMaturidade() {
         answers: answersArray,
         maturity_level: dominantLevel,
         maturity_scores: scores,
+        evaluation_type: 'manager',
         completed: true
       });
       
@@ -138,10 +176,10 @@ export default function DiagnosticoMaturidade() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50 py-8 px-4">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                Análise do Nível de Maturidade do(a) Colaborador(a)
+                Maturidade Profissional - Gestor
               </h1>
               {workshop && (
                 <p className="text-sm text-gray-600 mt-1">
@@ -149,12 +187,115 @@ export default function DiagnosticoMaturidade() {
                 </p>
               )}
             </div>
-            <div className="text-sm text-gray-600">
-              Pergunta {currentQuestion + 1} de {maturityQuestions.length}
+            <div className="flex gap-2 w-full md:w-auto">
+              <Button variant="outline" onClick={() => navigate(createPageUrl("HistoricoMaturidade"))}>
+                <History className="w-4 h-4 mr-2" />
+                Histórico
+              </Button>
+              <Button onClick={() => setIsInviteModalOpen(true)} className="bg-purple-600 hover:bg-purple-700">
+                <LinkIcon className="w-4 h-4 mr-2" />
+                Gerar Link
+              </Button>
             </div>
+          </div>
+          
+          <div className="flex justify-between text-sm text-gray-600 mb-2">
+            <span>Pergunta {currentQuestion + 1} de {maturityQuestions.length}</span>
+            <span>{progress.toFixed(0)}%</span>
           </div>
           <Progress value={progress} className="h-2" />
         </div>
+
+        <Dialog open={isInviteModalOpen} onOpenChange={setIsInviteModalOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Gerar Link para Autoavaliação</DialogTitle>
+                <DialogDescription>
+                  Envie este link para o colaborador ou candidato.
+                </DialogDescription>
+              </DialogHeader>
+              
+              {!inviteLink ? (
+                <div className="space-y-4 py-4">
+                  <div>
+                    <Label>Para quem é este link?</Label>
+                    <div className="flex gap-2 mt-2">
+                      <Button 
+                        variant={selectedEmployee ? "default" : "outline"} 
+                        onClick={() => setCandidateName("")}
+                        className="flex-1"
+                      >
+                        Colaborador Existente
+                      </Button>
+                      <Button 
+                        variant={!selectedEmployee ? "default" : "outline"} 
+                        onClick={() => setSelectedEmployee("")}
+                        className="flex-1"
+                      >
+                        Candidato / Externo
+                      </Button>
+                    </div>
+                  </div>
+
+                  {selectedEmployee === "" && (
+                    <div>
+                      <Label>Nome do Candidato</Label>
+                      <Input 
+                        value={candidateName} 
+                        onChange={(e) => setCandidateName(e.target.value)}
+                        placeholder="Nome completo" 
+                      />
+                    </div>
+                  )}
+
+                  {selectedEmployee !== "" && (
+                    <div>
+                      <Label>Selecione o Colaborador</Label>
+                      <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {employees.map((emp) => (
+                            <SelectItem key={emp.id} value={emp.id}>
+                              {emp.full_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  <Button 
+                    onClick={handleGenerateInvite} 
+                    disabled={generatingInvite || (!selectedEmployee && !candidateName)}
+                    className="w-full"
+                  >
+                    {generatingInvite ? <Loader2 className="animate-spin mr-2" /> : "Gerar Link"}
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4 py-4">
+                  <div className="p-4 bg-green-50 rounded border border-green-200 text-center text-green-800">
+                    Link gerado com sucesso!
+                  </div>
+                  <div className="flex gap-2">
+                    <Input value={inviteLink} readOnly />
+                    <Button onClick={copyToClipboard} size="icon">
+                      <Copy className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => { setInviteLink(""); setIsInviteModalOpen(false); }} 
+                    className="w-full"
+                  >
+                    Fechar
+                  </Button>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
 
         {currentQuestion === 0 && !selectedEmployee && (
           <Card className="shadow-lg border-2 border-purple-200 mb-6">
