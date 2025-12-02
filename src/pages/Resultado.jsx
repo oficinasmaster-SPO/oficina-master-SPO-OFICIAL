@@ -5,7 +5,8 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, TrendingUp, Users, BarChart3, Rocket, ArrowRight, PieChart as PieChartIcon, FileText } from "lucide-react";
+import { Loader2, TrendingUp, Users, BarChart3, Rocket, ArrowRight, PieChart as PieChartIcon, FileText, Printer, Share2 } from "lucide-react";
+import { toast } from "sonner";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import ExecutiveSummary from "../components/resultado/ExecutiveSummary";
 
@@ -412,6 +413,17 @@ export default function Resultado() {
             className="flex-1 py-6"
           >
             Voltar ao Início
+          </Button>
+          <Button variant="outline" className="flex-1 py-6" onClick={() => window.print()}>
+            <Printer className="w-5 h-5 mr-2" />
+            Imprimir
+          </Button>
+          <Button variant="outline" className="flex-1 py-6" onClick={() => {
+            navigator.clipboard.writeText(window.location.href);
+            toast.success("Link copiado!");
+          }}>
+            <Share2 className="w-5 h-5 mr-2" />
+            Compartilhar
           </Button>
         </div>
       </div>
