@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Users, Star, Phone, Mail, Loader2, Shield, Building2, MapPin } from "lucide-react";
+import { Search, Loader2, Shield, Building2, MapPin, Star } from "lucide-react";
+
 export default function AdminClientes() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -95,7 +96,7 @@ export default function AdminClientes() {
           <div>
             <div className="flex items-center gap-3 mb-2">
               <Shield className="w-8 h-8 text-purple-600" />
-              <h1 className="text-4xl font-bold text-gray-900">Gestão de Clientes - Admin</h1>
+              <h1 className="text-4xl font-bold text-gray-900">Gestão de Oficinas - Admin</h1>
             </div>
             <p className="text-gray-600">Painel administrativo da plataforma</p>
           </div>
@@ -105,13 +106,13 @@ export default function AdminClientes() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <Card>
             <CardContent className="p-4">
-              <div className="text-sm text-gray-600 mb-1">Total de Clientes</div>
+              <div className="text-sm text-gray-600 mb-1">Total de Oficinas</div>
               <div className="text-3xl font-bold text-gray-900">{stats.total}</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
-              <div className="text-sm text-gray-600 mb-1">Clientes Ativos</div>
+              <div className="text-sm text-gray-600 mb-1">Oficinas Ativas</div>
               <div className="text-3xl font-bold text-green-600">{stats.ativos}</div>
             </CardContent>
           </Card>
@@ -136,7 +137,7 @@ export default function AdminClientes() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
-                  placeholder="Buscar por nome ou email..."
+                  placeholder="Buscar por nome ou cidade..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -258,7 +259,6 @@ export default function AdminClientes() {
           </div>
         )}
       </div>
-
     </div>
   );
 }
