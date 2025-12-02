@@ -23,21 +23,10 @@ export default function Colaboradores() {
     queryKey: ['employees'],
     queryFn: async () => {
       try {
-        const user = await base44.auth.me();
-        const workshops = await base44.entities.Workshop.filter({ owner_id: user.id });
-        const workshopId = workshops[0]?.id;
-        
-        if (!workshopId) {
-            // Se não for dono, tenta achar onde é colaborador
-            const empCheck = await base44.entities.Employee.filter({ email: user.email });
-            if (empCheck.length > 0) return await base44.entities.Employee.filter({ workshop_id: empCheck[0].workshop_id }, '-created_date');
-            return [];
-        }
-
-        const result = await base44.entities.Employee.filter({ workshop_id: workshopId }, '-created_date');
+        const result = await base44.entities.Employee.list('-created_date');
         return Array.isArray(result) ? result : [];
       } catch (error) {
-        console.error("Error fetching employees:", error);
+        console.log("Error fetching employees:", error);
         return [];
       }
     },

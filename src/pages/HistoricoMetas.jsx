@@ -288,11 +288,7 @@ export default function HistoricoMetas() {
                         <Button 
                             variant="ghost" 
                             className="ml-auto text-blue-600 hover:text-blue-700 hover:bg-blue-50 w-full md:w-auto"
-                            onClick={() => { 
-                                console.log("Opening details for goal:", goal); 
-                                setSelectedGoal(goal); 
-                                setIsDetailsOpen(true); 
-                            }}
+                            onClick={() => { setSelectedGoal(goal); setIsDetailsOpen(true); }}
                         >
                             <span className="hidden md:inline">Ver Detalhes</span> <ArrowRight className="w-4 h-4 md:ml-2" />
                         </Button>

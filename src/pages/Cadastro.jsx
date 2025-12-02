@@ -86,10 +86,7 @@ export default function Cadastro() {
     }
   };
 
-  const [isSaving, setIsSaving] = useState(false);
-
   const handleWorkshopUpdate = async (updates) => {
-    setIsSaving(true);
     try {
       const updated = await base44.entities.Workshop.update(workshop.id, updates);
       setWorkshop(updated);
@@ -97,8 +94,6 @@ export default function Cadastro() {
     } catch (error) {
       console.error(error);
       toast.error("Erro ao salvar alterações.");
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -162,15 +157,6 @@ export default function Cadastro() {
 
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-4">
-      {isSaving && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm">
-            <div className="bg-white p-6 rounded-xl shadow-2xl flex flex-col items-center animate-in zoom-in-95">
-                <Loader2 className="w-10 h-10 text-blue-600 animate-spin mb-4" />
-                <h3 className="text-lg font-bold text-gray-900">Salvando alterações...</h3>
-                <p className="text-sm text-gray-500">Por favor, aguarde.</p>
-            </div>
-        </div>
-      )}
       <div className="max-w-7xl mx-auto">
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-slate-900 mb-2">
