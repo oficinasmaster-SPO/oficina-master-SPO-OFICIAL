@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -27,8 +26,16 @@ export default function Questionario() {
     try {
       const user = await base44.auth.me();
       const workshops = await base44.entities.Workshop.list();
-      const userWorkshop = workshops.find(w => w.owner_id === user.id);
+      let userWorkshop = workshops.find(w => w.owner_id === user.id);
       
+      if (!userWorkshop) {
+        // Tenta encontrar por vínculo de colaborador
+        const employees = await base44.entities.Employee.filter({ email: user.email });
+        if (employees && employees.length > 0 && employees[0].workshop_id) {
+          userWorkshop = workshops.find(w => w.id === employees[0].workshop_id);
+        }
+      }
+
       if (!userWorkshop) {
         toast.error("Você precisa cadastrar sua oficina antes de iniciar o diagnóstico");
         navigate(createPageUrl("Cadastro"));

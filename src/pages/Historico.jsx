@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, Eye, TrendingUp, Users, BarChart3, Rocket, Filter, LayoutGrid, User, CheckCircle2, Clock } from "lucide-react";
+import { Calendar, Eye, TrendingUp, Users, BarChart3, Rocket, Filter, LayoutGrid, User, CheckCircle2, Clock, Calculator, Activity, Brain, Heart, DollarSign, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { assessmentCriteria } from "../components/assessment/AssessmentCriteria";
@@ -22,10 +22,26 @@ export default function Historico() {
   const { data: allAssessments = [], isLoading } = useQuery({
     queryKey: ['all-assessments'],
     queryFn: async () => {
-      const [diagnostics, processAssessments, entrepreneurDiagnostics] = await Promise.all([
+      const [
+        diagnostics, 
+        processAssessments, 
+        entrepreneurDiagnostics,
+        productivityDiagnostics,
+        debtAnalyses,
+        performanceDiagnostics,
+        discDiagnostics,
+        maturityDiagnostics,
+        commercialDiagnostics
+      ] = await Promise.all([
         base44.entities.Diagnostic.list(),
         base44.entities.ProcessAssessment.list(),
-        base44.entities.EntrepreneurDiagnostic.list()
+        base44.entities.EntrepreneurDiagnostic.list(),
+        base44.entities.ProductivityDiagnostic.list(),
+        base44.entities.DebtAnalysis.list(),
+        base44.entities.PerformanceMatrixDiagnostic.list(),
+        base44.entities.DISCDiagnostic.list(),
+        base44.entities.CollaboratorMaturityDiagnostic.list(),
+        base44.entities.CommercialDiagnostic.list()
       ]);
 
       // Normalize data
@@ -62,8 +78,83 @@ export default function Historico() {
         detailsUrl: `ResultadoEmpresario?id=${e.id}`
       }));
 
-      return [...normalizedDiagnostics, ...normalizedProcess, ...normalizedEntrepreneur]
-        .sort((a, b) => new Date(b.date) - new Date(a.date));
+      const normalizedProductivity = (productivityDiagnostics || []).map(p => ({
+        ...p,
+        type: 'productivity',
+        typeName: 'Produção vs Salário',
+        title: `${p.employee_role} - ${p.period_month}`,
+        date: p.created_date,
+        status: p.completed ? 'concluido' : 'pendente',
+        score: p.classification,
+        detailsUrl: `ResultadoProducao?id=${p.id}`
+      }));
+
+      const normalizedDebt = (debtAnalyses || []).map(d => ({
+        ...d,
+        type: 'debt',
+        typeName: 'Endividamento',
+        title: `Análise Financeira`,
+        date: d.created_date,
+        status: d.completed ? 'concluido' : 'pendente',
+        score: d.risco_anual,
+        detailsUrl: `ResultadoEndividamento?id=${d.id}`
+      }));
+
+      const normalizedPerformance = (performanceDiagnostics || []).map(p => ({
+        ...p,
+        type: 'performance',
+        typeName: 'Desempenho (Matriz)',
+        title: p.classification,
+        date: p.created_date,
+        status: p.completed ? 'concluido' : 'pendente',
+        score: `T:${p.technical_average} E:${p.emotional_average}`,
+        detailsUrl: `ResultadoDesempenho?id=${p.id}`
+      }));
+
+      const normalizedDISC = (discDiagnostics || []).map(d => ({
+        ...d,
+        type: 'disc',
+        typeName: 'DISC',
+        title: d.dominant_profile ? d.dominant_profile.toUpperCase() : 'Perfil',
+        date: d.created_date,
+        status: d.completed ? 'concluido' : 'pendente',
+        score: d.dominant_profile,
+        detailsUrl: `ResultadoDISC?id=${d.id}`
+      }));
+
+      const normalizedMaturity = (maturityDiagnostics || []).map(m => ({
+        ...m,
+        type: 'maturity',
+        typeName: 'Maturidade Profissional',
+        title: m.maturity_level ? m.maturity_level.toUpperCase() : 'Nível',
+        date: m.created_date,
+        status: m.completed ? 'concluido' : 'pendente',
+        score: m.maturity_level,
+        detailsUrl: `ResultadoMaturidade?id=${m.id}`
+      }));
+
+      const normalizedCommercial = (commercialDiagnostics || []).map(c => ({
+        ...c,
+        type: 'commercial',
+        typeName: 'Diagnóstico Comercial',
+        title: c.diagnostic_type,
+        date: c.created_date,
+        status: c.completed ? 'concluido' : 'pendente',
+        score: `${c.average_score?.toFixed(1)}/10`,
+        detailsUrl: `DiagnosticoComercial?id=${c.id}` // Note: DiagnosticoComercial page handles history view
+      }));
+
+      return [
+        ...normalizedDiagnostics, 
+        ...normalizedProcess, 
+        ...normalizedEntrepreneur,
+        ...normalizedProductivity,
+        ...normalizedDebt,
+        ...normalizedPerformance,
+        ...normalizedDISC,
+        ...normalizedMaturity,
+        ...normalizedCommercial
+      ].sort((a, b) => new Date(b.date) - new Date(a.date));
     },
     initialData: []
   });
@@ -103,6 +194,12 @@ export default function Historico() {
       case 'diagnostic': return TrendingUp;
       case 'process': return LayoutGrid;
       case 'entrepreneur': return User;
+      case 'productivity': return Calculator;
+      case 'debt': return DollarSign;
+      case 'performance': return Activity;
+      case 'disc': return Brain;
+      case 'maturity': return Users;
+      case 'commercial': return BarChart3;
       default: return FileText;
     }
   };
@@ -142,8 +239,14 @@ export default function Historico() {
                   <SelectContent>
                     <SelectItem value="all">Todos os Tipos</SelectItem>
                     <SelectItem value="diagnostic">Fases da Oficina</SelectItem>
-                    <SelectItem value="process">Processos (Autoavaliação)</SelectItem>
+                    <SelectItem value="process">Processos</SelectItem>
                     <SelectItem value="entrepreneur">Perfil Empresário</SelectItem>
+                    <SelectItem value="productivity">Produção vs Salário</SelectItem>
+                    <SelectItem value="debt">Endividamento</SelectItem>
+                    <SelectItem value="performance">Desempenho</SelectItem>
+                    <SelectItem value="disc">DISC</SelectItem>
+                    <SelectItem value="maturity">Maturidade</SelectItem>
+                    <SelectItem value="commercial">Comercial</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

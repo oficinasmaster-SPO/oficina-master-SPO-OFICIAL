@@ -29,7 +29,14 @@ export default function TreinamentoVendas() {
     setUser(currentUser);
     
     const workshops = await base44.entities.Workshop.list();
-    const userWorkshop = workshops.find(w => w.owner_id === currentUser.id) || workshops[0];
+    let userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
+
+    if (!userWorkshop) {
+      const employees = await base44.entities.Employee.filter({ email: currentUser.email });
+      if (employees && employees.length > 0 && employees[0].workshop_id) {
+        userWorkshop = workshops.find(w => w.id === employees[0].workshop_id);
+      }
+    }
     setWorkshop(userWorkshop);
   };
 

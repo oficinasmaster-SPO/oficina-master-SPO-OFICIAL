@@ -25,16 +25,19 @@ export default function IAAnalytics() {
 
       try {
         const workshops = await base44.entities.Workshop.list();
-        const workshopsArray = Array.isArray(workshops) ? workshops : [];
-        // Tenta encontrar oficina do usuário (dono ou vinculado)
-        const userWorkshop = workshopsArray.find(w => w.owner_id === currentUser.id) || workshopsArray[0];
+        let userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
+        
+        if (!userWorkshop) {
+          const employees = await base44.entities.Employee.filter({ email: currentUser.email });
+          if (employees && employees.length > 0 && employees[0].workshop_id) {
+            userWorkshop = workshops.find(w => w.id === employees[0].workshop_id);
+          }
+        }
         
         if (userWorkshop) {
             setWorkshop(userWorkshop);
         } else {
              console.log("Nenhuma oficina encontrada para este usuário");
-             // Não redireciona forçadamente, apenas não seta o workshop
-             // O render vai tratar o estado de !workshop de forma amigável
         }
       } catch (workshopError) {
         console.log("Error fetching workshops:", workshopError);
