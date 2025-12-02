@@ -119,13 +119,12 @@ export default function MeusProcessos() {
             </p>
           </div>
           
-          {user?.role === 'admin' && (
-            <Link to={createPageUrl('GerenciarProcessos')}>
-              <Button variant="outline">
-                <Settings className="w-4 h-4 mr-2" /> Gerenciar (Admin)
-              </Button>
-            </Link>
-          )}
+          <Link to={createPageUrl('GerenciarProcessos')}>
+            <Button className="bg-red-600 hover:bg-red-700 text-white border-0">
+              <Settings className="w-4 h-4 mr-2" /> 
+              {user?.role === 'admin' ? 'Gerenciar Biblioteca (Admin)' : 'Criar e Gerenciar Processos'}
+            </Button>
+          </Link>
         </div>
 
         <div className="flex flex-col md:flex-row gap-4 mb-6">
