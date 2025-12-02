@@ -3,17 +3,24 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, MessageSquare, ThumbsUp, ThumbsDown, Users } from "lucide-react";
+import { Plus, MessageSquare, ThumbsUp, ThumbsDown, Users, Wand2, Printer, Filter } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
+import { jsPDF } from "npm:jspdf@2.5.1";
 
 export default function FeedbacksSection({ employee, onUpdate }) {
   const [showDialog, setShowDialog] = useState(false);
+  const [generatingAI, setGeneratingAI] = useState(false);
   const [formData, setFormData] = useState({
     type: "one_on_one",
     content: ""
+  });
+  
+  const [filters, setFilters] = useState({
+    month: "all",
+    type: "all"
   });
 
   const handleAdd = async () => {
@@ -38,6 +45,56 @@ export default function FeedbacksSection({ employee, onUpdate }) {
     setFormData({ type: "one_on_one", content: "" });
   };
 
+  const generateWithAI = async () => {
+    if (!formData.type) return;
+    setGeneratingAI(true);
+    try {
+      const prompt = `Escreva um modelo de ${formData.type === 'positivo' ? 'feedback positivo' : formData.type === 'negativo' ? 'feedback corretivo/negativo' : 'pauta para reunião one-on-one'} para um colaborador chamado ${employee.full_name}, cargo ${employee.position}. 
+      ${formData.type === 'one_on_one' ? 'Inclua perguntas chave para alinhamento e espaço para registrar metas.' : 'Seja profissional, construtivo e direto.'}`;
+      
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt: prompt
+      });
+      
+      setFormData({ ...formData, content: response });
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao gerar com IA");
+    } finally {
+      setGeneratingAI(false);
+    }
+  };
+
+  const handleTypeChange = (value) => {
+    let content = "";
+    if (value === "one_on_one") {
+      content = "**Pauta One-on-One**\n\n1. Como você está se sentindo no trabalho?\n2. Principais conquistas desde a última conversa:\n3. Desafios/Bloqueios encontrados:\n4. Feedback do Gestor:\n5. Plano de Ação/Metas para próxima semana:\n";
+    }
+    setFormData({ type: value, content: content || formData.content });
+  };
+
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text(`Relatório de Feedbacks - ${employee.full_name}`, 20, 20);
+    doc.setFontSize(12);
+    
+    let y = 40;
+    filteredFeedbacks.forEach((fb) => {
+      if (y > 270) { doc.addPage(); y = 20; }
+      doc.setFont(undefined, 'bold');
+      doc.text(`${new Date(fb.date).toLocaleDateString('pt-BR')} - ${fb.type.toUpperCase().replace('_', ' ')}`, 20, y);
+      y += 7;
+      doc.setFont(undefined, 'normal');
+      doc.setFontSize(10);
+      const splitText = doc.splitTextToSize(fb.content, 170);
+      doc.text(splitText, 20, y);
+      y += splitText.length * 5 + 10;
+    });
+    
+    doc.save(`feedbacks_${employee.full_name}.pdf`);
+  };
+
   const feedbackIcons = {
     positivo: ThumbsUp,
     negativo: ThumbsDown,
@@ -50,26 +107,69 @@ export default function FeedbacksSection({ employee, onUpdate }) {
     one_on_one: "border-blue-200 bg-blue-50"
   };
 
+  const filteredFeedbacks = (employee.feedbacks || []).filter(fb => {
+    const date = new Date(fb.date);
+    const monthMatch = filters.month === "all" || (date.getMonth() + 1) === parseInt(filters.month);
+    const typeMatch = filters.type === "all" || fb.type === filters.type;
+    return monthMatch && typeMatch;
+  }).sort((a, b) => new Date(b.date) - new Date(a.date));
+
   return (
     <Card className="shadow-lg">
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <CardTitle className="flex items-center gap-2">
             <MessageSquare className="w-5 h-5" />
             Feedbacks e One-on-One
           </CardTitle>
-          <Button onClick={() => setShowDialog(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Adicionar
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={exportToPDF}>
+              <Printer className="w-4 h-4 mr-2" />
+              PDF
+            </Button>
+            <Button onClick={() => setShowDialog(true)} size="sm">
+              <Plus className="w-4 h-4 mr-2" />
+              Adicionar
+            </Button>
+          </div>
+        </div>
+        
+        {/* Filtros */}
+        <div className="flex gap-2 mt-4">
+          <div className="w-32">
+            <Select value={filters.month} onValueChange={(v) => setFilters({...filters, month: v})}>
+              <SelectTrigger className="h-8">
+                <SelectValue placeholder="Mês" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos Meses</SelectItem>
+                {Array.from({length: 12}, (_, i) => (
+                  <SelectItem key={i+1} value={(i+1).toString()}>{new Date(0, i).toLocaleString('pt-BR', {month: 'long'})}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="w-32">
+            <Select value={filters.type} onValueChange={(v) => setFilters({...filters, type: v})}>
+              <SelectTrigger className="h-8">
+                <SelectValue placeholder="Tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos Tipos</SelectItem>
+                <SelectItem value="positivo">Positivo</SelectItem>
+                <SelectItem value="negativo">Negativo</SelectItem>
+                <SelectItem value="one_on_one">1:1</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
-        {!employee.feedbacks || employee.feedbacks.length === 0 ? (
-          <p className="text-center text-gray-500 py-8">Nenhum feedback registrado</p>
+        {filteredFeedbacks.length === 0 ? (
+          <p className="text-center text-gray-500 py-8">Nenhum registro encontrado</p>
         ) : (
           <div className="space-y-3">
-            {employee.feedbacks.map((feedback, index) => {
+            {filteredFeedbacks.map((feedback, index) => {
               const Icon = feedbackIcons[feedback.type];
               return (
                 <div key={index} className={`p-4 rounded-lg border-2 ${feedbackColors[feedback.type]}`}>
@@ -82,7 +182,7 @@ export default function FeedbacksSection({ employee, onUpdate }) {
                           {new Date(feedback.date).toLocaleDateString('pt-BR')}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-700">{feedback.content}</p>
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{feedback.content}</p>
                       <p className="text-xs text-gray-500 mt-2">Por: {feedback.created_by}</p>
                     </div>
                   </div>
@@ -94,14 +194,14 @@ export default function FeedbacksSection({ employee, onUpdate }) {
       </CardContent>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Adicionar Feedback</DialogTitle>
+            <DialogTitle>Adicionar Feedback / 1:1</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Tipo de Feedback</Label>
-              <Select value={formData.type} onValueChange={(value) => setFormData({...formData, type: value})}>
+              <Label>Tipo de Registro</Label>
+              <Select value={formData.type} onValueChange={handleTypeChange}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -113,9 +213,15 @@ export default function FeedbacksSection({ employee, onUpdate }) {
               </Select>
             </div>
             <div>
-              <Label>Conteúdo</Label>
+              <div className="flex justify-between mb-1">
+                <Label>Conteúdo</Label>
+                <Button variant="ghost" size="xs" onClick={generateWithAI} disabled={generatingAI} className="text-purple-600 h-6">
+                  <Wand2 className="w-3 h-3 mr-1" />
+                  {generatingAI ? "Gerando..." : "Gerar Sugestão com IA"}
+                </Button>
+              </div>
               <Textarea
-                rows={6}
+                rows={10}
                 value={formData.content}
                 onChange={(e) => setFormData({...formData, content: e.target.value})}
                 placeholder="Descreva o feedback ou pontos da conversa 1:1..."

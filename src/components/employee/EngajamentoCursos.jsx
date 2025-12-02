@@ -150,6 +150,33 @@ export default function EngajamentoCursos({ employee, onUpdate }) {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Biblioteca de Cursos da Plataforma */}
+      <Card className="shadow-lg border-2 border-gray-200">
+        <CardHeader>
+          <CardTitle>Cursos Disponíveis na Plataforma</CardTitle>
+          <CardDescription>Monitore o engajamento e resultados</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Exemplo estático de cursos disponíveis para adicionar futuramente lógica de tracking */}
+            <div className="p-4 border rounded-lg bg-gray-50 flex justify-between items-center">
+              <div>
+                <p className="font-semibold">Atendimento de Excelência</p>
+                <p className="text-xs text-gray-500">Módulo Comercial</p>
+              </div>
+              <Button size="sm" variant="ghost" disabled>Em breve</Button>
+            </div>
+            <div className="p-4 border rounded-lg bg-gray-50 flex justify-between items-center">
+              <div>
+                <p className="font-semibold">Gestão de Tempo e Produtividade</p>
+                <p className="text-xs text-gray-500">Módulo Gestão</p>
+              </div>
+              <Button size="sm" variant="ghost" disabled>Em breve</Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

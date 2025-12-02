@@ -92,14 +92,15 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
     (Array.isArray(formData.benefits) ? formData.benefits.reduce((sum, b) => sum + (b.valor || 0), 0) : 0);
   
   const totalProduction = formData.production_parts + formData.production_parts_sales + formData.production_services;
-  const productionPercentage = totalCost > 0 ? ((totalProduction / totalCost) * 100).toFixed(0) : 0;
+  // Formula: Custo (Salário) / Faturamento Total (Produção) * 100
+  const productionPercentage = totalProduction > 0 ? ((totalCost / totalProduction) * 100).toFixed(1) : 0;
 
   return (
     <div className="space-y-6">
       <Card className="shadow-lg">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Remuneração</CardTitle>
+            <CardTitle>Remuneração & Benefícios</CardTitle>
             {!editing ? (
               <Button onClick={() => setEditing(true)}>Editar</Button>
             ) : (
@@ -277,7 +278,7 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
 
       <Card className="shadow-lg border-2 border-green-200">
         <CardHeader>
-          <CardTitle>Produção</CardTitle>
+          <CardTitle>PRODUÇÃO PREVISTA</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -317,8 +318,9 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
                 <p className="text-2xl font-bold text-green-600">R$ {totalProduction.toFixed(2)}</p>
               </div>
               <div>
-                <p className="text-sm font-semibold text-green-900">% sobre Custos</p>
-                <p className={`text-2xl font-bold ${productionPercentage >= 100 ? 'text-green-600' : 'text-orange-600'}`}>
+                <p className="text-sm font-semibold text-green-900">% Custo sobre Produção</p>
+                <p className="text-xs text-green-700">(Salário / Faturamento x 100)</p>
+                <p className={`text-2xl font-bold ${productionPercentage <= 30 ? 'text-green-600' : 'text-orange-600'}`}>
                   {productionPercentage}%
                 </p>
               </div>

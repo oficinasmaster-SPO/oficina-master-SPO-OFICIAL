@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, AlertTriangle } from "lucide-react";
+import { Plus, AlertTriangle, Printer, Filter } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
+import { jsPDF } from "npm:jspdf@2.5.1";
 
 export default function AdvertenciasSection({ employee, onUpdate }) {
   const [showDialog, setShowDialog] = useState(false);
@@ -16,6 +17,11 @@ export default function AdvertenciasSection({ employee, onUpdate }) {
     reason: "",
     severity: "leve",
     description: ""
+  });
+  
+  const [filters, setFilters] = useState({
+    severity: "all",
+    month: "all"
   });
 
   const handleAdd = async () => {
@@ -41,6 +47,28 @@ export default function AdvertenciasSection({ employee, onUpdate }) {
     setFormData({ reason: "", severity: "leve", description: "" });
   };
 
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text(`Registro de Advertências - ${employee.full_name}`, 20, 20);
+    doc.setFontSize(12);
+    
+    let y = 40;
+    filteredWarnings.forEach((w) => {
+      if (y > 270) { doc.addPage(); y = 20; }
+      doc.setFont(undefined, 'bold');
+      doc.text(`${new Date(w.date).toLocaleDateString('pt-BR')} - ${severityLabels[w.severity]} - ${w.reason}`, 20, y);
+      y += 7;
+      doc.setFont(undefined, 'normal');
+      doc.setFontSize(10);
+      const splitText = doc.splitTextToSize(w.description, 170);
+      doc.text(splitText, 20, y);
+      y += splitText.length * 5 + 10;
+    });
+    
+    doc.save(`advertencias_${employee.full_name}.pdf`);
+  };
+
   const severityColors = {
     leve: "border-yellow-200 bg-yellow-50",
     grave: "border-orange-200 bg-orange-50",
@@ -53,26 +81,69 @@ export default function AdvertenciasSection({ employee, onUpdate }) {
     gravissima: "Gravíssima"
   };
 
+  const filteredWarnings = (employee.warnings || []).filter(w => {
+    const date = new Date(w.date);
+    const monthMatch = filters.month === "all" || (date.getMonth() + 1) === parseInt(filters.month);
+    const severityMatch = filters.severity === "all" || w.severity === filters.severity;
+    return monthMatch && severityMatch;
+  }).sort((a, b) => new Date(b.date) - new Date(a.date));
+
   return (
     <Card className="shadow-lg border-2 border-orange-200">
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <CardTitle className="flex items-center gap-2">
             <AlertTriangle className="w-5 h-5 text-orange-600" />
             Advertências
           </CardTitle>
-          <Button onClick={() => setShowDialog(true)} className="bg-orange-600 hover:bg-orange-700">
-            <Plus className="w-4 h-4 mr-2" />
-            Registrar Advertência
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={exportToPDF}>
+              <Printer className="w-4 h-4 mr-2" />
+              PDF
+            </Button>
+            <Button onClick={() => setShowDialog(true)} className="bg-orange-600 hover:bg-orange-700" size="sm">
+              <Plus className="w-4 h-4 mr-2" />
+              Registrar
+            </Button>
+          </div>
+        </div>
+
+        {/* Filtros */}
+        <div className="flex gap-2 mt-4">
+          <div className="w-32">
+            <Select value={filters.month} onValueChange={(v) => setFilters({...filters, month: v})}>
+              <SelectTrigger className="h-8">
+                <SelectValue placeholder="Mês" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos Meses</SelectItem>
+                {Array.from({length: 12}, (_, i) => (
+                  <SelectItem key={i+1} value={(i+1).toString()}>{new Date(0, i).toLocaleString('pt-BR', {month: 'long'})}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="w-32">
+            <Select value={filters.severity} onValueChange={(v) => setFilters({...filters, severity: v})}>
+              <SelectTrigger className="h-8">
+                <SelectValue placeholder="Gravidade" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                <SelectItem value="leve">Leve</SelectItem>
+                <SelectItem value="grave">Grave</SelectItem>
+                <SelectItem value="gravissima">Gravíssima</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
-        {!employee.warnings || employee.warnings.length === 0 ? (
-          <p className="text-center text-gray-500 py-8">Nenhuma advertência registrada</p>
+        {filteredWarnings.length === 0 ? (
+          <p className="text-center text-gray-500 py-8">Nenhuma advertência encontrada</p>
         ) : (
           <div className="space-y-3">
-            {employee.warnings.map((warning, index) => (
+            {filteredWarnings.map((warning, index) => (
               <div key={index} className={`p-4 rounded-lg border-2 ${severityColors[warning.severity]}`}>
                 <div className="flex items-start gap-3">
                   <AlertTriangle className="w-5 h-5 mt-1 flex-shrink-0 text-orange-600" />
