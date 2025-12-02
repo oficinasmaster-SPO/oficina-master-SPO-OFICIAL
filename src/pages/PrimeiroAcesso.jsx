@@ -105,12 +105,13 @@ export default function PrimeiroAcesso() {
       });
 
       if (response.data?.success) {
-        toast.success("Cadastro concluído! Redirecionando para login...");
+        toast.success("Dados confirmados! Agora você precisa criar sua senha.", { duration: 5000 });
         
-        // Redirecionar para login
+        // Mostrar modal ou alerta explicativo
         setTimeout(() => {
+          // Redirecionar para login/signup
           base44.auth.redirectToLogin(createPageUrl("PortalColaborador"));
-        }, 1500);
+        }, 2000);
       } else {
         throw new Error(response.data?.error || "Erro ao finalizar cadastro");
       }
@@ -264,6 +265,16 @@ export default function PrimeiroAcesso() {
                 </label>
               </div>
 
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                <p className="text-sm text-yellow-800 flex items-start">
+                  <AlertCircle className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
+                  <span>
+                    Ao clicar em continuar, você será redirecionado para <strong>criar sua senha</strong> de acesso. 
+                    Certifique-se de usar o mesmo e-mail: <strong>{formData.email}</strong>.
+                  </span>
+                </p>
+              </div>
+
               <Button
                 type="submit"
                 className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 py-6 text-lg"
@@ -274,7 +285,7 @@ export default function PrimeiroAcesso() {
                 ) : (
                   <CheckCircle2 className="w-5 h-5 mr-2" />
                 )}
-                Finalizar Cadastro
+                Confirmar e Criar Senha
               </Button>
             </form>
           </CardContent>

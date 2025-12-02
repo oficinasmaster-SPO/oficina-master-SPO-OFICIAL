@@ -28,20 +28,41 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: 'Convite já utilizado' }, { status: 400 });
     }
 
-    // Criar o colaborador
-    const employee = await base44.asServiceRole.entities.Employee.create({
-      workshop_id: invite.workshop_id,
-      full_name: name || invite.name,
+    // Verificar se já existe colaborador com este email na oficina
+    const existingEmployees = await base44.asServiceRole.entities.Employee.filter({ 
       email: email || invite.email,
-      telefone: phone || '',
-      profile_picture_url: profile_picture_url || '',
-      position: invite.position,
-      area: invite.area,
-      job_role: invite.job_role || 'outros',
-      hire_date: new Date().toISOString().split('T')[0],
-      status: 'ativo',
-      permission_level: invite.initial_permission || 'colaborador'
+      workshop_id: invite.workshop_id 
     });
+
+    let employee;
+    if (existingEmployees && existingEmployees.length > 0) {
+      // Atualizar existente
+      employee = await base44.asServiceRole.entities.Employee.update(existingEmployees[0].id, {
+        full_name: name || invite.name,
+        telefone: phone || '',
+        profile_picture_url: profile_picture_url || '',
+        position: invite.position,
+        area: invite.area,
+        job_role: invite.job_role || 'outros',
+        permission_level: invite.initial_permission || 'colaborador',
+        status: 'ativo'
+      });
+    } else {
+      // Criar novo
+      employee = await base44.asServiceRole.entities.Employee.create({
+        workshop_id: invite.workshop_id,
+        full_name: name || invite.name,
+        email: email || invite.email,
+        telefone: phone || '',
+        profile_picture_url: profile_picture_url || '',
+        position: invite.position,
+        area: invite.area,
+        job_role: invite.job_role || 'outros',
+        hire_date: new Date().toISOString().split('T')[0],
+        status: 'ativo',
+        permission_level: invite.initial_permission || 'colaborador'
+      });
+    }
 
     // Atualizar o convite para concluído
     await base44.asServiceRole.entities.EmployeeInvite.update(invite.id, {
