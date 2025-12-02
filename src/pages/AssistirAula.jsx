@@ -67,20 +67,31 @@ export default function AssistirAula() {
 
   const saveWatchTime = async (seconds) => {
       if (!user || !lesson) return;
-      // Update existing progress record
-      // NOTE: This is an optimistic fire-and-forget for UX smoothness
       try {
-          // We need the ID of the progress record. 
-          // Optimization: Store progress ID in state when loaded
-          // For now, using filter which might be slightly slower but safe
           const existing = await base44.entities.EmployeeTrainingProgress.filter({
             employee_id: user.id,
             lesson_id: lesson.id
           });
           
           if (existing.length > 0) {
+              // If we are just updating time, we can trust the interval increment (approx 30s per call)
+              // BUT, if the component re-rendered or user came back, 'seconds' state might be fresh.
+              // Safer to just increment DB value by the interval amount (30s) OR use the max of current state.
+              // Let's stick to incrementing by 30s as the timer calls this every 30s roughly.
+              
               await base44.entities.EmployeeTrainingProgress.update(existing[0].id, {
-                  watch_time_seconds: (existing[0].watch_time_seconds || 0) + 30, // Adding increment
+                  watch_time_seconds: (existing[0].watch_time_seconds || 0) + 30,
+                  last_access_date: new Date().toISOString()
+              });
+          } else {
+              // Should not happen due to loadData fix, but safety net
+              await base44.entities.EmployeeTrainingProgress.create({
+                  employee_id: user.id,
+                  module_id: lesson.module_id,
+                  lesson_id: lesson.id,
+                  status: 'in_progress',
+                  progress_percentage: 0,
+                  watch_time_seconds: 30,
                   last_access_date: new Date().toISOString()
               });
           }

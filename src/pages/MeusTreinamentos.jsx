@@ -29,11 +29,19 @@ export default function MeusTreinamentos() {
       // Filter by workshop and assignment
       let allModules = await base44.entities.TrainingModule.filter({ status: 'publicado' });
       
+      // Verificar se é dono de oficina
+      const ownedWorkshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
+      const isOwner = ownedWorkshops.length > 0;
+      const ownerWorkshopId = isOwner ? ownedWorkshops[0].id : null;
+
       // Encontrar meu registro de colaborador para verificar workshop e atribuição
       const myEmployeeRecords = await base44.entities.Employee.filter({ email: currentUser.email });
       const myEmployee = myEmployeeRecords[0];
 
-      if (myEmployee) {
+      if (isOwner) {
+          // Se for dono, vê todos os módulos da sua oficina + globais
+          allModules = allModules.filter(mod => !mod.workshop_id || mod.workshop_id === ownerWorkshopId);
+      } else if (myEmployee) {
           allModules = allModules.filter(mod => {
               // 1. Filtro por Workshop
               if (mod.workshop_id && mod.workshop_id !== myEmployee.workshop_id) {
@@ -47,8 +55,7 @@ export default function MeusTreinamentos() {
               return true;
           });
       } else {
-          // Fallback se não for employee (admin visualizando?) ou erro
-          // Mostra apenas globais
+          // Usuário sem vínculo (nem dono, nem colaborador) -> vê apenas globais
           allModules = allModules.filter(mod => !mod.workshop_id);
       }
       
