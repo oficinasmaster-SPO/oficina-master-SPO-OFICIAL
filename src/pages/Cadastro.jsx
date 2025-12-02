@@ -45,7 +45,7 @@ export default function Cadastro() {
             name: "Minha Nova Oficina (Clique em Editar)",
             city: "A Definir",
             state: "UF",
-            status: "em_cadastro"
+            status: "ativo"
           });
           toast.success("Ambiente de cadastro iniciado!");
         } catch (createError) {
