@@ -36,6 +36,7 @@ export default function Cadastro() {
         return;
       }
 
+      // Filtra apenas oficinas onde o usuário é dono
       const workshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
       
       if (workshops && workshops.length > 0) {
@@ -56,6 +57,7 @@ export default function Cadastro() {
     
     setCreating(true);
     try {
+      // Payload completo para evitar erros de validação nos defaults
       const newWorkshop = await base44.entities.Workshop.create({
         owner_id: user.id,
         name: "Minha Nova Oficina",
