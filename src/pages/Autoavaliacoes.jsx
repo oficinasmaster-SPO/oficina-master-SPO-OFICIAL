@@ -55,13 +55,6 @@ export default function Autoavaliacoes() {
     icon: LayoutGrid,
     color: "from-cyan-500 to-blue-600",
     href: "AutoavaliacaoMA3"
-  },
-  {
-    title: "Missão, Visão e Valores",
-    description: "Defina a cultura e direção estratégica da oficina",
-    icon: Target,
-    color: "from-indigo-500 to-violet-600",
-    href: "MissaoVisaoValores"
   }];
 
 
