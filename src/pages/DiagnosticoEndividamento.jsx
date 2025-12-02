@@ -57,7 +57,13 @@ export default function DiagnosticoEndividamento() {
     queryKey: ['dre-list', workshop?.id],
     queryFn: async () => {
       if (!workshop?.id) return [];
-      return await base44.entities.DREMonthly.filter({ workshop_id: workshop.id }, '-month', 12);
+      const dres = await base44.entities.DREMonthly.filter({ workshop_id: workshop.id }, '-month', 12);
+      // Auto-import if list exists and months are empty
+      if (dres.length > 0 && meses[0].receita_prevista === 0) {
+          setImportMonth(dres[0].month);
+          // Optional: Auto trigger import or suggest it
+      }
+      return dres;
     },
     enabled: !!workshop?.id,
   });
