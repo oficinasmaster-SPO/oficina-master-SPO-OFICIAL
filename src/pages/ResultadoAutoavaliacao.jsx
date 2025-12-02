@@ -4,7 +4,7 @@ import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Loader2, Home, RotateCcw, TrendingUp, AlertTriangle, CheckCircle2, Sparkles } from "lucide-react";
+import { Loader2, Home, RotateCcw, TrendingUp, AlertTriangle, CheckCircle2, Sparkles, Printer, Share2 } from "lucide-react";
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer, Tooltip } from "recharts";
 import { assessmentCriteria } from "../components/assessment/AssessmentCriteria";
 import ReactMarkdown from "react-markdown";
@@ -200,6 +200,17 @@ export default function ResultadoAutoavaliacao() {
           <Button onClick={() => navigate(createPageUrl("AutoavaliacaoVendas"))} className="bg-green-600 hover:bg-green-700">
             <RotateCcw className="w-4 h-4 mr-2" />
             Nova Avaliação
+          </Button>
+          <Button variant="outline" onClick={() => window.print()}>
+            <Printer className="w-4 h-4 mr-2" />
+            Imprimir
+          </Button>
+          <Button variant="outline" onClick={() => {
+            navigator.clipboard.writeText(window.location.href);
+            toast.success("Link copiado!");
+          }}>
+            <Share2 className="w-4 h-4 mr-2" />
+            Compartilhar
           </Button>
           <Button variant="outline" onClick={() => window.print()}>
             <Printer className="w-4 h-4 mr-2" />
