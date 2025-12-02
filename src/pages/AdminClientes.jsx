@@ -8,15 +8,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Users, Star, Phone, Mail, Loader2, Shield, Building2, MapPin } from "lucide-react";
-import AddClientDialog from "../components/clients/AddClientDialog";
-
 export default function AdminClientes() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterPlan, setFilterPlan] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
-  const [showAddDialog, setShowAddDialog] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -102,10 +99,6 @@ export default function AdminClientes() {
             </div>
             <p className="text-gray-600">Painel administrativo da plataforma</p>
           </div>
-          <Button onClick={() => setShowAddDialog(true)} className="bg-purple-600 hover:bg-purple-700">
-            <Plus className="w-5 h-5 mr-2" />
-            Novo Cliente
-          </Button>
         </div>
 
         {/* Estatísticas */}
@@ -266,12 +259,6 @@ export default function AdminClientes() {
         )}
       </div>
 
-      {showAddDialog && (
-        <AddClientDialog
-          open={showAddDialog}
-          onClose={() => setShowAddDialog(false)}
-        />
-      )}
     </div>
   );
 }

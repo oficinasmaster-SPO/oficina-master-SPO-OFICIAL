@@ -176,10 +176,21 @@ export default function Layout({ children }) {
                 {children}
               </SharedDataProvider>
             ) : (
-              children
-            )}
-          </div>
-        </main>
+                  workshop && workshop.status === 'inativo' && user.role !== 'admin' ? (
+                      <div className="flex flex-col items-center justify-center h-[60vh] text-center px-4">
+                          <div className="bg-red-100 p-4 rounded-full mb-4">
+                              <LogOut className="w-8 h-8 text-red-600" />
+                          </div>
+                          <h2 className="text-2xl font-bold text-gray-900 mb-2">Acesso em Análise</h2>
+                          <p className="text-gray-600 max-w-md">
+                              Sua oficina está com status <strong>Inativo</strong> ou em análise. 
+                              Entre em contato com o suporte para regularizar seu acesso.
+                          </p>
+                      </div>
+                  ) : children
+                )}
+              </div>
+            </main>
 
         <footer className="bg-white border-t border-gray-200 mt-auto print:hidden">
           <div className="px-4 sm:px-6 lg:px-8 py-6">
