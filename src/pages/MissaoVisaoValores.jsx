@@ -31,7 +31,8 @@ export default function MissaoVisaoValores() {
     products_services: "",
     contribution: "",
     how_to_deliver: "",
-    differential: ""
+    differential: "",
+    big_dream: "" // Novo campo para Missão
   });
 
   const [visionAnswers, setVisionAnswers] = useState({
@@ -173,8 +174,9 @@ Crie uma declaração de MISSÃO profissional para uma oficina automotiva basead
 2. Contribuição para a sociedade: ${missionAnswers.contribution}
 3. Como entregar: ${missionAnswers.how_to_deliver}
 4. Diferencial: ${missionAnswers.differential}
+5. Sonho Grande (pensando em você, colaboradores e clientes): ${missionAnswers.big_dream}
 
-A missão deve ser uma única frase clara, objetiva e inspiradora que engrandeça a oficina.
+A missão deve ser uma única frase clara, objetiva e inspiradora que engrandeça a oficina, conectando o propósito com o sonho grande.
 `;
       const response = await base44.integrations.Core.InvokeLLM({ prompt });
       setGeneratedMission(response);
@@ -299,6 +301,31 @@ Retorne em formato JSON com a estrutura:
         logo_url: logoUrl,
         brand_colors: { primary: primaryColor, secondary: secondaryColor }
       });
+
+      // Sincronizar com Manual de Cultura (CultureManual)
+      const cultureManuals = await base44.entities.CultureManual.filter({ workshop_id: workshop.id });
+      if (cultureManuals && cultureManuals.length > 0) {
+        // Atualiza existente
+        await base44.entities.CultureManual.update(cultureManuals[0].id, {
+          mission: generatedMission,
+          vision: generatedVision,
+          values: generatedCoreValues.map(v => v.name), // Salva apenas nomes no array de strings se for compatível, ou precisamos ver o schema
+          // O schema do CultureManual diz: "values": {'type': 'array', 'items': {'type': 'string'}}
+          last_updated: new Date().toISOString()
+        });
+      } else {
+        // Cria novo Manual de Cultura
+        await base44.entities.CultureManual.create({
+          workshop_id: workshop.id,
+          mission: generatedMission,
+          vision: generatedVision,
+          values: generatedCoreValues.map(v => v.name),
+          culture_pillars: [],
+          expectations: { from_company: [], from_employees: [] },
+          rituals: [],
+          last_updated: new Date().toISOString()
+        });
+      }
 
       // Se for uma nova geração (não existente), cria histórico
       // Se for edição de existente, podemos optar por criar um novo histórico ou atualizar o último.
@@ -553,6 +580,14 @@ Retorne em formato JSON com a estrutura:
                   value={missionAnswers.differential}
                   onChange={(e) => setMissionAnswers({...missionAnswers, differential: e.target.value})}
                   placeholder="Ex: Atendimento humanizado, diagnóstico preciso..."
+                />
+              </div>
+              <div>
+                <Label>5. Qual o seu Sonho Grande? (Pensando em você, seus colaboradores e clientes)</Label>
+                <Textarea
+                  value={missionAnswers.big_dream}
+                  onChange={(e) => setMissionAnswers({...missionAnswers, big_dream: e.target.value})}
+                  placeholder="Ex: Ser a maior referência regional, transformar a vida dos mecânicos..."
                 />
               </div>
               <Button
