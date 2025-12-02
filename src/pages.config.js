@@ -51,7 +51,6 @@ import COEXList from './pages/COEXList';
 import MeuPlano from './pages/MeuPlano';
 import Planos from './pages/Planos';
 import MonitoramentoRH from './pages/MonitoramentoRH';
-import CadastroOficinaCompleto from './pages/CadastroOficinaCompleto';
 import GestaoMetas from './pages/GestaoMetas';
 import DesdobramentoMeta from './pages/DesdobramentoMeta';
 import PainelMetas from './pages/PainelMetas';
@@ -158,7 +157,6 @@ export const PAGES = {
     "MeuPlano": MeuPlano,
     "Planos": Planos,
     "MonitoramentoRH": MonitoramentoRH,
-    "CadastroOficinaCompleto": CadastroOficinaCompleto,
     "GestaoMetas": GestaoMetas,
     "DesdobramentoMeta": DesdobramentoMeta,
     "PainelMetas": PainelMetas,
