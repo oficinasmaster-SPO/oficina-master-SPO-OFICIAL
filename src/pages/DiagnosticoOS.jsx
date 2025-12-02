@@ -166,11 +166,16 @@ export default function DiagnosticoOS() {
     // Calcular total de serviços de terceiros
     const totalThirdPartyCosts = thirdPartyServices.reduce((sum, s) => sum + (s.cost || 0), 0);
 
-    // Total da OS
+    // Total da OS (Peças + Serviços + Terceiros - se cobrado do cliente, mas assumindo que o valor cobrado de terceiros está embutido ou somado a parte.
+    // O usuário pediu "soma automática valor total das peças + valor total dos serviços".
+    // Mas também "custos (peças e serviço terceiro / Valor toral da O.S = ( i ) )"
+    // Normalmente o Valor Total da OS é Venda Peças + Venda Serviços.
+    // Se houver repasse de terceiro, deve entrar. Vamos assumir Total OS = Peças + Serviços.
+
     const totalOS = totalPartsSale + totalServicesValue; 
-    
+
     // R70/I30
-    // Os custos de peças usadas para R70/I30 são o totalPartsCost + totalThirdPartyCosts
+    // Investimento (I) = Custo Peças + Custo Terceiros
     const totalInvestment = totalPartsCost + totalThirdPartyCosts;
     const r70Base = totalOS - totalInvestment;
     const revenuePercentage = totalOS > 0 ? (r70Base / totalOS) * 100 : 0;
@@ -378,28 +383,40 @@ export default function DiagnosticoOS() {
                     value={referenceMonth}
                     onChange={(e) => setReferenceMonth(e.target.value)}
                     required
+                    readOnly
+                    className="bg-gray-100 cursor-not-allowed"
+                    title="O mês é definido automaticamente pela data atual"
                   />
+                  <p className="text-xs text-gray-500 mt-1">Data da Análise: {new Date().toLocaleDateString('pt-BR')}</p>
                   {tcmp2Value > 0 ? (
                     <p className="text-sm text-green-600 mt-2 font-medium flex items-center">
                       <Clock className="w-4 h-4 mr-1" />
-                      TCMP² do mês: {formatCurrency(tcmp2Value)}
+                      TCMP² (Automático): {formatCurrency(tcmp2Value)}
                     </p>
                   ) : (
-                    referenceMonth && !dreMonthlyData && (
-                     <p className="text-sm text-red-600 mt-2 flex items-center">
+                    <p className="text-sm text-red-600 mt-2 flex items-center">
                        <History className="w-4 h-4 mr-1" />
-                       Nenhum DRE encontrado para este mês. TCMP² indisponível.
-                     </p>
-                    )
+                       TCMP² não encontrado para este mês. Preencha o DRE primeiro.
+                    </p>
                   )}
                 </div>
-              </div>
-              <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
+                </div>
+
+                {/* Dados técnicos ocultos mas mantidos no state */}
+                <div className="hidden">
+                 <Input value={productiveTechnicians} readOnly />
+                 <Input value={monthlyHours} readOnly />
+                 <Input value={operationalCosts} readOnly />
+                 <Input value={peopleCosts} readOnly />
+                 <Input value={prolabore} readOnly />
+                </div>
+
+                <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
                 <div className="flex justify-between items-center">
-                    <p className="text-sm text-blue-700 font-medium">Total da OS (Peças + Serviços)</p>
+                    <p className="text-sm text-blue-700 font-medium">Total da OS (Peças + Serviços + Terceiros)</p>
                     <p className="text-3xl font-bold text-blue-900">{formatCurrency(calculateDiagnostic.totalOS)}</p>
                 </div>
-              </div>
+                </div>
             </CardContent>
           </Card>
 
@@ -536,13 +553,14 @@ export default function DiagnosticoOS() {
                       />
                     </div>
                     <div>
-                      <Label className="text-xs text-gray-600">Tempo Estimado (horas)</Label>
+                      <Label className="text-xs text-gray-600">Tempo Estimado (Auto)</Label>
                       <Input
-                        value={service.estimated_time.toFixed(2)}
+                        value={service.estimated_time?.toFixed(2) || "0.00"}
                         readOnly
                         className="bg-gray-100 italic text-gray-600 cursor-not-allowed"
-                        title="Calculado automaticamente: Valor / (2 * TCMP²)"
+                        title="Calculado: Valor Total / (2 * TCMP²)"
                       />
+                      <span className="text-[10px] text-gray-400">Baseado no TCMP²</span>
                     </div>
                   </div>
                   <div>
