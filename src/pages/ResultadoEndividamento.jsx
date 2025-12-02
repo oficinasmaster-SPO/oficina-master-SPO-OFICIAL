@@ -138,34 +138,20 @@ export default function ResultadoEndividamento() {
   const totalCustoPecas = analysis.custo_total_pecas_12m || 0;
   const totalCustoAdm = analysis.custo_total_administrativo_12m || 0;
 
-  // Cálculos para Ponto de Equilíbrio (Baseado no Mês 1)
-  const mes1 = analysis.meses[0];
-  const receitaAtual = mes1.receita_prevista || 0;
-  
-  // Custos Variáveis (Estimativa: Custo Peças + Impostos se tivesse, assumindo peças como principal variável)
-  const custosVariaveis = mes1.custo_previsto_pecas || 0;
-  
-  // Custos Fixos (Adm + Dívidas + Investimentos)
-  const custosFixos = (mes1.custo_previsto_administrativo || 0) + mes1.dividas_total;
-  
-  // Margem de Contribuição = Receita - Variáveis
-  const margemContribuicao = receitaAtual - custosVariaveis;
-  const indiceMargem = receitaAtual > 0 ? margemContribuicao / receitaAtual : 0;
-  
-  // Ponto de Equilíbrio = Custos Fixos / Índice Margem
-  const pontoEquilibrio = indiceMargem > 0 ? custosFixos / indiceMargem : 0;
+  // Recuperar dados salvos ou recalcular se antigo
+  const pontoEquilibrio = analysis.ponto_equilibrio || 0;
+  const receitaAtual = analysis.meses[0].receita_prevista || 0;
   
   // Projeção de Caixa Líquido (3 Meses)
-  const projecaoCaixa = analysis.meses.slice(0, 3).map(m => {
-    const totalSaidas = m.dividas_total + (m.custo_previsto_pecas || 0) + (m.custo_previsto_administrativo || 0);
-    const caixaLiquido = m.receita_prevista - totalSaidas;
-    return {
-      mes: `Mês ${m.mes}`,
-      receita: m.receita_prevista,
-      saidas: totalSaidas,
-      caixa: caixaLiquido
-    };
-  });
+  const projecaoCaixa = analysis.caixa_liquido_projetado 
+    ? analysis.caixa_liquido_projetado.map(p => ({ mes: `Mês ${p.mes}`, caixa: p.valor }))
+    : analysis.meses.slice(0, 3).map(m => {
+        const totalSaidas = m.dividas_total + (m.custo_previsto_pecas || 0) + (m.custo_previsto_administrativo || 0);
+        return {
+          mes: `Mês ${m.mes}`,
+          caixa: m.receita_prevista - totalSaidas
+        };
+      });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-red-50 py-12 px-4">
@@ -219,10 +205,10 @@ export default function ResultadoEndividamento() {
                   <CheckCircle2 className="w-4 h-4 text-green-600" /> Feedback Estratégico
                 </h4>
                 <ul className="space-y-2 text-sm text-gray-700">
-                  {receitaAtual < pontoEquilibrio ? (
+                  {analysis.feedback_vendas_pct > 0 ? (
                     <li className="flex items-start gap-2">
                       <AlertTriangle className="w-4 h-4 text-red-500 mt-0.5" />
-                      <span>Aumentar vendas em <strong>{(((pontoEquilibrio - receitaAtual) / receitaAtual) * 100).toFixed(1)}%</strong> para atingir o zero a zero.</span>
+                      <span>Aumentar vendas em <strong>{analysis.feedback_vendas_pct}%</strong> para atingir o zero a zero.</span>
                     </li>
                   ) : (
                     <li className="flex items-start gap-2">
