@@ -11,8 +11,14 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Plus, Edit2, Trash2, Sparkles, Target, Eye, Heart, Users, TrendingUp } from "lucide-react";
+import { Loader2, Plus, Edit2, Trash2, Sparkles, Target, Eye, Heart, Users, TrendingUp, Calendar as CalendarIcon, FileText, Mail, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const pillarLabels = {
   proposito: { label: "Propósito", icon: Target, color: "blue" },
@@ -332,6 +338,18 @@ export default function Rituais() {
     implementation_steps: [""]
   });
 
+  // Scheduling State
+  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+  const [selectedRitualForSchedule, setSelectedRitualForSchedule] = useState(null);
+  const [scheduleDate, setScheduleDate] = useState(new Date());
+  const [scheduleTime, setScheduleTime] = useState("09:00");
+  const [selectedEmployees, setSelectedEmployees] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  
+  // Step-by-step Modal State
+  const [stepsModalOpen, setStepsModalOpen] = useState(false);
+  const [viewingRitual, setViewingRitual] = useState(null);
+
   const { data: user } = useQuery({
     queryKey: ['user'],
     queryFn: () => base44.auth.me()
@@ -343,9 +361,48 @@ export default function Rituais() {
       const data = await base44.entities.Workshop.list();
       const userWorkshop = data.find(w => w.owner_id === user.id);
       setWorkshop(userWorkshop);
+      
+      // Load employees for scheduling
+      if (userWorkshop) {
+        const emps = await base44.entities.Employee.filter({ workshop_id: userWorkshop.id, status: 'ativo' });
+        setEmployees(emps);
+      }
+      
       return data;
     },
     enabled: !!user
+  });
+
+  const { data: scheduledRituals = [], refetch: refetchScheduled } = useQuery({
+    queryKey: ['scheduled-rituals', workshop?.id],
+    queryFn: async () => {
+      if (!workshop?.id) return [];
+      return await base44.entities.ScheduledRitual.filter({ workshop_id: workshop.id });
+    },
+    enabled: !!workshop?.id
+  });
+
+  const scheduleMutation = useMutation({
+    mutationFn: async (data) => {
+      const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
+      const ritual = await base44.entities.ScheduledRitual.create({ ...data, evidence_token: token });
+      
+      // Send emails
+      if (data.participants && data.participants.length > 0) {
+        await base44.functions.invoke("sendRitualEvidenceRequest", {
+          ritual_id: ritual.id,
+          participants: data.participants,
+          origin: window.location.origin
+        });
+      }
+      return ritual;
+    },
+    onSuccess: () => {
+      toast.success("Ritual agendado e solicitações enviadas!");
+      setScheduleDialogOpen(false);
+      refetchScheduled();
+    },
+    onError: () => toast.error("Erro ao agendar ritual")
   });
 
   const { data: rituals = [], isLoading: loadingRituals, refetch } = useQuery({
@@ -418,6 +475,79 @@ export default function Rituais() {
     } else {
       createMutation.mutate(data);
     }
+  };
+
+  const handleSchedule = () => {
+    if (!workshop || !selectedRitualForSchedule) return;
+    
+    const participantsData = employees
+      .filter(e => selectedEmployees.includes(e.id))
+      .map(e => ({
+        employee_id: e.id,
+        email: e.email,
+        name: e.full_name
+      }));
+
+    scheduleMutation.mutate({
+      workshop_id: workshop.id,
+      ritual_id: selectedRitualForSchedule.id,
+      ritual_name: selectedRitualForSchedule.name,
+      scheduled_date: format(scheduleDate, 'yyyy-MM-dd'),
+      scheduled_time: scheduleTime,
+      participants: participantsData,
+      status: 'agendado'
+    });
+  };
+
+  const openScheduleDialog = (ritual) => {
+    setSelectedRitualForSchedule(ritual);
+    setSelectedEmployees([]);
+    setScheduleDate(new Date());
+    setScheduleDialogOpen(true);
+  };
+
+  const openStepsModal = (ritual) => {
+    setViewingRitual(ritual);
+    setStepsModalOpen(true);
+  };
+
+  const printSteps = () => {
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>${viewingRitual.name} - Passo a Passo</title>
+          <style>
+            body { font-family: sans-serif; padding: 40px; }
+            h1 { color: #6b21a8; border-bottom: 2px solid #6b21a8; padding-bottom: 10px; }
+            .meta { margin-bottom: 30px; color: #666; }
+            .steps { margin-top: 20px; }
+            .step { margin-bottom: 15px; padding: 15px; background: #f9f9f9; border-left: 4px solid #6b21a8; }
+            .step-num { font-weight: bold; margin-bottom: 5px; }
+          </style>
+        </head>
+        <body>
+          <h1>${viewingRitual.name}</h1>
+          <div class="meta">
+            <p><strong>Pilar:</strong> ${pillarLabels[viewingRitual.pillar]?.label || viewingRitual.pillar}</p>
+            <p><strong>Frequência:</strong> ${viewingRitual.frequency}</p>
+            <p><strong>Responsável:</strong> ${viewingRitual.responsible_role}</p>
+            <p><strong>Descrição:</strong> ${viewingRitual.description}</p>
+          </div>
+          <h2>Como Executar (Passo a Passo)</h2>
+          <div class="steps">
+            ${viewingRitual.implementation_steps.map((step, i) => `
+              <div class="step">
+                <div class="step-num">Passo ${i + 1}</div>
+                <div>${step}</div>
+              </div>
+            `).join('')}
+          </div>
+          <script>window.print();</script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
   };
 
   const handleEdit = (ritual) => {
@@ -615,21 +745,28 @@ export default function Rituais() {
           </div>
         </div>
 
-        <div className="mb-6">
-          <Select value={filterPillar} onValueChange={setFilterPillar}>
-            <SelectTrigger className="w-64">
-              <SelectValue placeholder="Filtrar por pilar" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os Pilares</SelectItem>
-              {Object.entries(pillarLabels).map(([key, { label }]) => (
-                <SelectItem key={key} value={key}>{label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <Tabs defaultValue="library" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="library">Biblioteca de Rituais</TabsTrigger>
+            <TabsTrigger value="scheduled">Agendados & Realizados</TabsTrigger>
+          </TabsList>
 
-        {loadingRituals ? (
+          <TabsContent value="library">
+            <div className="mb-6">
+              <Select value={filterPillar} onValueChange={setFilterPillar}>
+                <SelectTrigger className="w-64">
+                  <SelectValue placeholder="Filtrar por pilar" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os Pilares</SelectItem>
+                  {Object.entries(pillarLabels).map(([key, { label }]) => (
+                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {loadingRituals ? (
           <div className="flex items-center justify-center p-12">
             <Loader2 className="w-8 h-8 animate-spin text-yellow-600 mr-3" />
             <p className="text-gray-600">Carregando rituais...</p>
@@ -692,8 +829,8 @@ export default function Rituais() {
                                 <Trash2 className="w-4 h-4" />
                               </Button>
                             </div>
-                          </div>
-                          <div className="flex gap-2 mt-2">
+                            </div>
+                            <div className="flex gap-2 mt-2 flex-wrap">
                             <Badge variant="secondary">{frequencyLabels[ritual.frequency]}</Badge>
                             {ritual.responsible_role && (
                               <Badge variant="outline">{ritual.responsible_role}</Badge>
@@ -722,6 +859,14 @@ export default function Rituais() {
                               </ul>
                             </div>
                           )}
+                          <div className="mt-4 pt-3 border-t flex gap-2">
+                            <Button size="sm" variant="outline" className="flex-1" onClick={() => openStepsModal(ritual)}>
+                              <FileText className="w-4 h-4 mr-2" /> Passo a Passo
+                            </Button>
+                            <Button size="sm" className="flex-1 bg-purple-600 hover:bg-purple-700" onClick={() => openScheduleDialog(ritual)}>
+                              <CalendarIcon className="w-4 h-4 mr-2" /> Agendar
+                            </Button>
+                          </div>
                         </CardContent>
                       </Card>
                     ))}
@@ -731,6 +876,149 @@ export default function Rituais() {
             })}
           </div>
         )}
+        </TabsContent>
+
+        <TabsContent value="scheduled">
+          <Card>
+            <CardHeader>
+              <CardTitle>Histórico de Execução</CardTitle>
+              <CardDescription>Acompanhe os rituais agendados e realizados</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {scheduledRituals.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">Nenhum ritual agendado.</div>
+              ) : (
+                <div className="space-y-4">
+                  {scheduledRituals.map(sr => (
+                    <div key={sr.id} className="flex items-center justify-between p-4 border rounded-lg bg-white">
+                      <div>
+                        <h4 className="font-bold text-gray-900">{sr.ritual_name}</h4>
+                        <div className="flex gap-4 text-sm text-gray-600 mt-1">
+                          <span className="flex items-center"><CalendarIcon className="w-4 h-4 mr-1" /> {format(new Date(sr.scheduled_date), 'dd/MM/yyyy')} às {sr.scheduled_time}</span>
+                          <span className="flex items-center"><Users className="w-4 h-4 mr-1" /> {sr.participants?.length || 0} participantes</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        {sr.status === 'realizado' ? (
+                          <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+                            <CheckCircle className="w-3 h-3 mr-1" /> Realizado
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary">Agendado</Badge>
+                        )}
+                        {sr.evidence_url && (
+                          <Button size="sm" variant="outline" onClick={() => window.open(sr.evidence_url, '_blank')}>
+                            <FileText className="w-4 h-4 mr-2" /> Ver Evidência
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Dialog Agendamento */}
+      <Dialog open={scheduleDialogOpen} onOpenChange={setScheduleDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Agendar Ritual: {selectedRitualForSchedule?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Data</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start text-left font-normal">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {scheduleDate ? format(scheduleDate, "dd/MM/yyyy") : <span>Selecione</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar mode="single" selected={scheduleDate} onSelect={setScheduleDate} initialFocus />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div>
+                <Label>Horário</Label>
+                <Input type="time" value={scheduleTime} onChange={e => setScheduleTime(e.target.value)} />
+              </div>
+            </div>
+            <div>
+              <Label>Participantes (receberão email para evidência)</Label>
+              <div className="max-h-48 overflow-y-auto border rounded-md p-2 mt-2 space-y-2">
+                {employees.map(emp => (
+                  <div key={emp.id} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`emp-${emp.id}`} 
+                      checked={selectedEmployees.includes(emp.id)}
+                      onCheckedChange={(checked) => {
+                        if(checked) setSelectedEmployees([...selectedEmployees, emp.id]);
+                        else setSelectedEmployees(selectedEmployees.filter(id => id !== emp.id));
+                      }}
+                    />
+                    <label htmlFor={`emp-${emp.id}`} className="text-sm cursor-pointer">{emp.full_name}</label>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <Button 
+              onClick={handleSchedule} 
+              disabled={scheduleMutation.isPending} 
+              className="w-full bg-purple-600 hover:bg-purple-700"
+            >
+              {scheduleMutation.isPending ? <Loader2 className="animate-spin mr-2" /> : <Mail className="w-4 h-4 mr-2" />}
+              Agendar e Solicitar Evidência
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Passo a Passo */}
+      <Dialog open={stepsModalOpen} onOpenChange={setStepsModalOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5 text-purple-600" />
+              Como Executar: {viewingRitual?.name}
+            </DialogTitle>
+          </DialogHeader>
+          {viewingRitual && (
+            <div className="space-y-6 py-4">
+              <div className="bg-gray-50 p-4 rounded-lg grid grid-cols-2 gap-4 text-sm">
+                <div><strong>Pilar:</strong> {pillarLabels[viewingRitual.pillar]?.label}</div>
+                <div><strong>Frequência:</strong> {frequencyLabels[viewingRitual.frequency]}</div>
+                <div><strong>Responsável:</strong> {viewingRitual.responsible_role}</div>
+                <div className="col-span-2"><strong>Descrição:</strong> {viewingRitual.description}</div>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold mb-3">Passo a Passo:</h3>
+                <div className="space-y-3">
+                  {viewingRitual.implementation_steps.map((step, idx) => (
+                    <div key={idx} className="flex gap-3 items-start p-3 border rounded-lg hover:bg-purple-50 transition-colors">
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center text-xs font-bold">
+                        {idx + 1}
+                      </div>
+                      <p className="text-gray-700 mt-0.5">{step}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <Button onClick={printSteps} variant="outline">
+                  <FileText className="w-4 h-4 mr-2" /> Imprimir Documento
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
       </div>
     </div>
   );

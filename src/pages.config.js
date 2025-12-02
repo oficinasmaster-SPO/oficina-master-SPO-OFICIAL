@@ -93,6 +93,7 @@ import HistoricoDISC from './pages/HistoricoDISC';
 import HistoricoMaturidade from './pages/HistoricoMaturidade';
 import HistoricoDesempenho from './pages/HistoricoDesempenho';
 import VisualizarProcesso from './pages/VisualizarProcesso';
+import EvidenceUpload from './pages/EvidenceUpload';
 import __Layout from './Layout.jsx';
 
 
@@ -192,6 +193,7 @@ export const PAGES = {
     "HistoricoMaturidade": HistoricoMaturidade,
     "HistoricoDesempenho": HistoricoDesempenho,
     "VisualizarProcesso": VisualizarProcesso,
+    "EvidenceUpload": EvidenceUpload,
 }
 
 export const pagesConfig = {
