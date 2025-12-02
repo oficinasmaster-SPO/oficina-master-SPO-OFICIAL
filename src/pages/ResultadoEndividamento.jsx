@@ -138,6 +138,35 @@ export default function ResultadoEndividamento() {
   const totalCustoPecas = analysis.custo_total_pecas_12m || 0;
   const totalCustoAdm = analysis.custo_total_administrativo_12m || 0;
 
+  // Cálculos para Ponto de Equilíbrio (Baseado no Mês 1)
+  const mes1 = analysis.meses[0];
+  const receitaAtual = mes1.receita_prevista || 0;
+  
+  // Custos Variáveis (Estimativa: Custo Peças + Impostos se tivesse, assumindo peças como principal variável)
+  const custosVariaveis = mes1.custo_previsto_pecas || 0;
+  
+  // Custos Fixos (Adm + Dívidas + Investimentos)
+  const custosFixos = (mes1.custo_previsto_administrativo || 0) + mes1.dividas_total;
+  
+  // Margem de Contribuição = Receita - Variáveis
+  const margemContribuicao = receitaAtual - custosVariaveis;
+  const indiceMargem = receitaAtual > 0 ? margemContribuicao / receitaAtual : 0;
+  
+  // Ponto de Equilíbrio = Custos Fixos / Índice Margem
+  const pontoEquilibrio = indiceMargem > 0 ? custosFixos / indiceMargem : 0;
+  
+  // Projeção de Caixa Líquido (3 Meses)
+  const projecaoCaixa = analysis.meses.slice(0, 3).map(m => {
+    const totalSaidas = m.dividas_total + (m.custo_previsto_pecas || 0) + (m.custo_previsto_administrativo || 0);
+    const caixaLiquido = m.receita_prevista - totalSaidas;
+    return {
+      mes: `Mês ${m.mes}`,
+      receita: m.receita_prevista,
+      saidas: totalSaidas,
+      caixa: caixaLiquido
+    };
+  });
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-red-50 py-12 px-4">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -167,6 +196,71 @@ export default function ResultadoEndividamento() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Feedback e Ponto de Equilíbrio */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card className="shadow-lg border-l-4 border-blue-500">
+            <CardHeader>
+              <CardTitle>Ponto de Equilíbrio & Metas</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <p className="text-sm text-gray-500">Ponto de Equilíbrio (Mês 1)</p>
+                <p className="text-3xl font-bold text-blue-700">
+                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(pontoEquilibrio)}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Necessário para cobrir Custos Fixos + Dívidas
+                </p>
+              </div>
+              
+              <div className="pt-4 border-t">
+                <h4 className="font-semibold mb-2 flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-600" /> Feedback Estratégico
+                </h4>
+                <ul className="space-y-2 text-sm text-gray-700">
+                  {receitaAtual < pontoEquilibrio ? (
+                    <li className="flex items-start gap-2">
+                      <AlertTriangle className="w-4 h-4 text-red-500 mt-0.5" />
+                      <span>Aumentar vendas em <strong>{(((pontoEquilibrio - receitaAtual) / receitaAtual) * 100).toFixed(1)}%</strong> para atingir o zero a zero.</span>
+                    </li>
+                  ) : (
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5" />
+                      <span>Receita atual cobre o Ponto de Equilíbrio. Foco em margem!</span>
+                    </li>
+                  )}
+                  <li>• Buscar reduzir custos com estoque de peças (Compras à vista/menor estoque).</li>
+                  <li>• Repensar consórcios e novos investimentos até estabilizar o caixa.</li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-lg border-l-4 border-green-500">
+            <CardHeader>
+              <CardTitle>Projeção de Caixa Líquido (3 Meses)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={projecaoCaixa}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="mes" />
+                  <YAxis />
+                  <Tooltip formatter={(val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val)} />
+                  <Bar dataKey="caixa" name="Caixa Líquido" fill="#10b981">
+                    {projecaoCaixa.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.caixa >= 0 ? '#10b981' : '#ef4444'} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+              <div className="mt-2 text-xs text-center text-gray-500">
+                Receita Prevista - (Total Custos + Dívidas)
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* KPIs Principais */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">

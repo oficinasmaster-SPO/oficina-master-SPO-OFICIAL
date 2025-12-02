@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, TrendingDown, AlertTriangle } from "lucide-react";
+import { Loader2, TrendingDown, AlertTriangle, Download } from "lucide-react";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function DiagnosticoEndividamento() {
   const navigate = useNavigate();
@@ -15,6 +17,7 @@ export default function DiagnosticoEndividamento() {
   const [submitting, setSubmitting] = useState(false);
   const [user, setUser] = useState(null);
   const [workshop, setWorkshop] = useState(null);
+  const [importMonth, setImportMonth] = useState("");
   
   const [meses, setMeses] = useState(
     Array.from({ length: 12 }, (_, i) => ({
@@ -48,6 +51,61 @@ export default function DiagnosticoEndividamento() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const { data: dreList = [] } = useQuery({
+    queryKey: ['dre-list', workshop?.id],
+    queryFn: async () => {
+      if (!workshop?.id) return [];
+      return await base44.entities.DREMonthly.filter({ workshop_id: workshop.id }, '-month', 12);
+    },
+    enabled: !!workshop?.id,
+  });
+
+  const handleImportDRE = () => {
+    if (!importMonth) {
+      toast.error("Selecione um mês para importar");
+      return;
+    }
+
+    const dre = dreList.find(d => d.month === importMonth);
+    if (!dre) {
+      toast.error("Dados do DRE não encontrados para o mês selecionado");
+      return;
+    }
+
+    // Calculate values from DRE
+    const pecasEstoque = dre.parts_cost?.parts_stock_purchase || 0;
+    const financiamento = dre.costs_not_tcmp2?.financing || 0;
+    const consorcio = dre.costs_not_tcmp2?.consortium || 0;
+    const processos = dre.costs_not_tcmp2?.legal_processes || 0;
+    const investimento = (dre.costs_not_tcmp2?.investments || 0) + (dre.costs_not_tcmp2?.land_purchase || 0);
+    
+    const custoPecasAplicadas = dre.parts_cost?.parts_applied_cost || 0;
+    
+    const custoAdm = dre.calculated?.total_costs_tcmp2 || 
+                     Object.values(dre.costs_tcmp2 || {}).reduce((a, b) => a + (parseFloat(b) || 0), 0);
+    
+    const receita = dre.calculated?.total_revenue || 
+                    ((dre.revenue?.parts_applied || 0) + (dre.revenue?.services || 0) + (dre.revenue?.other || 0));
+
+    // Update first 3 months as a projection base
+    const newMeses = [...meses];
+    for (let i = 0; i < 3; i++) {
+      newMeses[i] = {
+        ...newMeses[i],
+        pecas: pecasEstoque,
+        financiamento: financiamento,
+        consorcio: consorcio,
+        processos_judiciais: processos,
+        investimento: investimento,
+        custo_previsto_pecas: custoPecasAplicadas,
+        custo_previsto_administrativo: custoAdm,
+        receita_prevista: receita
+      };
+    }
+    setMeses(newMeses);
+    toast.success("Dados importados do DRE para os meses 1, 2 e 3!");
   };
 
   const updateMes = (index, field, value) => {
@@ -262,6 +320,36 @@ Seja específico, use linguagem clara e forneça ações práticas.
             Análise Completa com Custos Previstos e Projeções
           </p>
         </div>
+
+        {/* Importar DRE */}
+        <Card className="mb-6 border-2 border-green-200 bg-green-50">
+          <CardContent className="p-6">
+            <div className="flex flex-col md:flex-row items-center gap-4 justify-between">
+              <div>
+                <h3 className="font-bold text-green-900">Importar dados do DRE & TCMP²</h3>
+                <p className="text-sm text-green-700">Preencha automaticamente os campos usando o histórico do DRE.</p>
+              </div>
+              <div className="flex items-center gap-2 w-full md:w-auto">
+                <Select value={importMonth} onValueChange={setImportMonth}>
+                  <SelectTrigger className="w-[200px] bg-white">
+                    <SelectValue placeholder="Selecione um mês" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {dreList.map(dre => (
+                      <SelectItem key={dre.id} value={dre.month}>
+                        {new Date(dre.month + '-02').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button onClick={handleImportDRE} className="bg-green-600 hover:bg-green-700">
+                  <Download className="w-4 h-4 mr-2" />
+                  Importar
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         <Card className="mb-6 border-2 border-blue-200">
           <CardContent className="p-6">
