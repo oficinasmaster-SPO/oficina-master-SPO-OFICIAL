@@ -5,6 +5,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronRight, TrendingUp, Users, BarChart3, Rocket, Loader2, LogIn, FileText, Target } from "lucide-react";
+import { toast } from "sonner";
 import OnboardingTour from "../components/onboarding/OnboardingTour";
 import OnboardingChecklist from "../components/onboarding/OnboardingChecklist";
 import ContextualTips from "../components/onboarding/ContextualTips"; // This will be removed from authenticated view
@@ -40,7 +41,8 @@ export default function Home() {
           currentUser = await base44.auth.me();
           setUser(currentUser);
         } catch (userError) {
-          console.log("Error fetching user:", userError);
+          console.error("Error fetching user:", userError);
+          toast.error("Erro ao carregar dados do usuário: " + (userError.message || "Erro desconhecido"));
           setIsAuthenticated(false);
           setIsCheckingAuth(false);
           return;
@@ -78,7 +80,8 @@ export default function Home() {
             return;
           }
         } catch (workshopError) {
-          console.log("Error fetching workshops:", workshopError);
+          console.error("Error fetching workshops:", workshopError);
+          toast.error("Erro ao buscar oficina: " + (workshopError.message || "Erro desconhecido"));
           setWorkshop(null);
         } finally {
           setIsLoadingWorkshop(false);
@@ -87,14 +90,19 @@ export default function Home() {
         try {
           await loadUserProgress(currentUser, workshop);
         } catch (progressError) {
-          console.log("Error loading progress:", progressError);
+          console.error("Error loading progress:", progressError);
+          // Non-critical error, maybe no toast needed or just warning
         }
-      } catch (error) {
-        console.log("User not authenticated or error:", error);
+        } catch (error) {
+        console.error("Auth Check Error:", error);
+        // Only toast if it's not just "unauthenticated" which is a valid state
+        if (error.message && !error.message.includes('unauthenticated')) {
+            toast.error("Erro de autenticação: " + error.message);
+        }
         setIsAuthenticated(false);
-      } finally {
+        } finally {
         setIsCheckingAuth(false);
-      }
+        }
     };
     init();
   }, []);

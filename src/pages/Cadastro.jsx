@@ -52,10 +52,13 @@ export default function Cadastro() {
     }
   };
 
+  const [errorMsg, setErrorMsg] = useState(null);
+
   const handleCreateWorkshop = async () => {
     if (!user) return;
     
     setCreating(true);
+    setErrorMsg(null);
     try {
       // Payload completo para evitar erros de validação nos defaults
       const newWorkshop = await base44.entities.Workshop.create({
@@ -75,7 +78,9 @@ export default function Cadastro() {
       toast.success("Ambiente de cadastro criado com sucesso!");
     } catch (error) {
       console.error("Erro ao criar oficina:", error);
-      toast.error(`Erro ao criar oficina: ${error.message || 'Tente novamente.'}`);
+      const msg = error.message || JSON.stringify(error);
+      setErrorMsg(msg);
+      toast.error(`Erro ao criar oficina: ${msg}`);
     } finally {
       setCreating(false);
     }
@@ -136,8 +141,17 @@ export default function Cadastro() {
                     </>
                   )}
                 </Button>
-            </div>
-        </div>
+
+                {errorMsg && (
+                  <Alert className="mt-4 bg-red-50 border-red-200 text-left">
+                      <AlertTitle className="text-red-800 font-bold">Erro ao criar</AlertTitle>
+                      <AlertDescription className="text-red-700 text-sm break-words">
+                          {errorMsg}
+                      </AlertDescription>
+                  </Alert>
+                )}
+                </div>
+                </div>
     );
   }
 
