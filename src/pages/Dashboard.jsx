@@ -9,6 +9,7 @@ import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, L
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { formatCurrency, formatPercent } from "../components/utils/formatters";
+import { Button } from "@/components/ui/button";
 
 import MetricCard from "../components/dashboard/MetricCard";
 import RankingTable from "../components/dashboard/RankingTable";
