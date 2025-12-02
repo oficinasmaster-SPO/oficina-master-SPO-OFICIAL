@@ -25,7 +25,7 @@ export default function DiagnosticoOS() {
     { name: "", sale_value: 0, cost_value: 0, is_commodity: false }
   ]);
   const [services, setServices] = useState([
-    { name: "", charged_value: 0, description_steps: "" }
+    { name: "", charged_value: 0, description_steps: "", is_commodity: false }
   ]);
   const [thirdPartyServices, setThirdPartyServices] = useState([
     { name: "", cost: 0 }
@@ -120,7 +120,7 @@ export default function DiagnosticoOS() {
   };
 
   const addService = () => {
-    setServices([...services, { name: "", charged_value: 0, description_steps: "" }]);
+    setServices([...services, { name: "", charged_value: 0, description_steps: "", is_commodity: false }]);
   };
 
   const removeService = (index) => {
@@ -553,6 +553,16 @@ export default function DiagnosticoOS() {
                       onChange={(e) => updateService(index, 'description_steps', e.target.value)}
                       className="bg-white"
                     />
+                  </div>
+                  <div className="flex items-center gap-2 mt-3">
+                    <Checkbox
+                      id={`service-commodity-${index}`}
+                      checked={service.is_commodity}
+                      onCheckedChange={(checked) => updateService(index, 'is_commodity', checked)}
+                    />
+                    <Label htmlFor={`service-commodity-${index}`} className="text-xs font-normal cursor-pointer">
+                      É serviço commodity? (troca de óleo, balanceamento, etc.)
+                    </Label>
                   </div>
                 </div>
               ))}
