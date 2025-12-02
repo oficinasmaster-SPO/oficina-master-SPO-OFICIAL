@@ -218,28 +218,33 @@ export default function COEXForm() {
           body { font-family: Arial, sans-serif; padding: 40px; }
           .header { text-align: center; margin-bottom: 30px; }
           .logo-img { max-height: 50px; margin-bottom: 10px; }
-          .workshop-name { font-size: 20px; font-weight: bold; color: #333; margin-bottom: 5px; }
-          .slogan { font-size: 14px; color: #666; margin-bottom: 20px; }
-          h1 { color: #E31837; font-size: 24px; margin-bottom: 20px; }
-          .info-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-          .info-item { border: 1px solid #ddd; padding: 8px; }
-          .info-item label { font-size: 10px; color: #666; display: block; }
-          .info-item div { font-weight: bold; margin-top: 3px; }
-          .columns { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-          .column { border: 2px solid #E31837; }
-          .column-header { background: #E31837; color: white; padding: 10px; font-weight: bold; text-align: center; }
-          .column-content { padding: 15px; }
-          .item { margin-bottom: 10px; line-height: 1.6; }
-          .footer-text { background: #f5f5f5; padding: 15px; border: 1px solid #ddd; margin-bottom: 20px; font-size: 12px; line-height: 1.6; }
-          .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 40px; }
+          .workshop-name { font-size: 24px; font-weight: bold; color: #333; margin-bottom: 5px; text-transform: uppercase; }
+          .slogan { font-size: 14px; color: #666; margin-bottom: 20px; font-style: italic; }
+          h1 { color: #E31837; font-size: 28px; margin-bottom: 20px; border-bottom: 2px solid #E31837; padding-bottom: 10px; }
+          .info-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 30px; }
+          .info-item { border: 1px solid #ddd; padding: 10px; background: #f9f9f9; border-radius: 4px; }
+          .info-item label { font-size: 11px; color: #666; display: block; text-transform: uppercase; }
+          .info-item div { font-weight: bold; margin-top: 5px; font-size: 14px; }
+          .columns { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
+          .column { border: 2px solid #E31837; border-radius: 8px; overflow: hidden; }
+          .column-header { background: #E31837; color: white; padding: 15px; font-weight: bold; text-align: center; text-transform: uppercase; letter-spacing: 1px; }
+          .column-content { padding: 20px; background: #fff; }
+          .item { margin-bottom: 12px; line-height: 1.6; position: relative; padding-left: 15px; }
+          .item:before { content: "•"; position: absolute; left: 0; color: #E31837; }
+          .footer-text { background: #f5f5f5; padding: 20px; border: 1px solid #ddd; margin-bottom: 30px; font-size: 13px; line-height: 1.8; border-radius: 4px; text-align: justify; }
+          .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; margin-top: 60px; }
           .signature { text-align: center; }
-          .signature-line { border-top: 2px solid #000; margin-top: 50px; padding-top: 10px; }
-          @media print { body { padding: 20px; } }
+          .signature-line { border-top: 1px solid #000; margin-top: 60px; padding-top: 15px; width: 80%; margin-left: auto; margin-right: auto; }
+          @media print { 
+            body { padding: 0; } 
+            .column { break-inside: avoid; }
+          }
         </style>
       </head>
       <body>
         <div class="header">
-          ${workshop.logo_url ? `<img src="${workshop.logo_url}" alt="Logo da Oficina" class="logo-img"/>` : `<div class="workshop-name">${workshop.name}</div>`}
+          ${workshop.logo_url ? `<img src="${workshop.logo_url}" alt="Logo da Oficina" class="logo-img" style="max-height: 80px;"/>` : ''}
+          <div class="workshop-name">${workshop.name}</div>
           <div class="slogan">Oficinas Master Educação Empresarial</div>
           <h1>Contrato de Expectativa</h1>
         </div>

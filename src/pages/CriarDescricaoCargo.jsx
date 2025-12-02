@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, Save, ArrowLeft, ArrowRight, CheckCircle, FileText } from "lucide-react";
+import { Loader2, Save, ArrowLeft, ArrowRight, CheckCircle, FileText, Mic, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function CriarDescricaoCargo() {
@@ -45,6 +45,103 @@ export default function CriarDescricaoCargo() {
   });
 
   const [tempInput, setTempInput] = useState({ item: "", required: false, desired: false });
+  const [isListening, setIsListening] = useState(false);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+
+  // Função de Microfone
+  const toggleListening = () => {
+    if (isListening) {
+      setIsListening(false);
+      // Parar reconhecimento (a API para automaticamente, mas forçamos o estado)
+      return;
+    }
+
+    if (!('webkitSpeechRecognition' in window)) {
+      toast.error("Seu navegador não suporta reconhecimento de voz.");
+      return;
+    }
+
+    const recognition = new window.webkitSpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'pt-BR';
+
+    recognition.onstart = () => {
+      setIsListening(true);
+      toast.info("Ouvindo... Fale agora.");
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      const field = currentQuestion.id;
+      
+      if (currentQuestion.type === "textarea" || currentQuestion.type === "text") {
+        setFormData(prev => ({
+          ...prev,
+          [field]: (prev[field] ? prev[field] + " " : "") + transcript
+        }));
+      } else {
+        setTempInput(prev => ({ ...prev, item: transcript }));
+      }
+    };
+
+    recognition.start();
+  };
+
+  // Função de IA
+  const generateWithAI = async () => {
+    if (!formData.job_title) {
+      toast.error("Preencha o nome do cargo primeiro para usar a IA.");
+      return;
+    }
+
+    setIsGeneratingAI(true);
+    try {
+      const prompt = `
+        Atue como um especialista em RH sênior.
+        Gere um conteúdo profissional para o campo "${currentQuestion.title}" 
+        de uma Descrição de Cargo para a função: "${formData.job_title}".
+        
+        Contexto: O cargo é para uma oficina mecânica/centro automotivo.
+        Seja direto, use tópicos se apropriado para o campo, e mantenha um tom formal e claro.
+        Siga o padrão de mercado.
+        Retorne APENAS o texto sugerido, sem introduções.
+      `;
+
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt: prompt
+      });
+
+      const suggestion = response;
+      
+      if (currentQuestion.type === "textarea" || currentQuestion.type === "text") {
+        setFormData(prev => ({
+          ...prev,
+          [field]: suggestion
+        }));
+      } else {
+        // Tentar separar por quebras de linha se for lista
+        const items = suggestion.split('\n').filter(i => i.trim().length > 0).map(i => i.replace(/^-\s*/, '').trim());
+        // Adicionar o primeiro item ao input temporário
+        if (items.length > 0) {
+           setTempInput(prev => ({ ...prev, item: items[0] }));
+           toast.success("Sugestão gerada! Adicione o item ou edite.");
+           // Nota: Para listas completas seria complexo adicionar tudo de uma vez na estrutura atual, 
+           // então colocamos o primeiro no input para o usuário validar.
+        }
+      }
+      toast.success("Sugestão gerada com IA!");
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao gerar com IA");
+    } finally {
+      setIsGeneratingAI(false);
+    }
+  };
 
   const questions = [
     { id: "job_title", title: "1. Nome do Cargo", type: "text", hasRequiredDesired: false },
@@ -200,8 +297,30 @@ export default function CriarDescricaoCargo() {
         </div>
 
         <Card className="shadow-xl border-2 border-purple-200">
-          <CardHeader className="bg-gradient-to-r from-purple-50 to-blue-50">
+          <CardHeader className="bg-gradient-to-r from-purple-50 to-blue-50 flex flex-row items-center justify-between">
             <CardTitle className="text-2xl">{currentQuestion.title}</CardTitle>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={toggleListening}
+                className={`${isListening ? "bg-red-100 border-red-500 text-red-600" : ""}`}
+                title="Falar para preencher"
+              >
+                <Mic className={`w-4 h-4 ${isListening ? "animate-pulse" : ""}`} />
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={generateWithAI}
+                disabled={isGeneratingAI}
+                className="bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100"
+                title="Melhorar com IA"
+              >
+                {isGeneratingAI ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
+                <span className="ml-2 hidden sm:inline">IA</span>
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="p-6 min-h-[400px]">
             {currentQuestion.type === "text" && (
@@ -221,7 +340,7 @@ export default function CriarDescricaoCargo() {
                 <Textarea
                   value={formData[currentQuestion.id]}
                   onChange={(e) => setFormData({...formData, [currentQuestion.id]: e.target.value})}
-                  placeholder="Descreva aqui..."
+                  placeholder="Descreva aqui ou use o microfone/IA..."
                   rows={8}
                   className="mt-2"
                 />

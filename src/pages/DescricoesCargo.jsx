@@ -134,7 +134,48 @@ export default function DescricoesCargo() {
                         onClick={() => navigate(createPageUrl("EditarDescricaoCargo") + `?id=${desc.id}`)}
                       >
                         <FileText className="w-4 h-4 mr-1" />
-                        Ver Detalhes
+                        Ver/Editar
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          // Lógica simples de impressão direta
+                          const printWindow = window.open('', '_blank');
+                          printWindow.document.write(`
+                            <html>
+                              <head>
+                                <title>${desc.job_title}</title>
+                                <style>
+                                  body { font-family: Arial, sans-serif; padding: 40px; }
+                                  h1 { color: #333; border-bottom: 2px solid #666; padding-bottom: 10px; }
+                                  h2 { color: #555; margin-top: 20px; background: #f0f0f0; padding: 5px; }
+                                  ul { padding-left: 20px; }
+                                  li { margin-bottom: 5px; }
+                                </style>
+                              </head>
+                              <body>
+                                <h1>${desc.job_title}</h1>
+                                <p><strong>Data:</strong> ${new Date(desc.created_date).toLocaleDateString('pt-BR')}</p>
+                                
+                                ${desc.main_activities && desc.main_activities.length > 0 ? `
+                                  <h2>Atividades Principais</h2>
+                                  <ul>${desc.main_activities.map(a => `<li>${a}</li>`).join('')}</ul>
+                                ` : ''}
+                                
+                                ${desc.main_responsibilities ? `
+                                  <h2>Responsabilidades</h2>
+                                  <p>${desc.main_responsibilities}</p>
+                                ` : ''}
+
+                                <script>window.print();</script>
+                              </body>
+                            </html>
+                          `);
+                          printWindow.document.close();
+                        }}
+                      >
+                        <Download className="w-4 h-4" />
                       </Button>
                       {desc.pdf_url && (
                         <Button

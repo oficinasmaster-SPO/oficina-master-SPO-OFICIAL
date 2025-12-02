@@ -78,10 +78,22 @@ export default function CDCForm() {
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
-      return await base44.entities.Employee.update(employeeId, {
-        cdc_completed: true,
-        cdc_data: data
+      // Salvar como histórico em CDCRecord
+      const record = await base44.entities.CDCRecord.create({
+        employee_id: employeeId,
+        workshop_id: workshop?.id,
+        evaluator_id: user.id,
+        date: new Date().toISOString(),
+        ...data
       });
+
+      // Atualizar flag no funcionário apenas para facilitar listagem rápida
+      await base44.entities.Employee.update(employeeId, {
+        cdc_completed: true,
+        cdc_data: data // Mantemos o último para referência rápida se necessário
+      });
+
+      return record;
     },
     onSuccess: async () => {
       // Track engagement
@@ -127,18 +139,28 @@ export default function CDCForm() {
           .field div { border: 1px solid #ddd; padding: 10px; background: #f9f9f9; }
           .header { text-align: center; margin-bottom: 30px; }
           .logo-img { max-height: 50px; margin-bottom: 10px; }
-          .workshop-name { font-size: 20px; font-weight: bold; color: #333; margin-bottom: 5px; }
-          .slogan { font-size: 14px; color: #666; margin-bottom: 20px; }
+          .workshop-name { font-size: 24px; font-weight: bold; color: #333; margin-bottom: 5px; text-transform: uppercase; }
+          .slogan { font-size: 14px; color: #666; margin-bottom: 20px; font-style: italic; }
+          .page-break { page-break-before: always; }
+          .section-title { background-color: #f0f0f0; padding: 5px 10px; font-weight: bold; margin-top: 20px; border-left: 4px solid #E31837; }
         </style>
       </head>
       <body>
         <div class="header">
-          ${workshop.logo_url ? `<img src="${workshop.logo_url}" alt="Logo da Oficina" class="logo-img"/>` : `<div class="workshop-name">${workshop.name}</div>`}
+          ${workshop.logo_url ? `<img src="${workshop.logo_url}" alt="Logo da Oficina" class="logo-img" style="max-height: 80px;"/>` : ''}
+          <div class="workshop-name">${workshop.name}</div>
           <div class="slogan">Oficinas Master Educação Empresarial</div>
-          <h1>CDC - Conexão e Diagnóstico do Colaborador</h1>
-          <p><strong>Colaborador:</strong> ${employee?.full_name || '-'}</p>
-          <p><strong>Oficina:</strong> ${workshop.name || '-'}</p>
-          <p><strong>Data:</strong> ${new Date().toLocaleDateString('pt-BR')}</p>
+          <h1 style="margin-top: 20px; border-bottom: 2px solid #E31837; padding-bottom: 10px;">CDC - Conexão e Diagnóstico do Colaborador</h1>
+          
+          <table style="width: 100%; margin-top: 20px; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 8px; border: 1px solid #ddd; width: 50%;"><strong>Colaborador:</strong> ${employee?.full_name || '-'}</td>
+              <td style="padding: 8px; border: 1px solid #ddd;"><strong>Data:</strong> ${new Date().toLocaleDateString('pt-BR')}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; border: 1px solid #ddd;" colspan="2"><strong>Avaliador:</strong> ${user?.full_name || '-'}</td>
+            </tr>
+          </table>
         </div>
         
         <div class="field">
