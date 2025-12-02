@@ -19,6 +19,11 @@ export default function COEXCDCIntegration({ employee }) {
     queryFn: () => base44.entities.COEXContract.filter({ employee_id: employee.id })
   });
 
+  const { data: cdcRecords = [] } = useQuery({
+    queryKey: ['cdc-records', employee.id],
+    queryFn: () => base44.entities.CDCRecord.filter({ employee_id: employee.id })
+  });
+
   const activeCOEX = coexContracts.find(c => c.status === 'ativo');
   const daysUntilExpiry = activeCOEX ? differenceInDays(new Date(activeCOEX.end_date), new Date()) : null;
 
@@ -83,6 +88,20 @@ export default function COEXCDCIntegration({ employee }) {
               >
                 Atualizar CDC
               </Button>
+              
+              {cdcRecords.length > 0 && (
+                <div className="mt-4 pt-4 border-t">
+                  <p className="text-xs font-semibold text-gray-500 mb-2">Histórico de CDC</p>
+                  <div className="space-y-2">
+                    {cdcRecords.sort((a, b) => new Date(b.date) - new Date(a.date)).map((rec, idx) => (
+                        <div key={idx} className="text-xs flex justify-between bg-gray-50 p-2 rounded">
+                            <span>{new Date(rec.date).toLocaleDateString('pt-BR')}</span>
+                            <span className="text-gray-500">Ver detalhes (PDF)</span>
+                        </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="space-y-3">

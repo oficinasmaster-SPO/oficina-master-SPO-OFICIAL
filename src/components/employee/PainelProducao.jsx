@@ -97,7 +97,7 @@ export default function PainelProducao({ employee }) {
       {/* Gráficos */}
       <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle>Histórico de Produção</CardTitle>
+          <CardTitle>Produção Realizada</CardTitle>
         </CardHeader>
         <CardContent>
           {productionHistory.length === 0 ? (

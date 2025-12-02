@@ -39,7 +39,8 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
     
     const totalProduction = formData.production_parts + formData.production_parts_sales + formData.production_services;
     
-    const production_percentage = totalCost > 0 ? (totalProduction / totalCost) * 100 : 0;
+    // Formula: Custo / Faturamento * 100 (Fixed)
+    const production_percentage = totalProduction > 0 ? (totalCost / totalProduction) * 100 : 0;
 
     await onUpdate({
       ...formData,
@@ -97,6 +98,59 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
 
   return (
     <div className="space-y-6">
+      <Card className="shadow-lg border-2 border-green-200 mb-6">
+        <CardHeader>
+          <CardTitle>PRODUÇÃO PREVISTA</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label>Produção de Peças (R$)</Label>
+              <Input
+                type="number"
+                value={formData.production_parts}
+                onChange={(e) => setFormData({...formData, production_parts: parseFloat(e.target.value) || 0})}
+                disabled={!editing}
+              />
+            </div>
+            <div>
+              <Label>Produção Vendas de Peças (R$)</Label>
+              <Input
+                type="number"
+                value={formData.production_parts_sales}
+                onChange={(e) => setFormData({...formData, production_parts_sales: parseFloat(e.target.value) || 0})}
+                disabled={!editing}
+              />
+            </div>
+            <div>
+              <Label>Produção de Serviços (R$)</Label>
+              <Input
+                type="number"
+                value={formData.production_services}
+                onChange={(e) => setFormData({...formData, production_services: parseFloat(e.target.value) || 0})}
+                disabled={!editing}
+              />
+            </div>
+          </div>
+
+          <div className="pt-4 border-t bg-green-50 rounded-lg p-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm font-semibold text-green-900">Produção Total Prevista</p>
+                <p className="text-2xl font-bold text-green-600">R$ {totalProduction.toFixed(2)}</p>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-green-900">% Custo sobre Produção</p>
+                <p className="text-xs text-green-700">(Salário / Faturamento x 100)</p>
+                <p className={`text-2xl font-bold ${productionPercentage <= 30 ? 'text-green-600' : 'text-orange-600'}`}>
+                  {productionPercentage}%
+                </p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card className="shadow-lg">
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -276,58 +330,7 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
         </CardContent>
       </Card>
 
-      <Card className="shadow-lg border-2 border-green-200">
-        <CardHeader>
-          <CardTitle>PRODUÇÃO PREVISTA</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label>Produção de Peças (R$)</Label>
-              <Input
-                type="number"
-                value={formData.production_parts}
-                onChange={(e) => setFormData({...formData, production_parts: parseFloat(e.target.value) || 0})}
-                disabled={!editing}
-              />
-            </div>
-            <div>
-              <Label>Produção Vendas de Peças (R$)</Label>
-              <Input
-                type="number"
-                value={formData.production_parts_sales}
-                onChange={(e) => setFormData({...formData, production_parts_sales: parseFloat(e.target.value) || 0})}
-                disabled={!editing}
-              />
-            </div>
-            <div>
-              <Label>Produção de Serviços (R$)</Label>
-              <Input
-                type="number"
-                value={formData.production_services}
-                onChange={(e) => setFormData({...formData, production_services: parseFloat(e.target.value) || 0})}
-                disabled={!editing}
-              />
-            </div>
-          </div>
 
-          <div className="pt-4 border-t bg-green-50 rounded-lg p-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm font-semibold text-green-900">Produção Total</p>
-                <p className="text-2xl font-bold text-green-600">R$ {totalProduction.toFixed(2)}</p>
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-green-900">% Custo sobre Produção</p>
-                <p className="text-xs text-green-700">(Salário / Faturamento x 100)</p>
-                <p className={`text-2xl font-bold ${productionPercentage <= 30 ? 'text-green-600' : 'text-orange-600'}`}>
-                  {productionPercentage}%
-                </p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

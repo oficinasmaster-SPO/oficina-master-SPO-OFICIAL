@@ -194,6 +194,42 @@ export default function EvolucaoMaturidade({ employee }) {
           Avaliar Performance
         </Button>
       </div>
+
+      {/* Tabela de Histórico */}
+      <Card>
+        <CardHeader>
+            <CardTitle>Histórico de Diagnósticos</CardTitle>
+        </CardHeader>
+        <CardContent>
+            {maturityDiagnostics.length === 0 && performanceDiagnostics.length === 0 ? (
+                <p className="text-gray-500 text-center">Nenhum diagnóstico registrado.</p>
+            ) : (
+                <div className="space-y-2">
+                    {[...maturityDiagnostics, ...performanceDiagnostics]
+                        .sort((a, b) => new Date(b.created_date) - new Date(a.created_date))
+                        .map((diag, idx) => (
+                            <div key={idx} className="flex justify-between items-center p-3 bg-white border rounded hover:bg-gray-50">
+                                <div>
+                                    <p className="font-medium text-sm">
+                                        {diag.maturity_level ? "Maturidade" : "Desempenho"}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                        {new Date(diag.created_date).toLocaleDateString('pt-BR')}
+                                    </p>
+                                </div>
+                                <div className="text-right">
+                                    <span className="text-sm font-bold">
+                                        {diag.maturity_level ? 
+                                            maturityLevels[diag.maturity_level]?.label : 
+                                            diag.classification?.replace('_', ' ')}
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
+                </div>
+            )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

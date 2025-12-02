@@ -41,6 +41,11 @@ ${employee.full_name}
 
   const [contractText, setContractText] = useState(defaultTemplate);
 
+  const addClause = (title, text) => {
+    const newClause = `\nCLÁUSULA ADICIONAL - ${title}\n${text}\n`;
+    setContractText(prev => prev + newClause);
+  };
+
   const handleUpload = async () => {
     if (!file) {
       toast.error("Selecione um arquivo");
@@ -190,8 +195,13 @@ ${employee.full_name}
             <DialogTitle>Editor de Contrato</DialogTitle>
           </DialogHeader>
           <div className="flex-1 flex flex-col gap-4">
+            <div className="flex gap-2 mb-2">
+                <Button size="sm" variant="outline" onClick={() => addClause("CONFIDENCIALIDADE", "O EMPREGADO compromete-se a manter sigilo sobre as informações da empresa.")}>+ Confidencialidade</Button>
+                <Button size="sm" variant="outline" onClick={() => addClause("NÃO COMPETIÇÃO", "O EMPREGADO não poderá atuar em empresas concorrentes durante a vigência deste contrato.")}>+ Não Competição</Button>
+                <Button size="sm" variant="outline" onClick={() => addClause("USO DE IMAGEM", "Autorizo o uso da minha imagem para fins institucionais.")}>+ Uso de Imagem</Button>
+            </div>
             <div className="p-2 bg-blue-50 text-xs text-blue-700 rounded">
-              Edite as cláusulas conforme necessário. Os dados do colaborador foram pré-preenchidos.
+              Edite as cláusulas livremente. Use os botões acima para adicionar blocos prontos.
             </div>
             <Textarea 
               value={contractText}

@@ -48,8 +48,13 @@ export default function FeedbacksSection({ employee, onUpdate }) {
     if (!formData.type) return;
     setGeneratingAI(true);
     try {
-      const prompt = `Escreva um modelo de ${formData.type === 'positivo' ? 'feedback positivo' : formData.type === 'negativo' ? 'feedback corretivo/negativo' : 'pauta para reunião one-on-one'} para um colaborador chamado ${employee.full_name}, cargo ${employee.position}. 
-      ${formData.type === 'one_on_one' ? 'Inclua perguntas chave para alinhamento e espaço para registrar metas.' : 'Seja profissional, construtivo e direto.'}`;
+      const prompt = `Atue como um especialista em RH e liderança. Escreva um texto profissional de ${formData.type === 'positivo' ? 'FEEDBACK POSITIVO (Elogio)' : formData.type === 'negativo' ? 'FEEDBACK CORRETIVO (Construtivo)' : 'PAUTA DE REUNIÃO ONE-ON-ONE'} para:
+      Colaborador: ${employee.full_name}
+      Cargo: ${employee.position}
+      
+      ${formData.type === 'one_on_one' 
+        ? 'Crie uma estrutura de ATA com: 1. Quebra-gelo, 2. Pontos de Pauta, 3. Espaço para anotações do colaborador, 4. Definição de Metas/Compromissos.' 
+        : 'Use a técnica CNV (Comunicação Não Violenta): Observação, Sentimento, Necessidade e Pedido. Seja claro, direto e empático.'}`;
       
       const response = await base44.integrations.Core.InvokeLLM({
         prompt: prompt
