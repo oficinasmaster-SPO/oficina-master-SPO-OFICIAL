@@ -301,63 +301,12 @@ export default function CulturaOrganizacional() {
           <p className="text-gray-600">Manual da cultura e cronograma de aculturamento</p>
         </div>
 
-        <Tabs defaultValue="basico" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="basico">Básico</TabsTrigger>
+        <Tabs defaultValue="pilares" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="pilares">Pilares</TabsTrigger>
             <TabsTrigger value="expectativas">Expectativas</TabsTrigger>
             <TabsTrigger value="rituais">Rituais</TabsTrigger>
           </TabsList>
-
-          <TabsContent value="basico">
-            <Card>
-              <CardHeader>
-                <CardTitle>Missão, Visão e Valores</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label>Missão</Label>
-                  <Textarea
-                    value={formData.mission}
-                    onChange={(e) => setFormData({ ...formData, mission: e.target.value })}
-                    placeholder="Qual é o propósito da empresa?"
-                    rows={3}
-                  />
-                </div>
-
-                <div>
-                  <Label>Visão</Label>
-                  <Textarea
-                    value={formData.vision}
-                    onChange={(e) => setFormData({ ...formData, vision: e.target.value })}
-                    placeholder="Onde a empresa quer chegar?"
-                    rows={3}
-                  />
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <Label>Valores</Label>
-                    <Button size="sm" onClick={addValue}>
-                      <Plus className="w-4 h-4 mr-2" /> Adicionar
-                    </Button>
-                  </div>
-                  {formData.values.map((value, index) => (
-                    <div key={index} className="flex gap-2 mb-2">
-                      <Input
-                        value={value}
-                        onChange={(e) => updateValue(index, e.target.value)}
-                        placeholder="Ex: Respeito, Transparência..."
-                      />
-                      <Button size="icon" variant="ghost" onClick={() => removeValue(index)}>
-                        <Trash2 className="w-4 h-4 text-red-600" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           <TabsContent value="pilares">
             <Card>
