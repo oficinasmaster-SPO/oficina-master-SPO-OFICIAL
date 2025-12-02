@@ -33,8 +33,9 @@ export default function Cadastro() {
         return;
       }
 
-      const workshops = await base44.entities.Workshop.list();
-      let userWorkshop = workshops.find(w => w.owner_id === user.id);
+      // Filtra apenas oficinas onde o usuário é dono para evitar carregar todas as oficinas do banco (limite de paginação)
+      const workshops = await base44.entities.Workshop.filter({ owner_id: user.id });
+      let userWorkshop = workshops[0];
 
       if (!userWorkshop) {
         // Cria uma oficina rascunho se não existir, para permitir o uso dos componentes de edição
