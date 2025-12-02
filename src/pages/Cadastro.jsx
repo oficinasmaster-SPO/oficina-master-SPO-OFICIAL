@@ -17,8 +17,10 @@ import MetasObjetivosCompleto from "../components/workshop/MetasObjetivosComplet
 export default function Cadastro() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
   const [workshop, setWorkshop] = useState(null);
   const [activeTab, setActiveTab] = useState("dados");
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -26,49 +28,54 @@ export default function Cadastro() {
 
   const loadData = async () => {
     try {
-      const user = await base44.auth.me();
+      const currentUser = await base44.auth.me();
+      setUser(currentUser);
       
-      if (!user) {
+      if (!currentUser) {
         base44.auth.redirectToLogin(window.location.href);
         return;
       }
 
-      // Filtra apenas oficinas onde o usuário é dono para evitar carregar todas as oficinas do banco (limite de paginação)
-      const workshops = await base44.entities.Workshop.filter({ owner_id: user.id });
-      let userWorkshop = workshops[0];
-
-      if (!userWorkshop) {
-        // Cria uma oficina rascunho se não existir, para permitir o uso dos componentes de edição
-        try {
-          // Payload completo para evitar erros de validação nos defaults
-          userWorkshop = await base44.entities.Workshop.create({
-            owner_id: user.id,
-            name: "Minha Nova Oficina (Clique em Editar)",
-            city: "A Definir",
-            state: "UF",
-            status: "ativo",
-            employees_count: 1,
-            years_in_business: 1,
-            is_franchisee: false,
-            operates_franchise: false,
-            capacidade_atendimento_dia: 0,
-            tempo_medio_servico: 0
-          });
-          toast.success("Ambiente de cadastro iniciado!");
-        } catch (createError) {
-          console.error("Erro ao criar oficina rascunho:", createError);
-          toast.error(`Erro ao iniciar cadastro: ${createError.message || 'Erro desconhecido'}`);
-          setLoading(false);
-          return;
-        }
+      const workshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
+      
+      if (workshops && workshops.length > 0) {
+        setWorkshop(workshops[0]);
+      } else {
+        setWorkshop(null); // Nenhum workshop encontrado, mostraremos tela de criação
       }
-
-      setWorkshop(userWorkshop);
     } catch (error) {
       console.error(error);
       toast.error("Erro ao carregar dados.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCreateWorkshop = async () => {
+    if (!user) return;
+    
+    setCreating(true);
+    try {
+      const newWorkshop = await base44.entities.Workshop.create({
+        owner_id: user.id,
+        name: "Minha Nova Oficina",
+        city: "A Definir",
+        state: "UF",
+        status: "ativo",
+        employees_count: 1,
+        years_in_business: 1,
+        is_franchisee: false,
+        operates_franchise: false,
+        capacidade_atendimento_dia: 0,
+        tempo_medio_servico: 0
+      });
+      setWorkshop(newWorkshop);
+      toast.success("Ambiente de cadastro criado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao criar oficina:", error);
+      toast.error(`Erro ao criar oficina: ${error.message || 'Tente novamente.'}`);
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -102,14 +109,30 @@ export default function Cadastro() {
   if (!workshop) {
     return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-4">
-            <div className="bg-white p-8 rounded-xl shadow-lg text-center max-w-md">
-                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Settings className="w-8 h-8 text-red-600" />
+            <div className="bg-white p-8 rounded-xl shadow-lg text-center max-w-md animate-in zoom-in-95 duration-300">
+                <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Rocket className="w-10 h-10 text-blue-600" />
                 </div>
-                <h2 className="text-xl font-bold text-gray-900 mb-2">Não foi possível carregar sua oficina</h2>
-                <p className="text-gray-600 mb-6">Ocorreu um erro ao iniciar seu cadastro. Por favor, tente novamente.</p>
-                <Button onClick={() => { setLoading(true); loadData(); }} className="w-full bg-blue-600 hover:bg-blue-700">
-                    Tentar Novamente
+                <h2 className="text-2xl font-bold text-gray-900 mb-3">Bem-vindo à Oficinas Master!</h2>
+                <p className="text-gray-600 mb-8 leading-relaxed">
+                  Vamos configurar o ambiente da sua oficina para começar a usar as ferramentas de gestão e diagnóstico.
+                </p>
+                <Button 
+                  onClick={handleCreateWorkshop} 
+                  disabled={creating}
+                  className="w-full bg-blue-600 hover:bg-blue-700 h-12 text-lg shadow-md transition-all hover:shadow-xl"
+                >
+                  {creating ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Preparando tudo...
+                    </>
+                  ) : (
+                    <>
+                      <PlayCircle className="w-5 h-5 mr-2" />
+                      Iniciar Cadastro
+                    </>
+                  )}
                 </Button>
             </div>
         </div>
