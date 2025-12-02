@@ -70,27 +70,37 @@ export default function QGPBoard() {
     return emp ? emp.full_name.split(' ')[0] : 'N/A';
   };
 
-  // Calculate Predicted End Time logic
+  // Workshop data for lunch settings
+  const { data: workshop } = useQuery({
+    queryKey: ['workshop-qgp'],
+    queryFn: async () => {
+      const ws = await base44.entities.Workshop.list();
+      return ws[0]; // Assuming single workshop for now
+    }
+  });
+
+  // Calculate Predicted End Time with Lunch Logic
   const calculatePredictedEnd = (task) => {
     if (!task.predicted_time_minutes) return null;
     
-    // Basic calculation: Now + Remaining time? Or Start + Predicted?
-    // Ideally: Start Time + Predicted Minutes + Lunch Break if overlaps
-    // If not started: Now + Predicted...
-    
-    // For simplification in this version:
-    // If in progress: Start Time + Predicted
-    // If pending: Now + Predicted
-    
-    // We need real "start_time" from time_tracking or logs. 
-    // Let's assume if status is 'em_andamento', we use the last status change or created_date if not avail.
-    // This is complex without dedicated 'actual_start_time' field, but we added it to Entity now!
-    // Let's use updated_date as a proxy if actual_start_time is missing for now, or created_date.
-    
     const baseTime = task.status === 'em_andamento' ? new Date(task.updated_date) : new Date(); 
-    const predictedEnd = addMinutes(baseTime, task.predicted_time_minutes);
+    let predictedEnd = addMinutes(baseTime, task.predicted_time_minutes);
     
-    // TODO: Add Lunch Logic here based on Workshop settings
+    // Lunch Logic
+    if (workshop?.operational_settings?.lunch_start && workshop?.operational_settings?.lunch_end) {
+      const today = new Date();
+      const lunchStart = parse(workshop.operational_settings.lunch_start, 'HH:mm', today);
+      const lunchEnd = parse(workshop.operational_settings.lunch_end, 'HH:mm', today);
+      
+      // Check if the task interval overlaps with lunch
+      // Simplification: If the task spans across the lunch start time
+      if (isWithinInterval(lunchStart, { start: baseTime, end: predictedEnd })) {
+         const lunchDuration = differenceInMinutes(lunchEnd, lunchStart);
+         predictedEnd = addMinutes(predictedEnd, lunchDuration);
+      }
+      
+      // Also check employee specific lunch settings if needed (omitted for brevity/performance on list)
+    }
     
     return predictedEnd;
   };
