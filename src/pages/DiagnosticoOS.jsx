@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, FileText, Plus, Trash2, DollarSign, Clock, History } from "lucide-react";
+import { Loader2, FileText, Plus, Trash2, DollarSign, Clock, History, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { formatCurrency } from "../components/utils/formatters";
@@ -167,7 +167,7 @@ export default function DiagnosticoOS() {
     const totalThirdPartyCosts = thirdPartyServices.reduce((sum, s) => sum + (s.cost || 0), 0);
 
     // Total da OS
-    const totalOS = totalPartsSale + totalServicesValue; // Terceiros normalmente já estão inclusos no valor cobrado ou repassados? Assumindo estrutura padrão onde serviços é valor cobrado
+    const totalOS = totalPartsSale + totalServicesValue; 
     
     // R70/I30
     // Os custos de peças usadas para R70/I30 são o totalPartsCost + totalThirdPartyCosts
@@ -183,11 +183,7 @@ export default function DiagnosticoOS() {
     const servicesWithEstimatedTime = services.map(s => {
         let estimatedTime = 0;
         if (idealHourValue > 0) {
-            // (Valor total do serviço - TCMP2 = / 2 = Tempo que pode ser gasto naquele serviço )
-            // Rearranjando para fórmula: (Valor Serviço / 2) / TCMP2 = Tempo
-            // Ou conforme pedido: (Valor Total - TCMP2) / 2 -> Isso parece estranho dimensionalmente (R$ - R$/h).
-            // A interpretação correta da metodologia TCMP2 geralmente é: Preço = (Tempo * 2 * ValorHora)
-            // Logo, Tempo = Preço / (2 * ValorHora)
+            // (Valor total do serviço / (2 * TCMP2))
             estimatedTime = (s.charged_value || 0) / (2 * idealHourValue);
         }
         return { ...s, estimated_time: estimatedTime };
@@ -530,7 +526,7 @@ export default function DiagnosticoOS() {
                       />
                     </div>
                     <div>
-                      <Label className="text-xs text-gray-600">Valor total cobrado (R$)</Label>
+                      <Label className="text-xs text-gray-600">Valor total dos serviços cobrados (R$)</Label>
                       <Input
                         type="number"
                         step="0.01"
