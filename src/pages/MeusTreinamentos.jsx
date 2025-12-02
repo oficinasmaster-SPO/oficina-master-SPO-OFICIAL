@@ -26,12 +26,31 @@ export default function MeusTreinamentos() {
       setUser(currentUser);
 
       // 1. Fetch available modules (published ones)
-      // In a real app, we might filter by user role/workshop
+      // Filter by workshop and assignment
       let allModules = await base44.entities.TrainingModule.filter({ status: 'publicado' });
       
-      // Filter by workshop if user belongs to one (assuming user has workshop_id or similar, 
-      // logic might differ based on how user<->workshop is linked. 
-      // For now, showing all published modules + those specific to their workshop if known)
+      // Encontrar meu registro de colaborador para verificar workshop e atribuição
+      const myEmployeeRecords = await base44.entities.Employee.filter({ email: currentUser.email });
+      const myEmployee = myEmployeeRecords[0];
+
+      if (myEmployee) {
+          allModules = allModules.filter(mod => {
+              // 1. Filtro por Workshop
+              if (mod.workshop_id && mod.workshop_id !== myEmployee.workshop_id) {
+                  return false;
+              }
+              // 2. Filtro por Atribuição Específica (assigned_to_ids)
+              if (mod.assigned_to_ids && mod.assigned_to_ids.length > 0) {
+                  return mod.assigned_to_ids.includes(myEmployee.id);
+              }
+              // Se assigned_to_ids estiver vazio, é público para a oficina (ou global)
+              return true;
+          });
+      } else {
+          // Fallback se não for employee (admin visualizando?) ou erro
+          // Mostra apenas globais
+          allModules = allModules.filter(mod => !mod.workshop_id);
+      }
       
       // 2. Fetch user progress
       const progress = await base44.entities.EmployeeTrainingProgress.filter({ employee_id: currentUser.id });

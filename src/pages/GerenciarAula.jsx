@@ -222,6 +222,7 @@ export default function GerenciarAula() {
                   <SelectContent>
                     <SelectItem value="quiz">Quiz (Múltipla Escolha)</SelectItem>
                     <SelectItem value="exercise">Exercício (Dissertativo)</SelectItem>
+                    <SelectItem value="poll">Enquete (Sem nota)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -302,19 +303,22 @@ export default function GerenciarAula() {
                                newOpts[idx] = e.target.value;
                                setCurrentQuestion({...currentQuestion, options: newOpts});
                              }} />
-                             <input 
-                               type="radio" 
-                               name="correct_opt" 
-                               checked={String(currentQuestion.correct_answer) === String(idx)}
-                               onChange={() => setCurrentQuestion({...currentQuestion, correct_answer: String(idx)})}
-                             />
+                             {formData.type !== 'poll' && (
+                                 <input 
+                                   type="radio" 
+                                   name="correct_opt" 
+                                   checked={String(currentQuestion.correct_answer) === String(idx)}
+                                   onChange={() => setCurrentQuestion({...currentQuestion, correct_answer: String(idx)})}
+                                   title="Marcar como correta"
+                                 />
+                             )}
                           </div>
                         </div>
                       ))}
                     </div>
                   )}
                   
-                  {currentQuestion.type === 'boolean' && (
+                  {currentQuestion.type === 'boolean' && formData.type !== 'poll' && (
                      <div className="flex gap-4">
                         <label className="flex items-center gap-2">
                           <input type="radio" name="bool_ans" checked={currentQuestion.correct_answer === 'true'} onChange={() => setCurrentQuestion({...currentQuestion, correct_answer: 'true'})} />

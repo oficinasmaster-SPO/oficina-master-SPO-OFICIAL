@@ -10,9 +10,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Plus, BookOpen, Edit, Trash2, Eye, Users, MoreVertical, Video, FileText } from "lucide-react";
+import { Loader2, Plus, BookOpen, Edit, Trash2, Eye, Users, MoreVertical, Video, FileText, UserPlus, Check } from "lucide-react";
 import { toast } from "sonner";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function GerenciarTreinamentos() {
   const navigate = useNavigate();
@@ -20,9 +22,14 @@ export default function GerenciarTreinamentos() {
   const [modules, setModules] = useState([]);
   const [user, setUser] = useState(null);
   const [workshop, setWorkshop] = useState(null);
+  const [employees, setEmployees] = useState([]);
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [assigningModule, setAssigningModule] = useState(null);
+  const [selectedEmployees, setSelectedEmployees] = useState([]);
+  
   const [editingModule, setEditingModule] = useState(null);
   const [formData, setFormData] = useState({
     title: "",
@@ -53,6 +60,9 @@ export default function GerenciarTreinamentos() {
       let allModules = [];
       if (userWorkshop) {
           allModules = await base44.entities.TrainingModule.filter({ workshop_id: userWorkshop.id });
+          // Fetch employees for assignment
+          const emps = await base44.entities.Employee.filter({ workshop_id: userWorkshop.id, status: 'ativo' });
+          setEmployees(emps);
       } else {
           // Se não tem oficina, talvez seja um admin global ou usuário sem oficina
           allModules = await base44.entities.TrainingModule.list();
@@ -130,6 +140,29 @@ export default function GerenciarTreinamentos() {
     setIsModalOpen(true);
   };
 
+  const openAssignModal = (module) => {
+    setAssigningModule(module);
+    setSelectedEmployees(module.assigned_to_ids || []);
+    setIsAssignModalOpen(true);
+  };
+
+  const handleAssignSave = async () => {
+    if (!assigningModule) return;
+    setSaving(true);
+    try {
+      await base44.entities.TrainingModule.update(assigningModule.id, {
+        assigned_to_ids: selectedEmployees
+      });
+      toast.success("Atribuições atualizadas!");
+      setIsAssignModalOpen(false);
+      loadData();
+    } catch (error) {
+      toast.error("Erro ao atribuir colaboradores");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) {
     return <div className="flex h-screen items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-blue-600" /></div>;
   }
@@ -191,6 +224,9 @@ export default function GerenciarTreinamentos() {
                             <DropdownMenuItem onClick={() => handleEdit(module)}>
                                 <Edit className="w-4 h-4 mr-2" /> Editar
                             </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => openAssignModal(module)}>
+                                <UserPlus className="w-4 h-4 mr-2" /> Atribuir Colaboradores
+                            </DropdownMenuItem>
                             <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(module.id)}>
                                 <Trash2 className="w-4 h-4 mr-2" /> Excluir
                             </DropdownMenuItem>
@@ -251,6 +287,57 @@ export default function GerenciarTreinamentos() {
             <Button onClick={handleSave} disabled={saving} className="w-full bg-blue-600 hover:bg-blue-700">
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar"}
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isAssignModalOpen} onOpenChange={setIsAssignModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Atribuir Módulo: {assigningModule?.title}</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-gray-500 mb-4">
+              Selecione os colaboradores que terão acesso a este módulo. Se nenhum for selecionado, o módulo ficará visível para <strong>todos</strong>.
+            </p>
+            <div className="border rounded-md p-2">
+              <div className="flex items-center space-x-2 p-2 border-b bg-gray-50">
+                 <Checkbox 
+                    id="select-all"
+                    checked={selectedEmployees.length === employees.length && employees.length > 0}
+                    onCheckedChange={(checked) => {
+                        if (checked) setSelectedEmployees(employees.map(e => e.id));
+                        else setSelectedEmployees([]);
+                    }}
+                 />
+                 <label htmlFor="select-all" className="text-sm font-medium cursor-pointer">Selecionar Todos</label>
+              </div>
+              <ScrollArea className="h-60">
+                <div className="p-2 space-y-2">
+                  {employees.map(emp => (
+                    <div key={emp.id} className="flex items-center space-x-2 hover:bg-gray-50 p-1 rounded">
+                      <Checkbox 
+                        id={`emp-${emp.id}`}
+                        checked={selectedEmployees.includes(emp.id)}
+                        onCheckedChange={(checked) => {
+                            if (checked) setSelectedEmployees([...selectedEmployees, emp.id]);
+                            else setSelectedEmployees(selectedEmployees.filter(id => id !== emp.id));
+                        }}
+                      />
+                      <label htmlFor={`emp-${emp.id}`} className="text-sm cursor-pointer flex-1">
+                        {emp.full_name} <span className="text-xs text-gray-400">({emp.position})</span>
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
+            <div className="mt-4 flex justify-end">
+                <Button onClick={handleAssignSave} disabled={saving} className="w-full">
+                    {saving ? <Loader2 className="animate-spin mr-2" /> : <Check className="w-4 h-4 mr-2" />}
+                    Salvar Atribuições
+                </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

@@ -12,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Loader2, PlayCircle, CheckCircle, Lock, ArrowLeft, ChevronRight, FileText, Video, CheckCircle2, AlertCircle, Brain, PartyPopper } from "lucide-react";
+import { Loader2, PlayCircle, CheckCircle, Lock, ArrowLeft, ChevronRight, FileText, Video, CheckCircle2, AlertCircle, Brain, PartyPopper, Clock } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from 'react-markdown';
 
@@ -35,10 +35,57 @@ export default function AssistirAula() {
   const [submitting, setSubmitting] = useState(false);
   const [aiFeedback, setAiFeedback] = useState(null);
   const [assessmentResult, setAssessmentResult] = useState(null);
+  
+  // Watch Time Tracking
+  const [watchTimeSeconds, setWatchTimeSeconds] = useState(0);
+  const watchTimerRef = useRef(null);
 
   useEffect(() => {
     if (lessonId) loadData();
+    
+    // Start tracking time
+    startWatchTimer();
+    
+    return () => stopWatchTimer();
   }, [lessonId]);
+
+  const startWatchTimer = () => {
+      stopWatchTimer();
+      watchTimerRef.current = setInterval(() => {
+          setWatchTimeSeconds(prev => {
+              const newTime = prev + 5;
+              // Sync to DB every 30 seconds roughly (handled by side effect or explicit save on leave)
+              if (newTime % 30 === 0) saveWatchTime(newTime);
+              return newTime;
+          });
+      }, 5000); // Update local state every 5s, but effectively counting seconds
+  };
+
+  const stopWatchTimer = () => {
+      if (watchTimerRef.current) clearInterval(watchTimerRef.current);
+  };
+
+  const saveWatchTime = async (seconds) => {
+      if (!user || !lesson) return;
+      // Update existing progress record
+      // NOTE: This is an optimistic fire-and-forget for UX smoothness
+      try {
+          // We need the ID of the progress record. 
+          // Optimization: Store progress ID in state when loaded
+          // For now, using filter which might be slightly slower but safe
+          const existing = await base44.entities.EmployeeTrainingProgress.filter({
+            employee_id: user.id,
+            lesson_id: lesson.id
+          });
+          
+          if (existing.length > 0) {
+              await base44.entities.EmployeeTrainingProgress.update(existing[0].id, {
+                  watch_time_seconds: (existing[0].watch_time_seconds || 0) + 30, // Adding increment
+                  last_access_date: new Date().toISOString()
+              });
+          }
+      } catch(e) { console.error("Failed to save watch time", e); }
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -221,11 +268,16 @@ export default function AssistirAula() {
         setAiFeedback(aiResult);
 
         // Save Result
+        // If poll, force pass and score 100
+        const isPoll = assessment.type === 'poll';
+        const passed = isPoll ? true : aiResult.passed;
+        const score = isPoll ? 100 : aiResult.score;
+
         const resultData = {
             employee_id: user.id,
             assessment_id: assessment.id,
-            score: aiResult.score,
-            passed: aiResult.passed,
+            score: score,
+            passed: passed,
             answers: answers,
             ai_feedback: JSON.stringify(aiResult), // Storing full object for now
             attempt_date: new Date().toISOString()
@@ -234,9 +286,9 @@ export default function AssistirAula() {
         await base44.entities.LessonAssessmentResult.create(resultData);
         setAssessmentResult(resultData);
 
-        if (aiResult.passed) {
-            toast.success("Parabéns! Você passou na avaliação.");
-            handleCompleteLesson();
+        if (passed) {
+            toast.success(isPoll ? "Obrigado por sua resposta!" : "Parabéns! Você passou na avaliação.");
+            if (isPoll || aiResult.passed) handleCompleteLesson();
         } else {
             toast.warning("Você não atingiu a nota mínima. Veja o feedback e tente novamente.");
         }

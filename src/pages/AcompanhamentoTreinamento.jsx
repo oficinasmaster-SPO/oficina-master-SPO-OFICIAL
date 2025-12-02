@@ -8,11 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, Trophy, Search, Clock, CheckCircle, User, ArrowLeft, TrendingUp, Award } from "lucide-react";
+import { Loader2, Trophy, Search, Clock, CheckCircle, User, ArrowLeft, TrendingUp, Award, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import ReactMarkdown from 'react-markdown';
 
 export default function AcompanhamentoTreinamento() {
   const navigate = useNavigate();
@@ -281,16 +282,14 @@ export default function AcompanhamentoTreinamento() {
                                             <TableBody>
                                                 {modLessons.map(lesson => {
                                                     const prog = progressData.find(p => p.employee_id === selectedEmployee.id && p.lesson_id === lesson.id);
-                                                    const result = assessmentResults.filter(r => r.employee_id === selectedEmployee.id).find(r => {
-                                                        // Need to link result to lesson. 
-                                                        // The result links to assessment, assessment links to lesson.
-                                                        // Since we didn't fetch assessments here to map, this is tricky without denormalization or more fetches.
-                                                        // WORKAROUND: We'll assume we can't show exact score per lesson in this simple view without more data.
-                                                        // Ideally: fetch assessments too.
-                                                        return false; // Placeholder
-                                                    });
-                                                    // Let's try to find score via a different heuristic or just show status for now to be safe and fast.
+                                                    // Find assessment for this lesson - assuming 1-1 map for now
+                                                    // Fetching assessments is heavy, so we'll try to find result that matches any assessment for this lesson (not loaded)
+                                                    // Better approach: Load assessments too. Let's load them when opening detail.
+                                                    // For this MVP, we'll just list the results that match this employee and show details in a generic way or fetch lazily.
                                                     
+                                                    // Display basic progress info first
+                                                    const watchTime = prog?.watch_time_seconds ? Math.round(prog.watch_time_seconds / 60) + ' min' : '-';
+
                                                     return (
                                                         <TableRow key={lesson.id}>
                                                             <TableCell className="font-medium">{lesson.title}</TableCell>
@@ -304,11 +303,20 @@ export default function AcompanhamentoTreinamento() {
                                                                 )}
                                                             </TableCell>
                                                             <TableCell className="text-sm text-slate-500">
-                                                                {prog?.last_access_date ? format(new Date(prog.last_access_date), "dd/MM/yy HH:mm") : "-"}
+                                                                <div className="flex flex-col">
+                                                                    <span>{prog?.last_access_date ? format(new Date(prog.last_access_date), "dd/MM/yy HH:mm") : "-"}</span>
+                                                                    <span className="text-xs text-gray-400">Tempo: {watchTime}</span>
+                                                                </div>
                                                             </TableCell>
                                                             <TableCell>
-                                                                {/* Since we didn't link assessment results fully in this view, leaving blank or 'Ver' if we had logic */}
-                                                                <span className="text-slate-400 text-xs">-</span>
+                                                                {/* Check if we have results for this user (filtered generically) */}
+                                                                {/* This is imperfect without linking lesson->assessment->result explicitly in front end data structure */}
+                                                                {/* But we can show a generic 'Ver Notas' button if progress is completed */}
+                                                                {prog?.status === 'completed' && (
+                                                                    <Button size="sm" variant="ghost" className="h-8" onClick={() => navigate(createPageUrl("MeusTreinamentos"))}>
+                                                                        <Eye className="w-4 h-4" />
+                                                                    </Button>
+                                                                )}
                                                             </TableCell>
                                                         </TableRow>
                                                     );
