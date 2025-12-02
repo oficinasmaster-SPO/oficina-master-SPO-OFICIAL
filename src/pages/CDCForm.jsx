@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Loader2, Save, Download, Users } from "lucide-react";
+import { Loader2, Save, Download, Users, Printer } from "lucide-react";
 import { toast } from "sonner";
 import GuidedTour from "../components/help/GuidedTour";
 import HelpButton from "../components/help/HelpButton";
@@ -507,8 +507,8 @@ export default function CDCForm() {
               onClick={handleExportPDF}
               className="flex-1"
             >
-              <Download className="w-4 h-4 mr-2" />
-              Exportar PDF
+              <Printer className="w-4 h-4 mr-2" />
+              Imprimir / PDF
             </Button>
             <Button
               type="submit"

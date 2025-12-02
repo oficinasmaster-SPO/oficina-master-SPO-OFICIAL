@@ -5,7 +5,8 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, ArrowRight, CheckCircle2, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, History, Play, FileText } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { entrepreneurQuestions } from "../components/entrepreneur/EntrepreneurQuestions";
 import { toast } from "sonner";
 
@@ -17,6 +18,7 @@ export default function DiagnosticoEmpresario() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [workshop, setWorkshop] = useState(null);
+  const [viewMode, setViewMode] = useState("history"); // "history" or "new"
 
   useEffect(() => {
     checkAuth();
@@ -31,7 +33,8 @@ export default function DiagnosticoEmpresario() {
       const userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
       setWorkshop(userWorkshop);
     } catch (error) {
-      toast.error("Você precisa estar logado");
+      // toast.error("Você precisa estar logado"); // Removido toast duplicado se falhar auth
+      base44.auth.redirectToLogin(createPageUrl("DiagnosticoEmpresario"));
       base44.auth.redirectToLogin(createPageUrl("DiagnosticoEmpresario"));
     } finally {
       setLoading(false);
@@ -65,6 +68,22 @@ export default function DiagnosticoEmpresario() {
     if (currentQuestion > 0) {
       setCurrentQuestion(currentQuestion - 1);
     }
+  };
+
+  // Fetch histórico
+  const { data: history = [] } = useQuery({
+    queryKey: ['entrepreneur-history', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      return await base44.entities.EntrepreneurDiagnostic.filter({ user_id: user.id }, '-created_date');
+    },
+    enabled: !!user?.id
+  });
+
+  const startNew = () => {
+    setViewMode("new");
+    setCurrentQuestion(0);
+    setAnswers({});
   };
 
   const handleSubmit = async () => {
@@ -111,14 +130,74 @@ export default function DiagnosticoEmpresario() {
     );
   }
 
+  if (viewMode === "history") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-8 px-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Diagnóstico do Perfil Empresário</h1>
+              <p className="text-gray-600">Descubra e acompanhe seu perfil de gestão</p>
+            </div>
+            <Button onClick={startNew} className="bg-blue-600 hover:bg-blue-700">
+              <Play className="w-4 h-4 mr-2" />
+              Novo Diagnóstico
+            </Button>
+          </div>
+
+          <div className="grid gap-4">
+            {history.length === 0 ? (
+              <Card>
+                <CardContent className="p-12 text-center text-gray-500">
+                  <p className="mb-4">Nenhum diagnóstico realizado ainda.</p>
+                  <Button onClick={startNew}>Começar Agora</Button>
+                </CardContent>
+              </Card>
+            ) : (
+              history.map((diag, idx) => (
+                <Card key={diag.id || idx} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-6 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-xl
+                        ${diag.dominant_profile === 'aventureiro' ? 'bg-orange-500' : 
+                          diag.dominant_profile === 'empreendedor' ? 'bg-green-500' : 'bg-blue-500'}`}>
+                        {diag.dominant_profile?.[0]?.toUpperCase()}
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-lg capitalize">{diag.dominant_profile}</h3>
+                        <p className="text-sm text-gray-500 flex items-center gap-2">
+                          <Clock className="w-3 h-3" />
+                          {new Date(diag.created_date).toLocaleDateString('pt-BR')}
+                        </p>
+                      </div>
+                    </div>
+                    <Button variant="outline" onClick={() => navigate(createPageUrl("ResultadoEmpresario") + `?id=${diag.id}`)}>
+                      <FileText className="w-4 h-4 mr-2" />
+                      Ver Resultado
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-8 px-4">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
+          <Button variant="ghost" onClick={() => setViewMode("history")} className="mb-4">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Voltar ao Histórico
+          </Button>
+          
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                Diagnóstico do Perfil do Empresário
+                Novo Diagnóstico
               </h1>
               {workshop && (
                 <p className="text-sm text-gray-600 mt-1">

@@ -6,7 +6,8 @@ import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Loader2, Heart, Search, CheckCircle, Clock, User } from "lucide-react";
+import { Loader2, Heart, Search, CheckCircle, Clock, User, Filter } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import GuidedTour from "../components/help/GuidedTour";
 import HelpButton from "../components/help/HelpButton";
 
@@ -19,10 +20,18 @@ export default function CDCList() {
     queryFn: () => base44.entities.Employee.list('-created_date')
   });
 
-  const filteredEmployees = employees.filter(emp => 
-    emp.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    emp.position.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const [statusFilter, setStatusFilter] = useState("todos");
+
+  const filteredEmployees = employees.filter(emp => {
+    const matchesSearch = emp.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          emp.position.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    if (statusFilter === "todos") return matchesSearch;
+    if (statusFilter === "completo") return matchesSearch && emp.cdc_completed;
+    if (statusFilter === "pendente") return matchesSearch && !emp.cdc_completed;
+    
+    return matchesSearch;
+  });
 
   const completedCDCs = employees.filter(e => e.cdc_completed).length;
   const pendingCDCs = employees.length - completedCDCs;
@@ -135,14 +144,29 @@ export default function CDCList() {
 
         <Card id="cdc-search" className="mb-6 shadow-lg">
           <CardContent className="p-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <Input
-                placeholder="Buscar colaborador por nome ou cargo..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Input
+                  placeholder="Buscar colaborador por nome ou cargo..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <div className="w-full md:w-48">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger>
+                    <Filter className="w-4 h-4 mr-2 text-gray-500" />
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos</SelectItem>
+                    <SelectItem value="completo">Completos</SelectItem>
+                    <SelectItem value="pendente">Pendentes</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </CardContent>
         </Card>

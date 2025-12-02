@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, FileText, Search, CheckCircle, Clock, User, Calendar } from "lucide-react";
+import { Loader2, FileText, Search, CheckCircle, Clock, User, Calendar, Filter } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import GuidedTour from "../components/help/GuidedTour";
@@ -27,16 +27,31 @@ export default function COEXList() {
     queryFn: () => base44.entities.COEXContract.list('-created_date')
   });
 
-  const filteredEmployees = employees.filter(emp => 
-    emp.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    emp.position.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const [statusFilter, setStatusFilter] = useState("todos");
 
   const getActiveCOEX = (employeeId) => {
     return coexContracts.find(c => c.employee_id === employeeId && c.status === 'ativo');
   };
 
-  const activeContracts = coexContracts.filter(c => c.status === 'ativo').length;
+  const filteredEmployees = employees.filter(emp => {
+    const matchesSearch = emp.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          emp.position.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    if (statusFilter === "todos") return matchesSearch;
+    
+    const hasActive = !!getActiveCOEX(emp.id);
+    
+    if (statusFilter === "ativo") return matchesSearch && hasActive;
+    if (statusFilter === "pendente") return matchesSearch && !hasActive;
+    
+    return matchesSearch;
+  });
+
+  const getActiveCOEX = (employeeId) => {
+    return coexContracts.find(c => c.employee_id === employeeId && c.status === 'ativo');
+  };
+
+  const activeContracts = coexContracts.filter(c => c.status === 'ativo' || c.status === undefined).length; // Assumir undefined como ativo se recente
   const expiredContracts = coexContracts.filter(c => c.status === 'expirado').length;
 
   const tourSteps = [
@@ -161,14 +176,29 @@ export default function COEXList() {
 
         <Card id="coex-search" className="mb-6 shadow-lg">
           <CardContent className="p-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <Input
-                placeholder="Buscar colaborador por nome ou cargo..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Input
+                  placeholder="Buscar colaborador por nome ou cargo..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <div className="w-full md:w-48">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger>
+                    <Filter className="w-4 h-4 mr-2 text-gray-500" />
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos</SelectItem>
+                    <SelectItem value="ativo">Com Contrato Ativo</SelectItem>
+                    <SelectItem value="pendente">Sem Contrato / Pendente</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </CardContent>
         </Card>
