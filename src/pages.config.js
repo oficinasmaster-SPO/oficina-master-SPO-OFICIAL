@@ -89,6 +89,9 @@ import TechnicianQGP from './pages/TechnicianQGP';
 import ConsolidadoMensal from './pages/ConsolidadoMensal';
 import ResponderDISC from './pages/ResponderDISC';
 import ResponderMaturidade from './pages/ResponderMaturidade';
+import HistoricoDISC from './pages/HistoricoDISC';
+import HistoricoMaturidade from './pages/HistoricoMaturidade';
+import HistoricoDesempenho from './pages/HistoricoDesempenho';
 import __Layout from './Layout.jsx';
 
 
@@ -184,6 +187,9 @@ export const PAGES = {
     "ConsolidadoMensal": ConsolidadoMensal,
     "ResponderDISC": ResponderDISC,
     "ResponderMaturidade": ResponderMaturidade,
+    "HistoricoDISC": HistoricoDISC,
+    "HistoricoMaturidade": HistoricoMaturidade,
+    "HistoricoDesempenho": HistoricoDesempenho,
 }
 
 export const pagesConfig = {
