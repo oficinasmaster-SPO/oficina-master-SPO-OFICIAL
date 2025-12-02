@@ -9,7 +9,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Label } from "@/components/ui/label";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
-import { jsPDF } from "npm:jspdf@2.5.1";
 
 export default function AdvertenciasSection({ employee, onUpdate }) {
   const [showDialog, setShowDialog] = useState(false);
@@ -47,26 +46,29 @@ export default function AdvertenciasSection({ employee, onUpdate }) {
     setFormData({ reason: "", severity: "leve", description: "" });
   };
 
-  const exportToPDF = () => {
-    const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text(`Registro de Advertências - ${employee.full_name}`, 20, 20);
-    doc.setFontSize(12);
-    
-    let y = 40;
-    filteredWarnings.forEach((w) => {
-      if (y > 270) { doc.addPage(); y = 20; }
-      doc.setFont(undefined, 'bold');
-      doc.text(`${new Date(w.date).toLocaleDateString('pt-BR')} - ${severityLabels[w.severity]} - ${w.reason}`, 20, y);
-      y += 7;
-      doc.setFont(undefined, 'normal');
-      doc.setFontSize(10);
-      const splitText = doc.splitTextToSize(w.description, 170);
-      doc.text(splitText, 20, y);
-      y += splitText.length * 5 + 10;
-    });
-    
-    doc.save(`advertencias_${employee.full_name}.pdf`);
+  const exportToPDF = async () => {
+    try {
+      toast.info("Gerando PDF...");
+      const { data } = await base44.functions.invoke('generateEmployeeReport', {
+        type: 'warnings',
+        employee_name: employee.full_name,
+        items: filteredWarnings
+      });
+      
+      const blob = new Blob([data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `advertencias_${employee.full_name}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+      toast.success("PDF baixado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao gerar PDF:", error);
+      toast.error("Erro ao gerar PDF");
+    }
   };
 
   const severityColors = {
