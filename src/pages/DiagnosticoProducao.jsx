@@ -270,12 +270,6 @@ export default function DiagnosticoProducao() {
       recommendation,
       tcmp2Costs
     };
-      totalCost,
-      totalProductivity,
-      costPercentage,
-      classification,
-      recommendation
-    };
   };
 
   const handleSubmit = async (e) => {
