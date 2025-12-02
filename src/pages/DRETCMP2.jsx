@@ -13,8 +13,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { 
   Loader2, Calculator, DollarSign, TrendingUp, TrendingDown, 
   Save, ArrowLeft, Plus, FileText, Users, Clock, AlertCircle,
-  CheckCircle, XCircle
+  CheckCircle, XCircle, Printer
 } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, ReferenceLine } from "recharts";
 import { formatCurrency, formatNumber } from "../components/utils/formatters";
 import { toast } from "sonner";
 
@@ -207,6 +208,24 @@ export default function DRETCMP2() {
     });
   };
 
+  // Chart Data
+  const chartData = [...dreList]
+    .sort((a, b) => a.month.localeCompare(b.month))
+    .map(d => {
+      const [year, month] = d.month.split('-');
+      const date = new Date(parseInt(year), parseInt(month) - 1);
+      return {
+        name: date.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
+        tcmp2: d.calculated?.tcmp2_value || 0,
+        fullMonth: d.month
+      };
+    });
+
+  const tcmp2Values = dreList.map(d => d.calculated?.tcmp2_value || 0).filter(v => v > 0);
+  const averageTcmp2 = tcmp2Values.length > 0 
+    ? tcmp2Values.reduce((a, b) => a + b, 0) / tcmp2Values.length 
+    : 0;
+
   if (!workshop || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -231,18 +250,32 @@ export default function DRETCMP2() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <Button variant="outline" onClick={() => window.print()} className="print:hidden">
+              <Printer className="w-4 h-4 mr-2" />
+              Imprimir
+            </Button>
             <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-[300px] print:hidden">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {Array.from({ length: 12 }, (_, i) => {
+                {Array.from({ length: 24 }, (_, i) => {
                   const d = new Date();
                   d.setMonth(d.getMonth() - i);
                   const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                  const dreForMonth = dreList.find(x => x.month === val);
+                  const tcmp2Value = dreForMonth?.calculated?.tcmp2_value;
+                  
                   return (
                     <SelectItem key={val} value={val}>
-                      {d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+                      <span className="flex justify-between w-full gap-4">
+                        <span>{d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</span>
+                        {tcmp2Value && (
+                          <span className="text-gray-500 font-mono text-xs flex items-center">
+                             TCMP²: {formatCurrency(tcmp2Value)}
+                          </span>
+                        )}
+                      </span>
                     </SelectItem>
                   );
                 })}
@@ -251,13 +284,52 @@ export default function DRETCMP2() {
             <Button 
               onClick={() => saveMutation.mutate(formData)}
               disabled={saveMutation.isPending}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-green-600 hover:bg-green-700 print:hidden"
             >
               {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
               Salvar DRE
             </Button>
           </div>
         </div>
+
+        {/* Gráfico de Evolução TCMP² */}
+        <Card className="mb-6 print:break-inside-avoid">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-blue-600" />
+              Evolução do TCMP² (Valor Hora)
+            </CardTitle>
+            <CardDescription>
+              Acompanhe a variação do valor da hora técnica ao longo dos meses.
+              Média Geral: <strong>{formatCurrency(averageTcmp2)}</strong>
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <RechartsTooltip 
+                    formatter={(value) => formatCurrency(value)}
+                    labelStyle={{ color: '#1f2937' }}
+                  />
+                  <Legend />
+                  <ReferenceLine y={averageTcmp2} label="Média" stroke="red" strokeDasharray="3 3" />
+                  <Line 
+                    type="monotone" 
+                    dataKey="tcmp2" 
+                    name="TCMP²" 
+                    stroke="#2563eb" 
+                    strokeWidth={3}
+                    activeDot={{ r: 8 }} 
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* KPIs Principais */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
