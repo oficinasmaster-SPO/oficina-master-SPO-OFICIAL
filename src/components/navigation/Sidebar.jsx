@@ -161,13 +161,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           description: 'Esforço e Resultado - Meta por área',
           highlight: true
         },
-        { 
-          name: 'Mapas de Autoavaliação', 
-          href: createPageUrl('Autoavaliacoes'), 
-          icon: Target,
-          description: 'Vendas, Comercial, Marketing, RH...',
-          highlight: true
-        },
+
         { 
           name: 'DRE & TCMP²', 
           href: createPageUrl('DRETCMP2'), 
@@ -207,6 +201,13 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       label: 'Pessoas & RH (Colaboradores)',
       icon: Users,
       items: [
+        { 
+          name: 'Mapas de Autoavaliação', 
+          href: createPageUrl('Autoavaliacoes'), 
+          icon: Target,
+          description: 'Vendas, Comercial, Marketing, RH...',
+          highlight: true
+        },
         { 
           name: 'Colaboradores', 
           href: createPageUrl('Colaboradores'), 
