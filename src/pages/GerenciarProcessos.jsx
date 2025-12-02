@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Plus, Upload, FileText, Trash2, Edit, Search, ArrowLeft, Save } from "lucide-react";
+import { Loader2, Plus, Upload, FileText, Trash2, Edit, Search, ArrowLeft, Save, Wand2, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -49,6 +49,7 @@ export default function GerenciarProcessos() {
     workshop_id: ""
   });
   const [uploading, setUploading] = useState(false);
+  const [generatingAI, setGeneratingAI] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -156,8 +157,10 @@ export default function GerenciarProcessos() {
         campo_aplicacao: "",
         informacoes_complementares: "",
         fluxo_processo: "",
+        fluxo_image_url: "",
         atividades: [],
         matriz_riscos: [],
+        inter_relacoes: [],
         indicadores: []
       },
       workshop_id: workshop?.id || ""
@@ -181,8 +184,10 @@ export default function GerenciarProcessos() {
         campo_aplicacao: "",
         informacoes_complementares: "",
         fluxo_processo: "",
+        fluxo_image_url: "",
         atividades: [],
         matriz_riscos: [],
+        inter_relacoes: [],
         indicadores: []
       },
       workshop_id: doc.workshop_id
@@ -201,6 +206,112 @@ export default function GerenciarProcessos() {
     // For now, simple validation
     
     saveMutation.mutate(formData);
+  };
+
+  const generateWithAI = async () => {
+    if (!formData.title) {
+      toast.error("Preencha pelo menos o Título para gerar com IA.");
+      return;
+    }
+
+    setGeneratingAI(true);
+    try {
+      const prompt = `
+        Atue como um consultor de processos especializado em oficinas mecânicas (Metodologia Oficinas Master).
+        Gere o conteúdo técnico para uma Instrução de Trabalho (IT) com os seguintes dados:
+        Título: ${formData.title}
+        Categoria: ${formData.category}
+        Objetivo: ${formData.content_json.objetivo || "Definir o padrão para este processo"}
+
+        Critérios OBRIGATÓRIOS:
+        1. Matriz de Risco: Pelo menos 5 riscos com Identificação, Fonte, Impacto, Categoria (Baixo/Médio/Alto) e Controle.
+        2. Inter-relação entre Áreas: Entre 5 e 10 interações com outras áreas (ex: Vendas -> Oficina).
+        3. Indicadores: No mínimo 4 indicadores de desempenho (KPIs) com Meta sugerida e Como Medir.
+
+        Retorne APENAS um JSON com a seguinte estrutura, sem texto adicional:
+        {
+          "matriz_riscos": [{"identificacao": "...", "fonte": "...", "impacto": "...", "categoria": "...", "controle": "..."}],
+          "inter_relacoes": [{"area": "...", "interacao": "..."}],
+          "indicadores": [{"indicador": "...", "meta": "...", "como_medir": "..."}]
+        }
+      `;
+
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt: prompt,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            matriz_riscos: { 
+              type: "array", 
+              items: { 
+                type: "object", 
+                properties: { 
+                  identificacao: {type: "string"}, 
+                  fonte: {type: "string"}, 
+                  impacto: {type: "string"}, 
+                  categoria: {type: "string"}, 
+                  controle: {type: "string"} 
+                } 
+              } 
+            },
+            inter_relacoes: { 
+              type: "array", 
+              items: { 
+                type: "object", 
+                properties: { 
+                  area: {type: "string"}, 
+                  interacao: {type: "string"} 
+                } 
+              } 
+            },
+            indicadores: { 
+              type: "array", 
+              items: { 
+                type: "object", 
+                properties: { 
+                  indicador: {type: "string"}, 
+                  meta: {type: "string"}, 
+                  como_medir: {type: "string"} 
+                } 
+              } 
+            }
+          }
+        }
+      });
+
+      setFormData(prev => ({
+        ...prev,
+        content_json: {
+          ...prev.content_json,
+          matriz_riscos: response.matriz_riscos || [],
+          inter_relacoes: response.inter_relacoes || [],
+          indicadores: response.indicadores || []
+        }
+      }));
+      
+      toast.success("Conteúdo gerado com IA com sucesso!");
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao gerar conteúdo com IA.");
+    } finally {
+      setGeneratingAI(false);
+    }
+  };
+
+  const handleFluxoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      updateContent('fluxo_image_url', file_url);
+      toast.success("Imagem do fluxograma enviada!");
+    } catch (error) {
+      toast.error("Erro no upload da imagem.");
+    } finally {
+      setUploading(false);
+    }
   };
 
   // Content Editors Helpers
@@ -411,6 +522,18 @@ export default function GerenciarProcessos() {
                 </TabsContent>
 
                 <TabsContent value="conteudo" className="space-y-6 mt-4 flex-1 overflow-y-auto pr-2">
+                  <div className="flex justify-end mb-4">
+                    <Button 
+                      type="button" 
+                      onClick={generateWithAI} 
+                      disabled={generatingAI}
+                      className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700"
+                    >
+                      {generatingAI ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Wand2 className="w-4 h-4 mr-2" />}
+                      Gerar Riscos, Inter-relações e Indicadores com IA
+                    </Button>
+                  </div>
+
                   <div className="space-y-4">
                     <div>
                       <Label className="text-base font-semibold">1. Objetivo</Label>
@@ -441,12 +564,44 @@ export default function GerenciarProcessos() {
                     </div>
                     <div>
                       <Label className="text-base font-semibold">4. Fluxo do Processo</Label>
-                      <Textarea 
-                        value={formData.content_json?.fluxo_processo || ""} 
-                        onChange={e => updateContent('fluxo_processo', e.target.value)}
-                        placeholder="Descrição textual do fluxo..."
-                        rows={4}
-                      />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Textarea 
+                          value={formData.content_json?.fluxo_processo || ""} 
+                          onChange={e => updateContent('fluxo_processo', e.target.value)}
+                          placeholder="Descrição textual do fluxo..."
+                          rows={4}
+                        />
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center text-center">
+                          {formData.content_json?.fluxo_image_url ? (
+                            <div className="relative w-full h-32">
+                              <img src={formData.content_json.fluxo_image_url} alt="Fluxograma" className="w-full h-full object-contain" />
+                              <Button 
+                                type="button" 
+                                size="sm" 
+                                variant="destructive" 
+                                className="absolute top-0 right-0"
+                                onClick={() => updateContent('fluxo_image_url', "")}
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <>
+                              <ImageIcon className="w-8 h-8 text-gray-400 mb-2" />
+                              <Label htmlFor="fluxo-upload" className="cursor-pointer text-sm text-blue-600 hover:underline">
+                                Upload Imagem Fluxograma
+                              </Label>
+                              <Input 
+                                id="fluxo-upload" 
+                                type="file" 
+                                accept="image/*" 
+                                className="hidden" 
+                                onChange={handleFluxoUpload}
+                              />
+                            </>
+                          )}
+                        </div>
+                      </div>
                     </div>
 
                     <div className="border-t pt-4">
@@ -494,21 +649,44 @@ export default function GerenciarProcessos() {
 
                     <div className="border-t pt-4">
                       <div className="flex justify-between items-center mb-2">
-                        <Label className="text-base font-semibold">6. Matriz de Riscos</Label>
-                        <Button type="button" size="sm" variant="outline" onClick={() => addArrayItem('matriz_riscos', { processo: "", identificacao: "", fonte: "", impacto: "", categoria: "", controle: "" })}>
+                        <Label className="text-base font-semibold">6. Matriz de Riscos (Min 5)</Label>
+                        <Button type="button" size="sm" variant="outline" onClick={() => addArrayItem('matriz_riscos', { identificacao: "", fonte: "", impacto: "", categoria: "", controle: "" })}>
                           <Plus className="w-3 h-3 mr-1" /> Adicionar
                         </Button>
                       </div>
                       {formData.content_json?.matriz_riscos?.map((item, idx) => (
-                        <div key={idx} className="bg-gray-50 p-2 rounded mb-2 relative">
-                          <Button type="button" size="icon" variant="ghost" className="absolute right-0 top-0" onClick={() => removeArrayItem('matriz_riscos', idx)}>
+                        <div key={idx} className="bg-gray-50 p-3 rounded mb-2 relative border border-gray-200">
+                          <Button type="button" size="icon" variant="ghost" className="absolute right-1 top-1" onClick={() => removeArrayItem('matriz_riscos', idx)}>
                             <Trash2 className="w-4 h-4 text-red-500" />
                           </Button>
-                          <div className="grid grid-cols-2 gap-2 pr-8">
-                            <Input placeholder="Identificação do Risco" value={item.identificacao} onChange={e => updateArrayItem('matriz_riscos', idx, 'identificacao', e.target.value)} className="text-sm" />
-                            <Input placeholder="Fonte Geradora" value={item.fonte} onChange={e => updateArrayItem('matriz_riscos', idx, 'fonte', e.target.value)} className="text-sm" />
-                            <Input placeholder="Impacto" value={item.impacto} onChange={e => updateArrayItem('matriz_riscos', idx, 'impacto', e.target.value)} className="text-sm" />
-                            <Input placeholder="Controle" value={item.controle} onChange={e => updateArrayItem('matriz_riscos', idx, 'controle', e.target.value)} className="text-sm" />
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pr-8">
+                            <div>
+                              <Label className="text-xs">Risco</Label>
+                              <Input value={item.identificacao} onChange={e => updateArrayItem('matriz_riscos', idx, 'identificacao', e.target.value)} className="text-sm" />
+                            </div>
+                            <div>
+                              <Label className="text-xs">Fonte</Label>
+                              <Input value={item.fonte} onChange={e => updateArrayItem('matriz_riscos', idx, 'fonte', e.target.value)} className="text-sm" />
+                            </div>
+                            <div>
+                              <Label className="text-xs">Impacto</Label>
+                              <Input value={item.impacto} onChange={e => updateArrayItem('matriz_riscos', idx, 'impacto', e.target.value)} className="text-sm" />
+                            </div>
+                            <div>
+                              <Label className="text-xs">Categoria</Label>
+                              <Select value={item.categoria} onValueChange={v => updateArrayItem('matriz_riscos', idx, 'categoria', v)}>
+                                <SelectTrigger className="h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Baixo">Baixo</SelectItem>
+                                  <SelectItem value="Médio">Médio</SelectItem>
+                                  <SelectItem value="Alto">Alto</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="col-span-2">
+                              <Label className="text-xs">Controle</Label>
+                              <Input value={item.controle} onChange={e => updateArrayItem('matriz_riscos', idx, 'controle', e.target.value)} className="text-sm" />
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -516,7 +694,31 @@ export default function GerenciarProcessos() {
 
                     <div className="border-t pt-4">
                       <div className="flex justify-between items-center mb-2">
-                        <Label className="text-base font-semibold">8. Indicadores</Label>
+                        <Label className="text-base font-semibold">7. Inter-relação entre Áreas (5-10)</Label>
+                        <Button type="button" size="sm" variant="outline" onClick={() => addArrayItem('inter_relacoes', { area: "", interacao: "" })}>
+                          <Plus className="w-3 h-3 mr-1" /> Adicionar
+                        </Button>
+                      </div>
+                      {formData.content_json?.inter_relacoes?.map((item, idx) => (
+                        <div key={idx} className="grid grid-cols-12 gap-2 mb-2 items-center">
+                          <div className="col-span-4">
+                            <Input placeholder="Área" value={item.area} onChange={e => updateArrayItem('inter_relacoes', idx, 'area', e.target.value)} className="text-sm" />
+                          </div>
+                          <div className="col-span-7">
+                            <Input placeholder="Interação/Entrada/Saída" value={item.interacao} onChange={e => updateArrayItem('inter_relacoes', idx, 'interacao', e.target.value)} className="text-sm" />
+                          </div>
+                          <div className="col-span-1 flex justify-center">
+                            <Button type="button" size="icon" variant="ghost" onClick={() => removeArrayItem('inter_relacoes', idx)}>
+                              <Trash2 className="w-4 h-4 text-red-500" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="border-t pt-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <Label className="text-base font-semibold">8/9. Indicadores (Min 4)</Label>
                         <Button type="button" size="sm" variant="outline" onClick={() => addArrayItem('indicadores', { indicador: "", meta: "", como_medir: "" })}>
                           <Plus className="w-3 h-3 mr-1" /> Adicionar
                         </Button>
