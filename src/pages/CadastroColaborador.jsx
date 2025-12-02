@@ -118,6 +118,16 @@ export default function CadastroColaborador() {
       });
 
       toast.success("Colaborador cadastrado!");
+      
+      // Perguntar ou redirecionar para convite
+      if (window.confirm("Colaborador cadastrado! Deseja enviar o convite de acesso ao portal agora?")) {
+        const newEmployees = await base44.entities.Employee.filter({ email: formData.email }, '-created_date', 1);
+        if (newEmployees && newEmployees.length > 0) {
+           navigate(createPageUrl("ConvidarColaborador") + `?id=${newEmployees[0].id}`);
+           return;
+        }
+      }
+      
       navigate(createPageUrl("Colaboradores"));
     } catch (error) {
       console.error(error);

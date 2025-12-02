@@ -85,6 +85,25 @@ export default function ConvidarColaborador() {
       const workshops = await base44.entities.Workshop.list();
       const userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
       setWorkshop(userWorkshop);
+
+      // Check for employee ID in URL to pre-fill data
+      const urlParams = new URLSearchParams(window.location.search);
+      const employeeId = urlParams.get('id');
+      
+      if (employeeId && userWorkshop) {
+        const employee = await base44.entities.Employee.get(employeeId);
+        if (employee && employee.workshop_id === userWorkshop.id) {
+          setFormData(prev => ({
+            ...prev,
+            name: employee.full_name,
+            email: employee.email,
+            position: employee.position,
+            area: employee.area,
+            job_role: employee.job_role || "outros"
+          }));
+          toast.info("Dados do colaborador carregados!");
+        }
+      }
     } catch (error) {
       console.log("Error loading user:", error);
     }
