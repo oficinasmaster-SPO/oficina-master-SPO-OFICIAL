@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, BookOpen, PlayCircle, CheckCircle2, Lock, Trophy } from "lucide-react";
+import { Loader2, BookOpen, PlayCircle, CheckCircle2, Lock, Trophy, Download, Award } from "lucide-react";
 import { toast } from "sonner";
 
 export default function MeusTreinamentos() {
@@ -138,9 +138,24 @@ export default function MeusTreinamentos() {
                         <Progress value={prog.percent} className="h-2" />
                     </div>
 
-                    <div className="mt-6">
-                        <Button className="w-full bg-blue-600 hover:bg-blue-700 group-hover:bg-blue-700 transition-colors">
-                            {prog.started ? (
+                    <div className="mt-6 flex gap-2">
+                        <Button 
+                            className={`flex-1 ${isCompleted ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if (isCompleted) {
+                                    // Revisit or just stay? Revisit logic
+                                    navigate(`${createPageUrl('AssistirAula')}?id=${prog.nextLessonId}`);
+                                } else {
+                                    navigate(`${createPageUrl('AssistirAula')}?id=${prog.nextLessonId}`);
+                                }
+                            }}
+                        >
+                            {isCompleted ? (
+                                <>
+                                    <CheckCircle2 className="w-4 h-4 mr-2" /> Revisar
+                                </>
+                            ) : prog.started ? (
                                 <>
                                     <PlayCircle className="w-4 h-4 mr-2" /> Continuar
                                 </>
@@ -150,6 +165,41 @@ export default function MeusTreinamentos() {
                                 </>
                             )}
                         </Button>
+                        
+                        {isCompleted && (
+                            <Button 
+                                variant="outline"
+                                className="border-yellow-500 text-yellow-600 hover:bg-yellow-50"
+                                onClick={async (e) => {
+                                    e.stopPropagation();
+                                    toast.info("Gerando certificado...");
+                                    try {
+                                        const response = await base44.functions.invoke('generateCertificate', {
+                                            user_name: user.full_name || user.email,
+                                            course_name: module.title,
+                                            completion_date: new Date().toISOString(),
+                                            workshop_name: "Oficinas Master"
+                                        });
+                                        
+                                        // Handle PDF download
+                                        const blob = new Blob([response.data], { type: 'application/pdf' });
+                                        const url = window.URL.createObjectURL(blob);
+                                        const a = document.createElement('a');
+                                        a.href = url;
+                                        a.download = `Certificado_${module.title}.pdf`;
+                                        document.body.appendChild(a);
+                                        a.click();
+                                        window.URL.revokeObjectURL(url);
+                                        toast.success("Certificado baixado!");
+                                    } catch (error) {
+                                        console.error(error);
+                                        toast.error("Erro ao gerar certificado");
+                                    }
+                                }}
+                            >
+                                <Award className="w-4 h-4" />
+                            </Button>
+                        )}
                     </div>
                   </CardContent>
                 </Card>

@@ -12,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Loader2, PlayCircle, CheckCircle, Lock, ArrowLeft, ChevronRight, FileText, Video, CheckCircle2, AlertCircle, Brain } from "lucide-react";
+import { Loader2, PlayCircle, CheckCircle, Lock, ArrowLeft, ChevronRight, FileText, Video, CheckCircle2, AlertCircle, Brain, PartyPopper } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from 'react-markdown';
 
@@ -134,13 +134,61 @@ export default function AssistirAula() {
   };
 
   const handleCompleteLesson = async () => {
+      if (userProgress[lesson.id] === 'completed') {
+          // Already completed, just navigate
+          const currentIndex = lessons.findIndex(l => l.id === lesson.id);
+          if (currentIndex < lessons.length - 1) {
+              navigate(`${createPageUrl('AssistirAula')}?id=${lessons[currentIndex + 1].id}`);
+          } else {
+              toast.success("Módulo finalizado! Volte para 'Meus Treinamentos' para pegar seu certificado.");
+              navigate(createPageUrl("MeusTreinamentos"));
+          }
+          return;
+      }
+
       await updateProgress('completed');
-      toast.success("Aula concluída!");
+      
+      // Award XP
+      try {
+          const xpResponse = await base44.functions.invoke('awardXP', {
+              user_id: user.id,
+              xp_amount: 50, // 50 XP per lesson
+              reason: `Conclusão da aula: ${lesson.title}`
+          });
+          
+          if (xpResponse.data.leveled_up) {
+              toast.success(`Aula concluída! +50 XP. Parabéns, você subiu para o nível ${xpResponse.data.profile.level}!`, {
+                  icon: <PartyPopper className="w-5 h-5 text-yellow-500" />
+              });
+          } else {
+              toast.success("Aula concluída! +50 XP");
+          }
+      } catch (error) {
+          console.error("Failed to award XP", error);
+          toast.success("Aula concluída!");
+      }
       
       // Navigate to next lesson?
       const currentIndex = lessons.findIndex(l => l.id === lesson.id);
       if (currentIndex < lessons.length - 1) {
-          navigate(`${createPageUrl('AssistirAula')}?id=${lessons[currentIndex + 1].id}`);
+          setTimeout(() => {
+              navigate(`${createPageUrl('AssistirAula')}?id=${lessons[currentIndex + 1].id}`);
+          }, 1500);
+      } else {
+          // Module Completed
+          // Award Extra XP for Module Completion
+          try {
+             await base44.functions.invoke('awardXP', {
+                  user_id: user.id,
+                  xp_amount: 200, // Bonus for module
+                  reason: `Conclusão do módulo: ${module.title}`
+              });
+              toast.success("Módulo Completo! +200 XP Bônus");
+          } catch (e) {}
+
+          setTimeout(() => {
+              navigate(createPageUrl("MeusTreinamentos"));
+          }, 2000);
       }
   };
 
