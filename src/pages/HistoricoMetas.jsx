@@ -288,7 +288,11 @@ export default function HistoricoMetas() {
                         <Button 
                             variant="ghost" 
                             className="ml-auto text-blue-600 hover:text-blue-700 hover:bg-blue-50 w-full md:w-auto"
-                            onClick={() => { setSelectedGoal(goal); setIsDetailsOpen(true); }}
+                            onClick={() => { 
+                                setSelectedGoal(goal); 
+                                // Small timeout to ensure state update propagates if modal relies on it
+                                setTimeout(() => setIsDetailsOpen(true), 0);
+                            }}
                         >
                             <span className="hidden md:inline">Ver Detalhes</span> <ArrowRight className="w-4 h-4 md:ml-2" />
                         </Button>

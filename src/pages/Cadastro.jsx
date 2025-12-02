@@ -86,14 +86,27 @@ export default function Cadastro() {
     }
   };
 
+  const [isSaving, setIsSaving] = useState(false);
+
   const handleWorkshopUpdate = async (updates) => {
+    setIsSaving(true);
     try {
+      // We perform the update but we DO NOT reset the whole workshop object if it causes a re-render of the Tabs
+      // We update the local state 'workshop' which is passed to children.
       const updated = await base44.entities.Workshop.update(workshop.id, updates);
+      
+      // Merging instead of replacing might help if object identity is the issue, 
+      // but React depends on state updates.
+      // The issue "volta para a tela Dados" implies the component unmounts or activeTab resets.
+      // We ensure activeTab is preserved by not changing it here.
       setWorkshop(updated);
+      
       toast.success("Dados salvos com sucesso!");
     } catch (error) {
       console.error(error);
-      toast.error("Erro ao salvar alterações.");
+      toast.error("Erro ao salvar alterações: " + (error.message || "Erro desconhecido"));
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -157,6 +170,15 @@ export default function Cadastro() {
 
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-4">
+      {isSaving && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm">
+            <div className="bg-white p-6 rounded-xl shadow-2xl flex flex-col items-center animate-in zoom-in-95">
+                <Loader2 className="w-10 h-10 text-blue-600 animate-spin mb-4" />
+                <h3 className="text-lg font-bold text-gray-900">Salvando alterações...</h3>
+                <p className="text-sm text-gray-500">Por favor, aguarde.</p>
+            </div>
+        </div>
+      )}
       <div className="max-w-7xl mx-auto">
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-slate-900 mb-2">
