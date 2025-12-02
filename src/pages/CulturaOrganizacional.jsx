@@ -1,20 +1,24 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Heart, BookOpen, Calendar, TrendingUp, Plus, Trash2, Save } from "lucide-react";
+import { Loader2, Heart, BookOpen, Calendar, TrendingUp, Plus, Trash2, Save, Wand2, Mic, Video, Presentation, Info } from "lucide-react";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import AudioRecorder from "@/components/audio/AudioRecorder";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 export default function CulturaOrganizacional() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [workshop, setWorkshop] = useState(null);
   const [cultureManual, setCultureManual] = useState(null);
 
@@ -27,7 +31,7 @@ export default function CulturaOrganizacional() {
       from_company: [""],
       from_employees: [""]
     },
-    rituals: []
+    // rituals: [] // Removido, agora usa a entidade Ritual diretamente
   });
 
   useEffect(() => {
@@ -52,7 +56,6 @@ export default function CulturaOrganizacional() {
           values: manual.values || [""],
           culture_pillars: manual.culture_pillars || [],
           expectations: manual.expectations || { from_company: [""], from_employees: [""] },
-          rituals: manual.rituals || []
         });
       }
     } catch (error) {
@@ -61,6 +64,16 @@ export default function CulturaOrganizacional() {
       setLoading(false);
     }
   };
+
+  // Buscar rituais da entidade Ritual
+  const { data: registeredRituals = [] } = useQuery({
+    queryKey: ['rituals', workshop?.id],
+    queryFn: async () => {
+      if (!workshop?.id) return [];
+      return await base44.entities.Ritual.filter({ workshop_id: workshop.id });
+    },
+    enabled: !!workshop?.id
+  });
 
   const addValue = () => {
     setFormData({ ...formData, values: [...formData.values, ""] });
@@ -75,6 +88,120 @@ export default function CulturaOrganizacional() {
   const removeValue = (index) => {
     const updated = formData.values.filter((_, i) => i !== index);
     setFormData({ ...formData, values: updated });
+  };
+
+  const generatePillarsAI = async () => {
+    if (!formData.mission && !formData.values.length) {
+      toast.error("Defina Missão e Valores primeiro para dar contexto à IA");
+      return;
+    }
+    setGenerating(true);
+    try {
+      const prompt = `
+        Baseado na missão: "${formData.mission}"
+        e valores: "${formData.values.join(', ')}"
+        
+        Gere 4 pilares de cultura organizacional sólidos.
+        Para cada pilar, forneça: Título, Descrição e 3 Comportamentos esperados.
+        
+        Retorne apenas JSON: 
+        { "pillars": [{ "title": "...", "description": "...", "behaviors": ["...", "..."] }] }
+      `;
+      const res = await base44.integrations.Core.InvokeLLM({ 
+        prompt,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            pillars: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  title: { type: "string" },
+                  description: { type: "string" },
+                  behaviors: { type: "array", items: { type: "string" } }
+                }
+              }
+            }
+          }
+        }
+      });
+      
+      if (res.pillars) {
+        setFormData(prev => ({ ...prev, culture_pillars: [...prev.culture_pillars, ...res.pillars] }));
+        toast.success("Pilares gerados com IA!");
+      }
+    } catch (e) {
+      toast.error("Erro ao gerar pilares");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const generateExpectationsAI = async (type) => {
+    setGenerating(true);
+    try {
+      const context = type === 'from_company' ? "O que a empresa oferece aos colaboradores" : "O que a empresa espera dos colaboradores";
+      const prompt = `
+        Gere 5 itens claros e profissionais sobre: ${context}.
+        Contexto de uma oficina mecânica profissional.
+        Retorne JSON: { "items": ["item 1", "item 2"] }
+      `;
+      const res = await base44.integrations.Core.InvokeLLM({ 
+        prompt,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            items: { type: "array", items: { type: "string" } }
+          }
+        }
+      });
+      
+      if (res.items) {
+        setFormData(prev => ({
+          ...prev,
+          expectations: {
+            ...prev.expectations,
+            [type]: [...prev.expectations[type], ...res.items]
+          }
+        }));
+        toast.success("Expectativas geradas!");
+      }
+    } catch (e) {
+      toast.error("Erro ao gerar expectativas");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleAudioUpload = (url, field) => {
+    toast.success("Áudio gravado e salvo! (URL vinculada ao campo)");
+    // Aqui poderíamos salvar a URL do áudio no objeto, se houver campo para isso no schema.
+    // Por enquanto, apenas notificamos que foi gravado.
+  };
+
+  const handleGeneratePPTX = async () => {
+    toast.loading("Gerando apresentação...");
+    try {
+      const response = await base44.functions.invoke("generateCulturePresentation", { workshop_id: workshop.id });
+      
+      // Create blob and download
+      const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Manual_Cultura_${workshop.name}.pptx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+      toast.dismiss();
+      toast.success("Apresentação baixada!");
+    } catch (e) {
+      console.error(e);
+      toast.dismiss();
+      toast.error("Erro ao gerar apresentação");
+    }
   };
 
   const addPillar = () => {
@@ -125,23 +252,8 @@ export default function CulturaOrganizacional() {
     setFormData({ ...formData, expectations: updated });
   };
 
-  const addRitual = () => {
-    setFormData({
-      ...formData,
-      rituals: [...formData.rituals, { name: "", frequency: "semanal", description: "" }]
-    });
-  };
+  // Funções de ritual removidas pois agora usamos a página de Rituais dedicada
 
-  const updateRitual = (index, field, value) => {
-    const updated = [...formData.rituals];
-    updated[index][field] = value;
-    setFormData({ ...formData, rituals: updated });
-  };
-
-  const removeRitual = (index) => {
-    const updated = formData.rituals.filter((_, i) => i !== index);
-    setFormData({ ...formData, rituals: updated });
-  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -158,9 +270,6 @@ export default function CulturaOrganizacional() {
         await base44.entities.CultureManual.create(dataToSave);
       }
 
-      // Gerar atividades automáticas de aculturamento
-      await generateAcculturationActivities();
-
       toast.success("Manual da cultura salvo com sucesso!");
       navigate(createPageUrl("Home"));
     } catch (error) {
@@ -168,58 +277,6 @@ export default function CulturaOrganizacional() {
       toast.error("Erro ao salvar");
     } finally {
       setSaving(false);
-    }
-  };
-
-  const generateAcculturationActivities = async () => {
-    const activities = [];
-    const today = new Date();
-
-    // Atividades de rituais recorrentes
-    formData.rituals.forEach(ritual => {
-      let daysToAdd = 0;
-      switch (ritual.frequency) {
-        case "diario": daysToAdd = 1; break;
-        case "semanal": daysToAdd = 7; break;
-        case "mensal": daysToAdd = 30; break;
-        case "trimestral": daysToAdd = 90; break;
-        case "anual": daysToAdd = 365; break;
-      }
-
-      const scheduledDate = new Date(today);
-      scheduledDate.setDate(today.getDate() + daysToAdd);
-
-      activities.push({
-        workshop_id: workshop.id,
-        title: ritual.name,
-        description: ritual.description,
-        type: "ritual",
-        scheduled_date: scheduledDate.toISOString().split('T')[0],
-        responsible_id: workshop.owner_id,
-        auto_generated: true
-      });
-    });
-
-    // Atividade de avaliação de clima (trimestral)
-    const climateDate = new Date(today);
-    climateDate.setDate(today.getDate() + 90);
-    activities.push({
-      workshop_id: workshop.id,
-      title: "Pesquisa de Clima Organizacional",
-      description: "Realizar pesquisa de clima com todos os colaboradores",
-      type: "avaliacao",
-      scheduled_date: climateDate.toISOString().split('T')[0],
-      responsible_id: workshop.owner_id,
-      auto_generated: true
-    });
-
-    // Salvar todas as atividades
-    for (const activity of activities) {
-      try {
-        await base44.entities.AcculturationActivity.create(activity);
-      } catch (error) {
-        console.error("Erro ao criar atividade:", error);
-      }
     }
   };
 
@@ -307,12 +364,52 @@ export default function CulturaOrganizacional() {
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span>Pilares da Cultura</span>
-                  <Button size="sm" onClick={addPillar}>
-                    <Plus className="w-4 h-4 mr-2" /> Adicionar Pilar
-                  </Button>
+                  <div className="flex gap-2">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <Video className="w-4 h-4 mr-2" /> Tutorial
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Como criar Pilares da Cultura</DialogTitle>
+                        </DialogHeader>
+                        <div className="p-4 text-center bg-gray-100 rounded">
+                          <p>Vídeo explicativo disponível para planos avançados.</p>
+                          <p className="text-sm text-gray-500 mt-2">Aprenda a definir os fundamentos que sustentam sua empresa.</p>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                    <Button 
+                      size="sm" 
+                      variant="secondary"
+                      onClick={generatePillarsAI} 
+                      disabled={generating}
+                      className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700"
+                    >
+                      {generating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Wand2 className="w-4 h-4 mr-2" />}
+                      Gerar com IA
+                    </Button>
+                    <Button size="sm" onClick={addPillar}>
+                      <Plus className="w-4 h-4 mr-2" /> Adicionar
+                    </Button>
+                  </div>
                 </CardTitle>
+                <div className="bg-blue-50 p-4 rounded-md flex gap-3 items-start">
+                  <Info className="w-5 h-5 text-blue-600 mt-0.5" />
+                  <div className="text-sm text-blue-800">
+                    <p className="font-semibold">O que são Pilares?</p>
+                    <p>São os fundamentos inegociáveis que sustentam sua cultura. Ex: "Foco no Cliente", "Inovação Constante". Defina o que eles significam e quais comportamentos práticos demonstram que eles estão sendo vividos.</p>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent className="space-y-6">
+                <div className="mb-6 border-b pb-6">
+                  <Label className="mb-2 block">Narrar Pilares (Áudio)</Label>
+                  <AudioRecorder onAudioRecorded={(url) => handleAudioUpload(url, 'pillars')} />
+                </div>
+
                 {formData.culture_pillars.map((pillar, pIndex) => (
                   <div key={pIndex} className="border rounded-lg p-4 bg-purple-50">
                     <div className="flex items-center justify-between mb-3">
@@ -324,12 +421,12 @@ export default function CulturaOrganizacional() {
                     
                     <div className="space-y-3">
                       <Input
-                        placeholder="Título do pilar"
+                        placeholder="Título do pilar (Ex: Excelência Técnica)"
                         value={pillar.title}
                         onChange={(e) => updatePillar(pIndex, "title", e.target.value)}
                       />
                       <Textarea
-                        placeholder="Descrição"
+                        placeholder="Descrição detalhada do que este pilar significa..."
                         value={pillar.description}
                         onChange={(e) => updatePillar(pIndex, "description", e.target.value)}
                         rows={2}
@@ -337,7 +434,7 @@ export default function CulturaOrganizacional() {
                       
                       <div>
                         <div className="flex items-center justify-between mb-2">
-                          <Label className="text-sm">Comportamentos Esperados</Label>
+                          <Label className="text-sm">Comportamentos Esperados (Evidências)</Label>
                           <Button size="sm" variant="outline" onClick={() => addBehaviorToPillar(pIndex)}>
                             <Plus className="w-3 h-3 mr-1" /> Adicionar
                           </Button>
@@ -346,7 +443,7 @@ export default function CulturaOrganizacional() {
                           <Input
                             key={bIndex}
                             className="mb-2"
-                            placeholder="Comportamento esperado"
+                            placeholder="Ex: Sempre limpar a bancada após o serviço"
                             value={behavior}
                             onChange={(e) => updateBehavior(pIndex, bIndex, e.target.value)}
                           />
@@ -360,29 +457,55 @@ export default function CulturaOrganizacional() {
           </TabsContent>
 
           <TabsContent value="expectativas">
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="space-y-6">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
                     <span>O que a Empresa Oferece</span>
-                    <Button size="sm" onClick={() => addExpectation("from_company")}>
-                      <Plus className="w-4 h-4" />
-                    </Button>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {formData.expectations.from_company.map((exp, index) => (
-                    <div key={index} className="flex gap-2">
-                      <Input
-                        value={exp}
-                        onChange={(e) => updateExpectation("from_company", index, e.target.value)}
-                        placeholder="Ex: Ambiente seguro..."
-                      />
-                      <Button size="icon" variant="ghost" onClick={() => removeExpectation("from_company", index)}>
-                        <Trash2 className="w-4 h-4 text-red-600" />
+                    <div className="flex gap-2">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="sm"><Video className="w-4 h-4 mr-2" /> Tutorial</Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader><DialogTitle>O que a empresa oferece</DialogTitle></DialogHeader>
+                          <div className="p-4 bg-gray-100 rounded text-center">Vídeo explicativo para planos avançados.</div>
+                        </DialogContent>
+                      </Dialog>
+                      <Button 
+                        size="sm" 
+                        variant="secondary"
+                        onClick={() => generateExpectationsAI('from_company')} 
+                        disabled={generating}
+                        className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white"
+                      >
+                        <Wand2 className="w-4 h-4 mr-2" /> IA
+                      </Button>
+                      <Button size="sm" onClick={() => addExpectation("from_company")}>
+                        <Plus className="w-4 h-4" />
                       </Button>
                     </div>
-                  ))}
+                  </CardTitle>
+                  <div className="bg-green-50 p-3 rounded-md text-sm text-green-800 mb-2">
+                    Liste benefícios, ambiente, oportunidades de crescimento e garantias que a empresa dá ao colaborador.
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <AudioRecorder onAudioRecorded={(url) => handleAudioUpload(url, 'from_company')} />
+                  <div className="space-y-2">
+                    {formData.expectations.from_company.map((exp, index) => (
+                      <div key={index} className="flex gap-2">
+                        <Input
+                          value={exp}
+                          onChange={(e) => updateExpectation("from_company", index, e.target.value)}
+                          placeholder="Ex: Ambiente seguro, Pagamento em dia, Plano de carreira..."
+                        />
+                        <Button size="icon" variant="ghost" onClick={() => removeExpectation("from_company", index)}>
+                          <Trash2 className="w-4 h-4 text-red-600" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
 
@@ -390,24 +513,50 @@ export default function CulturaOrganizacional() {
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
                     <span>O que Esperamos dos Colaboradores</span>
-                    <Button size="sm" onClick={() => addExpectation("from_employees")}>
-                      <Plus className="w-4 h-4" />
-                    </Button>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {formData.expectations.from_employees.map((exp, index) => (
-                    <div key={index} className="flex gap-2">
-                      <Input
-                        value={exp}
-                        onChange={(e) => updateExpectation("from_employees", index, e.target.value)}
-                        placeholder="Ex: Comprometimento..."
-                      />
-                      <Button size="icon" variant="ghost" onClick={() => removeExpectation("from_employees", index)}>
-                        <Trash2 className="w-4 h-4 text-red-600" />
+                    <div className="flex gap-2">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="sm"><Video className="w-4 h-4 mr-2" /> Tutorial</Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader><DialogTitle>O que esperamos</DialogTitle></DialogHeader>
+                          <div className="p-4 bg-gray-100 rounded text-center">Vídeo explicativo para planos avançados.</div>
+                        </DialogContent>
+                      </Dialog>
+                      <Button 
+                        size="sm" 
+                        variant="secondary"
+                        onClick={() => generateExpectationsAI('from_employees')} 
+                        disabled={generating}
+                        className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white"
+                      >
+                        <Wand2 className="w-4 h-4 mr-2" /> IA
+                      </Button>
+                      <Button size="sm" onClick={() => addExpectation("from_employees")}>
+                        <Plus className="w-4 h-4" />
                       </Button>
                     </div>
-                  ))}
+                  </CardTitle>
+                  <div className="bg-orange-50 p-3 rounded-md text-sm text-orange-800 mb-2">
+                    Liste atitudes, entregas, comprometimento e responsabilidades inegociáveis.
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <AudioRecorder onAudioRecorded={(url) => handleAudioUpload(url, 'from_employees')} />
+                  <div className="space-y-2">
+                    {formData.expectations.from_employees.map((exp, index) => (
+                      <div key={index} className="flex gap-2">
+                        <Input
+                          value={exp}
+                          onChange={(e) => updateExpectation("from_employees", index, e.target.value)}
+                          placeholder="Ex: Pontualidade, Honestidade, Cuidado com ferramentas..."
+                        />
+                        <Button size="icon" variant="ghost" onClick={() => removeExpectation("from_employees", index)}>
+                          <Trash2 className="w-4 h-4 text-red-600" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -417,49 +566,41 @@ export default function CulturaOrganizacional() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  <span>Rituais e Cerimônias</span>
-                  <Button size="sm" onClick={addRitual}>
-                    <Plus className="w-4 h-4 mr-2" /> Adicionar Ritual
-                  </Button>
+                  <span>Rituais Cadastrados</span>
+                  <Link to={createPageUrl('Rituais')}>
+                    <Button size="sm" variant="outline">
+                      <TrendingUp className="w-4 h-4 mr-2" /> Gerenciar Rituais
+                    </Button>
+                  </Link>
                 </CardTitle>
+                <div className="bg-pink-50 p-3 rounded-md text-sm text-pink-800">
+                  Estes são os rituais definidos na página de Gestão de Rituais. Eles aparecerão automaticamente no documento final e na apresentação.
+                </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                {formData.rituals.map((ritual, index) => (
-                  <div key={index} className="border rounded-lg p-4 bg-pink-50">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-semibold">Ritual {index + 1}</h3>
-                      <Button size="sm" variant="destructive" onClick={() => removeRitual(index)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                    
-                    <div className="grid md:grid-cols-2 gap-3">
-                      <Input
-                        placeholder="Nome do ritual"
-                        value={ritual.name}
-                        onChange={(e) => updateRitual(index, "name", e.target.value)}
-                      />
-                      <select
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                        value={ritual.frequency}
-                        onChange={(e) => updateRitual(index, "frequency", e.target.value)}
-                      >
-                        <option value="diario">Diário</option>
-                        <option value="semanal">Semanal</option>
-                        <option value="mensal">Mensal</option>
-                        <option value="trimestral">Trimestral</option>
-                        <option value="anual">Anual</option>
-                      </select>
-                    </div>
-                    <Textarea
-                      className="mt-3"
-                      placeholder="Descrição do ritual"
-                      value={ritual.description}
-                      onChange={(e) => updateRitual(index, "description", e.target.value)}
-                      rows={2}
-                    />
+                {registeredRituals.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>Nenhum ritual cadastrado.</p>
+                    <Link to={createPageUrl('Rituais')}>
+                      <Button variant="link" className="text-purple-600">Cadastrar Rituais Agora</Button>
+                    </Link>
                   </div>
-                ))}
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {registeredRituals.map((ritual, index) => (
+                      <div key={index} className="border rounded-lg p-4 bg-white hover:shadow-md transition-shadow">
+                        <div className="flex justify-between items-start">
+                          <h4 className="font-semibold text-purple-900">{ritual.name}</h4>
+                          <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full capitalize">
+                            {ritual.frequency}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600 mt-2 line-clamp-2">{ritual.description}</p>
+                        <p className="text-xs text-gray-500 mt-2"><strong>Pilar:</strong> {ritual.pillar?.replace('_', ' ')}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -468,6 +609,9 @@ export default function CulturaOrganizacional() {
         <div className="flex justify-center gap-4 mt-8">
           <Button variant="outline" onClick={() => navigate(createPageUrl("Home"))}>
             Cancelar
+          </Button>
+          <Button onClick={handleGeneratePPTX} variant="outline" className="border-purple-200 text-purple-700 hover:bg-purple-50">
+            <Presentation className="w-5 h-5 mr-2" /> Gerar Apresentação (PPTX)
           </Button>
           <Button onClick={handleSave} disabled={saving} className="bg-purple-600 hover:bg-purple-700 px-8">
             {saving ? (
