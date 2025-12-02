@@ -109,60 +109,88 @@ export default function DiagnosticoProducao() {
     fetchDRE();
   }, [workshop?.id, formData.period_month]);
 
-  // Auto-fill employee data
-  useEffect(() => {
-    if (formData.employee_id && employees.length > 0) {
-      const emp = employees.find(e => e.id === formData.employee_id);
-      if (emp) {
-        // Map role
-        let role = "";
-        if (emp.job_role === "tecnico") role = "tecnico";
-        else if (emp.job_role === "lider_tecnico") role = "tecnico_lider";
-        else if (emp.job_role === "consultor_vendas" || emp.area === "vendas") role = "vendas";
-        else if (emp.job_role === "comercial" || emp.area === "comercial") role = "comercial";
-        else role = "outros";
+  // Helper to load employee data
+  const loadEmployeeData = (employeeId = formData.employee_id, month = formData.period_month) => {
+    if (!employeeId || employees.length === 0) return;
 
-        // Map benefits
-        let meal = 0, transport = 0, health = 0, other = 0;
-        if (emp.benefits && Array.isArray(emp.benefits)) {
-          emp.benefits.forEach(b => {
-            const name = b.nome?.toLowerCase() || "";
-            const val = parseFloat(b.valor || 0);
-            if (name.includes("alimenta") || name.includes("refei")) meal += val;
-            else if (name.includes("transporte") || name.includes("combust")) transport += val;
-            else if (name.includes("saude") || name.includes("saúde") || name.includes("odonto") || name.includes("médico")) health += val;
-            else other += val;
-          });
+    const emp = employees.find(e => e.id === employeeId);
+    if (emp) {
+      // Map role
+      let role = "";
+      if (emp.job_role === "tecnico") role = "tecnico";
+      else if (emp.job_role === "lider_tecnico") role = "tecnico_lider";
+      else if (emp.job_role === "consultor_vendas" || emp.area === "vendas") role = "vendas";
+      else if (emp.job_role === "comercial" || emp.area === "comercial") role = "comercial";
+      else role = "outros";
+
+      // Map benefits
+      let meal = 0, transport = 0, health = 0, other = 0;
+      if (emp.benefits && Array.isArray(emp.benefits)) {
+        emp.benefits.forEach(b => {
+          const name = b.nome?.toLowerCase() || "";
+          const val = parseFloat(b.valor || 0);
+          if (name.includes("alimenta") || name.includes("refei")) meal += val;
+          else if (name.includes("transporte") || name.includes("combust")) transport += val;
+          else if (name.includes("saude") || name.includes("saúde") || name.includes("odonto") || name.includes("médico")) health += val;
+          else other += val;
+        });
+      }
+
+      setFormData(prev => ({
+        ...prev,
+        employee_role: role,
+        salary_base: emp.salary || "",
+        commission: emp.commission || "0",
+        benefits: {
+          meal_voucher: meal,
+          transport_voucher: transport,
+          health_insurance: health,
+          other_benefits: other
         }
+      }));
 
-        // Auto-fill production data if available in history
-        let prodData = { ...formData.productivity_data };
-        if (emp.production_history && Array.isArray(emp.production_history)) {
-          const historyItem = emp.production_history.find(h => h.month === formData.period_month);
-          if (historyItem) {
-            prodData.parts_value = historyItem.parts || 0;
-            prodData.services_value = historyItem.services || 0;
-            prodData.sales_value = historyItem.total || 0; // Assuming total matches sales for sellers
-            toast.success("Dados de produtividade carregados do histórico!");
-          }
+      // Try to load productivity
+      loadProductivityFromHistory(emp, month);
+    }
+  };
+
+  const loadProductivityFromHistory = (emp, month) => {
+    if (!emp || !emp.production_history || !Array.isArray(emp.production_history)) {
+      return false;
+    }
+
+    const historyItem = emp.production_history.find(h => h.month === month);
+    if (historyItem) {
+      setFormData(prev => ({
+        ...prev,
+        productivity_data: {
+          parts_value: historyItem.parts || 0,
+          services_value: historyItem.services || 0,
+          sales_value: historyItem.total || 0
         }
+      }));
+      toast.success("Dados de produtividade carregados do histórico!");
+      return true;
+    }
+    return false;
+  };
 
-        setFormData(prev => ({
-          ...prev,
-          employee_role: role,
-          salary_base: emp.salary || "",
-          commission: emp.commission || "0", // Or calculate from commission_rules if possible, but simplified for now
-          benefits: {
-            meal_voucher: meal,
-            transport_voucher: transport,
-            health_insurance: health,
-            other_benefits: other
-          },
-          productivity_data: prodData
-        }));
+  const handleManualProductivityLoad = () => {
+    const emp = employees.find(e => e.id === formData.employee_id);
+    if (emp) {
+      const found = loadProductivityFromHistory(emp, formData.period_month);
+      if (!found) {
+        toast.info("Nenhum registro de produtividade encontrado para este mês.");
       }
     }
-  }, [formData.employee_id, formData.period_month, employees]);
+  };
+
+  // Auto-fill employee data on change
+  useEffect(() => {
+    if (formData.employee_id) {
+      loadEmployeeData(formData.employee_id, formData.period_month);
+    }
+  }, [formData.employee_id, formData.period_month]);
 
   const calculateDiagnostic = () => {
     const totalBenefits = 
@@ -374,8 +402,22 @@ export default function DiagnosticoProducao() {
           {/* Informações Básicas */}
           <Card>
             <CardHeader>
-              <CardTitle>Informações do Colaborador</CardTitle>
-              <CardDescription>Selecione o colaborador e o período de análise</CardDescription>
+              <div className="flex justify-between items-center">
+                <div>
+                   <CardTitle>Informações do Colaborador</CardTitle>
+                   <CardDescription>Selecione o colaborador e o período de análise</CardDescription>
+                </div>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => loadEmployeeData()}
+                  title="Recarregar dados do cadastro"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Recarregar Cadastro
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -530,16 +572,27 @@ export default function DiagnosticoProducao() {
           {/* Produtividade */}
           <Card>
             <CardHeader>
-              <div className="flex items-center gap-3">
-                <TrendingUp className="w-6 h-6 text-green-600" />
-                <div>
-                  <CardTitle>Dados de Produtividade</CardTitle>
-                  <CardDescription>
-                    {formData.employee_role === "vendas" 
-                      ? "Informe o valor total de vendas realizadas"
-                      : "Informe os valores de serviços e peças"}
-                  </CardDescription>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <TrendingUp className="w-6 h-6 text-green-600" />
+                  <div>
+                    <CardTitle>Dados de Produtividade</CardTitle>
+                    <CardDescription>
+                      {formData.employee_role === "vendas" 
+                        ? "Informe o valor total de vendas realizadas"
+                        : "Informe os valores de serviços e peças"}
+                    </CardDescription>
+                  </div>
                 </div>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleManualProductivityLoad}
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Buscar Produção
+                </Button>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
