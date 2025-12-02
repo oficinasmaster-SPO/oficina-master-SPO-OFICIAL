@@ -124,69 +124,24 @@ export default function ConvidarColaborador() {
 
   const sendInviteMutation = useMutation({
     mutationFn: async (data) => {
-      const token = generateToken();
-      const expiresAt = addDays(new Date(), 5);
-      
-      // Criar o convite
-      const invite = await base44.entities.EmployeeInvite.create({
+      // Usar backend function para garantir envio e segurança
+      const response = await base44.functions.invoke('sendEmployeeInvite', {
         ...data,
         workshop_id: workshop.id,
-        invite_token: token,
-        expires_at: expiresAt.toISOString(),
-        status: "enviado"
+        workshop_name: workshop.name,
+        origin: window.location.origin
       });
-
-      // Enviar e-mail
-      const inviteUrl = `${window.location.origin}${createPageUrl("PrimeiroAcesso")}?token=${token}`;
       
-      await base44.integrations.Core.SendEmail({
-        to: data.email,
-        subject: `Convite para ${workshop.name} - Oficinas Master`,
-        body: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #3b82f6, #6366f1); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
-              <h1 style="color: white; margin: 0;">🔧 ${workshop.name}</h1>
-              <p style="color: rgba(255,255,255,0.9); margin-top: 10px;">Oficinas Master</p>
-            </div>
-            
-            <div style="background: #f8fafc; padding: 30px; border-radius: 0 0 12px 12px;">
-              <h2 style="color: #1e293b; margin-top: 0;">Olá, ${data.name}!</h2>
-              
-              <p style="color: #475569; line-height: 1.6;">
-                Você foi convidado(a) para fazer parte da equipe da <strong>${workshop.name}</strong> 
-                como <strong>${data.position}</strong> na área de <strong>${data.area}</strong>.
-              </p>
-              
-              <p style="color: #475569; line-height: 1.6;">
-                Para completar seu cadastro e começar a usar a plataforma, clique no botão abaixo:
-              </p>
-              
-              <div style="text-align: center; margin: 30px 0;">
-                <a href="${inviteUrl}" style="background: linear-gradient(135deg, #3b82f6, #6366f1); color: white; padding: 15px 40px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">
-                  Completar Cadastro
-                </a>
-              </div>
-              
-              <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; border-radius: 4px; margin: 20px 0;">
-                <p style="color: #92400e; margin: 0; font-size: 14px;">
-                  ⚠️ <strong>Atenção:</strong> Este link expira em 5 dias e só pode ser usado uma vez.
-                </p>
-              </div>
-              
-              <p style="color: #64748b; font-size: 12px; margin-top: 30px;">
-                Se você não reconhece este convite, ignore este e-mail.
-              </p>
-            </div>
-          </div>
-        `
-      });
-
-      return invite;
+      if (response.data && response.data.error) {
+        throw new Error(response.data.error);
+      }
+      
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employee-invites'] });
       setFormData({ name: "", email: "", position: "", area: "", job_role: "outros", initial_permission: "colaborador" });
-      toast.success("Convite enviado com sucesso!");
+      toast.success("Convite enviado com sucesso! Verifique a caixa de spam.");
     },
     onError: (error) => {
       toast.error("Erro ao enviar convite: " + error.message);
@@ -195,52 +150,30 @@ export default function ConvidarColaborador() {
 
   const resendInviteMutation = useMutation({
     mutationFn: async (invite) => {
-      const token = generateToken();
-      const expiresAt = addDays(new Date(), 5);
-      
-      await base44.entities.EmployeeInvite.update(invite.id, {
-        invite_token: token,
-        expires_at: expiresAt.toISOString(),
-        status: "enviado",
-        resent_count: (invite.resent_count || 0) + 1,
-        last_resent_at: new Date().toISOString()
+      // Reutilizando a função de backend para reenvio, passando os mesmos dados
+      const response = await base44.functions.invoke('sendEmployeeInvite', {
+        name: invite.name,
+        email: invite.email,
+        position: invite.position,
+        area: invite.area,
+        job_role: invite.job_role,
+        initial_permission: invite.initial_permission,
+        workshop_id: workshop.id,
+        workshop_name: workshop.name,
+        origin: window.location.origin
       });
 
-      const inviteUrl = `${window.location.origin}${createPageUrl("PrimeiroAcesso")}?token=${token}`;
-      
-      await base44.integrations.Core.SendEmail({
-        to: invite.email,
-        subject: `Reenvio: Convite para ${workshop.name} - Oficinas Master`,
-        body: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #3b82f6, #6366f1); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
-              <h1 style="color: white; margin: 0;">🔧 ${workshop.name}</h1>
-            </div>
-            
-            <div style="background: #f8fafc; padding: 30px; border-radius: 0 0 12px 12px;">
-              <h2 style="color: #1e293b; margin-top: 0;">Olá, ${invite.name}!</h2>
-              
-              <p style="color: #475569;">
-                Este é um novo link de convite para completar seu cadastro.
-              </p>
-              
-              <div style="text-align: center; margin: 30px 0;">
-                <a href="${inviteUrl}" style="background: linear-gradient(135deg, #3b82f6, #6366f1); color: white; padding: 15px 40px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">
-                  Completar Cadastro
-                </a>
-              </div>
-              
-              <p style="color: #92400e; font-size: 14px;">
-                ⚠️ Este link expira em 5 dias.
-              </p>
-            </div>
-          </div>
-        `
-      });
+      if (response.data && response.data.error) {
+        throw new Error(response.data.error);
+      }
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employee-invites'] });
-      toast.success("Convite reenviado!");
+      toast.success("Convite reenviado! Verifique a caixa de spam.");
+    },
+    onError: (error) => {
+      toast.error("Erro ao reenviar: " + error.message);
     }
   });
 
