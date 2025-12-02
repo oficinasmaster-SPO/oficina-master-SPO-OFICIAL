@@ -218,18 +218,24 @@ export default function GerenciarProcessos() {
     try {
       const prompt = `
         Atue como um consultor de processos especializado em oficinas mecânicas (Metodologia Oficinas Master).
-        Gere o conteúdo técnico para uma Instrução de Trabalho (IT) com os seguintes dados:
+        Gere o conteúdo COMPLETO para uma Instrução de Trabalho (IT), correlacionando todas as etapas.
+        
+        Dados de entrada:
         Título: ${formData.title}
         Categoria: ${formData.category}
-        Objetivo: ${formData.content_json.objetivo || "Definir o padrão para este processo"}
+        Objetivo (se houver): ${formData.content_json.objetivo || "Definir o padrão para este processo"}
 
-        Critérios OBRIGATÓRIOS:
-        1. Matriz de Risco: Pelo menos 5 riscos com Identificação, Fonte, Impacto, Categoria (Baixo/Médio/Alto) e Controle.
-        2. Inter-relação entre Áreas: Entre 5 e 10 interações com outras áreas (ex: Vendas -> Oficina).
-        3. Indicadores: No mínimo 4 indicadores de desempenho (KPIs) com Meta sugerida e Como Medir.
+        CRITÉRIOS DE GERAÇÃO:
+        1. Fluxo do Processo (Texto): Descreva o fluxo passo a passo de forma resumida.
+        2. Atividades (Passo a Passo): Liste pelo menos 6 atividades sequenciais, definindo quem faz (Responsável) e o que usa (Ferramentas/Docs).
+        3. Matriz de Risco: Pelo menos 5 riscos correlacionados às atividades, com Identificação, Fonte, Impacto, Categoria (Baixo/Médio/Alto) e Controle.
+        4. Inter-relação entre Áreas: Entre 5 e 10 interações claras com outros departamentos (Entradas e Saídas).
+        5. Indicadores: No mínimo 4 KPIs relevantes para medir a eficácia deste processo específico.
 
-        Retorne APENAS um JSON com a seguinte estrutura, sem texto adicional:
+        Retorne APENAS um JSON com a seguinte estrutura:
         {
+          "fluxo_processo": "texto descritivo...",
+          "atividades": [{"atividade": "...", "responsavel": "...", "ferramentas": "..."}],
           "matriz_riscos": [{"identificacao": "...", "fonte": "...", "impacto": "...", "categoria": "...", "controle": "..."}],
           "inter_relacoes": [{"area": "...", "interacao": "..."}],
           "indicadores": [{"indicador": "...", "meta": "...", "como_medir": "..."}]
@@ -241,6 +247,18 @@ export default function GerenciarProcessos() {
         response_json_schema: {
           type: "object",
           properties: {
+            fluxo_processo: { type: "string" },
+            atividades: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  atividade: { type: "string" },
+                  responsavel: { type: "string" },
+                  ferramentas: { type: "string" }
+                }
+              }
+            },
             matriz_riscos: { 
               type: "array", 
               items: { 
@@ -283,6 +301,8 @@ export default function GerenciarProcessos() {
         ...prev,
         content_json: {
           ...prev.content_json,
+          fluxo_processo: response.fluxo_processo || prev.content_json.fluxo_processo,
+          atividades: response.atividades || [],
           matriz_riscos: response.matriz_riscos || [],
           inter_relacoes: response.inter_relacoes || [],
           indicadores: response.indicadores || []
@@ -530,7 +550,7 @@ export default function GerenciarProcessos() {
                       className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700"
                     >
                       {generatingAI ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Wand2 className="w-4 h-4 mr-2" />}
-                      Gerar Riscos, Inter-relações e Indicadores com IA
+                      Gerar Processo Completo com IA (Sugestão)
                     </Button>
                   </div>
 

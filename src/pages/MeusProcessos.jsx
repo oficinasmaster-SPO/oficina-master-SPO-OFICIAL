@@ -199,15 +199,9 @@ export default function MeusProcessos() {
                         <Button 
                           className="flex-1 bg-red-600 hover:bg-red-700" 
                           onClick={() => {
-                            if (doc.content_json && (doc.content_json.objetivo || doc.content_json.atividades?.length > 0)) {
-                              // Se tem conteúdo estruturado (novo formato), abre visualizador interno
-                              navigate(createPageUrl('VisualizarProcesso') + `?id=${doc.id}`);
-                            } else if (doc.pdf_url) {
-                              // Fallback para PDF antigo
-                              window.open(doc.pdf_url, '_blank');
-                            } else {
-                              toast.error("Documento sem conteúdo para visualizar.");
-                            }
+                            // SEMPRE tenta abrir o visualizador interno primeiro
+                            // O visualizador interno agora trata tanto conteúdo estruturado quanto PDF embed
+                            navigate(createPageUrl('VisualizarProcesso') + `?id=${doc.id}`);
                           }}
                         >
                           <Eye className="w-4 h-4 mr-2" />

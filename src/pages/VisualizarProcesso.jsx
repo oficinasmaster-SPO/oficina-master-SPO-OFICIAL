@@ -155,6 +155,24 @@ export default function VisualizarProcesso() {
               )}
             </section>
 
+            {/* PDF Embed (Fallback se não houver conteúdo estruturado mas houver PDF) */}
+            {doc.pdf_url && (!content.atividades || content.atividades.length === 0) && (
+              <section className="break-inside-avoid mt-8">
+                <h3 className="text-lg font-bold text-gray-900 border-b pb-2 mb-3 uppercase flex items-center gap-2">
+                  Documento Original (PDF)
+                </h3>
+                <div className="border rounded-lg overflow-hidden h-[800px] bg-gray-100">
+                  <iframe 
+                    src={doc.pdf_url} 
+                    className="w-full h-full" 
+                    title="PDF Viewer"
+                  >
+                    <p>Seu navegador não suporta visualização de PDF. <a href={doc.pdf_url}>Clique para baixar.</a></p>
+                  </iframe>
+                </div>
+              </section>
+            )}
+
             {/* 5. Atividades */}
             <section className="break-inside-avoid">
               <h3 className="text-lg font-bold text-gray-900 border-b pb-2 mb-3 uppercase flex items-center gap-2">
