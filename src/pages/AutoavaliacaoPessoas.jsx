@@ -17,6 +17,7 @@ export default function AutoavaliacaoPessoas() {
   const [user, setUser] = useState(null);
   const [workshop, setWorkshop] = useState(null);
   const [scores, setScores] = useState({});
+  const [userFeedback, setUserFeedback] = useState("");
 
   const criteria = assessmentCriteria.pessoas;
 
@@ -93,6 +94,7 @@ Gere um relatório profissional incluindo:
         weaknesses: weakPoints,
         bottlenecks: weakPoints,
         ai_recommendations: aiResponse,
+        user_feedback: userFeedback,
         completed: true
       });
 
@@ -166,6 +168,23 @@ Gere um relatório profissional incluindo:
               </CardContent>
             </Card>
           ))}
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Feedback Adicional</CardTitle>
+              <CardDescription className="text-sm leading-relaxed">
+                Use este campo para adicionar informações que você considera relevantes para a IA analisar e personalizar ainda mais o seu diagnóstico.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <textarea
+                className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[100px]"
+                placeholder="Ex: Detalhes específicos, desafios atuais, contexto da oficina..."
+                value={userFeedback}
+                onChange={(e) => setUserFeedback(e.target.value)}
+              />
+            </CardContent>
+          </Card>
 
           <div className="flex justify-center">
             <Button
