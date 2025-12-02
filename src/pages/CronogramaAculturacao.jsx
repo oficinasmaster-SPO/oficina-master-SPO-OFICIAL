@@ -29,53 +29,15 @@ export default function CronogramaAculturacao() {
 
       const allActivities = await base44.entities.AcculturationActivity.list();
       const workshopActivities = allActivities.filter(a => a.workshop_id === userWorkshop?.id);
-      
-      // Fetch Scheduled Rituals and convert to activity format
-      const scheduledRituals = await base44.entities.ScheduledRitual.filter({ workshop_id: userWorkshop.id });
-      const ritualActivities = scheduledRituals.map(sr => ({
-        id: sr.id,
-        title: sr.ritual_name,
-        description: `Ritual agendado para ${sr.scheduled_time}. ${sr.participants?.length || 0} participantes.`,
-        type: 'ritual',
-        status: sr.status === 'realizado' ? 'concluida' : 'pendente',
-        scheduled_date: sr.scheduled_date,
-        is_scheduled_ritual: true, // flag to distinguish
-        auto_generated: true
-      }));
-
-      // Merge and sort
-      const combined = [...workshopActivities, ...ritualActivities].sort((a, b) => new Date(a.scheduled_date) - new Date(b.scheduled_date));
-      setActivities(combined);
+      setActivities(workshopActivities);
     } catch (error) {
-      console.error(error);
       toast.error("Erro ao carregar atividades");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleStatusChange = async (activity, newStatus) => {
-    try {
-      if (activity.is_scheduled_ritual) {
-        // Update ScheduledRitual
-        await base44.entities.ScheduledRitual.update(activity.id, { 
-          status: newStatus === 'concluida' ? 'realizado' : 'agendado' 
-        });
-      } else {
-        // Update AcculturationActivity
-        const updateData = { status: newStatus };
-        if (newStatus === "concluida") {
-          updateData.completion_date = new Date().toISOString();
-        }
-        await base44.entities.AcculturationActivity.update(activity.id, updateData);
-      }
-      
-      toast.success("Status atualizado!");
-      loadData();
-    } catch (error) {
-      toast.error("Erro ao atualizar status");
-    }
-  };
+  const handleStatusChange = async (activityId, newStatus) => {
     try {
       const updateData = { status: newStatus };
       if (newStatus === "concluida") {
@@ -217,19 +179,19 @@ export default function CronogramaAculturacao() {
                     </div>
                     
                     <div className="flex flex-col gap-2 ml-4">
-                      {activity.status === "pendente" && !activity.is_scheduled_ritual && (
+                      {activity.status === "pendente" && (
                         <Button
                           size="sm"
-                          onClick={() => handleStatusChange(activity, "em_andamento")}
+                          onClick={() => handleStatusChange(activity.id, "em_andamento")}
                         >
                           Iniciar
                         </Button>
                       )}
-                      {(activity.status === "em_andamento" || (activity.is_scheduled_ritual && activity.status === 'pendente')) && (
+                      {activity.status === "em_andamento" && (
                         <Button
                           size="sm"
                           className="bg-green-600 hover:bg-green-700"
-                          onClick={() => handleStatusChange(activity, "concluida")}
+                          onClick={() => handleStatusChange(activity.id, "concluida")}
                         >
                           Concluir
                         </Button>
