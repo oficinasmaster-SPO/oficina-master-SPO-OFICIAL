@@ -13,11 +13,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { 
   Loader2, Calculator, DollarSign, TrendingUp, TrendingDown, 
   Save, ArrowLeft, Plus, FileText, Users, Clock, AlertCircle,
-  CheckCircle, XCircle, Printer
+  CheckCircle, XCircle, Printer, BarChart3
 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, ReferenceLine } from "recharts";
 import { formatCurrency, formatNumber } from "../components/utils/formatters";
 import { toast } from "sonner";
+import { useMemo } from "react";
 
 export default function DRETCMP2() {
   const navigate = useNavigate();
@@ -25,6 +26,7 @@ export default function DRETCMP2() {
   const [user, setUser] = useState(null);
   const [workshop, setWorkshop] = useState(null);
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
+  const [viewMode, setViewMode] = useState("month"); // 'month' or 'average'
   const [formData, setFormData] = useState(getEmptyDRE());
 
   function getCurrentMonth() {
@@ -82,7 +84,7 @@ export default function DRETCMP2() {
         const result = await base44.entities.DREMonthly.filter(
           { workshop_id: workshop.id },
           '-month',
-          24
+          50
         );
         return Array.isArray(result) ? result : [];
       } catch (error) {
@@ -95,8 +97,55 @@ export default function DRETCMP2() {
 
   const currentDRE = dreList.find(d => d.month === selectedMonth);
 
+  // Calculate Average DRE
+  const averageData = useMemo(() => {
+    if (!dreList.length) return null;
+    
+    const sum = (arr, keyPath) => arr.reduce((acc, item) => {
+      const val = keyPath.split('.').reduce((obj, key) => obj?.[key] || 0, item);
+      return acc + (parseFloat(val) || 0);
+    }, 0);
+
+    const count = dreList.length;
+    
+    return {
+      productive_technicians: Math.round(sum(dreList, 'productive_technicians') / count),
+      monthly_hours: sum(dreList, 'monthly_hours') / count,
+      revenue: {
+        parts_applied: sum(dreList, 'revenue.parts_applied') / count,
+        services: sum(dreList, 'revenue.services') / count,
+        other: sum(dreList, 'revenue.other') / count
+      },
+      costs_tcmp2: {
+        operational: sum(dreList, 'costs_tcmp2.operational') / count,
+        people: sum(dreList, 'costs_tcmp2.people') / count,
+        prolabore: sum(dreList, 'costs_tcmp2.prolabore') / count,
+        marketing: sum(dreList, 'costs_tcmp2.marketing') / count,
+        maintenance: sum(dreList, 'costs_tcmp2.maintenance') / count,
+        third_party: sum(dreList, 'costs_tcmp2.third_party') / count,
+        administrative: sum(dreList, 'costs_tcmp2.administrative') / count
+      },
+      costs_not_tcmp2: {
+        financing: sum(dreList, 'costs_not_tcmp2.financing') / count,
+        consortium: sum(dreList, 'costs_not_tcmp2.consortium') / count,
+        equipment_installments: sum(dreList, 'costs_not_tcmp2.equipment_installments') / count,
+        parts_invoices: sum(dreList, 'costs_not_tcmp2.parts_invoices') / count,
+        legal_processes: sum(dreList, 'costs_not_tcmp2.legal_processes') / count,
+        land_purchase: sum(dreList, 'costs_not_tcmp2.land_purchase') / count,
+        investments: sum(dreList, 'costs_not_tcmp2.investments') / count
+      },
+      parts_cost: {
+        parts_applied_cost: sum(dreList, 'parts_cost.parts_applied_cost') / count,
+        parts_stock_purchase: sum(dreList, 'parts_cost.parts_stock_purchase') / count
+      },
+      notes: "Média Geral Calculada"
+    };
+  }, [dreList]);
+
   useEffect(() => {
-    if (currentDRE) {
+    if (viewMode === 'average' && averageData) {
+      setFormData(averageData);
+    } else if (currentDRE) {
       setFormData({
         productive_technicians: currentDRE.productive_technicians || 1,
         monthly_hours: currentDRE.monthly_hours || 219,
@@ -109,7 +158,7 @@ export default function DRETCMP2() {
     } else {
       setFormData(getEmptyDRE());
     }
-  }, [currentDRE, selectedMonth]);
+  }, [currentDRE, selectedMonth, viewMode, averageData]);
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
@@ -254,55 +303,80 @@ export default function DRETCMP2() {
               <Printer className="w-4 h-4 mr-2" />
               Imprimir
             </Button>
-            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-              <SelectTrigger className="w-[300px] print:hidden">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Array.from({ length: 24 }, (_, i) => {
-                  const d = new Date();
-                  d.setMonth(d.getMonth() - i);
-                  const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-                  const dreForMonth = dreList.find(x => x.month === val);
-                  const tcmp2Value = dreForMonth?.calculated?.tcmp2_value;
-                  
-                  return (
-                    <SelectItem key={val} value={val}>
-                      <span className="flex justify-between w-full gap-4">
-                        <span>{d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</span>
-                        {tcmp2Value && (
-                          <span className="text-gray-500 font-mono text-xs flex items-center">
-                             TCMP²: {formatCurrency(tcmp2Value)}
+            
+            <div className="flex flex-col sm:flex-row gap-2 print:hidden">
+              <Select value={viewMode} onValueChange={setViewMode}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Modo de Visualização" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="month">Mensal</SelectItem>
+                  <SelectItem value="average">Média Geral</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {viewMode === 'month' && (
+                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                  <SelectTrigger className="w-[240px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 24 }, (_, i) => {
+                      const d = new Date();
+                      d.setMonth(d.getMonth() - i);
+                      const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                      const dreForMonth = dreList.find(x => x.month === val);
+                      const tcmp2Value = dreForMonth?.calculated?.tcmp2_value;
+                      
+                      return (
+                        <SelectItem key={val} value={val}>
+                          <span className="flex justify-between w-full gap-4">
+                            <span>{d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</span>
+                            {tcmp2Value && (
+                              <span className="text-gray-500 font-mono text-xs flex items-center">
+                                TCMP²: {formatCurrency(tcmp2Value)}
+                              </span>
+                            )}
                           </span>
-                        )}
-                      </span>
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-            <Button 
-              onClick={() => saveMutation.mutate(formData)}
-              disabled={saveMutation.isPending}
-              className="bg-green-600 hover:bg-green-700 print:hidden"
-            >
-              {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-              Salvar DRE
-            </Button>
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+
+            {viewMode === 'month' && (
+              <Button 
+                onClick={() => saveMutation.mutate(formData)}
+                disabled={saveMutation.isPending}
+                className="bg-green-600 hover:bg-green-700 print:hidden"
+              >
+                {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                Salvar DRE
+              </Button>
+            )}
           </div>
         </div>
 
         {/* Gráfico de Evolução TCMP² */}
-        <Card className="mb-6 print:break-inside-avoid">
+        <Card className="mb-6 print:break-inside-avoid print:block">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-blue-600" />
-              Evolução do TCMP² (Valor Hora)
-            </CardTitle>
-            <CardDescription>
-              Acompanhe a variação do valor da hora técnica ao longo dos meses.
-              Média Geral: <strong>{formatCurrency(averageTcmp2)}</strong>
-            </CardDescription>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-blue-600" />
+                  Evolução do TCMP² (Valor Hora)
+                </CardTitle>
+                <CardDescription>
+                  Acompanhe a variação do valor da hora técnica ao longo dos meses.
+                </CardDescription>
+              </div>
+              <div className="text-right">
+                 <p className="text-sm text-gray-500">Média Geral</p>
+                 <p className="text-2xl font-bold text-blue-600">{formatCurrency(averageTcmp2)}</p>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="h-[300px] w-full">
