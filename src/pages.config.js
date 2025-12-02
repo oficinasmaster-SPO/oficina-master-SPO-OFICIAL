@@ -95,9 +95,6 @@ import HistoricoDesempenho from './pages/HistoricoDesempenho';
 import VisualizarProcesso from './pages/VisualizarProcesso';
 import EvidenceUpload from './pages/EvidenceUpload';
 import ResponderPesquisaClima from './pages/ResponderPesquisaClima';
-import GestaoTreinamentos from './pages/GestaoTreinamentos';
-import EditorModulo from './pages/EditorModulo';
-import Treinamentos from './pages/Treinamentos';
 import __Layout from './Layout.jsx';
 
 
@@ -199,9 +196,6 @@ export const PAGES = {
     "VisualizarProcesso": VisualizarProcesso,
     "EvidenceUpload": EvidenceUpload,
     "ResponderPesquisaClima": ResponderPesquisaClima,
-    "GestaoTreinamentos": GestaoTreinamentos,
-    "EditorModulo": EditorModulo,
-    "Treinamentos": Treinamentos,
 }
 
 export const pagesConfig = {
