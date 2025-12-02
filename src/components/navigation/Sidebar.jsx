@@ -387,10 +387,23 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       icon: GraduationCap,
       items: [
         { 
-          name: 'Em Desenvolvimento', 
-          href: createPageUrl('Home'), 
+          name: 'Gestão de Treinamentos', 
+          href: createPageUrl('GerenciarTreinamentos'), 
+          icon: BookOpen,
+          description: 'Módulos, aulas e avaliações',
+          highlight: true
+        },
+        { 
+          name: 'Acompanhamento', 
+          href: createPageUrl('AcompanhamentoTreinamento'), 
+          icon: Users,
+          description: 'Progresso e notas da equipe'
+        },
+        { 
+          name: 'Meus Treinamentos', 
+          href: createPageUrl('MeusTreinamentos'), 
           icon: GraduationCap,
-          description: 'Cursos e capacitações - em breve'
+          description: 'Área do aluno'
         }
       ]
     },

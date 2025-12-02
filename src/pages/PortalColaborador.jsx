@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { 
   Loader2, User, ListTodo, Target, MessageSquare, BarChart3, 
   FileText, Trophy, Gauge, Calendar, Phone, LogOut, Menu, X,
-  CheckCircle2, Clock, AlertTriangle, TrendingUp, Star
+  CheckCircle2, Clock, AlertTriangle, TrendingUp, Star, GraduationCap
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -78,6 +78,7 @@ export default function PortalColaborador() {
     { id: "feedbacks", label: "Meus Feedbacks", icon: MessageSquare, roles: ["all"] },
     { id: "desempenho", label: "Desempenho", icon: BarChart3, roles: ["all"] },
     { id: "documentos", label: "Documentos", icon: FileText, roles: ["all"] },
+    { id: "treinamentos", label: "Meus Treinamentos", icon: GraduationCap, roles: ["all"] },
     { id: "gamificacao", label: "Gamificação", icon: Trophy, roles: ["all"] },
     { id: "qgp", label: "QGP Pessoal", icon: Gauge, roles: ["all"] },
     { id: "estoque", label: "Estoque", icon: Package, roles: ["diretor", "supervisor_loja", "gerente", "estoque"] },
@@ -358,6 +359,20 @@ export default function PortalColaborador() {
               ))
             )}
           </div>
+        );
+
+      case "treinamentos":
+        return (
+          <Card>
+            <CardContent className="py-12 text-center text-gray-500">
+              <GraduationCap className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+              <p className="text-lg font-medium text-gray-900">Universidade Corporativa</p>
+              <p className="text-sm mt-2 mb-6">Acesse seus cursos, aulas e avaliações para evoluir na carreira.</p>
+              <Button onClick={() => window.location.href = createPageUrl('MeusTreinamentos')} className="bg-blue-600 hover:bg-blue-700">
+                Acessar Meus Treinamentos
+              </Button>
+            </CardContent>
+          </Card>
         );
 
       case "gamificacao":
