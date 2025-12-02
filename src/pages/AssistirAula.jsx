@@ -119,6 +119,28 @@ export default function AssistirAula() {
       const allLessons = await base44.entities.TrainingLesson.filter({ module_id: currentLesson.module_id });
       setLessons(allLessons.sort((a, b) => a.order - b.order));
 
+      // Ensure Progress Record Exists
+      const existingProgress = await base44.entities.EmployeeTrainingProgress.filter({
+        employee_id: currentUser.id,
+        lesson_id: lessonId
+      });
+
+      if (existingProgress.length === 0) {
+        await base44.entities.EmployeeTrainingProgress.create({
+            employee_id: currentUser.id,
+            module_id: currentLesson.module_id,
+            lesson_id: lessonId,
+            status: 'in_progress',
+            progress_percentage: 0,
+            watch_time_seconds: 0,
+            last_access_date: new Date().toISOString()
+        });
+      } else {
+        await base44.entities.EmployeeTrainingProgress.update(existingProgress[0].id, {
+            last_access_date: new Date().toISOString()
+        });
+      }
+
       // 3. Fetch user progress for this module
       const progress = await base44.entities.EmployeeTrainingProgress.filter({ 
           employee_id: currentUser.id,
