@@ -71,6 +71,12 @@ export default function Home() {
           }
 
           setWorkshop(userWorkshop);
+          
+          // Se não encontrou oficina vinculada (nem dono, nem colaborador), redireciona para cadastro
+          if (!userWorkshop) {
+            navigate(createPageUrl("Cadastro"));
+            return;
+          }
         } catch (workshopError) {
           console.log("Error fetching workshops:", workshopError);
           setWorkshop(null);
