@@ -4,7 +4,7 @@ import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, CheckCircle2, Building2, Wrench, Settings, DollarSign, Target, ArrowRight } from "lucide-react";
+import { Loader2, CheckCircle2, Building2, Wrench, Settings, DollarSign, Target, ArrowRight, Rocket, PlayCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
