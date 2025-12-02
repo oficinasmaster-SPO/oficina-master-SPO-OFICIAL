@@ -75,17 +75,37 @@ export default function DiagnosticoProducao() {
     }
   };
 
-  const loadHistory = async (workshopId) => {
+  const loadHistory = async (workshopId, filters = {}) => {
     if (!workshopId) return;
+    
+    let query = { workshop_id: workshopId };
+    
+    if (filters.employee_id && filters.employee_id !== "all") {
+      query.employee_id = filters.employee_id;
+    }
+    
+    if (filters.month && filters.month !== "all") {
+      query.period_month = filters.month;
+    }
+
     try {
-      const diagnostics = await base44.entities.ProductivityDiagnostic.filter({ 
-        workshop_id: workshopId 
-      }, "-created_date", 50);
+      const diagnostics = await base44.entities.ProductivityDiagnostic.filter(
+        query, 
+        "-created_date", 
+        50
+      );
       setHistory(Array.isArray(diagnostics) ? diagnostics : []);
     } catch (error) {
       console.error("Error loading history:", error);
     }
   };
+
+  // Reload history when filters change
+  useEffect(() => {
+    if (workshop?.id) {
+      loadHistory(workshop.id, historyFilters);
+    }
+  }, [workshop?.id, historyFilters]);
 
   // Fetch DRE when month or workshop changes
   useEffect(() => {
@@ -209,9 +229,13 @@ export default function DiagnosticoProducao() {
     let costPercentage = 0;
     let tcmp2Costs = 0;
 
-    // Calculate Total Workshop Costs (TCMP2 base) for "outros" roles
-    if (dreData && dreData.costs_tcmp2) {
-      tcmp2Costs = (dreData.costs_tcmp2.operational || 0) + (dreData.costs_tcmp2.people || 0) + (dreData.costs_tcmp2.prolabore || 0);
+    // Calculate Total Workshop Costs (TCMP2 base) for "outros" and "comercial" roles
+    if (dreData) {
+      // Prefer calculated total if available, otherwise sum components
+      tcmp2Costs = dreData.calculated?.total_costs_tcmp2 || 
+                   ((dreData.costs_tcmp2?.operational || 0) + 
+                    (dreData.costs_tcmp2?.people || 0) + 
+                    (dreData.costs_tcmp2?.prolabore || 0));
     }
 
     if (formData.employee_role === "tecnico" || formData.employee_role === "tecnico_lider") {
@@ -347,21 +371,44 @@ export default function DiagnosticoProducao() {
         completed: true
       });
 
-      // Update Employee with new diagnostic ID
+      // Update Employee with new diagnostic ID and history record
       try {
         const emp = employees.find(e => e.id === formData.employee_id);
         if (emp) {
           const currentDiagnostics = emp.performance_diagnostics || [];
+          
+          // Also ensure we have a production history record for this calculation
+          // This ensures the "registro no cadastro do colaborador" is explicit
+          const currentHistory = emp.production_history || [];
+          let updatedHistory = [...currentHistory];
+          const historyIndex = updatedHistory.findIndex(h => h.month === formData.period_month);
+          
+          const newHistoryItem = {
+             month: formData.period_month,
+             parts: parseFloat(formData.productivity_data.parts_value || 0),
+             services: parseFloat(formData.productivity_data.services_value || 0),
+             total: parseFloat(formData.productivity_data.services_value || 0) + parseFloat(formData.productivity_data.parts_value || 0) + parseFloat(formData.productivity_data.sales_value || 0),
+             diagnostic_id: diagnostic.id,
+             cost_percentage: calculations.costPercentage
+          };
+
+          if (historyIndex >= 0) {
+            updatedHistory[historyIndex] = { ...updatedHistory[historyIndex], ...newHistoryItem };
+          } else {
+            updatedHistory.push(newHistoryItem);
+          }
+
           await base44.entities.Employee.update(emp.id, {
-            performance_diagnostics: [...currentDiagnostics, diagnostic.id]
+            performance_diagnostics: [...currentDiagnostics, diagnostic.id],
+            production_history: updatedHistory
           });
         }
       } catch (err) {
-        console.error("Failed to link diagnostic to employee", err);
+        console.error("Failed to update employee record", err);
       }
 
-      toast.success("Diagnóstico de produtividade concluído!");
-      loadHistory(workshop?.id); // Refresh history
+      toast.success("Diagnóstico salvo e registrado no cadastro do colaborador!");
+      loadHistory(workshop?.id, historyFilters); // Refresh history with filters
       // navigate(createPageUrl("ResultadoProducao") + `?id=${diagnostic.id}`); // Stay on page or navigate? User implies "history", maybe stay and show in history? 
       // Let's stick to navigation as per original flow, or maybe just clear form? 
       // User said "Deve gerar registro na cadastro do colaborador... historico de analise".
@@ -450,11 +497,11 @@ export default function DiagnosticoProducao() {
                       <SelectValue placeholder="Selecione a função" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="tecnico">Técnico</SelectItem>
-                      <SelectItem value="tecnico_lider">Técnico Líder</SelectItem>
-                      <SelectItem value="vendas">Vendas</SelectItem>
-                      <SelectItem value="comercial">Comercial</SelectItem>
-                      <SelectItem value="outros">Outros (Administrativo/Financeiro)</SelectItem>
+                      <SelectItem value="tecnico">Técnico (Avaliação sobre Produção)</SelectItem>
+                      <SelectItem value="tecnico_lider">Técnico Líder (Avaliação sobre Produção)</SelectItem>
+                      <SelectItem value="vendas">Vendas (Avaliação sobre Vendas)</SelectItem>
+                      <SelectItem value="comercial">Comercial (Avaliação sobre TCMP²)</SelectItem>
+                      <SelectItem value="outros">Outros (Adm/Fin - Avaliação sobre TCMP²)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -685,7 +732,7 @@ export default function DiagnosticoProducao() {
                  <Label>Filtrar por Colaborador</Label>
                  <Select 
                     value={historyFilters.employee_id} 
-                    onValueChange={(val) => setHistoryFilters({...historyFilters, employee_id: val})}
+                    onValueChange={(val) => setHistoryFilters(prev => ({...prev, employee_id: val}))}
                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Todos" />
@@ -703,7 +750,7 @@ export default function DiagnosticoProducao() {
                  <Input 
                     type="month" 
                     value={historyFilters.month === "all" ? "" : historyFilters.month}
-                    onChange={(e) => setHistoryFilters({...historyFilters, month: e.target.value || "all"})}
+                    onChange={(e) => setHistoryFilters(prev => ({...prev, month: e.target.value || "all"}))}
                  />
                </div>
                <div className="flex items-end">
@@ -722,13 +769,7 @@ export default function DiagnosticoProducao() {
           </div>
 
           <div className="grid gap-4">
-            {history
-              .filter(h => {
-                if (historyFilters.employee_id !== "all" && h.employee_id !== historyFilters.employee_id) return false;
-                if (historyFilters.month !== "all" && h.period_month !== historyFilters.month) return false;
-                return true;
-              })
-              .map((diag) => {
+            {history.map((diag) => {
                 const emp = employees.find(e => e.id === diag.employee_id);
                 return (
                   <div key={diag.id} className="bg-white p-4 rounded-lg border border-gray-200 hover:shadow-md transition-all flex flex-col md:flex-row justify-between items-center gap-4">
