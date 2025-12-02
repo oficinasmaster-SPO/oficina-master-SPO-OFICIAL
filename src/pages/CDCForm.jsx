@@ -137,9 +137,10 @@ export default function CDCForm() {
           .field { margin-bottom: 20px; }
           .field label { font-weight: bold; display: block; margin-bottom: 5px; }
           .field div { border: 1px solid #ddd; padding: 10px; background: #f9f9f9; }
-          .header { text-align: center; margin-bottom: 30px; }
-          .logo-img { max-height: 50px; margin-bottom: 10px; }
-          .workshop-name { font-size: 24px; font-weight: bold; color: #333; margin-bottom: 5px; text-transform: uppercase; }
+          .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #E31837; padding-bottom: 20px; }
+          .logo-container { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 15px; }
+          .logo-img { max-height: 80px; object-fit: contain; }
+          .workshop-name { font-size: 24px; font-weight: bold; color: #333; text-transform: uppercase; }
           .slogan { font-size: 14px; color: #666; margin-bottom: 20px; font-style: italic; }
           .page-break { page-break-before: always; }
           .section-title { background-color: #f0f0f0; padding: 5px 10px; font-weight: bold; margin-top: 20px; border-left: 4px solid #E31837; }
@@ -147,10 +148,13 @@ export default function CDCForm() {
       </head>
       <body>
         <div class="header">
-          ${workshop.logo_url ? `<img src="${workshop.logo_url}" alt="Logo da Oficina" class="logo-img" style="max-height: 80px;"/>` : ''}
-          <div class="workshop-name">${workshop.name}</div>
+          <div class="logo-container">
+            ${workshop.logo_url ? `<img src="${workshop.logo_url}" alt="Logo da Oficina" class="logo-img"/>` : ''}
+            ${!workshop.logo_url ? `<div class="workshop-name">${workshop.name}</div>` : ''}
+          </div>
+          ${workshop.logo_url ? `<div class="workshop-name" style="font-size: 18px; margin-top: 5px;">${workshop.name}</div>` : ''}
           <div class="slogan">Oficinas Master Educação Empresarial</div>
-          <h1 style="margin-top: 20px; border-bottom: 2px solid #E31837; padding-bottom: 10px;">CDC - Conexão e Diagnóstico do Colaborador</h1>
+          <h1 style="margin-top: 20px; font-size: 22px;">CDC - Conexão e Diagnóstico do Colaborador</h1>
           
           <table style="width: 100%; margin-top: 20px; border-collapse: collapse;">
             <tr>
@@ -238,7 +242,14 @@ export default function CDCForm() {
           <div>${formData.main_values || '-'}</div>
         </div>
         
-        <script>window.print();</script>
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+              window.close();
+            }, 500);
+          };
+        </script>
       </body>
       </html>
     `);

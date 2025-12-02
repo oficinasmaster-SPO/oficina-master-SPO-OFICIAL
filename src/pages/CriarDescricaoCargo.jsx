@@ -102,14 +102,19 @@ export default function CriarDescricaoCargo() {
     setIsGeneratingAI(true);
     try {
       const prompt = `
-        Atue como um especialista em RH sênior.
-        Gere um conteúdo profissional para o campo "${currentQuestion.title}" 
-        de uma Descrição de Cargo para a função: "${formData.job_title}".
+        Atue como um consultor sênior da metodologia Oficinas Master.
         
-        Contexto: O cargo é para uma oficina mecânica/centro automotivo.
-        Seja direto, use tópicos se apropriado para o campo, e mantenha um tom formal e claro.
-        Siga o padrão de mercado.
-        Retorne APENAS o texto sugerido, sem introduções.
+        Tarefa: Gerar conteúdo para o campo "${currentQuestion.title}" da Descrição de Cargo (DC) para a função: "${formData.job_title}".
+        
+        Contexto: Oficina mecânica/Centro automotivo de alta performance.
+        
+        Diretrizes de Estilo (Modelo Oficinas Master):
+        - Linguagem: Formal, técnica, direta e orientada a resultados.
+        - Foco: Produtividade, qualidade, processos e satisfação do cliente.
+        - Formato: Se for lista, use tópicos curtos e objetivos. Se for texto, seja conciso.
+        - Evite: Generalidades ou "RH tradicional" burocrático. Fale a língua do "chão de oficina" profissionalizado.
+        
+        Retorne APENAS o texto sugerido para ser colado diretamente no campo, sem explicações adicionais.
       `;
 
       const response = await base44.integrations.Core.InvokeLLM({

@@ -92,7 +92,6 @@ import ResponderMaturidade from './pages/ResponderMaturidade';
 import HistoricoDISC from './pages/HistoricoDISC';
 import HistoricoMaturidade from './pages/HistoricoMaturidade';
 import HistoricoDesempenho from './pages/HistoricoDesempenho';
-import DiagnosticoCarga from './pages/DiagnosticoCarga';
 import __Layout from './Layout.jsx';
 
 
@@ -191,7 +190,6 @@ export const PAGES = {
     "HistoricoDISC": HistoricoDISC,
     "HistoricoMaturidade": HistoricoMaturidade,
     "HistoricoDesempenho": HistoricoDesempenho,
-    "DiagnosticoCarga": DiagnosticoCarga,
 }
 
 export const pagesConfig = {

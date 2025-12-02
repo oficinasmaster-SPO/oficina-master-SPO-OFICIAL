@@ -215,10 +215,11 @@ export default function COEXForm() {
         <title>COEX - ${employee?.full_name}</title>
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: Arial, sans-serif; padding: 40px; }
-          .header { text-align: center; margin-bottom: 30px; }
-          .logo-img { max-height: 50px; margin-bottom: 10px; }
-          .workshop-name { font-size: 24px; font-weight: bold; color: #333; margin-bottom: 5px; text-transform: uppercase; }
+          body { font-family: Arial, sans-serif; padding: 40px; color: #333; }
+          .header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid #E31837; padding-bottom: 20px; }
+          .logo-container { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 15px; }
+          .logo-img { max-height: 80px; object-fit: contain; }
+          .workshop-name { font-size: 24px; font-weight: bold; color: #333; text-transform: uppercase; }
           .slogan { font-size: 14px; color: #666; margin-bottom: 20px; font-style: italic; }
           h1 { color: #E31837; font-size: 28px; margin-bottom: 20px; border-bottom: 2px solid #E31837; padding-bottom: 10px; }
           .info-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 30px; }
@@ -243,10 +244,13 @@ export default function COEXForm() {
       </head>
       <body>
         <div class="header">
-          ${workshop.logo_url ? `<img src="${workshop.logo_url}" alt="Logo da Oficina" class="logo-img" style="max-height: 80px;"/>` : ''}
-          <div class="workshop-name">${workshop.name}</div>
+          <div class="logo-container">
+            ${workshop.logo_url ? `<img src="${workshop.logo_url}" alt="Logo da Oficina" class="logo-img"/>` : ''}
+            ${!workshop.logo_url ? `<div class="workshop-name">${workshop.name}</div>` : ''}
+          </div>
+          ${workshop.logo_url ? `<div class="workshop-name" style="font-size: 18px; margin-top: 5px;">${workshop.name}</div>` : ''}
           <div class="slogan">Oficinas Master Educação Empresarial</div>
-          <h1>Contrato de Expectativa</h1>
+          <h1 style="margin-top: 20px; font-size: 26px; color: #E31837;">Contrato de Expectativa</h1>
         </div>
         
         <div class="info-grid">
@@ -320,7 +324,14 @@ export default function COEXForm() {
           <div style="font-size: 12px; color: #666; margin-top: 5px;">ACELERADORA</div>
         </div>
         
-        <script>window.print();</script>
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+              window.close();
+            }, 500);
+          };
+        </script>
       </body>
       </html>
     `);

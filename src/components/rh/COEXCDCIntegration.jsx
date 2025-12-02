@@ -92,11 +92,25 @@ export default function COEXCDCIntegration({ employee }) {
               {cdcRecords.length > 0 && (
                 <div className="mt-4 pt-4 border-t">
                   <p className="text-xs font-semibold text-gray-500 mb-2">Histórico de CDC</p>
-                  <div className="space-y-2">
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
                     {cdcRecords.sort((a, b) => new Date(b.date) - new Date(a.date)).map((rec, idx) => (
-                        <div key={idx} className="text-xs flex justify-between bg-gray-50 p-2 rounded">
-                            <span>{new Date(rec.date).toLocaleDateString('pt-BR')}</span>
-                            <span className="text-gray-500">Ver detalhes (PDF)</span>
+                        <div key={idx} className="text-xs flex justify-between items-center bg-gray-50 p-2 rounded hover:bg-gray-100 transition-colors">
+                            <div className="flex items-center gap-2">
+                                <Heart className="w-3 h-3 text-pink-400" />
+                                <span>{new Date(rec.date).toLocaleDateString('pt-BR')}</span>
+                            </div>
+                            <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-6 px-2 text-xs"
+                                onClick={() => {
+                                    // Lógica de reimpressão/visualização pode ser adicionada aqui
+                                    // Por enquanto redireciona para o form preenchido ou apenas mostra
+                                    navigate(createPageUrl("CDCForm") + `?employeeId=${employee.id}&recordId=${rec.id}`); // recordId seria novo no form para carregar histórico
+                                }}
+                            >
+                                Ver
+                            </Button>
                         </div>
                     ))}
                   </div>

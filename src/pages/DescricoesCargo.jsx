@@ -140,35 +140,78 @@ export default function DescricoesCargo() {
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          // Lógica simples de impressão direta
+                          // Lógica de impressão melhorada
                           const printWindow = window.open('', '_blank');
                           printWindow.document.write(`
                             <html>
                               <head>
                                 <title>${desc.job_title}</title>
                                 <style>
-                                  body { font-family: Arial, sans-serif; padding: 40px; }
-                                  h1 { color: #333; border-bottom: 2px solid #666; padding-bottom: 10px; }
-                                  h2 { color: #555; margin-top: 20px; background: #f0f0f0; padding: 5px; }
+                                  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #333; line-height: 1.6; }
+                                  .header { text-align: center; border-bottom: 3px solid #4F46E5; padding-bottom: 20px; margin-bottom: 30px; }
+                                  .workshop-name { font-size: 14px; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+                                  h1 { color: #1F2937; margin: 0; font-size: 28px; text-transform: uppercase; }
+                                  .meta { color: #6B7280; font-size: 12px; margin-top: 5px; }
+                                  
+                                  .section { margin-bottom: 25px; page-break-inside: avoid; }
+                                  h2 { color: #4F46E5; font-size: 16px; border-bottom: 1px solid #E5E7EB; padding-bottom: 5px; margin-bottom: 15px; text-transform: uppercase; }
+                                  
                                   ul { padding-left: 20px; }
-                                  li { margin-bottom: 5px; }
+                                  li { margin-bottom: 8px; }
+                                  p { margin-bottom: 10px; text-align: justify; }
+                                  
+                                  .footer { margin-top: 50px; border-top: 1px solid #E5E7EB; padding-top: 20px; text-align: center; font-size: 10px; color: #9CA3AF; }
                                 </style>
                               </head>
                               <body>
-                                <h1>${desc.job_title}</h1>
-                                <p><strong>Data:</strong> ${new Date(desc.created_date).toLocaleDateString('pt-BR')}</p>
+                                <div class="header">
+                                  <div class="workshop-name">${getWorkshopName(desc.workshop_id)}</div>
+                                  <h1>${desc.job_title}</h1>
+                                  <div class="meta">Descrição de Cargo • Gerado em ${new Date(desc.created_date).toLocaleDateString('pt-BR')}</div>
+                                </div>
                                 
-                                ${desc.main_activities && desc.main_activities.length > 0 ? `
-                                  <h2>Atividades Principais</h2>
-                                  <ul>${desc.main_activities.map(a => `<li>${a}</li>`).join('')}</ul>
-                                ` : ''}
-                                
-                                ${desc.main_responsibilities ? `
-                                  <h2>Responsabilidades</h2>
-                                  <p>${desc.main_responsibilities}</p>
-                                ` : ''}
+                                <div class="content">
+                                  ${desc.main_activities && desc.main_activities.length > 0 ? `
+                                    <div class="section">
+                                      <h2>Principais Atividades</h2>
+                                      <ul>${desc.main_activities.map(a => `<li>${a}</li>`).join('')}</ul>
+                                    </div>
+                                  ` : ''}
+                                  
+                                  ${desc.main_responsibilities ? `
+                                    <div class="section">
+                                      <h2>Responsabilidades Principais</h2>
+                                      <p>${desc.main_responsibilities}</p>
+                                    </div>
+                                  ` : ''}
 
-                                <script>window.print();</script>
+                                  ${desc.education && desc.education.length > 0 ? `
+                                    <div class="section">
+                                      <h2>Escolaridade</h2>
+                                      <ul>${desc.education.map(e => `<li>${e.item || e}</li>`).join('')}</ul>
+                                    </div>
+                                  ` : ''}
+
+                                  ${desc.previous_experience && desc.previous_experience.length > 0 ? `
+                                    <div class="section">
+                                      <h2>Experiência Necessária</h2>
+                                      <ul>${desc.previous_experience.map(e => `<li>${e.item || e}</li>`).join('')}</ul>
+                                    </div>
+                                  ` : ''}
+                                </div>
+
+                                <div class="footer">
+                                  Documento interno. Uso exclusivo para gestão de pessoas.
+                                </div>
+
+                                <script>
+                                  window.onload = function() {
+                                    setTimeout(function() {
+                                      window.print();
+                                      window.close();
+                                    }, 500);
+                                  };
+                                </script>
                               </body>
                             </html>
                           `);
