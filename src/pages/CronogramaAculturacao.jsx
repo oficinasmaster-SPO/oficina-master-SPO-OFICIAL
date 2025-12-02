@@ -5,16 +5,50 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Calendar, CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import { Loader2, Calendar, CheckCircle2, Clock, AlertCircle, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function CronogramaAculturacao() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [activities, setActivities] = useState([]);
   const [workshop, setWorkshop] = useState(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [newActivity, setNewActivity] = useState({
+    title: "",
+    description: "",
+    type: "ritual",
+    scheduled_date: ""
+  });
+
+  const handleCreateActivity = async () => {
+    if (!newActivity.title || !newActivity.scheduled_date) {
+      toast.error("Preencha título e data");
+      return;
+    }
+
+    try {
+      await base44.entities.AcculturationActivity.create({
+        workshop_id: workshop.id,
+        ...newActivity,
+        status: "pendente",
+        auto_generated: false
+      });
+      toast.success("Atividade criada!");
+      setIsCreateModalOpen(false);
+      setNewActivity({ title: "", description: "", type: "ritual", scheduled_date: "" });
+      loadData();
+    } catch (error) {
+      toast.error("Erro ao criar atividade");
+    }
+  };
 
   useEffect(() => {
     loadData();
@@ -107,6 +141,66 @@ export default function CronogramaAculturacao() {
             Cronograma de Aculturamento
           </h1>
           <p className="text-gray-600">Acompanhe as atividades programadas de cultura organizacional</p>
+          
+          <div className="mt-6">
+            <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-blue-600 hover:bg-blue-700">
+                  <Plus className="w-4 h-4 mr-2" /> Adicionar Atividade
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Nova Atividade</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div>
+                    <Label>Título</Label>
+                    <Input 
+                      value={newActivity.title}
+                      onChange={(e) => setNewActivity({...newActivity, title: e.target.value})}
+                      placeholder="Ex: Reunião de Alinhamento"
+                    />
+                  </div>
+                  <div>
+                    <Label>Tipo</Label>
+                    <Select 
+                      value={newActivity.type} 
+                      onValueChange={(val) => setNewActivity({...newActivity, type: val})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ritual">Ritual</SelectItem>
+                        <SelectItem value="treinamento">Treinamento</SelectItem>
+                        <SelectItem value="onboarding">Onboarding</SelectItem>
+                        <SelectItem value="avaliacao">Avaliação</SelectItem>
+                        <SelectItem value="feedback">Feedback</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Data Agendada</Label>
+                    <Input 
+                      type="date"
+                      value={newActivity.scheduled_date}
+                      onChange={(e) => setNewActivity({...newActivity, scheduled_date: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <Label>Descrição</Label>
+                    <Textarea 
+                      value={newActivity.description}
+                      onChange={(e) => setNewActivity({...newActivity, description: e.target.value})}
+                      placeholder="Detalhes da atividade..."
+                    />
+                  </div>
+                  <Button onClick={handleCreateActivity} className="w-full">Salvar</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
