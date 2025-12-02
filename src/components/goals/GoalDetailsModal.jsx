@@ -67,7 +67,24 @@ export default function GoalDetailsModal({ isOpen, onClose, goal, history }) {
                 <Button variant="outline" size="sm" onClick={handleExportPDF}>
                     <FileText className="w-4 h-4 mr-2" /> PDF
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={() => {
+                    // Simple CSV export
+                    const headers = ["Mes", "Meta", "Realizado", "Atingimento", "Status"];
+                    const row = [
+                        goal.month_year, 
+                        goal.goal_established, 
+                        goal.result_achieved, 
+                        goal.percentage_achieved + "%", 
+                        goal.status
+                    ];
+                    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), row.join(",")].join("\n");
+                    const encodedUri = encodeURI(csvContent);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", encodedUri);
+                    link.setAttribute("download", `meta_${goal.month_year}.csv`);
+                    document.body.appendChild(link);
+                    link.click();
+                }}>
                     <FileSpreadsheet className="w-4 h-4 mr-2" /> XLS
                 </Button>
             </div>

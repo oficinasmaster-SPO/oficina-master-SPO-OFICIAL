@@ -290,7 +290,7 @@ export default function HistoricoMetas() {
                             className="ml-auto text-blue-600 hover:text-blue-700 hover:bg-blue-50 w-full md:w-auto"
                             onClick={() => { setSelectedGoal(goal); setIsDetailsOpen(true); }}
                         >
-                            Ver Detalhes <ArrowRight className="w-4 h-4 ml-2" />
+                            <span className="hidden md:inline">Ver Detalhes</span> <ArrowRight className="w-4 h-4 md:ml-2" />
                         </Button>
                     </CardContent>
                 </Card>
