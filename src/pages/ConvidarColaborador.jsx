@@ -118,6 +118,37 @@ export default function ConvidarColaborador() {
     enabled: !!workshop?.id
   });
 
+  const { data: employees = [] } = useQuery({
+    queryKey: ['employees-list', workshop?.id],
+    queryFn: async () => {
+      const result = await base44.entities.Employee.filter({ workshop_id: workshop.id });
+      return Array.isArray(result) ? result : [];
+    },
+    enabled: !!workshop?.id
+  });
+
+  // Filtra colaboradores que ainda não têm convite (baseado no email)
+  const uninvitedEmployees = employees.filter(emp => {
+    if (!emp.email) return false;
+    // Verifica se já existe convite para este email
+    const hasInvite = invites.some(inv => inv.email === emp.email);
+    // Opcional: Verifica se já é o próprio usuário logado (dono) para não convidar a si mesmo se não quiser
+    // const isSelf = user?.email === emp.email; 
+    return !hasInvite;
+  });
+
+  const fillFormWithEmployee = (emp) => {
+    setFormData({
+      name: emp.full_name,
+      email: emp.email,
+      position: emp.position,
+      area: emp.area || "",
+      job_role: emp.job_role || "outros",
+      initial_permission: "colaborador"
+    });
+    toast.info("Dados preenchidos! Clique em Enviar Convite.");
+  };
+
   const generateToken = () => {
     return Math.random().toString(36).substring(2) + Date.now().toString(36) + Math.random().toString(36).substring(2);
   };
@@ -223,6 +254,36 @@ export default function ConvidarColaborador() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Colaboradores Cadastrados (Pendentes) */}
+          {uninvitedEmployees.length > 0 && (
+            <Card className="lg:col-span-2 border-orange-200 bg-orange-50">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg text-orange-800">
+                  <Users className="w-5 h-5" />
+                  Colaboradores Cadastrados (Sem Acesso)
+                </CardTitle>
+                <CardDescription className="text-orange-700">
+                  Estes colaboradores já estão no sistema mas ainda não foram convidados. Selecione um para convidar.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {uninvitedEmployees.map(emp => (
+                    <div key={emp.id} className="bg-white p-3 rounded-lg border border-orange-200 shadow-sm flex justify-between items-center hover:shadow-md transition-shadow cursor-pointer" onClick={() => fillFormWithEmployee(emp)}>
+                      <div className="overflow-hidden">
+                        <p className="font-medium text-gray-900 truncate" title={emp.full_name}>{emp.full_name}</p>
+                        <p className="text-xs text-gray-500 truncate">{emp.position}</p>
+                      </div>
+                      <Button size="sm" variant="ghost" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 shrink-0">
+                        Selecionar
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Formulário de Convite */}
           <Card>
             <CardHeader>
