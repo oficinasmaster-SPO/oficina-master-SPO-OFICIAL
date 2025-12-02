@@ -29,7 +29,8 @@ export default function DadosPessoais({ employee, onUpdate }) {
     status: employee.status || "ativo",
     endereco: employee.endereco || {},
     profile_picture_url: employee.profile_picture_url || "",
-    digital_signature_url: employee.digital_signature_url || ""
+    digital_signature_url: employee.digital_signature_url || "",
+    shift_settings: employee.shift_settings || { lunch_start: "", lunch_end: "", work_start: "", work_end: "" }
   });
 
   const handleSave = async () => {
@@ -300,6 +301,48 @@ export default function DadosPessoais({ employee, onUpdate }) {
                 <SelectItem value="afastado">Afastado</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+        </div>
+
+        <div className="pt-4 border-t">
+          <h3 className="font-semibold text-gray-900 mb-3">Configuração de Turno (QGP)</h3>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div>
+              <Label>Início Expediente</Label>
+              <Input
+                type="time"
+                value={formData.shift_settings?.work_start || ""}
+                onChange={(e) => setFormData({...formData, shift_settings: {...formData.shift_settings, work_start: e.target.value}})}
+                disabled={!editing}
+              />
+            </div>
+            <div>
+              <Label>Início Almoço</Label>
+              <Input
+                type="time"
+                value={formData.shift_settings?.lunch_start || ""}
+                onChange={(e) => setFormData({...formData, shift_settings: {...formData.shift_settings, lunch_start: e.target.value}})}
+                disabled={!editing}
+              />
+            </div>
+            <div>
+              <Label>Fim Almoço</Label>
+              <Input
+                type="time"
+                value={formData.shift_settings?.lunch_end || ""}
+                onChange={(e) => setFormData({...formData, shift_settings: {...formData.shift_settings, lunch_end: e.target.value}})}
+                disabled={!editing}
+              />
+            </div>
+            <div>
+              <Label>Fim Expediente</Label>
+              <Input
+                type="time"
+                value={formData.shift_settings?.work_end || ""}
+                onChange={(e) => setFormData({...formData, shift_settings: {...formData.shift_settings, work_end: e.target.value}})}
+                disabled={!editing}
+              />
+            </div>
           </div>
         </div>
 

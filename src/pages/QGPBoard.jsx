@@ -86,11 +86,15 @@ export default function QGPBoard() {
     const baseTime = task.status === 'em_andamento' ? new Date(task.updated_date) : new Date(); 
     let predictedEnd = addMinutes(baseTime, task.predicted_time_minutes);
     
-    // Lunch Logic
-    if (workshop?.operational_settings?.lunch_start && workshop?.operational_settings?.lunch_end) {
+    // Lunch Logic (Employee specific or Workshop default)
+    const employee = employees.find(e => e.id === task.employee_id);
+    const lunchStartStr = employee?.shift_settings?.lunch_start || workshop?.horario_funcionamento?.almoco_inicio;
+    const lunchEndStr = employee?.shift_settings?.lunch_end || workshop?.horario_funcionamento?.almoco_fim;
+
+    if (lunchStartStr && lunchEndStr) {
       const today = new Date();
-      const lunchStart = parse(workshop.operational_settings.lunch_start, 'HH:mm', today);
-      const lunchEnd = parse(workshop.operational_settings.lunch_end, 'HH:mm', today);
+      const lunchStart = parse(lunchStartStr, 'HH:mm', today);
+      const lunchEnd = parse(lunchEndStr, 'HH:mm', today);
       
       // Check if the task interval overlaps with lunch
       // If the task start is before lunch and predicted end is after lunch start
