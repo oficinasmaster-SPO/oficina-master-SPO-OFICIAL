@@ -78,6 +78,8 @@ Gere um relatório profissional incluindo:
 4. Recomendações práticas baseadas na metodologia Oficinas Master
 5. Plano 5W2H para os 4 problemas mais críticos
 6. Estratégias para melhorar geração de caixa e controle financeiro
+
+Feedback adicional do usuário para consideração: """${userFeedback}"""
 `;
 
       const aiResponse = await base44.integrations.Core.InvokeLLM({

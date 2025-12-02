@@ -78,6 +78,8 @@ Gere um relatório profissional incluindo:
 4. Recomendações práticas baseadas na metodologia Oficinas Master
 5. Ações imediatas (próximos 7 dias)
 6. Plano mensal de melhoria
+
+Feedback adicional do usuário para consideração: """${userFeedback}"""
 `;
 
       const aiResponse = await base44.integrations.Core.InvokeLLM({

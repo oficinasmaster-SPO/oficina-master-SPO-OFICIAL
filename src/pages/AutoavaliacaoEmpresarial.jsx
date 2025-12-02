@@ -78,6 +78,8 @@ Gere um relatório executivo incluindo:
 4. Recomendações estratégicas baseadas na metodologia Oficinas Master
 5. Plano de ação prioritário
 6. Visão de médio e longo prazo para evolução empresarial
+
+Feedback adicional do usuário para consideração: """${userFeedback}"""
 `;
 
       const aiResponse = await base44.integrations.Core.InvokeLLM({

@@ -78,6 +78,8 @@ Gere um relatório completo incluindo:
 4. Recomendações práticas baseadas na metodologia Oficinas Master
 5. Plano integrado de melhoria para alinhar todas as áreas
 6. Prioridades estratégicas
+
+Feedback adicional do usuário para consideração: """${userFeedback}"""
 `;
 
       const aiResponse = await base44.integrations.Core.InvokeLLM({
