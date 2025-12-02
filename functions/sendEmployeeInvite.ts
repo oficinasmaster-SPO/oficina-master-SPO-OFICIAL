@@ -11,87 +11,89 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { name, email, position, area, job_role, initial_permission, workshop_id, workshop_name } = await req.json();
+    const { name, email, position, area, job_role, initial_permission, workshop_id, workshop_name, origin } = await req.json();
 
     if (!email || !workshop_id) {
       return Response.json({ error: 'Dados incompletos' }, { status: 400 });
     }
 
+    // Tentar buscar convite existente para não duplicar se estiver pendente
+    const existingInvites = await base44.asServiceRole.entities.EmployeeInvite.filter({ 
+        email, 
+        workshop_id,
+        status: 'enviado'
+    });
+
+    let invite;
     const token = Math.random().toString(36).substring(2) + Date.now().toString(36) + Math.random().toString(36).substring(2);
     const expiresAt = addDays(new Date(), 5);
 
-    // Criar o convite usando service role para garantir permissão
-    const invite = await base44.asServiceRole.entities.EmployeeInvite.create({
-      name,
-      email,
-      position,
-      area,
-      job_role: job_role || 'outros',
-      initial_permission: initial_permission || 'colaborador',
-      workshop_id,
-      invite_token: token,
-      expires_at: expiresAt.toISOString(),
-      status: "enviado",
-      created_by: user.email 
-    });
+    if (existingInvites && existingInvites.length > 0) {
+        // Atualizar convite existente
+        invite = await base44.asServiceRole.entities.EmployeeInvite.update(existingInvites[0].id, {
+            invite_token: token,
+            expires_at: expiresAt.toISOString(),
+            resent_count: (existingInvites[0].resent_count || 0) + 1,
+            last_resent_at: new Date().toISOString()
+        });
+    } else {
+        // Criar novo convite
+        invite = await base44.asServiceRole.entities.EmployeeInvite.create({
+            name,
+            email,
+            position,
+            area,
+            job_role: job_role || 'outros',
+            initial_permission: initial_permission || 'colaborador',
+            workshop_id,
+            invite_token: token,
+            expires_at: expiresAt.toISOString(),
+            status: "enviado",
+            created_by: user.email 
+        });
+    }
 
-    // URL do frontend (origin do request ou configurado)
-    // Assumindo que o frontend envia a origin ou pegamos do header, mas aqui vamos construir baseada no padrão base44 se possível, 
-    // ou receber o origin no payload. Vamos receber originUrl no payload para ser seguro.
-    // Mas como fallback, usamos uma string genérica que o frontend deve substituir ou o usuário deve saber.
-    // Melhor: o frontend manda a inviteUrl base.
-    
-    const reqUrl = new URL(req.url);
-    // A URL do app pode ser inferida ou passada. Vamos simplificar e pedir pro front passar a base URL.
-    
-    // ATENÇÃO: O frontend vai passar a URL base para montarmos o link
-    // Se não, tentamos inferir (difícil em serverless functions sem contexto do host do front).
-    // Vamos usar um parametro 'origin' no body.
+    // URL do app
+    const baseUrl = origin || "https://app.base44.com"; 
+    const inviteUrl = `${baseUrl}/PrimeiroAcesso?token=${token}`;
 
-    const body = await req.json().catch(() => ({}));
-    const origin = body.origin || req.headers.get("origin") || "https://app.base44.com"; // Fallback
-    const inviteUrl = `${origin}/PrimeiroAcesso?token=${token}`;
-
-    // Enviar email
+    // Enviar email com from_name explícito e html simplificado para evitar spam
     await base44.integrations.Core.SendEmail({
       to: email,
-      subject: `Convite para ${workshop_name} - Oficinas Master`,
+      from_name: "Oficinas Master",
+      subject: `Convite: Junte-se à equipe ${workshop_name}`,
       body: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="background: linear-gradient(135deg, #3b82f6, #6366f1); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
-            <h1 style="color: white; margin: 0;">🔧 ${workshop_name}</h1>
-            <p style="color: rgba(255,255,255,0.9); margin-top: 10px;">Oficinas Master</p>
-          </div>
-          
-          <div style="background: #f8fafc; padding: 30px; border-radius: 0 0 12px 12px;">
-            <h2 style="color: #1e293b; margin-top: 0;">Olá, ${name}!</h2>
+        <!DOCTYPE html>
+        <html>
+        <body style="font-family: sans-serif; line-height: 1.6; color: #333;">
+          <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
+            <h2 style="color: #2563eb; text-align: center;">Oficinas Master</h2>
             
-            <p style="color: #475569; line-height: 1.6;">
-              Você foi convidado(a) para fazer parte da equipe da <strong>${workshop_name}</strong> 
-              como <strong>${position}</strong> na área de <strong>${area}</strong>.
-            </p>
+            <p>Olá, <strong>${name}</strong>!</p>
             
-            <p style="color: #475569; line-height: 1.6;">
-              Para completar seu cadastro e começar a usar a plataforma, clique no botão abaixo:
-            </p>
+            <p>A oficina <strong>${workshop_name}</strong> convidou você para acessar o sistema de gestão.</p>
+            
+            <p><strong>Cargo:</strong> ${position}<br>
+            <strong>Área:</strong> ${area}</p>
             
             <div style="text-align: center; margin: 30px 0;">
-              <a href="${inviteUrl}" style="background: linear-gradient(135deg, #3b82f6, #6366f1); color: white; padding: 15px 40px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">
-                Completar Cadastro
+              <a href="${inviteUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+                Aceitar Convite e Criar Senha
               </a>
             </div>
             
-            <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; border-radius: 4px; margin: 20px 0;">
-              <p style="color: #92400e; margin: 0; font-size: 14px;">
-                ⚠️ <strong>Atenção:</strong> Este link expira em 5 dias.
-              </p>
-            </div>
+            <p style="font-size: 14px; color: #666;">
+              Se o botão não funcionar, copie e cole o link abaixo no seu navegador:<br>
+              <a href="${inviteUrl}" style="color: #2563eb;">${inviteUrl}</a>
+            </p>
             
-            <p style="color: #64748b; font-size: 12px; margin-top: 30px;">
-              Se você não reconhece este convite, ignore este e-mail.
+            <p style="font-size: 12px; color: #999; margin-top: 30px; text-align: center;">
+              Este convite expira em 5 dias.<br>
+              Enviado automaticamente por Oficinas Master.
             </p>
           </div>
-        </div>
+        </body>
+        </html>
       `
     });
 
