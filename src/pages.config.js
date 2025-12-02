@@ -98,6 +98,7 @@ import ResponderPesquisaClima from './pages/ResponderPesquisaClima';
 import GerenciarTreinamentos from './pages/GerenciarTreinamentos';
 import GerenciarModulo from './pages/GerenciarModulo';
 import GerenciarAula from './pages/GerenciarAula';
+import MeusTreinamentos from './pages/MeusTreinamentos';
 import __Layout from './Layout.jsx';
 
 
@@ -202,6 +203,7 @@ export const PAGES = {
     "GerenciarTreinamentos": GerenciarTreinamentos,
     "GerenciarModulo": GerenciarModulo,
     "GerenciarAula": GerenciarAula,
+    "MeusTreinamentos": MeusTreinamentos,
 }
 
 export const pagesConfig = {
