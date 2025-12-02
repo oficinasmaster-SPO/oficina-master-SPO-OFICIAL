@@ -297,6 +297,13 @@ export default function DashboardHub({ user, workshop }) {
       icon: Trophy,
       href: createPageUrl("Gamificacao"),
       color: "from-yellow-500 to-orange-500"
+    },
+    {
+      title: "Mapas de Autoavaliação",
+      description: "Vendas, RH, Financeiro e mais",
+      icon: Target,
+      href: createPageUrl("Autoavaliacoes"),
+      color: "from-teal-500 to-emerald-500"
     }
   ];
 
