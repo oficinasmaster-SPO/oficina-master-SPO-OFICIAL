@@ -47,10 +47,6 @@ export default function COEXList() {
     return matchesSearch;
   });
 
-  const getActiveCOEX = (employeeId) => {
-    return coexContracts.find(c => c.employee_id === employeeId && c.status === 'ativo');
-  };
-
   const activeContracts = coexContracts.filter(c => c.status === 'ativo' || c.status === undefined).length; // Assumir undefined como ativo se recente
   const expiredContracts = coexContracts.filter(c => c.status === 'expirado').length;
 
