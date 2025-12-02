@@ -43,7 +43,14 @@ export default function TaskForm({ task, employees, onSubmit, onCancel, submitti
     actual_time_minutes: 0,
     time_tracking: [],
     task_type: "geral",
-    qgp_data: {},
+    qgp_data: {
+      os_number: "",
+      vehicle_plate: "",
+      vehicle_model: "",
+      client_name: "",
+      os_file_url: "",
+      waiting_reason: ""
+    },
     ai_epi: "",
     ai_specificity: "",
     ai_steps: [],
@@ -52,6 +59,27 @@ export default function TaskForm({ task, employees, onSubmit, onCancel, submitti
 
   const [newTag, setNewTag] = useState("");
   const [isEnhancing, setIsEnhancing] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setFormData(prev => ({
+        ...prev,
+        qgp_data: { ...prev.qgp_data, os_file_url: file_url }
+      }));
+      toast.success("Arquivo anexado!");
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro no upload.");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleEnhanceAI = async () => {
     if (!formData.title) {
@@ -130,27 +158,46 @@ export default function TaskForm({ task, employees, onSubmit, onCancel, submitti
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{task ? 'Editar Tarefa' : 'Nova Tarefa'}</CardTitle>
+        <div className="flex justify-between items-center">
+          <CardTitle>{task ? 'Editar Tarefa' : 'Nova Tarefa / Serviço'}</CardTitle>
+          <div className="flex items-center gap-2">
+             <Label>Tipo:</Label>
+             <Select
+                value={formData.task_type}
+                onValueChange={(value) => setFormData({ ...formData, task_type: value })}
+              >
+                <SelectTrigger className="w-40 h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="geral">Geral</SelectItem>
+                  <SelectItem value="qgp_solicitacao_servico">QGP - Serviço</SelectItem>
+                  <SelectItem value="qgp_aviso_entrega">QGP - Entrega</SelectItem>
+                  <SelectItem value="qgp_retrabalho">QGP - Retrabalho</SelectItem>
+                </SelectContent>
+              </Select>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           <Tabs defaultValue="basico" className="w-full">
             <TabsList className="grid w-full grid-cols-4 mb-4">
               <TabsTrigger value="basico">Básico</TabsTrigger>
+              <TabsTrigger value="qgp" className={formData.task_type?.startsWith('qgp') ? "" : "opacity-50"}>Dados QGP</TabsTrigger>
               <TabsTrigger value="tempo">Tempo</TabsTrigger>
               <TabsTrigger value="recorrencia">Recorrência</TabsTrigger>
-              <TabsTrigger value="qgp">QGP</TabsTrigger>
             </TabsList>
 
             <TabsContent value="basico" className="space-y-4">
           {/* Informações Básicas */}
           <div className="space-y-4">
             <div>
-              <Label>Título *</Label>
+              <Label>Título do Serviço / Tarefa *</Label>
               <Input
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="Digite o título da tarefa"
+                placeholder="Ex: Revisão de 10.000km"
                 required
               />
             </div>
@@ -426,12 +473,63 @@ export default function TaskForm({ task, employees, onSubmit, onCancel, submitti
             </TabsContent>
 
             <TabsContent value="qgp" className="space-y-4">
-              <QGPSettings
-                taskType={formData.task_type}
-                qgpData={formData.qgp_data}
-                onTypeChange={(type) => setFormData({ ...formData, task_type: type })}
-                onDataChange={(data) => setFormData({ ...formData, qgp_data: data })}
-              />
+              <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg border">
+                  <div className="col-span-2 md:col-span-1">
+                      <Label>Número da O.S.</Label>
+                      <Input 
+                          value={formData.qgp_data?.os_number || ""} 
+                          onChange={e => setFormData({...formData, qgp_data: {...formData.qgp_data, os_number: e.target.value}})}
+                          placeholder="Ex: 12345"
+                          className="bg-white"
+                      />
+                  </div>
+                  <div className="col-span-2 md:col-span-1">
+                      <Label>Placa do Veículo</Label>
+                      <Input 
+                          value={formData.qgp_data?.vehicle_plate || ""} 
+                          onChange={e => setFormData({...formData, qgp_data: {...formData.qgp_data, vehicle_plate: e.target.value}})}
+                          placeholder="Ex: ABC-1234"
+                          className="bg-white"
+                      />
+                  </div>
+                  <div className="col-span-2">
+                      <Label>Modelo do Veículo</Label>
+                      <Input 
+                          value={formData.qgp_data?.vehicle_model || ""} 
+                          onChange={e => setFormData({...formData, qgp_data: {...formData.qgp_data, vehicle_model: e.target.value}})}
+                          placeholder="Ex: Honda Civic Touring 2020"
+                          className="bg-white"
+                      />
+                  </div>
+                  <div className="col-span-2">
+                      <Label>Anexar O.S. (PDF ou Imagem)</Label>
+                      <div className="flex gap-2 items-center mt-1">
+                        <Input 
+                            type="file" 
+                            onChange={handleFileUpload}
+                            disabled={uploading}
+                            className="bg-white"
+                        />
+                        {uploading && <Loader2 className="w-4 h-4 animate-spin text-blue-600" />}
+                      </div>
+                      {formData.qgp_data?.os_file_url && (
+                          <p className="text-xs text-green-600 mt-1 flex items-center">
+                              <Shield className="w-3 h-3 mr-1" /> Arquivo anexado com sucesso
+                          </p>
+                      )}
+                  </div>
+                  <div className="col-span-2 md:col-span-1">
+                      <Label>Tempo Previsto (minutos)</Label>
+                      <Input 
+                          type="number"
+                          value={formData.predicted_time_minutes || ""} 
+                          onChange={e => setFormData({...formData, predicted_time_minutes: parseInt(e.target.value) || 0})}
+                          placeholder="Ex: 90"
+                          className="bg-white"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Ex: 1h30 = 90 min</p>
+                  </div>
+              </div>
             </TabsContent>
           </Tabs>
 

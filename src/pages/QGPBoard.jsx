@@ -93,13 +93,11 @@ export default function QGPBoard() {
       const lunchEnd = parse(workshop.operational_settings.lunch_end, 'HH:mm', today);
       
       // Check if the task interval overlaps with lunch
-      // Simplification: If the task spans across the lunch start time
-      if (isWithinInterval(lunchStart, { start: baseTime, end: predictedEnd })) {
+      // If the task start is before lunch and predicted end is after lunch start
+      if (baseTime < lunchStart && predictedEnd > lunchStart) {
          const lunchDuration = differenceInMinutes(lunchEnd, lunchStart);
          predictedEnd = addMinutes(predictedEnd, lunchDuration);
       }
-      
-      // Also check employee specific lunch settings if needed (omitted for brevity/performance on list)
     }
     
     return predictedEnd;
