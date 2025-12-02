@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Loader2, Home, RotateCcw, CheckCircle2, AlertTriangle, XCircle, Star, TrendingUp, DollarSign } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 import { toast } from "sonner";
+import { formatCurrency } from "@/components/utils/formatters";
 
 export default function ResultadoOS() {
   const navigate = useNavigate();
@@ -89,7 +90,7 @@ export default function ResultadoOS() {
     }
   };
 
-  const config = classificationConfig[diagnostic.classification];
+  const config = classificationConfig[diagnostic.classification] || classificationConfig.aprovada;
   const Icon = config.icon;
 
   // Dados para gráfico R70/I30
@@ -103,6 +104,9 @@ export default function ResultadoOS() {
     { name: "Valor Cobrado", value: diagnostic.total_services },
     { name: "Valor Ideal TCMP²", value: diagnostic.tcmp2_ideal_value }
   ];
+
+  // Calcular investimento total para exibição
+  const totalInvestment = (diagnostic.total_parts_cost || 0) + (diagnostic.total_third_party_costs || 0);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-green-50 py-12 px-4">
@@ -141,11 +145,11 @@ export default function ResultadoOS() {
                 <DollarSign className="w-5 h-5 text-blue-600" />
               </div>
               <p className="text-3xl font-bold text-gray-900">
-                R$ {diagnostic.total_os.toFixed(2)}
+                {formatCurrency(diagnostic.total_os)}
               </p>
               <div className="mt-2 text-xs text-gray-500">
-                Peças: R$ {diagnostic.total_parts_sale.toFixed(2)} | 
-                Serviços: R$ {diagnostic.total_services.toFixed(2)}
+                Peças: {formatCurrency(diagnostic.total_parts_sale)} | 
+                Serviços: {formatCurrency(diagnostic.total_services)}
               </div>
             </CardContent>
           </Card>
@@ -157,10 +161,10 @@ export default function ResultadoOS() {
                 <TrendingUp className="w-5 h-5 text-green-600" />
               </div>
               <p className={`text-3xl font-bold ${diagnostic.revenue_percentage >= 70 ? 'text-green-600' : 'text-red-600'}`}>
-                {diagnostic.revenue_percentage.toFixed(1)}%
+                {diagnostic.revenue_percentage?.toFixed(1)}%
               </p>
               <div className="mt-2 text-xs text-gray-500">
-                Meta: ≥ 70% | Mão de obra: R$ {diagnostic.total_services.toFixed(2)}
+                Meta: ≥ 70% | Mão de obra: {formatCurrency(diagnostic.total_services)}
               </div>
             </CardContent>
           </Card>
@@ -172,10 +176,10 @@ export default function ResultadoOS() {
                 <DollarSign className="w-5 h-5 text-blue-600" />
               </div>
               <p className={`text-3xl font-bold ${diagnostic.investment_percentage <= 30 ? 'text-green-600' : 'text-red-600'}`}>
-                {diagnostic.investment_percentage.toFixed(1)}%
+                {diagnostic.investment_percentage?.toFixed(1)}%
               </p>
               <div className="mt-2 text-xs text-gray-500">
-                Meta: ≤ 30% | Custo peças: R$ {diagnostic.total_parts_cost.toFixed(2)}
+                Meta: ≤ 30% | Custos: {formatCurrency(totalInvestment)}
               </div>
             </CardContent>
           </Card>
@@ -187,7 +191,7 @@ export default function ResultadoOS() {
           <Card>
             <CardHeader>
               <CardTitle>Análise R70/I30</CardTitle>
-              <CardDescription>Distribuição entre renda e investimento</CardDescription>
+              <CardDescription>Distribuição entre renda e investimento (Peças + Terceiros)</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -197,7 +201,7 @@ export default function ResultadoOS() {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, value }) => `${name}: ${value.toFixed(1)}%`}
+                    label={({ name, value }) => `${name}: ${value?.toFixed(1)}%`}
                     outerRadius={100}
                     fill="#8884d8"
                     dataKey="value"
@@ -206,7 +210,7 @@ export default function ResultadoOS() {
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value) => `${value.toFixed(1)}%`} />
+                  <Tooltip formatter={(value) => `${value?.toFixed(1)}%`} />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
@@ -225,18 +229,18 @@ export default function ResultadoOS() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />
-                  <Tooltip formatter={(value) => `R$ ${value.toFixed(2)}`} />
+                  <Tooltip formatter={(value) => formatCurrency(value)} />
                   <Legend />
-                  <Bar dataKey="value" fill={diagnostic.tcmp2_difference >= 0 ? "#22c55e" : "#ef4444"} />
+                  <Bar dataKey="value" fill={diagnostic.tcmp2_difference >= -1 ? "#22c55e" : "#ef4444"} />
                 </BarChart>
               </ResponsiveContainer>
               <div className="mt-4 text-center">
-                <p className={`text-lg font-semibold ${diagnostic.tcmp2_difference >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  Diferença: {diagnostic.tcmp2_difference >= 0 ? '+' : ''}R$ {diagnostic.tcmp2_difference.toFixed(2)}
+                <p className={`text-lg font-semibold ${diagnostic.tcmp2_difference >= -1 ? 'text-green-600' : 'text-red-600'}`}>
+                  Diferença: {diagnostic.tcmp2_difference >= 0 ? '+' : ''}{formatCurrency(diagnostic.tcmp2_difference)}
                 </p>
                 <p className="text-sm text-gray-600 mt-1">
-                  Valor Hora Ideal: R$ {diagnostic.ideal_hour_value.toFixed(2)} | 
-                  Atual: R$ {diagnostic.current_hour_value.toFixed(2)}
+                  Valor Hora Ideal: {formatCurrency(diagnostic.ideal_hour_value)} | 
+                  Atual: {formatCurrency(diagnostic.current_hour_value)}
                 </p>
               </div>
             </CardContent>
@@ -255,18 +259,16 @@ export default function ResultadoOS() {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="text-left p-2">Peça</th>
-                      <th className="text-center p-2">Qtd</th>
-                      <th className="text-right p-2">Venda Unit.</th>
-                      <th className="text-right p-2">Custo Unit.</th>
                       <th className="text-right p-2">Total Venda</th>
+                      <th className="text-right p-2">Total Custo</th>
                       <th className="text-right p-2">Margem</th>
                     </tr>
                   </thead>
                   <tbody>
                     {diagnostic.parts.map((part, index) => {
-                      const totalSale = part.sale_value * part.quantity;
-                      const totalCost = part.cost_value * part.quantity;
-                      const margin = ((totalSale - totalCost) / totalSale) * 100;
+                      const margin = part.sale_value > 0 
+                        ? ((part.sale_value - part.cost_value) / part.sale_value) * 100 
+                        : 0;
                       
                       return (
                         <tr key={index} className="border-t">
@@ -274,10 +276,8 @@ export default function ResultadoOS() {
                             {part.name}
                             {part.is_commodity && <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">Commodity</span>}
                           </td>
-                          <td className="text-center p-2">{part.quantity}</td>
-                          <td className="text-right p-2">R$ {part.sale_value.toFixed(2)}</td>
-                          <td className="text-right p-2">R$ {part.cost_value.toFixed(2)}</td>
-                          <td className="text-right p-2 font-semibold">R$ {totalSale.toFixed(2)}</td>
+                          <td className="text-right p-2 font-semibold">{formatCurrency(part.sale_value)}</td>
+                          <td className="text-right p-2">{formatCurrency(part.cost_value)}</td>
                           <td className={`text-right p-2 font-semibold ${margin >= 50 ? 'text-green-600' : margin >= 0 ? 'text-yellow-600' : 'text-red-600'}`}>
                             {margin.toFixed(1)}%
                           </td>
@@ -303,11 +303,11 @@ export default function ResultadoOS() {
                   <div key={index} className="bg-gray-50 rounded-lg p-4 border">
                     <div className="flex items-start justify-between mb-2">
                       <h4 className="font-semibold text-gray-900">{service.name}</h4>
-                      <span className="text-lg font-bold text-green-600">R$ {service.charged_value.toFixed(2)}</span>
+                      <span className="text-lg font-bold text-green-600">{formatCurrency(service.charged_value)}</span>
                     </div>
                     <div className="text-sm text-gray-600 mb-2">
-                      Tempo estimado: {service.estimated_time}h | 
-                      TCMP² (×2): {(service.estimated_time * 2).toFixed(1)}h
+                      Tempo calculado: {service.estimated_time?.toFixed(2)}h | 
+                      TCMP² (×2): {(service.estimated_time * 2).toFixed(2)}h
                     </div>
                     {service.description_steps && (
                       <div className="text-sm text-gray-700 bg-white rounded p-2 border-l-4 border-blue-500">
@@ -316,6 +316,39 @@ export default function ResultadoOS() {
                     )}
                   </div>
                 ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Detalhamento de Serviços Terceiros */}
+        {diagnostic.third_party_services?.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Serviços de Terceiros</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="text-left p-2">Serviço</th>
+                      <th className="text-right p-2">Custo</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {diagnostic.third_party_services.map((service, index) => (
+                      <tr key={index} className="border-t">
+                        <td className="p-2">{service.name}</td>
+                        <td className="text-right p-2 font-semibold">{formatCurrency(service.cost)}</td>
+                      </tr>
+                    ))}
+                    <tr className="border-t bg-gray-50 font-bold">
+                      <td className="p-2">Total</td>
+                      <td className="text-right p-2">{formatCurrency(diagnostic.total_third_party_costs)}</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </CardContent>
           </Card>

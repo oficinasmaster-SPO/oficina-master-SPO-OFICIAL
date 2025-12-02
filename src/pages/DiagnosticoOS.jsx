@@ -170,10 +170,11 @@ export default function DiagnosticoOS() {
     const totalOS = totalPartsSale + totalServicesValue; // Terceiros normalmente já estão inclusos no valor cobrado ou repassados? Assumindo estrutura padrão onde serviços é valor cobrado
     
     // R70/I30
-    // Os custos de peças usadas para R70/I30 são o totalPartsCost
-    const r70Base = totalOS - totalPartsCost;
+    // Os custos de peças usadas para R70/I30 são o totalPartsCost + totalThirdPartyCosts
+    const totalInvestment = totalPartsCost + totalThirdPartyCosts;
+    const r70Base = totalOS - totalInvestment;
     const revenuePercentage = totalOS > 0 ? (r70Base / totalOS) * 100 : 0;
-    const investmentPercentage = totalOS > 0 ? (totalPartsCost / totalOS) * 100 : 0;
+    const investmentPercentage = totalOS > 0 ? (totalInvestment / totalOS) * 100 : 0;
     
     // TCMP² - Valor hora ideal (puxado do DRE Mensal)
     const idealHourValue = tcmp2Value; 
