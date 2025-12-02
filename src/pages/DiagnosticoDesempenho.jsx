@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Loader2, User, Award, Brain } from "lucide-react";
+import { Loader2, User, Award, Brain, History } from "lucide-react";
 import { technicalCriteria, emotionalCriteria, calculateClassification } from "../components/performance/PerformanceCriteria";
 import { toast } from "sonner";
 
@@ -106,16 +106,22 @@ export default function DiagnosticoDesempenho() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 py-12 px-4">
       <div className="max-w-5xl mx-auto">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-100 rounded-full mb-4">
-            <Award className="w-8 h-8 text-indigo-600" />
+        <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+          <div className="text-center md:text-left flex-1">
+            <div className="inline-flex items-center justify-center w-12 h-12 bg-indigo-100 rounded-full mb-3">
+              <Award className="w-6 h-6 text-indigo-600" />
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Matriz de Decisão de Desempenho
+            </h1>
+            <p className="text-gray-600">
+              Avalie competências técnicas e emocionais.
+            </p>
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-3">
-            Matriz de Decisão de Desempenho
-          </h1>
-          <p className="text-lg text-gray-600">
-            Avalie competências técnicas e emocionais para classificar o colaborador
-          </p>
+          <Button variant="outline" onClick={() => navigate(createPageUrl("HistoricoDesempenho"))}>
+            <History className="w-4 h-4 mr-2" />
+            Histórico
+          </Button>
         </div>
 
         {currentSection === "intro" && (
