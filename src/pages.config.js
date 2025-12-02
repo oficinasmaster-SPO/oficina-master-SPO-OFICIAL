@@ -87,6 +87,8 @@ import MeusProcessos from './pages/MeusProcessos';
 import QGPBoard from './pages/QGPBoard';
 import TechnicianQGP from './pages/TechnicianQGP';
 import ConsolidadoMensal from './pages/ConsolidadoMensal';
+import ResponderDISC from './pages/ResponderDISC';
+import ResponderMaturidade from './pages/ResponderMaturidade';
 import __Layout from './Layout.jsx';
 
 
@@ -180,6 +182,8 @@ export const PAGES = {
     "QGPBoard": QGPBoard,
     "TechnicianQGP": TechnicianQGP,
     "ConsolidadoMensal": ConsolidadoMensal,
+    "ResponderDISC": ResponderDISC,
+    "ResponderMaturidade": ResponderMaturidade,
 }
 
 export const pagesConfig = {
