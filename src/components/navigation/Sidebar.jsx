@@ -47,7 +47,8 @@ import {
   Flame,
   Receipt,
   CreditCard,
-  MessageCircle
+  MessageCircle,
+  Truck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
