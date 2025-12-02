@@ -81,10 +81,10 @@ export default function DashboardHub({ user, workshop }) {
     queryFn: async () => {
       if (!user?.email) return null;
       try {
-        // STRICT FILTERING: Fetch only the employee record for this user
-        const result = await base44.entities.Employee.filter({ email: user.email });
+        const result = await base44.entities.Employee.list(); // Listar e filtrar no client por segurança ou usar filter se suportado
         const employees = Array.isArray(result) ? result : [];
-        return employees.find(e => !workshop || e.workshop_id === workshop.id) || null;
+        // Encontrar employee com mesmo email e da mesma oficina (se workshop existir)
+        return employees.find(e => e.email === user.email && (!workshop || e.workshop_id === workshop.id)) || null;
       } catch (e) {
         return null;
       }

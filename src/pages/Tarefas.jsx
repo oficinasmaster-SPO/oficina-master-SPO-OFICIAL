@@ -74,19 +74,17 @@ export default function Tarefas() {
   });
 
   const { data: employees = [] } = useQuery({
-    queryKey: ['employees', workshop?.id],
+    queryKey: ['employees'],
     queryFn: async () => {
-      if (!workshop?.id) return [];
       try {
-        // STRICT FILTERING
-        const result = await base44.entities.Employee.filter({ workshop_id: workshop.id });
+        const result = await base44.entities.Employee.list();
         return Array.isArray(result) ? result : [];
       } catch (error) {
         console.log("Error fetching employees:", error);
         return [];
       }
     },
-    enabled: !!user && !!workshop,
+    enabled: !!user,
     retry: 1
   });
 
