@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Users, Star, Phone, Mail, Loader2, Shield } from "lucide-react";
+import { Plus, Search, Users, Star, Phone, Mail, Loader2, Shield, Building2, MapPin } from "lucide-react";
 import AddClientDialog from "../components/clients/AddClientDialog";
 
 export default function AdminClientes() {
@@ -35,11 +35,21 @@ export default function AdminClientes() {
     }
   };
 
-  const { data: clients = [], isLoading } = useQuery({
-    queryKey: ['admin-clients'],
-    queryFn: () => base44.entities.Client.list('-created_date'),
+  const { data: workshops = [], isLoading, refetch } = useQuery({
+    queryKey: ['admin-workshops'],
+    queryFn: () => base44.entities.Workshop.list('-created_date'),
     enabled: !!user && user.role === "admin"
   });
+
+  const handleUpdateStatus = async (workshopId, newStatus) => {
+    await base44.entities.Workshop.update(workshopId, { status: newStatus });
+    refetch();
+  };
+
+  const handleUpdatePlan = async (workshopId, newPlan) => {
+    await base44.entities.Workshop.update(workshopId, { planoAtual: newPlan });
+    refetch();
+  };
 
   if (!user || user.role !== "admin") {
     return (
@@ -50,11 +60,13 @@ export default function AdminClientes() {
   }
 
   const planColors = {
-    gratis: "bg-gray-100 text-gray-800",
-    start: "bg-blue-100 text-blue-800",
-    bronze: "bg-amber-100 text-amber-800",
-    prata: "bg-slate-200 text-slate-800",
-    gold: "bg-yellow-100 text-yellow-800"
+    FREE: "bg-gray-100 text-gray-800",
+    START: "bg-blue-100 text-blue-800",
+    BRONZE: "bg-amber-100 text-amber-800",
+    PRATA: "bg-slate-200 text-slate-800",
+    GOLD: "bg-yellow-100 text-yellow-800",
+    IOM: "bg-purple-100 text-purple-800",
+    MILLIONS: "bg-green-100 text-green-800"
   };
 
   const statusColors = {
@@ -63,20 +75,20 @@ export default function AdminClientes() {
     acompanhamento: "bg-orange-100 text-orange-800"
   };
 
-  const filteredClients = clients.filter(client => {
-    const matchesSearch = client.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         client.email?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesPlan = filterPlan === "all" || client.plan_type === filterPlan;
-    const matchesStatus = filterStatus === "all" || client.status === filterStatus;
+  const filteredWorkshops = workshops.filter(w => {
+    const matchesSearch = w.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         w.city?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesPlan = filterPlan === "all" || w.planoAtual === filterPlan;
+    const matchesStatus = filterStatus === "all" || w.status === filterStatus;
     return matchesSearch && matchesPlan && matchesStatus;
   });
 
   // Estatísticas
   const stats = {
-    total: clients.length,
-    ativos: clients.filter(c => c.status === 'ativo').length,
-    gratis: clients.filter(c => c.plan_type === 'gratis').length,
-    pagos: clients.filter(c => c.plan_type !== 'gratis').length
+    total: workshops.length,
+    ativos: workshops.filter(w => w.status === 'ativo').length,
+    gratis: workshops.filter(w => w.planoAtual === 'FREE').length,
+    pagos: workshops.filter(w => w.planoAtual !== 'FREE').length
   };
 
   return (
@@ -143,11 +155,13 @@ export default function AdminClientes() {
                 className="px-3 py-2 border rounded-lg"
               >
                 <option value="all">Todos os Planos</option>
-                <option value="gratis">Grátis</option>
-                <option value="start">Start</option>
-                <option value="bronze">Bronze</option>
-                <option value="prata">Prata</option>
-                <option value="gold">Gold</option>
+                <option value="FREE">FREE</option>
+                <option value="START">START</option>
+                <option value="BRONZE">BRONZE</option>
+                <option value="PRATA">PRATA</option>
+                <option value="GOLD">GOLD</option>
+                <option value="IOM">IOM</option>
+                <option value="MILLIONS">MILLIONS</option>
               </select>
               <select
                 value={filterStatus}
@@ -163,24 +177,24 @@ export default function AdminClientes() {
           </CardContent>
         </Card>
 
-        {/* Lista de Clientes */}
+        {/* Lista de Oficinas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredClients.map((client) => (
-            <Card key={client.id} className="hover:shadow-xl transition-shadow border-2">
+          {filteredWorkshops.map((workshop) => (
+            <Card key={workshop.id} className="hover:shadow-xl transition-shadow border-2">
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-full flex items-center justify-center">
-                      <Users className="w-6 h-6 text-white" />
+                      <Building2 className="w-6 h-6 text-white" />
                     </div>
-                    <div>
-                      <CardTitle className="text-lg">{client.full_name}</CardTitle>
-                      <div className="flex gap-2 mt-1">
-                        <Badge className={planColors[client.plan_type]}>
-                          {client.plan_type?.toUpperCase()}
+                    <div className="overflow-hidden">
+                      <CardTitle className="text-lg truncate w-48" title={workshop.name}>{workshop.name}</CardTitle>
+                      <div className="flex gap-2 mt-1 flex-wrap">
+                        <Badge className={planColors[workshop.planoAtual] || 'bg-gray-100'}>
+                          {workshop.planoAtual}
                         </Badge>
-                        <Badge className={statusColors[client.status]}>
-                          {client.status}
+                        <Badge className={statusColors[workshop.status] || 'bg-gray-100'}>
+                          {workshop.status}
                         </Badge>
                       </div>
                     </div>
@@ -188,50 +202,66 @@ export default function AdminClientes() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
-                {client.email && (
+                {workshop.city && (
                   <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Mail className="w-4 h-4" />
-                    {client.email}
+                    <MapPin className="w-4 h-4" />
+                    {workshop.city} - {workshop.state}
                   </div>
                 )}
-                {client.phone && (
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Phone className="w-4 h-4" />
-                    {client.phone}
-                  </div>
-                )}
-                {client.cpf_cnpj && (
+                {workshop.cnpj && (
                   <div className="text-sm text-gray-600">
-                    <strong>CPF/CNPJ:</strong> {client.cpf_cnpj}
+                    <strong>CNPJ:</strong> {workshop.cnpj}
                   </div>
                 )}
-                {client.engagement_score > 0 && (
-                  <div className="flex items-center gap-2">
-                    <Star className="w-4 h-4 text-yellow-500" />
-                    <span className="text-sm text-gray-600">
-                      Engajamento: {client.engagement_score.toFixed(0)}%
-                    </span>
-                  </div>
-                )}
-                {client.participant_rating > 0 && (
-                  <div className="flex items-center gap-2">
-                    <div className="text-sm text-gray-600">
-                      Avaliação: <strong>{client.participant_rating.toFixed(1)}/10</strong>
+                
+                <div className="pt-2 border-t grid grid-cols-2 gap-2">
+                    <div>
+                        <label className="text-xs text-gray-500">Alterar Status</label>
+                        <select 
+                            className="w-full text-xs border rounded p-1 mt-1"
+                            value={workshop.status}
+                            onChange={(e) => handleUpdateStatus(workshop.id, e.target.value)}
+                        >
+                            <option value="ativo">Ativo</option>
+                            <option value="inativo">Inativo</option>
+                            <option value="acompanhamento">Acompanhamento</option>
+                        </select>
                     </div>
-                  </div>
-                )}
-                <div className="text-xs text-gray-500 pt-2 border-t">
-                  Criado em: {new Date(client.created_date).toLocaleDateString('pt-BR')}
+                    <div>
+                        <label className="text-xs text-gray-500">Alterar Plano</label>
+                        <select 
+                            className="w-full text-xs border rounded p-1 mt-1"
+                            value={workshop.planoAtual}
+                            onChange={(e) => handleUpdatePlan(workshop.id, e.target.value)}
+                        >
+                            <option value="FREE">FREE</option>
+                            <option value="START">START</option>
+                            <option value="BRONZE">BRONZE</option>
+                            <option value="PRATA">PRATA</option>
+                            <option value="GOLD">GOLD</option>
+                            <option value="IOM">IOM</option>
+                            <option value="MILLIONS">MILLIONS</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div className="text-xs text-gray-500 pt-2 border-t flex justify-between">
+                   <span>Criado em: {new Date(workshop.created_date).toLocaleDateString('pt-BR')}</span>
+                   {workshop.engagement_score > 0 && (
+                       <span className="flex items-center gap-1 text-yellow-600 font-bold">
+                           <Star className="w-3 h-3" /> {workshop.engagement_score}%
+                       </span>
+                   )}
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
 
-        {filteredClients.length === 0 && (
+        {filteredWorkshops.length === 0 && (
           <div className="text-center py-12">
-            <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 text-lg">Nenhum cliente encontrado</p>
+            <Building2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500 text-lg">Nenhuma oficina encontrada</p>
           </div>
         )}
       </div>
