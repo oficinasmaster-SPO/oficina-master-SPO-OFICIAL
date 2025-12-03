@@ -28,7 +28,8 @@ export default function ConvidarColaborador() {
     position: "",
     area: "",
     job_role: "outros",
-    initial_permission: "colaborador"
+    initial_permission: "colaborador",
+    employee_id: null
   });
 
   const jobRoles = [
@@ -99,7 +100,8 @@ export default function ConvidarColaborador() {
             email: employee.email,
             position: employee.position,
             area: employee.area,
-            job_role: employee.job_role || "outros"
+            job_role: employee.job_role || "outros",
+            employee_id: employee.id
           }));
           toast.info("Dados do colaborador carregados!");
         }
@@ -144,7 +146,8 @@ export default function ConvidarColaborador() {
       position: emp.position,
       area: emp.area || "",
       job_role: emp.job_role || "outros",
-      initial_permission: "colaborador"
+      initial_permission: "colaborador",
+      employee_id: emp.id
     });
     toast.info("Dados preenchidos! Clique em Enviar Convite.");
   };
@@ -171,7 +174,7 @@ export default function ConvidarColaborador() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employee-invites'] });
-      setFormData({ name: "", email: "", position: "", area: "", job_role: "outros", initial_permission: "colaborador" });
+      setFormData({ name: "", email: "", position: "", area: "", job_role: "outros", initial_permission: "colaborador", employee_id: null });
       toast.success("Convite enviado com sucesso! Verifique a caixa de spam.");
     },
     onError: (error) => {

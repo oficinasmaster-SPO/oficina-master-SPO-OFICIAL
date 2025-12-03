@@ -11,10 +11,26 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { name, email, position, area, job_role, initial_permission, workshop_id, workshop_name, origin } = await req.json();
+    const { name, email, position, area, job_role, initial_permission, workshop_id, workshop_name, origin, employee_id } = await req.json();
 
     if (!email || !workshop_id) {
       return Response.json({ error: 'Dados incompletos' }, { status: 400 });
+    }
+
+    // Tentar encontrar o employee_id se não foi passado, buscando pelo email na oficina
+    let targetEmployeeId = employee_id;
+    if (!targetEmployeeId) {
+        try {
+            const existingEmployees = await base44.asServiceRole.entities.Employee.filter({
+                email: email,
+                workshop_id: workshop_id
+            });
+            if (existingEmployees && existingEmployees.length > 0) {
+                targetEmployeeId = existingEmployees[0].id;
+            }
+        } catch (e) {
+            console.log("Erro ao buscar colaborador existente:", e);
+        }
     }
 
     // Tentar buscar convite existente para não duplicar se estiver pendente
@@ -34,7 +50,8 @@ Deno.serve(async (req) => {
             invite_token: token,
             expires_at: expiresAt.toISOString(),
             resent_count: (existingInvites[0].resent_count || 0) + 1,
-            last_resent_at: new Date().toISOString()
+            last_resent_at: new Date().toISOString(),
+            employee_id: targetEmployeeId || existingInvites[0].employee_id // Atualiza vínculo se encontrado
         });
     } else {
         // Criar novo convite
@@ -49,7 +66,8 @@ Deno.serve(async (req) => {
             invite_token: token,
             expires_at: expiresAt.toISOString(),
             status: "enviado",
-            created_by: user.email 
+            created_by: user.email,
+            employee_id: targetEmployeeId || null
         });
     }
 
@@ -57,7 +75,7 @@ Deno.serve(async (req) => {
     const baseUrl = origin || "https://app.base44.com"; 
     const inviteUrl = `${baseUrl}/PrimeiroAcesso?token=${token}`;
 
-    // Enviar email com from_name explícito e html simplificado para evitar spam
+    // Enviar email
     await base44.integrations.Core.SendEmail({
       to: email,
       from_name: "Oficinas Master",
