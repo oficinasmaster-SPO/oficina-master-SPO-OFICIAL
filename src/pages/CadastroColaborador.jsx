@@ -98,8 +98,8 @@ export default function CadastroColaborador() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.full_name || !formData.position) {
-      toast.error("Preencha nome e cargo");
+    if (!formData.full_name || !formData.position || !formData.email) {
+      toast.error("Preencha nome, cargo e e-mail");
       return;
     }
 
@@ -223,11 +223,12 @@ export default function CadastroColaborador() {
                   />
                 </div>
                 <div>
-                  <Label>Email</Label>
+                  <Label>Email *</Label>
                   <Input
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    required
                   />
                 </div>
               </div>
