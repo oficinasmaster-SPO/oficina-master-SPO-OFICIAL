@@ -130,23 +130,40 @@ export default function ConvidarColaborador() {
   // Mutação para enviar convite
   const sendInviteMutation = useMutation({
     mutationFn: async (data) => {
+      console.log("Iniciando envio...", data);
       try {
-        const response = await base44.functions.invoke('sendEmployeeInvite', {
+        // Garante que workshop.id existe
+        if (!workshop || !workshop.id) {
+            throw new Error("ID da oficina não encontrado. Recarregue a página.");
+        }
+
+        const payload = {
           ...data,
           workshop_id: workshop.id,
           workshop_name: workshop.name,
           origin: window.location.origin
-        });
+        };
         
-        // Verifica se a resposta contém erro
+        console.log("Payload enviado:", payload);
+
+        const response = await base44.functions.invoke('sendEmployeeInvite', payload);
+        
+        console.log("Resposta do servidor:", response);
+
+        // Verifica status HTTP e corpo da resposta
+        if (response.status !== 200) {
+             const errorMsg = response.data?.error || "Erro desconhecido no servidor";
+             throw new Error(errorMsg);
+        }
+        
         if (response.data && response.data.error) {
             throw new Error(response.data.error);
         }
         
         return response.data;
       } catch (error) {
-        // Relança o erro para cair no onError
-        throw new Error(error.message || "Erro ao comunicar com o servidor");
+        console.error("Erro capturado no frontend:", error);
+        throw new Error(error.message || "Falha na comunicação. Verifique sua conexão.");
       }
     },
     onSuccess: () => {
