@@ -148,22 +148,22 @@ export default function DiagnosticoDISC() {
 
       const recommendedRoles = getRecommendedRoles(profileScores);
 
-      const diagnostic = await base44.entities.DISCDiagnostic.create({
+      const response = await base44.functions.invoke('submitAppForms', {
+        form_type: 'manager_disc_diagnostic',
         employee_id: selectedEmployee,
-        evaluator_id: user.id,
         workshop_id: workshop?.id || null,
         is_leader: isLeader,
         team_name: teamName || null,
         answers: answersArray,
         profile_scores: profileScores,
         dominant_profile: dominant,
-        recommended_roles: recommendedRoles,
-        evaluation_type: 'manager',
-        completed: true
+        recommended_roles: recommendedRoles
       });
 
+      if (response.data.error) throw new Error(response.data.error);
+
       toast.success("Teste DISC concluído!");
-      navigate(createPageUrl("ResultadoDISC") + `?id=${diagnostic.id}`);
+      navigate(createPageUrl("ResultadoDISC") + `?id=${response.data.id}`);
     } catch (error) {
       console.error(error);
       toast.error("Erro ao salvar diagnóstico");

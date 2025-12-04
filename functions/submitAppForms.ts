@@ -77,6 +77,25 @@ Deno.serve(async (req) => {
         return Response.json({ success: true, id: diagnostic.id });
     }
 
+    if (form_type === 'manager_disc_diagnostic') {
+        const { employee_id, workshop_id, is_leader, team_name, answers, profile_scores, dominant_profile, recommended_roles } = body;
+        
+        const diagnostic = await base44.asServiceRole.entities.DISCDiagnostic.create({
+            employee_id,
+            evaluator_id: user.id,
+            workshop_id,
+            is_leader,
+            team_name,
+            answers,
+            profile_scores,
+            dominant_profile,
+            recommended_roles,
+            evaluation_type: 'manager',
+            completed: true
+        });
+        return Response.json({ success: true, id: diagnostic.id });
+    }
+
     return Response.json({ error: 'Invalid form type' }, { status: 400 });
 
   } catch (error) {
