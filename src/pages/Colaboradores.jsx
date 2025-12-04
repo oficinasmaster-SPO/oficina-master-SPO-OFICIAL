@@ -12,15 +12,15 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import AITrainingSuggestions from "../components/rh/AITrainingSuggestions";
 import DynamicHelpSystem from "../components/help/DynamicHelpSystem";
 import QuickTipsBar from "../components/help/QuickTipsBar";
-import ActivityNotificationSettings from "../components/rh/ActivityNotificationSettings";
-import { Settings } from "lucide-react";
+// import ActivityNotificationSettings from "../components/rh/ActivityNotificationSettings"; // Removed
+// import { Settings } from "lucide-react"; // Removed if unused elsewhere
 
 export default function Colaboradores() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedEmployee, setSelectedEmployee] = useState(null);
-  const [showSettings, setShowSettings] = useState(false);
+  // const [showSettings, setShowSettings] = useState(false);
 
   // Fetch user first to get workshop context
   const { data: user } = useQuery({
@@ -149,15 +149,7 @@ export default function Colaboradores() {
             Novo Colaborador
           </Button>
           
-          <Button
-            variant="outline"
-            onClick={() => setShowSettings(true)}
-            className="border-blue-200 hover:bg-blue-50 text-blue-700"
-            title="Configurar notificações automáticas"
-          >
-            <Settings className="w-5 h-5 mr-2" />
-            Notificações
-          </Button>
+          {/* Button Notificações removido e movido para Admin */}
         </div>
 
         <div className="flex flex-col md:flex-row gap-4 mb-6" id="filtros-colaboradores">
@@ -309,13 +301,7 @@ export default function Colaboradores() {
           </DialogContent>
         </Dialog>
 
-        {workshop && (
-          <ActivityNotificationSettings 
-            open={showSettings} 
-            onOpenChange={setShowSettings} 
-            workshop={workshop} 
-          />
-        )}
+        {/* ActivityNotificationSettings removido */}
       </div>
     </div>
   );

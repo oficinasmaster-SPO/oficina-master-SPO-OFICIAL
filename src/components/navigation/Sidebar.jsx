@@ -48,7 +48,8 @@ import {
   Receipt,
   CreditCard,
   MessageCircle,
-  Truck
+  Truck,
+  Mail
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -480,6 +481,13 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('AdminMensagens'), 
           icon: MessageCircle,
           description: 'Configurar mensagens de incentivo',
+          adminOnly: true
+        },
+        { 
+          name: 'Automação de E-mails', 
+          href: createPageUrl('AdminNotificacoes'), 
+          icon: Mail,
+          description: 'Alertas de inatividade e resumos',
           adminOnly: true
         },
         { 
