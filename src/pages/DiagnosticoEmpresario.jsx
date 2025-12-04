@@ -103,17 +103,18 @@ export default function DiagnosticoEmpresario() {
         scores[a] > scores[b] ? a : b
       );
       
-      const diagnostic = await base44.entities.EntrepreneurDiagnostic.create({
-        user_id: user.id,
+      const response = await base44.functions.invoke('submitAppForms', {
+        form_type: 'entrepreneur_diagnostic',
         workshop_id: workshop?.id || null,
         answers: answersArray,
         dominant_profile: dominantProfile,
-        profile_scores: scores,
-        completed: true
+        profile_scores: scores
       });
+
+      if (response.data.error) throw new Error(response.data.error);
       
       toast.success("Diagnóstico concluído!");
-      navigate(createPageUrl("ResultadoEmpresario") + `?id=${diagnostic.id}`);
+      navigate(createPageUrl("ResultadoEmpresario") + `?id=${response.data.id}`);
     } catch (error) {
       console.error(error);
       toast.error("Erro ao salvar diagnóstico");

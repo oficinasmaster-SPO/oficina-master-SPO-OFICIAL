@@ -99,17 +99,18 @@ export default function Questionario() {
         selected_option: letter
       }));
       
-      const diagnostic = await base44.entities.Diagnostic.create({
-        user_id: user.id,
+      const response = await base44.functions.invoke('submitAppForms', {
+        form_type: 'workshop_diagnostic',
         workshop_id: workshop.id,
         answers: answersArray,
         phase: phase,
-        dominant_letter: dominantLetter,
-        completed: true
+        dominant_letter: dominantLetter
       });
+
+      if (response.data.error) throw new Error(response.data.error);
       
       toast.success("Diagnóstico concluído com sucesso!");
-      navigate(createPageUrl("Resultado") + `?id=${diagnostic.id}`);
+      navigate(createPageUrl("Resultado") + `?id=${response.data.id}`);
     } catch (error) {
       console.error(error);
       toast.error("Erro ao salvar diagnóstico");

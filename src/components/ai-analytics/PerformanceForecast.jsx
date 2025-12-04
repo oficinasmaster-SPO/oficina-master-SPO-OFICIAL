@@ -152,7 +152,6 @@ Analise tendências e forneça:
                   stroke="#3b82f6" 
                   strokeWidth={2}
                   name="Faturamento" 
-                  strokeDasharray={d => d.type === 'Previsão' ? '5 5' : '0'}
                 />
                 <Line 
                   type="monotone" 
@@ -160,7 +159,6 @@ Analise tendências e forneça:
                   stroke="#10b981" 
                   strokeWidth={2}
                   name="Lucro %" 
-                  strokeDasharray={d => d.type === 'Previsão' ? '5 5' : '0'}
                 />
               </LineChart>
             </ResponsiveContainer>
