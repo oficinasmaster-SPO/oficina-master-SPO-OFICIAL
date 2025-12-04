@@ -55,14 +55,20 @@ export default function ActivityNotificationSettings({ open, onOpenChange, works
     setProcessing(true);
     try {
       const response = await base44.functions.invoke('processActivityEmails', {
-        workshop_id: workshop.id
+        workshop_id: workshop.id,
+        is_test_run: true // Solicita um relatório por e-mail para o admin
       });
       
       if (response.data?.success) {
         const stats = response.data.results;
-        toast.success(`Processamento concluído! ${stats.emails_sent} e-mails enviados.`);
+        toast.success(`Teste concluído! Relatório enviado para seu e-mail.`);
+        if (stats.emails_sent > 0) {
+             toast.info(`${stats.emails_sent} notificações enviadas para colaboradores.`);
+        } else {
+             toast.info("Nenhum colaborador atendeu aos critérios de inatividade neste momento.");
+        }
       } else {
-        toast.error("Erro ao processar notificações");
+        toast.error("Erro ao processar notificações: " + (response.data?.error || "Erro desconhecido"));
       }
     } catch (error) {
       console.error(error);
