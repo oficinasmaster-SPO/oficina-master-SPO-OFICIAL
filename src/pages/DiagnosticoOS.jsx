@@ -45,7 +45,16 @@ export default function DiagnosticoOS() {
       setUser(currentUser);
       
       const workshops = await base44.entities.Workshop.list();
-      const userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
+      let userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
+      
+      if (!userWorkshop) {
+        // Fallback for employees
+        const employees = await base44.entities.Employee.filter({ email: currentUser.email });
+        if (employees.length > 0 && employees[0].workshop_id) {
+            userWorkshop = workshops.find(w => w.id === employees[0].workshop_id);
+        }
+      }
+      
       setWorkshop(userWorkshop);
 
       const now = new Date();
@@ -170,6 +179,7 @@ export default function DiagnosticoOS() {
     // O usuário pediu "soma automática valor total das peças + valor total dos serviços".
     // Mas também "custos (peças e serviço terceiro / Valor toral da O.S = ( i ) )"
     // Normalmente o Valor Total da OS é Venda Peças + Venda Serviços.
+    // Se houver repasse de terceiro, deve entrar. Vamos assumir Total OS = Peças + Serviços.
     // Se houver repasse de terceiro, deve entrar. Vamos assumir Total OS = Peças + Serviços.
 
     const totalOS = totalPartsSale + totalServicesValue; 
