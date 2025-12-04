@@ -71,6 +71,13 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       icon: BarChart3,
       items: [
         { 
+          name: 'Visão Geral', 
+          href: createPageUrl('DashboardOverview'), 
+          icon: LayoutDashboard,
+          description: 'Resumo da sua oficina',
+          highlight: true
+        },
+        { 
           name: 'Dashboard Nacional', 
           href: createPageUrl('Dashboard'), 
           icon: TrendingUp,
