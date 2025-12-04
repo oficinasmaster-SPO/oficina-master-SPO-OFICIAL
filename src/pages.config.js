@@ -101,6 +101,7 @@ import MeusTreinamentos from './pages/MeusTreinamentos';
 import AssistirAula from './pages/AssistirAula';
 import AcompanhamentoTreinamento from './pages/AcompanhamentoTreinamento';
 import DiagnosticoCarga from './pages/DiagnosticoCarga';
+import DashboardOverview from './pages/DashboardOverview';
 import __Layout from './Layout.jsx';
 
 
@@ -208,6 +209,7 @@ export const PAGES = {
     "AssistirAula": AssistirAula,
     "AcompanhamentoTreinamento": AcompanhamentoTreinamento,
     "DiagnosticoCarga": DiagnosticoCarga,
+    "DashboardOverview": DashboardOverview,
 }
 
 export const pagesConfig = {
