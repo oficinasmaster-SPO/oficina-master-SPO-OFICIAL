@@ -124,8 +124,8 @@ export default function DiagnosticoEmpresario() {
       toast.success("Diagnóstico concluído!");
       navigate(createPageUrl("ResultadoEmpresario") + `?id=${response.data.id}`);
     } catch (error) {
-      console.error(error);
-      toast.error("Erro ao salvar diagnóstico");
+      console.error("Erro ao salvar diagnóstico:", error);
+      toast.error("Erro ao salvar diagnóstico: " + (error.message || "Erro desconhecido"));
     } finally {
       setIsSubmitting(false);
     }
