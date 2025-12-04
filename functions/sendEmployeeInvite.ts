@@ -1,5 +1,4 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
-import { addDays } from 'npm:date-fns@3.3.1';
 
 Deno.serve(async (req) => {
   try {
@@ -8,26 +7,17 @@ Deno.serve(async (req) => {
     // Verificar autenticação
     const user = await base44.auth.me();
     if (!user) {
-      return Response.json({ error: 'Usuário não autenticado' }, { status: 401 });
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await req.json();
     const { name, email, position, area, job_role, initial_permission, workshop_id, workshop_name, origin, employee_id } = body;
 
-    // Validação rigorosa dos campos obrigatórios
-    const missingFields = [];
-    if (!name) missingFields.push('Nome');
-    if (!email) missingFields.push('Email');
-    if (!position) missingFields.push('Cargo');
-    if (!area) missingFields.push('Área');
-    if (!workshop_id) missingFields.push('ID da Oficina');
-
-    if (missingFields.length > 0) {
-      return Response.json({ error: `Campos obrigatórios faltando: ${missingFields.join(', ')}` }, { status: 400 });
+    if (!name || !email || !workshop_id) {
+      return Response.json({ error: 'Dados incompletos: Nome, Email e ID da Oficina são obrigatórios.' }, { status: 400 });
     }
 
     // 1. Identificar o employee_id (ID do Colaborador)
-    // Se não veio no payload, tenta buscar pelo email na mesma oficina
     let targetEmployeeId = employee_id;
     if (!targetEmployeeId) {
         try {
@@ -39,41 +29,37 @@ Deno.serve(async (req) => {
                 targetEmployeeId = existingEmployees[0].id;
             }
         } catch (e) {
-            console.warn("Erro ao buscar colaborador por email:", e);
+            console.warn("Erro ao buscar colaborador:", e);
         }
     }
 
-    // 2. Verificar se já existe um convite PENDENTE (status 'enviado')
-    // Se existir, vamos atualizar e reenviar. Se não, criamos um novo.
+    // 2. Gerar Token e Data
+    const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
+    // Expira em 5 dias (calculado manualmente para evitar dependências externas)
+    const expiresAt = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString();
+
+    // 3. Verificar/Criar Convite
     const existingInvites = await base44.asServiceRole.entities.EmployeeInvite.filter({ 
         email, 
         workshop_id,
         status: 'enviado'
     });
 
-    const token = Math.random().toString(36).substring(2) + Date.now().toString(36) + Math.random().toString(36).substring(2);
-    const expiresAt = addDays(new Date(), 5);
     let invite;
-
     if (existingInvites && existingInvites.length > 0) {
-        // ATUALIZAR convite existente
+        // Atualizar
         const updateData = {
             invite_token: token,
-            expires_at: expiresAt.toISOString(),
+            expires_at: expiresAt,
             resent_count: (existingInvites[0].resent_count || 0) + 1,
             last_resent_at: new Date().toISOString()
         };
+        if (targetEmployeeId) updateData.employee_id = targetEmployeeId;
         
-        // Só atualiza o employee_id se tivermos encontrado um válido
-        if (targetEmployeeId) {
-            updateData.employee_id = targetEmployeeId;
-        }
-
         invite = await base44.asServiceRole.entities.EmployeeInvite.update(existingInvites[0].id, updateData);
     } else {
-        // CRIAR novo convite
-        // Importante: Construir o objeto para evitar passar null em campos string
-        const newInviteData = {
+        // Criar
+        const createData = {
             name,
             email,
             position,
@@ -82,20 +68,16 @@ Deno.serve(async (req) => {
             initial_permission: initial_permission || 'colaborador',
             workshop_id,
             invite_token: token,
-            expires_at: expiresAt.toISOString(),
+            expires_at: expiresAt,
             status: "enviado",
             created_by: user.email
         };
+        if (targetEmployeeId) createData.employee_id = targetEmployeeId;
 
-        // Adiciona employee_id apenas se existir (evita erro de schema validation com null)
-        if (targetEmployeeId) {
-            newInviteData.employee_id = targetEmployeeId;
-        }
-
-        invite = await base44.asServiceRole.entities.EmployeeInvite.create(newInviteData);
+        invite = await base44.asServiceRole.entities.EmployeeInvite.create(createData);
     }
 
-    // 3. Enviar o E-mail
+    // 4. Enviar Email
     const baseUrl = origin || "https://app.base44.com"; 
     const inviteUrl = `${baseUrl}/PrimeiroAcesso?token=${token}`;
 
@@ -103,51 +85,42 @@ Deno.serve(async (req) => {
         await base44.integrations.Core.SendEmail({
           to: email,
           from_name: "Oficinas Master",
-          subject: `Convite para Oficinas Master: ${workshop_name || 'Sua Oficina'}`,
+          subject: `Convite: Junte-se à equipe ${workshop_name || ''}`,
           body: `
             <!DOCTYPE html>
             <html>
             <body style="font-family: sans-serif; color: #333;">
-              <div style="padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px; max-width: 600px; margin: 0 auto;">
-                <h2 style="color: #2563eb; margin-bottom: 20px;">Convite de Acesso</h2>
-                <p>Olá, <strong>${name}</strong>.</p>
-                <p>Você foi convidado(a) para acessar o sistema da oficina <strong>${workshop_name || 'Parceira'}</strong>.</p>
+              <div style="padding: 20px; border: 1px solid #eee; border-radius: 8px; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #2563eb;">Oficinas Master</h2>
+                <p>Olá, <strong>${name}</strong>!</p>
+                <p>Você foi convidado para acessar o portal da oficina <strong>${workshop_name || 'sua oficina'}</strong>.</p>
                 
-                <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin: 20px 0;">
+                <div style="background: #f9fafb; padding: 15px; border-radius: 6px; margin: 20px 0;">
                   <p style="margin: 5px 0;"><strong>Cargo:</strong> ${position}</p>
                   <p style="margin: 5px 0;"><strong>Área:</strong> ${area}</p>
                 </div>
 
-                <p>Clique no botão abaixo para criar sua senha e acessar:</p>
-                
                 <div style="text-align: center; margin: 30px 0;">
-                  <a href="${inviteUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
-                    Acessar Sistema
+                  <a href="${inviteUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                    Aceitar Convite
                   </a>
                 </div>
                 
-                <p style="font-size: 12px; color: #6b7280;">
-                  Ou copie este link: <br>${inviteUrl}
-                </p>
+                <p style="font-size: 12px; color: #666;">Link de acesso: ${inviteUrl}</p>
               </div>
             </body>
             </html>
           `
         });
-    } catch (emailError) {
-        console.error("Erro no envio de email:", emailError);
-        // Se falhar o email, mas salvou o convite, retornamos sucesso mas com aviso (ou erro 500 se preferir)
-        // Vamos retornar erro para o frontend saber que o email falhou
-        return Response.json({ 
-            error: "O convite foi salvo, mas houve erro ao enviar o e-mail. Tente reenviar.", 
-            details: emailError.message 
-        }, { status: 500 });
+    } catch (emailErr) {
+        console.error("Erro envio email:", emailErr);
+        return Response.json({ error: "Convite salvo, mas erro ao enviar e-mail. Tente novamente." }, { status: 500 });
     }
 
     return Response.json({ success: true, invite_id: invite.id });
 
   } catch (error) {
-    console.error("Erro crítico na função sendEmployeeInvite:", error);
-    return Response.json({ error: error.message || "Erro interno no servidor" }, { status: 500 });
+    console.error("Erro sendEmployeeInvite:", error);
+    return Response.json({ error: error.message }, { status: 500 });
   }
 });
