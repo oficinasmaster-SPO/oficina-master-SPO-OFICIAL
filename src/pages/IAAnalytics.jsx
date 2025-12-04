@@ -26,12 +26,18 @@ export default function IAAnalytics() {
 
       try {
         const workshops = await base44.entities.Workshop.list();
-        // Use a distinct variable name to avoid any potential confusion
-        const foundWorkshop = workshops.find(w => w.owner_id === currentUser.id) || 
-                              (await findWorkshopAsEmployee(currentUser.email, workshops));
+        let loadedWorkshop = workshops.find(w => w.owner_id === currentUser.id);
         
-        if (foundWorkshop) {
-            setWorkshop(foundWorkshop);
+        if (!loadedWorkshop) {
+             // Fallback for employees
+             const employees = await base44.entities.Employee.filter({ email: currentUser.email });
+             if (employees.length > 0 && employees[0].workshop_id) {
+                 loadedWorkshop = workshops.find(w => w.id === employees[0].workshop_id);
+             }
+        }
+        
+        if (loadedWorkshop) {
+            setWorkshop(loadedWorkshop);
         }
       } catch (workshopError) {
         console.log("Error fetching workshops:", workshopError);
@@ -42,16 +48,6 @@ export default function IAAnalytics() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const findWorkshopAsEmployee = async (email, allWorkshops) => {
-      try {
-          const employees = await base44.entities.Employee.filter({ email });
-          if (employees && employees.length > 0 && employees[0].workshop_id) {
-            return allWorkshops.find(w => w.id === employees[0].workshop_id);
-          }
-      } catch (e) { return null; }
-      return null;
   };
 
   const { data: employees = [] } = useQuery({

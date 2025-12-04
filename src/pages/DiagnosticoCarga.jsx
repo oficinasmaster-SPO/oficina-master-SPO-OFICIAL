@@ -78,22 +78,22 @@ export default function DiagnosticoCarga() {
     try {
       const user = await base44.auth.me();
       const workshops = await base44.entities.Workshop.list();
-      let foundWorkshop = workshops.find(w => w.owner_id === user.id);
+      let loadedWorkshop = workshops.find(w => w.owner_id === user.id);
       
-      if (!foundWorkshop) {
+      if (!loadedWorkshop) {
         // Fallback for employees
         const employees = await base44.entities.Employee.filter({ email: user.email });
         if (employees.length > 0 && employees[0].workshop_id) {
-            foundWorkshop = workshops.find(w => w.id === employees[0].workshop_id);
+            loadedWorkshop = workshops.find(w => w.id === employees[0].workshop_id);
         }
       }
 
-      if (!foundWorkshop) {
+      if (!loadedWorkshop) {
         toast.error("Oficina não encontrada");
         navigate(createPageUrl("Home"));
         return;
       }
-      setWorkshop(foundWorkshop);
+      setWorkshop(loadedWorkshop);
     } catch (error) {
       base44.auth.redirectToLogin(createPageUrl("DiagnosticoCarga"));
     } finally {

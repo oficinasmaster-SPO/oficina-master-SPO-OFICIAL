@@ -30,8 +30,16 @@ export default function DiagnosticoEmpresario() {
       setUser(currentUser);
       
       const workshops = await base44.entities.Workshop.list();
-      const userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
-      setWorkshop(userWorkshop);
+      let loadedWorkshop = workshops.find(w => w.owner_id === currentUser.id);
+      
+      if (!loadedWorkshop) {
+        // Fallback for employees
+        const employees = await base44.entities.Employee.filter({ email: currentUser.email });
+        if (employees.length > 0 && employees[0].workshop_id) {
+            loadedWorkshop = workshops.find(w => w.id === employees[0].workshop_id);
+        }
+      }
+      setWorkshop(loadedWorkshop);
     } catch (error) {
       // toast.error("Você precisa estar logado"); // Removido toast duplicado se falhar auth
       base44.auth.redirectToLogin(createPageUrl("DiagnosticoEmpresario"));
