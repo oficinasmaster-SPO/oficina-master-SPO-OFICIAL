@@ -30,15 +30,15 @@ export default function ResultadoCarga() {
       }
 
       const diagnostics = await base44.entities.WorkloadDiagnostic.list();
-      const currentDiagnostic = diagnostics.find(d => d.id === diagnosticId);
+      const foundDiagnostic = diagnostics.find(d => d.id === diagnosticId);
 
-      if (!currentDiagnostic) {
+      if (!foundDiagnostic) {
         toast.error("Diagnóstico não encontrado");
         navigate(createPageUrl("Home"));
         return;
       }
 
-      setDiagnostic(currentDiagnostic);
+      setDiagnostic(foundDiagnostic);
 
       const allEmployees = await base44.entities.Employee.list();
       setEmployees(allEmployees);
