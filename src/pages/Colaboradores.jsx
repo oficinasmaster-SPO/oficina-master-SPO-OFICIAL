@@ -12,12 +12,15 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import AITrainingSuggestions from "../components/rh/AITrainingSuggestions";
 import DynamicHelpSystem from "../components/help/DynamicHelpSystem";
 import QuickTipsBar from "../components/help/QuickTipsBar";
+import ActivityNotificationSettings from "../components/rh/ActivityNotificationSettings";
+import { Settings } from "lucide-react";
 
 export default function Colaboradores() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [showSettings, setShowSettings] = useState(false);
 
   // Fetch user first to get workshop context
   const { data: user } = useQuery({
@@ -144,6 +147,16 @@ export default function Colaboradores() {
           >
             <UserPlus className="w-5 h-5 mr-2" />
             Novo Colaborador
+          </Button>
+          
+          <Button
+            variant="outline"
+            onClick={() => setShowSettings(true)}
+            className="border-blue-200 hover:bg-blue-50 text-blue-700"
+            title="Configurar notificações automáticas"
+          >
+            <Settings className="w-5 h-5 mr-2" />
+            Notificações
           </Button>
         </div>
 
@@ -295,6 +308,14 @@ export default function Colaboradores() {
             )}
           </DialogContent>
         </Dialog>
+
+        {workshop && (
+          <ActivityNotificationSettings 
+            open={showSettings} 
+            onOpenChange={setShowSettings} 
+            workshop={workshop} 
+          />
+        )}
       </div>
     </div>
   );
