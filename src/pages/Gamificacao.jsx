@@ -77,26 +77,6 @@ export default function Gamificacao() {
     retry: 1
   });
 
-  const { data: employees = [] } = useQuery({
-    queryKey: ['employees', currentWorkshop?.id],
-    queryFn: async () => {
-      if (!currentWorkshop) return [];
-      try {
-        // Strict filtering by workshop_id
-        const result = await base44.entities.Employee.filter({ workshop_id: currentWorkshop.id });
-        return Array.isArray(result) ? result : [];
-      } catch (error) {
-        console.log("Error fetching employees:", error);
-        return [];
-      }
-    },
-    enabled: !!currentWorkshop,
-    retry: 1
-  });
-
-
-
-
   const { data: workshops = [] } = useQuery({
     queryKey: ['workshops'],
     queryFn: async () => {
@@ -116,8 +96,26 @@ export default function Gamificacao() {
   });
 
   // Workshop do usuário atual
-  const currentWorkshop = workshops.find(w => w.owner_id === user?.id) || 
-    workshops.find(w => employees.find(e => e.email === user?.email && e.workshop_id === w.id));
+  // Note: We need to be careful with circular dependency if we try to use employees to find workshop
+  // For now, prefer owner_id or basic filtering. Employees will be fetched after workshop.
+  const currentWorkshop = workshops.find(w => w.owner_id === user?.id); 
+
+  const { data: employees = [] } = useQuery({
+    queryKey: ['employees', currentWorkshop?.id],
+    queryFn: async () => {
+      if (!currentWorkshop) return [];
+      try {
+        // Strict filtering by workshop_id
+        const result = await base44.entities.Employee.filter({ workshop_id: currentWorkshop.id });
+        return Array.isArray(result) ? result : [];
+      } catch (error) {
+        console.log("Error fetching employees:", error);
+        return [];
+      }
+    },
+    enabled: !!currentWorkshop,
+    retry: 1
+  });
 
   const myEmployeeRecord = employees.find(e => e.email === user?.email);
 
