@@ -24,7 +24,7 @@ export default function ResultadoCarga() {
       const diagnosticId = urlParams.get("id");
 
       if (!diagnosticId) {
-        toast.error("Diagnóstico não encontrado");
+        toast.error("ID do diagnóstico não encontrado");
         navigate(createPageUrl("Home"));
         return;
       }
@@ -87,16 +87,16 @@ export default function ResultadoCarga() {
     }
   };
 
-  const currentHealth = healthConfig[diagnostic.overall_health];
+  const currentHealth = healthConfig[diagnostic.overall_health] || healthConfig.atencao;
   const HealthIcon = currentHealth.icon;
 
   // Preparar dados para o gráfico
-  const chartData = diagnostic.workload_data.map(emp => {
+  const chartData = (diagnostic.workload_data || []).map(emp => {
     const employee = employees.find(e => e.id === emp.employee_id);
-    const utilization = (emp.weekly_hours_worked / emp.ideal_weekly_hours) * 100;
+    const utilization = emp.ideal_weekly_hours > 0 ? (emp.weekly_hours_worked / emp.ideal_weekly_hours) * 100 : 0;
     
     return {
-      name: employee?.full_name || emp.position_title,
+      name: employee?.full_name || emp.position_title || "Colaborador",
       utilizacao: utilization,
       ideal: 100,
       horas: emp.weekly_hours_worked
@@ -185,7 +185,7 @@ export default function ResultadoCarga() {
         </Card>
 
         {/* Colaboradores Sobrecarregados */}
-        {diagnostic.analysis_results.overloaded_employees?.length > 0 && (
+        {diagnostic.analysis_results?.overloaded_employees?.length > 0 && (
           <Card className="border-2 border-red-200">
             <CardHeader>
               <div className="flex items-center gap-3">
@@ -215,7 +215,7 @@ export default function ResultadoCarga() {
         )}
 
         {/* Colaboradores Subutilizados */}
-        {diagnostic.analysis_results.underutilized_employees?.length > 0 && (
+        {diagnostic.analysis_results?.underutilized_employees?.length > 0 && (
           <Card className="border-2 border-blue-200">
             <CardHeader>
               <div className="flex items-center gap-3">
@@ -245,7 +245,7 @@ export default function ResultadoCarga() {
         )}
 
         {/* Sugestões de Redistribuição */}
-        {diagnostic.analysis_results.redistribution_suggestions?.length > 0 && (
+        {diagnostic.analysis_results?.redistribution_suggestions?.length > 0 && (
           <Card className="border-2 border-purple-200">
             <CardHeader>
               <div className="flex items-center gap-3">

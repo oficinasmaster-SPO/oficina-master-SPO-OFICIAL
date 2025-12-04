@@ -81,6 +81,16 @@ export default function DiagnosticoCarga() {
       const userWorkshop = workshops.find(w => w.owner_id === user.id);
       
       if (!userWorkshop) {
+        // Fallback for employees
+        const employees = await base44.entities.Employee.filter({ email: user.email });
+        if (employees.length > 0 && employees[0].workshop_id) {
+            const w = workshops.find(w => w.id === employees[0].workshop_id);
+            if(w) {
+                setWorkshop(w);
+                setLoading(false);
+                return;
+            }
+        }
         toast.error("Oficina não encontrada");
         navigate(createPageUrl("Home"));
         return;
@@ -128,7 +138,6 @@ export default function DiagnosticoCarga() {
       if (average > 2.5) overall_health = 'bom';
       if (average > 3.5) overall_health = 'excelente';
 
-      // Use backend function for consistent creation (using the new consolidated function pattern)
       const response = await base44.functions.invoke('submitAppForms', {
         form_type: 'workload_diagnostic',
         workshop_id: workshop.id,
