@@ -156,6 +156,38 @@ export default function GestaoDesafios() {
     }
   });
 
+  const handleFinalize = async (challenge) => {
+    if (confirm("Tem certeza que deseja finalizar este desafio? Isso pode gerar recompensas para os participantes.")) {
+      try {
+        await base44.functions.invoke('updateChallengeProgress', {
+          challenge_id: challenge.id,
+          action: 'finalize'
+        });
+        toast.success("Desafio finalizado!");
+        queryClient.invalidateQueries(['workshop-challenges']);
+      } catch (error) {
+        toast.error("Erro ao finalizar desafio");
+      }
+    }
+  };
+
+  const handleUpdateProgress = async () => {
+    if (!progressData.challenge) return;
+    
+    try {
+      await base44.functions.invoke('updateChallengeProgress', {
+        challenge_id: progressData.challenge.id,
+        action: 'manual_update',
+        manual_value: Number(progressData.value),
+      });
+      toast.success("Progresso atualizado!");
+      setShowProgressModal(false);
+      queryClient.invalidateQueries(['workshop-challenges']);
+    } catch (error) {
+      toast.error("Erro ao atualizar progresso");
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (currentChallenge) {
@@ -316,7 +348,6 @@ export default function GestaoDesafios() {
                       value={formData.metric} 
                       onValueChange={v => {
                         setFormData({...formData, metric: v});
-                        // Auto-set direction based on metric
                         const selectedMetric = availableMetrics.find(m => m.code === v);
                         if (selectedMetric?.optimization_direction) {
                            setFormData(prev => ({...prev, metric_target_direction: selectedMetric.optimization_direction}));
@@ -456,33 +487,33 @@ export default function GestaoDesafios() {
               </div>
             )}
           </div>
-
-          {/* Modal de Atualização de Progresso */}
-          <Dialog open={showProgressModal} onOpenChange={setShowProgressModal}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Atualizar Progresso</DialogTitle>
-                <DialogDescription>
-                  Insira o valor atual alcançado para o desafio "{progressData.challenge?.title}".
-                </DialogDescription>
-              </DialogHeader>
-              <div className="py-4">
-                <Label>Valor Atual</Label>
-                <Input 
-                  type="number" 
-                  value={progressData.value} 
-                  onChange={(e) => setProgressData({...progressData, value: e.target.value})}
-                  placeholder="Ex: 50000"
-                />
-                <p className="text-xs text-gray-500 mt-1">Meta: {progressData.challenge?.goal_value}</p>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setShowProgressModal(false)}>Cancelar</Button>
-                <Button onClick={handleUpdateProgress} className="bg-purple-600 hover:bg-purple-700">Salvar Progresso</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
         )}
+
+        {/* Modal de Atualização de Progresso */}
+        <Dialog open={showProgressModal} onOpenChange={setShowProgressModal}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Atualizar Progresso</DialogTitle>
+              <DialogDescription>
+                Insira o valor atual alcançado para o desafio "{progressData.challenge?.title}".
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <Label>Valor Atual</Label>
+              <Input 
+                type="number" 
+                value={progressData.value} 
+                onChange={(e) => setProgressData({...progressData, value: e.target.value})}
+                placeholder="Ex: 50000"
+              />
+              <p className="text-xs text-gray-500 mt-1">Meta: {progressData.challenge?.goal_value}</p>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowProgressModal(false)}>Cancelar</Button>
+              <Button onClick={handleUpdateProgress} className="bg-purple-600 hover:bg-purple-700">Salvar Progresso</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
