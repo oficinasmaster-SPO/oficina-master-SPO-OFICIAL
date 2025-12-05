@@ -10,6 +10,7 @@ import Sidebar from "@/components/navigation/Sidebar";
 import Breadcrumbs from "@/components/navigation/Breadcrumbs";
 import UsageTracker from "@/components/tracking/UsageTracker";
 import { SharedDataProvider } from "@/components/shared/SharedDataProvider";
+import GlobalSearch from "@/components/navigation/GlobalSearch";
 
 export default function Layout({ children }) {
   const location = useLocation();
@@ -113,6 +114,13 @@ export default function Layout({ children }) {
               <Link to={createPageUrl("Home")} className={`flex items-center gap-2 ${isAuthenticated ? 'lg:hidden' : ''}`}>
                 <div className="text-lg font-bold text-gray-900">Oficinas Master</div>
               </Link>
+
+              {/* Global Search Bar */}
+              {isAuthenticated && workshop && (
+                <div className="hidden md:flex flex-1 items-center justify-center px-6">
+                    <GlobalSearch workshopId={workshop.id} />
+                </div>
+              )}
 
               <div className="flex items-center gap-4 ml-auto">
                 {isAuthenticated && user && (
