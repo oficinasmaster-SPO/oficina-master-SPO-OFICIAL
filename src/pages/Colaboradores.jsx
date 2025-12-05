@@ -9,12 +9,11 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import AITrainingSuggestions from "../components/rh/AITrainingSuggestions";
 import DynamicHelpSystem from "../components/help/DynamicHelpSystem";
 import QuickTipsBar from "../components/help/QuickTipsBar";
 import AdvancedFilter from "@/components/shared/AdvancedFilter";
-// import ActivityNotificationSettings from "../components/rh/ActivityNotificationSettings"; // Removed
-// import { Settings } from "lucide-react"; // Removed if unused elsewhere
 
 export default function Colaboradores() {
   const navigate = useNavigate();
@@ -22,9 +21,7 @@ export default function Colaboradores() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [maturityFilter, setMaturityFilter] = useState("all");
   const [selectedEmployee, setSelectedEmployee] = useState(null);
-  // const [showSettings, setShowSettings] = useState(false);
 
-  // Fetch user first to get workshop context
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me()
@@ -45,7 +42,6 @@ export default function Colaboradores() {
     queryFn: async () => {
       if (!workshop) return [];
       try {
-        // Filter employees by the specific workshop ID
         const result = await base44.entities.Employee.filter({ workshop_id: workshop.id }, '-created_date');
         return Array.isArray(result) ? result : [];
       } catch (error) {
@@ -72,23 +68,23 @@ export default function Colaboradores() {
   });
 
   const statusColors = {
-  ativo: "bg-green-100 text-green-700",
-  inativo: "bg-gray-100 text-gray-700",
-  ferias: "bg-blue-100 text-blue-700"
+    ativo: "bg-green-100 text-green-700",
+    inativo: "bg-gray-100 text-gray-700",
+    ferias: "bg-blue-100 text-blue-700"
   };
 
   const maturityColors = {
-  bebe: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  crianca: "bg-orange-100 text-orange-800 border-orange-200",
-  adolescente: "bg-blue-100 text-blue-800 border-blue-200",
-  adulto: "bg-purple-100 text-purple-800 border-purple-200"
+    bebe: "bg-yellow-100 text-yellow-800 border-yellow-200",
+    crianca: "bg-orange-100 text-orange-800 border-orange-200",
+    adolescente: "bg-blue-100 text-blue-800 border-blue-200",
+    adulto: "bg-purple-100 text-purple-800 border-purple-200"
   };
 
   const maturityLabels = {
-  bebe: "Bebê",
-  crianca: "Criança",
-  adolescente: "Adolescente",
-  adulto: "Adulto"
+    bebe: "Bebê",
+    crianca: "Criança",
+    adolescente: "Adolescente",
+    adulto: "Adulto"
   };
 
   const filteredEmployees = Array.isArray(employees) ? employees.filter((employee) => {
@@ -151,8 +147,6 @@ export default function Colaboradores() {
             <UserPlus className="w-5 h-5 mr-2" />
             Novo Colaborador
           </Button>
-          
-          {/* Button Notificações removido e movido para Admin */}
         </div>
 
         <AdvancedFilter 
@@ -318,8 +312,6 @@ export default function Colaboradores() {
             )}
           </DialogContent>
         </Dialog>
-
-        {/* ActivityNotificationSettings removido */}
       </div>
     </div>
   );
