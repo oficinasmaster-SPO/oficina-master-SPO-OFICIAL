@@ -12,6 +12,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import AITrainingSuggestions from "../components/rh/AITrainingSuggestions";
 import DynamicHelpSystem from "../components/help/DynamicHelpSystem";
 import QuickTipsBar from "../components/help/QuickTipsBar";
+import AdvancedFilter from "@/components/shared/AdvancedFilter";
 // import ActivityNotificationSettings from "../components/rh/ActivityNotificationSettings"; // Removed
 // import { Settings } from "lucide-react"; // Removed if unused elsewhere
 
@@ -19,6 +20,7 @@ export default function Colaboradores() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [maturityFilter, setMaturityFilter] = useState("all");
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   // const [showSettings, setShowSettings] = useState(false);
 
@@ -94,7 +96,8 @@ export default function Colaboradores() {
     const matchesSearch = employee.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          employee.position.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || employee.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesMaturity = maturityFilter === "all" || (employee.current_maturity_level === maturityFilter);
+    return matchesSearch && matchesStatus && matchesMaturity;
   }) : [];
 
   const getTotalCost = (employee) => {
@@ -152,26 +155,41 @@ export default function Colaboradores() {
           {/* Button Notificações removido e movido para Admin */}
         </div>
 
-        <div className="flex flex-col md:flex-row gap-4 mb-6" id="filtros-colaboradores">
-          <div className="flex-1">
-            <Input
-              placeholder="Buscar por nome ou cargo..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full md:w-48">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="ativo">Ativo</SelectItem>
-              <SelectItem value="inativo">Inativo</SelectItem>
-              <SelectItem value="ferias">Férias</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <AdvancedFilter 
+            onFilter={(params) => {
+                setSearchTerm(params.search);
+                setStatusFilter(params.status || 'all');
+                setMaturityFilter(params.maturity || 'all');
+            }}
+            filterConfig={[
+                {
+                    key: "status",
+                    label: "Status",
+                    type: "select",
+                    defaultValue: "all",
+                    options: [
+                        { value: "all", label: "Todos" },
+                        { value: "ativo", label: "Ativo" },
+                        { value: "inativo", label: "Inativo" },
+                        { value: "ferias", label: "Férias" }
+                    ]
+                },
+                {
+                    key: "maturity",
+                    label: "Maturidade",
+                    type: "select",
+                    defaultValue: "all",
+                    options: [
+                        { value: "all", label: "Todas" },
+                        { value: "bebe", label: "Bebê" },
+                        { value: "crianca", label: "Criança" },
+                        { value: "adolescente", label: "Adolescente" },
+                        { value: "adulto", label: "Adulto" }
+                    ]
+                }
+            ]}
+            placeholder="Buscar por nome ou cargo..."
+        />
 
         {filteredEmployees.length === 0 ? (
           <Card className="shadow-lg">

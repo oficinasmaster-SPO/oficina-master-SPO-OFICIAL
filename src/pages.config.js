@@ -103,6 +103,7 @@ import AcompanhamentoTreinamento from './pages/AcompanhamentoTreinamento';
 import DiagnosticoCarga from './pages/DiagnosticoCarga';
 import DashboardOverview from './pages/DashboardOverview';
 import AdminNotificacoes from './pages/AdminNotificacoes';
+import Feedbacks from './pages/Feedbacks';
 import __Layout from './Layout.jsx';
 
 
@@ -212,6 +213,7 @@ export const PAGES = {
     "DiagnosticoCarga": DiagnosticoCarga,
     "DashboardOverview": DashboardOverview,
     "AdminNotificacoes": AdminNotificacoes,
+    "Feedbacks": Feedbacks,
 }
 
 export const pagesConfig = {

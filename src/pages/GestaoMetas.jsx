@@ -11,11 +11,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Target, Plus, TrendingUp, Users, Calendar } from "lucide-react";
 import { toast } from "sonner";
+import AdvancedFilter from "@/components/shared/AdvancedFilter";
 
 export default function GestaoMetas() {
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState(null);
+  const [filters, setFilters] = useState({ search: "", area: "all", periodo: "all" });
   const [formData, setFormData] = useState({
     periodo: "mensal",
     area: "geral",
@@ -152,6 +154,7 @@ export default function GestaoMetas() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          {/* Stats cards remain unchanged */}
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center gap-3">
@@ -189,8 +192,44 @@ export default function GestaoMetas() {
           </Card>
         </div>
 
+        <AdvancedFilter 
+          onFilter={setFilters}
+          filterConfig={[
+            {
+              key: "area",
+              label: "Área",
+              type: "select",
+              defaultValue: "all",
+              options: [
+                { value: "all", label: "Todas Áreas" },
+                { value: "vendas", label: "Vendas" },
+                { value: "comercial", label: "Comercial" },
+                { value: "tecnico", label: "Técnico" },
+                { value: "financeiro", label: "Financeiro" }
+              ]
+            },
+            {
+              key: "periodo",
+              label: "Período",
+              type: "select",
+              defaultValue: "all",
+              options: [
+                { value: "all", label: "Todos" },
+                { value: "mensal", label: "Mensal" },
+                { value: "semanal", label: "Semanal" }
+              ]
+            }
+          ]}
+          placeholder="Buscar metas..."
+        />
+
         <div className="grid grid-cols-1 gap-4">
-          {goals.map((goal) => (
+          {goals.filter(g => {
+            const matchesSearch = filters.search ? JSON.stringify(g).toLowerCase().includes(filters.search.toLowerCase()) : true;
+            const matchesArea = filters.area === 'all' || g.area === filters.area;
+            const matchesPeriodo = filters.periodo === 'all' || g.periodo === filters.periodo;
+            return matchesSearch && matchesArea && matchesPeriodo;
+          }).map((goal) => (
             <Card key={goal.id} className="hover:shadow-lg transition-shadow">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
