@@ -10,11 +10,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Plus, Trash2, Save, Target, Globe, Calendar, Award, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import ChallengeCard from "@/components/gamification/ChallengeCard";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 export default function AdminDesafios() {
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [currentChallenge, setCurrentChallenge] = useState(null);
+  const [showProgressModal, setShowProgressModal] = useState(false);
+  const [progressData, setProgressData] = useState({ value: 0, challenge: null });
 
   // Estado inicial do formulário
   const initialFormState = {
