@@ -13,6 +13,8 @@ import { formatCurrency, formatNumber } from "../components/utils/formatters";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ServiceGoalsModal from "@/components/goals/ServiceGoalsModal";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export default function DesdobramentoMeta() {
   const navigate = useNavigate();
@@ -36,6 +38,15 @@ export default function DesdobramentoMeta() {
     comercial: [],
     tecnico: []
   });
+
+  // Estado para Modal de Metas por Serviço
+  const [serviceModalOpen, setServiceModalOpen] = useState(false);
+  const [selectedEmployeeForService, setSelectedEmployeeForService] = useState(null);
+  const [currentServiceGoals, setCurrentServiceGoals] = useState([]);
+
+  // Estado para Previsões IA
+  const [forecasts, setForecasts] = useState({});
+  const [isForecasting, setIsForecasting] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -115,6 +126,9 @@ export default function DesdobramentoMeta() {
           // Bonificação
           bonus_value: 0,
           
+          // Metas por Serviço
+          goals_by_service: [],
+
           is_new: !bestRevenue // Flag se é novo (sem histórico)
         });
       }
@@ -187,6 +201,81 @@ export default function DesdobramentoMeta() {
     toast.success(`Crescimento de ${config.growth_percentage}% aplicado a todos!`);
   };
 
+  const handleOpenServiceModal = (area, index) => {
+    const row = tableData[area][index];
+    setSelectedEmployeeForService({ area, index, name: row.name });
+    setCurrentServiceGoals(row.goals_by_service || []);
+    setServiceModalOpen(true);
+  };
+
+  const handleSaveServiceGoals = (goals) => {
+    if (!selectedEmployeeForService) return;
+    const { area, index } = selectedEmployeeForService;
+    const newData = { ...tableData };
+    newData[area][index].goals_by_service = goals;
+    
+    // Opcional: Atualizar meta total automaticamente se a soma dos serviços mudar?
+    // Vamos perguntar ou somar. Por enquanto, só salva a lista.
+    // const sum = goals.reduce((acc, g) => acc + g.goal_value, 0);
+    // if (sum > 0) newData[area][index].target_revenue = sum;
+
+    setTableData(newData);
+    setServiceModalOpen(false);
+    toast.success("Metas por serviço atualizadas!");
+  };
+
+  const handleRunForecast = async () => {
+    setIsForecasting(true);
+    const newForecasts = {};
+    
+    try {
+        // Itera sobre todos os funcionários visíveis
+        // Para performance, poderia fazer em batch no backend, mas vamos chamar individualmente por enquanto
+        const allRows = Object.values(tableData).flat();
+        const promises = allRows.map(async (row) => {
+            // Mock de dados atuais (idealmente viria do banco production_history do mês atual)
+            // Vamos assumir que não temos dados REAIS do mês futuro/atual ainda se for planejamento puro
+            // Mas se for monitoramento, usamos.
+            // Aqui vamos simular/usar histórico para projetar "se continuar assim"
+            
+            const historyMock = [
+                { month: "Mês -1", revenue: row.hist_revenue },
+                { month: "Mês -2", revenue: row.hist_revenue * 0.9 }, // Simulação
+                { month: "Mês -3", revenue: row.hist_revenue * 0.85 }
+            ];
+
+            // Simula dados atuais (ex: dia 15, 50% da meta)
+            const currentDay = new Date().getDate();
+            const currentRev = row.hist_revenue * (currentDay/30); // Apenas um placeholder lógico se não tiver dados reais
+
+            try {
+                const res = await base44.functions.invoke('monitorGoalsAI', {
+                    currentMonthData: {
+                        daysPassed: currentDay,
+                        totalDays: 30,
+                        currentRevenue: currentRev, // Em produção real, buscar valor real
+                        targetRevenue: row.target_revenue,
+                        currentDailyAverage: currentRev / currentDay,
+                        requiredDailyAverage: (row.target_revenue - currentRev) / (30 - currentDay)
+                    },
+                    employeeHistory: historyMock
+                });
+                newForecasts[row.id] = res.data;
+            } catch (e) {
+                console.error(e);
+            }
+        });
+
+        await Promise.all(promises);
+        setForecasts(newForecasts);
+        toast.success("Previsões geradas com IA!");
+    } catch (error) {
+        toast.error("Erro ao gerar previsões.");
+    } finally {
+        setIsForecasting(false);
+    }
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -213,7 +302,8 @@ export default function DesdobramentoMeta() {
                 month: config.target_month_date.slice(0, 7),
                 individual_goal: row.target_revenue,
                 target_clients: row.target_clients,
-                bonus_potential: row.bonus_value
+                bonus_potential: row.bonus_value,
+                goals_by_service: row.goals_by_service || []
             };
 
             // Se a meta definida for maior que o histórico, atualizamos o "melhor mês" como referência de desafio?
@@ -262,6 +352,10 @@ export default function DesdobramentoMeta() {
                 </p>
             </div>
             <div className="flex gap-3">
+                <Button variant="outline" onClick={handleRunForecast} disabled={isForecasting} className="border-purple-200 text-purple-700 hover:bg-purple-50">
+                    {isForecasting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Target className="w-4 h-4 mr-2" />}
+                    Previsão IA
+                </Button>
                 <Button variant="outline" onClick={() => toast.info("Gerando PDF...")}>
                     <Download className="w-4 h-4 mr-2" /> PDF
                 </Button>
@@ -362,6 +456,9 @@ export default function DesdobramentoMeta() {
                                         <TableHead className="text-center w-[140px] bg-green-50 text-green-800 font-bold border-l">
                                             Bonificação<br/>(R$)
                                         </TableHead>
+                                        <TableHead className="text-center w-[100px] bg-purple-50 text-purple-800 font-bold border-l">
+                                            Detalhes
+                                        </TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -441,6 +538,45 @@ export default function DesdobramentoMeta() {
                                                         placeholder="0,00"
                                                     />
                                                 </TableCell>
+                                                
+                                                {/* Ações / IA */}
+                                                <TableCell className="bg-purple-50/30 border-l p-2 text-center">
+                                                    <Button 
+                                                        variant="ghost" 
+                                                        size="sm" 
+                                                        onClick={() => handleOpenServiceModal(area, index)}
+                                                        title="Metas por Serviço"
+                                                    >
+                                                        <Target className="w-4 h-4 text-purple-600" />
+                                                    </Button>
+                                                    
+                                                    {forecasts[row.id] && (
+                                                        <TooltipProvider>
+                                                            <Tooltip>
+                                                                <TooltipTrigger asChild>
+                                                                    <Badge 
+                                                                        variant="outline" 
+                                                                        className={`ml-1 cursor-help ${
+                                                                            forecasts[row.id].status === 'on_track' ? 'bg-green-100 text-green-700' : 
+                                                                            forecasts[row.id].status === 'risk' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
+                                                                        }`}
+                                                                    >
+                                                                        {forecasts[row.id].probability}%
+                                                                    </Badge>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent className="max-w-xs bg-white border shadow-lg p-3 text-xs text-gray-700">
+                                                                    <p className="font-bold mb-1">Previsão IA:</p>
+                                                                    <p>Estimativa: {formatCurrency(forecasts[row.id].projected_revenue)}</p>
+                                                                    <p className="mb-2">{forecasts[row.id].alert_message}</p>
+                                                                    <p className="font-bold mb-1">Sugestões:</p>
+                                                                    <ul className="list-disc pl-4">
+                                                                        {forecasts[row.id].action_plan?.map((act, i) => <li key={i}>{act}</li>)}
+                                                                    </ul>
+                                                                </TooltipContent>
+                                                            </Tooltip>
+                                                        </TooltipProvider>
+                                                    )}
+                                                </TableCell>
                                             </TableRow>
                                         ))
                                     )}
@@ -483,6 +619,14 @@ export default function DesdobramentoMeta() {
         </div>
 
       </div>
+
+      <ServiceGoalsModal 
+        isOpen={serviceModalOpen}
+        onClose={() => setServiceModalOpen(false)}
+        employeeName={selectedEmployeeForService?.name || ""}
+        goals={currentServiceGoals}
+        onSave={handleSaveServiceGoals}
+      />
     </div>
   );
 }
