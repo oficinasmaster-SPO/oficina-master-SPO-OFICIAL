@@ -15,10 +15,12 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import AdvancedFilter from "@/components/shared/AdvancedFilter";
+import AIDocumentAnalyzer from "@/components/documents/AIDocumentAnalyzer";
 
 export default function RepositorioDocumentos() {
   const queryClient = useQueryClient();
   const [showUploadModal, setShowActionModal] = useState(false);
+  const [selectedDocForAnalysis, setSelectedDocForAnalysis] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [filterParams, setFilterParams] = useState({ search: "", category: "all", type: "all" });
   
@@ -247,6 +249,15 @@ export default function RepositorioDocumentos() {
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-8 px-2 text-purple-600 hover:bg-purple-50"
+                            onClick={() => setSelectedDocForAnalysis(doc)}
+                            title="Analisar com IA"
+                          >
+                            <Search className="w-4 h-4 mr-1" /> IA
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -256,6 +267,13 @@ export default function RepositorioDocumentos() {
             </Table>
           </div>
         </Card>
+
+        {selectedDocForAnalysis && (
+          <AIDocumentAnalyzer 
+            document={selectedDocForAnalysis} 
+            onClose={() => setSelectedDocForAnalysis(null)} 
+          />
+        )}
 
         {/* Upload Modal */}
         <Dialog open={showUploadModal} onOpenChange={setShowActionModal}>

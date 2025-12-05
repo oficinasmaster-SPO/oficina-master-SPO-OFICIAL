@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import AIProcessOptimizer from "@/components/processes/AIProcessOptimizer";
 
 export default function GerenciarProcessos() {
   const [user, setUser] = useState(null);
@@ -542,7 +543,21 @@ export default function GerenciarProcessos() {
                 </TabsContent>
 
                 <TabsContent value="conteudo" className="space-y-6 mt-4 flex-1 overflow-y-auto pr-2">
-                  <div className="flex justify-end mb-4">
+                  <div className="flex justify-end mb-4 gap-2">
+                    <AIProcessOptimizer 
+                      processData={formData} 
+                      onApplyOptimization={(optimizedData) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          content_json: {
+                            ...prev.content_json,
+                            fluxo_processo: optimizedData.fluxo_processo || prev.content_json.fluxo_processo,
+                            atividades: optimizedData.atividades || prev.content_json.atividades,
+                            indicadores: optimizedData.indicadores || prev.content_json.indicadores
+                          }
+                        }));
+                      }}
+                    />
                     <Button 
                       type="button" 
                       onClick={generateWithAI} 
@@ -550,7 +565,7 @@ export default function GerenciarProcessos() {
                       className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700"
                     >
                       {generatingAI ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Wand2 className="w-4 h-4 mr-2" />}
-                      Gerar Processo Completo com IA (Sugestão)
+                      Gerar Completo
                     </Button>
                   </div>
 
