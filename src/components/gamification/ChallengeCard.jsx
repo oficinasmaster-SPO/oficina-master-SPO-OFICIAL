@@ -6,7 +6,7 @@ import { Trophy, Users, Target, Clock, Award } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-export default function ChallengeCard({ challenge, userProgress }) {
+export default function ChallengeCard({ challenge, userProgress, isManager, onEdit, onDelete, onFinalize, onUpdateProgress }) {
   const typeConfig = {
     semanal: { color: "bg-blue-100 text-blue-800", label: "Semanal" },
     mensal: { color: "bg-purple-100 text-purple-800", label: "Mensal" },
@@ -46,14 +46,14 @@ export default function ChallengeCard({ challenge, userProgress }) {
             <CardTitle className="text-lg">{challenge.title}</CardTitle>
             <p className="text-sm text-gray-600 mt-1">{challenge.description}</p>
           </div>
-          <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+          <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shrink-0">
             <Award className="w-6 h-6 text-white" />
           </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        {/* Progresso */}
-        {userProgress && (
+        {/* Progresso (Participante) */}
+        {!isManager && userProgress && (
           <div>
             <div className="flex items-center justify-between text-sm mb-1">
               <span className="text-gray-600">Seu Progresso</span>
@@ -68,6 +68,20 @@ export default function ChallengeCard({ challenge, userProgress }) {
               </Badge>
             )}
           </div>
+        )}
+
+        {/* Progresso (Gerente/Geral) - Exibe progresso se for meta de oficina ou resumo */}
+        {isManager && challenge.target_type === 'oficina' && (
+           <div>
+             <div className="flex items-center justify-between text-sm mb-1">
+               <span className="text-gray-600">Progresso da Oficina</span>
+               <span className="font-bold text-gray-900">
+                 {/* Busca o valor do participante 'oficina' ou o primeiro participante (assumindo 1 para oficina) */}
+                 {(challenge.participants?.find(p => p.user_id === challenge.workshop_id)?.current_value || 0).toFixed(0)}/{challenge.goal_value}
+               </span>
+             </div>
+             <Progress value={Math.min(((challenge.participants?.find(p => p.user_id === challenge.workshop_id)?.current_value || 0) / challenge.goal_value) * 100, 100)} className="h-2" />
+           </div>
         )}
 
         {/* Recompensa */}
@@ -91,7 +105,30 @@ export default function ChallengeCard({ challenge, userProgress }) {
         <div className="text-xs text-gray-500">
           Métrica: <span className="font-medium capitalize">{challenge.metric.replace('_', ' ')}</span>
         </div>
+
+        {/* Ações de Gerenciamento */}
+        {isManager && (
+          <div className="pt-4 border-t flex flex-wrap gap-2 justify-end">
+             {challenge.status === 'ativo' && (
+                <Button variant="outline" size="sm" onClick={() => onUpdateProgress(challenge)}>
+                  Atualizar Progresso
+                </Button>
+             )}
+             {challenge.status === 'ativo' && (
+                <Button variant="secondary" size="sm" onClick={() => onFinalize(challenge)} className="bg-green-100 text-green-800 hover:bg-green-200">
+                  Finalizar
+                </Button>
+             )}
+             <Button variant="ghost" size="sm" onClick={() => onEdit(challenge)}>
+               Editar
+             </Button>
+             <Button variant="ghost" size="sm" onClick={() => onDelete(challenge.id)} className="text-red-500 hover:bg-red-50">
+               Excluir
+             </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
 }
+import { Button } from "@/components/ui/button";

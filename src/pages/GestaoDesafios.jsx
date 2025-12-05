@@ -10,6 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Plus, Trash2, Save, Target, Building2, Calendar, Award, Lightbulb, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import ChallengeCard from "@/components/gamification/ChallengeCard";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 export default function GestaoDesafios() {
   const queryClient = useQueryClient();
@@ -17,6 +19,8 @@ export default function GestaoDesafios() {
   const [workshop, setWorkshop] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [currentChallenge, setCurrentChallenge] = useState(null);
+  const [showProgressModal, setShowProgressModal] = useState(false);
+  const [progressData, setProgressData] = useState({ value: 0, challenge: null });
 
   useEffect(() => {
     const init = async () => {
@@ -426,43 +430,23 @@ export default function GestaoDesafios() {
         ) : (
           <div className="grid gap-4">
             {challenges.map(challenge => (
-              <Card key={challenge.id} className="hover:shadow-md transition-all border-l-4 border-l-purple-500">
-                <CardContent className="p-6">
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-bold text-lg text-gray-900">{challenge.title}</h3>
-                        <span className={`text-xs px-2 py-1 rounded-full ${
-                          challenge.status === 'ativo' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {challenge.status.toUpperCase()}
-                        </span>
-                        <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">
-                          {challenge.type}
-                        </span>
-                      </div>
-                      <p className="text-gray-600 text-sm max-w-2xl">{challenge.description}</p>
-                      <div className="flex gap-4 text-sm text-gray-500 mt-2 flex-wrap">
-                        <span>Meta: <strong>{challenge.goal_value}</strong></span>
-                        <span>XP: <strong>{challenge.reward_xp}</strong></span>
-                        <span>Área: <strong>{challenge.target_area}</strong></span>
-                        {challenge.additional_reward_type && challenge.additional_reward_type !== 'none' && (
-                          <span className="flex items-center gap-1 text-indigo-600 font-medium bg-indigo-50 px-2 rounded-md">
-                            <Award className="w-3 h-3" />
-                            {challenge.additional_reward_description || 'Recompensa Especial'}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="icon" onClick={() => handleEdit(challenge)}>
-                        <span className="sr-only">Editar</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pencil"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <ChallengeCard 
+                key={challenge.id} 
+                challenge={challenge} 
+                isManager={true}
+                onEdit={handleEdit}
+                onDelete={(id) => {
+                  if (confirm("Tem certeza que deseja excluir?")) deleteMutation.mutate(id);
+                }}
+                onFinalize={handleFinalize}
+                onUpdateProgress={(c) => {
+                  setProgressData({ 
+                    value: c.target_type === 'oficina' ? (c.participants?.find(p => p.user_id === c.workshop_id)?.current_value || 0) : 0, 
+                    challenge: c 
+                  });
+                  setShowProgressModal(true);
+                }}
+              />
             ))}
             {challenges.length === 0 && !isLoading && (
               <div className="text-center py-12 bg-white rounded-lg border border-dashed">
@@ -472,6 +456,32 @@ export default function GestaoDesafios() {
               </div>
             )}
           </div>
+
+          {/* Modal de Atualização de Progresso */}
+          <Dialog open={showProgressModal} onOpenChange={setShowProgressModal}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Atualizar Progresso</DialogTitle>
+                <DialogDescription>
+                  Insira o valor atual alcançado para o desafio "{progressData.challenge?.title}".
+                </DialogDescription>
+              </DialogHeader>
+              <div className="py-4">
+                <Label>Valor Atual</Label>
+                <Input 
+                  type="number" 
+                  value={progressData.value} 
+                  onChange={(e) => setProgressData({...progressData, value: e.target.value})}
+                  placeholder="Ex: 50000"
+                />
+                <p className="text-xs text-gray-500 mt-1">Meta: {progressData.challenge?.goal_value}</p>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowProgressModal(false)}>Cancelar</Button>
+                <Button onClick={handleUpdateProgress} className="bg-purple-600 hover:bg-purple-700">Salvar Progresso</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         )}
       </div>
     </div>
