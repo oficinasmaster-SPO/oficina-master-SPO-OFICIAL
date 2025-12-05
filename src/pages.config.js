@@ -104,6 +104,7 @@ import DiagnosticoCarga from './pages/DiagnosticoCarga';
 import DashboardOverview from './pages/DashboardOverview';
 import AdminNotificacoes from './pages/AdminNotificacoes';
 import Feedbacks from './pages/Feedbacks';
+import RepositorioDocumentos from './pages/RepositorioDocumentos';
 import __Layout from './Layout.jsx';
 
 
@@ -214,6 +215,7 @@ export const PAGES = {
     "DashboardOverview": DashboardOverview,
     "AdminNotificacoes": AdminNotificacoes,
     "Feedbacks": Feedbacks,
+    "RepositorioDocumentos": RepositorioDocumentos,
 }
 
 export const pagesConfig = {

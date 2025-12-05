@@ -341,10 +341,10 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       icon: FileCheck,
       items: [
         { 
-          name: 'Em Desenvolvimento', 
-          href: createPageUrl('Home'), 
+          name: 'Repositório de Documentos', 
+          href: createPageUrl('RepositorioDocumentos'), 
           icon: FileCheck,
-          description: 'Central de documentos - em breve'
+          description: 'Central segura de documentos'
         }
       ]
     },
