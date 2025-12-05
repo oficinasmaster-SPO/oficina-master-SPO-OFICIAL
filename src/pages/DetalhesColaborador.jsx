@@ -4,7 +4,7 @@ import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, ArrowLeft, User, FileText, MessageSquare, AlertTriangle, Award, TrendingUp, FileCheck, Heart, FilePenLine, Activity, GraduationCap, BarChart3 } from "lucide-react";
+import { Loader2, ArrowLeft, User, FileText, MessageSquare, AlertTriangle, Award, TrendingUp, FileCheck, Heart, FilePenLine, Activity, GraduationCap, BarChart3, Rocket } from "lucide-react";
 import { toast } from "sonner";
 import DadosPessoais from "../components/employee/DadosPessoais";
 import RemuneracaoProducao from "../components/employee/RemuneracaoProducao";
@@ -18,6 +18,7 @@ import PerformanceMonitoring from "../components/rh/PerformanceMonitoring";
 import EngajamentoCursos from "../components/employee/EngajamentoCursos";
 import EvolucaoMaturidade from "../components/employee/EvolucaoMaturidade";
 import ContratoTrabalho from "../components/employee/ContratoTrabalho";
+import AI_PDI_Generator from "../components/rh/AI_PDI_Generator";
 
 export default function DetalhesColaborador() {
   const navigate = useNavigate();
@@ -163,6 +164,10 @@ export default function DetalhesColaborador() {
               <FileText className="w-4 h-4 mr-2" />
               Docs
             </TabsTrigger>
+            <TabsTrigger value="pdi" className="data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700">
+              <Rocket className="w-4 h-4 mr-2" />
+              PDI (IA)
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="dados">
@@ -210,6 +215,10 @@ export default function DetalhesColaborador() {
 
           <TabsContent value="documentos">
             <DocumentosAnexos employee={employee} onUpdate={handleUpdate} />
+          </TabsContent>
+
+          <TabsContent value="pdi">
+            <AI_PDI_Generator employee={employee} />
           </TabsContent>
         </Tabs>
       </div>

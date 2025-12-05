@@ -19,16 +19,17 @@ export default function AITrainingSuggestions({ employee, onClose }) {
       const productivity = totalCost > 0 ? ((totalProduction / totalCost) * 100).toFixed(0) : 0;
 
       const prompt = `
-Você é um consultor de RH da metodologia Oficinas Master especializado em treinamentos automotivos.
+      Você é um consultor de RH da metodologia Oficinas Master especializado em treinamentos automotivos.
 
-COLABORADOR:
-Nome: ${employee.full_name}
-Cargo: ${employee.position}
-Produtividade: ${productivity}%
-Custo Total: R$ ${totalCost.toFixed(2)}
-Produção Total: R$ ${totalProduction.toFixed(2)}
+      COLABORADOR:
+      Nome: ${employee.full_name}
+      Cargo: ${employee.position}
+      Nível de Maturidade: ${employee.current_maturity_level || 'Não identificado'}
+      Produtividade: ${productivity}%
+      Custo Total: R$ ${totalCost.toFixed(2)}
+      Produção Total: R$ ${totalProduction.toFixed(2)}
 
-Analise este perfil e sugira treinamentos personalizados focados em:
+      Analise este perfil (considerando especialmente o nível de maturidade ${employee.current_maturity_level}) e sugira treinamentos personalizados focados em:
 1. Melhorar a produtividade
 2. Desenvolver competências técnicas específicas do cargo
 3. Desenvolver competências comportamentais

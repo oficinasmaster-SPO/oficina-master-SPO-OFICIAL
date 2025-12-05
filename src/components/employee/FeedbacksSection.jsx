@@ -20,6 +20,9 @@ export default function FeedbacksSection({ employee }) {
   const [generatingAI, setGeneratingAI] = useState(false);
   const [selectedFeedback, setSelectedFeedback] = useState(null);
   const [showActionPlanModal, setShowActionPlanModal] = useState(false);
+  const [showAnalysisModal, setShowAnalysisModal] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState(null);
+  const [analyzing, setAnalyzing] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -92,6 +95,49 @@ export default function FeedbacksSection({ employee }) {
         // Se quiser permitir editar texto também, pegaria de um state local do modal
       }
     });
+  };
+
+  const analyzeFeedbacks = async () => {
+    setAnalyzing(true);
+    setShowAnalysisModal(true);
+    try {
+      const feedbackTexts = filteredFeedbacks.slice(0, 10).map(f => 
+        `- [${f.type}] (${format(new Date(f.created_at || new Date()), "dd/MM/yyyy")}): ${f.content.substring(0, 200)}...`
+      ).join('\n');
+
+      const prompt = `Analise este histórico de feedbacks do colaborador ${employee.full_name} (${employee.position}):
+      
+      ${feedbackTexts}
+      
+      Identifique:
+      1. Padrões de comportamento (positivos e negativos)
+      2. Sugestões de ações de reconhecimento (se mérito)
+      3. Sugestões de ações de melhoria/correção (se necessário)
+      4. Resumo geral do momento do colaborador.
+      
+      Retorne um JSON: { "patterns": "string", "recognition_suggestions": ["string"], "improvement_suggestions": ["string"], "summary": "string" }`;
+
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            patterns: { type: "string" },
+            recognition_suggestions: { type: "array", items: { type: "string" } },
+            improvement_suggestions: { type: "array", items: { type: "string" } },
+            summary: { type: "string" }
+          }
+        }
+      });
+      
+      setAnalysisResult(response);
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao analisar feedbacks");
+      setShowAnalysisModal(false);
+    } finally {
+      setAnalyzing(false);
+    }
   };
 
   const generateWithAI = async () => {
@@ -173,6 +219,10 @@ export default function FeedbacksSection({ employee }) {
             <Button onClick={() => setShowDialog(true)} size="sm" className="bg-blue-600 hover:bg-blue-700">
               <Plus className="w-4 h-4 mr-2" />
               Novo Registro
+            </Button>
+            <Button onClick={analyzeFeedbacks} size="sm" variant="secondary" className="bg-purple-100 text-purple-700 hover:bg-purple-200 border border-purple-200">
+              <Wand2 className="w-4 h-4 mr-2" />
+              Analisar com IA
             </Button>
           </div>
         </div>
@@ -374,6 +424,65 @@ export default function FeedbacksSection({ employee }) {
                 {createMutation.isPending ? "Salvando..." : "Registrar Feedback"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Análise IA */}
+      <Dialog open={showAnalysisModal} onOpenChange={setShowAnalysisModal}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Wand2 className="w-5 h-5 text-purple-600" />
+              Análise de Feedbacks com IA
+            </DialogTitle>
+          </DialogHeader>
+          
+          {analyzing ? (
+            <div className="py-12 text-center">
+              <Loader2 className="w-10 h-10 text-purple-600 animate-spin mx-auto mb-4" />
+              <p className="text-gray-600">A IA está lendo o histórico e identificando padrões...</p>
+            </div>
+          ) : analysisResult ? (
+            <div className="space-y-6 py-4">
+              <div className="bg-slate-50 p-4 rounded-lg border">
+                <h4 className="font-semibold text-gray-900 mb-2">Resumo Geral</h4>
+                <p className="text-gray-700 text-sm leading-relaxed">{analysisResult.summary}</p>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="bg-green-50 p-4 rounded-lg border border-green-100">
+                  <h4 className="font-semibold text-green-800 mb-3 flex items-center gap-2">
+                    <ThumbsUp className="w-4 h-4" /> Sugestões de Reconhecimento
+                  </h4>
+                  <ul className="space-y-2">
+                    {analysisResult.recognition_suggestions?.map((item, i) => (
+                      <li key={i} className="text-sm text-green-900 flex items-start gap-2">
+                        <CheckCircle2 className="w-3 h-3 mt-1 shrink-0" /> {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="bg-orange-50 p-4 rounded-lg border border-orange-100">
+                  <h4 className="font-semibold text-orange-800 mb-3 flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4" /> Oportunidades de Melhoria
+                  </h4>
+                  <ul className="space-y-2">
+                    {analysisResult.improvement_suggestions?.map((item, i) => (
+                      <li key={i} className="text-sm text-orange-900 flex items-start gap-2">
+                        <Target className="w-3 h-3 mt-1 shrink-0" /> {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                <h4 className="font-semibold text-blue-800 mb-2">Padrões Identificados</h4>
+                <p className="text-sm text-blue-900">{analysisResult.patterns}</p>
+              </div>
+            </div>
+          ) : null}
         </DialogContent>
       </Dialog>
 
