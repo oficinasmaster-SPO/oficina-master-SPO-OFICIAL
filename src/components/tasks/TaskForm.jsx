@@ -372,7 +372,40 @@ export default function TaskForm({ task, employees, onSubmit, onCancel, submitti
             </div>
 
             <div>
-              <Label>Atribuir a Usuários</Label>
+              <div className="flex justify-between items-center">
+                <Label>Atribuir a Usuários</Label>
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="xs" 
+                  className="h-6 text-xs text-purple-600 hover:text-purple-700"
+                  onClick={async () => {
+                    if (!formData.title) return toast.error("Preencha o título primeiro");
+                    const loadingToast = toast.loading("Buscando melhor colaborador...");
+                    try {
+                      const availableEmployees = employees.map(e => ({ id: e.id, name: e.full_name, role: e.position }));
+                      const prompt = `Sugira o melhor colaborador para a tarefa "${formData.title}" (${formData.description || ''}) dentre: ${JSON.stringify(availableEmployees)}. Retorne JSON: { "suggested_id": "id", "reason": "motivo" }`;
+                      const res = await base44.integrations.Core.InvokeLLM({ prompt, response_json_schema: { type: "object", properties: { suggested_id: { type: "string" }, reason: { type: "string" } } } });
+                      
+                      if (res.suggested_id) {
+                        if (!formData.assigned_to?.includes(res.suggested_id)) {
+                          toggleAssignee(res.suggested_id);
+                          toast.success(`Sugerido: ${availableEmployees.find(e => e.id === res.suggested_id)?.name}`, { description: res.reason });
+                        } else {
+                          toast.info("Colaborador sugerido já está atribuído.");
+                        }
+                      }
+                    } catch (e) {
+                      toast.error("Erro ao sugerir alocação");
+                    } finally {
+                      toast.dismiss(loadingToast);
+                    }
+                  }}
+                >
+                  <Sparkles className="w-3 h-3 mr-1" />
+                  IA Sugerir
+                </Button>
+              </div>
               <div className="flex flex-wrap gap-2 mt-2">
                 {employees.map(emp => (
                   <Badge

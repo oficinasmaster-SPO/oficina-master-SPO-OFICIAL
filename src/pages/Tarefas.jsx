@@ -12,6 +12,7 @@ import TaskFilters from "../components/tasks/TaskFilters";
 import KanbanBoard from "../components/tasks/KanbanBoard";
 import GuidedTour from "../components/help/GuidedTour";
 import HelpButton from "../components/help/HelpButton";
+import AITaskManager from "../components/tasks/AITaskManager";
 
 export default function Tarefas() {
   const queryClient = useQueryClient();
@@ -416,6 +417,12 @@ export default function Tarefas() {
             <p className="text-2xl font-bold text-red-900">{stats.atrasadas}</p>
           </div>
         </div>
+
+        {filteredTasks.length > 0 && (
+          <div className="mb-6">
+            <AITaskManager tasks={filteredTasks} employees={employees} />
+          </div>
+        )}
 
         <div id="filters-section" className="mb-6">
           <TaskFilters
