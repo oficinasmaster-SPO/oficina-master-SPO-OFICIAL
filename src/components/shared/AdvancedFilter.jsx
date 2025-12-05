@@ -7,7 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Badge } from "@/components/ui/badge";
+// import { Badge } from "@/components/ui/badge";
 
 export default function AdvancedFilter({ onFilter, filterConfig = [], placeholder = "Buscar..." }) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -80,9 +80,9 @@ export default function AdvancedFilter({ onFilter, filterConfig = [], placeholde
           <Filter className="h-4 w-4" />
           Filtros
           {activeFiltersCount > 0 && (
-            <Badge variant="secondary" className="ml-1 bg-white/20 text-current h-5 px-1.5">
+            <span className="ml-1 bg-white/20 text-current h-5 px-1.5 rounded text-xs font-medium inline-flex items-center justify-center">
               {activeFiltersCount}
-            </Badge>
+            </span>
           )}
         </Button>
 

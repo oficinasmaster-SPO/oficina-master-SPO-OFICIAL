@@ -8,6 +8,7 @@ import { UserPlus, Loader2, Sparkles, Heart, FilePenLine } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import AITrainingSuggestions from "../components/rh/AITrainingSuggestions";
 import DynamicHelpSystem from "../components/help/DynamicHelpSystem";
