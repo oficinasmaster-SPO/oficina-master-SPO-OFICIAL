@@ -96,10 +96,12 @@ export default function PublicFeedback() {
         const name = params.get("n");
         const phone = params.get("p");
         const area = params.get("a");
+        const cid = params.get("cid");
 
         setUrlParams({
             workshop_id: wid,
-            employee_id: eid
+            employee_id: eid,
+            client_id: cid
         });
 
         setFormData(prev => ({
@@ -151,7 +153,8 @@ export default function PublicFeedback() {
         submitMutation.mutate({
             ...formData,
             workshop_id: urlParams.workshop_id,
-            employee_id: urlParams.employee_id
+            employee_id: urlParams.employee_id,
+            client_id: urlParams.client_id
         });
     };
 

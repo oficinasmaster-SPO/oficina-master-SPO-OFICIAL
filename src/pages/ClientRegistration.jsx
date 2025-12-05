@@ -36,7 +36,7 @@ export default function ClientRegistration() {
         setLoading(true);
         try {
             // Create Client
-            await base44.entities.Client.create({
+            const newClient = await base44.entities.Client.create({
                 name: formData.name,
                 phone: formData.phone,
                 workshop_id: workshopId
@@ -50,6 +50,7 @@ export default function ClientRegistration() {
             if (area) params.append("a", area);
             params.append("n", formData.name);
             params.append("p", formData.phone);
+            if (newClient?.id) params.append("cid", newClient.id);
 
             window.location.href = `${feedbackUrl}?${params.toString()}`;
         } catch (error) {
