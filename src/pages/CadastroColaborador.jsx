@@ -112,8 +112,10 @@ export default function CadastroColaborador() {
       const totalProduction = formData.production_parts + formData.production_parts_sales + formData.production_services;
       const productionPercentage = totalCost > 0 ? (totalProduction / totalCost) * 100 : 0;
 
-      await base44.entities.Employee.create({
+      // Salvar Employee com owner_id
+      const newEmployee = await base44.entities.Employee.create({
         ...formData,
+        owner_id: workshop.owner_id,
         production_percentage: productionPercentage
       });
 

@@ -28,6 +28,11 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: 'Convite já utilizado' }, { status: 400 });
     }
 
+    // Buscar a oficina para obter o owner_id
+    const workshops = await base44.asServiceRole.entities.Workshop.filter({ id: invite.workshop_id });
+    const workshop = workshops[0];
+    const ownerId = workshop ? workshop.owner_id : null;
+
     // Verificar se já existe colaborador com este email na oficina
     const existingEmployees = await base44.asServiceRole.entities.Employee.filter({ 
       email: email || invite.email,
@@ -45,12 +50,14 @@ Deno.serve(async (req) => {
         area: invite.area,
         job_role: invite.job_role || 'outros',
         permission_level: invite.initial_permission || 'colaborador',
-        status: 'ativo'
+        status: 'ativo',
+        owner_id: ownerId // Garantir que owner_id esteja setado
       });
     } else {
       // Criar novo
       employee = await base44.asServiceRole.entities.Employee.create({
         workshop_id: invite.workshop_id,
+        owner_id: ownerId, // Adicionar owner_id
         full_name: name || invite.name,
         email: email || invite.email,
         telefone: phone || '',
