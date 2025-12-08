@@ -623,38 +623,6 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label>Agendamentos do Mês</Label>
-                  <Input
-                    type="number"
-                    value={formData.monthly_goals.scheduled || 0}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      monthly_goals: { ...formData.monthly_goals, scheduled: parseInt(e.target.value) || 0 }
-                    })}
-                    disabled={!editing}
-                    placeholder="Quantidade de agendamentos"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Total de agendamentos previstos para o mês
-                  </p>
-                </div>
-                <div>
-                  <Label>Taxa de Conversão (Calculada)</Label>
-                  <Input
-                    value={formData.monthly_goals.scheduled > 0 
-                      ? `${((formData.monthly_goals.customer_volume / formData.monthly_goals.scheduled) * 100).toFixed(1)}%` 
-                      : '-'}
-                    disabled
-                    className="bg-blue-100 font-bold text-blue-700"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Clientes ÷ Agendamentos
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
                   <Label>Meta de Compra (R$)</Label>
                   <Input
                     type="number"
