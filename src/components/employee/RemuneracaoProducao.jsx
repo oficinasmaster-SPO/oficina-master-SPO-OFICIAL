@@ -9,6 +9,7 @@ import { Save, Plus, Trash2, Target, DollarSign, Percent, Award, Edit } from "lu
 
 export default function RemuneracaoProducao({ employee, onUpdate }) {
   const [editing, setEditing] = useState(false);
+  const [editingBestMonth, setEditingBestMonth] = useState(false);
   const [metrics, setMetrics] = useState([]);
   const [formData, setFormData] = useState({
     salary: employee.salary || 0,
@@ -19,6 +20,19 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
     production_parts: employee.production_parts || 0,
     production_parts_sales: employee.production_parts_sales || 0,
     production_services: employee.production_services || 0
+  });
+  
+  const [bestMonthData, setBestMonthData] = useState({
+    date: employee.best_month_history?.date || '',
+    revenue_total: employee.best_month_history?.revenue_total || 0,
+    revenue_parts: employee.best_month_history?.revenue_parts || 0,
+    revenue_services: employee.best_month_history?.revenue_services || 0,
+    profit_percentage: employee.best_month_history?.profit_percentage || 0,
+    rentability_percentage: employee.best_month_history?.rentability_percentage || 0,
+    customer_volume: employee.best_month_history?.customer_volume || 0,
+    average_ticket: employee.best_month_history?.average_ticket || 0,
+    average_ticket_parts: employee.best_month_history?.average_ticket_parts || 0,
+    average_ticket_services: employee.best_month_history?.average_ticket_services || 0
   });
 
   useEffect(() => {
