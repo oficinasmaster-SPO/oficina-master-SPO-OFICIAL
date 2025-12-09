@@ -4,7 +4,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend,
+  ResponsiveContainer, 
+  LineChart, 
+  Line, 
+  PieChart, 
+  Pie, 
+  Cell 
+} from "recharts";
 import { Brain, TrendingUp, AlertTriangle, Lightbulb, ArrowRight, Download, FileSpreadsheet, FileText } from "lucide-react";
 import { formatCurrency } from "@/components/utils/formatters";
 import { Button } from "@/components/ui/button";
