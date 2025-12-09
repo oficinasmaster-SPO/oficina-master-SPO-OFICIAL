@@ -17,19 +17,22 @@ export default function Feedbacks() {
   const { data: feedbacksData = [], isLoading } = useQuery({
     queryKey: ['all-feedbacks'],
     queryFn: async () => {
-      // Fetch all feedbacks (optimized: could add filters here if API supports it)
-      const fbs = await base44.entities.EmployeeFeedback.list('-created_at', 100); // Limit 100 for performance
-      const emps = await base44.entities.Employee.list();
-      
-      // Map employee names to feedbacks
-      const empMap = {};
-      if(Array.isArray(emps)) emps.forEach(e => empMap[e.id] = e);
-      
-      return Array.isArray(fbs) ? fbs.map(fb => ({
-        ...fb,
-        employee_name: empMap[fb.employee_id]?.full_name || "Desconhecido",
-        employee_position: empMap[fb.employee_id]?.position || "-"
-      })) : [];
+      try {
+        const fbs = await base44.entities.EmployeeFeedback.list('-created_date', 100);
+        const emps = await base44.entities.Employee.list();
+        
+        const empMap = {};
+        if(Array.isArray(emps)) emps.forEach(e => empMap[e.id] = e);
+        
+        return Array.isArray(fbs) ? fbs.map(fb => ({
+          ...fb,
+          employee_name: empMap[fb.employee_id]?.full_name || "Desconhecido",
+          employee_position: empMap[fb.employee_id]?.position || "-"
+        })) : [];
+      } catch (error) {
+        console.error("Error fetching feedbacks:", error);
+        return [];
+      }
     }
   });
 
@@ -133,8 +136,8 @@ export default function Feedbacks() {
                                                         </Badge>
                                                     </h3>
                                                     <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
-                                                        <User className="w-3 h-3" />
-                                                        {fb.created_by} • {format(new Date(fb.created_at || fb.date), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}
+                                                       <User className="w-3 h-3" />
+                                                       {fb.created_by} • {fb.created_date ? format(new Date(fb.created_date), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR }) : 'Data não disponível'}
                                                     </p>
                                                 </div>
                                                 <div className="mt-2 md:mt-0">
