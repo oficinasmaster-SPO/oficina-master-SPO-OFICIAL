@@ -49,6 +49,10 @@ export default function Layout({ children }) {
     }
   }, []);
 
+  useEffect(() => {
+    loadUser();
+  }, [loadUser]);
+
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ['unread-notifications', user?.id],
     queryFn: async () => {
