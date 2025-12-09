@@ -10,16 +10,16 @@ export default function UsageTracker({ user }) {
     if (!user) return;
 
     // Detectar atividade do usuário
-    const handleActivity = () => {
+    const trackUserActivity = () => {
       isActiveRef.current = true;
       lastUpdateRef.current = Date.now();
     };
 
     // Eventos que indicam atividade
-    window.addEventListener('mousemove', handleActivity);
-    window.addEventListener('keydown', handleActivity);
-    window.addEventListener('click', handleActivity);
-    window.addEventListener('scroll', handleActivity);
+    window.addEventListener('mousemove', trackUserActivity);
+    window.addEventListener('keydown', trackUserActivity);
+    window.addEventListener('click', trackUserActivity);
+    window.addEventListener('scroll', trackUserActivity);
 
     // Detectar inatividade (5 minutos sem interação)
     const inactivityCheck = setInterval(() => {
@@ -86,10 +86,10 @@ export default function UsageTracker({ user }) {
     window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
-      window.removeEventListener('mousemove', handleActivity);
-      window.removeEventListener('keydown', handleActivity);
-      window.removeEventListener('click', handleActivity);
-      window.removeEventListener('scroll', handleActivity);
+      window.removeEventListener('mousemove', trackUserActivity);
+      window.removeEventListener('keydown', trackUserActivity);
+      window.removeEventListener('click', trackUserActivity);
+      window.removeEventListener('scroll', trackUserActivity);
       window.removeEventListener('beforeunload', handleBeforeUnload);
       clearInterval(inactivityCheck);
       clearInterval(updateInterval);
