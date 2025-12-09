@@ -20,11 +20,7 @@ export default function Layout({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
-  useEffect(() => {
-    loadUser();
-  }, []);
-
-  const loadUser = async () => {
+  const loadUser = React.useCallback(async () => {
     try {
       const authenticated = await base44.auth.isAuthenticated();
       setIsAuthenticated(authenticated);
@@ -51,7 +47,7 @@ export default function Layout({ children }) {
     } finally {
       setIsCheckingAuth(false);
     }
-  };
+  }, []);
 
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ['unread-notifications', user?.id],
