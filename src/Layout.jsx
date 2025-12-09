@@ -11,9 +11,6 @@ import Breadcrumbs from "@/components/navigation/Breadcrumbs";
 import { SharedDataProvider } from "@/components/shared/SharedDataProvider";
 import GlobalSearch from "@/components/navigation/GlobalSearch";
 
-// Import UsageTracker dynamically to avoid initialization issues
-const UsageTracker = React.lazy(() => import("@/components/tracking/UsageTracker"));
-
 export default function Layout({ children }) {
   const location = useLocation();
   const [user, setUser] = useState(null);
@@ -85,11 +82,6 @@ export default function Layout({ children }) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {isAuthenticated && user && (
-        <React.Suspense fallback={null}>
-          <UsageTracker user={user} />
-        </React.Suspense>
-      )}
       
       {isAuthenticated && (
         <Sidebar 
