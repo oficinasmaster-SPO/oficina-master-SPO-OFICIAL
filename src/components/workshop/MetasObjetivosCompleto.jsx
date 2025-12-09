@@ -20,6 +20,7 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
   const [editingGrowth, setEditingGrowth] = useState(false);
   const [growthPercentageInput, setGrowthPercentageInput] = useState(10);
   const [activeTab, setActiveTab] = useState("melhor_mes");
+  const [loadingTCMP2, setLoadingTCMP2] = useState(false);
   const [formData, setFormData] = useState({
     serves_fleet_insurance: false,
     best_month_history: {
@@ -268,6 +269,46 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   };
 
+  const loadTCMP2FromDRE = async () => {
+    try {
+      setLoadingTCMP2(true);
+      // Buscar todos os DREs da oficina
+      const dres = await base44.entities.DREMonthly.filter({ 
+        workshop_id: workshop.id 
+      });
+
+      if (dres && dres.length > 0) {
+        // Calcular TCMP2 médio
+        const validTCMP2s = dres
+          .map(dre => dre.tcmp2 || 0)
+          .filter(tcmp2 => tcmp2 > 0);
+
+        if (validTCMP2s.length > 0) {
+          const averageTCMP2 = validTCMP2s.reduce((sum, val) => sum + val, 0) / validTCMP2s.length;
+          
+          setFormData(prev => ({
+            ...prev,
+            best_month_history: {
+              ...prev.best_month_history,
+              tcmp2: Number(averageTCMP2.toFixed(2))
+            }
+          }));
+          
+          toast.success(`TCMP2 médio carregado: R$ ${averageTCMP2.toFixed(2)}`);
+        } else {
+          toast.info("Nenhum TCMP2 válido encontrado nos DREs registrados");
+        }
+      } else {
+        toast.info("Nenhum DRE encontrado. Cadastre DREs para calcular o TCMP2 médio.");
+      }
+    } catch (error) {
+      console.error("Erro ao carregar TCMP2:", error);
+      toast.error("Erro ao buscar TCMP2 do DRE");
+    } finally {
+      setLoadingTCMP2(false);
+    }
+  };
+
   if (!workshop) {
     return <div className="p-8 text-center text-gray-500">Carregando...</div>;
   }
@@ -489,7 +530,27 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
 
               {/* R70/I30 e TCMP2 */}
               <div className="bg-white p-4 rounded-lg border-2 border-green-200">
-                <h4 className="font-semibold text-green-900 mb-4">💰 Indicadores Financeiros</h4>
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-semibold text-green-900">💰 Indicadores Financeiros</h4>
+                  {editing && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={loadTCMP2FromDRE}
+                      disabled={loadingTCMP2}
+                      className="border-green-400"
+                    >
+                      {loadingTCMP2 ? (
+                        <>Carregando...</>
+                      ) : (
+                        <>
+                          <Download className="w-4 h-4 mr-2" />
+                          Puxar TCMP2 do DRE
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <Label>R70 (%)</Label>
@@ -522,15 +583,24 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                     />
                   </div>
                   <div>
-                    <Label>TCMP2 (R$)</Label>
+                    <Label className="flex items-center gap-2">
+                      TCMP2 (R$)
+                      <span className="text-xs text-gray-500 font-normal">- Automático do DRE</span>
+                    </Label>
                     <Input
                       type="number"
                       value={formData.best_month_history.tcmp2}
                       onChange={(e) => updateBestMonth('tcmp2', parseFloat(e.target.value) || 0)}
                       disabled={!editing}
-                      placeholder="Puxar do DRE médio"
+                      placeholder="Clique em 'Puxar TCMP2'"
+                      className={formData.best_month_history.tcmp2 > 0 ? "bg-green-50 font-bold" : ""}
                     />
                   </div>
+                </div>
+                <div className="mt-3 p-2 bg-green-50 rounded border border-green-200">
+                  <p className="text-xs text-green-800">
+                    💡 <strong>TCMP2:</strong> Será calculado automaticamente como a média dos valores de TCMP2 registrados nos DREs mensais da oficina.
+                  </p>
                 </div>
               </div>
 
