@@ -30,8 +30,78 @@ export default function PainelProducao({ employee }) {
     (((currentMonthData?.total || 0) - (previousMonthData?.total || 0)) / (previousMonthData?.total || 1) * 100).toFixed(1) : 
     0;
 
+  // Dados do melhor mês histórico
+  const bestMonthHistory = employee.best_month_history || null;
+
   return (
     <div className="space-y-6">
+      {/* Melhor Mês Histórico - Destaque */}
+      {bestMonthHistory && (
+        <Card className="shadow-xl border-2 border-yellow-400 bg-gradient-to-r from-yellow-50 to-amber-50">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-yellow-800">
+              <Award className="w-6 h-6" />
+              🏆 Melhor Mês Histórico do Colaborador
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <p className="text-xs text-gray-600 mb-1">Data</p>
+                <p className="text-lg font-bold text-gray-900">
+                  {bestMonthHistory.date ? new Date(bestMonthHistory.date).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }) : '-'}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-600 mb-1">Faturamento Total</p>
+                <p className="text-lg font-bold text-green-600">
+                  R$ {(bestMonthHistory.revenue_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-600 mb-1">Volume de Clientes</p>
+                <p className="text-lg font-bold text-blue-600">
+                  {bestMonthHistory.customer_volume || 0} clientes
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-600 mb-1">Ticket Médio</p>
+                <p className="text-lg font-bold text-purple-600">
+                  R$ {(bestMonthHistory.average_ticket || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t border-yellow-200">
+              <div>
+                <p className="text-xs text-gray-600 mb-1">Faturamento Peças</p>
+                <p className="text-sm font-semibold text-gray-700">
+                  R$ {(bestMonthHistory.revenue_parts || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-600 mb-1">Faturamento Serviços</p>
+                <p className="text-sm font-semibold text-gray-700">
+                  R$ {(bestMonthHistory.revenue_services || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-600 mb-1">% Lucro</p>
+                <p className="text-sm font-semibold text-gray-700">
+                  {(bestMonthHistory.profit_percentage || 0).toFixed(1)}%
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-600 mb-1">% Rentabilidade</p>
+                <p className="text-sm font-semibold text-gray-700">
+                  {(bestMonthHistory.rentability_percentage || 0).toFixed(1)}%
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="shadow-lg border-2 border-blue-200">
