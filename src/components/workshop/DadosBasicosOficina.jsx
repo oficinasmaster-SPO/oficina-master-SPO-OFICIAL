@@ -5,16 +5,19 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Save, Building2, Info, Store } from "lucide-react";
+import { Save, Building2, Info, Store, Loader2 } from "lucide-react";
+import { base44 } from "@/api/base44Client";
 import { Checkbox } from "@/components/ui/checkbox";
 import SliderWithMax from "@/components/ui/slider-with-max";
 
 export default function DadosBasicosOficina({ workshop, onUpdate }) {
   const [editing, setEditing] = useState(false);
+  const [loadingCEP, setLoadingCEP] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     razao_social: "",
     cnpj: "",
+    cep: "",
     city: "",
     state: "",
     endereco_completo: "",
@@ -41,6 +44,7 @@ export default function DadosBasicosOficina({ workshop, onUpdate }) {
         name: workshop.name || "",
         razao_social: workshop.razao_social || "",
         cnpj: workshop.cnpj || "",
+        cep: workshop.cep || "",
         city: workshop.city || "",
         state: workshop.state || "",
         endereco_completo: workshop.endereco_completo || "",
@@ -65,6 +69,31 @@ export default function DadosBasicosOficina({ workshop, onUpdate }) {
   const handleSave = async () => {
     await onUpdate(formData);
     setEditing(false);
+  };
+
+  const handleCEPChange = async (cep) => {
+    setFormData({...formData, cep});
+    
+    // Consultar CEP quando tiver 8 dígitos
+    const cleanCEP = cep.replace(/\D/g, '');
+    if (cleanCEP.length === 8) {
+      setLoadingCEP(true);
+      try {
+        const response = await base44.functions.invoke('consultarCEP', { cep: cleanCEP });
+        if (response.data && !response.data.error) {
+          setFormData(prev => ({
+            ...prev,
+            city: response.data.city,
+            state: response.data.state,
+            endereco_completo: `${response.data.street}, ${response.data.neighborhood}`
+          }));
+        }
+      } catch (error) {
+        console.error('Erro ao consultar CEP:', error);
+      } finally {
+        setLoadingCEP(false);
+      }
+    }
   };
 
   const diasSemana = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
@@ -130,11 +159,30 @@ export default function DadosBasicosOficina({ workshop, onUpdate }) {
               />
             </div>
             <div>
+              <Label>CEP</Label>
+              <div className="relative">
+                <Input
+                  value={formData.cep}
+                  onChange={(e) => handleCEPChange(e.target.value)}
+                  disabled={!editing}
+                  placeholder="00000-000"
+                  maxLength={9}
+                />
+                {loadingCEP && (
+                  <Loader2 className="w-4 h-4 animate-spin absolute right-3 top-3 text-blue-600" />
+                )}
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Digite o CEP para preencher cidade e estado automaticamente
+              </p>
+            </div>
+            <div>
               <Label>Cidade *</Label>
               <Input
                 value={formData.city}
                 onChange={(e) => setFormData({...formData, city: e.target.value})}
                 disabled={!editing}
+                placeholder="Será preenchido automaticamente"
               />
             </div>
             <div>
@@ -144,6 +192,7 @@ export default function DadosBasicosOficina({ workshop, onUpdate }) {
                 onChange={(e) => setFormData({...formData, state: e.target.value.toUpperCase()})}
                 disabled={!editing}
                 maxLength={2}
+                placeholder="UF"
               />
             </div>
           <div className="md:col-span-2">
