@@ -90,7 +90,7 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
       }
     });
 
-    toast.success("Registro excluído!");
+    toast.success("Registro excluído e metas atualizadas!");
   };
 
   const resetForm = () => {
