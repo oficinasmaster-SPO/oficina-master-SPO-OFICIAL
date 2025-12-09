@@ -7,6 +7,10 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 
 export default function PainelProducao({ employee }) {
   const productionHistory = employee.production_history || [];
+  
+  // Debug: ver o que está vindo no employee
+  console.log('Employee data:', employee);
+  console.log('Best month history:', employee.best_month_history);
 
   // Preparar dados para gráficos
   const chartData = productionHistory.map(item => ({
