@@ -10,13 +10,15 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Save, Target, TrendingUp, Calendar, Building2, User, Users, FileText, Download } from "lucide-react";
+import { Save, Target, TrendingUp, Calendar, Building2, User, Users, FileText, Download, Edit } from "lucide-react";
 import { formatCurrency, formatNumber, formatInteger } from "../utils/formatters";
 import { toast } from "sonner";
 
 export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
   const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
+  const [editingGrowth, setEditingGrowth] = useState(false);
+  const [growthPercentageInput, setGrowthPercentageInput] = useState(10);
   const [activeTab, setActiveTab] = useState("melhor_mes");
   const [formData, setFormData] = useState({
     serves_fleet_insurance: false,
@@ -48,6 +50,9 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
     },
     monthly_goals: {
       month: "",
+      growth_percentage: 10,
+      projected_revenue: 0,
+      actual_revenue_achieved: 0,
       revenue_parts: 0,
       revenue_services: 0,
       profitability_percentage: 0,
@@ -83,6 +88,9 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
         },
         monthly_goals: workshop.monthly_goals || {
           month: "",
+          growth_percentage: 10,
+          projected_revenue: 0,
+          actual_revenue_achieved: 0,
           revenue_parts: 0,
           revenue_services: 0,
           profitability_percentage: 0,
@@ -93,12 +101,37 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
           product_cost_applied: 0
         }
       });
+      setGrowthPercentageInput(workshop.monthly_goals?.growth_percentage || 10);
     }
   }, [workshop]);
 
   const handleSave = async () => {
     await onUpdate(formData);
+    toast.success("Dados salvos com sucesso!");
     setEditing(false);
+  };
+
+  const handleSaveGrowth = async () => {
+    const bestMonthRevenue = formData.best_month_history?.revenue_total || 0;
+    const newGrowthPercentage = growthPercentageInput || 10;
+    const newProjectedRevenue = bestMonthRevenue > 0 
+      ? bestMonthRevenue * (1 + newGrowthPercentage / 100)
+      : bestMonthRevenue * 1.1;
+
+    const updatedMonthlyGoals = {
+      ...formData.monthly_goals,
+      growth_percentage: newGrowthPercentage,
+      projected_revenue: newProjectedRevenue,
+      month: getCurrentMonth()
+    };
+
+    await onUpdate({ monthly_goals: updatedMonthlyGoals });
+    setFormData(prev => ({
+      ...prev,
+      monthly_goals: updatedMonthlyGoals
+    }));
+    toast.success("Crescimento geral atualizado e meta projetada recalculada!");
+    setEditingGrowth(false);
   };
 
   const calculateTotals = () => {
@@ -196,6 +229,14 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
     return <div className="p-8 text-center text-gray-500">Carregando...</div>;
   }
 
+  // Cálculo da meta projetada e atingimento
+  const bestMonthRevenue = formData.best_month_history?.revenue_total || 0;
+  const growthPercentage = formData.monthly_goals?.growth_percentage || 10;
+  const projectedRevenue = formData.monthly_goals?.projected_revenue || 
+    (bestMonthRevenue > 0 ? bestMonthRevenue * (1 + growthPercentage / 100) : 0);
+  const actualRevenueAchieved = formData.monthly_goals?.actual_revenue_achieved || 0;
+  const achievementPercentage = projectedRevenue > 0 ? (actualRevenueAchieved / projectedRevenue) * 100 : 0;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -220,7 +261,7 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="melhor_mes">
             <TrendingUp className="w-4 h-4 mr-2" />
-            Melhor Mês
+            Config. Metas
           </TabsTrigger>
           <TabsTrigger value="metas_mensais">
             <Calendar className="w-4 h-4 mr-2" />
@@ -232,16 +273,75 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
           </TabsTrigger>
         </TabsList>
 
-        {/* Melhor Mês Histórico */}
+        {/* Configuração de Metas */}
         <TabsContent value="melhor_mes" className="space-y-6">
+
+          {/* CRESCIMENTO GERAL - Configuração */}
+          <Card className="shadow-xl border-2 border-orange-200 bg-gradient-to-r from-orange-50 to-yellow-50">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2 text-orange-900">
+                  <TrendingUp className="w-6 h-6" />
+                  📊 Crescimento Geral (Base para Metas Mensais)
+                </CardTitle>
+                {!editingGrowth ? (
+                  <Button onClick={() => setEditingGrowth(true)} size="sm" variant="outline" className="border-orange-400">
+                    <Edit className="w-4 h-4 mr-2" />
+                    Editar
+                  </Button>
+                ) : (
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => {
+                      setEditingGrowth(false);
+                      setGrowthPercentageInput(formData.monthly_goals?.growth_percentage || 10);
+                    }} size="sm">Cancelar</Button>
+                    <Button onClick={handleSaveGrowth} size="sm" className="bg-orange-600 hover:bg-orange-700">
+                      <Save className="w-4 h-4 mr-2" />
+                      Salvar
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <Label className="text-sm text-gray-700 mb-2 block">
+                    Porcentagem de Crescimento Geral (%)
+                  </Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    value={growthPercentageInput}
+                    onChange={(e) => setGrowthPercentageInput(parseFloat(e.target.value) || 0)}
+                    disabled={!editingGrowth}
+                    className="text-xl font-bold"
+                  />
+                </div>
+                <div className="text-center p-4 bg-orange-100 rounded-lg">
+                  <p className="text-sm text-orange-800 mb-1">Projeção</p>
+                  <p className="text-2xl font-bold text-orange-600">
+                    +{growthPercentageInput.toFixed(1)}%
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                <p className="text-xs text-yellow-800">
+                  ℹ️ Esta porcentagem será aplicada sobre o Melhor Mês Histórico para calcular a Meta Projetada mensal da oficina. Se não preenchido, o sistema usará 10% por padrão.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Melhor Mês Histórico */}
           <Card className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-orange-200">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-orange-600" />
-                🏆 Melhor Mês Histórico
+                🏆 Melhor Mês Histórico da Oficina
               </CardTitle>
               <CardDescription>
-                Registre o melhor desempenho da oficina como referência para metas
+                Registre o melhor desempenho da oficina como referência para metas. Será utilizado para calcular a meta mensal PROJETADA.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -255,7 +355,7 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                 <div>
                   <Label className="text-base font-semibold">Atende Locadora/Seguradora?</Label>
                   <p className="text-sm text-gray-600">
-                    Se marcado, você poderá separar o faturamento por tipo de cliente (PF x PJ)
+                    Se marcado, você poderá separar o faturamento por tipo de cliente (PF x PJ).
                   </p>
                 </div>
               </div>
@@ -511,14 +611,81 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
 
         {/* Metas Mensais */}
         <TabsContent value="metas_mensais" className="space-y-6">
+          
+          {/* Card de Espelhamento do Melhor Mês + Metas Mensais */}
+          <Card className="shadow-xl border-2 border-green-200 bg-gradient-to-r from-green-50 to-emerald-50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-green-900">
+                <Target className="w-6 h-6" />
+                🎯 Metas Mensais Projetadas - {new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                <div>
+                  <p className="text-xs text-gray-600 mb-1">Melhor Mês Histórico</p>
+                  <p className="text-xl font-bold text-gray-900">
+                    R$ {formatCurrency(bestMonthRevenue)}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">Base para projeção</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-600 mb-1">% Crescimento</p>
+                  <p className="text-xl font-bold text-blue-600">
+                    +{formatNumber(growthPercentage, 1)}%
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">Configurado em "Config. Metas"</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-600 mb-1">PROJETADO (Mês)</p>
+                  <p className="text-xl font-bold text-green-600">
+                    R$ {formatCurrency(projectedRevenue)}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">Meta a atingir</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-600 mb-1">REALIZADO no Mês</p>
+                  <p className="text-xl font-bold text-purple-600">
+                    R$ {formatCurrency(actualRevenueAchieved)}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">Alimentado pelo sistema</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 pt-4 border-t-2 border-green-300">
+                <div className="bg-white p-4 rounded-lg">
+                  <p className="text-xs text-gray-600 mb-1">% Atingimento da Meta</p>
+                  <p className={`text-2xl font-bold ${achievementPercentage >= 100 ? 'text-green-600' : achievementPercentage >= 70 ? 'text-yellow-600' : 'text-red-600'}`}>
+                    {achievementPercentage.toFixed(1)}%
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {achievementPercentage >= 100 ? '🎉 Meta superada!' : achievementPercentage >= 70 ? '⚡ Quase lá!' : '💪 Continue o esforço!'}
+                  </p>
+                </div>
+                <div className="bg-white p-4 rounded-lg">
+                  <p className="text-xs text-gray-600 mb-1">Falta para Meta</p>
+                  <p className="text-2xl font-bold text-orange-600">
+                    R$ {formatCurrency(Math.max(0, projectedRevenue - actualRevenueAchieved))}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">Quanto ainda precisa faturar</p>
+                </div>
+              </div>
+
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <p className="text-xs text-blue-800">
+                  💡 <strong>Como funciona:</strong> A meta PROJETADA é calculada automaticamente (Melhor Mês + % Crescimento). 
+                  O valor REALIZADO é atualizado automaticamente pelo sistema, com base nos dados de produção.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Metas Detalhadas */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-blue-600" />
-                Metas Mensais
-              </CardTitle>
+              <CardTitle>Metas Detalhadas (Opcional)</CardTitle>
               <CardDescription>
-                Defina as metas para o mês atual ou próximo
+                Você pode preencher valores específicos se desejar um controle mais granular.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -676,29 +843,27 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {formData.best_month_history.revenue_total > 0 && (
-                <div className="bg-white p-4 rounded-lg border">
-                  <h4 className="font-semibold text-gray-900 mb-2">Dados do Melhor Mês (Referência)</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                    <div>
-                      <p className="text-gray-600">Faturamento:</p>
-                      <p className="font-bold">{formatCurrency(formData.best_month_history.revenue_total)}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600">Lucro:</p>
-                      <p className="font-bold">{formatNumber(formData.best_month_history.profit_percentage, 1)}%</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600">Rentabilidade:</p>
-                      <p className="font-bold">{formatNumber(formData.best_month_history.rentability_percentage, 1)}%</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600">Clientes:</p>
-                      <p className="font-bold">{formData.best_month_history.customer_volume}</p>
-                    </div>
+              <div className="bg-white p-4 rounded-lg border">
+                <h4 className="font-semibold text-gray-900 mb-2">Dados do Melhor Mês (Referência para Desdobramento)</h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                  <div>
+                    <p className="text-gray-600">PROJETADO Mês:</p>
+                    <p className="font-bold text-green-600">{formatCurrency(projectedRevenue)}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Realizado Mês:</p>
+                    <p className="font-bold text-purple-600">{formatCurrency(actualRevenueAchieved)}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Faturamento Melhor Mês:</p>
+                    <p className="font-bold">{formatCurrency(bestMonthRevenue)}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">% Crescimento Aplicado:</p>
+                    <p className="font-bold">{formatNumber(growthPercentage, 1)}%</p>
                   </div>
                 </div>
-              )}
+              </div>
 
               <p className="text-gray-600">
                 Para definir metas por área (Vendas, Comercial, Pátio) e distribuir por colaborador, 
