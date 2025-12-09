@@ -151,24 +151,28 @@ export default function ManualGoalRegistration({ open, onClose, workshop, onSave
 
       await base44.entities.MonthlyGoalHistory.create(recordData);
 
-      // Atualizar actual_revenue_achieved na entidade correspondente
+      // Atualizar campos REALIZADOS nas metas mensais
       if (entityType === "workshop") {
         await base44.entities.Workshop.update(workshop.id, {
           monthly_goals: {
             ...workshop.monthly_goals,
-            actual_revenue_achieved: (workshop.monthly_goals?.actual_revenue_achieved || 0) + formData.achieved_total
+            actual_revenue_achieved: formData.achieved_total,
+            revenue_parts: formData.revenue_parts,
+            revenue_services: formData.revenue_services,
+            customer_volume: formData.customer_volume,
+            average_ticket: average_ticket
           }
         });
       } else if (selectedEmployee) {
         await base44.entities.Employee.update(selectedEmployee.id, {
           monthly_goals: {
             ...selectedEmployee.monthly_goals,
-            actual_revenue_achieved: (selectedEmployee.monthly_goals?.actual_revenue_achieved || 0) + formData.achieved_total
+            actual_revenue_achieved: formData.achieved_total
           }
         });
       }
 
-      toast.success("Registro salvo com sucesso!");
+      toast.success("Registro salvo e metas atualizadas automaticamente!");
       if (onSave) onSave();
       onClose();
     } catch (error) {
