@@ -120,10 +120,10 @@ export default function EmployeeGoals({ employee, onUpdate }) {
       
       // Calcular meta projetada baseada no melhor mês + crescimento
       const bestMonthRevenue = employee.best_month_history?.revenue_total || 0;
-      const growthPercentage = employee.monthly_goals?.growth_percentage || 10;
+      const currentGrowthPercentage = growthPercentageInput || 10;
       const projectedGoal = bestMonthRevenue > 0 
-        ? bestMonthRevenue * (1 + growthPercentage / 100)
-        : totalGoalValue;
+        ? bestMonthRevenue * (1 + currentGrowthPercentage / 100)
+        : totalGoalValue || (bestMonthRevenue * 1.1);
 
       // Calcular meta diária (assumindo 22 dias úteis)
       const dailyProjectedGoal = projectedGoal / 22;
@@ -134,7 +134,7 @@ export default function EmployeeGoals({ employee, onUpdate }) {
         individual_goal: projectedGoal,
         daily_projected_goal: dailyProjectedGoal,
         actual_revenue_achieved: employee.monthly_goals?.actual_revenue_achieved || 0,
-        growth_percentage: growthPercentage,
+        growth_percentage: currentGrowthPercentage,
         achievement_percentage: goalsWithProgress.length > 0
           ? goalsWithProgress.reduce((sum, g) => sum + (g.progress || 0), 0) / goalsWithProgress.length
           : 0
@@ -185,22 +185,34 @@ export default function EmployeeGoals({ employee, onUpdate }) {
 
   // Dados do melhor mês e projeções
   const bestMonthRevenue = employee.best_month_history?.revenue_total || 0;
-  const growthPercentage = growthPercentageInput;
+  const growthPercentage = growthPercentageInput || 10;
+  
+  // Se há melhor mês, usa ele + crescimento. Se não, usa 10% mínimo sobre melhor mês ou totalGoalValue
   const projectedGoal = bestMonthRevenue > 0 
     ? bestMonthRevenue * (1 + growthPercentage / 100)
-    : totalGoalValue;
+    : totalGoalValue || (bestMonthRevenue * 1.1);
+    
   const dailyProjectedGoal = projectedGoal / 22;
   const actualRevenueAchieved = employee.monthly_goals?.actual_revenue_achieved || 0;
   const achievementPercentage = projectedGoal > 0 ? (actualRevenueAchieved / projectedGoal) * 100 : 0;
 
   const handleSaveGrowth = async () => {
+    const bestMonthRevenue = employee.best_month_history?.revenue_total || 0;
+    const newProjectedGoal = bestMonthRevenue > 0 
+      ? bestMonthRevenue * (1 + growthPercentageInput / 100)
+      : bestMonthRevenue * 1.1;
+    const newDailyProjectedGoal = newProjectedGoal / 22;
+
     await onUpdate({
       monthly_goals: {
         ...employee.monthly_goals,
-        growth_percentage: growthPercentageInput
+        growth_percentage: growthPercentageInput,
+        individual_goal: newProjectedGoal,
+        daily_projected_goal: newDailyProjectedGoal,
+        month: new Date().toISOString().substring(0, 7)
       }
     });
-    toast.success("Crescimento geral atualizado!");
+    toast.success("Crescimento geral atualizado! Metas recalculadas automaticamente.");
     setEditingGrowth(false);
   };
 
