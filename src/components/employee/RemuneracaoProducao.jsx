@@ -63,6 +63,13 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
     setEditing(false);
   };
 
+  const handleSaveBestMonth = async () => {
+    await onUpdate({
+      best_month_history: bestMonthData
+    });
+    setEditingBestMonth(false);
+  };
+
   const addBenefit = () => {
     setFormData({
       ...formData,
