@@ -33,6 +33,22 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
       average_ticket: 0,
       average_ticket_parts: 0,
       average_ticket_services: 0,
+      r70_i30: { r70: 70, i30: 30 },
+      tcmp2: 0,
+      pave_commercial: 0,
+      kit_master: 0,
+      sales_base: 0,
+      sales_marketing: 0,
+      clients_delivered: 0,
+      marketing: {
+        leads_generated: 0,
+        leads_scheduled: 0,
+        leads_showed_up: 0,
+        leads_sold: 0,
+        cost_per_sale: 0,
+        invested_value: 0,
+        revenue_from_traffic: 0
+      },
       physical_person: {
         revenue_total: 0,
         revenue_parts: 0,
@@ -66,26 +82,44 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
 
   useEffect(() => {
     if (workshop) {
+      const defaultBestMonth = {
+        date: "",
+        revenue_total: 0,
+        revenue_parts: 0,
+        revenue_services: 0,
+        profit_percentage: 0,
+        rentability_percentage: 0,
+        customer_volume: 0,
+        average_ticket: 0,
+        average_ticket_parts: 0,
+        average_ticket_services: 0,
+        r70_i30: { r70: 70, i30: 30 },
+        tcmp2: 0,
+        pave_commercial: 0,
+        kit_master: 0,
+        sales_base: 0,
+        sales_marketing: 0,
+        clients_delivered: 0,
+        marketing: {
+          leads_generated: 0,
+          leads_scheduled: 0,
+          leads_showed_up: 0,
+          leads_sold: 0,
+          cost_per_sale: 0,
+          invested_value: 0,
+          revenue_from_traffic: 0
+        },
+        physical_person: {
+          revenue_total: 0, revenue_parts: 0, revenue_services: 0, customer_volume: 0, percentage: 0
+        },
+        juridical_person: {
+          revenue_total: 0, revenue_parts: 0, revenue_services: 0, customer_volume: 0, percentage: 0
+        }
+      };
+
       setFormData({
         serves_fleet_insurance: workshop.serves_fleet_insurance || false,
-        best_month_history: workshop.best_month_history || {
-          date: "",
-          revenue_total: 0,
-          revenue_parts: 0,
-          revenue_services: 0,
-          profit_percentage: 0,
-          rentability_percentage: 0,
-          customer_volume: 0,
-          average_ticket: 0,
-          average_ticket_parts: 0,
-          average_ticket_services: 0,
-          physical_person: {
-            revenue_total: 0, revenue_parts: 0, revenue_services: 0, customer_volume: 0, percentage: 0
-          },
-          juridical_person: {
-            revenue_total: 0, revenue_parts: 0, revenue_services: 0, customer_volume: 0, percentage: 0
-          }
-        },
+        best_month_history: { ...defaultBestMonth, ...(workshop.best_month_history || {}) },
         monthly_goals: workshop.monthly_goals || {
           month: "",
           growth_percentage: 10,
@@ -134,25 +168,10 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
     setEditingGrowth(false);
   };
 
-  const calculateTotals = () => {
-    const bm = formData.best_month_history;
-    const totalParts = bm.revenue_parts || 0;
-    const totalServices = bm.revenue_services || 0;
-    const totalRevenue = totalParts + totalServices;
-    const customerVolume = bm.customer_volume || 0;
-
-    return {
-      revenue_total: totalRevenue,
-      average_ticket: customerVolume > 0 ? totalRevenue / customerVolume : 0,
-      average_ticket_parts: customerVolume > 0 ? totalParts / customerVolume : 0,
-      average_ticket_services: customerVolume > 0 ? totalServices / customerVolume : 0
-    };
-  };
-
   const updateBestMonth = (field, value) => {
     const newBestMonth = { ...formData.best_month_history, [field]: value };
     
-    // Recalculate totals
+    // Recalcular totais automáticos
     const totalParts = newBestMonth.revenue_parts || 0;
     const totalServices = newBestMonth.revenue_services || 0;
     const totalRevenue = totalParts + totalServices;
@@ -162,6 +181,13 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
     newBestMonth.average_ticket = customerVolume > 0 ? totalRevenue / customerVolume : 0;
     newBestMonth.average_ticket_parts = customerVolume > 0 ? totalParts / customerVolume : 0;
     newBestMonth.average_ticket_services = customerVolume > 0 ? totalServices / customerVolume : 0;
+
+    // Calcular custo por venda (Marketing)
+    if (newBestMonth.marketing) {
+      const leadsSold = newBestMonth.marketing.leads_sold || 0;
+      const investedValue = newBestMonth.marketing.invested_value || 0;
+      newBestMonth.marketing.cost_per_sale = leadsSold > 0 ? investedValue / leadsSold : 0;
+    }
 
     // Calculate percentages for PF/PJ
     if (formData.serves_fleet_insurance) {
@@ -180,6 +206,23 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
     }
 
     setFormData({ ...formData, best_month_history: newBestMonth });
+  };
+
+  const updateMarketing = (field, value) => {
+    const newMarketing = { ...formData.best_month_history.marketing, [field]: value };
+    
+    // Recalcular custo por venda automaticamente
+    const leadsSold = newMarketing.leads_sold || 0;
+    const investedValue = newMarketing.invested_value || 0;
+    newMarketing.cost_per_sale = leadsSold > 0 ? investedValue / leadsSold : 0;
+
+    setFormData({
+      ...formData,
+      best_month_history: {
+        ...formData.best_month_history,
+        marketing: newMarketing
+      }
+    });
   };
 
   const updatePhysicalPerson = (field, value) => {
@@ -360,104 +403,258 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                 </div>
               </div>
 
-              {/* Dados Gerais */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div>
-                  <Label>Data do Melhor Mês</Label>
-                  <Input
-                    type="month"
-                    value={formData.best_month_history.date}
-                    onChange={(e) => updateBestMonth('date', e.target.value)}
-                    disabled={!editing}
-                  />
+              {/* Dados Principais */}
+              <div className="bg-white p-4 rounded-lg border-2 border-blue-200">
+                <h4 className="font-semibold text-blue-900 mb-4">📊 Dados Principais</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div>
+                    <Label>Data do Melhor Mês</Label>
+                    <Input
+                      type="month"
+                      value={formData.best_month_history.date}
+                      onChange={(e) => updateBestMonth('date', e.target.value)}
+                      disabled={!editing}
+                    />
+                  </div>
+                  <div>
+                    <Label>Faturamento Peças (R$)</Label>
+                    <Input
+                      type="number"
+                      value={formData.best_month_history.revenue_parts}
+                      onChange={(e) => updateBestMonth('revenue_parts', parseFloat(e.target.value) || 0)}
+                      disabled={!editing}
+                      className="text-right"
+                    />
+                  </div>
+                  <div>
+                    <Label>Faturamento Serviços (R$)</Label>
+                    <Input
+                      type="number"
+                      value={formData.best_month_history.revenue_services}
+                      onChange={(e) => updateBestMonth('revenue_services', parseFloat(e.target.value) || 0)}
+                      disabled={!editing}
+                      className="text-right"
+                    />
+                  </div>
+                  <div>
+                    <Label>Faturamento Total (Auto)</Label>
+                    <Input
+                      value={formatCurrency(formData.best_month_history.revenue_total || 0)}
+                      disabled
+                      className="bg-yellow-100 font-bold text-orange-700"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <Label>Faturamento Peças (R$)</Label>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+                  <div>
+                    <Label>Clientes (qtd)</Label>
+                    <Input
+                      type="number"
+                      value={formData.best_month_history.customer_volume}
+                      onChange={(e) => updateBestMonth('customer_volume', parseInt(e.target.value) || 0)}
+                      disabled={!editing}
+                    />
+                  </div>
+                  <div>
+                    <Label>Ticket Médio (Auto)</Label>
+                    <Input
+                      value={formatCurrency(formData.best_month_history.average_ticket || 0)}
+                      disabled
+                      className="bg-yellow-100 font-bold text-orange-700"
+                    />
+                  </div>
+                  <div>
+                    <Label>Lucro (%)</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      value={formData.best_month_history.profit_percentage}
+                      onChange={(e) => updateBestMonth('profit_percentage', parseFloat(e.target.value) || 0)}
+                      disabled={!editing}
+                    />
+                  </div>
+                  <div>
+                    <Label>Rentabilidade (%)</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      value={formData.best_month_history.rentability_percentage}
+                      onChange={(e) => updateBestMonth('rentability_percentage', parseFloat(e.target.value) || 0)}
+                      disabled={!editing}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* R70/I30 e TCMP2 */}
+              <div className="bg-white p-4 rounded-lg border-2 border-green-200">
+                <h4 className="font-semibold text-green-900 mb-4">💰 Indicadores Financeiros</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label>R70 (%)</Label>
+                    <Input
+                      type="number"
+                      value={formData.best_month_history.r70_i30?.r70 || 70}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        best_month_history: {
+                          ...formData.best_month_history,
+                          r70_i30: { ...formData.best_month_history.r70_i30, r70: parseFloat(e.target.value) || 70 }
+                        }
+                      })}
+                      disabled={!editing}
+                    />
+                  </div>
+                  <div>
+                    <Label>I30 (%)</Label>
+                    <Input
+                      type="number"
+                      value={formData.best_month_history.r70_i30?.i30 || 30}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        best_month_history: {
+                          ...formData.best_month_history,
+                          r70_i30: { ...formData.best_month_history.r70_i30, i30: parseFloat(e.target.value) || 30 }
+                        }
+                      })}
+                      disabled={!editing}
+                    />
+                  </div>
+                  <div>
+                    <Label>TCMP2 (R$)</Label>
+                    <Input
+                      type="number"
+                      value={formData.best_month_history.tcmp2}
+                      onChange={(e) => updateBestMonth('tcmp2', parseFloat(e.target.value) || 0)}
+                      disabled={!editing}
+                      placeholder="Puxar do DRE médio"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Comercial */}
+              <div className="bg-white p-4 rounded-lg border-2 border-purple-200">
+                <h4 className="font-semibold text-purple-900 mb-4">🎯 Comercial</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div>
+                    <Label>PAVE - Comercial</Label>
+                    <Input
+                      type="number"
+                      value={formData.best_month_history.pave_commercial}
+                      onChange={(e) => updateBestMonth('pave_commercial', parseFloat(e.target.value) || 0)}
+                      disabled={!editing}
+                    />
+                  </div>
+                  <div>
+                    <Label>Kit Master (R$)</Label>
+                    <Input
+                      type="number"
+                      value={formData.best_month_history.kit_master}
+                      onChange={(e) => updateBestMonth('kit_master', parseFloat(e.target.value) || 0)}
+                      disabled={!editing}
+                    />
+                  </div>
+                  <div>
+                    <Label>Vendas Comercial Base (R$)</Label>
+                    <Input
+                      type="number"
+                      value={formData.best_month_history.sales_base}
+                      onChange={(e) => updateBestMonth('sales_base', parseFloat(e.target.value) || 0)}
+                      disabled={!editing}
+                    />
+                  </div>
+                  <div>
+                    <Label>Vendas Lead Marketing (R$)</Label>
+                    <Input
+                      type="number"
+                      value={formData.best_month_history.sales_marketing}
+                      onChange={(e) => updateBestMonth('sales_marketing', parseFloat(e.target.value) || 0)}
+                      disabled={!editing}
+                    />
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <Label>Clientes Entregues (QTD)</Label>
                   <Input
                     type="number"
-                    value={formData.best_month_history.revenue_parts}
-                    onChange={(e) => updateBestMonth('revenue_parts', parseFloat(e.target.value) || 0)}
+                    value={formData.best_month_history.clients_delivered}
+                    onChange={(e) => updateBestMonth('clients_delivered', parseInt(e.target.value) || 0)}
                     disabled={!editing}
-                    className="text-right"
-                  />
-                </div>
-                <div>
-                  <Label>Faturamento Serviços (R$)</Label>
-                  <Input
-                    type="number"
-                    value={formData.best_month_history.revenue_services}
-                    onChange={(e) => updateBestMonth('revenue_services', parseFloat(e.target.value) || 0)}
-                    disabled={!editing}
-                    className="text-right"
-                  />
-                </div>
-                <div>
-                  <Label>Faturamento Total</Label>
-                  <Input
-                    value={formatCurrency(formData.best_month_history.revenue_total || 0)}
-                    disabled
-                    className="bg-yellow-100 font-bold text-orange-700"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div>
-                  <Label>Volume de Clientes</Label>
-                  <Input
-                    type="number"
-                    value={formData.best_month_history.customer_volume}
-                    onChange={(e) => updateBestMonth('customer_volume', parseInt(e.target.value) || 0)}
-                    disabled={!editing}
-                  />
+              {/* Marketing */}
+              <div className="bg-white p-4 rounded-lg border-2 border-pink-200">
+                <h4 className="font-semibold text-pink-900 mb-4">📣 Marketing</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div>
+                    <Label>Lead Gerados (qtd)</Label>
+                    <Input
+                      type="number"
+                      value={formData.best_month_history.marketing?.leads_generated || 0}
+                      onChange={(e) => updateMarketing('leads_generated', parseInt(e.target.value) || 0)}
+                      disabled={!editing}
+                    />
+                  </div>
+                  <div>
+                    <Label>Lead Agendados (qtd)</Label>
+                    <Input
+                      type="number"
+                      value={formData.best_month_history.marketing?.leads_scheduled || 0}
+                      onChange={(e) => updateMarketing('leads_scheduled', parseInt(e.target.value) || 0)}
+                      disabled={!editing}
+                    />
+                  </div>
+                  <div>
+                    <Label>Comparecimentos (qtd)</Label>
+                    <Input
+                      type="number"
+                      value={formData.best_month_history.marketing?.leads_showed_up || 0}
+                      onChange={(e) => updateMarketing('leads_showed_up', parseInt(e.target.value) || 0)}
+                      disabled={!editing}
+                    />
+                  </div>
+                  <div>
+                    <Label>Lead Vendas (qtd)</Label>
+                    <Input
+                      type="number"
+                      value={formData.best_month_history.marketing?.leads_sold || 0}
+                      onChange={(e) => updateMarketing('leads_sold', parseInt(e.target.value) || 0)}
+                      disabled={!editing}
+                    />
+                  </div>
                 </div>
-                <div>
-                  <Label>Lucro (%)</Label>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    value={formData.best_month_history.profit_percentage}
-                    onChange={(e) => updateBestMonth('profit_percentage', parseFloat(e.target.value) || 0)}
-                    disabled={!editing}
-                  />
-                </div>
-                <div>
-                  <Label>Rentabilidade (%)</Label>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    value={formData.best_month_history.rentability_percentage}
-                    onChange={(e) => updateBestMonth('rentability_percentage', parseFloat(e.target.value) || 0)}
-                    disabled={!editing}
-                  />
-                </div>
-                <div>
-                  <Label>Ticket Médio (Auto)</Label>
-                  <Input
-                    value={formatCurrency(formData.best_month_history.average_ticket || 0)}
-                    disabled
-                    className="bg-yellow-100 font-bold text-orange-700"
-                  />
-                </div>
-              </div>
 
-              {/* Tickets Médios Separados */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label>Ticket Médio Peças (Auto)</Label>
-                  <Input
-                    value={formatCurrency(formData.best_month_history.average_ticket_parts || 0)}
-                    disabled
-                    className="bg-gray-100"
-                  />
-                </div>
-                <div>
-                  <Label>Ticket Médio Serviços (Auto)</Label>
-                  <Input
-                    value={formatCurrency(formData.best_month_history.average_ticket_services || 0)}
-                    disabled
-                    className="bg-gray-100"
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                  <div>
+                    <Label>Valor Investido (Tráfego) R$</Label>
+                    <Input
+                      type="number"
+                      value={formData.best_month_history.marketing?.invested_value || 0}
+                      onChange={(e) => updateMarketing('invested_value', parseFloat(e.target.value) || 0)}
+                      disabled={!editing}
+                    />
+                  </div>
+                  <div>
+                    <Label>Valor Faturado Lead Tráfego (R$)</Label>
+                    <Input
+                      type="number"
+                      value={formData.best_month_history.marketing?.revenue_from_traffic || 0}
+                      onChange={(e) => updateMarketing('revenue_from_traffic', parseFloat(e.target.value) || 0)}
+                      disabled={!editing}
+                    />
+                  </div>
+                  <div>
+                    <Label>Custo por Venda (Auto)</Label>
+                    <Input
+                      value={formatCurrency(formData.best_month_history.marketing?.cost_per_sale || 0)}
+                      disabled
+                      className="bg-pink-100 font-bold text-pink-700"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -577,9 +774,9 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
               {formData.best_month_history.date && formData.best_month_history.revenue_total > 0 && (
                 <div className="bg-orange-100 rounded-lg p-4 border-2 border-orange-300">
                   <p className="text-sm text-orange-900 font-semibold mb-2">
-                    📊 Referência para Metas
+                    📊 Resumo - Referência para Metas Mensais
                   </p>
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                     <div>
                       <p className="text-orange-700">Data:</p>
                       <p className="font-bold text-orange-900">
@@ -591,16 +788,12 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                       <p className="font-bold text-orange-900">{formatCurrency(formData.best_month_history.revenue_total)}</p>
                     </div>
                     <div>
-                      <p className="text-orange-700">Lucro:</p>
-                      <p className="font-bold text-orange-900">{formatNumber(formData.best_month_history.profit_percentage, 1)}%</p>
-                    </div>
-                    <div>
-                      <p className="text-orange-700">Rentabilidade:</p>
-                      <p className="font-bold text-orange-900">{formatNumber(formData.best_month_history.rentability_percentage, 1)}%</p>
-                    </div>
-                    <div>
                       <p className="text-orange-700">Ticket Médio:</p>
                       <p className="font-bold text-orange-900">{formatCurrency(formData.best_month_history.average_ticket)}</p>
+                    </div>
+                    <div>
+                      <p className="text-orange-700">Clientes:</p>
+                      <p className="font-bold text-orange-900">{formData.best_month_history.customer_volume}</p>
                     </div>
                   </div>
                 </div>
@@ -648,7 +841,7 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                   <p className="text-xl font-bold text-purple-600">
                     R$ {formatCurrency(actualRevenueAchieved)}
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">Alimentado pelo sistema</p>
+                  <p className="text-xs text-gray-500 mt-1">Alimentado pelo histórico</p>
                 </div>
               </div>
 
@@ -671,16 +864,85 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                 </div>
               </div>
 
+              {/* Espelhamento completo do Melhor Mês */}
+              <div className="mt-6 space-y-4">
+                <h3 className="font-semibold text-gray-900">📋 Valores Espelhados do Melhor Mês (com Crescimento Aplicado)</h3>
+                
+                {/* Dados Principais */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm bg-white p-4 rounded-lg border">
+                  <div>
+                    <p className="text-gray-600">Fat. Peças:</p>
+                    <p className="font-bold text-blue-600">
+                      R$ {formatCurrency((formData.best_month_history.revenue_parts || 0) * (1 + growthPercentage / 100))}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Fat. Serviços:</p>
+                    <p className="font-bold text-green-600">
+                      R$ {formatCurrency((formData.best_month_history.revenue_services || 0) * (1 + growthPercentage / 100))}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Clientes:</p>
+                    <p className="font-bold">{Math.round((formData.best_month_history.customer_volume || 0) * (1 + growthPercentage / 100))}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Ticket Médio:</p>
+                    <p className="font-bold">R$ {formatCurrency((formData.best_month_history.average_ticket || 0) * (1 + growthPercentage / 100))}</p>
+                  </div>
+                </div>
+
+                {/* Comercial */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm bg-purple-50 p-4 rounded-lg border border-purple-200">
+                  <div>
+                    <p className="text-gray-600">PAVE:</p>
+                    <p className="font-bold">{formatCurrency((formData.best_month_history.pave_commercial || 0) * (1 + growthPercentage / 100))}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Kit Master:</p>
+                    <p className="font-bold">R$ {formatCurrency((formData.best_month_history.kit_master || 0) * (1 + growthPercentage / 100))}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Vendas Base:</p>
+                    <p className="font-bold">R$ {formatCurrency((formData.best_month_history.sales_base || 0) * (1 + growthPercentage / 100))}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Vendas Marketing:</p>
+                    <p className="font-bold">R$ {formatCurrency((formData.best_month_history.sales_marketing || 0) * (1 + growthPercentage / 100))}</p>
+                  </div>
+                </div>
+
+                {/* Marketing */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm bg-pink-50 p-4 rounded-lg border border-pink-200">
+                  <div>
+                    <p className="text-gray-600">Leads Gerados:</p>
+                    <p className="font-bold">{Math.round((formData.best_month_history.marketing?.leads_generated || 0) * (1 + growthPercentage / 100))}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Leads Agendados:</p>
+                    <p className="font-bold">{Math.round((formData.best_month_history.marketing?.leads_scheduled || 0) * (1 + growthPercentage / 100))}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Comparecimentos:</p>
+                    <p className="font-bold">{Math.round((formData.best_month_history.marketing?.leads_showed_up || 0) * (1 + growthPercentage / 100))}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Leads Vendidos:</p>
+                    <p className="font-bold">{Math.round((formData.best_month_history.marketing?.leads_sold || 0) * (1 + growthPercentage / 100))}</p>
+                  </div>
+                </div>
+              </div>
+
               <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
                 <p className="text-xs text-blue-800">
                   💡 <strong>Como funciona:</strong> A meta PROJETADA é calculada automaticamente (Melhor Mês + % Crescimento). 
-                  O valor REALIZADO é atualizado automaticamente pelo sistema, com base nos dados de produção.
+                  O valor REALIZADO é atualizado automaticamente pelo sistema conforme registros são feitos no Histórico de Metas.
                 </p>
               </div>
             </CardContent>
           </Card>
 
-          {/* Metas Detalhadas */}
+          {/* Metas Detalhadas - Opcional */}
           <Card>
             <CardHeader>
               <CardTitle>Metas Detalhadas (Opcional)</CardTitle>
