@@ -182,7 +182,7 @@ export default function DetalhesColaborador() {
           <TabsContent value="remuneracao">
             <RemuneracaoProducao employee={employee} onUpdate={handleUpdate} />
             <div className="mt-6">
-              <PainelProducao employee={employee} />
+              <HistoricoDiarioProducao employee={employee} onUpdate={handleUpdate} />
             </div>
           </TabsContent>
 
