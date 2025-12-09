@@ -11,12 +11,15 @@ import { toast } from "sonner";
 
 export default function EmployeeGoals({ employee, onUpdate }) {
   const [editing, setEditing] = useState(false);
+  const [editingGrowth, setEditingGrowth] = useState(false);
   const [goals, setGoals] = useState([]);
   const [user, setUser] = useState(null);
+  const [growthPercentageInput, setGrowthPercentageInput] = useState(10);
 
   useEffect(() => {
     loadUser();
     loadGoals();
+    setGrowthPercentageInput(employee.monthly_goals?.growth_percentage || 10);
   }, [employee]);
 
   const loadUser = async () => {
@@ -182,7 +185,7 @@ export default function EmployeeGoals({ employee, onUpdate }) {
 
   // Dados do melhor mês e projeções
   const bestMonthRevenue = employee.best_month_history?.revenue_total || 0;
-  const growthPercentage = employee.monthly_goals?.growth_percentage || 10;
+  const growthPercentage = growthPercentageInput;
   const projectedGoal = bestMonthRevenue > 0 
     ? bestMonthRevenue * (1 + growthPercentage / 100)
     : totalGoalValue;
@@ -190,14 +193,82 @@ export default function EmployeeGoals({ employee, onUpdate }) {
   const actualRevenueAchieved = employee.monthly_goals?.actual_revenue_achieved || 0;
   const achievementPercentage = projectedGoal > 0 ? (actualRevenueAchieved / projectedGoal) * 100 : 0;
 
+  const handleSaveGrowth = async () => {
+    await onUpdate({
+      monthly_goals: {
+        ...employee.monthly_goals,
+        growth_percentage: growthPercentageInput
+      }
+    });
+    toast.success("Crescimento geral atualizado!");
+    setEditingGrowth(false);
+  };
+
   return (
     <div className="space-y-6">
+      {/* CRESCIMENTO GERAL - Configuração */}
+      <Card className="shadow-xl border-2 border-orange-200 bg-gradient-to-r from-orange-50 to-yellow-50">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-orange-900">
+              <TrendingUp className="w-6 h-6" />
+              📊 Crescimento Geral
+            </CardTitle>
+            {!editingGrowth ? (
+              <Button onClick={() => setEditingGrowth(true)} size="sm" variant="outline" className="border-orange-400">
+                <Edit className="w-4 h-4 mr-2" />
+                Editar
+              </Button>
+            ) : (
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => {
+                  setEditingGrowth(false);
+                  setGrowthPercentageInput(employee.monthly_goals?.growth_percentage || 10);
+                }} size="sm">Cancelar</Button>
+                <Button onClick={handleSaveGrowth} size="sm" className="bg-orange-600 hover:bg-orange-700">
+                  <Save className="w-4 h-4 mr-2" />
+                  Salvar
+                </Button>
+              </div>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-4">
+            <div className="flex-1">
+              <Label className="text-sm text-gray-700 mb-2 block">
+                Porcentagem de Crescimento Geral (%)
+              </Label>
+              <Input
+                type="number"
+                step="0.1"
+                value={growthPercentageInput}
+                onChange={(e) => setGrowthPercentageInput(parseFloat(e.target.value) || 0)}
+                disabled={!editingGrowth}
+                className="text-xl font-bold"
+              />
+            </div>
+            <div className="text-center p-4 bg-orange-100 rounded-lg">
+              <p className="text-sm text-orange-800 mb-1">Projeção Gerada</p>
+              <p className="text-2xl font-bold text-orange-600">
+                +{growthPercentageInput.toFixed(1)}%
+              </p>
+            </div>
+          </div>
+          <div className="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+            <p className="text-xs text-yellow-800">
+              ℹ️ Esta porcentagem será aplicada sobre o Melhor Mês Histórico para calcular a Meta Projetada mensal. Se deixar em branco, o sistema usará 10% por padrão.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Card de Espelhamento do Melhor Mês + Metas Mensais */}
       <Card className="shadow-xl border-2 border-green-200 bg-gradient-to-r from-green-50 to-emerald-50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-green-900">
-            <TrendingUp className="w-6 h-6" />
-            Metas Mensais Projetadas - {new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+            <Target className="w-6 h-6" />
+            🎯 Metas Mensais Projetadas - {new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -207,46 +278,54 @@ export default function EmployeeGoals({ employee, onUpdate }) {
               <p className="text-xl font-bold text-gray-900">
                 R$ {bestMonthRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </p>
+              <p className="text-xs text-gray-500 mt-1">Base para projeção</p>
             </div>
             <div>
               <p className="text-xs text-gray-600 mb-1">% Crescimento</p>
               <p className="text-xl font-bold text-blue-600">
                 +{growthPercentage.toFixed(1)}%
               </p>
+              <p className="text-xs text-gray-500 mt-1">Configurado acima</p>
             </div>
             <div>
-              <p className="text-xs text-gray-600 mb-1">Meta Projetada (Mês)</p>
+              <p className="text-xs text-gray-600 mb-1">PROJETADO (Mês)</p>
               <p className="text-xl font-bold text-green-600">
                 R$ {projectedGoal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </p>
+              <p className="text-xs text-gray-500 mt-1">Meta a atingir</p>
             </div>
             <div>
-              <p className="text-xs text-gray-600 mb-1">Meta Projetada (Dia)</p>
+              <p className="text-xs text-gray-600 mb-1">PROJETADO (Dia)</p>
               <p className="text-xl font-bold text-purple-600">
                 R$ {dailyProjectedGoal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </p>
+              <p className="text-xs text-gray-500 mt-1">Meta diária</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 pt-4 border-t border-green-200">
-            <div>
-              <p className="text-xs text-gray-600 mb-1">Realizado no Mês</p>
+          <div className="grid grid-cols-2 gap-4 pt-4 border-t-2 border-green-300">
+            <div className="bg-white p-4 rounded-lg">
+              <p className="text-xs text-gray-600 mb-1">REALIZADO no Mês</p>
               <p className="text-2xl font-bold text-green-600">
                 R$ {actualRevenueAchieved.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </p>
+              <p className="text-xs text-gray-500 mt-1">Alimentado pelo histórico diário</p>
             </div>
-            <div>
-              <p className="text-xs text-gray-600 mb-1">% Atingimento</p>
+            <div className="bg-white p-4 rounded-lg">
+              <p className="text-xs text-gray-600 mb-1">% Atingimento da Meta</p>
               <p className={`text-2xl font-bold ${achievementPercentage >= 100 ? 'text-green-600' : achievementPercentage >= 70 ? 'text-yellow-600' : 'text-red-600'}`}>
                 {achievementPercentage.toFixed(1)}%
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                {achievementPercentage >= 100 ? '🎉 Meta superada!' : achievementPercentage >= 70 ? '⚡ Quase lá!' : '💪 Continue o esforço!'}
               </p>
             </div>
           </div>
 
           <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
             <p className="text-xs text-blue-800">
-              💡 <strong>Informação:</strong> A meta projetada é calculada automaticamente com base no seu Melhor Mês Histórico + {growthPercentage}% de crescimento (definido no Desdobramento de Metas). 
-              O valor "Realizado" é atualizado automaticamente conforme você registra sua produção diária.
+              💡 <strong>Como funciona:</strong> A meta PROJETADA é calculada automaticamente (Melhor Mês + % Crescimento). 
+              O valor REALIZADO é atualizado conforme você registra sua produção no "Histórico Diário da Produção".
             </p>
           </div>
         </CardContent>
