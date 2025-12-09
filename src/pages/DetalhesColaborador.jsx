@@ -4,7 +4,7 @@ import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, ArrowLeft, User, FileText, MessageSquare, AlertTriangle, Award, TrendingUp, FileCheck, Heart, FilePenLine, Activity, GraduationCap, BarChart3, Rocket } from "lucide-react";
+import { Loader2, ArrowLeft, User, FileText, MessageSquare, AlertTriangle, Award, TrendingUp, FileCheck, Heart, FilePenLine, Activity, GraduationCap, BarChart3, Rocket, Target } from "lucide-react";
 import { toast } from "sonner";
 import DadosPessoais from "../components/employee/DadosPessoais";
 import RemuneracaoProducao from "../components/employee/RemuneracaoProducao";
@@ -19,6 +19,7 @@ import EngajamentoCursos from "../components/employee/EngajamentoCursos";
 import EvolucaoMaturidade from "../components/employee/EvolucaoMaturidade";
 import ContratoTrabalho from "../components/employee/ContratoTrabalho";
 import AI_PDI_Generator from "../components/rh/AI_PDI_Generator";
+import EmployeeGoals from "../components/employee/EmployeeGoals";
 
 export default function DetalhesColaborador() {
   const navigate = useNavigate();
@@ -119,7 +120,7 @@ export default function DetalhesColaborador() {
         </div>
 
         <Tabs defaultValue="dados" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-11 bg-white shadow-md">
+          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-12 bg-white shadow-md">
             <TabsTrigger value="dados">
               <User className="w-4 h-4 mr-2" />
               Dados
@@ -127,6 +128,10 @@ export default function DetalhesColaborador() {
             <TabsTrigger value="remuneracao">
               <TrendingUp className="w-4 h-4 mr-2" />
               Produção
+            </TabsTrigger>
+            <TabsTrigger value="metas" className="data-[state=active]:bg-indigo-100 data-[state=active]:text-indigo-700">
+              <Target className="w-4 h-4 mr-2" />
+              Metas
             </TabsTrigger>
             <TabsTrigger value="engajamento">
               <GraduationCap className="w-4 h-4 mr-2" />
@@ -179,6 +184,10 @@ export default function DetalhesColaborador() {
             <div className="mt-6">
               <PainelProducao employee={employee} />
             </div>
+          </TabsContent>
+
+          <TabsContent value="metas">
+            <EmployeeGoals employee={employee} onUpdate={handleUpdate} />
           </TabsContent>
 
           <TabsContent value="engajamento">
