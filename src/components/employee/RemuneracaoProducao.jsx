@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Save, Plus, Trash2, Target, DollarSign, Percent } from "lucide-react";
+import { Save, Plus, Trash2, Target, DollarSign, Percent, Award, Edit } from "lucide-react";
 
 export default function RemuneracaoProducao({ employee, onUpdate }) {
   const [editing, setEditing] = useState(false);
