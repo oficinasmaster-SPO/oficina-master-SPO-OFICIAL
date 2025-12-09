@@ -35,6 +35,19 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
     average_ticket_services: employee.best_month_history?.average_ticket_services || 0
   });
 
+  // Calcular ticket médio automaticamente
+  const calculatedAverageTicket = bestMonthData.customer_volume > 0 
+    ? bestMonthData.revenue_total / bestMonthData.customer_volume 
+    : 0;
+  
+  const calculatedAverageTicketParts = bestMonthData.customer_volume > 0 
+    ? bestMonthData.revenue_parts / bestMonthData.customer_volume 
+    : 0;
+  
+  const calculatedAverageTicketServices = bestMonthData.customer_volume > 0 
+    ? bestMonthData.revenue_services / bestMonthData.customer_volume 
+    : 0;
+
   useEffect(() => {
     const loadMetrics = async () => {
       try {
@@ -64,8 +77,16 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
   };
 
   const handleSaveBestMonth = async () => {
+    // Salvar com os tickets médios calculados automaticamente
+    const dataToSave = {
+      ...bestMonthData,
+      average_ticket: calculatedAverageTicket,
+      average_ticket_parts: calculatedAverageTicketParts,
+      average_ticket_services: calculatedAverageTicketServices
+    };
+    
     await onUpdate({
-      best_month_history: bestMonthData
+      best_month_history: dataToSave
     });
     setEditingBestMonth(false);
   };
@@ -176,13 +197,13 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
               />
             </div>
             <div>
-              <Label className="text-xs text-gray-600 mb-1 block">Ticket Médio (R$)</Label>
+              <Label className="text-xs text-gray-600 mb-1 block">Ticket Médio (Automático)</Label>
               <Input
                 type="number"
-                value={bestMonthData.average_ticket}
-                onChange={(e) => setBestMonthData({...bestMonthData, average_ticket: parseFloat(e.target.value) || 0})}
-                disabled={!editingBestMonth}
-                className="h-9"
+                value={calculatedAverageTicket.toFixed(2)}
+                disabled
+                className="h-9 bg-gray-100"
+                title="Calculado automaticamente: Faturamento Total ÷ Volume de Clientes"
               />
             </div>
           </div>
@@ -229,6 +250,34 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
                 disabled={!editingBestMonth}
                 className="h-9"
               />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-yellow-200">
+            <div>
+              <Label className="text-xs text-gray-600 mb-1 block">Ticket Médio Peças (Automático)</Label>
+              <Input
+                type="number"
+                value={calculatedAverageTicketParts.toFixed(2)}
+                disabled
+                className="h-9 bg-gray-100"
+                title="Calculado: Faturamento Peças ÷ Volume de Clientes"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-gray-600 mb-1 block">Ticket Médio Serviços (Automático)</Label>
+              <Input
+                type="number"
+                value={calculatedAverageTicketServices.toFixed(2)}
+                disabled
+                className="h-9 bg-gray-100"
+                title="Calculado: Faturamento Serviços ÷ Volume de Clientes"
+              />
+            </div>
+            <div className="bg-yellow-100 rounded-lg p-2 flex items-center">
+              <p className="text-xs text-yellow-800">
+                💡 Os tickets médios são calculados automaticamente com base no faturamento e volume de clientes
+              </p>
             </div>
           </div>
         </CardContent>
