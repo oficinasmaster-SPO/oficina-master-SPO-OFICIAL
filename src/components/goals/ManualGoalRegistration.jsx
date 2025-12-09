@@ -17,7 +17,27 @@ export default function ManualGoalRegistration({ open, onClose, workshop, onSave
   const [formData, setFormData] = useState({
     reference_date: new Date().toISOString().split('T')[0],
     month: new Date().toISOString().substring(0, 7),
+    // PREVISTO (vem do desdobramento)
     projected_total: 0,
+    projected_revenue_parts: 0,
+    projected_revenue_services: 0,
+    projected_customer_volume: 0,
+    projected_average_ticket: 0,
+    projected_pave_commercial: 0,
+    projected_kit_master: 0,
+    projected_sales_base: 0,
+    projected_sales_marketing: 0,
+    projected_clients_delivered: 0,
+    projected_marketing: {
+      leads_generated: 0,
+      leads_scheduled: 0,
+      leads_showed_up: 0,
+      leads_sold: 0,
+      cost_per_sale: 0,
+      invested_value: 0,
+      revenue_from_traffic: 0
+    },
+    // REALIZADO (preenchimento manual)
     achieved_total: 0,
     revenue_parts: 0,
     revenue_services: 0,
@@ -69,36 +89,49 @@ export default function ManualGoalRegistration({ open, onClose, workshop, onSave
     if (entityType === "workshop") {
       const bestMonth = workshop?.best_month_history || {};
       const growthPercentage = workshop?.monthly_goals?.growth_percentage || 10;
-      const projectedRevenue = (bestMonth.revenue_total || 0) * (1 + growthPercentage / 100);
+      const factor = 1 + growthPercentage / 100;
       
       setFormData(prev => ({
         ...prev,
-        projected_total: projectedRevenue,
-        revenue_parts: bestMonth.revenue_parts || 0,
-        revenue_services: bestMonth.revenue_services || 0,
-        customer_volume: bestMonth.customer_volume || 0,
-        pave_commercial: bestMonth.pave_commercial || 0,
-        kit_master: bestMonth.kit_master || 0,
-        sales_base: bestMonth.sales_base || 0,
-        sales_marketing: bestMonth.sales_marketing || 0,
-        clients_delivered: bestMonth.clients_delivered || 0,
-        marketing_data: bestMonth.marketing || {
-          leads_generated: 0,
-          leads_scheduled: 0,
-          leads_showed_up: 0,
-          leads_sold: 0,
-          invested_value: 0,
-          revenue_from_traffic: 0
+        // PREVISTO - Calculado automaticamente
+        projected_total: (bestMonth.revenue_total || 0) * factor,
+        projected_revenue_parts: (bestMonth.revenue_parts || 0) * factor,
+        projected_revenue_services: (bestMonth.revenue_services || 0) * factor,
+        projected_customer_volume: Math.round((bestMonth.customer_volume || 0) * factor),
+        projected_average_ticket: (bestMonth.average_ticket || 0) * factor,
+        projected_pave_commercial: (bestMonth.pave_commercial || 0) * factor,
+        projected_kit_master: (bestMonth.kit_master || 0) * factor,
+        projected_sales_base: (bestMonth.sales_base || 0) * factor,
+        projected_sales_marketing: (bestMonth.sales_marketing || 0) * factor,
+        projected_clients_delivered: Math.round((bestMonth.clients_delivered || 0) * factor),
+        projected_marketing: {
+          leads_generated: Math.round((bestMonth.marketing?.leads_generated || 0) * factor),
+          leads_scheduled: Math.round((bestMonth.marketing?.leads_scheduled || 0) * factor),
+          leads_showed_up: Math.round((bestMonth.marketing?.leads_showed_up || 0) * factor),
+          leads_sold: Math.round((bestMonth.marketing?.leads_sold || 0) * factor),
+          cost_per_sale: (bestMonth.marketing?.cost_per_sale || 0) * factor,
+          invested_value: (bestMonth.marketing?.invested_value || 0) * factor,
+          revenue_from_traffic: (bestMonth.marketing?.revenue_from_traffic || 0) * factor
         }
       }));
     } else if (selectedEmployee) {
       const bestMonth = selectedEmployee.best_month_history || {};
       const growthPercentage = selectedEmployee.monthly_goals?.growth_percentage || 10;
-      const projectedRevenue = (bestMonth.revenue_total || 0) * (1 + growthPercentage / 100);
+      const factor = 1 + growthPercentage / 100;
       
       setFormData(prev => ({
         ...prev,
-        projected_total: projectedRevenue
+        // PREVISTO - Calculado automaticamente
+        projected_total: (bestMonth.revenue_total || 0) * factor,
+        projected_revenue_parts: (bestMonth.revenue_parts || 0) * factor,
+        projected_revenue_services: (bestMonth.revenue_services || 0) * factor,
+        projected_customer_volume: Math.round((bestMonth.customer_volume || 0) * factor),
+        projected_average_ticket: (bestMonth.average_ticket || 0) * factor,
+        projected_pave_commercial: (bestMonth.pave_commercial || 0) * factor,
+        projected_kit_master: (bestMonth.kit_master || 0) * factor,
+        projected_sales_base: (bestMonth.sales_base || 0) * factor,
+        projected_sales_marketing: (bestMonth.sales_marketing || 0) * factor,
+        projected_clients_delivered: Math.round((bestMonth.clients_delivered || 0) * factor)
       }));
     }
   };
@@ -185,56 +218,130 @@ export default function ManualGoalRegistration({ open, onClose, workshop, onSave
   const renderFieldsForRole = () => {
     const role = entityType === "employee" ? selectedEmployee?.job_role : "geral";
 
-    // Campos comuns
+    // Campos comuns - PREVISTO x REALIZADO
     const commonFields = (
       <>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label>Faturamento Peças (R$)</Label>
-            <Input
-              type="number"
-              value={formData.revenue_parts}
-              onChange={(e) => setFormData({...formData, revenue_parts: parseFloat(e.target.value) || 0})}
-            />
-          </div>
-          <div>
-            <Label>Faturamento Serviços (R$)</Label>
-            <Input
-              type="number"
-              value={formData.revenue_services}
-              onChange={(e) => setFormData({...formData, revenue_services: parseFloat(e.target.value) || 0})}
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label>Faturamento Total (Auto)</Label>
-            <Input
-              value={(formData.revenue_parts + formData.revenue_services).toFixed(2)}
-              disabled
-              className="bg-gray-100 font-bold"
-            />
-          </div>
-          <div>
-            <Label>Ticket Médio (Auto)</Label>
-            <Input
-              value={formData.customer_volume > 0 
-                ? ((formData.revenue_parts + formData.revenue_services) / formData.customer_volume).toFixed(2)
-                : "0.00"}
-              disabled
-              className="bg-gray-100 font-bold"
-            />
+        {/* Faturamento Peças */}
+        <div className="border-l-4 border-blue-500 pl-3 py-2 bg-blue-50/30">
+          <Label className="text-sm font-semibold text-gray-700 mb-2 block">Faturamento Peças</Label>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs text-blue-600">PREVISTO</Label>
+              <Input
+                type="number"
+                value={formData.projected_revenue_parts.toFixed(2)}
+                disabled
+                className="bg-blue-100 font-bold text-blue-700"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-green-600">REALIZADO</Label>
+              <Input
+                type="number"
+                value={formData.revenue_parts}
+                onChange={(e) => setFormData({...formData, revenue_parts: parseFloat(e.target.value) || 0})}
+                className="font-semibold"
+              />
+            </div>
           </div>
         </div>
 
-        <div>
-          <Label>Clientes (qtd)</Label>
-          <Input
-            type="number"
-            value={formData.customer_volume}
-            onChange={(e) => setFormData({...formData, customer_volume: parseInt(e.target.value) || 0})}
-          />
+        {/* Faturamento Serviços */}
+        <div className="border-l-4 border-green-500 pl-3 py-2 bg-green-50/30">
+          <Label className="text-sm font-semibold text-gray-700 mb-2 block">Faturamento Serviços</Label>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs text-blue-600">PREVISTO</Label>
+              <Input
+                type="number"
+                value={formData.projected_revenue_services.toFixed(2)}
+                disabled
+                className="bg-blue-100 font-bold text-blue-700"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-green-600">REALIZADO</Label>
+              <Input
+                type="number"
+                value={formData.revenue_services}
+                onChange={(e) => setFormData({...formData, revenue_services: parseFloat(e.target.value) || 0})}
+                className="font-semibold"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Faturamento Total (Automático) */}
+        <div className="border-l-4 border-purple-500 pl-3 py-2 bg-purple-50/30">
+          <Label className="text-sm font-semibold text-gray-700 mb-2 block">Faturamento Total (Automático)</Label>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs text-blue-600">PREVISTO</Label>
+              <Input
+                value={(formData.projected_revenue_parts + formData.projected_revenue_services).toFixed(2)}
+                disabled
+                className="bg-blue-100 font-bold text-blue-700"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-green-600">REALIZADO</Label>
+              <Input
+                value={(formData.revenue_parts + formData.revenue_services).toFixed(2)}
+                disabled
+                className="bg-green-100 font-bold text-green-700"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Clientes */}
+        <div className="border-l-4 border-orange-500 pl-3 py-2 bg-orange-50/30">
+          <Label className="text-sm font-semibold text-gray-700 mb-2 block">Clientes (qtd)</Label>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs text-blue-600">PREVISTO</Label>
+              <Input
+                type="number"
+                value={formData.projected_customer_volume}
+                disabled
+                className="bg-blue-100 font-bold text-blue-700"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-green-600">REALIZADO</Label>
+              <Input
+                type="number"
+                value={formData.customer_volume}
+                onChange={(e) => setFormData({...formData, customer_volume: parseInt(e.target.value) || 0})}
+                className="font-semibold"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Ticket Médio (Automático) */}
+        <div className="border-l-4 border-pink-500 pl-3 py-2 bg-pink-50/30">
+          <Label className="text-sm font-semibold text-gray-700 mb-2 block">Ticket Médio (Automático)</Label>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs text-blue-600">PREVISTO</Label>
+              <Input
+                value={formData.projected_average_ticket.toFixed(2)}
+                disabled
+                className="bg-blue-100 font-bold text-blue-700"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-green-600">REALIZADO</Label>
+              <Input
+                value={formData.customer_volume > 0 
+                  ? ((formData.revenue_parts + formData.revenue_services) / formData.customer_volume).toFixed(2)
+                  : "0.00"}
+                disabled
+                className="bg-green-100 font-bold text-green-700"
+              />
+            </div>
+          </div>
         </div>
       </>
     );
@@ -244,40 +351,104 @@ export default function ManualGoalRegistration({ open, onClose, workshop, onSave
       return (
         <>
           {commonFields}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>PAVE - Comercial</Label>
-              <Input
-                type="number"
-                value={formData.pave_commercial}
-                onChange={(e) => setFormData({...formData, pave_commercial: parseFloat(e.target.value) || 0})}
-              />
-            </div>
-            <div>
-              <Label>Kit Master (qtd)</Label>
-              <Input
-                type="number"
-                value={formData.kit_master}
-                onChange={(e) => setFormData({...formData, kit_master: parseFloat(e.target.value) || 0})}
-              />
+          
+          {/* PAVE - Comercial */}
+          <div className="border-l-4 border-indigo-500 pl-3 py-2 bg-indigo-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">PAVE - Comercial</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs text-blue-600">PREVISTO</Label>
+                <Input
+                  type="number"
+                  value={formData.projected_pave_commercial.toFixed(2)}
+                  disabled
+                  className="bg-blue-100 font-bold text-blue-700"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-green-600">REALIZADO</Label>
+                <Input
+                  type="number"
+                  value={formData.pave_commercial}
+                  onChange={(e) => setFormData({...formData, pave_commercial: parseFloat(e.target.value) || 0})}
+                  className="font-semibold"
+                />
+              </div>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Vendas Lead Marketing (R$)</Label>
-              <Input
-                type="number"
-                value={formData.sales_marketing}
-                onChange={(e) => setFormData({...formData, sales_marketing: parseFloat(e.target.value) || 0})}
-              />
+
+          {/* Kit Master */}
+          <div className="border-l-4 border-yellow-500 pl-3 py-2 bg-yellow-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Kit Master (R$)</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs text-blue-600">PREVISTO</Label>
+                <Input
+                  type="number"
+                  value={formData.projected_kit_master.toFixed(2)}
+                  disabled
+                  className="bg-blue-100 font-bold text-blue-700"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-green-600">REALIZADO</Label>
+                <Input
+                  type="number"
+                  value={formData.kit_master}
+                  onChange={(e) => setFormData({...formData, kit_master: parseFloat(e.target.value) || 0})}
+                  className="font-semibold"
+                />
+              </div>
             </div>
-            <div>
-              <Label>Vendas Clientes Base (R$)</Label>
-              <Input
-                type="number"
-                value={formData.sales_base}
-                onChange={(e) => setFormData({...formData, sales_base: parseFloat(e.target.value) || 0})}
-              />
+          </div>
+
+          {/* Vendas Lead Marketing */}
+          <div className="border-l-4 border-purple-500 pl-3 py-2 bg-purple-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Vendas Lead Marketing (R$)</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs text-blue-600">PREVISTO</Label>
+                <Input
+                  type="number"
+                  value={formData.projected_sales_marketing.toFixed(2)}
+                  disabled
+                  className="bg-blue-100 font-bold text-blue-700"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-green-600">REALIZADO</Label>
+                <Input
+                  type="number"
+                  value={formData.sales_marketing}
+                  onChange={(e) => setFormData({...formData, sales_marketing: parseFloat(e.target.value) || 0})}
+                  className="font-semibold"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Vendas Clientes Base */}
+          <div className="border-l-4 border-teal-500 pl-3 py-2 bg-teal-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Vendas Clientes Base (R$)</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs text-blue-600">PREVISTO</Label>
+                <Input
+                  type="number"
+                  value={formData.projected_sales_base.toFixed(2)}
+                  disabled
+                  className="bg-blue-100 font-bold text-blue-700"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-green-600">REALIZADO</Label>
+                <Input
+                  type="number"
+                  value={formData.sales_base}
+                  onChange={(e) => setFormData({...formData, sales_base: parseFloat(e.target.value) || 0})}
+                  className="font-semibold"
+                />
+              </div>
             </div>
           </div>
         </>
@@ -288,190 +459,350 @@ export default function ManualGoalRegistration({ open, onClose, workshop, onSave
     if (role === "comercial") {
       return (
         <>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>PAVE - Comercial</Label>
-              <Input
-                type="number"
-                value={formData.pave_commercial}
-                onChange={(e) => setFormData({...formData, pave_commercial: parseFloat(e.target.value) || 0})}
-              />
-            </div>
-            <div>
-              <Label>Kit Master (qtd)</Label>
-              <Input
-                type="number"
-                value={formData.kit_master}
-                onChange={(e) => setFormData({...formData, kit_master: parseFloat(e.target.value) || 0})}
-              />
+          {/* PAVE - Comercial */}
+          <div className="border-l-4 border-indigo-500 pl-3 py-2 bg-indigo-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">PAVE - Comercial</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs text-blue-600">PREVISTO</Label>
+                <Input
+                  type="number"
+                  value={formData.projected_pave_commercial.toFixed(2)}
+                  disabled
+                  className="bg-blue-100 font-bold text-blue-700"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-green-600">REALIZADO</Label>
+                <Input
+                  type="number"
+                  value={formData.pave_commercial}
+                  onChange={(e) => setFormData({...formData, pave_commercial: parseFloat(e.target.value) || 0})}
+                  className="font-semibold"
+                />
+              </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Clientes Agendados Base (qtd)</Label>
+          {/* Kit Master */}
+          <div className="border-l-4 border-yellow-500 pl-3 py-2 bg-yellow-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Kit Master (qtd)</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs text-blue-600">PREVISTO</Label>
+                <Input
+                  type="number"
+                  value={formData.projected_kit_master.toFixed(2)}
+                  disabled
+                  className="bg-blue-100 font-bold text-blue-700"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-green-600">REALIZADO</Label>
+                <Input
+                  type="number"
+                  value={formData.kit_master}
+                  onChange={(e) => setFormData({...formData, kit_master: parseFloat(e.target.value) || 0})}
+                  className="font-semibold"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Clientes Base */}
+          <div className="space-y-3">
+            <div className="border-l-4 border-blue-500 pl-3 py-2 bg-blue-50/30">
+              <Label className="text-sm font-semibold text-gray-700 mb-2 block">Clientes Agendados Base (qtd)</Label>
               <Input
                 type="number"
                 value={formData.clients_scheduled_base}
                 onChange={(e) => setFormData({...formData, clients_scheduled_base: parseInt(e.target.value) || 0})}
+                className="font-semibold"
               />
             </div>
-            <div>
-              <Label>Clientes Entregues Base (qtd)</Label>
+            <div className="border-l-4 border-green-500 pl-3 py-2 bg-green-50/30">
+              <Label className="text-sm font-semibold text-gray-700 mb-2 block">Clientes Entregues Base (qtd)</Label>
               <Input
                 type="number"
                 value={formData.clients_delivered_base}
                 onChange={(e) => setFormData({...formData, clients_delivered_base: parseInt(e.target.value) || 0})}
+                className="font-semibold"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Clientes Agendados Marketing (qtd)</Label>
+          {/* Vendas Base */}
+          <div className="border-l-4 border-teal-500 pl-3 py-2 bg-teal-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Vendas Clientes Base (R$)</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs text-blue-600">PREVISTO</Label>
+                <Input
+                  type="number"
+                  value={formData.projected_sales_base.toFixed(2)}
+                  disabled
+                  className="bg-blue-100 font-bold text-blue-700"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-green-600">REALIZADO</Label>
+                <Input
+                  type="number"
+                  value={formData.sales_base}
+                  onChange={(e) => setFormData({...formData, sales_base: parseFloat(e.target.value) || 0})}
+                  className="font-semibold"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Clientes Marketing */}
+          <div className="space-y-3">
+            <div className="border-l-4 border-pink-500 pl-3 py-2 bg-pink-50/30">
+              <Label className="text-sm font-semibold text-gray-700 mb-2 block">Clientes Agendados Marketing (qtd)</Label>
               <Input
                 type="number"
                 value={formData.clients_scheduled_mkt}
                 onChange={(e) => setFormData({...formData, clients_scheduled_mkt: parseInt(e.target.value) || 0})}
+                className="font-semibold"
               />
             </div>
-            <div>
-              <Label>Clientes Entregues Marketing (qtd)</Label>
+            <div className="border-l-4 border-purple-500 pl-3 py-2 bg-purple-50/30">
+              <Label className="text-sm font-semibold text-gray-700 mb-2 block">Clientes Entregues Marketing (qtd)</Label>
               <Input
                 type="number"
                 value={formData.clients_delivered_mkt}
                 onChange={(e) => setFormData({...formData, clients_delivered_mkt: parseInt(e.target.value) || 0})}
+                className="font-semibold"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Clientes Agendados Indicação (qtd)</Label>
+          {/* Vendas Marketing */}
+          <div className="border-l-4 border-fuchsia-500 pl-3 py-2 bg-fuchsia-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Vendas Lead Marketing (R$)</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs text-blue-600">PREVISTO</Label>
+                <Input
+                  type="number"
+                  value={formData.projected_sales_marketing.toFixed(2)}
+                  disabled
+                  className="bg-blue-100 font-bold text-blue-700"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-green-600">REALIZADO</Label>
+                <Input
+                  type="number"
+                  value={formData.sales_marketing}
+                  onChange={(e) => setFormData({...formData, sales_marketing: parseFloat(e.target.value) || 0})}
+                  className="font-semibold"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Clientes Indicação */}
+          <div className="space-y-3">
+            <div className="border-l-4 border-orange-500 pl-3 py-2 bg-orange-50/30">
+              <Label className="text-sm font-semibold text-gray-700 mb-2 block">Clientes Agendados Indicação (qtd)</Label>
               <Input
                 type="number"
                 value={formData.clients_scheduled_referral}
                 onChange={(e) => setFormData({...formData, clients_scheduled_referral: parseInt(e.target.value) || 0})}
+                className="font-semibold"
               />
             </div>
-            <div>
-              <Label>Clientes Entregues Indicação (qtd)</Label>
+            <div className="border-l-4 border-red-500 pl-3 py-2 bg-red-50/30">
+              <Label className="text-sm font-semibold text-gray-700 mb-2 block">Clientes Entregues Indicação (qtd)</Label>
               <Input
                 type="number"
                 value={formData.clients_delivered_referral}
                 onChange={(e) => setFormData({...formData, clients_delivered_referral: parseInt(e.target.value) || 0})}
+                className="font-semibold"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Vendas Clientes Base (R$)</Label>
-              <Input
-                type="number"
-                value={formData.sales_base}
-                onChange={(e) => setFormData({...formData, sales_base: parseFloat(e.target.value) || 0})}
-              />
-            </div>
-            <div>
-              <Label>Vendas Lead Marketing (R$)</Label>
-              <Input
-                type="number"
-                value={formData.sales_marketing}
-                onChange={(e) => setFormData({...formData, sales_marketing: parseFloat(e.target.value) || 0})}
-              />
-            </div>
-          </div>
-
-          <div>
-            <Label>Valor Faturado Total (Auto)</Label>
+          {/* Valor Faturado Total */}
+          <div className="border-l-4 border-green-500 pl-3 py-2 bg-green-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Valor Faturado Total (Auto)</Label>
             <Input
               value={(formData.sales_base + formData.sales_marketing).toFixed(2)}
               disabled
-              className="bg-green-100 font-bold"
+              className="bg-green-100 font-bold text-green-700"
             />
           </div>
 
-          {/* Marketing Section for Comercial */}
-          <Card className="bg-purple-50 border-purple-200">
+          {/* Marketing Section for Comercial - PREVISTO x REALIZADO */}
+          <Card className="bg-purple-50 border-2 border-purple-300">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm">Marketing - Indicadores</CardTitle>
+              <CardTitle className="text-sm font-bold">📣 Marketing - Indicadores (Previsto x Realizado)</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-xs">Lead Recebidos (qtd)</Label>
-                  <Input
-                    type="number"
-                    value={formData.marketing_data.leads_generated}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      marketing_data: {...formData.marketing_data, leads_generated: parseInt(e.target.value) || 0}
-                    })}
-                    className="h-9"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs">Lead Agendados (qtd)</Label>
-                  <Input
-                    type="number"
-                    value={formData.marketing_data.leads_scheduled}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      marketing_data: {...formData.marketing_data, leads_scheduled: parseInt(e.target.value) || 0}
-                    })}
-                    className="h-9"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-xs">Comparecimentos (qtd)</Label>
-                  <Input
-                    type="number"
-                    value={formData.marketing_data.leads_showed_up}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      marketing_data: {...formData.marketing_data, leads_showed_up: parseInt(e.target.value) || 0}
-                    })}
-                    className="h-9"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs">Lead Vendas (qtd)</Label>
-                  <Input
-                    type="number"
-                    value={formData.marketing_data.leads_sold}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      marketing_data: {...formData.marketing_data, leads_sold: parseInt(e.target.value) || 0}
-                    })}
-                    className="h-9"
-                  />
+            <CardContent className="space-y-4">
+              {/* Lead Recebidos/Gerados */}
+              <div className="border-l-4 border-purple-500 pl-3 py-2 bg-white">
+                <Label className="text-sm font-semibold text-gray-700 mb-2 block">Lead Recebidos (qtd)</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-blue-600">PREVISTO</Label>
+                    <Input
+                      type="number"
+                      value={formData.projected_marketing.leads_generated}
+                      disabled
+                      className="h-9 bg-blue-100 font-bold text-blue-700"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-green-600">REALIZADO</Label>
+                    <Input
+                      type="number"
+                      value={formData.marketing_data.leads_generated}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        marketing_data: {...formData.marketing_data, leads_generated: parseInt(e.target.value) || 0}
+                      })}
+                      className="h-9 font-semibold"
+                    />
+                  </div>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-xs">Valor Investido (R$)</Label>
-                  <Input
-                    type="number"
-                    value={formData.marketing_data.invested_value}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      marketing_data: {...formData.marketing_data, invested_value: parseFloat(e.target.value) || 0}
-                    })}
-                    className="h-9"
-                  />
+
+              {/* Lead Agendados */}
+              <div className="border-l-4 border-indigo-500 pl-3 py-2 bg-white">
+                <Label className="text-sm font-semibold text-gray-700 mb-2 block">Lead Agendados (qtd)</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-blue-600">PREVISTO</Label>
+                    <Input
+                      type="number"
+                      value={formData.projected_marketing.leads_scheduled}
+                      disabled
+                      className="h-9 bg-blue-100 font-bold text-blue-700"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-green-600">REALIZADO</Label>
+                    <Input
+                      type="number"
+                      value={formData.marketing_data.leads_scheduled}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        marketing_data: {...formData.marketing_data, leads_scheduled: parseInt(e.target.value) || 0}
+                      })}
+                      className="h-9 font-semibold"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <Label className="text-xs">Custo por Venda (Auto)</Label>
-                  <Input
-                    value={(formData.marketing_data.leads_sold > 0 
-                      ? formData.marketing_data.invested_value / formData.marketing_data.leads_sold 
-                      : 0).toFixed(2)}
-                    disabled
-                    className="h-9 bg-gray-100"
-                  />
+              </div>
+
+              {/* Comparecimentos */}
+              <div className="border-l-4 border-yellow-500 pl-3 py-2 bg-white">
+                <Label className="text-sm font-semibold text-gray-700 mb-2 block">Comparecimentos (qtd)</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-blue-600">PREVISTO</Label>
+                    <Input
+                      type="number"
+                      value={formData.projected_marketing.leads_showed_up}
+                      disabled
+                      className="h-9 bg-blue-100 font-bold text-blue-700"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-green-600">REALIZADO</Label>
+                    <Input
+                      type="number"
+                      value={formData.marketing_data.leads_showed_up}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        marketing_data: {...formData.marketing_data, leads_showed_up: parseInt(e.target.value) || 0}
+                      })}
+                      className="h-9 font-semibold"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Lead Vendas */}
+              <div className="border-l-4 border-green-500 pl-3 py-2 bg-white">
+                <Label className="text-sm font-semibold text-gray-700 mb-2 block">Lead Vendas (qtd)</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-blue-600">PREVISTO</Label>
+                    <Input
+                      type="number"
+                      value={formData.projected_marketing.leads_sold}
+                      disabled
+                      className="h-9 bg-blue-100 font-bold text-blue-700"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-green-600">REALIZADO</Label>
+                    <Input
+                      type="number"
+                      value={formData.marketing_data.leads_sold}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        marketing_data: {...formData.marketing_data, leads_sold: parseInt(e.target.value) || 0}
+                      })}
+                      className="h-9 font-semibold"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Valor Investido */}
+              <div className="border-l-4 border-orange-500 pl-3 py-2 bg-white">
+                <Label className="text-sm font-semibold text-gray-700 mb-2 block">Valor Investido (R$)</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-blue-600">PREVISTO</Label>
+                    <Input
+                      type="number"
+                      value={formData.projected_marketing.invested_value.toFixed(2)}
+                      disabled
+                      className="h-9 bg-blue-100 font-bold text-blue-700"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-green-600">REALIZADO</Label>
+                    <Input
+                      type="number"
+                      value={formData.marketing_data.invested_value}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        marketing_data: {...formData.marketing_data, invested_value: parseFloat(e.target.value) || 0}
+                      })}
+                      className="h-9 font-semibold"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Custo por Venda - AUTOMÁTICO */}
+              <div className="border-l-4 border-red-500 pl-3 py-2 bg-red-50/30">
+                <Label className="text-sm font-semibold text-gray-700 mb-2 block">Custo por Venda (Auto)</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-blue-600">PREVISTO</Label>
+                    <Input
+                      value={formData.projected_marketing.cost_per_sale.toFixed(2)}
+                      disabled
+                      className="h-9 bg-blue-100 font-bold text-blue-700"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-green-600">REALIZADO</Label>
+                    <Input
+                      value={(formData.marketing_data.leads_sold > 0 
+                        ? formData.marketing_data.invested_value / formData.marketing_data.leads_sold 
+                        : 0).toFixed(2)}
+                      disabled
+                      className="h-9 bg-green-100 font-bold text-green-700"
+                    />
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -485,12 +816,15 @@ export default function ManualGoalRegistration({ open, onClose, workshop, onSave
       return (
         <>
           {commonFields}
-          <div>
-            <Label>Retrabalho (qtd)</Label>
+          
+          {/* Retrabalho */}
+          <div className="border-l-4 border-red-500 pl-3 py-2 bg-red-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Retrabalho (qtd)</Label>
             <Input
               type="number"
               value={formData.rework_count}
               onChange={(e) => setFormData({...formData, rework_count: parseInt(e.target.value) || 0})}
+              className="font-semibold"
             />
           </div>
         </>
@@ -600,166 +934,328 @@ export default function ManualGoalRegistration({ open, onClose, workshop, onSave
         <>
           {commonFields}
           
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>R70/I30</Label>
-              <Input
-                type="number"
-                value={70}
-                disabled
-                className="bg-gray-100"
-              />
-            </div>
-            <div>
-              <Label>TCMP2 (R$)</Label>
-              <Input
-                type="number"
-                placeholder="Puxado do DRE médio"
-                disabled
-                className="bg-gray-100"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>PAVE - Comercial</Label>
-              <Input
-                type="number"
-                value={formData.pave_commercial}
-                onChange={(e) => setFormData({...formData, pave_commercial: parseFloat(e.target.value) || 0})}
-              />
-            </div>
-            <div>
-              <Label>Kit Master (R$)</Label>
-              <Input
-                type="number"
-                value={formData.kit_master}
-                onChange={(e) => setFormData({...formData, kit_master: parseFloat(e.target.value) || 0})}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Vendas Comercial Base (R$)</Label>
-              <Input
-                type="number"
-                value={formData.sales_base}
-                onChange={(e) => setFormData({...formData, sales_base: parseFloat(e.target.value) || 0})}
-              />
-            </div>
-            <div>
-              <Label>Vendas Lead Marketing (R$)</Label>
-              <Input
-                type="number"
-                value={formData.sales_marketing}
-                onChange={(e) => setFormData({...formData, sales_marketing: parseFloat(e.target.value) || 0})}
-              />
-            </div>
-          </div>
-
-          <div>
-            <Label>Clientes Entregues (qtd)</Label>
-            <Input
-              type="number"
-              value={formData.clients_delivered}
-              onChange={(e) => setFormData({...formData, clients_delivered: parseInt(e.target.value) || 0})}
-            />
-          </div>
-
-          <Card className="bg-purple-50 border-purple-200 mt-4">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm">Marketing - Indicadores</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-xs">Lead Gerados (qtd)</Label>
-                  <Input
-                    type="number"
-                    value={formData.marketing_data.leads_generated}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      marketing_data: {...formData.marketing_data, leads_generated: parseInt(e.target.value) || 0}
-                    })}
-                    className="h-9"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs">Lead Agendados (qtd)</Label>
-                  <Input
-                    type="number"
-                    value={formData.marketing_data.leads_scheduled}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      marketing_data: {...formData.marketing_data, leads_scheduled: parseInt(e.target.value) || 0}
-                    })}
-                    className="h-9"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-xs">Comparecimentos (qtd)</Label>
-                  <Input
-                    type="number"
-                    value={formData.marketing_data.leads_showed_up}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      marketing_data: {...formData.marketing_data, leads_showed_up: parseInt(e.target.value) || 0}
-                    })}
-                    className="h-9"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs">Lead Vendas (qtd)</Label>
-                  <Input
-                    type="number"
-                    value={formData.marketing_data.leads_sold}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      marketing_data: {...formData.marketing_data, leads_sold: parseInt(e.target.value) || 0}
-                    })}
-                    className="h-9"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-xs">Valor Investido (Tráfego) R$</Label>
-                  <Input
-                    type="number"
-                    value={formData.marketing_data.invested_value}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      marketing_data: {...formData.marketing_data, invested_value: parseFloat(e.target.value) || 0}
-                    })}
-                    className="h-9"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs">Valor Faturado Lead Tráfego (R$)</Label>
-                  <Input
-                    type="number"
-                    value={formData.marketing_data.revenue_from_traffic}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      marketing_data: {...formData.marketing_data, revenue_from_traffic: parseFloat(e.target.value) || 0}
-                    })}
-                    className="h-9"
-                  />
-                </div>
+          {/* PAVE - Comercial */}
+          <div className="border-l-4 border-indigo-500 pl-3 py-2 bg-indigo-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">PAVE - Comercial</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs text-blue-600">PREVISTO</Label>
+                <Input
+                  type="number"
+                  value={formData.projected_pave_commercial.toFixed(2)}
+                  disabled
+                  className="bg-blue-100 font-bold text-blue-700"
+                />
               </div>
               <div>
-                <Label className="text-xs">Custo por Venda (Auto)</Label>
+                <Label className="text-xs text-green-600">REALIZADO</Label>
                 <Input
-                  value={(formData.marketing_data.leads_sold > 0 
-                    ? formData.marketing_data.invested_value / formData.marketing_data.leads_sold 
-                    : 0).toFixed(2)}
-                  disabled
-                  className="h-9 bg-gray-100 font-bold"
+                  type="number"
+                  value={formData.pave_commercial}
+                  onChange={(e) => setFormData({...formData, pave_commercial: parseFloat(e.target.value) || 0})}
+                  className="font-semibold"
                 />
+              </div>
+            </div>
+          </div>
+
+          {/* Kit Master */}
+          <div className="border-l-4 border-yellow-500 pl-3 py-2 bg-yellow-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Kit Master (R$)</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs text-blue-600">PREVISTO</Label>
+                <Input
+                  type="number"
+                  value={formData.projected_kit_master.toFixed(2)}
+                  disabled
+                  className="bg-blue-100 font-bold text-blue-700"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-green-600">REALIZADO</Label>
+                <Input
+                  type="number"
+                  value={formData.kit_master}
+                  onChange={(e) => setFormData({...formData, kit_master: parseFloat(e.target.value) || 0})}
+                  className="font-semibold"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Vendas Comercial Base */}
+          <div className="border-l-4 border-teal-500 pl-3 py-2 bg-teal-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Vendas Comercial Base (R$)</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs text-blue-600">PREVISTO</Label>
+                <Input
+                  type="number"
+                  value={formData.projected_sales_base.toFixed(2)}
+                  disabled
+                  className="bg-blue-100 font-bold text-blue-700"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-green-600">REALIZADO</Label>
+                <Input
+                  type="number"
+                  value={formData.sales_base}
+                  onChange={(e) => setFormData({...formData, sales_base: parseFloat(e.target.value) || 0})}
+                  className="font-semibold"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Vendas Lead Marketing */}
+          <div className="border-l-4 border-fuchsia-500 pl-3 py-2 bg-fuchsia-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Vendas Lead Marketing (R$)</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs text-blue-600">PREVISTO</Label>
+                <Input
+                  type="number"
+                  value={formData.projected_sales_marketing.toFixed(2)}
+                  disabled
+                  className="bg-blue-100 font-bold text-blue-700"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-green-600">REALIZADO</Label>
+                <Input
+                  type="number"
+                  value={formData.sales_marketing}
+                  onChange={(e) => setFormData({...formData, sales_marketing: parseFloat(e.target.value) || 0})}
+                  className="font-semibold"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Clientes Entregues */}
+          <div className="border-l-4 border-purple-500 pl-3 py-2 bg-purple-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Clientes Entregues (qtd)</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs text-blue-600">PREVISTO</Label>
+                <Input
+                  type="number"
+                  value={formData.projected_clients_delivered}
+                  disabled
+                  className="bg-blue-100 font-bold text-blue-700"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-green-600">REALIZADO</Label>
+                <Input
+                  type="number"
+                  value={formData.clients_delivered}
+                  onChange={(e) => setFormData({...formData, clients_delivered: parseInt(e.target.value) || 0})}
+                  className="font-semibold"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Marketing - PREVISTO x REALIZADO */}
+          <Card className="bg-purple-50 border-2 border-purple-300 mt-4">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-bold">📣 Marketing - Indicadores (Previsto x Realizado)</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Lead Gerados */}
+              <div className="border-l-4 border-purple-500 pl-3 py-2 bg-white">
+                <Label className="text-sm font-semibold text-gray-700 mb-2 block">Lead Gerados (qtd)</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-blue-600">PREVISTO</Label>
+                    <Input
+                      type="number"
+                      value={formData.projected_marketing.leads_generated}
+                      disabled
+                      className="h-9 bg-blue-100 font-bold text-blue-700"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-green-600">REALIZADO</Label>
+                    <Input
+                      type="number"
+                      value={formData.marketing_data.leads_generated}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        marketing_data: {...formData.marketing_data, leads_generated: parseInt(e.target.value) || 0}
+                      })}
+                      className="h-9 font-semibold"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Lead Agendados */}
+              <div className="border-l-4 border-indigo-500 pl-3 py-2 bg-white">
+                <Label className="text-sm font-semibold text-gray-700 mb-2 block">Lead Agendados (qtd)</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-blue-600">PREVISTO</Label>
+                    <Input
+                      type="number"
+                      value={formData.projected_marketing.leads_scheduled}
+                      disabled
+                      className="h-9 bg-blue-100 font-bold text-blue-700"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-green-600">REALIZADO</Label>
+                    <Input
+                      type="number"
+                      value={formData.marketing_data.leads_scheduled}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        marketing_data: {...formData.marketing_data, leads_scheduled: parseInt(e.target.value) || 0}
+                      })}
+                      className="h-9 font-semibold"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Comparecimentos */}
+              <div className="border-l-4 border-yellow-500 pl-3 py-2 bg-white">
+                <Label className="text-sm font-semibold text-gray-700 mb-2 block">Comparecimentos (qtd)</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-blue-600">PREVISTO</Label>
+                    <Input
+                      type="number"
+                      value={formData.projected_marketing.leads_showed_up}
+                      disabled
+                      className="h-9 bg-blue-100 font-bold text-blue-700"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-green-600">REALIZADO</Label>
+                    <Input
+                      type="number"
+                      value={formData.marketing_data.leads_showed_up}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        marketing_data: {...formData.marketing_data, leads_showed_up: parseInt(e.target.value) || 0}
+                      })}
+                      className="h-9 font-semibold"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Lead Vendas */}
+              <div className="border-l-4 border-green-500 pl-3 py-2 bg-white">
+                <Label className="text-sm font-semibold text-gray-700 mb-2 block">Lead Vendas (qtd)</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-blue-600">PREVISTO</Label>
+                    <Input
+                      type="number"
+                      value={formData.projected_marketing.leads_sold}
+                      disabled
+                      className="h-9 bg-blue-100 font-bold text-blue-700"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-green-600">REALIZADO</Label>
+                    <Input
+                      type="number"
+                      value={formData.marketing_data.leads_sold}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        marketing_data: {...formData.marketing_data, leads_sold: parseInt(e.target.value) || 0}
+                      })}
+                      className="h-9 font-semibold"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Valor Investido */}
+              <div className="border-l-4 border-orange-500 pl-3 py-2 bg-white">
+                <Label className="text-sm font-semibold text-gray-700 mb-2 block">Valor Investido (Tráfego) R$</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-blue-600">PREVISTO</Label>
+                    <Input
+                      type="number"
+                      value={formData.projected_marketing.invested_value.toFixed(2)}
+                      disabled
+                      className="h-9 bg-blue-100 font-bold text-blue-700"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-green-600">REALIZADO</Label>
+                    <Input
+                      type="number"
+                      value={formData.marketing_data.invested_value}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        marketing_data: {...formData.marketing_data, invested_value: parseFloat(e.target.value) || 0}
+                      })}
+                      className="h-9 font-semibold"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Valor Faturado Tráfego */}
+              <div className="border-l-4 border-pink-500 pl-3 py-2 bg-white">
+                <Label className="text-sm font-semibold text-gray-700 mb-2 block">Valor Faturado Lead Tráfego (R$)</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-blue-600">PREVISTO</Label>
+                    <Input
+                      type="number"
+                      value={formData.projected_marketing.revenue_from_traffic.toFixed(2)}
+                      disabled
+                      className="h-9 bg-blue-100 font-bold text-blue-700"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-green-600">REALIZADO</Label>
+                    <Input
+                      type="number"
+                      value={formData.marketing_data.revenue_from_traffic}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        marketing_data: {...formData.marketing_data, revenue_from_traffic: parseFloat(e.target.value) || 0}
+                      })}
+                      className="h-9 font-semibold"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Custo por Venda - AUTOMÁTICO */}
+              <div className="border-l-4 border-red-500 pl-3 py-2 bg-red-50/30">
+                <Label className="text-sm font-semibold text-gray-700 mb-2 block">Custo por Venda (Auto)</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-blue-600">PREVISTO</Label>
+                    <Input
+                      value={formData.projected_marketing.cost_per_sale.toFixed(2)}
+                      disabled
+                      className="h-9 bg-blue-100 font-bold text-blue-700"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-green-600">REALIZADO</Label>
+                    <Input
+                      value={(formData.marketing_data.leads_sold > 0 
+                        ? formData.marketing_data.invested_value / formData.marketing_data.leads_sold 
+                        : 0).toFixed(2)}
+                      disabled
+                      className="h-9 bg-green-100 font-bold text-green-700"
+                    />
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
