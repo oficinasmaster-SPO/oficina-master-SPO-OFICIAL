@@ -3,307 +3,334 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Plus, ArrowRight, Sparkles, Upload, Filter, Download, Eye } from "lucide-react";
-import { formatCurrency } from "@/components/utils/formatters";
+import { Plus, Download, Target, TrendingUp, Award, AlertCircle, Building2, User } from "lucide-react";
+import { formatCurrency, formatNumber } from "../components/utils/formatters";
+import ManualGoalRegistration from "../components/goals/ManualGoalRegistration";
 import { toast } from "sonner";
-import GoalDetailsModal from "@/components/goals/GoalDetailsModal";
 
 export default function HistoricoMetas() {
-  const [user, setUser] = useState(null);
   const [workshop, setWorkshop] = useState(null);
-  const [selectedGoal, setSelectedGoal] = useState(null);
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const [isAddOpen, setIsAddOpen] = useState(false);
-  const [filterType, setFilterType] = useState("workshop"); // 'workshop' or 'employee'
-  const [filterEntityId, setFilterEntityId] = useState("all");
-
-  // Form State
-  const [formData, setFormData] = useState({
-    month_year: new Date().toISOString().slice(0, 7),
-    goal_established: "",
-    result_achieved: "",
-    detailed_data_json: "{}", // Simplified for manual input, ideally file upload
-  });
-  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
-
+  const [user, setUser] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [filterType, setFilterType] = useState("workshop");
+  const [filterEmployee, setFilterEmployee] = useState(null);
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    const loadData = async () => {
-      const u = await base44.auth.me();
-      setUser(u);
-      const workshops = await base44.entities.Workshop.filter({ owner_id: u.id });
-      setWorkshop(workshops[0]);
-      if (workshops[0]) {
-        setFilterEntityId(workshops[0].id); // Default to workshop
-      }
-    };
-    loadData();
+    loadUser();
   }, []);
 
-  const { data: history = [], isLoading } = useQuery({
-    queryKey: ['goal-history', filterType, filterEntityId],
+  const loadUser = async () => {
+    try {
+      const currentUser = await base44.auth.me();
+      setUser(currentUser);
+
+      const workshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
+      if (workshops.length > 0) {
+        setWorkshop(workshops[0]);
+      }
+    } catch (error) {
+      console.error("Error loading user:", error);
+    }
+  };
+
+  const { data: goalHistory = [], isLoading } = useQuery({
+    queryKey: ['goal-history', workshop?.id, filterType, filterEmployee],
     queryFn: async () => {
-      if (!user) return [];
+      if (!workshop) return [];
       
-      // Logic to fetch based on filters
-      let query = {};
-      if (filterType === 'workshop' && workshop) {
-        query = { entity_id: workshop.id, entity_type: 'workshop' };
-      } else if (filterType === 'employee' && filterEntityId !== 'all') {
-        query = { entity_id: filterEntityId, entity_type: 'employee' };
-      } else {
-        // Fallback or admin view all
-        query = {}; 
+      let query = { workshop_id: workshop.id };
+      
+      if (filterType === "employee" && filterEmployee) {
+        query.employee_id = filterEmployee;
+      } else if (filterType === "workshop") {
+        query.entity_type = "workshop";
       }
 
-      const results = await base44.entities.GoalHistory.filter(query, '-month_year', 50);
-      return results;
+      const result = await base44.entities.MonthlyGoalHistory.filter(query);
+      return result.sort((a, b) => new Date(b.reference_date) - new Date(a.reference_date));
     },
-    enabled: !!user && !!workshop
+    enabled: !!workshop
   });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', workshop?.id],
     queryFn: async () => {
       if (!workshop) return [];
-      return await base44.entities.Employee.filter({ workshop_id: workshop.id });
+      return await base44.entities.Employee.filter({ 
+        workshop_id: workshop.id,
+        status: "ativo"
+      });
     },
     enabled: !!workshop
   });
 
-  const createMutation = useMutation({
-    mutationFn: async (data) => {
-      // Calculate status
-      const percentage = (data.result_achieved / data.goal_established) * 100;
-      let status = "red";
-      if (percentage >= 100) status = "green";
-      else if (percentage >= 85) status = "yellow";
-
-      // Generate AI insights
-      let aiInsights = null;
-      try {
-        setIsGeneratingAI(true);
-        const aiRes = await base44.functions.invoke('generateGoalInsights', {
-            goalData: { ...data, percentage_achieved: percentage, status },
-            historyData: history.slice(0, 3) // Last 3 months context
-        });
-        aiInsights = aiRes.data;
-      } catch (e) {
-        console.error("AI Gen error", e);
-        toast.error("Não foi possível gerar insights de IA, salvando sem eles.");
-      } finally {
-        setIsGeneratingAI(false);
-      }
-
-      return await base44.entities.GoalHistory.create({
-        ...data,
-        percentage_achieved: percentage,
-        status,
-        ai_insights: aiInsights,
-        detailed_data: JSON.parse(formData.detailed_data_json || "{}")
-      });
-    },
-    onSuccess: () => {
-      toast.success("Histórico registrado com sucesso!");
-      setIsAddOpen(false);
-      setFormData({
-        month_year: new Date().toISOString().slice(0, 7),
-        goal_established: "",
-        result_achieved: "",
-        detailed_data_json: "{}"
-      });
-      queryClient.invalidateQueries(['goal-history']);
-    }
-  });
-
-  const handleAddSubmit = (e) => {
-    e.preventDefault();
-    if (!formData.goal_established || !formData.result_achieved) {
-        toast.error("Preencha os valores");
-        return;
-    }
-
-    createMutation.mutate({
-        entity_id: filterType === 'workshop' ? workshop.id : filterEntityId, // Use current filter context for creation
-        entity_type: filterType,
-        month_year: formData.month_year,
-        goal_established: parseFloat(formData.goal_established),
-        result_achieved: parseFloat(formData.result_achieved)
-    });
+  const handleExport = () => {
+    toast.info("Exportação em desenvolvimento...");
   };
 
-  const getStatusColor = (status) => {
-    switch(status) {
-        case 'green': return "bg-green-500";
-        case 'yellow': return "bg-yellow-400";
-        case 'red': return "bg-red-500";
-        default: return "bg-gray-300";
-    }
-  };
-
-  const getStatusText = (status) => {
-    switch(status) {
-        case 'green': return "Meta Superada";
-        case 'yellow': return "Parcialmente Atingida";
-        case 'red': return "Não Atingida";
-        default: return "-";
-    }
-  };
+  if (!workshop) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-500">Carregando...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto min-h-screen bg-gray-50/50">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Histórico de Metas</h1>
-          <p className="text-gray-500">Acompanhe a evolução e resultados mensais.</p>
-        </div>
-        <div className="flex gap-2">
-            <Button variant="outline" onClick={() => {}}>
-                <Download className="w-4 h-4 mr-2" /> Exportar
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+              <Target className="w-8 h-8 text-blue-600" />
+              Histórico de Metas
+            </h1>
+            <p className="text-gray-600 mt-2">
+              Acompanhe os resultados mensais da oficina e colaboradores
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={handleExport}>
+              <Download className="w-4 h-4 mr-2" />
+              Exportar
             </Button>
-            <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-                <DialogTrigger asChild>
-                    <Button className="bg-blue-600 hover:bg-blue-700">
-                        <Plus className="w-4 h-4 mr-2" /> Novo Registro Manual
-                    </Button>
-                </DialogTrigger>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Registrar Resultado Mensal</DialogTitle>
-                    </DialogHeader>
-                    <form onSubmit={handleAddSubmit} className="space-y-4 py-4">
-                        <div>
-                            <Label>Entidade</Label>
-                            <div className="p-2 bg-gray-100 rounded text-sm text-gray-600">
-                                {filterType === 'workshop' ? 'Oficina (Geral)' : 'Colaborador Selecionado'}
-                            </div>
-                        </div>
-                        <div>
-                            <Label>Mês/Ano</Label>
-                            <Input type="month" value={formData.month_year} onChange={e => setFormData({...formData, month_year: e.target.value})} />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <Label>Meta (R$)</Label>
-                                <Input type="number" value={formData.goal_established} onChange={e => setFormData({...formData, goal_established: e.target.value})} />
-                            </div>
-                            <div>
-                                <Label>Realizado (R$)</Label>
-                                <Input type="number" value={formData.result_achieved} onChange={e => setFormData({...formData, result_achieved: e.target.value})} />
-                            </div>
-                        </div>
-                        <div>
-                            <Label>Dados Adicionais (JSON - Opcional)</Label>
-                            <Input value={formData.detailed_data_json} onChange={e => setFormData({...formData, detailed_data_json: e.target.value})} placeholder='{"ranking": [...] }' />
-                            <p className="text-xs text-gray-400 mt-1">Para integração automática, use a API.</p>
-                        </div>
-                        <Button type="submit" className="w-full" disabled={createMutation.isPending || isGeneratingAI}>
-                            {(createMutation.isPending || isGeneratingAI) ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
-                            {isGeneratingAI ? "Gerando Insights IA..." : "Salvar e Analisar"}
-                        </Button>
-                    </form>
-                </DialogContent>
-            </Dialog>
+            <Button onClick={() => setShowModal(true)} className="bg-blue-600 hover:bg-blue-700">
+              <Plus className="w-4 h-4 mr-2" />
+              Novo Registro Manual
+            </Button>
+          </div>
         </div>
-      </div>
 
-      {/* Filters */}
-      <Card className="mb-6">
-        <CardContent className="p-4 flex flex-col md:flex-row gap-4 items-center">
-            <div className="flex items-center gap-2">
-                <Filter className="w-4 h-4 text-gray-500" />
-                <span className="text-sm font-medium">Filtrar por:</span>
-            </div>
-            <Select value={filterType} onValueChange={val => { setFilterType(val); if(val === 'workshop' && workshop) setFilterEntityId(workshop.id); }}>
-                <SelectTrigger className="w-40">
+        {/* Filtros */}
+        <Card className="mb-6 shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-lg">Filtros</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label>Filtrar por</Label>
+                <Select value={filterType} onValueChange={setFilterType}>
+                  <SelectTrigger>
                     <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="workshop">Oficina (Geral)</SelectItem>
-                    <SelectItem value="employee">Colaborador</SelectItem>
-                </SelectContent>
-            </Select>
-            
-            {filterType === 'employee' && (
-                <Select value={filterEntityId} onValueChange={setFilterEntityId}>
-                    <SelectTrigger className="w-64">
-                        <SelectValue placeholder="Selecione o colaborador" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="workshop">
+                      <div className="flex items-center gap-2">
+                        <Building2 className="w-4 h-4" />
+                        Oficina (Geral)
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="employee">
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4" />
+                        Colaborador
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {filterType === "employee" && (
+                <div>
+                  <Label>Colaborador</Label>
+                  <Select value={filterEmployee} onValueChange={setFilterEmployee}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todos os colaboradores" />
                     </SelectTrigger>
                     <SelectContent>
-                        {employees.map(emp => (
-                            <SelectItem key={emp.id} value={emp.id}>{emp.full_name}</SelectItem>
-                        ))}
+                      <SelectItem value={null}>Todos</SelectItem>
+                      {employees.map(emp => (
+                        <SelectItem key={emp.id} value={emp.id}>
+                          {emp.full_name} - {emp.position}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
-                </Select>
-            )}
-        </CardContent>
-      </Card>
-
-      {/* List */}
-      <div className="space-y-3">
-        {isLoading ? (
-            <div className="text-center py-12"><Loader2 className="w-8 h-8 animate-spin mx-auto text-gray-400" /></div>
-        ) : history.length === 0 ? (
-            <div className="text-center py-12 text-gray-500 bg-white rounded-lg border border-dashed">
-                Nenhum histórico encontrado para este filtro.
+                  </Select>
+                </div>
+              )}
             </div>
-        ) : (
-            history.map(goal => (
-                <Card key={goal.id} className="hover:shadow-md transition-shadow overflow-hidden">
-                    <div className={`h-1 w-full ${getStatusColor(goal.status)}`} />
-                    <CardContent className="p-4 flex flex-col md:flex-row items-center justify-between gap-4">
-                        <div className="flex items-center gap-4 w-full md:w-auto">
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center bg-gray-100 font-bold text-gray-600 border-2 ${goal.status === 'green' ? 'border-green-500' : goal.status === 'yellow' ? 'border-yellow-500' : 'border-red-500'}`}>
-                                {goal.month_year.split('-')[1]}
-                            </div>
-                            <div>
-                                <h3 className="font-bold text-lg text-gray-900">{goal.month_year}</h3>
-                                <p className="text-xs text-gray-500 capitalize">{getStatusText(goal.status)}</p>
-                            </div>
-                        </div>
+          </CardContent>
+        </Card>
 
-                        <div className="grid grid-cols-3 gap-8 flex-1 text-center md:text-left border-t md:border-t-0 pt-3 md:pt-0 w-full md:w-auto">
-                            <div>
-                                <p className="text-xs text-gray-500 mb-1">Meta</p>
-                                <p className="font-semibold">{formatCurrency(goal.goal_established)}</p>
-                            </div>
-                            <div>
-                                <p className="text-xs text-gray-500 mb-1">Realizado</p>
-                                <p className="font-semibold">{formatCurrency(goal.result_achieved)}</p>
-                            </div>
-                            <div>
-                                <p className="text-xs text-gray-500 mb-1">Atingimento</p>
-                                <Badge variant="outline" className={`${goal.status === 'green' ? 'bg-green-50 text-green-700 border-green-200' : goal.status === 'yellow' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
-                                    {goal.percentage_achieved.toFixed(1)}%
-                                </Badge>
-                            </div>
-                        </div>
+        {/* Lista de Histórico */}
+        <div className="space-y-4">
+          {isLoading ? (
+            <Card className="shadow-lg">
+              <CardContent className="p-12 text-center">
+                <p className="text-gray-500">Carregando histórico...</p>
+              </CardContent>
+            </Card>
+          ) : goalHistory.length === 0 ? (
+            <Card className="shadow-lg">
+              <CardContent className="p-12 text-center">
+                <Target className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500 mb-4">Nenhum registro encontrado</p>
+                <Button onClick={() => setShowModal(true)} className="bg-blue-600">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Criar Primeiro Registro
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            goalHistory.map((record) => {
+              const achievementPercentage = record.projected_total > 0 
+                ? (record.achieved_total / record.projected_total) * 100 
+                : 0;
+              
+              const employee = employees.find(e => e.id === record.employee_id);
 
-                        <Button 
-                            variant="ghost" 
-                            className="ml-auto text-blue-600 hover:text-blue-700 hover:bg-blue-50 w-full md:w-auto"
-                            onClick={() => { setSelectedGoal(goal); setIsDetailsOpen(true); }}
-                        >
-                            <span className="hidden md:inline">Ver Detalhes</span> <ArrowRight className="w-4 h-4 md:ml-2" />
-                        </Button>
-                    </CardContent>
+              return (
+                <Card key={record.id} className="shadow-lg hover:shadow-xl transition-all border-2 border-blue-100">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle className="flex items-center gap-2">
+                          {record.entity_type === "workshop" ? (
+                            <Building2 className="w-5 h-5 text-blue-600" />
+                          ) : (
+                            <User className="w-5 h-5 text-purple-600" />
+                          )}
+                          {record.entity_type === "workshop" 
+                            ? workshop.name 
+                            : employee?.full_name || "Colaborador"}
+                        </CardTitle>
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant="outline">
+                            {new Date(record.reference_date).toLocaleDateString('pt-BR')}
+                          </Badge>
+                          <Badge variant="outline">
+                            {new Date(record.month + '-01').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+                          </Badge>
+                          {record.employee_role && record.employee_role !== "geral" && (
+                            <Badge className="bg-purple-100 text-purple-700 capitalize">
+                              {record.employee_role}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-gray-500 mb-1">Atingimento</p>
+                        <p className={`text-3xl font-bold ${
+                          achievementPercentage >= 100 ? 'text-green-600' : 
+                          achievementPercentage >= 70 ? 'text-yellow-600' : 
+                          'text-red-600'
+                        }`}>
+                          {achievementPercentage.toFixed(1)}%
+                        </p>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="bg-green-50 p-3 rounded-lg">
+                        <p className="text-xs text-gray-600 mb-1">PREVISTO</p>
+                        <p className="text-lg font-bold text-green-600">
+                          R$ {formatCurrency(record.projected_total)}
+                        </p>
+                      </div>
+                      <div className="bg-purple-50 p-3 rounded-lg">
+                        <p className="text-xs text-gray-600 mb-1">REALIZADO</p>
+                        <p className="text-lg font-bold text-purple-600">
+                          R$ {formatCurrency(record.achieved_total)}
+                        </p>
+                      </div>
+                      <div className="bg-blue-50 p-3 rounded-lg">
+                        <p className="text-xs text-gray-600 mb-1">Faturamento Total</p>
+                        <p className="text-lg font-bold text-blue-600">
+                          R$ {formatCurrency(record.revenue_total || 0)}
+                        </p>
+                      </div>
+                      <div className="bg-orange-50 p-3 rounded-lg">
+                        <p className="text-xs text-gray-600 mb-1">Ticket Médio</p>
+                        <p className="text-lg font-bold text-orange-600">
+                          R$ {formatCurrency(record.average_ticket || 0)}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Detalhes adicionais */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4 text-sm">
+                      <div>
+                        <p className="text-gray-600">Fat. Peças:</p>
+                        <p className="font-semibold">R$ {formatCurrency(record.revenue_parts || 0)}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-600">Fat. Serviços:</p>
+                        <p className="font-semibold">R$ {formatCurrency(record.revenue_services || 0)}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-600">Clientes:</p>
+                        <p className="font-semibold">{record.customer_volume || 0}</p>
+                      </div>
+                      {record.rework_count > 0 && (
+                        <div>
+                          <p className="text-gray-600">Retrabalho:</p>
+                          <p className="font-semibold text-red-600">{record.rework_count}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Marketing Data */}
+                    {record.marketing_data && record.marketing_data.leads_generated > 0 && (
+                      <div className="mt-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                        <p className="text-sm font-semibold text-purple-900 mb-2">Marketing</p>
+                        <div className="grid grid-cols-3 md:grid-cols-6 gap-2 text-xs">
+                          <div>
+                            <p className="text-gray-600">Leads:</p>
+                            <p className="font-bold">{record.marketing_data.leads_generated}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600">Agendados:</p>
+                            <p className="font-bold">{record.marketing_data.leads_scheduled}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600">Comparec.:</p>
+                            <p className="font-bold">{record.marketing_data.leads_showed_up}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600">Vendidos:</p>
+                            <p className="font-bold">{record.marketing_data.leads_sold}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600">Investido:</p>
+                            <p className="font-bold">R$ {formatCurrency(record.marketing_data.invested_value || 0)}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600">Custo/Venda:</p>
+                            <p className="font-bold">R$ {formatCurrency(record.marketing_data.cost_per_sale || 0)}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {record.notes && (
+                      <div className="mt-3 p-2 bg-gray-50 rounded text-sm text-gray-700">
+                        <strong>Obs:</strong> {record.notes}
+                      </div>
+                    )}
+                  </CardContent>
                 </Card>
-            ))
-        )}
-      </div>
+              );
+            })
+          )}
+        </div>
 
-      <GoalDetailsModal 
-        isOpen={isDetailsOpen} 
-        onClose={() => setIsDetailsOpen(false)} 
-        goal={selectedGoal} 
-        history={history} // Pass full history for trends
-      />
+        {/* Modal de Registro */}
+        <ManualGoalRegistration
+          open={showModal}
+          onClose={() => setShowModal(false)}
+          workshop={workshop}
+          onSave={() => {
+            queryClient.invalidateQueries(['goal-history']);
+          }}
+        />
+      </div>
     </div>
   );
 }
