@@ -946,37 +946,84 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                   </p>
                 </div>
                 
-                {/* Dados Principais */}
+                {/* Dados Principais - PREVISTO x REALIZADO */}
                 <div className="bg-white p-4 rounded-lg border-2 border-blue-200">
-                  <h4 className="font-semibold text-blue-900 mb-3">📊 Dados Principais</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div>
-                      <p className="text-xs text-gray-600 mb-1">Faturamento Peças</p>
-                      <p className="text-lg font-bold text-blue-600">
-                        R$ {formatCurrency((formData.best_month_history.revenue_parts || 0) * (1 + growthPercentage / 100))}
-                      </p>
-                      <p className="text-xs text-gray-500">Base: {formatCurrency(formData.best_month_history.revenue_parts || 0)}</p>
+                  <h4 className="font-semibold text-blue-900 mb-3">📊 Dados Principais - Previsto x Realizado</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Faturamento Peças */}
+                    <div className="border-l-4 border-blue-500 pl-3">
+                      <p className="text-xs text-gray-600 mb-2">Faturamento Peças</p>
+                      <div className="flex gap-4">
+                        <div className="flex-1">
+                          <p className="text-xs text-blue-600 mb-1">PREVISTO</p>
+                          <p className="text-lg font-bold text-blue-600">
+                            R$ {formatCurrency((formData.best_month_history.revenue_parts || 0) * (1 + growthPercentage / 100))}
+                          </p>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-green-600 mb-1">REALIZADO</p>
+                          <p className="text-lg font-bold text-green-600">
+                            R$ {formatCurrency(formData.monthly_goals?.revenue_parts || 0)}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-600 mb-1">Faturamento Serviços</p>
-                      <p className="text-lg font-bold text-green-600">
-                        R$ {formatCurrency((formData.best_month_history.revenue_services || 0) * (1 + growthPercentage / 100))}
-                      </p>
-                      <p className="text-xs text-gray-500">Base: {formatCurrency(formData.best_month_history.revenue_services || 0)}</p>
+
+                    {/* Faturamento Serviços */}
+                    <div className="border-l-4 border-green-500 pl-3">
+                      <p className="text-xs text-gray-600 mb-2">Faturamento Serviços</p>
+                      <div className="flex gap-4">
+                        <div className="flex-1">
+                          <p className="text-xs text-blue-600 mb-1">PREVISTO</p>
+                          <p className="text-lg font-bold text-blue-600">
+                            R$ {formatCurrency((formData.best_month_history.revenue_services || 0) * (1 + growthPercentage / 100))}
+                          </p>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-green-600 mb-1">REALIZADO</p>
+                          <p className="text-lg font-bold text-green-600">
+                            R$ {formatCurrency(formData.monthly_goals?.revenue_services || 0)}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-600 mb-1">Clientes (qtd)</p>
-                      <p className="text-lg font-bold text-purple-600">
-                        {Math.round((formData.best_month_history.customer_volume || 0) * (1 + growthPercentage / 100))}
-                      </p>
-                      <p className="text-xs text-gray-500">Base: {formData.best_month_history.customer_volume || 0}</p>
+
+                    {/* Clientes */}
+                    <div className="border-l-4 border-purple-500 pl-3">
+                      <p className="text-xs text-gray-600 mb-2">Clientes (qtd)</p>
+                      <div className="flex gap-4">
+                        <div className="flex-1">
+                          <p className="text-xs text-blue-600 mb-1">PREVISTO</p>
+                          <p className="text-lg font-bold text-blue-600">
+                            {Math.round((formData.best_month_history.customer_volume || 0) * (1 + growthPercentage / 100))}
+                          </p>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-green-600 mb-1">REALIZADO</p>
+                          <p className="text-lg font-bold text-green-600">
+                            {formData.monthly_goals?.customer_volume || 0}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-600 mb-1">Ticket Médio</p>
-                      <p className="text-lg font-bold text-orange-600">
-                        R$ {formatCurrency((formData.best_month_history.average_ticket || 0) * (1 + growthPercentage / 100))}
-                      </p>
-                      <p className="text-xs text-gray-500">Base: {formatCurrency(formData.best_month_history.average_ticket || 0)}</p>
+
+                    {/* Ticket Médio */}
+                    <div className="border-l-4 border-orange-500 pl-3">
+                      <p className="text-xs text-gray-600 mb-2">Ticket Médio</p>
+                      <div className="flex gap-4">
+                        <div className="flex-1">
+                          <p className="text-xs text-blue-600 mb-1">PREVISTO</p>
+                          <p className="text-lg font-bold text-blue-600">
+                            R$ {formatCurrency((formData.best_month_history.average_ticket || 0) * (1 + growthPercentage / 100))}
+                          </p>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-green-600 mb-1">REALIZADO</p>
+                          <p className="text-lg font-bold text-green-600">
+                            R$ {formatCurrency(formData.monthly_goals?.average_ticket || 0)}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   

@@ -280,7 +280,7 @@ export default function EmployeeGoals({ employee, onUpdate }) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-green-900">
             <Target className="w-6 h-6" />
-            🎯 Metas Mensais Projetadas - {new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+            🎯 Metas Mensais - Previsto x Realizado - {new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -301,7 +301,7 @@ export default function EmployeeGoals({ employee, onUpdate }) {
             </div>
             <div>
               <p className="text-xs text-gray-600 mb-1">PROJETADO (Mês)</p>
-              <p className="text-xl font-bold text-green-600">
+              <p className="text-xl font-bold text-blue-600">
                 R$ {projectedGoal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </p>
               <p className="text-xs text-gray-500 mt-1">Meta a atingir</p>
@@ -315,13 +315,20 @@ export default function EmployeeGoals({ employee, onUpdate }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 pt-4 border-t-2 border-green-300">
+          <div className="grid grid-cols-3 gap-4 pt-4 border-t-2 border-green-300">
             <div className="bg-white p-4 rounded-lg">
-              <p className="text-xs text-gray-600 mb-1">REALIZADO no Mês</p>
+              <p className="text-xs text-blue-600 mb-1">PREVISTO (Mês)</p>
+              <p className="text-2xl font-bold text-blue-600">
+                R$ {projectedGoal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">Melhor Mês + {growthPercentage.toFixed(1)}%</p>
+            </div>
+            <div className="bg-white p-4 rounded-lg">
+              <p className="text-xs text-green-600 mb-1">REALIZADO no Mês</p>
               <p className="text-2xl font-bold text-green-600">
                 R$ {actualRevenueAchieved.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </p>
-              <p className="text-xs text-gray-500 mt-1">Alimentado pelo histórico diário</p>
+              <p className="text-xs text-gray-500 mt-1">Alimentado pelo histórico</p>
             </div>
             <div className="bg-white p-4 rounded-lg">
               <p className="text-xs text-gray-600 mb-1">% Atingimento da Meta</p>
