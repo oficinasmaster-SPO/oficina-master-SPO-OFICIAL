@@ -936,71 +936,291 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
 
               {/* Espelhamento completo do Melhor Mês */}
               <div className="mt-6 space-y-4">
-                <h3 className="font-semibold text-gray-900">📋 Valores Espelhados do Melhor Mês (com Crescimento Aplicado)</h3>
+                <div className="bg-gradient-to-r from-blue-100 to-purple-100 p-4 rounded-lg border-2 border-blue-300">
+                  <h3 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5" />
+                    📋 Valores PREVISTOS (Melhor Mês + {growthPercentage.toFixed(1)}% de Crescimento)
+                  </h3>
+                  <p className="text-sm text-blue-800">
+                    Todos os valores abaixo são calculados automaticamente: <strong>Melhor Mês × (1 + {growthPercentage}%)</strong>
+                  </p>
+                </div>
                 
                 {/* Dados Principais */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm bg-white p-4 rounded-lg border">
-                  <div>
-                    <p className="text-gray-600">Fat. Peças:</p>
-                    <p className="font-bold text-blue-600">
-                      R$ {formatCurrency((formData.best_month_history.revenue_parts || 0) * (1 + growthPercentage / 100))}
-                    </p>
+                <div className="bg-white p-4 rounded-lg border-2 border-blue-200">
+                  <h4 className="font-semibold text-blue-900 mb-3">📊 Dados Principais</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                      <p className="text-xs text-gray-600 mb-1">Faturamento Peças</p>
+                      <p className="text-lg font-bold text-blue-600">
+                        R$ {formatCurrency((formData.best_month_history.revenue_parts || 0) * (1 + growthPercentage / 100))}
+                      </p>
+                      <p className="text-xs text-gray-500">Base: {formatCurrency(formData.best_month_history.revenue_parts || 0)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600 mb-1">Faturamento Serviços</p>
+                      <p className="text-lg font-bold text-green-600">
+                        R$ {formatCurrency((formData.best_month_history.revenue_services || 0) * (1 + growthPercentage / 100))}
+                      </p>
+                      <p className="text-xs text-gray-500">Base: {formatCurrency(formData.best_month_history.revenue_services || 0)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600 mb-1">Clientes (qtd)</p>
+                      <p className="text-lg font-bold text-purple-600">
+                        {Math.round((formData.best_month_history.customer_volume || 0) * (1 + growthPercentage / 100))}
+                      </p>
+                      <p className="text-xs text-gray-500">Base: {formData.best_month_history.customer_volume || 0}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600 mb-1">Ticket Médio</p>
+                      <p className="text-lg font-bold text-orange-600">
+                        R$ {formatCurrency((formData.best_month_history.average_ticket || 0) * (1 + growthPercentage / 100))}
+                      </p>
+                      <p className="text-xs text-gray-500">Base: {formatCurrency(formData.best_month_history.average_ticket || 0)}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-gray-600">Fat. Serviços:</p>
-                    <p className="font-bold text-green-600">
-                      R$ {formatCurrency((formData.best_month_history.revenue_services || 0) * (1 + growthPercentage / 100))}
-                    </p>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t">
+                    <div>
+                      <p className="text-xs text-gray-600 mb-1">Lucro (%)</p>
+                      <p className="text-lg font-bold text-green-600">
+                        {formatNumber((formData.best_month_history.profit_percentage || 0) * (1 + growthPercentage / 100), 1)}%
+                      </p>
+                      <p className="text-xs text-gray-500">Base: {formatNumber(formData.best_month_history.profit_percentage || 0, 1)}%</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600 mb-1">Rentabilidade (%)</p>
+                      <p className="text-lg font-bold text-blue-600">
+                        {formatNumber((formData.best_month_history.rentability_percentage || 0) * (1 + growthPercentage / 100), 1)}%
+                      </p>
+                      <p className="text-xs text-gray-500">Base: {formatNumber(formData.best_month_history.rentability_percentage || 0, 1)}%</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600 mb-1">Ticket Médio Peças</p>
+                      <p className="text-lg font-bold text-blue-600">
+                        R$ {formatCurrency((formData.best_month_history.average_ticket_parts || 0) * (1 + growthPercentage / 100))}
+                      </p>
+                      <p className="text-xs text-gray-500">Base: {formatCurrency(formData.best_month_history.average_ticket_parts || 0)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600 mb-1">Ticket Médio Serviços</p>
+                      <p className="text-lg font-bold text-green-600">
+                        R$ {formatCurrency((formData.best_month_history.average_ticket_services || 0) * (1 + growthPercentage / 100))}
+                      </p>
+                      <p className="text-xs text-gray-500">Base: {formatCurrency(formData.best_month_history.average_ticket_services || 0)}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-gray-600">Clientes:</p>
-                    <p className="font-bold">{Math.round((formData.best_month_history.customer_volume || 0) * (1 + growthPercentage / 100))}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">Ticket Médio:</p>
-                    <p className="font-bold">R$ {formatCurrency((formData.best_month_history.average_ticket || 0) * (1 + growthPercentage / 100))}</p>
+                </div>
+
+                {/* Indicadores Financeiros */}
+                <div className="bg-green-50 p-4 rounded-lg border-2 border-green-200">
+                  <h4 className="font-semibold text-green-900 mb-3">💰 Indicadores Financeiros</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div>
+                      <p className="text-xs text-gray-600 mb-1">R70 (%)</p>
+                      <p className="text-lg font-bold text-green-600">
+                        {formatNumber((formData.best_month_history.r70_i30?.r70 || 70) * (1 + growthPercentage / 100), 1)}%
+                      </p>
+                      <p className="text-xs text-gray-500">Base: {formatNumber(formData.best_month_history.r70_i30?.r70 || 70, 1)}%</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600 mb-1">I30 (%)</p>
+                      <p className="text-lg font-bold text-orange-600">
+                        {formatNumber((formData.best_month_history.r70_i30?.i30 || 30) * (1 + growthPercentage / 100), 1)}%
+                      </p>
+                      <p className="text-xs text-gray-500">Base: {formatNumber(formData.best_month_history.r70_i30?.i30 || 30, 1)}%</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600 mb-1">TCMP2 (R$)</p>
+                      <p className="text-lg font-bold text-green-600">
+                        R$ {formatCurrency((formData.best_month_history.tcmp2 || 0) * (1 + growthPercentage / 100))}
+                      </p>
+                      <p className="text-xs text-gray-500">Base: {formatCurrency(formData.best_month_history.tcmp2 || 0)}</p>
+                    </div>
                   </div>
                 </div>
 
                 {/* Comercial */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm bg-purple-50 p-4 rounded-lg border border-purple-200">
-                  <div>
-                    <p className="text-gray-600">PAVE:</p>
-                    <p className="font-bold">{formatCurrency((formData.best_month_history.pave_commercial || 0) * (1 + growthPercentage / 100))}</p>
+                <div className="bg-purple-50 p-4 rounded-lg border-2 border-purple-200">
+                  <h4 className="font-semibold text-purple-900 mb-3">🎯 Comercial</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                      <p className="text-xs text-gray-600 mb-1">PAVE - Comercial</p>
+                      <p className="text-lg font-bold text-purple-600">
+                        {formatCurrency((formData.best_month_history.pave_commercial || 0) * (1 + growthPercentage / 100))}
+                      </p>
+                      <p className="text-xs text-gray-500">Base: {formatCurrency(formData.best_month_history.pave_commercial || 0)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600 mb-1">Kit Master (R$)</p>
+                      <p className="text-lg font-bold text-purple-600">
+                        R$ {formatCurrency((formData.best_month_history.kit_master || 0) * (1 + growthPercentage / 100))}
+                      </p>
+                      <p className="text-xs text-gray-500">Base: {formatCurrency(formData.best_month_history.kit_master || 0)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600 mb-1">Vendas Base (R$)</p>
+                      <p className="text-lg font-bold text-purple-600">
+                        R$ {formatCurrency((formData.best_month_history.sales_base || 0) * (1 + growthPercentage / 100))}
+                      </p>
+                      <p className="text-xs text-gray-500">Base: {formatCurrency(formData.best_month_history.sales_base || 0)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600 mb-1">Vendas Marketing (R$)</p>
+                      <p className="text-lg font-bold text-purple-600">
+                        R$ {formatCurrency((formData.best_month_history.sales_marketing || 0) * (1 + growthPercentage / 100))}
+                      </p>
+                      <p className="text-xs text-gray-500">Base: {formatCurrency(formData.best_month_history.sales_marketing || 0)}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-gray-600">Kit Master:</p>
-                    <p className="font-bold">R$ {formatCurrency((formData.best_month_history.kit_master || 0) * (1 + growthPercentage / 100))}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">Vendas Base:</p>
-                    <p className="font-bold">R$ {formatCurrency((formData.best_month_history.sales_base || 0) * (1 + growthPercentage / 100))}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">Vendas Marketing:</p>
-                    <p className="font-bold">R$ {formatCurrency((formData.best_month_history.sales_marketing || 0) * (1 + growthPercentage / 100))}</p>
+                  <div className="mt-4">
+                    <div>
+                      <p className="text-xs text-gray-600 mb-1">Clientes Entregues (qtd)</p>
+                      <p className="text-lg font-bold text-purple-600">
+                        {Math.round((formData.best_month_history.clients_delivered || 0) * (1 + growthPercentage / 100))}
+                      </p>
+                      <p className="text-xs text-gray-500">Base: {formData.best_month_history.clients_delivered || 0}</p>
+                    </div>
                   </div>
                 </div>
 
                 {/* Marketing */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm bg-pink-50 p-4 rounded-lg border border-pink-200">
-                  <div>
-                    <p className="text-gray-600">Leads Gerados:</p>
-                    <p className="font-bold">{Math.round((formData.best_month_history.marketing?.leads_generated || 0) * (1 + growthPercentage / 100))}</p>
+                <div className="bg-pink-50 p-4 rounded-lg border-2 border-pink-200">
+                  <h4 className="font-semibold text-pink-900 mb-3">📣 Marketing</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                      <p className="text-xs text-gray-600 mb-1">Leads Gerados (qtd)</p>
+                      <p className="text-lg font-bold text-pink-600">
+                        {Math.round((formData.best_month_history.marketing?.leads_generated || 0) * (1 + growthPercentage / 100))}
+                      </p>
+                      <p className="text-xs text-gray-500">Base: {formData.best_month_history.marketing?.leads_generated || 0}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600 mb-1">Leads Agendados (qtd)</p>
+                      <p className="text-lg font-bold text-pink-600">
+                        {Math.round((formData.best_month_history.marketing?.leads_scheduled || 0) * (1 + growthPercentage / 100))}
+                      </p>
+                      <p className="text-xs text-gray-500">Base: {formData.best_month_history.marketing?.leads_scheduled || 0}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600 mb-1">Comparecimentos (qtd)</p>
+                      <p className="text-lg font-bold text-pink-600">
+                        {Math.round((formData.best_month_history.marketing?.leads_showed_up || 0) * (1 + growthPercentage / 100))}
+                      </p>
+                      <p className="text-xs text-gray-500">Base: {formData.best_month_history.marketing?.leads_showed_up || 0}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600 mb-1">Leads Vendidos (qtd)</p>
+                      <p className="text-lg font-bold text-pink-600">
+                        {Math.round((formData.best_month_history.marketing?.leads_sold || 0) * (1 + growthPercentage / 100))}
+                      </p>
+                      <p className="text-xs text-gray-500">Base: {formData.best_month_history.marketing?.leads_sold || 0}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-gray-600">Leads Agendados:</p>
-                    <p className="font-bold">{Math.round((formData.best_month_history.marketing?.leads_scheduled || 0) * (1 + growthPercentage / 100))}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">Comparecimentos:</p>
-                    <p className="font-bold">{Math.round((formData.best_month_history.marketing?.leads_showed_up || 0) * (1 + growthPercentage / 100))}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">Leads Vendidos:</p>
-                    <p className="font-bold">{Math.round((formData.best_month_history.marketing?.leads_sold || 0) * (1 + growthPercentage / 100))}</p>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+                    <div>
+                      <p className="text-xs text-gray-600 mb-1">Valor Investido (R$)</p>
+                      <p className="text-lg font-bold text-pink-600">
+                        R$ {formatCurrency((formData.best_month_history.marketing?.invested_value || 0) * (1 + growthPercentage / 100))}
+                      </p>
+                      <p className="text-xs text-gray-500">Base: {formatCurrency(formData.best_month_history.marketing?.invested_value || 0)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600 mb-1">Valor Faturado Tráfego (R$)</p>
+                      <p className="text-lg font-bold text-pink-600">
+                        R$ {formatCurrency((formData.best_month_history.marketing?.revenue_from_traffic || 0) * (1 + growthPercentage / 100))}
+                      </p>
+                      <p className="text-xs text-gray-500">Base: {formatCurrency(formData.best_month_history.marketing?.revenue_from_traffic || 0)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600 mb-1">Custo por Venda (R$)</p>
+                      <p className="text-lg font-bold text-pink-600">
+                        R$ {formatCurrency((formData.best_month_history.marketing?.cost_per_sale || 0) * (1 + growthPercentage / 100))}
+                      </p>
+                      <p className="text-xs text-gray-500">Base: {formatCurrency(formData.best_month_history.marketing?.cost_per_sale || 0)}</p>
+                    </div>
                   </div>
                 </div>
+
+                {/* PF x PJ (se aplicável) */}
+                {formData.serves_fleet_insurance && (
+                  <>
+                    <div className="bg-blue-50 p-4 rounded-lg border-2 border-blue-200">
+                      <h4 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                        <User className="w-4 h-4" />
+                        Pessoa Física
+                      </h4>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                          <p className="text-xs text-gray-600 mb-1">Fat. Peças (R$)</p>
+                          <p className="text-lg font-bold text-blue-600">
+                            R$ {formatCurrency((formData.best_month_history.physical_person?.revenue_parts || 0) * (1 + growthPercentage / 100))}
+                          </p>
+                          <p className="text-xs text-gray-500">Base: {formatCurrency(formData.best_month_history.physical_person?.revenue_parts || 0)}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-600 mb-1">Fat. Serviços (R$)</p>
+                          <p className="text-lg font-bold text-blue-600">
+                            R$ {formatCurrency((formData.best_month_history.physical_person?.revenue_services || 0) * (1 + growthPercentage / 100))}
+                          </p>
+                          <p className="text-xs text-gray-500">Base: {formatCurrency(formData.best_month_history.physical_person?.revenue_services || 0)}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-600 mb-1">Clientes (qtd)</p>
+                          <p className="text-lg font-bold text-blue-600">
+                            {Math.round((formData.best_month_history.physical_person?.customer_volume || 0) * (1 + growthPercentage / 100))}
+                          </p>
+                          <p className="text-xs text-gray-500">Base: {formData.best_month_history.physical_person?.customer_volume || 0}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-600 mb-1">Total (R$)</p>
+                          <p className="text-lg font-bold text-blue-600">
+                            R$ {formatCurrency((formData.best_month_history.physical_person?.revenue_total || 0) * (1 + growthPercentage / 100))}
+                          </p>
+                          <p className="text-xs text-gray-500">Base: {formatCurrency(formData.best_month_history.physical_person?.revenue_total || 0)}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-purple-50 p-4 rounded-lg border-2 border-purple-200">
+                      <h4 className="font-semibold text-purple-900 mb-3 flex items-center gap-2">
+                        <Building2 className="w-4 h-4" />
+                        Pessoa Jurídica (Locadora/Seguradora)
+                      </h4>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                          <p className="text-xs text-gray-600 mb-1">Fat. Peças (R$)</p>
+                          <p className="text-lg font-bold text-purple-600">
+                            R$ {formatCurrency((formData.best_month_history.juridical_person?.revenue_parts || 0) * (1 + growthPercentage / 100))}
+                          </p>
+                          <p className="text-xs text-gray-500">Base: {formatCurrency(formData.best_month_history.juridical_person?.revenue_parts || 0)}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-600 mb-1">Fat. Serviços (R$)</p>
+                          <p className="text-lg font-bold text-purple-600">
+                            R$ {formatCurrency((formData.best_month_history.juridical_person?.revenue_services || 0) * (1 + growthPercentage / 100))}
+                          </p>
+                          <p className="text-xs text-gray-500">Base: {formatCurrency(formData.best_month_history.juridical_person?.revenue_services || 0)}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-600 mb-1">Clientes (qtd)</p>
+                          <p className="text-lg font-bold text-purple-600">
+                            {Math.round((formData.best_month_history.juridical_person?.customer_volume || 0) * (1 + growthPercentage / 100))}
+                          </p>
+                          <p className="text-xs text-gray-500">Base: {formData.best_month_history.juridical_person?.customer_volume || 0}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-600 mb-1">Total (R$)</p>
+                          <p className="text-lg font-bold text-purple-600">
+                            R$ {formatCurrency((formData.best_month_history.juridical_person?.revenue_total || 0) * (1 + growthPercentage / 100))}
+                          </p>
+                          <p className="text-xs text-gray-500">Base: {formatCurrency(formData.best_month_history.juridical_person?.revenue_total || 0)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
 
               <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
