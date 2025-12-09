@@ -119,6 +119,121 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
 
   return (
     <div className="space-y-6">
+      {/* Melhor Mês Histórico - Card Editável */}
+      <Card className="shadow-xl border-2 border-yellow-400 bg-gradient-to-r from-yellow-50 to-amber-50">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-yellow-800">
+              <Award className="w-6 h-6" />
+              🏆 Melhor Mês Histórico do Colaborador
+            </CardTitle>
+            {!editingBestMonth ? (
+              <Button onClick={() => setEditingBestMonth(true)} size="sm" variant="outline" className="border-yellow-400">
+                <Edit className="w-4 h-4 mr-2" />
+                Editar
+              </Button>
+            ) : (
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setEditingBestMonth(false)} size="sm">Cancelar</Button>
+                <Button onClick={handleSaveBestMonth} size="sm" className="bg-yellow-600 hover:bg-yellow-700">
+                  <Save className="w-4 h-4 mr-2" />
+                  Salvar
+                </Button>
+              </div>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <Label className="text-xs text-gray-600 mb-1 block">Data (Mês/Ano)</Label>
+              <Input
+                type="month"
+                value={bestMonthData.date ? bestMonthData.date.substring(0, 7) : ''}
+                onChange={(e) => setBestMonthData({...bestMonthData, date: e.target.value + '-01'})}
+                disabled={!editingBestMonth}
+                className="h-9"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-gray-600 mb-1 block">Faturamento Total (R$)</Label>
+              <Input
+                type="number"
+                value={bestMonthData.revenue_total}
+                onChange={(e) => setBestMonthData({...bestMonthData, revenue_total: parseFloat(e.target.value) || 0})}
+                disabled={!editingBestMonth}
+                className="h-9"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-gray-600 mb-1 block">Volume de Clientes</Label>
+              <Input
+                type="number"
+                value={bestMonthData.customer_volume}
+                onChange={(e) => setBestMonthData({...bestMonthData, customer_volume: parseInt(e.target.value) || 0})}
+                disabled={!editingBestMonth}
+                className="h-9"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-gray-600 mb-1 block">Ticket Médio (R$)</Label>
+              <Input
+                type="number"
+                value={bestMonthData.average_ticket}
+                onChange={(e) => setBestMonthData({...bestMonthData, average_ticket: parseFloat(e.target.value) || 0})}
+                disabled={!editingBestMonth}
+                className="h-9"
+              />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t border-yellow-200">
+            <div>
+              <Label className="text-xs text-gray-600 mb-1 block">Faturamento Peças (R$)</Label>
+              <Input
+                type="number"
+                value={bestMonthData.revenue_parts}
+                onChange={(e) => setBestMonthData({...bestMonthData, revenue_parts: parseFloat(e.target.value) || 0})}
+                disabled={!editingBestMonth}
+                className="h-9"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-gray-600 mb-1 block">Faturamento Serviços (R$)</Label>
+              <Input
+                type="number"
+                value={bestMonthData.revenue_services}
+                onChange={(e) => setBestMonthData({...bestMonthData, revenue_services: parseFloat(e.target.value) || 0})}
+                disabled={!editingBestMonth}
+                className="h-9"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-gray-600 mb-1 block">% Lucro</Label>
+              <Input
+                type="number"
+                step="0.1"
+                value={bestMonthData.profit_percentage}
+                onChange={(e) => setBestMonthData({...bestMonthData, profit_percentage: parseFloat(e.target.value) || 0})}
+                disabled={!editingBestMonth}
+                className="h-9"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-gray-600 mb-1 block">% Rentabilidade</Label>
+              <Input
+                type="number"
+                step="0.1"
+                value={bestMonthData.rentability_percentage}
+                onChange={(e) => setBestMonthData({...bestMonthData, rentability_percentage: parseFloat(e.target.value) || 0})}
+                disabled={!editingBestMonth}
+                className="h-9"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card className="shadow-lg border-2 border-green-200 mb-6">
         <CardHeader>
           <CardTitle>PRODUÇÃO PREVISTA</CardTitle>
