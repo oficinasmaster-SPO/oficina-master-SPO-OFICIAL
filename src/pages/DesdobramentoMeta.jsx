@@ -101,16 +101,16 @@ export default function DesdobramentoMeta() {
       const area = areaMap[emp.area] || "comercial";
       
       // Lógica de Melhor Mês do Colaborador (Histórico)
-      // Se não tiver histórico individual, tenta usar uma média ou valor zero
-      const bestRevenue = emp.best_month_history?.revenue || 0;
-      const bestClients = emp.best_month_history?.clients || 0;
-      const bestTicket = bestClients > 0 ? bestRevenue / bestClients : 0;
+      // Puxar do campo best_month_history do colaborador
+      const bestRevenue = emp.best_month_history?.revenue_total || 0;
+      const bestClients = emp.best_month_history?.customer_volume || 0;
+      const bestTicket = emp.best_month_history?.average_ticket || 0;
 
       if (newTableData[area]) {
         newTableData[area].push({
           id: emp.id,
           name: emp.full_name,
-          // Dados Históricos (Melhor Mês)
+          // Dados Históricos (Melhor Mês) - PUXADOS DO COLABORADOR
           hist_revenue: bestRevenue,
           hist_clients: bestClients,
           hist_ticket: bestTicket,
@@ -297,20 +297,21 @@ export default function DesdobramentoMeta() {
         const allRows = Object.values(tableData).flat();
         
         for (const row of allRows) {
-            // Atualizar COEX/Metas do funcionário
+            // Atualizar Metas do funcionário aplicando o percentual de crescimento
             const monthlyGoal = {
                 month: config.target_month_date.slice(0, 7),
+                growth_percentage: row.growth_pct,
                 individual_goal: row.target_revenue,
+                daily_projected_goal: row.target_revenue / 22,
+                actual_revenue_achieved: 0, // Resetar realizado para novo mês
                 target_clients: row.target_clients,
                 bonus_potential: row.bonus_value,
-                goals_by_service: row.goals_by_service || []
+                goals_by_service: row.goals_by_service || [],
+                achievement_percentage: 0
             };
-
-            // Se a meta definida for maior que o histórico, atualizamos o "melhor mês" como referência de desafio?
-            // Não, o melhor mês só atualiza quando REALIZADO. Aqui é PLANEJAMENTO.
             
             promises.push(base44.entities.Employee.update(row.id, {
-                monthly_goals: monthlyGoal // Sobrescreve ou adiciona lógica de histórico no backend idealmente
+                monthly_goals: monthlyGoal
             }));
         }
 
