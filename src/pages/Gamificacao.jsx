@@ -36,7 +36,7 @@ export default function Gamificacao() {
       try {
         const profiles = await base44.entities.UserGameProfile.list();
         const profilesArray = Array.isArray(profiles) ? profiles : [];
-        const profile = profilesArray.find(p => p.user_id === currentUser.id);
+        const profile = profilesArray.find((p) => p.user_id === currentUser.id);
         setUserProfile(profile || null);
       } catch (profileError) {
         console.log("Error fetching profiles:", profileError);
@@ -98,7 +98,7 @@ export default function Gamificacao() {
   // Workshop do usuário atual
   // Note: We need to be careful with circular dependency if we try to use employees to find workshop
   // For now, prefer owner_id or basic filtering. Employees will be fetched after workshop.
-  const currentWorkshop = workshops.find(w => w.owner_id === user?.id); 
+  const currentWorkshop = workshops.find((w) => w.owner_id === user?.id);
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', currentWorkshop?.id],
@@ -117,66 +117,66 @@ export default function Gamificacao() {
     retry: 1
   });
 
-  const myEmployeeRecord = employees.find(e => e.email === user?.email);
+  const myEmployeeRecord = employees.find((e) => e.email === user?.email);
 
   const period = new Date().toISOString().slice(0, 7);
 
   const { data: internalRankings = [], refetch: refetchRankings } = useQuery({
     queryKey: ['productivity-rankings-internal', currentWorkshop?.id, period],
     queryFn: async () => {
-        if (!currentWorkshop?.id) return [];
-        const ranks = await base44.entities.ProductivityRanking.filter({ 
-            workshop_id: currentWorkshop.id,
-            period 
-        });
+      if (!currentWorkshop?.id) return [];
+      const ranks = await base44.entities.ProductivityRanking.filter({
+        workshop_id: currentWorkshop.id,
+        period
+      });
 
-        return ranks.map(rank => ({
-            ...rank,
-            employee: employees.find(e => e.id === rank.employee_id)
-        }));
+      return ranks.map((rank) => ({
+        ...rank,
+        employee: employees.find((e) => e.id === rank.employee_id)
+      }));
     },
     enabled: !!currentWorkshop?.id && employees.length > 0
   });
 
   const { data: nationalRankings = [] } = useQuery({
-      queryKey: ['productivity-rankings-national', period],
-      queryFn: async () => {
-          // Fetch all rankings for the period (assuming RLS allows it for "National" view)
-          // In a real scenario with many records, this should be a backend aggregation function
-          const ranks = await base44.entities.ProductivityRanking.filter({ period });
+    queryKey: ['productivity-rankings-national', period],
+    queryFn: async () => {
+      // Fetch all rankings for the period (assuming RLS allows it for "National" view)
+      // In a real scenario with many records, this should be a backend aggregation function
+      const ranks = await base44.entities.ProductivityRanking.filter({ period });
 
-          // We need to enrich with employee names even for other workshops
-          // Since we might not have all employees loaded, we rely on what's available or fetch if needed.
-          // For now, we assume 'employees' contains needed data or we map what we can.
-          // Note: In a production app with thousands of users, we would fetch only top N records via backend function.
+      // We need to enrich with employee names even for other workshops
+      // Since we might not have all employees loaded, we rely on what's available or fetch if needed.
+      // For now, we assume 'employees' contains needed data or we map what we can.
+      // Note: In a production app with thousands of users, we would fetch only top N records via backend function.
 
-          // For national ranking, we also need workshop names.
-          return ranks.map(rank => {
-              const emp = employees.find(e => e.id === rank.employee_id);
-              const ws = workshops.find(w => w.id === rank.workshop_id);
-              return {
-                  ...rank,
-                  employee: emp || { full_name: 'Usuário Externo', profile_picture_url: null }, // Fallback
-                  workshop_name: ws?.name || 'Oficina Externa'
-              };
-          });
-      },
-      enabled: !!user
+      // For national ranking, we also need workshop names.
+      return ranks.map((rank) => {
+        const emp = employees.find((e) => e.id === rank.employee_id);
+        const ws = workshops.find((w) => w.id === rank.workshop_id);
+        return {
+          ...rank,
+          employee: emp || { full_name: 'Usuário Externo', profile_picture_url: null }, // Fallback
+          workshop_name: ws?.name || 'Oficina Externa'
+        };
+      });
+    },
+    enabled: !!user
   });
 
   const calculateRankingsMutation = useMutation({
     mutationFn: async () => {
-        return await base44.functions.invoke('calculateRankings', { 
-            workshop_id: currentWorkshop.id,
-            period: new Date().toISOString().slice(0, 7)
-        });
+      return await base44.functions.invoke('calculateRankings', {
+        workshop_id: currentWorkshop.id,
+        period: new Date().toISOString().slice(0, 7)
+      });
     },
     onSuccess: () => {
-        refetchRankings();
-        toast.success("Rankings atualizados com sucesso!");
+      refetchRankings();
+      toast.success("Rankings atualizados com sucesso!");
     },
     onError: (error) => {
-        toast.error("Erro ao atualizar rankings: " + error.message);
+      toast.error("Erro ao atualizar rankings: " + error.message);
     }
   });
 
@@ -195,49 +195,49 @@ export default function Gamificacao() {
       endDate.setDate(endDate.getDate() + 7);
 
       const challenges = [
-        {
-          title: "Top 10 Produtividade",
-          description: "Entre no top 10 de produtividade esta semana",
-          type: "semanal",
-          target_type: "individual",
-          target_area: "tecnico",
-          metric: "produtividade",
-          goal_value: 50000,
-          start_date: startDate.toISOString(),
-          end_date: endDate.toISOString(),
-          reward_xp: 500,
-          reward_badge: "top_10_week",
-          status: "ativo"
-        },
-        {
-          title: "Zero Retrabalho",
-          description: "Complete a semana sem nenhum retrabalho",
-          type: "semanal",
-          target_type: "individual",
-          target_area: "tecnico",
-          metric: "qualidade",
-          goal_value: 100,
-          start_date: startDate.toISOString(),
-          end_date: endDate.toISOString(),
-          reward_xp: 300,
-          reward_badge: "zero_rework",
-          status: "ativo"
-        },
-        {
-          title: "Equipe Campeã",
-          description: "Seja a equipe com maior faturamento do mês",
-          type: "mensal",
-          target_type: "equipe",
-          target_area: "vendas",
-          metric: "faturamento",
-          goal_value: 200000,
-          start_date: startDate.toISOString(),
-          end_date: new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0).toISOString(),
-          reward_xp: 1000,
-          reward_badge: "team_champion",
-          status: "ativo"
-        }
-      ];
+      {
+        title: "Top 10 Produtividade",
+        description: "Entre no top 10 de produtividade esta semana",
+        type: "semanal",
+        target_type: "individual",
+        target_area: "tecnico",
+        metric: "produtividade",
+        goal_value: 50000,
+        start_date: startDate.toISOString(),
+        end_date: endDate.toISOString(),
+        reward_xp: 500,
+        reward_badge: "top_10_week",
+        status: "ativo"
+      },
+      {
+        title: "Zero Retrabalho",
+        description: "Complete a semana sem nenhum retrabalho",
+        type: "semanal",
+        target_type: "individual",
+        target_area: "tecnico",
+        metric: "qualidade",
+        goal_value: 100,
+        start_date: startDate.toISOString(),
+        end_date: endDate.toISOString(),
+        reward_xp: 300,
+        reward_badge: "zero_rework",
+        status: "ativo"
+      },
+      {
+        title: "Equipe Campeã",
+        description: "Seja a equipe com maior faturamento do mês",
+        type: "mensal",
+        target_type: "equipe",
+        target_area: "vendas",
+        metric: "faturamento",
+        goal_value: 200000,
+        start_date: startDate.toISOString(),
+        end_date: new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0).toISOString(),
+        reward_xp: 1000,
+        reward_badge: "team_champion",
+        status: "ativo"
+      }];
+
 
       return await base44.entities.Challenge.create(challenges[Math.floor(Math.random() * challenges.length)]);
     },
@@ -254,12 +254,12 @@ export default function Gamificacao() {
 
       // Atualizar XP do usuário
       const profiles = await base44.entities.UserGameProfile.list();
-      const profile = profiles.find(p => p.user_id === data.user_id);
-      
+      const profile = profiles.find((p) => p.user_id === data.user_id);
+
       if (profile) {
         const newXP = (profile.xp || 0) + (data.xp_earned || 0);
         const newLevel = Math.floor(newXP / 1000) + 1;
-        
+
         await base44.entities.UserGameProfile.update(profile.id, {
           xp: newXP,
           level: Math.min(newLevel, 6)
@@ -275,9 +275,9 @@ export default function Gamificacao() {
   });
 
   // Desafios ativos e filtrados
-  const activeChallenges = Array.isArray(challenges) ? challenges.filter(c => c.status === 'ativo') : [];
-  
-  const filteredChallenges = activeChallenges.filter(challenge => {
+  const activeChallenges = Array.isArray(challenges) ? challenges.filter((c) => c.status === 'ativo') : [];
+
+  const filteredChallenges = activeChallenges.filter((challenge) => {
     const typeMatch = challengeTypeFilter === "all" || challenge.type === challengeTypeFilter;
     const targetMatch = challengeTargetFilter === "all" || challenge.target_type === challengeTargetFilter;
     const scopeMatch = challengeScopeFilter === "all" || challenge.scope === challengeScopeFilter;
@@ -286,18 +286,18 @@ export default function Gamificacao() {
 
   // Progresso do usuário nos desafios
   const getUserProgress = (challenge) => {
-    return challenge?.participants?.find(p => p.user_id === user?.id);
+    return challenge?.participants?.find((p) => p.user_id === user?.id);
   };
 
   // Minhas recompensas
-  const myRewards = Array.isArray(rewards) ? rewards.filter(r => r.user_id === user?.id) : [];
+  const myRewards = Array.isArray(rewards) ? rewards.filter((r) => r.user_id === user?.id) : [];
 
   if (loadingChallenges || loadingRewards) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-      </div>
-    );
+      </div>);
+
   }
 
   return (
@@ -305,9 +305,9 @@ export default function Gamificacao() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-3 flex items-center justify-center gap-3">
-            <Wrench className="w-10 h-10 text-purple-600" />
-            Sistema de Gamificação
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-3 flex items-center justify-center gap-3">Sistema de Gameficação
+
+
           </h1>
           <p className="text-lg text-gray-600">
             Desafios, Rankings e Reconhecimento
@@ -315,29 +315,29 @@ export default function Gamificacao() {
         </div>
 
         {/* Perfil do Usuário */}
-        {userProfile && (
-          <div className="mb-8">
+        {userProfile &&
+        <div className="mb-8">
             <LevelBadge level={userProfile.level} xp={userProfile.xp} />
           </div>
-        )}
+        }
 
         {/* Admin Actions */}
-        {user?.role === 'admin' && (
-          <div className="mb-6 flex gap-3">
+        {user?.role === 'admin' &&
+        <div className="mb-6 flex gap-3">
             <Button
-              onClick={() => createChallengeMutation.mutate()}
-              disabled={createChallengeMutation.isPending}
-              className="bg-purple-600 hover:bg-purple-700"
-            >
-              {createChallengeMutation.isPending ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <Plus className="w-4 h-4 mr-2" />
-              )}
+            onClick={() => createChallengeMutation.mutate()}
+            disabled={createChallengeMutation.isPending}
+            className="bg-purple-600 hover:bg-purple-700">
+
+              {createChallengeMutation.isPending ?
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" /> :
+
+            <Plus className="w-4 h-4 mr-2" />
+            }
               Criar Novo Desafio
             </Button>
           </div>
-        )}
+        }
 
         <Tabs defaultValue="desafios" className="space-y-6">
           <TabsList className="grid w-full grid-cols-5 bg-white shadow-md">
@@ -415,20 +415,20 @@ export default function Gamificacao() {
                     </Select>
                 </div>
 
-                {(challengeTypeFilter !== "all" || challengeTargetFilter !== "all" || challengeScopeFilter !== "all") && (
-                    <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => {
-                            setChallengeTypeFilter("all");
-                            setChallengeTargetFilter("all");
-                            setChallengeScopeFilter("all");
-                        }}
-                        className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                    >
+                {(challengeTypeFilter !== "all" || challengeTargetFilter !== "all" || challengeScopeFilter !== "all") &&
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setChallengeTypeFilter("all");
+                  setChallengeTargetFilter("all");
+                  setChallengeScopeFilter("all");
+                }}
+                className="text-red-500 hover:text-red-600 hover:bg-red-50">
+
                         Limpar Filtros
                     </Button>
-                )}
+              }
             </div>
 
             <Card className="border-2 border-purple-200 bg-gradient-to-r from-purple-50 to-pink-50">
@@ -441,41 +441,41 @@ export default function Gamificacao() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {filteredChallenges.length === 0 ? (
-                  <div className="text-center py-12">
+                {filteredChallenges.length === 0 ?
+                <div className="text-center py-12">
                     <Target className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-600">Nenhum desafio encontrado com os filtros atuais</p>
-                    <Button 
-                        variant="link" 
-                        onClick={() => {
-                            setChallengeTypeFilter("all");
-                            setChallengeTargetFilter("all");
-                        }}
-                    >
+                    <Button
+                    variant="link"
+                    onClick={() => {
+                      setChallengeTypeFilter("all");
+                      setChallengeTargetFilter("all");
+                    }}>
+
                         Limpar filtros
                     </Button>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {filteredChallenges.map(challenge => (
-                      <ChallengeCard
-                        key={challenge.id}
-                        challenge={challenge}
-                        userProgress={getUserProgress(challenge)}
-                      />
-                    ))}
-                  </div>
+                  </div> :
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {filteredChallenges.map((challenge) =>
+                  <ChallengeCard
+                    key={challenge.id}
+                    challenge={challenge}
+                    userProgress={getUserProgress(challenge)} />
+
                   )}
+                  </div>
+                }
                   </CardContent>
                   </Card>
 
                   {/* Evidence Submission Section */}
-                  {myEmployeeRecord && (
-                  <EvidenceSubmission 
-                  activeChallenges={activeChallenges} 
-                  user={myEmployeeRecord} // Using employee record for consistent IDs (or user depending on backend logic, but logs use employee_id)
-                  />
-                  )}
+                  {myEmployeeRecord &&
+            <EvidenceSubmission
+              activeChallenges={activeChallenges}
+              user={myEmployeeRecord} // Using employee record for consistent IDs (or user depending on backend logic, but logs use employee_id)
+            />
+            }
                   </TabsContent>
 
                   {/* Rankings */}
@@ -488,23 +488,23 @@ export default function Gamificacao() {
                             <h3 className="text-lg font-bold text-gray-900">Rankings de Produtividade</h3>
                             <p className="text-sm text-gray-500">Baseado nos registros diários e engajamento</p>
                         </div>
-                        <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => calculateRankingsMutation.mutate()}
-                            disabled={calculateRankingsMutation.isPending}
-                        >
+                        <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => calculateRankingsMutation.mutate()}
+                    disabled={calculateRankingsMutation.isPending}>
+
                             {calculateRankingsMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
                             Atualizar
                         </Button>
                     </div>
                     
-                    <RankingSection 
-                        internalRankings={internalRankings}
-                        nationalRankings={nationalRankings}
-                        userEmployee={myEmployeeRecord}
-                        currentWorkshop={currentWorkshop}
-                    />
+                    <RankingSection
+                  internalRankings={internalRankings}
+                  nationalRankings={nationalRankings}
+                  userEmployee={myEmployeeRecord}
+                  currentWorkshop={currentWorkshop} />
+
                 </div>
 
                 {/* XP General Ranking */}
@@ -529,23 +529,23 @@ export default function Gamificacao() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {myRewards.length === 0 ? (
-                  <div className="text-center py-12">
+                {myRewards.length === 0 ?
+                <div className="text-center py-12">
                     <Award className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-600">Complete desafios para ganhar recompensas!</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {myRewards.map(reward => (
-                      <div
-                        key={reward.id}
-                        className="p-4 rounded-lg border-2 border-yellow-200 bg-gradient-to-br from-yellow-50 to-orange-50 hover:shadow-lg transition-all"
-                      >
+                  </div> :
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {myRewards.map((reward) =>
+                  <div
+                    key={reward.id}
+                    className="p-4 rounded-lg border-2 border-yellow-200 bg-gradient-to-br from-yellow-50 to-orange-50 hover:shadow-lg transition-all">
+
                         <div className="text-center">
                           <div
-                            className="w-16 h-16 rounded-full mx-auto mb-3 flex items-center justify-center"
-                            style={{ background: reward.color || '#f59e0b' }}
-                          >
+                        className="w-16 h-16 rounded-full mx-auto mb-3 flex items-center justify-center"
+                        style={{ background: reward.color || '#f59e0b' }}>
+
                             <Trophy className="w-8 h-8 text-white" />
                           </div>
                           <h3 className="font-bold text-gray-900 mb-1">{reward.title}</h3>
@@ -557,9 +557,9 @@ export default function Gamificacao() {
                           </div>
                         </div>
                       </div>
-                    ))}
+                  )}
                   </div>
-                )}
+                }
               </CardContent>
             </Card>
           </TabsContent>
@@ -571,15 +571,15 @@ export default function Gamificacao() {
 
           {/* Qualidade */}
           <TabsContent value="qualidade">
-            {currentWorkshop && (
-              <QualityDashboard 
-                workshopId={currentWorkshop.id} 
-                employees={employees} 
-              />
-            )}
+            {currentWorkshop &&
+            <QualityDashboard
+              workshopId={currentWorkshop.id}
+              employees={employees} />
+
+            }
           </TabsContent>
         </Tabs>
       </div>
-    </div>
-  );
+    </div>);
+
 }
