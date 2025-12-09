@@ -31,7 +31,11 @@ export default function EmployeeGoals({ employee, onUpdate }) {
   const loadGoals = () => {
     const employeeGoals = employee.monthly_goals || {
       month: new Date().toISOString().substring(0, 7),
-      goals_by_service: []
+      goals_by_service: [],
+      individual_goal: 0,
+      daily_projected_goal: 0,
+      actual_revenue_achieved: 0,
+      growth_percentage: 10
     };
     
     const formattedGoals = Array.isArray(employeeGoals.goals_by_service) 
@@ -109,10 +113,25 @@ export default function EmployeeGoals({ employee, onUpdate }) {
         };
       });
 
+      const totalGoalValue = goalsWithProgress.reduce((sum, g) => sum + g.goal_value, 0);
+      
+      // Calcular meta projetada baseada no melhor mês + crescimento
+      const bestMonthRevenue = employee.best_month_history?.revenue_total || 0;
+      const growthPercentage = employee.monthly_goals?.growth_percentage || 10;
+      const projectedGoal = bestMonthRevenue > 0 
+        ? bestMonthRevenue * (1 + growthPercentage / 100)
+        : totalGoalValue;
+
+      // Calcular meta diária (assumindo 22 dias úteis)
+      const dailyProjectedGoal = projectedGoal / 22;
+
       const monthlyGoals = {
         month: new Date().toISOString().substring(0, 7),
         goals_by_service: goalsWithProgress,
-        individual_goal: goalsWithProgress.reduce((sum, g) => sum + g.goal_value, 0),
+        individual_goal: projectedGoal,
+        daily_projected_goal: dailyProjectedGoal,
+        actual_revenue_achieved: employee.monthly_goals?.actual_revenue_achieved || 0,
+        growth_percentage: growthPercentage,
         achievement_percentage: goalsWithProgress.length > 0
           ? goalsWithProgress.reduce((sum, g) => sum + (g.progress || 0), 0) / goalsWithProgress.length
           : 0
@@ -161,15 +180,85 @@ export default function EmployeeGoals({ employee, onUpdate }) {
 
   const canEdit = user && (user.role === 'admin' || user.email === employee.created_by);
 
+  // Dados do melhor mês e projeções
+  const bestMonthRevenue = employee.best_month_history?.revenue_total || 0;
+  const growthPercentage = employee.monthly_goals?.growth_percentage || 10;
+  const projectedGoal = bestMonthRevenue > 0 
+    ? bestMonthRevenue * (1 + growthPercentage / 100)
+    : totalGoalValue;
+  const dailyProjectedGoal = projectedGoal / 22;
+  const actualRevenueAchieved = employee.monthly_goals?.actual_revenue_achieved || 0;
+  const achievementPercentage = projectedGoal > 0 ? (actualRevenueAchieved / projectedGoal) * 100 : 0;
+
   return (
     <div className="space-y-6">
+      {/* Card de Espelhamento do Melhor Mês + Metas Mensais */}
+      <Card className="shadow-xl border-2 border-green-200 bg-gradient-to-r from-green-50 to-emerald-50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-green-900">
+            <TrendingUp className="w-6 h-6" />
+            Metas Mensais Projetadas - {new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+            <div>
+              <p className="text-xs text-gray-600 mb-1">Melhor Mês Histórico</p>
+              <p className="text-xl font-bold text-gray-900">
+                R$ {bestMonthRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-600 mb-1">% Crescimento</p>
+              <p className="text-xl font-bold text-blue-600">
+                +{growthPercentage.toFixed(1)}%
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-600 mb-1">Meta Projetada (Mês)</p>
+              <p className="text-xl font-bold text-green-600">
+                R$ {projectedGoal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-600 mb-1">Meta Projetada (Dia)</p>
+              <p className="text-xl font-bold text-purple-600">
+                R$ {dailyProjectedGoal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 pt-4 border-t border-green-200">
+            <div>
+              <p className="text-xs text-gray-600 mb-1">Realizado no Mês</p>
+              <p className="text-2xl font-bold text-green-600">
+                R$ {actualRevenueAchieved.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-600 mb-1">% Atingimento</p>
+              <p className={`text-2xl font-bold ${achievementPercentage >= 100 ? 'text-green-600' : achievementPercentage >= 70 ? 'text-yellow-600' : 'text-red-600'}`}>
+                {achievementPercentage.toFixed(1)}%
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <p className="text-xs text-blue-800">
+              💡 <strong>Informação:</strong> A meta projetada é calculada automaticamente com base no seu Melhor Mês Histórico + {growthPercentage}% de crescimento (definido no Desdobramento de Metas). 
+              O valor "Realizado" é atualizado automaticamente conforme você registra sua produção diária.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Resumo Geral das Metas */}
       <Card className="shadow-xl border-2 border-indigo-200 bg-gradient-to-r from-indigo-50 to-purple-50">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-indigo-900">
               <Target className="w-6 h-6" />
-              Resumo das Metas - {new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+              Metas por Atividade
             </CardTitle>
             {canEdit && !editing && (
               <Button onClick={() => setEditing(true)} className="bg-indigo-600 hover:bg-indigo-700">

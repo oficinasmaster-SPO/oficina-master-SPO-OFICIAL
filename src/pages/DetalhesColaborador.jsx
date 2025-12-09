@@ -12,7 +12,7 @@ import FeedbacksSection from "../components/employee/FeedbacksSection";
 import AdvertenciasSection from "../components/employee/AdvertenciasSection";
 import DiagnosticosVinculados from "../components/employee/DiagnosticosVinculados";
 import DocumentosAnexos from "../components/employee/DocumentosAnexos";
-import PainelProducao from "../components/employee/PainelProducao";
+import HistoricoDiarioProducao from "../components/employee/HistoricoDiarioProducao";
 import COEXCDCIntegration from "../components/rh/COEXCDCIntegration";
 import PerformanceMonitoring from "../components/rh/PerformanceMonitoring";
 import EngajamentoCursos from "../components/employee/EngajamentoCursos";
