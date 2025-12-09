@@ -13,6 +13,9 @@ import SliderWithMax from "@/components/ui/slider-with-max";
 export default function DadosBasicosOficina({ workshop, onUpdate }) {
   const [editing, setEditing] = useState(false);
   const [loadingCEP, setLoadingCEP] = useState(false);
+  const [loadingCities, setLoadingCities] = useState(false);
+  const [cities, setCities] = useState([]);
+  const [showCityInput, setShowCityInput] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     razao_social: "",
@@ -87,6 +90,10 @@ export default function DadosBasicosOficina({ workshop, onUpdate }) {
             state: response.data.state,
             endereco_completo: `${response.data.street}, ${response.data.neighborhood}`
           }));
+          // Buscar cidades do estado retornado
+          if (response.data.state) {
+            await loadCities(response.data.state);
+          }
         }
       } catch (error) {
         console.error('Erro ao consultar CEP:', error);
@@ -95,6 +102,65 @@ export default function DadosBasicosOficina({ workshop, onUpdate }) {
       }
     }
   };
+
+  const loadCities = async (uf) => {
+    if (!uf || uf.length !== 2) return;
+    
+    setLoadingCities(true);
+    try {
+      const response = await base44.functions.invoke('listarCidadesPorUF', { uf });
+      if (response.data && response.data.cities) {
+        setCities(response.data.cities);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar cidades:', error);
+      setCities([]);
+    } finally {
+      setLoadingCities(false);
+    }
+  };
+
+  const handleStateChange = async (uf) => {
+    setFormData({...formData, state: uf, city: ''});
+    await loadCities(uf);
+  };
+
+  // Carregar cidades quando o estado já existir no workshop
+  useEffect(() => {
+    if (workshop?.state && workshop.state.length === 2) {
+      loadCities(workshop.state);
+    }
+  }, [workshop?.state]);
+
+  const estadosBrasileiros = [
+    { value: 'AC', label: 'Acre' },
+    { value: 'AL', label: 'Alagoas' },
+    { value: 'AP', label: 'Amapá' },
+    { value: 'AM', label: 'Amazonas' },
+    { value: 'BA', label: 'Bahia' },
+    { value: 'CE', label: 'Ceará' },
+    { value: 'DF', label: 'Distrito Federal' },
+    { value: 'ES', label: 'Espírito Santo' },
+    { value: 'GO', label: 'Goiás' },
+    { value: 'MA', label: 'Maranhão' },
+    { value: 'MT', label: 'Mato Grosso' },
+    { value: 'MS', label: 'Mato Grosso do Sul' },
+    { value: 'MG', label: 'Minas Gerais' },
+    { value: 'PA', label: 'Pará' },
+    { value: 'PB', label: 'Paraíba' },
+    { value: 'PR', label: 'Paraná' },
+    { value: 'PE', label: 'Pernambuco' },
+    { value: 'PI', label: 'Piauí' },
+    { value: 'RJ', label: 'Rio de Janeiro' },
+    { value: 'RN', label: 'Rio Grande do Norte' },
+    { value: 'RS', label: 'Rio Grande do Sul' },
+    { value: 'RO', label: 'Rondônia' },
+    { value: 'RR', label: 'Roraima' },
+    { value: 'SC', label: 'Santa Catarina' },
+    { value: 'SP', label: 'São Paulo' },
+    { value: 'SE', label: 'Sergipe' },
+    { value: 'TO', label: 'Tocantins' }
+  ];
 
   const diasSemana = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
 
@@ -177,23 +243,87 @@ export default function DadosBasicosOficina({ workshop, onUpdate }) {
               </p>
             </div>
             <div>
-              <Label>Cidade *</Label>
-              <Input
-                value={formData.city}
-                onChange={(e) => setFormData({...formData, city: e.target.value})}
-                disabled={!editing}
-                placeholder="Será preenchido automaticamente"
-              />
+              <Label>Estado (UF) *</Label>
+              {!editing ? (
+                <Input value={formData.state} disabled />
+              ) : (
+                <Select value={formData.state} onValueChange={handleStateChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o estado..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {estadosBrasileiros.map(estado => (
+                      <SelectItem key={estado.value} value={estado.value}>
+                        {estado.value} - {estado.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
             <div>
-              <Label>Estado (UF) *</Label>
-              <Input
-                value={formData.state}
-                onChange={(e) => setFormData({...formData, state: e.target.value.toUpperCase()})}
-                disabled={!editing}
-                maxLength={2}
-                placeholder="UF"
-              />
+              <Label>Cidade *</Label>
+              {!editing ? (
+                <Input value={formData.city} disabled />
+              ) : showCityInput ? (
+                <div className="space-y-2">
+                  <Input
+                    value={formData.city}
+                    onChange={(e) => setFormData({...formData, city: e.target.value})}
+                    placeholder="Digite a cidade..."
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowCityInput(false)}
+                    className="w-full"
+                  >
+                    Voltar para lista de cidades
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="relative">
+                    <Select 
+                      value={formData.city} 
+                      onValueChange={(value) => setFormData({...formData, city: value})}
+                      disabled={!formData.state || loadingCities}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={
+                          loadingCities ? "Carregando cidades..." : 
+                          !formData.state ? "Selecione um estado primeiro" : 
+                          "Selecione a cidade..."
+                        } />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {cities.map(city => (
+                          <SelectItem key={city} value={city}>
+                            {city}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {loadingCities && (
+                      <Loader2 className="w-4 h-4 animate-spin absolute right-10 top-3 text-blue-600" />
+                    )}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowCityInput(true)}
+                    className="w-full"
+                    disabled={!formData.state}
+                  >
+                    Minha cidade não está na lista - Digitar manualmente
+                  </Button>
+                </div>
+              )}
+              <p className="text-xs text-gray-500 mt-1">
+                Selecione o estado primeiro para ver as cidades disponíveis
+              </p>
             </div>
           <div className="md:col-span-2">
             <Label>Segmento (edição livre)</Label>
