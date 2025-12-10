@@ -98,7 +98,7 @@ export default function Layout({ children }) {
   };
 
   const handleLogin = () => {
-    base44.auth.redirectToLogin(window.location.href);
+    base44.auth.redirectToLogin();
   };
 
   return (

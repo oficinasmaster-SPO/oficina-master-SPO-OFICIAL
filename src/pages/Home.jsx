@@ -226,7 +226,7 @@ export default function Home() {
 
   const handleStartDiagnostic = () => {
     if (!isAuthenticated) {
-      base44.auth.redirectToLogin(window.location.href);
+      base44.auth.redirectToLogin();
       return;
     }
     
@@ -238,7 +238,7 @@ export default function Home() {
   };
 
   const handleLogin = () => {
-    base44.auth.redirectToLogin(window.location.href);
+    base44.auth.redirectToLogin();
   };
 
   const phases = [
