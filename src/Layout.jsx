@@ -41,13 +41,17 @@ export default function Layout({ children }) {
   }, []);
 
   const loadUser = React.useCallback(async () => {
-    try {
-      // Páginas públicas que não precisam de autenticação
-      const publicPages = ['Home', 'PrimeiroAcesso'];
-      const currentPath = window.location.pathname;
-      const currentPage = currentPath.split('/').pop();
-      const isPublicPage = publicPages.includes(currentPage);
+    // Páginas públicas que não precisam de autenticação
+    const publicPages = ['/PrimeiroAcesso', '/ClientRegistration'];
+    const isPublicPage = publicPages.some(page => location.pathname.includes(page));
+    
+    if (isPublicPage) {
+      setIsAuthenticated(false);
+      setIsCheckingAuth(false);
+      return;
+    }
 
+    try {
       const authenticated = await base44.auth.isAuthenticated();
       setIsAuthenticated(authenticated);
 
@@ -65,10 +69,6 @@ export default function Layout({ children }) {
           console.log("Error fetching user:", userError);
           setUser(null);
         }
-      } else if (!isPublicPage) {
-        // Se não autenticado e não é página pública, redireciona para login
-        // Mas não para PrimeiroAcesso (convite de colaborador)
-        console.log("User not authenticated on private page");
       }
     } catch (error) {
       console.log("User not authenticated:", error);
@@ -77,11 +77,11 @@ export default function Layout({ children }) {
     } finally {
       setIsCheckingAuth(false);
     }
-  }, []);
+  }, [location.pathname]);
 
   useEffect(() => {
     loadUser();
-  }, [loadUser]);
+  }, [loadUser, location.pathname]);
 
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ['unread-notifications', user?.id],
@@ -111,22 +111,10 @@ export default function Layout({ children }) {
     base44.auth.redirectToLogin();
   };
 
-  // Verifica se é página pública
-  const isPublicPage = () => {
-    const publicPages = ['PrimeiroAcesso'];
-    const currentPath = window.location.pathname;
-    const currentPage = currentPath.split('/').pop();
-    // Home é pública apenas se não autenticado
-    if (currentPage === 'Home') {
-      return !isAuthenticated;
-    }
-    return publicPages.includes(currentPage);
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
       
-      {isAuthenticated && !isPublicPage() && (
+      {isAuthenticated && (
         <Sidebar 
           user={user}
           unreadCount={unreadCount}
@@ -135,11 +123,11 @@ export default function Layout({ children }) {
         />
       )}
 
-      <div className={`${isAuthenticated && !isPublicPage() ? 'lg:pl-64' : ''} flex flex-col min-h-screen transition-all duration-300`} style={isAuthenticated && !isPublicPage() ? { paddingLeft: 'var(--sidebar-width, 16rem)' } : {}}>
+      <div className={`${isAuthenticated ? 'lg:pl-64' : ''} flex flex-col min-h-screen transition-all duration-300`} style={isAuthenticated ? { paddingLeft: 'var(--sidebar-width, 16rem)' } : {}}>
         <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30 print:hidden">
           <div className="px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
-              {isAuthenticated && !isPublicPage() && (
+              {isAuthenticated && (
                 <button
                   onClick={() => setSidebarOpen(!sidebarOpen)}
                   className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
@@ -152,12 +140,12 @@ export default function Layout({ children }) {
                 </button>
               )}
 
-              <Link to={createPageUrl("Home")} className={`flex items-center gap-2 ${isAuthenticated && !isPublicPage() ? 'lg:hidden' : ''}`}>
+              <Link to={createPageUrl("Home")} className={`flex items-center gap-2 ${isAuthenticated ? 'lg:hidden' : ''}`}>
                 <div className="text-lg font-bold text-gray-900">Oficinas Master</div>
               </Link>
 
               {/* Global Search Bar */}
-              {isAuthenticated && workshop && !isPublicPage() && (
+              {isAuthenticated && workshop && (
                 <div className="hidden md:flex flex-1 items-center justify-center px-6">
                     <GlobalSearch workshopId={workshop.id} />
                 </div>
@@ -218,17 +206,14 @@ export default function Layout({ children }) {
         </header>
 
         <main className="flex-1">
-          <div className={`${isAuthenticated && !isPublicPage() ? 'px-4 sm:px-6 lg:px-8 py-6' : ''}`}>
-            {isAuthenticated && !isPublicPage() && <Breadcrumbs />}
-            {isPublicPage() ? (
-              // Páginas públicas renderizam diretamente sem contexto
-              children
-            ) : isAuthenticated && workshop ? (
+          <div className={`${isAuthenticated ? 'px-4 sm:px-6 lg:px-8 py-6' : ''}`}>
+            {isAuthenticated && <Breadcrumbs />}
+            {isAuthenticated && workshop ? (
               <SharedDataProvider workshopId={workshop.id} userId={user?.id}>
                 {children}
               </SharedDataProvider>
             ) : (
-                  workshop && workshop.status === 'inativo' && user?.role !== 'admin' ? (
+                  workshop && workshop.status === 'inativo' && user.role !== 'admin' ? (
                       <div className="flex flex-col items-center justify-center h-[60vh] text-center px-4">
                           <div className="bg-red-100 p-4 rounded-full mb-4">
                               <LogOut className="w-8 h-8 text-red-600" />
