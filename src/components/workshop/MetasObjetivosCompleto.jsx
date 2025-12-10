@@ -1415,152 +1415,16 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
             </CardContent>
           </Card>
 
-          {/* Metas Detalhadas - Opcional */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Metas Detalhadas (Opcional)</CardTitle>
-              <CardDescription>
-                Você pode preencher valores específicos se desejar um controle mais granular.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div>
-                  <Label>Mês de Referência</Label>
-                  <Input
-                    type="month"
-                    value={formData.monthly_goals.month || getCurrentMonth()}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      monthly_goals: { ...formData.monthly_goals, month: e.target.value }
-                    })}
-                    disabled={!editing} />
-
-                </div>
-                <div>
-                  <Label>Faturamento Peças (R$)</Label>
-                  <Input
-                    type="number"
-                    value={formData.monthly_goals.revenue_parts}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      monthly_goals: { ...formData.monthly_goals, revenue_parts: parseFloat(e.target.value) || 0 }
-                    })}
-                    disabled={!editing} />
-
-                </div>
-                <div>
-                  <Label>Faturamento Serviços (R$)</Label>
-                  <Input
-                    type="number"
-                    value={formData.monthly_goals.revenue_services}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      monthly_goals: { ...formData.monthly_goals, revenue_services: parseFloat(e.target.value) || 0 }
-                    })}
-                    disabled={!editing} />
-
-                </div>
-                <div>
-                  <Label>Meta Total</Label>
-                  <Input
-                    value={formatCurrency((formData.monthly_goals.revenue_parts || 0) + (formData.monthly_goals.revenue_services || 0))}
-                    disabled
-                    className="bg-green-100 font-bold text-green-700" />
-
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div>
-                  <Label>Rentabilidade (%)</Label>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    value={formData.monthly_goals.profitability_percentage}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      monthly_goals: { ...formData.monthly_goals, profitability_percentage: parseFloat(e.target.value) || 0 }
-                    })}
-                    disabled={!editing} />
-
-                </div>
-                <div>
-                  <Label>Lucro (%)</Label>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    value={formData.monthly_goals.profit_percentage}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      monthly_goals: { ...formData.monthly_goals, profit_percentage: parseFloat(e.target.value) || 0 }
-                    })}
-                    disabled={!editing} />
-
-                </div>
-                <div>
-                  <Label>Ticket Médio (R$)</Label>
-                  <Input
-                    type="number"
-                    value={formData.monthly_goals.average_ticket}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      monthly_goals: { ...formData.monthly_goals, average_ticket: parseFloat(e.target.value) || 0 }
-                    })}
-                    disabled={!editing} />
-
-                </div>
-                <div>
-                  <Label>Volume de Clientes</Label>
-                  <Input
-                    type="number"
-                    value={formData.monthly_goals.customer_volume}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      monthly_goals: { ...formData.monthly_goals, customer_volume: parseInt(e.target.value) || 0 }
-                    })}
-                    disabled={!editing} />
-
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label>Meta de Compra (R$)</Label>
-                  <Input
-                    type="number"
-                    value={formData.monthly_goals.buy_target}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      monthly_goals: { ...formData.monthly_goals, buy_target: parseFloat(e.target.value) || 0 }
-                    })}
-                    disabled={!editing} />
-
-                </div>
-                <div>
-                  <Label>Custo de Produto Aplicado (R$)</Label>
-                  <Input
-                    type="number"
-                    value={formData.monthly_goals.product_cost_applied}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      monthly_goals: { ...formData.monthly_goals, product_cost_applied: parseFloat(e.target.value) || 0 }
-                    })}
-                    disabled={!editing} />
-
-                </div>
-              </div>
-
-              <div className="pt-4 border-t">
-                <Button
-                  variant="outline"
-                  onClick={() => navigate(createPageUrl("HistoricoMetas"))}
-                  className="w-full">
-
-                  <FileText className="w-4 h-4 mr-2" />
-                  Histórico da Produção Diária
-                </Button>
-              </div>
+          {/* Botão Histórico da Produção Diária */}
+          <Card className="shadow-lg border-2 border-blue-200">
+            <CardContent className="p-6">
+              <Button
+                variant="outline"
+                onClick={() => navigate(createPageUrl("HistoricoMetas"))}
+                className="w-full h-16 text-lg bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-2 border-blue-300">
+                <FileText className="w-5 h-5 mr-2" />
+                Histórico da Produção Diária
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>
