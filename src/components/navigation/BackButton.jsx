@@ -150,8 +150,7 @@ export default function BackButton({ className = "" }) {
       className={`text-gray-600 hover:text-gray-900 hover:bg-gray-100 gap-2 mb-4 ${className}`}
     >
       <ArrowLeft className="w-4 h-4" />
-      <span className="hidden sm:inline">Voltar para {previousPageName}</span>
-      <span className="sm:hidden">Voltar</span>
+      Voltar
     </Button>
   );
 }

@@ -14,6 +14,7 @@ export default function ManualGoalRegistration({ open, onClose, workshop, onSave
   const [entityType, setEntityType] = useState("workshop");
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [employees, setEmployees] = useState([]);
+  const [tcmp2Value, setTcmp2Value] = useState(0);
   const [formData, setFormData] = useState({
     reference_date: new Date().toISOString().split('T')[0],
     month: new Date().toISOString().substring(0, 7),
@@ -42,6 +43,8 @@ export default function ManualGoalRegistration({ open, onClose, workshop, onSave
     revenue_parts: 0,
     revenue_services: 0,
     customer_volume: 0,
+    r70_i30: { r70: 70, i30: 30 },
+    tcmp2: 0,
     pave_commercial: 0,
     kit_master: 0,
     sales_base: 0,
@@ -69,8 +72,32 @@ export default function ManualGoalRegistration({ open, onClose, workshop, onSave
     if (open) {
       loadEmployees();
       loadProjectedGoals();
+      loadTCMP2();
     }
   }, [open, entityType, selectedEmployee]);
+
+  const loadTCMP2 = async () => {
+    if (!workshop) return;
+    try {
+      const currentMonth = new Date().toISOString().substring(0, 7);
+      const dres = await base44.entities.DREMonthly.filter({ 
+        workshop_id: workshop.id,
+        reference_month: currentMonth
+      });
+      
+      if (dres && dres.length > 0) {
+        const latestDRE = dres[0];
+        const tcmp2 = latestDRE.tcmp2_value || 0;
+        setTcmp2Value(tcmp2);
+        setFormData(prev => ({ ...prev, tcmp2 }));
+      } else {
+        setTcmp2Value(0);
+        setFormData(prev => ({ ...prev, tcmp2: 0 }));
+      }
+    } catch (error) {
+      console.error("Error loading TCMP2:", error);
+    }
+  };
 
   const loadEmployees = async () => {
     if (!workshop) return;
@@ -163,6 +190,8 @@ export default function ManualGoalRegistration({ open, onClose, workshop, onSave
         revenue_services: formData.revenue_services,
         average_ticket: average_ticket,
         customer_volume: formData.customer_volume,
+        r70_i30: formData.r70_i30,
+        tcmp2: tcmp2Value,
         pave_commercial: formData.pave_commercial,
         kit_master: formData.kit_master,
         sales_base: formData.sales_base,
@@ -362,6 +391,55 @@ export default function ManualGoalRegistration({ open, onClose, workshop, onSave
             </div>
           </div>
         </div>
+
+        {/* R70/I30 - Automático */}
+        <div className="border-l-4 border-cyan-500 pl-3 py-2 bg-cyan-50/30">
+          <Label className="text-sm font-semibold text-gray-700 mb-2 block">R70/I30 (%) - Automático</Label>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs text-cyan-600">R70 (Renda %)</Label>
+              <Input
+                type="number"
+                value={formData.r70_i30.r70}
+                onChange={(e) => {
+                  const r70 = parseFloat(e.target.value) || 0;
+                  const i30 = 100 - r70;
+                  setFormData({...formData, r70_i30: { r70, i30 }});
+                }}
+                className="font-semibold"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-cyan-600">I30 (Investimento %)</Label>
+              <Input
+                type="number"
+                value={formData.r70_i30.i30}
+                onChange={(e) => {
+                  const i30 = parseFloat(e.target.value) || 0;
+                  const r70 = 100 - i30;
+                  setFormData({...formData, r70_i30: { r70, i30 }});
+                }}
+                className="font-semibold"
+              />
+            </div>
+          </div>
+          <p className="text-xs text-cyan-700 mt-1">✓ Ajuste automático: R70 + I30 = 100%</p>
+        </div>
+
+        {/* TCMP2 - Automático do DRE */}
+        <div className="border-l-4 border-emerald-500 pl-3 py-2 bg-emerald-50/30">
+          <Label className="text-sm font-semibold text-gray-700 mb-2 block">TCMP² (Automático - do DRE)</Label>
+          <Input
+            type="number"
+            value={tcmp2Value.toFixed(2)}
+            disabled
+            className="bg-emerald-100 font-bold text-emerald-700"
+            title="Valor puxado automaticamente do DRE do mês atual"
+          />
+          <p className="text-xs text-emerald-700 mt-1">
+            {tcmp2Value > 0 ? '✓ Valor do DRE carregado' : '⚠️ Cadastre o DRE do mês atual'}
+          </p>
+        </div>
       </>
     );
 
@@ -398,13 +476,13 @@ export default function ManualGoalRegistration({ open, onClose, workshop, onSave
 
           {/* Kit Master */}
           <div className="border-l-4 border-yellow-500 pl-3 py-2 bg-yellow-50/30">
-            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Kit Master (R$)</Label>
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Kit Master (qtd)</Label>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs text-blue-600">PREVISTO</Label>
                 <Input
                   type="number"
-                  value={formData.projected_kit_master.toFixed(2)}
+                  value={formData.projected_kit_master.toFixed(0)}
                   disabled
                   className="bg-blue-100 font-bold text-blue-700"
                 />
@@ -414,11 +492,80 @@ export default function ManualGoalRegistration({ open, onClose, workshop, onSave
                 <Input
                   type="number"
                   value={formData.kit_master}
-                  onChange={(e) => setFormData({...formData, kit_master: parseFloat(e.target.value) || 0})}
+                  onChange={(e) => setFormData({...formData, kit_master: parseInt(e.target.value) || 0})}
                   className="font-semibold"
                 />
               </div>
             </div>
+          </div>
+
+          {/* Clientes Agendados Base */}
+          <div className="border-l-4 border-blue-400 pl-3 py-2 bg-blue-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Clientes Agendados Base (qtd)</Label>
+            <Input
+              type="number"
+              value={formData.clients_scheduled_base}
+              onChange={(e) => setFormData({...formData, clients_scheduled_base: parseInt(e.target.value) || 0})}
+              className="font-semibold"
+            />
+          </div>
+
+          {/* Clientes Entregues Base */}
+          <div className="border-l-4 border-blue-600 pl-3 py-2 bg-blue-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Clientes Entregues Base (qtd)</Label>
+            <Input
+              type="number"
+              value={formData.clients_delivered_base}
+              onChange={(e) => setFormData({...formData, clients_delivered_base: parseInt(e.target.value) || 0})}
+              className="font-semibold"
+            />
+          </div>
+
+          {/* Vendas Clientes Base */}
+          <div className="border-l-4 border-teal-500 pl-3 py-2 bg-teal-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Vendas Clientes Base (R$)</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs text-blue-600">PREVISTO</Label>
+                <Input
+                  type="number"
+                  value={formData.projected_sales_base.toFixed(2)}
+                  disabled
+                  className="bg-blue-100 font-bold text-blue-700"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-green-600">REALIZADO</Label>
+                <Input
+                  type="number"
+                  value={formData.sales_base}
+                  onChange={(e) => setFormData({...formData, sales_base: parseFloat(e.target.value) || 0})}
+                  className="font-semibold"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Clientes Agendados Marketing */}
+          <div className="border-l-4 border-pink-400 pl-3 py-2 bg-pink-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Clientes Agendados Marketing (qtd)</Label>
+            <Input
+              type="number"
+              value={formData.clients_scheduled_mkt}
+              onChange={(e) => setFormData({...formData, clients_scheduled_mkt: parseInt(e.target.value) || 0})}
+              className="font-semibold"
+            />
+          </div>
+
+          {/* Clientes Entregues Marketing */}
+          <div className="border-l-4 border-pink-600 pl-3 py-2 bg-pink-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Clientes Entregues Marketing (qtd)</Label>
+            <Input
+              type="number"
+              value={formData.clients_delivered_mkt}
+              onChange={(e) => setFormData({...formData, clients_delivered_mkt: parseInt(e.target.value) || 0})}
+              className="font-semibold"
+            />
           </div>
 
           {/* Vendas Lead Marketing */}
@@ -446,6 +593,28 @@ export default function ManualGoalRegistration({ open, onClose, workshop, onSave
             </div>
           </div>
 
+          {/* Clientes Agendados Indicação */}
+          <div className="border-l-4 border-orange-400 pl-3 py-2 bg-orange-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Clientes Agendados Indicação (qtd)</Label>
+            <Input
+              type="number"
+              value={formData.clients_scheduled_referral}
+              onChange={(e) => setFormData({...formData, clients_scheduled_referral: parseInt(e.target.value) || 0})}
+              className="font-semibold"
+            />
+          </div>
+
+          {/* Clientes Entregues Indicação */}
+          <div className="border-l-4 border-orange-600 pl-3 py-2 bg-orange-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Clientes Entregues Indicação (qtd)</Label>
+            <Input
+              type="number"
+              value={formData.clients_delivered_referral}
+              onChange={(e) => setFormData({...formData, clients_delivered_referral: parseInt(e.target.value) || 0})}
+              className="font-semibold"
+            />
+          </div>
+
           {/* Vendas Clientes Base */}
           <div className="border-l-4 border-teal-500 pl-3 py-2 bg-teal-50/30">
             <Label className="text-sm font-semibold text-gray-700 mb-2 block">Vendas Clientes Base (R$)</Label>
@@ -469,6 +638,17 @@ export default function ManualGoalRegistration({ open, onClose, workshop, onSave
                 />
               </div>
             </div>
+          </div>
+
+          {/* Valor Faturado Total */}
+          <div className="border-l-4 border-emerald-500 pl-3 py-2 bg-emerald-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Valor Faturado Total (Auto)</Label>
+            <Input
+              value={(formData.sales_base + formData.sales_marketing).toFixed(2)}
+              disabled
+              className="bg-emerald-100 font-bold text-emerald-700"
+            />
+            <p className="text-xs text-gray-500 mt-1">Vendas Base + Vendas Marketing</p>
           </div>
         </>
       );
@@ -597,7 +777,29 @@ export default function ManualGoalRegistration({ open, onClose, workshop, onSave
             </div>
           </div>
 
-          {/* Vendas Marketing */}
+          {/* Clientes Agendados Marketing */}
+          <div className="border-l-4 border-pink-400 pl-3 py-2 bg-pink-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Clientes Agendados Marketing (qtd)</Label>
+            <Input
+              type="number"
+              value={formData.clients_scheduled_mkt}
+              onChange={(e) => setFormData({...formData, clients_scheduled_mkt: parseInt(e.target.value) || 0})}
+              className="font-semibold"
+            />
+          </div>
+
+          {/* Clientes Entregues Marketing */}
+          <div className="border-l-4 border-pink-600 pl-3 py-2 bg-pink-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Clientes Entregues Marketing (qtd)</Label>
+            <Input
+              type="number"
+              value={formData.clients_delivered_mkt}
+              onChange={(e) => setFormData({...formData, clients_delivered_mkt: parseInt(e.target.value) || 0})}
+              className="font-semibold"
+            />
+          </div>
+
+          {/* Vendas Lead Marketing */}
           <div className="border-l-4 border-fuchsia-500 pl-3 py-2 bg-fuchsia-50/30">
             <Label className="text-sm font-semibold text-gray-700 mb-2 block">Vendas Lead Marketing (R$)</Label>
             <div className="grid grid-cols-2 gap-3">
@@ -622,10 +824,9 @@ export default function ManualGoalRegistration({ open, onClose, workshop, onSave
             </div>
           </div>
 
-          {/* Clientes Indicação */}
-          <div className="space-y-3">
-            <div className="border-l-4 border-orange-500 pl-3 py-2 bg-orange-50/30">
-              <Label className="text-sm font-semibold text-gray-700 mb-2 block">Clientes Agendados Indicação (qtd)</Label>
+          {/* Clientes Agendados Indicação */}
+          <div className="border-l-4 border-orange-400 pl-3 py-2 bg-orange-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Clientes Agendados Indicação (qtd)</Label>
               <Input
                 type="number"
                 value={formData.clients_scheduled_referral}
@@ -633,25 +834,52 @@ export default function ManualGoalRegistration({ open, onClose, workshop, onSave
                 className="font-semibold"
               />
             </div>
-            <div className="border-l-4 border-red-500 pl-3 py-2 bg-red-50/30">
-              <Label className="text-sm font-semibold text-gray-700 mb-2 block">Clientes Entregues Indicação (qtd)</Label>
-              <Input
-                type="number"
-                value={formData.clients_delivered_referral}
-                onChange={(e) => setFormData({...formData, clients_delivered_referral: parseInt(e.target.value) || 0})}
-                className="font-semibold"
-              />
+
+          {/* Clientes Entregues Indicação */}
+          <div className="border-l-4 border-orange-600 pl-3 py-2 bg-orange-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Clientes Entregues Indicação (qtd)</Label>
+            <Input
+              type="number"
+              value={formData.clients_delivered_referral}
+              onChange={(e) => setFormData({...formData, clients_delivered_referral: parseInt(e.target.value) || 0})}
+              className="font-semibold"
+            />
+          </div>
+
+          {/* Vendas Clientes Base */}
+          <div className="border-l-4 border-teal-500 pl-3 py-2 bg-teal-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Vendas Clientes Base (R$)</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs text-blue-600">PREVISTO</Label>
+                <Input
+                  type="number"
+                  value={formData.projected_sales_base.toFixed(2)}
+                  disabled
+                  className="bg-blue-100 font-bold text-blue-700"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-green-600">REALIZADO</Label>
+                <Input
+                  type="number"
+                  value={formData.sales_base}
+                  onChange={(e) => setFormData({...formData, sales_base: parseFloat(e.target.value) || 0})}
+                  className="font-semibold"
+                />
+              </div>
             </div>
           </div>
 
           {/* Valor Faturado Total */}
-          <div className="border-l-4 border-green-500 pl-3 py-2 bg-green-50/30">
+          <div className="border-l-4 border-emerald-500 pl-3 py-2 bg-emerald-50/30">
             <Label className="text-sm font-semibold text-gray-700 mb-2 block">Valor Faturado Total (Auto)</Label>
             <Input
               value={(formData.sales_base + formData.sales_marketing).toFixed(2)}
               disabled
-              className="bg-green-100 font-bold text-green-700"
+              className="bg-emerald-100 font-bold text-emerald-700"
             />
+            <p className="text-xs text-gray-500 mt-1">Vendas Base + Vendas Marketing</p>
           </div>
 
           {/* Marketing Section for Comercial - PREVISTO x REALIZADO */}
@@ -980,13 +1208,13 @@ export default function ManualGoalRegistration({ open, onClose, workshop, onSave
 
           {/* Kit Master */}
           <div className="border-l-4 border-yellow-500 pl-3 py-2 bg-yellow-50/30">
-            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Kit Master (R$)</Label>
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Kit Master (qtd)</Label>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs text-blue-600">PREVISTO</Label>
                 <Input
                   type="number"
-                  value={formData.projected_kit_master.toFixed(2)}
+                  value={formData.projected_kit_master.toFixed(0)}
                   disabled
                   className="bg-blue-100 font-bold text-blue-700"
                 />
@@ -996,16 +1224,38 @@ export default function ManualGoalRegistration({ open, onClose, workshop, onSave
                 <Input
                   type="number"
                   value={formData.kit_master}
-                  onChange={(e) => setFormData({...formData, kit_master: parseFloat(e.target.value) || 0})}
+                  onChange={(e) => setFormData({...formData, kit_master: parseInt(e.target.value) || 0})}
                   className="font-semibold"
                 />
               </div>
             </div>
           </div>
 
-          {/* Vendas Comercial Base */}
+          {/* Clientes Agendados Base */}
+          <div className="border-l-4 border-blue-400 pl-3 py-2 bg-blue-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Clientes Agendados Base (qtd)</Label>
+            <Input
+              type="number"
+              value={formData.clients_scheduled_base}
+              onChange={(e) => setFormData({...formData, clients_scheduled_base: parseInt(e.target.value) || 0})}
+              className="font-semibold"
+            />
+          </div>
+
+          {/* Clientes Entregues Base */}
+          <div className="border-l-4 border-blue-600 pl-3 py-2 bg-blue-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Clientes Entregues Base (qtd)</Label>
+            <Input
+              type="number"
+              value={formData.clients_delivered_base}
+              onChange={(e) => setFormData({...formData, clients_delivered_base: parseInt(e.target.value) || 0})}
+              className="font-semibold"
+            />
+          </div>
+
+          {/* Vendas Clientes Base */}
           <div className="border-l-4 border-teal-500 pl-3 py-2 bg-teal-50/30">
-            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Vendas Comercial Base (R$)</Label>
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Vendas Clientes Base (R$)</Label>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs text-blue-600">PREVISTO</Label>
@@ -1026,6 +1276,75 @@ export default function ManualGoalRegistration({ open, onClose, workshop, onSave
                 />
               </div>
             </div>
+          </div>
+
+          {/* Clientes Agendados Base */}
+          <div className="border-l-4 border-blue-400 pl-3 py-2 bg-blue-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Clientes Agendados Base (qtd)</Label>
+            <Input
+              type="number"
+              value={formData.clients_scheduled_base}
+              onChange={(e) => setFormData({...formData, clients_scheduled_base: parseInt(e.target.value) || 0})}
+              className="font-semibold"
+            />
+          </div>
+
+          {/* Clientes Entregues Base */}
+          <div className="border-l-4 border-blue-600 pl-3 py-2 bg-blue-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Clientes Entregues Base (qtd)</Label>
+            <Input
+              type="number"
+              value={formData.clients_delivered_base}
+              onChange={(e) => setFormData({...formData, clients_delivered_base: parseInt(e.target.value) || 0})}
+              className="font-semibold"
+            />
+          </div>
+
+          {/* Vendas Clientes Base */}
+          <div className="border-l-4 border-teal-500 pl-3 py-2 bg-teal-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Vendas Clientes Base (R$)</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs text-blue-600">PREVISTO</Label>
+                <Input
+                  type="number"
+                  value={formData.projected_sales_base.toFixed(2)}
+                  disabled
+                  className="bg-blue-100 font-bold text-blue-700"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-green-600">REALIZADO</Label>
+                <Input
+                  type="number"
+                  value={formData.sales_base}
+                  onChange={(e) => setFormData({...formData, sales_base: parseFloat(e.target.value) || 0})}
+                  className="font-semibold"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Clientes Agendados Marketing */}
+          <div className="border-l-4 border-pink-400 pl-3 py-2 bg-pink-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Clientes Agendados Marketing (qtd)</Label>
+            <Input
+              type="number"
+              value={formData.clients_scheduled_mkt}
+              onChange={(e) => setFormData({...formData, clients_scheduled_mkt: parseInt(e.target.value) || 0})}
+              className="font-semibold"
+            />
+          </div>
+
+          {/* Clientes Entregues Marketing */}
+          <div className="border-l-4 border-pink-600 pl-3 py-2 bg-pink-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Clientes Entregues Marketing (qtd)</Label>
+            <Input
+              type="number"
+              value={formData.clients_delivered_mkt}
+              onChange={(e) => setFormData({...formData, clients_delivered_mkt: parseInt(e.target.value) || 0})}
+              className="font-semibold"
+            />
           </div>
 
           {/* Vendas Lead Marketing */}
@@ -1053,9 +1372,9 @@ export default function ManualGoalRegistration({ open, onClose, workshop, onSave
             </div>
           </div>
 
-          {/* Clientes Entregues */}
-          <div className="border-l-4 border-purple-500 pl-3 py-2 bg-purple-50/30">
-            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Clientes Entregues (qtd)</Label>
+          {/* Clientes Agendados Indicação */}
+          <div className="border-l-4 border-orange-400 pl-3 py-2 bg-orange-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Clientes Agendados Indicação (qtd)</Label>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs text-blue-600">PREVISTO</Label>
