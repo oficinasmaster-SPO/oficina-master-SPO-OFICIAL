@@ -609,11 +609,11 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                 <h4 className="font-semibold text-purple-900 mb-4">🎯 Comercial</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div>
-                    <Label>PAVE - Comercial</Label>
+                    <Label>PAVE - Comercial (Leads Base - qtd)</Label>
                     <Input
                       type="number"
                       value={formData.best_month_history.pave_commercial}
-                      onChange={(e) => updateBestMonth('pave_commercial', parseFloat(e.target.value) || 0)}
+                      onChange={(e) => updateBestMonth('pave_commercial', parseInt(e.target.value) || 0)}
                       disabled={!editing}
                     />
                   </div>
@@ -1092,11 +1092,11 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                   <h4 className="font-semibold text-purple-900 mb-3">🎯 Comercial</h4>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div>
-                      <p className="text-xs text-gray-600 mb-1">PAVE - Comercial</p>
+                      <p className="text-xs text-gray-600 mb-1">PAVE - Comercial (Leads Base)</p>
                       <p className="text-lg font-bold text-purple-600">
-                        {formatCurrency((formData.best_month_history.pave_commercial || 0) * (1 + growthPercentage / 100))}
+                        {formatInteger((formData.best_month_history.pave_commercial || 0) * (1 + growthPercentage / 100))}
                       </p>
-                      <p className="text-xs text-gray-500">Base: {formatCurrency(formData.best_month_history.pave_commercial || 0)}</p>
+                      <p className="text-xs text-gray-500">Base: {formatInteger(formData.best_month_history.pave_commercial || 0)}</p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-600 mb-1">Kit Master (R$)</p>
