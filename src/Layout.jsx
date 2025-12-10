@@ -19,6 +19,27 @@ export default function Layout({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
+  // Monitora mudanças no estado de colapso da sidebar
+  useEffect(() => {
+    const handleSidebarResize = () => {
+      try {
+        const isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+        document.documentElement.style.setProperty('--sidebar-width', isCollapsed ? '5rem' : '16rem');
+      } catch {
+        document.documentElement.style.setProperty('--sidebar-width', '16rem');
+      }
+    };
+
+    handleSidebarResize();
+    window.addEventListener('storage', handleSidebarResize);
+    const interval = setInterval(handleSidebarResize, 500);
+
+    return () => {
+      window.removeEventListener('storage', handleSidebarResize);
+      clearInterval(interval);
+    };
+  }, []);
+
   const loadUser = React.useCallback(async () => {
     try {
       const authenticated = await base44.auth.isAuthenticated();
@@ -92,7 +113,7 @@ export default function Layout({ children }) {
         />
       )}
 
-      <div className={`${isAuthenticated ? 'lg:pl-64' : ''} flex flex-col min-h-screen`}>
+      <div className={`${isAuthenticated ? 'lg:pl-64' : ''} flex flex-col min-h-screen transition-all duration-300`} style={isAuthenticated ? { paddingLeft: 'var(--sidebar-width, 16rem)' } : {}}>
         <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30 print:hidden">
           <div className="px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">

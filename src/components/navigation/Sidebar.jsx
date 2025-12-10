@@ -11,6 +11,8 @@ import {
   User,
   ChevronDown,
   ChevronRight,
+  ChevronLeft,
+  Menu,
   Database,
   TrendingUp,
   Building2,
@@ -56,6 +58,24 @@ import { cn } from "@/lib/utils";
 export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
   const location = useLocation();
   const [expandedGroups, setExpandedGroups] = React.useState(['dashboard', 'cadastros']);
+  const [isCollapsed, setIsCollapsed] = React.useState(() => {
+    try {
+      const saved = localStorage.getItem('sidebar-collapsed');
+      return saved === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleCollapse = () => {
+    const newState = !isCollapsed;
+    setIsCollapsed(newState);
+    try {
+      localStorage.setItem('sidebar-collapsed', String(newState));
+    } catch {
+      // Ignora erro
+    }
+  };
 
   const toggleGroup = (groupId) => {
     setExpandedGroups(prev => 
@@ -537,20 +557,43 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
 
       <aside 
         className={cn(
-          "fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 z-50 transition-transform duration-300 flex flex-col print:hidden",
-          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          "fixed top-0 left-0 h-full bg-white border-r border-gray-200 z-50 transition-all duration-300 flex flex-col print:hidden",
+          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+          isCollapsed ? "w-20" : "w-64"
         )}
       >
         <div className="p-6 border-b border-gray-200">
-          <Link to={createPageUrl('Home')} className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center">
-              <FileText className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h2 className="font-bold text-gray-900">Oficinas Master</h2>
-              <p className="text-xs text-gray-600">Sistema de Aceleração</p>
-            </div>
-          </Link>
+          <div className="flex items-center justify-between gap-3">
+            {!isCollapsed && (
+              <Link to={createPageUrl('Home')} className="flex items-center gap-3 flex-1">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center">
+                  <FileText className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="font-bold text-gray-900">Oficinas Master</h2>
+                  <p className="text-xs text-gray-600">Sistema de Aceleração</p>
+                </div>
+              </Link>
+            )}
+            {isCollapsed && (
+              <Link to={createPageUrl('Home')} className="mx-auto">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center">
+                  <FileText className="w-6 h-6 text-white" />
+                </div>
+              </Link>
+            )}
+            <button
+              onClick={toggleCollapse}
+              className="hidden lg:flex p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              title={isCollapsed ? "Expandir menu" : "Recolher menu"}
+            >
+              {isCollapsed ? (
+                <ChevronRight className="w-5 h-5 text-gray-600" />
+              ) : (
+                <ChevronLeft className="w-5 h-5 text-gray-600" />
+              )}
+            </button>
+          </div>
         </div>
 
         <nav className="flex-1 overflow-y-auto p-4">
@@ -562,11 +605,13 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all",
                 isActive(createPageUrl('Home'))
                   ? "bg-blue-50 text-blue-700 font-medium"
-                  : "text-gray-700 hover:bg-gray-100"
+                  : "text-gray-700 hover:bg-gray-100",
+                isCollapsed && "justify-center"
               )}
+              title={isCollapsed ? "Início" : ""}
             >
               <Home className="w-5 h-5" />
-              <span>Início</span>
+              {!isCollapsed && <span>Início</span>}
             </Link>
           </div>
 
@@ -580,22 +625,73 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
 
               return (
                 <div key={group.id}>
-                  <button
-                    onClick={() => toggleGroup(group.id)}
-                    className="flex items-center justify-between w-full px-2 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <GroupIcon className="w-4 h-4" />
-                      <span>{group.label}</span>
-                    </div>
-                    {isExpanded ? (
-                      <ChevronDown className="w-4 h-4" />
-                    ) : (
-                      <ChevronRight className="w-4 h-4" />
-                    )}
-                  </button>
+                  {!isCollapsed ? (
+                    <>
+                      <button
+                        onClick={() => toggleGroup(group.id)}
+                        className="flex items-center justify-between w-full px-2 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          <GroupIcon className="w-4 h-4" />
+                          <span>{group.label}</span>
+                        </div>
+                        {isExpanded ? (
+                          <ChevronDown className="w-4 h-4" />
+                        ) : (
+                          <ChevronRight className="w-4 h-4" />
+                        )}
+                      </button>
 
-                  {isExpanded && (
+                      {isExpanded && (
+                        <div className="space-y-1 mt-2">
+                          {visibleItems.map((item) => {
+                            const Icon = item.icon;
+                            const active = isActive(item.href);
+
+                            return (
+                              <Link
+                                key={item.name}
+                                to={item.href}
+                                onClick={onClose}
+                                className={cn(
+                                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group relative select-none",
+                                  active 
+                                    ? "bg-blue-50 text-blue-700 font-medium" 
+                                    : "text-gray-700 hover:bg-gray-100 active:bg-gray-200",
+                                  item.highlight && !active && "bg-gradient-to-r from-blue-50/50 to-indigo-50/50 border border-blue-100 hover:border-blue-200"
+                                )}
+                              >
+                                <Icon className={cn(
+                                  "w-5 h-5 flex-shrink-0",
+                                  active ? "text-blue-600" : item.highlight ? "text-blue-600" : "text-gray-500 group-hover:text-gray-700"
+                                )} />
+                                
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-sm truncate">{item.name}</span>
+                                    {item.badge > 0 && (
+                                      <Badge className="bg-red-500 text-white ml-2 h-5 min-w-5 px-1.5">
+                                        {item.badge}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  {item.description && !active && (
+                                    <p className="text-xs text-gray-500 mt-0.5 truncate">
+                                      {item.description}
+                                    </p>
+                                  )}
+                                </div>
+
+                                {active && (
+                                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600 rounded-r" />
+                                )}
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </>
+                  ) : (
                     <div className="space-y-1 mt-2">
                       {visibleItems.map((item) => {
                         const Icon = item.icon;
@@ -607,34 +703,22 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                             to={item.href}
                             onClick={onClose}
                             className={cn(
-                              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group relative select-none",
+                              "flex items-center justify-center p-3 rounded-lg transition-all group relative",
                               active 
-                                ? "bg-blue-50 text-blue-700 font-medium" 
-                                : "text-gray-700 hover:bg-gray-100 active:bg-gray-200",
-                              item.highlight && !active && "bg-gradient-to-r from-blue-50/50 to-indigo-50/50 border border-blue-100 hover:border-blue-200"
+                                ? "bg-blue-50 text-blue-700" 
+                                : "text-gray-700 hover:bg-gray-100"
                             )}
+                            title={item.name}
                           >
                             <Icon className={cn(
-                              "w-5 h-5 flex-shrink-0",
-                              active ? "text-blue-600" : item.highlight ? "text-blue-600" : "text-gray-500 group-hover:text-gray-700"
+                              "w-5 h-5",
+                              active ? "text-blue-600" : "text-gray-500 group-hover:text-gray-700"
                             )} />
-                            
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm truncate">{item.name}</span>
-                                {item.badge > 0 && (
-                                  <Badge className="bg-red-500 text-white ml-2 h-5 min-w-5 px-1.5">
-                                    {item.badge}
-                                  </Badge>
-                                )}
-                              </div>
-                              {item.description && !active && (
-                                <p className="text-xs text-gray-500 mt-0.5 truncate">
-                                  {item.description}
-                                </p>
-                              )}
-                            </div>
-
+                            {item.badge > 0 && (
+                              <Badge className="absolute -top-1 -right-1 bg-red-500 text-white h-4 min-w-4 px-1 text-xs">
+                                {item.badge}
+                              </Badge>
+                            )}
                             {active && (
                               <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600 rounded-r" />
                             )}
@@ -648,12 +732,14 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
             })}
           </div>
 
-          <div className="mt-6 px-3 py-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-            <p className="text-xs font-semibold text-blue-900 mb-1">💡 Dica</p>
-            <p className="text-xs text-blue-700">
-              Complete os diagnósticos para receber planos de ação personalizados!
-            </p>
-          </div>
+          {!isCollapsed && (
+            <div className="mt-6 px-3 py-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+              <p className="text-xs font-semibold text-blue-900 mb-1">💡 Dica</p>
+              <p className="text-xs text-blue-700">
+                Complete os diagnósticos para receber planos de ação personalizados!
+              </p>
+            </div>
+          )}
 
           {/* Item fixo: Escolha seu Plano */}
           <div className="mt-6 border-t border-gray-200 pt-4">
@@ -662,32 +748,41 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
               onClick={onClose}
               className={cn(
                 "flex items-center gap-3 px-3 py-3 rounded-lg transition-all",
-                "bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 shadow-md"
+                "bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 shadow-md",
+                isCollapsed && "justify-center"
               )}
+              title={isCollapsed ? "Escolha seu Plano" : ""}
             >
               <Crown className="w-5 h-5" />
-              <div className="flex-1">
-                <span className="text-sm font-semibold">Escolha seu Plano</span>
-                <p className="text-xs text-purple-100">Upgrade ou altere seu plano</p>
-              </div>
+              {!isCollapsed && (
+                <div className="flex-1">
+                  <span className="text-sm font-semibold">Escolha seu Plano</span>
+                  <p className="text-xs text-purple-100">Upgrade ou altere seu plano</p>
+                </div>
+              )}
             </Link>
           </div>
         </nav>
 
         {user && (
           <div className="p-4 border-t border-gray-200">
-            <div className="flex items-center gap-3 px-3 py-2 bg-gray-50 rounded-lg">
+            <div className={cn(
+              "flex items-center gap-3 px-3 py-2 bg-gray-50 rounded-lg",
+              isCollapsed && "justify-center px-0"
+            )}>
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center">
                 <User className="w-5 h-5 text-white" />
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">
-                  {user.full_name || user.email}
-                </p>
-                <p className="text-xs text-gray-600 capitalize">
-                  {user.role === 'admin' ? 'Administrador' : user.role === 'user' ? 'Consultor' : 'Usuário'}
-                </p>
-              </div>
+              {!isCollapsed && (
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {user.full_name || user.email}
+                  </p>
+                  <p className="text-xs text-gray-600 capitalize">
+                    {user.role === 'admin' ? 'Administrador' : user.role === 'user' ? 'Consultor' : 'Usuário'}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}
