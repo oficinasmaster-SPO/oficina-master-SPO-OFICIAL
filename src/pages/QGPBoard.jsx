@@ -19,10 +19,6 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import AIPrioritizationAssistant from "@/components/tasks/AIPrioritizationAssistant";
-import AIResourceAllocator from "@/components/tasks/AIResourceAllocator";
-import BottleneckDetector from "@/components/ai-analytics/BottleneckDetector";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"; // For Bottleneck modal
 
 export default function QGPBoard() {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -68,9 +64,6 @@ export default function QGPBoard() {
     queryKey: ['employees'],
     queryFn: () => base44.entities.Employee.list()
   });
-
-  // Refetch helper
-  const refreshTasks = () => queryClient.invalidateQueries(['qgp-tasks']);
 
   const getEmployeeName = (id) => {
     const emp = employees.find(e => e.id === id);
@@ -161,29 +154,6 @@ export default function QGPBoard() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-
-          {/* AI Features */}
-          <div className="flex gap-2">
-            <AIPrioritizationAssistant tasks={tasks} onApplyChanges={refreshTasks} />
-            
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="bg-orange-900/20 text-orange-400 border-orange-900/50 hover:bg-orange-900/40">
-                  <AlertTriangle className="w-4 h-4 mr-2" />
-                  Gargalos
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-                <BottleneckDetector 
-                  workshop={workshop} 
-                  employees={employees} 
-                  osAssessments={[]} // Optional if focusing on tasks
-                  tasks={tasks}
-                />
-              </DialogContent>
-            </Dialog>
-          </div>
-
           <Button 
             variant="outline" 
             className="bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700 hover:text-white"
@@ -241,21 +211,10 @@ export default function QGPBoard() {
                       {task.qgp_data?.vehicle_model || task.title}
                     </div>
                     <div className="col-span-2 flex items-center gap-2">
-                      {task.employee_id ? (
-                        <>
-                          <div className="w-8 h-8 rounded-full bg-blue-900/50 flex items-center justify-center border border-blue-700/30 text-blue-400 font-bold text-xs">
-                            {getEmployeeName(task.employee_id).charAt(0)}
-                          </div>
-                          <span className="text-gray-300">{getEmployeeName(task.employee_id)}</span>
-                        </>
-                      ) : (
-                        <AIResourceAllocator 
-                          task={task} 
-                          employees={employees} 
-                          currentTasks={tasks} 
-                          onAssign={refreshTasks} 
-                        />
-                      )}
+                      <div className="w-8 h-8 rounded-full bg-blue-900/50 flex items-center justify-center border border-blue-700/30 text-blue-400 font-bold text-xs">
+                        {getEmployeeName(task.employee_id).charAt(0)}
+                      </div>
+                      <span className="text-gray-300">{getEmployeeName(task.employee_id)}</span>
                     </div>
                     <div className="col-span-1 text-gray-400 font-mono">
                       {task.predicted_time_minutes ? `${Math.floor(task.predicted_time_minutes / 60)}h${task.predicted_time_minutes % 60}m` : '-'}

@@ -137,7 +137,7 @@ export default function QualityDashboard({ workshopId, employees }) {
 
     // Generate Share Link
     const generateShareLink = () => {
-        const baseUrl = window.location.origin + createPageUrl("ClientRegistration");
+        const baseUrl = window.location.origin + createPageUrl("PublicFeedback");
         const params = new URLSearchParams();
         params.append("wid", workshopId);
         if (linkConfig.employee_id && linkConfig.employee_id !== "all") {

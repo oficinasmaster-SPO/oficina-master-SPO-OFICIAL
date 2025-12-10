@@ -6,7 +6,7 @@ import { Loader2, AlertTriangle, CheckCircle } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 
-export default function BottleneckDetector({ workshop, employees, osAssessments, tasks = [] }) {
+export default function BottleneckDetector({ workshop, employees, osAssessments }) {
   const [loading, setLoading] = useState(false);
   const [bottlenecks, setBottlenecks] = useState([]);
 
@@ -15,49 +15,6 @@ export default function BottleneckDetector({ workshop, employees, osAssessments,
     try {
       // Análise automática de gargalos
       const detected = [];
-
-      // 0. Análise de Tarefas (QGP)
-      if (tasks.length > 0) {
-        // Tarefas travadas em "em_andamento" por muito tempo (ex: > 4 horas ou > predicted * 1.5)
-        const stuckTasks = tasks.filter(t => {
-          if (t.status !== 'em_andamento') return false;
-          const startTime = new Date(t.updated_date || t.created_date);
-          const hoursRunning = (new Date() - startTime) / (1000 * 60 * 60);
-          const limit = t.predicted_time_minutes ? (t.predicted_time_minutes / 60) * 1.5 : 4; 
-          return hoursRunning > limit;
-        });
-
-        if (stuckTasks.length > 0) {
-          detected.push({
-            area: "producao",
-            type: "tarefas_travadas",
-            severity: "alta",
-            description: `${stuckTasks.length} tarefas executando há mais tempo que o previsto`,
-            metrics: {
-              current_value: stuckTasks.length,
-              expected_value: 0,
-              details: "Possíveis problemas técnicos ou esquecimento de dar baixa"
-            }
-          });
-        }
-
-        // Gargalo no Fluxo: Muitas tarefas pendentes acumuladas
-        const pendingCount = tasks.filter(t => t.status === 'pendente').length;
-        const activeCount = tasks.filter(t => t.status === 'em_andamento').length;
-        if (pendingCount > activeCount * 5 && activeCount > 0) {
-           detected.push({
-            area: "fluxo",
-            type: "acumulo_pendencias",
-            severity: "media",
-            description: "Grande acúmulo de tarefas pendentes em relação à capacidade atual",
-            metrics: {
-              current_value: pendingCount,
-              active_tasks: activeCount,
-              ratio: (pendingCount / activeCount).toFixed(1)
-            }
-          });
-        }
-      }
 
       // 1. Tempo ocioso de técnicos
       const technicians = employees.filter(e => e.area === 'tecnico' && e.status === 'ativo');
