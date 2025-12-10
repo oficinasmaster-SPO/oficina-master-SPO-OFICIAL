@@ -78,6 +78,50 @@ Deno.serve(async (req) => {
       employee_id: employee.id
     });
 
+    // Enviar email com instruções de acesso
+    try {
+      const loginUrl = `${req.headers.get('origin')}/login`;
+      await base44.asServiceRole.integrations.Core.SendEmail({
+        to: email || invite.email,
+        subject: `Bem-vindo(a) à ${workshop.name || 'Oficina'} - Crie sua Senha`,
+        body: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #2563eb;">Olá, ${name || invite.name}!</h2>
+            
+            <p>Seu cadastro foi concluído com sucesso na plataforma <strong>Oficinas Master</strong>.</p>
+            
+            <p>Você foi cadastrado(a) como <strong>${invite.position}</strong> na oficina <strong>${workshop.name}</strong>.</p>
+            
+            <h3 style="color: #1e40af;">Próximos Passos:</h3>
+            <ol>
+              <li>Clique no botão abaixo para acessar a plataforma</li>
+              <li>Use o email: <strong>${email || invite.email}</strong></li>
+              <li>Clique em "Criar Conta" para definir sua senha de acesso</li>
+            </ol>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${loginUrl}" 
+                 style="background-color: #2563eb; color: white; padding: 15px 30px; 
+                        text-decoration: none; border-radius: 8px; display: inline-block;
+                        font-weight: bold;">
+                Acessar Plataforma
+              </a>
+            </div>
+            
+            <p style="color: #666; font-size: 14px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+              <strong>Importante:</strong> Use exatamente o email <strong>${email || invite.email}</strong> ao criar sua conta.
+            </p>
+            
+            <p style="color: #666; font-size: 12px; margin-top: 20px;">
+              Se você tiver dúvidas, entre em contato com seu gestor.
+            </p>
+          </div>
+        `
+      });
+    } catch (emailError) {
+      console.log('Aviso: não foi possível enviar email de boas-vindas:', emailError);
+    }
+
     return Response.json({ 
       success: true, 
       employee_id: employee.id,
