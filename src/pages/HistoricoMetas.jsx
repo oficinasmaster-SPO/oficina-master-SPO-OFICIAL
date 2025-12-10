@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Download, Target, TrendingUp, Award, AlertCircle, Building2, User, X } from "lucide-react";
+import { Plus, Download, Target, TrendingUp, Award, AlertCircle, Building2, User, X, Activity, BarChart3, Calendar, DollarSign, CheckCircle2 } from "lucide-react";
 import { formatCurrency, formatNumber } from "../components/utils/formatters";
 import ManualGoalRegistration from "../components/goals/ManualGoalRegistration";
 import { toast } from "sonner";
