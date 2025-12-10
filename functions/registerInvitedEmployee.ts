@@ -79,6 +79,8 @@ Deno.serve(async (req) => {
     });
 
     // Enviar email com instruções de acesso
+    let emailSent = false;
+    let emailError = null;
     try {
       const loginUrl = `${req.headers.get('origin')}/login`;
       await base44.asServiceRole.integrations.Core.SendEmail({
@@ -118,14 +120,18 @@ Deno.serve(async (req) => {
           </div>
         `
       });
-    } catch (emailError) {
-      console.log('Aviso: não foi possível enviar email de boas-vindas:', emailError);
+      emailSent = true;
+    } catch (error) {
+      emailError = error.message;
+      console.error('Erro ao enviar email de boas-vindas:', error);
     }
 
     return Response.json({ 
       success: true, 
       employee_id: employee.id,
-      message: 'Colaborador registrado com sucesso'
+      message: 'Colaborador registrado com sucesso',
+      email_sent: emailSent,
+      email_error: emailError
     });
 
   } catch (error) {

@@ -31,7 +31,6 @@ export default function PrimeiroAcesso() {
   }, []);
 
   const loadInvite = async () => {
-    setLoading(true);
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const token = urlParams.get("token");
@@ -42,13 +41,9 @@ export default function PrimeiroAcesso() {
         return;
       }
 
-      console.log("Validando token:", token);
-
       // Validar token via backend (não precisa de autenticação)
       const response = await base44.functions.invoke('validateInviteToken', { token });
       
-      console.log("Resposta da validação:", response.data);
-
       if (!response.data?.success) {
         setError(response.data?.error || "Convite não encontrado ou inválido.");
         setLoading(false);
@@ -62,15 +57,15 @@ export default function PrimeiroAcesso() {
       }
 
       setInvite(foundInvite);
-      setFormData(prev => ({
-        ...prev,
+      setFormData({
+        ...formData,
         name: foundInvite.name || "",
         email: foundInvite.email || ""
-      }));
+      });
 
     } catch (error) {
       console.error("Erro ao carregar convite:", error);
-      setError("Erro ao carregar convite: " + (error.message || "Verifique sua conexão"));
+      setError("Erro ao carregar convite. Verifique sua conexão e tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -110,12 +105,18 @@ export default function PrimeiroAcesso() {
       });
 
       if (response.data?.success) {
-        toast.success("Dados confirmados! Agora crie sua senha no próximo passo.", { duration: 3000 });
-        
-        // Redirecionar para a raiz que vai para login automaticamente
+        // Notificar sobre o sucesso do cadastro
+        if (response.data.email_sent) {
+          toast.success("Cadastro confirmado! Enviamos um e-mail com instruções de acesso.", { duration: 6000 });
+        } else {
+          toast.success("Cadastro confirmado! Mas não foi possível enviar o e-mail.", { duration: 6000 });
+          toast.info(`Por favor, acesse diretamente: ${window.location.origin}/login usando o e-mail: ${formData.email}`, { duration: 8000 });
+        }
+
+        // Redirecionar para login/signup
         setTimeout(() => {
-          window.location.href = window.location.origin + '/login';
-        }, 2000);
+          base44.auth.redirectToLogin(createPageUrl("PortalColaborador"));
+        }, 3000);
       } else {
         throw new Error(response.data?.error || "Erro ao finalizar cadastro");
       }
