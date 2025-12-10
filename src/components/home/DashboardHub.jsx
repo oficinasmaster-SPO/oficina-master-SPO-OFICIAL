@@ -65,6 +65,21 @@ export default function DashboardHub({ user, workshop }) {
     queryFn: async () => {
       if (!workshop?.id) return [];
       const currentMonth = new Date().toISOString().substring(0, 7);
+      const history = await base44.entities.MonthlyGoalHistory.filter({ 
+        workshop_id: workshop.id,
+        month: currentMonth 
+      });
+      console.log('Histórico de Metas:', currentMonth, history);
+      return history;
+    },
+    enabled: !!workshop?.id
+  });
+
+  const { data: monthlyGoalHistory = [] } = useQuery({
+    queryKey: ['monthly-goal-history', workshop?.id],
+    queryFn: async () => {
+      if (!workshop?.id) return [];
+      const currentMonth = new Date().toISOString().substring(0, 7);
       return await base44.entities.MonthlyGoalHistory.filter({ 
         workshop_id: workshop.id,
         month: currentMonth 
@@ -218,17 +233,19 @@ export default function DashboardHub({ user, workshop }) {
   });
 
   const { data: tasks = [] } = useQuery({
-    queryKey: ['user-tasks', user?.id],
+    queryKey: ['workshop-tasks', workshop?.id],
     queryFn: async () => {
       try {
-        const result = await base44.entities.Task.list();
+        if (!workshop?.id) return [];
+        const result = await base44.entities.Task.filter({ workshop_id: workshop.id });
+        console.log('Tarefas carregadas:', result.length, result);
         return Array.isArray(result) ? result : [];
       } catch (error) {
         console.log("Error fetching tasks:", error);
         return [];
       }
     },
-    enabled: !!user?.id,
+    enabled: !!workshop?.id,
     retry: 1
   });
 
@@ -277,12 +294,14 @@ export default function DashboardHub({ user, workshop }) {
   const lastDiagnostic = diagnostics?.[0] || null;
   const userWorkshop = workshop || null;
   const pendingTasks = Array.isArray(tasks) 
-    ? tasks.filter(t => t.status !== 'concluida' && t.assigned_to?.includes(user.id))
+    ? tasks.filter(t => t.status === 'pendente' || t.status === 'em_andamento')
     : [];
   const overdueTasks = pendingTasks.filter(t => {
     if (!t.due_date) return false;
     return new Date(t.due_date) < new Date();
   });
+
+  console.log('Tarefas:', { total: tasks.length, pendentes: pendingTasks.length, atrasadas: overdueTasks.length });
   const unreadNotifications = Array.isArray(notifications)
     ? notifications.filter(n => n.user_id === user.id && !n.is_read)
     : [];
@@ -849,28 +868,26 @@ export default function DashboardHub({ user, workshop }) {
             );
           })()}
 
-          {/* 7. Kit Master Convertido - DADOS REAIS */}
+          {/* 7. Kit Master Convertido - QUANTIDADE DE CLIENTES */}
           {canView('home_kit_master') && (() => {
             const kitMasterGoal = workshop?.best_month_history?.kit_master || 0;
             const growth = (workshop?.monthly_goals?.growth_percentage || 10) / 100;
             const kitMasterTarget = Math.round(kitMasterGoal * (1 + growth));
             
-            const commercialEmployees = employees.filter(e => 
-              e.job_role === 'comercial' || e.job_role === 'consultor_vendas'
-            );
-            
-            // Contar do histórico diário de produção (campo daily_production_history)
+            // Buscar histórico de meta mensal para pegar clientes convertidos (Kit Master)
             const currentMonth = new Date().toISOString().substring(0, 7);
-            const kitMasterAchieved = commercialEmployees.reduce((sum, emp) => {
-              const dailyHistory = emp.daily_production_history || [];
-              return sum + dailyHistory.filter(d => d.date?.startsWith(currentMonth)).length;
-            }, 0);
+            const monthHistory = monthlyGoalHistory.find(h => h.month === currentMonth);
+            
+            // Kit Master vem do campo do histórico de metas ou soma dos colaboradores comerciais
+            const kitMasterAchieved = monthHistory?.kit_master_converted || 
+              employees.filter(e => e.job_role === 'comercial' || e.job_role === 'consultor_vendas')
+                .reduce((sum, emp) => sum + (emp.monthly_goals?.kit_master_converted || 0), 0);
 
-            console.log('Kit Master:', { 
+            console.log('Kit Master (Clientes):', { 
               goal: kitMasterGoal, 
               target: kitMasterTarget, 
-              achieved: kitMasterAchieved, 
-              commercialEmps: commercialEmployees.length 
+              achieved: kitMasterAchieved,
+              monthHistory
             });
 
             return (
@@ -884,9 +901,9 @@ export default function DashboardHub({ user, workshop }) {
                   <h3 className="text-sm font-medium text-gray-500">Kit Master</h3>
                   <div className="mt-1">
                     <span className="text-2xl font-bold text-gray-900">
-                      {kitMasterAchieved}/{kitMasterTarget || 0}
+                      {kitMasterAchieved || 0}/{kitMasterTarget || 0}
                     </span>
-                    <p className="text-xs text-gray-500">Convertidos este mês</p>
+                    <p className="text-xs text-gray-500">Clientes convertidos mês</p>
                   </div>
                   {kitMasterTarget === 0 && (
                     <p className="text-xs text-gray-400 mt-2">Configure melhor mês em Gestão</p>
@@ -902,16 +919,20 @@ export default function DashboardHub({ user, workshop }) {
             const growth = (workshop?.monthly_goals?.growth_percentage || 10) / 100;
             const paveTarget = Math.round(paveGoal * (1 + growth));
             
-            const commercialEmployees = employees.filter(e => 
-              e.job_role === 'comercial' || e.job_role === 'consultor_vendas'
-            );
+            // Buscar do histórico de meta mensal
+            const currentMonth = new Date().toISOString().substring(0, 7);
+            const monthHistory = monthlyGoalHistory.find(h => h.month === currentMonth);
+            
+            // PAVE hoje: contar agendamentos do dia (pode vir do registro diário ou histórico)
             const today = new Date().toISOString().split('T')[0];
-            const paveToday = commercialEmployees.reduce((sum, emp) => {
-              const dailyHistory = emp.daily_production_history || [];
-              return sum + dailyHistory.filter(d => d.date === today).length;
-            }, 0);
+            const paveToday = monthHistory?.pave_today || 
+              employees.filter(e => e.job_role === 'comercial' || e.job_role === 'consultor_vendas')
+                .reduce((sum, emp) => {
+                  const dailyHistory = emp.daily_production_history || [];
+                  return sum + dailyHistory.filter(d => d.date === today).length;
+                }, 0);
 
-            console.log('PAVE Agendamento:', { goal: paveGoal, target: paveTarget, today: paveToday, commercialEmps: commercialEmployees.length });
+            console.log('PAVE Agendamento:', { goal: paveGoal, target: paveTarget, today: paveToday });
 
             return (
               <Card className="border-l-4 border-pink-500 hover:shadow-md transition-shadow">
@@ -924,7 +945,7 @@ export default function DashboardHub({ user, workshop }) {
                   </div>
                   <h3 className="text-sm font-medium text-gray-500">PAVE Agendamento</h3>
                   <div className="mt-1">
-                    <span className="text-2xl font-bold text-gray-900">{paveToday}</span>
+                    <span className="text-2xl font-bold text-gray-900">{paveToday || 0}</span>
                     <p className="text-xs text-gray-500">
                       Clientes hoje (Meta mês: {paveTarget})
                     </p>
