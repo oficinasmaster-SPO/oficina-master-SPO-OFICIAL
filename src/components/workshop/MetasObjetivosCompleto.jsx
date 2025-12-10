@@ -161,9 +161,9 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
   const handleSaveGrowth = async () => {
     const bestMonthRevenue = formData.best_month_history?.revenue_total || 0;
     const newGrowthPercentage = growthPercentageInput || 10;
-    const newProjectedRevenue = bestMonthRevenue > 0 
-      ? bestMonthRevenue * (1 + newGrowthPercentage / 100)
-      : bestMonthRevenue * 1.1;
+    const newProjectedRevenue = bestMonthRevenue > 0 ?
+    bestMonthRevenue * (1 + newGrowthPercentage / 100) :
+    bestMonthRevenue * 1.1;
 
     const updatedMonthlyGoals = {
       ...formData.monthly_goals,
@@ -173,7 +173,7 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
     };
 
     await onUpdate({ monthly_goals: updatedMonthlyGoals });
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       monthly_goals: updatedMonthlyGoals
     }));
@@ -183,7 +183,7 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
 
   const updateBestMonth = (field, value) => {
     const newBestMonth = { ...formData.best_month_history, [field]: value };
-    
+
     // Recalcular totais automáticos
     const totalParts = newBestMonth.revenue_parts || 0;
     const totalServices = newBestMonth.revenue_services || 0;
@@ -204,16 +204,16 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
 
     // Calculate percentages for PF/PJ
     if (formData.serves_fleet_insurance) {
-      const pfTotal = (newBestMonth.physical_person?.revenue_total || 0);
-      const pjTotal = (newBestMonth.juridical_person?.revenue_total || 0);
+      const pfTotal = newBestMonth.physical_person?.revenue_total || 0;
+      const pjTotal = newBestMonth.juridical_person?.revenue_total || 0;
       if (totalRevenue > 0) {
         newBestMonth.physical_person = {
           ...newBestMonth.physical_person,
-          percentage: (pfTotal / totalRevenue) * 100
+          percentage: pfTotal / totalRevenue * 100
         };
         newBestMonth.juridical_person = {
           ...newBestMonth.juridical_person,
-          percentage: (pjTotal / totalRevenue) * 100
+          percentage: pjTotal / totalRevenue * 100
         };
       }
     }
@@ -223,7 +223,7 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
 
   const updateMarketing = (field, value) => {
     const newMarketing = { ...formData.best_month_history.marketing, [field]: value };
-    
+
     // Recalcular custo por venda automaticamente
     const leadsSold = newMarketing.leads_sold || 0;
     const investedValue = newMarketing.invested_value || 0;
@@ -241,11 +241,11 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
   const updatePhysicalPerson = (field, value) => {
     const newPF = { ...formData.best_month_history.physical_person, [field]: value };
     const totalRevenue = formData.best_month_history.revenue_total || 0;
-    
+
     if (totalRevenue > 0) {
       const pfTotal = (newPF.revenue_parts || 0) + (newPF.revenue_services || 0);
       newPF.revenue_total = pfTotal;
-      newPF.percentage = (pfTotal / totalRevenue) * 100;
+      newPF.percentage = pfTotal / totalRevenue * 100;
     }
 
     setFormData({
@@ -260,11 +260,11 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
   const updateJuridicalPerson = (field, value) => {
     const newPJ = { ...formData.best_month_history.juridical_person, [field]: value };
     const totalRevenue = formData.best_month_history.revenue_total || 0;
-    
+
     if (totalRevenue > 0) {
       const pjTotal = (newPJ.revenue_parts || 0) + (newPJ.revenue_services || 0);
       newPJ.revenue_total = pjTotal;
-      newPJ.percentage = (pjTotal / totalRevenue) * 100;
+      newPJ.percentage = pjTotal / totalRevenue * 100;
     }
 
     setFormData({
@@ -285,27 +285,27 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
     try {
       setLoadingTCMP2(true);
       // Buscar todos os DREs da oficina
-      const dres = await base44.entities.DREMonthly.filter({ 
-        workshop_id: workshop.id 
+      const dres = await base44.entities.DREMonthly.filter({
+        workshop_id: workshop.id
       });
 
       if (dres && dres.length > 0) {
         // Calcular TCMP2 médio
-        const validTCMP2s = dres
-          .map(dre => dre.tcmp2 || 0)
-          .filter(tcmp2 => tcmp2 > 0);
+        const validTCMP2s = dres.
+        map((dre) => dre.tcmp2 || 0).
+        filter((tcmp2) => tcmp2 > 0);
 
         if (validTCMP2s.length > 0) {
           const averageTCMP2 = validTCMP2s.reduce((sum, val) => sum + val, 0) / validTCMP2s.length;
-          
-          setFormData(prev => ({
+
+          setFormData((prev) => ({
             ...prev,
             best_month_history: {
               ...prev.best_month_history,
               tcmp2: Number(averageTCMP2.toFixed(2))
             }
           }));
-          
+
           toast.success(`TCMP2 médio carregado: R$ ${averageTCMP2.toFixed(2)}`);
         } else {
           toast.info("Nenhum TCMP2 válido encontrado nos DREs registrados");
@@ -328,10 +328,10 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
   // Cálculo da meta projetada e atingimento
   const bestMonthRevenue = formData.best_month_history?.revenue_total || 0;
   const growthPercentage = formData.monthly_goals?.growth_percentage || 10;
-  const projectedRevenue = formData.monthly_goals?.projected_revenue || 
-    (bestMonthRevenue > 0 ? bestMonthRevenue * (1 + growthPercentage / 100) : 0);
+  const projectedRevenue = formData.monthly_goals?.projected_revenue || (
+  bestMonthRevenue > 0 ? bestMonthRevenue * (1 + growthPercentage / 100) : 0);
   const actualRevenueAchieved = formData.monthly_goals?.actual_revenue_achieved || 0;
-  const achievementPercentage = projectedRevenue > 0 ? (actualRevenueAchieved / projectedRevenue) * 100 : 0;
+  const achievementPercentage = projectedRevenue > 0 ? actualRevenueAchieved / projectedRevenue * 100 : 0;
 
   return (
     <div className="space-y-6">
@@ -340,17 +340,17 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
           <Target className="w-6 h-6 text-blue-600" />
           <h2 className="text-xl font-bold text-gray-900">Metas e Objetivos</h2>
         </div>
-        {!editing ? (
-          <Button onClick={() => setEditing(true)}>Editar</Button>
-        ) : (
-          <div className="flex gap-2">
+        {!editing ?
+        <Button onClick={() => setEditing(true)}>Editar</Button> :
+
+        <div className="flex gap-2">
             <Button variant="outline" onClick={() => setEditing(false)}>Cancelar</Button>
             <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
               <Save className="w-4 h-4 mr-2" />
               Salvar
             </Button>
           </div>
-        )}
+        }
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -380,23 +380,23 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                   <TrendingUp className="w-6 h-6" />
                   📊 Crescimento Geral (Base para Metas Mensais)
                 </CardTitle>
-                {!editingGrowth ? (
-                  <Button onClick={() => setEditingGrowth(true)} size="sm" variant="outline" className="border-orange-400">
+                {!editingGrowth ?
+                <Button onClick={() => setEditingGrowth(true)} size="sm" variant="outline" className="border-orange-400">
                     <Edit className="w-4 h-4 mr-2" />
                     Editar
-                  </Button>
-                ) : (
-                  <div className="flex gap-2">
+                  </Button> :
+
+                <div className="flex gap-2">
                     <Button variant="outline" onClick={() => {
-                      setEditingGrowth(false);
-                      setGrowthPercentageInput(formData.monthly_goals?.growth_percentage || 10);
-                    }} size="sm">Cancelar</Button>
+                    setEditingGrowth(false);
+                    setGrowthPercentageInput(formData.monthly_goals?.growth_percentage || 10);
+                  }} size="sm">Cancelar</Button>
                     <Button onClick={handleSaveGrowth} size="sm" className="bg-orange-600 hover:bg-orange-700">
                       <Save className="w-4 h-4 mr-2" />
                       Salvar
                     </Button>
                   </div>
-                )}
+                }
               </div>
             </CardHeader>
             <CardContent>
@@ -411,8 +411,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                     value={growthPercentageInput}
                     onChange={(e) => setGrowthPercentageInput(parseFloat(e.target.value) || 0)}
                     disabled={!editingGrowth}
-                    className="text-xl font-bold"
-                  />
+                    className="text-xl font-bold" />
+
                 </div>
                 <div className="text-center p-4 bg-orange-100 rounded-lg">
                   <p className="text-sm text-orange-800 mb-1">Projeção</p>
@@ -446,8 +446,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                 <Checkbox
                   checked={formData.serves_fleet_insurance}
                   onCheckedChange={(checked) => setFormData({ ...formData, serves_fleet_insurance: checked })}
-                  disabled={!editing}
-                />
+                  disabled={!editing} />
+
                 <div>
                   <Label className="text-base font-semibold">Atende Locadora/Seguradora?</Label>
                   <p className="text-sm text-gray-600">
@@ -466,8 +466,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                       type="month"
                       value={formData.best_month_history.date}
                       onChange={(e) => updateBestMonth('date', e.target.value)}
-                      disabled={!editing}
-                    />
+                      disabled={!editing} />
+
                   </div>
                   <div>
                     <Label>Faturamento Peças (R$)</Label>
@@ -476,8 +476,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                       value={formData.best_month_history.revenue_parts}
                       onChange={(e) => updateBestMonth('revenue_parts', parseFloat(e.target.value) || 0)}
                       disabled={!editing}
-                      className="text-right"
-                    />
+                      className="text-right" />
+
                   </div>
                   <div>
                     <Label>Faturamento Serviços (R$)</Label>
@@ -486,16 +486,16 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                       value={formData.best_month_history.revenue_services}
                       onChange={(e) => updateBestMonth('revenue_services', parseFloat(e.target.value) || 0)}
                       disabled={!editing}
-                      className="text-right"
-                    />
+                      className="text-right" />
+
                   </div>
                   <div>
                     <Label>Faturamento Total (Auto)</Label>
                     <Input
                       value={formatCurrency(formData.best_month_history.revenue_total || 0)}
                       disabled
-                      className="bg-yellow-100 font-bold text-orange-700"
-                    />
+                      className="bg-yellow-100 font-bold text-orange-700" />
+
                   </div>
                 </div>
 
@@ -506,16 +506,16 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                       type="number"
                       value={formData.best_month_history.customer_volume}
                       onChange={(e) => updateBestMonth('customer_volume', parseInt(e.target.value) || 0)}
-                      disabled={!editing}
-                    />
+                      disabled={!editing} />
+
                   </div>
                   <div>
                     <Label>Ticket Médio (Auto)</Label>
                     <Input
                       value={formatCurrency(formData.best_month_history.average_ticket || 0)}
                       disabled
-                      className="bg-yellow-100 font-bold text-orange-700"
-                    />
+                      className="bg-yellow-100 font-bold text-orange-700" />
+
                   </div>
                   <div>
                     <Label>Lucro (%)</Label>
@@ -524,8 +524,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                       step="0.1"
                       value={formData.best_month_history.profit_percentage}
                       onChange={(e) => updateBestMonth('profit_percentage', parseFloat(e.target.value) || 0)}
-                      disabled={!editing}
-                    />
+                      disabled={!editing} />
+
                   </div>
                   <div>
                     <Label>Rentabilidade (%)</Label>
@@ -534,8 +534,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                       step="0.1"
                       value={formData.best_month_history.rentability_percentage}
                       onChange={(e) => updateBestMonth('rentability_percentage', parseFloat(e.target.value) || 0)}
-                      disabled={!editing}
-                    />
+                      disabled={!editing} />
+
                   </div>
                 </div>
               </div>
@@ -544,24 +544,24 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
               <div className="bg-white p-4 rounded-lg border-2 border-green-200">
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="font-semibold text-green-900">💰 Indicadores Financeiros</h4>
-                  {editing && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={loadTCMP2FromDRE}
-                      disabled={loadingTCMP2}
-                      className="border-green-400"
-                    >
-                      {loadingTCMP2 ? (
-                        <>Carregando...</>
-                      ) : (
-                        <>
+                  {editing &&
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={loadTCMP2FromDRE}
+                    disabled={loadingTCMP2}
+                    className="border-green-400">
+
+                      {loadingTCMP2 ?
+                    <>Carregando...</> :
+
+                    <>
                           <Download className="w-4 h-4 mr-2" />
                           Puxar TCMP2 do DRE
                         </>
-                      )}
+                    }
                     </Button>
-                  )}
+                  }
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
@@ -576,8 +576,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                           r70_i30: { ...formData.best_month_history.r70_i30, r70: parseFloat(e.target.value) || 70 }
                         }
                       })}
-                      disabled={!editing}
-                    />
+                      disabled={!editing} />
+
                   </div>
                   <div>
                     <Label>I30 (%)</Label>
@@ -591,8 +591,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                           r70_i30: { ...formData.best_month_history.r70_i30, i30: parseFloat(e.target.value) || 30 }
                         }
                       })}
-                      disabled={!editing}
-                    />
+                      disabled={!editing} />
+
                   </div>
                   <div>
                     <Label className="flex items-center gap-2">
@@ -605,8 +605,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                       onChange={(e) => updateBestMonth('tcmp2', parseFloat(e.target.value) || 0)}
                       disabled={!editing}
                       placeholder="Clique em 'Puxar TCMP2'"
-                      className={formData.best_month_history.tcmp2 > 0 ? "bg-green-50 font-bold" : ""}
-                    />
+                      className={formData.best_month_history.tcmp2 > 0 ? "bg-green-50 font-bold" : ""} />
+
                   </div>
                 </div>
                 <div className="mt-3 p-2 bg-green-50 rounded border border-green-200">
@@ -626,8 +626,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                       type="number"
                       value={formData.best_month_history.pave_commercial}
                       onChange={(e) => updateBestMonth('pave_commercial', parseInt(e.target.value) || 0)}
-                      disabled={!editing}
-                    />
+                      disabled={!editing} />
+
                   </div>
                   <div>
                     <Label>Kit Master (qtd)</Label>
@@ -635,8 +635,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                       type="number"
                       value={formData.best_month_history.kit_master}
                       onChange={(e) => updateBestMonth('kit_master', parseInt(e.target.value) || 0)}
-                      disabled={!editing}
-                    />
+                      disabled={!editing} />
+
                   </div>
                 </div>
                 
@@ -648,8 +648,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                       type="number"
                       value={formData.best_month_history.clients_scheduled_base}
                       onChange={(e) => updateBestMonth('clients_scheduled_base', parseInt(e.target.value) || 0)}
-                      disabled={!editing}
-                    />
+                      disabled={!editing} />
+
                   </div>
                   <div>
                     <Label>Clientes Entregues Base (QTD)</Label>
@@ -657,8 +657,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                       type="number"
                       value={formData.best_month_history.clients_delivered_base}
                       onChange={(e) => updateBestMonth('clients_delivered_base', parseInt(e.target.value) || 0)}
-                      disabled={!editing}
-                    />
+                      disabled={!editing} />
+
                   </div>
                   <div>
                     <Label>Vendas Clientes Base (R$)</Label>
@@ -666,8 +666,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                       type="number"
                       value={formData.best_month_history.sales_base}
                       onChange={(e) => updateBestMonth('sales_base', parseFloat(e.target.value) || 0)}
-                      disabled={!editing}
-                    />
+                      disabled={!editing} />
+
                   </div>
                 </div>
 
@@ -679,8 +679,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                       type="number"
                       value={formData.best_month_history.clients_scheduled_mkt}
                       onChange={(e) => updateBestMonth('clients_scheduled_mkt', parseInt(e.target.value) || 0)}
-                      disabled={!editing}
-                    />
+                      disabled={!editing} />
+
                   </div>
                   <div>
                     <Label>Clientes Entregues Marketing (qtd)</Label>
@@ -688,8 +688,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                       type="number"
                       value={formData.best_month_history.clients_delivered_mkt}
                       onChange={(e) => updateBestMonth('clients_delivered_mkt', parseInt(e.target.value) || 0)}
-                      disabled={!editing}
-                    />
+                      disabled={!editing} />
+
                   </div>
                   <div>
                     <Label>Vendas Lead Marketing (R$)</Label>
@@ -697,8 +697,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                       type="number"
                       value={formData.best_month_history.sales_marketing}
                       onChange={(e) => updateBestMonth('sales_marketing', parseFloat(e.target.value) || 0)}
-                      disabled={!editing}
-                    />
+                      disabled={!editing} />
+
                   </div>
                 </div>
 
@@ -710,8 +710,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                       type="number"
                       value={formData.best_month_history.clients_scheduled_referral}
                       onChange={(e) => updateBestMonth('clients_scheduled_referral', parseInt(e.target.value) || 0)}
-                      disabled={!editing}
-                    />
+                      disabled={!editing} />
+
                   </div>
                   <div>
                     <Label>Clientes Entregues Indicação (qtd)</Label>
@@ -719,8 +719,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                       type="number"
                       value={formData.best_month_history.clients_delivered_referral}
                       onChange={(e) => updateBestMonth('clients_delivered_referral', parseInt(e.target.value) || 0)}
-                      disabled={!editing}
-                    />
+                      disabled={!editing} />
+
                   </div>
                 </div>
 
@@ -730,8 +730,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                   <Input
                     value={formatCurrency((formData.best_month_history.sales_base || 0) + (formData.best_month_history.sales_marketing || 0))}
                     disabled
-                    className="bg-purple-100 font-bold text-purple-700"
-                  />
+                    className="bg-purple-100 font-bold text-purple-700" />
+
                   <p className="text-xs text-gray-500 mt-1">Vendas Base + Vendas Marketing</p>
                 </div>
               </div>
@@ -746,8 +746,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                       type="number"
                       value={formData.best_month_history.marketing?.leads_generated || 0}
                       onChange={(e) => updateMarketing('leads_generated', parseInt(e.target.value) || 0)}
-                      disabled={!editing}
-                    />
+                      disabled={!editing} />
+
                   </div>
                   <div>
                     <Label>Lead Agendados (qtd)</Label>
@@ -755,8 +755,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                       type="number"
                       value={formData.best_month_history.marketing?.leads_scheduled || 0}
                       onChange={(e) => updateMarketing('leads_scheduled', parseInt(e.target.value) || 0)}
-                      disabled={!editing}
-                    />
+                      disabled={!editing} />
+
                   </div>
                   <div>
                     <Label>Comparecimentos (qtd)</Label>
@@ -764,8 +764,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                       type="number"
                       value={formData.best_month_history.marketing?.leads_showed_up || 0}
                       onChange={(e) => updateMarketing('leads_showed_up', parseInt(e.target.value) || 0)}
-                      disabled={!editing}
-                    />
+                      disabled={!editing} />
+
                   </div>
                   <div>
                     <Label>Lead Vendas (qtd)</Label>
@@ -773,8 +773,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                       type="number"
                       value={formData.best_month_history.marketing?.leads_sold || 0}
                       onChange={(e) => updateMarketing('leads_sold', parseInt(e.target.value) || 0)}
-                      disabled={!editing}
-                    />
+                      disabled={!editing} />
+
                   </div>
                 </div>
 
@@ -785,8 +785,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                       type="number"
                       value={formData.best_month_history.marketing?.invested_value || 0}
                       onChange={(e) => updateMarketing('invested_value', parseFloat(e.target.value) || 0)}
-                      disabled={!editing}
-                    />
+                      disabled={!editing} />
+
                   </div>
                   <div>
                     <Label>Valor Faturado Lead Tráfego (R$)</Label>
@@ -794,23 +794,23 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                       type="number"
                       value={formData.best_month_history.marketing?.revenue_from_traffic || 0}
                       onChange={(e) => updateMarketing('revenue_from_traffic', parseFloat(e.target.value) || 0)}
-                      disabled={!editing}
-                    />
+                      disabled={!editing} />
+
                   </div>
                   <div>
                     <Label>Custo por Venda (Auto)</Label>
                     <Input
                       value={formatCurrency(formData.best_month_history.marketing?.cost_per_sale || 0)}
                       disabled
-                      className="bg-pink-100 font-bold text-pink-700"
-                    />
+                      className="bg-pink-100 font-bold text-pink-700" />
+
                   </div>
                 </div>
               </div>
 
               {/* Detalhamento PF x PJ */}
-              {formData.serves_fleet_insurance && (
-                <div className="space-y-4 pt-4 border-t">
+              {formData.serves_fleet_insurance &&
+              <div className="space-y-4 pt-4 border-t">
                   <h4 className="font-semibold text-gray-900 flex items-center gap-2">
                     <Users className="w-4 h-4" />
                     Detalhamento por Tipo de Cliente
@@ -829,40 +829,40 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                       <div>
                         <Label className="text-xs">Fat. Peças (R$)</Label>
                         <Input
-                          type="number"
-                          value={formData.best_month_history.physical_person?.revenue_parts || 0}
-                          onChange={(e) => updatePhysicalPerson('revenue_parts', parseFloat(e.target.value) || 0)}
-                          disabled={!editing}
-                          className="h-9"
-                        />
+                        type="number"
+                        value={formData.best_month_history.physical_person?.revenue_parts || 0}
+                        onChange={(e) => updatePhysicalPerson('revenue_parts', parseFloat(e.target.value) || 0)}
+                        disabled={!editing}
+                        className="h-9" />
+
                       </div>
                       <div>
                         <Label className="text-xs">Fat. Serviços (R$)</Label>
                         <Input
-                          type="number"
-                          value={formData.best_month_history.physical_person?.revenue_services || 0}
-                          onChange={(e) => updatePhysicalPerson('revenue_services', parseFloat(e.target.value) || 0)}
-                          disabled={!editing}
-                          className="h-9"
-                        />
+                        type="number"
+                        value={formData.best_month_history.physical_person?.revenue_services || 0}
+                        onChange={(e) => updatePhysicalPerson('revenue_services', parseFloat(e.target.value) || 0)}
+                        disabled={!editing}
+                        className="h-9" />
+
                       </div>
                       <div>
                         <Label className="text-xs">Clientes</Label>
                         <Input
-                          type="number"
-                          value={formData.best_month_history.physical_person?.customer_volume || 0}
-                          onChange={(e) => updatePhysicalPerson('customer_volume', parseInt(e.target.value) || 0)}
-                          disabled={!editing}
-                          className="h-9"
-                        />
+                        type="number"
+                        value={formData.best_month_history.physical_person?.customer_volume || 0}
+                        onChange={(e) => updatePhysicalPerson('customer_volume', parseInt(e.target.value) || 0)}
+                        disabled={!editing}
+                        className="h-9" />
+
                       </div>
                       <div>
                         <Label className="text-xs">Total</Label>
                         <Input
-                          value={formatCurrency(formData.best_month_history.physical_person?.revenue_total || 0)}
-                          disabled
-                          className="h-9 bg-blue-100"
-                        />
+                        value={formatCurrency(formData.best_month_history.physical_person?.revenue_total || 0)}
+                        disabled
+                        className="h-9 bg-blue-100" />
+
                       </div>
                     </div>
                   </div>
@@ -880,49 +880,49 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                       <div>
                         <Label className="text-xs">Fat. Peças (R$)</Label>
                         <Input
-                          type="number"
-                          value={formData.best_month_history.juridical_person?.revenue_parts || 0}
-                          onChange={(e) => updateJuridicalPerson('revenue_parts', parseFloat(e.target.value) || 0)}
-                          disabled={!editing}
-                          className="h-9"
-                        />
+                        type="number"
+                        value={formData.best_month_history.juridical_person?.revenue_parts || 0}
+                        onChange={(e) => updateJuridicalPerson('revenue_parts', parseFloat(e.target.value) || 0)}
+                        disabled={!editing}
+                        className="h-9" />
+
                       </div>
                       <div>
                         <Label className="text-xs">Fat. Serviços (R$)</Label>
                         <Input
-                          type="number"
-                          value={formData.best_month_history.juridical_person?.revenue_services || 0}
-                          onChange={(e) => updateJuridicalPerson('revenue_services', parseFloat(e.target.value) || 0)}
-                          disabled={!editing}
-                          className="h-9"
-                        />
+                        type="number"
+                        value={formData.best_month_history.juridical_person?.revenue_services || 0}
+                        onChange={(e) => updateJuridicalPerson('revenue_services', parseFloat(e.target.value) || 0)}
+                        disabled={!editing}
+                        className="h-9" />
+
                       </div>
                       <div>
                         <Label className="text-xs">Clientes</Label>
                         <Input
-                          type="number"
-                          value={formData.best_month_history.juridical_person?.customer_volume || 0}
-                          onChange={(e) => updateJuridicalPerson('customer_volume', parseInt(e.target.value) || 0)}
-                          disabled={!editing}
-                          className="h-9"
-                        />
+                        type="number"
+                        value={formData.best_month_history.juridical_person?.customer_volume || 0}
+                        onChange={(e) => updateJuridicalPerson('customer_volume', parseInt(e.target.value) || 0)}
+                        disabled={!editing}
+                        className="h-9" />
+
                       </div>
                       <div>
                         <Label className="text-xs">Total</Label>
                         <Input
-                          value={formatCurrency(formData.best_month_history.juridical_person?.revenue_total || 0)}
-                          disabled
-                          className="h-9 bg-purple-100"
-                        />
+                        value={formatCurrency(formData.best_month_history.juridical_person?.revenue_total || 0)}
+                        disabled
+                        className="h-9 bg-purple-100" />
+
                       </div>
                     </div>
                   </div>
                 </div>
-              )}
+              }
 
               {/* Resumo */}
-              {formData.best_month_history.date && formData.best_month_history.revenue_total > 0 && (
-                <div className="bg-orange-100 rounded-lg p-4 border-2 border-orange-300">
+              {formData.best_month_history.date && formData.best_month_history.revenue_total > 0 &&
+              <div className="bg-orange-100 rounded-lg p-4 border-2 border-orange-300">
                   <p className="text-sm text-orange-900 font-semibold mb-2">
                     📊 Resumo - Referência para Metas Mensais
                   </p>
@@ -947,7 +947,7 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                     </div>
                   </div>
                 </div>
-              )}
+              }
             </CardContent>
           </Card>
         </TabsContent>
@@ -1261,8 +1261,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                     <Input
                       value={formatCurrency((formData.best_month_history.sales_base || 0) + (formData.best_month_history.sales_marketing || 0))}
                       disabled
-                      className="bg-purple-100 font-bold text-purple-700"
-                    />
+                      className="bg-purple-100 font-bold text-purple-700" />
+
                     <p className="text-xs text-gray-500 mt-1">Vendas Base + Vendas Marketing</p>
                   </div>
                 </div>
@@ -1327,8 +1327,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                 </div>
 
                 {/* PF x PJ (se aplicável) */}
-                {formData.serves_fleet_insurance && (
-                  <>
+                {formData.serves_fleet_insurance &&
+                <>
                     <div className="bg-blue-50 p-4 rounded-lg border-2 border-blue-200">
                       <h4 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
                         <User className="w-4 h-4" />
@@ -1403,13 +1403,13 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                       </div>
                     </div>
                   </>
-                )}
+                }
               </div>
 
               <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <p className="text-xs text-blue-800">
-                  💡 <strong>Como funciona:</strong> A meta PROJETADA é calculada automaticamente (Melhor Mês + % Crescimento). 
-                  O valor REALIZADO é atualizado automaticamente pelo sistema conforme registros são feitos no Histórico de Metas.
+                <p className="text-xs text-blue-800">💡 Como funciona: A meta PROJETADA é calculada automaticamente (Melhor Mês + % Crescimento). O valor REALIZADO é atualizado automaticamente pelo sistema conforme registros são feitos no Histórico de Produção Diária.
+
+
                 </p>
               </div>
             </CardContent>
@@ -1434,8 +1434,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                       ...formData,
                       monthly_goals: { ...formData.monthly_goals, month: e.target.value }
                     })}
-                    disabled={!editing}
-                  />
+                    disabled={!editing} />
+
                 </div>
                 <div>
                   <Label>Faturamento Peças (R$)</Label>
@@ -1446,8 +1446,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                       ...formData,
                       monthly_goals: { ...formData.monthly_goals, revenue_parts: parseFloat(e.target.value) || 0 }
                     })}
-                    disabled={!editing}
-                  />
+                    disabled={!editing} />
+
                 </div>
                 <div>
                   <Label>Faturamento Serviços (R$)</Label>
@@ -1458,16 +1458,16 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                       ...formData,
                       monthly_goals: { ...formData.monthly_goals, revenue_services: parseFloat(e.target.value) || 0 }
                     })}
-                    disabled={!editing}
-                  />
+                    disabled={!editing} />
+
                 </div>
                 <div>
                   <Label>Meta Total</Label>
                   <Input
                     value={formatCurrency((formData.monthly_goals.revenue_parts || 0) + (formData.monthly_goals.revenue_services || 0))}
                     disabled
-                    className="bg-green-100 font-bold text-green-700"
-                  />
+                    className="bg-green-100 font-bold text-green-700" />
+
                 </div>
               </div>
 
@@ -1482,8 +1482,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                       ...formData,
                       monthly_goals: { ...formData.monthly_goals, profitability_percentage: parseFloat(e.target.value) || 0 }
                     })}
-                    disabled={!editing}
-                  />
+                    disabled={!editing} />
+
                 </div>
                 <div>
                   <Label>Lucro (%)</Label>
@@ -1495,8 +1495,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                       ...formData,
                       monthly_goals: { ...formData.monthly_goals, profit_percentage: parseFloat(e.target.value) || 0 }
                     })}
-                    disabled={!editing}
-                  />
+                    disabled={!editing} />
+
                 </div>
                 <div>
                   <Label>Ticket Médio (R$)</Label>
@@ -1507,8 +1507,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                       ...formData,
                       monthly_goals: { ...formData.monthly_goals, average_ticket: parseFloat(e.target.value) || 0 }
                     })}
-                    disabled={!editing}
-                  />
+                    disabled={!editing} />
+
                 </div>
                 <div>
                   <Label>Volume de Clientes</Label>
@@ -1519,8 +1519,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                       ...formData,
                       monthly_goals: { ...formData.monthly_goals, customer_volume: parseInt(e.target.value) || 0 }
                     })}
-                    disabled={!editing}
-                  />
+                    disabled={!editing} />
+
                 </div>
               </div>
 
@@ -1534,8 +1534,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                       ...formData,
                       monthly_goals: { ...formData.monthly_goals, buy_target: parseFloat(e.target.value) || 0 }
                     })}
-                    disabled={!editing}
-                  />
+                    disabled={!editing} />
+
                 </div>
                 <div>
                   <Label>Custo de Produto Aplicado (R$)</Label>
@@ -1546,8 +1546,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                       ...formData,
                       monthly_goals: { ...formData.monthly_goals, product_cost_applied: parseFloat(e.target.value) || 0 }
                     })}
-                    disabled={!editing}
-                  />
+                    disabled={!editing} />
+
                 </div>
               </div>
 
@@ -1555,8 +1555,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                 <Button
                   variant="outline"
                   onClick={() => navigate(createPageUrl("HistoricoMetas"))}
-                  className="w-full"
-                >
+                  className="w-full">
+
                   <FileText className="w-4 h-4 mr-2" />
                   Histórico da Produção Diária
                 </Button>
@@ -1607,8 +1607,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
 
               <Button
                 onClick={() => navigate(createPageUrl("DesdobramentoMeta"))}
-                className="w-full bg-blue-600 hover:bg-blue-700"
-              >
+                className="w-full bg-blue-600 hover:bg-blue-700">
+
                 <Users className="w-4 h-4 mr-2" />
                 Abrir Desdobramento de Metas
               </Button>
@@ -1616,6 +1616,6 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
-  );
+    </div>);
+
 }
