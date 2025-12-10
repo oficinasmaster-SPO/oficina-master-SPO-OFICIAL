@@ -99,6 +99,20 @@ export default function GestaoOficina() {
   const loadTcmp2 = async (workshopId) => {
     setLoadingTcmp2(true);
     try {
+      // Primeiro tentar puxar do DRE (prioridade)
+      const currentMonth = new Date().toISOString().substring(0, 7);
+      const dres = await base44.entities.DREMonthly.filter({ 
+        workshop_id: workshopId,
+        reference_month: currentMonth
+      });
+
+      if (dres && dres.length > 0 && dres[0].tcmp2_value > 0) {
+        setTcmp2Value(dres[0].tcmp2_value);
+        setLoadingTcmp2(false);
+        return;
+      }
+
+      // Se não tiver DRE, buscar de diagnósticos de OS (fallback)
       const osAssessments = await base44.entities.ServiceOrderDiagnostic.filter(
         { workshop_id: workshopId },
         '-created_date',
@@ -220,7 +234,7 @@ export default function GestaoOficina() {
                         Valor hora que transforma 100% das despesas em lucro
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
-                        Média das últimas 10 OSs diagnosticadas
+                        Valor do DRE atual ou média das OSs
                       </p>
                     </>
                   ) : (
@@ -235,10 +249,10 @@ export default function GestaoOficina() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => navigate(createPageUrl("DiagnosticoOS"))}
+                  onClick={() => navigate(createPageUrl("DRETCMP2"))}
                   className="bg-white hover:bg-green-50"
                 >
-                  Fazer Diagnóstico
+                  {tcmp2Value > 0 ? "Atualizar DRE" : "Cadastrar DRE"}
                 </Button>
               </div>
             </CardContent>
