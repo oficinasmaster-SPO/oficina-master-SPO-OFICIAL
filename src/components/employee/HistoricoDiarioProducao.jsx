@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Calendar, DollarSign, Edit, Trash2, Save, X } from "lucide-react";
+import { Plus, Calendar, DollarSign, Edit, Trash2, Save, X, Target, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
+import { base44 } from "@/api/base44Client";
 
 export default function HistoricoDiarioProducao({ employee, onUpdate }) {
   const [isAdding, setIsAdding] = useState(false);
