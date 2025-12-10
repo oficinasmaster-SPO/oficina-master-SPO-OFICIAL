@@ -57,8 +57,8 @@ export default function HistoricoMetas() {
     enabled: !!workshop
   });
 
-  const { data: employees = [] } = useQuery({
-    queryKey: ['employees', workshop?.id],
+  const { data: employees = [], refetch: refetchEmployees } = useQuery({
+    queryKey: ['employees', workshop?.id, filterEmployee],
     queryFn: async () => {
       if (!workshop) return [];
       return await base44.entities.Employee.filter({ 
@@ -66,7 +66,8 @@ export default function HistoricoMetas() {
         status: "ativo"
       });
     },
-    enabled: !!workshop
+    enabled: !!workshop,
+    refetchOnWindowFocus: false
   });
 
   const handleExport = () => {
@@ -170,12 +171,43 @@ export default function HistoricoMetas() {
         {/* Resumo do Colaborador Selecionado */}
         {filterType === "employee" && filterEmployee && (() => {
           const selectedEmployee = employees.find(e => e.id === filterEmployee);
-          if (!selectedEmployee) return null;
+          if (!selectedEmployee) {
+            return (
+              <Card className="mb-6 shadow-xl border-2 border-red-300 bg-red-50">
+                <CardContent className="p-6 text-center">
+                  <p className="text-red-600">Colaborador não encontrado. Por favor, selecione novamente.</p>
+                </CardContent>
+              </Card>
+            );
+          }
 
+          // Calcular o mês atual
+          const currentMonth = new Date().toISOString().slice(0, 7);
+          
+          // Buscar registros do mês atual para este colaborador
+          const currentMonthRecords = goalHistory.filter(
+            record => record.employee_id === filterEmployee && record.month === currentMonth
+          );
+          
+          // Somar o realizado de todos os registros do mês
+          const monthlyActualRevenue = currentMonthRecords.reduce(
+            (sum, record) => sum + (record.achieved_total || 0), 
+            0
+          );
+
+          // Pegar metas do colaborador
           const monthlyGoal = selectedEmployee.monthly_goals?.individual_goal || 0;
-          const dailyGoal = selectedEmployee.monthly_goals?.daily_projected_goal || (monthlyGoal / 22);
-          const actualRevenue = selectedEmployee.monthly_goals?.actual_revenue_achieved || 0;
+          const dailyGoalCalculated = monthlyGoal > 0 ? monthlyGoal / 22 : 0;
+          const dailyGoal = selectedEmployee.monthly_goals?.daily_projected_goal || dailyGoalCalculated;
+          
+          // Usar o valor calculado dos registros ou o do employee (o que for maior)
+          const actualRevenue = Math.max(
+            monthlyActualRevenue,
+            selectedEmployee.monthly_goals?.actual_revenue_achieved || 0
+          );
+          
           const achievementPercentage = monthlyGoal > 0 ? (actualRevenue / monthlyGoal) * 100 : 0;
+          const missingToGoal = Math.max(0, monthlyGoal - actualRevenue);
 
           return (
             <Card className="mb-6 shadow-xl border-2 border-purple-300 bg-gradient-to-r from-purple-50 to-blue-50">
@@ -185,39 +217,74 @@ export default function HistoricoMetas() {
                     <User className="w-6 h-6 text-purple-600" />
                     <div>
                       <CardTitle className="text-xl text-purple-900">{selectedEmployee.full_name}</CardTitle>
-                      <p className="text-sm text-gray-600">{selectedEmployee.position}</p>
+                      <p className="text-sm text-gray-600">{selectedEmployee.position} - {selectedEmployee.area || "Geral"}</p>
                     </div>
                   </div>
-                  <Badge className="bg-purple-100 text-purple-800 text-lg px-4 py-2">
-                    {achievementPercentage.toFixed(1)}% Atingimento
-                  </Badge>
+                  <div className="text-right">
+                    <p className="text-xs text-gray-600 mb-1">Atingimento</p>
+                    <Badge className={`text-lg px-4 py-2 ${
+                      achievementPercentage >= 100 ? 'bg-green-100 text-green-800' : 
+                      achievementPercentage >= 70 ? 'bg-yellow-100 text-yellow-800' : 
+                      'bg-red-100 text-red-800'
+                    }`}>
+                      {achievementPercentage.toFixed(1)}%
+                    </Badge>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="bg-white p-4 rounded-lg border-l-4 border-blue-500 shadow-sm">
-                    <p className="text-xs text-gray-600 mb-1">Meta Mensal</p>
-                    <p className="text-xl font-bold text-blue-600">
+                    <p className="text-xs text-gray-600 mb-1 flex items-center gap-1">
+                      <Target className="w-3 h-3" />
+                      Meta Mensal (Previsto)
+                    </p>
+                    <p className="text-2xl font-bold text-blue-600">
                       R$ {formatCurrency(monthlyGoal)}
                     </p>
+                    {monthlyGoal === 0 && (
+                      <p className="text-xs text-red-500 mt-1">⚠️ Meta não definida</p>
+                    )}
                   </div>
                   <div className="bg-white p-4 rounded-lg border-l-4 border-purple-500 shadow-sm">
-                    <p className="text-xs text-gray-600 mb-1">Meta Diária</p>
-                    <p className="text-xl font-bold text-purple-600">
+                    <p className="text-xs text-gray-600 mb-1 flex items-center gap-1">
+                      <Target className="w-3 h-3" />
+                      Meta Diária
+                    </p>
+                    <p className="text-2xl font-bold text-purple-600">
                       R$ {formatCurrency(dailyGoal)}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {dailyGoalCalculated > 0 ? `(${formatCurrency(monthlyGoal)} ÷ 22 dias)` : 'Não calculada'}
                     </p>
                   </div>
                   <div className="bg-white p-4 rounded-lg border-l-4 border-green-500 shadow-sm">
-                    <p className="text-xs text-gray-600 mb-1">Realizado no Mês</p>
-                    <p className="text-xl font-bold text-green-600">
+                    <p className="text-xs text-gray-600 mb-1 flex items-center gap-1">
+                      <TrendingUp className="w-3 h-3" />
+                      Realizado no Mês
+                    </p>
+                    <p className="text-2xl font-bold text-green-600">
                       R$ {formatCurrency(actualRevenue)}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {currentMonthRecords.length} registro(s) no mês
                     </p>
                   </div>
                   <div className="bg-white p-4 rounded-lg border-l-4 border-orange-500 shadow-sm">
-                    <p className="text-xs text-gray-600 mb-1">Falta para Meta</p>
-                    <p className={`text-xl font-bold ${achievementPercentage >= 100 ? 'text-green-600' : 'text-orange-600'}`}>
-                      R$ {formatCurrency(Math.max(0, monthlyGoal - actualRevenue))}
+                    <p className="text-xs text-gray-600 mb-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" />
+                      Falta para Meta
                     </p>
+                    <p className={`text-2xl font-bold ${achievementPercentage >= 100 ? 'text-green-600' : 'text-orange-600'}`}>
+                      R$ {formatCurrency(missingToGoal)}
+                    </p>
+                    {achievementPercentage >= 100 ? (
+                      <p className="text-xs text-green-600 mt-1 font-semibold">🎉 Meta atingida!</p>
+                    ) : (
+                      <p className="text-xs text-gray-500 mt-1">
+                        {missingToGoal > 0 ? `Faltam ${formatCurrency(missingToGoal)}` : 'Meta batida!'}
+                      </p>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -447,6 +514,8 @@ export default function HistoricoMetas() {
           workshop={workshop}
           onSave={() => {
             queryClient.invalidateQueries(['goal-history']);
+            queryClient.invalidateQueries(['employees']);
+            refetchEmployees();
           }}
         />
       </div>
