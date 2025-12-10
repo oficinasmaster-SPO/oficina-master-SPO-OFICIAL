@@ -1422,7 +1422,7 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                   className="w-full"
                 >
                   <FileText className="w-4 h-4 mr-2" />
-                  Ver Histórico de Metas e Relatórios
+                  Histórico da Produção Diária
                 </Button>
               </div>
             </CardContent>
