@@ -31,6 +31,7 @@ export default function PrimeiroAcesso() {
   }, []);
 
   const loadInvite = async () => {
+    setLoading(true);
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const token = urlParams.get("token");
@@ -41,9 +42,13 @@ export default function PrimeiroAcesso() {
         return;
       }
 
+      console.log("Validando token:", token);
+
       // Validar token via backend (não precisa de autenticação)
       const response = await base44.functions.invoke('validateInviteToken', { token });
       
+      console.log("Resposta da validação:", response.data);
+
       if (!response.data?.success) {
         setError(response.data?.error || "Convite não encontrado ou inválido.");
         setLoading(false);
@@ -57,15 +62,15 @@ export default function PrimeiroAcesso() {
       }
 
       setInvite(foundInvite);
-      setFormData({
-        ...formData,
+      setFormData(prev => ({
+        ...prev,
         name: foundInvite.name || "",
         email: foundInvite.email || ""
-      });
+      }));
 
     } catch (error) {
       console.error("Erro ao carregar convite:", error);
-      setError("Erro ao carregar convite. Verifique sua conexão e tente novamente.");
+      setError("Erro ao carregar convite: " + (error.message || "Verifique sua conexão"));
     } finally {
       setLoading(false);
     }
@@ -105,11 +110,11 @@ export default function PrimeiroAcesso() {
       });
 
       if (response.data?.success) {
-        toast.success("Dados confirmados! Agora você precisa criar sua senha.", { duration: 5000 });
+        toast.success("Dados confirmados! Agora crie sua senha no próximo passo.", { duration: 3000 });
         
-        // Redirecionar para login sem parâmetro de redirecionamento para evitar loops
+        // Redirecionar para a raiz que vai para login automaticamente
         setTimeout(() => {
-          window.location.href = '/login';
+          window.location.href = window.location.origin + '/login';
         }, 2000);
       } else {
         throw new Error(response.data?.error || "Erro ao finalizar cadastro");
