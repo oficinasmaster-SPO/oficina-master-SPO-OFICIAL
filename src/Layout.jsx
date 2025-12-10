@@ -24,7 +24,7 @@ export default function Layout({ children }) {
     const handleSidebarResize = () => {
       try {
         const isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
-        document.documentElement.style.setProperty('--sidebar-width', isCollapsed ? '5rem' : '16rem');
+        document.documentElement.style.setProperty('--sidebar-width', isCollapsed ? '4rem' : '16rem');
       } catch {
         document.documentElement.style.setProperty('--sidebar-width', '16rem');
       }

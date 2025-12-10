@@ -559,12 +559,23 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
         className={cn(
           "fixed top-0 left-0 h-full bg-white border-r border-gray-200 z-50 transition-all duration-300 flex flex-col print:hidden",
           isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
-          isCollapsed ? "w-20" : "w-64"
+          isCollapsed ? "w-16" : "w-64"
         )}
       >
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center justify-between gap-3">
-            {!isCollapsed && (
+        <div className={cn(
+          "border-b border-gray-200 transition-all",
+          isCollapsed ? "p-3" : "p-6"
+        )}>
+          {isCollapsed ? (
+            <button
+              onClick={toggleCollapse}
+              className="mx-auto flex items-center justify-center p-2 hover:bg-gray-100 rounded-lg transition-colors w-full"
+              title="Expandir menu"
+            >
+              <Menu className="w-6 h-6 text-gray-700" />
+            </button>
+          ) : (
+            <div className="flex items-center justify-between gap-3">
               <Link to={createPageUrl('Home')} className="flex items-center gap-3 flex-1">
                 <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center">
                   <FileText className="w-6 h-6 text-white" />
@@ -574,46 +585,53 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                   <p className="text-xs text-gray-600">Sistema de Aceleração</p>
                 </div>
               </Link>
-            )}
-            {isCollapsed && (
-              <Link to={createPageUrl('Home')} className="mx-auto">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center">
-                  <FileText className="w-6 h-6 text-white" />
-                </div>
-              </Link>
-            )}
-            <button
-              onClick={toggleCollapse}
-              className="hidden lg:flex p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              title={isCollapsed ? "Expandir menu" : "Recolher menu"}
-            >
-              {isCollapsed ? (
-                <ChevronRight className="w-5 h-5 text-gray-600" />
-              ) : (
+              <button
+                onClick={toggleCollapse}
+                className="hidden lg:flex p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Recolher menu"
+              >
                 <ChevronLeft className="w-5 h-5 text-gray-600" />
-              )}
-            </button>
-          </div>
+              </button>
+            </div>
+          )}
         </div>
 
         <nav className="flex-1 overflow-y-auto p-4">
-          <div className="space-y-1 mb-6">
-            <Link
-              to={createPageUrl('Home')}
-              onClick={onClose}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all",
-                isActive(createPageUrl('Home'))
-                  ? "bg-blue-50 text-blue-700 font-medium"
-                  : "text-gray-700 hover:bg-gray-100",
-                isCollapsed && "justify-center"
-              )}
-              title={isCollapsed ? "Início" : ""}
-            >
-              <Home className="w-5 h-5" />
-              {!isCollapsed && <span>Início</span>}
-            </Link>
-          </div>
+          {!isCollapsed && (
+            <div className="space-y-1 mb-6">
+              <Link
+                to={createPageUrl('Home')}
+                onClick={onClose}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all",
+                  isActive(createPageUrl('Home'))
+                    ? "bg-blue-50 text-blue-700 font-medium"
+                    : "text-gray-700 hover:bg-gray-100"
+                )}
+              >
+                <Home className="w-5 h-5" />
+                <span>Início</span>
+              </Link>
+            </div>
+          )}
+
+          {isCollapsed && (
+            <div className="flex flex-col items-center gap-4 py-2">
+              <Link
+                to={createPageUrl('Home')}
+                onClick={onClose}
+                className={cn(
+                  "p-3 rounded-lg transition-all",
+                  isActive(createPageUrl('Home'))
+                    ? "bg-blue-50 text-blue-700"
+                    : "text-gray-700 hover:bg-gray-100"
+                )}
+                title="Início"
+              >
+                <Home className="w-5 h-5" />
+              </Link>
+            </div>
+          )}
 
           <div className="space-y-6">
             {navigationGroups.map((group) => {
@@ -691,42 +709,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                         </div>
                       )}
                     </>
-                  ) : (
-                    <div className="space-y-1 mt-2">
-                      {visibleItems.map((item) => {
-                        const Icon = item.icon;
-                        const active = isActive(item.href);
-
-                        return (
-                          <Link
-                            key={item.name}
-                            to={item.href}
-                            onClick={onClose}
-                            className={cn(
-                              "flex items-center justify-center p-3 rounded-lg transition-all group relative",
-                              active 
-                                ? "bg-blue-50 text-blue-700" 
-                                : "text-gray-700 hover:bg-gray-100"
-                            )}
-                            title={item.name}
-                          >
-                            <Icon className={cn(
-                              "w-5 h-5",
-                              active ? "text-blue-600" : "text-gray-500 group-hover:text-gray-700"
-                            )} />
-                            {item.badge > 0 && (
-                              <Badge className="absolute -top-1 -right-1 bg-red-500 text-white h-4 min-w-4 px-1 text-xs">
-                                {item.badge}
-                              </Badge>
-                            )}
-                            {active && (
-                              <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600 rounded-r" />
-                            )}
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  )}
+                  ) : null}
                 </div>
               );
             })}
