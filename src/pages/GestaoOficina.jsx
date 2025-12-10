@@ -103,11 +103,11 @@ export default function GestaoOficina() {
       const currentMonth = new Date().toISOString().substring(0, 7);
       const dres = await base44.entities.DREMonthly.filter({ 
         workshop_id: workshopId,
-        reference_month: currentMonth
+        month: currentMonth
       });
 
-      if (dres && dres.length > 0 && dres[0].tcmp2_value > 0) {
-        setTcmp2Value(dres[0].tcmp2_value);
+      if (dres && dres.length > 0 && dres[0].calculated?.tcmp2_value > 0) {
+        setTcmp2Value(dres[0].calculated.tcmp2_value);
         setLoadingTcmp2(false);
         return;
       }
