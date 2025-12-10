@@ -43,10 +43,14 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
 
     // Calcular o realizado do mês atual
     const currentMonth = new Date().toISOString().substring(0, 7);
-    const monthlyTotal = updatedHistory
-      .filter(entry => entry.date.startsWith(currentMonth))
-      .reduce((sum, entry) => sum + entry.total_revenue, 0);
+    const monthEntries = updatedHistory.filter(entry => entry.date.startsWith(currentMonth));
+    
+    const monthlyTotal = monthEntries.reduce((sum, entry) => sum + entry.total_revenue, 0);
+    const monthlyParts = monthEntries.reduce((sum, entry) => sum + entry.parts_revenue, 0);
+    const monthlyServices = monthEntries.reduce((sum, entry) => sum + entry.services_revenue, 0);
+    const clientCount = monthEntries.length; // Aproximação: 1 cliente por dia registrado
 
+    // Atualizar colaborador
     await onUpdate({
       daily_production_history: updatedHistory,
       monthly_goals: {
@@ -55,7 +59,41 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
       }
     });
 
-    toast.success(editingIndex !== null ? "Registro atualizado!" : "Registro adicionado!");
+    // Atualizar ou criar registro no MonthlyGoalHistory
+    try {
+      const existingRecords = await base44.entities.MonthlyGoalHistory.filter({
+        workshop_id: employee.workshop_id,
+        employee_id: employee.id,
+        month: currentMonth
+      });
+
+      const historyData = {
+        workshop_id: employee.workshop_id,
+        entity_type: "employee",
+        entity_id: employee.id,
+        employee_id: employee.id,
+        employee_role: employee.area || "geral",
+        reference_date: new Date().toISOString().split('T')[0],
+        month: currentMonth,
+        projected_total: employee.monthly_goals?.individual_goal || 0,
+        achieved_total: monthlyTotal,
+        revenue_total: monthlyTotal,
+        revenue_parts: monthlyParts,
+        revenue_services: monthlyServices,
+        customer_volume: clientCount,
+        average_ticket: clientCount > 0 ? monthlyTotal / clientCount : 0
+      };
+
+      if (existingRecords && existingRecords.length > 0) {
+        await base44.entities.MonthlyGoalHistory.update(existingRecords[0].id, historyData);
+      } else {
+        await base44.entities.MonthlyGoalHistory.create(historyData);
+      }
+    } catch (error) {
+      console.error("Erro ao atualizar histórico de metas:", error);
+    }
+
+    toast.success(editingIndex !== null ? "Registro atualizado e metas alimentadas!" : "Registro adicionado e metas alimentadas!");
     resetForm();
   };
 
@@ -78,9 +116,12 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
     
     // Recalcular o realizado do mês atual
     const currentMonth = new Date().toISOString().substring(0, 7);
-    const monthlyTotal = updatedHistory
-      .filter(entry => entry.date.startsWith(currentMonth))
-      .reduce((sum, entry) => sum + entry.total_revenue, 0);
+    const monthEntries = updatedHistory.filter(entry => entry.date.startsWith(currentMonth));
+    
+    const monthlyTotal = monthEntries.reduce((sum, entry) => sum + entry.total_revenue, 0);
+    const monthlyParts = monthEntries.reduce((sum, entry) => sum + entry.parts_revenue, 0);
+    const monthlyServices = monthEntries.reduce((sum, entry) => sum + entry.services_revenue, 0);
+    const clientCount = monthEntries.length;
 
     await onUpdate({
       daily_production_history: updatedHistory,
@@ -89,6 +130,28 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
         actual_revenue_achieved: monthlyTotal
       }
     });
+
+    // Atualizar histórico de metas
+    try {
+      const existingRecords = await base44.entities.MonthlyGoalHistory.filter({
+        workshop_id: employee.workshop_id,
+        employee_id: employee.id,
+        month: currentMonth
+      });
+
+      if (existingRecords && existingRecords.length > 0) {
+        await base44.entities.MonthlyGoalHistory.update(existingRecords[0].id, {
+          achieved_total: monthlyTotal,
+          revenue_total: monthlyTotal,
+          revenue_parts: monthlyParts,
+          revenue_services: monthlyServices,
+          customer_volume: clientCount,
+          average_ticket: clientCount > 0 ? monthlyTotal / clientCount : 0
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao atualizar histórico de metas:", error);
+    }
 
     toast.success("Registro excluído e metas atualizadas!");
   };
