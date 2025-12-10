@@ -167,6 +167,64 @@ export default function HistoricoMetas() {
           </CardContent>
         </Card>
 
+        {/* Resumo do Colaborador Selecionado */}
+        {filterType === "employee" && filterEmployee && (() => {
+          const selectedEmployee = employees.find(e => e.id === filterEmployee);
+          if (!selectedEmployee) return null;
+
+          const monthlyGoal = selectedEmployee.monthly_goals?.individual_goal || 0;
+          const dailyGoal = selectedEmployee.monthly_goals?.daily_projected_goal || (monthlyGoal / 22);
+          const actualRevenue = selectedEmployee.monthly_goals?.actual_revenue_achieved || 0;
+          const achievementPercentage = monthlyGoal > 0 ? (actualRevenue / monthlyGoal) * 100 : 0;
+
+          return (
+            <Card className="mb-6 shadow-xl border-2 border-purple-300 bg-gradient-to-r from-purple-50 to-blue-50">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <User className="w-6 h-6 text-purple-600" />
+                    <div>
+                      <CardTitle className="text-xl text-purple-900">{selectedEmployee.full_name}</CardTitle>
+                      <p className="text-sm text-gray-600">{selectedEmployee.position}</p>
+                    </div>
+                  </div>
+                  <Badge className="bg-purple-100 text-purple-800 text-lg px-4 py-2">
+                    {achievementPercentage.toFixed(1)}% Atingimento
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-white p-4 rounded-lg border-l-4 border-blue-500 shadow-sm">
+                    <p className="text-xs text-gray-600 mb-1">Meta Mensal</p>
+                    <p className="text-xl font-bold text-blue-600">
+                      R$ {formatCurrency(monthlyGoal)}
+                    </p>
+                  </div>
+                  <div className="bg-white p-4 rounded-lg border-l-4 border-purple-500 shadow-sm">
+                    <p className="text-xs text-gray-600 mb-1">Meta Diária</p>
+                    <p className="text-xl font-bold text-purple-600">
+                      R$ {formatCurrency(dailyGoal)}
+                    </p>
+                  </div>
+                  <div className="bg-white p-4 rounded-lg border-l-4 border-green-500 shadow-sm">
+                    <p className="text-xs text-gray-600 mb-1">Realizado no Mês</p>
+                    <p className="text-xl font-bold text-green-600">
+                      R$ {formatCurrency(actualRevenue)}
+                    </p>
+                  </div>
+                  <div className="bg-white p-4 rounded-lg border-l-4 border-orange-500 shadow-sm">
+                    <p className="text-xs text-gray-600 mb-1">Falta para Meta</p>
+                    <p className={`text-xl font-bold ${achievementPercentage >= 100 ? 'text-green-600' : 'text-orange-600'}`}>
+                      R$ {formatCurrency(Math.max(0, monthlyGoal - actualRevenue))}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })()}
+
         {/* Lista de Histórico */}
         <div className="space-y-4">
           {isLoading ? (
@@ -196,114 +254,65 @@ export default function HistoricoMetas() {
               const isExpanded = expandedCards[record.id];
 
               return (
-                <Card key={record.id} className="shadow-lg hover:shadow-xl transition-all border-l-4 border-blue-400">
-                  <CardContent className="p-6">
-                    {/* Header Compacto */}
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        {record.entity_type === "workshop" ? (
-                          <Building2 className="w-5 h-5 text-blue-600" />
-                        ) : (
-                          <User className="w-5 h-5 text-purple-600" />
-                        )}
-                        <div>
-                          <h3 className="font-bold text-lg text-gray-900">
-                            {record.entity_type === "workshop" 
-                              ? workshop.name 
-                              : employee?.full_name || "Colaborador"}
-                          </h3>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs text-gray-500">
-                              {new Date(record.reference_date).toLocaleDateString('pt-BR')}
-                            </span>
-                            <span className="text-xs text-gray-400">•</span>
-                            <span className="text-xs text-gray-500">
-                              {new Date(record.month + '-01').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
-                            </span>
-                            {record.employee_role && record.employee_role !== "geral" && (
-                              <>
-                                <span className="text-xs text-gray-400">•</span>
-                                <Badge className="bg-purple-100 text-purple-700 capitalize text-xs">
-                                  {record.employee_role}
-                                </Badge>
-                              </>
-                            )}
-                          </div>
+                <Card key={record.id} className="shadow-md hover:shadow-lg transition-all border-l-4 border-blue-400">
+                  <CardContent className="p-4">
+                    {/* Linha Resumida */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className="text-center min-w-16">
+                          <p className="text-2xl font-bold text-gray-900">
+                            {new Date(record.reference_date).getDate()}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {new Date(record.reference_date).toLocaleDateString('pt-BR', { month: 'short' })}
+                          </p>
+                        </div>
+                        
+                        <div className="flex-1">
+                          <p className="font-semibold text-gray-900">
+                            {new Date(record.reference_date).toLocaleDateString('pt-BR', { weekday: 'long' })}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {new Date(record.month + '-01').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+                          </p>
+                        </div>
+
+                        <div className="bg-green-50 px-4 py-2 rounded-lg border border-green-200">
+                          <p className="text-xs text-green-700 mb-1">PREVISTO</p>
+                          <p className="text-lg font-bold text-green-600">
+                            R$ {formatCurrency(record.projected_total)}
+                          </p>
+                        </div>
+
+                        <div className="bg-purple-50 px-4 py-2 rounded-lg border border-purple-200">
+                          <p className="text-xs text-purple-700 mb-1">REALIZADO</p>
+                          <p className="text-lg font-bold text-purple-600">
+                            R$ {formatCurrency(record.achieved_total)}
+                          </p>
+                        </div>
+
+                        <div className="text-right min-w-24">
+                          <p className="text-xs text-gray-500 mb-1">Atingimento</p>
+                          <p className={`text-2xl font-bold ${
+                            achievementPercentage >= 100 ? 'text-green-600' : 
+                            achievementPercentage >= 70 ? 'text-yellow-600' : 
+                            'text-red-600'
+                          }`}>
+                            {achievementPercentage.toFixed(1)}%
+                          </p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-xs text-gray-500 mb-1">Atingimento</p>
-                        <p className={`text-4xl font-bold ${
-                          achievementPercentage >= 100 ? 'text-green-600' : 
-                          achievementPercentage >= 70 ? 'text-yellow-600' : 
-                          'text-red-600'
-                        }`}>
-                          {achievementPercentage.toFixed(1)}%
-                        </p>
-                      </div>
-                    </div>
 
-                    {/* Métricas Principais - Compacto */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                      <div className="bg-green-50 p-3 rounded-lg border-l-4 border-green-500">
-                        <p className="text-xs text-gray-600 mb-1">PREVISTO</p>
-                        <p className="text-xl font-bold text-green-600">
-                          R$ R$ {formatCurrency(record.projected_total)}
-                        </p>
-                      </div>
-                      <div className="bg-purple-50 p-3 rounded-lg border-l-4 border-purple-500">
-                        <p className="text-xs text-gray-600 mb-1">REALIZADO</p>
-                        <p className="text-xl font-bold text-purple-600">
-                          R$ R$ {formatCurrency(record.achieved_total)}
-                        </p>
-                      </div>
-                      <div className="bg-blue-50 p-3 rounded-lg border-l-4 border-blue-500">
-                        <p className="text-xs text-gray-600 mb-1">Faturamento Total</p>
-                        <p className="text-xl font-bold text-blue-600">
-                          R$ R$ {formatCurrency(record.revenue_total || 0)}
-                        </p>
-                      </div>
-                      <div className="bg-orange-50 p-3 rounded-lg border-l-4 border-orange-500">
-                        <p className="text-xs text-gray-600 mb-1">Ticket Médio</p>
-                        <p className="text-xl font-bold text-orange-600">
-                          R$ R$ {formatCurrency(record.average_ticket || 0)}
-                        </p>
-                      </div>
+                      {/* Botão Ver Detalhes - Compacto */}
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => toggleCardExpansion(record.id)}
+                        className="ml-3"
+                      >
+                        {isExpanded ? "Ocultar" : "Detalhes"}
+                      </Button>
                     </div>
-
-                    {/* Resumo Rápido */}
-                    <div className="flex items-center gap-6 text-sm mb-3">
-                      <div>
-                        <span className="text-gray-600">Fat. Peças: </span>
-                        <span className="font-bold">R$ {formatCurrency(record.revenue_parts || 0)}</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-600">Fat. Serviços: </span>
-                        <span className="font-bold">R$ {formatCurrency(record.revenue_services || 0)}</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-600">Clientes: </span>
-                        <span className="font-bold">{record.customer_volume || 0}</span>
-                      </div>
-                      {record.rework_count !== undefined && (
-                        <div>
-                          <span className="text-gray-600">Obs: </span>
-                          <span className="font-semibold text-gray-700">
-                            {record.rework_count === 0 ? "zero retrabalho" : `${record.rework_count} retrabalhos`}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Botão Ver Detalhes */}
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => toggleCardExpansion(record.id)}
-                      className="w-full mt-2"
-                    >
-                      {isExpanded ? "Ocultar Detalhes" : "Ver Detalhes"}
-                    </Button>
 
                     {/* Detalhes Expandidos */}
                     {isExpanded && (
