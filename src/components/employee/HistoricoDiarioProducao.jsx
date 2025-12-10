@@ -444,16 +444,16 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
           </CardContent>
         </Card>
 
-        <Card className="shadow-lg border-2 border-indigo-200">
+        <Card className="shadow-lg border-2 border-gray-200 bg-gray-50">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-indigo-600" />
+              <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                <Calendar className="w-5 h-5 text-gray-600" />
               </div>
               <div>
-                <p className="text-xs text-gray-600">Registros</p>
-                <p className="text-lg font-bold text-indigo-600">
-                  {dailyHistory.length}
+                <p className="text-xs text-gray-600">Dias Registrados</p>
+                <p className="text-lg font-bold text-gray-900">
+                  {dailyHistory.length} dias
                 </p>
               </div>
             </div>

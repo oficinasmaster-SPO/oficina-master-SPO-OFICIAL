@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Download, Target, TrendingUp, Award, AlertCircle, Building2, User } from "lucide-react";
+import { Plus, Download, Target, TrendingUp, Award, AlertCircle, Building2, User, X } from "lucide-react";
 import { formatCurrency, formatNumber } from "../components/utils/formatters";
 import ManualGoalRegistration from "../components/goals/ManualGoalRegistration";
 import { toast } from "sonner";
@@ -17,6 +17,7 @@ export default function HistoricoMetas() {
   const [showModal, setShowModal] = useState(false);
   const [filterType, setFilterType] = useState("workshop");
   const [filterEmployee, setFilterEmployee] = useState(null);
+  const [filterMonth, setFilterMonth] = useState(new Date().toISOString().substring(0, 7));
   const [expandedCards, setExpandedCards] = useState({});
   const queryClient = useQueryClient();
 
@@ -39,7 +40,7 @@ export default function HistoricoMetas() {
   };
 
   const { data: goalHistory = [], isLoading } = useQuery({
-    queryKey: ['goal-history', workshop?.id, filterType, filterEmployee],
+    queryKey: ['goal-history', workshop?.id, filterType, filterEmployee, filterMonth],
     queryFn: async () => {
       if (!workshop) return [];
       
@@ -49,6 +50,10 @@ export default function HistoricoMetas() {
         query.employee_id = filterEmployee;
       } else if (filterType === "workshop") {
         query.entity_type = "workshop";
+      }
+
+      if (filterMonth) {
+        query.month = filterMonth;
       }
 
       const result = await base44.entities.MonthlyGoalHistory.filter(query);
@@ -164,9 +169,19 @@ export default function HistoricoMetas() {
                   </Select>
                 </div>
               )}
-            </div>
-          </CardContent>
-        </Card>
+              </div>
+
+              <div className="mt-4">
+              <Label>Filtrar por Mês</Label>
+              <Input
+                type="month"
+                value={filterMonth}
+                onChange={(e) => setFilterMonth(e.target.value)}
+                className="max-w-xs"
+              />
+              </div>
+              </CardContent>
+              </Card>
 
         {/* Resumo do Colaborador Selecionado */}
         {filterType === "employee" && filterEmployee && (() => {
@@ -279,11 +294,9 @@ export default function HistoricoMetas() {
                       R$ {formatCurrency(missingToGoal)}
                     </p>
                     {achievementPercentage >= 100 ? (
-                      <p className="text-xs text-green-600 mt-1 font-semibold">🎉 Meta atingida!</p>
+                      <p className="text-xs text-green-600 mt-1 font-semibold">🎉 Meta batida!</p>
                     ) : (
-                      <p className="text-xs text-gray-500 mt-1">
-                        {missingToGoal > 0 ? `Faltam ${formatCurrency(missingToGoal)}` : 'Meta batida!'}
-                      </p>
+                      <p className="text-xs text-gray-500 mt-1">Para atingir</p>
                     )}
                   </div>
                 </div>
@@ -316,74 +329,142 @@ export default function HistoricoMetas() {
               const achievementPercentage = record.projected_total > 0 
                 ? (record.achieved_total / record.projected_total) * 100 
                 : 0;
-              
+
               const employee = employees.find(e => e.id === record.employee_id);
               const isExpanded = expandedCards[record.id];
+              const metaAchieved = achievementPercentage >= 100;
 
               return (
-                <Card key={record.id} className="shadow-md hover:shadow-lg transition-all border-l-4 border-blue-400">
+                <Card key={record.id} className={`hover:shadow-lg transition-all ${
+                  metaAchieved ? 'border-l-4 border-green-500 bg-green-50/30' : 'border-l-4 border-orange-400 bg-orange-50/30'
+                }`}>
                   <CardContent className="p-4">
-                    {/* Linha Resumida */}
+                    {/* Visão Compacta - Sempre Visível */}
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3 flex-1">
-                        <div className="text-center min-w-16">
-                          <p className="text-2xl font-bold text-gray-900">
+                      <div className="flex items-center gap-4 flex-1">
+                        {/* Data */}
+                        <div className="text-center min-w-[70px]">
+                          <p className="text-3xl font-bold text-gray-900">
                             {new Date(record.reference_date).getDate()}
                           </p>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-gray-500 uppercase">
                             {new Date(record.reference_date).toLocaleDateString('pt-BR', { month: 'short' })}
                           </p>
+                          <p className="text-xs text-gray-400">
+                            {new Date(record.reference_date).getFullYear()}
+                          </p>
                         </div>
-                        
+
+                        {/* Info Principal */}
                         <div className="flex-1">
-                          <p className="font-semibold text-gray-900">
-                            {new Date(record.reference_date).toLocaleDateString('pt-BR', { weekday: 'long' })}
+                          <p className="font-semibold text-gray-900 mb-1">
+                            {new Date(record.reference_date).toLocaleDateString('pt-BR', { 
+                              weekday: 'long', 
+                              day: '2-digit', 
+                              month: 'long'
+                            })}
                           </p>
-                          <p className="text-xs text-gray-500">
-                            {new Date(record.month + '-01').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
-                          </p>
+                          {employee && (
+                            <p className="text-xs text-gray-600">
+                              {employee.full_name} - {employee.position}
+                            </p>
+                          )}
+
+                          {/* Indicador de Meta */}
+                          <div className="flex items-center gap-2 mt-2">
+                            <div className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                              metaAchieved 
+                                ? 'bg-green-500 text-white' 
+                                : achievementPercentage >= 70 
+                                  ? 'bg-yellow-500 text-white'
+                                  : 'bg-red-500 text-white'
+                            }`}>
+                              {metaAchieved ? '✓ Meta Atingida' : `${achievementPercentage.toFixed(0)}% da meta`}
+                            </div>
+                          </div>
                         </div>
 
-                        <div className="bg-green-50 px-4 py-2 rounded-lg border border-green-200">
-                          <p className="text-xs text-green-700 mb-1">PREVISTO</p>
-                          <p className="text-lg font-bold text-green-600">
-                            R$ {formatCurrency(record.projected_total)}
-                          </p>
+                        {/* Valores - Compacto */}
+                        <div className="flex gap-3">
+                          <div className="text-center bg-blue-50 px-4 py-2 rounded-lg shadow-sm min-w-[120px]">
+                            <p className="text-xs text-blue-700 mb-1">Previsto</p>
+                            <p className="text-xl font-bold text-blue-600">
+                              R$ {formatCurrency(record.projected_total)}
+                            </p>
+                          </div>
+                          <div className="text-center bg-white px-4 py-2 rounded-lg shadow-sm min-w-[120px]">
+                            <p className="text-xs text-purple-700 mb-1">Realizado</p>
+                            <p className={`text-xl font-bold ${metaAchieved ? 'text-green-600' : 'text-orange-600'}`}>
+                              R$ {formatCurrency(record.achieved_total)}
+                            </p>
+                          </div>
                         </div>
 
-                        <div className="bg-purple-50 px-4 py-2 rounded-lg border border-purple-200">
-                          <p className="text-xs text-purple-700 mb-1">REALIZADO</p>
-                          <p className="text-lg font-bold text-purple-600">
-                            R$ {formatCurrency(record.achieved_total)}
-                          </p>
-                        </div>
-
-                        <div className="text-right min-w-24">
-                          <p className="text-xs text-gray-500 mb-1">Atingimento</p>
-                          <p className={`text-2xl font-bold ${
-                            achievementPercentage >= 100 ? 'text-green-600' : 
-                            achievementPercentage >= 70 ? 'text-yellow-600' : 
-                            'text-red-600'
-                          }`}>
-                            {achievementPercentage.toFixed(1)}%
-                          </p>
-                        </div>
+                        {/* Botão Expandir */}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => toggleCardExpansion(record.id)}
+                          className="text-gray-600 hover:text-gray-900"
+                        >
+                          {isExpanded ? (
+                            <>
+                              <X className="w-4 h-4 mr-1" />
+                              Fechar
+                            </>
+                          ) : (
+                            <>
+                              <Target className="w-4 h-4 mr-1" />
+                              Detalhes
+                            </>
+                          )}
+                        </Button>
                       </div>
-
-                      {/* Botão Ver Detalhes - Compacto */}
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => toggleCardExpansion(record.id)}
-                        className="ml-3"
-                      >
-                        {isExpanded ? "Ocultar" : "Detalhes"}
-                      </Button>
                     </div>
 
                     {/* Detalhes Expandidos */}
                     {isExpanded && (
-                      <div className="mt-4 pt-4 border-t space-y-4">
+                      <div className="mt-4 pt-4 border-t border-gray-200 space-y-4">
+                        {/* Detalhamento de Faturamento */}
+                        <div className="grid grid-cols-3 gap-4">
+                          <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                            <p className="text-xs text-blue-700 mb-1">Faturamento Peças</p>
+                            <p className="text-lg font-bold text-blue-600">
+                              R$ {formatCurrency(record.revenue_parts)}
+                            </p>
+                          </div>
+                          <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                            <p className="text-xs text-green-700 mb-1">Faturamento Serviços</p>
+                            <p className="text-lg font-bold text-green-600">
+                              R$ {formatCurrency(record.revenue_services)}
+                            </p>
+                          </div>
+                          <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
+                            <p className="text-xs text-purple-700 mb-1">Total Faturado</p>
+                            <p className="text-lg font-bold text-purple-600">
+                              R$ {formatCurrency(record.revenue_total)}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Clientes e Ticket Médio */}
+                        {record.customer_volume > 0 && (
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-indigo-50 p-3 rounded-lg border border-indigo-200">
+                              <p className="text-xs text-indigo-700 mb-1">Clientes Atendidos</p>
+                              <p className="text-lg font-bold text-indigo-600">
+                                {record.customer_volume} clientes
+                              </p>
+                            </div>
+                            <div className="bg-pink-50 p-3 rounded-lg border border-pink-200">
+                              <p className="text-xs text-pink-700 mb-1">Ticket Médio</p>
+                              <p className="text-lg font-bold text-pink-600">
+                                R$ {formatCurrency(record.average_ticket || 0)}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
                         {/* Detalhes Comerciais */}
                         {(record.pave_commercial > 0 || record.kit_master > 0 || record.sales_base > 0 || record.sales_marketing > 0 || record.clients_delivered > 0) && (
                           <div className="bg-indigo-50 p-3 rounded-lg border border-indigo-200">
@@ -391,8 +472,8 @@ export default function HistoricoMetas() {
                             <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-xs">
                               {record.pave_commercial > 0 && (
                                 <div>
-                                  <p className="text-gray-600">PAVE:</p>
-                                  <p className="font-bold">{formatCurrency(record.pave_commercial)}</p>
+                                  <p className="text-gray-600">PAVE (Leads Base):</p>
+                                  <p className="font-bold">{record.pave_commercial} leads</p>
                                 </div>
                               )}
                               {record.kit_master > 0 && (
