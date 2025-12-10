@@ -18,6 +18,11 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
   });
 
   const dailyHistory = employee.daily_production_history || [];
+  
+  // Cálculo de metas
+  const monthlyProjectedGoal = employee.monthly_goals?.individual_goal || 0;
+  const dailyProjectedGoal = employee.monthly_goals?.daily_projected_goal || (monthlyProjectedGoal / 22);
+  const actualRevenueAchieved = employee.monthly_goals?.actual_revenue_achieved || 0;
 
   const handleSubmit = async () => {
     const totalRevenue = parseFloat(formData.parts_revenue) + parseFloat(formData.services_revenue);
@@ -180,18 +185,34 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
 
   return (
     <div className="space-y-6">
-      {/* Cards de Resumo */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Cards de Resumo e Metas */}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card className="shadow-lg border-2 border-blue-200">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                <DollarSign className="w-6 h-6 text-blue-600" />
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                <Target className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Total Histórico</p>
-                <p className="text-2xl font-bold text-blue-600">
-                  R$ {getTotalRevenue().toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                <p className="text-xs text-gray-600">Meta Mensal</p>
+                <p className="text-lg font-bold text-blue-600">
+                  R$ {monthlyProjectedGoal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-lg border-2 border-purple-200 bg-purple-50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                <Calendar className="w-5 h-5 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-xs text-gray-600">Meta Diária</p>
+                <p className="text-lg font-bold text-purple-600">
+                  R$ {dailyProjectedGoal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </p>
               </div>
             </div>
@@ -199,30 +220,50 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
         </Card>
 
         <Card className="shadow-lg border-2 border-green-200">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                <Calendar className="w-6 h-6 text-green-600" />
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                <DollarSign className="w-5 h-5 text-green-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Mês Atual</p>
-                <p className="text-2xl font-bold text-green-600">
-                  R$ {getMonthlyRevenue().toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                <p className="text-xs text-gray-600">Realizado Mês</p>
+                <p className="text-lg font-bold text-green-600">
+                  R$ {actualRevenueAchieved.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="shadow-lg border-2 border-purple-200">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                <Calendar className="w-6 h-6 text-purple-600" />
+        <Card className="shadow-lg border-2 border-orange-200">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-orange-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Registros</p>
-                <p className="text-2xl font-bold text-purple-600">
+                <p className="text-xs text-gray-600">Atingimento</p>
+                <p className={`text-lg font-bold ${
+                  monthlyProjectedGoal > 0 && (actualRevenueAchieved / monthlyProjectedGoal * 100) >= 100 ? 'text-green-600' :
+                  monthlyProjectedGoal > 0 && (actualRevenueAchieved / monthlyProjectedGoal * 100) >= 70 ? 'text-yellow-600' :
+                  'text-red-600'
+                }`}>
+                  {monthlyProjectedGoal > 0 ? ((actualRevenueAchieved / monthlyProjectedGoal) * 100).toFixed(1) : '0.0'}%
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-lg border-2 border-indigo-200">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+                <Calendar className="w-5 h-5 text-indigo-600" />
+              </div>
+              <div>
+                <p className="text-xs text-gray-600">Registros</p>
+                <p className="text-lg font-bold text-indigo-600">
                   {dailyHistory.length}
                 </p>
               </div>
@@ -305,67 +346,92 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
             </div>
           ) : (
             <div className="space-y-3">
-              {dailyHistory.map((entry, index) => (
-                <Card key={index} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="text-center">
-                          <p className="text-2xl font-bold text-gray-900">
-                            {new Date(entry.date).getDate()}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {new Date(entry.date).toLocaleDateString('pt-BR', { month: 'short' })}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="font-semibold text-gray-900">
-                            {new Date(entry.date).toLocaleDateString('pt-BR', { 
-                              weekday: 'long', 
-                              day: '2-digit', 
-                              month: 'long', 
-                              year: 'numeric' 
-                            })}
-                          </p>
-                          <div className="flex gap-4 text-sm text-gray-600 mt-1">
-                            <span>Peças: R$ {entry.parts_revenue.toFixed(2)}</span>
-                            <span>Serviços: R$ {entry.services_revenue.toFixed(2)}</span>
+              {dailyHistory.map((entry, index) => {
+                const dailyAchievementPercentage = dailyProjectedGoal > 0 
+                  ? (entry.total_revenue / dailyProjectedGoal) * 100 
+                  : 0;
+                const metaDayAchieved = dailyAchievementPercentage >= 100;
+
+                return (
+                  <Card key={index} className={`hover:shadow-md transition-shadow ${
+                    metaDayAchieved ? 'border-l-4 border-green-500' : 'border-l-4 border-orange-400'
+                  }`}>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="text-center">
+                            <p className="text-2xl font-bold text-gray-900">
+                              {new Date(entry.date).getDate()}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {new Date(entry.date).toLocaleDateString('pt-BR', { month: 'short' })}
+                            </p>
                           </div>
-                          {entry.notes && (
-                            <p className="text-xs text-gray-500 mt-1 italic">{entry.notes}</p>
-                          )}
+                          <div>
+                            <p className="font-semibold text-gray-900">
+                              {new Date(entry.date).toLocaleDateString('pt-BR', { 
+                                weekday: 'long', 
+                                day: '2-digit', 
+                                month: 'long', 
+                                year: 'numeric' 
+                              })}
+                            </p>
+                            <div className="flex gap-4 text-sm text-gray-600 mt-1">
+                              <span>Peças: R$ {entry.parts_revenue.toFixed(2)}</span>
+                              <span>Serviços: R$ {entry.services_revenue.toFixed(2)}</span>
+                            </div>
+
+                            {/* Meta Diária */}
+                            <div className="mt-2 flex items-center gap-3 text-xs">
+                              <div className="bg-purple-100 px-2 py-1 rounded">
+                                <span className="text-purple-700">Meta Dia: R$ {dailyProjectedGoal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                              </div>
+                              <div className={`px-2 py-1 rounded ${metaDayAchieved ? 'bg-green-100' : 'bg-orange-100'}`}>
+                                <span className={metaDayAchieved ? 'text-green-700' : 'text-orange-700'}>
+                                  {metaDayAchieved ? '✅ Meta atingida!' : `📊 ${dailyAchievementPercentage.toFixed(0)}% da meta`}
+                                </span>
+                              </div>
+                            </div>
+
+                            {entry.notes && (
+                              <p className="text-xs text-gray-500 mt-1 italic">{entry.notes}</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="text-right">
+                            <p className="text-xs text-gray-500">Realizado Dia</p>
+                            <p className={`text-xl font-bold ${metaDayAchieved ? 'text-green-600' : 'text-orange-600'}`}>
+                              R$ {entry.total_revenue.toFixed(2)}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {dailyAchievementPercentage.toFixed(1)}% da meta
+                            </p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => handleEdit(index)}
+                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => handleDelete(index)}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <p className="text-xs text-gray-500">Total</p>
-                          <p className="text-xl font-bold text-green-600">
-                            R$ {entry.total_revenue.toFixed(2)}
-                          </p>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => handleEdit(index)}
-                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => handleDelete(index)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </CardContent>
