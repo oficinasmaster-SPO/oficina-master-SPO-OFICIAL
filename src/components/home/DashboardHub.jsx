@@ -663,6 +663,8 @@ export default function DashboardHub({ user, workshop }) {
             const percentage = projected > 0 ? (achieved / projected * 100) : 0;
             const growth = workshop?.monthly_goals?.growth_percentage || 0;
 
+            console.log('Metas Globais:', { projected, achieved, percentage, growth });
+
             return (
               <Card className="border-l-4 border-blue-500 hover:shadow-md transition-shadow">
                 <CardContent className="p-4">
@@ -670,7 +672,9 @@ export default function DashboardHub({ user, workshop }) {
                     <div className="p-2 bg-blue-100 rounded-lg">
                       <Target className="w-5 h-5 text-blue-600" />
                     </div>
-                    <Badge variant="outline" className="text-blue-600 border-blue-200">Mensal</Badge>
+                    <Link to={createPageUrl("HistoricoMetas")} className="text-xs text-blue-600 hover:underline">
+                      Ver todos
+                    </Link>
                   </div>
                   <h3 className="text-sm font-medium text-gray-500">Metas Globais</h3>
                   <div className="mt-1 flex items-baseline gap-2">
@@ -682,6 +686,9 @@ export default function DashboardHub({ user, workshop }) {
                   <div className="w-full bg-gray-100 rounded-full h-1.5 mt-3">
                     <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${Math.min(percentage, 100)}%` }}></div>
                   </div>
+                  {projected === 0 && (
+                    <p className="text-xs text-gray-400 mt-2">Configure metas em Gestão da Oficina</p>
+                  )}
                 </CardContent>
               </Card>
             );
@@ -755,6 +762,8 @@ export default function DashboardHub({ user, workshop }) {
           {canView('home_tcmp2') && (() => {
             const tcmp2 = latestDRE?.calculated?.tcmp2_value || workshop?.best_month_history?.tcmp2 || 0;
 
+            console.log('TCMP2:', { dre: latestDRE?.calculated?.tcmp2_value, bestMonth: workshop?.best_month_history?.tcmp2, final: tcmp2 });
+
             return (
               <Card className="border-l-4 border-indigo-500 hover:shadow-md transition-shadow">
                 <CardContent className="p-4">
@@ -772,7 +781,7 @@ export default function DashboardHub({ user, workshop }) {
                       R$ {tcmp2.toFixed(2)}
                     </span>
                     <p className="text-xs text-gray-500">
-                      {latestDRE ? 'DRE mensal' : 'Do melhor mês'}
+                      {latestDRE ? 'DRE mensal' : tcmp2 > 0 ? 'Do melhor mês' : 'Cadastre DRE'}
                     </p>
                   </div>
                 </CardContent>
@@ -784,6 +793,8 @@ export default function DashboardHub({ user, workshop }) {
           {canView('home_r70i30') && (() => {
             const r70 = workshop?.best_month_history?.r70_i30?.r70 || 70;
             const i30 = workshop?.best_month_history?.r70_i30?.i30 || 30;
+
+            console.log('R70/I30:', { r70, i30, source: workshop?.best_month_history?.r70_i30 });
 
             return (
               <Card className="border-l-4 border-purple-500 hover:shadow-md transition-shadow">
@@ -816,6 +827,8 @@ export default function DashboardHub({ user, workshop }) {
               return sum + dailyHistory.length;
             }, 0);
 
+            console.log('GPS Aplicados:', { totalGPS, employees: employees.length });
+
             return (
               <Card className="border-l-4 border-cyan-500 hover:shadow-md transition-shadow">
                 <CardContent className="p-4">
@@ -843,11 +856,20 @@ export default function DashboardHub({ user, workshop }) {
             const commercialEmployees = employees.filter(e => 
               e.job_role === 'comercial' || e.job_role === 'consultor_vendas'
             );
+            
+            // Contar do histórico diário de produção (campo daily_production_history)
+            const currentMonth = new Date().toISOString().substring(0, 7);
             const kitMasterAchieved = commercialEmployees.reduce((sum, emp) => {
-              const currentMonth = new Date().toISOString().substring(0, 7);
               const dailyHistory = emp.daily_production_history || [];
               return sum + dailyHistory.filter(d => d.date?.startsWith(currentMonth)).length;
             }, 0);
+
+            console.log('Kit Master:', { 
+              goal: kitMasterGoal, 
+              target: kitMasterTarget, 
+              achieved: kitMasterAchieved, 
+              commercialEmps: commercialEmployees.length 
+            });
 
             return (
               <Card className="border-l-4 border-emerald-500 hover:shadow-md transition-shadow">
@@ -864,6 +886,9 @@ export default function DashboardHub({ user, workshop }) {
                     </span>
                     <p className="text-xs text-gray-500">Convertidos este mês</p>
                   </div>
+                  {kitMasterTarget === 0 && (
+                    <p className="text-xs text-gray-400 mt-2">Configure melhor mês em Gestão</p>
+                  )}
                 </CardContent>
               </Card>
             );
@@ -884,6 +909,8 @@ export default function DashboardHub({ user, workshop }) {
               return sum + dailyHistory.filter(d => d.date === today).length;
             }, 0);
 
+            console.log('PAVE Agendamento:', { goal: paveGoal, target: paveTarget, today: paveToday, commercialEmps: commercialEmployees.length });
+
             return (
               <Card className="border-l-4 border-pink-500 hover:shadow-md transition-shadow">
                 <CardContent className="p-4">
@@ -900,6 +927,9 @@ export default function DashboardHub({ user, workshop }) {
                       Clientes hoje (Meta mês: {paveTarget})
                     </p>
                   </div>
+                  {paveTarget === 0 && (
+                    <p className="text-xs text-gray-400 mt-2">Configure PAVE em Melhor Mês</p>
+                  )}
                 </CardContent>
               </Card>
             );
