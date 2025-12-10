@@ -51,9 +51,7 @@ import COEXList from './pages/COEXList';
 import MeuPlano from './pages/MeuPlano';
 import Planos from './pages/Planos';
 import MonitoramentoRH from './pages/MonitoramentoRH';
-import GestaoMetas from './pages/GestaoMetas';
 import DesdobramentoMeta from './pages/DesdobramentoMeta';
-import PainelMetas from './pages/PainelMetas';
 import DiagnosticoGerencial from './pages/DiagnosticoGerencial';
 import CulturaOrganizacional from './pages/CulturaOrganizacional';
 import CronogramaAculturacao from './pages/CronogramaAculturacao';
@@ -163,9 +161,7 @@ export const PAGES = {
     "MeuPlano": MeuPlano,
     "Planos": Planos,
     "MonitoramentoRH": MonitoramentoRH,
-    "GestaoMetas": GestaoMetas,
     "DesdobramentoMeta": DesdobramentoMeta,
-    "PainelMetas": PainelMetas,
     "DiagnosticoGerencial": DiagnosticoGerencial,
     "CulturaOrganizacional": CulturaOrganizacional,
     "CronogramaAculturacao": CronogramaAculturacao,
