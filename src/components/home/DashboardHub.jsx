@@ -75,19 +75,6 @@ export default function DashboardHub({ user, workshop }) {
     enabled: !!workshop?.id
   });
 
-  const { data: monthlyGoalHistory = [] } = useQuery({
-    queryKey: ['monthly-goal-history', workshop?.id],
-    queryFn: async () => {
-      if (!workshop?.id) return [];
-      const currentMonth = new Date().toISOString().substring(0, 7);
-      return await base44.entities.MonthlyGoalHistory.filter({ 
-        workshop_id: workshop.id,
-        month: currentMonth 
-      });
-    },
-    enabled: !!workshop?.id
-  });
-
   const { data: latestDRE } = useQuery({
     queryKey: ['latest-dre', workshop?.id],
     queryFn: async () => {
