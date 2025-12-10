@@ -113,9 +113,13 @@ export default function Layout({ children }) {
 
   // Verifica se é página pública
   const isPublicPage = () => {
-    const publicPages = ['Home', 'PrimeiroAcesso'];
+    const publicPages = ['PrimeiroAcesso'];
     const currentPath = window.location.pathname;
     const currentPage = currentPath.split('/').pop();
+    // Home é pública apenas se não autenticado
+    if (currentPage === 'Home') {
+      return !isAuthenticated;
+    }
     return publicPages.includes(currentPage);
   };
 
