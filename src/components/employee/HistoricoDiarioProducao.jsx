@@ -11,6 +11,11 @@ import { base44 } from "@/api/base44Client";
 export default function HistoricoDiarioProducao({ employee, onUpdate }) {
   const [isAdding, setIsAdding] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
+  const [editingGoal, setEditingGoal] = useState(false);
+  const [goalFormData, setGoalFormData] = useState({
+    individual_goal: 0,
+    growth_percentage: 10
+  });
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     parts_revenue: 0,
@@ -24,6 +29,18 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
   const monthlyProjectedGoal = employee.monthly_goals?.individual_goal || 0;
   const dailyProjectedGoal = employee.monthly_goals?.daily_projected_goal || (monthlyProjectedGoal / 22);
   const actualRevenueAchieved = employee.monthly_goals?.actual_revenue_achieved || 0;
+
+  // Inicializar dados da meta quando o employee mudar
+  React.useEffect(() => {
+    const bestMonthRevenue = employee.best_month_history?.revenue_total || 0;
+    const currentGoal = employee.monthly_goals?.individual_goal || 0;
+    const growthPct = employee.monthly_goals?.growth_percentage || 10;
+    
+    setGoalFormData({
+      individual_goal: currentGoal > 0 ? currentGoal : bestMonthRevenue * 1.1,
+      growth_percentage: growthPct
+    });
+  }, [employee]);
 
   const handleSubmit = async () => {
     const totalRevenue = parseFloat(formData.parts_revenue) + parseFloat(formData.services_revenue);
@@ -184,11 +201,169 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
       .reduce((sum, entry) => sum + entry.total_revenue, 0);
   };
 
+  const handleSaveGoal = async () => {
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    const dailyGoalCalculated = goalFormData.individual_goal / 22;
+
+    await onUpdate({
+      monthly_goals: {
+        ...employee.monthly_goals,
+        month: currentMonth,
+        individual_goal: parseFloat(goalFormData.individual_goal) || 0,
+        daily_projected_goal: dailyGoalCalculated,
+        growth_percentage: parseFloat(goalFormData.growth_percentage) || 10,
+        actual_revenue_achieved: actualRevenueAchieved
+      }
+    });
+
+    toast.success("Meta mensal atualizada com sucesso!");
+    setEditingGoal(false);
+  };
+
+  const calculateGoalFromGrowth = () => {
+    const bestMonthRevenue = employee.best_month_history?.revenue_total || 0;
+    const growthPct = parseFloat(goalFormData.growth_percentage) || 10;
+    const calculatedGoal = bestMonthRevenue * (1 + growthPct / 100);
+    
+    setGoalFormData({
+      ...goalFormData,
+      individual_goal: calculatedGoal
+    });
+  };
+
   return (
     <div className="space-y-6">
+      {/* Configuração de Meta Mensal do Colaborador */}
+      <Card className="shadow-xl border-2 border-indigo-300 bg-gradient-to-r from-indigo-50 to-purple-50">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Target className="w-6 h-6 text-indigo-600" />
+              <CardTitle className="text-indigo-900">Meta Mensal do Colaborador</CardTitle>
+            </div>
+            {!editingGoal ? (
+              <Button onClick={() => setEditingGoal(true)} size="sm" variant="outline" className="border-indigo-400">
+                <Edit className="w-4 h-4 mr-2" />
+                Editar Meta
+              </Button>
+            ) : (
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setEditingGoal(false)} size="sm">
+                  <X className="w-4 h-4 mr-2" />
+                  Cancelar
+                </Button>
+                <Button onClick={handleSaveGoal} size="sm" className="bg-indigo-600 hover:bg-indigo-700">
+                  <Save className="w-4 h-4 mr-2" />
+                  Salvar
+                </Button>
+              </div>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {editingGoal ? (
+            <div className="space-y-4">
+              <div className="bg-white p-4 rounded-lg border-2 border-blue-200">
+                <p className="text-sm font-semibold text-blue-900 mb-3">📊 Referência - Melhor Mês Histórico</p>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-gray-600">Faturamento do Melhor Mês:</p>
+                    <p className="text-xl font-bold text-blue-600">
+                      R$ {((employee.best_month_history?.revenue_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }))}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Data:</p>
+                    <p className="font-semibold text-gray-900">
+                      {employee.best_month_history?.date 
+                        ? new Date(employee.best_month_history.date + '-01').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+                        : 'Não registrado'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>% Crescimento sobre Melhor Mês</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      step="0.1"
+                      value={goalFormData.growth_percentage}
+                      onChange={(e) => setGoalFormData({ ...goalFormData, growth_percentage: e.target.value })}
+                      className="flex-1"
+                    />
+                    <Button variant="outline" onClick={calculateGoalFromGrowth} size="sm">
+                      Calcular
+                    </Button>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Ex: 10% = {((employee.best_month_history?.revenue_total || 0) * 1.1).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </p>
+                </div>
+
+                <div>
+                  <Label>Meta Mensal (R$)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={goalFormData.individual_goal}
+                    onChange={(e) => setGoalFormData({ ...goalFormData, individual_goal: e.target.value })}
+                    className="text-lg font-bold"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Meta Diária: R$ {(goalFormData.individual_goal / 22).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
+                <p className="text-xs text-amber-800">
+                  💡 <strong>Como funciona:</strong> Defina o percentual de crescimento ou edite a meta diretamente. 
+                  A meta diária será calculada automaticamente (Meta Mensal ÷ 22 dias úteis).
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-white p-4 rounded-lg border-l-4 border-indigo-500 shadow-sm">
+                <p className="text-xs text-gray-600 mb-1">Meta Mensal Definida</p>
+                <p className="text-2xl font-bold text-indigo-600">
+                  R$ {monthlyProjectedGoal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </p>
+                {monthlyProjectedGoal === 0 && (
+                  <p className="text-xs text-red-500 mt-1">⚠️ Defina a meta</p>
+                )}
+              </div>
+              <div className="bg-white p-4 rounded-lg border-l-4 border-purple-500 shadow-sm">
+                <p className="text-xs text-gray-600 mb-1">Meta Diária Calculada</p>
+                <p className="text-2xl font-bold text-purple-600">
+                  R$ {dailyProjectedGoal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">(Meta ÷ 22 dias)</p>
+              </div>
+              <div className="bg-white p-4 rounded-lg border-l-4 border-green-500 shadow-sm">
+                <p className="text-xs text-gray-600 mb-1">Realizado no Mês</p>
+                <p className="text-2xl font-bold text-green-600">
+                  R$ {actualRevenueAchieved.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </p>
+              </div>
+              <div className="bg-white p-4 rounded-lg border-l-4 border-orange-500 shadow-sm">
+                <p className="text-xs text-gray-600 mb-1">% Crescimento</p>
+                <p className="text-2xl font-bold text-orange-600">
+                  {(employee.monthly_goals?.growth_percentage || 0).toFixed(1)}%
+                </p>
+                <p className="text-xs text-gray-500 mt-1">Sobre melhor mês</p>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Cards de Resumo e Metas */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <Card className="shadow-lg border-2 border-blue-200">
+        <Card className="shadow-lg border-2 border-blue-200 bg-blue-50">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
               <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
@@ -199,6 +374,9 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
                 <p className="text-lg font-bold text-blue-600">
                   R$ {monthlyProjectedGoal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </p>
+                {monthlyProjectedGoal === 0 && (
+                  <p className="text-xs text-red-600 mt-1">⚠️ Defina a meta acima</p>
+                )}
               </div>
             </div>
           </CardContent>
