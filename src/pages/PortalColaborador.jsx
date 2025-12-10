@@ -275,14 +275,63 @@ export default function PortalColaborador() {
         );
 
       case "metas":
+        const employeeGoals = employee?.monthly_goals || {};
+        const individualGoal = employeeGoals.individual_goal || 0;
+        const actualRevenue = employeeGoals.actual_revenue_achieved || 0;
+        const achievementPercentage = individualGoal > 0 ? (actualRevenue / individualGoal * 100) : 0;
+        const dailyGoal = employeeGoals.daily_projected_goal || 0;
+
         return (
-          <Card>
-            <CardContent className="py-12 text-center text-gray-500">
-              <Target className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-              <p>Suas metas serão exibidas aqui</p>
-              <p className="text-sm mt-2">Em breve você poderá acompanhar suas metas mensais</p>
-            </CardContent>
-          </Card>
+          <div className="space-y-4">
+            <Card className="border-l-4 border-blue-500">
+              <CardHeader>
+                <CardTitle>Minhas Metas do Mês</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Meta Mensal</p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      R$ {individualGoal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Realizado</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      R$ {actualRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <span className="text-sm text-gray-600">Atingimento</span>
+                    <span className={`text-sm font-bold ${achievementPercentage >= 100 ? 'text-green-600' : achievementPercentage >= 70 ? 'text-yellow-600' : 'text-red-600'}`}>
+                      {achievementPercentage.toFixed(1)}%
+                    </span>
+                  </div>
+                  <Progress value={Math.min(achievementPercentage, 100)} className="h-3" />
+                </div>
+
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <p className="text-sm text-gray-600">Meta Diária Projetada</p>
+                  <p className="text-xl font-bold text-blue-700">
+                    R$ {dailyGoal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Para atingir a meta mensal
+                  </p>
+                </div>
+
+                {individualGoal === 0 && (
+                  <div className="text-center py-4 text-gray-500">
+                    <p className="text-sm">Suas metas ainda não foram definidas</p>
+                    <p className="text-xs mt-1">Aguarde seu gestor realizar o desdobramento de metas</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         );
 
       case "feedbacks":

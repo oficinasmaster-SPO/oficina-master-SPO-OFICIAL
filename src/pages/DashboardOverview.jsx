@@ -31,7 +31,7 @@ export default function DashboardOverview() {
         }
       } catch (error) {
         console.error("Error loading dashboard:", error);
-        base44.auth.redirectToLogin(window.location.href);
+        base44.auth.redirectToLogin();
       } finally {
         setLoading(false);
       }
