@@ -104,6 +104,7 @@ import AdminNotificacoes from './pages/AdminNotificacoes';
 import Feedbacks from './pages/Feedbacks';
 import RepositorioDocumentos from './pages/RepositorioDocumentos';
 import ClientRegistration from './pages/ClientRegistration';
+import GestaoRoles from './pages/GestaoRoles';
 import __Layout from './Layout.jsx';
 
 
@@ -214,6 +215,7 @@ export const PAGES = {
     "Feedbacks": Feedbacks,
     "RepositorioDocumentos": RepositorioDocumentos,
     "ClientRegistration": ClientRegistration,
+    "GestaoRoles": GestaoRoles,
 }
 
 export const pagesConfig = {
