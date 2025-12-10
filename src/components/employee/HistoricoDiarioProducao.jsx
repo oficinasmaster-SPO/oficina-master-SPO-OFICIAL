@@ -287,7 +287,37 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
         </CardHeader>
         <CardContent>
           {isAdding && (
-            <div className="space-y-4 p-4 bg-gray-50 rounded-lg mb-6">
+            <div className="space-y-4 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg mb-6 border-2 border-purple-200">
+              {/* Exibir Meta Diária */}
+              <div className="bg-white p-4 rounded-lg border-2 border-purple-300 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-purple-900 mb-1">🎯 Meta Diária (Previsto)</p>
+                    <p className="text-3xl font-bold text-purple-600">
+                      R$ {dailyProjectedGoal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Meta Mensal: R$ {monthlyProjectedGoal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} ÷ 22 dias úteis
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-gray-600 mb-1">Total a registrar hoje:</p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      R$ {(parseFloat(formData.parts_revenue || 0) + parseFloat(formData.services_revenue || 0)).toFixed(2)}
+                    </p>
+                    {dailyProjectedGoal > 0 && (
+                      <p className={`text-sm font-semibold mt-1 ${
+                        (parseFloat(formData.parts_revenue || 0) + parseFloat(formData.services_revenue || 0)) >= dailyProjectedGoal 
+                          ? 'text-green-600' 
+                          : 'text-orange-600'
+                      }`}>
+                        {((parseFloat(formData.parts_revenue || 0) + parseFloat(formData.services_revenue || 0)) / dailyProjectedGoal * 100).toFixed(1)}% da meta
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <Label>Data</Label>
