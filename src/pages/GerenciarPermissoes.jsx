@@ -10,8 +10,10 @@ import { toast } from "sonner";
 
 export default function GerenciarPermissoes() {
   const queryClient = useQueryClient();
-  const [permissions, setPermissions] = useState({});
+  const [permissionsSidebar, setPermissionsSidebar] = useState({});
+  const [permissionsPortal, setPermissionsPortal] = useState({});
   const [isSaving, setIsSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState("sidebar");
 
   // Lista de cargos do sistema (conforme User.json)
   const roles = [
@@ -34,8 +36,8 @@ export default function GerenciarPermissoes() {
     { id: "outros", label: "Outros" }
   ];
 
-  // Módulos do sistema (conforme Sidebar)
-  const modules = [
+  // Módulos da Sidebar Principal
+  const modulosSidebar = [
     { id: "dashboard", label: "Dashboard & Rankings" },
     { id: "cadastros", label: "Cadastros (Oficina)" },
     { id: "patio", label: "Pátio Operação (QGP)" },
@@ -48,57 +50,120 @@ export default function GerenciarPermissoes() {
     { id: "treinamentos", label: "Treinamentos" }
   ];
 
+  // Módulos do Portal do Colaborador
+  const modulosPortal = [
+    { id: "perfil", label: "Meu Perfil" },
+    { id: "tarefas", label: "Minhas Tarefas" },
+    { id: "equipe", label: "Minha Equipe" },
+    { id: "financeiro", label: "Financeiro" },
+    { id: "comercial", label: "Vendas & CRM" },
+    { id: "metas", label: "Minhas Metas" },
+    { id: "feedbacks", label: "Meus Feedbacks" },
+    { id: "desempenho", label: "Desempenho" },
+    { id: "documentos", label: "Documentos" },
+    { id: "treinamentos", label: "Meus Treinamentos" },
+    { id: "gamificacao", label: "Gamificação" },
+    { id: "qgp", label: "QGP Pessoal" },
+    { id: "estoque", label: "Estoque" },
+    { id: "agenda", label: "Agenda" }
+  ];
+
   // Carregar configurações atuais
-  const { data: settings, isLoading } = useQuery({
-    queryKey: ['system-setting-permissions'],
+  const { data: settingsSidebar, isLoading: isLoadingSidebar } = useQuery({
+    queryKey: ['system-setting-permissions-sidebar'],
     queryFn: async () => {
       const result = await base44.entities.SystemSetting.filter({ key: 'permissions_config' });
       return result[0] || null;
     }
   });
 
+  const { data: settingsPortal, isLoading: isLoadingPortal } = useQuery({
+    queryKey: ['system-setting-permissions-portal'],
+    queryFn: async () => {
+      const result = await base44.entities.SystemSetting.filter({ key: 'permissions_config_portal' });
+      return result[0] || null;
+    }
+  });
+
   useEffect(() => {
-    if (settings?.value) {
+    // Carregar permissões da Sidebar
+    if (settingsSidebar?.value) {
       try {
-        setPermissions(JSON.parse(settings.value));
+        setPermissionsSidebar(JSON.parse(settingsSidebar.value));
       } catch (e) {
-        console.error("Erro ao parsear permissões:", e);
-        setPermissions({});
+        console.error("Erro ao parsear permissões sidebar:", e);
+        setPermissionsSidebar({});
       }
     } else {
-      // Padrão inicial: Diretor acessa tudo
-      setPermissions({
-        diretor: modules.reduce((acc, mod) => ({ ...acc, [mod.id]: true }), {})
+      setPermissionsSidebar({
+        diretor: modulosSidebar.reduce((acc, mod) => ({ ...acc, [mod.id]: true }), {})
       });
     }
-  }, [settings]);
 
-  const handleToggle = (roleId, moduleId) => {
-    setPermissions(prev => ({
-      ...prev,
-      [roleId]: {
-        ...prev[roleId],
-        [moduleId]: !prev[roleId]?.[moduleId]
+    // Carregar permissões do Portal
+    if (settingsPortal?.value) {
+      try {
+        setPermissionsPortal(JSON.parse(settingsPortal.value));
+      } catch (e) {
+        console.error("Erro ao parsear permissões portal:", e);
+        setPermissionsPortal({});
       }
-    }));
+    } else {
+      setPermissionsPortal({
+        diretor: modulosPortal.reduce((acc, mod) => ({ ...acc, [mod.id]: true }), {})
+      });
+    }
+  }, [settingsSidebar, settingsPortal]);
+
+  const handleToggle = (roleId, moduleId, isPortal = false) => {
+    if (isPortal) {
+      setPermissionsPortal(prev => ({
+        ...prev,
+        [roleId]: {
+          ...prev[roleId],
+          [moduleId]: !prev[roleId]?.[moduleId]
+        }
+      }));
+    } else {
+      setPermissionsSidebar(prev => ({
+        ...prev,
+        [roleId]: {
+          ...prev[roleId],
+          [moduleId]: !prev[roleId]?.[moduleId]
+        }
+      }));
+    }
   };
 
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const value = JSON.stringify(permissions);
-      
-      if (settings) {
-        await base44.entities.SystemSetting.update(settings.id, { value });
+      // Salvar permissões da Sidebar
+      const valueSidebar = JSON.stringify(permissionsSidebar);
+      if (settingsSidebar) {
+        await base44.entities.SystemSetting.update(settingsSidebar.id, { value: valueSidebar });
       } else {
         await base44.entities.SystemSetting.create({
           key: 'permissions_config',
-          value,
-          description: 'Configuração de visibilidade de módulos por cargo'
+          value: valueSidebar,
+          description: 'Configuração de visibilidade de módulos da Sidebar por cargo'
+        });
+      }
+
+      // Salvar permissões do Portal
+      const valuePortal = JSON.stringify(permissionsPortal);
+      if (settingsPortal) {
+        await base44.entities.SystemSetting.update(settingsPortal.id, { value: valuePortal });
+      } else {
+        await base44.entities.SystemSetting.create({
+          key: 'permissions_config_portal',
+          value: valuePortal,
+          description: 'Configuração de visibilidade de módulos do Portal do Colaborador por cargo'
         });
       }
       
-      await queryClient.invalidateQueries(['system-setting-permissions']);
+      await queryClient.invalidateQueries(['system-setting-permissions-sidebar']);
+      await queryClient.invalidateQueries(['system-setting-permissions-portal']);
       toast.success("Permissões atualizadas com sucesso!");
     } catch (error) {
       console.error(error);
@@ -108,20 +173,30 @@ export default function GerenciarPermissoes() {
     }
   };
 
-  const handleSelectAll = (roleId) => {
-    const allSelected = modules.every(m => permissions[roleId]?.[m.id]);
+  const handleSelectAll = (roleId, isPortal = false) => {
+    const currentModules = isPortal ? modulosPortal : modulosSidebar;
+    const currentPermissions = isPortal ? permissionsPortal : permissionsSidebar;
+    
+    const allSelected = currentModules.every(m => currentPermissions[roleId]?.[m.id]);
     const newRolePermissions = {};
-    modules.forEach(m => {
+    currentModules.forEach(m => {
       newRolePermissions[m.id] = !allSelected;
     });
     
-    setPermissions(prev => ({
-      ...prev,
-      [roleId]: newRolePermissions
-    }));
+    if (isPortal) {
+      setPermissionsPortal(prev => ({
+        ...prev,
+        [roleId]: newRolePermissions
+      }));
+    } else {
+      setPermissionsSidebar(prev => ({
+        ...prev,
+        [roleId]: newRolePermissions
+      }));
+    }
   };
 
-  if (isLoading) {
+  if (isLoadingSidebar || isLoadingPortal) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
@@ -156,77 +231,157 @@ export default function GerenciarPermissoes() {
           </Button>
         </div>
 
-        <Card className="border-none shadow-lg">
-          <CardHeader className="bg-white border-b">
-            <CardTitle>Matriz de Acesso</CardTitle>
-            <CardDescription>Marque os módulos visíveis para cada função</CardDescription>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Tabs defaultValue={roles[0].id} className="w-full flex flex-col md:flex-row">
-              <TabsList className="flex flex-col h-auto w-full md:w-64 bg-gray-50 p-2 justify-start space-y-1 rounded-none md:border-r md:min-h-[600px]">
-                {roles.map((role) => (
-                  <TabsTrigger 
-                    key={role.id} 
-                    value={role.id}
-                    className="w-full justify-start px-4 py-3 text-left data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:border-l-4 data-[state=active]:border-blue-600 rounded-r-md rounded-l-none"
-                  >
-                    {role.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-              
-              <div className="flex-1 p-6 bg-white">
-                {roles.map((role) => (
-                  <TabsContent key={role.id} value={role.id} className="mt-0 space-y-6">
-                    <div className="flex items-center justify-between mb-6 pb-4 border-b">
-                      <div>
-                        <h3 className="text-xl font-bold text-gray-800">{role.label}</h3>
-                        <p className="text-sm text-gray-500">Configurando acesso para {role.label}</p>
-                      </div>
-                      <Button variant="outline" size="sm" onClick={() => handleSelectAll(role.id)}>
-                        Selecionar Todos
-                      </Button>
-                    </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full max-w-md grid-cols-2 bg-white shadow-sm">
+            <TabsTrigger value="sidebar">Sidebar Principal</TabsTrigger>
+            <TabsTrigger value="portal">Portal Colaborador</TabsTrigger>
+          </TabsList>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {modules.map((module) => (
-                        <div 
-                          key={module.id}
-                          className={`flex items-center space-x-3 p-4 rounded-lg border transition-all ${
-                            permissions[role.id]?.[module.id] 
-                              ? "bg-blue-50 border-blue-200 shadow-sm" 
-                              : "bg-white border-gray-200 hover:bg-gray-50"
-                          }`}
-                        >
-                          <Checkbox 
-                            id={`${role.id}-${module.id}`}
-                            checked={permissions[role.id]?.[module.id] || false}
-                            onCheckedChange={() => handleToggle(role.id, module.id)}
-                            className="w-5 h-5 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
-                          />
-                          <label
-                            htmlFor={`${role.id}-${module.id}`}
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1 py-1"
-                          >
-                            {module.label}
-                          </label>
-                          {permissions[role.id]?.[module.id] && (
-                            <CheckCircle2 className="w-4 h-4 text-blue-600" />
-                          )}
+          {/* Permissões da Sidebar */}
+          <TabsContent value="sidebar">
+            <Card className="border-none shadow-lg">
+              <CardHeader className="bg-white border-b">
+                <CardTitle>Matriz de Acesso - Sidebar Principal</CardTitle>
+                <CardDescription>Controle quais módulos da sidebar cada cargo pode ver</CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                <Tabs defaultValue={roles[0].id} className="w-full flex flex-col md:flex-row">
+                  <TabsList className="flex flex-col h-auto w-full md:w-64 bg-gray-50 p-2 justify-start space-y-1 rounded-none md:border-r md:min-h-[600px]">
+                    {roles.map((role) => (
+                      <TabsTrigger 
+                        key={role.id} 
+                        value={role.id}
+                        className="w-full justify-start px-4 py-3 text-left data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:border-l-4 data-[state=active]:border-blue-600 rounded-r-md rounded-l-none"
+                      >
+                        {role.label}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                  
+                  <div className="flex-1 p-6 bg-white">
+                    {roles.map((role) => (
+                      <TabsContent key={role.id} value={role.id} className="mt-0 space-y-6">
+                        <div className="flex items-center justify-between mb-6 pb-4 border-b">
+                          <div>
+                            <h3 className="text-xl font-bold text-gray-800">{role.label}</h3>
+                            <p className="text-sm text-gray-500">Módulos da Sidebar Principal</p>
+                          </div>
+                          <Button variant="outline" size="sm" onClick={() => handleSelectAll(role.id, false)}>
+                            Selecionar Todos
+                          </Button>
                         </div>
-                      ))}
-                    </div>
-                    
-                    <div className="mt-8 p-4 bg-yellow-50 rounded-lg border border-yellow-200 text-sm text-yellow-800">
-                        <p className="font-semibold mb-1">Nota:</p>
-                        <p>As alterações terão efeito na próxima vez que os usuários desse cargo recarregarem a página.</p>
-                    </div>
-                  </TabsContent>
-                ))}
-              </div>
-            </Tabs>
-          </CardContent>
-        </Card>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {modulosSidebar.map((module) => (
+                            <div 
+                              key={module.id}
+                              className={`flex items-center space-x-3 p-4 rounded-lg border transition-all ${
+                                permissionsSidebar[role.id]?.[module.id] 
+                                  ? "bg-blue-50 border-blue-200 shadow-sm" 
+                                  : "bg-white border-gray-200 hover:bg-gray-50"
+                              }`}
+                            >
+                              <Checkbox 
+                                id={`sidebar-${role.id}-${module.id}`}
+                                checked={permissionsSidebar[role.id]?.[module.id] || false}
+                                onCheckedChange={() => handleToggle(role.id, module.id, false)}
+                                className="w-5 h-5 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                              />
+                              <label
+                                htmlFor={`sidebar-${role.id}-${module.id}`}
+                                className="text-sm font-medium leading-none cursor-pointer flex-1 py-1"
+                              >
+                                {module.label}
+                              </label>
+                              {permissionsSidebar[role.id]?.[module.id] && (
+                                <CheckCircle2 className="w-4 h-4 text-blue-600" />
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </TabsContent>
+                    ))}
+                  </div>
+                </Tabs>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Permissões do Portal */}
+          <TabsContent value="portal">
+            <Card className="border-none shadow-lg">
+              <CardHeader className="bg-white border-b">
+                <CardTitle>Matriz de Acesso - Portal do Colaborador</CardTitle>
+                <CardDescription>Controle o que cada cargo vê no Portal do Colaborador</CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                <Tabs defaultValue={roles[0].id} className="w-full flex flex-col md:flex-row">
+                  <TabsList className="flex flex-col h-auto w-full md:w-64 bg-gray-50 p-2 justify-start space-y-1 rounded-none md:border-r md:min-h-[600px]">
+                    {roles.map((role) => (
+                      <TabsTrigger 
+                        key={role.id} 
+                        value={role.id}
+                        className="w-full justify-start px-4 py-3 text-left data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:border-l-4 data-[state=active]:border-green-600 rounded-r-md rounded-l-none"
+                      >
+                        {role.label}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                  
+                  <div className="flex-1 p-6 bg-white">
+                    {roles.map((role) => (
+                      <TabsContent key={role.id} value={role.id} className="mt-0 space-y-6">
+                        <div className="flex items-center justify-between mb-6 pb-4 border-b">
+                          <div>
+                            <h3 className="text-xl font-bold text-gray-800">{role.label}</h3>
+                            <p className="text-sm text-gray-500">Módulos do Portal do Colaborador</p>
+                          </div>
+                          <Button variant="outline" size="sm" onClick={() => handleSelectAll(role.id, true)}>
+                            Selecionar Todos
+                          </Button>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {modulosPortal.map((module) => (
+                            <div 
+                              key={module.id}
+                              className={`flex items-center space-x-3 p-4 rounded-lg border transition-all ${
+                                permissionsPortal[role.id]?.[module.id] 
+                                  ? "bg-green-50 border-green-200 shadow-sm" 
+                                  : "bg-white border-gray-200 hover:bg-gray-50"
+                              }`}
+                            >
+                              <Checkbox 
+                                id={`portal-${role.id}-${module.id}`}
+                                checked={permissionsPortal[role.id]?.[module.id] || false}
+                                onCheckedChange={() => handleToggle(role.id, module.id, true)}
+                                className="w-5 h-5 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                              />
+                              <label
+                                htmlFor={`portal-${role.id}-${module.id}`}
+                                className="text-sm font-medium leading-none cursor-pointer flex-1 py-1"
+                              >
+                                {module.label}
+                              </label>
+                              {permissionsPortal[role.id]?.[module.id] && (
+                                <CheckCircle2 className="w-4 h-4 text-green-600" />
+                              )}
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="mt-8 p-4 bg-yellow-50 rounded-lg border border-yellow-200 text-sm text-yellow-800">
+                            <p className="font-semibold mb-1">Nota:</p>
+                            <p>As alterações terão efeito na próxima vez que os colaboradores desse cargo recarregarem a página.</p>
+                        </div>
+                      </TabsContent>
+                    ))}
+                  </div>
+                </Tabs>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

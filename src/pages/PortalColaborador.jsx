@@ -10,7 +10,8 @@ import { Progress } from "@/components/ui/progress";
 import { 
   Loader2, User, ListTodo, Target, MessageSquare, BarChart3, 
   FileText, Trophy, Gauge, Calendar, Phone, LogOut, Menu, X,
-  CheckCircle2, Clock, AlertTriangle, TrendingUp, Star, GraduationCap
+  CheckCircle2, Clock, AlertTriangle, TrendingUp, Star, GraduationCap,
+  Users, Package
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -21,10 +22,23 @@ export default function PortalColaborador() {
   const [workshop, setWorkshop] = useState(null);
   const [activeSection, setActiveSection] = useState("perfil");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [permissionsConfig, setPermissionsConfig] = useState(null);
 
   useEffect(() => {
     loadUser();
+    loadPermissions();
   }, []);
+
+  const loadPermissions = async () => {
+    try {
+      const settings = await base44.entities.SystemSetting.filter({ key: 'permissions_config_portal' });
+      if (settings && settings[0]) {
+        setPermissionsConfig(JSON.parse(settings[0].value));
+      }
+    } catch (error) {
+      console.log("Error loading permissions:", error);
+    }
+  };
 
   const loadUser = async () => {
     try {
@@ -36,25 +50,32 @@ export default function PortalColaborador() {
       if (employees && employees.length > 0) {
         setEmployee(employees[0]);
         
-        // Buscar oficina
-        const workshops = await base44.entities.Workshop.filter({ id: employees[0].workshop_id });
-        if (workshops && workshops.length > 0) {
-          setWorkshop(workshops[0]);
+        // Buscar oficina pelo ID
+        if (employees[0].workshop_id) {
+          const workshopData = await base44.entities.Workshop.get(employees[0].workshop_id);
+          setWorkshop(workshopData);
         }
       }
     } catch (error) {
       console.log("Error loading user:", error);
+      base44.auth.redirectToLogin();
     }
   };
 
   // Buscar tarefas do colaborador
   const { data: tasks = [] } = useQuery({
-    queryKey: ['my-tasks', employee?.id],
+    queryKey: ['my-tasks', employee?.id, user?.id],
     queryFn: async () => {
-      const result = await base44.entities.Task.list('-created_date');
-      return result.filter(t => t.assigned_to?.includes(employee.id) || t.assigned_to?.includes(user.id));
+      if (!workshop?.id) return [];
+      const result = await base44.entities.Task.filter({ workshop_id: workshop.id });
+      const tasksArray = Array.isArray(result) ? result : [];
+      return tasksArray.filter(t => 
+        t.assigned_to?.includes(employee?.id) || 
+        t.assigned_to?.includes(user?.id) ||
+        t.employee_id === employee?.id
+      );
     },
-    enabled: !!employee?.id || !!user?.id
+    enabled: !!workshop?.id && (!!employee?.id || !!user?.id)
   });
 
   // Buscar feedbacks
@@ -69,33 +90,42 @@ export default function PortalColaborador() {
   };
 
   const menuItems = [
-    { id: "perfil", label: "Meu Perfil", icon: User, roles: ["all"] },
-    { id: "tarefas", label: "Minhas Tarefas", icon: ListTodo, roles: ["all"] },
-    { id: "equipe", label: "Minha Equipe", icon: Users, roles: ["diretor", "supervisor_loja", "gerente", "lider_tecnico", "rh"] },
-    { id: "financeiro", label: "Financeiro", icon: TrendingUp, roles: ["diretor", "supervisor_loja", "financeiro"] },
-    { id: "comercial", label: "Vendas & CRM", icon: Phone, roles: ["diretor", "supervisor_loja", "gerente", "comercial", "consultor_vendas", "marketing"] },
-    { id: "metas", label: "Minhas Metas", icon: Target, roles: ["all"] },
-    { id: "feedbacks", label: "Meus Feedbacks", icon: MessageSquare, roles: ["all"] },
-    { id: "desempenho", label: "Desempenho", icon: BarChart3, roles: ["all"] },
-    { id: "documentos", label: "Documentos", icon: FileText, roles: ["all"] },
-    { id: "treinamentos", label: "Meus Treinamentos", icon: GraduationCap, roles: ["all"] },
-    { id: "gamificacao", label: "Gamificação", icon: Trophy, roles: ["all"] },
-    { id: "qgp", label: "QGP Pessoal", icon: Gauge, roles: ["all"] },
-    { id: "estoque", label: "Estoque", icon: Package, roles: ["diretor", "supervisor_loja", "gerente", "estoque"] },
-    { id: "agenda", label: "Agenda", icon: Calendar, roles: ["all"] }
+    { id: "perfil", label: "Meu Perfil", icon: User },
+    { id: "tarefas", label: "Minhas Tarefas", icon: ListTodo },
+    { id: "equipe", label: "Minha Equipe", icon: Users },
+    { id: "financeiro", label: "Financeiro", icon: TrendingUp },
+    { id: "comercial", label: "Vendas & CRM", icon: Phone },
+    { id: "metas", label: "Minhas Metas", icon: Target },
+    { id: "feedbacks", label: "Meus Feedbacks", icon: MessageSquare },
+    { id: "desempenho", label: "Desempenho", icon: BarChart3 },
+    { id: "documentos", label: "Documentos", icon: FileText },
+    { id: "treinamentos", label: "Meus Treinamentos", icon: GraduationCap },
+    { id: "gamificacao", label: "Gamificação", icon: Trophy },
+    { id: "qgp", label: "QGP Pessoal", icon: Gauge },
+    { id: "estoque", label: "Estoque", icon: Package },
+    { id: "agenda", label: "Agenda", icon: Calendar }
   ];
 
-  const filterMenuItems = () => {
-    if (!employee || !employee.job_role) return menuItems.filter(i => i.roles.includes("all"));
+  const canViewModule = (moduleId) => {
+    // Admin e Diretor (Dono) sempre têm acesso total
+    if (user.role === 'admin' || (workshop && user.id === workshop.owner_id)) return true;
+
+    // Se não há configuração de permissões, usa padrão: perfil, tarefas, metas e feedbacks sempre visíveis
+    if (!permissionsConfig || !employee?.job_role) {
+      return ['perfil', 'tarefas', 'metas', 'feedbacks', 'documentos', 'treinamentos'].includes(moduleId);
+    }
+
+    const permission = permissionsConfig[employee.job_role]?.[moduleId];
     
-    const role = employee.job_role;
-    return menuItems.filter(item => {
-      if (item.roles.includes("all")) return true;
-      if (item.roles.includes(role)) return true;
-      // Fallback para administradores do sistema verem tudo
-      if (user.role === 'admin') return true;
-      return false;
-    });
+    // Se a permissão foi explicitamente definida, respeita
+    if (permission !== undefined) return permission;
+
+    // Padrão: apenas módulos básicos
+    return ['perfil', 'tarefas', 'metas', 'feedbacks'].includes(moduleId);
+  };
+
+  const filterMenuItems = () => {
+    return menuItems.filter(item => canViewModule(item.id));
   };
 
   const filteredMenuItems = filterMenuItems();
