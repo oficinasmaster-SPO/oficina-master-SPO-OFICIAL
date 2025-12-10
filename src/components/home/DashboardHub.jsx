@@ -53,7 +53,9 @@ export default function DashboardHub({ user, workshop }) {
     queryKey: ['workshop-employees', workshop?.id],
     queryFn: async () => {
       if (!workshop?.id) return [];
-      return await base44.entities.Employee.filter({ workshop_id: workshop.id, status: 'ativo' });
+      const emps = await base44.entities.Employee.filter({ workshop_id: workshop.id, status: 'ativo' });
+      console.log('Colaboradores carregados:', emps.length, emps);
+      return emps;
     },
     enabled: !!workshop?.id
   });
