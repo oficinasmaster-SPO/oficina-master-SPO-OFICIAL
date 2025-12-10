@@ -197,15 +197,34 @@ export default function ManualGoalRegistration({ open, onClose, workshop, onSave
           }
         });
       } else if (selectedEmployee) {
+        // Sincronizar com daily_production_history do colaborador
+        const dailyProductionEntry = {
+          date: formData.reference_date,
+          parts_revenue: formData.revenue_parts,
+          services_revenue: formData.revenue_services,
+          total_revenue: revenue_total,
+          notes: formData.notes || ""
+        };
+
+        // Adicionar ao histórico diário
+        const updatedDailyHistory = [...(selectedEmployee.daily_production_history || []), dailyProductionEntry];
+        updatedDailyHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        // Recalcular realizado do mês atual
+        const currentMonth = new Date().toISOString().substring(0, 7);
+        const monthEntries = updatedDailyHistory.filter(entry => entry.date.startsWith(currentMonth));
+        const monthlyTotal = monthEntries.reduce((sum, entry) => sum + entry.total_revenue, 0);
+
         await base44.entities.Employee.update(selectedEmployee.id, {
+          daily_production_history: updatedDailyHistory,
           monthly_goals: {
             ...selectedEmployee.monthly_goals,
-            actual_revenue_achieved: formData.achieved_total
+            actual_revenue_achieved: monthlyTotal
           }
         });
       }
 
-      toast.success("Registro salvo e metas atualizadas automaticamente!");
+      toast.success("Registro salvo e sincronizado com o histórico diário!");
       if (onSave) onSave();
       onClose();
     } catch (error) {
