@@ -107,10 +107,9 @@ export default function PrimeiroAcesso() {
       if (response.data?.success) {
         toast.success("Dados confirmados! Agora você precisa criar sua senha.", { duration: 5000 });
         
-        // Mostrar modal ou alerta explicativo
+        // Redirecionar para login sem parâmetro de redirecionamento para evitar loops
         setTimeout(() => {
-          // Redirecionar para login/signup
-          base44.auth.redirectToLogin(createPageUrl("PortalColaborador"));
+          window.location.href = '/login';
         }, 2000);
       } else {
         throw new Error(response.data?.error || "Erro ao finalizar cadastro");

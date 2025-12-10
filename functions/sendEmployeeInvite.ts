@@ -107,9 +107,12 @@ Deno.serve(async (req) => {
     }
 
     // 6. Envio de Email
-    const baseUrl = origin || "https://app.base44.com";
+    // Remove trailing slash e garante URL limpa
+    const baseUrl = (origin || "https://app.base44.com").replace(/\/$/, '');
     const inviteUrl = `${baseUrl}/PrimeiroAcesso?token=${token}`;
     const companyName = workshop_name || "Oficinas Master";
+    
+    console.log("Link gerado:", inviteUrl);
 
     try {
         await base44.integrations.Core.SendEmail({
