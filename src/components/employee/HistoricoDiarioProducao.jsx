@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Calendar, DollarSign, Edit, Trash2, Save, X, Target, TrendingUp } from "lucide-react";
+import { Plus, Calendar, DollarSign, Edit, Trash2, Save, X, Target, TrendingUp, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
 
@@ -12,6 +12,7 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
   const [isAdding, setIsAdding] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
   const [editingGoal, setEditingGoal] = useState(false);
+  const [expandedRecords, setExpandedRecords] = useState({});
   const [goalFormData, setGoalFormData] = useState({
     individual_goal: 0,
     growth_percentage: 10
@@ -201,6 +202,13 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
       .reduce((sum, entry) => sum + entry.total_revenue, 0);
   };
 
+  const toggleRecordExpansion = (index) => {
+    setExpandedRecords(prev => ({
+      ...prev,
+      [index]: !prev[index]
+    }));
+  };
+
   const handleSaveGoal = async () => {
     const currentMonth = new Date().toISOString().slice(0, 7);
     const dailyGoalCalculated = goalFormData.individual_goal / 22;
@@ -350,11 +358,13 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
                 </p>
               </div>
               <div className="bg-white p-4 rounded-lg border-l-4 border-orange-500 shadow-sm">
-                <p className="text-xs text-gray-600 mb-1">% Crescimento</p>
+                <p className="text-xs text-gray-600 mb-1">Falta para Meta</p>
                 <p className="text-2xl font-bold text-orange-600">
-                  {(employee.monthly_goals?.growth_percentage || 0).toFixed(1)}%
+                  R$ {Math.max(0, monthlyProjectedGoal - actualRevenueAchieved).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">Sobre melhor mês</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {monthlyProjectedGoal > 0 && actualRevenueAchieved >= monthlyProjectedGoal ? '🎉 Meta batida!' : 'Para atingir'}
+                </p>
               </div>
             </div>
           )}
@@ -560,69 +570,85 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
                   ? (entry.total_revenue / dailyProjectedGoal) * 100 
                   : 0;
                 const metaDayAchieved = dailyAchievementPercentage >= 100;
+                const isExpanded = expandedRecords[index];
 
                 return (
-                  <Card key={index} className={`hover:shadow-md transition-shadow ${
-                    metaDayAchieved ? 'border-l-4 border-green-500' : 'border-l-4 border-orange-400'
+                  <Card key={index} className={`hover:shadow-md transition-all ${
+                    metaDayAchieved ? 'border-l-4 border-green-500 bg-green-50/30' : 'border-l-4 border-orange-400 bg-orange-50/30'
                   }`}>
                     <CardContent className="p-4">
+                      {/* Visão Compacta - Sempre Visível */}
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="text-center">
+                        <div className="flex items-center gap-4 flex-1">
+                          {/* Data */}
+                          <div className="text-center min-w-[60px]">
                             <p className="text-2xl font-bold text-gray-900">
                               {new Date(entry.date).getDate()}
                             </p>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-gray-500 uppercase">
                               {new Date(entry.date).toLocaleDateString('pt-BR', { month: 'short' })}
                             </p>
                           </div>
-                          <div>
-                            <p className="font-semibold text-gray-900">
+
+                          {/* Info Principal */}
+                          <div className="flex-1">
+                            <p className="font-semibold text-gray-900 mb-1">
                               {new Date(entry.date).toLocaleDateString('pt-BR', { 
                                 weekday: 'long', 
                                 day: '2-digit', 
-                                month: 'long', 
-                                year: 'numeric' 
+                                month: 'long'
                               })}
                             </p>
-                            <div className="flex gap-4 text-sm text-gray-600 mt-1">
-                              <span>Peças: R$ {entry.parts_revenue.toFixed(2)}</span>
-                              <span>Serviços: R$ {entry.services_revenue.toFixed(2)}</span>
-                            </div>
 
-                            {/* Meta Diária */}
-                            <div className="mt-2 flex items-center gap-3 text-xs">
-                              <div className="bg-purple-100 px-2 py-1 rounded">
-                                <span className="text-purple-700">Meta Dia: R$ {dailyProjectedGoal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                              </div>
-                              <div className={`px-2 py-1 rounded ${metaDayAchieved ? 'bg-green-100' : 'bg-orange-100'}`}>
-                                <span className={metaDayAchieved ? 'text-green-700' : 'text-orange-700'}>
-                                  {metaDayAchieved ? '✅ Meta atingida!' : `📊 ${dailyAchievementPercentage.toFixed(0)}% da meta`}
-                                </span>
+                            {/* Indicador de Meta */}
+                            <div className="flex items-center gap-2">
+                              <div className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                metaDayAchieved 
+                                  ? 'bg-green-500 text-white' 
+                                  : dailyAchievementPercentage >= 70 
+                                    ? 'bg-yellow-500 text-white'
+                                    : 'bg-red-500 text-white'
+                              }`}>
+                                {metaDayAchieved ? '✓ Meta Atingida' : `${dailyAchievementPercentage.toFixed(0)}% da meta`}
                               </div>
                             </div>
-
-                            {entry.notes && (
-                              <p className="text-xs text-gray-500 mt-1 italic">{entry.notes}</p>
-                            )}
                           </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="text-right">
-                            <p className="text-xs text-gray-500">Realizado Dia</p>
-                            <p className={`text-xl font-bold ${metaDayAchieved ? 'text-green-600' : 'text-orange-600'}`}>
+
+                          {/* Valor Realizado - Destaque */}
+                          <div className="text-right bg-white px-4 py-2 rounded-lg shadow-sm min-w-[140px]">
+                            <p className="text-xs text-gray-500 mb-1">Realizado</p>
+                            <p className={`text-2xl font-bold ${metaDayAchieved ? 'text-green-600' : 'text-orange-600'}`}>
                               R$ {entry.total_revenue.toFixed(2)}
                             </p>
-                            <p className="text-xs text-gray-500 mt-1">
-                              {dailyAchievementPercentage.toFixed(1)}% da meta
-                            </p>
                           </div>
-                          <div className="flex gap-2">
+
+                          {/* Botão Expandir */}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => toggleRecordExpansion(index)}
+                            className="text-gray-600 hover:text-gray-900"
+                          >
+                            {isExpanded ? (
+                              <>
+                                <X className="w-4 h-4 mr-1" />
+                                Fechar
+                              </>
+                            ) : (
+                              <>
+                                <Eye className="w-4 h-4 mr-1" />
+                                Detalhes
+                              </>
+                            )}
+                          </Button>
+
+                          {/* Ações */}
+                          <div className="flex gap-1">
                             <Button
                               size="icon"
                               variant="ghost"
                               onClick={() => handleEdit(index)}
-                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 h-8 w-8"
                             >
                               <Edit className="w-4 h-4" />
                             </Button>
@@ -630,13 +656,77 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
                               size="icon"
                               variant="ghost"
                               onClick={() => handleDelete(index)}
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8"
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
                         </div>
                       </div>
+
+                      {/* Detalhes Expandidos */}
+                      {isExpanded && (
+                        <div className="mt-4 pt-4 border-t border-gray-200 space-y-3">
+                          {/* Detalhamento de Faturamento */}
+                          <div className="grid grid-cols-3 gap-4">
+                            <div className="bg-blue-50 p-3 rounded-lg">
+                              <p className="text-xs text-blue-700 mb-1">Faturamento Peças</p>
+                              <p className="text-lg font-bold text-blue-600">
+                                R$ {entry.parts_revenue.toFixed(2)}
+                              </p>
+                            </div>
+                            <div className="bg-green-50 p-3 rounded-lg">
+                              <p className="text-xs text-green-700 mb-1">Faturamento Serviços</p>
+                              <p className="text-lg font-bold text-green-600">
+                                R$ {entry.services_revenue.toFixed(2)}
+                              </p>
+                            </div>
+                            <div className="bg-purple-50 p-3 rounded-lg">
+                              <p className="text-xs text-purple-700 mb-1">Total do Dia</p>
+                              <p className="text-lg font-bold text-purple-600">
+                                R$ {entry.total_revenue.toFixed(2)}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Meta vs Realizado */}
+                          <div className="bg-white border-2 border-gray-200 p-3 rounded-lg">
+                            <div className="flex items-center justify-between mb-2">
+                              <p className="text-sm font-semibold text-gray-700">Meta Diária vs Realizado</p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <p className="text-xs text-gray-600 mb-1">Meta Diária (Previsto)</p>
+                                <p className="text-lg font-bold text-purple-600">
+                                  R$ {dailyProjectedGoal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-600 mb-1">Atingimento</p>
+                                <p className={`text-lg font-bold ${
+                                  metaDayAchieved ? 'text-green-600' : 'text-orange-600'
+                                }`}>
+                                  {dailyAchievementPercentage.toFixed(1)}%
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  {metaDayAchieved 
+                                    ? '✅ Meta do dia batida!' 
+                                    : `Faltaram R$ ${(dailyProjectedGoal - entry.total_revenue).toFixed(2)}`
+                                  }
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Notas/Observações */}
+                          {entry.notes && (
+                            <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
+                              <p className="text-xs text-yellow-800 font-semibold mb-1">📝 Observações:</p>
+                              <p className="text-sm text-gray-700">{entry.notes}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 );
