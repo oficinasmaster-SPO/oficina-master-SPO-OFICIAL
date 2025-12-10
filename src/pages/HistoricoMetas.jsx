@@ -17,6 +17,7 @@ export default function HistoricoMetas() {
   const [showModal, setShowModal] = useState(false);
   const [filterType, setFilterType] = useState("workshop");
   const [filterEmployee, setFilterEmployee] = useState(null);
+  const [expandedCards, setExpandedCards] = useState({});
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -72,6 +73,13 @@ export default function HistoricoMetas() {
     toast.info("Exportação em desenvolvimento...");
   };
 
+  const toggleCardExpansion = (recordId) => {
+    setExpandedCards(prev => ({
+      ...prev,
+      [recordId]: !prev[recordId]
+    }));
+  };
+
   if (!workshop) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -89,10 +97,10 @@ export default function HistoricoMetas() {
           <div>
             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
               <Target className="w-8 h-8 text-blue-600" />
-              Histórico de Metas
+              Histórico da Produção Diária
             </h1>
             <p className="text-gray-600 mt-2">
-              Acompanhe os resultados mensais da oficina e colaboradores
+              Acompanhe os resultados e desempenho da oficina e colaboradores
             </p>
           </div>
           <div className="flex gap-3">
@@ -185,39 +193,47 @@ export default function HistoricoMetas() {
                 : 0;
               
               const employee = employees.find(e => e.id === record.employee_id);
+              const isExpanded = expandedCards[record.id];
 
               return (
-                <Card key={record.id} className="shadow-lg hover:shadow-xl transition-all border-2 border-blue-100">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="flex items-center gap-2">
-                          {record.entity_type === "workshop" ? (
-                            <Building2 className="w-5 h-5 text-blue-600" />
-                          ) : (
-                            <User className="w-5 h-5 text-purple-600" />
-                          )}
-                          {record.entity_type === "workshop" 
-                            ? workshop.name 
-                            : employee?.full_name || "Colaborador"}
-                        </CardTitle>
-                        <div className="flex items-center gap-2 mt-2">
-                          <Badge variant="outline">
-                            {new Date(record.reference_date).toLocaleDateString('pt-BR')}
-                          </Badge>
-                          <Badge variant="outline">
-                            {new Date(record.month + '-01').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
-                          </Badge>
-                          {record.employee_role && record.employee_role !== "geral" && (
-                            <Badge className="bg-purple-100 text-purple-700 capitalize">
-                              {record.employee_role}
-                            </Badge>
-                          )}
+                <Card key={record.id} className="shadow-lg hover:shadow-xl transition-all border-l-4 border-blue-400">
+                  <CardContent className="p-6">
+                    {/* Header Compacto */}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        {record.entity_type === "workshop" ? (
+                          <Building2 className="w-5 h-5 text-blue-600" />
+                        ) : (
+                          <User className="w-5 h-5 text-purple-600" />
+                        )}
+                        <div>
+                          <h3 className="font-bold text-lg text-gray-900">
+                            {record.entity_type === "workshop" 
+                              ? workshop.name 
+                              : employee?.full_name || "Colaborador"}
+                          </h3>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs text-gray-500">
+                              {new Date(record.reference_date).toLocaleDateString('pt-BR')}
+                            </span>
+                            <span className="text-xs text-gray-400">•</span>
+                            <span className="text-xs text-gray-500">
+                              {new Date(record.month + '-01').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+                            </span>
+                            {record.employee_role && record.employee_role !== "geral" && (
+                              <>
+                                <span className="text-xs text-gray-400">•</span>
+                                <Badge className="bg-purple-100 text-purple-700 capitalize text-xs">
+                                  {record.employee_role}
+                                </Badge>
+                              </>
+                            )}
+                          </div>
                         </div>
                       </div>
                       <div className="text-right">
                         <p className="text-xs text-gray-500 mb-1">Atingimento</p>
-                        <p className={`text-3xl font-bold ${
+                        <p className={`text-4xl font-bold ${
                           achievementPercentage >= 100 ? 'text-green-600' : 
                           achievementPercentage >= 70 ? 'text-yellow-600' : 
                           'text-red-600'
@@ -226,93 +242,186 @@ export default function HistoricoMetas() {
                         </p>
                       </div>
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div className="bg-green-50 p-3 rounded-lg">
+
+                    {/* Métricas Principais - Compacto */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                      <div className="bg-green-50 p-3 rounded-lg border-l-4 border-green-500">
                         <p className="text-xs text-gray-600 mb-1">PREVISTO</p>
-                        <p className="text-lg font-bold text-green-600">
-                          R$ {formatCurrency(record.projected_total)}
+                        <p className="text-xl font-bold text-green-600">
+                          R$ R$ {formatCurrency(record.projected_total)}
                         </p>
                       </div>
-                      <div className="bg-purple-50 p-3 rounded-lg">
+                      <div className="bg-purple-50 p-3 rounded-lg border-l-4 border-purple-500">
                         <p className="text-xs text-gray-600 mb-1">REALIZADO</p>
-                        <p className="text-lg font-bold text-purple-600">
-                          R$ {formatCurrency(record.achieved_total)}
+                        <p className="text-xl font-bold text-purple-600">
+                          R$ R$ {formatCurrency(record.achieved_total)}
                         </p>
                       </div>
-                      <div className="bg-blue-50 p-3 rounded-lg">
+                      <div className="bg-blue-50 p-3 rounded-lg border-l-4 border-blue-500">
                         <p className="text-xs text-gray-600 mb-1">Faturamento Total</p>
-                        <p className="text-lg font-bold text-blue-600">
-                          R$ {formatCurrency(record.revenue_total || 0)}
+                        <p className="text-xl font-bold text-blue-600">
+                          R$ R$ {formatCurrency(record.revenue_total || 0)}
                         </p>
                       </div>
-                      <div className="bg-orange-50 p-3 rounded-lg">
+                      <div className="bg-orange-50 p-3 rounded-lg border-l-4 border-orange-500">
                         <p className="text-xs text-gray-600 mb-1">Ticket Médio</p>
-                        <p className="text-lg font-bold text-orange-600">
-                          R$ {formatCurrency(record.average_ticket || 0)}
+                        <p className="text-xl font-bold text-orange-600">
+                          R$ R$ {formatCurrency(record.average_ticket || 0)}
                         </p>
                       </div>
                     </div>
 
-                    {/* Detalhes adicionais */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4 text-sm">
+                    {/* Resumo Rápido */}
+                    <div className="flex items-center gap-6 text-sm mb-3">
                       <div>
-                        <p className="text-gray-600">Fat. Peças:</p>
-                        <p className="font-semibold">R$ {formatCurrency(record.revenue_parts || 0)}</p>
+                        <span className="text-gray-600">Fat. Peças: </span>
+                        <span className="font-bold">R$ {formatCurrency(record.revenue_parts || 0)}</span>
                       </div>
                       <div>
-                        <p className="text-gray-600">Fat. Serviços:</p>
-                        <p className="font-semibold">R$ {formatCurrency(record.revenue_services || 0)}</p>
+                        <span className="text-gray-600">Fat. Serviços: </span>
+                        <span className="font-bold">R$ {formatCurrency(record.revenue_services || 0)}</span>
                       </div>
                       <div>
-                        <p className="text-gray-600">Clientes:</p>
-                        <p className="font-semibold">{record.customer_volume || 0}</p>
+                        <span className="text-gray-600">Clientes: </span>
+                        <span className="font-bold">{record.customer_volume || 0}</span>
                       </div>
-                      {record.rework_count > 0 && (
+                      {record.rework_count !== undefined && (
                         <div>
-                          <p className="text-gray-600">Retrabalho:</p>
-                          <p className="font-semibold text-red-600">{record.rework_count}</p>
+                          <span className="text-gray-600">Obs: </span>
+                          <span className="font-semibold text-gray-700">
+                            {record.rework_count === 0 ? "zero retrabalho" : `${record.rework_count} retrabalhos`}
+                          </span>
                         </div>
                       )}
                     </div>
 
-                    {/* Marketing Data */}
-                    {record.marketing_data && record.marketing_data.leads_generated > 0 && (
-                      <div className="mt-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
-                        <p className="text-sm font-semibold text-purple-900 mb-2">Marketing</p>
-                        <div className="grid grid-cols-3 md:grid-cols-6 gap-2 text-xs">
-                          <div>
-                            <p className="text-gray-600">Leads:</p>
-                            <p className="font-bold">{record.marketing_data.leads_generated}</p>
-                          </div>
-                          <div>
-                            <p className="text-gray-600">Agendados:</p>
-                            <p className="font-bold">{record.marketing_data.leads_scheduled}</p>
-                          </div>
-                          <div>
-                            <p className="text-gray-600">Comparec.:</p>
-                            <p className="font-bold">{record.marketing_data.leads_showed_up}</p>
-                          </div>
-                          <div>
-                            <p className="text-gray-600">Vendidos:</p>
-                            <p className="font-bold">{record.marketing_data.leads_sold}</p>
-                          </div>
-                          <div>
-                            <p className="text-gray-600">Investido:</p>
-                            <p className="font-bold">R$ {formatCurrency(record.marketing_data.invested_value || 0)}</p>
-                          </div>
-                          <div>
-                            <p className="text-gray-600">Custo/Venda:</p>
-                            <p className="font-bold">R$ {formatCurrency(record.marketing_data.cost_per_sale || 0)}</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+                    {/* Botão Ver Detalhes */}
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => toggleCardExpansion(record.id)}
+                      className="w-full mt-2"
+                    >
+                      {isExpanded ? "Ocultar Detalhes" : "Ver Detalhes"}
+                    </Button>
 
-                    {record.notes && (
-                      <div className="mt-3 p-2 bg-gray-50 rounded text-sm text-gray-700">
-                        <strong>Obs:</strong> {record.notes}
+                    {/* Detalhes Expandidos */}
+                    {isExpanded && (
+                      <div className="mt-4 pt-4 border-t space-y-4">
+                        {/* Detalhes Comerciais */}
+                        {(record.pave_commercial > 0 || record.kit_master > 0 || record.sales_base > 0 || record.sales_marketing > 0 || record.clients_delivered > 0) && (
+                          <div className="bg-indigo-50 p-3 rounded-lg border border-indigo-200">
+                            <p className="text-sm font-semibold text-indigo-900 mb-2">🎯 Comercial</p>
+                            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-xs">
+                              {record.pave_commercial > 0 && (
+                                <div>
+                                  <p className="text-gray-600">PAVE:</p>
+                                  <p className="font-bold">{formatCurrency(record.pave_commercial)}</p>
+                                </div>
+                              )}
+                              {record.kit_master > 0 && (
+                                <div>
+                                  <p className="text-gray-600">Kit Master:</p>
+                                  <p className="font-bold">R$ {formatCurrency(record.kit_master)}</p>
+                                </div>
+                              )}
+                              {record.sales_base > 0 && (
+                                <div>
+                                  <p className="text-gray-600">Vendas Base:</p>
+                                  <p className="font-bold">R$ {formatCurrency(record.sales_base)}</p>
+                                </div>
+                              )}
+                              {record.sales_marketing > 0 && (
+                                <div>
+                                  <p className="text-gray-600">Vendas Mkt:</p>
+                                  <p className="font-bold">R$ {formatCurrency(record.sales_marketing)}</p>
+                                </div>
+                              )}
+                              {record.clients_delivered > 0 && (
+                                <div>
+                                  <p className="text-gray-600">Clientes Entregues:</p>
+                                  <p className="font-bold">{record.clients_delivered}</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Detalhes de Agendamento - Comercial */}
+                        {(record.clients_scheduled_base > 0 || record.clients_delivered_base > 0 || 
+                          record.clients_scheduled_mkt > 0 || record.clients_delivered_mkt > 0 ||
+                          record.clients_scheduled_referral > 0 || record.clients_delivered_referral > 0) && (
+                          <div className="bg-teal-50 p-3 rounded-lg border border-teal-200">
+                            <p className="text-sm font-semibold text-teal-900 mb-2">📅 Agendamentos e Entregas</p>
+                            <div className="grid grid-cols-2 md:grid-cols-6 gap-3 text-xs">
+                              <div>
+                                <p className="text-gray-600">Agend. Base:</p>
+                                <p className="font-bold">{record.clients_scheduled_base || 0}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-600">Entreg. Base:</p>
+                                <p className="font-bold">{record.clients_delivered_base || 0}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-600">Agend. Mkt:</p>
+                                <p className="font-bold">{record.clients_scheduled_mkt || 0}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-600">Entreg. Mkt:</p>
+                                <p className="font-bold">{record.clients_delivered_mkt || 0}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-600">Agend. Indic.:</p>
+                                <p className="font-bold">{record.clients_scheduled_referral || 0}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-600">Entreg. Indic.:</p>
+                                <p className="font-bold">{record.clients_delivered_referral || 0}</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Marketing Data */}
+                        {record.marketing_data && record.marketing_data.leads_generated > 0 && (
+                          <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+                            <p className="text-sm font-semibold text-purple-900 mb-2">📣 Marketing</p>
+                            <div className="grid grid-cols-3 md:grid-cols-6 gap-2 text-xs">
+                              <div>
+                                <p className="text-gray-600">Leads:</p>
+                                <p className="font-bold">{record.marketing_data.leads_generated}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-600">Agendados:</p>
+                                <p className="font-bold">{record.marketing_data.leads_scheduled}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-600">Comparec.:</p>
+                                <p className="font-bold">{record.marketing_data.leads_showed_up}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-600">Vendidos:</p>
+                                <p className="font-bold">{record.marketing_data.leads_sold}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-600">Investido:</p>
+                                <p className="font-bold">R$ {formatCurrency(record.marketing_data.invested_value || 0)}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-600">Custo/Venda:</p>
+                                <p className="font-bold">R$ {formatCurrency(record.marketing_data.cost_per_sale || 0)}</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Observações */}
+                        {record.notes && (
+                          <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                            <p className="text-xs font-semibold text-yellow-900 mb-1">📝 Observações</p>
+                            <p className="text-sm text-gray-700">{record.notes}</p>
+                          </div>
+                        )}
                       </div>
                     )}
                   </CardContent>
