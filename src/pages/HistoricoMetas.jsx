@@ -190,13 +190,18 @@ export default function HistoricoMetas() {
           const currentMonthRecords = goalHistory.filter(
             record => record.entity_type === "workshop" && record.month === currentMonth
           );
-          
+
           const monthlyActualRevenue = currentMonthRecords.reduce(
             (sum, record) => sum + (record.achieved_total || 0), 
             0
           );
 
-          const monthlyGoal = workshop.monthly_goals?.projected_revenue || 0;
+          // Puxar meta projetada corretamente: Melhor Mês + % Crescimento
+          const bestMonthRevenue = workshop.best_month_history?.revenue_total || 0;
+          const growthPercentage = workshop.monthly_goals?.growth_percentage || 10;
+          const monthlyGoal = bestMonthRevenue > 0 
+            ? bestMonthRevenue * (1 + growthPercentage / 100)
+            : workshop.monthly_goals?.projected_revenue || 0;
           const actualRevenue = Math.max(
             monthlyActualRevenue,
             workshop.monthly_goals?.actual_revenue_achieved || 0
@@ -313,8 +318,11 @@ export default function HistoricoMetas() {
             0
           );
 
-          // Pegar metas do colaborador
-          const monthlyGoal = selectedEmployee.monthly_goals?.individual_goal || 0;
+          // Puxar meta projetada corretamente: Melhor Mês + % Crescimento
+          const bestMonthRevenue = selectedEmployee.best_month_history?.revenue_total || 0;
+          const growthPercentage = selectedEmployee.monthly_goals?.growth_percentage || 10;
+          const monthlyGoal = selectedEmployee.monthly_goals?.individual_goal || 
+            (bestMonthRevenue > 0 ? bestMonthRevenue * (1 + growthPercentage / 100) : 0);
           const dailyGoalCalculated = monthlyGoal > 0 ? monthlyGoal / 22 : 0;
           const dailyGoal = selectedEmployee.monthly_goals?.daily_projected_goal || dailyGoalCalculated;
           

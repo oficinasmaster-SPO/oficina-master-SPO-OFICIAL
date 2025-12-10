@@ -38,8 +38,14 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
       tcmp2: 0,
       pave_commercial: 0,
       kit_master: 0,
+      clients_scheduled_base: 0,
+      clients_delivered_base: 0,
       sales_base: 0,
+      clients_scheduled_mkt: 0,
+      clients_delivered_mkt: 0,
       sales_marketing: 0,
+      clients_scheduled_referral: 0,
+      clients_delivered_referral: 0,
       clients_delivered: 0,
       marketing: {
         leads_generated: 0,
@@ -98,8 +104,14 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
         tcmp2: 0,
         pave_commercial: 0,
         kit_master: 0,
+        clients_scheduled_base: 0,
+        clients_delivered_base: 0,
         sales_base: 0,
+        clients_scheduled_mkt: 0,
+        clients_delivered_mkt: 0,
         sales_marketing: 0,
+        clients_scheduled_referral: 0,
+        clients_delivered_referral: 0,
         clients_delivered: 0,
         marketing: {
           leads_generated: 0,
@@ -607,9 +619,9 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
               {/* Comercial */}
               <div className="bg-white p-4 rounded-lg border-2 border-purple-200">
                 <h4 className="font-semibold text-purple-900 mb-4">🎯 Comercial</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div>
-                    <Label>PAVE - Comercial (Leads Base - qtd)</Label>
+                    <Label>PAVE - Comercial (qtd)</Label>
                     <Input
                       type="number"
                       value={formData.best_month_history.pave_commercial}
@@ -618,20 +630,64 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                     />
                   </div>
                   <div>
-                    <Label>Kit Master (R$)</Label>
+                    <Label>Kit Master (qtd)</Label>
                     <Input
                       type="number"
                       value={formData.best_month_history.kit_master}
-                      onChange={(e) => updateBestMonth('kit_master', parseFloat(e.target.value) || 0)}
+                      onChange={(e) => updateBestMonth('kit_master', parseInt(e.target.value) || 0)}
+                      disabled={!editing}
+                    />
+                  </div>
+                </div>
+                
+                {/* Clientes Base */}
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label>Clientes Agendados Base (QTD)</Label>
+                    <Input
+                      type="number"
+                      value={formData.best_month_history.clients_scheduled_base}
+                      onChange={(e) => updateBestMonth('clients_scheduled_base', parseInt(e.target.value) || 0)}
                       disabled={!editing}
                     />
                   </div>
                   <div>
-                    <Label>Vendas Comercial Base (R$)</Label>
+                    <Label>Clientes Entregues Base (QTD)</Label>
+                    <Input
+                      type="number"
+                      value={formData.best_month_history.clients_delivered_base}
+                      onChange={(e) => updateBestMonth('clients_delivered_base', parseInt(e.target.value) || 0)}
+                      disabled={!editing}
+                    />
+                  </div>
+                  <div>
+                    <Label>Vendas Clientes Base (R$)</Label>
                     <Input
                       type="number"
                       value={formData.best_month_history.sales_base}
                       onChange={(e) => updateBestMonth('sales_base', parseFloat(e.target.value) || 0)}
+                      disabled={!editing}
+                    />
+                  </div>
+                </div>
+
+                {/* Clientes Marketing */}
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label>Clientes Agendados Marketing (qtd)</Label>
+                    <Input
+                      type="number"
+                      value={formData.best_month_history.clients_scheduled_mkt}
+                      onChange={(e) => updateBestMonth('clients_scheduled_mkt', parseInt(e.target.value) || 0)}
+                      disabled={!editing}
+                    />
+                  </div>
+                  <div>
+                    <Label>Clientes Entregues Marketing (qtd)</Label>
+                    <Input
+                      type="number"
+                      value={formData.best_month_history.clients_delivered_mkt}
+                      onChange={(e) => updateBestMonth('clients_delivered_mkt', parseInt(e.target.value) || 0)}
                       disabled={!editing}
                     />
                   </div>
@@ -645,14 +701,38 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                     />
                   </div>
                 </div>
+
+                {/* Clientes Indicação */}
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label>Clientes Agendados Indicação (qtd)</Label>
+                    <Input
+                      type="number"
+                      value={formData.best_month_history.clients_scheduled_referral}
+                      onChange={(e) => updateBestMonth('clients_scheduled_referral', parseInt(e.target.value) || 0)}
+                      disabled={!editing}
+                    />
+                  </div>
+                  <div>
+                    <Label>Clientes Entregues Indicação (qtd)</Label>
+                    <Input
+                      type="number"
+                      value={formData.best_month_history.clients_delivered_referral}
+                      onChange={(e) => updateBestMonth('clients_delivered_referral', parseInt(e.target.value) || 0)}
+                      disabled={!editing}
+                    />
+                  </div>
+                </div>
+
+                {/* Valor Faturado Total */}
                 <div className="mt-4">
-                  <Label>Clientes Entregues (QTD)</Label>
+                  <Label>Valor Faturado Total (Auto - Soma das Vendas)</Label>
                   <Input
-                    type="number"
-                    value={formData.best_month_history.clients_delivered}
-                    onChange={(e) => updateBestMonth('clients_delivered', parseInt(e.target.value) || 0)}
-                    disabled={!editing}
+                    value={formatCurrency((formData.best_month_history.sales_base || 0) + (formData.best_month_history.sales_marketing || 0))}
+                    disabled
+                    className="bg-purple-100 font-bold text-purple-700"
                   />
+                  <p className="text-xs text-gray-500 mt-1">Vendas Base + Vendas Marketing</p>
                 </div>
               </div>
 
@@ -1090,44 +1170,100 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                 {/* Comercial */}
                 <div className="bg-purple-50 p-4 rounded-lg border-2 border-purple-200">
                   <h4 className="font-semibold text-purple-900 mb-3">🎯 Comercial</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div>
-                      <p className="text-xs text-gray-600 mb-1">PAVE - Comercial (Leads Base)</p>
+                      <p className="text-xs text-gray-600 mb-1">PAVE - Comercial (qtd)</p>
                       <p className="text-lg font-bold text-purple-600">
                         {formatInteger((formData.best_month_history.pave_commercial || 0) * (1 + growthPercentage / 100))}
                       </p>
                       <p className="text-xs text-gray-500">Base: {formatInteger(formData.best_month_history.pave_commercial || 0)}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-600 mb-1">Kit Master (R$)</p>
+                      <p className="text-xs text-gray-600 mb-1">Kit Master (qtd)</p>
                       <p className="text-lg font-bold text-purple-600">
-                        R$ {formatCurrency((formData.best_month_history.kit_master || 0) * (1 + growthPercentage / 100))}
+                        {formatInteger((formData.best_month_history.kit_master || 0) * (1 + growthPercentage / 100))}
                       </p>
-                      <p className="text-xs text-gray-500">Base: {formatCurrency(formData.best_month_history.kit_master || 0)}</p>
+                      <p className="text-xs text-gray-500">Base: {formatInteger(formData.best_month_history.kit_master || 0)}</p>
+                    </div>
+                  </div>
+
+                  {/* Clientes Base */}
+                  <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4 bg-blue-50 p-3 rounded-lg">
+                    <div>
+                      <p className="text-xs text-blue-700 mb-1">Clientes Agendados Base (QTD)</p>
+                      <p className="text-lg font-bold text-blue-600">
+                        {formatInteger((formData.best_month_history.clients_scheduled_base || 0) * (1 + growthPercentage / 100))}
+                      </p>
+                      <p className="text-xs text-gray-500">Base: {formatInteger(formData.best_month_history.clients_scheduled_base || 0)}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-600 mb-1">Vendas Base (R$)</p>
-                      <p className="text-lg font-bold text-purple-600">
+                      <p className="text-xs text-blue-700 mb-1">Clientes Entregues Base (QTD)</p>
+                      <p className="text-lg font-bold text-blue-600">
+                        {formatInteger((formData.best_month_history.clients_delivered_base || 0) * (1 + growthPercentage / 100))}
+                      </p>
+                      <p className="text-xs text-gray-500">Base: {formatInteger(formData.best_month_history.clients_delivered_base || 0)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-blue-700 mb-1">Vendas Clientes Base (R$)</p>
+                      <p className="text-lg font-bold text-blue-600">
                         R$ {formatCurrency((formData.best_month_history.sales_base || 0) * (1 + growthPercentage / 100))}
                       </p>
                       <p className="text-xs text-gray-500">Base: {formatCurrency(formData.best_month_history.sales_base || 0)}</p>
                     </div>
+                  </div>
+
+                  {/* Clientes Marketing */}
+                  <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4 bg-pink-50 p-3 rounded-lg">
                     <div>
-                      <p className="text-xs text-gray-600 mb-1">Vendas Marketing (R$)</p>
-                      <p className="text-lg font-bold text-purple-600">
+                      <p className="text-xs text-pink-700 mb-1">Clientes Agendados Marketing (qtd)</p>
+                      <p className="text-lg font-bold text-pink-600">
+                        {formatInteger((formData.best_month_history.clients_scheduled_mkt || 0) * (1 + growthPercentage / 100))}
+                      </p>
+                      <p className="text-xs text-gray-500">Base: {formatInteger(formData.best_month_history.clients_scheduled_mkt || 0)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-pink-700 mb-1">Clientes Entregues Marketing (qtd)</p>
+                      <p className="text-lg font-bold text-pink-600">
+                        {formatInteger((formData.best_month_history.clients_delivered_mkt || 0) * (1 + growthPercentage / 100))}
+                      </p>
+                      <p className="text-xs text-gray-500">Base: {formatInteger(formData.best_month_history.clients_delivered_mkt || 0)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-pink-700 mb-1">Vendas Lead Marketing (R$)</p>
+                      <p className="text-lg font-bold text-pink-600">
                         R$ {formatCurrency((formData.best_month_history.sales_marketing || 0) * (1 + growthPercentage / 100))}
                       </p>
                       <p className="text-xs text-gray-500">Base: {formatCurrency(formData.best_month_history.sales_marketing || 0)}</p>
                     </div>
                   </div>
-                  <div className="mt-4">
+
+                  {/* Clientes Indicação */}
+                  <div className="mt-4 grid grid-cols-2 md:grid-cols-2 gap-4 bg-orange-50 p-3 rounded-lg">
                     <div>
-                      <p className="text-xs text-gray-600 mb-1">Clientes Entregues (qtd)</p>
-                      <p className="text-lg font-bold text-purple-600">
-                        {Math.round((formData.best_month_history.clients_delivered || 0) * (1 + growthPercentage / 100))}
+                      <p className="text-xs text-orange-700 mb-1">Clientes Agendados Indicação (qtd)</p>
+                      <p className="text-lg font-bold text-orange-600">
+                        {formatInteger((formData.best_month_history.clients_scheduled_referral || 0) * (1 + growthPercentage / 100))}
                       </p>
-                      <p className="text-xs text-gray-500">Base: {formData.best_month_history.clients_delivered || 0}</p>
+                      <p className="text-xs text-gray-500">Base: {formatInteger(formData.best_month_history.clients_scheduled_referral || 0)}</p>
                     </div>
+                    <div>
+                      <p className="text-xs text-orange-700 mb-1">Clientes Entregues Indicação (qtd)</p>
+                      <p className="text-lg font-bold text-orange-600">
+                        {formatInteger((formData.best_month_history.clients_delivered_referral || 0) * (1 + growthPercentage / 100))}
+                      </p>
+                      <p className="text-xs text-gray-500">Base: {formatInteger(formData.best_month_history.clients_delivered_referral || 0)}</p>
+                    </div>
+                  </div>
+
+                  {/* Valor Faturado Total */}
+                  <div className="mt-4">
+                    <Label>Valor Faturado Total (Auto - Soma das Vendas)</Label>
+                    <Input
+                      value={formatCurrency((formData.best_month_history.sales_base || 0) + (formData.best_month_history.sales_marketing || 0))}
+                      disabled
+                      className="bg-purple-100 font-bold text-purple-700"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Vendas Base + Vendas Marketing</p>
                   </div>
                 </div>
 
