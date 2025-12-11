@@ -119,6 +119,24 @@ export default function CadastroColaborador() {
         production_percentage: productionPercentage
       });
 
+      // Criar registro de User vinculado à empresa
+      try {
+        await base44.entities.User.create({
+          email: formData.email,
+          full_name: formData.full_name,
+          workshop_id: workshop.id,
+          position: formData.position,
+          job_role: formData.job_role,
+          area: formData.area,
+          telefone: formData.telefone,
+          hire_date: formData.hire_date,
+          user_status: formData.status,
+          role: 'user'
+        });
+      } catch (userError) {
+        console.log("Usuário já existe ou erro ao criar:", userError);
+      }
+
       toast.success("Colaborador cadastrado!");
       
       // Perguntar ou redirecionar para convite
