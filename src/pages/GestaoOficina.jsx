@@ -311,7 +311,7 @@ export default function GestaoOficina() {
               <>
                 <TabsTrigger value="aceleracao" className="text-xs md:text-sm bg-purple-50 text-purple-700 data-[state=active]:bg-purple-100 data-[state=active]:text-purple-900">
                   <Briefcase className="w-4 h-4 mr-1" />
-                  <span className="hidden sm:inline">Painel Acompanhamento</span>
+                  <span className="hidden sm:inline">Aceleração</span>
                 </TabsTrigger>
                 <TabsTrigger value="cronograma" className="text-xs md:text-sm bg-indigo-50 text-indigo-700 data-[state=active]:bg-indigo-100 data-[state=active]:text-indigo-900">
                   <CalendarIcon className="w-4 h-4 mr-1" />

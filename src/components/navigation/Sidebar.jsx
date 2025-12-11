@@ -464,22 +464,8 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       ]
     },
     {
-      id: 'painel_cliente',
-      label: 'Meu Plano',
-      icon: Target,
-      items: [
-        { 
-          name: 'Painel do Cliente', 
-          href: createPageUrl('PainelCliente'), 
-          icon: LayoutDashboard,
-          description: 'Seu progresso e tarefas',
-          highlight: true
-        }
-      ]
-    },
-    {
       id: 'aceleracao',
-      label: 'Painel de Acompanhamento',
+      label: 'Aceleração',
       icon: Briefcase,
       aceleradorOnly: true,
       items: [
@@ -502,13 +488,6 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('RegistrarAtendimento'), 
           icon: FilePenLine,
           description: 'Agendar e documentar acelerações',
-          aceleradorOnly: true
-        },
-        { 
-          name: 'Gerenciar Templates', 
-          href: createPageUrl('GerenciarTemplatesAtendimento'), 
-          icon: FileText,
-          description: 'Templates personalizados',
           aceleradorOnly: true
         }
       ]

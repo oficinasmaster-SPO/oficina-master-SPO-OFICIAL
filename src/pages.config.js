@@ -110,8 +110,6 @@ import CronogramaConsultoria from './pages/CronogramaConsultoria';
 import RegistrarAtendimento from './pages/RegistrarAtendimento';
 import CronogramaDetalhado from './pages/CronogramaDetalhado';
 import AvaliarAtendimento from './pages/AvaliarAtendimento';
-import PainelCliente from './pages/PainelCliente';
-import GerenciarTemplatesAtendimento from './pages/GerenciarTemplatesAtendimento';
 import __Layout from './Layout.jsx';
 
 
@@ -228,8 +226,6 @@ export const PAGES = {
     "RegistrarAtendimento": RegistrarAtendimento,
     "CronogramaDetalhado": CronogramaDetalhado,
     "AvaliarAtendimento": AvaliarAtendimento,
-    "PainelCliente": PainelCliente,
-    "GerenciarTemplatesAtendimento": GerenciarTemplatesAtendimento,
 }
 
 export const pagesConfig = {
