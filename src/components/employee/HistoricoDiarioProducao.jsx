@@ -7,6 +7,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus, Calendar, DollarSign, Edit, Trash2, Save, X, Target, TrendingUp, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
+import RegistroComercial from "./RegistroComercial";
+import RegistroMarketing from "./RegistroMarketing";
+import RegistroTecnico from "./RegistroTecnico";
+import RegistroGenerico from "./RegistroGenerico";
 
 export default function HistoricoDiarioProducao({ employee, onUpdate }) {
   const [isAdding, setIsAdding] = useState(false);
@@ -21,7 +25,28 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
     date: new Date().toISOString().split('T')[0],
     parts_revenue: 0,
     services_revenue: 0,
-    notes: ""
+    notes: "",
+    // Comercial
+    clientes_agendados_base: 0,
+    clientes_agendados_marketing: 0,
+    clientes_entregues_marketing: 0,
+    vendas_leads_marketing: 0,
+    // Marketing
+    leads_gerados: 0,
+    leads_agendados: 0,
+    leads_compareceram: 0,
+    leads_vendidos: 0,
+    valor_investido_trafego: 0,
+    valor_faturado_leads: 0,
+    // Técnico
+    faturamento_pecas: 0,
+    faturamento_servicos: 0,
+    qgp_aplicados: 0,
+    clientes_atendidos: 0,
+    // Genérico
+    atividades_concluidas: 0,
+    horas_trabalhadas: 0,
+    observacoes: ""
   });
 
   const dailyHistory = employee.daily_production_history || [];
@@ -44,14 +69,48 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
   }, [employee]);
 
   const handleSubmit = async () => {
-    const totalRevenue = parseFloat(formData.parts_revenue) + parseFloat(formData.services_revenue);
+    // Calcula faturamento baseado na área/função do colaborador
+    let totalRevenue = 0;
+    
+    if (employee.area === 'tecnico') {
+      totalRevenue = parseFloat(formData.faturamento_pecas || 0) + parseFloat(formData.faturamento_servicos || 0);
+    } else if (employee.area === 'comercial' || employee.area === 'marketing') {
+      totalRevenue = parseFloat(formData.vendas_leads_marketing || 0) + parseFloat(formData.valor_faturado_leads || 0);
+    } else {
+      totalRevenue = parseFloat(formData.parts_revenue || 0) + parseFloat(formData.services_revenue || 0);
+    }
     
     const newEntry = {
       date: formData.date,
       parts_revenue: parseFloat(formData.parts_revenue) || 0,
       services_revenue: parseFloat(formData.services_revenue) || 0,
       total_revenue: totalRevenue,
-      notes: formData.notes
+      notes: formData.notes,
+      // Dados específicos por área
+      area_data: {
+        // Comercial
+        clientes_agendados_base: parseFloat(formData.clientes_agendados_base) || 0,
+        clientes_agendados_marketing: parseFloat(formData.clientes_agendados_marketing) || 0,
+        clientes_entregues_marketing: parseFloat(formData.clientes_entregues_marketing) || 0,
+        vendas_leads_marketing: parseFloat(formData.vendas_leads_marketing) || 0,
+        // Marketing
+        leads_gerados: parseFloat(formData.leads_gerados) || 0,
+        leads_agendados: parseFloat(formData.leads_agendados) || 0,
+        leads_compareceram: parseFloat(formData.leads_compareceram) || 0,
+        leads_vendidos: parseFloat(formData.leads_vendidos) || 0,
+        valor_investido_trafego: parseFloat(formData.valor_investido_trafego) || 0,
+        valor_faturado_leads: parseFloat(formData.valor_faturado_leads) || 0,
+        custo_por_venda: formData.leads_vendidos > 0 ? (parseFloat(formData.valor_investido_trafego) || 0) / parseFloat(formData.leads_vendidos) : 0,
+        // Técnico
+        faturamento_pecas: parseFloat(formData.faturamento_pecas) || 0,
+        faturamento_servicos: parseFloat(formData.faturamento_servicos) || 0,
+        qgp_aplicados: parseFloat(formData.qgp_aplicados) || 0,
+        clientes_atendidos: parseFloat(formData.clientes_atendidos) || 0,
+        // Genérico
+        atividades_concluidas: parseFloat(formData.atividades_concluidas) || 0,
+        horas_trabalhadas: parseFloat(formData.horas_trabalhadas) || 0,
+        observacoes: formData.observacoes || ""
+      }
     };
 
     let updatedHistory;
@@ -125,9 +184,27 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
     const entry = dailyHistory[index];
     setFormData({
       date: entry.date,
-      parts_revenue: entry.parts_revenue,
-      services_revenue: entry.services_revenue,
-      notes: entry.notes || ""
+      parts_revenue: entry.parts_revenue || 0,
+      services_revenue: entry.services_revenue || 0,
+      notes: entry.notes || "",
+      // Carregar dados específicos da área se existirem
+      clientes_agendados_base: entry.area_data?.clientes_agendados_base || 0,
+      clientes_agendados_marketing: entry.area_data?.clientes_agendados_marketing || 0,
+      clientes_entregues_marketing: entry.area_data?.clientes_entregues_marketing || 0,
+      vendas_leads_marketing: entry.area_data?.vendas_leads_marketing || 0,
+      leads_gerados: entry.area_data?.leads_gerados || 0,
+      leads_agendados: entry.area_data?.leads_agendados || 0,
+      leads_compareceram: entry.area_data?.leads_compareceram || 0,
+      leads_vendidos: entry.area_data?.leads_vendidos || 0,
+      valor_investido_trafego: entry.area_data?.valor_investido_trafego || 0,
+      valor_faturado_leads: entry.area_data?.valor_faturado_leads || 0,
+      faturamento_pecas: entry.area_data?.faturamento_pecas || 0,
+      faturamento_servicos: entry.area_data?.faturamento_servicos || 0,
+      qgp_aplicados: entry.area_data?.qgp_aplicados || 0,
+      clientes_atendidos: entry.area_data?.clientes_atendidos || 0,
+      atividades_concluidas: entry.area_data?.atividades_concluidas || 0,
+      horas_trabalhadas: entry.area_data?.horas_trabalhadas || 0,
+      observacoes: entry.area_data?.observacoes || ""
     });
     setEditingIndex(index);
     setIsAdding(true);
@@ -185,7 +262,24 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
       date: new Date().toISOString().split('T')[0],
       parts_revenue: 0,
       services_revenue: 0,
-      notes: ""
+      notes: "",
+      clientes_agendados_base: 0,
+      clientes_agendados_marketing: 0,
+      clientes_entregues_marketing: 0,
+      vendas_leads_marketing: 0,
+      leads_gerados: 0,
+      leads_agendados: 0,
+      leads_compareceram: 0,
+      leads_vendidos: 0,
+      valor_investido_trafego: 0,
+      valor_faturado_leads: 0,
+      faturamento_pecas: 0,
+      faturamento_servicos: 0,
+      qgp_aplicados: 0,
+      clientes_atendidos: 0,
+      atividades_concluidas: 0,
+      horas_trabalhadas: 0,
+      observacoes: ""
     });
     setIsAdding(false);
     setEditingIndex(null);
@@ -507,33 +601,47 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-4">
                 <div>
                   <Label>Data</Label>
                   <Input
                     type="date"
                     value={formData.date}
                     onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    className="w-full md:w-64"
                   />
                 </div>
-                <div>
-                  <Label>Faturamento Peças (R$)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={formData.parts_revenue}
-                    onChange={(e) => setFormData({ ...formData, parts_revenue: e.target.value })}
+
+                {/* Formulário específico por área */}
+                {(employee.area === 'comercial' || employee.job_role === 'comercial' || employee.job_role === 'consultor_vendas') && (
+                  <RegistroComercial 
+                    formData={formData}
+                    onChange={(data) => setFormData({ ...formData, ...data })}
                   />
-                </div>
-                <div>
-                  <Label>Faturamento Serviços (R$)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={formData.services_revenue}
-                    onChange={(e) => setFormData({ ...formData, services_revenue: e.target.value })}
+                )}
+
+                {(employee.area === 'marketing' || employee.job_role === 'marketing') && (
+                  <RegistroMarketing
+                    formData={formData}
+                    onChange={(data) => setFormData({ ...formData, ...data })}
                   />
-                </div>
+                )}
+
+                {(employee.area === 'tecnico' || employee.job_role === 'tecnico' || employee.job_role === 'lider_tecnico') && (
+                  <RegistroTecnico
+                    formData={formData}
+                    onChange={(data) => setFormData({ ...formData, ...data })}
+                  />
+                )}
+
+                {!['comercial', 'marketing', 'tecnico'].includes(employee.area) && 
+                 !['comercial', 'consultor_vendas', 'marketing', 'tecnico', 'lider_tecnico'].includes(employee.job_role) && (
+                  <RegistroGenerico
+                    formData={formData}
+                    onChange={(data) => setFormData({ ...formData, ...data })}
+                    jobRole={employee.job_role}
+                  />
+                )}
               </div>
               <div>
                 <Label>Observações (Opcional)</Label>
