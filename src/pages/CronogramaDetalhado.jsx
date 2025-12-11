@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Calendar, 
   CheckCircle2, 
@@ -29,6 +30,8 @@ export default function CronogramaDetalhado() {
   const queryClient = useQueryClient();
   const [selectedModulo, setSelectedModulo] = useState(null);
   const [showAvaliacaoModal, setShowAvaliacaoModal] = useState(false);
+  const [editMode, setEditMode] = useState({});
+  const [editData, setEditData] = useState({});
 
   // Carregar usuário e workshop
   const { data: user } = useQuery({
@@ -119,6 +122,29 @@ export default function CronogramaDetalhado() {
     if (!progressos || progressos.length === 0) return 0;
     const concluidos = progressos.filter(p => p.situacao === 'concluido').length;
     return Math.round((concluidos / progressos.length) * 100);
+  };
+
+  const handleStartEdit = (progresso, field) => {
+    setEditMode({ ...editMode, [`${progresso.id}_${field}`]: true });
+    setEditData({ 
+      ...editData, 
+      [`${progresso.id}_${field}`]: progresso[field] || (field.includes('data') ? '' : 0)
+    });
+  };
+
+  const handleSaveEdit = async (progresso, field) => {
+    const value = editData[`${progresso.id}_${field}`];
+    
+    await updateProgressoMutation.mutateAsync({
+      id: progresso.id,
+      data: { [field]: value }
+    });
+    
+    setEditMode({ ...editMode, [`${progresso.id}_${field}`]: false });
+  };
+
+  const handleCancelEdit = (progresso, field) => {
+    setEditMode({ ...editMode, [`${progresso.id}_${field}`]: false });
   };
 
   if (isLoading) {
@@ -234,81 +260,247 @@ export default function CronogramaDetalhado() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {progressos.map((prog) => (
-                    <tr 
-                      key={prog.id}
-                      className="hover:bg-gray-50 cursor-pointer transition-colors"
-                      onClick={() => setSelectedModulo(prog)}
-                    >
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          {getSituacaoIcon(prog.situacao)}
-                          <div>
-                            <p className="font-medium text-gray-900">{prog.modulo_codigo}</p>
-                            <p className="text-sm text-gray-600">{prog.modulo_nome}</p>
+                  {progressos.map((prog) => {
+                    const isEditing = editMode[`${prog.id}_situacao`];
+                    
+                    return (
+                      <tr 
+                        key={prog.id}
+                        className="hover:bg-gray-50 transition-colors"
+                      >
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            {getSituacaoIcon(prog.situacao)}
+                            <div>
+                              <p className="font-medium text-gray-900">{prog.modulo_codigo}</p>
+                              <p className="text-sm text-gray-600">{prog.modulo_nome}</p>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <div className="text-sm">
-                          <p className="text-gray-600">
-                            {prog.data_inicio_previsto ? format(new Date(prog.data_inicio_previsto), 'dd/MM/yyyy') : '-'}
-                          </p>
-                          {prog.data_inicio_realizado && (
-                            <p className="text-green-600 font-medium">
-                              {format(new Date(prog.data_inicio_realizado), 'dd/MM/yyyy')}
+                        </td>
+                        
+                        {/* Início - Editável por admin */}
+                        <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                          <div className="text-sm">
+                            <p className="text-gray-600">
+                              {prog.data_inicio_previsto ? format(new Date(prog.data_inicio_previsto), 'dd/MM/yyyy') : '-'}
                             </p>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <div className="text-sm">
-                          <p className="text-gray-600">
-                            {prog.data_conclusao_previsto ? format(new Date(prog.data_conclusao_previsto), 'dd/MM/yyyy') : '-'}
-                          </p>
-                          {prog.data_conclusao_realizado && (
-                            <p className="text-green-600 font-medium">
-                              {format(new Date(prog.data_conclusao_realizado), 'dd/MM/yyyy')}
-                            </p>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <span className="text-sm font-medium">
-                          {prog.atividades_realizadas || 0}/{prog.atividades_previstas || 0}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <span className="text-sm font-medium">
-                          {prog.tarefas_entregues || 0}/{prog.tarefas_solicitadas || 0}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        {prog.avaliacao_participante?.nota ? (
-                          <div className="flex items-center justify-center gap-1">
-                            <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                            <span className="font-medium">{prog.avaliacao_participante.nota}/10</span>
+                            {user?.role === 'admin' ? (
+                              editMode[`${prog.id}_data_inicio_realizado`] ? (
+                                <div className="flex items-center gap-1 justify-center">
+                                  <Input
+                                    type="date"
+                                    className="h-7 w-32 text-xs"
+                                    value={editData[`${prog.id}_data_inicio_realizado`] || ''}
+                                    onChange={(e) => setEditData({
+                                      ...editData,
+                                      [`${prog.id}_data_inicio_realizado`]: e.target.value
+                                    })}
+                                  />
+                                  <Button size="sm" className="h-7 px-2" onClick={() => handleSaveEdit(prog, 'data_inicio_realizado')}>✓</Button>
+                                  <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => handleCancelEdit(prog, 'data_inicio_realizado')}>✕</Button>
+                                </div>
+                              ) : (
+                                <p 
+                                  className="text-green-600 font-medium cursor-pointer hover:underline"
+                                  onClick={() => handleStartEdit(prog, 'data_inicio_realizado')}
+                                >
+                                  {prog.data_inicio_realizado ? format(new Date(prog.data_inicio_realizado), 'dd/MM/yyyy') : '+ Registrar'}
+                                </p>
+                              )
+                            ) : (
+                              prog.data_inicio_realizado && (
+                                <p className="text-green-600 font-medium">
+                                  {format(new Date(prog.data_inicio_realizado), 'dd/MM/yyyy')}
+                                </p>
+                              )
+                            )}
                           </div>
-                        ) : (
-                          <span className="text-gray-400">-</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        {prog.avaliacao_programa?.resultado ? (
-                          <Badge className="bg-green-100 text-green-800">
-                            {prog.avaliacao_programa.resultado}
-                          </Badge>
-                        ) : (
-                          <span className="text-gray-400">-</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <Badge className={getSituacaoColor(prog.situacao)}>
-                          {prog.situacao.replace(/_/g, ' ')}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        
+                        {/* Conclusão - Editável por admin */}
+                        <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                          <div className="text-sm">
+                            <p className="text-gray-600">
+                              {prog.data_conclusao_previsto ? format(new Date(prog.data_conclusao_previsto), 'dd/MM/yyyy') : '-'}
+                            </p>
+                            {user?.role === 'admin' ? (
+                              editMode[`${prog.id}_data_conclusao_realizado`] ? (
+                                <div className="flex items-center gap-1 justify-center">
+                                  <Input
+                                    type="date"
+                                    className="h-7 w-32 text-xs"
+                                    value={editData[`${prog.id}_data_conclusao_realizado`] || ''}
+                                    onChange={(e) => setEditData({
+                                      ...editData,
+                                      [`${prog.id}_data_conclusao_realizado`]: e.target.value
+                                    })}
+                                  />
+                                  <Button size="sm" className="h-7 px-2" onClick={() => handleSaveEdit(prog, 'data_conclusao_realizado')}>✓</Button>
+                                  <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => handleCancelEdit(prog, 'data_conclusao_realizado')}>✕</Button>
+                                </div>
+                              ) : (
+                                <p 
+                                  className="text-green-600 font-medium cursor-pointer hover:underline"
+                                  onClick={() => handleStartEdit(prog, 'data_conclusao_realizado')}
+                                >
+                                  {prog.data_conclusao_realizado ? format(new Date(prog.data_conclusao_realizado), 'dd/MM/yyyy') : '+ Registrar'}
+                                </p>
+                              )
+                            ) : (
+                              prog.data_conclusao_realizado && (
+                                <p className="text-green-600 font-medium">
+                                  {format(new Date(prog.data_conclusao_realizado), 'dd/MM/yyyy')}
+                                </p>
+                              )
+                            )}
+                          </div>
+                        </td>
+                        
+                        {/* Atividades - Editável */}
+                        <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                          {user?.role === 'admin' && editMode[`${prog.id}_atividades`] ? (
+                            <div className="flex items-center gap-1 justify-center">
+                              <Input
+                                type="number"
+                                className="h-7 w-12 text-xs"
+                                value={editData[`${prog.id}_atividades_realizadas`] || 0}
+                                onChange={(e) => setEditData({
+                                  ...editData,
+                                  [`${prog.id}_atividades_realizadas`]: parseInt(e.target.value)
+                                })}
+                              />
+                              <span className="text-sm">/</span>
+                              <Input
+                                type="number"
+                                className="h-7 w-12 text-xs"
+                                value={editData[`${prog.id}_atividades_previstas`] || 0}
+                                onChange={(e) => setEditData({
+                                  ...editData,
+                                  [`${prog.id}_atividades_previstas`]: parseInt(e.target.value)
+                                })}
+                              />
+                              <Button size="sm" className="h-7 px-2" onClick={async () => {
+                                await updateProgressoMutation.mutateAsync({
+                                  id: prog.id,
+                                  data: {
+                                    atividades_realizadas: editData[`${prog.id}_atividades_realizadas`],
+                                    atividades_previstas: editData[`${prog.id}_atividades_previstas`]
+                                  }
+                                });
+                                setEditMode({ ...editMode, [`${prog.id}_atividades`]: false });
+                              }}>✓</Button>
+                            </div>
+                          ) : (
+                            <span 
+                              className={`text-sm font-medium ${user?.role === 'admin' ? 'cursor-pointer hover:text-blue-600' : ''}`}
+                              onClick={() => user?.role === 'admin' && handleStartEdit(prog, 'atividades')}
+                            >
+                              {prog.atividades_realizadas || 0}/{prog.atividades_previstas || 0}
+                            </span>
+                          )}
+                        </td>
+                        
+                        {/* Tarefas - Editável */}
+                        <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                          {user?.role === 'admin' && editMode[`${prog.id}_tarefas`] ? (
+                            <div className="flex items-center gap-1 justify-center">
+                              <Input
+                                type="number"
+                                className="h-7 w-12 text-xs"
+                                value={editData[`${prog.id}_tarefas_entregues`] || 0}
+                                onChange={(e) => setEditData({
+                                  ...editData,
+                                  [`${prog.id}_tarefas_entregues`]: parseInt(e.target.value)
+                                })}
+                              />
+                              <span className="text-sm">/</span>
+                              <Input
+                                type="number"
+                                className="h-7 w-12 text-xs"
+                                value={editData[`${prog.id}_tarefas_solicitadas`] || 0}
+                                onChange={(e) => setEditData({
+                                  ...editData,
+                                  [`${prog.id}_tarefas_solicitadas`]: parseInt(e.target.value)
+                                })}
+                              />
+                              <Button size="sm" className="h-7 px-2" onClick={async () => {
+                                await updateProgressoMutation.mutateAsync({
+                                  id: prog.id,
+                                  data: {
+                                    tarefas_entregues: editData[`${prog.id}_tarefas_entregues`],
+                                    tarefas_solicitadas: editData[`${prog.id}_tarefas_solicitadas`]
+                                  }
+                                });
+                                setEditMode({ ...editMode, [`${prog.id}_tarefas`]: false });
+                              }}>✓</Button>
+                            </div>
+                          ) : (
+                            <span 
+                              className={`text-sm font-medium ${user?.role === 'admin' ? 'cursor-pointer hover:text-blue-600' : ''}`}
+                              onClick={() => user?.role === 'admin' && handleStartEdit(prog, 'tarefas')}
+                            >
+                              {prog.tarefas_entregues || 0}/{prog.tarefas_solicitadas || 0}
+                            </span>
+                          )}
+                        </td>
+                        
+                        <td className="px-4 py-3 text-center">
+                          {prog.avaliacao_participante?.nota ? (
+                            <div className="flex items-center justify-center gap-1">
+                              <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                              <span className="font-medium">{prog.avaliacao_participante.nota}/10</span>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          {prog.avaliacao_programa?.resultado ? (
+                            <Badge className="bg-green-100 text-green-800">
+                              {prog.avaliacao_programa.resultado}
+                            </Badge>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </td>
+                        
+                        {/* Situação - Editável por admin */}
+                        <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                          {user?.role === 'admin' && editMode[`${prog.id}_situacao`] ? (
+                            <div className="flex items-center gap-1 justify-center">
+                              <Select
+                                value={editData[`${prog.id}_situacao`] || prog.situacao}
+                                onValueChange={(value) => setEditData({
+                                  ...editData,
+                                  [`${prog.id}_situacao`]: value
+                                })}
+                              >
+                                <SelectTrigger className="h-7 w-36 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="nao_iniciado">Não Iniciado</SelectItem>
+                                  <SelectItem value="em_andamento">Em Andamento</SelectItem>
+                                  <SelectItem value="concluido">Concluído</SelectItem>
+                                  <SelectItem value="atrasado">Atrasado</SelectItem>
+                                  <SelectItem value="cancelado">Cancelado</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <Button size="sm" className="h-7 px-2" onClick={() => handleSaveEdit(prog, 'situacao')}>✓</Button>
+                              <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => handleCancelEdit(prog, 'situacao')}>✕</Button>
+                            </div>
+                          ) : (
+                            <Badge 
+                              className={`${getSituacaoColor(prog.situacao)} ${user?.role === 'admin' ? 'cursor-pointer hover:ring-2 hover:ring-blue-300' : ''}`}
+                              onClick={() => user?.role === 'admin' && handleStartEdit(prog, 'situacao')}
+                            >
+                              {prog.situacao.replace(/_/g, ' ')}
+                            </Badge>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
