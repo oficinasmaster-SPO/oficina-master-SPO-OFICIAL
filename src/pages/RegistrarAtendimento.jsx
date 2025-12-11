@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar as CalendarIcon, Plus, Trash2, Upload, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import NotificationSchedulerModal from "@/components/aceleracao/NotificationSchedulerModal";
+import TemplateAtendimentoModal from "@/components/aceleracao/TemplateAtendimentoModal";
 
 export default function RegistrarAtendimento() {
   const navigate = useNavigate();
@@ -31,8 +33,12 @@ export default function RegistrarAtendimento() {
     decisoes_tomadas: [],
     acoes_geradas: [],
     observacoes_consultor: "",
-    proximos_passos: ""
+    proximos_passos: "",
+    notificacoes_programadas: []
   });
+  
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
 
   const [gerandoAta, setGerandoAta] = useState(false);
 
@@ -91,7 +97,7 @@ export default function RegistrarAtendimento() {
       });
 
       // Se status é "realizado", enviar notificação
-      if (data.status === 'realizado' && !data.notificacao_enviada) {
+      if (data.status === 'realizado') {
         try {
           await base44.functions.invoke('notificarClienteAtendimento', {
             atendimento_id: atendimento.id
@@ -512,6 +518,65 @@ export default function RegistrarAtendimento() {
           </CardContent>
         </Card>
 
+        {/* Opções Avançadas */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Opções Avançadas</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full justify-start"
+              onClick={() => setShowNotificationModal(true)}
+            >
+              📅 Programar Notificações Automáticas
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full justify-start"
+              onClick={() => setShowTemplateModal(true)}
+            >
+              📋 Usar Template de Atendimento
+            </Button>
+
+            {formData.workshop_id && (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full justify-start"
+                onClick={async () => {
+                  try {
+                    toast.info('Gerando relatório completo...');
+                    const response = await base44.functions.invoke('gerarRelatorioCliente', {
+                      workshop_id: formData.workshop_id
+                    });
+
+                    // Download do PDF
+                    const blob = new Blob([response.data], { type: 'application/pdf' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `Relatorio_Completo_${new Date().toISOString().split('T')[0]}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    a.remove();
+
+                    toast.success('Relatório gerado com sucesso!');
+                  } catch (error) {
+                    toast.error('Erro ao gerar relatório: ' + error.message);
+                  }
+                }}
+              >
+                📊 Gerar Relatório Completo do Cliente
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Ações */}
         <div className="flex gap-3 justify-end">
           <Button
@@ -536,6 +601,34 @@ export default function RegistrarAtendimento() {
             )}
           </Button>
         </div>
+
+        {/* Modais */}
+        {showNotificationModal && (
+          <NotificationSchedulerModal
+            onClose={() => setShowNotificationModal(false)}
+            onSave={(notificacoes) => {
+              setFormData({ ...formData, notificacoes_programadas: notificacoes });
+              setShowNotificationModal(false);
+              toast.success('Notificações programadas!');
+            }}
+          />
+        )}
+
+        {showTemplateModal && (
+          <TemplateAtendimentoModal
+            onClose={() => setShowTemplateModal(false)}
+            onSelect={(template) => {
+              setFormData({
+                ...formData,
+                tipo_atendimento: template.tipo,
+                pauta: template.pauta,
+                objetivos: template.objetivos
+              });
+              setShowTemplateModal(false);
+              toast.success('Template aplicado!');
+            }}
+          />
+        )}
       </form>
     </div>
   );
