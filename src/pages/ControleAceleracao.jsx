@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Loader2, BarChart3, Calendar, FileText, Settings, ClipboardList } from "lucide-react";
 import VisaoGeralTab from "@/components/aceleracao/VisaoGeralTab";
 import PainelAtendimentosTab from "@/components/aceleracao/PainelAtendimentosTab";
-import CronogramaAceleracaoTab from "@/components/aceleracao/CronogramaAceleracaoTab";
 import TemplatesTab from "@/components/aceleracao/TemplatesTab";
 import RelatoriosTab from "@/components/aceleracao/RelatoriosTab";
 
@@ -71,9 +70,12 @@ export default function ControleAceleracao() {
             <ClipboardList className="w-4 h-4 mr-2" />
             Atendimentos
           </TabsTrigger>
-          <TabsTrigger value="cronograma">
+          <TabsTrigger 
+            value="cronograma"
+            onClick={() => navigate(createPageUrl('CronogramaGeral'))}
+          >
             <Calendar className="w-4 h-4 mr-2" />
-            Cronograma
+            Cronograma Geral
           </TabsTrigger>
           <TabsTrigger value="templates">
             <Settings className="w-4 h-4 mr-2" />
@@ -91,10 +93,6 @@ export default function ControleAceleracao() {
 
         <TabsContent value="atendimentos">
           <PainelAtendimentosTab user={user} />
-        </TabsContent>
-
-        <TabsContent value="cronograma">
-          <CronogramaAceleracaoTab user={user} />
         </TabsContent>
 
         <TabsContent value="templates">
