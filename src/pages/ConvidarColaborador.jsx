@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { 
   Loader2, Send, UserPlus, Mail, RefreshCw, CheckCircle2, 
-  Clock, AlertCircle, XCircle, Users
+  Clock, AlertCircle, XCircle, Users, Link2, Copy, Check
 } from "lucide-react";
 import { toast } from "sonner";
 import { format, isPast } from "date-fns";
@@ -22,6 +22,8 @@ export default function ConvidarColaborador() {
   const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
   const [workshop, setWorkshop] = useState(null);
+  const [generatedLink, setGeneratedLink] = useState(null);
+  const [copied, setCopied] = useState(false);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -179,19 +181,10 @@ export default function ConvidarColaborador() {
         employee_id: null 
       });
       
-      // Mostra o link no toast
+      // Salva o link gerado para exibir
       if (data.invite_url) {
-        toast.success(
-          <div>
-            <p className="font-semibold">Convite criado com sucesso!</p>
-            <p className="text-xs mt-1">Compartilhe este link:</p>
-            <a href={data.invite_url} target="_blank" rel="noopener noreferrer" 
-               className="text-blue-600 text-xs hover:underline break-all">
-              {data.invite_url}
-            </a>
-          </div>,
-          { duration: 10000 }
-        );
+        setGeneratedLink(data.invite_url);
+        toast.success("Link de acesso gerado com sucesso!");
       }
     },
     onError: (error) => {
@@ -205,7 +198,17 @@ export default function ConvidarColaborador() {
       toast.error("Preencha todos os campos obrigatórios (*)");
       return;
     }
+    setGeneratedLink(null); // Limpa link anterior
     sendInviteMutation.mutate(formData);
+  };
+
+  const copyToClipboard = () => {
+    if (generatedLink) {
+      navigator.clipboard.writeText(generatedLink);
+      setCopied(true);
+      toast.success("Link copiado!");
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   const getStatusBadge = (invite) => {
@@ -268,6 +271,48 @@ export default function ConvidarColaborador() {
             <p className="text-gray-600">Gere links de acesso para compartilhar com colaboradores</p>
           </div>
         </div>
+
+        {/* Link Gerado */}
+        {generatedLink && (
+          <Card className="border-green-200 bg-green-50 shadow-lg">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg text-green-800">
+                <CheckCircle2 className="w-5 h-5" />
+                Link de Acesso Gerado!
+              </CardTitle>
+              <CardDescription className="text-green-700">
+                Copie e compartilhe este link com o colaborador
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="bg-white p-4 rounded-lg border border-green-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <Link2 className="w-4 h-4 text-green-600" />
+                  <span className="text-xs font-semibold text-gray-700">Link de Primeiro Acesso</span>
+                </div>
+                <p className="text-sm text-gray-600 break-all font-mono bg-gray-50 p-2 rounded">
+                  {generatedLink}
+                </p>
+              </div>
+              <Button 
+                onClick={copyToClipboard}
+                className="w-full bg-green-600 hover:bg-green-700"
+              >
+                {copied ? (
+                  <>
+                    <Check className="w-4 h-4 mr-2" />
+                    Link Copiado!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-4 h-4 mr-2" />
+                    Copiar Link
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Colaboradores Cadastrados (Pendentes) */}
