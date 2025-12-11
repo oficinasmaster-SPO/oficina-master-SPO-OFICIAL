@@ -106,13 +106,58 @@ Deno.serve(async (req) => {
         }, { status: 500 });
     }
 
-    // 6. Envio de Email
-    // Remove trailing slash e garante URL limpa
-    const baseUrl = (origin || "https://app.base44.com").replace(/\/$/, '');
+    // 6. Criar User no banco de dados
+    try {
+        // Verificar se já existe User com este email
+        const allUsers = await base44.asServiceRole.entities.User.list();
+        const existingUser = allUsers.find(u => u.email === email);
+
+        if (!existingUser) {
+            // Criar novo User
+            const newUser = await base44.asServiceRole.entities.User.create({
+                email: email,
+                full_name: name,
+                role: 'user',
+                workshop_id: workshop_id,
+                position: position,
+                job_role: job_role || 'outros',
+                area: area || 'tecnico',
+                telefone: '',
+                profile_picture_url: '',
+                hire_date: new Date().toISOString().split('T')[0],
+                user_status: 'ativo'
+            });
+            console.log("User criado no envio do convite:", newUser.id);
+
+            // Vincular User ao Employee se existir
+            if (finalEmployeeId) {
+                try {
+                    await base44.asServiceRole.entities.Employee.update(finalEmployeeId, {
+                        user_id: newUser.id
+                    });
+                } catch (linkErr) {
+                    console.warn("Erro ao vincular user ao employee:", linkErr);
+                }
+            }
+        } else {
+            console.log("User já existe:", existingUser.id);
+            // Atualizar dados do User
+            await base44.asServiceRole.entities.User.update(existingUser.id, {
+                workshop_id: workshop_id,
+                position: position,
+                job_role: job_role || 'outros',
+                area: area || 'tecnico',
+                user_status: 'ativo'
+            });
+        }
+    } catch (userError) {
+        console.error("Erro ao criar/atualizar User:", userError);
+    }
+
+    // 7. Envio de Email
+    const baseUrl = origin || "https://app.base44.com";
     const inviteUrl = `${baseUrl}/PrimeiroAcesso?token=${token}`;
     const companyName = workshop_name || "Oficinas Master";
-    
-    console.log("Link gerado:", inviteUrl);
 
     try {
         await base44.integrations.Core.SendEmail({
