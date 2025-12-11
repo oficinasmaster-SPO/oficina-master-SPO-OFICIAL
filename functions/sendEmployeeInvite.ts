@@ -97,7 +97,8 @@ Deno.serve(async (req) => {
       console.log("✅ Convite criado:", inviteId);
     }
 
-    const baseUrl = origin || req.headers.get('origin') || 'https://app.base44.com';
+    // Usa o domínio de origem da requisição (oficinasmastergtr.com em produção)
+    const baseUrl = origin || req.headers.get('origin') || 'https://oficinasmastergtr.com';
     const inviteUrl = `${baseUrl}/PrimeiroAcesso?token=${token}`;
 
     console.log("✅ Link de convite gerado:", inviteUrl);

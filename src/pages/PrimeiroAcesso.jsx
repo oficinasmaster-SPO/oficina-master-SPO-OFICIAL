@@ -35,22 +35,32 @@ export default function PrimeiroAcesso() {
       const urlParams = new URLSearchParams(window.location.search);
       const token = urlParams.get("token");
 
+      console.log("🔍 Token recebido:", token);
+
       if (!token) {
-        setError("Token de convite não encontrado. Verifique o link recebido por e-mail.");
+        setError("Token de convite não encontrado. Verifique o link recebido.");
         setLoading(false);
         return;
       }
 
-      // Validar token via backend (não precisa de autenticação)
-      const response = await base44.functions.invoke('validateInviteToken', { token });
+      // Validar token via backend (sem autenticação necessária)
+      console.log("📡 Chamando validateInviteToken...");
+      const response = await fetch(`${window.location.origin}/.functions/validateInviteToken`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token })
+      });
+
+      const data = await response.json();
+      console.log("📥 Resposta recebida:", data);
       
-      if (!response.data?.success) {
-        setError(response.data?.error || "Convite não encontrado ou inválido.");
+      if (!data.success) {
+        setError(data.error || "Convite não encontrado ou inválido.");
         setLoading(false);
         return;
       }
 
-      const { invite: foundInvite, workshop: foundWorkshop } = response.data;
+      const { invite: foundInvite, workshop: foundWorkshop } = data;
 
       if (foundWorkshop) {
         setWorkshop(foundWorkshop);
@@ -64,7 +74,7 @@ export default function PrimeiroAcesso() {
       });
 
     } catch (error) {
-      console.error("Erro ao carregar convite:", error);
+      console.error("❌ Erro ao carregar convite:", error);
       setError("Erro ao carregar convite. Verifique sua conexão e tente novamente.");
     } finally {
       setLoading(false);
@@ -95,34 +105,36 @@ export default function PrimeiroAcesso() {
     setSubmitting(true);
 
     try {
-      // Chamar função de backend para registrar colaborador
-      const response = await base44.functions.invoke('registerInvitedEmployee', {
-        token: invite.invite_token,
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        profile_picture_url: formData.profile_picture_url
+      // Chamar função de backend para registrar colaborador (sem autenticação)
+      console.log("📤 Registrando colaborador...");
+      const response = await fetch(`${window.location.origin}/.functions/registerInvitedEmployee`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: invite.invite_token,
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          profile_picture_url: formData.profile_picture_url
+        })
       });
 
-      if (response.data?.success) {
-        // Notificar sobre o sucesso do cadastro
-        if (response.data.email_sent) {
-          toast.success("Cadastro confirmado! Enviamos um e-mail com instruções de acesso.", { duration: 6000 });
-        } else {
-          toast.success("Cadastro confirmado! Mas não foi possível enviar o e-mail.", { duration: 6000 });
-          toast.info(`Por favor, acesse diretamente: ${window.location.origin}/login usando o e-mail: ${formData.email}`, { duration: 8000 });
-        }
+      const data = await response.json();
+      console.log("📥 Resposta registro:", data);
 
-        // Redirecionar para login/signup
+      if (data.success) {
+        toast.success("Cadastro confirmado! Agora você pode fazer login.");
+        
+        // Redirecionar para login após 2 segundos
         setTimeout(() => {
-          base44.auth.redirectToLogin(createPageUrl("PortalColaborador"));
-        }, 3000);
+          window.location.href = `${window.location.origin}/login`;
+        }, 2000);
       } else {
-        throw new Error(response.data?.error || "Erro ao finalizar cadastro");
+        throw new Error(data.error || "Erro ao finalizar cadastro");
       }
 
     } catch (error) {
-      console.error("Erro ao finalizar cadastro:", error);
+      console.error("❌ Erro ao finalizar cadastro:", error);
       toast.error(error.message || "Erro ao finalizar cadastro. Tente novamente.");
     } finally {
       setSubmitting(false);
