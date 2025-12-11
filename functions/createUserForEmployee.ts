@@ -9,51 +9,24 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { employee_data, workshop_id } = await req.json();
+    const { employee_data, workshop_id, employee_id } = await req.json();
 
     if (!employee_data || !workshop_id) {
       return Response.json({ error: 'Dados incompletos' }, { status: 400 });
     }
 
-    // Buscar todos os usuários e filtrar manualmente
-    const allUsers = await base44.asServiceRole.entities.User.list();
-    const existingUser = allUsers.find(u => u.email === employee_data.email);
-
-    if (existingUser) {
-      // Atualizar usuário existente com dados da empresa
-      await base44.asServiceRole.entities.User.update(existingUser.id, {
-        workshop_id: workshop_id,
-        position: employee_data.position,
-        job_role: employee_data.job_role,
-        area: employee_data.area
-      });
-
-      return Response.json({
-        success: true,
-        user_id: existingUser.id,
-        message: 'Usuário existente atualizado'
-      });
-    }
-
-    // Criar novo usuário
-    const newUser = await base44.asServiceRole.entities.User.create({
-      email: employee_data.email,
-      full_name: employee_data.full_name,
-      workshop_id: workshop_id,
-      position: employee_data.position,
-      job_role: employee_data.job_role,
-      area: employee_data.area,
-      role: 'user'
-    });
-
+    // A entidade User é built-in e gerenciada pelo sistema de autenticação
+    // Quando o colaborador receber o convite e criar senha, o User será criado automaticamente
+    // Por enquanto, retornamos sucesso e marcamos que o user será criado no primeiro acesso
+    
     return Response.json({
       success: true,
-      user_id: newUser.id,
-      message: 'Usuário criado com sucesso'
+      user_id: null,
+      message: 'Colaborador registrado. User será criado quando aceitar o convite.'
     });
 
   } catch (error) {
-    console.error("Error creating user:", error);
+    console.error("Error in createUserForEmployee:", error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });

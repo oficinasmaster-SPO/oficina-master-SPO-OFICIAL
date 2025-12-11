@@ -119,30 +119,8 @@ export default function CadastroColaborador() {
         production_percentage: productionPercentage
       });
 
-      // Criar registro de User vinculado à empresa via backend
-      let userId = null;
-      try {
-        const userResponse = await base44.functions.invoke('createUserForEmployee', {
-          employee_data: {
-            email: formData.email,
-            full_name: formData.full_name,
-            position: formData.position,
-            job_role: formData.job_role,
-            area: formData.area
-          },
-          workshop_id: workshop.id
-        });
-
-        if (userResponse.data.success) {
-          userId = userResponse.data.user_id;
-          // Atualizar employee com user_id
-          await base44.entities.Employee.update(newEmployee.id, {
-            user_id: userId
-          });
-        }
-      } catch (userError) {
-        console.log("Erro ao criar usuário:", userError);
-      }
+      // O User será criado automaticamente quando o colaborador aceitar o convite
+      // e criar senha no sistema de autenticação do Base44
 
       // Criar convite e enviar e-mail
       try {
