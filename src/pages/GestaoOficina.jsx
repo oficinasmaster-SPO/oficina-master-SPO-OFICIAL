@@ -19,7 +19,7 @@ import WorkshopLevelBadge from "../components/gamification/WorkshopLevelBadge";
 import AutomacaoIncentivos from "../components/workshop/AutomacaoIncentivos";
 import GrowthDashboard from "../components/management/GrowthDashboard";
 import WorkshopMilestones from "../components/management/WorkshopMilestones";
-import AceleracaoTab from "../components/aceleracao/AceleracaoTab";
+import PainelAceleracao from "../components/aceleracao/PainelAceleracao";
 import CronogramaTab from "../components/aceleracao/CronogramaTab";
 
 export default function GestaoOficina() {
