@@ -71,6 +71,57 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Criar ou atualizar User vinculado à oficina
+    try {
+      const allUsers = await base44.asServiceRole.entities.User.list();
+      const existingUser = allUsers.find(u => u.email === (email || invite.email));
+
+      if (existingUser) {
+        // Atualizar User existente com dados da oficina
+        await base44.asServiceRole.entities.User.update(existingUser.id, {
+          workshop_id: invite.workshop_id,
+          position: invite.position,
+          job_role: invite.job_role || 'outros',
+          area: invite.area,
+          telefone: phone || existingUser.telefone || '',
+          profile_picture_url: profile_picture_url || existingUser.profile_picture_url || '',
+          hire_date: employee.hire_date || new Date().toISOString().split('T')[0],
+          user_status: 'ativo'
+        });
+        
+        // Vincular User ao Employee
+        await base44.asServiceRole.entities.Employee.update(employee.id, {
+          user_id: existingUser.id
+        });
+        
+        console.log("✅ User existente vinculado à oficina:", existingUser.id);
+      } else {
+        // Criar novo User já vinculado à oficina
+        const newUser = await base44.asServiceRole.entities.User.create({
+          email: email || invite.email,
+          full_name: name || invite.name,
+          role: 'user',
+          workshop_id: invite.workshop_id,
+          position: invite.position,
+          job_role: invite.job_role || 'outros',
+          area: invite.area,
+          telefone: phone || '',
+          profile_picture_url: profile_picture_url || '',
+          hire_date: employee.hire_date || new Date().toISOString().split('T')[0],
+          user_status: 'ativo'
+        });
+        
+        // Vincular User ao Employee
+        await base44.asServiceRole.entities.Employee.update(employee.id, {
+          user_id: newUser.id
+        });
+        
+        console.log("✅ User criado e vinculado à oficina:", newUser.id);
+      }
+    } catch (userError) {
+      console.error("❌ Erro ao criar/vincular User:", userError);
+    }
+
     // Atualizar o convite para concluído
     await base44.asServiceRole.entities.EmployeeInvite.update(invite.id, {
       status: 'concluido',
