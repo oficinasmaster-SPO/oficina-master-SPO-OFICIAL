@@ -79,18 +79,29 @@ export default function CronogramaDetalhado() {
   // Mutation para gerar cronograma automático
   const gerarCronogramaMutation = useMutation({
     mutationFn: async () => {
-      return await base44.functions.invoke('gerarCronogramaAutomatico', {
+      const response = await base44.functions.invoke('gerarCronogramaAutomatico', {
         workshop_id: workshop.id,
         fase_oficina: workshop.maturity_level || 1,
         data_inicio: new Date().toISOString().split('T')[0]
       });
+      return response.data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries(['cronograma-progresso']);
-      toast.success('Cronograma gerado com sucesso!');
+      toast.success(`Cronograma gerado! ${data.total_modulos} módulos criados para ${data.nome_fase}`);
     },
     onError: (error) => {
-      toast.error('Erro ao gerar cronograma: ' + error.message);
+      const errorMsg = error.response?.data?.error || error.message;
+      if (errorMsg.includes('Diagnóstico de Fase')) {
+        toast.error('Você precisa fazer o Diagnóstico de Fase primeiro!', {
+          action: {
+            label: 'Fazer Agora',
+            onClick: () => navigate(createPageUrl('Questionario'))
+          }
+        });
+      } else {
+        toast.error('Erro: ' + errorMsg);
+      }
     }
   });
 
@@ -168,22 +179,30 @@ export default function CronogramaDetalhado() {
           </p>
         </div>
 
-        {user?.role === 'admin' && (
+        <div className="flex gap-2">
+          {user?.role === 'admin' && (
+            <Button
+              onClick={() => gerarCronogramaMutation.mutate()}
+              disabled={gerarCronogramaMutation.isPending}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {gerarCronogramaMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Gerando...
+                </>
+              ) : (
+                'Gerar Cronograma Automático'
+              )}
+            </Button>
+          )}
           <Button
-            onClick={() => gerarCronogramaMutation.mutate()}
-            disabled={gerarCronogramaMutation.isPending}
-            className="bg-blue-600 hover:bg-blue-700"
+            variant="outline"
+            onClick={() => navigate(createPageUrl('CronogramaConsultoria'))}
           >
-            {gerarCronogramaMutation.isPending ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Gerando...
-              </>
-            ) : (
-              'Gerar Cronograma'
-            )}
+            Ver Atendimentos
           </Button>
-        )}
+        </div>
       </div>
 
       {/* Card de Resumo */}

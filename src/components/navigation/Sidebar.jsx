@@ -634,7 +634,10 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       'Acompanhamento': 'treinamentos',
       'Meus Treinamentos': 'treinamentos',
       'Dicas da Operação': 'gestao',
-      'Criar Desafios Internos': 'gestao'
+      'Criar Desafios Internos': 'gestao',
+      'CheckPoint / Cronograma': 'admin',
+      'Cronograma de Consultoria': 'admin',
+      'Registrar Atendimento': 'admin'
     };
     
     const module = moduleMap[item.name];
