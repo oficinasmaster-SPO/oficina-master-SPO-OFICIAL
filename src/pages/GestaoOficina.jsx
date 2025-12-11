@@ -5,7 +5,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Building2, Settings, Target, FileText, Users, TrendingUp, Package, DollarSign, BarChart3, Calculator, MessageCircle, Trophy } from "lucide-react";
+import { Loader2, Building2, Settings, Target, FileText, Users, TrendingUp, Package, DollarSign, BarChart3, Calculator, MessageCircle, Trophy, Briefcase, Calendar as CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency } from "../components/utils/formatters";
 import DadosBasicosOficina from "../components/workshop/DadosBasicosOficina";
@@ -19,6 +19,8 @@ import WorkshopLevelBadge from "../components/gamification/WorkshopLevelBadge";
 import AutomacaoIncentivos from "../components/workshop/AutomacaoIncentivos";
 import GrowthDashboard from "../components/management/GrowthDashboard";
 import WorkshopMilestones from "../components/management/WorkshopMilestones";
+import AceleracaoTab from "../components/aceleracao/AceleracaoTab";
+import CronogramaTab from "../components/aceleracao/CronogramaTab";
 
 export default function GestaoOficina() {
   const navigate = useNavigate();
@@ -260,7 +262,7 @@ export default function GestaoOficina() {
         </div>
 
         <Tabs defaultValue="dados" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-8 bg-white shadow-md gap-1 p-2">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-10 bg-white shadow-md gap-1 p-2">
             <TabsTrigger value="dados" className="text-xs md:text-sm">
               <Building2 className="w-4 h-4 mr-1" />
               <span className="hidden sm:inline">Dados</span>
@@ -305,6 +307,18 @@ export default function GestaoOficina() {
               <Trophy className="w-4 h-4 mr-1" />
               <span className="hidden sm:inline">Conquistas</span>
             </TabsTrigger>
+            {(user?.role === 'admin' || user?.job_role === 'acelerador') && (
+              <>
+                <TabsTrigger value="aceleracao" className="text-xs md:text-sm bg-purple-50 text-purple-700 data-[state=active]:bg-purple-100 data-[state=active]:text-purple-900">
+                  <Briefcase className="w-4 h-4 mr-1" />
+                  <span className="hidden sm:inline">Aceleração</span>
+                </TabsTrigger>
+                <TabsTrigger value="cronograma" className="text-xs md:text-sm bg-indigo-50 text-indigo-700 data-[state=active]:bg-indigo-100 data-[state=active]:text-indigo-900">
+                  <CalendarIcon className="w-4 h-4 mr-1" />
+                  <span className="hidden sm:inline">Cronograma</span>
+                </TabsTrigger>
+              </>
+            )}
           </TabsList>
 
           <TabsContent value="crescimento">
@@ -376,6 +390,18 @@ export default function GestaoOficina() {
               </div>
             </div>
           </TabsContent>
+
+          {(user?.role === 'admin' || user?.job_role === 'acelerador') && (
+            <>
+              <TabsContent value="aceleracao">
+                <AceleracaoTab workshop={workshop} user={user} />
+              </TabsContent>
+
+              <TabsContent value="cronograma">
+                <CronogramaTab workshop={workshop} />
+              </TabsContent>
+            </>
+          )}
         </Tabs>
       </div>
     </div>
