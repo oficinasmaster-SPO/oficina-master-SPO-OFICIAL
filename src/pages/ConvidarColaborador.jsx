@@ -179,7 +179,7 @@ export default function ConvidarColaborador() {
         initial_permission: "colaborador", 
         employee_id: null 
       });
-      toast.success("Convite enviado com sucesso! Verifique a caixa de spam.");
+      toast.success("Link de convite gerado! Compartilhe com o colaborador.");
     },
     onError: (error) => {
       toast.error("Erro ao enviar convite: " + error.message);
