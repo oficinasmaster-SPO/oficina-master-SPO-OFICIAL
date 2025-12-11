@@ -82,9 +82,25 @@ export default function AceleracaoTab({ workshop, user }) {
       confirmado: "bg-green-100 text-green-800",
       realizado: "bg-gray-100 text-gray-800",
       cancelado: "bg-red-100 text-red-800",
-      remarcado: "bg-yellow-100 text-yellow-800"
+      remarcado: "bg-yellow-100 text-yellow-800",
+      atrasado: "bg-red-500 text-white animate-pulse"
     };
     return colors[status] || "bg-gray-100 text-gray-800";
+  };
+
+  const checkAtrasado = (atendimento) => {
+    if (atendimento.status !== 'realizado' && atendimento.status !== 'cancelado') {
+      const agora = new Date();
+      const dataAtendimento = new Date(atendimento.data_agendada);
+      const horaLimite = new Date(dataAtendimento);
+      horaLimite.setHours(17, 0, 0, 0);
+      
+      // Se passou das 17h do dia do atendimento e ainda não foi realizado
+      if (agora > horaLimite && dataAtendimento.toDateString() === agora.toDateString()) {
+        return true;
+      }
+    }
+    return false;
   };
 
   const atendimentosFiltrados = atendimentos.filter(a => {
@@ -212,16 +228,20 @@ export default function AceleracaoTab({ workshop, user }) {
             </div>
           ) : (
             <div className="space-y-3">
-              {atendimentosFiltrados.map((atendimento) => (
+              {atendimentosFiltrados.map((atendimento) => {
+                const isAtrasado = checkAtrasado(atendimento);
+                return (
                 <div
                   key={atendimento.id}
-                  className="border rounded-lg p-4 hover:shadow-md transition-shadow"
+                  className={`border rounded-lg p-4 hover:shadow-md transition-shadow ${
+                    isAtrasado ? 'border-red-500 border-2 shadow-lg' : ''
+                  }`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <Badge className={getStatusColor(atendimento.status)}>
-                          {atendimento.status}
+                        <Badge className={getStatusColor(isAtrasado ? 'atrasado' : atendimento.status)}>
+                          {isAtrasado ? 'ATRASADO' : atendimento.status}
                         </Badge>
                         <span className="text-sm text-gray-600">
                           {atendimento.tipo_atendimento?.replace(/_/g, ' ')}
@@ -247,7 +267,7 @@ export default function AceleracaoTab({ workshop, user }) {
                     </div>
                   </div>
                 </div>
-              ))}
+              )})}
             </div>
           )}
         </CardContent>

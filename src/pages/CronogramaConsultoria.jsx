@@ -304,6 +304,12 @@ export default function CronogramaConsultoria() {
                           </Button>
                         </>
                       )}
+                      {atendimento.avaliacao_cliente && (
+                        <div className="text-xs text-gray-600">
+                          <Star className="w-4 h-4 inline text-yellow-500 fill-yellow-500" />
+                          {' '}{atendimento.avaliacao_cliente.nota}/5
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

@@ -54,7 +54,7 @@ export default function RegistrarAtendimento() {
     mutationFn: async (data) => {
       const dataHora = `${data.data_agendada}T${data.hora_agendada}:00`;
       
-      return await base44.entities.ConsultoriaAtendimento.create({
+      const atendimento = await base44.entities.ConsultoriaAtendimento.create({
         ...data,
         consultor_id: user.id,
         consultor_nome: user.full_name,
@@ -63,6 +63,19 @@ export default function RegistrarAtendimento() {
         pauta: data.pauta.filter(p => p.titulo),
         objetivos: data.objetivos.filter(o => o)
       });
+
+      // Se status é "realizado", enviar notificação
+      if (data.status === 'realizado' && !data.notificacao_enviada) {
+        try {
+          await base44.functions.invoke('notificarClienteAtendimento', {
+            atendimento_id: atendimento.id
+          });
+        } catch (error) {
+          console.error('Erro ao enviar notificação:', error);
+        }
+      }
+
+      return atendimento;
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['consultoria-atendimentos']);
