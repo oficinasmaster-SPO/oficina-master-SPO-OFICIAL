@@ -14,7 +14,7 @@ export default function AceleracaoTab({ workshop, user }) {
   const [filters, setFilters] = useState({
     data_inicio: "",
     data_fim: "",
-    status: "todos",
+    status: "em_aberto", // Mostrar apenas em aberto por padrão
     tipo: "todos"
   });
 
@@ -26,9 +26,18 @@ export default function AceleracaoTab({ workshop, user }) {
       
       let query = { workshop_id: workshop.id };
       
-      if (filters.status !== "todos") {
+      // Filtro de status
+      if (filters.status === "em_aberto") {
+        // Buscar todos que NÃO são realizados nem cancelados
+        const todos = await base44.entities.ConsultoriaAtendimento.filter(
+          { workshop_id: workshop.id },
+          '-data_agendada'
+        );
+        return todos.filter(a => !['realizado', 'cancelado'].includes(a.status));
+      } else if (filters.status !== "todos") {
         query.status = filters.status;
       }
+      
       if (filters.tipo !== "todos") {
         query.tipo_atendimento = filters.tipo;
       }
@@ -78,12 +87,12 @@ export default function AceleracaoTab({ workshop, user }) {
 
   const getStatusColor = (status) => {
     const colors = {
-      agendado: "bg-blue-100 text-blue-800",
-      confirmado: "bg-green-100 text-green-800",
-      realizado: "bg-gray-100 text-gray-800",
-      cancelado: "bg-red-100 text-red-800",
-      remarcado: "bg-yellow-100 text-yellow-800",
-      atrasado: "bg-red-500 text-white animate-pulse"
+      agendado: "bg-red-500 text-white", // Em aberto = vermelho
+      confirmado: "bg-orange-500 text-white animate-pulse", // Em andamento = laranja piscando
+      realizado: "bg-green-500 text-white", // Finalizado = verde
+      cancelado: "bg-gray-400 text-white",
+      remarcado: "bg-yellow-500 text-white",
+      atrasado: "bg-red-700 text-white animate-pulse font-bold"
     };
     return colors[status] || "bg-gray-100 text-gray-800";
   };
@@ -103,11 +112,22 @@ export default function AceleracaoTab({ workshop, user }) {
     return false;
   };
 
-  const atendimentosFiltrados = atendimentos.filter(a => {
-    if (filters.data_inicio && new Date(a.data_agendada) < new Date(filters.data_inicio)) return false;
-    if (filters.data_fim && new Date(a.data_agendada) > new Date(filters.data_fim)) return false;
-    return true;
-  });
+  const atendimentosFiltrados = atendimentos
+    .filter(a => {
+      if (filters.data_inicio && new Date(a.data_agendada) < new Date(filters.data_inicio)) return false;
+      if (filters.data_fim && new Date(a.data_agendada) > new Date(filters.data_fim)) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      // Atrasados primeiro (no topo piscando)
+      const aAtrasado = checkAtrasado(a);
+      const bAtrasado = checkAtrasado(b);
+      if (aAtrasado && !bAtrasado) return -1;
+      if (!aAtrasado && bAtrasado) return 1;
+      
+      // Depois por data
+      return new Date(b.data_agendada) - new Date(a.data_agendada);
+    });
 
   return (
     <div className="space-y-6">
@@ -186,6 +206,7 @@ export default function AceleracaoTab({ workshop, user }) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="em_aberto">Em Aberto (padrão)</SelectItem>
                   <SelectItem value="todos">Todos</SelectItem>
                   <SelectItem value="agendado">Agendado</SelectItem>
                   <SelectItem value="confirmado">Confirmado</SelectItem>
@@ -230,38 +251,52 @@ export default function AceleracaoTab({ workshop, user }) {
             <div className="space-y-3">
               {atendimentosFiltrados.map((atendimento) => {
                 const isAtrasado = checkAtrasado(atendimento);
+                const statusDisplay = isAtrasado ? 'ATRASADO ⚠️' : atendimento.status.toUpperCase();
+                
                 return (
                 <div
                   key={atendimento.id}
-                  className={`border rounded-lg p-4 hover:shadow-md transition-shadow ${
-                    isAtrasado ? 'border-red-500 border-2 shadow-lg' : ''
+                  className={`border-2 rounded-lg p-4 transition-all ${
+                    isAtrasado ? 'border-red-600 bg-red-50 shadow-xl' : 'border-gray-200 hover:shadow-md'
                   }`}
                 >
-                  <div className="flex items-start justify-between">
+                  <div className="flex items-start justify-between gap-4">
+                    {/* Coluna Status */}
+                    <div className="flex-shrink-0">
+                      <Badge className={`${getStatusColor(isAtrasado ? 'atrasado' : atendimento.status)} text-sm px-3 py-1`}>
+                        {statusDisplay}
+                      </Badge>
+                    </div>
+
+                    {/* Informações Principais */}
                     <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <Badge className={getStatusColor(isAtrasado ? 'atrasado' : atendimento.status)}>
-                          {isAtrasado ? 'ATRASADO' : atendimento.status}
-                        </Badge>
-                        <span className="text-sm text-gray-600">
-                          {atendimento.tipo_atendimento?.replace(/_/g, ' ')}
-                        </span>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-3 text-sm text-gray-600">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4" />
-                          {format(new Date(atendimento.data_agendada), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
+                        <div className="flex items-center gap-2 text-sm">
+                          <Calendar className="w-4 h-4 text-gray-500" />
+                          <span className="font-medium">
+                            {format(new Date(atendimento.data_agendada), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                          </span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <User className="w-4 h-4" />
-                          {atendimento.consultor_nome}
+                        <div className="flex items-center gap-2 text-sm">
+                          <Building2 className="w-4 h-4 text-gray-500" />
+                          <span>Workshop ID: {atendimento.workshop_id.substring(0, 8)}...</span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
+                        <div className="flex items-center gap-2 text-sm">
+                          <User className="w-4 h-4 text-gray-500" />
+                          <span>{atendimento.consultor_nome}</span>
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          <span className="font-medium">Tipo:</span> {atendimento.tipo_atendimento?.replace(/_/g, ' ')}
                         </div>
                       </div>
 
                       {atendimento.pauta?.length > 0 && (
-                        <div className="mt-2 text-sm text-gray-600">
-                          <strong>Pauta:</strong> {atendimento.pauta[0].titulo}
+                        <div className="mt-2 text-sm bg-blue-50 p-2 rounded">
+                          <strong className="text-blue-700">Pauta:</strong>{' '}
+                          <span className="text-gray-700">{atendimento.pauta[0].titulo}</span>
                         </div>
                       )}
                     </div>
