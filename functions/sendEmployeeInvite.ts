@@ -33,9 +33,14 @@ Deno.serve(async (req) => {
         finalEmployeeId = employee.id;
         console.log("✅ Employee já existe:", finalEmployeeId);
       } else {
+        // Buscar workshop para pegar owner_id
+        const workshops = await base44.asServiceRole.entities.Workshop.filter({ id: workshop_id });
+        const workshop = workshops[0];
+        
         // Criar Employee se não existir
         employee = await base44.asServiceRole.entities.Employee.create({
           workshop_id: workshop_id,
+          owner_id: workshop?.owner_id || null,
           full_name: name,
           email: email,
           position: position || 'Colaborador',
