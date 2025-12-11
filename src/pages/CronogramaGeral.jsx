@@ -23,6 +23,9 @@ export default function CronogramaGeral() {
     queryFn: () => base44.auth.me()
   });
 
+  // Log para debug
+  console.log("Tela carregada: Cronograma Geral", { user, planoSelecionado });
+
   // Verificar permissão
   if (user && user.role !== 'admin' && user.job_role !== 'acelerador') {
     return (

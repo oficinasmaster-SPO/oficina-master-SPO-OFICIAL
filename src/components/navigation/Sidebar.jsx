@@ -467,7 +467,6 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       id: 'aceleracao',
       label: 'Aceleração',
       icon: Briefcase,
-      aceleradorOnly: true,
       items: [
         { 
           name: 'Controle da Aceleração', 
@@ -486,6 +485,22 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           aceleradorOnly: true
         },
         { 
+          name: 'Registrar Atendimento', 
+          href: createPageUrl('RegistrarAtendimento'), 
+          icon: FilePenLine,
+          description: 'Agendar e documentar acelerações',
+          highlight: true,
+          aceleradorOnly: true
+        },
+        { 
+          name: 'Histórico de Atendimentos', 
+          href: createPageUrl('CronogramaConsultoria'), 
+          icon: Calendar,
+          description: 'Atendimentos e atas de reunião',
+          highlight: true,
+          aceleradorOnly: true
+        },
+        { 
           name: 'Meu Plano de Aceleração', 
           href: createPageUrl('PainelClienteAceleracao'), 
           icon: Target,
@@ -498,20 +513,6 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: ListTodo,
           description: 'Progresso detalhado do plano',
           highlight: true
-        },
-        { 
-          name: 'Cronograma de Aceleração', 
-          href: createPageUrl('CronogramaConsultoria'), 
-          icon: Calendar,
-          description: 'Atendimentos e atas de reunião',
-          highlight: true
-        },
-        { 
-          name: 'Registrar Atendimento', 
-          href: createPageUrl('RegistrarAtendimento'), 
-          icon: FilePenLine,
-          description: 'Agendar e documentar acelerações',
-          aceleradorOnly: true
         }
       ]
     },
@@ -666,9 +667,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       'Dicas da Operação': 'gestao',
       'Criar Desafios Internos': 'gestao',
       'CheckPoint / Cronograma': 'admin',
-      'Cronograma Geral': 'aceleracao',
-      'Cronograma de Aceleração': 'admin',
-      'Registrar Atendimento': 'admin'
+
     };
     
     const module = moduleMap[item.name];

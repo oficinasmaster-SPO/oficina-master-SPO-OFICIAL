@@ -48,6 +48,9 @@ export default function RegistrarAtendimento() {
     queryFn: () => base44.auth.me()
   });
 
+  // Log para debug
+  console.log("Tela carregada: Registro de Atendimento", { user });
+
   // Carregar oficinas com planos habilitados
   const { data: workshops } = useQuery({
     queryKey: ['workshops-list'],
