@@ -42,11 +42,37 @@ export default function RegistrarAtendimento() {
     queryFn: () => base44.auth.me()
   });
 
-  // Carregar oficinas (para admin)
+  // Carregar oficinas com planos habilitados
   const { data: workshops } = useQuery({
     queryKey: ['workshops-list'],
-    queryFn: () => base44.entities.Workshop.list(),
+    queryFn: async () => {
+      const allWorkshops = await base44.entities.Workshop.list();
+      return allWorkshops.filter(w => w.planoAtual && w.planoAtual !== 'FREE');
+    },
+    enabled: user?.role === 'admin' || user?.job_role === 'acelerador'
+  });
+
+  // Carregar consultores/aceleradores
+  const { data: consultores } = useQuery({
+    queryKey: ['consultores-list'],
+    queryFn: async () => {
+      const employees = await base44.entities.Employee.list();
+      return employees.filter(e => e.job_role === 'acelerador' || e.position?.toLowerCase().includes('consultor'));
+    },
     enabled: user?.role === 'admin'
+  });
+
+  // Carregar colaboradores da oficina selecionada
+  const { data: colaboradores } = useQuery({
+    queryKey: ['colaboradores-oficina', formData.workshop_id],
+    queryFn: async () => {
+      if (!formData.workshop_id) return [];
+      return await base44.entities.Employee.filter({ 
+        workshop_id: formData.workshop_id,
+        status: 'ativo'
+      });
+    },
+    enabled: !!formData.workshop_id
   });
 
   // Mutation para criar atendimento
@@ -163,23 +189,54 @@ export default function RegistrarAtendimento() {
             <CardTitle>Informações Básicas</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <Label>Oficina Cliente *</Label>
-              <Select
-                value={formData.workshop_id}
-                onValueChange={(value) => setFormData({ ...formData, workshop_id: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a oficina" />
-                </SelectTrigger>
-                <SelectContent>
-                  {workshops?.map((w) => (
-                    <SelectItem key={w.id} value={w.id}>
-                      {w.name} - {w.city}/{w.state}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Oficina Cliente *</Label>
+                <Select
+                  value={formData.workshop_id}
+                  onValueChange={(value) => setFormData({ ...formData, workshop_id: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a oficina" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {workshops?.map((w) => (
+                      <SelectItem key={w.id} value={w.id}>
+                        {w.name} - {w.planoAtual} - {w.city}/{w.state}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {user?.role === 'admin' && (
+                <div>
+                  <Label>Consultor Responsável</Label>
+                  <Select
+                    value={formData.consultor_id || user.id}
+                    onValueChange={(value) => {
+                      const consultor = consultores?.find(c => c.user_id === value);
+                      setFormData({ 
+                        ...formData, 
+                        consultor_id: value,
+                        consultor_nome: consultor?.full_name || user.full_name
+                      });
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={user.id}>{user.full_name} (Eu)</SelectItem>
+                      {consultores?.filter(c => c.user_id !== user.id).map((c) => (
+                        <SelectItem key={c.id} value={c.user_id}>
+                          {c.full_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -260,10 +317,38 @@ export default function RegistrarAtendimento() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Participantes</CardTitle>
-              <Button type="button" variant="outline" size="sm" onClick={addParticipante}>
-                <Plus className="w-4 h-4 mr-2" />
-                Adicionar
-              </Button>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={addParticipante}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Adicionar Manual
+                </Button>
+                {colaboradores && colaboradores.length > 0 && (
+                  <Select onValueChange={(value) => {
+                    const colab = colaboradores.find(c => c.id === value);
+                    if (colab) {
+                      setFormData({
+                        ...formData,
+                        participantes: [...formData.participantes, {
+                          nome: colab.full_name,
+                          cargo: colab.position,
+                          email: colab.email
+                        }]
+                      });
+                    }
+                  }}>
+                    <SelectTrigger className="w-64">
+                      <SelectValue placeholder="Adicionar da oficina" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {colaboradores.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.full_name} - {c.position}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">

@@ -6,9 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, User, Building2, Clock, Filter, TrendingUp, Users as UsersIcon, Target, ListTodo } from "lucide-react";
+import { Calendar, User, Building2, Clock, Filter, TrendingUp, Users as UsersIcon, Target, ListTodo, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import FinalizarAtendimentoModal from "./FinalizarAtendimentoModal";
 
 export default function AceleracaoTab({ workshop, user }) {
   const [filters, setFilters] = useState({
@@ -17,6 +18,7 @@ export default function AceleracaoTab({ workshop, user }) {
     status: "em_aberto", // Mostrar apenas em aberto por padrão
     tipo: "todos"
   });
+  const [atendimentoSelecionado, setAtendimentoSelecionado] = useState(null);
 
   // Buscar atendimentos
   const { data: atendimentos = [], isLoading } = useQuery({
@@ -130,6 +132,14 @@ export default function AceleracaoTab({ workshop, user }) {
     });
 
   return (
+    <>
+      {atendimentoSelecionado && (
+        <FinalizarAtendimentoModal
+          atendimento={atendimentoSelecionado}
+          onClose={() => setAtendimentoSelecionado(null)}
+        />
+      )}
+
     <div className="space-y-6">
       {/* Cards de Estatísticas */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -234,7 +244,7 @@ export default function AceleracaoTab({ workshop, user }) {
         </CardContent>
       </Card>
 
-      {/* Lista de Registros */}
+      {/* Lista de Registros em Formato Tabela */}
       <Card>
         <CardHeader>
           <CardTitle>Registros de Atendimentos</CardTitle>
@@ -248,65 +258,88 @@ export default function AceleracaoTab({ workshop, user }) {
               <p>Nenhum atendimento encontrado</p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {atendimentosFiltrados.map((atendimento) => {
-                const isAtrasado = checkAtrasado(atendimento);
-                const statusDisplay = isAtrasado ? 'ATRASADO ⚠️' : atendimento.status.toUpperCase();
-                
-                return (
-                <div
-                  key={atendimento.id}
-                  className={`border-2 rounded-lg p-4 transition-all ${
-                    isAtrasado ? 'border-red-600 bg-red-50 shadow-xl' : 'border-gray-200 hover:shadow-md'
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    {/* Coluna Status */}
-                    <div className="flex-shrink-0">
-                      <Badge className={`${getStatusColor(isAtrasado ? 'atrasado' : atendimento.status)} text-sm px-3 py-1`}>
-                        {statusDisplay}
-                      </Badge>
-                    </div>
-
-                    {/* Informações Principais */}
-                    <div className="flex-1">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
-                        <div className="flex items-center gap-2 text-sm">
-                          <Calendar className="w-4 h-4 text-gray-500" />
-                          <span className="font-medium">
-                            {format(new Date(atendimento.data_agendada), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b-2 border-gray-300 bg-gray-50">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">ID</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Cliente</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Data/Hora</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Tipo</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Pauta</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Consultor</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Observações</th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {atendimentosFiltrados.map((atendimento) => {
+                    const isAtrasado = checkAtrasado(atendimento);
+                    const statusFinal = isAtrasado ? 'atrasado' : atendimento.status;
+                    
+                    return (
+                      <tr 
+                        key={atendimento.id} 
+                        className={`border-b hover:bg-gray-50 transition-colors ${
+                          isAtrasado ? 'bg-red-100' : ''
+                        }`}
+                      >
+                        <td className="px-4 py-3 text-sm font-mono text-gray-600">
+                          {atendimento.id.substring(0, 8)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <Badge className={`${getStatusColor(statusFinal)} text-xs font-bold`}>
+                            {isAtrasado ? 'ATRASADO' : atendimento.status.toUpperCase()}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          {atendimento.workshop_id?.substring(0, 12)}...
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-700">
+                          {format(new Date(atendimento.data_agendada), "dd/MM/yyyy", { locale: ptBR })}
+                          <br />
+                          <span className="text-xs text-gray-500">
+                            {format(new Date(atendimento.data_agendada), "HH:mm")}
                           </span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <Building2 className="w-4 h-4 text-gray-500" />
-                          <span>Workshop ID: {atendimento.workshop_id.substring(0, 8)}...</span>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
-                        <div className="flex items-center gap-2 text-sm">
-                          <User className="w-4 h-4 text-gray-500" />
-                          <span>{atendimento.consultor_nome}</span>
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          <span className="font-medium">Tipo:</span> {atendimento.tipo_atendimento?.replace(/_/g, ' ')}
-                        </div>
-                      </div>
-
-                      {atendimento.pauta?.length > 0 && (
-                        <div className="mt-2 text-sm bg-blue-50 p-2 rounded">
-                          <strong className="text-blue-700">Pauta:</strong>{' '}
-                          <span className="text-gray-700">{atendimento.pauta[0].titulo}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )})}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-700">
+                          {atendimento.tipo_atendimento?.replace(/_/g, ' ')}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-700 max-w-xs truncate">
+                          {atendimento.pauta?.[0]?.titulo || '-'}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-700">
+                          {atendimento.consultor_nome}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600 max-w-xs">
+                          <div className="truncate" title={atendimento.observacoes_consultor}>
+                            {atendimento.observacoes_consultor || '-'}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          {!['realizado', 'cancelado'].includes(atendimento.status) && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-green-600 hover:text-green-800"
+                              onClick={() => setAtendimentoSelecionado(atendimento)}
+                              title="Finalizar Atendimento"
+                            >
+                              <CheckCircle className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           )}
         </CardContent>
       </Card>
     </div>
+    </>
   );
 }
