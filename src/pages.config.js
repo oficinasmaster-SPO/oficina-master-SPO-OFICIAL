@@ -106,6 +106,8 @@ import RepositorioDocumentos from './pages/RepositorioDocumentos';
 import ClientRegistration from './pages/ClientRegistration';
 import Usuarios from './pages/Usuarios';
 import Organograma from './pages/Organograma';
+import CronogramaConsultoria from './pages/CronogramaConsultoria';
+import RegistrarAtendimento from './pages/RegistrarAtendimento';
 import __Layout from './Layout.jsx';
 
 
@@ -218,6 +220,8 @@ export const PAGES = {
     "ClientRegistration": ClientRegistration,
     "Usuarios": Usuarios,
     "Organograma": Organograma,
+    "CronogramaConsultoria": CronogramaConsultoria,
+    "RegistrarAtendimento": RegistrarAtendimento,
 }
 
 export const pagesConfig = {

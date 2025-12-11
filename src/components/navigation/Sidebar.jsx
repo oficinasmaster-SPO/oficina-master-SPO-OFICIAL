@@ -461,6 +461,27 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       ]
     },
     {
+      id: 'consultoria',
+      label: 'Consultoria',
+      icon: Briefcase,
+      items: [
+        { 
+          name: 'Cronograma de Consultoria', 
+          href: createPageUrl('CronogramaConsultoria'), 
+          icon: Calendar,
+          description: 'Atendimentos e atas de reunião',
+          highlight: true
+        },
+        { 
+          name: 'Registrar Atendimento', 
+          href: createPageUrl('RegistrarAtendimento'), 
+          icon: FilePenLine,
+          description: 'Agendar e documentar consultorias',
+          adminOnly: true
+        }
+      ]
+    },
+    {
       id: 'admin',
       label: 'Administração & Planos',
       icon: Shield,
