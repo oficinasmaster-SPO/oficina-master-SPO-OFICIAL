@@ -19,8 +19,7 @@ import WorkshopLevelBadge from "../components/gamification/WorkshopLevelBadge";
 import AutomacaoIncentivos from "../components/workshop/AutomacaoIncentivos";
 import GrowthDashboard from "../components/management/GrowthDashboard";
 import WorkshopMilestones from "../components/management/WorkshopMilestones";
-import PainelAceleracao from "../components/aceleracao/PainelAceleracao";
-import CronogramaTab from "../components/aceleracao/CronogramaTab";
+
 
 export default function GestaoOficina() {
   const navigate = useNavigate();
@@ -307,18 +306,7 @@ export default function GestaoOficina() {
               <Trophy className="w-4 h-4 mr-1" />
               <span className="hidden sm:inline">Conquistas</span>
             </TabsTrigger>
-            {(user?.role === 'admin' || user?.job_role === 'acelerador') && (
-              <>
-                <TabsTrigger value="aceleracao" className="text-xs md:text-sm bg-purple-50 text-purple-700 data-[state=active]:bg-purple-100 data-[state=active]:text-purple-900">
-                  <Briefcase className="w-4 h-4 mr-1" />
-                  <span className="hidden sm:inline">Aceleração</span>
-                </TabsTrigger>
-                <TabsTrigger value="cronograma" className="text-xs md:text-sm bg-indigo-50 text-indigo-700 data-[state=active]:bg-indigo-100 data-[state=active]:text-indigo-900">
-                  <CalendarIcon className="w-4 h-4 mr-1" />
-                  <span className="hidden sm:inline">Cronograma</span>
-                </TabsTrigger>
-              </>
-            )}
+
           </TabsList>
 
           <TabsContent value="crescimento">
@@ -391,17 +379,7 @@ export default function GestaoOficina() {
             </div>
           </TabsContent>
 
-          {(user?.role === 'admin' || user?.job_role === 'acelerador') && (
-            <>
-              <TabsContent value="aceleracao">
-                <PainelAceleracao workshop={workshop} user={user} />
-              </TabsContent>
 
-              <TabsContent value="cronograma">
-                <CronogramaTab workshop={workshop} />
-              </TabsContent>
-            </>
-          )}
         </Tabs>
       </div>
     </div>
