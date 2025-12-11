@@ -119,8 +119,35 @@ export default function CadastroColaborador() {
         production_percentage: productionPercentage
       });
 
-      // O User será criado automaticamente quando o colaborador aceitar o convite
-      // e criar senha no sistema de autenticação do Base44
+      // Criar User no banco de dados
+      let userId = null;
+      try {
+        const userResponse = await base44.functions.invoke('createUserForEmployee', {
+          employee_data: {
+            email: formData.email,
+            full_name: formData.full_name,
+            position: formData.position,
+            job_role: formData.job_role,
+            area: formData.area,
+            telefone: formData.telefone,
+            profile_picture_url: formData.profile_picture_url,
+            hire_date: formData.hire_date
+          },
+          workshop_id: workshop.id,
+          employee_id: newEmployee.id
+        });
+
+        if (userResponse.data.success) {
+          userId = userResponse.data.user_id;
+          // Vincular User ao Employee
+          await base44.entities.Employee.update(newEmployee.id, {
+            user_id: userId
+          });
+        }
+      } catch (userError) {
+        console.error("Erro ao criar user:", userError);
+        toast.error("Colaborador criado, mas houve erro ao criar o usuário do sistema");
+      }
 
       // Criar convite e enviar e-mail
       try {
