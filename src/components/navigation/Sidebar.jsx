@@ -230,14 +230,6 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       icon: Users,
       items: [
         { 
-          name: 'Usuários do Sistema', 
-          href: createPageUrl('Usuarios'), 
-          icon: Users,
-          description: 'Gerenciar usuários e empresas',
-          highlight: true,
-          adminOnly: true
-        },
-        { 
           name: 'Mapas de Autoavaliação', 
           href: createPageUrl('Autoavaliacoes'), 
           icon: Target,
@@ -468,6 +460,14 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       label: 'Administração & Planos',
       icon: Shield,
       items: [
+        { 
+          name: 'Usuários do Sistema', 
+          href: createPageUrl('Usuarios'), 
+          icon: Users,
+          description: 'Gerenciar usuários e empresas',
+          highlight: true,
+          adminOnly: true
+        },
         { 
           name: 'Gerenciar Tela Inicial', 
           href: createPageUrl('GerenciarTelaInicial'), 
