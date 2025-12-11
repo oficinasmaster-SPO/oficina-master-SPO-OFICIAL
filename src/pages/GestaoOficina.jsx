@@ -394,7 +394,7 @@ export default function GestaoOficina() {
           {(user?.role === 'admin' || user?.job_role === 'acelerador') && (
             <>
               <TabsContent value="aceleracao">
-                <AceleracaoTab workshop={workshop} user={user} />
+                <PainelAceleracao workshop={workshop} user={user} />
               </TabsContent>
 
               <TabsContent value="cronograma">
