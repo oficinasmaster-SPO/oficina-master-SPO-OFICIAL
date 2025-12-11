@@ -119,22 +119,27 @@ export default function CadastroColaborador() {
         production_percentage: productionPercentage
       });
 
-      // Criar registro de User vinculado à empresa
+      // Criar registro de User vinculado à empresa via backend
       try {
-        await base44.entities.User.create({
-          email: formData.email,
-          full_name: formData.full_name,
-          workshop_id: workshop.id,
-          position: formData.position,
-          job_role: formData.job_role,
-          area: formData.area,
-          telefone: formData.telefone,
-          hire_date: formData.hire_date,
-          user_status: formData.status,
-          role: 'user'
+        const userResponse = await base44.functions.invoke('createUserForEmployee', {
+          employee_data: {
+            email: formData.email,
+            full_name: formData.full_name,
+            position: formData.position,
+            job_role: formData.job_role,
+            area: formData.area
+          },
+          workshop_id: workshop.id
         });
+
+        if (userResponse.data.success) {
+          // Atualizar employee com user_id
+          await base44.entities.Employee.update(newEmployee.id, {
+            user_id: userResponse.data.user_id
+          });
+        }
       } catch (userError) {
-        console.log("Usuário já existe ou erro ao criar:", userError);
+        console.log("Erro ao criar usuário:", userError);
       }
 
       toast.success("Colaborador cadastrado!");
