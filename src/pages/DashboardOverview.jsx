@@ -24,14 +24,32 @@ export default function DashboardOverview() {
         const currentUser = await base44.auth.me();
         setUser(currentUser);
         
-        // Load workshop
-        const workshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
-        if (workshops.length > 0) {
-          setWorkshop(workshops[0]);
+        // Load workshop - CORRIGIDO: buscar por workshop_id do user ou owner_id
+        let userWorkshop = null;
+        
+        if (currentUser.workshop_id) {
+          const byId = await base44.entities.Workshop.filter({ id: currentUser.workshop_id });
+          userWorkshop = byId[0];
         }
+        
+        if (!userWorkshop) {
+          const byOwner = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
+          userWorkshop = byOwner[0];
+        }
+        
+        if (!userWorkshop) {
+          // Buscar se é colaborador
+          const employees = await base44.entities.Employee.filter({ user_id: currentUser.id });
+          if (employees.length > 0) {
+            const byWorkshop = await base44.entities.Workshop.filter({ id: employees[0].workshop_id });
+            userWorkshop = byWorkshop[0];
+          }
+        }
+        
+        setWorkshop(userWorkshop);
       } catch (error) {
         console.error("Error loading dashboard:", error);
-        base44.auth.redirectToLogin();
+        base44.auth.redirectToLogin(window.location.href);
       } finally {
         setLoading(false);
       }
@@ -173,13 +191,23 @@ export default function DashboardOverview() {
                         <p className="text-sm text-gray-500 mt-1">
                             Última avaliação: {new Date(entrepreneurDiag.created_date).toLocaleDateString('pt-BR')}
                         </p>
-                        <Button 
-                            variant="link" 
-                            className="p-0 h-auto mt-3 text-blue-600"
-                            onClick={() => navigate(createPageUrl("ResultadoEmpresario") + `?id=${entrepreneurDiag.id}`)}
-                        >
-                            Ver detalhes <TrendingUp className="w-3 h-3 ml-1" />
-                        </Button>
+                        <div className="flex gap-2 mt-3">
+                            <Button 
+                                variant="link" 
+                                className="p-0 h-auto text-blue-600"
+                                onClick={() => navigate(createPageUrl("ResultadoEmpresario") + `?id=${entrepreneurDiag.id}`)}
+                            >
+                                Ver detalhes <TrendingUp className="w-3 h-3 ml-1" />
+                            </Button>
+                            <span className="text-gray-300">|</span>
+                            <Button 
+                                variant="link" 
+                                className="p-0 h-auto text-blue-600"
+                                onClick={() => navigate(createPageUrl("Historico"))}
+                            >
+                                Ver todos
+                            </Button>
+                        </div>
                     </div>
                 ) : (
                     <div className="text-center py-4">
@@ -208,13 +236,23 @@ export default function DashboardOverview() {
                                 {maturityDiags.length}
                             </div>
                             <p className="text-sm text-gray-500">Colaboradores avaliados</p>
-                            <Button 
-                                variant="link" 
-                                className="p-0 h-auto mt-3 text-purple-600"
-                                onClick={() => navigate(createPageUrl("HistoricoMaturidade"))}
-                            >
-                                Ver equipe <TrendingUp className="w-3 h-3 ml-1" />
-                            </Button>
+                            <div className="flex gap-2 mt-3">
+                                <Button 
+                                    variant="link" 
+                                    className="p-0 h-auto text-purple-600"
+                                    onClick={() => navigate(createPageUrl("HistoricoMaturidade"))}
+                                >
+                                    Ver equipe <TrendingUp className="w-3 h-3 ml-1" />
+                                </Button>
+                                <span className="text-gray-300">|</span>
+                                <Button 
+                                    variant="link" 
+                                    className="p-0 h-auto text-purple-600"
+                                    onClick={() => navigate(createPageUrl("Colaboradores"))}
+                                >
+                                    Ver todos
+                                </Button>
+                            </div>
                         </div>
                         <div className="h-20 w-20">
                              <ResponsiveContainer width="100%" height="100%">
@@ -266,13 +304,23 @@ export default function DashboardOverview() {
                              <p className="text-xs text-center text-gray-400">+ {expiringContracts.length - 3} outros</p>
                         )}
                     </div>
-                    <Button 
-                        variant="link" 
-                        className="p-0 h-auto mt-3 text-amber-600"
-                        onClick={() => navigate(createPageUrl("COEXList"))}
-                    >
-                        Gerenciar contratos <TrendingUp className="w-3 h-3 ml-1" />
-                    </Button>
+                    <div className="flex gap-2 mt-3">
+                        <Button 
+                            variant="link" 
+                            className="p-0 h-auto text-amber-600"
+                            onClick={() => navigate(createPageUrl("COEXList"))}
+                        >
+                            Gerenciar contratos <TrendingUp className="w-3 h-3 ml-1" />
+                        </Button>
+                        <span className="text-gray-300">|</span>
+                        <Button 
+                            variant="link" 
+                            className="p-0 h-auto text-amber-600"
+                            onClick={() => navigate(createPageUrl("COEXList"))}
+                        >
+                            Ver todos
+                        </Button>
+                    </div>
                 </div>
             </CardContent>
           </Card>
