@@ -166,8 +166,7 @@ export default function ConvidarColaborador() {
         throw new Error(error.message || "Falha na comunicação. Verifique sua conexão.");
       }
     },
-    onSuccess: () => {
-      // Invalida a query exata para forçar atualização da lista
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['employee-invites'] });
       
       setFormData({ 
@@ -179,7 +178,21 @@ export default function ConvidarColaborador() {
         initial_permission: "colaborador", 
         employee_id: null 
       });
-      toast.success("Link de convite gerado! Compartilhe com o colaborador.");
+      
+      // Mostra o link no toast
+      if (data.invite_url) {
+        toast.success(
+          <div>
+            <p className="font-semibold">Convite criado com sucesso!</p>
+            <p className="text-xs mt-1">Compartilhe este link:</p>
+            <a href={data.invite_url} target="_blank" rel="noopener noreferrer" 
+               className="text-blue-600 text-xs hover:underline break-all">
+              {data.invite_url}
+            </a>
+          </div>,
+          { duration: 10000 }
+        );
+      }
     },
     onError: (error) => {
       toast.error("Erro ao enviar convite: " + error.message);
