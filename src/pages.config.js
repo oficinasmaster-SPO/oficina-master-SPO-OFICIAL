@@ -105,6 +105,7 @@ import Feedbacks from './pages/Feedbacks';
 import RepositorioDocumentos from './pages/RepositorioDocumentos';
 import ClientRegistration from './pages/ClientRegistration';
 import Usuarios from './pages/Usuarios';
+import Organograma from './pages/Organograma';
 import __Layout from './Layout.jsx';
 
 
@@ -216,6 +217,7 @@ export const PAGES = {
     "RepositorioDocumentos": RepositorioDocumentos,
     "ClientRegistration": ClientRegistration,
     "Usuarios": Usuarios,
+    "Organograma": Organograma,
 }
 
 export const pagesConfig = {
