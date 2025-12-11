@@ -470,6 +470,21 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       aceleradorOnly: true,
       items: [
         { 
+          name: 'Controle da Aceleração', 
+          href: createPageUrl('ControleAceleracao'), 
+          icon: Briefcase,
+          description: 'Painel completo de gestão',
+          highlight: true,
+          aceleradorOnly: true
+        },
+        { 
+          name: 'Meu Plano de Aceleração', 
+          href: createPageUrl('PainelClienteAceleracao'), 
+          icon: Target,
+          description: 'Seu progresso e tarefas',
+          highlight: true
+        },
+        { 
           name: 'CheckPoint / Cronograma', 
           href: createPageUrl('CronogramaDetalhado'), 
           icon: ListTodo,

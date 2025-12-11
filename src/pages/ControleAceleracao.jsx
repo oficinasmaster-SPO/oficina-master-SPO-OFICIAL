@@ -33,8 +33,13 @@ export default function ControleAceleracao() {
 
   if (!user || (user.role !== 'admin' && user.job_role !== 'acelerador')) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-600">Acesso restrito a consultores e aceleradores</p>
+      <div className="max-w-4xl mx-auto text-center py-12">
+        <div className="bg-red-50 border-2 border-red-200 rounded-lg p-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Acesso Restrito</h2>
+          <p className="text-gray-600">
+            Esta área é restrita a consultores e aceleradores.
+          </p>
+        </div>
       </div>
     );
   }

@@ -49,6 +49,23 @@ export default function PainelClienteAceleracao() {
     );
   }
 
+  // Verificar se o cliente tem plano habilitado
+  if (!workshop?.planoAtual || workshop.planoAtual === 'FREE') {
+    return (
+      <div className="max-w-4xl mx-auto text-center py-12">
+        <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Plano de Aceleração Não Ativo</h2>
+          <p className="text-gray-600 mb-6">
+            Para acessar o painel de aceleração, você precisa ter um plano habilitado.
+          </p>
+          <Button onClick={() => window.location.href = '/cadastro-planos'}>
+            Ver Planos Disponíveis
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   const proximosAtendimentos = atendimentos?.filter(a => 
     ['agendado', 'confirmado'].includes(a.status) && 
     new Date(a.data_agendada) >= new Date()

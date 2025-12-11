@@ -2,7 +2,11 @@ import React from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Calendar, TrendingUp, CheckCircle, Clock } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Users, Calendar, TrendingUp, CheckCircle, Clock, AlertTriangle } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export default function VisaoGeralTab({ user }) {
   const { data: workshops } = useQuery({
@@ -28,6 +32,15 @@ export default function VisaoGeralTab({ user }) {
   const reunioesFuturas = atendimentos?.filter(a => 
     ['agendado', 'confirmado'].includes(a.status)
   ).length || 0;
+  
+  const tarefasPendentes = atendimentos?.filter(a => 
+    a.status !== 'realizado' && new Date(a.data_agendada) < new Date()
+  ) || [];
+
+  const proximosAtendimentos = atendimentos?.filter(a => 
+    ['agendado', 'confirmado'].includes(a.status) && 
+    new Date(a.data_agendada) >= new Date()
+  ).slice(0, 5) || [];
 
   return (
     <div className="space-y-6">
@@ -77,7 +90,62 @@ export default function VisaoGeralTab({ user }) {
         </Card>
       </div>
 
-      {/* Gráficos e outras visualizações podem ser adicionados aqui */}
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Próximos Atendimentos */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="w-5 h-5" />
+              Próximos Atendimentos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {proximosAtendimentos.length === 0 ? (
+              <p className="text-gray-500 text-center py-4">Nenhum atendimento próximo</p>
+            ) : (
+              <div className="space-y-3">
+                {proximosAtendimentos.map((atendimento) => (
+                  <div key={atendimento.id} className="border-l-4 border-blue-500 pl-3 py-2">
+                    <p className="font-medium text-sm">{atendimento.tipo_atendimento}</p>
+                    <p className="text-xs text-gray-600">
+                      {format(new Date(atendimento.data_agendada), "dd/MM 'às' HH:mm", { locale: ptBR })}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Tarefas Atrasadas */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-red-500" />
+              Atendimentos Atrasados
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {tarefasPendentes.length === 0 ? (
+              <div className="text-center py-4">
+                <CheckCircle className="w-12 h-12 mx-auto text-green-500 mb-2" />
+                <p className="text-gray-500">Tudo em dia!</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {tarefasPendentes.slice(0, 5).map((atendimento) => (
+                  <div key={atendimento.id} className="border-l-4 border-red-500 pl-3 py-2">
+                    <p className="font-medium text-sm">{atendimento.tipo_atendimento}</p>
+                    <p className="text-xs text-red-600">
+                      Previsto: {format(new Date(atendimento.data_agendada), "dd/MM/yyyy", { locale: ptBR })}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
