@@ -153,30 +153,51 @@ Deno.serve(async (req) => {
     const companyName = workshop_name || "Oficinas Master";
 
     try {
-        await base44.integrations.Core.SendEmail({
+        await base44.asServiceRole.integrations.Core.SendEmail({
             to: email,
-            subject: `Convite de Acesso: ${companyName}`,
+            subject: `🔑 Convite de Acesso - ${companyName}`,
             body: `
-Olá ${name},
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
+                <div style="background-color: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                  <h2 style="color: #1e40af; margin-bottom: 20px;">Olá, ${name}!</h2>
+                  
+                  <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+                    Você foi convidado(a) para acessar o sistema de gestão da <strong>${companyName}</strong>.
+                  </p>
 
-Você foi convidado(a) para acessar o sistema de gestão da oficina ${companyName}.
+                  <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+                    Cargo: <strong>${position}</strong><br>
+                    Área: <strong>${area}</strong>
+                  </p>
+                  
+                  <div style="text-align: center; margin: 30px 0;">
+                    <a href="${inviteUrl}" 
+                       style="background-color: #2563eb; color: white; padding: 14px 32px; 
+                              text-decoration: none; border-radius: 8px; display: inline-block;
+                              font-weight: bold; font-size: 16px;">
+                      Aceitar Convite
+                    </a>
+                  </div>
+                  
+                  <p style="color: #6b7280; font-size: 14px; margin-top: 20px;">
+                    <strong>⏰ Este link é válido por 5 dias.</strong>
+                  </p>
 
-Para aceitar o convite e criar sua senha, clique no link abaixo:
-
-${inviteUrl}
-
-(Este link é válido por 5 dias)
-
-Atenciosamente,
-Equipe Oficinas Master
+                  <p style="color: #9ca3af; font-size: 12px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+                    Se você não solicitou este convite, ignore este email.<br>
+                    Equipe Oficinas Master
+                  </p>
+                </div>
+              </div>
             `
         });
+        console.log("✅ Email enviado com sucesso para:", email);
     } catch (emailError) {
-        console.error("Erro de Envio de Email:", emailError);
-        // Retorna erro 500 mas avisa que o convite foi salvo
+        console.error("❌ Erro ao enviar email:", emailError.message);
         return Response.json({ 
-            error: "O convite foi salvo no sistema, mas o envio do e-mail falhou. Tente reenviar na lista de convites.",
-            invite_id: inviteId
+            error: "Convite salvo, mas erro ao enviar email. Verifique se o serviço de email está ativo.",
+            invite_id: inviteId,
+            details: emailError.message
         }, { status: 500 });
     }
 
