@@ -124,7 +124,7 @@ export default function ConvidarColaborador() {
       initial_permission: "colaborador",
       employee_id: emp.id
     });
-    toast.info("Dados preenchidos! Clique em Enviar Convite.");
+    toast.info("Dados preenchidos! Clique em Gerar Link de Acesso.");
   };
 
   // Mutação para enviar convite
@@ -195,7 +195,7 @@ export default function ConvidarColaborador() {
       }
     },
     onError: (error) => {
-      toast.error("Erro ao enviar convite: " + error.message);
+      toast.error("Erro ao gerar link: " + error.message);
     }
   });
 
@@ -265,7 +265,7 @@ export default function ConvidarColaborador() {
           </div>
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Convidar Colaborador</h1>
-            <p className="text-gray-600">Envie convites por e-mail para acesso ao portal</p>
+            <p className="text-gray-600">Gere links de acesso para compartilhar com colaboradores</p>
           </div>
         </div>
 
@@ -276,10 +276,10 @@ export default function ConvidarColaborador() {
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-lg text-orange-800">
                   <Users className="w-5 h-5" />
-                  Colaboradores Cadastrados (Sem Convite)
+                  Colaboradores Cadastrados (Sem Link de Acesso)
                 </CardTitle>
                 <CardDescription className="text-orange-700">
-                  Estes colaboradores já estão cadastrados. Selecione um para enviar o convite.
+                  Estes colaboradores já estão cadastrados. Selecione um para gerar o link de acesso.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -309,10 +309,10 @@ export default function ConvidarColaborador() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Send className="w-5 h-5 text-blue-600" />
-                Novo Convite
+                Gerar Link de Acesso
               </CardTitle>
               <CardDescription>
-                Preencha os dados para enviar o link de acesso
+                Preencha os dados para gerar um link que você pode compartilhar
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -408,12 +408,12 @@ export default function ConvidarColaborador() {
                   {sendInviteMutation.isPending ? (
                     <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Enviando...
+                        Gerando Link...
                     </>
                   ) : (
                     <>
                         <Send className="w-4 h-4 mr-2" />
-                        Enviar Convite
+                        Gerar Link de Acesso
                     </>
                   )}
                 </Button>
@@ -426,7 +426,7 @@ export default function ConvidarColaborador() {
             <CardHeader className="border-b bg-gray-50/50">
               <CardTitle className="flex items-center gap-2 text-base">
                 <Mail className="w-5 h-5 text-gray-500" />
-                Histórico de Convites
+                Links de Acesso Gerados
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
@@ -439,8 +439,8 @@ export default function ConvidarColaborador() {
                   <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Mail className="w-8 h-8 text-gray-400" />
                   </div>
-                  <p className="font-medium text-gray-900">Nenhum convite enviado</p>
-                  <p className="text-sm mt-1">Preencha o formulário para enviar o primeiro convite.</p>
+                  <p className="font-medium text-gray-900">Nenhum link gerado</p>
+                  <p className="text-sm mt-1">Preencha o formulário para gerar o primeiro link de acesso.</p>
                 </div>
               ) : (
                 <div className="divide-y max-h-[600px] overflow-y-auto">
@@ -466,17 +466,17 @@ export default function ConvidarColaborador() {
                           size="sm"
                           className="w-full text-xs h-8"
                           onClick={() => {
-                            if (confirm('Deseja reenviar o convite para ' + invite.email + '?')) {
+                            if (confirm('Deseja gerar um novo link de acesso para ' + invite.email + '?')) {
                                 sendInviteMutation.mutate({
                                     ...invite,
-                                    employee_id: invite.employee_id // Ensure ID is passed for updates
+                                    employee_id: invite.employee_id
                                 });
                             }
                           }}
                           disabled={sendInviteMutation.isPending}
                         >
                           <RefreshCw className="w-3 h-3 mr-2" />
-                          Reenviar Convite
+                          Gerar Novo Link
                         </Button>
                       )}
                     </div>
