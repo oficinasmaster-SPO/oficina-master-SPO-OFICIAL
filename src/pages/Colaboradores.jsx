@@ -275,31 +275,70 @@ export default function Colaboradores() {
                         </span>
                       </div>
                       
-                      <div className="flex gap-2 mt-4">
-                        <Button
-                          onClick={() => navigate(createPageUrl("DetalhesColaborador") + `?id=${employee.id}`)}
-                          className="flex-1"
-                          size="sm"
-                          variant="outline"
-                        >
-                          Ver Detalhes
-                        </Button>
-                        <Button
-                          onClick={() => navigate(createPageUrl("ConvidarColaborador") + `?id=${employee.id}`)}
-                          size="sm"
-                          className="bg-blue-600 hover:bg-blue-700"
-                          title="Convidar para o Portal"
-                        >
-                          <UserPlus className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          onClick={() => setSelectedEmployee(employee)}
-                          size="sm"
-                          className="bg-purple-600 hover:bg-purple-700"
-                          title="Sugestões de IA"
-                        >
-                          <Sparkles className="w-4 h-4" />
-                        </Button>
+                      <div className="space-y-2 mt-4">
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={() => navigate(createPageUrl("DetalhesColaborador") + `?id=${employee.id}`)}
+                            className="flex-1"
+                            size="sm"
+                            variant="outline"
+                          >
+                            Ver Detalhes
+                          </Button>
+                          <Button
+                            onClick={() => navigate(createPageUrl("ConvidarColaborador") + `?id=${employee.id}`)}
+                            size="sm"
+                            className="bg-blue-600 hover:bg-blue-700"
+                            title="Convidar para o Portal"
+                          >
+                            <UserPlus className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            onClick={() => setSelectedEmployee(employee)}
+                            size="sm"
+                            className="bg-purple-600 hover:bg-purple-700"
+                            title="Sugestões de IA"
+                          >
+                            <Sparkles className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={async () => {
+                              if (confirm(`${employee.status === 'ativo' ? 'Inativar' : 'Ativar'} ${employee.full_name}?`)) {
+                                try {
+                                  await base44.entities.Employee.update(employee.id, {
+                                    status: employee.status === 'ativo' ? 'inativo' : 'ativo'
+                                  });
+                                  window.location.reload();
+                                } catch (error) {
+                                  console.error(error);
+                                }
+                              }
+                            }}
+                            size="sm"
+                            variant="outline"
+                            className="flex-1"
+                          >
+                            {employee.status === 'ativo' ? 'Inativar' : 'Ativar'}
+                          </Button>
+                          <Button
+                            onClick={async () => {
+                              if (confirm(`EXCLUIR ${employee.full_name}? Ação irreversível!`)) {
+                                try {
+                                  await base44.entities.Employee.delete(employee.id);
+                                  window.location.reload();
+                                } catch (error) {
+                                  console.error(error);
+                                }
+                              }
+                            }}
+                            size="sm"
+                            variant="destructive"
+                          >
+                            Excluir
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </CardContent>

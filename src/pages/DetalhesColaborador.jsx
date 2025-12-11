@@ -4,7 +4,7 @@ import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, ArrowLeft, User, FileText, MessageSquare, AlertTriangle, Award, TrendingUp, FileCheck, Heart, FilePenLine, Activity, GraduationCap, BarChart3, Rocket, Target } from "lucide-react";
+import { Loader2, ArrowLeft, User, FileText, MessageSquare, AlertTriangle, Award, TrendingUp, FileCheck, Heart, FilePenLine, Activity, GraduationCap, BarChart3, Rocket, Target, Trash2, UserX } from "lucide-react";
 import { toast } from "sonner";
 import DadosPessoais from "../components/employee/DadosPessoais";
 import RemuneracaoProducao from "../components/employee/RemuneracaoProducao";
@@ -88,6 +88,35 @@ export default function DetalhesColaborador() {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Voltar
           </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={async () => {
+                if (confirm(`Tem certeza que deseja ${employee.status === 'ativo' ? 'inativar' : 'ativar'} este colaborador?`)) {
+                  await handleUpdate({ status: employee.status === 'ativo' ? 'inativo' : 'ativo' });
+                }
+              }}
+              className={employee.status === 'ativo' ? 'text-orange-600 border-orange-600' : 'text-green-600 border-green-600'}
+            >
+              {employee.status === 'ativo' ? 'Inativar' : 'Ativar'}
+            </Button>
+            <Button 
+              variant="destructive"
+              onClick={async () => {
+                if (confirm(`Tem certeza que deseja EXCLUIR permanentemente ${employee.full_name}? Esta ação não pode ser desfeita.`)) {
+                  try {
+                    await base44.entities.Employee.delete(employee.id);
+                    toast.success("Colaborador excluído");
+                    navigate(createPageUrl("Colaboradores"));
+                  } catch (error) {
+                    toast.error("Erro ao excluir colaborador");
+                  }
+                }
+              }}
+            >
+              Excluir
+            </Button>
+          </div>
         </div>
 
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
