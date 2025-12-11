@@ -15,14 +15,13 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Dados incompletos' }, { status: 400 });
     }
 
-    // Verificar se usuário já existe
-    const existingUsers = await base44.asServiceRole.entities.User.filter({ 
-      email: employee_data.email 
-    });
+    // Buscar todos os usuários e filtrar manualmente
+    const allUsers = await base44.asServiceRole.entities.User.list();
+    const existingUser = allUsers.find(u => u.email === employee_data.email);
 
-    if (existingUsers && existingUsers.length > 0) {
+    if (existingUser) {
       // Atualizar usuário existente com dados da empresa
-      await base44.asServiceRole.entities.User.update(existingUsers[0].id, {
+      await base44.asServiceRole.entities.User.update(existingUser.id, {
         workshop_id: workshop_id,
         position: employee_data.position,
         job_role: employee_data.job_role,
@@ -31,7 +30,7 @@ Deno.serve(async (req) => {
 
       return Response.json({
         success: true,
-        user_id: existingUsers[0].id,
+        user_id: existingUser.id,
         message: 'Usuário existente atualizado'
       });
     }

@@ -120,6 +120,7 @@ export default function CadastroColaborador() {
       });
 
       // Criar registro de User vinculado à empresa via backend
+      let userId = null;
       try {
         const userResponse = await base44.functions.invoke('createUserForEmployee', {
           employee_data: {
@@ -133,16 +134,55 @@ export default function CadastroColaborador() {
         });
 
         if (userResponse.data.success) {
+          userId = userResponse.data.user_id;
           // Atualizar employee com user_id
           await base44.entities.Employee.update(newEmployee.id, {
-            user_id: userResponse.data.user_id
+            user_id: userId
           });
         }
       } catch (userError) {
         console.log("Erro ao criar usuário:", userError);
       }
 
-      toast.success("Colaborador cadastrado!");
+      // Criar convite e enviar e-mail
+      try {
+        const inviteToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 7);
+
+        const invite = await base44.entities.EmployeeInvite.create({
+          workshop_id: workshop.id,
+          employee_id: newEmployee.id,
+          name: formData.full_name,
+          email: formData.email,
+          position: formData.position,
+          area: formData.area,
+          job_role: formData.job_role,
+          invite_token: inviteToken,
+          expires_at: expiresAt.toISOString(),
+          status: "enviado"
+        });
+
+        // Enviar e-mail de convite
+        const emailResponse = await base44.functions.invoke('sendEmployeeInvite', {
+          name: formData.full_name,
+          email: formData.email,
+          position: formData.position,
+          area: formData.area,
+          job_role: formData.job_role,
+          workshop_id: workshop.id,
+          employee_id: newEmployee.id
+        });
+
+        if (emailResponse.data.success) {
+          toast.success("Colaborador cadastrado e e-mail de convite enviado!");
+        } else {
+          toast.success("Colaborador cadastrado! E-mail não foi enviado, mas convite está disponível.");
+        }
+      } catch (inviteError) {
+        console.log("Erro ao enviar convite:", inviteError);
+        toast.success("Colaborador cadastrado! Mas houve erro ao enviar o e-mail de convite.");
+      }
       
       // Perguntar ou redirecionar para convite
       if (window.confirm("Colaborador cadastrado! Deseja enviar o convite de acesso ao portal agora?")) {
