@@ -137,12 +137,12 @@ export default function CadastroColaborador() {
           await base44.entities.Employee.update(newEmployee.id, {
             user_id: userResponse.data.user_id
           });
+          toast.success("Colaborador e usuário criados com sucesso!");
         }
       } catch (userError) {
         console.log("Erro ao criar usuário:", userError);
+        toast.warning("Colaborador criado, mas houve erro ao criar usuário do sistema");
       }
-
-      toast.success("Colaborador cadastrado!");
       
       // Perguntar ou redirecionar para convite
       if (window.confirm("Colaborador cadastrado! Deseja enviar o convite de acesso ao portal agora?")) {

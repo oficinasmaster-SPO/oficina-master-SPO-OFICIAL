@@ -466,7 +466,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: Users,
           description: 'Gerenciar usuários e empresas',
           highlight: true,
-          adminOnly: true
+          adminOnly: false
         },
         { 
           name: 'Gerenciar Tela Inicial', 
