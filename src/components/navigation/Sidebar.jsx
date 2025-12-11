@@ -466,6 +466,13 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       icon: Briefcase,
       items: [
         { 
+          name: 'CheckPoint / Cronograma', 
+          href: createPageUrl('CronogramaDetalhado'), 
+          icon: ListTodo,
+          description: 'Progresso detalhado do plano',
+          highlight: true
+        },
+        { 
           name: 'Cronograma de Consultoria', 
           href: createPageUrl('CronogramaConsultoria'), 
           icon: Calendar,

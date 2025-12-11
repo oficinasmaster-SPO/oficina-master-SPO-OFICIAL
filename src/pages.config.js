@@ -108,6 +108,7 @@ import Usuarios from './pages/Usuarios';
 import Organograma from './pages/Organograma';
 import CronogramaConsultoria from './pages/CronogramaConsultoria';
 import RegistrarAtendimento from './pages/RegistrarAtendimento';
+import CronogramaDetalhado from './pages/CronogramaDetalhado';
 import __Layout from './Layout.jsx';
 
 
@@ -222,6 +223,7 @@ export const PAGES = {
     "Organograma": Organograma,
     "CronogramaConsultoria": CronogramaConsultoria,
     "RegistrarAtendimento": RegistrarAtendimento,
+    "CronogramaDetalhado": CronogramaDetalhado,
 }
 
 export const pagesConfig = {
