@@ -45,17 +45,34 @@ export default function PrimeiroAcesso() {
 
       // Validar token via backend (sem autenticação necessária)
       console.log("📡 Chamando validateInviteToken...");
-      const response = await fetch(`${window.location.origin}/.functions/validateInviteToken`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token })
-      });
-
-      const data = await response.json();
-      console.log("📥 Resposta recebida:", data);
       
-      if (!data.success) {
-        setError(data.error || "Convite não encontrado ou inválido.");
+      try {
+        const response = await fetch(`${window.location.origin}/.functions/validateInviteToken`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({ token })
+        });
+
+        console.log("📡 Status da resposta:", response.status);
+
+        if (!response.ok) {
+          throw new Error(`Erro HTTP: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("📥 Resposta recebida:", data);
+        
+        if (!data.success) {
+          setError(data.error || "Convite não encontrado ou inválido.");
+          setLoading(false);
+          return;
+        }
+      } catch (fetchError) {
+        console.error("❌ Erro na requisição:", fetchError);
+        setError("Erro ao validar convite. Verifique sua conexão e tente novamente.");
         setLoading(false);
         return;
       }
@@ -67,15 +84,18 @@ export default function PrimeiroAcesso() {
       }
 
       setInvite(foundInvite);
-      setFormData({
-        ...formData,
+      setFormData(prev => ({
+        ...prev,
         name: foundInvite.name || "",
         email: foundInvite.email || ""
-      });
+      }));
+
+      console.log("✅ Dados carregados com sucesso!");
 
     } catch (error) {
       console.error("❌ Erro ao carregar convite:", error);
-      setError("Erro ao carregar convite. Verifique sua conexão e tente novamente.");
+      console.error("❌ Stack:", error.stack);
+      setError("Erro ao carregar convite: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -86,11 +106,26 @@ export default function PrimeiroAcesso() {
     if (!file) return;
 
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      setFormData({ ...formData, profile_picture_url: file_url });
-      toast.success("Foto enviada!");
+      // Upload usando FormData direto para a API (sem SDK pois não há autenticação)
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+      
+      const response = await fetch(`${window.location.origin}/.integrations/Core/UploadFile`, {
+        method: 'POST',
+        body: formDataUpload
+      });
+      
+      const data = await response.json();
+      
+      if (data.file_url) {
+        setFormData({ ...formData, profile_picture_url: data.file_url });
+        toast.success("Foto enviada!");
+      } else {
+        throw new Error("Erro no upload");
+      }
     } catch (error) {
-      toast.error("Erro ao enviar foto");
+      console.error("Erro upload:", error);
+      toast.error("Erro ao enviar foto. Você pode continuar sem foto.");
     }
   };
 
@@ -107,9 +142,19 @@ export default function PrimeiroAcesso() {
     try {
       // Chamar função de backend para registrar colaborador (sem autenticação)
       console.log("📤 Registrando colaborador...");
+      console.log("📤 Dados enviados:", {
+        token: invite.invite_token,
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone
+      });
+
       const response = await fetch(`${window.location.origin}/.functions/registerInvitedEmployee`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         body: JSON.stringify({
           token: invite.invite_token,
           name: formData.name,
@@ -119,11 +164,18 @@ export default function PrimeiroAcesso() {
         })
       });
 
+      console.log("📡 Status resposta registro:", response.status);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Erro HTTP: ${response.status}`);
+      }
+
       const data = await response.json();
       console.log("📥 Resposta registro:", data);
 
       if (data.success) {
-        toast.success("Cadastro confirmado! Agora você pode fazer login.");
+        toast.success("✅ Cadastro confirmado! Redirecionando para criar sua senha...", { duration: 5000 });
         
         // Redirecionar para login após 2 segundos
         setTimeout(() => {
@@ -135,7 +187,7 @@ export default function PrimeiroAcesso() {
 
     } catch (error) {
       console.error("❌ Erro ao finalizar cadastro:", error);
-      toast.error(error.message || "Erro ao finalizar cadastro. Tente novamente.");
+      toast.error("Erro: " + (error.message || "Erro ao finalizar cadastro. Tente novamente."), { duration: 6000 });
     } finally {
       setSubmitting(false);
     }
@@ -143,8 +195,10 @@ export default function PrimeiroAcesso() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 to-indigo-700">
-        <Loader2 className="w-12 h-12 animate-spin text-white" />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-600 to-indigo-700">
+        <Loader2 className="w-12 h-12 animate-spin text-white mb-4" />
+        <p className="text-white text-lg">Validando convite...</p>
+        <p className="text-white/70 text-sm mt-2">Aguarde um momento</p>
       </div>
     );
   }
@@ -282,12 +336,14 @@ export default function PrimeiroAcesso() {
                 </label>
               </div>
 
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-                <p className="text-sm text-yellow-800 flex items-start">
-                  <AlertCircle className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <p className="text-sm text-blue-800 flex items-start">
+                  <AlertCircle className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0 text-blue-600" />
                   <span>
-                    Ao clicar em continuar, você será redirecionado para <strong>criar sua senha</strong> de acesso. 
-                    Certifique-se de usar o mesmo e-mail: <strong>{formData.email}</strong>.
+                    <strong>Como funciona:</strong><br/>
+                    1. Ao clicar em "Confirmar", seu cadastro será salvo<br/>
+                    2. Você receberá um email com instruções<br/>
+                    3. Use o email <strong className="text-blue-900">{formData.email}</strong> para criar sua senha de acesso
                   </span>
                 </p>
               </div>

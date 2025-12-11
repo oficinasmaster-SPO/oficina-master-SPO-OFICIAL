@@ -10,9 +10,13 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: 'Token não fornecido' }, { status: 400 });
     }
 
-    // Buscar convite pelo token usando service role
-    const invites = await base44.asServiceRole.entities.EmployeeInvite.list();
-    const invite = invites.find(inv => inv.invite_token === token);
+    console.log("🔍 Buscando convite com token:", token);
+
+    // Buscar convite pelo token usando service role - filter é mais eficiente
+    const invites = await base44.asServiceRole.entities.EmployeeInvite.filter({ invite_token: token });
+    const invite = invites[0];
+    
+    console.log("📋 Convite encontrado:", invite ? "SIM" : "NÃO");
 
     if (!invite) {
       return Response.json({ success: false, error: 'Convite não encontrado' }, { status: 404 });
@@ -72,43 +76,39 @@ Deno.serve(async (req) => {
     }
 
     // Criar ou atualizar User vinculado à oficina
+    // IMPORTANTE: User precisa dos campos obrigatórios preenchidos
     try {
-      const allUsers = await base44.asServiceRole.entities.User.list();
-      const existingUser = allUsers.find(u => u.email === (email || invite.email));
+      const allUsers = await base44.asServiceRole.entities.User.filter({ email: email || invite.email });
+      const existingUser = allUsers[0];
+
+      const userDataToUpdate = {
+        workshop_id: invite.workshop_id,
+        position: invite.position,
+        job_role: invite.job_role || 'outros',
+        area: invite.area || 'tecnico',
+        telefone: phone || '(00) 00000-0000',
+        profile_picture_url: profile_picture_url || '',
+        hire_date: employee.hire_date || new Date().toISOString().split('T')[0],
+        user_status: 'ativo'
+      };
 
       if (existingUser) {
         // Atualizar User existente com dados da oficina
-        await base44.asServiceRole.entities.User.update(existingUser.id, {
-          workshop_id: invite.workshop_id,
-          position: invite.position,
-          job_role: invite.job_role || 'outros',
-          area: invite.area,
-          telefone: phone || existingUser.telefone || '',
-          profile_picture_url: profile_picture_url || existingUser.profile_picture_url || '',
-          hire_date: employee.hire_date || new Date().toISOString().split('T')[0],
-          user_status: 'ativo'
-        });
+        await base44.asServiceRole.entities.User.update(existingUser.id, userDataToUpdate);
         
         // Vincular User ao Employee
         await base44.asServiceRole.entities.Employee.update(employee.id, {
           user_id: existingUser.id
         });
         
-        console.log("✅ User existente vinculado à oficina:", existingUser.id);
+        console.log("✅ User existente atualizado e vinculado:", existingUser.id);
       } else {
         // Criar novo User já vinculado à oficina
         const newUser = await base44.asServiceRole.entities.User.create({
           email: email || invite.email,
           full_name: name || invite.name,
           role: 'user',
-          workshop_id: invite.workshop_id,
-          position: invite.position,
-          job_role: invite.job_role || 'outros',
-          area: invite.area,
-          telefone: phone || '',
-          profile_picture_url: profile_picture_url || '',
-          hire_date: employee.hire_date || new Date().toISOString().split('T')[0],
-          user_status: 'ativo'
+          ...userDataToUpdate
         });
         
         // Vincular User ao Employee
@@ -120,6 +120,8 @@ Deno.serve(async (req) => {
       }
     } catch (userError) {
       console.error("❌ Erro ao criar/vincular User:", userError);
+      console.error("❌ Stack trace:", userError.stack);
+      // NÃO bloqueia o processo - colaborador foi criado com sucesso
     }
 
     // Atualizar o convite para concluído
@@ -133,17 +135,21 @@ Deno.serve(async (req) => {
     let emailSent = false;
     let emailError = null;
     try {
-      const loginUrl = `${req.headers.get('origin')}/login`;
+      const origin = req.headers.get('origin') || 'https://oficinasmastergtr.com';
+      const loginUrl = `${origin}/login`;
+      
+      console.log("📧 Enviando email para:", email || invite.email);
+      
       await base44.asServiceRole.integrations.Core.SendEmail({
         to: email || invite.email,
-        subject: `Bem-vindo(a) à ${workshop.name || 'Oficina'} - Crie sua Senha`,
+        subject: `Bem-vindo(a) à ${workshop?.name || 'Oficina'} - Crie sua Senha`,
         body: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #2563eb;">Olá, ${name || invite.name}!</h2>
             
             <p>Seu cadastro foi concluído com sucesso na plataforma <strong>Oficinas Master</strong>.</p>
             
-            <p>Você foi cadastrado(a) como <strong>${invite.position}</strong> na oficina <strong>${workshop.name}</strong>.</p>
+            <p>Você foi cadastrado(a) como <strong>${invite.position}</strong> na oficina <strong>${workshop?.name || 'Sua Oficina'}</strong>.</p>
             
             <h3 style="color: #1e40af;">Próximos Passos:</h3>
             <ol>
@@ -172,10 +178,15 @@ Deno.serve(async (req) => {
         `
       });
       emailSent = true;
+      console.log("✅ Email enviado com sucesso!");
     } catch (error) {
       emailError = error.message;
-      console.error('Erro ao enviar email de boas-vindas:', error);
+      console.error('❌ Erro ao enviar email de boas-vindas:', error);
     }
+
+    console.log("✅ Colaborador registrado com sucesso!");
+    console.log("📊 Employee ID:", employee.id);
+    console.log("📧 Email enviado:", emailSent);
 
     return Response.json({ 
       success: true, 
@@ -186,10 +197,12 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Erro ao registrar colaborador:', error);
+    console.error('❌ Erro ao registrar colaborador:', error);
+    console.error('❌ Stack trace completo:', error.stack);
     return Response.json({ 
       success: false, 
-      error: error.message || 'Erro interno do servidor' 
+      error: error.message || 'Erro interno do servidor',
+      details: error.stack
     }, { status: 500 });
   }
 });

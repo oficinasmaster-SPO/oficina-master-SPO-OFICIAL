@@ -6,13 +6,15 @@ Deno.serve(async (req) => {
     
     const { token } = await req.json();
 
+    console.log("🔍 Validando token:", token);
+
     if (!token) {
       return Response.json({ success: false, error: 'Token não fornecido' }, { status: 400 });
     }
 
-    // Buscar convite pelo token usando service role (não precisa de auth)
-    const invites = await base44.asServiceRole.entities.EmployeeInvite.list();
-    const invite = invites.find(inv => inv.invite_token === token);
+    // Buscar convite pelo token usando service role - usando filter é mais eficiente
+    const invites = await base44.asServiceRole.entities.EmployeeInvite.filter({ invite_token: token });
+    const invite = invites[0];
 
     if (!invite) {
       return Response.json({ 
@@ -49,14 +51,17 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Buscar oficina
+    // Buscar oficina usando filter (mais eficiente)
     let workshop = null;
     try {
-      const workshops = await base44.asServiceRole.entities.Workshop.list();
-      workshop = workshops.find(w => w.id === invite.workshop_id);
+      const workshops = await base44.asServiceRole.entities.Workshop.filter({ id: invite.workshop_id });
+      workshop = workshops[0];
+      console.log("✅ Oficina encontrada:", workshop?.name);
     } catch (e) {
-      console.log('Aviso: não foi possível carregar oficina');
+      console.error('Erro ao carregar oficina:', e);
     }
+
+    console.log("✅ Convite validado com sucesso:", invite.email);
 
     return Response.json({ 
       success: true, 
@@ -67,11 +72,13 @@ Deno.serve(async (req) => {
         position: invite.position,
         area: invite.area,
         workshop_id: invite.workshop_id,
-        invite_token: invite.invite_token
+        invite_token: invite.invite_token,
+        job_role: invite.job_role
       },
       workshop: workshop ? {
         id: workshop.id,
-        name: workshop.name
+        name: workshop.name,
+        logo_url: workshop.logo_url
       } : null
     });
 
