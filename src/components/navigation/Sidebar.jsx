@@ -478,14 +478,6 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           aceleradorOnly: true
         },
         { 
-          name: 'Cronograma Geral', 
-          href: createPageUrl('CronogramaGeral'), 
-          icon: LayoutDashboard,
-          description: 'Visão geral de processos e clientes',
-          highlight: true,
-          aceleradorOnly: true
-        },
-        { 
           name: 'Meu Plano de Aceleração', 
           href: createPageUrl('PainelClienteAceleracao'), 
           icon: Target,
