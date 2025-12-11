@@ -63,12 +63,26 @@ export default function Layout({ children }) {
         try {
           const currentUser = await base44.auth.me();
           setUser(currentUser);
-          
-          // Carregar oficina do usuário (otimizado)
-          const workshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
-          // Se não encontrar como dono, tenta buscar onde é colaborador (fallback se necessário)
-          // Para evitar chamadas pesadas, assumimos primeiro o dono
-          setWorkshop(workshops[0] || null);
+
+          console.log("👤 User autenticado:", currentUser.email);
+          console.log("🏢 Workshop_id do User:", currentUser.workshop_id);
+
+          // Carregar oficina do usuário
+          let userWorkshop = null;
+
+          if (currentUser.workshop_id) {
+            // Se já tem workshop_id, busca diretamente
+            const workshopsById = await base44.entities.Workshop.filter({ id: currentUser.workshop_id });
+            userWorkshop = workshopsById[0];
+            console.log("✅ Workshop encontrado pelo ID:", userWorkshop?.name);
+          } else {
+            // Fallback: busca onde é owner
+            const workshopsByOwner = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
+            userWorkshop = workshopsByOwner[0];
+            console.log("✅ Workshop encontrado como owner:", userWorkshop?.name);
+          }
+
+          setWorkshop(userWorkshop || null);
         } catch (userError) {
           console.log("Error fetching user:", userError);
           setUser(null);
@@ -90,7 +104,7 @@ export default function Layout({ children }) {
   // Hook para vincular User ao Employee no primeiro login
   useEffect(() => {
     const linkUserToEmployee = async () => {
-      if (!user || !user.email || workshop) return;
+      if (!user || !user.email) return;
 
       try {
         // Buscar Employee pelo email
@@ -100,23 +114,45 @@ export default function Layout({ children }) {
           const emp = employees[0];
 
           // Vincular workshop_id ao User se ainda não tiver
-          if (emp.workshop_id && !user.workshop_id) {
+          if (emp.workshop_id && (!user.workshop_id || !user.job_role)) {
             console.log("🔗 Vinculando User à oficina do Employee...");
+            console.log("📋 Dados do Employee:", { workshop_id: emp.workshop_id, area: emp.area, job_role: emp.job_role });
+
             await base44.auth.updateMe({ 
               workshop_id: emp.workshop_id,
-              area: emp.area,
-              job_role: emp.job_role,
-              position: emp.position
+              area: emp.area || 'tecnico',
+              job_role: emp.job_role || 'outros',
+              position: emp.position || 'Colaborador'
             });
 
-            // Atualizar Employee com user_id
-            await base44.entities.Employee.update(emp.id, {
+            // Atualizar Employee com user_id se ainda não tiver
+            if (!emp.user_id) {
+              await base44.entities.Employee.update(emp.id, {
+                user_id: user.id,
+                first_login_at: emp.first_login_at || new Date().toISOString(),
+                last_login_at: new Date().toISOString()
+              });
+            }
+
+            // Criar permissões padrão se não existir
+            const permissions = await base44.entities.UserPermission.filter({ 
               user_id: user.id,
-              first_login_at: emp.first_login_at || new Date().toISOString()
+              workshop_id: emp.workshop_id
             });
+
+            if (!permissions || permissions.length === 0) {
+              console.log("🔐 Criando permissões padrão via função...");
+              await base44.functions.invoke('createDefaultPermissions', {
+                user_id: user.id,
+                workshop_id: emp.workshop_id,
+                job_role: emp.job_role || 'outros'
+              });
+            }
 
             // Recarregar usuário
-            loadUser();
+            setTimeout(() => {
+              window.location.reload();
+            }, 500);
           }
         }
       } catch (error) {
@@ -125,7 +161,7 @@ export default function Layout({ children }) {
     };
 
     linkUserToEmployee();
-  }, [user]);
+  }, [user?.id, user?.email]);
 
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ['unread-notifications', user?.id],

@@ -2,6 +2,7 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Badge } from "@/components/ui/badge";
+import { usePermissions } from "@/components/hooks/usePermissions";
 import { 
   Home, 
   FileText, 
@@ -57,6 +58,8 @@ import { cn } from "@/lib/utils";
 
 export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
   const location = useLocation();
+  const { canViewModule, canEditModule, isAdmin, permissionLevel } = usePermissions(user);
+  
   const [expandedGroups, setExpandedGroups] = React.useState(['dashboard', 'patio', 'treinamentos']);
   const [isCollapsed, setIsCollapsed] = React.useState(() => {
     try {
@@ -66,28 +69,6 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       return false;
     }
   });
-
-  // Verificar se usuário é técnico
-  const isTechnician = user && (
-    user.area === 'tecnico' || 
-    user.job_role === 'tecnico' || 
-    user.job_role === 'lider_tecnico' ||
-    user.job_role === 'funilaria_pintura'
-  );
-
-  // Verificar se usuário é comercial/vendas
-  const isCommercial = user && (
-    user.area === 'comercial' || 
-    user.area === 'vendas' ||
-    user.job_role === 'comercial' || 
-    user.job_role === 'consultor_vendas'
-  );
-
-  // Verificar se usuário é marketing
-  const isMarketing = user && (
-    user.area === 'marketing' || 
-    user.job_role === 'marketing'
-  );
 
   const toggleCollapse = () => {
     const newState = !isCollapsed;
@@ -574,33 +555,67 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
   const canAccessItem = (item) => {
     if (item.public) return true;
     if (!user) return false;
-    if (item.adminOnly && user.role !== 'admin') return false;
     
-    // Filtrar por área/função específica
-    if (item.technicianOnly && !isTechnician && user.role !== 'admin') return false;
-    if (item.commercialOnly && !isCommercial && user.role !== 'admin') return false;
-    if (item.marketingOnly && !isMarketing && user.role !== 'admin') return false;
+    // Admin sempre tem acesso total
+    if (user.role === 'admin') return true;
     
-    // Se usuário é técnico, esconder itens administrativos/gerenciais (exceto admin)
-    if (isTechnician && user.role !== 'admin') {
-      const technicianBlockedItems = [
-        'Gestão da Oficina',
-        'Desdobramento de Metas',
-        'DRE & TCMP²',
-        'Diagnóstico Gerencial',
-        'Colaboradores',
-        'Convidar Colaborador',
-        'Missão, Visão e Valores',
-        'Cronograma de Aculturação',
-        'Gestão de Treinamentos',
-        'Dicas da Operação',
-        'Criar Desafios Internos'
-      ];
-      
-      if (technicianBlockedItems.includes(item.name)) return false;
-    }
+    // Verificar permissões específicas de admin
+    if (item.adminOnly) return false;
     
-    return true;
+    // Mapear item para módulo de permissão
+    const moduleMap = {
+      'Visão Geral': 'dashboard',
+      'Dashboard Nacional': 'dashboard',
+      'Desafios & Conquistas': 'dashboard',
+      'Gestão da Oficina': 'cadastros',
+      'Tarefas Operacionais': 'patio',
+      'Notificações': 'patio',
+      'Diário de Produção': 'patio',
+      'Quadro Geral (TV)': 'patio',
+      'Minha Fila (Técnico)': 'patio',
+      'Histórico de Metas': 'resultados',
+      'Desdobramento de Metas': 'resultados',
+      'DRE & TCMP²': 'resultados',
+      'OS - R70/I30': 'resultados',
+      'Produção vs Salário': 'resultados',
+      'Curva de Endividamento': 'resultados',
+      'Diagnóstico Gerencial': 'resultados',
+      'Mapas de Autoavaliação': 'pessoas',
+      'Colaboradores': 'pessoas',
+      'Convidar Colaborador': 'pessoas',
+      'CDC - Conexão do Colaborador': 'pessoas',
+      'COEX - Contrato Expectativa': 'pessoas',
+      'Perfil do Empresário': 'pessoas',
+      'Teste DISC': 'pessoas',
+      'Maturidade do Colaborador': 'pessoas',
+      'Matriz de Desempenho': 'pessoas',
+      'Carga de Trabalho': 'pessoas',
+      'IA Analytics': 'diagnosticos',
+      'Treinamento de Vendas': 'diagnosticos',
+      'Diagnóstico Comercial': 'diagnosticos',
+      'Selecionar Diagnóstico': 'diagnosticos',
+      'Histórico de Diagnósticos': 'diagnosticos',
+      'Meus Processos (MAPs)': 'processos',
+      'Repositório de Documentos': 'documentos',
+      'Manual da Cultura': 'cultura',
+      'Missão, Visão e Valores': 'cultura',
+      'Rituais de Aculturamento': 'cultura',
+      'Cronograma de Aculturação': 'cultura',
+      'Pesquisa de Clima': 'cultura',
+      'Gestão de Treinamentos': 'treinamentos',
+      'Acompanhamento': 'treinamentos',
+      'Meus Treinamentos': 'treinamentos',
+      'Dicas da Operação': 'gestao',
+      'Criar Desafios Internos': 'gestao'
+    };
+    
+    const module = moduleMap[item.name];
+    
+    // Se não mapeou, permite acesso (fallback seguro para itens novos)
+    if (!module) return true;
+    
+    // Verificar se tem permissão de visualização para o módulo
+    return canViewModule(module);
   };
 
   return (

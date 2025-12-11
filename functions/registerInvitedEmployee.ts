@@ -133,6 +133,19 @@ Deno.serve(async (req) => {
       const origin = req.headers.get('origin') || 'https://oficinasmastergtr.com';
       const loginUrl = `${origin}/login`;
       
+      // Criar permissões padrão para o colaborador baseado em job_role
+      try {
+        console.log("🔐 Criando permissões padrão...");
+        await base44.asServiceRole.functions.invoke('createDefaultPermissions', {
+          user_id: existingUser?.id || 'pending', // Se não tiver user ainda, será criado no login
+          workshop_id: invite.workshop_id,
+          job_role: invite.job_role || 'outros'
+        });
+        console.log("✅ Permissões padrão configuradas!");
+      } catch (permError) {
+        console.error("⚠️ Erro ao criar permissões (não crítico):", permError);
+      }
+
       console.log("📧 Enviando email para:", email || invite.email);
       
       await base44.asServiceRole.integrations.Core.SendEmail({
