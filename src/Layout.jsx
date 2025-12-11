@@ -42,12 +42,16 @@ export default function Layout({ children }) {
 
   const loadUser = React.useCallback(async () => {
     // Páginas públicas que não precisam de autenticação
-    const publicPages = ['/PrimeiroAcesso', '/ClientRegistration'];
-    const isPublicPage = publicPages.some(page => location.pathname.includes(page));
-    
+    const publicPages = ['/PrimeiroAcesso', '/ClientRegistration', '/login', '/signup'];
+    const isPublicPage = publicPages.some(page => location.pathname.toLowerCase().includes(page.toLowerCase()));
+
+    console.log("🔍 Verificando autenticação - Página atual:", location.pathname);
+    console.log("🔍 É página pública?", isPublicPage);
+
     if (isPublicPage) {
       setIsAuthenticated(false);
       setIsCheckingAuth(false);
+      console.log("✅ Página pública - autenticação ignorada");
       return;
     }
 
