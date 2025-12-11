@@ -108,18 +108,16 @@ Deno.serve(async (req) => {
 
     // 6. Criar User no banco de dados
     try {
-        // Verificar se já existe User com este email
         const allUsers = await base44.asServiceRole.entities.User.list();
         const existingUser = allUsers.find(u => u.email === email);
 
         if (!existingUser) {
-            // Criar novo User
             const newUser = await base44.asServiceRole.entities.User.create({
                 email: email,
                 full_name: name,
                 role: 'user',
                 workshop_id: workshop_id,
-                position: position,
+                position: position || 'Colaborador',
                 job_role: job_role || 'outros',
                 area: area || 'tecnico',
                 telefone: '',
@@ -127,31 +125,26 @@ Deno.serve(async (req) => {
                 hire_date: new Date().toISOString().split('T')[0],
                 user_status: 'ativo'
             });
-            console.log("User criado no envio do convite:", newUser.id);
+            console.log("✅ User criado:", newUser.id);
 
-            // Vincular User ao Employee se existir
             if (finalEmployeeId) {
-                try {
-                    await base44.asServiceRole.entities.Employee.update(finalEmployeeId, {
-                        user_id: newUser.id
-                    });
-                } catch (linkErr) {
-                    console.warn("Erro ao vincular user ao employee:", linkErr);
-                }
+                await base44.asServiceRole.entities.Employee.update(finalEmployeeId, {
+                    user_id: newUser.id
+                });
+                console.log("✅ User vinculado ao Employee");
             }
         } else {
-            console.log("User já existe:", existingUser.id);
-            // Atualizar dados do User
+            console.log("✅ User já existe, atualizando:", existingUser.id);
             await base44.asServiceRole.entities.User.update(existingUser.id, {
                 workshop_id: workshop_id,
-                position: position,
-                job_role: job_role || 'outros',
-                area: area || 'tecnico',
+                position: position || existingUser.position,
+                job_role: job_role || existingUser.job_role,
+                area: area || existingUser.area,
                 user_status: 'ativo'
             });
         }
     } catch (userError) {
-        console.error("Erro ao criar/atualizar User:", userError);
+        console.error("❌ Erro ao criar User:", userError.message);
     }
 
     // 7. Envio de Email
