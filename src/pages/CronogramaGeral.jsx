@@ -1,0 +1,356 @@
+import React, { useState } from "react";
+import { base44 } from "@/api/base44Client";
+import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Calendar, Search, Download, AlertCircle, CheckCircle2, Clock, ChevronRight } from "lucide-react";
+import ClientDetailPanel from "@/components/aceleracao/ClientDetailPanel";
+import AvaliacaoProcessoModal from "@/components/aceleracao/AvaliacaoProcessoModal";
+
+export default function CronogramaGeral() {
+  const [selectedPlan, setSelectedPlan] = useState("GOLD");
+  const [filterStatus, setFilterStatus] = useState("todos");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedClient, setSelectedClient] = useState(null);
+  const [showPanel, setShowPanel] = useState(false);
+  const [avaliacaoModal, setAvaliacaoModal] = useState({ show: false, client: null, process: null });
+
+  // Carregar usuário
+  const { data: user } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: () => base44.auth.me()
+  });
+
+  // Carregar workshops com planos ativos
+  const { data: workshops = [], isLoading } = useQuery({
+    queryKey: ['workshops-cronograma'],
+    queryFn: async () => {
+      const all = await base44.entities.Workshop.list();
+      return all.filter(w => w.planoAtual && w.planoAtual !== 'FREE');
+    }
+  });
+
+  // Carregar progresso dos cronogramas
+  const { data: progressos = [] } = useQuery({
+    queryKey: ['cronograma-progressos'],
+    queryFn: () => base44.entities.CronogramaProgresso.list()
+  });
+
+  // Carregar templates de cronograma
+  const { data: templates = [] } = useQuery({
+    queryKey: ['cronograma-templates'],
+    queryFn: () => base44.entities.CronogramaTemplate.list()
+  });
+
+  // Verificar acesso
+  if (!user || (user.role !== 'admin' && user.job_role !== 'acelerador')) {
+    return (
+      <div className="max-w-4xl mx-auto text-center py-12">
+        <div className="bg-red-50 border-2 border-red-200 rounded-lg p-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Acesso Restrito</h2>
+          <p className="text-gray-600">Esta área é restrita a consultores e aceleradores.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Filtrar workshops pelo plano selecionado
+  const workshopsPorPlano = workshops.filter(w => w.planoAtual === selectedPlan);
+
+  // Obter template do plano selecionado (assumindo fase 1 para simplificar)
+  const templatePlano = templates.find(t => t.fase_oficina === 1);
+  const processos = templatePlano?.modulos || [
+    { codigo: 'GPS', nome: 'GPS - Gestão de Performance e Sistemas' },
+    { codigo: 'PAVE', nome: 'PAVE - Performance de Vendas' },
+    { codigo: 'RD', nome: 'RD - Reunião de Desempenho' },
+    { codigo: 'TCMP2', nome: 'TCMP² - Cálculo de Hora Ideal' },
+    { codigo: 'DRE', nome: 'DRE - Demonstrativo de Resultados' }
+  ];
+
+  // Calcular contadores por processo
+  const getContagemPorProcesso = (codigoProcesso) => {
+    const clientesComProcesso = workshopsPorPlano.map(workshop => {
+      const progresso = progressos.find(p => 
+        p.workshop_id === workshop.id && p.modulo_codigo === codigoProcesso
+      );
+
+      let status = 'a_fazer';
+      if (progresso) {
+        if (progresso.situacao === 'concluido') {
+          status = 'concluido';
+        } else if (progresso.situacao === 'atrasado') {
+          status = 'atrasado';
+        } else if (progresso.situacao === 'em_andamento') {
+          status = 'em_andamento';
+        }
+      }
+
+      return { workshop, status, progresso };
+    });
+
+    return {
+      a_fazer: clientesComProcesso.filter(c => c.status === 'a_fazer').length,
+      atrasado: clientesComProcesso.filter(c => c.status === 'atrasado').length,
+      concluido: clientesComProcesso.filter(c => c.status === 'concluido').length,
+      em_andamento: clientesComProcesso.filter(c => c.status === 'em_andamento').length
+    };
+  };
+
+  // Preparar lista de clientes com seus status
+  const clientesComStatus = workshopsPorPlano.map(workshop => {
+    const progressosWorkshop = progressos.filter(p => p.workshop_id === workshop.id);
+    const totalProcessos = processos.length;
+    const concluidos = progressosWorkshop.filter(p => p.situacao === 'concluido').length;
+    const atrasados = progressosWorkshop.filter(p => p.situacao === 'atrasado').length;
+    const percentual = totalProcessos > 0 ? Math.round((concluidos / totalProcessos) * 100) : 0;
+
+    let statusGeral = 'a_fazer';
+    if (concluidos === totalProcessos) {
+      statusGeral = 'concluido';
+    } else if (atrasados > 0) {
+      statusGeral = 'atrasado';
+    } else if (concluidos > 0) {
+      statusGeral = 'ativo';
+    }
+
+    return {
+      ...workshop,
+      percentualConclusao: percentual,
+      statusGeral,
+      atrasados,
+      progressos: progressosWorkshop
+    };
+  });
+
+  // Aplicar filtros
+  const clientesFiltrados = clientesComStatus.filter(cliente => {
+    const matchStatus = filterStatus === 'todos' || 
+      (filterStatus === 'ativo' && cliente.statusGeral === 'ativo') ||
+      (filterStatus === 'concluido' && cliente.statusGeral === 'concluido') ||
+      (filterStatus === 'a_fazer' && cliente.statusGeral === 'a_fazer');
+
+    const matchSearch = !searchTerm || 
+      cliente.name.toLowerCase().includes(searchTerm.toLowerCase());
+
+    return matchStatus && matchSearch;
+  });
+
+  const handleExport = () => {
+    // Implementar export CSV/PDF
+    console.log('Exportando relatório...');
+  };
+
+  return (
+    <div className="h-screen flex flex-col bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-3xl font-bold text-gray-900">CRONOGRAMA GERAL</h1>
+          <div className="flex gap-3">
+            <Select value={selectedPlan} onValueChange={setSelectedPlan}>
+              <SelectTrigger className="w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="START">START</SelectItem>
+                <SelectItem value="BRONZE">BRONZE</SelectItem>
+                <SelectItem value="PRATA">PRATA</SelectItem>
+                <SelectItem value="GOLD">GOLD</SelectItem>
+                <SelectItem value="IOM">IOM</SelectItem>
+                <SelectItem value="MILLIONS">MILLIONS</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline" onClick={handleExport}>
+              <Download className="w-4 h-4 mr-2" />
+              Exportar
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Conteúdo Principal */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Coluna Esquerda - Tabela de Processos */}
+        <div className="w-1/2 border-r border-gray-200 overflow-y-auto p-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Processos - Plano {selectedPlan}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {processos.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <AlertCircle className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                  <p>Nenhum processo registrado para o plano selecionado.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="border-b-2 border-gray-200">
+                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Processos</th>
+                        <th className="text-center py-3 px-4 font-semibold text-gray-700">A Fazer</th>
+                        <th className="text-center py-3 px-4 font-semibold text-red-600">Atrasado</th>
+                        <th className="text-center py-3 px-4 font-semibold text-green-600">Concluído</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {processos.map((processo) => {
+                        const contagem = getContagemPorProcesso(processo.codigo);
+                        return (
+                          <tr key={processo.codigo} className="border-b border-gray-100 hover:bg-gray-50">
+                            <td className="py-3 px-4 font-medium">{processo.nome || processo.codigo}</td>
+                            <td className="text-center py-3 px-4">
+                              <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                                {contagem.a_fazer + contagem.em_andamento}
+                              </Badge>
+                            </td>
+                            <td className="text-center py-3 px-4">
+                              <Badge variant="outline" className="bg-red-50 text-red-700">
+                                {contagem.atrasado}
+                              </Badge>
+                            </td>
+                            <td className="text-center py-3 px-4">
+                              <Badge variant="outline" className="bg-green-50 text-green-700">
+                                {contagem.concluido}
+                              </Badge>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Coluna Direita - Lista de Clientes */}
+        <div className="w-1/2 overflow-y-auto p-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>LISTA DE CLIENTES</CardTitle>
+              <div className="flex gap-3 mt-4">
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos</SelectItem>
+                    <SelectItem value="ativo">Ativo</SelectItem>
+                    <SelectItem value="concluido">Concluído</SelectItem>
+                    <SelectItem value="a_fazer">A Fazer</SelectItem>
+                  </SelectContent>
+                </Select>
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    placeholder="Buscar oficina..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {clientesFiltrados.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <AlertCircle className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                  <p>Nenhum cliente encontrado para este filtro.</p>
+                  {user.role === 'admin' && (
+                    <Button className="mt-4" variant="outline">
+                      Associar Clientes ao Plano
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {clientesFiltrados.map((cliente) => (
+                    <div
+                      key={cliente.id}
+                      onClick={() => {
+                        setSelectedClient(cliente);
+                        setShowPanel(true);
+                      }}
+                      className="border rounded-lg p-4 hover:shadow-md transition-all cursor-pointer bg-white"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="font-semibold text-gray-900">{cliente.name}</h3>
+                            {cliente.statusGeral === 'atrasado' && (
+                              <Badge className="bg-red-100 text-red-700">
+                                <AlertCircle className="w-3 h-3 mr-1" />
+                                Atrasado
+                              </Badge>
+                            )}
+                            {cliente.statusGeral === 'concluido' && (
+                              <Badge className="bg-green-100 text-green-700">
+                                <CheckCircle2 className="w-3 h-3 mr-1" />
+                                Concluído
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="text-sm text-gray-600 space-y-1">
+                            <p>Plano: <span className="font-medium">{cliente.planoAtual}</span></p>
+                            <p>Cidade: {cliente.city}/{cliente.state}</p>
+                            <div className="flex items-center gap-2 mt-2">
+                              <div className="flex-1 bg-gray-200 rounded-full h-2">
+                                <div 
+                                  className="bg-blue-600 h-2 rounded-full"
+                                  style={{ width: `${cliente.percentualConclusao}%` }}
+                                />
+                              </div>
+                              <span className="text-xs font-medium">{cliente.percentualConclusao}%</span>
+                            </div>
+                          </div>
+                        </div>
+                        <ChevronRight className="w-5 h-5 text-gray-400" />
+                      </div>
+                      {cliente.atrasados > 0 && (
+                        <div className="mt-2 text-xs text-red-600 flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {cliente.atrasados} processo(s) atrasado(s)
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Painel Lateral de Detalhes */}
+      {showPanel && selectedClient && (
+        <ClientDetailPanel
+          client={selectedClient}
+          processos={processos}
+          onClose={() => setShowPanel(false)}
+          onAvaliar={(client, process) => {
+            setAvaliacaoModal({ show: true, client, process });
+            setShowPanel(false);
+          }}
+        />
+      )}
+
+      {/* Modal de Avaliação */}
+      {avaliacaoModal.show && (
+        <AvaliacaoProcessoModal
+          client={avaliacaoModal.client}
+          process={avaliacaoModal.process}
+          onClose={() => setAvaliacaoModal({ show: false, client: null, process: null })}
+          onSave={() => {
+            setAvaliacaoModal({ show: false, client: null, process: null });
+            // Recarregar dados
+          }}
+        />
+      )}
+    </div>
+  );
+}
