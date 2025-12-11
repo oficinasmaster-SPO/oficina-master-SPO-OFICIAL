@@ -88,6 +88,9 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
     );
   };
 
+  // Verificar se o usuário é acelerador
+  const isAcelerador = user?.job_role === 'acelerador' || user?.role === 'admin';
+
   const navigationGroups = [
     {
       id: 'dashboard',
@@ -461,9 +464,10 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       ]
     },
     {
-      id: 'consultoria',
-      label: 'Consultoria',
+      id: 'aceleracao',
+      label: 'Aceleração',
       icon: Briefcase,
+      aceleradorOnly: true,
       items: [
         { 
           name: 'CheckPoint / Cronograma', 
@@ -473,7 +477,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           highlight: true
         },
         { 
-          name: 'Cronograma de Consultoria', 
+          name: 'Cronograma de Aceleração', 
           href: createPageUrl('CronogramaConsultoria'), 
           icon: Calendar,
           description: 'Atendimentos e atas de reunião',
@@ -483,8 +487,8 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           name: 'Registrar Atendimento', 
           href: createPageUrl('RegistrarAtendimento'), 
           icon: FilePenLine,
-          description: 'Agendar e documentar consultorias',
-          adminOnly: true
+          description: 'Agendar e documentar acelerações',
+          aceleradorOnly: true
         }
       ]
     },
@@ -583,10 +587,13 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
   const canAccessItem = (item) => {
     if (item.public) return true;
     if (!user) return false;
-    
+
     // Admin sempre tem acesso total
     if (user.role === 'admin') return true;
-    
+
+    // Verificar permissões específicas de acelerador
+    if (item.aceleradorOnly && !isAcelerador) return false;
+
     // Verificar permissões específicas de admin
     if (item.adminOnly) return false;
     
@@ -636,7 +643,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       'Dicas da Operação': 'gestao',
       'Criar Desafios Internos': 'gestao',
       'CheckPoint / Cronograma': 'admin',
-      'Cronograma de Consultoria': 'admin',
+      'Cronograma de Aceleração': 'admin',
       'Registrar Atendimento': 'admin'
     };
     
@@ -737,9 +744,12 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           )}
 
           <div className="space-y-6">
-            {navigationGroups.map((group) => {
-              const visibleItems = group.items.filter(canAccessItem);
-              if (visibleItems.length === 0) return null;
+                    {navigationGroups.map((group) => {
+                      // Se o grupo é exclusivo para aceleradores, verificar acesso
+                      if (group.aceleradorOnly && !isAcelerador) return null;
+
+                      const visibleItems = group.items.filter(canAccessItem);
+                      if (visibleItems.length === 0) return null;
 
               const isExpanded = expandedGroups.includes(group.id);
               const GroupIcon = group.icon;
@@ -865,7 +875,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                     {user.full_name || user.email}
                   </p>
                   <p className="text-xs text-gray-600 capitalize">
-                    {user.role === 'admin' ? 'Administrador' : user.role === 'user' ? 'Consultor' : 'Usuário'}
+                    {user.role === 'admin' ? 'Administrador' : user.job_role === 'acelerador' ? 'Acelerador' : user.role === 'user' ? 'Consultor' : 'Usuário'}
                   </p>
                 </div>
               )}

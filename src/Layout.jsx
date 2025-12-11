@@ -256,7 +256,7 @@ export default function Layout({ children }) {
                           {user.full_name || user.email}
                         </p>
                         <p className="text-xs text-gray-600 capitalize">
-                          {user.role === 'admin' ? 'Administrador' : user.role === 'user' ? 'Consultor' : 'Usuário'}
+                          {user.role === 'admin' ? 'Administrador' : user.job_role === 'acelerador' ? 'Acelerador' : user.role === 'user' ? 'Consultor' : 'Usuário'}
                         </p>
                       </div>
                       <Button
