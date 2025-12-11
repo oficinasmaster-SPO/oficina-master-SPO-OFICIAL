@@ -22,6 +22,8 @@ export default function Usuarios() {
     queryFn: () => base44.auth.me()
   });
 
+  const currentWorkshop = workshops.find(w => w.owner_id === currentUser?.id);
+
   const { data: workshops = [] } = useQuery({
     queryKey: ['workshops'],
     queryFn: async () => {
@@ -111,8 +113,14 @@ export default function Usuarios() {
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Usuários do Sistema</h1>
-            <p className="text-gray-600">Gerencie todos os usuários e suas empresas</p>
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">
+              {currentUser?.role === 'admin' ? 'Usuários do Sistema' : 'Usuários da Empresa'}
+            </h1>
+            <p className="text-gray-600">
+              {currentUser?.role === 'admin' 
+                ? 'Gerencie todos os usuários e suas empresas' 
+                : `Usuários vinculados à ${currentWorkshop?.name || 'sua empresa'}`}
+            </p>
           </div>
         </div>
 
