@@ -60,7 +60,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
   const location = useLocation();
   const { canViewModule, canEditModule, isAdmin, permissionLevel } = usePermissions(user);
   
-  const [expandedGroups, setExpandedGroups] = React.useState(['dashboard', 'patio', 'treinamentos']);
+  const [expandedGroups, setExpandedGroups] = React.useState(['dashboard', 'patio', 'treinamentos', 'aceleracao']);
   const [isCollapsed, setIsCollapsed] = React.useState(() => {
     try {
       const saved = localStorage.getItem('sidebar-collapsed');
@@ -666,8 +666,12 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       'Meus Treinamentos': 'treinamentos',
       'Dicas da Operação': 'gestao',
       'Criar Desafios Internos': 'gestao',
-      'CheckPoint / Cronograma': 'admin',
-
+      'Controle da Aceleração': 'aceleracao',
+      'Cronograma Geral': 'aceleracao',
+      'Registrar Atendimento': 'aceleracao',
+      'Histórico de Atendimentos': 'aceleracao',
+      'Meu Plano de Aceleração': 'aceleracao',
+      'CheckPoint / Cronograma': 'aceleracao'
     };
     
     const module = moduleMap[item.name];
