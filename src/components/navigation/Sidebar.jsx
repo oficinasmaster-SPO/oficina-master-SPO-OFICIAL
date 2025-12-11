@@ -230,6 +230,14 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       icon: Users,
       items: [
         { 
+          name: 'Usuários do Sistema', 
+          href: createPageUrl('Usuarios'), 
+          icon: Users,
+          description: 'Gerenciar usuários e empresas',
+          highlight: true,
+          adminOnly: true
+        },
+        { 
           name: 'Mapas de Autoavaliação', 
           href: createPageUrl('Autoavaliacoes'), 
           icon: Target,
