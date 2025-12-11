@@ -478,6 +478,14 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           aceleradorOnly: true
         },
         { 
+          name: 'Cronograma Geral', 
+          href: createPageUrl('CronogramaGeral'), 
+          icon: BarChart3,
+          description: 'Visão macro de processos e clientes',
+          highlight: true,
+          aceleradorOnly: true
+        },
+        { 
           name: 'Meu Plano de Aceleração', 
           href: createPageUrl('PainelClienteAceleracao'), 
           icon: Target,
@@ -658,6 +666,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       'Dicas da Operação': 'gestao',
       'Criar Desafios Internos': 'gestao',
       'CheckPoint / Cronograma': 'admin',
+      'Cronograma Geral': 'aceleracao',
       'Cronograma de Aceleração': 'admin',
       'Registrar Atendimento': 'admin'
     };

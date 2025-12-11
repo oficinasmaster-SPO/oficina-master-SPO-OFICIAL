@@ -112,6 +112,7 @@ import CronogramaDetalhado from './pages/CronogramaDetalhado';
 import AvaliarAtendimento from './pages/AvaliarAtendimento';
 import ControleAceleracao from './pages/ControleAceleracao';
 import PainelClienteAceleracao from './pages/PainelClienteAceleracao';
+import CronogramaGeral from './pages/CronogramaGeral';
 import __Layout from './Layout.jsx';
 
 
@@ -230,6 +231,7 @@ export const PAGES = {
     "AvaliarAtendimento": AvaliarAtendimento,
     "ControleAceleracao": ControleAceleracao,
     "PainelClienteAceleracao": PainelClienteAceleracao,
+    "CronogramaGeral": CronogramaGeral,
 }
 
 export const pagesConfig = {
