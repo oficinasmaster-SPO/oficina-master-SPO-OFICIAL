@@ -57,7 +57,7 @@ import { cn } from "@/lib/utils";
 
 export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
   const location = useLocation();
-  const [expandedGroups, setExpandedGroups] = React.useState(['dashboard', 'cadastros']);
+  const [expandedGroups, setExpandedGroups] = React.useState(['dashboard', 'patio', 'treinamentos']);
   const [isCollapsed, setIsCollapsed] = React.useState(() => {
     try {
       const saved = localStorage.getItem('sidebar-collapsed');
@@ -66,6 +66,28 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       return false;
     }
   });
+
+  // Verificar se usuário é técnico
+  const isTechnician = user && (
+    user.area === 'tecnico' || 
+    user.job_role === 'tecnico' || 
+    user.job_role === 'lider_tecnico' ||
+    user.job_role === 'funilaria_pintura'
+  );
+
+  // Verificar se usuário é comercial/vendas
+  const isCommercial = user && (
+    user.area === 'comercial' || 
+    user.area === 'vendas' ||
+    user.job_role === 'comercial' || 
+    user.job_role === 'consultor_vendas'
+  );
+
+  // Verificar se usuário é marketing
+  const isMarketing = user && (
+    user.area === 'marketing' || 
+    user.job_role === 'marketing'
+  );
 
   const toggleCollapse = () => {
     const newState = !isCollapsed;
@@ -159,14 +181,16 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('QGPBoard'), 
           icon: Truck,
           description: 'Visão aeroporto do pátio',
-          highlight: true
+          highlight: true,
+          technicianOnly: true
         },
         { 
           name: 'Minha Fila (Técnico)', 
           href: createPageUrl('TechnicianQGP'), 
           icon: Wrench,
           description: 'Painel do executor',
-          highlight: true
+          highlight: true,
+          technicianOnly: true
         }
       ]
     },
@@ -551,6 +575,31 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
     if (item.public) return true;
     if (!user) return false;
     if (item.adminOnly && user.role !== 'admin') return false;
+    
+    // Filtrar por área/função específica
+    if (item.technicianOnly && !isTechnician && user.role !== 'admin') return false;
+    if (item.commercialOnly && !isCommercial && user.role !== 'admin') return false;
+    if (item.marketingOnly && !isMarketing && user.role !== 'admin') return false;
+    
+    // Se usuário é técnico, esconder itens administrativos/gerenciais (exceto admin)
+    if (isTechnician && user.role !== 'admin') {
+      const technicianBlockedItems = [
+        'Gestão da Oficina',
+        'Desdobramento de Metas',
+        'DRE & TCMP²',
+        'Diagnóstico Gerencial',
+        'Colaboradores',
+        'Convidar Colaborador',
+        'Missão, Visão e Valores',
+        'Cronograma de Aculturação',
+        'Gestão de Treinamentos',
+        'Dicas da Operação',
+        'Criar Desafios Internos'
+      ];
+      
+      if (technicianBlockedItems.includes(item.name)) return false;
+    }
+    
     return true;
   };
 

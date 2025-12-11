@@ -87,6 +87,46 @@ export default function Layout({ children }) {
     loadUser();
   }, [loadUser, location.pathname]);
 
+  // Hook para vincular User ao Employee no primeiro login
+  useEffect(() => {
+    const linkUserToEmployee = async () => {
+      if (!user || !user.email || workshop) return;
+
+      try {
+        // Buscar Employee pelo email
+        const employees = await base44.entities.Employee.filter({ email: user.email });
+
+        if (employees && employees.length > 0) {
+          const emp = employees[0];
+
+          // Vincular workshop_id ao User se ainda não tiver
+          if (emp.workshop_id && !user.workshop_id) {
+            console.log("🔗 Vinculando User à oficina do Employee...");
+            await base44.auth.updateMe({ 
+              workshop_id: emp.workshop_id,
+              area: emp.area,
+              job_role: emp.job_role,
+              position: emp.position
+            });
+
+            // Atualizar Employee com user_id
+            await base44.entities.Employee.update(emp.id, {
+              user_id: user.id,
+              first_login_at: emp.first_login_at || new Date().toISOString()
+            });
+
+            // Recarregar usuário
+            loadUser();
+          }
+        }
+      } catch (error) {
+        console.error("Erro ao vincular User ao Employee:", error);
+      }
+    };
+
+    linkUserToEmployee();
+  }, [user]);
+
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ['unread-notifications', user?.id],
     queryFn: async () => {
