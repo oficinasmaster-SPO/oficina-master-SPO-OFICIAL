@@ -22,9 +22,6 @@ export default function CronogramaConsultoria() {
     queryFn: () => base44.auth.me()
   });
 
-  // Log para debug
-  console.log("Tela carregada: Histórico de Atendimentos", { user });
-
   const { data: workshop } = useQuery({
     queryKey: ['workshop', user?.workshop_id],
     queryFn: () => base44.entities.Workshop.get(user.workshop_id),

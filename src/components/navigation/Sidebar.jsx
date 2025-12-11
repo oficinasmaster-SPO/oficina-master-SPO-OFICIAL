@@ -60,7 +60,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
   const location = useLocation();
   const { canViewModule, canEditModule, isAdmin, permissionLevel } = usePermissions(user);
   
-  const [expandedGroups, setExpandedGroups] = React.useState(['dashboard', 'patio', 'treinamentos', 'aceleracao']);
+  const [expandedGroups, setExpandedGroups] = React.useState(['dashboard', 'patio', 'treinamentos']);
   const [isCollapsed, setIsCollapsed] = React.useState(() => {
     try {
       const saved = localStorage.getItem('sidebar-collapsed');
@@ -467,36 +467,13 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       id: 'aceleracao',
       label: 'Aceleração',
       icon: Briefcase,
+      aceleradorOnly: true,
       items: [
         { 
           name: 'Controle da Aceleração', 
           href: createPageUrl('ControleAceleracao'), 
           icon: Briefcase,
           description: 'Painel completo de gestão',
-          highlight: true,
-          aceleradorOnly: true
-        },
-        { 
-          name: 'Cronograma Geral', 
-          href: createPageUrl('CronogramaGeral'), 
-          icon: BarChart3,
-          description: 'Visão macro de processos e clientes',
-          highlight: true,
-          aceleradorOnly: true
-        },
-        { 
-          name: 'Registrar Atendimento', 
-          href: createPageUrl('RegistrarAtendimento'), 
-          icon: FilePenLine,
-          description: 'Agendar e documentar acelerações',
-          highlight: true,
-          aceleradorOnly: true
-        },
-        { 
-          name: 'Histórico de Atendimentos', 
-          href: createPageUrl('CronogramaConsultoria'), 
-          icon: Calendar,
-          description: 'Atendimentos e atas de reunião',
           highlight: true,
           aceleradorOnly: true
         },
@@ -513,6 +490,20 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: ListTodo,
           description: 'Progresso detalhado do plano',
           highlight: true
+        },
+        { 
+          name: 'Cronograma de Aceleração', 
+          href: createPageUrl('CronogramaConsultoria'), 
+          icon: Calendar,
+          description: 'Atendimentos e atas de reunião',
+          highlight: true
+        },
+        { 
+          name: 'Registrar Atendimento', 
+          href: createPageUrl('RegistrarAtendimento'), 
+          icon: FilePenLine,
+          description: 'Agendar e documentar acelerações',
+          aceleradorOnly: true
         }
       ]
     },
@@ -666,12 +657,9 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       'Meus Treinamentos': 'treinamentos',
       'Dicas da Operação': 'gestao',
       'Criar Desafios Internos': 'gestao',
-      'Controle da Aceleração': 'aceleracao',
-      'Cronograma Geral': 'aceleracao',
-      'Registrar Atendimento': 'aceleracao',
-      'Histórico de Atendimentos': 'aceleracao',
-      'Meu Plano de Aceleração': 'aceleracao',
-      'CheckPoint / Cronograma': 'aceleracao'
+      'CheckPoint / Cronograma': 'admin',
+      'Cronograma de Aceleração': 'admin',
+      'Registrar Atendimento': 'admin'
     };
     
     const module = moduleMap[item.name];
