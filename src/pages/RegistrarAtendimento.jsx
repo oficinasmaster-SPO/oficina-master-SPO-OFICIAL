@@ -44,6 +44,17 @@ export default function RegistrarAtendimento() {
     notificacoes_programadas: []
   });
 
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [timerData, setTimerData] = useState(null);
+  const [showMeetingTimer, setShowMeetingTimer] = useState(false);
+
+  // Carregar usuário
+  const { data: user } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: () => base44.auth.me()
+  });
+
   // Carregar atendimento se vier da URL
   React.useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -79,17 +90,6 @@ export default function RegistrarAtendimento() {
       loadAtendimento();
     }
   }, [user]);
-  
-  const [showNotificationModal, setShowNotificationModal] = useState(false);
-  const [showTemplateModal, setShowTemplateModal] = useState(false);
-  const [timerData, setTimerData] = useState(null);
-  const [showMeetingTimer, setShowMeetingTimer] = useState(false);
-
-  // Carregar usuário
-  const { data: user } = useQuery({
-    queryKey: ['current-user'],
-    queryFn: () => base44.auth.me()
-  });
 
   // Carregar oficinas com planos habilitados
   const { data: workshops } = useQuery({
