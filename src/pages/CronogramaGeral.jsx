@@ -15,6 +15,7 @@ export default function CronogramaGeral() {
   const [filterStatus, setFilterStatus] = useState("todos");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClient, setSelectedClient] = useState(null);
+  const [selectedProcess, setSelectedProcess] = useState(null);
   const [showPanel, setShowPanel] = useState(false);
   const [avaliacaoModal, setAvaliacaoModal] = useState({ show: false, client: null, process: null });
 
@@ -127,6 +128,17 @@ export default function CronogramaGeral() {
 
   // Aplicar filtros
   const clientesFiltrados = clientesComStatus.filter(cliente => {
+    // Filtro por processo selecionado
+    if (selectedProcess) {
+      const progressoProcesso = progressos.find(p => 
+        p.workshop_id === cliente.id && p.modulo_codigo === selectedProcess.codigo
+      );
+      
+      // Considera "realizando" se o processo está em qualquer estado exceto não iniciado
+      const estaRealizando = progressoProcesso && progressoProcesso.situacao !== 'nao_iniciado';
+      if (!estaRealizando) return false;
+    }
+
     const matchStatus = filterStatus === 'todos' || 
       (filterStatus === 'ativo' && cliente.statusGeral === 'ativo') ||
       (filterStatus === 'concluido' && cliente.statusGeral === 'concluido') ||
@@ -260,9 +272,20 @@ export default function CronogramaGeral() {
                     <tbody>
                       {processos.map((processo) => {
                         const contagem = getContagemPorProcesso(processo.codigo);
+                        const isSelected = selectedProcess?.codigo === processo.codigo;
                         return (
-                          <tr key={processo.codigo} className="border-b border-gray-100 hover:bg-gray-50">
-                            <td className="py-3 px-4 font-medium">{processo.nome || processo.codigo}</td>
+                          <tr 
+                            key={processo.codigo} 
+                            onClick={() => setSelectedProcess(isSelected ? null : processo)}
+                            className={`border-b border-gray-100 cursor-pointer transition-colors ${
+                              isSelected 
+                                ? 'bg-blue-100 hover:bg-blue-100' 
+                                : 'hover:bg-gray-50'
+                            }`}
+                          >
+                            <td className={`py-3 px-4 font-medium ${isSelected ? 'text-blue-900' : ''}`}>
+                              {processo.nome || processo.codigo}
+                            </td>
                             <td className="text-center py-3 px-4">
                               <Badge variant="outline" className="bg-blue-50 text-blue-700">
                                 {contagem.a_fazer + contagem.em_andamento}
@@ -293,7 +316,26 @@ export default function CronogramaGeral() {
         <div className="w-1/2 overflow-y-auto p-6">
           <Card>
             <CardHeader>
-              <CardTitle>LISTA DE CLIENTES</CardTitle>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>LISTA DE CLIENTES</CardTitle>
+                  {selectedProcess && (
+                    <p className="text-sm text-gray-600 mt-1">
+                      Filtrando por: <span className="font-semibold text-blue-600">{selectedProcess.nome}</span>
+                    </p>
+                  )}
+                </div>
+                {selectedProcess && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setSelectedProcess(null)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    Limpar Filtro
+                  </Button>
+                )}
+              </div>
               <div className="flex gap-3 mt-4">
                 <Select value={filterStatus} onValueChange={setFilterStatus}>
                   <SelectTrigger className="w-48">
