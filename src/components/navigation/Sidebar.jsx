@@ -485,32 +485,11 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           aceleradorOnly: true
         },
         { 
-          name: 'Meu Plano de Aceleração', 
-          href: createPageUrl('PainelClienteAceleracao'), 
-          icon: Target,
-          description: 'Seu progresso e tarefas',
-          highlight: true
-        },
-        { 
           name: 'CheckPoint / Cronograma', 
           href: createPageUrl('CronogramaDetalhado'), 
           icon: ListTodo,
           description: 'Progresso detalhado do plano',
           highlight: true
-        },
-        { 
-          name: 'Cronograma de Aceleração', 
-          href: createPageUrl('CronogramaConsultoria'), 
-          icon: Calendar,
-          description: 'Atendimentos e atas de reunião',
-          highlight: true
-        },
-        { 
-          name: 'Registrar Atendimento', 
-          href: createPageUrl('RegistrarAtendimento'), 
-          icon: FilePenLine,
-          description: 'Agendar e documentar acelerações',
-          aceleradorOnly: true
         }
       ]
     },
@@ -664,9 +643,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       'Meus Treinamentos': 'treinamentos',
       'Dicas da Operação': 'gestao',
       'Criar Desafios Internos': 'gestao',
-      'CheckPoint / Cronograma': 'admin',
-      'Cronograma de Aceleração': 'admin',
-      'Registrar Atendimento': 'admin'
+      'CheckPoint / Cronograma': 'admin'
     };
     
     const module = moduleMap[item.name];
