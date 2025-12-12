@@ -40,6 +40,39 @@ export default function RegistrarAtendimento() {
     proximos_passos: "",
     notificacoes_programadas: []
   });
+
+  // Carregar atendimento se vier da URL
+  React.useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const atendimentoId = urlParams.get('atendimento_id');
+    
+    if (atendimentoId && user) {
+      const loadAtendimento = async () => {
+        try {
+          const atendimentos = await base44.entities.ConsultoriaAtendimento.filter({ id: atendimentoId });
+          const atendimento = atendimentos[0];
+          
+          if (atendimento) {
+            const dataAgendada = new Date(atendimento.data_agendada);
+            setFormData({
+              ...atendimento,
+              data_agendada: dataAgendada.toISOString().split('T')[0],
+              hora_agendada: dataAgendada.toTimeString().slice(0, 5),
+              participantes: atendimento.participantes || [{ nome: "", cargo: "", email: "" }],
+              pauta: atendimento.pauta || [{ titulo: "", descricao: "", tempo_estimado: 15 }],
+              objetivos: atendimento.objetivos || [""],
+              midias_anexas: atendimento.midias_anexas || []
+            });
+            setShowMeetingTimer(atendimento.status === 'participando');
+          }
+        } catch (error) {
+          console.error("Erro ao carregar atendimento:", error);
+        }
+      };
+      
+      loadAtendimento();
+    }
+  }, [user]);
   
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
@@ -85,12 +118,12 @@ export default function RegistrarAtendimento() {
     enabled: !!formData.workshop_id
   });
 
-  // Mutation para criar atendimento
+  // Mutation para criar ou atualizar atendimento
   const createMutation = useMutation({
     mutationFn: async (data) => {
       const dataHora = `${data.data_agendada}T${data.hora_agendada}:00`;
       
-      const atendimento = await base44.entities.ConsultoriaAtendimento.create({
+      const atendimentoData = {
         ...data,
         consultor_id: user.id,
         consultor_nome: user.full_name,
@@ -98,10 +131,15 @@ export default function RegistrarAtendimento() {
         participantes: data.participantes.filter(p => p.nome),
         pauta: data.pauta.filter(p => p.titulo),
         objetivos: data.objetivos.filter(o => o)
-      });
+      };
+
+      // Atualizar ou criar
+      const atendimento = formData.id 
+        ? await base44.entities.ConsultoriaAtendimento.update(formData.id, atendimentoData)
+        : await base44.entities.ConsultoriaAtendimento.create(atendimentoData);
 
       // Se status é "realizado", enviar notificação
-      if (data.status === 'realizado') {
+      if (atendimentoData.status === 'realizado') {
         try {
           await base44.functions.invoke('notificarClienteAtendimento', {
             atendimento_id: atendimento.id
@@ -211,9 +249,11 @@ export default function RegistrarAtendimento() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Registrar Atendimento de Consultoria</h1>
+        <h1 className="text-3xl font-bold text-gray-900">
+          {formData.id ? 'Editar Atendimento' : 'Registrar Atendimento de Consultoria'}
+        </h1>
         <p className="text-gray-600 mt-2">
-          Agende e registre informações do atendimento ao cliente
+          {formData.id ? 'Atualize as informações do atendimento' : 'Agende e registre informações do atendimento ao cliente'}
         </p>
       </div>
 
@@ -792,9 +832,9 @@ export default function RegistrarAtendimento() {
                 Salvando...
               </>
             ) : (
-              'Salvar Atendimento'
+              formData.id ? 'Atualizar Atendimento' : 'Salvar Atendimento'
             )}
-          </Button>
+            </Button>
         </div>
 
         {/* Modais */}

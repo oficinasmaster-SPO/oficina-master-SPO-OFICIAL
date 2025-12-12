@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
@@ -6,6 +8,7 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, startOf
 import { ptBR } from "date-fns/locale";
 
 export default function AgendaVisual({ atendimentos = [] }) {
+  const navigate = useNavigate();
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
   const monthStart = startOfMonth(currentMonth);
@@ -87,8 +90,12 @@ export default function AgendaVisual({ atendimentos = [] }) {
                   {atendimentosDia.slice(0, 2).map((atendimento) => (
                     <div
                       key={atendimento.id}
-                      className={`text-[10px] p-1 rounded border ${getStatusColor(atendimento.status)}`}
+                      className={`text-[10px] p-1 rounded border ${getStatusColor(atendimento.status)} cursor-pointer hover:opacity-80 transition-opacity`}
                       title={`${atendimento.tipo_atendimento} - ${format(new Date(atendimento.data_agendada), 'HH:mm')}`}
+                      onClick={() => {
+                        const params = new URLSearchParams({ atendimento_id: atendimento.id });
+                        navigate(createPageUrl('RegistrarAtendimento') + '?' + params.toString());
+                      }}
                     >
                       {format(new Date(atendimento.data_agendada), 'HH:mm')}
                     </div>
