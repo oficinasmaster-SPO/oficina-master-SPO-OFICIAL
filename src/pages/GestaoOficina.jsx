@@ -403,6 +403,17 @@ export default function GestaoOficina() {
                     <p className="text-xs text-gray-600">Reuniões e atas de consultoria</p>
                   </div>
                 </Button>
+                <Button
+                  onClick={() => navigate(createPageUrl("CronogramaImplementacao"))}
+                  variant="outline"
+                  className="h-24 text-left justify-start bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 hover:border-green-300"
+                >
+                  <Target className="w-6 h-6 mr-3 text-green-600" />
+                  <div>
+                    <p className="font-semibold text-green-900">Cronograma de Implementação</p>
+                    <p className="text-xs text-gray-600">Acompanhe o progresso das ferramentas</p>
+                  </div>
+                </Button>
               </div>
             </div>
           </TabsContent>

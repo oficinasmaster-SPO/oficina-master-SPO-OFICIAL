@@ -1,0 +1,76 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
+
+Deno.serve(async (req) => {
+  try {
+    const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
+
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { workshop_id, item_tipo, item_id, item_nome, item_categoria } = await req.json();
+
+    if (!workshop_id || !item_tipo || !item_id || !item_nome) {
+      return Response.json({ 
+        error: 'Parâmetros obrigatórios: workshop_id, item_tipo, item_id, item_nome' 
+      }, { status: 400 });
+    }
+
+    // Buscar registro existente
+    const existingRecords = await base44.entities.CronogramaImplementacao.filter({
+      workshop_id,
+      item_tipo,
+      item_id
+    });
+
+    if (existingRecords && existingRecords.length > 0) {
+      // Já existe, apenas incrementar visualizações
+      const record = existingRecords[0];
+      await base44.entities.CronogramaImplementacao.update(record.id, {
+        total_visualizacoes: (record.total_visualizacoes || 0) + 1
+      });
+
+      return Response.json({ 
+        success: true, 
+        message: 'Visualização registrada',
+        record_id: record.id,
+        is_new: false
+      });
+    }
+
+    // Criar novo registro
+    const dataInicio = new Date();
+    const dataTerminoPrevisto = new Date(dataInicio);
+    dataTerminoPrevisto.setDate(dataTerminoPrevisto.getDate() + 30);
+
+    const newRecord = await base44.entities.CronogramaImplementacao.create({
+      workshop_id,
+      item_tipo,
+      item_id,
+      item_nome,
+      item_categoria: item_categoria || '',
+      data_inicio_real: dataInicio.toISOString(),
+      data_termino_previsto: dataTerminoPrevisto.toISOString(),
+      status: 'em_andamento',
+      total_visualizacoes: 1,
+      historico_alteracoes: []
+    });
+
+    return Response.json({ 
+      success: true, 
+      message: 'Item iniciado no cronograma',
+      record_id: newRecord.id,
+      is_new: true,
+      data_inicio: dataInicio.toISOString(),
+      data_termino_previsto: dataTerminoPrevisto.toISOString()
+    });
+
+  } catch (error) {
+    console.error('Erro ao registrar tracking:', error);
+    return Response.json({ 
+      error: 'Erro ao registrar tracking',
+      details: error.message 
+    }, { status: 500 });
+  }
+});
