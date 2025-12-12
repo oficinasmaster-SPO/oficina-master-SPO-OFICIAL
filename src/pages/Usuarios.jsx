@@ -98,6 +98,11 @@ export default function Usuarios() {
     return workshop?.name || "Sem empresa";
   };
 
+  const getWorkshopPlan = (workshopId) => {
+    const workshop = workshops.find(w => w.id === workshopId);
+    return workshop?.planoAtual || "FREE";
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -162,9 +167,16 @@ export default function Usuarios() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    <div className="flex items-center gap-2 text-sm">
-                      <Building2 className="w-4 h-4 text-gray-500" />
-                      <span className="font-medium">{getWorkshopName(user.workshop_id)}</span>
+                    <div className="flex items-center justify-between gap-2 text-sm">
+                      <div className="flex items-center gap-2">
+                        <Building2 className="w-4 h-4 text-gray-500" />
+                        <span className="font-medium">{getWorkshopName(user.workshop_id)}</span>
+                      </div>
+                      {user.workshop_id && (
+                        <Badge variant="outline" className="bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border-blue-200">
+                          {getWorkshopPlan(user.workshop_id)}
+                        </Badge>
+                      )}
                     </div>
                     
                     {user.position && (
@@ -245,7 +257,7 @@ export default function Usuarios() {
             {selectedUser && (
               <form onSubmit={handleSaveUser} className="space-y-4">
                 <div>
-                  <Label>Empresa</Label>
+                  <Label>Empresa (opcional)</Label>
                   <Select name="workshop_id" defaultValue={selectedUser.workshop_id || ""}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione a empresa" />
@@ -253,24 +265,27 @@ export default function Usuarios() {
                     <SelectContent>
                       <SelectItem value={null}>Sem empresa</SelectItem>
                       {workshops.map(w => (
-                        <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
+                        <SelectItem key={w.id} value={w.id}>
+                          {w.name} - {w.planoAtual || "FREE"}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div>
-                  <Label>Cargo</Label>
-                  <Input name="position" defaultValue={selectedUser.position || ""} />
+                  <Label>Cargo (opcional)</Label>
+                  <Input name="position" defaultValue={selectedUser.position || ""} placeholder="Ex: Gerente de Operações" />
                 </div>
 
                 <div>
-                  <Label>Função</Label>
-                  <Select name="job_role" defaultValue={selectedUser.job_role || "outros"}>
+                  <Label>Função (opcional)</Label>
+                  <Select name="job_role" defaultValue={selectedUser.job_role || ""}>
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue placeholder="Selecione uma função" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value={null}>Nenhuma</SelectItem>
                       <SelectItem value="diretor">Diretor</SelectItem>
                       <SelectItem value="gerente">Gerente</SelectItem>
                       <SelectItem value="supervisor_loja">Supervisor</SelectItem>
@@ -285,12 +300,13 @@ export default function Usuarios() {
                 </div>
 
                 <div>
-                  <Label>Área</Label>
+                  <Label>Área (opcional)</Label>
                   <Select name="area" defaultValue={selectedUser.area || ""}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione a área" />
+                      <SelectValue placeholder="Selecione uma área" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value={null}>Nenhuma</SelectItem>
                       <SelectItem value="vendas">Vendas</SelectItem>
                       <SelectItem value="comercial">Comercial</SelectItem>
                       <SelectItem value="marketing">Marketing</SelectItem>
@@ -303,8 +319,8 @@ export default function Usuarios() {
                 </div>
 
                 <div>
-                  <Label>Telefone</Label>
-                  <Input name="telefone" defaultValue={selectedUser.telefone || ""} />
+                  <Label>Telefone (opcional)</Label>
+                  <Input name="telefone" defaultValue={selectedUser.telefone || ""} placeholder="(00) 00000-0000" />
                 </div>
 
                 <div>
