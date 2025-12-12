@@ -302,6 +302,25 @@ const DEFAULT_PERMISSIONS = {
       gestao: { view: false, edit: false },
       admin: { users: false, permissions: false, settings: false }
     }
+  },
+
+  // PROPRIETÁRIO/OWNER - Acesso completo igual a diretor
+  owner: {
+    permission_level: "admin",
+    modules_access: {
+      dashboard: { view: true, edit: true },
+      cadastros: { view: true, edit: true, delete: true },
+      patio: { view: true, edit: true },
+      resultados: { view: true, edit: true },
+      pessoas: { view: true, edit: true, delete: true },
+      diagnosticos: { view: true, create: true },
+      processos: { view: true, edit: true },
+      documentos: { view: true, upload: true, delete: true },
+      cultura: { view: true, edit: true },
+      treinamentos: { view: true, create: true, manage: true },
+      gestao: { view: true, edit: true },
+      admin: { users: true, permissions: true, settings: true }
+    }
   }
 };
 

@@ -250,7 +250,28 @@ export default function CadastroPlanos() {
         toast.success("Plano escolhido com sucesso!");
       } else {
         // Cria nova oficina
-        await base44.entities.Workshop.create(workshopData);
+        const newWorkshop = await base44.entities.Workshop.create(workshopData);
+        
+        // Atualizar dados do usuário como proprietário
+        await base44.auth.updateMe({
+          workshop_id: newWorkshop.id,
+          job_role: 'diretor',
+          area: 'gerencia',
+          position: 'Proprietário'
+        });
+
+        // Criar permissões completas para o proprietário
+        try {
+          await base44.functions.invoke('createDefaultPermissions', {
+            user_id: currentUser.id,
+            workshop_id: newWorkshop.id,
+            job_role: 'diretor'
+          });
+          console.log("✅ Permissões criadas para proprietário");
+        } catch (permError) {
+          console.error("Erro ao criar permissões:", permError);
+        }
+
         toast.success("Oficina cadastrada e plano escolhido!");
       }
 
