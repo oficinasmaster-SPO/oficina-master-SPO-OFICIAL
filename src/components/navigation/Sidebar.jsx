@@ -467,14 +467,8 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       id: 'aceleracao',
       label: 'Aceleração',
       icon: Briefcase,
+      aceleradorOnly: true,
       items: [
-        { 
-          name: 'Meu Plano de Aceleração', 
-          href: createPageUrl('AcessoAceleracao'), 
-          icon: Target,
-          description: 'Progresso e atendimentos',
-          highlight: true
-        },
         { 
           name: 'Controle da Aceleração', 
           href: createPageUrl('ControleAceleracao'), 
