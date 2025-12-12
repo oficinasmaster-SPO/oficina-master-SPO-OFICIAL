@@ -68,8 +68,11 @@ export default function Usuarios() {
     if (!selectedUser) return;
 
     const formData = new FormData(e.target);
+    const workshopId = formData.get('workshop_id');
+    const planoSelecionado = formData.get('plano');
+    
     const data = {
-      workshop_id: formData.get('workshop_id'),
+      workshop_id: workshopId,
       position: formData.get('position'),
       job_role: formData.get('job_role'),
       area: formData.get('area'),
@@ -77,7 +80,21 @@ export default function Usuarios() {
       user_status: formData.get('user_status')
     };
 
-    updateUserMutation.mutate({ userId: selectedUser.id, data });
+    // Atualizar usuário
+    await updateUserMutation.mutateAsync({ userId: selectedUser.id, data });
+
+    // Se admin e tem workshop, atualizar plano do workshop
+    if (currentUser?.role === 'admin' && workshopId && planoSelecionado) {
+      try {
+        await base44.entities.Workshop.update(workshopId, {
+          planoAtual: planoSelecionado
+        });
+        queryClient.invalidateQueries(['workshops']);
+        toast.success("Plano atualizado!");
+      } catch (error) {
+        toast.error("Erro ao atualizar plano");
+      }
+    }
   };
 
   const filteredUsers = users.filter(user => {
@@ -336,6 +353,26 @@ export default function Usuarios() {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {currentUser?.role === 'admin' && selectedUser.workshop_id && (
+                  <div>
+                    <Label>Plano da Oficina</Label>
+                    <Select name="plano" defaultValue={getWorkshopPlan(selectedUser.workshop_id)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="FREE">FREE</SelectItem>
+                        <SelectItem value="START">START</SelectItem>
+                        <SelectItem value="BRONZE">BRONZE</SelectItem>
+                        <SelectItem value="PRATA">PRATA</SelectItem>
+                        <SelectItem value="GOLD">GOLD</SelectItem>
+                        <SelectItem value="IOM">IOM</SelectItem>
+                        <SelectItem value="MILLIONS">MILLIONS</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
                 <div className="flex justify-end gap-2">
                   <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
