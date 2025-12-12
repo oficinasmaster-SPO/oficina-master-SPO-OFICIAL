@@ -313,9 +313,9 @@ export default function CronogramaGeral() {
         </div>
 
         {/* Coluna Direita - Lista de Clientes */}
-        <div className="w-1/2 overflow-y-auto p-6">
-          <Card>
-            <CardHeader>
+        <div className="w-1/2 flex flex-col p-6">
+          <Card className="flex flex-col h-full">
+            <CardHeader className="flex-shrink-0">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle>LISTA DE CLIENTES</CardTitle>
