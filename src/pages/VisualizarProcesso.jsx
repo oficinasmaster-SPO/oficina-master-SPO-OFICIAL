@@ -321,7 +321,6 @@ export default function VisualizarProcesso() {
           </div>
         </div>
       </div>
-      </div>
     </TrackingWrapper>
   );
 }
