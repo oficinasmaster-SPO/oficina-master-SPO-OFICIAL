@@ -37,6 +37,12 @@ export default function CronogramaImplementacao() {
     enabled: !!user
   });
 
+  const { data: planFeatures = [] } = useQuery({
+    queryKey: ['plan-features'],
+    queryFn: () => base44.entities.PlanFeature.list(),
+    enabled: !!workshop
+  });
+
   const { data: cronograma = [], isLoading } = useQuery({
     queryKey: ['cronograma-implementacao', workshop?.id],
     queryFn: async () => {
@@ -102,6 +108,23 @@ export default function CronogramaImplementacao() {
     if (dias < 0) return { dias: Math.abs(dias), atrasado: true };
     return { dias, atrasado: false };
   };
+
+  // Buscar configuração do plano atual
+  const currentPlanData = planFeatures.find(p => p.plan_id === workshop?.planoAtual);
+
+  // Combinar itens do cronograma com itens configurados no plano
+  const allPlanItems = [
+    ...(currentPlanData?.cronograma_features || []).map(f => ({
+      codigo: f,
+      nome: f.replace(/_/g, ' ').toUpperCase(),
+      tipo: 'funcionalidade'
+    })),
+    ...(currentPlanData?.cronograma_modules || []).map(m => ({
+      codigo: m,
+      nome: m,
+      tipo: 'modulo'
+    }))
+  ];
 
   const filteredItems = cronograma.filter(item => {
     if (filterStatus !== "todos" && item.status !== filterStatus) return false;
@@ -228,6 +251,24 @@ export default function CronogramaImplementacao() {
         </CardContent>
       </Card>
 
+      {/* Itens Disponíveis no Plano */}
+      {allPlanItems.length > 0 && (
+        <Card className="bg-blue-50 border-blue-200">
+          <CardHeader>
+            <CardTitle className="text-lg">Itens Disponíveis no Plano {workshop?.planoAtual}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+              {allPlanItems.map((item) => (
+                <Badge key={item.codigo} variant="outline" className="justify-center py-2">
+                  {item.nome}
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Lista de Itens */}
       <Card>
         <CardContent className="pt-6">
@@ -237,6 +278,11 @@ export default function CronogramaImplementacao() {
               <p className="text-gray-600">
                 Nenhum item iniciado ainda. Acesse as ferramentas e processos para começar!
               </p>
+              {allPlanItems.length > 0 && (
+                <p className="text-sm text-gray-500 mt-2">
+                  {allPlanItems.length} itens disponíveis no seu plano
+                </p>
+              )}
             </div>
           ) : (
             <div className="space-y-3">

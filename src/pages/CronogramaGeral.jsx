@@ -318,7 +318,7 @@ export default function CronogramaGeral() {
                 <div>
                   <CardTitle>Processos - Plano {selectedPlan}</CardTitle>
                   <p className="text-sm text-gray-600 mt-1">
-                    {planData?.features_allowed?.length || 0} funcionalidades | {processos.length} módulos
+                    {processos.length} itens no cronograma
                   </p>
                 </div>
                 {planData && (
