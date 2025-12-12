@@ -171,6 +171,67 @@ export default function CronogramaGeral() {
         </div>
       </div>
 
+      {/* Cards de Totais */}
+      <div className="grid grid-cols-4 gap-4 px-6">
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100">
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <p className="text-sm text-blue-600 font-medium mb-1">Total A Fazer</p>
+              <p className="text-3xl font-bold text-blue-900">
+                {processos.reduce((acc, p) => {
+                  const contagem = getContagemPorProcesso(p.codigo);
+                  return acc + contagem.a_fazer + contagem.em_andamento;
+                }, 0)}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-red-50 to-red-100">
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <p className="text-sm text-red-600 font-medium mb-1">Total Atrasado</p>
+              <p className="text-3xl font-bold text-red-900">
+                {processos.reduce((acc, p) => {
+                  const contagem = getContagemPorProcesso(p.codigo);
+                  return acc + contagem.atrasado;
+                }, 0)}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-green-50 to-green-100">
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <p className="text-sm text-green-600 font-medium mb-1">Total Concluído</p>
+              <p className="text-3xl font-bold text-green-900">
+                {processos.reduce((acc, p) => {
+                  const contagem = getContagemPorProcesso(p.codigo);
+                  return acc + contagem.concluido;
+                }, 0)}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-purple-50 to-purple-100">
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <p className="text-sm text-purple-600 font-medium mb-1">Taxa Conclusão</p>
+              <p className="text-3xl font-bold text-purple-900">
+                {processos.length > 0 ? Math.round(
+                  (processos.reduce((acc, p) => {
+                    const contagem = getContagemPorProcesso(p.codigo);
+                    return acc + contagem.concluido;
+                  }, 0) / (workshopsPorPlano.length * processos.length || 1)) * 100
+                ) : 0}%
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Conteúdo Principal */}
       <div className="flex-1 flex overflow-hidden">
         {/* Coluna Esquerda - Tabela de Processos */}
