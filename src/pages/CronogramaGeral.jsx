@@ -359,7 +359,7 @@ export default function CronogramaGeral() {
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex-1 overflow-y-auto">
               {clientesFiltrados.length === 0 ? (
                 <div className="text-center py-12 text-gray-500">
                   <AlertCircle className="w-12 h-12 mx-auto mb-3 text-gray-400" />
