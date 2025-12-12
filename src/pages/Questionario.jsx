@@ -9,6 +9,7 @@ import { ArrowLeft, ArrowRight, CheckCircle2, Loader2 } from "lucide-react";
 import { questions } from "../components/diagnostic/Questions";
 import { toast } from "sonner";
 import DynamicHelpSystem from "@/components/help/DynamicHelpSystem";
+import TrackingWrapper from "@/components/shared/TrackingWrapper";
 
 export default function Questionario() {
   const navigate = useNavigate();
