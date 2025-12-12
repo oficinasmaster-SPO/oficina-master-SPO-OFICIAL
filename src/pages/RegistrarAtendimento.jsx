@@ -706,15 +706,64 @@ export default function RegistrarAtendimento() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-3 gap-3">
-                <Button type="button" variant="outline" className="w-full">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={async () => {
+                    if (!formData.workshop_id) {
+                      toast.error("Selecione uma oficina primeiro");
+                      return;
+                    }
+                    try {
+                      const response = await base44.functions.invoke('enviarAtaWhatsApp', {
+                        atendimento_id: formData.id
+                      });
+                      const phone = response.data.phone?.replace(/\D/g, '') || '';
+                      const message = encodeURIComponent(response.data.whatsapp_message);
+                      window.open(`https://wa.me/55${phone}?text=${message}`, '_blank');
+                      toast.success("WhatsApp aberto!");
+                    } catch (error) {
+                      toast.error("Erro: " + error.message);
+                    }
+                  }}
+                >
                   <MessageSquare className="w-4 h-4 mr-2" />
                   WhatsApp
                 </Button>
-                <Button type="button" variant="outline" className="w-full">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={async () => {
+                    try {
+                      await base44.functions.invoke('enviarAtaEmail', {
+                        atendimento_id: formData.id
+                      });
+                      toast.success("Ata enviada por email!");
+                    } catch (error) {
+                      toast.error("Erro: " + error.message);
+                    }
+                  }}
+                >
                   <Send className="w-4 h-4 mr-2" />
                   E-mail
                 </Button>
-                <Button type="button" variant="outline" className="w-full">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={async () => {
+                    try {
+                      await base44.functions.invoke('disponibilizarAtaPlataforma', {
+                        atendimento_id: formData.id
+                      });
+                      toast.success("Ata disponibilizada na plataforma!");
+                    } catch (error) {
+                      toast.error("Erro: " + error.message);
+                    }
+                  }}
+                >
                   <FileText className="w-4 h-4 mr-2" />
                   Plataforma
                 </Button>

@@ -478,6 +478,13 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           aceleradorOnly: true
         },
         { 
+          name: 'Relatórios de Aceleração', 
+          href: createPageUrl('RelatoriosAceleracao'), 
+          icon: FileText,
+          description: 'Testes, diagnósticos e desempenho',
+          aceleradorOnly: true
+        },
+        { 
           name: 'Meu Plano de Aceleração', 
           href: createPageUrl('PainelClienteAceleracao'), 
           icon: Target,
