@@ -128,15 +128,15 @@ export default function CronogramaGeral() {
 
   // Aplicar filtros
   const clientesFiltrados = clientesComStatus.filter(cliente => {
-    // Filtro por processo selecionado
+    // Filtro por processo selecionado - mostra TODOS os clientes com esse processo
     if (selectedProcess) {
-      const progressoProcesso = progressos.find(p => 
+      // Simplesmente verifica se existe progresso do processo para este workshop
+      const temProcesso = progressos.some(p => 
         p.workshop_id === cliente.id && p.modulo_codigo === selectedProcess.codigo
       );
       
-      // Considera "realizando" se o processo está em qualquer estado exceto não iniciado
-      const estaRealizando = progressoProcesso && progressoProcesso.situacao !== 'nao_iniciado';
-      if (!estaRealizando) return false;
+      // Se não tem progresso registrado, ainda mostra (pois o cliente está no plano e deve fazer o processo)
+      // Isso garante que todos os clientes apareçam, independente do status
     }
 
     const matchStatus = filterStatus === 'todos' || 
