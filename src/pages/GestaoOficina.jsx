@@ -16,7 +16,7 @@ import MetasObjetivosCompleto from "../components/workshop/MetasObjetivosComplet
 import CulturaOrganizacional from "../components/workshop/CulturaOrganizacional";
 import DocumentosProcessos from "../components/workshop/DocumentosProcessos";
 import WorkshopLevelBadge from "../components/gamification/WorkshopLevelBadge";
-import AutomacaoIncentivos from "../components/workshop/AutomacaoIncentivos";
+
 import GrowthDashboard from "../components/management/GrowthDashboard";
 import WorkshopMilestones from "../components/management/WorkshopMilestones";
 
@@ -294,9 +294,9 @@ export default function GestaoOficina() {
               <BarChart3 className="w-4 h-4 mr-1" />
               <span className="hidden sm:inline">Relatórios</span>
             </TabsTrigger>
-            <TabsTrigger value="automacao" className="text-xs md:text-sm">
-              <MessageCircle className="w-4 h-4 mr-1" />
-              <span className="hidden sm:inline">Automação</span>
+            <TabsTrigger value="aceleracao" className="text-xs md:text-sm bg-purple-50 text-purple-700 data-[state=active]:bg-purple-100 data-[state=active]:text-purple-900">
+              <Briefcase className="w-4 h-4 mr-1" />
+              <span className="hidden sm:inline">Aceleração</span>
             </TabsTrigger>
             <TabsTrigger value="crescimento" className="text-xs md:text-sm bg-green-50 text-green-700 data-[state=active]:bg-green-100 data-[state=active]:text-green-900">
               <TrendingUp className="w-4 h-4 mr-1" />
@@ -306,7 +306,6 @@ export default function GestaoOficina() {
               <Trophy className="w-4 h-4 mr-1" />
               <span className="hidden sm:inline">Conquistas</span>
             </TabsTrigger>
-
           </TabsList>
 
           <TabsContent value="crescimento">
@@ -345,10 +344,6 @@ export default function GestaoOficina() {
             <DocumentosProcessos workshop={workshop} onUpdate={handleUpdate} />
           </TabsContent>
 
-          <TabsContent value="automacao">
-            <AutomacaoIncentivos workshop={workshop} />
-          </TabsContent>
-
           <TabsContent value="relatorios">
             <div className="bg-white rounded-lg shadow-lg p-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Relatórios e Diagnósticos</h2>
@@ -379,6 +374,38 @@ export default function GestaoOficina() {
             </div>
           </TabsContent>
 
+          <TabsContent value="aceleracao">
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                <Briefcase className="w-7 h-7 text-purple-600" />
+                Programa de Aceleração
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Button
+                  onClick={() => navigate(createPageUrl("PainelClienteAceleracao"))}
+                  variant="outline"
+                  className="h-24 text-left justify-start bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200 hover:border-purple-300"
+                >
+                  <Target className="w-6 h-6 mr-3 text-purple-600" />
+                  <div>
+                    <p className="font-semibold text-purple-900">Meu Plano de Aceleração</p>
+                    <p className="text-xs text-gray-600">Progresso, tarefas e cronograma</p>
+                  </div>
+                </Button>
+                <Button
+                  onClick={() => navigate(createPageUrl("CronogramaConsultoria"))}
+                  variant="outline"
+                  className="h-24 text-left justify-start bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200 hover:border-blue-300"
+                >
+                  <CalendarIcon className="w-6 h-6 mr-3 text-blue-600" />
+                  <div>
+                    <p className="font-semibold text-blue-900">Cronograma de Atendimentos</p>
+                    <p className="text-xs text-gray-600">Reuniões e atas de consultoria</p>
+                  </div>
+                </Button>
+              </div>
+            </div>
+          </TabsContent>
 
         </Tabs>
       </div>
