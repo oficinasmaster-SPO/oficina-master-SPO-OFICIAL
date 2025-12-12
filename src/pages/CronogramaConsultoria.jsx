@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
@@ -6,15 +6,18 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, User, FileText, Star, Eye, Download, Users, Target } from "lucide-react";
+import { Calendar, Clock, User, FileText, Star, Eye, Download, Users, Target, Printer } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import ReactMarkdown from "react-markdown";
+import AtaPrintLayout from "@/components/aceleracao/AtaPrintLayout";
 
 export default function CronogramaConsultoria() {
   const navigate = useNavigate();
   const [selectedAtendimento, setSelectedAtendimento] = useState(null);
   const [showAta, setShowAta] = useState(false);
+  const [showPrintPreview, setShowPrintPreview] = useState(false);
+  const printRef = useRef();
 
   // Carregar usuário e workshop
   const { data: user } = useQuery({
@@ -79,6 +82,16 @@ export default function CronogramaConsultoria() {
     a.click();
     window.URL.revokeObjectURL(url);
     a.remove();
+  };
+
+  const handlePrintAta = (atendimento) => {
+    setSelectedAtendimento(atendimento);
+    setShowPrintPreview(true);
+    
+    // Aguardar renderização e chamar impressão
+    setTimeout(() => {
+      window.print();
+    }, 100);
   };
 
   if (isLoading) {
@@ -298,7 +311,16 @@ export default function CronogramaConsultoria() {
                           <Button
                             variant="outline"
                             size="sm"
+                            onClick={() => handlePrintAta(atendimento)}
+                            title="Imprimir Ata"
+                          >
+                            <Printer className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
                             onClick={() => handleDownloadAta(atendimento)}
+                            title="Download Markdown"
                           >
                             <Download className="w-4 h-4" />
                           </Button>
@@ -344,6 +366,16 @@ export default function CronogramaConsultoria() {
               </div>
             </CardContent>
           </Card>
+        </div>
+      )}
+
+      {/* Preview de Impressão */}
+      {showPrintPreview && selectedAtendimento && (
+        <div className="hidden print:block">
+          <AtaPrintLayout 
+            atendimento={selectedAtendimento} 
+            workshop={workshop}
+          />
         </div>
       )}
     </div>
