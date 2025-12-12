@@ -128,8 +128,15 @@ export default function Questionario() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4">
-      <DynamicHelpSystem pageName="Questionario" autoStartTour={currentQuestion === 0} />
+    <TrackingWrapper
+      workshopId={workshop?.id}
+      itemTipo="diagnostico"
+      itemId="diagnostico_oficina"
+      itemNome="Diagnóstico de Oficina (4 Fases)"
+      itemCategoria="diagnosticos"
+    >
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4">
+        <DynamicHelpSystem pageName="Questionario" autoStartTour={currentQuestion === 0} />
       
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
@@ -227,6 +234,7 @@ export default function Questionario() {
           </Button>
         </div>
       </div>
-    </div>
+      </div>
+    </TrackingWrapper>
   );
 }
