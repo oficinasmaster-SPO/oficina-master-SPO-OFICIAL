@@ -9,6 +9,7 @@ import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, History, Play, FileText }
 import { useQuery } from "@tanstack/react-query";
 import { entrepreneurQuestions } from "../components/entrepreneur/EntrepreneurQuestions";
 import { toast } from "sonner";
+import TrackingWrapper from "@/components/shared/TrackingWrapper";
 
 export default function DiagnosticoEmpresario() {
   const navigate = useNavigate();
@@ -195,7 +196,14 @@ export default function DiagnosticoEmpresario() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-8 px-4">
+    <TrackingWrapper
+      workshopId={workshop?.id}
+      itemTipo="diagnostico"
+      itemId="diagnostico_empresario"
+      itemNome="Diagnóstico do Perfil Empresário"
+      itemCategoria="diagnosticos"
+    >
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-8 px-4">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <Button variant="ghost" onClick={() => setViewMode("history")} className="mb-4">
@@ -304,5 +312,6 @@ export default function DiagnosticoEmpresario() {
         </div>
       </div>
     </div>
+    </TrackingWrapper>
   );
 }

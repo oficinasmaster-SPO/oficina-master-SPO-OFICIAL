@@ -10,6 +10,7 @@ import { Slider } from "@/components/ui/slider";
 import { Loader2, User, Award, Brain, History } from "lucide-react";
 import { technicalCriteria, emotionalCriteria, calculateClassification } from "../components/performance/PerformanceCriteria";
 import { toast } from "sonner";
+import TrackingWrapper from "@/components/shared/TrackingWrapper";
 
 export default function DiagnosticoDesempenho() {
   const navigate = useNavigate();
@@ -112,7 +113,14 @@ export default function DiagnosticoDesempenho() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 py-12 px-4">
+    <TrackingWrapper
+      workshopId={workshop?.id}
+      itemTipo="diagnostico"
+      itemId="diagnostico_desempenho"
+      itemNome="Matriz de Decisão de Desempenho"
+      itemCategoria="diagnosticos"
+    >
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 py-12 px-4">
       <div className="max-w-5xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
           <div className="text-center md:text-left flex-1">
@@ -304,5 +312,6 @@ export default function DiagnosticoDesempenho() {
         )}
       </div>
     </div>
+    </TrackingWrapper>
   );
 }

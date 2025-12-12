@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, Brain } from "lucide-react";
 import { toast } from "sonner";
 import DynamicHelpSystem from "@/components/help/DynamicHelpSystem";
+import TrackingWrapper from "@/components/shared/TrackingWrapper";
 
 const workloadQuestions = [
   {
@@ -162,8 +163,15 @@ export default function DiagnosticoCarga() {
   const progress = ((currentQuestion + 1) / workloadQuestions.length) * 100;
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8 px-4">
-      <DynamicHelpSystem pageName="DiagnosticoCarga" />
+    <TrackingWrapper
+      workshopId={workshop?.id}
+      itemTipo="diagnostico"
+      itemId="diagnostico_carga"
+      itemNome="Diagnóstico de Carga de Trabalho"
+      itemCategoria="diagnosticos"
+    >
+      <div className="min-h-screen bg-slate-50 py-8 px-4">
+        <DynamicHelpSystem pageName="DiagnosticoCarga" />
       <div className="max-w-3xl mx-auto">
         <div className="mb-8">
            <div className="flex justify-between items-center mb-2">
@@ -212,6 +220,7 @@ export default function DiagnosticoCarga() {
           </Button>
         </div>
       </div>
-    </div>
+      </div>
+    </TrackingWrapper>
   );
 }

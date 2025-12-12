@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Input } from "@/components/ui/input";
 import { maturityQuestions, answerMapping } from "../components/maturity/MaturityQuestions";
 import { toast } from "sonner";
+import TrackingWrapper from "@/components/shared/TrackingWrapper";
 
 export default function DiagnosticoMaturidade() {
   const navigate = useNavigate();
@@ -173,7 +174,14 @@ export default function DiagnosticoMaturidade() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50 py-8 px-4">
+    <TrackingWrapper
+      workshopId={workshop?.id}
+      itemTipo="diagnostico"
+      itemId="diagnostico_maturidade"
+      itemNome="Diagnóstico de Maturidade Profissional"
+      itemCategoria="diagnosticos"
+    >
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50 py-8 px-4">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
@@ -413,5 +421,6 @@ export default function DiagnosticoMaturidade() {
         </div>
       </div>
     </div>
+    </TrackingWrapper>
   );
 }
