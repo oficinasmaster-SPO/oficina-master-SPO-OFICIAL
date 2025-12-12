@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,8 +10,12 @@ import { ptBR } from "date-fns/locale";
 import AgendaVisual from "./AgendaVisual";
 import GraficoAtendimentos from "./GraficoAtendimentos";
 import StatusClientesCard from "./StatusClientesCard";
+import ClientesDetalhesModal from "./ClientesDetalhesModal";
+import ReunioesDetalhesModal from "./ReunioesDetalhesModal";
 
 export default function VisaoGeralTab({ user }) {
+  const [modalClientes, setModalClientes] = useState({ isOpen: false, tipo: null, clientes: [] });
+  const [modalReunioes, setModalReunioes] = useState({ isOpen: false, tipo: null, reunioes: [] });
   const { data: workshops } = useQuery({
     queryKey: ['workshops-ativos'],
     queryFn: async () => {
@@ -70,38 +74,74 @@ export default function VisaoGeralTab({ user }) {
     new Date(a.data_agendada) >= new Date()
   ).slice(0, 5) || [];
 
+  const handleClientesClick = () => {
+    setModalClientes({ 
+      isOpen: true, 
+      tipo: 'ativos', 
+      clientes: workshops || [] 
+    });
+  };
+
+  const handleReunioesRealizadasClick = () => {
+    const realizadas = atendimentosMes?.filter(a => a.status === 'realizado') || [];
+    setModalReunioes({ 
+      isOpen: true, 
+      tipo: 'realizadas', 
+      reunioes: realizadas 
+    });
+  };
+
+  const handleReunioesFuturasClick = () => {
+    const futuras = atendimentosMes?.filter(a => 
+      ['agendado', 'confirmado'].includes(a.status)
+    ) || [];
+    setModalReunioes({ 
+      isOpen: true, 
+      tipo: 'futuras', 
+      reunioes: futuras 
+    });
+  };
+
+  const handleAtrasadosClick = () => {
+    setModalReunioes({ 
+      isOpen: true, 
+      tipo: 'atrasadas', 
+      reunioes: tarefasPendentes 
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={handleClientesClick}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Clientes Ativos</CardTitle>
             <Users className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{clientesAtivos}</div>
+            <div className="text-2xl font-bold text-blue-600 hover:text-blue-700">{clientesAtivos}</div>
             <p className="text-xs text-gray-600">Com planos habilitados</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={handleReunioesRealizadasClick}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Reuniões Realizadas</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{reunioesRealizadas}</div>
+            <div className="text-2xl font-bold text-green-600 hover:text-green-700">{reunioesRealizadas}</div>
             <p className="text-xs text-gray-600">Neste mês</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={handleReunioesFuturasClick}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Reuniões Futuras</CardTitle>
             <Calendar className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{reunioesFuturas}</div>
+            <div className="text-2xl font-bold text-purple-600 hover:text-purple-700">{reunioesFuturas}</div>
             <p className="text-xs text-gray-600">Agendadas</p>
           </CardContent>
         </Card>
@@ -122,7 +162,13 @@ export default function VisaoGeralTab({ user }) {
 
       <div className="grid md:grid-cols-3 gap-6">
         {/* Status dos Clientes */}
-        <StatusClientesCard workshops={workshops} atendimentos={atendimentos || []} />
+        <StatusClientesCard 
+          workshops={workshops} 
+          atendimentos={atendimentos || []} 
+          onStatusClick={(tipo, clientes) => {
+            setModalClientes({ isOpen: true, tipo, clientes });
+          }}
+        />
 
         {/* Próximos Atendimentos */}
         <Card>
@@ -174,11 +220,38 @@ export default function VisaoGeralTab({ user }) {
                     </p>
                   </div>
                 ))}
+                {tarefasPendentes.length > 0 && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full mt-2"
+                    onClick={handleAtrasadosClick}
+                  >
+                    Ver Todos ({tarefasPendentes.length})
+                  </Button>
+                )}
               </div>
             )}
           </CardContent>
         </Card>
       </div>
+
+      {/* Modais */}
+      <ClientesDetalhesModal
+        isOpen={modalClientes.isOpen}
+        onClose={() => setModalClientes({ isOpen: false, tipo: null, clientes: [] })}
+        clientes={modalClientes.clientes}
+        tipo={modalClientes.tipo}
+        atendimentos={atendimentos || []}
+      />
+
+      <ReunioesDetalhesModal
+        isOpen={modalReunioes.isOpen}
+        onClose={() => setModalReunioes({ isOpen: false, tipo: null, reunioes: [] })}
+        reunioes={modalReunioes.reunioes}
+        tipo={modalReunioes.tipo}
+        workshops={workshops || []}
+      />
 
       <div className="grid md:grid-cols-2 gap-6">
         {/* Gráfico de Atendimentos */}
