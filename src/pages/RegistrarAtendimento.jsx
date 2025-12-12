@@ -9,11 +9,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar as CalendarIcon, Plus, Trash2, Upload, Sparkles, Loader2 } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, Trash2, Upload, Sparkles, Loader2, Video, Link as LinkIcon, Image, Film, Send, FileText, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import NotificationSchedulerModal from "@/components/aceleracao/NotificationSchedulerModal";
 import TemplateAtendimentoModal from "@/components/aceleracao/TemplateAtendimentoModal";
+import MeetingTimer from "@/components/aceleracao/MeetingTimer";
 
 export default function RegistrarAtendimento() {
   const navigate = useNavigate();
@@ -26,12 +27,15 @@ export default function RegistrarAtendimento() {
     hora_agendada: "",
     duracao_minutos: 60,
     status: "agendado",
+    status_cliente: "",
+    google_meet_link: "",
     participantes: [{ nome: "", cargo: "", email: "" }],
     pauta: [{ titulo: "", descricao: "", tempo_estimado: 15 }],
     objetivos: [""],
     topicos_discutidos: [],
     decisoes_tomadas: [],
     acoes_geradas: [],
+    midias_anexas: [],
     observacoes_consultor: "",
     proximos_passos: "",
     notificacoes_programadas: []
@@ -39,8 +43,8 @@ export default function RegistrarAtendimento() {
   
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
-
-  const [gerandoAta, setGerandoAta] = useState(false);
+  const [timerData, setTimerData] = useState(null);
+  const [showMeetingTimer, setShowMeetingTimer] = useState(false);
 
   // Carregar usuário
   const { data: user } = useQuery({
@@ -137,7 +141,32 @@ export default function RegistrarAtendimento() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    createMutation.mutate(formData);
+    
+    // Se o timer estiver rodando, parar automaticamente
+    if (timerData) {
+      setFormData(prev => ({ ...prev, ...timerData }));
+    }
+    
+    createMutation.mutate({ ...formData, ...timerData });
+  };
+
+  const gerarLinkGoogleMeet = () => {
+    const randomId = Math.random().toString(36).substring(7);
+    const meetLink = `https://meet.google.com/${randomId}`;
+    setFormData({ ...formData, google_meet_link: meetLink });
+    toast.success("Link gerado! Você pode editá-lo se necessário.");
+  };
+
+  const addMidia = () => {
+    setFormData({
+      ...formData,
+      midias_anexas: [...formData.midias_anexas, { tipo: "link", url: "", titulo: "" }]
+    });
+  };
+
+  const removeMidia = (index) => {
+    const newMidias = formData.midias_anexas.filter((_, i) => i !== index);
+    setFormData({ ...formData, midias_anexas: newMidias });
   };
 
   const addParticipante = () => {
@@ -315,6 +344,36 @@ export default function RegistrarAtendimento() {
                 />
               </div>
             </div>
+
+            <div className="space-y-2">
+              <Label>Google Meet</Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Link do Google Meet"
+                  value={formData.google_meet_link}
+                  onChange={(e) => setFormData({ ...formData, google_meet_link: e.target.value })}
+                />
+                <Button type="button" variant="outline" onClick={gerarLinkGoogleMeet}>
+                  <Video className="w-4 h-4 mr-2" />
+                  Gerar
+                </Button>
+              </div>
+            </div>
+
+            {formData.status === 'participando' && (
+              <div className="border-t pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full mb-4"
+                  onClick={() => setShowMeetingTimer(!showMeetingTimer)}
+                >
+                  <Clock className="w-4 h-4 mr-2" />
+                  {showMeetingTimer ? 'Ocultar Timer' : 'Iniciar Reunião com Timer'}
+                </Button>
+                {showMeetingTimer && <MeetingTimer onTimerData={setTimerData} />}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -491,6 +550,68 @@ export default function RegistrarAtendimento() {
           </CardContent>
         </Card>
 
+        {/* Mídias e Anexos */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Mídias e Anexos para o Cliente</CardTitle>
+              <Button type="button" variant="outline" size="sm" onClick={addMidia}>
+                <Plus className="w-4 h-4 mr-2" />
+                Adicionar Mídia
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {formData.midias_anexas.map((midia, idx) => (
+              <div key={idx} className="flex gap-3 items-start border-b pb-3">
+                <Select
+                  value={midia.tipo}
+                  onValueChange={(value) => {
+                    const newMidias = [...formData.midias_anexas];
+                    newMidias[idx].tipo = value;
+                    setFormData({ ...formData, midias_anexas: newMidias });
+                  }}
+                >
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="link">Link</SelectItem>
+                    <SelectItem value="imagem">Imagem</SelectItem>
+                    <SelectItem value="video">Vídeo</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input
+                  placeholder="URL"
+                  value={midia.url}
+                  onChange={(e) => {
+                    const newMidias = [...formData.midias_anexas];
+                    newMidias[idx].url = e.target.value;
+                    setFormData({ ...formData, midias_anexas: newMidias });
+                  }}
+                />
+                <Input
+                  placeholder="Título"
+                  value={midia.titulo}
+                  onChange={(e) => {
+                    const newMidias = [...formData.midias_anexas];
+                    newMidias[idx].titulo = e.target.value;
+                    setFormData({ ...formData, midias_anexas: newMidias });
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removeMidia(idx)}
+                >
+                  <Trash2 className="w-4 h-4 text-red-500" />
+                </Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
         {/* Observações */}
         <Card>
           <CardHeader>
@@ -577,6 +698,31 @@ export default function RegistrarAtendimento() {
           </CardContent>
         </Card>
 
+        {/* Ações de Envio da Ata */}
+        {formData.status === 'realizado' && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Enviar Documento para Cliente</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-3 gap-3">
+                <Button type="button" variant="outline" className="w-full">
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  WhatsApp
+                </Button>
+                <Button type="button" variant="outline" className="w-full">
+                  <Send className="w-4 h-4 mr-2" />
+                  E-mail
+                </Button>
+                <Button type="button" variant="outline" className="w-full">
+                  <FileText className="w-4 h-4 mr-2" />
+                  Plataforma
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Ações */}
         <div className="flex gap-3 justify-end">
           <Button
@@ -597,7 +743,7 @@ export default function RegistrarAtendimento() {
                 Salvando...
               </>
             ) : (
-              'Registrar Atendimento'
+              'Salvar Atendimento'
             )}
           </Button>
         </div>
