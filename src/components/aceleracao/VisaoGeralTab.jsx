@@ -1,147 +1,192 @@
-import React, { useState } from "react";
+import React from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
-import DashboardKPIs from "./DashboardKPIs";
-import StatusClientesCards from "./StatusClientesCards";
-import ClientesStatusModal from "./ClientesStatusModal";
-import ProximosAtendimentos from "./ProximosAtendimentos";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Users, Calendar, TrendingUp, CheckCircle, Clock, AlertTriangle } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import AgendaVisual from "./AgendaVisual";
+import GraficoAtendimentos from "./GraficoAtendimentos";
+import StatusClientesCard from "./StatusClientesCard";
 
 export default function VisaoGeralTab({ user }) {
-  const [modalStatus, setModalStatus] = useState(null);
-  const [selectedClientes, setSelectedClientes] = useState([]);
-
-  // Carregar workshops ativos
-  const { data: workshops = [] } = useQuery({
-    queryKey: ['workshops-aceleracao'],
+  const { data: workshops } = useQuery({
+    queryKey: ['workshops-ativos'],
     queryFn: async () => {
       const all = await base44.entities.Workshop.list();
       return all.filter(w => w.planoAtual && w.planoAtual !== 'FREE');
     }
   });
 
-  // Carregar atendimentos
-  const { data: atendimentos = [], isLoading: loadingAtendimentos } = useQuery({
+  const { data: atendimentos } = useQuery({
     queryKey: ['atendimentos-acelerador', user?.id],
     queryFn: async () => {
-      if (user.role === 'admin') {
-        return await base44.entities.ConsultoriaAtendimento.list('-data_agendada');
-      }
-      return await base44.entities.ConsultoriaAtendimento.filter(
-        { consultor_id: user.id },
-        '-data_agendada'
-      );
+      const all = await base44.entities.ConsultoriaAtendimento.filter({
+        consultor_id: user.id
+      });
+      return all;
     },
-    enabled: !!user
+    enabled: !!user?.id
   });
 
-  // Carregar planos
-  const { data: planos = [] } = useQuery({
-    queryKey: ['planos-acelerador', user?.id],
+  const { data: planos } = useQuery({
+    queryKey: ['planos-acelerador'],
     queryFn: async () => {
-      if (user.role === 'admin') {
-        return await base44.entities.Plan.list();
-      }
-      return await base44.entities.Plan.filter({ consultant_id: user.id });
+      const plans = await base44.entities.Plan.filter({
+        consultant_id: user.id
+      });
+      return plans;
     },
-    enabled: !!user
+    enabled: !!user?.id
   });
 
-  // Calcular KPIs
-  const clientesAtivos = workshops.length;
-  
-  const horasContratadas = planos.reduce((sum, p) => sum + (p.hours_contracted || 0), 0);
-  const horasRealizadas = planos.reduce((sum, p) => sum + (p.hours_used || 0), 0);
-  const horasDisponiveis = Math.max(0, horasContratadas - horasRealizadas);
+  // Filtrar atendimentos do mês atual
+  const atendimentosMes = atendimentos?.filter(a => {
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    return new Date(a.data_agendada) >= firstDay;
+  }) || [];
 
-  const reunioesRealizadas = atendimentos.filter(a => a.status === 'realizado').length;
-  const proximasReunioes = atendimentos.filter(a => 
+  const clientesAtivos = workshops?.length || 0;
+  const reunioesRealizadas = atendimentosMes?.filter(a => a.status === 'realizado').length || 0;
+  const reunioesFuturas = atendimentosMes?.filter(a => 
     ['agendado', 'confirmado'].includes(a.status)
-  ).length;
-  const reunioesCanceladas = atendimentos.filter(a => a.status === 'cancelado').length;
+  ).length || 0;
+  
+  // Calcular horas: Total Contratado - Total Realizado
+  const totalHorasContratadas = planos?.reduce((acc, plan) => acc + (plan.hours_contracted || 0), 0) || 0;
+  const totalHorasRealizadas = atendimentos?.filter(a => a.status === 'realizado')
+    .reduce((acc, a) => acc + (a.duracao_real_minutos || a.duracao_minutos || 0), 0) || 0;
+  const horasDisponiveis = totalHorasContratadas - Math.round(totalHorasRealizadas / 60);
+  
+  const tarefasPendentes = atendimentosMes?.filter(a => 
+    a.status !== 'realizado' && new Date(a.data_agendada) < new Date()
+  ) || [];
 
-  // Calcular status dos clientes
-  const clientesPorStatus = workshops.reduce((acc, workshop) => {
-    const atendimentosWorkshop = atendimentos.filter(a => a.workshop_id === workshop.id);
-    const ultimoAtendimento = atendimentosWorkshop.length > 0 
-      ? atendimentosWorkshop[0] 
-      : null;
-    
-    const status = ultimoAtendimento?.status_cliente || 'estagnado';
-    
-    if (!acc[status]) acc[status] = [];
-    acc[status].push({
-      workshop_id: workshop.id,
-      workshop_name: workshop.name,
-      workshop_cidade: workshop.city,
-      workshop_estado: workshop.state,
-      plano: workshop.planoAtual,
-      ultimo_atendimento: ultimoAtendimento?.data_realizada || null,
-      consultor_nome: ultimoAtendimento?.consultor_nome || 'Não atribuído'
-    });
-    
-    return acc;
-  }, {});
-
-  const crescendo = clientesPorStatus.crescente?.length || 0;
-  const decrescendo = clientesPorStatus.decrescente?.length || 0;
-  const estagnados = clientesPorStatus.estagnado?.length || 0;
-  const naoRespondem = clientesPorStatus.nao_responde?.length || 0;
-
-  // Próximos 5 atendimentos
-  const proximosAtendimentosLista = atendimentos
-    .filter(a => ['agendado', 'confirmado'].includes(a.status))
-    .slice(0, 5)
-    .map(a => {
-      const workshop = workshops.find(w => w.id === a.workshop_id);
-      return {
-        ...a,
-        workshop_name: workshop?.name || 'Cliente'
-      };
-    });
-
-  const handleViewDetails = (status) => {
-    setModalStatus(status);
-    setSelectedClientes(clientesPorStatus[status] || []);
-  };
+  const proximosAtendimentos = atendimentos?.filter(a => 
+    ['agendado', 'confirmado'].includes(a.status) && 
+    new Date(a.data_agendada) >= new Date()
+  ).slice(0, 5) || [];
 
   return (
     <div className="space-y-6">
-      <DashboardKPIs
-        clientesAtivos={clientesAtivos}
-        horasDisponiveis={horasDisponiveis}
-        reunioesRealizadas={reunioesRealizadas}
-        proximasReunioes={proximasReunioes}
-        reunioesCanceladas={reunioesCanceladas}
-        loading={loadingAtendimentos}
-      />
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Clientes Ativos</CardTitle>
+            <Users className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{clientesAtivos}</div>
+            <p className="text-xs text-gray-600">Com planos habilitados</p>
+          </CardContent>
+        </Card>
 
-      <div>
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Status dos Clientes</h2>
-        <StatusClientesCards
-          crescendo={crescendo}
-          decrescendo={decrescendo}
-          estagnados={estagnados}
-          naoRespondem={naoRespondem}
-          loading={loadingAtendimentos}
-          onViewDetails={handleViewDetails}
-        />
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Reuniões Realizadas</CardTitle>
+            <CheckCircle className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{reunioesRealizadas}</div>
+            <p className="text-xs text-gray-600">Neste mês</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Reuniões Futuras</CardTitle>
+            <Calendar className="h-4 w-4 text-purple-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{reunioesFuturas}</div>
+            <p className="text-xs text-gray-600">Agendadas</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Horas Disponíveis</CardTitle>
+            <Clock className="h-4 w-4 text-orange-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{horasDisponiveis}h</div>
+            <p className="text-xs text-gray-600">
+              Contratadas: {totalHorasContratadas}h | Realizadas: {Math.round(totalHorasRealizadas / 60)}h
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
-      <ProximosAtendimentos
-        atendimentos={proximosAtendimentosLista}
-        loading={loadingAtendimentos}
-      />
+      <div className="grid md:grid-cols-3 gap-6">
+        {/* Status dos Clientes */}
+        <StatusClientesCard workshops={workshops} atendimentos={atendimentos || []} />
 
-      {modalStatus && (
-        <ClientesStatusModal
-          clientes={selectedClientes}
-          status={modalStatus}
-          onClose={() => {
-            setModalStatus(null);
-            setSelectedClientes([]);
-          }}
-        />
-      )}
+        {/* Próximos Atendimentos */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="w-5 h-5" />
+              Próximos Atendimentos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {proximosAtendimentos.length === 0 ? (
+              <p className="text-gray-500 text-center py-4">Nenhum atendimento próximo</p>
+            ) : (
+              <div className="space-y-3">
+                {proximosAtendimentos.map((atendimento) => (
+                  <div key={atendimento.id} className="border-l-4 border-blue-500 pl-3 py-2">
+                    <p className="font-medium text-sm">{atendimento.tipo_atendimento}</p>
+                    <p className="text-xs text-gray-600">
+                      {format(new Date(atendimento.data_agendada), "dd/MM 'às' HH:mm", { locale: ptBR })}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Tarefas Atrasadas */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-red-500" />
+              Atendimentos Atrasados
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {tarefasPendentes.length === 0 ? (
+              <div className="text-center py-4">
+                <CheckCircle className="w-12 h-12 mx-auto text-green-500 mb-2" />
+                <p className="text-gray-500">Tudo em dia!</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {tarefasPendentes.slice(0, 5).map((atendimento) => (
+                  <div key={atendimento.id} className="border-l-4 border-red-500 pl-3 py-2">
+                    <p className="font-medium text-sm">{atendimento.tipo_atendimento}</p>
+                    <p className="text-xs text-red-600">
+                      Previsto: {format(new Date(atendimento.data_agendada), "dd/MM/yyyy", { locale: ptBR })}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Gráfico de Atendimentos */}
+        <GraficoAtendimentos atendimentos={atendimentosMes} />
+
+        {/* Agenda Visual */}
+        <AgendaVisual atendimentos={atendimentos || []} />
+      </div>
     </div>
   );
 }
