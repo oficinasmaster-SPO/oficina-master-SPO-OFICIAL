@@ -7,8 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Calendar, CheckCircle, Clock, Edit2, History, Loader2, TrendingUp, AlertTriangle } from "lucide-react";
+import { Calendar, CheckCircle, Clock, Edit2, History, Loader2, TrendingUp } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -270,7 +269,7 @@ export default function CronogramaImplementacao() {
         </Card>
       )}
 
-      {/* Tabela de Itens */}
+      {/* Lista de Itens */}
       <Card>
         <CardContent className="pt-6">
           {filteredItems.length === 0 ? (
@@ -286,99 +285,80 @@ export default function CronogramaImplementacao() {
               )}
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-gray-50">
-                    <TableHead className="font-bold">Item</TableHead>
-                    <TableHead className="font-bold text-center">Início Previsto</TableHead>
-                    <TableHead className="font-bold text-center">Início Real</TableHead>
-                    <TableHead className="font-bold text-center">Término Previsto</TableHead>
-                    <TableHead className="font-bold text-center">Término Real</TableHead>
-                    <TableHead className="font-bold text-center">Status</TableHead>
-                    <TableHead className="font-bold text-center">Atraso</TableHead>
-                    <TableHead className="font-bold text-center">Detalhes</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredItems.map((item) => {
-                    const diasRestantes = getDiasRestantes(item.data_termino_previsto);
-                    const isAtrasado = item.status !== 'concluido' && diasRestantes.atrasado;
-                    
-                    return (
-                      <TableRow key={item.id} className={isAtrasado ? 'bg-red-50' : ''}>
-                        <TableCell className="font-medium">
-                          <div>
-                            <p className="font-semibold text-gray-900">{item.item_nome}</p>
-                            <Badge variant="outline" className="capitalize text-xs mt-1">
-                              {item.item_tipo}
-                            </Badge>
-                          </div>
-                        </TableCell>
-                        
-                        <TableCell className="text-center text-sm">
-                          -
-                        </TableCell>
-                        
-                        <TableCell className="text-center text-sm">
-                          {format(new Date(item.data_inicio_real), "dd/MM/yyyy", { locale: ptBR })}
-                        </TableCell>
-                        
-                        <TableCell className="text-center text-sm">
-                          {format(new Date(item.data_termino_previsto), "dd/MM/yyyy", { locale: ptBR })}
-                        </TableCell>
-                        
-                        <TableCell className="text-center text-sm">
-                          {item.data_termino_real 
-                            ? format(new Date(item.data_termino_real), "dd/MM/yyyy", { locale: ptBR })
-                            : '-'
-                          }
-                        </TableCell>
-                        
-                        <TableCell className="text-center">
+            <div className="space-y-3">
+              {filteredItems.map((item) => {
+                const diasRestantes = getDiasRestantes(item.data_termino_previsto);
+                
+                return (
+                  <div key={item.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h3 className="font-semibold text-gray-900">{item.item_nome}</h3>
                           <Badge className={getStatusColor(item.status)}>
                             {getStatusLabel(item.status)}
                           </Badge>
-                        </TableCell>
-                        
-                        <TableCell className="text-center">
-                          {item.status !== 'concluido' && (
-                            isAtrasado ? (
-                              <div className="flex items-center justify-center gap-1 text-red-600">
-                                <AlertTriangle className="w-4 h-4" />
-                                <span className="text-xs font-semibold">{diasRestantes.dias}d</span>
-                              </div>
-                            ) : (
-                              <span className="text-xs text-gray-600">{diasRestantes.dias}d</span>
-                            )
-                          )}
-                        </TableCell>
-                        
-                        <TableCell className="text-center">
-                          <div className="flex items-center justify-center gap-1">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setEditingItem(item)}
-                            >
-                              <Edit2 className="w-3 h-3" />
-                            </Button>
-                            {item.historico_alteracoes?.length > 0 && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setShowHistory(item)}
-                              >
-                                <History className="w-3 h-3" />
-                              </Button>
+                          <Badge variant="outline" className="capitalize">
+                            {item.item_tipo}
+                          </Badge>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-4 text-sm mt-3">
+                          <div>
+                            <p className="text-gray-600 mb-1">Início Real</p>
+                            <p className="font-medium">
+                              {format(new Date(item.data_inicio_real), "dd/MM/yyyy", { locale: ptBR })}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600 mb-1">Término Previsto</p>
+                            <p className="font-medium">
+                              {format(new Date(item.data_termino_previsto), "dd/MM/yyyy", { locale: ptBR })}
+                            </p>
+                            {item.status !== 'concluido' && (
+                              <p className={`text-xs ${diasRestantes.atrasado ? 'text-red-600' : 'text-gray-600'}`}>
+                                {diasRestantes.atrasado ? `${diasRestantes.dias} dias atrasado` : `${diasRestantes.dias} dias restantes`}
+                              </p>
                             )}
                           </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+                          <div>
+                            <p className="text-gray-600 mb-1">Término Real</p>
+                            <p className="font-medium">
+                              {item.data_termino_real 
+                                ? format(new Date(item.data_termino_real), "dd/MM/yyyy", { locale: ptBR })
+                                : '-'
+                              }
+                            </p>
+                          </div>
+                        </div>
+
+                        {item.observacoes && (
+                          <p className="text-sm text-gray-600 mt-2">{item.observacoes}</p>
+                        )}
+                      </div>
+
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setEditingItem(item)}
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                        {item.historico_alteracoes?.length > 0 && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowHistory(item)}
+                          >
+                            <History className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </CardContent>
