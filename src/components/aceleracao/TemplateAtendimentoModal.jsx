@@ -10,7 +10,7 @@ export default function TemplateAtendimentoModal({ onClose, onSelect }) {
       id: 1,
       nome: "Diagnóstico Inicial",
       tipo: "diagnostico_inicial",
-      duracao: 120,
+      duracao_minutos: 120,
       pauta: [
         { titulo: "Apresentação da Metodologia", descricao: "Explicar o processo de aceleração", tempo_estimado: 15 },
         { titulo: "Levantamento de Dados", descricao: "Coletar informações sobre a oficina", tempo_estimado: 30 },
@@ -27,7 +27,7 @@ export default function TemplateAtendimentoModal({ onClose, onSelect }) {
       id: 2,
       nome: "Acompanhamento Mensal",
       tipo: "acompanhamento_mensal",
-      duracao: 60,
+      duracao_minutos: 60,
       pauta: [
         { titulo: "Revisão de Metas", descricao: "Análise do desempenho do mês", tempo_estimado: 20 },
         { titulo: "Discussão de Desafios", descricao: "Identificar obstáculos e propor soluções", tempo_estimado: 25 },
@@ -43,7 +43,7 @@ export default function TemplateAtendimentoModal({ onClose, onSelect }) {
       id: 3,
       nome: "Revisão de Metas Trimestrais",
       tipo: "revisao_metas",
-      duracao: 90,
+      duracao_minutos: 90,
       pauta: [
         { titulo: "Análise de Resultados", descricao: "Revisão dos últimos 3 meses", tempo_estimado: 30 },
         { titulo: "Ajuste de Estratégias", descricao: "Adequar plano conforme necessário", tempo_estimado: 30 },
@@ -59,7 +59,7 @@ export default function TemplateAtendimentoModal({ onClose, onSelect }) {
       id: 4,
       nome: "Treinamento de Equipe",
       tipo: "treinamento",
-      duracao: 180,
+      duracao_minutos: 180,
       pauta: [
         { titulo: "Abertura e Contexto", descricao: "Apresentar objetivo do treinamento", tempo_estimado: 15 },
         { titulo: "Conteúdo Teórico", descricao: "Exposição de conceitos", tempo_estimado: 60 },
@@ -76,7 +76,7 @@ export default function TemplateAtendimentoModal({ onClose, onSelect }) {
       id: 5,
       nome: "Auditoria de Processos",
       tipo: "auditoria",
-      duracao: 120,
+      duracao_minutos: 120,
       pauta: [
         { titulo: "Mapeamento de Processos", descricao: "Documentar processos atuais", tempo_estimado: 40 },
         { titulo: "Identificação de Gaps", descricao: "Analisar desvios e falhas", tempo_estimado: 40 },
@@ -112,7 +112,7 @@ export default function TemplateAtendimentoModal({ onClose, onSelect }) {
                       <div className="flex items-center gap-2 mt-2">
                         <Badge variant="outline" className="text-xs">
                           <Clock className="w-3 h-3 mr-1" />
-                          {template.duracao}min
+                          {template.duracao_minutos}min
                         </Badge>
                         <Badge variant="outline" className="text-xs">
                           <FileText className="w-3 h-3 mr-1" />
