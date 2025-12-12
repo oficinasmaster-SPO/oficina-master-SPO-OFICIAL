@@ -269,9 +269,9 @@ export default function CronogramaImplementacao() {
         </Card>
       )}
 
-      {/* Lista de Itens */}
+      {/* Tabela de Itens */}
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="pt-6 overflow-x-auto">
           {filteredItems.length === 0 ? (
             <div className="text-center py-12">
               <Calendar className="w-16 h-16 mx-auto text-gray-400 mb-4" />
@@ -285,81 +285,96 @@ export default function CronogramaImplementacao() {
               )}
             </div>
           ) : (
-            <div className="space-y-3">
-              {filteredItems.map((item) => {
-                const diasRestantes = getDiasRestantes(item.data_termino_previsto);
-                
-                return (
-                  <div key={item.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="font-semibold text-gray-900">{item.item_nome}</h3>
-                          <Badge className={getStatusColor(item.status)}>
-                            {getStatusLabel(item.status)}
-                          </Badge>
-                          <Badge variant="outline" className="capitalize">
-                            {item.item_tipo}
-                          </Badge>
-                        </div>
-
-                        <div className="grid grid-cols-3 gap-4 text-sm mt-3">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-50 border-b-2 border-gray-200">
+                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Programa / Conteúdo</th>
+                  <th className="text-center py-3 px-4 font-semibold text-gray-700 min-w-[110px]">Início Previsto</th>
+                  <th className="text-center py-3 px-4 font-semibold text-gray-700 min-w-[110px]">Início Real</th>
+                  <th className="text-center py-3 px-4 font-semibold text-gray-700 min-w-[110px]">Término Previsto</th>
+                  <th className="text-center py-3 px-4 font-semibold text-gray-700 min-w-[110px]">Término Real</th>
+                  <th className="text-center py-3 px-4 font-semibold text-gray-700">Status</th>
+                  <th className="text-center py-3 px-4 font-semibold text-gray-700">Atraso</th>
+                  <th className="text-center py-3 px-4 font-semibold text-gray-700">Detalhes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredItems.map((item) => {
+                  const diasRestantes = getDiasRestantes(item.data_termino_previsto);
+                  const inicioPrevisto = new Date(item.data_inicio_real);
+                  inicioPrevisto.setDate(inicioPrevisto.getDate() - 1);
+                  
+                  return (
+                    <tr key={item.id} className="border-b hover:bg-gray-50 transition-colors">
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          {item.status === 'concluido' && (
+                            <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
+                          )}
                           <div>
-                            <p className="text-gray-600 mb-1">Início Real</p>
-                            <p className="font-medium">
-                              {format(new Date(item.data_inicio_real), "dd/MM/yyyy", { locale: ptBR })}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-gray-600 mb-1">Término Previsto</p>
-                            <p className="font-medium">
-                              {format(new Date(item.data_termino_previsto), "dd/MM/yyyy", { locale: ptBR })}
-                            </p>
-                            {item.status !== 'concluido' && (
-                              <p className={`text-xs ${diasRestantes.atrasado ? 'text-red-600' : 'text-gray-600'}`}>
-                                {diasRestantes.atrasado ? `${diasRestantes.dias} dias atrasado` : `${diasRestantes.dias} dias restantes`}
-                              </p>
-                            )}
-                          </div>
-                          <div>
-                            <p className="text-gray-600 mb-1">Término Real</p>
-                            <p className="font-medium">
-                              {item.data_termino_real 
-                                ? format(new Date(item.data_termino_real), "dd/MM/yyyy", { locale: ptBR })
-                                : '-'
-                              }
-                            </p>
+                            <p className="font-medium text-gray-900">{item.item_nome}</p>
+                            <Badge variant="outline" className="capitalize text-xs mt-1">
+                              {item.item_tipo}
+                            </Badge>
                           </div>
                         </div>
-
-                        {item.observacoes && (
-                          <p className="text-sm text-gray-600 mt-2">{item.observacoes}</p>
+                      </td>
+                      <td className="py-3 px-4 text-center text-sm">
+                        {format(inicioPrevisto, "dd/MM/yyyy", { locale: ptBR })}
+                      </td>
+                      <td className="py-3 px-4 text-center text-sm font-medium">
+                        {format(new Date(item.data_inicio_real), "dd/MM/yyyy", { locale: ptBR })}
+                      </td>
+                      <td className="py-3 px-4 text-center text-sm">
+                        {format(new Date(item.data_termino_previsto), "dd/MM/yyyy", { locale: ptBR })}
+                      </td>
+                      <td className="py-3 px-4 text-center text-sm font-medium">
+                        {item.data_termino_real 
+                          ? format(new Date(item.data_termino_real), "dd/MM/yyyy", { locale: ptBR })
+                          : '-'
+                        }
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <Badge className={getStatusColor(item.status)}>
+                          {getStatusLabel(item.status)}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        {item.status !== 'concluido' && diasRestantes.atrasado ? (
+                          <span className="text-red-600 font-semibold text-sm">
+                            {diasRestantes.dias}d
+                          </span>
+                        ) : (
+                          <span className="text-gray-400">-</span>
                         )}
-                      </div>
-
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setEditingItem(item)}
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </Button>
-                        {item.historico_alteracoes?.length > 0 && (
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <div className="flex gap-1 justify-center">
                           <Button
-                            variant="outline"
+                            variant="ghost"
                             size="sm"
-                            onClick={() => setShowHistory(item)}
+                            onClick={() => setEditingItem(item)}
+                            className="h-8 w-8 p-0"
                           >
-                            <History className="w-4 h-4" />
+                            <Edit2 className="w-4 h-4" />
                           </Button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                          {item.historico_alteracoes?.length > 0 && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setShowHistory(item)}
+                              className="h-8 w-8 p-0"
+                            >
+                              <History className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           )}
         </CardContent>
       </Card>
