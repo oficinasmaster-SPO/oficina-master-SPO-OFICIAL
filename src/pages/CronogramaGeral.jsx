@@ -68,20 +68,21 @@ export default function CronogramaGeral() {
   // Filtrar workshops pelo plano selecionado
   const workshopsPorPlano = workshops.filter(w => w.planoAtual === selectedPlan);
 
-  // Obter módulos do plano selecionado
+  // Obter dados do plano selecionado
   const planData = planFeatures.find(p => p.plan_id === selectedPlan);
   
-  // Usar módulos do PlanFeature, senão usar do template
-  const templatePlano = templates.find(t => t.fase_oficina === 1);
-  const processos = planData?.modules_allowed?.map(modCode => ({
-    codigo: modCode,
-    nome: modCode
-  })) || templatePlano?.modulos || [
-    { codigo: 'GPS', nome: 'GPS - Gestão de Performance e Sistemas' },
-    { codigo: 'PAVE', nome: 'PAVE - Performance de Vendas' },
-    { codigo: 'RD', nome: 'RD - Reunião de Desempenho' },
-    { codigo: 'TCMP2', nome: 'TCMP² - Cálculo de Hora Ideal' },
-    { codigo: 'DRE', nome: 'DRE - Demonstrativo de Resultados' }
+  // Combinar funcionalidades e módulos do cronograma
+  const processos = [
+    ...(planData?.cronograma_features?.map(featId => ({
+      codigo: featId,
+      nome: featId.replace(/_/g, ' ').toUpperCase(),
+      tipo: 'funcionalidade'
+    })) || []),
+    ...(planData?.cronograma_modules?.map(modId => ({
+      codigo: modId,
+      nome: modId,
+      tipo: 'modulo'
+    })) || [])
   ];
 
   // Calcular contadores por processo

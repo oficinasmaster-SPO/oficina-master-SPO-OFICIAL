@@ -13,7 +13,6 @@ import { Loader2, Save, Shield, Lock, Unlock, Settings } from "lucide-react";
 import { toast } from "sonner";
 import { createPageUrl } from "@/utils";
 import { useNavigate } from "react-router-dom";
-import PlanModulesManager from "@/components/plans/PlanModulesManager";
 
 export default function GerenciarPlanos() {
   const navigate = useNavigate();
@@ -291,6 +290,8 @@ export default function GerenciarPlanos() {
         features_allowed: [],
         features_blocked: [],
         modules_allowed: [],
+        cronograma_features: [],
+        cronograma_modules: [],
         extra_resources: "",
         limitations: "",
         max_diagnostics_per_month: -1,
@@ -316,6 +317,17 @@ export default function GerenciarPlanos() {
         ? list.filter(f => f !== feature)
         : [...list, feature];
       return { ...prev, [type]: newList };
+    });
+  };
+
+  const toggleCronograma = (item, type) => {
+    const field = type === 'feature' ? 'cronograma_features' : 'cronograma_modules';
+    setSelectedPlan(prev => {
+      const list = prev[field] || [];
+      const newList = list.includes(item)
+        ? list.filter(i => i !== item)
+        : [...list, item];
+      return { ...prev, [field]: newList };
     });
   };
 
@@ -457,16 +469,26 @@ export default function GerenciarPlanos() {
                           </CardTitle>
                         </CardHeader>
                         <CardContent>
-                          <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-2">
                             {features.map(feature => (
-                              <div key={feature.id} className="flex items-center space-x-2">
-                                <Checkbox
-                                  checked={selectedPlan.features_allowed?.includes(feature.id)}
-                                  onCheckedChange={() => toggleFeature(feature.id, 'features_allowed')}
-                                />
-                                <label className="text-sm cursor-pointer">
-                                  {feature.label}
-                                </label>
+                              <div key={feature.id} className="flex items-center justify-between p-2 border rounded">
+                                <div className="flex items-center space-x-2 flex-1">
+                                  <Checkbox
+                                    checked={selectedPlan.features_allowed?.includes(feature.id)}
+                                    onCheckedChange={() => toggleFeature(feature.id, 'features_allowed')}
+                                  />
+                                  <label className="text-sm cursor-pointer">
+                                    {feature.label}
+                                  </label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <span className="text-xs text-gray-500">Cronograma:</span>
+                                  <Checkbox
+                                    checked={selectedPlan.cronograma_features?.includes(feature.id)}
+                                    onCheckedChange={() => toggleCronograma(feature.id, 'feature')}
+                                    disabled={!selectedPlan.features_allowed?.includes(feature.id)}
+                                  />
+                                </div>
                               </div>
                             ))}
                           </div>
@@ -486,33 +508,32 @@ export default function GerenciarPlanos() {
                           </CardTitle>
                         </CardHeader>
                         <CardContent>
-                          <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-2">
                             {modules.map(module => (
-                              <div key={module.id} className="flex items-center space-x-2">
-                                <Checkbox
-                                  checked={selectedPlan.modules_allowed?.includes(module.id)}
-                                  onCheckedChange={() => toggleFeature(module.id, 'modules_allowed')}
-                                />
-                                <label className="text-sm cursor-pointer">
-                                  {module.label}
-                                </label>
+                              <div key={module.id} className="flex items-center justify-between p-2 border rounded">
+                                <div className="flex items-center space-x-2 flex-1">
+                                  <Checkbox
+                                    checked={selectedPlan.modules_allowed?.includes(module.id)}
+                                    onCheckedChange={() => toggleFeature(module.id, 'modules_allowed')}
+                                  />
+                                  <label className="text-sm cursor-pointer">
+                                    {module.label}
+                                  </label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <span className="text-xs text-gray-500">Cronograma:</span>
+                                  <Checkbox
+                                    checked={selectedPlan.cronograma_modules?.includes(module.id)}
+                                    onCheckedChange={() => toggleCronograma(module.id, 'module')}
+                                    disabled={!selectedPlan.modules_allowed?.includes(module.id)}
+                                  />
+                                </div>
                               </div>
                             ))}
                           </div>
                         </CardContent>
                       </Card>
                     ))}
-
-                    {/* Gerenciador Avançado */}
-                    <div className="mt-6">
-                      <PlanModulesManager
-                        planData={selectedPlan}
-                        onSave={async (data) => {
-                          setSelectedPlan({ ...selectedPlan, ...data });
-                          handleSavePlan();
-                        }}
-                      />
-                    </div>
                   </div>
                 </TabsContent>
 
