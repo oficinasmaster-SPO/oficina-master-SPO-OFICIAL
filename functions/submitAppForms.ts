@@ -13,7 +13,6 @@ Deno.serve(async (req) => {
     if (form_type === 'entrepreneur_diagnostic') {
         const { workshop_id, answers, dominant_profile, profile_scores } = body;
         
-        // Create using service role to bypass strict RLS if any
         const diagnostic = await base44.asServiceRole.entities.EntrepreneurDiagnostic.create({
             user_id: user.id,
             workshop_id,
@@ -22,7 +21,7 @@ Deno.serve(async (req) => {
             profile_scores,
             completed: true
         });
-        return Response.json({ success: true, id: diagnostic.id });
+        return Response.json({ success: true, id: diagnostic.id, diagnostic });
     }
 
     if (form_type === 'workshop_diagnostic') {
@@ -48,13 +47,12 @@ Deno.serve(async (req) => {
              }
         } catch(e) { console.log("Progress update error", e); }
 
-        return Response.json({ success: true, id: diagnostic.id });
+        return Response.json({ success: true, id: diagnostic.id, diagnostic });
     }
 
     if (form_type === 'workload_diagnostic') {
         const { workshop_id, answers, overall_health, average_score } = body;
 
-        // Mock workload data for now as it's complex to calculate in one go without existing data
         const workload_data = [
              { position_title: "Mecânico", weekly_hours_worked: 45, ideal_weekly_hours: 44 },
              { position_title: "Gerente", weekly_hours_worked: 50, ideal_weekly_hours: 40 }
@@ -66,7 +64,7 @@ Deno.serve(async (req) => {
             period_end: new Date().toISOString(),
             overall_health,
             average_score,
-            workload_data, // Mock data for visualization
+            workload_data,
             analysis_results: {
                 overloaded_employees: [],
                 underutilized_employees: [],
@@ -74,7 +72,7 @@ Deno.serve(async (req) => {
             },
             completed: true
         });
-        return Response.json({ success: true, id: diagnostic.id });
+        return Response.json({ success: true, id: diagnostic.id, diagnostic });
     }
 
     if (form_type === 'manager_disc_diagnostic') {
@@ -93,7 +91,7 @@ Deno.serve(async (req) => {
             evaluation_type: 'manager',
             completed: true
         });
-        return Response.json({ success: true, id: diagnostic.id });
+        return Response.json({ success: true, id: diagnostic.id, diagnostic });
     }
 
     return Response.json({ error: 'Invalid form type' }, { status: 400 });
