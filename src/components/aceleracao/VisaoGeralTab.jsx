@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Users, Calendar, TrendingUp, CheckCircle, Clock, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import AgendaVisual from "./AgendaVisual";
+import GraficoAtendimentos from "./GraficoAtendimentos";
+import StatusClientesCard from "./StatusClientesCard";
 
 export default function VisaoGeralTab({ user }) {
   const { data: workshops } = useQuery({
@@ -18,22 +21,47 @@ export default function VisaoGeralTab({ user }) {
   });
 
   const { data: atendimentos } = useQuery({
-    queryKey: ['atendimentos-mes'],
+    queryKey: ['atendimentos-acelerador', user?.id],
     queryFn: async () => {
-      const now = new Date();
-      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-      const all = await base44.entities.ConsultoriaAtendimento.list();
-      return all.filter(a => new Date(a.data_agendada) >= firstDay);
-    }
+      const all = await base44.entities.ConsultoriaAtendimento.filter({
+        consultor_id: user.id
+      });
+      return all;
+    },
+    enabled: !!user?.id
   });
 
+  const { data: planos } = useQuery({
+    queryKey: ['planos-acelerador'],
+    queryFn: async () => {
+      const plans = await base44.entities.Plan.filter({
+        consultant_id: user.id
+      });
+      return plans;
+    },
+    enabled: !!user?.id
+  });
+
+  // Filtrar atendimentos do mês atual
+  const atendimentosMes = atendimentos?.filter(a => {
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    return new Date(a.data_agendada) >= firstDay;
+  }) || [];
+
   const clientesAtivos = workshops?.length || 0;
-  const reunioesRealizadas = atendimentos?.filter(a => a.status === 'realizado').length || 0;
-  const reunioesFuturas = atendimentos?.filter(a => 
+  const reunioesRealizadas = atendimentosMes?.filter(a => a.status === 'realizado').length || 0;
+  const reunioesFuturas = atendimentosMes?.filter(a => 
     ['agendado', 'confirmado'].includes(a.status)
   ).length || 0;
   
-  const tarefasPendentes = atendimentos?.filter(a => 
+  // Calcular horas: Total Contratado - Total Realizado
+  const totalHorasContratadas = planos?.reduce((acc, plan) => acc + (plan.hours_contracted || 0), 0) || 0;
+  const totalHorasRealizadas = atendimentos?.filter(a => a.status === 'realizado')
+    .reduce((acc, a) => acc + (a.duracao_real_minutos || a.duracao_minutos || 0), 0) || 0;
+  const horasDisponiveis = totalHorasContratadas - Math.round(totalHorasRealizadas / 60);
+  
+  const tarefasPendentes = atendimentosMes?.filter(a => 
     a.status !== 'realizado' && new Date(a.data_agendada) < new Date()
   ) || [];
 
@@ -84,13 +112,18 @@ export default function VisaoGeralTab({ user }) {
             <Clock className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">160h</div>
-            <p className="text-xs text-gray-600">Neste mês</p>
+            <div className="text-2xl font-bold">{horasDisponiveis}h</div>
+            <p className="text-xs text-gray-600">
+              Contratadas: {totalHorasContratadas}h | Realizadas: {Math.round(totalHorasRealizadas / 60)}h
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid md:grid-cols-3 gap-6">
+        {/* Status dos Clientes */}
+        <StatusClientesCard workshops={workshops} atendimentos={atendimentos || []} />
+
         {/* Próximos Atendimentos */}
         <Card>
           <CardHeader>
@@ -145,6 +178,14 @@ export default function VisaoGeralTab({ user }) {
             )}
           </CardContent>
         </Card>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Gráfico de Atendimentos */}
+        <GraficoAtendimentos atendimentos={atendimentosMes} />
+
+        {/* Agenda Visual */}
+        <AgendaVisual atendimentos={atendimentos || []} />
       </div>
     </div>
   );
