@@ -9,18 +9,29 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, ArrowLeft, Printer, FileText, AlertTriangle, Share2 } from "lucide-react";
 import { createPageUrl } from "@/utils";
 import { toast } from "sonner";
+import TrackingWrapper from "@/components/shared/TrackingWrapper";
 
 export default function VisualizarProcesso() {
   const [searchParams] = useSearchParams();
   const docId = searchParams.get("id");
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [workshop, setWorkshop] = useState(null);
 
   useEffect(() => {
     const loadUser = async () => {
       try {
         const currentUser = await base44.auth.me();
         setUser(currentUser);
+
+        // Carregar workshop
+        if (currentUser.workshop_id) {
+          const w = await base44.entities.Workshop.get(currentUser.workshop_id);
+          setWorkshop(w);
+        } else {
+          const workshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
+          setWorkshop(workshops[0]);
+        }
       } catch (e) {
         console.error(e);
       }
@@ -61,7 +72,14 @@ export default function VisualizarProcesso() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 print:bg-white print:p-0">
+    <TrackingWrapper
+      workshopId={workshop?.id}
+      itemTipo="processo"
+      itemId={doc?.id}
+      itemNome={doc?.title}
+      itemCategoria={doc?.category}
+    >
+      <div className="min-h-screen bg-gray-50 py-8 px-4 print:bg-white print:p-0">
       <div className="max-w-4xl mx-auto print:max-w-full">
         <div className="flex justify-between items-center mb-6 print:hidden">
           <Button variant="ghost" onClick={() => navigate(createPageUrl('MeusProcessos'))}>
@@ -303,7 +321,7 @@ export default function VisualizarProcesso() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
     </TrackingWrapper>
   );
 }
