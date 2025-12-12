@@ -13,6 +13,7 @@ import { Loader2, Save, Shield, Lock, Unlock, Settings } from "lucide-react";
 import { toast } from "sonner";
 import { createPageUrl } from "@/utils";
 import { useNavigate } from "react-router-dom";
+import PlanModulesManager from "@/components/plans/PlanModulesManager";
 
 export default function GerenciarPlanos() {
   const navigate = useNavigate();
@@ -501,6 +502,17 @@ export default function GerenciarPlanos() {
                         </CardContent>
                       </Card>
                     ))}
+
+                    {/* Gerenciador Avançado */}
+                    <div className="mt-6">
+                      <PlanModulesManager
+                        planData={selectedPlan}
+                        onSave={async (data) => {
+                          setSelectedPlan({ ...selectedPlan, ...data });
+                          handleSavePlan();
+                        }}
+                      />
+                    </div>
                   </div>
                 </TabsContent>
 
