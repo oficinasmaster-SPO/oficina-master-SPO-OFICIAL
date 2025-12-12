@@ -12,6 +12,7 @@ import { Loader2, FileText, Plus, Trash2, DollarSign, Clock, History, Calendar }
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { formatCurrency } from "../components/utils/formatters";
+import TrackingWrapper from "@/components/shared/TrackingWrapper";
 
 export default function DiagnosticoOS() {
   const navigate = useNavigate();
@@ -355,7 +356,14 @@ export default function DiagnosticoOS() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-green-50 py-12 px-4">
+    <TrackingWrapper
+      workshopId={workshop?.id}
+      itemTipo="diagnostico"
+      itemId="diagnostico_os"
+      itemNome="Diagnóstico OS – R70/I30 + TCMP²"
+      itemCategoria="diagnosticos"
+    >
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-green-50 py-12 px-4">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
@@ -764,5 +772,6 @@ export default function DiagnosticoOS() {
         </Card>
       </div>
     </div>
+    </TrackingWrapper>
   );
 }

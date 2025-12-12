@@ -13,6 +13,7 @@ import { Loader2, Brain, AlertCircle, CheckCircle2, Link as LinkIcon, History, C
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { discQuestions } from "../components/disc/DISCQuestions";
 import { toast } from "sonner";
+import TrackingWrapper from "@/components/shared/TrackingWrapper";
 
 export default function DiagnosticoDISC() {
   const navigate = useNavigate();
@@ -250,7 +251,14 @@ export default function DiagnosticoDISC() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 py-12 px-4">
+    <TrackingWrapper
+      workshopId={workshop?.id}
+      itemTipo="diagnostico"
+      itemId="diagnostico_disc"
+      itemNome="Teste DISC"
+      itemCategoria="diagnosticos"
+    >
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 py-12 px-4">
       <div className="max-w-6xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div className="text-center md:text-left flex-1">
@@ -529,5 +537,6 @@ export default function DiagnosticoDISC() {
         </form>
       </div>
     </div>
+    </TrackingWrapper>
   );
 }
