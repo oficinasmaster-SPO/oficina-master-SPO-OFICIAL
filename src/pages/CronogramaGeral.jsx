@@ -47,6 +47,12 @@ export default function CronogramaGeral() {
     queryFn: () => base44.entities.CronogramaTemplate.list()
   });
 
+  // Carregar features dos planos
+  const { data: planFeatures = [] } = useQuery({
+    queryKey: ['plan-features'],
+    queryFn: () => base44.entities.PlanFeature.list()
+  });
+
   // Verificar acesso
   if (!user || (user.role !== 'admin' && user.job_role !== 'acelerador')) {
     return (
@@ -62,9 +68,15 @@ export default function CronogramaGeral() {
   // Filtrar workshops pelo plano selecionado
   const workshopsPorPlano = workshops.filter(w => w.planoAtual === selectedPlan);
 
-  // Obter template do plano selecionado (assumindo fase 1 para simplificar)
+  // Obter módulos do plano selecionado
+  const planData = planFeatures.find(p => p.plan_id === selectedPlan);
+  
+  // Usar módulos do PlanFeature, senão usar do template
   const templatePlano = templates.find(t => t.fase_oficina === 1);
-  const processos = templatePlano?.modulos || [
+  const processos = planData?.modules_allowed?.map(modCode => ({
+    codigo: modCode,
+    nome: modCode
+  })) || templatePlano?.modulos || [
     { codigo: 'GPS', nome: 'GPS - Gestão de Performance e Sistemas' },
     { codigo: 'PAVE', nome: 'PAVE - Performance de Vendas' },
     { codigo: 'RD', nome: 'RD - Reunião de Desempenho' },
@@ -301,7 +313,19 @@ export default function CronogramaGeral() {
         <div className="w-1/2 border-r border-gray-200 overflow-y-auto p-6">
           <Card>
             <CardHeader>
-              <CardTitle>Processos - Plano {selectedPlan}</CardTitle>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Processos - Plano {selectedPlan}</CardTitle>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {planData?.features_allowed?.length || 0} funcionalidades | {processos.length} módulos
+                  </p>
+                </div>
+                {planData && (
+                  <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                    {workshopsPorPlano.length} clientes
+                  </Badge>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               {processos.length === 0 ? (
