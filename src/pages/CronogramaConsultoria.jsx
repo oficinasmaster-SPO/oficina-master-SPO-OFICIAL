@@ -6,7 +6,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, User, FileText, Star, Eye, Download, Users, Target, Printer } from "lucide-react";
+import { Calendar, Clock, User, FileText, Star, Eye, Download, Users, Target, Printer, MessageSquare, Send } from "lucide-react";
+import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import ReactMarkdown from "react-markdown";
@@ -272,7 +273,7 @@ export default function CronogramaConsultoria() {
                           </Badge>
                         )}
                       </div>
-                      
+
                       <div className="grid grid-cols-2 gap-4 mt-3">
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                           <Calendar className="w-4 h-4" />
@@ -294,42 +295,101 @@ export default function CronogramaConsultoria() {
                       )}
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex flex-col gap-2">
+                      <div className="flex gap-2">
+                        {atendimento.ata_ia && (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedAtendimento(atendimento);
+                                setShowAta(true);
+                              }}
+                            >
+                              <Eye className="w-4 h-4 mr-2" />
+                              Ver Ata
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handlePrintAta(atendimento)}
+                              title="Imprimir Ata"
+                            >
+                              <Printer className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDownloadAta(atendimento)}
+                              title="Download Markdown"
+                            >
+                              <Download className="w-4 h-4" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Ações de Envio */}
                       {atendimento.ata_ia && (
-                        <>
-                          <Button
-                            variant="outline"
+                        <div className="flex gap-2 pt-2 border-t">
+                          <Button 
+                            variant="ghost" 
                             size="sm"
-                            onClick={() => {
-                              setSelectedAtendimento(atendimento);
-                              setShowAta(true);
+                            className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                            onClick={async () => {
+                              try {
+                                const response = await base44.functions.invoke('enviarAtaWhatsApp', {
+                                  atendimento_id: atendimento.id
+                                });
+                                const phone = response.data.phone?.replace(/\D/g, '') || '';
+                                const message = encodeURIComponent(response.data.whatsapp_message);
+                                window.open(`https://wa.me/55${phone}?text=${message}`, '_blank');
+                                toast.success("WhatsApp aberto!");
+                              } catch (error) {
+                                toast.error("Erro: " + error.message);
+                              }
                             }}
+                            title="Enviar via WhatsApp"
                           >
-                            <Eye className="w-4 h-4 mr-2" />
-                            Ver Ata
+                            <MessageSquare className="w-4 h-4" />
                           </Button>
-                          <Button
-                            variant="outline"
+                          <Button 
+                            variant="ghost" 
                             size="sm"
-                            onClick={() => handlePrintAta(atendimento)}
-                            title="Imprimir Ata"
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            onClick={async () => {
+                              try {
+                                await base44.functions.invoke('enviarAtaEmail', {
+                                  atendimento_id: atendimento.id
+                                });
+                                toast.success("Ata enviada por email!");
+                              } catch (error) {
+                                toast.error("Erro: " + error.message);
+                              }
+                            }}
+                            title="Enviar via E-mail"
                           >
-                            <Printer className="w-4 h-4" />
+                            <Send className="w-4 h-4" />
                           </Button>
-                          <Button
-                            variant="outline"
+                          <Button 
+                            variant="ghost" 
                             size="sm"
-                            onClick={() => handleDownloadAta(atendimento)}
-                            title="Download Markdown"
+                            className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                            onClick={async () => {
+                              try {
+                                await base44.functions.invoke('disponibilizarAtaPlataforma', {
+                                  atendimento_id: atendimento.id
+                                });
+                                toast.success("Ata disponibilizada na plataforma!");
+                              } catch (error) {
+                                toast.error("Erro: " + error.message);
+                              }
+                            }}
+                            title="Disponibilizar na Plataforma"
                           >
-                            <Download className="w-4 h-4" />
+                            <FileText className="w-4 h-4" />
                           </Button>
-                        </>
-                      )}
-                      {atendimento.avaliacao_cliente && (
-                        <div className="text-xs text-gray-600">
-                          <Star className="w-4 h-4 inline text-yellow-500 fill-yellow-500" />
-                          {' '}{atendimento.avaliacao_cliente.nota}/5
                         </div>
                       )}
                     </div>
