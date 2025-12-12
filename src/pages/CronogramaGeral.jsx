@@ -147,7 +147,7 @@ export default function CronogramaGeral() {
     <div className="h-screen flex flex-col bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-gray-900">CRONOGRAMA GERAL</h1>
           <div className="flex gap-3">
             <Select value={selectedPlan} onValueChange={setSelectedPlan}>
@@ -169,67 +169,67 @@ export default function CronogramaGeral() {
             </Button>
           </div>
         </div>
-      </div>
 
-      {/* Cards de Totais */}
-      <div className="grid grid-cols-4 gap-4 px-6">
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100">
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <p className="text-sm text-blue-600 font-medium mb-1">Total A Fazer</p>
-              <p className="text-3xl font-bold text-blue-900">
-                {processos.reduce((acc, p) => {
-                  const contagem = getContagemPorProcesso(p.codigo);
-                  return acc + contagem.a_fazer + contagem.em_andamento;
-                }, 0)}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Cards de Totais */}
+        <div className="grid grid-cols-4 gap-4 mt-4">
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-0 shadow-sm">
+            <CardContent className="py-4">
+              <div className="text-center">
+                <p className="text-sm text-blue-600 font-medium mb-1">Total A Fazer</p>
+                <p className="text-3xl font-bold text-blue-900">
+                  {processos.reduce((acc, p) => {
+                    const contagem = getContagemPorProcesso(p.codigo);
+                    return acc + contagem.a_fazer + contagem.em_andamento;
+                  }, 0)}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card className="bg-gradient-to-br from-red-50 to-red-100">
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <p className="text-sm text-red-600 font-medium mb-1">Total Atrasado</p>
-              <p className="text-3xl font-bold text-red-900">
-                {processos.reduce((acc, p) => {
-                  const contagem = getContagemPorProcesso(p.codigo);
-                  return acc + contagem.atrasado;
-                }, 0)}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+          <Card className="bg-gradient-to-br from-red-50 to-red-100 border-0 shadow-sm">
+            <CardContent className="py-4">
+              <div className="text-center">
+                <p className="text-sm text-red-600 font-medium mb-1">Total Atrasado</p>
+                <p className="text-3xl font-bold text-red-900">
+                  {processos.reduce((acc, p) => {
+                    const contagem = getContagemPorProcesso(p.codigo);
+                    return acc + contagem.atrasado;
+                  }, 0)}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card className="bg-gradient-to-br from-green-50 to-green-100">
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <p className="text-sm text-green-600 font-medium mb-1">Total Concluído</p>
-              <p className="text-3xl font-bold text-green-900">
-                {processos.reduce((acc, p) => {
-                  const contagem = getContagemPorProcesso(p.codigo);
-                  return acc + contagem.concluido;
-                }, 0)}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-purple-50 to-purple-100">
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <p className="text-sm text-purple-600 font-medium mb-1">Taxa Conclusão</p>
-              <p className="text-3xl font-bold text-purple-900">
-                {processos.length > 0 ? Math.round(
-                  (processos.reduce((acc, p) => {
+          <Card className="bg-gradient-to-br from-green-50 to-green-100 border-0 shadow-sm">
+            <CardContent className="py-4">
+              <div className="text-center">
+                <p className="text-sm text-green-600 font-medium mb-1">Total Concluído</p>
+                <p className="text-3xl font-bold text-green-900">
+                  {processos.reduce((acc, p) => {
                     const contagem = getContagemPorProcesso(p.codigo);
                     return acc + contagem.concluido;
-                  }, 0) / (workshopsPorPlano.length * processos.length || 1)) * 100
-                ) : 0}%
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+                  }, 0)}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-0 shadow-sm">
+            <CardContent className="py-4">
+              <div className="text-center">
+                <p className="text-sm text-purple-600 font-medium mb-1">Taxa Conclusão</p>
+                <p className="text-3xl font-bold text-purple-900">
+                  {processos.length > 0 ? Math.round(
+                    (processos.reduce((acc, p) => {
+                      const contagem = getContagemPorProcesso(p.codigo);
+                      return acc + contagem.concluido;
+                    }, 0) / (workshopsPorPlano.length * processos.length || 1)) * 100
+                  ) : 0}%
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Conteúdo Principal */}
