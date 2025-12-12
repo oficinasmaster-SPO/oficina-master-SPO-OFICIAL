@@ -19,19 +19,25 @@ export default function ProcessoVisualizacao({ processo, user, isAdmin }) {
   );
   const [justificativa, setJustificativa] = React.useState(processo.justificativa_prazo || "");
 
-  // Registrar visualização automática
+  // Registrar visualização automática e definir prazo +30 dias
   useEffect(() => {
     const registrarVisualizacao = async () => {
       // Só registrar se for cliente (não admin) e não tiver sido visualizado ainda
       if (!isAdmin && !processo.data_visualizacao) {
         try {
+          const dataInicio = new Date();
+          const dataTermino = new Date(dataInicio);
+          dataTermino.setDate(dataTermino.getDate() + 30); // +30 dias automático
+
           await base44.entities.CronogramaProgresso.update(processo.id, {
-            data_visualizacao: new Date().toISOString(),
-            data_inicio_realizado: new Date().toISOString().split('T')[0],
-            situacao: 'em_andamento'
+            data_visualizacao: dataInicio.toISOString(),
+            data_inicio_realizado: dataInicio.toISOString().split('T')[0],
+            data_conclusao_previsto: dataTermino.toISOString().split('T')[0],
+            situacao: 'em_andamento',
+            notificacao_diaria_ativa: true
           });
           queryClient.invalidateQueries(['cronograma-progresso']);
-          toast.success("Início do processo registrado automaticamente!");
+          toast.success("Processo iniciado! Prazo: 30 dias.");
         } catch (error) {
           console.error("Erro ao registrar visualização:", error);
         }
