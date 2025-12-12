@@ -100,6 +100,8 @@ export default function Questionario() {
         selected_option: letter
       }));
       
+      console.log("Enviando diagnóstico:", { workshop_id: workshop.id, answers: answersArray, phase, dominantLetter });
+      
       const response = await base44.functions.invoke('submitAppForms', {
         form_type: 'workshop_diagnostic',
         workshop_id: workshop.id,
@@ -108,14 +110,19 @@ export default function Questionario() {
         dominant_letter: dominantLetter
       });
 
+      console.log("Resposta recebida:", response.data);
+
       if (response.data.error) throw new Error(response.data.error);
+      
+      if (!response.data.id) {
+        throw new Error("ID do diagnóstico não retornado");
+      }
       
       toast.success("Diagnóstico concluído com sucesso!");
       navigate(createPageUrl("Resultado") + `?id=${response.data.id}`);
     } catch (error) {
-      console.error(error);
-      toast.error("Erro ao salvar diagnóstico");
-    } finally {
+      console.error("Erro ao salvar diagnóstico:", error);
+      toast.error(error.message || "Erro ao salvar diagnóstico. Verifique o console para mais detalhes.");
       setIsSubmitting(false);
     }
   };
