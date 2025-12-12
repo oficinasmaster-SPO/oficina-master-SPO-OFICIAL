@@ -36,6 +36,9 @@ export default function RegistrarAtendimento() {
     decisoes_tomadas: [],
     acoes_geradas: [],
     midias_anexas: [],
+    processos_vinculados: [],
+    videoaulas_vinculadas: [],
+    documentos_vinculados: [],
     observacoes_consultor: "",
     proximos_passos: "",
     notificacoes_programadas: []
@@ -61,7 +64,10 @@ export default function RegistrarAtendimento() {
               participantes: atendimento.participantes || [{ nome: "", cargo: "", email: "" }],
               pauta: atendimento.pauta || [{ titulo: "", descricao: "", tempo_estimado: 15 }],
               objetivos: atendimento.objetivos || [""],
-              midias_anexas: atendimento.midias_anexas || []
+              midias_anexas: atendimento.midias_anexas || [],
+              processos_vinculados: atendimento.processos_vinculados || [],
+              videoaulas_vinculadas: atendimento.videoaulas_vinculadas || [],
+              documentos_vinculados: atendimento.documentos_vinculados || []
             });
             setShowMeetingTimer(atendimento.status === 'participando');
           }
@@ -116,6 +122,22 @@ export default function RegistrarAtendimento() {
       });
     },
     enabled: !!formData.workshop_id
+  });
+
+  // Carregar processos disponíveis
+  const { data: processos } = useQuery({
+    queryKey: ['processos-disponiveis'],
+    queryFn: async () => {
+      return await base44.entities.ProcessDocument.list();
+    }
+  });
+
+  // Carregar módulos de treinamento
+  const { data: modulos } = useQuery({
+    queryKey: ['modulos-treinamento'],
+    queryFn: async () => {
+      return await base44.entities.TrainingModule.list();
+    }
   });
 
   // Mutation para criar ou atualizar atendimento
@@ -205,6 +227,45 @@ export default function RegistrarAtendimento() {
   const removeMidia = (index) => {
     const newMidias = formData.midias_anexas.filter((_, i) => i !== index);
     setFormData({ ...formData, midias_anexas: newMidias });
+  };
+
+  const addProcesso = (processoId) => {
+    const processo = processos?.find(p => p.id === processoId);
+    if (processo && !formData.processos_vinculados.find(p => p.id === processoId)) {
+      setFormData({
+        ...formData,
+        processos_vinculados: [...formData.processos_vinculados, {
+          id: processo.id,
+          titulo: processo.title,
+          categoria: processo.category,
+          url: processo.file_url
+        }]
+      });
+    }
+  };
+
+  const removeProcesso = (index) => {
+    const newProcessos = formData.processos_vinculados.filter((_, i) => i !== index);
+    setFormData({ ...formData, processos_vinculados: newProcessos });
+  };
+
+  const addVideoaula = (moduloId) => {
+    const modulo = modulos?.find(m => m.id === moduloId);
+    if (modulo && !formData.videoaulas_vinculadas.find(v => v.id === moduloId)) {
+      setFormData({
+        ...formData,
+        videoaulas_vinculadas: [...formData.videoaulas_vinculadas, {
+          id: modulo.id,
+          titulo: modulo.title,
+          descricao: modulo.description
+        }]
+      });
+    }
+  };
+
+  const removeVideoaula = (index) => {
+    const newVideoaulas = formData.videoaulas_vinculadas.filter((_, i) => i !== index);
+    setFormData({ ...formData, videoaulas_vinculadas: newVideoaulas });
   };
 
   const addParticipante = () => {
@@ -649,6 +710,107 @@ export default function RegistrarAtendimento() {
                 </Button>
               </div>
             ))}
+          </CardContent>
+        </Card>
+
+        {/* Conteúdo Pedagógico Vinculado */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Processos e Conteúdo Compartilhado</CardTitle>
+            <p className="text-sm text-gray-600">Vincule processos, videoaulas e documentos discutidos na reunião</p>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Processos (MAPs) */}
+            <div>
+              <Label className="text-base font-semibold flex items-center gap-2 mb-3">
+                <Package className="w-4 h-4" />
+                Processos (MAPs)
+              </Label>
+              <div className="space-y-2">
+                <Select onValueChange={addProcesso}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Adicionar processo..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {processos?.filter(p => !formData.processos_vinculados.find(pv => pv.id === p.id)).map((processo) => (
+                      <SelectItem key={processo.id} value={processo.id}>
+                        {processo.title} - {processo.category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {formData.processos_vinculados.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    {formData.processos_vinculados.map((processo, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="flex items-center gap-3">
+                          <Package className="w-5 h-5 text-blue-600" />
+                          <div>
+                            <p className="font-medium text-sm">{processo.titulo}</p>
+                            <p className="text-xs text-gray-600">{processo.categoria}</p>
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeProcesso(idx)}
+                        >
+                          <Trash2 className="w-4 h-4 text-red-500" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Videoaulas/Treinamentos */}
+            <div>
+              <Label className="text-base font-semibold flex items-center gap-2 mb-3">
+                <Video className="w-4 h-4" />
+                Videoaulas e Treinamentos
+              </Label>
+              <div className="space-y-2">
+                <Select onValueChange={addVideoaula}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Adicionar videoaula..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {modulos?.filter(m => !formData.videoaulas_vinculadas.find(v => v.id === m.id)).map((modulo) => (
+                      <SelectItem key={modulo.id} value={modulo.id}>
+                        {modulo.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {formData.videoaulas_vinculadas.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    {formData.videoaulas_vinculadas.map((video, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-200">
+                        <div className="flex items-center gap-3">
+                          <Video className="w-5 h-5 text-purple-600" />
+                          <div>
+                            <p className="font-medium text-sm">{video.titulo}</p>
+                            <p className="text-xs text-gray-600">{video.descricao}</p>
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeVideoaula(idx)}
+                        >
+                          <Trash2 className="w-4 h-4 text-red-500" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </CardContent>
         </Card>
 
