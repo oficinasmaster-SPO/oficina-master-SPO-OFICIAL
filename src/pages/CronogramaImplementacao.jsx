@@ -126,18 +126,31 @@ export default function CronogramaImplementacao() {
     }))
   ];
 
-  const filteredItems = cronograma.filter(item => {
+  // Mesclar itens do plano com itens já rastreados no cronograma
+  const allItemsForTable = allPlanItems.map(planItem => {
+    const cronogramaItem = cronograma.find(c => c.item_id === planItem.codigo || c.item_nome === planItem.nome);
+    return cronogramaItem || {
+      id: planItem.codigo,
+      item_nome: planItem.nome,
+      item_tipo: planItem.tipo,
+      item_id: planItem.codigo,
+      status: 'a_fazer',
+      not_started: true // Flag para identificar itens não iniciados
+    };
+  });
+
+  const filteredItems = allItemsForTable.filter(item => {
     if (filterStatus !== "todos" && item.status !== filterStatus) return false;
     if (filterTipo !== "todos" && item.item_tipo !== filterTipo) return false;
     return true;
   });
 
   const stats = {
-    total: cronograma.length,
-    concluidos: cronograma.filter(i => i.status === 'concluido').length,
-    em_andamento: cronograma.filter(i => i.status === 'em_andamento').length,
-    atrasados: cronograma.filter(i => {
-      if (i.status === 'concluido') return false;
+    total: allItemsForTable.length,
+    concluidos: allItemsForTable.filter(i => i.status === 'concluido').length,
+    em_andamento: allItemsForTable.filter(i => i.status === 'em_andamento').length,
+    atrasados: allItemsForTable.filter(i => {
+      if (i.status === 'concluido' || i.not_started) return false;
       return differenceInDays(new Date(i.data_termino_previsto), new Date()) < 0;
     }).length
   };
@@ -251,38 +264,18 @@ export default function CronogramaImplementacao() {
         </CardContent>
       </Card>
 
-      {/* Itens Disponíveis no Plano */}
-      {allPlanItems.length > 0 && (
-        <Card className="bg-blue-50 border-blue-200">
-          <CardHeader>
-            <CardTitle className="text-lg">Itens Disponíveis no Plano {workshop?.planoAtual}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-              {allPlanItems.map((item) => (
-                <Badge key={item.codigo} variant="outline" className="justify-center py-2">
-                  {item.nome}
-                </Badge>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+
 
       {/* Tabela de Itens */}
       <Card>
+        <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+          <CardTitle className="text-lg">CheckPoint / Cronograma do Plano {workshop?.planoAtual}</CardTitle>
+        </CardHeader>
         <CardContent className="pt-6 overflow-x-auto">
           {filteredItems.length === 0 ? (
             <div className="text-center py-12">
               <Calendar className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-              <p className="text-gray-600">
-                Nenhum item iniciado ainda. Acesse as ferramentas e processos para começar!
-              </p>
-              {allPlanItems.length > 0 && (
-                <p className="text-sm text-gray-500 mt-2">
-                  {allPlanItems.length} itens disponíveis no seu plano
-                </p>
-              )}
+              <p className="text-gray-600">Nenhum item disponível no plano selecionado.</p>
             </div>
           ) : (
             <table className="w-full border-collapse">
@@ -299,13 +292,11 @@ export default function CronogramaImplementacao() {
                 </tr>
               </thead>
               <tbody>
-                {filteredItems.map((item) => {
-                  const diasRestantes = getDiasRestantes(item.data_termino_previsto);
-                  const inicioPrevisto = new Date(item.data_inicio_real);
-                  inicioPrevisto.setDate(inicioPrevisto.getDate() - 1);
+                {filteredItems.map((item, index) => {
+                  const diasRestantes = item.not_started ? null : getDiasRestantes(item.data_termino_previsto);
                   
                   return (
-                    <tr key={item.id} className="border-b hover:bg-gray-50 transition-colors">
+                    <tr key={item.id || index} className="border-b hover:bg-gray-50 transition-colors">
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
                           {item.status === 'concluido' && (
@@ -319,20 +310,17 @@ export default function CronogramaImplementacao() {
                           </div>
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-center text-sm">
-                        {format(inicioPrevisto, "dd/MM/yyyy", { locale: ptBR })}
+                      <td className="py-3 px-4 text-center text-sm text-gray-500">
+                        {item.not_started ? '-' : format(new Date(new Date(item.data_inicio_real).setDate(new Date(item.data_inicio_real).getDate() - 1)), "dd/MM/yyyy", { locale: ptBR })}
                       </td>
                       <td className="py-3 px-4 text-center text-sm font-medium">
-                        {format(new Date(item.data_inicio_real), "dd/MM/yyyy", { locale: ptBR })}
+                        {item.not_started ? '-' : format(new Date(item.data_inicio_real), "dd/MM/yyyy", { locale: ptBR })}
                       </td>
                       <td className="py-3 px-4 text-center text-sm">
-                        {format(new Date(item.data_termino_previsto), "dd/MM/yyyy", { locale: ptBR })}
+                        {item.not_started ? '-' : format(new Date(item.data_termino_previsto), "dd/MM/yyyy", { locale: ptBR })}
                       </td>
                       <td className="py-3 px-4 text-center text-sm font-medium">
-                        {item.data_termino_real 
-                          ? format(new Date(item.data_termino_real), "dd/MM/yyyy", { locale: ptBR })
-                          : '-'
-                        }
+                        {item.not_started || !item.data_termino_real ? '-' : format(new Date(item.data_termino_real), "dd/MM/yyyy", { locale: ptBR })}
                       </td>
                       <td className="py-3 px-4 text-center">
                         <Badge className={getStatusColor(item.status)}>
@@ -340,7 +328,7 @@ export default function CronogramaImplementacao() {
                         </Badge>
                       </td>
                       <td className="py-3 px-4 text-center">
-                        {item.status !== 'concluido' && diasRestantes.atrasado ? (
+                        {!item.not_started && item.status !== 'concluido' && diasRestantes?.atrasado ? (
                           <span className="text-red-600 font-semibold text-sm">
                             {diasRestantes.dias}d
                           </span>
@@ -358,7 +346,7 @@ export default function CronogramaImplementacao() {
                           >
                             <Edit2 className="w-4 h-4" />
                           </Button>
-                          {item.historico_alteracoes?.length > 0 && (
+                          {!item.not_started && item.historico_alteracoes?.length > 0 && (
                             <Button
                               variant="ghost"
                               size="sm"
