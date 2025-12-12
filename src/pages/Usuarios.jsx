@@ -184,15 +184,18 @@ export default function Usuarios() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between gap-2 text-sm">
-                      <div className="flex items-center gap-2">
+                    <div className="text-sm">
+                      <div className="flex items-center gap-2 mb-2">
                         <Building2 className="w-4 h-4 text-gray-500" />
                         <span className="font-medium">{getWorkshopName(user.workshop_id)}</span>
                       </div>
                       {user.workshop_id && (
-                        <Badge variant="outline" className="bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border-blue-200">
-                          {getWorkshopPlan(user.workshop_id)}
-                        </Badge>
+                        <div className="ml-6 flex items-center gap-2">
+                          <span className="text-gray-600">Plano:</span>
+                          <Badge className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+                            {getWorkshopPlan(user.workshop_id)}
+                          </Badge>
+                        </div>
                       )}
                     </div>
                     
@@ -355,20 +358,21 @@ export default function Usuarios() {
                 </div>
 
                 {currentUser?.role === 'admin' && selectedUser.workshop_id && (
-                  <div>
-                    <Label>Plano da Oficina</Label>
+                  <div className="border-t pt-4">
+                    <Label className="text-lg font-semibold text-gray-900">Plano da Oficina</Label>
+                    <p className="text-sm text-gray-600 mb-2">Altere o plano da oficina deste usuário</p>
                     <Select name="plano" defaultValue={getWorkshopPlan(selectedUser.workshop_id)}>
-                      <SelectTrigger>
+                      <SelectTrigger className="border-2">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="FREE">FREE</SelectItem>
-                        <SelectItem value="START">START</SelectItem>
-                        <SelectItem value="BRONZE">BRONZE</SelectItem>
-                        <SelectItem value="PRATA">PRATA</SelectItem>
-                        <SelectItem value="GOLD">GOLD</SelectItem>
-                        <SelectItem value="IOM">IOM</SelectItem>
-                        <SelectItem value="MILLIONS">MILLIONS</SelectItem>
+                        <SelectItem value="FREE">🆓 FREE - Grátis</SelectItem>
+                        <SelectItem value="START">🚀 START - Inicial</SelectItem>
+                        <SelectItem value="BRONZE">🥉 BRONZE</SelectItem>
+                        <SelectItem value="PRATA">🥈 PRATA</SelectItem>
+                        <SelectItem value="GOLD">🥇 GOLD</SelectItem>
+                        <SelectItem value="IOM">💎 IOM - Premium</SelectItem>
+                        <SelectItem value="MILLIONS">👑 MILLIONS - Elite</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
