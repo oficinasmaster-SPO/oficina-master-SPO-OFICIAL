@@ -856,14 +856,16 @@ export default function RegistrarAtendimento() {
               📅 Programar Notificações Automáticas
             </Button>
 
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full justify-start"
-              onClick={() => setShowTemplateModal(true)}
-            >
-              📋 Usar Template de Atendimento
-            </Button>
+            {!formData.id && (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => setShowTemplateModal(true)}
+              >
+                📋 Usar Template de Atendimento
+              </Button>
+            )}
 
             {formData.workshop_id && (
               <Button
@@ -1018,8 +1020,9 @@ export default function RegistrarAtendimento() {
               setFormData({
                 ...formData,
                 tipo_atendimento: template.tipo,
-                pauta: template.pauta,
-                objetivos: template.objetivos
+                pauta: template.pauta || [{ titulo: "", descricao: "", tempo_estimado: 15 }],
+                objetivos: template.objetivos || [""],
+                duracao_minutos: template.duracao_minutos || 60
               });
               setShowTemplateModal(false);
               toast.success('Template aplicado!');
