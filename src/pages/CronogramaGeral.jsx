@@ -18,6 +18,7 @@ export default function CronogramaGeral() {
   const [selectedProcess, setSelectedProcess] = useState(null);
   const [showPanel, setShowPanel] = useState(false);
   const [avaliacaoModal, setAvaliacaoModal] = useState({ show: false, client: null, process: null });
+  const [detailsModal, setDetailsModal] = useState({ show: false, type: null, data: [] });
 
   // Carregar usuário
   const { data: user } = useQuery({
@@ -150,6 +151,17 @@ export default function CronogramaGeral() {
     return matchStatus && matchSearch;
   });
 
+  const getClientesPorStatus = (tipo) => {
+    if (tipo === 'a_fazer') {
+      return clientesComStatus.filter(c => c.statusGeral === 'a_fazer' || c.statusGeral === 'ativo');
+    } else if (tipo === 'atrasado') {
+      return clientesComStatus.filter(c => c.atrasados > 0);
+    } else if (tipo === 'concluido') {
+      return clientesComStatus.filter(c => c.statusGeral === 'concluido');
+    }
+    return [];
+  };
+
   const handleExport = () => {
     // Implementar export CSV/PDF
     console.log('Exportando relatório...');
@@ -184,7 +196,7 @@ export default function CronogramaGeral() {
 
         {/* Cards de Totais */}
         <div className="grid grid-cols-4 gap-4 mt-4">
-          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-0 shadow-sm">
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-0 shadow-sm hover:shadow-md transition-shadow">
             <CardContent className="py-4">
               <div className="text-center">
                 <p className="text-sm text-blue-600 font-medium mb-1">Total A Fazer</p>
@@ -194,11 +206,24 @@ export default function CronogramaGeral() {
                     return acc + contagem.a_fazer + contagem.em_andamento;
                   }, 0)}
                 </p>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="mt-2 text-blue-700 hover:text-blue-900 hover:bg-blue-200"
+                  onClick={() => setDetailsModal({ 
+                    show: true, 
+                    type: 'a_fazer', 
+                    data: getClientesPorStatus('a_fazer'),
+                    title: 'Clientes com Processos A Fazer'
+                  })}
+                >
+                  Ver Detalhes
+                </Button>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-red-50 to-red-100 border-0 shadow-sm">
+          <Card className="bg-gradient-to-br from-red-50 to-red-100 border-0 shadow-sm hover:shadow-md transition-shadow">
             <CardContent className="py-4">
               <div className="text-center">
                 <p className="text-sm text-red-600 font-medium mb-1">Total Atrasado</p>
@@ -208,11 +233,24 @@ export default function CronogramaGeral() {
                     return acc + contagem.atrasado;
                   }, 0)}
                 </p>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="mt-2 text-red-700 hover:text-red-900 hover:bg-red-200"
+                  onClick={() => setDetailsModal({ 
+                    show: true, 
+                    type: 'atrasado', 
+                    data: getClientesPorStatus('atrasado'),
+                    title: 'Clientes com Processos Atrasados'
+                  })}
+                >
+                  Ver Detalhes
+                </Button>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-green-50 to-green-100 border-0 shadow-sm">
+          <Card className="bg-gradient-to-br from-green-50 to-green-100 border-0 shadow-sm hover:shadow-md transition-shadow">
             <CardContent className="py-4">
               <div className="text-center">
                 <p className="text-sm text-green-600 font-medium mb-1">Total Concluído</p>
@@ -222,6 +260,19 @@ export default function CronogramaGeral() {
                     return acc + contagem.concluido;
                   }, 0)}
                 </p>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="mt-2 text-green-700 hover:text-green-900 hover:bg-green-200"
+                  onClick={() => setDetailsModal({ 
+                    show: true, 
+                    type: 'concluido', 
+                    data: getClientesPorStatus('concluido'),
+                    title: 'Clientes com Processos Concluídos'
+                  })}
+                >
+                  Ver Detalhes
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -453,6 +504,84 @@ export default function CronogramaGeral() {
             // Recarregar dados
           }}
         />
+      )}
+
+      {/* Modal de Detalhes dos Cards */}
+      {detailsModal.show && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+            <CardHeader className="border-b flex-shrink-0">
+              <div className="flex items-center justify-between">
+                <CardTitle>{detailsModal.title}</CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setDetailsModal({ show: false, type: null, data: [] })}
+                >
+                  ✕
+                </Button>
+              </div>
+              <p className="text-sm text-gray-600 mt-1">
+                Total: {detailsModal.data.length} cliente(s)
+              </p>
+            </CardHeader>
+            <CardContent className="pt-6 overflow-y-auto flex-1">
+              <div className="space-y-3">
+                {detailsModal.data.map((cliente) => (
+                  <div
+                    key={cliente.id}
+                    className="border rounded-lg p-4 hover:shadow-md transition-all cursor-pointer bg-white"
+                    onClick={() => {
+                      setSelectedClient(cliente);
+                      setShowPanel(true);
+                      setDetailsModal({ show: false, type: null, data: [] });
+                    }}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="font-semibold text-gray-900">{cliente.name}</h3>
+                          {cliente.statusGeral === 'atrasado' && (
+                            <Badge className="bg-red-100 text-red-700">
+                              <AlertCircle className="w-3 h-3 mr-1" />
+                              Atrasado
+                            </Badge>
+                          )}
+                          {cliente.statusGeral === 'concluido' && (
+                            <Badge className="bg-green-100 text-green-700">
+                              <CheckCircle2 className="w-3 h-3 mr-1" />
+                              Concluído
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="text-sm text-gray-600 space-y-1">
+                          <p>Plano: <span className="font-medium">{cliente.planoAtual}</span></p>
+                          <p>Cidade: {cliente.city}/{cliente.state}</p>
+                          <div className="flex items-center gap-2 mt-2">
+                            <div className="flex-1 bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="bg-blue-600 h-2 rounded-full"
+                                style={{ width: `${cliente.percentualConclusao}%` }}
+                              />
+                            </div>
+                            <span className="text-xs font-medium">{cliente.percentualConclusao}%</span>
+                          </div>
+                        </div>
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-gray-400" />
+                    </div>
+                    {cliente.atrasados > 0 && (
+                      <div className="mt-2 text-xs text-red-600 flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {cliente.atrasados} processo(s) atrasado(s)
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   );
