@@ -8,10 +8,40 @@ import { toast } from "sonner";
 import { Line, Bar } from "recharts";
 import { ResponsiveContainer, LineChart, BarChart, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from "recharts";
 import { formatCurrency } from "../utils/formatters";
-import { exportToPDF, exportToCSV } from "./exportUtils";
+import jsPDF from "jspdf";
 
 export default function FinancialReports({ filters }) {
   const [exporting, setExporting] = useState(false);
+
+  const exportToPDF = (data) => {
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text('Performance Financeira', 14, 20);
+    doc.setFontSize(10);
+    doc.text(`${data.workshop} - ${new Date().toLocaleDateString('pt-BR')}`, 14, 30);
+    
+    let y = 40;
+    data.data.revenueData.forEach(item => {
+      doc.text(`${item.month}: Proj=R$${item.projetado.toFixed(0)}, Real=R$${item.realizado.toFixed(0)}`, 14, y);
+      y += 7;
+    });
+    
+    doc.save(`financeiro-${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
+  const exportToCSV = (data, filename) => {
+    const headers = Object.keys(data[0]);
+    const csv = [
+      headers.join(','),
+      ...data.map(row => headers.map(h => row[h]).join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+  };
 
   const { data: workshop } = useQuery({
     queryKey: ['workshop-current'],
@@ -68,11 +98,10 @@ export default function FinancialReports({ filters }) {
     }));
   }, [monthlyGoals]);
 
-  const handleExportPDF = async () => {
+  const handleExportPDF = () => {
     setExporting(true);
     try {
-      await exportToPDF('financial-performance', {
-        title: 'Performance Financeira',
+      exportToPDF({
         data: { revenueData, profitabilityData, ticketData },
         workshop: workshop?.name || 'Oficina'
       });
