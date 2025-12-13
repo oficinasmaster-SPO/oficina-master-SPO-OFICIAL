@@ -43,9 +43,11 @@ export default function DiagnosticoGerencial() {
       const userWorkshop = workshops.find(w => w.owner_id === user.id);
       setWorkshop(userWorkshop);
 
-      const allEmployees = await base44.entities.Employee.list();
-      const activeEmployees = allEmployees.filter(e => e.status === "ativo");
-      setEmployees(activeEmployees);
+      const allEmployees = await base44.entities.Employee.filter({ 
+        workshop_id: userWorkshop.id,
+        status: "ativo"
+      });
+      setEmployees(allEmployees);
       
       // Set default month
       const now = new Date();
