@@ -7,39 +7,68 @@ export const generateCronogramaPDF = (cronogramaData, workshop, mode = 'download
   const doc = new jsPDF('landscape');
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
+  const logoUrl = 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69161d2e91d07685b2bc845b/0846b1f95_Oficinasmasters-fundo.png';
   
   let yPosition = 20;
+  let isFirstPage = true;
 
-  // === CABEÇALHO PERSONALIZADO ===
-  doc.setFillColor(37, 99, 235);
-  doc.rect(0, 0, pageWidth, 40, 'F');
-  
-  // Logo da oficina (se disponível)
-  if (workshop.logo_url) {
+  // Função para adicionar cabeçalho completo (apenas primeira página)
+  const addFullHeader = () => {
+    // Fundo vermelho
+    doc.setFillColor(220, 38, 38);
+    doc.rect(0, 0, pageWidth, 45, 'F');
+    
+    // Logo Oficinas Master
     try {
-      doc.addImage(workshop.logo_url, 'PNG', 15, 8, 25, 25);
+      doc.addImage(logoUrl, 'PNG', 15, 8, 40, 30);
     } catch (error) {
-      console.log('Logo não disponível');
+      console.log('Logo não carregada');
     }
-  }
-  
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(20);
-  doc.setFont(undefined, 'bold');
-  doc.text('Relatório do Cronograma de Implementação', pageWidth / 2, 15, { align: 'center' });
-  
-  doc.setFontSize(11);
-  doc.setFont(undefined, 'normal');
-  doc.text(`${workshop.name} - Plano ${planName}`, pageWidth / 2, 25, { align: 'center' });
-  doc.setFontSize(9);
-  doc.text(
-    `${workshop.city || ''}, ${workshop.state || ''} | Gerado em ${new Date().toLocaleDateString('pt-BR')}`,
-    pageWidth / 2,
-    32,
-    { align: 'center' }
-  );
-  
-  yPosition = 50;
+    
+    // Título principal
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.setFont(undefined, 'bold');
+    doc.text('Relatório do Cronograma de Implementação', pageWidth / 2, 20, { align: 'center' });
+    
+    // Subtítulo
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'normal');
+    doc.text(`${workshop.name} - Plano ${planName}`, pageWidth / 2, 28, { align: 'center' });
+    
+    // Informações adicionais
+    doc.setFontSize(9);
+    doc.text(
+      `${workshop.city || ''}, ${workshop.state || ''} | Gerado em ${new Date().toLocaleDateString('pt-BR')}`,
+      pageWidth / 2,
+      36,
+      { align: 'center' }
+    );
+  };
+
+  // Função para adicionar cabeçalho simplificado (demais páginas)
+  const addSimpleHeader = () => {
+    // Fundo vermelho reduzido
+    doc.setFillColor(220, 38, 38);
+    doc.rect(0, 0, pageWidth, 25, 'F');
+    
+    // Logo menor
+    try {
+      doc.addImage(logoUrl, 'PNG', 15, 5, 25, 15);
+    } catch (error) {
+      console.log('Logo não carregada');
+    }
+    
+    // Título reduzido
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.text(`Cronograma de Implementação - ${workshop.name}`, pageWidth / 2, 15, { align: 'center' });
+  };
+
+  // Adicionar cabeçalho da primeira página
+  addFullHeader();
+  yPosition = 55;
 
   // === GRÁFICO DE ANÁLISE VISUAL (MOVIDO PARA O INÍCIO) ===
   doc.setFontSize(14);
@@ -89,7 +118,7 @@ export const generateCronogramaPDF = (cronogramaData, workshop, mode = 'download
     ];
   });
 
-  yPosition = drawTableWithPagination(doc, 14, yPosition, tableHeaders, tableData, [60, 25, 23, 27, 27, 23, 18, 32], pageHeight);
+  yPosition = drawTableWithPagination(doc, 14, yPosition, tableHeaders, tableData, [60, 25, 23, 27, 27, 23, 18, 32], pageHeight, addSimpleHeader);
   yPosition += 15;
 
   // === NOTAS PERSONALIZADAS ===
@@ -131,33 +160,32 @@ export const generateCronogramaPDF = (cronogramaData, workshop, mode = 'download
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i);
     
-    // Linha separadora
-    doc.setDrawColor(200, 200, 200);
-    doc.line(14, pageHeight - 18, pageWidth - 14, pageHeight - 18);
+    // Adicionar cabeçalho conforme a página
+    if (i > 1) {
+      addSimpleHeader();
+    }
     
-    doc.setFontSize(8);
+    // Faixa vermelha no rodapé
+    doc.setFillColor(220, 38, 38);
+    doc.rect(0, pageHeight - 20, pageWidth, 20, 'F');
+    
+    // Texto do rodapé
+    doc.setFontSize(10);
+    doc.setTextColor(255, 255, 255);
+    doc.setFont(undefined, 'bold');
+    doc.text('Oficinas Master Educação Empresarial e Técnica', pageWidth / 2, pageHeight - 11, { align: 'center' });
+    
+    // Informações de geração (em preto, acima da faixa)
+    doc.setFontSize(7);
     doc.setTextColor(100, 100, 100);
-    
-    // Informações de geração
     doc.text(
       `Gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`,
       14,
-      pageHeight - 12
+      pageHeight - 23
     );
     
-    // Informações de contato (se habilitado)
-    if (includeContactInfo && i === 1) {
-      const contactText = [];
-      if (contactInfo.telefone) contactText.push(`Tel: ${contactInfo.telefone}`);
-      if (contactInfo.email) contactText.push(`Email: ${contactInfo.email}`);
-      
-      if (contactText.length > 0) {
-        doc.text(contactText.join(' | '), 14, pageHeight - 6);
-      }
-    }
-    
     // Numeração de página
-    doc.text(`Página ${i} de ${totalPages}`, pageWidth - 30, pageHeight - 12);
+    doc.text(`Página ${i} de ${totalPages}`, pageWidth - 30, pageHeight - 23);
   }
 
   // === SAÍDA ===
@@ -255,10 +283,11 @@ function drawTable(doc, x, y, data, columnWidths, hasHeader = false) {
   });
 }
 
-function drawTableWithPagination(doc, x, y, headers, dataRows, columnWidths, pageHeight) {
+function drawTableWithPagination(doc, x, y, headers, dataRows, columnWidths, pageHeight, addSimpleHeader) {
   const rowHeight = 10;
   const cellPadding = 1.5;
-  const marginBottom = 25;
+  const marginBottom = 30;
+  const marginTop = 35;
   let currentY = y;
   let rowIndex = 0;
 
@@ -269,13 +298,13 @@ function drawTableWithPagination(doc, x, y, headers, dataRows, columnWidths, pag
     headers.forEach((header, colIndex) => {
       const width = columnWidths[colIndex] || 30;
       
-      // Definir cores para cada célula
-      doc.setFillColor(37, 99, 235);
+      // Cor vermelha nos headers
+      doc.setFillColor(220, 38, 38);
       doc.setTextColor(255, 255, 255);
       doc.setFont(undefined, 'bold');
       doc.setFontSize(8);
       
-      // Desenhar fundo azul do header
+      // Desenhar fundo vermelho do header
       doc.rect(currentX, currentY, width, headerRowHeight, 'F');
       
       // Desenhar borda
@@ -310,7 +339,7 @@ function drawTableWithPagination(doc, x, y, headers, dataRows, columnWidths, pag
   dataRows.forEach((row) => {
     if (currentY + rowHeight > pageHeight - marginBottom) {
       doc.addPage();
-      currentY = 20;
+      currentY = marginTop;
       
       doc.setFontSize(12);
       doc.setFont(undefined, 'bold');
