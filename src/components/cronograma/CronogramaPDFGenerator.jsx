@@ -1,7 +1,8 @@
 import jsPDF from "jspdf";
 
-export const generateCronogramaPDF = (cronogramaData, workshop, mode = 'download') => {
+export const generateCronogramaPDF = (cronogramaData, workshop, mode = 'download', options = {}) => {
   const { stats, items, planName } = cronogramaData;
+  const { customNotes = '', includeContactInfo = true, contactInfo = {} } = options;
   
   const doc = new jsPDF('landscape');
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -9,20 +10,36 @@ export const generateCronogramaPDF = (cronogramaData, workshop, mode = 'download
   
   let yPosition = 20;
 
-  // === CABEÇALHO ===
+  // === CABEÇALHO PERSONALIZADO ===
   doc.setFillColor(37, 99, 235);
-  doc.rect(0, 0, pageWidth, 35, 'F');
+  doc.rect(0, 0, pageWidth, 40, 'F');
+  
+  // Logo da oficina (se disponível)
+  if (workshop.logo_url) {
+    try {
+      doc.addImage(workshop.logo_url, 'PNG', 15, 8, 25, 25);
+    } catch (error) {
+      console.log('Logo não disponível');
+    }
+  }
   
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(22);
+  doc.setFontSize(20);
   doc.setFont(undefined, 'bold');
   doc.text('Relatório do Cronograma de Implementação', pageWidth / 2, 15, { align: 'center' });
   
-  doc.setFontSize(12);
+  doc.setFontSize(11);
   doc.setFont(undefined, 'normal');
   doc.text(`${workshop.name} - Plano ${planName}`, pageWidth / 2, 25, { align: 'center' });
+  doc.setFontSize(9);
+  doc.text(
+    `${workshop.city || ''}, ${workshop.state || ''} | Gerado em ${new Date().toLocaleDateString('pt-BR')}`,
+    pageWidth / 2,
+    32,
+    { align: 'center' }
+  );
   
-  yPosition = 45;
+  yPosition = 50;
 
   // === RESUMO EXECUTIVO ===
   doc.setTextColor(0, 0, 0);
@@ -65,9 +82,43 @@ export const generateCronogramaPDF = (cronogramaData, workshop, mode = 'download
     item.data_termino_real ? formatDate(item.data_termino_real) : '-'
   ]);
 
+  const tableHeight = (tableData.length + 1) * 8;
   drawTable(doc, 14, yPosition, [tableHeaders, ...tableData], [70, 25, 30, 28, 32, 28], true);
+  yPosition += tableHeight + 15;
 
-  // === NOVA PÁGINA PARA GRÁFICOS ===
+  // === NOTAS PERSONALIZADAS ===
+  if (customNotes) {
+    if (yPosition > pageHeight - 60) {
+      doc.addPage();
+      yPosition = 20;
+    }
+
+    doc.setFillColor(255, 250, 230);
+    doc.rect(14, yPosition, pageWidth - 28, 0, 'F');
+    
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(0, 0, 0);
+    doc.text('Observações e Comentários', 14, yPosition + 7);
+    
+    yPosition += 12;
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'normal');
+    
+    const lines = doc.splitTextToSize(customNotes, pageWidth - 35);
+    lines.forEach((line) => {
+      if (yPosition > pageHeight - 30) {
+        doc.addPage();
+        yPosition = 20;
+      }
+      doc.text(line, 17, yPosition);
+      yPosition += 5;
+    });
+    
+    yPosition += 10;
+  }
+
+  // === NOVA PÁGINA PARA GRÁFICO ===
   doc.addPage();
   yPosition = 20;
 
@@ -77,23 +128,40 @@ export const generateCronogramaPDF = (cronogramaData, workshop, mode = 'download
   yPosition += 15;
 
   // Gráfico de Pizza (Status)
-  drawPieChart(doc, stats, 40, yPosition);
-  
-  // Gráfico de Gantt (Timeline)
-  drawGanttChart(doc, items, 40, yPosition + 90);
+  drawPieChart(doc, stats, pageWidth / 2 - 60, yPosition);
 
-  // === RODAPÉ ===
+  // === RODAPÉ PERSONALIZADO ===
   const totalPages = doc.internal.getNumberOfPages();
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i);
-    doc.setFontSize(9);
-    doc.setTextColor(128, 128, 128);
+    
+    // Linha separadora
+    doc.setDrawColor(200, 200, 200);
+    doc.line(14, pageHeight - 18, pageWidth - 14, pageHeight - 18);
+    
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    
+    // Informações de geração
     doc.text(
       `Gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`,
       14,
-      pageHeight - 10
+      pageHeight - 12
     );
-    doc.text(`Página ${i} de ${totalPages}`, pageWidth - 30, pageHeight - 10);
+    
+    // Informações de contato (se habilitado)
+    if (includeContactInfo && i === 1) {
+      const contactText = [];
+      if (contactInfo.telefone) contactText.push(`Tel: ${contactInfo.telefone}`);
+      if (contactInfo.email) contactText.push(`Email: ${contactInfo.email}`);
+      
+      if (contactText.length > 0) {
+        doc.text(contactText.join(' | '), 14, pageHeight - 6);
+      }
+    }
+    
+    // Numeração de página
+    doc.text(`Página ${i} de ${totalPages}`, pageWidth - 30, pageHeight - 12);
   }
 
   // === SAÍDA ===
@@ -223,66 +291,4 @@ function drawPieSlice(doc, centerX, centerY, radius, startAngle, endAngle) {
   }
   doc.lineTo(centerX, centerY);
   doc.fill();
-}
-
-function drawGanttChart(doc, items, x, y) {
-  doc.setFontSize(12);
-  doc.setFont(undefined, 'bold');
-  doc.setTextColor(0, 0, 0);
-  doc.text('Cronograma (Gráfico de Gantt)', x, y - 5);
-
-  // Filtrar apenas itens iniciados
-  const itemsIniciados = items.filter(i => !i.not_started && i.data_inicio_real);
-  const displayItems = itemsIniciados.slice(0, 8); // Limitar para caber na página
-
-  if (displayItems.length === 0) {
-    doc.setFontSize(9);
-    doc.text('Nenhum item iniciado ainda', x + 10, y + 20);
-    return;
-  }
-
-  const chartWidth = 200;
-  const barHeight = 8;
-  const barSpacing = 12;
-
-  // Encontrar data min e max
-  const dates = displayItems.flatMap(i => [
-    new Date(i.data_inicio_real),
-    new Date(i.data_termino_previsto || i.data_inicio_real)
-  ]);
-  const minDate = new Date(Math.min(...dates));
-  const maxDate = new Date(Math.max(...dates));
-  const dateRange = maxDate - minDate || 1;
-
-  displayItems.forEach((item, index) => {
-    const startDate = new Date(item.data_inicio_real);
-    const endDate = new Date(item.data_termino_previsto || item.data_termino_real || new Date());
-    
-    const startPos = ((startDate - minDate) / dateRange) * chartWidth;
-    const duration = ((endDate - startDate) / dateRange) * chartWidth;
-
-    const barY = y + (index * barSpacing);
-
-    // Nome da atividade
-    doc.setFontSize(7);
-    doc.setTextColor(0, 0, 0);
-    const itemName = item.item_nome.length > 25 ? item.item_nome.substring(0, 25) + '...' : item.item_nome;
-    doc.text(itemName, x, barY + 5);
-
-    // Barra do Gantt
-    const barX = x + 70;
-    doc.setFillColor(200, 200, 200);
-    doc.rect(barX, barY, chartWidth, barHeight, 'F');
-    
-    // Barra de progresso
-    const statusColor = item.status === 'concluido' ? [34, 197, 94] : 
-                       item.status === 'em_andamento' ? [59, 130, 246] : [239, 68, 68];
-    doc.setFillColor(...statusColor);
-    doc.rect(barX + startPos, barY, Math.max(duration, 2), barHeight, 'F');
-  });
-
-  // Eixo de datas
-  doc.setFontSize(7);
-  doc.text(minDate.toLocaleDateString('pt-BR'), x + 70, y + (displayItems.length * barSpacing) + 8);
-  doc.text(maxDate.toLocaleDateString('pt-BR'), x + 70 + chartWidth - 20, y + (displayItems.length * barSpacing) + 8);
 }

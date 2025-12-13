@@ -159,14 +159,14 @@ export default function CronogramaImplementacao() {
     }).length
   };
 
-  const handleGeneratePDF = (mode) => {
-    const cronogramaData = {
+  const handleGeneratePDF = (mode, dataOverride, options) => {
+    const cronogramaData = dataOverride || {
       stats,
       items: allItemsForTable,
       planName: workshop?.planoAtual || 'N/A'
     };
-    
-    return generateCronogramaPDF(cronogramaData, workshop, mode);
+
+    return generateCronogramaPDF(cronogramaData, workshop, mode, options);
   };
 
   if (isLoading) {

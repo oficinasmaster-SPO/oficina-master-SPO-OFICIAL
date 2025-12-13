@@ -3,8 +3,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Mail, MessageCircle, Share2, Loader2, Download } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { FileText, Mail, MessageCircle, Share2, Loader2, Download, Settings, FileEdit } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 
@@ -18,14 +21,56 @@ export default function ExportCronogramaModal({
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [telefone, setTelefone] = useState("");
+  
+  // Filtros avançados
+  const [filters, setFilters] = useState({
+    status: "todos",
+    tipo: "todos",
+    dataInicio: "",
+    dataFim: ""
+  });
+  
+  // Personalização do PDF
+  const [customNotes, setCustomNotes] = useState("");
+  const [includeContactInfo, setIncludeContactInfo] = useState(true);
+
+  const applyFilters = (items) => {
+    return items.filter(item => {
+      const statusMatch = filters.status === "todos" || item.status === filters.status;
+      const tipoMatch = filters.tipo === "todos" || item.item_tipo === filters.tipo;
+      
+      let dateMatch = true;
+      if (filters.dataInicio && item.data_inicio_real) {
+        dateMatch = new Date(item.data_inicio_real) >= new Date(filters.dataInicio);
+      }
+      if (filters.dataFim && item.data_termino_previsto && dateMatch) {
+        dateMatch = new Date(item.data_termino_previsto) <= new Date(filters.dataFim);
+      }
+      
+      return statusMatch && tipoMatch && dateMatch;
+    });
+  };
+
+  const getPDFOptions = () => ({
+    filters,
+    customNotes,
+    includeContactInfo,
+    contactInfo: {
+      telefone: workshop.telefone || '',
+      email: workshop.email || '',
+      endereco: workshop.endereco_completo || ''
+    }
+  });
 
   const handlePrintPDF = () => {
-    onGeneratePDF('print');
+    const filteredItems = applyFilters(cronogramaData.items);
+    onGeneratePDF('print', { ...cronogramaData, items: filteredItems }, getPDFOptions());
     toast.success("Abrindo visualização de impressão...");
   };
 
   const handleDownloadPDF = () => {
-    onGeneratePDF('download');
+    const filteredItems = applyFilters(cronogramaData.items);
+    onGeneratePDF('download', { ...cronogramaData, items: filteredItems }, getPDFOptions());
     toast.success("PDF baixado com sucesso!");
   };
 
@@ -37,7 +82,8 @@ export default function ExportCronogramaModal({
 
     setIsLoading(true);
     try {
-      const pdfBlob = await onGeneratePDF('blob');
+      const filteredItems = applyFilters(cronogramaData.items);
+      const pdfBlob = await onGeneratePDF('blob', { ...cronogramaData, items: filteredItems }, getPDFOptions());
       
       // Converter blob para base64
       const reader = new FileReader();
@@ -116,8 +162,12 @@ export default function ExportCronogramaModal({
           <DialogTitle className="text-xl font-bold">Exportar Cronograma</DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="pdf" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+        <Tabs defaultValue="personalizar" className="w-full">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="personalizar">
+              <Settings className="w-4 h-4 mr-2" />
+              Personalizar
+            </TabsTrigger>
             <TabsTrigger value="pdf">
               <FileText className="w-4 h-4 mr-2" />
               PDF
@@ -135,6 +185,94 @@ export default function ExportCronogramaModal({
               Plataforma
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="personalizar" className="space-y-4 mt-4">
+            <div className="space-y-4">
+              <div>
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <Settings className="w-4 h-4" />
+                  Filtros de Dados
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Status</Label>
+                    <Select value={filters.status} onValueChange={(val) => setFilters({...filters, status: val})}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="todos">Todos</SelectItem>
+                        <SelectItem value="a_fazer">A Fazer</SelectItem>
+                        <SelectItem value="em_andamento">Em Andamento</SelectItem>
+                        <SelectItem value="concluido">Concluído</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Tipo</Label>
+                    <Select value={filters.tipo} onValueChange={(val) => setFilters({...filters, tipo: val})}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="todos">Todos</SelectItem>
+                        <SelectItem value="processo">Processos</SelectItem>
+                        <SelectItem value="diagnostico">Diagnósticos</SelectItem>
+                        <SelectItem value="ferramenta">Ferramentas</SelectItem>
+                        <SelectItem value="teste">Testes</SelectItem>
+                        <SelectItem value="modulo">Módulos</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Data Início (Mín.)</Label>
+                    <Input 
+                      type="date" 
+                      value={filters.dataInicio}
+                      onChange={(e) => setFilters({...filters, dataInicio: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <Label>Data Término (Máx.)</Label>
+                    <Input 
+                      type="date" 
+                      value={filters.dataFim}
+                      onChange={(e) => setFilters({...filters, dataFim: e.target.value})}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <FileEdit className="w-4 h-4" />
+                  Notas Personalizadas
+                </h3>
+                <Textarea 
+                  placeholder="Adicione observações, metas ou comentários que deseja incluir no relatório..."
+                  value={customNotes}
+                  onChange={(e) => setCustomNotes(e.target.value)}
+                  rows={4}
+                  className="resize-none"
+                />
+              </div>
+
+              <div className="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg">
+                <Checkbox 
+                  id="contact-info"
+                  checked={includeContactInfo}
+                  onCheckedChange={setIncludeContactInfo}
+                />
+                <Label htmlFor="contact-info" className="cursor-pointer">
+                  Incluir informações de contato da oficina no rodapé
+                </Label>
+              </div>
+
+              <div className="text-xs text-gray-500 p-3 bg-blue-50 rounded-lg">
+                <strong>Dica:</strong> As configurações acima serão aplicadas em todas as formas de exportação (PDF, E-mail, WhatsApp).
+              </div>
+            </div>
+          </TabsContent>
 
           <TabsContent value="pdf" className="space-y-4 mt-4">
             <div className="text-sm text-gray-600 mb-4">
