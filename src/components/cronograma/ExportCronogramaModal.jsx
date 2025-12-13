@@ -35,7 +35,18 @@ export default function ExportCronogramaModal({
   const [includeContactInfo, setIncludeContactInfo] = useState(true);
 
   const applyFilters = (items) => {
+    // SEMPRE incluir todos os itens do cronograma que já foram iniciados
+    // ou têm qualquer data registrada no sistema
     return items.filter(item => {
+      // Incluir item se já foi iniciado OU se tem alguma data registrada
+      const hasBeenStarted = !item.not_started || 
+                             item.data_inicio_real || 
+                             item.data_termino_previsto || 
+                             item.data_termino_real;
+      
+      if (!hasBeenStarted) return false; // Excluir apenas itens sem nenhuma data
+      
+      // Aplicar filtros opcionais apenas se especificados
       const statusMatch = filters.status === "todos" || item.status === filters.status;
       const tipoMatch = filters.tipo === "todos" || item.item_tipo === filters.tipo;
       
