@@ -149,8 +149,9 @@ export default function ExportCronogramaModal({
     }
   };
 
-  const handleSendWhatsApp = () => {
-    if (!telefone) {
+  const handleSendWhatsApp = (telefoneParam = null) => {
+    const tel = telefoneParam || telefone;
+    if (!tel) {
       toast.error("Por favor, informe o número do WhatsApp");
       return;
     }
@@ -165,11 +166,54 @@ export default function ExportCronogramaModal({
       `🔴 Atrasados: ${stats.atrasados}\n\n` +
       `Acesse o sistema para mais detalhes!`;
 
-    const telefoneFormatado = telefone.replace(/\D/g, '');
+    const telefoneFormatado = tel.replace(/\D/g, '');
     const url = `https://wa.me/${telefoneFormatado}?text=${encodeURIComponent(mensagem)}`;
     window.open(url, '_blank');
     
     toast.success("Abrindo WhatsApp...");
+  };
+
+  const handleQuickEmailSend = async (colaboradorEmail, colaboradorNome) => {
+    if (!colaboradorEmail) {
+      toast.error("Colaborador sem e-mail cadastrado");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const filteredItems = applyFilters(cronogramaData.items);
+      const pdfBlob = await onGeneratePDF('blob', { ...cronogramaData, items: filteredItems }, getPDFOptions());
+      
+      const reader = new FileReader();
+      reader.readAsDataURL(pdfBlob);
+      reader.onloadend = async () => {
+        try {
+          const base64data = reader.result.split(',')[1];
+          
+          const response = await base44.functions.invoke('enviarCronogramaEmail', {
+            email_destino: '',
+            emails_colaboradores: [colaboradorEmail],
+            email_empresa: workshop.email || '',
+            workshop_nome: workshop.name,
+            pdf_base64: base64data,
+            stats: cronogramaData.stats
+          });
+
+          if (response.data?.success) {
+            toast.success(`Enviado para ${colaboradorNome}`);
+          } else {
+            throw new Error(response.data?.error || 'Erro ao enviar');
+          }
+        } catch (error) {
+          toast.error("Erro ao enviar: " + error.message);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+    } catch (error) {
+      toast.error("Erro ao gerar PDF");
+      setIsLoading(false);
+    }
   };
 
   const handleSharePlatform = async () => {
@@ -322,12 +366,13 @@ export default function ExportCronogramaModal({
                           <th className="text-left p-2 font-medium text-gray-700">Nome</th>
                           <th className="text-left p-2 font-medium text-gray-700">E-mail</th>
                           <th className="text-left p-2 font-medium text-gray-700">WhatsApp</th>
+                          <th className="text-center p-2 font-medium text-gray-700">Envio Rápido</th>
                         </tr>
                       </thead>
                       <tbody>
                         {colaboradores.length === 0 ? (
                           <tr>
-                            <td colSpan="4" className="text-center p-4 text-gray-500">
+                            <td colSpan="5" className="text-center p-4 text-gray-500">
                               Nenhum colaborador encontrado
                             </td>
                           </tr>
@@ -349,6 +394,33 @@ export default function ExportCronogramaModal({
                               <td className="p-2">{colab.full_name}</td>
                               <td className="p-2 text-gray-600">{colab.email || '-'}</td>
                               <td className="p-2 text-gray-600">{colab.telefone || '-'}</td>
+                              <td className="p-2">
+                                <div className="flex justify-center gap-1">
+                                  {colab.email && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleQuickEmailSend(colab.email, colab.full_name)}
+                                      disabled={isLoading}
+                                      className="h-7 w-7 p-0"
+                                      title="Enviar por E-mail"
+                                    >
+                                      <Mail className="w-4 h-4 text-blue-600" />
+                                    </Button>
+                                  )}
+                                  {colab.telefone && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleSendWhatsApp(colab.telefone)}
+                                      className="h-7 w-7 p-0"
+                                      title="Enviar por WhatsApp"
+                                    >
+                                      <MessageCircle className="w-4 h-4 text-green-600" />
+                                    </Button>
+                                  )}
+                                </div>
+                              </td>
                             </tr>
                           ))
                         )}
