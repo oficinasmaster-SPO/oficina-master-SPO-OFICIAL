@@ -99,7 +99,7 @@ export const generateCronogramaPDF = (cronogramaData, workshop, mode = 'download
   yPosition += 10;
 
   // Tabela de cronograma manual com paginação automática - TODOS OS ITENS
-  const tableHeaders = ['Programa / Conteúdo', 'Início Previsto', 'Início Real', 'Término Previsto', 'Término Real', 'Status', 'Atraso', 'Detalhes'];
+  const tableHeaders = ['Programa / Conteúdo', 'Início Previsto', 'Início Real', 'Término Previsto', 'Término Real', 'Status', 'Depend.', 'Atraso', 'Detalhes'];
   
   const tableData = items.map(item => {
     const diasAtraso = getDiasAtraso(item);
@@ -114,6 +114,11 @@ export const generateCronogramaPDF = (cronogramaData, workshop, mode = 'download
       ? formatDate(new Date(new Date(item.data_inicio_real).setDate(new Date(item.data_inicio_real).getDate() - 1)))
       : '-';
     
+    // Dependências
+    const dependencias = item.dependencias && item.dependencias.length > 0 
+      ? `${item.dependencias.length}` 
+      : '-';
+    
     return [
       nomeCompleto + '\n' + categoria,
       inicioPrevisto,
@@ -121,12 +126,13 @@ export const generateCronogramaPDF = (cronogramaData, workshop, mode = 'download
       item.data_termino_previsto ? formatDate(item.data_termino_previsto) : '-',
       item.data_termino_real ? formatDate(item.data_termino_real) : '-',
       getStatusLabel(item.status),
+      dependencias,
       diasAtraso,
       ultimaAtualizacao
     ];
   });
 
-  yPosition = drawTableWithPagination(doc, 14, yPosition, tableHeaders, tableData, [60, 25, 23, 27, 27, 23, 18, 32], pageHeight, addSimpleHeader);
+  yPosition = drawTableWithPagination(doc, 14, yPosition, tableHeaders, tableData, [55, 23, 22, 25, 25, 20, 15, 16, 30], pageHeight, addSimpleHeader);
   yPosition += 15;
 
   // === NOTAS PERSONALIZADAS ===

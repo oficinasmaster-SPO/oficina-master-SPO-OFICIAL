@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, CheckCircle, Clock, Edit2, History, Loader2, TrendingUp } from "lucide-react";
+import { Calendar, CheckCircle, Clock, Edit2, History, Loader2, TrendingUp, Link as LinkIcon, AlertCircle } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -15,6 +15,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import ExportCronogramaModal from "@/components/cronograma/ExportCronogramaModal";
 import { generateCronogramaPDF } from "@/components/cronograma/CronogramaPDFGenerator";
 import { FileDown } from "lucide-react";
+import DependencySelector from "@/components/cronograma/DependencySelector";
+import GanttTimeline from "@/components/cronograma/GanttTimeline";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function CronogramaImplementacao() {
   const queryClient = useQueryClient();
@@ -111,6 +114,23 @@ export default function CronogramaImplementacao() {
     const dias = differenceInDays(new Date(dataTerminoPrevisto), new Date());
     if (dias < 0) return { dias: Math.abs(dias), atrasado: true };
     return { dias, atrasado: false };
+  };
+
+  const checkDependenciesBlocked = (item) => {
+    if (!item.dependencias || item.dependencias.length === 0) return { blocked: false, pendingDeps: [] };
+    
+    const pendingDeps = item.dependencias.filter(depId => {
+      const depItem = cronograma.find(c => c.id === depId);
+      return depItem && depItem.status !== 'concluido';
+    });
+
+    return {
+      blocked: pendingDeps.length > 0,
+      pendingDeps: pendingDeps.map(depId => {
+        const depItem = cronograma.find(c => c.id === depId);
+        return depItem?.item_nome || depId;
+      })
+    };
   };
 
   // Buscar configuração do plano atual
@@ -285,6 +305,9 @@ export default function CronogramaImplementacao() {
         </CardContent>
       </Card>
 
+      {/* Timeline Gantt */}
+      <GanttTimeline items={allItemsForTable} />
+
 
 
       {/* Tabela de Itens */}
@@ -308,6 +331,7 @@ export default function CronogramaImplementacao() {
                   <th className="text-center py-3 px-4 font-semibold text-gray-700 min-w-[110px]">Término Previsto</th>
                   <th className="text-center py-3 px-4 font-semibold text-gray-700 min-w-[110px]">Término Real</th>
                   <th className="text-center py-3 px-4 font-semibold text-gray-700">Status</th>
+                  <th className="text-center py-3 px-4 font-semibold text-gray-700">Dependências</th>
                   <th className="text-center py-3 px-4 font-semibold text-gray-700">Atraso</th>
                   <th className="text-center py-3 px-4 font-semibold text-gray-700">Detalhes</th>
                 </tr>
@@ -315,6 +339,7 @@ export default function CronogramaImplementacao() {
               <tbody>
                 {filteredItems.map((item, index) => {
                   const diasRestantes = item.not_started ? null : getDiasRestantes(item.data_termino_previsto);
+                  const depCheck = checkDependenciesBlocked(item);
                   
                   return (
                     <tr key={item.id || index} className="border-b hover:bg-gray-50 transition-colors">
@@ -322,6 +347,9 @@ export default function CronogramaImplementacao() {
                         <div className="flex items-center gap-2">
                           {item.status === 'concluido' && (
                             <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
+                          )}
+                          {depCheck.blocked && (
+                            <AlertCircle className="w-5 h-5 text-orange-600 flex-shrink-0" />
                           )}
                           <div>
                             <p className="font-medium text-gray-900">{item.item_nome}</p>
@@ -347,6 +375,16 @@ export default function CronogramaImplementacao() {
                         <Badge className={getStatusColor(item.status)}>
                           {getStatusLabel(item.status)}
                         </Badge>
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        {item.dependencias && item.dependencias.length > 0 ? (
+                          <div className="flex items-center justify-center gap-1">
+                            <LinkIcon className="w-4 h-4 text-gray-500" />
+                            <span className="text-sm text-gray-700">{item.dependencias.length}</span>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
                       </td>
                       <td className="py-3 px-4 text-center">
                         {!item.not_started && item.status !== 'concluido' && diasRestantes?.atrasado ? (
@@ -397,6 +435,26 @@ export default function CronogramaImplementacao() {
             </DialogHeader>
             
             <div className="space-y-4">
+              {(() => {
+                const depCheck = checkDependenciesBlocked(editingItem);
+                return depCheck.blocked && (
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      Esta tarefa depende de: <strong>{depCheck.pendingDeps.join(', ')}</strong>. 
+                      Complete-as antes de iniciar esta tarefa.
+                    </AlertDescription>
+                  </Alert>
+                );
+              })()}
+
+              <DependencySelector
+                selectedDependencies={editingItem.dependencias || []}
+                availableItems={allItemsForTable}
+                currentItemId={editingItem.id}
+                onChange={(deps) => setEditingItem({ ...editingItem, dependencias: deps })}
+              />
+
               <div>
                 <label className="block text-sm font-medium mb-2">Status</label>
                 <Select
@@ -473,7 +531,8 @@ export default function CronogramaImplementacao() {
                       data_termino_previsto: editingItem.data_termino_previsto,
                       data_termino_real: editingItem.data_termino_real,
                       progresso_percentual: editingItem.progresso_percentual,
-                      observacoes: editingItem.observacoes
+                      observacoes: editingItem.observacoes,
+                      dependencias: editingItem.dependencias || []
                     }
                   })}
                   disabled={updateMutation.isPending}
