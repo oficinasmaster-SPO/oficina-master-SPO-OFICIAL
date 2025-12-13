@@ -12,17 +12,21 @@ export default function SliderWithMax({
   min = 1,
   max = 100
 }) {
-  const [isOver100, setIsOver100] = React.useState(value > max);
-  const [inputValue, setInputValue] = React.useState(value > max ? value : max);
+  // Garantir que value é sempre um número
+  const numericValue = typeof value === 'number' ? value : parseInt(value) || min;
+  
+  const [isOver100, setIsOver100] = React.useState(numericValue > max);
+  const [inputValue, setInputValue] = React.useState(numericValue > max ? numericValue : max);
 
   React.useEffect(() => {
-    if (value > max) {
+    const val = typeof value === 'number' ? value : parseInt(value) || min;
+    if (val > max) {
       setIsOver100(true);
-      setInputValue(value);
+      setInputValue(val);
     } else {
       setIsOver100(false);
     }
-  }, [value, max]);
+  }, [value, max, min]);
 
   const handleSliderChange = (newValue) => {
     const val = newValue[0];
@@ -49,7 +53,7 @@ export default function SliderWithMax({
       {!isOver100 ? (
         <>
           <Slider
-            value={[value > max ? max : value]}
+            value={[numericValue > max ? max : numericValue]}
             onValueChange={handleSliderChange}
             min={min}
             max={max}
@@ -59,7 +63,7 @@ export default function SliderWithMax({
           />
           <div className="flex items-center justify-between text-sm text-gray-600">
             <span>{min}{suffix}</span>
-            <span className="font-semibold text-blue-600">{value}{suffix}</span>
+            <span className="font-semibold text-blue-600">{numericValue}{suffix}</span>
             <span>{max}+{suffix}</span>
           </div>
         </>
