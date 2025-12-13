@@ -263,26 +263,38 @@ function drawTableWithPagination(doc, x, y, headers, dataRows, columnWidths, pag
   let rowIndex = 0;
 
   const drawHeaders = () => {
-    const headerRowHeight = 12;
+    const headerRowHeight = 10;
     doc.setFillColor(37, 99, 235);
     doc.setTextColor(255, 255, 255);
     doc.setFont(undefined, 'bold');
-    doc.setFontSize(7.5);
+    doc.setFontSize(8);
 
     let currentX = x;
     headers.forEach((header, colIndex) => {
       const width = columnWidths[colIndex] || 30;
-      doc.rect(currentX, currentY, width, headerRowHeight, 'FD');
       
+      // Desenhar fundo azul do header
+      doc.rect(currentX, currentY, width, headerRowHeight, 'F');
+      
+      // Desenhar borda
+      doc.setDrawColor(255, 255, 255);
+      doc.setLineWidth(0.3);
+      doc.rect(currentX, currentY, width, headerRowHeight, 'S');
+      
+      // Preparar texto
       const headerText = String(header);
-      const lines = doc.splitTextToSize(headerText, width - 3);
+      const maxWidth = width - 3;
+      const lines = doc.splitTextToSize(headerText, maxWidth);
       
+      // Centralizar verticalmente
       const lineHeight = 3.5;
-      const totalTextHeight = lines.length * lineHeight;
-      const startY = currentY + (headerRowHeight / 2) - (totalTextHeight / 2) + lineHeight;
+      const totalHeight = lines.length * lineHeight;
+      let textY = currentY + (headerRowHeight - totalHeight) / 2 + 3;
       
-      lines.forEach((line, lineIdx) => {
-        doc.text(line, currentX + 2, startY + (lineIdx * lineHeight), { align: 'left' });
+      // Renderizar cada linha
+      lines.forEach((line) => {
+        doc.text(line, currentX + 1.5, textY);
+        textY += lineHeight;
       });
       
       currentX += width;
