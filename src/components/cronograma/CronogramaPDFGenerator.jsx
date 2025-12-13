@@ -263,30 +263,32 @@ function drawTableWithPagination(doc, x, y, headers, dataRows, columnWidths, pag
   let rowIndex = 0;
 
   const drawHeaders = () => {
+    const headerRowHeight = 12;
     doc.setFillColor(37, 99, 235);
     doc.setTextColor(255, 255, 255);
     doc.setFont(undefined, 'bold');
-    doc.setFontSize(8);
+    doc.setFontSize(7.5);
 
     let currentX = x;
     headers.forEach((header, colIndex) => {
       const width = columnWidths[colIndex] || 30;
-      doc.rect(currentX, currentY, width, rowHeight, 'FD');
+      doc.rect(currentX, currentY, width, headerRowHeight, 'FD');
       
-      // Dividir texto em múltiplas linhas se necessário
       const headerText = String(header);
-      const lines = doc.splitTextToSize(headerText, width - (cellPadding * 2));
+      const lines = doc.splitTextToSize(headerText, width - 3);
       
-      // Centralizar texto verticalmente
-      const startY = currentY + 3;
+      const lineHeight = 3.5;
+      const totalTextHeight = lines.length * lineHeight;
+      const startY = currentY + (headerRowHeight / 2) - (totalTextHeight / 2) + lineHeight;
+      
       lines.forEach((line, lineIdx) => {
-        doc.text(line, currentX + cellPadding, startY + (lineIdx * 3.5));
+        doc.text(line, currentX + 2, startY + (lineIdx * lineHeight), { align: 'left' });
       });
       
       currentX += width;
     });
     
-    currentY += rowHeight;
+    currentY += headerRowHeight;
   };
 
   drawHeaders();
