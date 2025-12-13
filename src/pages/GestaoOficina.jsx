@@ -347,7 +347,7 @@ export default function GestaoOficina() {
           <TabsContent value="relatorios">
             <div className="bg-white rounded-lg shadow-lg p-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Relatórios e Diagnósticos</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Button
                   onClick={() => navigate(createPageUrl("Historico"))}
                   variant="outline"
@@ -368,6 +368,17 @@ export default function GestaoOficina() {
                   <div>
                     <p className="font-semibold">Dashboard Geral</p>
                     <p className="text-xs text-gray-500">Visão geral de indicadores</p>
+                  </div>
+                </Button>
+                <Button
+                  onClick={() => navigate(createPageUrl("RelatoriosAvancados"))}
+                  variant="outline"
+                  className="h-20 text-left justify-start bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200 hover:border-purple-300"
+                >
+                  <BarChart3 className="w-5 h-5 mr-3 text-purple-600" />
+                  <div>
+                    <p className="font-semibold text-purple-900">Relatórios Avançados</p>
+                    <p className="text-xs text-purple-600">Análises customizáveis com exportação</p>
                   </div>
                 </Button>
               </div>
