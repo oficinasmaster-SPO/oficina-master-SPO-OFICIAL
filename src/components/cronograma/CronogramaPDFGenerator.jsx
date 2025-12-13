@@ -103,16 +103,18 @@ export const generateCronogramaPDF = (cronogramaData, workshop, mode = 'download
   if (customNotes) {
     if (yPosition > pageHeight - 60) {
       doc.addPage();
-      yPosition = 20;
+      isFirstPage = false;
+      yPosition = 35; // Espaço para logo no topo
     }
 
-    doc.setFillColor(255, 250, 230);
-    doc.rect(14, yPosition, pageWidth - 28, 0, 'F');
-    
+    doc.setFillColor(255, 243, 224);
+    doc.rect(14, yPosition, pageWidth - 28, 40, 'F');
+
     doc.setFontSize(12);
     doc.setFont(undefined, 'bold');
-    doc.setTextColor(0, 0, 0);
+    doc.setTextColor(211, 47, 47); // Vermelho da marca
     doc.text('Observações e Comentários', 14, yPosition + 7);
+    doc.setTextColor(0, 0, 0);
     
     yPosition += 12;
     doc.setFontSize(9);
