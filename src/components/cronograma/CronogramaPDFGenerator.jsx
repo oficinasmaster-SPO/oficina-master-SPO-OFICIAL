@@ -72,17 +72,24 @@ export const generateCronogramaPDF = (cronogramaData, workshop, mode = 'download
   yPosition += 10;
 
   // Tabela de cronograma manual com paginação automática
-  const tableHeaders = ['Atividade', 'Tipo', 'Status', 'Início', 'Término Prev.', 'Término Real'];
-  const tableData = items.map(item => [
-    truncateText(item.item_nome || '-', 25),
-    item.item_tipo || '-',
-    getStatusLabel(item.status),
-    item.data_inicio_real ? formatDate(item.data_inicio_real) : '-',
-    item.data_termino_previsto ? formatDate(item.data_termino_previsto) : '-',
-    item.data_termino_real ? formatDate(item.data_termino_real) : '-'
-  ]);
+  const tableHeaders = ['Atividade', 'Início Previsto', 'Início Real', 'Término Previsto', 'Término Real', 'Status', 'Atraso', 'Detalhes'];
+  const tableData = items.map(item => {
+    const diasAtraso = getDiasAtraso(item);
+    const ultimaAtualizacao = getUltimaAtualizacao(item);
+    
+    return [
+      truncateText(item.item_nome || '-', 20),
+      item.data_inicio_real ? formatDate(new Date(new Date(item.data_inicio_real).setDate(new Date(item.data_inicio_real).getDate() - 1))) : '-',
+      item.data_inicio_real ? formatDate(item.data_inicio_real) : '-',
+      item.data_termino_previsto ? formatDate(item.data_termino_previsto) : '-',
+      item.data_termino_real ? formatDate(item.data_termino_real) : '-',
+      getStatusLabel(item.status),
+      diasAtraso,
+      ultimaAtualizacao
+    ];
+  });
 
-  yPosition = drawTableWithPagination(doc, 14, yPosition, tableHeaders, tableData, [70, 25, 30, 28, 32, 28], pageHeight);
+  yPosition = drawTableWithPagination(doc, 14, yPosition, tableHeaders, tableData, [55, 25, 25, 28, 28, 25, 20, 35], pageHeight);
   yPosition += 15;
 
   // === NOTAS PERSONALIZADAS ===
@@ -196,6 +203,27 @@ function truncateText(text, maxLength) {
   return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
 }
 
+function getDiasAtraso(item) {
+  if (item.status === 'concluido' || item.not_started || !item.data_termino_previsto) {
+    return '-';
+  }
+  
+  const hoje = new Date();
+  const termino = new Date(item.data_termino_previsto);
+  const diff = Math.floor((hoje - termino) / (1000 * 60 * 60 * 24));
+  
+  return diff > 0 ? `${diff}d` : '-';
+}
+
+function getUltimaAtualizacao(item) {
+  if (!item.historico_alteracoes || item.historico_alteracoes.length === 0) {
+    return '-';
+  }
+  
+  const ultima = item.historico_alteracoes[item.historico_alteracoes.length - 1];
+  return formatDate(ultima.data_alteracao);
+}
+
 function drawTable(doc, x, y, data, columnWidths, hasHeader = false) {
   const rowHeight = 8;
   const cellPadding = 2;
@@ -239,62 +267,69 @@ function drawTable(doc, x, y, data, columnWidths, hasHeader = false) {
 
 function drawTableWithPagination(doc, x, y, headers, dataRows, columnWidths, pageHeight) {
   const rowHeight = 8;
-  const cellPadding = 2;
-  const marginBottom = 25; // Espaço para rodapé
+  const cellPadding = 1.5;
+  const marginBottom = 25;
   let currentY = y;
   let rowIndex = 0;
 
-  // Função para desenhar cabeçalho
   const drawHeaders = () => {
     doc.setFillColor(37, 99, 235);
     doc.setTextColor(255, 255, 255);
     doc.setFont(undefined, 'bold');
-    doc.setFontSize(10);
+    doc.setFontSize(7);
 
     let currentX = x;
     headers.forEach((header, colIndex) => {
-      const width = columnWidths[colIndex] || 40;
+      const width = columnWidths[colIndex] || 30;
       doc.rect(currentX, currentY, width, rowHeight, 'FD');
-      doc.text(String(header), currentX + cellPadding, currentY + rowHeight - cellPadding - 1);
+      
+      const lines = doc.splitTextToSize(String(header), width - (cellPadding * 2));
+      const textY = currentY + (rowHeight / 2) + 1;
+      doc.text(lines[0], currentX + cellPadding, textY);
+      
       currentX += width;
     });
     
     currentY += rowHeight;
   };
 
-  // Desenhar cabeçalho inicial
   drawHeaders();
 
-  // Desenhar linhas de dados
   dataRows.forEach((row) => {
-    // Verificar se precisa de nova página
     if (currentY + rowHeight > pageHeight - marginBottom) {
       doc.addPage();
       currentY = 20;
       
-      // Repetir título da seção
-      doc.setFontSize(14);
+      doc.setFontSize(12);
       doc.setFont(undefined, 'bold');
       doc.setTextColor(0, 0, 0);
       doc.text(`CheckPoint / Cronograma (continuação)`, 14, currentY);
       currentY += 10;
       
-      // Redesenhar cabeçalho
       drawHeaders();
     }
 
-    // Desenhar linha de dados
     const isEvenRow = rowIndex % 2 === 0;
-    doc.setFillColor(isEvenRow ? 245 : 255);
+    doc.setFillColor(isEvenRow ? 250 : 255);
     doc.setTextColor(0, 0, 0);
     doc.setFont(undefined, 'normal');
-    doc.setFontSize(8);
+    doc.setFontSize(7);
 
     let currentX = x;
     row.forEach((cell, colIndex) => {
-      const width = columnWidths[colIndex] || 40;
-      doc.rect(currentX, currentY, width, rowHeight, 'FD');
-      doc.text(String(cell || ''), currentX + cellPadding, currentY + rowHeight - cellPadding - 1);
+      const width = columnWidths[colIndex] || 30;
+      
+      doc.setDrawColor(200, 200, 200);
+      doc.rect(currentX, currentY, width, rowHeight);
+      
+      doc.setFillColor(isEvenRow ? 250 : 255);
+      doc.rect(currentX, currentY, width, rowHeight, 'F');
+      
+      const cellText = String(cell || '-');
+      const lines = doc.splitTextToSize(cellText, width - (cellPadding * 2));
+      const textY = currentY + (rowHeight / 2) + 1.5;
+      doc.text(lines[0], currentX + cellPadding, textY);
+      
       currentX += width;
     });
 
