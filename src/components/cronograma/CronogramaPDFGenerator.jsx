@@ -41,24 +41,14 @@ export const generateCronogramaPDF = (cronogramaData, workshop, mode = 'download
   
   yPosition = 50;
 
-  // === RESUMO EXECUTIVO ===
-  doc.setTextColor(0, 0, 0);
+  // === GRÁFICO DE ANÁLISE VISUAL (MOVIDO PARA O INÍCIO) ===
   doc.setFontSize(14);
   doc.setFont(undefined, 'bold');
-  doc.text('Resumo Executivo', 14, yPosition);
-  yPosition += 10;
+  doc.text('Análise Visual do Cronograma', pageWidth / 2, yPosition, { align: 'center' });
+  yPosition += 15;
 
-  // Tabela de resumo manual
-  drawTable(doc, 14, yPosition, [
-    ['Indicador', 'Quantidade'],
-    ['Total de Itens', stats.total.toString()],
-    ['Itens Concluídos', stats.concluidos.toString()],
-    ['Itens em Andamento', stats.em_andamento.toString()],
-    ['Itens Atrasados', stats.atrasados.toString()],
-    ['Itens Não Iniciados', (stats.total - stats.concluidos - stats.em_andamento).toString()]
-  ], [100, 50], true);
-
-  yPosition += 80;
+  drawPieChart(doc, stats, pageWidth / 2 - 60, yPosition);
+  yPosition += 95;
 
   // === CHECKPOINT DO CRONOGRAMA ===
   if (yPosition > pageHeight - 60) {
@@ -99,7 +89,7 @@ export const generateCronogramaPDF = (cronogramaData, workshop, mode = 'download
     ];
   });
 
-  yPosition = drawTableWithPagination(doc, 14, yPosition, tableHeaders, tableData, [55, 25, 25, 28, 28, 25, 20, 35], pageHeight);
+  yPosition = drawTableWithPagination(doc, 14, yPosition, tableHeaders, tableData, [60, 25, 23, 27, 27, 23, 18, 32], pageHeight);
   yPosition += 15;
 
   // === NOTAS PERSONALIZADAS ===
@@ -134,17 +124,7 @@ export const generateCronogramaPDF = (cronogramaData, workshop, mode = 'download
     yPosition += 10;
   }
 
-  // === NOVA PÁGINA PARA GRÁFICO ===
-  doc.addPage();
-  yPosition = 20;
 
-  doc.setFontSize(14);
-  doc.setFont(undefined, 'bold');
-  doc.text('Análise Visual do Cronograma', pageWidth / 2, yPosition, { align: 'center' });
-  yPosition += 15;
-
-  // Gráfico de Pizza (Status)
-  drawPieChart(doc, stats, pageWidth / 2 - 60, yPosition);
 
   // === RODAPÉ PERSONALIZADO ===
   const totalPages = doc.internal.getNumberOfPages();
@@ -286,16 +266,22 @@ function drawTableWithPagination(doc, x, y, headers, dataRows, columnWidths, pag
     doc.setFillColor(37, 99, 235);
     doc.setTextColor(255, 255, 255);
     doc.setFont(undefined, 'bold');
-    doc.setFontSize(7);
+    doc.setFontSize(8);
 
     let currentX = x;
     headers.forEach((header, colIndex) => {
       const width = columnWidths[colIndex] || 30;
       doc.rect(currentX, currentY, width, rowHeight, 'FD');
       
-      const lines = doc.splitTextToSize(String(header), width - (cellPadding * 2));
-      const textY = currentY + (rowHeight / 2) + 1.5;
-      doc.text(lines[0], currentX + cellPadding, textY);
+      // Dividir texto em múltiplas linhas se necessário
+      const headerText = String(header);
+      const lines = doc.splitTextToSize(headerText, width - (cellPadding * 2));
+      
+      // Centralizar texto verticalmente
+      const startY = currentY + 3;
+      lines.forEach((line, lineIdx) => {
+        doc.text(line, currentX + cellPadding, startY + (lineIdx * 3.5));
+      });
       
       currentX += width;
     });
