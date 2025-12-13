@@ -116,6 +116,7 @@ import CronogramaGeral from './pages/CronogramaGeral';
 import RelatoriosAceleracao from './pages/RelatoriosAceleracao';
 import AcessoAceleracao from './pages/AcessoAceleracao';
 import CronogramaImplementacao from './pages/CronogramaImplementacao';
+import PainelMetas from './pages/PainelMetas';
 import __Layout from './Layout.jsx';
 
 
@@ -238,6 +239,7 @@ export const PAGES = {
     "RelatoriosAceleracao": RelatoriosAceleracao,
     "AcessoAceleracao": AcessoAceleracao,
     "CronogramaImplementacao": CronogramaImplementacao,
+    "PainelMetas": PainelMetas,
 }
 
 export const pagesConfig = {
