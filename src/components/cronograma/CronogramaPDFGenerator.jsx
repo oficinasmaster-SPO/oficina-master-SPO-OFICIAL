@@ -71,19 +71,10 @@ export const generateCronogramaPDF = (cronogramaData, workshop, mode = 'download
   doc.text(`CheckPoint / Cronograma do Plano ${planName}`, 14, yPosition);
   yPosition += 10;
 
-  // Tabela de cronograma manual com paginação automática
+  // Tabela de cronograma manual com paginação automática - TODOS OS ITENS
   const tableHeaders = ['Programa / Conteúdo', 'Início Previsto', 'Início Real', 'Término Previsto', 'Término Real', 'Status', 'Atraso', 'Detalhes'];
   
-  // Filtrar apenas itens que têm dados preenchidos (em andamento, concluído, ou a fazer com datas)
-  const itemsComDados = items.filter(item => 
-    !item.not_started && (
-      item.status === 'em_andamento' || 
-      item.status === 'concluido' || 
-      (item.status === 'a_fazer' && (item.data_inicio_real || item.data_termino_previsto))
-    )
-  );
-  
-  const tableData = itemsComDados.map(item => {
+  const tableData = items.map(item => {
     const diasAtraso = getDiasAtraso(item);
     const ultimaAtualizacao = getUltimaAtualizacao(item);
     
@@ -91,9 +82,14 @@ export const generateCronogramaPDF = (cronogramaData, workshop, mode = 'download
     const nomeCompleto = item.item_nome || '-';
     const categoria = item.item_tipo ? `  ${item.item_tipo.charAt(0).toUpperCase() + item.item_tipo.slice(1)}` : '';
     
+    // Calcular início previsto (1 dia antes do início real)
+    const inicioPrevisto = item.data_inicio_real 
+      ? formatDate(new Date(new Date(item.data_inicio_real).setDate(new Date(item.data_inicio_real).getDate() - 1)))
+      : '-';
+    
     return [
       nomeCompleto + '\n' + categoria,
-      item.data_inicio_previsto ? formatDate(item.data_inicio_previsto) : '-',
+      inicioPrevisto,
       item.data_inicio_real ? formatDate(item.data_inicio_real) : '-',
       item.data_termino_previsto ? formatDate(item.data_termino_previsto) : '-',
       item.data_termino_real ? formatDate(item.data_termino_real) : '-',
