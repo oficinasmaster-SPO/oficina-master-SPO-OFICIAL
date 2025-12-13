@@ -78,7 +78,7 @@ export default function DadosBasicosOficina({ workshop, onUpdate }) {
     setFormData({...formData, cep});
     
     // Consultar CEP quando tiver 8 dígitos
-    const cleanCEP = cep.replace(/\D/g, '');
+    const cleanCEP = String(cep || '').replace(/\D/g, '');
     if (cleanCEP.length === 8) {
       setLoadingCEP(true);
       try {
@@ -218,7 +218,7 @@ export default function DadosBasicosOficina({ workshop, onUpdate }) {
             <div>
               <Label>CNPJ</Label>
               <Input
-                value={formData.cnpj}
+                value={formData.cnpj || ''}
                 onChange={(e) => setFormData({...formData, cnpj: e.target.value})}
                 disabled={!editing}
                 placeholder="00.000.000/0000-00"
