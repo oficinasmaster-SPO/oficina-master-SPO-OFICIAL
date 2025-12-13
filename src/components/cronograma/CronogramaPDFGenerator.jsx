@@ -8,38 +8,45 @@ export const generateCronogramaPDF = (cronogramaData, workshop, mode = 'download
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   
+  // URL da logo Oficinas Master
+  const logoUrl = 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69161d2e91d07685b2bc845b/0855d9767_ImagemdoWhatsAppde2025-12-13s113944_4e1bbfc8.jpg';
+  
   let yPosition = 20;
 
-  // === CABEÇALHO PERSONALIZADO ===
-  doc.setFillColor(37, 99, 235);
-  doc.rect(0, 0, pageWidth, 40, 'F');
-  
-  // Logo da oficina (se disponível)
-  if (workshop.logo_url) {
+  // Função para desenhar cabeçalho em cada página
+  const drawHeader = () => {
+    // Fundo vermelho Oficinas Master
+    doc.setFillColor(227, 30, 36);
+    doc.rect(0, 0, pageWidth, 35, 'F');
+    
+    // Logo Oficinas Master
     try {
-      doc.addImage(workshop.logo_url, 'PNG', 15, 8, 25, 25);
+      doc.addImage(logoUrl, 'JPEG', 15, 5, 40, 25);
     } catch (error) {
       console.log('Logo não disponível');
     }
-  }
-  
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(20);
-  doc.setFont(undefined, 'bold');
-  doc.text('Relatório do Cronograma de Implementação', pageWidth / 2, 15, { align: 'center' });
-  
-  doc.setFontSize(11);
-  doc.setFont(undefined, 'normal');
-  doc.text(`${workshop.name} - Plano ${planName}`, pageWidth / 2, 25, { align: 'center' });
-  doc.setFontSize(9);
-  doc.text(
-    `${workshop.city || ''}, ${workshop.state || ''} | Gerado em ${new Date().toLocaleDateString('pt-BR')}`,
-    pageWidth / 2,
-    32,
-    { align: 'center' }
-  );
-  
-  yPosition = 50;
+    
+    // Título
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(18);
+    doc.setFont(undefined, 'bold');
+    doc.text('Relatório do Cronograma de Implementação', pageWidth / 2, 15, { align: 'center' });
+    
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text(`${workshop.name} - Plano ${planName}`, pageWidth / 2, 23, { align: 'center' });
+    doc.setFontSize(8);
+    doc.text(
+      `${workshop.city || ''}, ${workshop.state || ''} | ${new Date().toLocaleDateString('pt-BR')}`,
+      pageWidth / 2,
+      29,
+      { align: 'center' }
+    );
+  };
+
+  // Desenhar cabeçalho da primeira página
+  drawHeader();
+  yPosition = 45;
 
   // === GRÁFICO DE ANÁLISE VISUAL (MOVIDO PARA O INÍCIO) ===
   doc.setFontSize(14);
@@ -131,33 +138,57 @@ export const generateCronogramaPDF = (cronogramaData, workshop, mode = 'download
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i);
     
-    // Linha separadora
-    doc.setDrawColor(200, 200, 200);
-    doc.line(14, pageHeight - 18, pageWidth - 14, pageHeight - 18);
+    // Redesenhar cabeçalho em todas as páginas (exceto primeira)
+    if (i > 1) {
+      drawHeader();
+    }
     
+    // Linha separadora do rodapé
+    doc.setDrawColor(227, 30, 36);
+    doc.setLineWidth(0.5);
+    doc.line(14, pageHeight - 20, pageWidth - 14, pageHeight - 20);
+    
+    // Logo pequena no rodapé
+    try {
+      doc.addImage(logoUrl, 'JPEG', 14, pageHeight - 18, 15, 9);
+    } catch (error) {
+      console.log('Logo rodapé não disponível');
+    }
+    
+    // Texto "Oficinas Master Educação Empresarial e Técnica"
     doc.setFontSize(8);
-    doc.setTextColor(100, 100, 100);
-    
-    // Informações de geração
-    doc.text(
-      `Gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`,
-      14,
-      pageHeight - 12
-    );
+    doc.setTextColor(227, 30, 36);
+    doc.setFont(undefined, 'bold');
+    doc.text('Oficinas Master Educação Empresarial e Técnica', 35, pageHeight - 12);
     
     // Informações de contato (se habilitado)
-    if (includeContactInfo && i === 1) {
+    if (includeContactInfo && contactInfo.telefone) {
+      doc.setFontSize(7);
+      doc.setTextColor(100, 100, 100);
+      doc.setFont(undefined, 'normal');
       const contactText = [];
       if (contactInfo.telefone) contactText.push(`Tel: ${contactInfo.telefone}`);
       if (contactInfo.email) contactText.push(`Email: ${contactInfo.email}`);
-      
       if (contactText.length > 0) {
-        doc.text(contactText.join(' | '), 14, pageHeight - 6);
+        doc.text(contactText.join(' | '), 35, pageHeight - 7);
       }
     }
     
+    // Data e hora de geração
+    doc.setFontSize(7);
+    doc.setTextColor(120, 120, 120);
+    doc.text(
+      `Gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`,
+      pageWidth / 2,
+      pageHeight - 7,
+      { align: 'center' }
+    );
+    
     // Numeração de página
-    doc.text(`Página ${i} de ${totalPages}`, pageWidth - 30, pageHeight - 12);
+    doc.setFontSize(8);
+    doc.setTextColor(227, 30, 36);
+    doc.setFont(undefined, 'bold');
+    doc.text(`Página ${i} de ${totalPages}`, pageWidth - 25, pageHeight - 10, { align: 'right' });
   }
 
   // === SAÍDA ===
@@ -269,13 +300,13 @@ function drawTableWithPagination(doc, x, y, headers, dataRows, columnWidths, pag
     headers.forEach((header, colIndex) => {
       const width = columnWidths[colIndex] || 30;
       
-      // Definir cores para cada célula
-      doc.setFillColor(37, 99, 235);
+      // Definir cores vermelho Oficinas Master
+      doc.setFillColor(227, 30, 36);
       doc.setTextColor(255, 255, 255);
       doc.setFont(undefined, 'bold');
       doc.setFontSize(8);
       
-      // Desenhar fundo azul do header
+      // Desenhar fundo vermelho do header
       doc.rect(currentX, currentY, width, headerRowHeight, 'F');
       
       // Desenhar borda
