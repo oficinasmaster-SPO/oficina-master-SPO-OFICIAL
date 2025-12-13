@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useQuery } from "@tanstack/react-query";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileText, Mail, MessageCircle, Share2, Loader2, Download, Settings, FileEdit } from "lucide-react";
 import { base44 } from "@/api/base44Client";
@@ -33,6 +34,20 @@ export default function ExportCronogramaModal({
   // Personalização do PDF
   const [customNotes, setCustomNotes] = useState("");
   const [includeContactInfo, setIncludeContactInfo] = useState(true);
+  const [selectedCollaborators, setSelectedCollaborators] = useState([]);
+
+  // Buscar colaboradores da oficina
+  const { data: colaboradores = [] } = useQuery({
+    queryKey: ['colaboradores-export', workshop?.id],
+    queryFn: async () => {
+      if (!workshop?.id) return [];
+      return await base44.entities.Employee.filter({ 
+        workshop_id: workshop.id,
+        status: 'ativo'
+      });
+    },
+    enabled: !!workshop?.id
+  });
 
   const applyFilters = (items) => {
     return items.filter(item => {
@@ -75,8 +90,14 @@ export default function ExportCronogramaModal({
   };
 
   const handleSendEmail = async () => {
-    if (!email) {
-      toast.error("Por favor, informe o e-mail de destino");
+    // Validar destinatários
+    const destinatarios = email ? [email] : [];
+    const emailsColaboradores = selectedCollaborators
+      .map(id => colaboradores.find(c => c.id === id)?.email)
+      .filter(e => e);
+    
+    if (destinatarios.length === 0 && emailsColaboradores.length === 0) {
+      toast.error("Por favor, informe pelo menos um destinatário");
       return;
     }
 
@@ -93,15 +114,19 @@ export default function ExportCronogramaModal({
           const base64data = reader.result.split(',')[1];
           
           const response = await base44.functions.invoke('enviarCronogramaEmail', {
-            email_destino: email,
+            email_destino: email || '',
+            emails_colaboradores: emailsColaboradores,
+            email_empresa: workshop.email || '',
             workshop_nome: workshop.name,
             pdf_base64: base64data,
             stats: cronogramaData.stats
           });
 
           if (response.data?.success) {
-            toast.success(`Relatório enviado para ${email}`);
+            const total = destinatarios.length + emailsColaboradores.length;
+            toast.success(`Relatório enviado para ${total} destinatário(s)`);
             setEmail("");
+            setSelectedCollaborators([]);
             onClose();
           } else {
             throw new Error(response.data?.error || 'Erro ao enviar e-mail');
@@ -283,11 +308,66 @@ export default function ExportCronogramaModal({
                 </Label>
               </div>
 
+              <div>
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <Mail className="w-4 h-4" />
+                  Destinatários do Relatório
+                </h3>
+                <div className="border rounded-lg overflow-hidden">
+                  <div className="max-h-64 overflow-y-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-50 sticky top-0">
+                        <tr>
+                          <th className="text-left p-2 font-medium text-gray-700">Selecionar</th>
+                          <th className="text-left p-2 font-medium text-gray-700">Nome</th>
+                          <th className="text-left p-2 font-medium text-gray-700">E-mail</th>
+                          <th className="text-left p-2 font-medium text-gray-700">WhatsApp</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {colaboradores.length === 0 ? (
+                          <tr>
+                            <td colSpan="4" className="text-center p-4 text-gray-500">
+                              Nenhum colaborador encontrado
+                            </td>
+                          </tr>
+                        ) : (
+                          colaboradores.map((colab) => (
+                            <tr key={colab.id} className="border-t hover:bg-gray-50">
+                              <td className="p-2">
+                                <Checkbox
+                                  checked={selectedCollaborators.includes(colab.id)}
+                                  onCheckedChange={(checked) => {
+                                    if (checked) {
+                                      setSelectedCollaborators([...selectedCollaborators, colab.id]);
+                                    } else {
+                                      setSelectedCollaborators(selectedCollaborators.filter(id => id !== colab.id));
+                                    }
+                                  }}
+                                />
+                              </td>
+                              <td className="p-2">{colab.full_name}</td>
+                              <td className="p-2 text-gray-600">{colab.email || '-'}</td>
+                              <td className="p-2 text-gray-600">{colab.telefone || '-'}</td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                {selectedCollaborators.length > 0 && (
+                  <p className="text-xs text-blue-600 mt-2">
+                    {selectedCollaborators.length} colaborador(es) selecionado(s)
+                  </p>
+                )}
+              </div>
+
               <div className="text-xs text-gray-500 p-3 bg-blue-50 rounded-lg">
                 <strong>Dica:</strong> As configurações acima serão aplicadas em todas as formas de exportação (PDF, E-mail, WhatsApp).
               </div>
-            </div>
-          </TabsContent>
+              </div>
+              </TabsContent>
 
           <TabsContent value="pdf" className="space-y-4 mt-4">
             <div className="text-sm text-gray-600 mb-4">

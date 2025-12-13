@@ -10,11 +10,31 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { email_destino, workshop_nome, pdf_base64, stats } = await req.json();
+    const { 
+      email_destino, 
+      emails_colaboradores = [], 
+      email_empresa = '',
+      workshop_nome, 
+      pdf_base64, 
+      stats 
+    } = await req.json();
 
-    if (!email_destino || !workshop_nome || !pdf_base64) {
+    if (!workshop_nome || !pdf_base64) {
       return Response.json({ 
-        error: 'Campos obrigatórios: email_destino, workshop_nome, pdf_base64' 
+        error: 'Campos obrigatórios: workshop_nome, pdf_base64' 
+      }, { status: 400 });
+    }
+
+    // Montar lista de destinatários
+    const destinatarios = [];
+    if (email_destino) destinatarios.push(email_destino);
+    if (emails_colaboradores && emails_colaboradores.length > 0) {
+      destinatarios.push(...emails_colaboradores);
+    }
+
+    if (destinatarios.length === 0) {
+      return Response.json({ 
+        error: 'Nenhum destinatário informado' 
       }, { status: 400 });
     }
 
@@ -67,23 +87,47 @@ Deno.serve(async (req) => {
       </div>
     `;
 
-    // Enviar e-mail usando o SDK
-    await base44.integrations.Core.SendEmail({
-      from_name: 'Oficinas Master - Cronograma',
-      to: email_destino,
-      subject: `📊 Cronograma de Implementação - ${workshop_nome}`,
-      body: emailBody,
-      attachments: [{
-        filename: `Cronograma_${workshop_nome.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`,
-        content: pdf_base64,
-        encoding: 'base64',
-        contentType: 'application/pdf'
-      }]
-    });
+    // Anexo do PDF
+    const anexo = {
+      filename: `Cronograma_${workshop_nome.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`,
+      content: pdf_base64,
+      encoding: 'base64',
+      contentType: 'application/pdf'
+    };
+
+    // Enviar para cada destinatário
+    const envios = [];
+    for (const destinatario of destinatarios) {
+      envios.push(
+        base44.integrations.Core.SendEmail({
+          from_name: 'Oficinas Master - Cronograma',
+          to: destinatario,
+          subject: `📊 Cronograma de Implementação - ${workshop_nome}`,
+          body: emailBody,
+          attachments: [anexo]
+        })
+      );
+    }
+
+    // Enviar cópia para email da empresa (se informado)
+    if (email_empresa && !destinatarios.includes(email_empresa)) {
+      envios.push(
+        base44.integrations.Core.SendEmail({
+          from_name: 'Oficinas Master - Cronograma',
+          to: email_empresa,
+          subject: `[CÓPIA] 📊 Cronograma de Implementação - ${workshop_nome}`,
+          body: emailBody,
+          attachments: [anexo]
+        })
+      );
+    }
+
+    // Executar todos os envios
+    await Promise.all(envios);
 
     return Response.json({ 
       success: true, 
-      message: `E-mail enviado com sucesso para ${email_destino}` 
+      message: `E-mail enviado com sucesso para ${destinatarios.length} destinatário(s)${email_empresa ? ' + cópia para empresa' : ''}` 
     });
 
   } catch (error) {
