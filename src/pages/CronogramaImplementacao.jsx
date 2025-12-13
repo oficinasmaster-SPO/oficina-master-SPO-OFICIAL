@@ -160,23 +160,9 @@ export default function CronogramaImplementacao() {
   };
 
   const handleGeneratePDF = (mode, dataOverride, options) => {
-    // Se não houver override, incluir TODOS os itens com dados registrados
-    let itemsParaPDF = allItemsForTable;
-
-    if (!dataOverride) {
-      // Incluir todos os itens que já têm alguma data ou status definido
-      itemsParaPDF = allItemsForTable.filter(item => 
-        !item.not_started || 
-        item.data_inicio_real || 
-        item.data_termino_previsto || 
-        item.data_termino_real ||
-        item.status !== 'a_fazer'
-      );
-    }
-
     const cronogramaData = dataOverride || {
       stats,
-      items: itemsParaPDF,
+      items: allItemsForTable,
       planName: workshop?.planoAtual || 'N/A'
     };
 
