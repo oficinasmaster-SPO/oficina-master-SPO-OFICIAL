@@ -8,43 +8,47 @@ export const generateCronogramaPDF = (cronogramaData, workshop, mode = 'download
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   
-  let yPosition = 20;
-
-  // === CABEÇALHO PERSONALIZADO ===
-  doc.setFillColor(37, 99, 235);
-  doc.rect(0, 0, pageWidth, 40, 'F');
+  // URL da logo Oficinas Master
+  const logoUrl = 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69161d2e91d07685b2bc845b/db077b29a_Oficinasmasters-fundo.png';
   
-  // Logo da oficina (se disponível)
-  if (workshop.logo_url) {
-    try {
-      doc.addImage(workshop.logo_url, 'PNG', 15, 8, 25, 25);
-    } catch (error) {
-      console.log('Logo não disponível');
-    }
+  let yPosition = 20;
+  let isFirstPage = true;
+
+  // === CABEÇALHO MACRO (APENAS PRIMEIRA PÁGINA) ===
+  doc.setFillColor(211, 47, 47); // Vermelho da marca
+  doc.rect(0, 0, pageWidth, 45, 'F');
+  
+  // Logo Oficinas Master
+  try {
+    doc.addImage(logoUrl, 'PNG', 15, 8, 40, 30);
+  } catch (error) {
+    console.log('Erro ao carregar logo Oficinas Master');
   }
   
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(20);
+  doc.setFontSize(22);
   doc.setFont(undefined, 'bold');
-  doc.text('Relatório do Cronograma de Implementação', pageWidth / 2, 15, { align: 'center' });
+  doc.text('Relatório do Cronograma de Implementação', pageWidth / 2, 18, { align: 'center' });
   
-  doc.setFontSize(11);
+  doc.setFontSize(12);
   doc.setFont(undefined, 'normal');
-  doc.text(`${workshop.name} - Plano ${planName}`, pageWidth / 2, 25, { align: 'center' });
-  doc.setFontSize(9);
+  doc.text(`${workshop.name} - Plano ${planName}`, pageWidth / 2, 28, { align: 'center' });
+  doc.setFontSize(10);
   doc.text(
     `${workshop.city || ''}, ${workshop.state || ''} | Gerado em ${new Date().toLocaleDateString('pt-BR')}`,
     pageWidth / 2,
-    32,
+    36,
     { align: 'center' }
   );
   
-  yPosition = 50;
+  yPosition = 55;
 
   // === GRÁFICO DE ANÁLISE VISUAL (MOVIDO PARA O INÍCIO) ===
   doc.setFontSize(14);
   doc.setFont(undefined, 'bold');
+  doc.setTextColor(211, 47, 47); // Vermelho da marca
   doc.text('Análise Visual do Cronograma', pageWidth / 2, yPosition, { align: 'center' });
+  doc.setTextColor(0, 0, 0);
   yPosition += 15;
 
   drawPieChart(doc, stats, pageWidth / 2 - 60, yPosition);
@@ -53,12 +57,15 @@ export const generateCronogramaPDF = (cronogramaData, workshop, mode = 'download
   // === CHECKPOINT DO CRONOGRAMA ===
   if (yPosition > pageHeight - 60) {
     doc.addPage();
-    yPosition = 20;
+    isFirstPage = false;
+    yPosition = 35; // Espaço para logo no topo
   }
 
   doc.setFontSize(14);
   doc.setFont(undefined, 'bold');
+  doc.setTextColor(211, 47, 47); // Vermelho da marca
   doc.text(`CheckPoint / Cronograma do Plano ${planName}`, 14, yPosition);
+  doc.setTextColor(0, 0, 0);
   yPosition += 10;
 
   // Tabela de cronograma manual com paginação automática - TODOS OS ITENS
@@ -115,7 +122,8 @@ export const generateCronogramaPDF = (cronogramaData, workshop, mode = 'download
     lines.forEach((line) => {
       if (yPosition > pageHeight - 30) {
         doc.addPage();
-        yPosition = 20;
+        isFirstPage = false;
+        yPosition = 35; // Espaço para logo no topo
       }
       doc.text(line, 17, yPosition);
       yPosition += 5;
@@ -126,38 +134,49 @@ export const generateCronogramaPDF = (cronogramaData, workshop, mode = 'download
 
 
 
-  // === RODAPÉ PERSONALIZADO ===
+  // === RODAPÉ E LOGO EM TODAS AS PÁGINAS ===
   const totalPages = doc.internal.getNumberOfPages();
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i);
     
-    // Linha separadora
-    doc.setDrawColor(200, 200, 200);
-    doc.line(14, pageHeight - 18, pageWidth - 14, pageHeight - 18);
-    
-    doc.setFontSize(8);
-    doc.setTextColor(100, 100, 100);
-    
-    // Informações de geração
-    doc.text(
-      `Gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`,
-      14,
-      pageHeight - 12
-    );
-    
-    // Informações de contato (se habilitado)
-    if (includeContactInfo && i === 1) {
-      const contactText = [];
-      if (contactInfo.telefone) contactText.push(`Tel: ${contactInfo.telefone}`);
-      if (contactInfo.email) contactText.push(`Email: ${contactInfo.email}`);
-      
-      if (contactText.length > 0) {
-        doc.text(contactText.join(' | '), 14, pageHeight - 6);
+    // Logo no topo de todas as páginas (exceto primeira que já tem cabeçalho macro)
+    if (i > 1) {
+      try {
+        doc.addImage(logoUrl, 'PNG', pageWidth - 45, 8, 30, 20);
+      } catch (error) {
+        console.log('Erro ao adicionar logo no topo');
       }
     }
     
+    // Linha separadora do rodapé
+    doc.setDrawColor(211, 47, 47); // Vermelho da marca
+    doc.setLineWidth(0.5);
+    doc.line(14, pageHeight - 18, pageWidth - 14, pageHeight - 18);
+    
+    // Rodapé com logo
+    try {
+      doc.addImage(logoUrl, 'PNG', 14, pageHeight - 16, 20, 13);
+    } catch (error) {
+      console.log('Erro ao adicionar logo no rodapé');
+    }
+    
+    doc.setFontSize(9);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont(undefined, 'bold');
+    doc.text('Oficinas Master Educação Empresarial e Técnica', 38, pageHeight - 10);
+    
+    doc.setFontSize(7);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(100, 100, 100);
+    doc.text(
+      `Gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`,
+      38,
+      pageHeight - 6
+    );
+    
     // Numeração de página
-    doc.text(`Página ${i} de ${totalPages}`, pageWidth - 30, pageHeight - 12);
+    doc.setFontSize(8);
+    doc.text(`Página ${i} de ${totalPages}`, pageWidth - 30, pageHeight - 10);
   }
 
   // === SAÍDA ===
@@ -223,7 +242,7 @@ function drawTable(doc, x, y, data, columnWidths, hasHeader = false) {
     const isHeader = hasHeader && rowIndex === 0;
     
     if (isHeader) {
-      doc.setFillColor(37, 99, 235);
+      doc.setFillColor(211, 47, 47); // Vermelho da marca
       doc.setTextColor(255, 255, 255);
       doc.setFont(undefined, 'bold');
       doc.setFontSize(10);
@@ -270,12 +289,12 @@ function drawTableWithPagination(doc, x, y, headers, dataRows, columnWidths, pag
       const width = columnWidths[colIndex] || 30;
       
       // Definir cores para cada célula
-      doc.setFillColor(37, 99, 235);
+      doc.setFillColor(211, 47, 47); // Vermelho da marca
       doc.setTextColor(255, 255, 255);
       doc.setFont(undefined, 'bold');
       doc.setFontSize(8);
-      
-      // Desenhar fundo azul do header
+
+      // Desenhar fundo vermelho do header
       doc.rect(currentX, currentY, width, headerRowHeight, 'F');
       
       // Desenhar borda
@@ -310,14 +329,16 @@ function drawTableWithPagination(doc, x, y, headers, dataRows, columnWidths, pag
   dataRows.forEach((row) => {
     if (currentY + rowHeight > pageHeight - marginBottom) {
       doc.addPage();
-      currentY = 20;
-      
+      isFirstPage = false;
+      currentY = 35; // Espaço para logo no topo
+
       doc.setFontSize(12);
       doc.setFont(undefined, 'bold');
-      doc.setTextColor(0, 0, 0);
+      doc.setTextColor(211, 47, 47); // Vermelho da marca
       doc.text(`CheckPoint / Cronograma (continuação)`, 14, currentY);
+      doc.setTextColor(0, 0, 0);
       currentY += 10;
-      
+
       drawHeaders();
     }
 
