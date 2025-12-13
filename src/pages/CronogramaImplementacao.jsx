@@ -12,6 +12,9 @@ import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import ExportCronogramaModal from "@/components/cronograma/ExportCronogramaModal";
+import { generateCronogramaPDF } from "@/components/cronograma/CronogramaPDFGenerator";
+import { FileDown } from "lucide-react";
 
 export default function CronogramaImplementacao() {
   const queryClient = useQueryClient();
@@ -19,6 +22,7 @@ export default function CronogramaImplementacao() {
   const [showHistory, setShowHistory] = useState(null);
   const [filterStatus, setFilterStatus] = useState("todos");
   const [filterTipo, setFilterTipo] = useState("todos");
+  const [showExportModal, setShowExportModal] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['current-user'],
@@ -155,6 +159,16 @@ export default function CronogramaImplementacao() {
     }).length
   };
 
+  const handleGeneratePDF = (mode) => {
+    const cronogramaData = {
+      stats,
+      items: allItemsForTable,
+      planName: workshop?.planoAtual || 'N/A'
+    };
+    
+    return generateCronogramaPDF(cronogramaData, workshop, mode);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -172,6 +186,13 @@ export default function CronogramaImplementacao() {
             Acompanhe o progresso da implementação das ferramentas e processos
           </p>
         </div>
+        <Button 
+          onClick={() => setShowExportModal(true)}
+          className="bg-blue-600 hover:bg-blue-700"
+        >
+          <FileDown className="w-4 h-4 mr-2" />
+          Exportar Relatório
+        </Button>
       </div>
 
       {/* Cards de Resumo */}
@@ -489,6 +510,15 @@ export default function CronogramaImplementacao() {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Modal de Exportação */}
+      <ExportCronogramaModal
+        open={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        cronogramaData={{ stats, items: allItemsForTable, planName: workshop?.planoAtual }}
+        workshop={workshop}
+        onGeneratePDF={handleGeneratePDF}
+      />
     </div>
   );
 }
