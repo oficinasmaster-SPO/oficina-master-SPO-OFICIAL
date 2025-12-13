@@ -21,7 +21,6 @@ export default function ExportCronogramaModal({
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [telefone, setTelefone] = useState("");
-  const [attachPDF, setAttachPDF] = useState(true);
   
   // Filtros avançados
   const [filters, setFilters] = useState({
@@ -34,20 +33,6 @@ export default function ExportCronogramaModal({
   // Personalização do PDF
   const [customNotes, setCustomNotes] = useState("");
   const [includeContactInfo, setIncludeContactInfo] = useState(true);
-
-  // Carregar contatos do workshop
-  const workshopContacts = {
-    emails: [
-      workshop?.email,
-      workshop?.owner_email,
-      ...(workshop?.contacts?.emails || [])
-    ].filter(Boolean),
-    telefones: [
-      workshop?.telefone,
-      workshop?.phone,
-      ...(workshop?.contacts?.phones || [])
-    ].filter(Boolean)
-  };
 
   const applyFilters = (items) => {
     return items.filter(item => {
@@ -97,43 +82,44 @@ export default function ExportCronogramaModal({
 
     setIsLoading(true);
     try {
-      let base64data = null;
+      const filteredItems = applyFilters(cronogramaData.items);
+      const pdfBlob = await onGeneratePDF('blob', { ...cronogramaData, items: filteredItems }, getPDFOptions());
       
-      if (attachPDF) {
-        const filteredItems = applyFilters(cronogramaData.items);
-        const pdfBlob = await onGeneratePDF('blob', { ...cronogramaData, items: filteredItems }, getPDFOptions());
-        
-        // Converter blob para base64
-        const reader = new FileReader();
-        await new Promise((resolve, reject) => {
-          reader.readAsDataURL(pdfBlob);
-          reader.onloadend = () => {
-            base64data = reader.result.split(',')[1];
-            resolve();
-          };
-          reader.onerror = reject;
-        });
-      }
+      // Converter blob para base64
+      const reader = new FileReader();
+      reader.readAsDataURL(pdfBlob);
+      reader.onloadend = async () => {
+        try {
+          const base64data = reader.result.split(',')[1];
+          
+          const response = await base44.functions.invoke('enviarCronogramaEmail', {
+            email_destino: email,
+            workshop_nome: workshop.name,
+            pdf_base64: base64data,
+            stats: cronogramaData.stats
+          });
 
-      const response = await base44.functions.invoke('enviarCronogramaEmail', {
-        email_destino: email,
-        workshop_nome: workshop.name,
-        pdf_base64: base64data,
-        stats: cronogramaData.stats,
-        attach_pdf: attachPDF
-      });
-
-      if (response.data?.success) {
-        toast.success(`${attachPDF ? 'Relatório' : 'Resumo'} enviado para ${email}`);
-        setEmail("");
-        onClose();
-      } else {
-        throw new Error(response.data?.error || 'Erro ao enviar e-mail');
-      }
+          if (response.data?.success) {
+            toast.success(`Relatório enviado para ${email}`);
+            setEmail("");
+            onClose();
+          } else {
+            throw new Error(response.data?.error || 'Erro ao enviar e-mail');
+          }
+        } catch (emailError) {
+          console.error("Erro ao enviar e-mail:", emailError);
+          toast.error("Erro ao enviar e-mail: " + (emailError.message || 'Erro desconhecido'));
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      reader.onerror = () => {
+        toast.error("Erro ao processar PDF");
+        setIsLoading(false);
+      };
     } catch (error) {
-      console.error("Erro ao enviar e-mail:", error);
-      toast.error("Erro ao enviar e-mail: " + (error.message || 'Erro desconhecido'));
-    } finally {
+      console.error("Erro ao gerar PDF:", error);
+      toast.error("Erro ao gerar PDF");
       setIsLoading(false);
     }
   };
@@ -144,28 +130,40 @@ export default function ExportCronogramaModal({
       return;
     }
 
-    const { stats } = cronogramaData;
-    
-    if (attachPDF) {
-      toast.info("Gerando PDF para envio via WhatsApp...");
+    setIsLoading(true);
+    try {
       const filteredItems = applyFilters(cronogramaData.items);
-      await onGeneratePDF('download', { ...cronogramaData, items: filteredItems }, getPDFOptions());
-      toast.success("PDF baixado! Anexe manualmente no WhatsApp");
+      const pdfBlob = await onGeneratePDF('blob', { ...cronogramaData, items: filteredItems }, getPDFOptions());
+      
+      // Upload do PDF para obter URL pública
+      const formData = new FormData();
+      formData.append('file', pdfBlob, `Cronograma_${workshop.name.replace(/\s/g, '_')}.pdf`);
+      
+      const { file_url } = await base44.integrations.Core.UploadFile({ file: pdfBlob });
+      
+      // Gera mensagem com resumo e link do PDF
+      const { stats } = cronogramaData;
+      const mensagem = `📊 *Cronograma de Implementação - ${workshop.name}*\n\n` +
+        `📈 *Resumo do Projeto:*\n` +
+        `✅ Total de Itens: ${stats.total}\n` +
+        `🟢 Concluídos: ${stats.concluidos}\n` +
+        `🟡 Em Andamento: ${stats.em_andamento}\n` +
+        `🔴 Atrasados: ${stats.atrasados}\n\n` +
+        `📄 *Baixar PDF Completo:*\n${file_url}`;
+
+      const telefoneFormatado = telefone.replace(/\D/g, '');
+      const url = `https://wa.me/${telefoneFormatado}?text=${encodeURIComponent(mensagem)}`;
+      window.open(url, '_blank');
+      
+      toast.success("PDF gerado! Abrindo WhatsApp...");
+      setTelefone("");
+      onClose();
+    } catch (error) {
+      console.error("Erro ao enviar WhatsApp:", error);
+      toast.error("Erro ao gerar PDF para WhatsApp");
+    } finally {
+      setIsLoading(false);
     }
-
-    const mensagem = `📊 *Cronograma de Implementação - ${workshop.name}*\n\n` +
-      `📈 *Resumo do Projeto:*\n` +
-      `✅ Total de Itens: ${stats.total}\n` +
-      `🟢 Concluídos: ${stats.concluidos}\n` +
-      `🟡 Em Andamento: ${stats.em_andamento}\n` +
-      `🔴 Atrasados: ${stats.atrasados}\n\n` +
-      `${attachPDF ? 'PDF baixado - anexe ao enviar!' : 'Acesse o sistema para mais detalhes!'}`;
-
-    const telefoneFormatado = telefone.replace(/\D/g, '');
-    const url = `https://wa.me/${telefoneFormatado}?text=${encodeURIComponent(mensagem)}`;
-    window.open(url, '_blank');
-    
-    toast.success("Abrindo WhatsApp...");
   };
 
   const handleSharePlatform = async () => {
@@ -329,39 +327,15 @@ export default function ExportCronogramaModal({
           <TabsContent value="email" className="space-y-4 mt-4">
             <div>
               <Label htmlFor="email">E-mail de Destino</Label>
-              {workshopContacts.emails.length > 0 && (
-                <Select value={email} onValueChange={setEmail}>
-                  <SelectTrigger className="mt-2">
-                    <SelectValue placeholder="Selecione ou digite um e-mail" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {workshopContacts.emails.map((e, idx) => (
-                      <SelectItem key={idx} value={e}>{e}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
               <Input
                 id="email"
                 type="email"
-                placeholder="ou digite um e-mail personalizado"
+                placeholder="exemplo@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="mt-2"
               />
             </div>
-
-            <div className="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg">
-              <Checkbox 
-                id="attach-pdf-email"
-                checked={attachPDF}
-                onCheckedChange={setAttachPDF}
-              />
-              <Label htmlFor="attach-pdf-email" className="cursor-pointer">
-                Anexar PDF completo (se desmarcado, envia apenas resumo)
-              </Label>
-            </div>
-
             <Button 
               onClick={handleSendEmail} 
               disabled={isLoading}
@@ -384,45 +358,34 @@ export default function ExportCronogramaModal({
           <TabsContent value="whatsapp" className="space-y-4 mt-4">
             <div>
               <Label htmlFor="telefone">Número do WhatsApp</Label>
-              {workshopContacts.telefones.length > 0 && (
-                <Select value={telefone} onValueChange={setTelefone}>
-                  <SelectTrigger className="mt-2">
-                    <SelectValue placeholder="Selecione ou digite um telefone" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {workshopContacts.telefones.map((tel, idx) => (
-                      <SelectItem key={idx} value={tel}>{tel}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
               <Input
                 id="telefone"
                 type="tel"
-                placeholder="ou digite: +55 11 99999-9999"
+                placeholder="+55 11 99999-9999"
                 value={telefone}
                 onChange={(e) => setTelefone(e.target.value)}
                 className="mt-2"
               />
               <p className="text-xs text-gray-500 mt-2">
-                Inclua o código do país (ex: +55 para Brasil)
+                Inclua o código do país (ex: +55 para Brasil). O PDF será anexado como link para download.
               </p>
             </div>
-
-            <div className="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg">
-              <Checkbox 
-                id="attach-pdf-whats"
-                checked={attachPDF}
-                onCheckedChange={setAttachPDF}
-              />
-              <Label htmlFor="attach-pdf-whats" className="cursor-pointer">
-                Baixar PDF para anexar manualmente no WhatsApp
-              </Label>
-            </div>
-
-            <Button onClick={handleSendWhatsApp} className="w-full">
-              <MessageCircle className="w-4 h-4 mr-2" />
-              Enviar por WhatsApp
+            <Button 
+              onClick={handleSendWhatsApp} 
+              disabled={isLoading}
+              className="w-full"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Gerando PDF...
+                </>
+              ) : (
+                <>
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Enviar por WhatsApp
+                </>
+              )}
             </Button>
           </TabsContent>
 
