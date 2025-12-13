@@ -124,46 +124,27 @@ export default function ExportCronogramaModal({
     }
   };
 
-  const handleSendWhatsApp = async () => {
+  const handleSendWhatsApp = () => {
     if (!telefone) {
       toast.error("Por favor, informe o número do WhatsApp");
       return;
     }
 
-    setIsLoading(true);
-    try {
-      const filteredItems = applyFilters(cronogramaData.items);
-      const pdfBlob = await onGeneratePDF('blob', { ...cronogramaData, items: filteredItems }, getPDFOptions());
-      
-      // Upload do PDF para obter URL pública
-      const formData = new FormData();
-      formData.append('file', pdfBlob, `Cronograma_${workshop.name.replace(/\s/g, '_')}.pdf`);
-      
-      const { file_url } = await base44.integrations.Core.UploadFile({ file: pdfBlob });
-      
-      // Gera mensagem com resumo e link do PDF
-      const { stats } = cronogramaData;
-      const mensagem = `📊 *Cronograma de Implementação - ${workshop.name}*\n\n` +
-        `📈 *Resumo do Projeto:*\n` +
-        `✅ Total de Itens: ${stats.total}\n` +
-        `🟢 Concluídos: ${stats.concluidos}\n` +
-        `🟡 Em Andamento: ${stats.em_andamento}\n` +
-        `🔴 Atrasados: ${stats.atrasados}\n\n` +
-        `📄 *Baixar PDF Completo:*\n${file_url}`;
+    // Gera mensagem com resumo
+    const { stats } = cronogramaData;
+    const mensagem = `📊 *Cronograma de Implementação - ${workshop.name}*\n\n` +
+      `📈 *Resumo do Projeto:*\n` +
+      `✅ Total de Itens: ${stats.total}\n` +
+      `🟢 Concluídos: ${stats.concluidos}\n` +
+      `🟡 Em Andamento: ${stats.em_andamento}\n` +
+      `🔴 Atrasados: ${stats.atrasados}\n\n` +
+      `Acesse o sistema para mais detalhes!`;
 
-      const telefoneFormatado = telefone.replace(/\D/g, '');
-      const url = `https://wa.me/${telefoneFormatado}?text=${encodeURIComponent(mensagem)}`;
-      window.open(url, '_blank');
-      
-      toast.success("PDF gerado! Abrindo WhatsApp...");
-      setTelefone("");
-      onClose();
-    } catch (error) {
-      console.error("Erro ao enviar WhatsApp:", error);
-      toast.error("Erro ao gerar PDF para WhatsApp");
-    } finally {
-      setIsLoading(false);
-    }
+    const telefoneFormatado = telefone.replace(/\D/g, '');
+    const url = `https://wa.me/${telefoneFormatado}?text=${encodeURIComponent(mensagem)}`;
+    window.open(url, '_blank');
+    
+    toast.success("Abrindo WhatsApp...");
   };
 
   const handleSharePlatform = async () => {
@@ -367,25 +348,12 @@ export default function ExportCronogramaModal({
                 className="mt-2"
               />
               <p className="text-xs text-gray-500 mt-2">
-                Inclua o código do país (ex: +55 para Brasil). O PDF será anexado como link para download.
+                Inclua o código do país (ex: +55 para Brasil)
               </p>
             </div>
-            <Button 
-              onClick={handleSendWhatsApp} 
-              disabled={isLoading}
-              className="w-full"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Gerando PDF...
-                </>
-              ) : (
-                <>
-                  <MessageCircle className="w-4 h-4 mr-2" />
-                  Enviar por WhatsApp
-                </>
-              )}
+            <Button onClick={handleSendWhatsApp} className="w-full">
+              <MessageCircle className="w-4 h-4 mr-2" />
+              Enviar por WhatsApp
             </Button>
           </TabsContent>
 

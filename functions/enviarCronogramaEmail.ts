@@ -10,17 +10,11 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { email_destino, workshop_nome, pdf_base64, stats, attach_pdf = true } = await req.json();
+    const { email_destino, workshop_nome, pdf_base64, stats } = await req.json();
 
-    if (!email_destino || !workshop_nome) {
+    if (!email_destino || !workshop_nome || !pdf_base64) {
       return Response.json({ 
-        error: 'Campos obrigatórios: email_destino, workshop_nome' 
-      }, { status: 400 });
-    }
-
-    if (attach_pdf && !pdf_base64) {
-      return Response.json({ 
-        error: 'PDF é obrigatório quando attach_pdf=true' 
+        error: 'Campos obrigatórios: email_destino, workshop_nome, pdf_base64' 
       }, { status: 400 });
     }
 
@@ -74,23 +68,18 @@ Deno.serve(async (req) => {
     `;
 
     // Enviar e-mail usando o SDK
-    const emailPayload = {
+    await base44.integrations.Core.SendEmail({
       from_name: 'Oficinas Master - Cronograma',
       to: email_destino,
       subject: `📊 Cronograma de Implementação - ${workshop_nome}`,
-      body: emailBody
-    };
-
-    if (attach_pdf && pdf_base64) {
-      emailPayload.attachments = [{
+      body: emailBody,
+      attachments: [{
         filename: `Cronograma_${workshop_nome.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`,
         content: pdf_base64,
         encoding: 'base64',
         contentType: 'application/pdf'
-      }];
-    }
-
-    await base44.integrations.Core.SendEmail(emailPayload);
+      }]
+    });
 
     return Response.json({ 
       success: true, 
