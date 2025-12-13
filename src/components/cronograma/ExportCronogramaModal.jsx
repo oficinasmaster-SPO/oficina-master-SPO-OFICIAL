@@ -89,22 +89,37 @@ export default function ExportCronogramaModal({
       const reader = new FileReader();
       reader.readAsDataURL(pdfBlob);
       reader.onloadend = async () => {
-        const base64data = reader.result.split(',')[1];
-        
-        await base44.functions.invoke('enviarCronogramaEmail', {
-          email_destino: email,
-          workshop_nome: workshop.name,
-          pdf_base64: base64data,
-          stats: cronogramaData.stats
-        });
+        try {
+          const base64data = reader.result.split(',')[1];
+          
+          const response = await base44.functions.invoke('enviarCronogramaEmail', {
+            email_destino: email,
+            workshop_nome: workshop.name,
+            pdf_base64: base64data,
+            stats: cronogramaData.stats
+          });
 
-        toast.success(`Relatório enviado para ${email}`);
-        setEmail("");
+          if (response.data?.success) {
+            toast.success(`Relatório enviado para ${email}`);
+            setEmail("");
+            onClose();
+          } else {
+            throw new Error(response.data?.error || 'Erro ao enviar e-mail');
+          }
+        } catch (emailError) {
+          console.error("Erro ao enviar e-mail:", emailError);
+          toast.error("Erro ao enviar e-mail: " + (emailError.message || 'Erro desconhecido'));
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      reader.onerror = () => {
+        toast.error("Erro ao processar PDF");
+        setIsLoading(false);
       };
     } catch (error) {
-      console.error("Erro ao enviar e-mail:", error);
-      toast.error("Erro ao enviar e-mail");
-    } finally {
+      console.error("Erro ao gerar PDF:", error);
+      toast.error("Erro ao gerar PDF");
       setIsLoading(false);
     }
   };
