@@ -5,7 +5,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, History, Play, FileText } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, History, Play, FileText, Clock } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { entrepreneurQuestions } from "../components/entrepreneur/EntrepreneurQuestions";
 import { toast } from "sonner";
