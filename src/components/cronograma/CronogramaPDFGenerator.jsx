@@ -264,14 +264,16 @@ function drawTableWithPagination(doc, x, y, headers, dataRows, columnWidths, pag
 
   const drawHeaders = () => {
     const headerRowHeight = 10;
-    doc.setFillColor(37, 99, 235);
-    doc.setTextColor(255, 255, 255);
-    doc.setFont(undefined, 'bold');
-    doc.setFontSize(8);
 
     let currentX = x;
     headers.forEach((header, colIndex) => {
       const width = columnWidths[colIndex] || 30;
+      
+      // Definir cores para cada célula
+      doc.setFillColor(37, 99, 235);
+      doc.setTextColor(255, 255, 255);
+      doc.setFont(undefined, 'bold');
+      doc.setFontSize(8);
       
       // Desenhar fundo azul do header
       doc.rect(currentX, currentY, width, headerRowHeight, 'F');
