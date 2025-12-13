@@ -72,14 +72,28 @@ export const generateCronogramaPDF = (cronogramaData, workshop, mode = 'download
   yPosition += 10;
 
   // Tabela de cronograma manual com paginação automática
-  const tableHeaders = ['Atividade', 'Início Previsto', 'Início Real', 'Término Previsto', 'Término Real', 'Status', 'Atraso', 'Detalhes'];
-  const tableData = items.map(item => {
+  const tableHeaders = ['Programa / Conteúdo', 'Início Previsto', 'Início Real', 'Término Previsto', 'Término Real', 'Status', 'Atraso', 'Detalhes'];
+  
+  // Filtrar apenas itens que têm dados preenchidos (em andamento, concluído, ou a fazer com datas)
+  const itemsComDados = items.filter(item => 
+    !item.not_started && (
+      item.status === 'em_andamento' || 
+      item.status === 'concluido' || 
+      (item.status === 'a_fazer' && (item.data_inicio_real || item.data_termino_previsto))
+    )
+  );
+  
+  const tableData = itemsComDados.map(item => {
     const diasAtraso = getDiasAtraso(item);
     const ultimaAtualizacao = getUltimaAtualizacao(item);
     
+    // Estruturar com hierarquia: Nome Principal + Categoria
+    const nomeCompleto = item.item_nome || '-';
+    const categoria = item.item_tipo ? `  ${item.item_tipo.charAt(0).toUpperCase() + item.item_tipo.slice(1)}` : '';
+    
     return [
-      truncateText(item.item_nome || '-', 20),
-      item.data_inicio_real ? formatDate(new Date(new Date(item.data_inicio_real).setDate(new Date(item.data_inicio_real).getDate() - 1))) : '-',
+      nomeCompleto + '\n' + categoria,
+      item.data_inicio_previsto ? formatDate(item.data_inicio_previsto) : '-',
       item.data_inicio_real ? formatDate(item.data_inicio_real) : '-',
       item.data_termino_previsto ? formatDate(item.data_termino_previsto) : '-',
       item.data_termino_real ? formatDate(item.data_termino_real) : '-',
@@ -266,7 +280,7 @@ function drawTable(doc, x, y, data, columnWidths, hasHeader = false) {
 }
 
 function drawTableWithPagination(doc, x, y, headers, dataRows, columnWidths, pageHeight) {
-  const rowHeight = 8;
+  const rowHeight = 10;
   const cellPadding = 1.5;
   const marginBottom = 25;
   let currentY = y;
@@ -284,7 +298,7 @@ function drawTableWithPagination(doc, x, y, headers, dataRows, columnWidths, pag
       doc.rect(currentX, currentY, width, rowHeight, 'FD');
       
       const lines = doc.splitTextToSize(String(header), width - (cellPadding * 2));
-      const textY = currentY + (rowHeight / 2) + 1;
+      const textY = currentY + (rowHeight / 2) + 1.5;
       doc.text(lines[0], currentX + cellPadding, textY);
       
       currentX += width;
@@ -312,7 +326,6 @@ function drawTableWithPagination(doc, x, y, headers, dataRows, columnWidths, pag
     const isEvenRow = rowIndex % 2 === 0;
     doc.setFillColor(isEvenRow ? 250 : 255);
     doc.setTextColor(0, 0, 0);
-    doc.setFont(undefined, 'normal');
     doc.setFontSize(7);
 
     let currentX = x;
@@ -326,9 +339,27 @@ function drawTableWithPagination(doc, x, y, headers, dataRows, columnWidths, pag
       doc.rect(currentX, currentY, width, rowHeight, 'F');
       
       const cellText = String(cell || '-');
-      const lines = doc.splitTextToSize(cellText, width - (cellPadding * 2));
-      const textY = currentY + (rowHeight / 2) + 1.5;
-      doc.text(lines[0], currentX + cellPadding, textY);
+      
+      // Para a primeira coluna, aplicar hierarquia visual
+      if (colIndex === 0) {
+        const lines = cellText.split('\n');
+        doc.setFont(undefined, 'bold');
+        doc.text(lines[0], currentX + cellPadding, currentY + 3.5);
+        
+        if (lines[1]) {
+          doc.setFont(undefined, 'normal');
+          doc.setFontSize(6);
+          doc.setTextColor(100, 100, 100);
+          doc.text(lines[1], currentX + cellPadding + 2, currentY + 7.5);
+          doc.setTextColor(0, 0, 0);
+          doc.setFontSize(7);
+        }
+      } else {
+        doc.setFont(undefined, 'normal');
+        const lines = doc.splitTextToSize(cellText, width - (cellPadding * 2));
+        const textY = currentY + (rowHeight / 2) + 1.5;
+        doc.text(lines[0], currentX + cellPadding, textY);
+      }
       
       currentX += width;
     });
