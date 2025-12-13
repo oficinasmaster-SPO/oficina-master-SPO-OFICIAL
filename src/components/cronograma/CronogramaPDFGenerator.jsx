@@ -265,7 +265,7 @@ function drawTableWithPagination(doc, x, y, headers, dataRows, columnWidths, pag
   const drawHeaders = () => {
     const headerRowHeight = 10;
     doc.setFillColor(37, 99, 235);
-    doc.setTextColor(0, 0, 0);
+    doc.setTextColor(255, 255, 255);
     doc.setFont(undefined, 'bold');
     doc.setFontSize(8);
 
