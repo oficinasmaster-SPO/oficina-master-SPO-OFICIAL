@@ -7,7 +7,7 @@ import { Download, Loader2, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { Line, Bar } from "recharts";
 import { ResponsiveContainer, LineChart, BarChart, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from "recharts";
-import { exportToPDF, exportToCSV } from "../../lib/exportUtils";
+import { exportToPDF, exportToCSV } from "./exportUtils";
 
 export default function DiagnosticReports({ filters }) {
   const [exporting, setExporting] = useState(false);

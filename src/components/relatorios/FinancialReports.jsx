@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { Line, Bar } from "recharts";
 import { ResponsiveContainer, LineChart, BarChart, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from "recharts";
 import { formatCurrency } from "../utils/formatters";
-import { exportToPDF, exportToCSV } from "../../lib/exportUtils";
+import { exportToPDF, exportToCSV } from "./exportUtils";
 
 export default function FinancialReports({ filters }) {
   const [exporting, setExporting] = useState(false);
