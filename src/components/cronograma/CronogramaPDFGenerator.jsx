@@ -71,7 +71,7 @@ export const generateCronogramaPDF = (cronogramaData, workshop, mode = 'download
   doc.text(`CheckPoint / Cronograma do Plano ${planName}`, 14, yPosition);
   yPosition += 10;
 
-  // Tabela de cronograma manual
+  // Tabela de cronograma manual com paginação automática
   const tableHeaders = ['Atividade', 'Tipo', 'Status', 'Início', 'Término Prev.', 'Término Real'];
   const tableData = items.map(item => [
     truncateText(item.item_nome || '-', 25),
@@ -82,9 +82,8 @@ export const generateCronogramaPDF = (cronogramaData, workshop, mode = 'download
     item.data_termino_real ? formatDate(item.data_termino_real) : '-'
   ]);
 
-  const tableHeight = (tableData.length + 1) * 8;
-  drawTable(doc, 14, yPosition, [tableHeaders, ...tableData], [70, 25, 30, 28, 32, 28], true);
-  yPosition += tableHeight + 15;
+  yPosition = drawTableWithPagination(doc, 14, yPosition, tableHeaders, tableData, [70, 25, 30, 28, 32, 28], pageHeight);
+  yPosition += 15;
 
   // === NOTAS PERSONALIZADAS ===
   if (customNotes) {
@@ -236,6 +235,74 @@ function drawTable(doc, x, y, data, columnWidths, hasHeader = false) {
     
     currentY += rowHeight;
   });
+}
+
+function drawTableWithPagination(doc, x, y, headers, dataRows, columnWidths, pageHeight) {
+  const rowHeight = 8;
+  const cellPadding = 2;
+  const marginBottom = 25; // Espaço para rodapé
+  let currentY = y;
+  let rowIndex = 0;
+
+  // Função para desenhar cabeçalho
+  const drawHeaders = () => {
+    doc.setFillColor(37, 99, 235);
+    doc.setTextColor(255, 255, 255);
+    doc.setFont(undefined, 'bold');
+    doc.setFontSize(10);
+
+    let currentX = x;
+    headers.forEach((header, colIndex) => {
+      const width = columnWidths[colIndex] || 40;
+      doc.rect(currentX, currentY, width, rowHeight, 'FD');
+      doc.text(String(header), currentX + cellPadding, currentY + rowHeight - cellPadding - 1);
+      currentX += width;
+    });
+    
+    currentY += rowHeight;
+  };
+
+  // Desenhar cabeçalho inicial
+  drawHeaders();
+
+  // Desenhar linhas de dados
+  dataRows.forEach((row) => {
+    // Verificar se precisa de nova página
+    if (currentY + rowHeight > pageHeight - marginBottom) {
+      doc.addPage();
+      currentY = 20;
+      
+      // Repetir título da seção
+      doc.setFontSize(14);
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(0, 0, 0);
+      doc.text(`CheckPoint / Cronograma (continuação)`, 14, currentY);
+      currentY += 10;
+      
+      // Redesenhar cabeçalho
+      drawHeaders();
+    }
+
+    // Desenhar linha de dados
+    const isEvenRow = rowIndex % 2 === 0;
+    doc.setFillColor(isEvenRow ? 245 : 255);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont(undefined, 'normal');
+    doc.setFontSize(8);
+
+    let currentX = x;
+    row.forEach((cell, colIndex) => {
+      const width = columnWidths[colIndex] || 40;
+      doc.rect(currentX, currentY, width, rowHeight, 'FD');
+      doc.text(String(cell || ''), currentX + cellPadding, currentY + rowHeight - cellPadding - 1);
+      currentX += width;
+    });
+
+    currentY += rowHeight;
+    rowIndex++;
+  });
+
+  return currentY;
 }
 
 function drawPieChart(doc, stats, x, y) {
