@@ -1,5 +1,4 @@
 import jsPDF from "jspdf";
-import "jspdf-autotable";
 
 export const generateCronogramaPDF = (cronogramaData, workshop, mode = 'download') => {
   const { stats, items, planName } = cronogramaData;
@@ -32,28 +31,17 @@ export const generateCronogramaPDF = (cronogramaData, workshop, mode = 'download
   doc.text('Resumo Executivo', 14, yPosition);
   yPosition += 10;
 
-  const resumoData = [
+  // Tabela de resumo manual
+  drawTable(doc, 14, yPosition, [
+    ['Indicador', 'Quantidade'],
     ['Total de Itens', stats.total.toString()],
     ['Itens Concluídos', stats.concluidos.toString()],
     ['Itens em Andamento', stats.em_andamento.toString()],
     ['Itens Atrasados', stats.atrasados.toString()],
     ['Itens Não Iniciados', (stats.total - stats.concluidos - stats.em_andamento).toString()]
-  ];
+  ], [100, 50], true);
 
-  doc.autoTable({
-    startY: yPosition,
-    head: [['Indicador', 'Quantidade']],
-    body: resumoData,
-    theme: 'striped',
-    headStyles: { fillColor: [37, 99, 235], fontSize: 11, fontStyle: 'bold' },
-    styles: { fontSize: 10 },
-    columnStyles: {
-      0: { cellWidth: 100 },
-      1: { cellWidth: 50, halign: 'center' }
-    }
-  });
-
-  yPosition = doc.lastAutoTable.finalY + 15;
+  yPosition += 80;
 
   // === CHECKPOINT DO CRONOGRAMA ===
   if (yPosition > pageHeight - 60) {
@@ -66,31 +54,18 @@ export const generateCronogramaPDF = (cronogramaData, workshop, mode = 'download
   doc.text(`CheckPoint / Cronograma do Plano ${planName}`, 14, yPosition);
   yPosition += 10;
 
+  // Tabela de cronograma manual
+  const tableHeaders = ['Atividade', 'Tipo', 'Status', 'Início', 'Término Prev.', 'Término Real'];
   const tableData = items.map(item => [
-    item.item_nome || '-',
+    truncateText(item.item_nome || '-', 25),
     item.item_tipo || '-',
     getStatusLabel(item.status),
-    item.data_inicio_real ? new Date(item.data_inicio_real).toLocaleDateString('pt-BR') : '-',
-    item.data_termino_previsto ? new Date(item.data_termino_previsto).toLocaleDateString('pt-BR') : '-',
-    item.data_termino_real ? new Date(item.data_termino_real).toLocaleDateString('pt-BR') : '-'
+    item.data_inicio_real ? formatDate(item.data_inicio_real) : '-',
+    item.data_termino_previsto ? formatDate(item.data_termino_previsto) : '-',
+    item.data_termino_real ? formatDate(item.data_termino_real) : '-'
   ]);
 
-  doc.autoTable({
-    startY: yPosition,
-    head: [['Atividade', 'Tipo', 'Status', 'Início Real', 'Término Previsto', 'Término Real']],
-    body: tableData,
-    theme: 'grid',
-    headStyles: { fillColor: [37, 99, 235], fontSize: 9, fontStyle: 'bold' },
-    styles: { fontSize: 8, cellPadding: 3 },
-    columnStyles: {
-      0: { cellWidth: 80 },
-      1: { cellWidth: 30, halign: 'center' },
-      2: { cellWidth: 35, halign: 'center' },
-      3: { cellWidth: 30, halign: 'center' },
-      4: { cellWidth: 35, halign: 'center' },
-      5: { cellWidth: 30, halign: 'center' }
-    }
-  });
+  drawTable(doc, 14, yPosition, [tableHeaders, ...tableData], [70, 25, 30, 28, 32, 28], true);
 
   // === NOVA PÁGINA PARA GRÁFICOS ===
   doc.addPage();
@@ -139,6 +114,60 @@ function getStatusLabel(status) {
     concluido: "Concluído"
   };
   return labels[status] || status;
+}
+
+function formatDate(dateString) {
+  try {
+    return new Date(dateString).toLocaleDateString('pt-BR');
+  } catch {
+    return '-';
+  }
+}
+
+function truncateText(text, maxLength) {
+  if (!text) return '-';
+  return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+}
+
+function drawTable(doc, x, y, data, columnWidths, hasHeader = false) {
+  const rowHeight = 8;
+  const cellPadding = 2;
+  let currentY = y;
+
+  data.forEach((row, rowIndex) => {
+    const isHeader = hasHeader && rowIndex === 0;
+    
+    if (isHeader) {
+      doc.setFillColor(37, 99, 235);
+      doc.setTextColor(255, 255, 255);
+      doc.setFont(undefined, 'bold');
+      doc.setFontSize(10);
+    } else {
+      doc.setFillColor(rowIndex % 2 === 0 ? 245 : 255);
+      doc.setTextColor(0, 0, 0);
+      doc.setFont(undefined, 'normal');
+      doc.setFontSize(8);
+    }
+
+    let currentX = x;
+    row.forEach((cell, colIndex) => {
+      const width = columnWidths[colIndex] || 40;
+      
+      // Desenhar célula
+      doc.rect(currentX, currentY, width, rowHeight, 'FD');
+      
+      // Adicionar texto
+      doc.text(
+        String(cell || ''), 
+        currentX + cellPadding, 
+        currentY + rowHeight - cellPadding - 1
+      );
+      
+      currentX += width;
+    });
+    
+    currentY += rowHeight;
+  });
 }
 
 function drawPieChart(doc, stats, x, y) {
