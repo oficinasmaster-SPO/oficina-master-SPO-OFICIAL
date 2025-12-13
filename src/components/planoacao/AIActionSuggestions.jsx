@@ -273,47 +273,47 @@ IMPORTANTE:
                         </Badge>
                       </div>
                       <p className="text-gray-700 leading-relaxed mb-4">
-                        {acao.descricao}
+                       {acao.descricao || ''}
                       </p>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        {/* Benefícios Esperados */}
-                        {acao.beneficios_esperados && acao.beneficios_esperados.length > 0 && (
-                          <div className="bg-green-50 rounded-lg p-4">
-                            <p className="font-semibold text-green-900 mb-2 flex items-center gap-2">
-                              <TrendingUp className="w-4 h-4" />
-                              Benefícios Esperados:
-                            </p>
-                            <ul className="space-y-1 text-sm text-green-800">
-                              {acao.beneficios_esperados.map((beneficio, i) => (
-                                <li key={i} className="flex items-start gap-2">
-                                  <span className="text-green-600">✓</span>
-                                  <span>{beneficio}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
+                       {/* Benefícios Esperados */}
+                       {Array.isArray(acao.beneficios_esperados) && acao.beneficios_esperados.length > 0 && (
+                         <div className="bg-green-50 rounded-lg p-4">
+                           <p className="font-semibold text-green-900 mb-2 flex items-center gap-2">
+                             <TrendingUp className="w-4 h-4" />
+                             Benefícios Esperados:
+                           </p>
+                           <ul className="space-y-1 text-sm text-green-800">
+                             {acao.beneficios_esperados.map((beneficio, i) => (
+                               <li key={i} className="flex items-start gap-2">
+                                 <span className="text-green-600">✓</span>
+                                 <span>{String(beneficio)}</span>
+                               </li>
+                             ))}
+                           </ul>
+                         </div>
+                       )}
 
-                        {/* Passos de Implementação */}
-                        {acao.passos_implementacao && acao.passos_implementacao.length > 0 && (
-                          <div className="bg-blue-50 rounded-lg p-4">
-                            <p className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
-                              <Lightbulb className="w-4 h-4" />
-                              Como Implementar:
-                            </p>
-                            <ol className="space-y-1 text-sm text-blue-800 list-decimal list-inside">
-                              {acao.passos_implementacao.map((passo, i) => (
-                                <li key={i}>{passo}</li>
-                              ))}
-                            </ol>
-                          </div>
-                        )}
+                       {/* Passos de Implementação */}
+                       {Array.isArray(acao.passos_implementacao) && acao.passos_implementacao.length > 0 && (
+                         <div className="bg-blue-50 rounded-lg p-4">
+                           <p className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                             <Lightbulb className="w-4 h-4" />
+                             Como Implementar:
+                           </p>
+                           <ol className="space-y-1 text-sm text-blue-800 list-decimal list-inside">
+                             {acao.passos_implementacao.map((passo, i) => (
+                               <li key={i}>{String(passo)}</li>
+                             ))}
+                           </ol>
+                         </div>
+                       )}
                       </div>
 
                       <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <span className="font-semibold">Prazo sugerido:</span>
-                        <Badge variant="outline">{acao.prazo_sugerido} dias</Badge>
+                       <span className="font-semibold">Prazo sugerido:</span>
+                       <Badge variant="outline">{acao.prazo_sugerido || 0} dias</Badge>
                       </div>
                     </div>
                   </div>
