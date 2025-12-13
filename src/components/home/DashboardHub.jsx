@@ -48,47 +48,6 @@ export default function DashboardHub({ user, workshop }) {
   const [newNotice, setNewNotice] = React.useState({ title: "", content: "", priority: "media" });
   const [quickTips, setQuickTips] = React.useState("");
 
-  // Dados reais da oficina
-  const { data: employees = [] } = useQuery({
-    queryKey: ['workshop-employees', workshop?.id],
-    queryFn: async () => {
-      if (!workshop?.id) return [];
-      const emps = await base44.entities.Employee.filter({ workshop_id: workshop.id, status: 'ativo' });
-      console.log('Colaboradores carregados:', emps.length, emps);
-      return emps;
-    },
-    enabled: !!workshop?.id
-  });
-
-  const { data: monthlyGoalHistory = [] } = useQuery({
-    queryKey: ['monthly-goal-history', workshop?.id],
-    queryFn: async () => {
-      if (!workshop?.id) return [];
-      const currentMonth = new Date().toISOString().substring(0, 7);
-      const history = await base44.entities.MonthlyGoalHistory.filter({ 
-        workshop_id: workshop.id,
-        month: currentMonth 
-      });
-      console.log('Histórico de Metas:', currentMonth, history);
-      return history;
-    },
-    enabled: !!workshop?.id
-  });
-
-  const { data: latestDRE } = useQuery({
-    queryKey: ['latest-dre', workshop?.id],
-    queryFn: async () => {
-      if (!workshop?.id) return null;
-      const currentMonth = new Date().toISOString().substring(0, 7);
-      const dres = await base44.entities.DREMonthly.filter({ 
-        workshop_id: workshop.id,
-        month: currentMonth
-      });
-      return dres[0] || null;
-    },
-    enabled: !!workshop?.id
-  });
-
   // Queries para Avisos e Configurações
   const { data: notices = [], refetch: refetchNotices } = useQuery({
     queryKey: ['internal-notices'],
@@ -220,19 +179,17 @@ export default function DashboardHub({ user, workshop }) {
   });
 
   const { data: tasks = [] } = useQuery({
-    queryKey: ['workshop-tasks', workshop?.id],
+    queryKey: ['user-tasks', user?.id],
     queryFn: async () => {
       try {
-        if (!workshop?.id) return [];
-        const result = await base44.entities.Task.filter({ workshop_id: workshop.id });
-        console.log('Tarefas carregadas:', result.length, result);
+        const result = await base44.entities.Task.list();
         return Array.isArray(result) ? result : [];
       } catch (error) {
         console.log("Error fetching tasks:", error);
         return [];
       }
     },
-    enabled: !!workshop?.id,
+    enabled: !!user?.id,
     retry: 1
   });
 
@@ -281,14 +238,12 @@ export default function DashboardHub({ user, workshop }) {
   const lastDiagnostic = diagnostics?.[0] || null;
   const userWorkshop = workshop || null;
   const pendingTasks = Array.isArray(tasks) 
-    ? tasks.filter(t => t.status === 'pendente' || t.status === 'em_andamento')
+    ? tasks.filter(t => t.status !== 'concluida' && t.assigned_to?.includes(user.id))
     : [];
   const overdueTasks = pendingTasks.filter(t => {
     if (!t.due_date) return false;
     return new Date(t.due_date) < new Date();
   });
-
-  console.log('Tarefas:', { total: tasks.length, pendentes: pendingTasks.length, atrasadas: overdueTasks.length });
   const unreadNotifications = Array.isArray(notifications)
     ? notifications.filter(n => n.user_id === user.id && !n.is_read)
     : [];
@@ -371,7 +326,7 @@ export default function DashboardHub({ user, workshop }) {
                 <div>
                     <h3 className="font-bold text-indigo-900 text-lg mb-1">Dicas Rápidas</h3>
                     <p className="text-indigo-800 whitespace-pre-line">
-                        {displayTips}
+                        {typeof displayTips === 'string' ? displayTips : displayTips?.texto || displayTips?.Texto || 'Sem dicas disponíveis'}
                     </p>
                 </div>
             </div>
@@ -664,82 +619,52 @@ export default function DashboardHub({ user, workshop }) {
         <h2 className="text-2xl font-bold text-gray-900 mb-4">Visão Geral & Acesso Rápido</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          {/* 1. Metas (Situação) - DADOS REAIS */}
-          {canView('home_metas') && (() => {
-            const projected = workshop?.monthly_goals?.projected_revenue || 0;
-            const achieved = workshop?.monthly_goals?.actual_revenue_achieved || 0;
-            const percentage = projected > 0 ? (achieved / projected * 100) : 0;
-            const growth = workshop?.monthly_goals?.growth_percentage || 0;
+          {/* 1. Metas (Situação) */}
+          {canView('home_metas') && (
+            <Card className="border-l-4 border-blue-500 hover:shadow-md transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Target className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <Badge variant="outline" className="text-blue-600 border-blue-200">Mensal</Badge>
+                </div>
+                <h3 className="text-sm font-medium text-gray-500">Metas Globais</h3>
+                <div className="mt-1 flex items-baseline gap-2">
+                  <span className="text-2xl font-bold text-gray-900">68%</span>
+                  <span className="text-xs text-green-600 font-medium">+12%</span>
+                </div>
+                <div className="w-full bg-gray-100 rounded-full h-1.5 mt-3">
+                  <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: "68%" }}></div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-            console.log('Metas Globais:', { projected, achieved, percentage, growth });
-
-            return (
-              <Card className="border-l-4 border-blue-500 hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <Target className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <Link to={createPageUrl("HistoricoMetas")} className="text-xs text-blue-600 hover:underline">
-                      Ver todos
-                    </Link>
+          {/* 2. Ranking Colaboradores */}
+          {canView('home_ranking') && (
+            <Card className="border-l-4 border-yellow-500 hover:shadow-md transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="p-2 bg-yellow-100 rounded-lg">
+                    <Trophy className="w-5 h-5 text-yellow-600" />
                   </div>
-                  <h3 className="text-sm font-medium text-gray-500">Metas Globais</h3>
-                  <div className="mt-1 flex items-baseline gap-2">
-                    <span className="text-2xl font-bold text-gray-900">{percentage.toFixed(0)}%</span>
-                    <span className={`text-xs font-medium ${growth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {growth >= 0 ? '+' : ''}{growth.toFixed(0)}%
-                    </span>
+                  <Link to={createPageUrl("RankingBrasil")} className="text-xs text-blue-600 hover:underline">Ver todos</Link>
+                </div>
+                <h3 className="text-sm font-medium text-gray-500">Ranking</h3>
+                <div className="mt-2 space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="flex items-center gap-2"><span className="font-bold text-yellow-600">1º</span> João S.</span>
+                    <span className="font-bold">R$ 15k</span>
                   </div>
-                  <div className="w-full bg-gray-100 rounded-full h-1.5 mt-3">
-                    <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${Math.min(percentage, 100)}%` }}></div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="flex items-center gap-2"><span className="font-bold text-gray-400">2º</span> Maria O.</span>
+                    <span className="font-bold">R$ 12k</span>
                   </div>
-                  {projected === 0 && (
-                    <p className="text-xs text-gray-400 mt-2">Configure metas em Gestão da Oficina</p>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })()}
-
-          {/* 2. Ranking Colaboradores - DADOS REAIS */}
-          {canView('home_ranking') && (() => {
-            const topEmployees = [...employees]
-              .filter(e => (e.monthly_goals?.actual_revenue_achieved || 0) > 0)
-              .sort((a, b) => (b.monthly_goals?.actual_revenue_achieved || 0) - (a.monthly_goals?.actual_revenue_achieved || 0))
-              .slice(0, 2);
-
-            return (
-              <Card className="border-l-4 border-yellow-500 hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="p-2 bg-yellow-100 rounded-lg">
-                      <Trophy className="w-5 h-5 text-yellow-600" />
-                    </div>
-                    <Link to={createPageUrl("RankingBrasil")} className="text-xs text-blue-600 hover:underline">Ver todos</Link>
-                  </div>
-                  <h3 className="text-sm font-medium text-gray-500">Ranking</h3>
-                  <div className="mt-2 space-y-2">
-                    {topEmployees.length > 0 ? topEmployees.map((emp, idx) => (
-                      <div key={emp.id} className="flex items-center justify-between text-sm">
-                        <span className="flex items-center gap-2">
-                          <span className={`font-bold ${idx === 0 ? 'text-yellow-600' : 'text-gray-400'}`}>
-                            {idx + 1}º
-                          </span>
-                          {emp.full_name?.split(' ')[0]}
-                        </span>
-                        <span className="font-bold">
-                          R$ {((emp.monthly_goals?.actual_revenue_achieved || 0) / 1000).toFixed(0)}k
-                        </span>
-                      </div>
-                    )) : (
-                      <p className="text-xs text-gray-400 text-center">Sem dados ainda</p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })()}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* 3. Tarefas Pendentes */}
           {canView('home_tarefas') && (
@@ -766,184 +691,103 @@ export default function DashboardHub({ user, workshop }) {
             </Card>
           )}
 
-          {/* 4. TCMP2 Real Time - DADOS REAIS */}
-          {canView('home_tcmp2') && (() => {
-            const tcmp2 = latestDRE?.calculated?.tcmp2_value || workshop?.best_month_history?.tcmp2 || 0;
-
-            console.log('TCMP2:', { dre: latestDRE?.calculated?.tcmp2_value, bestMonth: workshop?.best_month_history?.tcmp2, final: tcmp2 });
-
-            return (
-              <Card className="border-l-4 border-indigo-500 hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="p-2 bg-indigo-100 rounded-lg">
-                      <Timer className="w-5 h-5 text-indigo-600" />
-                    </div>
-                    <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
-                      {latestDRE ? 'DRE Atual' : 'Histórico'}
-                    </Badge>
+          {/* 4. TCMP2 Real Time */}
+          {canView('home_tcmp2') && (
+            <Card className="border-l-4 border-indigo-500 hover:shadow-md transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="p-2 bg-indigo-100 rounded-lg">
+                    <Timer className="w-5 h-5 text-indigo-600" />
                   </div>
-                  <h3 className="text-sm font-medium text-gray-500">TCMP2 (Valor Hora)</h3>
-                  <div className="mt-1">
-                    <span className="text-2xl font-bold text-gray-900">
-                      R$ {tcmp2.toFixed(2)}
-                    </span>
-                    <p className="text-xs text-gray-500">
-                      {latestDRE ? 'DRE mensal' : tcmp2 > 0 ? 'Do melhor mês' : 'Cadastre DRE'}
-                    </p>
+                  <Badge className="bg-green-100 text-green-700 hover:bg-green-100">Ao Vivo</Badge>
+                </div>
+                <h3 className="text-sm font-medium text-gray-500">TCMP2 (Valor Hora)</h3>
+                <div className="mt-1">
+                  <span className="text-2xl font-bold text-gray-900">R$ 185,00</span>
+                  <p className="text-xs text-gray-500">Média atual da oficina</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* 5. R70/I30 Real Time */}
+          {canView('home_r70i30') && (
+            <Card className="border-l-4 border-purple-500 hover:shadow-md transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="p-2 bg-purple-100 rounded-lg">
+                    <PieChart className="w-5 h-5 text-purple-600" />
                   </div>
-                </CardContent>
-              </Card>
-            );
-          })()}
-
-          {/* 5. R70/I30 Real Time - DADOS REAIS */}
-          {canView('home_r70i30') && (() => {
-            const r70 = workshop?.best_month_history?.r70_i30?.r70 || 70;
-            const i30 = workshop?.best_month_history?.r70_i30?.i30 || 30;
-
-            console.log('R70/I30:', { r70, i30, source: workshop?.best_month_history?.r70_i30 });
-
-            return (
-              <Card className="border-l-4 border-purple-500 hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="p-2 bg-purple-100 rounded-lg">
-                      <PieChart className="w-5 h-5 text-purple-600" />
-                    </div>
+                </div>
+                <h3 className="text-sm font-medium text-gray-500">R70 / I30</h3>
+                <div className="mt-2 flex items-center gap-2">
+                  <div className="flex-1 bg-gray-100 rounded h-2 overflow-hidden flex">
+                    <div className="bg-green-500 h-full" style={{width: '65%'}} title="Renda 65%"></div>
+                    <div className="bg-orange-500 h-full" style={{width: '35%'}} title="Investimento 35%"></div>
                   </div>
-                  <h3 className="text-sm font-medium text-gray-500">R70 / I30</h3>
-                  <div className="mt-2 flex items-center gap-2">
-                    <div className="flex-1 bg-gray-100 rounded h-2 overflow-hidden flex">
-                      <div className="bg-green-500 h-full" style={{width: `${r70}%`}} title={`Renda ${r70}%`}></div>
-                      <div className="bg-orange-500 h-full" style={{width: `${i30}%`}} title={`Investimento ${i30}%`}></div>
-                    </div>
+                </div>
+                <div className="flex justify-between text-xs mt-1">
+                  <span className="text-green-600 font-bold">R: 65%</span>
+                  <span className="text-orange-600 font-bold">I: 35%</span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* 6. GPS Aplicados */}
+          {canView('home_gps') && (
+            <Card className="border-l-4 border-cyan-500 hover:shadow-md transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="p-2 bg-cyan-100 rounded-lg">
+                    <Map className="w-5 h-5 text-cyan-600" />
                   </div>
-                  <div className="flex justify-between text-xs mt-1">
-                    <span className="text-green-600 font-bold">R: {r70.toFixed(0)}%</span>
-                    <span className="text-orange-600 font-bold">I: {i30.toFixed(0)}%</span>
+                </div>
+                <h3 className="text-sm font-medium text-gray-500">GPS Aplicados</h3>
+                <div className="mt-1">
+                  <span className="text-2xl font-bold text-gray-900">12</span>
+                  <p className="text-xs text-gray-500">Guias de Processo Simplificado</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* 7. Kit Master Convertido */}
+          {canView('home_kit_master') && (
+            <Card className="border-l-4 border-emerald-500 hover:shadow-md transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="p-2 bg-emerald-100 rounded-lg">
+                    <Package className="w-5 h-5 text-emerald-600" />
                   </div>
-                </CardContent>
-              </Card>
-            );
-          })()}
+                </div>
+                <h3 className="text-sm font-medium text-gray-500">Kit Master</h3>
+                <div className="mt-1">
+                  <span className="text-2xl font-bold text-gray-900">8/15</span>
+                  <p className="text-xs text-gray-500">Convertidos este mês</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-          {/* 6. GPS Aplicados - DADOS REAIS */}
-          {canView('home_gps') && (() => {
-            const totalGPS = employees.reduce((sum, emp) => {
-              const dailyHistory = emp.daily_production_history || [];
-              return sum + dailyHistory.length;
-            }, 0);
-
-            console.log('GPS Aplicados:', { totalGPS, employees: employees.length });
-
-            return (
-              <Card className="border-l-4 border-cyan-500 hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="p-2 bg-cyan-100 rounded-lg">
-                      <Map className="w-5 h-5 text-cyan-600" />
-                    </div>
+          {/* 8. PAVE Agendamento */}
+          {canView('home_pave') && (
+            <Card className="border-l-4 border-pink-500 hover:shadow-md transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="p-2 bg-pink-100 rounded-lg">
+                    <Calendar className="w-5 h-5 text-pink-600" />
                   </div>
-                  <h3 className="text-sm font-medium text-gray-500">GPS Aplicados</h3>
-                  <div className="mt-1">
-                    <span className="text-2xl font-bold text-gray-900">{totalGPS}</span>
-                    <p className="text-xs text-gray-500">Registros de produção diária</p>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })()}
-
-          {/* 7. Kit Master Convertido - QUANTIDADE DE CLIENTES */}
-          {canView('home_kit_master') && (() => {
-            const kitMasterGoal = workshop?.best_month_history?.kit_master || 0;
-            const growth = (workshop?.monthly_goals?.growth_percentage || 10) / 100;
-            const kitMasterTarget = Math.round(kitMasterGoal * (1 + growth));
-            
-            // Buscar histórico de meta mensal para pegar clientes convertidos (Kit Master)
-            const currentMonth = new Date().toISOString().substring(0, 7);
-            const monthHistory = monthlyGoalHistory.find(h => h.month === currentMonth);
-            
-            // Kit Master vem do campo do histórico de metas ou soma dos colaboradores comerciais
-            const kitMasterAchieved = monthHistory?.kit_master_converted || 
-              employees.filter(e => e.job_role === 'comercial' || e.job_role === 'consultor_vendas')
-                .reduce((sum, emp) => sum + (emp.monthly_goals?.kit_master_converted || 0), 0);
-
-            console.log('Kit Master (Clientes):', { 
-              goal: kitMasterGoal, 
-              target: kitMasterTarget, 
-              achieved: kitMasterAchieved,
-              monthHistory
-            });
-
-            return (
-              <Card className="border-l-4 border-emerald-500 hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="p-2 bg-emerald-100 rounded-lg">
-                      <Package className="w-5 h-5 text-emerald-600" />
-                    </div>
-                  </div>
-                  <h3 className="text-sm font-medium text-gray-500">Kit Master</h3>
-                  <div className="mt-1">
-                    <span className="text-2xl font-bold text-gray-900">
-                      {kitMasterAchieved || 0}/{kitMasterTarget || 0}
-                    </span>
-                    <p className="text-xs text-gray-500">Clientes convertidos mês</p>
-                  </div>
-                  {kitMasterTarget === 0 && (
-                    <p className="text-xs text-gray-400 mt-2">Configure melhor mês em Gestão</p>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })()}
-
-          {/* 8. PAVE Agendamento - DADOS REAIS */}
-          {canView('home_pave') && (() => {
-            const paveGoal = workshop?.best_month_history?.pave_commercial || 0;
-            const growth = (workshop?.monthly_goals?.growth_percentage || 10) / 100;
-            const paveTarget = Math.round(paveGoal * (1 + growth));
-            
-            // Buscar do histórico de meta mensal
-            const currentMonth = new Date().toISOString().substring(0, 7);
-            const monthHistory = monthlyGoalHistory.find(h => h.month === currentMonth);
-            
-            // PAVE hoje: contar agendamentos do dia (pode vir do registro diário ou histórico)
-            const today = new Date().toISOString().split('T')[0];
-            const paveToday = monthHistory?.pave_today || 
-              employees.filter(e => e.job_role === 'comercial' || e.job_role === 'consultor_vendas')
-                .reduce((sum, emp) => {
-                  const dailyHistory = emp.daily_production_history || [];
-                  return sum + dailyHistory.filter(d => d.date === today).length;
-                }, 0);
-
-            console.log('PAVE Agendamento:', { goal: paveGoal, target: paveTarget, today: paveToday });
-
-            return (
-              <Card className="border-l-4 border-pink-500 hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="p-2 bg-pink-100 rounded-lg">
-                      <Calendar className="w-5 h-5 text-pink-600" />
-                    </div>
-                    <Badge variant="outline" className="text-pink-600 border-pink-200">Hoje</Badge>
-                  </div>
-                  <h3 className="text-sm font-medium text-gray-500">PAVE Agendamento</h3>
-                  <div className="mt-1">
-                    <span className="text-2xl font-bold text-gray-900">{paveToday || 0}</span>
-                    <p className="text-xs text-gray-500">
-                      Clientes hoje (Meta mês: {paveTarget})
-                    </p>
-                  </div>
-                  {paveTarget === 0 && (
-                    <p className="text-xs text-gray-400 mt-2">Configure PAVE em Melhor Mês</p>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })()}
+                  <Badge variant="outline" className="text-pink-600 border-pink-200">Hoje</Badge>
+                </div>
+                <h3 className="text-sm font-medium text-gray-500">PAVE Agendamento</h3>
+                <div className="mt-1">
+                  <span className="text-2xl font-bold text-gray-900">5</span>
+                  <p className="text-xs text-gray-500">Clientes agendados</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
