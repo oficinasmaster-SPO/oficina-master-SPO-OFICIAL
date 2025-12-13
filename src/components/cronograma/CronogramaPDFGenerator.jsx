@@ -14,9 +14,13 @@ export const generateCronogramaPDF = (cronogramaData, workshop, mode = 'download
 
   // Função para adicionar cabeçalho completo (apenas primeira página)
   const addFullHeader = () => {
-    // Fundo vermelho
-    doc.setFillColor(220, 38, 38);
+    // Fundo branco
+    doc.setFillColor(255, 255, 255);
     doc.rect(0, 0, pageWidth, 45, 'F');
+    
+    // Borda inferior
+    doc.setDrawColor(200, 200, 200);
+    doc.line(0, 45, pageWidth, 45);
     
     // Logo Oficinas Master
     try {
@@ -26,7 +30,7 @@ export const generateCronogramaPDF = (cronogramaData, workshop, mode = 'download
     }
     
     // Título principal
-    doc.setTextColor(255, 255, 255);
+    doc.setTextColor(0, 0, 0);
     doc.setFontSize(22);
     doc.setFont(undefined, 'bold');
     doc.text('Relatório do Cronograma de Implementação', pageWidth / 2, 20, { align: 'center' });
@@ -48,9 +52,13 @@ export const generateCronogramaPDF = (cronogramaData, workshop, mode = 'download
 
   // Função para adicionar cabeçalho simplificado (demais páginas)
   const addSimpleHeader = () => {
-    // Fundo vermelho reduzido
-    doc.setFillColor(220, 38, 38);
+    // Fundo branco
+    doc.setFillColor(255, 255, 255);
     doc.rect(0, 0, pageWidth, 25, 'F');
+    
+    // Borda inferior
+    doc.setDrawColor(200, 200, 200);
+    doc.line(0, 25, pageWidth, 25);
     
     // Logo menor
     try {
@@ -60,7 +68,7 @@ export const generateCronogramaPDF = (cronogramaData, workshop, mode = 'download
     }
     
     // Título reduzido
-    doc.setTextColor(255, 255, 255);
+    doc.setTextColor(0, 0, 0);
     doc.setFontSize(14);
     doc.setFont(undefined, 'bold');
     doc.text(`Cronograma de Implementação - ${workshop.name}`, pageWidth / 2, 15, { align: 'center' });
@@ -165,13 +173,17 @@ export const generateCronogramaPDF = (cronogramaData, workshop, mode = 'download
       addSimpleHeader();
     }
     
-    // Faixa vermelha no rodapé
-    doc.setFillColor(220, 38, 38);
+    // Faixa branca no rodapé
+    doc.setFillColor(255, 255, 255);
     doc.rect(0, pageHeight - 20, pageWidth, 20, 'F');
+    
+    // Borda superior
+    doc.setDrawColor(200, 200, 200);
+    doc.line(0, pageHeight - 20, pageWidth, pageHeight - 20);
     
     // Texto do rodapé
     doc.setFontSize(10);
-    doc.setTextColor(255, 255, 255);
+    doc.setTextColor(0, 0, 0);
     doc.setFont(undefined, 'bold');
     doc.text('Oficinas Master Educação Empresarial e Técnica', pageWidth / 2, pageHeight - 11, { align: 'center' });
     
