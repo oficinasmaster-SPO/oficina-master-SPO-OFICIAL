@@ -1,19 +1,25 @@
-import React from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Calendar, CheckCircle, Clock, FileText, Target, AlertCircle } from "lucide-react";
+import { Loader2, Calendar, CheckCircle, Clock, FileText, Target, AlertCircle, Sparkles } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { toast } from "sonner";
 import FaseOficinaCard from "../components/aceleracao/FaseOficinaCard";
 import AtividadesImplementacao from "../components/aceleracao/AtividadesImplementacao";
+import PlanoAceleracaoMensal from "../components/aceleracao/PlanoAceleracaoMensal";
+import FeedbackPlanoModal from "../components/aceleracao/FeedbackPlanoModal";
 
 export default function PainelClienteAceleracao() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [showPlanDetails, setShowPlanDetails] = useState(false);
   
   const { data: user, isLoading: loadingUser } = useQuery({
     queryKey: ['current-user'],
@@ -73,6 +79,99 @@ export default function PainelClienteAceleracao() {
     enabled: !!workshop?.id
   });
 
+  // Buscar Plano de Aceleração do Mês Atual
+  const currentMonth = new Date().toISOString().substring(0, 7);
+  const { data: monthlyPlan, isLoading: loadingPlan } = useQuery({
+    queryKey: ['monthly-plan', workshop?.id, currentMonth],
+    queryFn: async () => {
+      const plans = await base44.entities.MonthlyAccelerationPlan.filter(
+        { 
+          workshop_id: workshop.id, 
+          reference_month: currentMonth,
+          status: 'ativo'
+        },
+        '-version',
+        1
+      );
+      return plans?.[0] || null;
+    },
+    enabled: !!workshop?.id
+  });
+
+  // Mutation para gerar plano
+  const generatePlanMutation = useMutation({
+    mutationFn: async () => {
+      if (!lastDiagnostic) {
+        throw new Error('É necessário realizar um diagnóstico antes de gerar o plano');
+      }
+      
+      const response = await base44.functions.invoke('generateMonthlyPlan', {
+        workshop_id: workshop.id,
+        diagnostic_id: lastDiagnostic.id,
+        phase: lastDiagnostic.phase || workshop.maturity_level || 1,
+        reference_month: currentMonth
+      });
+      
+      return response.data.plan;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['monthly-plan']);
+      toast.success('Plano de Aceleração gerado com sucesso!');
+      setShowPlanDetails(true);
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Erro ao gerar plano');
+    }
+  });
+
+  // Mutation para refinar plano
+  const refinePlanMutation = useMutation({
+    mutationFn: async (feedbackData) => {
+      const response = await base44.functions.invoke('refineMonthlyPlan', {
+        plan_id: monthlyPlan.id,
+        feedback_content: feedbackData.content,
+        feedback_type: feedbackData.type,
+        audio_url: feedbackData.audio_url
+      });
+      
+      return response.data.refined_plan;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['monthly-plan']);
+      toast.success('Plano refinado com sucesso!');
+      setShowFeedbackModal(false);
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Erro ao refinar plano');
+    }
+  });
+
+  // Mutation para atualizar atividade
+  const updateActivityMutation = useMutation({
+    mutationFn: async ({ activityIndex, newStatus }) => {
+      const updatedSchedule = [...monthlyPlan.plan_data.implementation_schedule];
+      updatedSchedule[activityIndex].status = newStatus;
+      if (newStatus === 'concluida') {
+        updatedSchedule[activityIndex].completed_date = new Date().toISOString();
+      }
+
+      const activitiesDone = updatedSchedule.filter(a => a.status === 'concluida').length;
+      const newPercentage = Math.round((activitiesDone / updatedSchedule.length) * 100);
+
+      await base44.entities.MonthlyAccelerationPlan.update(monthlyPlan.id, {
+        plan_data: {
+          ...monthlyPlan.plan_data,
+          implementation_schedule: updatedSchedule
+        },
+        completion_percentage: newPercentage
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['monthly-plan']);
+      toast.success('Atividade atualizada!');
+    }
+  });
+
   if (loadingUser) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -123,6 +222,15 @@ export default function PainelClienteAceleracao() {
   const progressoGeral = progresso?.length > 0 
     ? Math.round((progresso.filter(p => p.situacao === 'concluido').length / progresso.length) * 100)
     : 0;
+
+  const handleGeneratePlan = async () => {
+    if (!lastDiagnostic) {
+      toast.error('Realize um diagnóstico da oficina antes de gerar o plano');
+      navigate(createPageUrl("SelecionarDiagnostico"));
+      return;
+    }
+    await generatePlanMutation.mutateAsync();
+  };
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -178,6 +286,102 @@ export default function PainelClienteAceleracao() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Plano de Aceleração Mensal */}
+      {loadingPlan ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-3" />
+            <p className="text-gray-600">Carregando plano de aceleração...</p>
+          </CardContent>
+        </Card>
+      ) : !monthlyPlan ? (
+        <Card className="border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+          <CardContent className="py-12 text-center">
+            <Sparkles className="w-16 h-16 mx-auto text-blue-600 mb-4" />
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">
+              Seu Plano de Aceleração Mensal
+            </h3>
+            <p className="text-gray-600 max-w-2xl mx-auto mb-6">
+              A IA irá analisar seu diagnóstico e criar um plano estruturado e executável 
+              para os próximos 90 dias, focado na evolução da sua oficina.
+            </p>
+            <Button 
+              onClick={handleGeneratePlan}
+              disabled={generatePlanMutation.isPending}
+              size="lg"
+              className="bg-blue-600 hover:bg-blue-700 gap-2"
+            >
+              {generatePlanMutation.isPending ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Gerando Plano com IA...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-5 h-5" />
+                  Gerar Plano de Aceleração
+                </>
+              )}
+            </Button>
+            {!lastDiagnostic && (
+              <p className="text-sm text-orange-600 mt-4">
+                ⚠️ Realize um diagnóstico antes de gerar o plano
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      ) : showPlanDetails ? (
+        <>
+          <PlanoAceleracaoMensal 
+            plan={monthlyPlan}
+            workshop={workshop}
+            onRefine={() => setShowFeedbackModal(true)}
+            onUpdateActivity={(index, status) => updateActivityMutation.mutate({ activityIndex: index, newStatus: status })}
+          />
+          <Button 
+            variant="outline" 
+            onClick={() => setShowPlanDetails(false)}
+            className="w-full"
+          >
+            Voltar ao Resumo
+          </Button>
+        </>
+      ) : (
+        <Card className="border-2 border-green-200 bg-green-50">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-green-900">
+                <CheckCircle className="w-6 h-6" />
+                Plano Ativo - {format(new Date(monthlyPlan.reference_month + '-01'), "MMMM 'de' yyyy", { locale: ptBR })}
+              </CardTitle>
+              <Badge className="bg-green-600 text-white">
+                {monthlyPlan.completion_percentage}% Concluído
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-gray-700">
+              Você possui um plano ativo para este mês. Continue executando as atividades 
+              para evoluir para a próxima fase.
+            </p>
+            <div className="flex gap-3">
+              <Button 
+                onClick={() => setShowPlanDetails(true)}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                Ver Plano Completo
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => setShowFeedbackModal(true)}
+              >
+                Refinar Plano
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Atividades de Implementação do Cronograma */}
       <AtividadesImplementacao items={cronogramaItems} workshop={workshop} />
@@ -285,6 +489,14 @@ export default function PainelClienteAceleracao() {
           )}
         </CardContent>
       </Card>
+
+      {/* Modal de Feedback */}
+      <FeedbackPlanoModal
+        open={showFeedbackModal}
+        onClose={() => setShowFeedbackModal(false)}
+        onSubmit={(feedbackData) => refinePlanMutation.mutate(feedbackData)}
+        isLoading={refinePlanMutation.isPending}
+      />
     </div>
   );
 }
