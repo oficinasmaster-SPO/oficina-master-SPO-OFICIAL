@@ -467,8 +467,21 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       id: 'aceleracao',
       label: 'Aceleração',
       icon: Briefcase,
-      aceleradorOnly: true,
       items: [
+        { 
+          name: 'Meu Plano de Aceleração', 
+          href: createPageUrl('PainelClienteAceleracao'), 
+          icon: Sparkles,
+          description: 'Plano mensal gerado por IA',
+          highlight: true
+        },
+        { 
+          name: 'CheckPoint / Cronograma', 
+          href: createPageUrl('CronogramaImplementacao'), 
+          icon: ListTodo,
+          description: 'Progresso detalhado do plano',
+          highlight: true
+        },
         { 
           name: 'Controle da Aceleração', 
           href: createPageUrl('ControleAceleracao'), 
@@ -483,13 +496,6 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: FileText,
           description: 'Testes, diagnósticos e desempenho',
           aceleradorOnly: true
-        },
-        { 
-          name: 'CheckPoint / Cronograma', 
-          href: createPageUrl('CronogramaDetalhado'), 
-          icon: ListTodo,
-          description: 'Progresso detalhado do plano',
-          highlight: true
         }
       ]
     },
