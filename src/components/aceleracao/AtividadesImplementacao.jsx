@@ -27,6 +27,8 @@ const statusConfig = {
 export default function AtividadesImplementacao({ items, workshop }) {
   const navigate = useNavigate();
 
+  if (!workshop) return null;
+
   const itemsPorStatus = {
     a_fazer: items?.filter(i => i.status === 'a_fazer') || [],
     em_andamento: items?.filter(i => i.status === 'em_andamento') || [],
@@ -47,7 +49,7 @@ export default function AtividadesImplementacao({ items, workshop }) {
   };
 
   return (
-    <Card className="border-2">
+    <Card className="border-2 shadow-lg">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">

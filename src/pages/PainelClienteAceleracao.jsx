@@ -131,11 +131,10 @@ export default function PainelClienteAceleracao() {
         <p className="text-blue-100 mt-2">{workshop?.name}</p>
       </div>
 
+      {/* Fase da Oficina e Progresso */}
       <div className="grid md:grid-cols-2 gap-6">
-        {/* Fase da Oficina */}
         <FaseOficinaCard workshop={workshop} diagnostic={lastDiagnostic} />
 
-        {/* Progresso do Plano */}
         <Card className="border-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

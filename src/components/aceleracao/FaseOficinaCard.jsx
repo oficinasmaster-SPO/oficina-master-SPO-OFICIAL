@@ -11,6 +11,8 @@ const faseLabels = {
 };
 
 export default function FaseOficinaCard({ workshop, diagnostic }) {
+  if (!workshop) return null;
+  
   const fase = diagnostic?.phase || workshop?.maturity_level || 1;
   const faseInfo = faseLabels[fase] || faseLabels[1];
   const dataAnalise = diagnostic?.created_date 
@@ -18,7 +20,7 @@ export default function FaseOficinaCard({ workshop, diagnostic }) {
     : 'Não realizada';
 
   return (
-    <Card className="border-2">
+    <Card className="border-2 shadow-lg">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <TrendingUp className="w-5 h-5 text-purple-600" />
