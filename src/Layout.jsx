@@ -288,24 +288,30 @@ export default function Layout({ children }) {
         <main className="flex-1">
           <div className={`${isAuthenticated ? 'px-4 sm:px-6 lg:px-8 py-6' : ''}`}>
             {isAuthenticated && <Breadcrumbs />}
-            {isAuthenticated && workshop ? (
-              <SharedDataProvider workshopId={workshop.id} userId={user?.id}>
-                {children}
-              </SharedDataProvider>
+            {isAuthenticated ? (
+              workshop ? (
+                workshop.status === 'inativo' && user?.role !== 'admin' ? (
+                  <div className="flex flex-col items-center justify-center h-[60vh] text-center px-4">
+                    <div className="bg-red-100 p-4 rounded-full mb-4">
+                      <LogOut className="w-8 h-8 text-red-600" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Acesso em Análise</h2>
+                    <p className="text-gray-600 max-w-md">
+                      Sua oficina está com status <strong>Inativo</strong>. 
+                      Entre em contato com o suporte para regularizar seu acesso.
+                    </p>
+                  </div>
+                ) : (
+                  <SharedDataProvider workshopId={workshop.id} userId={user?.id}>
+                    {children}
+                  </SharedDataProvider>
+                )
+              ) : (
+                children
+              )
             ) : (
-                  workshop && workshop.status === 'inativo' && user.role !== 'admin' ? (
-                      <div className="flex flex-col items-center justify-center h-[60vh] text-center px-4">
-                          <div className="bg-red-100 p-4 rounded-full mb-4">
-                              <LogOut className="w-8 h-8 text-red-600" />
-                          </div>
-                          <h2 className="text-2xl font-bold text-gray-900 mb-2">Acesso em Análise</h2>
-                          <p className="text-gray-600 max-w-md">
-                              Sua oficina está com status <strong>Inativo</strong> ou em análise. 
-                              Entre em contato com o suporte para regularizar seu acesso.
-                          </p>
-                      </div>
-                  ) : children
-                )}
+              children
+            )}
               </div>
             </main>
 
