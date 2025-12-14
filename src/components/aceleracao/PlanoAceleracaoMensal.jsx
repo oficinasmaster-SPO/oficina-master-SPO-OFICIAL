@@ -19,9 +19,32 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import PrintPlanoModal from "./PrintPlanoModal";
+import SharePlanoModal from "./SharePlanoModal";
+import HistoricoVersoesModal from "./HistoricoVersoesModal";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 
 export default function PlanoAceleracaoMensal({ plan, workshop, onRefine, onUpdateActivity }) {
   const [expandedPillar, setExpandedPillar] = useState(null);
+  const [showPrintModal, setShowPrintModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+
+  // Buscar todas as versões do plano
+  const { data: allVersions = [] } = useQuery({
+    queryKey: ['plan-versions', plan?.workshop_id, plan?.reference_month],
+    queryFn: async () => {
+      return await base44.entities.MonthlyAccelerationPlan.filter(
+        { 
+          workshop_id: plan.workshop_id,
+          reference_month: plan.reference_month
+        },
+        '-version'
+      );
+    },
+    enabled: !!plan
+  });
 
   if (!plan || !plan.plan_data) {
     return (
@@ -96,14 +119,20 @@ export default function PlanoAceleracaoMensal({ plan, workshop, onRefine, onUpda
           <MessageSquare className="w-4 h-4" />
           Refinar com Feedback
         </Button>
-        <Button variant="outline" className="gap-2">
+        <Button onClick={() => setShowPrintModal(true)} variant="outline" className="gap-2">
           <Printer className="w-4 h-4" />
           Imprimir Plano
         </Button>
-        <Button variant="outline" className="gap-2">
+        <Button onClick={() => setShowShareModal(true)} variant="outline" className="gap-2">
           <Share2 className="w-4 h-4" />
           Compartilhar
         </Button>
+        {allVersions.length > 1 && (
+          <Button onClick={() => setShowHistoryModal(true)} variant="outline" className="gap-2">
+            <History className="w-4 h-4" />
+            Ver Histórico ({allVersions.length} versões)
+          </Button>
+        )}
       </div>
 
       {/* Tabs do Plano */}
@@ -257,6 +286,31 @@ export default function PlanoAceleracaoMensal({ plan, workshop, onRefine, onUpda
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Modais */}
+      <PrintPlanoModal
+        open={showPrintModal}
+        onClose={() => setShowPrintModal(false)}
+        plan={plan}
+        workshop={workshop}
+      />
+
+      <SharePlanoModal
+        open={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        plan={plan}
+        workshop={workshop}
+      />
+
+      <HistoricoVersoesModal
+        open={showHistoryModal}
+        onClose={() => setShowHistoryModal(false)}
+        versions={allVersions}
+        onViewVersion={(version) => {
+          // TODO: Implementar visualização de versão específica
+          console.log('Ver versão:', version);
+        }}
+      />
     </div>
   );
 }
