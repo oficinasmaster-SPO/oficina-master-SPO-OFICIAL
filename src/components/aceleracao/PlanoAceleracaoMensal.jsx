@@ -22,6 +22,8 @@ import { ptBR } from "date-fns/locale";
 import PrintPlanoModal from "./PrintPlanoModal";
 import SharePlanoModal from "./SharePlanoModal";
 import HistoricoVersoesModal from "./HistoricoVersoesModal";
+import ViewVersionModal from "./ViewVersionModal";
+import TimelinePlano from "./TimelinePlano";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 
@@ -30,6 +32,7 @@ export default function PlanoAceleracaoMensal({ plan, workshop, onRefine, onUpda
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [viewingVersion, setViewingVersion] = useState(null);
 
   // Buscar todas as versões do plano
   const { data: allVersions = [] } = useQuery({
@@ -177,25 +180,37 @@ export default function PlanoAceleracaoMensal({ plan, workshop, onRefine, onUpda
         </TabsContent>
 
         {/* Pilares */}
-        <TabsContent value="pilares" className="space-y-4">
-          {data.pillar_directions?.map((pillar, index) => (
-            <Card key={index} className="border-2 hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-3">
-                    <TrendingUp className="w-5 h-5 text-indigo-600" />
-                    {pillar.pillar_name}
-                  </CardTitle>
-                  <Badge className={getPriorityColor(pillar.priority)}>
-                    {pillar.priority?.toUpperCase()}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-700 leading-relaxed">{pillar.direction}</p>
-              </CardContent>
-            </Card>
-          ))}
+        <TabsContent value="pilares" className="space-y-6">
+          {/* Timeline Visual */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Plano de Ação por Prazo</h3>
+            <TimelinePlano timelinePlan={data.timeline_plan} />
+          </div>
+
+          {/* Direcionamentos por Pilar */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Direcionamentos Estratégicos</h3>
+            <div className="space-y-4">
+              {data.pillar_directions?.map((pillar, index) => (
+                <Card key={index} className="border-2 hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-3">
+                        <TrendingUp className="w-5 h-5 text-indigo-600" />
+                        {pillar.pillar_name}
+                      </CardTitle>
+                      <Badge className={getPriorityColor(pillar.priority)}>
+                        {pillar.priority?.toUpperCase()}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-700 leading-relaxed">{pillar.direction}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
         </TabsContent>
 
         {/* Cronograma de Implementação */}
@@ -307,9 +322,15 @@ export default function PlanoAceleracaoMensal({ plan, workshop, onRefine, onUpda
         onClose={() => setShowHistoryModal(false)}
         versions={allVersions}
         onViewVersion={(version) => {
-          // TODO: Implementar visualização de versão específica
-          console.log('Ver versão:', version);
+          setViewingVersion(version);
+          setShowHistoryModal(false);
         }}
+      />
+
+      <ViewVersionModal
+        open={!!viewingVersion}
+        onClose={() => setViewingVersion(null)}
+        version={viewingVersion}
       />
     </div>
   );
