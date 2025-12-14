@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Calendar, CheckCircle, Clock, FileText, Target, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import FaseOficinaCard from "../components/aceleracao/FaseOficinaCard";
+import AtividadesImplementacao from "../components/aceleracao/AtividadesImplementacao";
 
 export default function PainelClienteAceleracao() {
   const { data: user, isLoading: loadingUser } = useQuery({
@@ -41,6 +43,32 @@ export default function PainelClienteAceleracao() {
     enabled: !!workshop?.id
   });
 
+  // Buscar atividades do Cronograma de Implementação
+  const { data: cronogramaItems, isLoading: loadingCronograma } = useQuery({
+    queryKey: ['cronograma-implementacao', workshop?.id],
+    queryFn: async () => {
+      return await base44.entities.CronogramaImplementacao.filter(
+        { workshop_id: workshop.id },
+        '-created_date'
+      );
+    },
+    enabled: !!workshop?.id
+  });
+
+  // Buscar último diagnóstico para mostrar a fase
+  const { data: lastDiagnostic } = useQuery({
+    queryKey: ['last-diagnostic', workshop?.id],
+    queryFn: async () => {
+      const diagnostics = await base44.entities.Diagnostic.filter(
+        { workshop_id: workshop.id, completed: true },
+        '-created_date',
+        1
+      );
+      return diagnostics?.[0] || null;
+    },
+    enabled: !!workshop?.id
+  });
+
   if (loadingUser) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -50,13 +78,22 @@ export default function PainelClienteAceleracao() {
   }
 
   // Verificar se o cliente tem plano habilitado
-  if (!workshop?.planoAtual || workshop.planoAtual === 'FREE') {
+  // Planos válidos: START, BRONZE, PRATA, GOLD, IOM, MILLIONS
+  const planosValidos = ['START', 'BRONZE', 'PRATA', 'GOLD', 'IOM', 'MILLIONS'];
+  const temPlanoAtivo = workshop?.planoAtual && planosValidos.includes(workshop.planoAtual);
+
+  if (!temPlanoAtivo) {
     return (
       <div className="max-w-4xl mx-auto text-center py-12">
         <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Plano de Aceleração Não Ativo</h2>
           <p className="text-gray-600 mb-6">
             Para acessar o painel de aceleração, você precisa ter um plano habilitado.
+            {workshop?.planoAtual && (
+              <span className="block mt-2 text-sm">
+                Plano atual: <strong>{workshop.planoAtual}</strong> (não habilitado para aceleração)
+              </span>
+            )}
           </p>
           <Button onClick={() => window.location.href = '/cadastro-planos'}>
             Ver Planos Disponíveis
@@ -90,49 +127,57 @@ export default function PainelClienteAceleracao() {
         <p className="text-blue-100 mt-2">{workshop?.name}</p>
       </div>
 
-      {/* Progresso do Plano */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Target className="w-5 h-5" />
-            Progresso do Plano - {workshop?.planoAtual || 'FREE'}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-gray-600">Progresso Geral</span>
-              <span className="font-bold text-2xl text-blue-600">{progressoGeral}%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-4">
-              <div 
-                className="bg-blue-600 h-4 rounded-full transition-all duration-500"
-                style={{ width: `${progressoGeral}%` }}
-              />
-            </div>
-            <div className="grid grid-cols-3 gap-4 mt-4 text-center">
-              <div>
-                <p className="text-2xl font-bold text-green-600">
-                  {progresso?.filter(p => p.situacao === 'concluido').length || 0}
-                </p>
-                <p className="text-xs text-gray-600">Concluídos</p>
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Fase da Oficina */}
+        <FaseOficinaCard workshop={workshop} diagnostic={lastDiagnostic} />
+
+        {/* Progresso do Plano */}
+        <Card className="border-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="w-5 h-5 text-green-600" />
+              Progresso do Plano - {workshop?.planoAtual}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600">Progresso Geral</span>
+                <span className="font-bold text-2xl text-blue-600">{progressoGeral}%</span>
               </div>
-              <div>
-                <p className="text-2xl font-bold text-yellow-600">
-                  {progresso?.filter(p => p.situacao === 'em_andamento').length || 0}
-                </p>
-                <p className="text-xs text-gray-600">Em Andamento</p>
+              <div className="w-full bg-gray-200 rounded-full h-4">
+                <div 
+                  className="bg-blue-600 h-4 rounded-full transition-all duration-500"
+                  style={{ width: `${progressoGeral}%` }}
+                />
               </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-600">
-                  {progresso?.filter(p => p.situacao === 'nao_iniciado').length || 0}
-                </p>
-                <p className="text-xs text-gray-600">Não Iniciados</p>
+              <div className="grid grid-cols-3 gap-4 mt-4 text-center">
+                <div>
+                  <p className="text-2xl font-bold text-green-600">
+                    {progresso?.filter(p => p.situacao === 'concluido').length || 0}
+                  </p>
+                  <p className="text-xs text-gray-600">Concluídos</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-yellow-600">
+                    {progresso?.filter(p => p.situacao === 'em_andamento').length || 0}
+                  </p>
+                  <p className="text-xs text-gray-600">Em Andamento</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-600">
+                    {progresso?.filter(p => p.situacao === 'nao_iniciado').length || 0}
+                  </p>
+                  <p className="text-xs text-gray-600">Não Iniciados</p>
+                </div>
               </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Atividades de Implementação do Cronograma */}
+      <AtividadesImplementacao items={cronogramaItems} workshop={workshop} />
 
       <div className="grid md:grid-cols-2 gap-6">
         {/* Próximos Atendimentos */}
