@@ -7,10 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Calendar, CheckCircle, Clock, FileText, Target, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useNavigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 import FaseOficinaCard from "../components/aceleracao/FaseOficinaCard";
 import AtividadesImplementacao from "../components/aceleracao/AtividadesImplementacao";
 
 export default function PainelClienteAceleracao() {
+  const navigate = useNavigate();
+  
   const { data: user, isLoading: loadingUser } = useQuery({
     queryKey: ['current-user'],
     queryFn: () => base44.auth.me()
@@ -95,7 +99,7 @@ export default function PainelClienteAceleracao() {
               </span>
             )}
           </p>
-          <Button onClick={() => window.location.href = '/cadastro-planos'}>
+          <Button onClick={() => navigate(createPageUrl("Planos"))}>
             Ver Planos Disponíveis
           </Button>
         </div>
