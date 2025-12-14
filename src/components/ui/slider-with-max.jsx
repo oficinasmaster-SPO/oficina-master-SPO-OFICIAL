@@ -13,13 +13,13 @@ export default function SliderWithMax({
   max = 100
 }) {
   // Garantir que value é sempre um número
-  const numericValue = typeof value === 'number' ? value : parseInt(value) || min;
+  const numericValue = typeof value === 'number' ? value : (typeof value === 'string' ? parseInt(String(value).replace(/\D/g, '')) : 0) || min;
   
   const [isOver100, setIsOver100] = React.useState(numericValue > max);
   const [inputValue, setInputValue] = React.useState(numericValue > max ? numericValue : max);
 
   React.useEffect(() => {
-    const val = typeof value === 'number' ? value : parseInt(value) || min;
+    const val = typeof value === 'number' ? value : (typeof value === 'string' ? parseInt(String(value).replace(/\D/g, '')) : 0) || min;
     if (val > max) {
       setIsOver100(true);
       setInputValue(val);
