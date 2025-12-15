@@ -14,6 +14,7 @@ import FaseOficinaCard from "../components/aceleracao/FaseOficinaCard";
 import AtividadesImplementacao from "../components/aceleracao/AtividadesImplementacao";
 import PlanoAceleracaoMensal from "../components/aceleracao/PlanoAceleracaoMensal";
 import FeedbackPlanoModal from "../components/aceleracao/FeedbackPlanoModal";
+import AtasSection from "../components/aceleracao/AtasSection";
 
 export default function PainelClienteAceleracao() {
   const navigate = useNavigate();
@@ -76,6 +77,15 @@ export default function PainelClienteAceleracao() {
       );
       return diagnostics?.[0] || null;
     },
+    enabled: !!workshop?.id
+  });
+
+  const { data: atas = [] } = useQuery({
+    queryKey: ['meeting-minutes', workshop?.id],
+    queryFn: () => base44.entities.MeetingMinutes.filter(
+      { workshop_id: workshop.id, status: 'finalizada' },
+      '-meeting_date'
+    ),
     enabled: !!workshop?.id
   });
 
@@ -458,37 +468,8 @@ export default function PainelClienteAceleracao() {
         </Card>
       </div>
 
-      {/* Atas Disponíveis */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="w-5 h-5" />
-            Atas de Reuniões
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {atasDisponiveis.length === 0 ? (
-            <p className="text-gray-500 text-center py-4">Nenhuma ata disponível</p>
-          ) : (
-            <div className="space-y-3">
-              {atasDisponiveis.map((atendimento) => (
-                <div key={atendimento.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <p className="font-medium">
-                      {format(new Date(atendimento.data_realizada), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                    </p>
-                    <p className="text-sm text-gray-600">{atendimento.tipo_atendimento}</p>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    <FileText className="w-4 h-4 mr-2" />
-                    Ver ATA
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* ATAs de Reunião */}
+      <AtasSection atas={atas} workshop={workshop} />
 
       {/* Modal de Feedback */}
       <FeedbackPlanoModal

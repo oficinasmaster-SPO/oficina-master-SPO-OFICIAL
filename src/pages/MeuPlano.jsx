@@ -15,13 +15,10 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import DynamicHelpSystem from "@/components/help/DynamicHelpSystem";
 import QuickTipsBar from "@/components/help/QuickTipsBar";
-import VisualizarAtaModal from "@/components/aceleracao/VisualizarAtaModal";
 
 export default function MeuPlano() {
   const navigate = useNavigate();
   const [loadingUpgrade, setLoadingUpgrade] = useState(false);
-  const [showAta, setShowAta] = useState(false);
-  const [selectedAta, setSelectedAta] = useState(null);
 
   const { data: user, isLoading: isUserLoading } = useQuery({
     queryKey: ['current-user'],
@@ -46,14 +43,6 @@ export default function MeuPlano() {
     queryFn: () => base44.entities.PaymentHistory.filter({ 
       workshop_id: workshop.id 
     }, '-payment_date'),
-    enabled: !!workshop
-  });
-
-  const { data: atas = [], isLoading: loadingAtas } = useQuery({
-    queryKey: ['meeting-minutes', workshop?.id],
-    queryFn: () => base44.entities.MeetingMinutes.filter({ 
-      workshop_id: workshop.id 
-    }, '-meeting_date'),
     enabled: !!workshop
   });
 
@@ -308,53 +297,7 @@ export default function MeuPlano() {
           </CardContent>
         </Card>
 
-        {/* ATAs de Reunião */}
-        <Card className="shadow-lg mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="w-5 h-5 text-blue-600" />
-              ATAs de Reunião
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loadingAtas ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-              </div>
-            ) : atas.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                Nenhuma ATA gerada ainda
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {atas.map((ata) => (
-                  <div 
-                    key={ata.id} 
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-                    onClick={() => {
-                      setSelectedAta(ata);
-                      setShowAta(true);
-                    }}
-                  >
-                    <div className="flex items-center gap-4">
-                      <FileText className="w-5 h-5 text-blue-600" />
-                      <div>
-                        <div className="font-medium">{ata.code} - {ata.tipo_aceleracao}</div>
-                        <div className="text-sm text-gray-600">
-                          {format(new Date(ata.meeting_date), "dd/MM/yyyy", { locale: ptBR })} às {ata.meeting_time}
-                        </div>
-                        <div className="text-xs text-gray-500">Consultor: {ata.consultor_name}</div>
-                      </div>
-                    </div>
-                    <Badge variant={ata.status === 'finalizada' ? 'success' : 'secondary'}>
-                      {ata.status === 'finalizada' ? 'Finalizada' : 'Rascunho'}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+
 
         {/* Histórico de Pagamentos */}
         <Card className="shadow-lg">
@@ -410,15 +353,6 @@ export default function MeuPlano() {
           </CardContent>
         </Card>
 
-        {showAta && selectedAta && (
-          <VisualizarAtaModal
-            ata={selectedAta}
-            onClose={() => {
-              setShowAta(false);
-              setSelectedAta(null);
-            }}
-          />
-        )}
       </div>
     </div>
   );

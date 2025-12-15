@@ -2,17 +2,24 @@ import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { FileText, Printer, Download } from "lucide-react";
+import { FileText, Printer, Download, Building2, MapPin, Award } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { downloadAtaPDF } from "./AtasPDFGenerator";
+import { toast } from "sonner";
 
-export default function VisualizarAtaModal({ ata, onClose }) {
+export default function VisualizarAtaModal({ ata, workshop, onClose }) {
   const handlePrint = () => {
     window.print();
   };
 
-  const handleDownload = async () => {
-    // Implementar geração de PDF posteriormente
-    alert("Funcionalidade de download em desenvolvimento");
+  const handleDownload = () => {
+    try {
+      downloadAtaPDF(ata, workshop);
+      toast.success("PDF baixado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao gerar PDF:", error);
+      toast.error("Erro ao gerar PDF");
+    }
   };
 
   if (!ata) return null;
@@ -133,6 +140,88 @@ export default function VisualizarAtaModal({ ata, onClose }) {
               <p className="whitespace-pre-wrap">{ata.visao_geral_projeto || "Não informado"}</p>
             </CardContent>
           </Card>
+
+          {workshop && (
+            <Card className="print:break-before-page">
+              <CardContent className="pt-6">
+                <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                  <Building2 className="w-5 h-5 text-blue-600" />
+                  Dados da Oficina Cliente
+                </h3>
+                
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="font-semibold text-gray-700">Nome da Oficina:</p>
+                    <p className="text-gray-900">{workshop.name}</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-700">CNPJ:</p>
+                    <p className="text-gray-900">{workshop.cnpj || 'Não informado'}</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-700 flex items-center gap-1">
+                      <MapPin className="w-4 h-4" />
+                      Localização:
+                    </p>
+                    <p className="text-gray-900">{workshop.city} / {workshop.state}</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-700 flex items-center gap-1">
+                      <Award className="w-4 h-4" />
+                      Plano Atual:
+                    </p>
+                    <p className="text-gray-900">{workshop.planoAtual || 'FREE'}</p>
+                  </div>
+                  {workshop.segment_auto && (
+                    <div>
+                      <p className="font-semibold text-gray-700">Segmento:</p>
+                      <p className="text-gray-900">{workshop.segment_auto}</p>
+                    </div>
+                  )}
+                  {workshop.employees_count && (
+                    <div>
+                      <p className="font-semibold text-gray-700">Funcionários:</p>
+                      <p className="text-gray-900">{workshop.employees_count}</p>
+                    </div>
+                  )}
+                </div>
+
+                {(workshop.monthly_revenue || workshop.monthly_goals?.projected_revenue) && (
+                  <div className="mt-4 pt-4 border-t">
+                    <p className="font-semibold text-gray-700 mb-2">Visão Geral & Acesso Rápido:</p>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      {workshop.monthly_revenue && (
+                        <div className="bg-blue-50 p-3 rounded">
+                          <p className="text-gray-600 text-xs">Faixa de Faturamento:</p>
+                          <p className="font-semibold text-blue-900">{workshop.monthly_revenue}</p>
+                        </div>
+                      )}
+                      {workshop.monthly_goals?.projected_revenue && (
+                        <div className="bg-green-50 p-3 rounded">
+                          <p className="text-gray-600 text-xs">Meta Mensal:</p>
+                          <p className="font-semibold text-green-900">
+                            R$ {workshop.monthly_goals.projected_revenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </p>
+                        </div>
+                      )}
+                      {workshop.maturity_level && (
+                        <div className="bg-purple-50 p-3 rounded">
+                          <p className="text-gray-600 text-xs">Fase Atual:</p>
+                          <p className="font-semibold text-purple-900">Fase {workshop.maturity_level}</p>
+                        </div>
+                      )}
+                      {workshop.services_offered?.length > 0 && (
+                        <div className="bg-orange-50 p-3 rounded">
+                          <p className="text-gray-600 text-xs">Serviços Oferecidos:</p>
+                          <p className="font-semibold text-orange-900">{workshop.services_offered.length} serviços</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           <div className="text-sm text-gray-500 text-center pt-6 border-t print:hidden">
             <p>Gerado por: {ata.created_by}</p>
