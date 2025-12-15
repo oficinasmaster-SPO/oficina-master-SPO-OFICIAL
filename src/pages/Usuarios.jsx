@@ -551,13 +551,12 @@ export default function Usuarios() {
                 </div>
 
                 <div>
-                  <Label>Empresa (opcional)</Label>
-                  <Select name="workshop_id" defaultValue={selectedUser.workshop_id || ""}>
+                  <Label>Empresa *</Label>
+                  <Select name="workshop_id" defaultValue={selectedUser.workshop_id || ""} required>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione a empresa" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={null}>Sem empresa</SelectItem>
                       {workshops.map(w => (
                         <SelectItem key={w.id} value={w.id}>
                           {w.name} - {w.planoAtual || "FREE"}
@@ -568,18 +567,17 @@ export default function Usuarios() {
                 </div>
 
                 <div>
-                  <Label>Cargo (opcional)</Label>
-                  <Input name="position" defaultValue={selectedUser.position || ""} placeholder="Ex: Gerente de Operações" />
+                  <Label>Cargo *</Label>
+                  <Input name="position" defaultValue={selectedUser.position || ""} placeholder="Ex: Gerente de Operações" required />
                 </div>
 
                 <div>
-                  <Label>Função (opcional)</Label>
-                  <Select name="job_role" defaultValue={selectedUser.job_role || ""}>
+                  <Label>Função *</Label>
+                  <Select name="job_role" defaultValue={selectedUser.job_role || ""} required>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione uma função" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={null}>Nenhuma</SelectItem>
                       <SelectItem value="socio">Sócio</SelectItem>
                       <SelectItem value="diretor">Diretor</SelectItem>
                       <SelectItem value="gerente">Gerente</SelectItem>
@@ -597,13 +595,12 @@ export default function Usuarios() {
                 </div>
 
                 <div>
-                  <Label>Área (opcional)</Label>
-                  <Select name="area" defaultValue={selectedUser.area || ""}>
+                  <Label>Área *</Label>
+                  <Select name="area" defaultValue={selectedUser.area || ""} required>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione uma área" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={null}>Nenhuma</SelectItem>
                       <SelectItem value="vendas">Vendas</SelectItem>
                       <SelectItem value="comercial">Comercial</SelectItem>
                       <SelectItem value="marketing">Marketing</SelectItem>
@@ -616,8 +613,8 @@ export default function Usuarios() {
                 </div>
 
                 <div>
-                  <Label>Telefone (opcional)</Label>
-                  <Input name="telefone" defaultValue={selectedUser.telefone || ""} placeholder="(00) 00000-0000" />
+                  <Label>Telefone *</Label>
+                  <Input name="telefone" defaultValue={selectedUser.telefone || ""} placeholder="(00) 00000-0000" required />
                 </div>
 
                 <div className="flex justify-end gap-2">
