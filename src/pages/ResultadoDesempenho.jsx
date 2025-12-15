@@ -59,18 +59,8 @@ export default function ResultadoDesempenho() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-      </div>
-    );
-  }
-
-  if (!diagnostic || !employee) return null;
-
   const { data: actionPlan } = useQuery({
-    queryKey: ['action-plan', diagnostic.id],
+    queryKey: ['action-plan', diagnostic?.id],
     queryFn: async () => {
       const plans = await base44.entities.DiagnosticActionPlan.filter({
         diagnostic_id: diagnostic.id,
@@ -119,6 +109,16 @@ export default function ResultadoDesempenho() {
       toast.success('Atividade atualizada!');
     }
   });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  if (!diagnostic || !employee) return null;
 
   const classificationInfo = classificationRules[diagnostic.classification];
   

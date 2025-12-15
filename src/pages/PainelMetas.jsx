@@ -63,16 +63,6 @@ export default function PainelMetas() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-      </div>
-    );
-  }
-
-  if (!breakdown) return null;
-
   const { data: actionPlan } = useQuery({
     queryKey: ['action-plan', managementDiagnostic?.id],
     queryFn: async () => {
@@ -123,6 +113,16 @@ export default function PainelMetas() {
       toast.success('Atividade atualizada!');
     }
   });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  if (!breakdown) return null;
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 

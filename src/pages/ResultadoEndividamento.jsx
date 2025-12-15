@@ -54,16 +54,6 @@ export default function ResultadoEndividamento() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-      </div>
-    );
-  }
-
-  if (!analysis) return null;
-
   const { data: actionPlan } = useQuery({
     queryKey: ['action-plan', analysis.id],
     queryFn: async () => {
@@ -114,6 +104,16 @@ export default function ResultadoEndividamento() {
       toast.success('Atividade atualizada!');
     }
   });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  if (!analysis) return null;
 
   // Dados para gráficos
   const curvaEndividamentoData = analysis.meses.map(m => ({

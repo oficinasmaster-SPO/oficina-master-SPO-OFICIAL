@@ -55,18 +55,6 @@ export default function ResultadoAutoavaliacao() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-      </div>
-    );
-  }
-
-  if (!assessment) return null;
-
-  const criteriaConfig = assessmentCriteria[assessment.assessment_type];
-
   const { data: actionPlan } = useQuery({
     queryKey: ['action-plan', assessment.id],
     queryFn: async () => {
@@ -117,6 +105,18 @@ export default function ResultadoAutoavaliacao() {
       toast.success('Atividade atualizada!');
     }
   });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  if (!assessment) return null;
+
+  const criteriaConfig = assessmentCriteria[assessment.assessment_type];
   
   const radarData = Object.entries(assessment.scores).map(([key, value]) => {
     const criterion = criteriaConfig.criteria.find(c => c.key === key);
