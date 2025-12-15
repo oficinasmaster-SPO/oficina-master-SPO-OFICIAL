@@ -36,6 +36,7 @@ export default function ConvidarColaborador() {
   });
 
   const jobRoles = [
+    { value: "socio", label: "Sócio" },
     { value: "diretor", label: "Diretor" },
     { value: "supervisor_loja", label: "Supervisor de Loja" },
     { value: "gerente", label: "Gerente" },
@@ -51,6 +52,8 @@ export default function ConvidarColaborador() {
     { value: "administrativo", label: "Administrativo" },
     { value: "motoboy", label: "Motoboy" },
     { value: "lavador", label: "Lavador" },
+    { value: "acelerador", label: "Acelerador" },
+    { value: "consultor", label: "Consultor" },
     { value: "outros", label: "Outros" }
   ];
 
