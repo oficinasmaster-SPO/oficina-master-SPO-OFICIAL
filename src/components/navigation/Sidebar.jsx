@@ -582,6 +582,14 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: FileText,
           description: 'Upload e gestão de MAPs',
           adminOnly: true
+        },
+        { 
+          name: 'Usuários Administrativos', 
+          href: createPageUrl('AdminUsuarios'), 
+          icon: Users,
+          description: 'Gestão de usuários administrativos',
+          adminOnly: true,
+          highlight: true
         }
       ]
     }
