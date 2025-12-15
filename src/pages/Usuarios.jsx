@@ -10,7 +10,12 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UserPlus, Loader2, Mail, Phone, Trash2, UserX, Building2, Eye, Edit, ExternalLink, Filter, X, Users, Key, Copy, CheckCircle } from "lucide-react";
+import { 
+  UserPlus, Loader2, Mail, Phone, Trash2, UserX, Building2, Eye, Edit, 
+  ExternalLink, Filter, X, Users, Key, Copy, CheckCircle, ChevronDown,
+  Home, BarChart3, Wrench, Calculator, Target, Brain, Package, FileCheck,
+  GraduationCap, Lightbulb, Briefcase
+} from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -21,6 +26,7 @@ export default function Usuarios() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [resetPasswordDialog, setResetPasswordDialog] = useState({ open: false, password: "" });
+  const [expandedRow, setExpandedRow] = useState(null);
   
   // Filtros avançados
   const [filters, setFilters] = useState({
@@ -349,102 +355,306 @@ export default function Usuarios() {
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
                   {filteredUsers.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-4 py-4">
-                        <div className="flex items-center gap-2">
-                          <Building2 className="w-4 h-4 text-gray-500 flex-shrink-0" />
-                          <div>
-                            <p className="font-medium text-gray-900">{user.workshopName}</p>
-                            {user.workshopCity && user.workshopState && (
-                              <p className="text-xs text-gray-500">{user.workshopCity} - {user.workshopState}</p>
-                            )}
+                    <React.Fragment key={user.id}>
+                      <tr className="hover:bg-gray-50 transition-colors">
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-2">
+                            <Building2 className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                            <div>
+                              <p className="font-medium text-gray-900">{user.workshopName}</p>
+                              {user.workshopCity && user.workshopState && (
+                                <p className="text-xs text-gray-500">{user.workshopCity} - {user.workshopState}</p>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4">
-                        <div>
-                          <p className="font-medium text-gray-900">{user.full_name || "Sem nome"}</p>
-                          <p className="text-xs text-gray-500">{user.email}</p>
-                          {user.position && <p className="text-xs text-gray-600 mt-0.5">{user.position}</p>}
-                        </div>
-                      </td>
-                      <td className="px-4 py-4">
-                        <Badge className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-                          {user.workshopPlan}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-4">
-                        <p className="text-sm text-gray-700">
-                          {user.planStartDate ? format(new Date(user.planStartDate), 'dd/MM/yyyy') : '-'}
-                        </p>
-                      </td>
-                      <td className="px-4 py-4">
-                        <p className="text-sm text-gray-700">
-                          {user.planEndDate ? format(new Date(user.planEndDate), 'dd/MM/yyyy') : '-'}
-                        </p>
-                      </td>
-                      <td className="px-4 py-4">
-                        <Badge className={
-                          user.user_status === 'ativo' ? 'bg-green-100 text-green-700' :
-                          user.user_status === 'ferias' ? 'bg-blue-100 text-blue-700' :
-                          'bg-gray-100 text-gray-700'
-                        }>
-                          {user.user_status || 'ativo'}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="flex items-center justify-center gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setSelectedUser(user);
-                              setIsDialogOpen(true);
-                            }}
-                            title="Ver Detalhes"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setSelectedUser(user);
-                              setIsDialogOpen(true);
-                            }}
-                            title="Editar"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          {user.workshop_id && (
-                            <>
+                        </td>
+                        <td className="px-4 py-4">
+                          <div>
+                            <p className="font-medium text-gray-900">{user.full_name || "Sem nome"}</p>
+                            <p className="text-xs text-gray-500">{user.email}</p>
+                            {user.position && <p className="text-xs text-gray-600 mt-0.5">{user.position}</p>}
+                          </div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <Badge className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+                            {user.workshopPlan}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-4">
+                          <p className="text-sm text-gray-700">
+                            {user.planStartDate ? format(new Date(user.planStartDate), 'dd/MM/yyyy') : '-'}
+                          </p>
+                        </td>
+                        <td className="px-4 py-4">
+                          <p className="text-sm text-gray-700">
+                            {user.planEndDate ? format(new Date(user.planEndDate), 'dd/MM/yyyy') : '-'}
+                          </p>
+                        </td>
+                        <td className="px-4 py-4">
+                          <Badge className={
+                            user.user_status === 'ativo' ? 'bg-green-100 text-green-700' :
+                            user.user_status === 'ferias' ? 'bg-blue-100 text-blue-700' :
+                            'bg-gray-100 text-gray-700'
+                          }>
+                            {user.user_status || 'ativo'}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex items-center justify-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setSelectedUser(user);
+                                setIsDialogOpen(true);
+                              }}
+                              title="Editar"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            {user.workshop_id && (
                               <Button
                                 size="sm"
                                 variant="default"
-                                className="bg-purple-600 hover:bg-purple-700"
-                                onClick={() => {
-                                  navigate(`${createPageUrl("GestaoOficina")}?workshop_id=${user.workshop_id}`);
-                                }}
-                                title="Gestão da Oficina"
+                                className="bg-blue-600 hover:bg-blue-700"
+                                onClick={() => setExpandedRow(expandedRow === user.id ? null : user.id)}
+                                title="Acessar Páginas do Cliente"
                               >
+                                <ExternalLink className="w-4 h-4 mr-1" />
+                                {expandedRow === user.id ? <ChevronDown className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                              </Button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                      
+                      {expandedRow === user.id && user.workshop_id && (
+                        <tr className="bg-blue-50">
+                          <td colSpan="7" className="px-4 py-6">
+                            <div className="max-w-6xl mx-auto">
+                              <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
                                 <ExternalLink className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="border-green-600 text-green-700 hover:bg-green-50"
-                                onClick={() => {
-                                  navigate(`${createPageUrl("Colaboradores")}?workshop_id=${user.workshop_id}`);
-                                }}
-                                title="Ver Colaboradores"
-                              >
-                                <Users className="w-4 h-4" />
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
+                                Acessar como {user.full_name}
+                              </h4>
+                              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                {/* Início */}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="justify-start"
+                                  onClick={() => navigate(`${createPageUrl("Home")}?workshop_id=${user.workshop_id}`)}
+                                >
+                                  <Home className="w-4 h-4 mr-2" />
+                                  Tela Início
+                                </Button>
+
+                                {/* Dashboard & Rankings */}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="justify-start"
+                                  onClick={() => navigate(`${createPageUrl("DashboardOverview")}?workshop_id=${user.workshop_id}`)}
+                                >
+                                  <BarChart3 className="w-4 h-4 mr-2" />
+                                  Visão Geral
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="justify-start"
+                                  onClick={() => navigate(`${createPageUrl("Gamificacao")}?workshop_id=${user.workshop_id}`)}
+                                >
+                                  <Target className="w-4 h-4 mr-2" />
+                                  Rankings
+                                </Button>
+
+                                {/* Cadastros */}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="justify-start bg-purple-50 border-purple-200"
+                                  onClick={() => navigate(`${createPageUrl("GestaoOficina")}?workshop_id=${user.workshop_id}`)}
+                                >
+                                  <Building2 className="w-4 h-4 mr-2" />
+                                  Gestão Oficina
+                                </Button>
+
+                                {/* Pátio Operação */}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="justify-start"
+                                  onClick={() => navigate(`${createPageUrl("Tarefas")}?workshop_id=${user.workshop_id}`)}
+                                >
+                                  <Wrench className="w-4 h-4 mr-2" />
+                                  Tarefas QGP
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="justify-start"
+                                  onClick={() => navigate(`${createPageUrl("RegistroDiario")}?workshop_id=${user.workshop_id}`)}
+                                >
+                                  <Wrench className="w-4 h-4 mr-2" />
+                                  Diário Produção
+                                </Button>
+
+                                {/* Resultados */}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="justify-start"
+                                  onClick={() => navigate(`${createPageUrl("HistoricoMetas")}?workshop_id=${user.workshop_id}`)}
+                                >
+                                  <BarChart3 className="w-4 h-4 mr-2" />
+                                  Hist. Metas
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="justify-start"
+                                  onClick={() => navigate(`${createPageUrl("DRETCMP2")}?workshop_id=${user.workshop_id}`)}
+                                >
+                                  <Calculator className="w-4 h-4 mr-2" />
+                                  DRE & TCMP²
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="justify-start"
+                                  onClick={() => navigate(`${createPageUrl("DiagnosticoOS")}?workshop_id=${user.workshop_id}`)}
+                                >
+                                  <Calculator className="w-4 h-4 mr-2" />
+                                  OS R70/I30
+                                </Button>
+
+                                {/* Pessoas & RH */}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="justify-start bg-green-50 border-green-200"
+                                  onClick={() => navigate(`${createPageUrl("Colaboradores")}?workshop_id=${user.workshop_id}`)}
+                                >
+                                  <Users className="w-4 h-4 mr-2" />
+                                  Colaboradores
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="justify-start"
+                                  onClick={() => navigate(`${createPageUrl("Autoavaliacoes")}?workshop_id=${user.workshop_id}`)}
+                                >
+                                  <Target className="w-4 h-4 mr-2" />
+                                  Autoavaliações
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="justify-start"
+                                  onClick={() => navigate(`${createPageUrl("CDCList")}?workshop_id=${user.workshop_id}`)}
+                                >
+                                  <Target className="w-4 h-4 mr-2" />
+                                  CDC
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="justify-start"
+                                  onClick={() => navigate(`${createPageUrl("COEXList")}?workshop_id=${user.workshop_id}`)}
+                                >
+                                  <Target className="w-4 h-4 mr-2" />
+                                  COEX
+                                </Button>
+
+                                {/* Diagnósticos & IA */}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="justify-start"
+                                  onClick={() => navigate(`${createPageUrl("IAAnalytics")}?workshop_id=${user.workshop_id}`)}
+                                >
+                                  <Brain className="w-4 h-4 mr-2" />
+                                  IA Analytics
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="justify-start"
+                                  onClick={() => navigate(`${createPageUrl("Historico")}?workshop_id=${user.workshop_id}`)}
+                                >
+                                  <Brain className="w-4 h-4 mr-2" />
+                                  Histórico
+                                </Button>
+
+                                {/* Processos */}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="justify-start"
+                                  onClick={() => navigate(`${createPageUrl("MeusProcessos")}?workshop_id=${user.workshop_id}`)}
+                                >
+                                  <Package className="w-4 h-4 mr-2" />
+                                  Processos
+                                </Button>
+
+                                {/* Documentos */}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="justify-start"
+                                  onClick={() => navigate(`${createPageUrl("RepositorioDocumentos")}?workshop_id=${user.workshop_id}`)}
+                                >
+                                  <FileCheck className="w-4 h-4 mr-2" />
+                                  Documentos
+                                </Button>
+
+                                {/* Treinamentos */}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="justify-start"
+                                  onClick={() => navigate(`${createPageUrl("GerenciarTreinamentos")}?workshop_id=${user.workshop_id}`)}
+                                >
+                                  <GraduationCap className="w-4 h-4 mr-2" />
+                                  Treinamentos
+                                </Button>
+
+                                {/* Gestão Operação */}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="justify-start"
+                                  onClick={() => navigate(`${createPageUrl("DicasOperacao")}?workshop_id=${user.workshop_id}`)}
+                                >
+                                  <Lightbulb className="w-4 h-4 mr-2" />
+                                  Dicas Operação
+                                </Button>
+
+                                {/* Aceleração */}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="justify-start bg-orange-50 border-orange-200"
+                                  onClick={() => navigate(`${createPageUrl("PainelClienteAceleracao")}?workshop_id=${user.workshop_id}`)}
+                                >
+                                  <Briefcase className="w-4 h-4 mr-2" />
+                                  Aceleração
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="justify-start"
+                                  onClick={() => navigate(`${createPageUrl("CronogramaImplementacao")}?workshop_id=${user.workshop_id}`)}
+                                >
+                                  <Briefcase className="w-4 h-4 mr-2" />
+                                  Cronograma
+                                </Button>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   ))}
                 </tbody>
               </table>
