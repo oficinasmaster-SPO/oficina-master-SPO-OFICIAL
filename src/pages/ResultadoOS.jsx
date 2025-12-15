@@ -21,51 +21,8 @@ export default function ResultadoOS() {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const queryClient = useQueryClient();
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    try {
-      const urlParams = new URLSearchParams(window.location.search);
-      const diagnosticId = urlParams.get("id");
-
-      if (!diagnosticId) {
-        toast.error("Diagnóstico não encontrado");
-        navigate(createPageUrl("Home"));
-        return;
-      }
-
-      const diagnostics = await base44.entities.ServiceOrderDiagnostic.list();
-      const currentDiagnostic = diagnostics.find(d => d.id === diagnosticId);
-
-      if (!currentDiagnostic) {
-        toast.error("Diagnóstico não encontrado");
-        navigate(createPageUrl("Home"));
-        return;
-      }
-
-      setDiagnostic(currentDiagnostic);
-    } catch (error) {
-      console.error(error);
-      toast.error("Erro ao carregar resultado");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-      </div>
-    );
-  }
-
-  if (!diagnostic) return null;
-
   const { data: actionPlan } = useQuery({
-    queryKey: ['action-plan', diagnostic.id],
+    queryKey: ['action-plan', diagnostic?.id],
     queryFn: async () => {
       const plans = await base44.entities.DiagnosticActionPlan.filter({
         diagnostic_id: diagnostic.id,
@@ -114,6 +71,49 @@ export default function ResultadoOS() {
       toast.success('Atividade atualizada!');
     }
   });
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const diagnosticId = urlParams.get("id");
+
+      if (!diagnosticId) {
+        toast.error("Diagnóstico não encontrado");
+        navigate(createPageUrl("Home"));
+        return;
+      }
+
+      const diagnostics = await base44.entities.ServiceOrderDiagnostic.list();
+      const currentDiagnostic = diagnostics.find(d => d.id === diagnosticId);
+
+      if (!currentDiagnostic) {
+        toast.error("Diagnóstico não encontrado");
+        navigate(createPageUrl("Home"));
+        return;
+      }
+
+      setDiagnostic(currentDiagnostic);
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao carregar resultado");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  if (!diagnostic) return null;
 
   const classificationConfig = {
     perfeita: {

@@ -23,6 +23,57 @@ export default function ResultadoDISC() {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const queryClient = useQueryClient();
 
+  const { data: actionPlan } = useQuery({
+    queryKey: ['action-plan', diagnostic?.id],
+    queryFn: async () => {
+      const plans = await base44.entities.DiagnosticActionPlan.filter({
+        diagnostic_id: diagnostic.id,
+        diagnostic_type: 'DISCDiagnostic'
+      });
+      return plans.sort((a, b) => new Date(b.created_date) - new Date(a.created_date))[0];
+    },
+    enabled: !!diagnostic?.id
+  });
+
+  const generatePlanMutation = useMutation({
+    mutationFn: async () => base44.functions.invoke('generateActionPlanDISC', { diagnostic_id: diagnostic.id }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['action-plan', diagnostic.id]);
+      toast.success('Plano gerado!');
+    }
+  });
+
+  const refinePlanMutation = useMutation({
+    mutationFn: async ({ feedback }) => base44.functions.invoke('refineActionPlan', {
+      plan_id: actionPlan.id,
+      feedback_content: feedback.content,
+      feedback_type: feedback.type,
+      audio_url: feedback.audio_url
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['action-plan', diagnostic.id]);
+      setShowFeedbackModal(false);
+      toast.success('Plano refinado!');
+    }
+  });
+
+  const updateActivityMutation = useMutation({
+    mutationFn: async ({ activityIndex, status }) => {
+      const updatedSchedule = [...actionPlan.plan_data.implementation_schedule];
+      updatedSchedule[activityIndex].status = status;
+      if (status === 'concluida') updatedSchedule[activityIndex].completed_date = new Date().toISOString();
+      const completion = Math.round((updatedSchedule.filter(a => a.status === 'concluida').length / updatedSchedule.length) * 100);
+      return await base44.entities.DiagnosticActionPlan.update(actionPlan.id, {
+        plan_data: { ...actionPlan.plan_data, implementation_schedule: updatedSchedule },
+        completion_percentage: completion
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['action-plan', diagnostic.id]);
+      toast.success('Atividade atualizada!');
+    }
+  });
+
   useEffect(() => {
     loadData();
   }, []);
@@ -115,57 +166,6 @@ export default function ResultadoDISC() {
 
   const scores = diagnostic.profile_scores;
   const dominantProfile = profileInfo[diagnostic.dominant_profile];
-
-  const { data: actionPlan } = useQuery({
-    queryKey: ['action-plan', diagnostic.id],
-    queryFn: async () => {
-      const plans = await base44.entities.DiagnosticActionPlan.filter({
-        diagnostic_id: diagnostic.id,
-        diagnostic_type: 'DISCDiagnostic'
-      });
-      return plans.sort((a, b) => new Date(b.created_date) - new Date(a.created_date))[0];
-    },
-    enabled: !!diagnostic?.id
-  });
-
-  const generatePlanMutation = useMutation({
-    mutationFn: async () => base44.functions.invoke('generateActionPlanDISC', { diagnostic_id: diagnostic.id }),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['action-plan', diagnostic.id]);
-      toast.success('Plano gerado!');
-    }
-  });
-
-  const refinePlanMutation = useMutation({
-    mutationFn: async ({ feedback }) => base44.functions.invoke('refineActionPlan', {
-      plan_id: actionPlan.id,
-      feedback_content: feedback.content,
-      feedback_type: feedback.type,
-      audio_url: feedback.audio_url
-    }),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['action-plan', diagnostic.id]);
-      setShowFeedbackModal(false);
-      toast.success('Plano refinado!');
-    }
-  });
-
-  const updateActivityMutation = useMutation({
-    mutationFn: async ({ activityIndex, status }) => {
-      const updatedSchedule = [...actionPlan.plan_data.implementation_schedule];
-      updatedSchedule[activityIndex].status = status;
-      if (status === 'concluida') updatedSchedule[activityIndex].completed_date = new Date().toISOString();
-      const completion = Math.round((updatedSchedule.filter(a => a.status === 'concluida').length / updatedSchedule.length) * 100);
-      return await base44.entities.DiagnosticActionPlan.update(actionPlan.id, {
-        plan_data: { ...actionPlan.plan_data, implementation_schedule: updatedSchedule },
-        completion_percentage: completion
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['action-plan', diagnostic.id]);
-      toast.success('Atividade atualizada!');
-    }
-  });
 
   // Dados para gráfico de barras
   const barChartData = [

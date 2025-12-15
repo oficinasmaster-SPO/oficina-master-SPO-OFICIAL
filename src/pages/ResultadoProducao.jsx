@@ -22,52 +22,8 @@ export default function ResultadoProducao() {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const queryClient = useQueryClient();
 
-  useEffect(() => {
-    loadDiagnostic();
-  }, []);
-
-  const loadDiagnostic = async () => {
-    try {
-      const urlParams = new URLSearchParams(window.location.search);
-      const id = urlParams.get("id");
-      
-      if (!id) {
-        navigate(createPageUrl("Home"));
-        return;
-      }
-
-      const diagnostics = await base44.entities.ProductivityDiagnostic.list();
-      const diag = diagnostics.find(d => d.id === id);
-      
-      if (!diag) {
-        navigate(createPageUrl("Home"));
-        return;
-      }
-
-      setDiagnostic(diag);
-
-      const employees = await base44.entities.Employee.list();
-      const emp = employees.find(e => e.id === diag.employee_id);
-      setEmployee(emp);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-green-600" />
-      </div>
-    );
-  }
-
-  if (!diagnostic || !employee) return null;
-
   const { data: actionPlan } = useQuery({
-    queryKey: ['action-plan', diagnostic.id],
+    queryKey: ['action-plan', diagnostic?.id],
     queryFn: async () => {
       const plans = await base44.entities.DiagnosticActionPlan.filter({
         diagnostic_id: diagnostic.id,
@@ -116,6 +72,50 @@ export default function ResultadoProducao() {
       toast.success('Atividade atualizada!');
     }
   });
+
+  useEffect(() => {
+    loadDiagnostic();
+  }, []);
+
+  const loadDiagnostic = async () => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const id = urlParams.get("id");
+      
+      if (!id) {
+        navigate(createPageUrl("Home"));
+        return;
+      }
+
+      const diagnostics = await base44.entities.ProductivityDiagnostic.list();
+      const diag = diagnostics.find(d => d.id === id);
+      
+      if (!diag) {
+        navigate(createPageUrl("Home"));
+        return;
+      }
+
+      setDiagnostic(diag);
+
+      const employees = await base44.entities.Employee.list();
+      const emp = employees.find(e => e.id === diag.employee_id);
+      setEmployee(emp);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-green-600" />
+      </div>
+    );
+  }
+
+  if (!diagnostic || !employee) return null;
 
   const getClassificationInfo = () => {
     const configs = {
