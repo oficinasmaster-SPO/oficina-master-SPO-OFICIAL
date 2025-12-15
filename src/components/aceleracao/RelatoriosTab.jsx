@@ -12,7 +12,7 @@ import { format, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths } from
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import AIInsightsCard from "../ai/AIInsightsCard";
-import { useAIInsights } from "../hooks/useAIInsights";
+import { useAIInsights } from "@/components/hooks/useAIInsights";
 
 export default function RelatoriosTab({ user }) {
   const [filtros, setFiltros] = useState({

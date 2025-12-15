@@ -16,7 +16,7 @@ import PlanoAceleracaoMensal from "../components/aceleracao/PlanoAceleracaoMensa
 import FeedbackPlanoModal from "../components/aceleracao/FeedbackPlanoModal";
 import AtasSection from "../components/aceleracao/AtasSection";
 import AIInsightsCard from "../components/ai/AIInsightsCard";
-import { useAIInsights } from "../components/hooks/useAIInsights";
+import { useAIInsights } from "@/components/hooks/useAIInsights";
 
 export default function PainelClienteAceleracao() {
   const navigate = useNavigate();
