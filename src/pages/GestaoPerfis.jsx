@@ -4,11 +4,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Copy, Power, Trash2, Shield, AlertCircle, Users } from "lucide-react";
+import { Plus, Edit, Copy, Power, Trash2, Shield, AlertCircle, Users, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import ProfileEditor from "@/components/profiles/ProfileEditor";
 import ProfileCreator from "@/components/profiles/ProfileCreator";
 import ProfileAudit from "@/components/profiles/ProfileAudit";
+import { systemRoles } from "@/components/lib/systemRoles";
 
 export default function GestaoPerfis() {
   const [selectedProfile, setSelectedProfile] = useState(null);
@@ -25,6 +26,9 @@ export default function GestaoPerfis() {
     queryKey: ["users"],
     queryFn: () => base44.entities.User.list(),
   });
+
+  // Calcular total de roles disponíveis no sistema
+  const totalSystemRoles = systemRoles.reduce((sum, m) => sum + m.roles.length, 0);
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.UserProfile.delete(id),
@@ -45,11 +49,16 @@ export default function GestaoPerfis() {
 
   const duplicateMutation = useMutation({
     mutationFn: async (profile) => {
+      // Verificar se já existe perfil com mesmo nome
+      const existingName = profiles.find(p => p.name === `${profile.name} (Cópia)`);
+      const copyNumber = existingName ? ` ${profiles.filter(p => p.name.startsWith(profile.name)).length}` : '';
+      
       const newProfile = {
         ...profile,
-        name: `${profile.name} (Cópia)`,
+        name: `${profile.name} (Cópia)${copyNumber}`,
         cloned_from: profile.id,
         users_count: 0,
+        is_system: false,
       };
       delete newProfile.id;
       delete newProfile.created_date;
@@ -75,6 +84,10 @@ export default function GestaoPerfis() {
   };
 
   const handleDelete = (profile) => {
+    if (profile.is_system) {
+      toast.error("Perfis do sistema não podem ser excluídos");
+      return;
+    }
     if (getUsersCountByProfile(profile.id) > 0) {
       toast.error("Não é possível excluir perfil com usuários vinculados");
       return;
@@ -142,7 +155,7 @@ export default function GestaoPerfis() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
@@ -173,6 +186,17 @@ export default function GestaoPerfis() {
                 {externalProfiles.length}
               </p>
               <p className="text-sm text-gray-600">Perfis Externos</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <RefreshCw className="w-12 h-12 mx-auto text-orange-600 mb-2" />
+              <p className="text-3xl font-bold text-gray-900">
+                {totalSystemRoles}
+              </p>
+              <p className="text-sm text-gray-600">Roles Disponíveis</p>
             </div>
           </CardContent>
         </Card>
@@ -235,7 +259,7 @@ function ProfileSection({
                 className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
               >
                 <div className="flex-1">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 flex-wrap">
                     <h3 className="font-semibold text-gray-900">
                       {profile.name}
                     </h3>
@@ -246,6 +270,16 @@ function ProfileSection({
                     >
                       {profile.status}
                     </Badge>
+                    {profile.is_system && (
+                      <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                        Sistema
+                      </Badge>
+                    )}
+                    {profile.roles && profile.roles.length > 0 && (
+                      <Badge variant="outline" className="bg-green-50 text-green-700">
+                        {profile.roles.length} roles
+                      </Badge>
+                    )}
                   </div>
                   <p className="text-sm text-gray-600 mt-1">
                     {profile.description || "Sem descrição"}
@@ -286,7 +320,7 @@ function ProfileSection({
                     variant="destructive"
                     size="sm"
                     className="gap-2"
-                    disabled={usersCount > 0}
+                    disabled={usersCount > 0 || profile.is_system}
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>

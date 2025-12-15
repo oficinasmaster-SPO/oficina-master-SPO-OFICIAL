@@ -27,12 +27,23 @@ export default function ProfileCreator({ onBack, onCreated, profiles }) {
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
+      // Verificar duplicidade de nome
+      const existingProfile = profiles.find(
+        (p) => p.name.toLowerCase() === data.name.toLowerCase()
+      );
+      
+      if (existingProfile) {
+        throw new Error("Já existe um perfil com este nome");
+      }
+
       let newProfile = {
         name: data.name,
         type: data.type,
         description: data.description,
         status: "ativo",
         users_count: 0,
+        is_system: false,
+        roles: [],
         sidebar_permissions: {},
         module_permissions: {
           dashboard: "bloqueado",
@@ -49,12 +60,14 @@ export default function ProfileCreator({ onBack, onCreated, profiles }) {
           aceleracao: "bloqueado",
           admin: "bloqueado",
         },
+        audit_log: [],
       };
 
       if (data.base_profile_id) {
         const baseProfile = profiles.find((p) => p.id === data.base_profile_id);
         if (baseProfile) {
-          newProfile.sidebar_permissions = baseProfile.sidebar_permissions;
+          newProfile.roles = baseProfile.roles || [];
+          newProfile.sidebar_permissions = baseProfile.sidebar_permissions || {};
           newProfile.module_permissions = baseProfile.module_permissions;
           newProfile.cloned_from = baseProfile.id;
         }

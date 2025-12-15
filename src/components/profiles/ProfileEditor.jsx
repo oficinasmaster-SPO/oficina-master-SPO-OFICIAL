@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import SidebarPermissions from "./SidebarPermissions";
 import ModulePermissions from "./ModulePermissions";
 import ProfilePreview from "./ProfilePreview";
+import RoleManager from "./RoleManager";
+import ImpactAnalysis from "./ImpactAnalysis";
 
 export default function ProfileEditor({ profile, onBack }) {
   const queryClient = useQueryClient();
@@ -22,27 +24,30 @@ export default function ProfileEditor({ profile, onBack }) {
     },
   });
 
-  const handleSave = () => {
-    if (
-      !confirm("Deseja salvar as alterações? Isso afetará todos os usuários vinculados a este perfil.")
-    ) {
-      return;
+  const handleSave = async () => {
+    try {
+      const currentUser = await base44.auth.me();
+      
+      const auditEntry = {
+        changed_by: currentUser.full_name || currentUser.email,
+        changed_by_email: currentUser.email,
+        changed_at: new Date().toISOString(),
+        action: "update",
+        field_changed: "permissions_and_roles",
+        old_value: JSON.stringify({roles: profile.roles, permissions: profile.sidebar_permissions}),
+        new_value: JSON.stringify({roles: editedProfile.roles, permissions: editedProfile.sidebar_permissions}),
+        affected_users_count: profile.users_count || 0,
+      };
+
+      const updatedData = {
+        ...editedProfile,
+        audit_log: [...(editedProfile.audit_log || []), auditEntry],
+      };
+
+      updateMutation.mutate(updatedData);
+    } catch (error) {
+      toast.error("Erro ao salvar: " + error.message);
     }
-
-    const auditEntry = {
-      changed_by: "current_user",
-      changed_at: new Date().toISOString(),
-      field_changed: "permissions",
-      old_value: JSON.stringify(profile),
-      new_value: JSON.stringify(editedProfile),
-    };
-
-    const updatedData = {
-      ...editedProfile,
-      audit_log: [...(editedProfile.audit_log || []), auditEntry],
-    };
-
-    updateMutation.mutate(updatedData);
   };
 
   if (showPreview) {
@@ -91,11 +96,20 @@ export default function ProfileEditor({ profile, onBack }) {
         </div>
       </div>
 
-      <Tabs defaultValue="sidebar" className="space-y-6">
+      <Tabs defaultValue="roles" className="space-y-6">
         <TabsList>
+          <TabsTrigger value="roles">Roles do Sistema</TabsTrigger>
           <TabsTrigger value="sidebar">Permissões da Sidebar</TabsTrigger>
           <TabsTrigger value="modules">Módulos e Cadastros</TabsTrigger>
+          <TabsTrigger value="impact">Análise de Impacto</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="roles">
+          <RoleManager
+            profile={editedProfile}
+            onChange={setEditedProfile}
+          />
+        </TabsContent>
 
         <TabsContent value="sidebar">
           <SidebarPermissions
@@ -108,6 +122,13 @@ export default function ProfileEditor({ profile, onBack }) {
           <ModulePermissions
             profile={editedProfile}
             onChange={setEditedProfile}
+          />
+        </TabsContent>
+
+        <TabsContent value="impact">
+          <ImpactAnalysis
+            profile={editedProfile}
+            originalProfile={profile}
           />
         </TabsContent>
       </Tabs>
