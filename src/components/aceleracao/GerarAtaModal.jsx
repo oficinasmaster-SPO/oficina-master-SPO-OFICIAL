@@ -34,24 +34,24 @@ export default function GerarAtaModal({ atendimento, workshop, planoAceleracao, 
       const user = await base44.auth.me();
       
       const participantesIniciais = [
-        { name: user.full_name, role: "Consultor/Acelerador" }
+        { name: user.full_name || user.email, role: "Consultor/Acelerador" }
       ];
 
-      if (atendimento?.participantes) {
+      if (atendimento?.participantes && Array.isArray(atendimento.participantes)) {
         participantesIniciais.push(...atendimento.participantes);
       }
 
       setFormData(prev => ({
         ...prev,
-        consultor_name: user.full_name,
+        consultor_name: user.full_name || user.email,
         consultor_id: user.id,
         participantes: participantesIniciais,
         responsavel: {
-          name: workshop?.owner_name || "",
+          name: workshop?.owner_name || workshop?.name || "",
           role: "Proprietário"
         },
-        plano_nome: planoAceleracao?.nome || "Plano de Aceleração",
-        visao_geral_projeto: planoAceleracao?.status_atual || ""
+        plano_nome: planoAceleracao?.nome || planoAceleracao?.titulo || "Plano de Aceleração",
+        visao_geral_projeto: planoAceleracao?.status_atual || planoAceleracao?.descricao || ""
       }));
     } catch (error) {
       console.error("Erro ao carregar dados:", error);

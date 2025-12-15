@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Copy, CheckCircle, FileText, Send, AlertTriangle } from "lucide-react";
+import { Edit, Copy, CheckCircle, FileText, Send, AlertTriangle, FilePlus } from "lucide-react";
+import GerarAtaModal from "./GerarAtaModal";
+import VisualizarAtaModal from "./VisualizarAtaModal";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
@@ -16,6 +18,10 @@ import { toast } from "sonner";
 export default function PainelAtendimentosTab({ user }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [showGerarAta, setShowGerarAta] = useState(false);
+  const [showVisualizarAta, setShowVisualizarAta] = useState(false);
+  const [selectedAtendimento, setSelectedAtendimento] = useState(null);
+  const [selectedAta, setSelectedAta] = useState(null);
   const [filtros, setFiltros] = useState({
     dataInicio: "",
     dataFim: "",
@@ -34,6 +40,16 @@ export default function PainelAtendimentosTab({ user }) {
   const { data: workshops } = useQuery({
     queryKey: ['workshops-lista'],
     queryFn: () => base44.entities.Workshop.list()
+  });
+
+  const { data: atas } = useQuery({
+    queryKey: ['meeting-minutes'],
+    queryFn: () => base44.entities.MeetingMinutes.list('-created_date')
+  });
+
+  const { data: planos } = useQuery({
+    queryKey: ['planos-aceleracao'],
+    queryFn: () => base44.entities.MonthlyAccelerationPlan.list('-created_date')
   });
 
   // Verificar atendimentos atrasados
@@ -96,8 +112,38 @@ export default function PainelAtendimentosTab({ user }) {
     return new Date(b.data_agendada) - new Date(a.data_agendada);
   }) || [];
 
+  const handleAtaSaved = () => {
+    queryClient.invalidateQueries(['todos-atendimentos']);
+    queryClient.invalidateQueries(['meeting-minutes']);
+    setShowGerarAta(false);
+    setSelectedAtendimento(null);
+  };
+
   return (
     <div className="space-y-6">
+      {showGerarAta && selectedAtendimento && (
+        <GerarAtaModal
+          atendimento={selectedAtendimento}
+          workshop={workshops?.find(w => w.id === selectedAtendimento.workshop_id)}
+          planoAceleracao={planos?.find(p => p.workshop_id === selectedAtendimento.workshop_id)}
+          onClose={() => {
+            setShowGerarAta(false);
+            setSelectedAtendimento(null);
+          }}
+          onSaved={handleAtaSaved}
+        />
+      )}
+
+      {showVisualizarAta && selectedAta && (
+        <VisualizarAtaModal
+          ata={selectedAta}
+          onClose={() => {
+            setShowVisualizarAta(false);
+            setSelectedAta(null);
+          }}
+        />
+      )}
+
       {/* Filtros */}
       <Card>
         <CardContent className="pt-6">
@@ -205,9 +251,34 @@ export default function PainelAtendimentosTab({ user }) {
                               <CheckCircle className="w-4 h-4 text-green-600" />
                             </Button>
                           )}
-                          {atendimento.ata_ia && (
-                            <Button variant="ghost" size="sm">
-                              <FileText className="w-4 h-4 text-blue-600" />
+                          {atendimento.ata_id ? (
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={async () => {
+                                const ata = atas?.find(a => a.id === atendimento.ata_id);
+                                if (ata) {
+                                  setSelectedAta(ata);
+                                  setShowVisualizarAta(true);
+                                }
+                              }}
+                              title="Ver ATA"
+                            >
+                              <FileText className="w-4 h-4 text-green-600" />
+                            </Button>
+                          ) : atendimento.status === 'realizado' && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                const workshop = workshops?.find(w => w.id === atendimento.workshop_id);
+                                const plano = planos?.find(p => p.workshop_id === atendimento.workshop_id);
+                                setSelectedAtendimento({ ...atendimento, workshop, plano });
+                                setShowGerarAta(true);
+                              }}
+                              title="Gerar ATA"
+                            >
+                              <FilePlus className="w-4 h-4 text-blue-600" />
                             </Button>
                           )}
                         </div>
