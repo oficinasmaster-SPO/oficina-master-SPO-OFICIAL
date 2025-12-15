@@ -58,6 +58,12 @@ export default function GerarAtaModal({ atendimento, workshop, planoAceleracao, 
           .join('\n');
       }
 
+      // Incluir tópicos discutidos
+      if (atendimento?.topicos_discutidos && atendimento.topicos_discutidos.length > 0) {
+        pautasTexto += (pautasTexto ? '\n\n' : '') + '**Tópicos Discutidos:**\n' + 
+          atendimento.topicos_discutidos.map(t => `• ${t}`).join('\n');
+      }
+
       // Converter objetivos
       let objetivosTexto = "";
       if (atendimento?.objetivos && Array.isArray(atendimento.objetivos)) {
@@ -67,17 +73,52 @@ export default function GerarAtaModal({ atendimento, workshop, planoAceleracao, 
           .join('\n');
       }
 
-      // Data e hora do atendimento
-      const dataAtendimento = atendimento?.data_agendada 
-        ? new Date(atendimento.data_agendada)
+      // Incluir decisões tomadas nos objetivos/consultor
+      let objetivosConsultorTexto = atendimento?.observacoes_consultor || "";
+      if (atendimento?.decisoes_tomadas && atendimento.decisoes_tomadas.length > 0) {
+        objetivosConsultorTexto += (objetivosConsultorTexto ? '\n\n' : '') + '**Decisões Tomadas:**\n' + 
+          atendimento.decisoes_tomadas
+            .map(d => `• ${d.decisao}${d.responsavel ? ' (Responsável: ' + d.responsavel + ')' : ''}${d.prazo ? ' - Prazo: ' + d.prazo : ''}`)
+            .join('\n');
+      }
+
+      // Converter ações geradas em próximos passos
+      const proximosPassosIniciais = [];
+      if (atendimento?.acoes_geradas && atendimento.acoes_geradas.length > 0) {
+        atendimento.acoes_geradas.forEach(acao => {
+          if (acao.acao) {
+            proximosPassosIniciais.push({
+              descricao: acao.acao,
+              responsavel: acao.responsavel || "",
+              prazo: acao.prazo || ""
+            });
+          }
+        });
+      }
+
+      // Incluir próximos passos textuais
+      if (atendimento?.proximos_passos) {
+        proximosPassosIniciais.push({
+          descricao: atendimento.proximos_passos,
+          responsavel: "",
+          prazo: ""
+        });
+      }
+
+      // Data e hora do atendimento (usar hora real se disponível)
+      const dataAtendimento = atendimento?.data_realizada || atendimento?.data_agendada 
+        ? new Date(atendimento.data_realizada || atendimento.data_agendada)
         : new Date();
 
       setFormData(prev => ({
         ...prev,
         meeting_date: dataAtendimento.toISOString().split('T')[0],
-        meeting_time: dataAtendimento.toTimeString().slice(0, 5),
-        consultor_name: user.full_name || user.email,
-        consultor_id: user.id,
+        meeting_time: atendimento?.hora_inicio_real 
+          ? new Date(atendimento.hora_inicio_real).toTimeString().slice(0, 5)
+          : dataAtendimento.toTimeString().slice(0, 5),
+        tipo_aceleracao: atendimento?.tipo_atendimento?.replace('acompanhamento_', '') || 'mensal',
+        consultor_name: atendimento?.consultor_nome || user.full_name || user.email,
+        consultor_id: atendimento?.consultor_id || user.id,
         participantes: participantesIniciais,
         responsavel: {
           name: workshop?.owner_name || workshop?.name || "",
@@ -86,7 +127,8 @@ export default function GerarAtaModal({ atendimento, workshop, planoAceleracao, 
         plano_nome: planoAceleracao?.plan_data?.title || "Plano de Aceleração",
         pautas: pautasTexto,
         objetivos_atendimento: objetivosTexto,
-        objetivos_consultor: atendimento?.observacoes_consultor || "",
+        objetivos_consultor: objetivosConsultorTexto,
+        proximos_passos: proximosPassosIniciais.length > 0 ? proximosPassosIniciais : prev.proximos_passos,
         visao_geral_projeto: planoAceleracao?.plan_data?.overview || planoAceleracao?.plan_data?.executive_summary || ""
       }));
     } catch (error) {
