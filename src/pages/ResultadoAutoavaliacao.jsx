@@ -8,12 +8,19 @@ import { Loader2, Home, RotateCcw, TrendingUp, AlertTriangle, CheckCircle2, Spar
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer, Tooltip } from "recharts";
 import { assessmentCriteria } from "../components/assessment/AssessmentCriteria";
 import ReactMarkdown from "react-markdown";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import ActionPlanCard from "../components/diagnostics/ActionPlanCard";
+import ActionPlanDetails from "../components/diagnostics/ActionPlanDetails";
+import ActionPlanFeedbackModal from "../components/diagnostics/ActionPlanFeedbackModal";
 
 export default function ResultadoAutoavaliacao() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [assessment, setAssessment] = useState(null);
+  const [showActionPlanDetails, setShowActionPlanDetails] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     loadData();
@@ -59,6 +66,57 @@ export default function ResultadoAutoavaliacao() {
   if (!assessment) return null;
 
   const criteriaConfig = assessmentCriteria[assessment.assessment_type];
+
+  const { data: actionPlan } = useQuery({
+    queryKey: ['action-plan', assessment.id],
+    queryFn: async () => {
+      const plans = await base44.entities.DiagnosticActionPlan.filter({
+        diagnostic_id: assessment.id,
+        diagnostic_type: 'ProcessAssessment'
+      });
+      return plans.sort((a, b) => new Date(b.created_date) - new Date(a.created_date))[0];
+    },
+    enabled: !!assessment?.id
+  });
+
+  const generatePlanMutation = useMutation({
+    mutationFn: async () => base44.functions.invoke('generateActionPlanProcess', { diagnostic_id: assessment.id }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['action-plan', assessment.id]);
+      toast.success('Plano gerado!');
+    }
+  });
+
+  const refinePlanMutation = useMutation({
+    mutationFn: async ({ feedback }) => base44.functions.invoke('refineActionPlan', {
+      plan_id: actionPlan.id,
+      feedback_content: feedback.content,
+      feedback_type: feedback.type,
+      audio_url: feedback.audio_url
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['action-plan', assessment.id]);
+      setShowFeedbackModal(false);
+      toast.success('Plano refinado!');
+    }
+  });
+
+  const updateActivityMutation = useMutation({
+    mutationFn: async ({ activityIndex, status }) => {
+      const updatedSchedule = [...actionPlan.plan_data.implementation_schedule];
+      updatedSchedule[activityIndex].status = status;
+      if (status === 'concluida') updatedSchedule[activityIndex].completed_date = new Date().toISOString();
+      const completion = Math.round((updatedSchedule.filter(a => a.status === 'concluida').length / updatedSchedule.length) * 100);
+      return await base44.entities.DiagnosticActionPlan.update(actionPlan.id, {
+        plan_data: { ...actionPlan.plan_data, implementation_schedule: updatedSchedule },
+        completion_percentage: completion
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['action-plan', assessment.id]);
+      toast.success('Atividade atualizada!');
+    }
+  });
   
   const radarData = Object.entries(assessment.scores).map(([key, value]) => {
     const criterion = criteriaConfig.criteria.find(c => c.key === key);
@@ -190,6 +248,56 @@ export default function ResultadoAutoavaliacao() {
             <ReactMarkdown>{assessment.ai_recommendations}</ReactMarkdown>
           </CardContent>
         </Card>
+
+        {/* Plano Personalizado com IA */}
+        {showActionPlanDetails && actionPlan ? (
+          <div className="mb-6">
+            <ActionPlanDetails
+              plan={actionPlan}
+              onUpdateActivity={(index, status) => updateActivityMutation.mutate({ activityIndex: index, status })}
+              onBack={() => setShowActionPlanDetails(false)}
+            />
+          </div>
+        ) : actionPlan ? (
+          <div className="mb-6">
+            <ActionPlanCard
+              plan={actionPlan}
+              onViewDetails={() => setShowActionPlanDetails(true)}
+              onRefine={() => setShowFeedbackModal(true)}
+            />
+          </div>
+        ) : (
+          <Card className="mb-6 border-2 border-dashed border-purple-300 bg-purple-50">
+            <CardContent className="p-8 text-center">
+              <Sparkles className="w-12 h-12 text-purple-600 mx-auto mb-4" />
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                Plano de Melhoria de Processos com IA
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Gere um plano detalhado para otimizar seus processos de {criteriaConfig.title.toLowerCase()}.
+              </p>
+              <Button
+                onClick={() => generatePlanMutation.mutate()}
+                disabled={generatePlanMutation.isPending}
+                className="bg-purple-600 hover:bg-purple-700"
+                size="lg"
+              >
+                {generatePlanMutation.isPending ? (
+                  <><Loader2 className="w-5 h-5 mr-2 animate-spin" />Gerando...</>
+                ) : (
+                  <><Sparkles className="w-5 h-5 mr-2" />Gerar Plano com IA</>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        <ActionPlanFeedbackModal
+          open={showFeedbackModal}
+          onClose={() => setShowFeedbackModal(false)}
+          onSubmit={(feedback) => refinePlanMutation.mutate({ feedback })}
+          isLoading={refinePlanMutation.isPending}
+        />
 
         {/* Ações */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center">

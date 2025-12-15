@@ -5,14 +5,22 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, CheckCircle2, AlertTriangle, AlertCircle, Home, TrendingUp, DollarSign, Target, Lightbulb, ArrowRight } from "lucide-react";
+import { Loader2, CheckCircle2, AlertTriangle, AlertCircle, Home, TrendingUp, DollarSign, Target, Lightbulb, ArrowRight, Sparkles } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import ActionPlanCard from "../components/diagnostics/ActionPlanCard";
+import ActionPlanDetails from "../components/diagnostics/ActionPlanDetails";
+import ActionPlanFeedbackModal from "../components/diagnostics/ActionPlanFeedbackModal";
 
 export default function ResultadoProducao() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [diagnostic, setDiagnostic] = useState(null);
   const [employee, setEmployee] = useState(null);
+  const [showActionPlanDetails, setShowActionPlanDetails] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     loadDiagnostic();
@@ -57,6 +65,57 @@ export default function ResultadoProducao() {
   }
 
   if (!diagnostic || !employee) return null;
+
+  const { data: actionPlan } = useQuery({
+    queryKey: ['action-plan', diagnostic.id],
+    queryFn: async () => {
+      const plans = await base44.entities.DiagnosticActionPlan.filter({
+        diagnostic_id: diagnostic.id,
+        diagnostic_type: 'ProductivityDiagnostic'
+      });
+      return plans.sort((a, b) => new Date(b.created_date) - new Date(a.created_date))[0];
+    },
+    enabled: !!diagnostic?.id
+  });
+
+  const generatePlanMutation = useMutation({
+    mutationFn: async () => base44.functions.invoke('generateActionPlanProductivity', { diagnostic_id: diagnostic.id }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['action-plan', diagnostic.id]);
+      toast.success('Plano gerado!');
+    }
+  });
+
+  const refinePlanMutation = useMutation({
+    mutationFn: async ({ feedback }) => base44.functions.invoke('refineActionPlan', {
+      plan_id: actionPlan.id,
+      feedback_content: feedback.content,
+      feedback_type: feedback.type,
+      audio_url: feedback.audio_url
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['action-plan', diagnostic.id]);
+      setShowFeedbackModal(false);
+      toast.success('Plano refinado!');
+    }
+  });
+
+  const updateActivityMutation = useMutation({
+    mutationFn: async ({ activityIndex, status }) => {
+      const updatedSchedule = [...actionPlan.plan_data.implementation_schedule];
+      updatedSchedule[activityIndex].status = status;
+      if (status === 'concluida') updatedSchedule[activityIndex].completed_date = new Date().toISOString();
+      const completion = Math.round((updatedSchedule.filter(a => a.status === 'concluida').length / updatedSchedule.length) * 100);
+      return await base44.entities.DiagnosticActionPlan.update(actionPlan.id, {
+        plan_data: { ...actionPlan.plan_data, implementation_schedule: updatedSchedule },
+        completion_percentage: completion
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['action-plan', diagnostic.id]);
+      toast.success('Atividade atualizada!');
+    }
+  });
 
   const getClassificationInfo = () => {
     const configs = {
@@ -302,6 +361,56 @@ export default function ResultadoProducao() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Plano Personalizado com IA */}
+        {showActionPlanDetails && actionPlan ? (
+          <div className="mb-8">
+            <ActionPlanDetails
+              plan={actionPlan}
+              onUpdateActivity={(index, status) => updateActivityMutation.mutate({ activityIndex: index, status })}
+              onBack={() => setShowActionPlanDetails(false)}
+            />
+          </div>
+        ) : actionPlan ? (
+          <div className="mb-8">
+            <ActionPlanCard
+              plan={actionPlan}
+              onViewDetails={() => setShowActionPlanDetails(true)}
+              onRefine={() => setShowFeedbackModal(true)}
+            />
+          </div>
+        ) : (
+          <Card className="mb-8 border-2 border-dashed border-green-300 bg-green-50">
+            <CardContent className="p-8 text-center">
+              <Sparkles className="w-12 h-12 text-green-600 mx-auto mb-4" />
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                Plano de Otimização de Produtividade com IA
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Gere um plano para melhorar a produtividade de {employee.full_name}.
+              </p>
+              <Button
+                onClick={() => generatePlanMutation.mutate()}
+                disabled={generatePlanMutation.isPending}
+                className="bg-green-600 hover:bg-green-700"
+                size="lg"
+              >
+                {generatePlanMutation.isPending ? (
+                  <><Loader2 className="w-5 h-5 mr-2 animate-spin" />Gerando...</>
+                ) : (
+                  <><Sparkles className="w-5 h-5 mr-2" />Gerar Plano com IA</>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        <ActionPlanFeedbackModal
+          open={showFeedbackModal}
+          onClose={() => setShowFeedbackModal(false)}
+          onSubmit={(feedback) => refinePlanMutation.mutate({ feedback })}
+          isLoading={refinePlanMutation.isPending}
+        />
 
         {/* Insights e Ações */}
         <Card className="shadow-lg mb-8">
