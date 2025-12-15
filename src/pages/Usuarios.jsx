@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UserPlus, Loader2, Mail, Phone, Trash2, UserX, Building2, Eye, Edit, ExternalLink, Filter, X } from "lucide-react";
+import { UserPlus, Loader2, Mail, Phone, Trash2, UserX, Building2, Eye, Edit, ExternalLink, Filter, X, Users } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
