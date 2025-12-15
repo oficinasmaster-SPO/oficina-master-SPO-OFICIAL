@@ -112,12 +112,26 @@ export default function CadastroColaborador() {
       const totalProduction = formData.production_parts + formData.production_parts_sales + formData.production_services;
       const productionPercentage = totalCost > 0 ? (totalProduction / totalCost) * 100 : 0;
 
+      // Verificar se é sócio e atualizar Workshop
+      const isPartner = formData.job_role === 'socio';
+      
       // Salvar Employee com owner_id
       const newEmployee = await base44.entities.Employee.create({
         ...formData,
         owner_id: workshop.owner_id,
-        production_percentage: productionPercentage
+        production_percentage: productionPercentage,
+        is_partner: isPartner
       });
+
+      // Se for sócio, adicionar ao array de partner_ids do Workshop
+      if (isPartner && workshop) {
+        const currentPartnerIds = workshop.partner_ids || [];
+        if (!currentPartnerIds.includes(user.id)) {
+          await base44.entities.Workshop.update(workshop.id, {
+            partner_ids: [...currentPartnerIds, user.id]
+          });
+        }
+      }
 
       // Criar User no banco de dados
       let userId = null;
@@ -131,7 +145,8 @@ export default function CadastroColaborador() {
             area: formData.area,
             telefone: formData.telefone,
             profile_picture_url: formData.profile_picture_url,
-            hire_date: formData.hire_date
+            hire_date: formData.hire_date,
+            is_partner: isPartner
           },
           workshop_id: workshop.id,
           employee_id: newEmployee.id
@@ -377,6 +392,7 @@ export default function CadastroColaborador() {
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="socio">Sócio</SelectItem>
                       <SelectItem value="diretor">Diretor</SelectItem>
                       <SelectItem value="supervisor_loja">Supervisor de Loja</SelectItem>
                       <SelectItem value="gerente">Gerente</SelectItem>
