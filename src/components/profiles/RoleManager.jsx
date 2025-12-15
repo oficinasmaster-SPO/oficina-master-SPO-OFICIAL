@@ -9,7 +9,9 @@ import { systemRoles } from "@/components/lib/systemRoles";
 
 export default function RoleManager({ profile, onChange }) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [expandedModules, setExpandedModules] = useState([]);
+  const [expandedModules, setExpandedModules] = useState(
+    systemRoles.map(m => m.id) // Expandir todos por padrão
+  );
   
   const profileRoles = profile.roles || [];
 

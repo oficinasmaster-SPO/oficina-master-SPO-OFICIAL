@@ -45,9 +45,11 @@ export default function ProfileEditor({ profile, onBack }) {
         audit_log: [...(editedProfile.audit_log || []), auditEntry],
       };
 
-      updateMutation.mutate(updatedData);
+      await updateMutation.mutateAsync(updatedData);
+      onBack(); // Voltar após salvar com sucesso
     } catch (error) {
-      toast.error("Erro ao salvar: " + error.message);
+      console.error("Erro ao salvar perfil:", error);
+      toast.error("Erro ao salvar perfil: " + (error.message || "Tente novamente"));
     }
   };
 
