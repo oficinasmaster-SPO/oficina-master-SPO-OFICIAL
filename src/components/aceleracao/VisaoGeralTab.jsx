@@ -12,10 +12,15 @@ import GraficoAtendimentos from "./GraficoAtendimentos";
 import StatusClientesCard from "./StatusClientesCard";
 import ClientesDetalhesModal from "./ClientesDetalhesModal";
 import ReunioesDetalhesModal from "./ReunioesDetalhesModal";
+import AIInsightsCard from "../ai/AIInsightsCard";
+import { useAIInsights } from "../hooks/useAIInsights";
 
 export default function VisaoGeralTab({ user }) {
   const [modalClientes, setModalClientes] = useState({ isOpen: false, tipo: null, clientes: [] });
   const [modalReunioes, setModalReunioes] = useState({ isOpen: false, tipo: null, reunioes: [] });
+  
+  const { data: aiInsights = [], isLoading: loadingInsights } = useAIInsights('overview');
+
   const { data: workshops } = useQuery({
     queryKey: ['workshops-ativos'],
     queryFn: async () => {
@@ -112,6 +117,8 @@ export default function VisaoGeralTab({ user }) {
 
   return (
     <div className="space-y-6">
+      <AIInsightsCard insights={aiInsights} loading={loadingInsights} />
+
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={handleClientesClick}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
