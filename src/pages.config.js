@@ -120,6 +120,7 @@ import PainelMetas from './pages/PainelMetas';
 import RelatoriosAvancados from './pages/RelatoriosAvancados';
 import GestaoPerfis from './pages/GestaoPerfis';
 import UsuariosAdmin from './pages/UsuariosAdmin';
+import AcademiaTreinamento from './pages/AcademiaTreinamento';
 import __Layout from './Layout.jsx';
 
 
@@ -246,6 +247,7 @@ export const PAGES = {
     "RelatoriosAvancados": RelatoriosAvancados,
     "GestaoPerfis": GestaoPerfis,
     "UsuariosAdmin": UsuariosAdmin,
+    "AcademiaTreinamento": AcademiaTreinamento,
 }
 
 export const pagesConfig = {
