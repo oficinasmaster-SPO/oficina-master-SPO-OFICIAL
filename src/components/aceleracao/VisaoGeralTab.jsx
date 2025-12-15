@@ -13,7 +13,7 @@ import StatusClientesCard from "./StatusClientesCard";
 import ClientesDetalhesModal from "./ClientesDetalhesModal";
 import ReunioesDetalhesModal from "./ReunioesDetalhesModal";
 import AIInsightsCard from "../ai/AIInsightsCard";
-import { useAIInsights } from "../hooks/useAIInsights";
+import { useAIInsights } from "@/components/hooks/useAIInsights";
 
 export default function VisaoGeralTab({ user }) {
   const [modalClientes, setModalClientes] = useState({ isOpen: false, tipo: null, clientes: [] });
