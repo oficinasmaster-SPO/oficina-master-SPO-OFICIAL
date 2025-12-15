@@ -77,7 +77,7 @@ Gere um relatório profissional incluindo:
 3. Gargalos críticos a resolver
 4. Recomendações práticas baseadas na metodologia Oficinas Master
 5. Plano 5W2H para os 4 problemas mais críticos
-6. Estratégias para melhorar geração de caixa e controle financeiro
+6. Estratégias de fluxo de caixa e gestão financeira
 
 Feedback adicional do usuário para consideração: """${userFeedback}"""
 `;
@@ -181,7 +181,7 @@ Feedback adicional do usuário para consideração: """${userFeedback}"""
             <CardContent>
               <textarea
                 className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[100px]"
-                placeholder="Ex: Detalhes específicos, desafios atuais, contexto da oficina..."
+                placeholder="Ex: Dificuldades com fluxo de caixa, endividamento, controle de custos..."
                 value={userFeedback}
                 onChange={(e) => setUserFeedback(e.target.value)}
               />

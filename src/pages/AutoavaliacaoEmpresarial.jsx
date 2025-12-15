@@ -71,13 +71,13 @@ ${Object.entries(scores).map(([key, score]) => {
 
 Média geral: ${average.toFixed(1)}/10
 
-Gere um relatório executivo incluindo:
+Gere um relatório profissional incluindo:
 1. Diagnóstico geral da empresa
 2. Pontos fortes a manter
 3. Gargalos críticos a resolver
-4. Recomendações estratégicas baseadas na metodologia Oficinas Master
-5. Plano de ação prioritário
-6. Visão de médio e longo prazo para evolução empresarial
+4. Recomendações práticas baseadas na metodologia Oficinas Master
+5. Plano estratégico de 90 dias
+6. Ações de transformação e crescimento
 
 Feedback adicional do usuário para consideração: """${userFeedback}"""
 `;
@@ -126,10 +126,10 @@ Feedback adicional do usuário para consideração: """${userFeedback}"""
             <Building2 className="w-8 h-8 text-pink-600" />
           </div>
           <h1 className="text-4xl font-bold text-gray-900 mb-3">
-            Autoavaliação Empresarial Geral
+            Autoavaliação - Empresarial Geral
           </h1>
           <p className="text-lg text-gray-600">
-            Avalie de 0 a 10 cada área e receba diagnóstico executivo com IA
+            Avalie de 0 a 10 cada aspecto e receba diagnóstico com IA
           </p>
         </div>
 
@@ -181,7 +181,7 @@ Feedback adicional do usuário para consideração: """${userFeedback}"""
             <CardContent>
               <textarea
                 className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[100px]"
-                placeholder="Ex: Detalhes específicos, desafios atuais, contexto da oficina..."
+                placeholder="Ex: Desafios estratégicos, visão de futuro, planos de expansão..."
                 value={userFeedback}
                 onChange={(e) => setUserFeedback(e.target.value)}
               />
@@ -202,7 +202,7 @@ Feedback adicional do usuário para consideração: """${userFeedback}"""
               ) : (
                 <>
                   <Sparkles className="w-5 h-5 mr-2" />
-                  Gerar Diagnóstico Executivo
+                  Gerar Diagnóstico Completo
                 </>
               )}
             </Button>

@@ -63,7 +63,7 @@ export default function AutoavaliacaoMA3() {
         .map(([key, _]) => criteria.criteria.find(c => c.key === key)?.label);
 
       const aiPrompt = `
-Analise a autoavaliação MA3 (todas as áreas) de uma oficina automotiva com as seguintes notas (0-10):
+Analise a autoavaliação das Áreas MA3 de uma oficina automotiva com as seguintes notas (0-10):
 ${Object.entries(scores).map(([key, score]) => {
   const crit = criteria.criteria.find(c => c.key === key);
   return `${crit.label}: ${score}/10`;
@@ -71,13 +71,13 @@ ${Object.entries(scores).map(([key, score]) => {
 
 Média geral: ${average.toFixed(1)}/10
 
-Gere um relatório completo incluindo:
-1. Visão geral de todas as áreas
-2. Áreas de excelência
-3. Áreas críticas que precisam atenção urgente
-4. Recomendações práticas baseadas na metodologia Oficinas Master
-5. Plano integrado de melhoria para alinhar todas as áreas
-6. Prioridades estratégicas
+Gere um relatório profissional incluindo:
+1. Diagnóstico geral das áreas MA3
+2. Pontos fortes a manter
+3. Gargalos críticos a resolver
+4. Recomendações práticas baseadas na metodologia Oficinas Master MA3
+5. Plano integrado de melhoria das áreas
+6. Ações de otimização e sinergia entre áreas
 
 Feedback adicional do usuário para consideração: """${userFeedback}"""
 `;
@@ -100,7 +100,7 @@ Feedback adicional do usuário para consideração: """${userFeedback}"""
         completed: true
       });
 
-      toast.success("Avaliação MA3 concluída!");
+      toast.success("Avaliação concluída!");
       navigate(createPageUrl("ResultadoAutoavaliacao") + `?id=${assessment.id}`);
     } catch (error) {
       console.error(error);
@@ -126,10 +126,10 @@ Feedback adicional do usuário para consideração: """${userFeedback}"""
             <LayoutGrid className="w-8 h-8 text-cyan-600" />
           </div>
           <h1 className="text-4xl font-bold text-gray-900 mb-3">
-            Autoavaliação MA3 - Todas as Áreas
+            Autoavaliação - Áreas MA3
           </h1>
           <p className="text-lg text-gray-600">
-            Avalie de 0 a 10 cada área e receba diagnóstico integrado com IA
+            Avalie de 0 a 10 cada área e receba diagnóstico com IA
           </p>
         </div>
 
@@ -181,7 +181,7 @@ Feedback adicional do usuário para consideração: """${userFeedback}"""
             <CardContent>
               <textarea
                 className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[100px]"
-                placeholder="Ex: Detalhes específicos, desafios atuais, contexto da oficina..."
+                placeholder="Ex: Integração entre áreas, desafios operacionais, necessidades de melhoria..."
                 value={userFeedback}
                 onChange={(e) => setUserFeedback(e.target.value)}
               />
@@ -202,7 +202,7 @@ Feedback adicional do usuário para consideração: """${userFeedback}"""
               ) : (
                 <>
                   <Sparkles className="w-5 h-5 mr-2" />
-                  Gerar Diagnóstico MA3
+                  Gerar Diagnóstico Completo
                 </>
               )}
             </Button>

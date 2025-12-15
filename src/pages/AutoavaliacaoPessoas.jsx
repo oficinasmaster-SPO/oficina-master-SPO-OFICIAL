@@ -63,7 +63,7 @@ export default function AutoavaliacaoPessoas() {
         .map(([key, _]) => criteria.criteria.find(c => c.key === key)?.label);
 
       const aiPrompt = `
-Analise a autoavaliação de Gestão de Pessoas (RH) de uma oficina automotiva com as seguintes notas (0-10):
+Analise a autoavaliação de Processos de Pessoas (RH) de uma oficina automotiva com as seguintes notas (0-10):
 ${Object.entries(scores).map(([key, score]) => {
   const crit = criteria.criteria.find(c => c.key === key);
   return `${crit.label}: ${score}/10`;
@@ -72,12 +72,12 @@ ${Object.entries(scores).map(([key, score]) => {
 Média geral: ${average.toFixed(1)}/10
 
 Gere um relatório profissional incluindo:
-1. Diagnóstico geral da área de pessoas
+1. Diagnóstico geral da área de gestão de pessoas
 2. Pontos fortes a manter
 3. Gargalos críticos a resolver
 4. Recomendações práticas baseadas na metodologia Oficinas Master
 5. Plano 5W2H para os 4 problemas mais críticos
-6. Estratégias para engajamento e retenção de talentos
+6. Ações de engajamento e retenção de talentos
 
 Feedback adicional do usuário para consideração: """${userFeedback}"""
 `;
@@ -181,7 +181,7 @@ Feedback adicional do usuário para consideração: """${userFeedback}"""
             <CardContent>
               <textarea
                 className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[100px]"
-                placeholder="Ex: Detalhes específicos, desafios atuais, contexto da oficina..."
+                placeholder="Ex: Desafios com engajamento, rotatividade alta, dificuldades de comunicação..."
                 value={userFeedback}
                 onChange={(e) => setUserFeedback(e.target.value)}
               />
