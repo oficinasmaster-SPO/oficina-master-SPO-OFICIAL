@@ -584,14 +584,6 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           adminOnly: true
         },
         { 
-          name: 'Usuários Administrativos', 
-          href: createPageUrl('AdminUsuarios'), 
-          icon: Users,
-          description: 'Gestão de usuários administrativos',
-          adminOnly: true,
-          highlight: true
-        },
-        { 
           name: 'Gestão de Perfis', 
           href: createPageUrl('GestaoPerfis'), 
           icon: Shield,
