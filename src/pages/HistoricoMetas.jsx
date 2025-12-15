@@ -11,6 +11,7 @@ import { Plus, Download, Target, TrendingUp, Award, AlertCircle, Building2, User
 import { formatCurrency, formatNumber } from "../components/utils/formatters";
 import ManualGoalRegistration from "../components/goals/ManualGoalRegistration";
 import { toast } from "sonner";
+import AdminViewBanner from "../components/shared/AdminViewBanner";
 
 export default function HistoricoMetas() {
   const [workshop, setWorkshop] = useState(null);
@@ -21,6 +22,7 @@ export default function HistoricoMetas() {
   const [filterMonth, setFilterMonth] = useState(new Date().toISOString().substring(0, 7));
   const [expandedCards, setExpandedCards] = useState({});
   const queryClient = useQueryClient();
+  const [isAdminView, setIsAdminView] = useState(false);
 
   useEffect(() => {
     loadUser();
@@ -31,10 +33,26 @@ export default function HistoricoMetas() {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
-      const workshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
-      if (workshops.length > 0) {
-        setWorkshop(workshops[0]);
+      // Verificar se há workshop_id na URL (admin visualizando)
+      const urlParams = new URLSearchParams(window.location.search);
+      const adminWorkshopId = urlParams.get('workshop_id');
+
+      let userWorkshop = null;
+      
+      if (adminWorkshopId && currentUser.role === 'admin') {
+        // Admin visualizando oficina específica
+        userWorkshop = await base44.entities.Workshop.get(adminWorkshopId);
+        setIsAdminView(true);
+      } else {
+        // Fluxo normal
+        const workshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
+        if (workshops.length > 0) {
+          userWorkshop = workshops[0];
+        }
+        setIsAdminView(false);
       }
+      
+      setWorkshop(userWorkshop);
     } catch (error) {
       console.error("Error loading user:", error);
     }
@@ -98,6 +116,10 @@ export default function HistoricoMetas() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-6">
       <div className="max-w-7xl mx-auto">
+        
+        {isAdminView && workshop && (
+          <AdminViewBanner workshopName={workshop.name} />
+        )}
         
         {/* Header */}
         <div className="flex items-center justify-between mb-8">

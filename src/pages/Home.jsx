@@ -12,6 +12,7 @@ import ContextualTips from "../components/onboarding/ContextualTips"; // This wi
 import DashboardHub from "../components/home/DashboardHub";
 import DynamicHelpSystem from "@/components/help/DynamicHelpSystem";
 import QuickTipsBar from "@/components/help/QuickTipsBar";
+import AdminViewBanner from "../components/shared/AdminViewBanner";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -23,6 +24,7 @@ export default function Home() {
   const [userProgress, setUserProgress] = useState(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAdminView, setIsAdminView] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -55,21 +57,35 @@ export default function Home() {
 
         setIsLoadingWorkshop(true);
         try {
-          // 1. Tenta buscar como dono
-          const ownedWorkshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
-          let userWorkshop = Array.isArray(ownedWorkshops) && ownedWorkshops.length > 0 
-            ? ownedWorkshops[0] 
-            : null;
+          // Verificar se há workshop_id na URL (admin visualizando)
+          const urlParams = new URLSearchParams(window.location.search);
+          const adminWorkshopId = urlParams.get('workshop_id');
+          
+          let userWorkshop = null;
+          
+          if (adminWorkshopId && currentUser.role === 'admin') {
+            // Admin visualizando oficina específica
+            userWorkshop = await base44.entities.Workshop.get(adminWorkshopId);
+            setIsAdminView(true);
+          } else {
+            // Fluxo normal
+            // 1. Tenta buscar como dono
+            const ownedWorkshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
+            userWorkshop = Array.isArray(ownedWorkshops) && ownedWorkshops.length > 0 
+              ? ownedWorkshops[0] 
+              : null;
 
-          // 2. Se não encontrou como dono, tenta encontrar como colaborador
-          if (!userWorkshop) {
-              const employees = await base44.entities.Employee.filter({ email: currentUser.email });
-              const myEmployeeRecord = Array.isArray(employees) ? employees[0] : null;
-              
-              if (myEmployeeRecord && myEmployeeRecord.workshop_id) {
-                  // Busca a oficina específica do colaborador
-                  userWorkshop = await base44.entities.Workshop.get(myEmployeeRecord.workshop_id);
-              }
+            // 2. Se não encontrou como dono, tenta encontrar como colaborador
+            if (!userWorkshop) {
+                const employees = await base44.entities.Employee.filter({ email: currentUser.email });
+                const myEmployeeRecord = Array.isArray(employees) ? employees[0] : null;
+                
+                if (myEmployeeRecord && myEmployeeRecord.workshop_id) {
+                    // Busca a oficina específica do colaborador
+                    userWorkshop = await base44.entities.Workshop.get(myEmployeeRecord.workshop_id);
+                }
+            }
+            setIsAdminView(false);
           }
 
           setWorkshop(userWorkshop);
@@ -294,6 +310,10 @@ export default function Home() {
         <DynamicHelpSystem pageName="Home" autoStartTour={showOnboarding} />
         
         <div className="px-4 sm:px-6 lg:px-8 py-8">
+          {isAdminView && workshop && (
+            <AdminViewBanner workshopName={workshop.name} />
+          )}
+          
           <QuickTipsBar tips={dashboardTips} pageName="home-dashboard" />
 
           {showOnboarding && (

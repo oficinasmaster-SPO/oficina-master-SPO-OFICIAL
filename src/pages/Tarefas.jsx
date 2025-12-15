@@ -13,6 +13,7 @@ import KanbanBoard from "../components/tasks/KanbanBoard";
 import GuidedTour from "../components/help/GuidedTour";
 import HelpButton from "../components/help/HelpButton";
 import AITaskManager from "../components/tasks/AITaskManager";
+import AdminViewBanner from "../components/shared/AdminViewBanner";
 
 export default function Tarefas() {
   const queryClient = useQueryClient();
@@ -21,6 +22,7 @@ export default function Tarefas() {
   const [showForm, setShowForm] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [viewMode, setViewMode] = useState("list");
+  const [isAdminView, setIsAdminView] = useState(false);
 
   const [filters, setFilters] = useState({
     search: "",
@@ -45,10 +47,25 @@ export default function Tarefas() {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
+      // Verificar se há workshop_id na URL (admin visualizando)
+      const urlParams = new URLSearchParams(window.location.search);
+      const adminWorkshopId = urlParams.get('workshop_id');
+
       try {
-        const workshops = await base44.entities.Workshop.list();
-        const workshopsArray = Array.isArray(workshops) ? workshops : [];
-        const userWorkshop = workshopsArray.find(w => w.owner_id === currentUser.id);
+        let userWorkshop = null;
+        
+        if (adminWorkshopId && currentUser.role === 'admin') {
+          // Admin visualizando oficina específica
+          userWorkshop = await base44.entities.Workshop.get(adminWorkshopId);
+          setIsAdminView(true);
+        } else {
+          // Fluxo normal
+          const workshops = await base44.entities.Workshop.list();
+          const workshopsArray = Array.isArray(workshops) ? workshops : [];
+          userWorkshop = workshopsArray.find(w => w.owner_id === currentUser.id);
+          setIsAdminView(false);
+        }
+        
         setWorkshop(userWorkshop || null);
       } catch (workshopError) {
         console.log("Error fetching workshops:", workshopError);
@@ -328,6 +345,12 @@ export default function Tarefas() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-8 px-4">
+      {isAdminView && workshop && (
+        <div className="max-w-7xl mx-auto mb-6">
+          <AdminViewBanner workshopName={workshop.name} />
+        </div>
+      )}
+      
       {/* BOTÕES DE AJUDA E TOUR - SEMPRE VISÍVEIS */}
       <div className="fixed top-24 right-6 z-[9999] flex flex-col gap-3">
         {/* Botão de Ajuda (?) */}
