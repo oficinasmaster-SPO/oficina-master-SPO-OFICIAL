@@ -55,6 +55,32 @@ export default function ActionPlanFeedbackModal({
           </DialogDescription>
         </DialogHeader>
 
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <h4 className="font-semibold text-blue-900 mb-2">💡 Perguntas para te guiar:</h4>
+          <ul className="space-y-2 text-sm text-blue-800">
+            <li className="flex items-start gap-2">
+              <span className="text-blue-600 font-bold">•</span>
+              <span>O que você gostaria de priorizar ou mudar no plano atual?</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-blue-600 font-bold">•</span>
+              <span>Quais ações parecem mais difíceis de implementar e por quê?</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-blue-600 font-bold">•</span>
+              <span>Há alguma área específica que precisa de mais atenção?</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-blue-600 font-bold">•</span>
+              <span>Existem limitações de recursos (tempo, equipe, dinheiro) que devemos considerar?</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-blue-600 font-bold">•</span>
+              <span>O que você já tentou antes e não funcionou?</span>
+            </li>
+          </ul>
+        </div>
+
         <Tabs value={feedbackType} onValueChange={setFeedbackType}>
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="text">Texto</TabsTrigger>
@@ -63,7 +89,7 @@ export default function ActionPlanFeedbackModal({
 
           <TabsContent value="text" className="space-y-4">
             <Textarea
-              placeholder="Ex: Gostaria de focar mais em vendas e menos em processos. Preciso de ações mais práticas para implementar no dia a dia..."
+              placeholder="Ex: Preciso priorizar ações de curto prazo porque tenho pouco tempo. Gostaria de focar mais em aumentar vendas do que em processos internos. Também não tenho orçamento para contratar agora..."
               value={textContent}
               onChange={(e) => setTextContent(e.target.value)}
               rows={8}
