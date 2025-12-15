@@ -118,9 +118,6 @@ import AcessoAceleracao from './pages/AcessoAceleracao';
 import CronogramaImplementacao from './pages/CronogramaImplementacao';
 import PainelMetas from './pages/PainelMetas';
 import RelatoriosAvancados from './pages/RelatoriosAvancados';
-import AdminUsuarios from './pages/AdminUsuarios';
-import AdminUserCadastro from './pages/AdminUserCadastro';
-import AdminPermissoes from './pages/AdminPermissoes';
 import GestaoPerfis from './pages/GestaoPerfis';
 import __Layout from './Layout.jsx';
 
@@ -246,9 +243,6 @@ export const PAGES = {
     "CronogramaImplementacao": CronogramaImplementacao,
     "PainelMetas": PainelMetas,
     "RelatoriosAvancados": RelatoriosAvancados,
-    "AdminUsuarios": AdminUsuarios,
-    "AdminUserCadastro": AdminUserCadastro,
-    "AdminPermissoes": AdminPermissoes,
     "GestaoPerfis": GestaoPerfis,
 }
 
