@@ -1,30 +1,17 @@
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { jobRoles, jobRoleCategories } from "@/components/lib/jobRoles";
-import { Users } from "lucide-react";
+import { Briefcase } from "lucide-react";
 
 export default function JobRoleManager({ profile, onChange }) {
-  const profileJobRoles = profile.job_roles || [];
-
-  const toggleJobRole = (roleValue) => {
-    const updated = profileJobRoles.includes(roleValue)
-      ? profileJobRoles.filter((r) => r !== roleValue)
-      : [...profileJobRoles, roleValue];
-    
-    onChange({
-      ...profile,
-      job_roles: updated,
-    });
-  };
-
-  const selectAllCategory = (category, select) => {
-    const categoryRoles = jobRoles.filter(jr => jr.category === category).map(r => r.value);
-    const updated = select
-      ? [...new Set([...profileJobRoles, ...categoryRoles])]
-      : profileJobRoles.filter((r) => !categoryRoles.includes(r));
+  const handleToggleJobRole = (roleValue) => {
+    const currentJobRoles = profile.job_roles || [];
+    const updated = currentJobRoles.includes(roleValue)
+      ? currentJobRoles.filter(r => r !== roleValue)
+      : [...currentJobRoles, roleValue];
     
     onChange({
       ...profile,
@@ -33,102 +20,88 @@ export default function JobRoleManager({ profile, onChange }) {
   };
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                Funções Vinculadas (job_role)
-              </CardTitle>
-              <p className="text-sm text-gray-600 mt-1">
-                Colaboradores com estas funções receberão este perfil automaticamente
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-2xl font-bold text-purple-600">{profileJobRoles.length}</p>
-              <p className="text-xs text-gray-600">de {jobRoles.length} funções</p>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            {Object.entries(jobRoleCategories).map(([cat, catData]) => {
-              const categoryRoles = jobRoles.filter(jr => jr.category === cat);
-              const selectedCount = categoryRoles.filter(r => 
-                profileJobRoles.includes(r.value)
-              ).length;
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Briefcase className="w-5 h-5 text-purple-600" />
+          Funções Vinculadas (job_role)
+        </CardTitle>
+        <CardDescription>
+          Selecione quais funções terão este perfil automaticamente quando um colaborador for cadastrado.
+          Isso garante que cada função tenha as permissões corretas desde o início.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-6">
+          {Object.entries(jobRoleCategories).map(([cat, catData]) => {
+            const categoryRoles = jobRoles.filter(jr => jr.category === cat);
+            const selectedInCategory = categoryRoles.filter(jr => 
+              (profile.job_roles || []).includes(jr.value)
+            ).length;
 
-              return (
-                <Card key={cat} className="border-2">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-semibold text-gray-900">
-                          {catData.label}
-                        </h3>
-                        <p className="text-xs text-gray-600">
-                          {selectedCount} de {categoryRoles.length} selecionadas
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={selectedCount > 0 ? "default" : "outline"} className={catData.color}>
-                          {selectedCount}/{categoryRoles.length}
-                        </Badge>
-                        <button
-                          onClick={() => selectAllCategory(cat, selectedCount === 0)}
-                          className="text-xs text-blue-600 hover:underline"
+            return (
+              <div key={cat} className="border rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                    {catData.label}
+                    {selectedInCategory > 0 && (
+                      <Badge variant="outline" className={catData.color}>
+                        {selectedInCategory} selecionadas
+                      </Badge>
+                    )}
+                  </h3>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {categoryRoles.map((role) => {
+                    const isSelected = (profile.job_roles || []).includes(role.value);
+                    return (
+                      <div
+                        key={role.value}
+                        className={`flex items-center gap-2 p-2 rounded border transition-colors ${
+                          isSelected
+                            ? "bg-purple-50 border-purple-200"
+                            : "bg-white border-gray-200 hover:bg-gray-50"
+                        }`}
+                      >
+                        <Checkbox
+                          id={`job-role-${role.value}`}
+                          checked={isSelected}
+                          onCheckedChange={() => handleToggleJobRole(role.value)}
+                        />
+                        <Label
+                          htmlFor={`job-role-${role.value}`}
+                          className="text-sm cursor-pointer flex-1"
                         >
-                          {selectedCount === categoryRoles.length ? "Desmarcar" : "Marcar"} todas
-                        </button>
+                          {role.label}
+                        </Label>
                       </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      {categoryRoles.map((role) => (
-                        <div
-                          key={role.value}
-                          className="flex items-center gap-2 p-2 border rounded hover:bg-gray-50"
-                        >
-                          <Checkbox
-                            id={`jr-${role.value}`}
-                            checked={profileJobRoles.includes(role.value)}
-                            onCheckedChange={() => toggleJobRole(role.value)}
-                          />
-                          <Label htmlFor={`jr-${role.value}`} className="text-sm cursor-pointer">
-                            {role.label}
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-
-          {profileJobRoles.length > 0 && (
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <h4 className="font-semibold text-sm text-blue-900 mb-2">
-                Funções Selecionadas:
-              </h4>
-              <div className="flex flex-wrap gap-2">
-                {profileJobRoles.map((jr) => {
-                  const role = jobRoles.find(r => r.value === jr);
-                  const category = jobRoleCategories[role?.category];
-                  return (
-                    <Badge key={jr} className={category?.color || "bg-gray-100 text-gray-700"}>
-                      {role?.label || jr}
-                    </Badge>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
+            );
+          })}
+        </div>
+
+        {profile.job_roles && profile.job_roles.length > 0 && (
+          <div className="mt-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
+            <p className="text-sm font-medium text-purple-900 mb-2">
+              Funções selecionadas ({profile.job_roles.length}):
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {profile.job_roles.map((jr) => {
+                const role = jobRoles.find(r => r.value === jr);
+                const category = jobRoleCategories[role?.category];
+                return (
+                  <Badge key={jr} className={category?.color || "bg-gray-100 text-gray-700"}>
+                    {role?.label || jr}
+                  </Badge>
+                );
+              })}
             </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

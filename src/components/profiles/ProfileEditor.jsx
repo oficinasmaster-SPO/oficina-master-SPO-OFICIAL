@@ -100,7 +100,7 @@ export default function ProfileEditor({ profile, onBack }) {
       <Tabs defaultValue="roles" className="space-y-6">
         <TabsList>
           <TabsTrigger value="roles">Roles do Sistema</TabsTrigger>
-          <TabsTrigger value="jobroles">Funções (job_role)</TabsTrigger>
+          <TabsTrigger value="job_roles">Funções Vinculadas</TabsTrigger>
           <TabsTrigger value="sidebar">Permissões da Sidebar</TabsTrigger>
           <TabsTrigger value="modules">Módulos e Cadastros</TabsTrigger>
           <TabsTrigger value="impact">Análise de Impacto</TabsTrigger>
@@ -113,7 +113,7 @@ export default function ProfileEditor({ profile, onBack }) {
           />
         </TabsContent>
 
-        <TabsContent value="jobroles">
+        <TabsContent value="job_roles">
           <JobRoleManager
             profile={editedProfile}
             onChange={setEditedProfile}
