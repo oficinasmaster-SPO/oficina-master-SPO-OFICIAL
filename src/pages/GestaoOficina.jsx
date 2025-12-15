@@ -29,6 +29,7 @@ export default function GestaoOficina() {
   const [user, setUser] = useState(null);
   const [tcmp2Value, setTcmp2Value] = useState(0);
   const [loadingTcmp2, setLoadingTcmp2] = useState(true);
+  const [isAdminViewing, setIsAdminViewing] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -41,24 +42,42 @@ export default function GestaoOficina() {
       setUser(currentUser);
 
       let workshopToDisplay = null;
-      try {
-        // 1. Buscar oficinas onde o usuário é dono
-        const ownedWorkshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
-
-        if (ownedWorkshops && ownedWorkshops.length > 0) {
-          workshopToDisplay = ownedWorkshops[0];
-        } else {
-          // 2. Se não é dono, verifica se é colaborador
-          const employees = await base44.entities.Employee.filter({ email: currentUser.email, status: 'ativo' });
-          const myEmployeeRecord = employees && employees.length > 0 ? employees[0] : null;
-          
-          if (myEmployeeRecord && myEmployeeRecord.workshop_id) {
-             const employeeWorkshop = await base44.entities.Workshop.get(myEmployeeRecord.workshop_id);
-             workshopToDisplay = employeeWorkshop;
-          }
+      
+      // Verifica se há um workshop_id na URL (admin acessando backoffice do cliente)
+      const urlParams = new URLSearchParams(window.location.search);
+      const adminWorkshopId = urlParams.get('workshop_id');
+      
+      if (adminWorkshopId && currentUser.role === 'admin') {
+        // Admin visualizando oficina específica
+        try {
+          workshopToDisplay = await base44.entities.Workshop.get(adminWorkshopId);
+          setIsAdminViewing(true);
+          toast.info(`Visualizando backoffice de: ${workshopToDisplay.name}`);
+        } catch (error) {
+          console.log("Error fetching admin workshop:", error);
+          toast.error("Erro ao carregar oficina");
         }
-      } catch (workshopError) {
-        console.log("Error fetching workshops:", workshopError);
+      } else {
+        // Fluxo normal do usuário
+        try {
+          // 1. Buscar oficinas onde o usuário é dono
+          const ownedWorkshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
+
+          if (ownedWorkshops && ownedWorkshops.length > 0) {
+            workshopToDisplay = ownedWorkshops[0];
+          } else {
+            // 2. Se não é dono, verifica se é colaborador
+            const employees = await base44.entities.Employee.filter({ email: currentUser.email, status: 'ativo' });
+            const myEmployeeRecord = employees && employees.length > 0 ? employees[0] : null;
+            
+            if (myEmployeeRecord && myEmployeeRecord.workshop_id) {
+               const employeeWorkshop = await base44.entities.Workshop.get(myEmployeeRecord.workshop_id);
+               workshopToDisplay = employeeWorkshop;
+            }
+          }
+        } catch (workshopError) {
+          console.log("Error fetching workshops:", workshopError);
+        }
       }
 
       if (!workshopToDisplay) {
@@ -170,6 +189,28 @@ export default function GestaoOficina() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4">
       <div className="max-w-7xl mx-auto">
+        {/* Banner de Admin Visualizando */}
+        {isAdminViewing && (
+          <div className="bg-purple-600 text-white rounded-lg shadow-lg p-4 mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-2 h-2 bg-purple-300 rounded-full animate-pulse"></div>
+              <span className="font-semibold">
+                🔍 Modo Admin: Visualizando backoffice do cliente
+              </span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                window.history.back();
+              }}
+              className="bg-white text-purple-700 hover:bg-purple-50"
+            >
+              Voltar para Gestão de Usuários
+            </Button>
+          </div>
+        )}
+        
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
           <div className="flex items-start justify-between mb-6">
             <div>

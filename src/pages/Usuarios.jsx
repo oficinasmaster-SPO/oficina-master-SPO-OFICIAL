@@ -415,9 +415,7 @@ export default function Usuarios() {
                               variant="default"
                               className="bg-purple-600 hover:bg-purple-700"
                               onClick={() => {
-                                // Temporariamente seta o workshop no localStorage para simular acesso
-                                localStorage.setItem('temp_admin_workshop_id', user.workshop_id);
-                                navigate(createPageUrl("GestaoOficina"));
+                                navigate(`${createPageUrl("GestaoOficina")}?workshop_id=${user.workshop_id}`);
                               }}
                               title="Acessar BackOffice"
                             >
