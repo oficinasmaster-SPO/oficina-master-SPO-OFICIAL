@@ -143,22 +143,48 @@ export default function RegistrarAtendimento() {
   // Mutation para criar ou atualizar atendimento
   const createMutation = useMutation({
     mutationFn: async (data) => {
+      if (!data.workshop_id) {
+        throw new Error("Selecione uma oficina");
+      }
+      if (!data.data_agendada || !data.hora_agendada) {
+        throw new Error("Preencha data e horário");
+      }
+
       const dataHora = `${data.data_agendada}T${data.hora_agendada}:00`;
       
       const atendimentoData = {
-        ...data,
-        consultor_id: user.id,
-        consultor_nome: user.full_name,
+        workshop_id: data.workshop_id,
+        tipo_atendimento: data.tipo_atendimento,
+        status: data.status,
+        status_cliente: data.status_cliente,
+        consultor_id: data.consultor_id || user.id,
+        consultor_nome: data.consultor_nome || user.full_name,
         data_agendada: dataHora,
-        participantes: data.participantes.filter(p => p.nome),
-        pauta: data.pauta.filter(p => p.titulo),
-        objetivos: data.objetivos.filter(o => o)
+        duracao_minutos: data.duracao_minutos,
+        google_meet_link: data.google_meet_link,
+        participantes: (data.participantes || []).filter(p => p.nome),
+        pauta: (data.pauta || []).filter(p => p.titulo),
+        objetivos: (data.objetivos || []).filter(o => o),
+        topicos_discutidos: data.topicos_discutidos || [],
+        decisoes_tomadas: data.decisoes_tomadas || [],
+        acoes_geradas: data.acoes_geradas || [],
+        midias_anexas: (data.midias_anexas || []).filter(m => m.url),
+        processos_vinculados: data.processos_vinculados || [],
+        videoaulas_vinculadas: data.videoaulas_vinculadas || [],
+        documentos_vinculados: data.documentos_vinculados || [],
+        observacoes_consultor: data.observacoes_consultor,
+        proximos_passos: data.proximos_passos,
+        notificacoes_programadas: data.notificacoes_programadas || []
       };
 
+      console.log("Salvando atendimento:", atendimentoData);
+
       // Atualizar ou criar
-      const atendimento = formData.id 
-        ? await base44.entities.ConsultoriaAtendimento.update(formData.id, atendimentoData)
+      const atendimento = data.id 
+        ? await base44.entities.ConsultoriaAtendimento.update(data.id, atendimentoData)
         : await base44.entities.ConsultoriaAtendimento.create(atendimentoData);
+
+      console.log("Atendimento salvo:", atendimento);
 
       // Se status é "realizado", enviar notificação
       if (atendimentoData.status === 'realizado') {
@@ -173,13 +199,15 @@ export default function RegistrarAtendimento() {
 
       return atendimento;
     },
-    onSuccess: () => {
+    onSuccess: (atendimento) => {
       queryClient.invalidateQueries(['consultoria-atendimentos']);
-      toast.success('Atendimento registrado com sucesso!');
-      navigate(createPageUrl('CronogramaConsultoria'));
+      queryClient.invalidateQueries(['meeting-minutes']);
+      toast.success('Atendimento salvo com sucesso!');
+      navigate(createPageUrl('ControleAceleracao'));
     },
     onError: (error) => {
-      toast.error('Erro ao registrar atendimento: ' + error.message);
+      console.error("Erro ao salvar:", error);
+      toast.error('Erro ao salvar: ' + (error.message || "Verifique os campos obrigatórios"));
     }
   });
 
@@ -202,12 +230,21 @@ export default function RegistrarAtendimento() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Se o timer estiver rodando, parar automaticamente
-    if (timerData) {
-      setFormData(prev => ({ ...prev, ...timerData }));
+    if (!formData.workshop_id) {
+      toast.error("Selecione uma oficina");
+      return;
     }
+
+    if (!formData.data_agendada || !formData.hora_agendada) {
+      toast.error("Preencha data e horário do atendimento");
+      return;
+    }
+
+    // Mesclar dados do timer se estiver ativo
+    const dadosParaSalvar = timerData ? { ...formData, ...timerData } : formData;
     
-    createMutation.mutate({ ...formData, ...timerData });
+    console.log("Submetendo formulário:", dadosParaSalvar);
+    createMutation.mutate(dadosParaSalvar);
   };
 
   const gerarLinkGoogleMeet = () => {

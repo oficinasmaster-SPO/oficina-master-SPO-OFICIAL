@@ -73,47 +73,66 @@ export default function GerarAtaModal({ atendimento, workshop, planoAceleracao, 
   };
 
   const updateParticipante = (index, field, value) => {
-    const updated = [...formData.participantes];
-    updated[index][field] = value;
+    const updated = [...(formData.participantes || [])];
+    updated[index] = {...updated[index], [field]: value};
     setFormData(prev => ({ ...prev, participantes: updated }));
   };
 
   const addProximoPasso = () => {
     setFormData(prev => ({
       ...prev,
-      proximos_passos: [...prev.proximos_passos, { descricao: "", responsavel: "", prazo: "" }]
+      proximos_passos: [...(prev.proximos_passos || []), { descricao: "", responsavel: "", prazo: "" }]
     }));
   };
 
   const removeProximoPasso = (index) => {
     setFormData(prev => ({
       ...prev,
-      proximos_passos: prev.proximos_passos.filter((_, i) => i !== index)
+      proximos_passos: (prev.proximos_passos || []).filter((_, i) => i !== index)
     }));
   };
 
   const updateProximoPasso = (index, field, value) => {
-    const updated = [...formData.proximos_passos];
-    updated[index][field] = value;
+    const updated = [...(formData.proximos_passos || [])];
+    updated[index] = {...updated[index], [field]: value};
     setFormData(prev => ({ ...prev, proximos_passos: updated }));
   };
 
   const handleSave = async (status = "rascunho") => {
+    if (!formData.meeting_date || !formData.meeting_time) {
+      toast.error("Preencha data e hora da reunião");
+      return;
+    }
+
     setLoading(true);
     try {
       const ataCount = await base44.entities.MeetingMinutes.list();
       const code = `IT.${String(ataCount.length + 1).padStart(4, '0')}`;
 
       const ataData = {
-        ...formData,
         code,
         workshop_id: workshop.id,
         atendimento_id: atendimento?.id,
         plano_aceleracao_id: planoAceleracao?.id,
+        meeting_date: formData.meeting_date,
+        meeting_time: formData.meeting_time,
+        tipo_aceleracao: formData.tipo_aceleracao,
+        consultor_name: formData.consultor_name,
+        consultor_id: formData.consultor_id,
+        participantes: (formData.participantes || []).filter(p => p.name),
+        responsavel: formData.responsavel,
+        plano_nome: formData.plano_nome,
+        pautas: formData.pautas,
+        objetivos_atendimento: formData.objetivos_atendimento,
+        objetivos_consultor: formData.objetivos_consultor,
+        proximos_passos: (formData.proximos_passos || []).filter(p => p.descricao),
+        visao_geral_projeto: formData.visao_geral_projeto,
         status
       };
 
+      console.log("Salvando ATA com dados:", ataData);
       const newAta = await base44.entities.MeetingMinutes.create(ataData);
+      console.log("ATA criada:", newAta);
 
       if (atendimento?.id) {
         await base44.entities.ConsultoriaAtendimento.update(atendimento.id, {
@@ -122,12 +141,12 @@ export default function GerarAtaModal({ atendimento, workshop, planoAceleracao, 
         });
       }
 
-      toast.success("ATA gerada com sucesso!");
-      onSaved(newAta);
+      toast.success("ATA salva com sucesso!");
+      if (onSaved) onSaved(newAta);
       onClose();
     } catch (error) {
-      console.error("Erro ao gerar ATA:", error);
-      toast.error("Erro ao gerar ATA");
+      console.error("Erro ao salvar ATA:", error);
+      toast.error("Erro ao salvar ATA: " + (error.message || "Verifique os campos obrigatórios"));
     } finally {
       setLoading(false);
     }
@@ -207,17 +226,17 @@ export default function GerarAtaModal({ atendimento, workshop, planoAceleracao, 
                   Adicionar
                 </Button>
               </div>
-              {formData.participantes.map((p, index) => (
+              {(formData.participantes || []).map((p, index) => (
                 <div key={index} className="flex gap-2">
                   <Input
                     placeholder="Nome"
-                    value={p.name}
+                    value={p.name || ""}
                     onChange={(e) => updateParticipante(index, 'name', e.target.value)}
                     className="flex-1"
                   />
                   <Input
                     placeholder="Função"
-                    value={p.role}
+                    value={p.role || ""}
                     onChange={(e) => updateParticipante(index, 'role', e.target.value)}
                     className="flex-1"
                   />
@@ -302,23 +321,23 @@ export default function GerarAtaModal({ atendimento, workshop, planoAceleracao, 
                   Adicionar
                 </Button>
               </div>
-              {formData.proximos_passos.map((passo, index) => (
+              {(formData.proximos_passos || []).map((passo, index) => (
                 <div key={index} className="flex gap-2">
                   <Input
                     placeholder="Descrição da ação"
-                    value={passo.descricao}
+                    value={passo.descricao || ""}
                     onChange={(e) => updateProximoPasso(index, 'descricao', e.target.value)}
                     className="flex-1"
                   />
                   <Input
                     placeholder="Responsável"
-                    value={passo.responsavel}
+                    value={passo.responsavel || ""}
                     onChange={(e) => updateProximoPasso(index, 'responsavel', e.target.value)}
                     className="w-40"
                   />
                   <Input
                     type="date"
-                    value={passo.prazo}
+                    value={passo.prazo || ""}
                     onChange={(e) => updateProximoPasso(index, 'prazo', e.target.value)}
                     className="w-40"
                   />
