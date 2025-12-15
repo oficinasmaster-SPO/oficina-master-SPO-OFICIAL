@@ -18,6 +18,7 @@ export default function CadastroColaborador() {
   const [user, setUser] = useState(null);
   const [workshop, setWorkshop] = useState(null);
   const [jobDescriptions, setJobDescriptions] = useState([]);
+  const [profiles, setProfiles] = useState([]);
   
   const [formData, setFormData] = useState({
     workshop_id: "",
@@ -37,6 +38,7 @@ export default function CadastroColaborador() {
     },
     position: "",
     job_role: "outros",
+    user_profile_id: "",
     area: "",
     hire_date: "",
     salary: 0,
@@ -69,6 +71,9 @@ export default function CadastroColaborador() {
 
       const descriptions = await base44.entities.JobDescription.list();
       setJobDescriptions(descriptions.filter(d => !userWorkshop || d.workshop_id === userWorkshop.id));
+
+      const allProfiles = await base44.entities.UserProfile.list();
+      setProfiles(allProfiles.filter(p => p.status === 'ativo'));
     } catch (error) {
       toast.error("Você precisa estar logado");
       base44.auth.redirectToLogin(createPageUrl("CadastroColaborador"));
@@ -115,6 +120,15 @@ export default function CadastroColaborador() {
       // Verificar se é sócio e atualizar Workshop
       const isPartner = formData.job_role === 'socio';
       
+      // Buscar perfil selecionado para obter as roles
+      let userRoles = [];
+      if (formData.user_profile_id) {
+        const selectedProfile = profiles.find(p => p.id === formData.user_profile_id);
+        if (selectedProfile) {
+          userRoles = selectedProfile.roles || [];
+        }
+      }
+
       // Salvar Employee com owner_id
       const newEmployee = await base44.entities.Employee.create({
         ...formData,
@@ -146,7 +160,9 @@ export default function CadastroColaborador() {
             telefone: formData.telefone,
             profile_picture_url: formData.profile_picture_url,
             hire_date: formData.hire_date,
-            is_partner: isPartner
+            is_partner: isPartner,
+            user_profile_id: formData.user_profile_id,
+            roles: userRoles
           },
           workshop_id: workshop.id,
           employee_id: newEmployee.id
@@ -376,7 +392,7 @@ export default function CadastroColaborador() {
               <CardTitle>Dados da Contratação</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label>Cargo/Função (Descrição) *</Label>
                   <Input
@@ -386,7 +402,46 @@ export default function CadastroColaborador() {
                   />
                 </div>
                 <div>
-                  <Label>Função do Sistema (Permissões)</Label>
+                  <Label>Perfil de Usuário</Label>
+                  <Select 
+                    value={formData.user_profile_id} 
+                    onValueChange={(value) => {
+                      const selectedProfile = profiles.find(p => p.id === value);
+                      if (selectedProfile) {
+                        // Se o perfil usa job_role, pegar o primeiro job_role da lista
+                        const newJobRole = selectedProfile.permission_type === 'job_role' && 
+                                          selectedProfile.job_roles?.length > 0 
+                                          ? selectedProfile.job_roles[0] 
+                                          : formData.job_role;
+                        
+                        setFormData({
+                          ...formData, 
+                          user_profile_id: value,
+                          job_role: newJobRole
+                        });
+                      } else {
+                        setFormData({...formData, user_profile_id: value});
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o perfil..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={null}>Nenhum perfil</SelectItem>
+                      {profiles.map(profile => (
+                        <SelectItem key={profile.id} value={profile.id}>
+                          {profile.name} ({profile.type})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    O perfil define as permissões do colaborador no sistema
+                  </p>
+                </div>
+                <div>
+                  <Label>Função do Sistema (job_role)</Label>
                   <Select value={formData.job_role} onValueChange={(value) => setFormData({...formData, job_role: value})}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione..." />
