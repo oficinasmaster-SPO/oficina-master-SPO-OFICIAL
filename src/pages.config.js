@@ -119,6 +119,7 @@ import CronogramaImplementacao from './pages/CronogramaImplementacao';
 import PainelMetas from './pages/PainelMetas';
 import RelatoriosAvancados from './pages/RelatoriosAvancados';
 import GestaoPerfis from './pages/GestaoPerfis';
+import UsuariosAdmin from './pages/UsuariosAdmin';
 import __Layout from './Layout.jsx';
 
 
@@ -244,6 +245,7 @@ export const PAGES = {
     "PainelMetas": PainelMetas,
     "RelatoriosAvancados": RelatoriosAvancados,
     "GestaoPerfis": GestaoPerfis,
+    "UsuariosAdmin": UsuariosAdmin,
 }
 
 export const pagesConfig = {
