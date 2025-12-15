@@ -15,6 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ServiceGoalsModal from "@/components/goals/ServiceGoalsModal";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import AdminViewBanner from "../components/shared/AdminViewBanner";
 
 export default function DesdobramentoMeta() {
   const navigate = useNavigate();
@@ -23,6 +24,7 @@ export default function DesdobramentoMeta() {
   const [workshop, setWorkshop] = useState(null);
   const [employees, setEmployees] = useState([]);
   const [activeTab, setActiveTab] = useState("vendas");
+  const [isAdminView, setIsAdminView] = useState(false);
   
   // Configurações Globais do Desdobramento
   const [config, setConfig] = useState({
@@ -55,8 +57,23 @@ export default function DesdobramentoMeta() {
   const loadData = async () => {
     try {
       const user = await base44.auth.me();
-      const workshops = await base44.entities.Workshop.filter({ owner_id: user.id });
-      const userWorkshop = workshops[0];
+      
+      // Verificar se há workshop_id na URL (admin visualizando)
+      const urlParams = new URLSearchParams(window.location.search);
+      const adminWorkshopId = urlParams.get('workshop_id');
+      
+      let userWorkshop = null;
+      
+      if (adminWorkshopId && user.role === 'admin') {
+        // Admin visualizando oficina específica
+        userWorkshop = await base44.entities.Workshop.get(adminWorkshopId);
+        setIsAdminView(true);
+      } else {
+        // Fluxo normal
+        const workshops = await base44.entities.Workshop.filter({ owner_id: user.id });
+        userWorkshop = workshops[0];
+        setIsAdminView(false);
+      }
       
       if (!userWorkshop) {
         toast.error("Oficina não encontrada");
@@ -337,6 +354,15 @@ export default function DesdobramentoMeta() {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
+      
+      {isAdminView && workshop && (
+        <div className="px-6 pt-6">
+          <div className="max-w-7xl mx-auto">
+            <AdminViewBanner workshopName={workshop.name} />
+          </div>
+        </div>
+      )}
+      
       {/* Header Fixo */}
       <div className="bg-white border-b sticky top-0 z-10 shadow-sm px-6 py-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">

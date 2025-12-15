@@ -10,14 +10,48 @@ import { Loader2, Heart, Search, CheckCircle, Clock, User, Filter } from "lucide
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import GuidedTour from "../components/help/GuidedTour";
 import HelpButton from "../components/help/HelpButton";
+import AdminViewBanner from "../components/shared/AdminViewBanner";
 
 export default function CDCList() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
+  const [workshop, setWorkshop] = useState(null);
+  const [isAdminView, setIsAdminView] = useState(false);
+
+  const { data: user } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: () => base44.auth.me()
+  });
+
+  const { data: workshopData } = useQuery({
+    queryKey: ['workshop', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      
+      // Verificar se há workshop_id na URL (admin visualizando)
+      const urlParams = new URLSearchParams(window.location.search);
+      const adminWorkshopId = urlParams.get('workshop_id');
+      
+      if (adminWorkshopId && user.role === 'admin') {
+        setIsAdminView(true);
+        return await base44.entities.Workshop.get(adminWorkshopId);
+      }
+      
+      setIsAdminView(false);
+      const workshops = await base44.entities.Workshop.filter({ owner_id: user.id });
+      return workshops[0];
+    },
+    enabled: !!user,
+    onSuccess: (data) => setWorkshop(data)
+  });
 
   const { data: employees = [], isLoading } = useQuery({
-    queryKey: ['employees'],
-    queryFn: () => base44.entities.Employee.list('-created_date')
+    queryKey: ['employees', workshop?.id],
+    queryFn: async () => {
+      if (!workshop?.id) return [];
+      return await base44.entities.Employee.filter({ workshop_id: workshop.id }, '-created_date');
+    },
+    enabled: !!workshop?.id
   });
 
   const [statusFilter, setStatusFilter] = useState("todos");
@@ -90,6 +124,11 @@ export default function CDCList() {
       <GuidedTour tourId="cdc_list" steps={tourSteps} autoStart={false} />
 
       <div className="max-w-7xl mx-auto">
+        
+        {isAdminView && workshop && (
+          <AdminViewBanner workshopName={workshop.name} />
+        )}
+        
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
             <Heart className="w-10 h-10 text-pink-600" />

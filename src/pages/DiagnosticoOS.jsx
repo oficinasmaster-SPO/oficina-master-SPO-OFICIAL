@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { formatCurrency } from "../components/utils/formatters";
 import TrackingWrapper from "@/components/shared/TrackingWrapper";
+import AdminViewBanner from "../components/shared/AdminViewBanner";
 
 export default function DiagnosticoOS() {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ export default function DiagnosticoOS() {
   const [submitting, setSubmitting] = useState(false);
   const [user, setUser] = useState(null);
   const [workshop, setWorkshop] = useState(null);
+  const [isAdminView, setIsAdminView] = useState(false);
 
   const [osNumber, setOsNumber] = useState("");
   const [referenceMonth, setReferenceMonth] = useState("");
@@ -46,15 +48,29 @@ export default function DiagnosticoOS() {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
       
-      const workshops = await base44.entities.Workshop.list();
-      let userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
+      // Verificar se há workshop_id na URL (admin visualizando)
+      const urlParams = new URLSearchParams(window.location.search);
+      const adminWorkshopId = urlParams.get('workshop_id');
       
-      if (!userWorkshop) {
-        // Fallback for employees
-        const employees = await base44.entities.Employee.filter({ email: currentUser.email });
-        if (employees.length > 0 && employees[0].workshop_id) {
-            userWorkshop = workshops.find(w => w.id === employees[0].workshop_id);
+      let userWorkshop = null;
+      
+      if (adminWorkshopId && currentUser.role === 'admin') {
+        // Admin visualizando oficina específica
+        userWorkshop = await base44.entities.Workshop.get(adminWorkshopId);
+        setIsAdminView(true);
+      } else {
+        // Fluxo normal
+        const workshops = await base44.entities.Workshop.list();
+        userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
+        
+        if (!userWorkshop) {
+          // Fallback for employees
+          const employees = await base44.entities.Employee.filter({ email: currentUser.email });
+          if (employees.length > 0 && employees[0].workshop_id) {
+              userWorkshop = workshops.find(w => w.id === employees[0].workshop_id);
+          }
         }
+        setIsAdminView(false);
       }
       
       setWorkshop(userWorkshop);
@@ -365,6 +381,11 @@ export default function DiagnosticoOS() {
     >
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-green-50 py-12 px-4">
       <div className="max-w-6xl mx-auto">
+        
+        {isAdminView && workshop && (
+          <AdminViewBanner workshopName={workshop.name} />
+        )}
+        
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
             <FileText className="w-8 h-8 text-green-600" />
