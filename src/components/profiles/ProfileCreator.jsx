@@ -19,6 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { jobRoles, jobRoleCategories } from "@/components/lib/jobRoles";
+import { systemRoles } from "@/components/lib/systemRoles";
 
 export default function ProfileCreator({ onBack, onCreated, profiles }) {
   const queryClient = useQueryClient();
@@ -28,6 +29,7 @@ export default function ProfileCreator({ onBack, onCreated, profiles }) {
     description: "",
     base_profile_id: "",
     job_roles: [],
+    roles: [],
     permission_type: "job_role",
   });
 
@@ -46,11 +48,12 @@ export default function ProfileCreator({ onBack, onCreated, profiles }) {
         name: data.name,
         type: data.type,
         description: data.description,
+        permission_type: data.permission_type,
         job_roles: data.job_roles || [],
         status: "ativo",
         users_count: 0,
         is_system: false,
-        roles: [],
+        roles: data.roles || [],
         sidebar_permissions: {},
         module_permissions: {
           dashboard: "bloqueado",
@@ -269,6 +272,63 @@ export default function ProfileCreator({ onBack, onCreated, profiles }) {
                   })}
                 </div>
               )}
+              </div>
+            )}
+
+            {formData.permission_type === "role" && (
+              <div className="space-y-2">
+                <Label>Roles do Sistema</Label>
+                <p className="text-xs text-gray-600 mb-3">
+                  Selecione as permissões de roles que este perfil terá
+                </p>
+                <div className="border rounded-lg p-4 max-h-96 overflow-y-auto">
+                  {systemRoles.map((group) => (
+                    <div key={group.id} className="mb-6">
+                      <div className="flex items-center gap-2 mb-3">
+                        <group.icon className="w-4 h-4 text-gray-600" />
+                        <h4 className="font-semibold text-sm text-gray-700">
+                          {group.name}
+                        </h4>
+                      </div>
+                      <div className="space-y-2 ml-6">
+                        {group.roles.map((role) => (
+                          <div key={role.id} className="flex items-start gap-2">
+                            <Checkbox
+                              id={`role-${role.id}`}
+                              checked={formData.roles.includes(role.id)}
+                              onCheckedChange={(checked) => {
+                                const updated = checked
+                                  ? [...formData.roles, role.id]
+                                  : formData.roles.filter(r => r !== role.id);
+                                setFormData({ ...formData, roles: updated });
+                              }}
+                            />
+                            <div className="flex-1">
+                              <Label htmlFor={`role-${role.id}`} className="text-sm cursor-pointer font-medium">
+                                {role.name}
+                              </Label>
+                              <p className="text-xs text-gray-500">{role.description}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {formData.roles.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {formData.roles.map((roleId) => {
+                      const role = systemRoles
+                        .flatMap(g => g.roles)
+                        .find(r => r.id === roleId);
+                      return (
+                        <Badge key={roleId} variant="outline">
+                          {role?.name}
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
