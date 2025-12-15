@@ -15,6 +15,9 @@ import {
 } from "@/components/ui/select";
 import { ArrowLeft, Save } from "lucide-react";
 import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { jobRoles, jobRoleCategories } from "@/components/lib/jobRoles";
 
 export default function ProfileCreator({ onBack, onCreated, profiles }) {
   const queryClient = useQueryClient();
@@ -23,6 +26,7 @@ export default function ProfileCreator({ onBack, onCreated, profiles }) {
     type: "externo",
     description: "",
     base_profile_id: "",
+    job_roles: [],
   });
 
   const createMutation = useMutation({
@@ -189,6 +193,56 @@ export default function ProfileCreator({ onBack, onCreated, profiles }) {
               <p className="text-xs text-gray-500">
                 Selecione um perfil para copiar suas permissões
               </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Funções Vinculadas (job_role)</Label>
+              <p className="text-xs text-gray-600 mb-3">
+                Selecione as funções que terão este perfil automaticamente
+              </p>
+              <div className="border rounded-lg p-4 max-h-64 overflow-y-auto">
+                {Object.entries(jobRoleCategories).map(([cat, catData]) => {
+                  const categoryRoles = jobRoles.filter(jr => jr.category === cat);
+                  return (
+                    <div key={cat} className="mb-4">
+                      <h4 className="font-semibold text-sm text-gray-700 mb-2">
+                        {catData.label}
+                      </h4>
+                      <div className="grid grid-cols-2 gap-2">
+                        {categoryRoles.map((role) => (
+                          <div key={role.value} className="flex items-center gap-2">
+                            <Checkbox
+                              id={`job-${role.value}`}
+                              checked={formData.job_roles.includes(role.value)}
+                              onCheckedChange={(checked) => {
+                                const updated = checked
+                                  ? [...formData.job_roles, role.value]
+                                  : formData.job_roles.filter(r => r !== role.value);
+                                setFormData({ ...formData, job_roles: updated });
+                              }}
+                            />
+                            <Label htmlFor={`job-${role.value}`} className="text-sm cursor-pointer">
+                              {role.label}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              {formData.job_roles.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {formData.job_roles.map((jr) => {
+                    const role = jobRoles.find(r => r.value === jr);
+                    return (
+                      <Badge key={jr} variant="outline">
+                        {role?.label}
+                      </Badge>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             <div className="flex justify-end gap-3">
