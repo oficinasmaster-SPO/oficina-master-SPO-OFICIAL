@@ -67,19 +67,33 @@ export default function Layout({ children }) {
           console.log("👤 User autenticado:", currentUser.email);
           console.log("🏢 Workshop_id do User:", currentUser.workshop_id);
 
-          // Carregar oficina do usuário
+          // Verificar se há workshop_id na URL (admin visualizando cliente)
+          const urlParams = new URLSearchParams(window.location.search);
+          const adminWorkshopId = urlParams.get('workshop_id');
+
+          console.log("🔍 Workshop_id na URL:", adminWorkshopId);
+          console.log("🔍 É admin?", currentUser.role === 'admin');
+
           let userWorkshop = null;
 
-          if (currentUser.workshop_id) {
-            // Se já tem workshop_id, busca diretamente
-            const workshopsById = await base44.entities.Workshop.filter({ id: currentUser.workshop_id });
-            userWorkshop = workshopsById[0];
-            console.log("✅ Workshop encontrado pelo ID:", userWorkshop?.name);
+          if (adminWorkshopId && currentUser.role === 'admin') {
+            // MODO ADMIN: Carregar oficina do cliente
+            console.log("🔐 MODO ADMIN: Carregando oficina do cliente...");
+            userWorkshop = await base44.entities.Workshop.get(adminWorkshopId);
+            console.log("✅ Workshop do cliente carregado:", userWorkshop?.name);
           } else {
-            // Fallback: busca onde é owner
-            const workshopsByOwner = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
-            userWorkshop = workshopsByOwner[0];
-            console.log("✅ Workshop encontrado como owner:", userWorkshop?.name);
+            // MODO NORMAL: Carregar oficina do próprio usuário
+            if (currentUser.workshop_id) {
+              // Se já tem workshop_id, busca diretamente
+              const workshopsById = await base44.entities.Workshop.filter({ id: currentUser.workshop_id });
+              userWorkshop = workshopsById[0];
+              console.log("✅ Workshop encontrado pelo ID:", userWorkshop?.name);
+            } else {
+              // Fallback: busca onde é owner
+              const workshopsByOwner = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
+              userWorkshop = workshopsByOwner[0];
+              console.log("✅ Workshop encontrado como owner:", userWorkshop?.name);
+            }
           }
 
           setWorkshop(userWorkshop || null);
