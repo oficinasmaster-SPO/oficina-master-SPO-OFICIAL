@@ -15,6 +15,8 @@ import AtividadesImplementacao from "../components/aceleracao/AtividadesImplemen
 import PlanoAceleracaoMensal from "../components/aceleracao/PlanoAceleracaoMensal";
 import FeedbackPlanoModal from "../components/aceleracao/FeedbackPlanoModal";
 import AtasSection from "../components/aceleracao/AtasSection";
+import AIInsightsCard from "../components/ai/AIInsightsCard";
+import { useAIInsights } from "../hooks/useAIInsights";
 
 export default function PainelClienteAceleracao() {
   const navigate = useNavigate();
@@ -88,6 +90,8 @@ export default function PainelClienteAceleracao() {
     ),
     enabled: !!workshop?.id
   });
+
+  const { data: aiInsights = [], isLoading: loadingInsights } = useAIInsights('client', workshop?.id);
 
   // Buscar Plano de Aceleração do Mês Atual
   const currentMonth = new Date().toISOString().substring(0, 7);
@@ -248,6 +252,9 @@ export default function PainelClienteAceleracao() {
         <h1 className="text-3xl font-bold">Bem-vindo ao seu Painel de Aceleração</h1>
         <p className="text-blue-100 mt-2">{workshop?.name}</p>
       </div>
+
+      {/* AI Insights */}
+      <AIInsightsCard insights={aiInsights} loading={loadingInsights} />
 
       {/* Fase da Oficina e Progresso */}
       <div className="grid md:grid-cols-2 gap-6">
