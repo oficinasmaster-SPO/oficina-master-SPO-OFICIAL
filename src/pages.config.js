@@ -121,6 +121,7 @@ import RelatoriosAvancados from './pages/RelatoriosAvancados';
 import AdminUsuarios from './pages/AdminUsuarios';
 import AdminUserCadastro from './pages/AdminUserCadastro';
 import AdminPermissoes from './pages/AdminPermissoes';
+import GestaoPerfis from './pages/GestaoPerfis';
 import __Layout from './Layout.jsx';
 
 
@@ -248,6 +249,7 @@ export const PAGES = {
     "AdminUsuarios": AdminUsuarios,
     "AdminUserCadastro": AdminUserCadastro,
     "AdminPermissoes": AdminPermissoes,
+    "GestaoPerfis": GestaoPerfis,
 }
 
 export const pagesConfig = {
