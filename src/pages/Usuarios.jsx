@@ -410,17 +410,30 @@ export default function Usuarios() {
                             <Edit className="w-4 h-4" />
                           </Button>
                           {user.workshop_id && (
-                            <Button
-                              size="sm"
-                              variant="default"
-                              className="bg-purple-600 hover:bg-purple-700"
-                              onClick={() => {
-                                navigate(`${createPageUrl("GestaoOficina")}?workshop_id=${user.workshop_id}`);
-                              }}
-                              title="Acessar BackOffice"
-                            >
-                              <ExternalLink className="w-4 h-4" />
-                            </Button>
+                            <>
+                              <Button
+                                size="sm"
+                                variant="default"
+                                className="bg-purple-600 hover:bg-purple-700"
+                                onClick={() => {
+                                  navigate(`${createPageUrl("GestaoOficina")}?workshop_id=${user.workshop_id}`);
+                                }}
+                                title="Gestão da Oficina"
+                              >
+                                <ExternalLink className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-green-600 text-green-700 hover:bg-green-50"
+                                onClick={() => {
+                                  navigate(`${createPageUrl("Colaboradores")}?workshop_id=${user.workshop_id}`);
+                                }}
+                                title="Ver Colaboradores"
+                              >
+                                <Users className="w-4 h-4" />
+                              </Button>
+                            </>
                           )}
                         </div>
                       </td>

@@ -35,6 +35,17 @@ export default function Colaboradores() {
     queryKey: ['userWorkshop', user?.id],
     queryFn: async () => {
         if (!user) return null;
+        
+        // Verificar se há workshop_id na URL (admin visualizando)
+        const urlParams = new URLSearchParams(window.location.search);
+        const adminWorkshopId = urlParams.get('workshop_id');
+        
+        if (adminWorkshopId && user.role === 'admin') {
+          // Admin visualizando oficina específica
+          return await base44.entities.Workshop.get(adminWorkshopId);
+        }
+        
+        // Fluxo normal - buscar oficina do usuário
         const ws = await base44.entities.Workshop.filter({ owner_id: user.id });
         return ws[0];
     },
