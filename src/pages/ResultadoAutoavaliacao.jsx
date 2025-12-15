@@ -56,7 +56,7 @@ export default function ResultadoAutoavaliacao() {
   };
 
   const { data: actionPlan } = useQuery({
-    queryKey: ['action-plan', assessment.id],
+    queryKey: ['action-plan', assessment?.id],
     queryFn: async () => {
       const plans = await base44.entities.DiagnosticActionPlan.filter({
         diagnostic_id: assessment.id,
