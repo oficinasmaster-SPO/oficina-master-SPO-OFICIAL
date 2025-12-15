@@ -17,6 +17,7 @@ import { ArrowLeft, Save } from "lucide-react";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { jobRoles, jobRoleCategories } from "@/components/lib/jobRoles";
 
 export default function ProfileCreator({ onBack, onCreated, profiles }) {
@@ -27,6 +28,7 @@ export default function ProfileCreator({ onBack, onCreated, profiles }) {
     description: "",
     base_profile_id: "",
     job_roles: [],
+    permission_type: "job_role",
   });
 
   const createMutation = useMutation({
@@ -195,11 +197,35 @@ export default function ProfileCreator({ onBack, onCreated, profiles }) {
               </p>
             </div>
 
-            <div className="space-y-2">
-              <Label>Funções Vinculadas (job_role)</Label>
-              <p className="text-xs text-gray-600 mb-3">
-                Selecione as funções que terão este perfil automaticamente
-              </p>
+            <div className="space-y-3 p-4 bg-gray-50 rounded-lg border">
+              <Label>Tipo de Vinculação</Label>
+              <RadioGroup
+                value={formData.permission_type}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, permission_type: value })
+                }
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="job_role" id="type-job" />
+                  <Label htmlFor="type-job" className="cursor-pointer">
+                    <span className="font-medium">Job Role</span> - Vinculado a funções específicas (recomendado)
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="role" id="type-role" />
+                  <Label htmlFor="type-role" className="cursor-pointer">
+                    <span className="font-medium">Role</span> - Permissão manual por role do sistema
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            {formData.permission_type === "job_role" && (
+              <div className="space-y-2">
+                <Label>Funções Vinculadas (job_role)</Label>
+                <p className="text-xs text-gray-600 mb-3">
+                  Selecione as funções que terão este perfil automaticamente
+                </p>
               <div className="border rounded-lg p-4 max-h-64 overflow-y-auto">
                 {Object.entries(jobRoleCategories).map(([cat, catData]) => {
                   const categoryRoles = jobRoles.filter(jr => jr.category === cat);
@@ -243,7 +269,8 @@ export default function ProfileCreator({ onBack, onCreated, profiles }) {
                   })}
                 </div>
               )}
-            </div>
+              </div>
+            )}
 
             <div className="flex justify-end gap-3">
               <Button type="button" onClick={onBack} variant="outline">

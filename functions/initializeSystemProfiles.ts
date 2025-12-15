@@ -21,6 +21,7 @@ Deno.serve(async (req) => {
         is_system: true,
         status: "ativo",
         job_roles: [],
+        permission_type: "role",
         roles: [
           "admin.users", "admin.profiles", "admin.system_config", "admin.audit",
           "dashboard.view", "dashboard.edit", "dashboard.export",
@@ -48,6 +49,7 @@ Deno.serve(async (req) => {
         is_system: true,
         status: "ativo",
         job_roles: ["socio", "diretor"],
+        permission_type: "job_role",
         roles: [
           "dashboard.view", "dashboard.edit", "dashboard.export",
           "workshop.view", "workshop.edit", "workshop.manage_goals",
@@ -73,6 +75,7 @@ Deno.serve(async (req) => {
         is_system: true,
         status: "ativo",
         job_roles: ["gerente", "supervisor_loja", "lider_tecnico"],
+        permission_type: "job_role",
         roles: [
           "dashboard.view", "workshop.view",
           "employees.view", "employees.edit",
@@ -94,6 +97,7 @@ Deno.serve(async (req) => {
         is_system: true,
         status: "ativo",
         job_roles: ["tecnico", "funilaria_pintura", "estoque"],
+        permission_type: "job_role",
         roles: [
           "dashboard.view", "operations.view_qgp", "operations.daily_log",
           "processes.view", "training.view"
@@ -112,6 +116,7 @@ Deno.serve(async (req) => {
         is_system: true,
         status: "ativo",
         job_roles: ["comercial", "consultor_vendas", "marketing"],
+        permission_type: "job_role",
         roles: [
           "dashboard.view", "operations.view_qgp", "operations.daily_log",
           "financeiro.view", "processes.view"
@@ -130,6 +135,7 @@ Deno.serve(async (req) => {
         is_system: true,
         status: "ativo",
         job_roles: ["consultor", "acelerador"],
+        permission_type: "job_role",
         roles: [
           "dashboard.view", "dashboard.export",
           "workshop.view", "employees.view",
@@ -151,6 +157,7 @@ Deno.serve(async (req) => {
         is_system: true,
         status: "ativo",
         job_roles: [],
+        permission_type: "role",
         roles: ["dashboard.view"],
         module_permissions: {
           dashboard: "visualizacao", cadastros: "bloqueado", patio: "bloqueado",

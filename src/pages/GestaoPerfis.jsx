@@ -301,6 +301,11 @@ function ProfileSection({
                         {profile.job_roles.length} funções
                       </Badge>
                     )}
+                    {profile.permission_type && (
+                      <Badge variant="outline" className={profile.permission_type === "job_role" ? "bg-indigo-50 text-indigo-700" : "bg-amber-50 text-amber-700"}>
+                        {profile.permission_type === "job_role" ? "Job Role" : "Role"}
+                      </Badge>
+                    )}
                   </div>
                   <p className="text-sm text-gray-600 mt-1">
                     {profile.description || "Sem descrição"}
