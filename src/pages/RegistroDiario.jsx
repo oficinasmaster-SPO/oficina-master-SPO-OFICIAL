@@ -63,31 +63,30 @@ export default function RegistroDiario() {
             // Buscar oficina
             const workshops = await base44.entities.Workshop.filter({ id: employees[0].workshop_id });
             if (workshops.length > 0) userWorkshop = workshops[0];
+            
+            // Tentar inferir categoria inicial baseada na área
+            if (employees[0].area) {
+              const areaMap = {
+                'vendas': 'vendas',
+                'comercial': 'comercial',
+                'tecnico': 'tecnico',
+                'financeiro': 'financeiro',
+                'administrativo': 'rh', 
+                'gerencia': 'gestao'
+              };
+              if (areaMap[employees[0].area]) {
+                setSelectedCategory(areaMap[employees[0].area]);
+              }
+            }
+
+            // Carregar acumulado do mês para projeção de salário
+            loadMonthlyStats(employees[0].id);
           }
           setIsAdminView(false);
         }
         
         setEmployee(employeeRecord);
         setWorkshop(userWorkshop);
-          
-          // Tentar inferir categoria inicial baseada na área
-          if (employees[0].area) {
-             const areaMap = {
-               'vendas': 'vendas',
-               'comercial': 'comercial',
-               'tecnico': 'tecnico',
-               'financeiro': 'financeiro',
-               'administrativo': 'rh', 
-               'gerencia': 'gestao'
-             };
-             if (areaMap[employees[0].area]) {
-               setSelectedCategory(areaMap[employees[0].area]);
-             }
-          }
-
-          // Carregar acumulado do mês para projeção de salário
-          loadMonthlyStats(employees[0].id);
-        }
       } catch (error) {
         console.error("Erro ao carregar usuário:", error);
       }
