@@ -11,8 +11,6 @@ import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, Cart
 import { format, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
-import AIInsightsCard from "../ai/AIInsightsCard";
-import { useAIInsights } from "@/components/hooks/useAIInsights";
 
 export default function RelatoriosTab({ user }) {
   const [filtros, setFiltros] = useState({
@@ -46,8 +44,6 @@ export default function RelatoriosTab({ user }) {
     queryKey: ['cronogramas-relatorios'],
     queryFn: () => base44.entities.CronogramaImplementacao.list('-created_date')
   });
-
-  const { data: aiInsights = [], isLoading: loadingInsights } = useAIInsights('reports');
 
   // Filtrar dados
   const dadosFiltrados = useMemo(() => {
@@ -152,11 +148,6 @@ export default function RelatoriosTab({ user }) {
 
   return (
     <div className="space-y-6 print:space-y-4">
-      {/* AI Insights */}
-      <div className="print:hidden">
-        <AIInsightsCard insights={aiInsights} loading={loadingInsights} />
-      </div>
-
       {/* Filtros Avançados */}
       <Card className="print:hidden">
         <CardHeader>
