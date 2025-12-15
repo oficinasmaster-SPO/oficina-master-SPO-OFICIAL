@@ -590,6 +590,14 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           description: 'Perfis e permissões centralizados',
           adminOnly: true,
           highlight: true
+        },
+        { 
+          name: 'Usuários Internos', 
+          href: createPageUrl('UsuariosAdmin'), 
+          icon: Users,
+          description: 'Consultores e aceleradores do sistema',
+          adminOnly: true,
+          highlight: true
         }
       ]
     }
