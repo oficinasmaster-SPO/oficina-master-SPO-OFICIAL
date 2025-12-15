@@ -16,6 +16,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import AdvancedFilter from "@/components/shared/AdvancedFilter";
 import AIDocumentAnalyzer from "@/components/documents/AIDocumentAnalyzer";
+import AdminViewBanner from "../components/shared/AdminViewBanner";
 
 export default function RepositorioDocumentos() {
   const queryClient = useQueryClient();
@@ -23,6 +24,7 @@ export default function RepositorioDocumentos() {
   const [selectedDocForAnalysis, setSelectedDocForAnalysis] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [filterParams, setFilterParams] = useState({ search: "", category: "all", type: "all" });
+  const [isAdminView, setIsAdminView] = useState(false);
   
   const [newDoc, setNewDoc] = useState({
     title: "",
@@ -43,6 +45,16 @@ export default function RepositorioDocumentos() {
     queryKey: ['workshop', user?.id],
     queryFn: async () => {
       if (!user) return null;
+      
+      const urlParams = new URLSearchParams(window.location.search);
+      const adminWorkshopId = urlParams.get('workshop_id');
+      
+      if (adminWorkshopId && user.role === 'admin') {
+        setIsAdminView(true);
+        return await base44.entities.Workshop.get(adminWorkshopId);
+      }
+      
+      setIsAdminView(false);
       const ws = await base44.entities.Workshop.filter({ owner_id: user.id });
       return ws[0];
     },
@@ -155,6 +167,11 @@ export default function RepositorioDocumentos() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-8 px-4">
       <div className="max-w-7xl mx-auto">
+        
+        {isAdminView && workshop && (
+          <AdminViewBanner workshopName={workshop.name} />
+        )}
+        
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Repositório de Documentos</h1>

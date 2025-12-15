@@ -11,6 +11,7 @@ import { createPageUrl } from "@/utils";
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import AdminViewBanner from "../components/shared/AdminViewBanner";
 
 export default function MeusProcessos() {
   const navigate = useNavigate();
@@ -19,14 +20,29 @@ export default function MeusProcessos() {
   const [workshop, setWorkshop] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("Todos");
+  const [isAdminView, setIsAdminView] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
       try {
         const currentUser = await base44.auth.me();
         setUser(currentUser);
-        const workshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
-        setWorkshop(workshops[0] || null);
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const adminWorkshopId = urlParams.get('workshop_id');
+        
+        let userWorkshop = null;
+        
+        if (adminWorkshopId && currentUser.role === 'admin') {
+          userWorkshop = await base44.entities.Workshop.get(adminWorkshopId);
+          setIsAdminView(true);
+        } else {
+          const workshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
+          userWorkshop = workshops[0] || null;
+          setIsAdminView(false);
+        }
+        
+        setWorkshop(userWorkshop);
       } catch (e) {
         console.error(e);
       }
@@ -108,6 +124,11 @@ export default function MeusProcessos() {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
+        
+        {isAdminView && workshop && (
+          <AdminViewBanner workshopName={workshop.name} />
+        )}
+        
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">

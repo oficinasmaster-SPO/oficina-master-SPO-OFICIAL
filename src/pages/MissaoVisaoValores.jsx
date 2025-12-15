@@ -13,6 +13,7 @@ import { valuesSuggestions } from "../components/assessment/AssessmentCriteria";
 import { toast } from "sonner";
 import { differenceInMonths, format, addMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import AdminViewBanner from "../components/shared/AdminViewBanner";
 
 export default function MissaoVisaoValores() {
   const navigate = useNavigate();
@@ -22,6 +23,7 @@ export default function MissaoVisaoValores() {
   const [workshop, setWorkshop] = useState(null);
   const [step, setStep] = useState(1);
   const [isEditing, setIsEditing] = useState(false);
+  const [isAdminView, setIsAdminView] = useState(false);
   
   // Controle de regeneração e edição
   const [lastGenerationDate, setLastGenerationDate] = useState(null);
@@ -68,8 +70,20 @@ export default function MissaoVisaoValores() {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
       
-      const workshops = await base44.entities.Workshop.list();
-      const userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
+      const urlParams = new URLSearchParams(window.location.search);
+      const adminWorkshopId = urlParams.get('workshop_id');
+      
+      let userWorkshop = null;
+      
+      if (adminWorkshopId && currentUser.role === 'admin') {
+        userWorkshop = await base44.entities.Workshop.get(adminWorkshopId);
+        setIsAdminView(true);
+      } else {
+        const workshops = await base44.entities.Workshop.list();
+        userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
+        setIsAdminView(false);
+      }
+      
       setWorkshop(userWorkshop);
       
       if (userWorkshop?.logo_url) {
@@ -528,6 +542,11 @@ Retorne em formato JSON com a estrutura:
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 py-12 px-4">
       <div className="max-w-4xl mx-auto">
+        
+        {isAdminView && workshop && (
+          <AdminViewBanner workshopName={workshop.name} />
+        )}
+        
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-3">
             Missão, Visão e Valores
