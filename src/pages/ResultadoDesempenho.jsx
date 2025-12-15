@@ -67,7 +67,7 @@ export default function ResultadoDesempenho() {
     );
   }
 
-  if (!diagnostic) return null;
+  if (!diagnostic || !employee) return null;
 
   const { data: actionPlan } = useQuery({
     queryKey: ['action-plan', diagnostic.id],
@@ -340,7 +340,7 @@ export default function ResultadoDesempenho() {
                 Plano de Desenvolvimento com IA
               </h3>
               <p className="text-gray-600 mb-6">
-                Gere um plano para desenvolver competências de {employee.full_name}.
+                Gere um plano para desenvolver competências de {employee?.full_name}.
               </p>
               <Button
                 onClick={() => generatePlanMutation.mutate()}
