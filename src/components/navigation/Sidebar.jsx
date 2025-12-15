@@ -590,6 +590,14 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           description: 'Gestão de usuários administrativos',
           adminOnly: true,
           highlight: true
+        },
+        { 
+          name: 'Gestão de Perfis', 
+          href: createPageUrl('GestaoPerfis'), 
+          icon: Shield,
+          description: 'Perfis e permissões centralizados',
+          adminOnly: true,
+          highlight: true
         }
       ]
     }

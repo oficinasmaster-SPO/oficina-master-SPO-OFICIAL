@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, CheckCircle, XCircle } from "lucide-react";
-import { sidebarStructure } from "@/lib/sidebarStructure";
+import { sidebarStructure } from "@/components/lib/sidebarStructure";
 
 export default function ProfilePreview({ profile, onBack }) {
   const sidebarPerms = profile.sidebar_permissions || {};

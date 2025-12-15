@@ -2,7 +2,7 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { sidebarStructure } from "@/lib/sidebarStructure";
+import { sidebarStructure } from "@/components/lib/sidebarStructure";
 
 export default function SidebarPermissions({ profile, onChange }) {
   const permissions = profile.sidebar_permissions || {};
