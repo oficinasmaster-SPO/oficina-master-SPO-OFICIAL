@@ -5,8 +5,38 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     
     // Validar autenticação usando service role
-    const { employee_data, workshop_id, employee_id } = await req.json();
+    const { employee_data, workshop_id, employee_id, user_data, email, full_name } = await req.json();
 
+    // Modo novo: criar usuário interno admin
+    if (user_data && email && full_name) {
+      console.log("Criando usuário interno admin:", email);
+
+      // Gerar senha temporária
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%&*';
+      let tempPassword = '';
+      for (let i = 0; i < 12; i++) {
+        tempPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+
+      // Criar User com role 'user' (interno)
+      const newUser = await base44.asServiceRole.entities.User.create({
+        email: email,
+        full_name: full_name,
+        role: 'user',
+        ...user_data
+      });
+
+      console.log("Usuário interno criado:", newUser.id);
+
+      return Response.json({
+        success: true,
+        user: newUser,
+        password: tempPassword,
+        message: 'Usuário interno criado com sucesso'
+      });
+    }
+
+    // Modo antigo: vincular employee a workshop
     if (!employee_data || !workshop_id) {
       return Response.json({ error: 'Dados incompletos' }, { status: 400 });
     }
