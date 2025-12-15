@@ -243,6 +243,7 @@ export default function DadosPessoais({ employee, onUpdate }) {
                 <SelectValue placeholder="Selecione..." />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="socio">Sócio</SelectItem>
                 <SelectItem value="diretor">Diretor</SelectItem>
                 <SelectItem value="supervisor_loja">Supervisor de Loja</SelectItem>
                 <SelectItem value="gerente">Gerente</SelectItem>
@@ -258,6 +259,8 @@ export default function DadosPessoais({ employee, onUpdate }) {
                 <SelectItem value="administrativo">Administrativo</SelectItem>
                 <SelectItem value="motoboy">Moto Boy</SelectItem>
                 <SelectItem value="lavador">Lavador</SelectItem>
+                <SelectItem value="acelerador">Acelerador</SelectItem>
+                <SelectItem value="consultor">Consultor</SelectItem>
                 <SelectItem value="outros">Outros</SelectItem>
               </SelectContent>
             </Select>
