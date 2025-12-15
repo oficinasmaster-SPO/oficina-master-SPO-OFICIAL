@@ -15,6 +15,7 @@ import RewardsWall from "../components/gamification/RewardsWall";
 import RankingSection from "@/components/gamification/RankingSection";
 import EvidenceSubmission from "@/components/gamification/EvidenceSubmission";
 import QualityDashboard from "@/components/gamification/QualityDashboard";
+import AdminViewBanner from "../components/shared/AdminViewBanner";
 
 export default function Gamificacao() {
   const queryClient = useQueryClient();
@@ -23,6 +24,8 @@ export default function Gamificacao() {
   const [challengeTypeFilter, setChallengeTypeFilter] = useState("all");
   const [challengeTargetFilter, setChallengeTargetFilter] = useState("all");
   const [challengeScopeFilter, setChallengeScopeFilter] = useState("all");
+  const [workshop, setWorkshop] = useState(null);
+  const [isAdminView, setIsAdminView] = useState(false);
 
   useEffect(() => {
     loadUser();
@@ -32,6 +35,26 @@ export default function Gamificacao() {
     try {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
+
+      // Verificar se há workshop_id na URL (admin visualizando)
+      const urlParams = new URLSearchParams(window.location.search);
+      const adminWorkshopId = urlParams.get('workshop_id');
+
+      let userWorkshop = null;
+      
+      if (adminWorkshopId && currentUser.role === 'admin') {
+        // Admin visualizando oficina específica
+        userWorkshop = await base44.entities.Workshop.get(adminWorkshopId);
+        setIsAdminView(true);
+      } else {
+        // Fluxo normal - buscar oficina do usuário
+        const workshops = await base44.entities.Workshop.list();
+        const workshopsArray = Array.isArray(workshops) ? workshops : [];
+        userWorkshop = workshopsArray.find(w => w.owner_id === currentUser.id);
+        setIsAdminView(false);
+      }
+      
+      setWorkshop(userWorkshop || null);
 
       try {
         const profiles = await base44.entities.UserGameProfile.list();
@@ -95,10 +118,8 @@ export default function Gamificacao() {
     retry: 1
   });
 
-  // Workshop do usuário atual
-  // Note: We need to be careful with circular dependency if we try to use employees to find workshop
-  // For now, prefer owner_id or basic filtering. Employees will be fetched after workshop.
-  const currentWorkshop = workshops.find((w) => w.owner_id === user?.id);
+  // Workshop do usuário atual ou do admin view
+  const currentWorkshop = workshop || workshops.find((w) => w.owner_id === user?.id);
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', currentWorkshop?.id],
@@ -303,6 +324,11 @@ export default function Gamificacao() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-yellow-50 py-8 px-4">
       <div className="max-w-7xl mx-auto">
+        
+        {isAdminView && workshop && (
+          <AdminViewBanner workshopName={workshop.name} />
+        )}
+        
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-3 flex items-center justify-center gap-3">Sistema de Gameficação

@@ -19,6 +19,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsToolti
 import { formatCurrency, formatNumber } from "../components/utils/formatters";
 import { toast } from "sonner";
 import { useMemo } from "react";
+import AdminViewBanner from "../components/shared/AdminViewBanner";
 
 export default function DRETCMP2() {
   const navigate = useNavigate();
@@ -28,6 +29,7 @@ export default function DRETCMP2() {
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
   const [viewMode, setViewMode] = useState("month"); // 'month' or 'average'
   const [formData, setFormData] = useState(getEmptyDRE());
+  const [isAdminView, setIsAdminView] = useState(false);
 
   function getCurrentMonth() {
     const now = new Date();
@@ -61,13 +63,27 @@ export default function DRETCMP2() {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
-      const workshops = await base44.entities.Workshop.list();
-      const workshopsArray = Array.isArray(workshops) ? workshops : [];
-      const userWorkshop = workshopsArray.find(w => w.owner_id === currentUser.id);
+      // Verificar se há workshop_id na URL (admin visualizando)
+      const urlParams = new URLSearchParams(window.location.search);
+      const adminWorkshopId = urlParams.get('workshop_id');
 
-      if (!userWorkshop) {
-        navigate(createPageUrl("Cadastro"));
-        return;
+      let userWorkshop = null;
+      
+      if (adminWorkshopId && currentUser.role === 'admin') {
+        // Admin visualizando oficina específica
+        userWorkshop = await base44.entities.Workshop.get(adminWorkshopId);
+        setIsAdminView(true);
+      } else {
+        // Fluxo normal
+        const workshops = await base44.entities.Workshop.list();
+        const workshopsArray = Array.isArray(workshops) ? workshops : [];
+        userWorkshop = workshopsArray.find(w => w.owner_id === currentUser.id);
+
+        if (!userWorkshop) {
+          navigate(createPageUrl("Cadastro"));
+          return;
+        }
+        setIsAdminView(false);
       }
 
       setWorkshop(userWorkshop);
@@ -286,6 +302,11 @@ export default function DRETCMP2() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-green-50 py-8 px-4">
       <div className="max-w-7xl mx-auto">
+        
+        {isAdminView && workshop && (
+          <AdminViewBanner workshopName={workshop.name} />
+        )}
+        
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">

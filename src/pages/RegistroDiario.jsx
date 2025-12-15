@@ -15,6 +15,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import AdminViewBanner from "../components/shared/AdminViewBanner";
 
 export default function RegistroDiario() {
   const queryClient = useQueryClient();
@@ -29,6 +30,7 @@ export default function RegistroDiario() {
   const [isUploading, setIsUploading] = useState(false);
   const [monthlyTotalCommission, setMonthlyTotalCommission] = useState(0);
   const [estimatedDailyCommission, setEstimatedDailyCommission] = useState(0);
+  const [isAdminView, setIsAdminView] = useState(false);
 
   // Carregar usuário e colaborador vinculado
   useEffect(() => {
@@ -37,13 +39,36 @@ export default function RegistroDiario() {
         const user = await base44.auth.me();
         setCurrentUser(user);
 
-        // Buscar registro de colaborador
-        const employees = await base44.entities.Employee.filter({ email: user.email });
-        if (employees.length > 0) {
-          setEmployee(employees[0]);
-          // Buscar oficina
-          const workshops = await base44.entities.Workshop.filter({ id: employees[0].workshop_id });
-          if (workshops.length > 0) setWorkshop(workshops[0]);
+        // Verificar se há workshop_id na URL (admin visualizando)
+        const urlParams = new URLSearchParams(window.location.search);
+        const adminWorkshopId = urlParams.get('workshop_id');
+
+        let userWorkshop = null;
+        let employeeRecord = null;
+
+        if (adminWorkshopId && user.role === 'admin') {
+          // Admin visualizando oficina específica
+          userWorkshop = await base44.entities.Workshop.get(adminWorkshopId);
+          // Buscar primeiro colaborador da oficina como exemplo
+          const employees = await base44.entities.Employee.filter({ workshop_id: adminWorkshopId }, '-created_date', 1);
+          if (employees.length > 0) {
+            employeeRecord = employees[0];
+          }
+          setIsAdminView(true);
+        } else {
+          // Fluxo normal - buscar colaborador do usuário logado
+          const employees = await base44.entities.Employee.filter({ email: user.email });
+          if (employees.length > 0) {
+            employeeRecord = employees[0];
+            // Buscar oficina
+            const workshops = await base44.entities.Workshop.filter({ id: employees[0].workshop_id });
+            if (workshops.length > 0) userWorkshop = workshops[0];
+          }
+          setIsAdminView(false);
+        }
+        
+        setEmployee(employeeRecord);
+        setWorkshop(userWorkshop);
           
           // Tentar inferir categoria inicial baseada na área
           if (employees[0].area) {
@@ -298,6 +323,11 @@ export default function RegistroDiario() {
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl">
+      
+      {isAdminView && workshop && (
+        <AdminViewBanner workshopName={workshop.name} />
+      )}
+      
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Diário de Produção</h1>

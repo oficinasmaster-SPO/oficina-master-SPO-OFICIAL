@@ -10,6 +10,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Ba
 import NotificationSettingsDialog from "@/components/dashboard/NotificationSettingsDialog";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import AdminViewBanner from "../components/shared/AdminViewBanner";
 
 export default function DashboardOverview() {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ export default function DashboardOverview() {
   const [workshop, setWorkshop] = useState(null);
   const [loading, setLoading] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [isAdminView, setIsAdminView] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -24,26 +26,37 @@ export default function DashboardOverview() {
         const currentUser = await base44.auth.me();
         setUser(currentUser);
         
-        // Load workshop - CORRIGIDO: buscar por workshop_id do user ou owner_id
+        // Verificar se há workshop_id na URL (admin visualizando)
+        const urlParams = new URLSearchParams(window.location.search);
+        const adminWorkshopId = urlParams.get('workshop_id');
+        
         let userWorkshop = null;
         
-        if (currentUser.workshop_id) {
-          const byId = await base44.entities.Workshop.filter({ id: currentUser.workshop_id });
-          userWorkshop = byId[0];
-        }
-        
-        if (!userWorkshop) {
-          const byOwner = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
-          userWorkshop = byOwner[0];
-        }
-        
-        if (!userWorkshop) {
-          // Buscar se é colaborador
-          const employees = await base44.entities.Employee.filter({ user_id: currentUser.id });
-          if (employees.length > 0) {
-            const byWorkshop = await base44.entities.Workshop.filter({ id: employees[0].workshop_id });
-            userWorkshop = byWorkshop[0];
+        if (adminWorkshopId && currentUser.role === 'admin') {
+          // Admin visualizando oficina específica
+          userWorkshop = await base44.entities.Workshop.get(adminWorkshopId);
+          setIsAdminView(true);
+        } else {
+          // Fluxo normal
+          if (currentUser.workshop_id) {
+            const byId = await base44.entities.Workshop.filter({ id: currentUser.workshop_id });
+            userWorkshop = byId[0];
           }
+          
+          if (!userWorkshop) {
+            const byOwner = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
+            userWorkshop = byOwner[0];
+          }
+          
+          if (!userWorkshop) {
+            // Buscar se é colaborador
+            const employees = await base44.entities.Employee.filter({ user_id: currentUser.id });
+            if (employees.length > 0) {
+              const byWorkshop = await base44.entities.Workshop.filter({ id: employees[0].workshop_id });
+              userWorkshop = byWorkshop[0];
+            }
+          }
+          setIsAdminView(false);
         }
         
         setWorkshop(userWorkshop);
@@ -145,6 +158,11 @@ export default function DashboardOverview() {
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
+        
+        {isAdminView && workshop && (
+          <AdminViewBanner workshopName={workshop.name} />
+        )}
+        
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
