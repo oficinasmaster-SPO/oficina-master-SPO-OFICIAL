@@ -17,10 +17,25 @@ export default function GestaoPerfis() {
   const [viewMode, setViewMode] = useState("list"); // list, edit, audit
   const queryClient = useQueryClient();
 
-  const { data: profiles = [], isLoading } = useQuery({
+  const { data: profiles = [], isLoading, refetch } = useQuery({
     queryKey: ["user-profiles"],
     queryFn: () => base44.entities.UserProfile.list(),
   });
+
+  // Inicializar perfis padrão do sistema
+  React.useEffect(() => {
+    const initProfiles = async () => {
+      if (profiles.length === 0 && !isLoading) {
+        try {
+          await base44.functions.invoke('initializeSystemProfiles', {});
+          refetch();
+        } catch (error) {
+          console.error("Erro ao inicializar perfis:", error);
+        }
+      }
+    };
+    initProfiles();
+  }, [profiles.length, isLoading]);
 
   const { data: users = [] } = useQuery({
     queryKey: ["users"],
