@@ -33,16 +33,49 @@ export default function GerarAtaModal({ atendimento, workshop, planoAceleracao, 
     try {
       const user = await base44.auth.me();
       
+      // Converter participantes do atendimento para formato da ATA
       const participantesIniciais = [
         { name: user.full_name || user.email, role: "Consultor/Acelerador" }
       ];
 
       if (atendimento?.participantes && Array.isArray(atendimento.participantes)) {
-        participantesIniciais.push(...atendimento.participantes);
+        atendimento.participantes.forEach(p => {
+          if (p.nome) {
+            participantesIniciais.push({
+              name: p.nome,
+              role: p.cargo || "Participante"
+            });
+          }
+        });
       }
+
+      // Converter pauta do atendimento
+      let pautasTexto = "";
+      if (atendimento?.pauta && Array.isArray(atendimento.pauta)) {
+        pautasTexto = atendimento.pauta
+          .filter(p => p.titulo)
+          .map(p => `• ${p.titulo}${p.descricao ? ': ' + p.descricao : ''}`)
+          .join('\n');
+      }
+
+      // Converter objetivos
+      let objetivosTexto = "";
+      if (atendimento?.objetivos && Array.isArray(atendimento.objetivos)) {
+        objetivosTexto = atendimento.objetivos
+          .filter(o => o)
+          .map(o => `• ${o}`)
+          .join('\n');
+      }
+
+      // Data e hora do atendimento
+      const dataAtendimento = atendimento?.data_agendada 
+        ? new Date(atendimento.data_agendada)
+        : new Date();
 
       setFormData(prev => ({
         ...prev,
+        meeting_date: dataAtendimento.toISOString().split('T')[0],
+        meeting_time: dataAtendimento.toTimeString().slice(0, 5),
         consultor_name: user.full_name || user.email,
         consultor_id: user.id,
         participantes: participantesIniciais,
@@ -50,11 +83,15 @@ export default function GerarAtaModal({ atendimento, workshop, planoAceleracao, 
           name: workshop?.owner_name || workshop?.name || "",
           role: "Proprietário"
         },
-        plano_nome: planoAceleracao?.nome || planoAceleracao?.titulo || "Plano de Aceleração",
-        visao_geral_projeto: planoAceleracao?.status_atual || planoAceleracao?.descricao || ""
+        plano_nome: planoAceleracao?.plan_data?.title || "Plano de Aceleração",
+        pautas: pautasTexto,
+        objetivos_atendimento: objetivosTexto,
+        objetivos_consultor: atendimento?.observacoes_consultor || "",
+        visao_geral_projeto: planoAceleracao?.plan_data?.overview || planoAceleracao?.plan_data?.executive_summary || ""
       }));
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
+      toast.error("Erro ao carregar dados do atendimento");
     }
   };
 

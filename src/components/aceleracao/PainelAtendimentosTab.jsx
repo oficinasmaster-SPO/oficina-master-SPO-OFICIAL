@@ -238,7 +238,8 @@ export default function PainelAtendimentosTab({ user }) {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => navigate(createPageUrl('RegistrarAtendimento') + `?edit=${atendimento.id}`)}
+                            onClick={() => navigate(createPageUrl('RegistrarAtendimento') + `?atendimento_id=${atendimento.id}`)}
+                            title="Editar Atendimento"
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
@@ -271,9 +272,7 @@ export default function PainelAtendimentosTab({ user }) {
                               variant="ghost"
                               size="sm"
                               onClick={() => {
-                                const workshop = workshops?.find(w => w.id === atendimento.workshop_id);
-                                const plano = planos?.find(p => p.workshop_id === atendimento.workshop_id);
-                                setSelectedAtendimento({ ...atendimento, workshop, plano });
+                                setSelectedAtendimento(atendimento);
                                 setShowGerarAta(true);
                               }}
                               title="Gerar ATA"

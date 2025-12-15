@@ -58,13 +58,12 @@ export default function RegistrarAtendimento() {
   // Carregar atendimento se vier da URL
   React.useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const atendimentoId = urlParams.get('atendimento_id');
+    const atendimentoId = urlParams.get('atendimento_id') || urlParams.get('edit');
     
     if (atendimentoId && user) {
       const loadAtendimento = async () => {
         try {
-          const atendimentos = await base44.entities.ConsultoriaAtendimento.filter({ id: atendimentoId });
-          const atendimento = atendimentos[0];
+          const atendimento = await base44.entities.ConsultoriaAtendimento.get(atendimentoId);
           
           if (atendimento) {
             const dataAgendada = new Date(atendimento.data_agendada);
@@ -78,12 +77,17 @@ export default function RegistrarAtendimento() {
               midias_anexas: atendimento.midias_anexas || [],
               processos_vinculados: atendimento.processos_vinculados || [],
               videoaulas_vinculadas: atendimento.videoaulas_vinculadas || [],
-              documentos_vinculados: atendimento.documentos_vinculados || []
+              documentos_vinculados: atendimento.documentos_vinculados || [],
+              topicos_discutidos: atendimento.topicos_discutidos || [],
+              decisoes_tomadas: atendimento.decisoes_tomadas || [],
+              acoes_geradas: atendimento.acoes_geradas || []
             });
             setShowMeetingTimer(atendimento.status === 'participando');
+            console.log("Atendimento carregado para edição:", atendimento);
           }
         } catch (error) {
           console.error("Erro ao carregar atendimento:", error);
+          toast.error("Erro ao carregar atendimento");
         }
       };
       
