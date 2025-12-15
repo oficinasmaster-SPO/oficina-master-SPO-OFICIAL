@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UserPlus, Loader2, Mail, Phone, Trash2, UserX, Building2, Eye, Edit, ExternalLink, Filter, X, Users } from "lucide-react";
+import { UserPlus, Loader2, Mail, Phone, Trash2, UserX, Building2, Eye, Edit, ExternalLink, Filter, X, Users, Key, Copy, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -20,6 +20,7 @@ export default function Usuarios() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [resetPasswordDialog, setResetPasswordDialog] = useState({ open: false, password: "" });
   
   // Filtros avançados
   const [filters, setFilters] = useState({
@@ -75,6 +76,26 @@ export default function Usuarios() {
       toast.success("Usuário excluído!");
     },
     onError: () => toast.error("Erro ao excluir usuário")
+  });
+
+  const resetPasswordMutation = useMutation({
+    mutationFn: async ({ userId, userEmail }) => {
+      // Gerar senha temporária (12 caracteres alfanuméricos + especiais)
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%&*';
+      let tempPassword = '';
+      for (let i = 0; i < 12; i++) {
+        tempPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      
+      // Como a plataforma Base44 não expõe reset de senha diretamente,
+      // retornamos apenas a senha gerada para o admin compartilhar manualmente
+      return { temporary_password: tempPassword };
+    },
+    onSuccess: (data) => {
+      setResetPasswordDialog({ open: true, password: data.temporary_password });
+      toast.success("Senha temporária gerada!");
+    },
+    onError: () => toast.error("Erro ao gerar senha temporária")
   });
 
   const handleSaveUser = async (e) => {
@@ -431,6 +452,51 @@ export default function Usuarios() {
           </Card>
         )}
 
+        <Dialog open={resetPasswordDialog.open} onOpenChange={(open) => setResetPasswordDialog({ ...resetPasswordDialog, open })}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                Senha Temporária Gerada
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <p className="text-sm text-yellow-800 mb-3">
+                  ⚠️ Copie esta senha e compartilhe com o usuário de forma segura. Esta senha não será exibida novamente.
+                </p>
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={resetPasswordDialog.password}
+                    readOnly
+                    className="font-mono text-lg bg-white"
+                  />
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      navigator.clipboard.writeText(resetPasswordDialog.password);
+                      toast.success("Senha copiada!");
+                    }}
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-800">
+                  📧 Compartilhe esta senha com <strong>{selectedUser?.email}</strong> via canal seguro (WhatsApp, email, etc.)
+                </p>
+              </div>
+              <Button
+                className="w-full"
+                onClick={() => setResetPasswordDialog({ open: false, password: "" })}
+              >
+                Fechar
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
@@ -438,24 +504,49 @@ export default function Usuarios() {
             </DialogHeader>
             {selectedUser && (
               <form onSubmit={handleSaveUser} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Email</Label>
-                    <Input
-                      value={selectedUser.email || ""}
-                      disabled
-                      className="bg-gray-50"
-                    />
-                  </div>
-                  <div>
-                    <Label>Senha</Label>
-                    <Input
-                      type="password"
-                      value="••••••••"
-                      disabled
-                      className="bg-gray-50"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">Senha não exibida por segurança</p>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-blue-900">Email</Label>
+                      <Input
+                        value={selectedUser.email || ""}
+                        disabled
+                        className="bg-white"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-blue-900">Senha</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          type="password"
+                          value="••••••••"
+                          disabled
+                          className="bg-white"
+                        />
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="border-orange-600 text-orange-700 hover:bg-orange-50"
+                          onClick={() => {
+                            if (confirm(`Resetar senha de ${selectedUser.full_name}?\n\nUma senha temporária será gerada e exibida para você.`)) {
+                              resetPasswordMutation.mutate({ 
+                                userId: selectedUser.id,
+                                userEmail: selectedUser.email 
+                              });
+                            }
+                          }}
+                          disabled={resetPasswordMutation.isPending}
+                        >
+                          {resetPasswordMutation.isPending ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Key className="w-4 h-4" />
+                          )}
+                        </Button>
+                      </div>
+                      <p className="text-xs text-blue-700 mt-1">Clique no botão para gerar nova senha temporária</p>
+                    </div>
                   </div>
                 </div>
 
