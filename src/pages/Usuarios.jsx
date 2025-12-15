@@ -452,6 +452,27 @@ export default function Usuarios() {
             </DialogHeader>
             {selectedUser && (
               <form onSubmit={handleSaveUser} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Email</Label>
+                    <Input
+                      value={selectedUser.email || ""}
+                      disabled
+                      className="bg-gray-50"
+                    />
+                  </div>
+                  <div>
+                    <Label>Senha</Label>
+                    <Input
+                      type="password"
+                      value="••••••••"
+                      disabled
+                      className="bg-gray-50"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Senha não exibida por segurança</p>
+                  </div>
+                </div>
+
                 <div>
                   <Label>Empresa (opcional)</Label>
                   <Select name="workshop_id" defaultValue={selectedUser.workshop_id || ""}>
@@ -482,6 +503,7 @@ export default function Usuarios() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value={null}>Nenhuma</SelectItem>
+                      <SelectItem value="socio">Sócio</SelectItem>
                       <SelectItem value="diretor">Diretor</SelectItem>
                       <SelectItem value="gerente">Gerente</SelectItem>
                       <SelectItem value="supervisor_loja">Supervisor</SelectItem>
@@ -490,6 +512,8 @@ export default function Usuarios() {
                       <SelectItem value="financeiro">Financeiro</SelectItem>
                       <SelectItem value="rh">RH</SelectItem>
                       <SelectItem value="marketing">Marketing</SelectItem>
+                      <SelectItem value="acelerador">Acelerador</SelectItem>
+                      <SelectItem value="consultor">Consultor</SelectItem>
                       <SelectItem value="outros">Outros</SelectItem>
                     </SelectContent>
                   </Select>
@@ -518,41 +542,6 @@ export default function Usuarios() {
                   <Label>Telefone (opcional)</Label>
                   <Input name="telefone" defaultValue={selectedUser.telefone || ""} placeholder="(00) 00000-0000" />
                 </div>
-
-                <div>
-                  <Label>Status</Label>
-                  <Select name="user_status" defaultValue={selectedUser.user_status || "ativo"}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ativo">Ativo</SelectItem>
-                      <SelectItem value="inativo">Inativo</SelectItem>
-                      <SelectItem value="ferias">Férias</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {currentUser?.role === 'admin' && selectedUser.workshop_id && (
-                  <div className="border-t pt-4">
-                    <Label className="text-lg font-semibold text-gray-900">Plano da Oficina</Label>
-                    <p className="text-sm text-gray-600 mb-2">Altere o plano da oficina deste usuário</p>
-                    <Select name="plano" defaultValue={getWorkshopPlan(selectedUser.workshop_id)}>
-                      <SelectTrigger className="border-2">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="FREE">🆓 FREE - Grátis</SelectItem>
-                        <SelectItem value="START">🚀 START - Inicial</SelectItem>
-                        <SelectItem value="BRONZE">🥉 BRONZE</SelectItem>
-                        <SelectItem value="PRATA">🥈 PRATA</SelectItem>
-                        <SelectItem value="GOLD">🥇 GOLD</SelectItem>
-                        <SelectItem value="IOM">💎 IOM - Premium</SelectItem>
-                        <SelectItem value="MILLIONS">👑 MILLIONS - Elite</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
 
                 <div className="flex justify-end gap-2">
                   <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
