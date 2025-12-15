@@ -16,15 +16,17 @@ import ActionPlanFeedbackModal from "../components/diagnostics/ActionPlanFeedbac
 
 export default function ResultadoAutoavaliacao() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  
   const [loading, setLoading] = useState(true);
   const [assessment, setAssessment] = useState(null);
   const [showActionPlanDetails, setShowActionPlanDetails] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
-  const queryClient = useQueryClient();
 
   const { data: actionPlan } = useQuery({
     queryKey: ['action-plan', assessment?.id],
     queryFn: async () => {
+      if (!assessment?.id) return null;
       const plans = await base44.entities.DiagnosticActionPlan.filter({
         diagnostic_id: assessment.id,
         diagnostic_type: 'ProcessAssessment'
@@ -35,17 +37,23 @@ export default function ResultadoAutoavaliacao() {
   });
 
   const generatePlanMutation = useMutation({
-    mutationFn: async () => base44.functions.invoke('generateActionPlanProcess', { diagnostic_id: assessment.id }),
+    mutationFn: async () => {
+      if (!assessment?.id) throw new Error('Assessment não encontrado');
+      return await base44.functions.invoke('generateActionPlanProcess', { diagnostic_id: assessment.id });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['action-plan', assessment?.id]);
       toast.success('Plano gerado!');
+    },
+    onError: (error) => {
+      toast.error('Erro ao gerar plano: ' + error.message);
     }
   });
 
   const refinePlanMutation = useMutation({
     mutationFn: async ({ feedback }) => {
-      if (!actionPlan?.id) return;
-      return base44.functions.invoke('refineActionPlan', {
+      if (!actionPlan?.id) throw new Error('Plano não encontrado');
+      return await base44.functions.invoke('refineActionPlan', {
         plan_id: actionPlan.id,
         feedback_content: feedback.content,
         feedback_type: feedback.type,
@@ -56,12 +64,17 @@ export default function ResultadoAutoavaliacao() {
       queryClient.invalidateQueries(['action-plan', assessment?.id]);
       setShowFeedbackModal(false);
       toast.success('Plano refinado!');
+    },
+    onError: (error) => {
+      toast.error('Erro ao refinar plano: ' + error.message);
     }
   });
 
   const updateActivityMutation = useMutation({
     mutationFn: async ({ activityIndex, status }) => {
-      if (!actionPlan?.plan_data?.implementation_schedule) return;
+      if (!actionPlan?.id || !actionPlan?.plan_data?.implementation_schedule) {
+        throw new Error('Dados do plano inválidos');
+      }
       const updatedSchedule = [...actionPlan.plan_data.implementation_schedule];
       updatedSchedule[activityIndex].status = status;
       if (status === 'concluida') updatedSchedule[activityIndex].completed_date = new Date().toISOString();
@@ -74,6 +87,9 @@ export default function ResultadoAutoavaliacao() {
     onSuccess: () => {
       queryClient.invalidateQueries(['action-plan', assessment?.id]);
       toast.success('Atividade atualizada!');
+    },
+    onError: (error) => {
+      toast.error('Erro ao atualizar: ' + error.message);
     }
   });
 
