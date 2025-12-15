@@ -24,6 +24,78 @@ export default function Resultado() {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const queryClient = useQueryClient();
 
+  const { data: actionPlan } = useQuery({
+    queryKey: ['action-plan', diagnostic?.id],
+    queryFn: async () => {
+      const plans = await base44.entities.DiagnosticActionPlan.filter({
+        diagnostic_id: diagnostic.id,
+        diagnostic_type: 'Diagnostic'
+      });
+      return plans.sort((a, b) => new Date(b.created_date) - new Date(a.created_date))[0];
+    },
+    enabled: !!diagnostic?.id
+  });
+
+  const generatePlanMutation = useMutation({
+    mutationFn: async () => {
+      return await base44.functions.invoke('generateActionPlanDiagnostic', {
+        diagnostic_id: diagnostic.id
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['action-plan', diagnostic.id]);
+      toast.success('Plano de ação gerado com sucesso!');
+    },
+    onError: (error) => {
+      toast.error('Erro ao gerar plano: ' + error.message);
+    }
+  });
+
+  const refinePlanMutation = useMutation({
+    mutationFn: async ({ feedback }) => {
+      return await base44.functions.invoke('refineActionPlan', {
+        plan_id: actionPlan.id,
+        feedback_content: feedback.content,
+        feedback_type: feedback.type,
+        audio_url: feedback.audio_url
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['action-plan', diagnostic.id]);
+      setShowFeedbackModal(false);
+      toast.success('Plano refinado com sucesso!');
+    },
+    onError: (error) => {
+      toast.error('Erro ao refinar plano: ' + error.message);
+    }
+  });
+
+  const updateActivityMutation = useMutation({
+    mutationFn: async ({ activityIndex, status }) => {
+      const updatedSchedule = [...actionPlan.plan_data.implementation_schedule];
+      updatedSchedule[activityIndex].status = status;
+      if (status === 'concluida') {
+        updatedSchedule[activityIndex].completed_date = new Date().toISOString();
+      }
+
+      const completedCount = updatedSchedule.filter(a => a.status === 'concluida').length;
+      const totalCount = updatedSchedule.length;
+      const completionPercentage = Math.round((completedCount / totalCount) * 100);
+
+      return await base44.entities.DiagnosticActionPlan.update(actionPlan.id, {
+        plan_data: {
+          ...actionPlan.plan_data,
+          implementation_schedule: updatedSchedule
+        },
+        completion_percentage: completionPercentage
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['action-plan', diagnostic.id]);
+      toast.success('Atividade atualizada!');
+    }
+  });
+
   useEffect(() => {
     loadDiagnostic();
   }, []);
@@ -62,82 +134,6 @@ export default function Resultado() {
       setLoading(false);
     }
   };
-
-  // Buscar plano de ação
-  const { data: actionPlan } = useQuery({
-    queryKey: ['action-plan', diagnostic?.id],
-    queryFn: async () => {
-      const plans = await base44.entities.DiagnosticActionPlan.filter({
-        diagnostic_id: diagnostic.id,
-        diagnostic_type: 'Diagnostic'
-      });
-      return plans.sort((a, b) => new Date(b.created_date) - new Date(a.created_date))[0];
-    },
-    enabled: !!diagnostic?.id
-  });
-
-  // Gerar plano
-  const generatePlanMutation = useMutation({
-    mutationFn: async () => {
-      return await base44.functions.invoke('generateActionPlanDiagnostic', {
-        diagnostic_id: diagnostic.id
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['action-plan', diagnostic.id]);
-      toast.success('Plano de ação gerado com sucesso!');
-    },
-    onError: (error) => {
-      toast.error('Erro ao gerar plano: ' + error.message);
-    }
-  });
-
-  // Refinar plano
-  const refinePlanMutation = useMutation({
-    mutationFn: async ({ feedback }) => {
-      return await base44.functions.invoke('refineActionPlan', {
-        plan_id: actionPlan.id,
-        feedback_content: feedback.content,
-        feedback_type: feedback.type,
-        audio_url: feedback.audio_url
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['action-plan', diagnostic.id]);
-      setShowFeedbackModal(false);
-      toast.success('Plano refinado com sucesso!');
-    },
-    onError: (error) => {
-      toast.error('Erro ao refinar plano: ' + error.message);
-    }
-  });
-
-  // Atualizar atividade
-  const updateActivityMutation = useMutation({
-    mutationFn: async ({ activityIndex, status }) => {
-      const updatedSchedule = [...actionPlan.plan_data.implementation_schedule];
-      updatedSchedule[activityIndex].status = status;
-      if (status === 'concluida') {
-        updatedSchedule[activityIndex].completed_date = new Date().toISOString();
-      }
-
-      const completedCount = updatedSchedule.filter(a => a.status === 'concluida').length;
-      const totalCount = updatedSchedule.length;
-      const completionPercentage = Math.round((completedCount / totalCount) * 100);
-
-      return await base44.entities.DiagnosticActionPlan.update(actionPlan.id, {
-        plan_data: {
-          ...actionPlan.plan_data,
-          implementation_schedule: updatedSchedule
-        },
-        completion_percentage: completionPercentage
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['action-plan', diagnostic.id]);
-      toast.success('Atividade atualizada!');
-    }
-  });
 
   const calculatePhaseDistribution = (diag) => {
     const letterToPhase = {
