@@ -90,25 +90,11 @@ export default function Usuarios() {
       position: formData.get('position'),
       job_role: formData.get('job_role'),
       area: formData.get('area'),
-      telefone: formData.get('telefone'),
-      user_status: formData.get('user_status')
+      telefone: formData.get('telefone')
     };
 
     // Atualizar usuário
     await updateUserMutation.mutateAsync({ userId: selectedUser.id, data });
-
-    // Se admin e tem workshop, atualizar plano do workshop
-    if (currentUser?.role === 'admin' && workshopId && planoSelecionado) {
-      try {
-        await base44.entities.Workshop.update(workshopId, {
-          planoAtual: planoSelecionado
-        });
-        queryClient.invalidateQueries(['workshops']);
-        toast.success("Plano atualizado!");
-      } catch (error) {
-        toast.error("Erro ao atualizar plano");
-      }
-    }
   };
 
   // Combinar users com workshops para tabela
