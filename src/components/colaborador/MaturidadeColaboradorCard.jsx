@@ -52,6 +52,42 @@ export default function MaturidadeColaboradorCard({ employee, diagnostic }) {
   const proximoNivelKey = proximoNivel[nivelAtual];
   const proximoNivelInfo = proximoNivelKey ? nivelLabels[proximoNivelKey] : null;
 
+  // Buscar treinamentos concluídos pelo colaborador
+  const { data: trainingProgress } = useQuery({
+    queryKey: ['employee-training-progress', employee.id],
+    queryFn: async () => {
+      const progress = await base44.entities.EmployeeTrainingProgress.filter({
+        employee_id: employee.id
+      });
+      return progress || [];
+    },
+    enabled: !!employee?.id
+  });
+
+  // Buscar feedbacks e avaliações do colaborador
+  const { data: feedbacks } = useQuery({
+    queryKey: ['employee-feedbacks', employee.id],
+    queryFn: async () => {
+      const feedbackList = await base44.entities.EmployeeFeedback.filter({
+        employee_id: employee.id
+      });
+      return feedbackList || [];
+    },
+    enabled: !!employee?.id
+  });
+
+  // Calcular progresso de desenvolvimento
+  const trainingCompleted = trainingProgress?.filter(t => t.status === 'concluido').length || 0;
+  const trainingTotal = trainingProgress?.length || 0;
+  const feedbacksPositivos = feedbacks?.filter(f => f.type === 'positivo').length || 0;
+  
+  // Percentual de progresso baseado em treinamentos e feedbacks
+  const progressoTreinamentos = trainingTotal > 0 ? (trainingCompleted / trainingTotal) * 100 : 0;
+  const progressoTotal = Math.min(Math.round(progressoTreinamentos), 100);
+
+  // Pode evoluir se tiver 100% de progresso e feedbacks positivos
+  const canEvolve = progressoTotal >= 100 && feedbacksPositivos >= 3;
+
   const handleIniciarDiagnostico = () => {
     navigate(createPageUrl("DiagnosticoMaturidade"));
   };
