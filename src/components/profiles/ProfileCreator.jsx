@@ -40,6 +40,7 @@ export default function ProfileCreator({ onBack, onCreated, profiles }) {
         name: data.name,
         type: data.type,
         description: data.description,
+        job_roles: data.job_roles || [],
         status: "ativo",
         users_count: 0,
         is_system: false,

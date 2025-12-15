@@ -10,6 +10,7 @@ import ProfileEditor from "@/components/profiles/ProfileEditor";
 import ProfileCreator from "@/components/profiles/ProfileCreator";
 import ProfileAudit from "@/components/profiles/ProfileAudit";
 import { systemRoles } from "@/components/lib/systemRoles";
+import { jobRoles } from "@/components/lib/jobRoles";
 
 export default function GestaoPerfis() {
   const [selectedProfile, setSelectedProfile] = useState(null);
@@ -293,6 +294,11 @@ function ProfileSection({
                     {profile.roles && profile.roles.length > 0 && (
                       <Badge variant="outline" className="bg-green-50 text-green-700">
                         {profile.roles.length} roles
+                      </Badge>
+                    )}
+                    {profile.job_roles && profile.job_roles.length > 0 && (
+                      <Badge variant="outline" className="bg-purple-50 text-purple-700">
+                        {profile.job_roles.length} funções
                       </Badge>
                     )}
                   </div>
