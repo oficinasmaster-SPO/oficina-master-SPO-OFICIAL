@@ -423,6 +423,13 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       icon: GraduationCap,
       items: [
         { 
+          name: 'Academia de Treinamento', 
+          href: createPageUrl('AcademiaTreinamento'), 
+          icon: Video,
+          description: 'Plataforma estilo Netflix',
+          highlight: true
+        },
+        { 
           name: 'Gestão de Treinamentos', 
           href: createPageUrl('GerenciarTreinamentos'), 
           icon: BookOpen,
