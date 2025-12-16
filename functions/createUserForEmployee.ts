@@ -34,34 +34,12 @@ Deno.serve(async (req) => {
       }
       console.log("Senha temporária gerada:", tempPassword);
 
-      // 1. Criar conta de autenticação via signup
-      console.log("Criando conta de autenticação...");
+      // 1. Criar User diretamente no banco de dados
+      console.log("Criando User no banco de dados...");
       
-      const signupResult = await fetch(`https://api.base44.com/auth/signup`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-app-id': Deno.env.get('BASE44_APP_ID')
-        },
-        body: JSON.stringify({
-          email: email,
-          password: tempPassword,
-          full_name: full_name
-        })
-      });
-
-      if (!signupResult.ok) {
-        const errorData = await signupResult.json();
-        throw new Error(errorData.message || 'Erro ao criar conta de autenticação');
-      }
-
-      const authData = await signupResult.json();
-      const userId = authData.user?.id || authData.id;
-      console.log("✅ Conta de autenticação criada! User ID:", userId);
-
-      // 2. Atualizar o User recém-criado para ser admin e ter dados completos
-      console.log("Atualizando User para role admin...");
-      await base44.asServiceRole.entities.User.update(userId, {
+      const newUser = await base44.asServiceRole.entities.User.create({
+        email: email,
+        full_name: full_name,
         role: 'admin',
         telefone: user_data.telefone,
         position: user_data.position,
@@ -70,7 +48,8 @@ Deno.serve(async (req) => {
         is_internal: true
       });
 
-      console.log("✅ User atualizado para admin!");
+      const userId = newUser.id;
+      console.log("✅ User criado! ID:", userId);
 
       // 3. Criar Employee vinculado ao User
       console.log("Criando Employee vinculado ao User...");
