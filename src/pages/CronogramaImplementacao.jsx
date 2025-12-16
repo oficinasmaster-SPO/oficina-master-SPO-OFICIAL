@@ -18,6 +18,8 @@ import { FileDown } from "lucide-react";
 import DependencySelector from "@/components/cronograma/DependencySelector";
 import GanttTimeline from "@/components/cronograma/GanttTimeline";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import NavigableItemName from "@/components/cronograma/NavigableItemName";
+import QuickActionButtons from "@/components/cronograma/QuickActionButtons";
 
 export default function CronogramaImplementacao() {
   const queryClient = useQueryClient();
@@ -344,20 +346,11 @@ export default function CronogramaImplementacao() {
                   return (
                     <tr key={item.id || index} className="border-b hover:bg-gray-50 transition-colors">
                       <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
-                          {item.status === 'concluido' && (
-                            <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
-                          )}
-                          {depCheck.blocked && (
-                            <AlertCircle className="w-5 h-5 text-orange-600 flex-shrink-0" />
-                          )}
-                          <div>
-                            <p className="font-medium text-gray-900">{item.item_nome}</p>
-                            <Badge variant="outline" className="capitalize text-xs mt-1">
-                              {item.item_tipo}
-                            </Badge>
-                          </div>
-                        </div>
+                        <NavigableItemName
+                          item={item}
+                          workshop={workshop}
+                          showDependencyWarning={depCheck.blocked}
+                        />
                       </td>
                       <td className="py-3 px-4 text-center text-sm text-gray-500">
                         {item.not_started ? '-' : format(new Date(new Date(item.data_inicio_real).setDate(new Date(item.data_inicio_real).getDate() - 1)), "dd/MM/yyyy", { locale: ptBR })}
@@ -447,6 +440,11 @@ export default function CronogramaImplementacao() {
                   </Alert>
                 );
               })()}
+
+              <QuickActionButtons 
+                item={editingItem} 
+                workshop={workshop}
+              />
 
               <DependencySelector
                 selectedDependencies={editingItem.dependencias || []}
