@@ -53,19 +53,40 @@ Deno.serve(async (req) => {
 
       console.log("✅ Employee criado com sucesso! ID:", newEmployee.id);
 
-      // Criar conta de acesso no sistema de autenticação
+      // Criar conta de acesso no sistema de autenticação via API
       try {
         console.log("Criando conta de acesso no sistema...");
-        await base44.asServiceRole.auth.createUser({
-          email: email,
-          password: tempPassword,
-          metadata: {
+        
+        const authUrl = Deno.env.get('BASE44_AUTH_URL') || 'https://api.base44.com/v1/auth';
+        const appId = Deno.env.get('BASE44_APP_ID');
+        
+        const signupResponse = await fetch(`${authUrl}/signup`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-app-id': appId
+          },
+          body: JSON.stringify({
+            email: email,
+            password: tempPassword,
             full_name: full_name,
-            employee_id: newEmployee.id,
-            is_internal: true
-          }
+            role: 'admin' // Usuários internos são admins
+          })
         });
+
+        if (!signupResponse.ok) {
+          const errorData = await signupResponse.json();
+          throw new Error(errorData.message || 'Erro ao criar conta de autenticação');
+        }
+
+        const authData = await signupResponse.json();
         console.log("✅ Conta de acesso criada no sistema de autenticação");
+
+        // Atualizar Employee com user_id
+        await base44.asServiceRole.entities.Employee.update(newEmployee.id, {
+          user_id: authData.user?.id || authData.id
+        });
+        
       } catch (authError) {
         console.error("Erro ao criar conta de acesso:", authError);
         // Deletar o employee se falhar a criação da conta
