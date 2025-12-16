@@ -19,6 +19,9 @@ export default function UserFormDialog({
   isLoading
 }) {
   const [selectedProfileId, setSelectedProfileId] = useState(selectedUser?.profile_id || "");
+  const [formData, setFormData] = useState({
+    admin_responsavel_id: selectedUser?.admin_responsavel_id || ""
+  });
   
   // Debug: Log profiles recebidos
   React.useEffect(() => {
@@ -27,7 +30,7 @@ export default function UserFormDialog({
     console.log("📝 Modo criação:", isCreateMode);
   }, [profiles, selectedUser, isCreateMode]);
   
-  // Atualiza selectedProfileId quando selectedUser mudar (modo edição)
+  // Atualiza selectedProfileId e formData quando selectedUser mudar (modo edição)
   React.useEffect(() => {
     if (selectedUser?.profile_id) {
       setSelectedProfileId(selectedUser.profile_id);
@@ -35,6 +38,14 @@ export default function UserFormDialog({
     } else if (isCreateMode) {
       setSelectedProfileId("");
       console.log("🆕 Modo criação - perfil limpo");
+    }
+    
+    if (selectedUser?.admin_responsavel_id) {
+      setFormData({admin_responsavel_id: selectedUser.admin_responsavel_id});
+      console.log("✅ Admin Responsável definido:", selectedUser.admin_responsavel_id);
+    } else if (isCreateMode) {
+      setFormData({admin_responsavel_id: ""});
+      console.log("🆕 Modo criação - admin limpo");
     }
   }, [selectedUser, isCreateMode]);
   
@@ -48,18 +59,19 @@ export default function UserFormDialog({
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
-    const formData = new FormData(e.target);
+    const formDataObj = new FormData(e.target);
     
     const data = {
-      full_name: formData.get('full_name'),
-      email: formData.get('email'),
-      telefone: formData.get('telefone'),
-      position: formData.get('position'),
-      profile_id: selectedProfileId, // Usa o state ao invés do FormData
-      admin_responsavel_id: formData.get('admin_responsavel_id'),
-      user_status: formData.get('user_status') || 'ativo'
+      full_name: formDataObj.get('full_name'),
+      email: formDataObj.get('email'),
+      telefone: formDataObj.get('telefone'),
+      position: formDataObj.get('position'),
+      profile_id: selectedProfileId,
+      admin_responsavel_id: formData.admin_responsavel_id, // Usa o state
+      user_status: formDataObj.get('user_status') || 'ativo'
     };
 
+    console.log("📤 Dados do formulário:", data);
     onSubmit(data);
   };
 
@@ -209,20 +221,36 @@ export default function UserFormDialog({
                 <Label>Administrador Responsável *</Label>
                 <Select 
                   name="admin_responsavel_id" 
-                  defaultValue={selectedUser?.admin_responsavel_id || ""}
+                  value={formData.admin_responsavel_id || selectedUser?.admin_responsavel_id || ""}
+                  onValueChange={(value) => setFormData({...formData, admin_responsavel_id: value})}
                   required
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione o admin responsável" />
+                    <SelectValue placeholder="Selecione o admin responsável">
+                      {(() => {
+                        const selectedAdmin = admins?.find(a => a.id === (formData.admin_responsavel_id || selectedUser?.admin_responsavel_id));
+                        return selectedAdmin ? (selectedAdmin.full_name || selectedAdmin.email) : "Selecione o admin responsável";
+                      })()}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    {admins?.map(admin => (
-                      <SelectItem key={admin.id} value={admin.id}>
-                        {admin.full_name || admin.email}
-                      </SelectItem>
-                    ))}
+                    {!admins || admins.length === 0 ? (
+                      <div className="p-2 text-xs text-gray-500 text-center">
+                        Nenhum admin disponível
+                      </div>
+                    ) : (
+                      admins.map(admin => (
+                        <SelectItem key={admin.id} value={admin.id}>
+                          {admin.full_name || admin.email}
+                          {admin.position && <span className="text-xs text-gray-500"> • {admin.position}</span>}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Administrador que supervisionará este usuário
+                </p>
               </div>
 
               {!isCreateMode && (
