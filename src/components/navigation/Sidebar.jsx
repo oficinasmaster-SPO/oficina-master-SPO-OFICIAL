@@ -52,7 +52,8 @@ import {
   CreditCard,
   MessageCircle,
   Truck,
-  Mail
+  Mail,
+  Activity
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
