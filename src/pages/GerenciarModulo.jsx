@@ -250,7 +250,7 @@ export default function GerenciarModulo() {
       </div>
 
       <Dialog open={isLessonModalOpen} onOpenChange={setIsLessonModalOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
                 <DialogTitle>{editingLesson ? "Editar Aula" : "Nova Aula"}</DialogTitle>
             </DialogHeader>
