@@ -124,6 +124,7 @@ export const sidebarStructure = [
     label: "Administração",
     items: [
       { name: "Usuários", description: "Gerenciar usuários" },
+      { name: "Monitoramento de Usuários", description: "Relatórios e atividades" },
       { name: "Gestão de Perfis", description: "Perfis e permissões" },
       { name: "Tela Inicial", description: "Widgets Home" },
       { name: "Permissões", description: "Controle de acesso" },
