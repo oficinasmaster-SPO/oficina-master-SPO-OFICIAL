@@ -158,11 +158,10 @@ export default function AcademiaTreinamento() {
   });
 
   const handleCourseClick = (course) => {
-    navigate(`${createPageUrl('CursoDetalhes')}?id=${course.id}`);
+    navigate(`${createPageUrl('AssistirCurso')}?course_id=${course.id}`);
   };
 
   const handlePlayCourse = (course) => {
-    // Encontrar primeira aula
     navigate(`${createPageUrl('AssistirCurso')}?course_id=${course.id}`);
   };
 
