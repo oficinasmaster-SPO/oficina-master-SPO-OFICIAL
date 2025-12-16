@@ -1,25 +1,37 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { UserPlus, Loader2, Trash2, Edit, Key, Copy, CheckCircle, Shield, FileText, AlertTriangle, Clock } from "lucide-react";
+import { UserPlus, Loader2, Copy, CheckCircle, Shield } from "lucide-react";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { differenceInDays } from "date-fns";
 import UserFormDialog from "@/components/admin/UserFormDialog";
 import UserAuditDialog from "@/components/admin/UserAuditDialog";
+import UserStatsCards from "@/components/admin/users/UserStatsCards";
+import UserFilters from "@/components/admin/users/UserFilters";
+import UserTable from "@/components/admin/users/UserTable";
+import UserDetailsDrawer from "@/components/admin/users/UserDetailsDrawer";
 
 export default function UsuariosAdmin() {
   const queryClient = useQueryClient();
-  const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isCreateMode, setIsCreateMode] = useState(false);
   const [resetPasswordDialog, setResetPasswordDialog] = useState({ open: false, password: "", email: "", loginUrl: "" });
   const [auditDialogOpen, setAuditDialogOpen] = useState(false);
+  const [showDetailsDrawer, setShowDetailsDrawer] = useState(false);
+  const [filters, setFilters] = useState({
+    search: "",
+    position: "",
+    status: "todos",
+    profile: "todos",
+    admin: "todos",
+    lastLogin: "todos",
+    alert: "todos"
+  });
 
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
@@ -209,11 +221,61 @@ export default function UsuariosAdmin() {
     }
   };
 
-  const filteredUsers = (adminUsers || []).filter(user =>
-    user?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user?.position?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = useMemo(() => {
+    return (adminUsers || []).filter(user => {
+      // Busca por nome/email
+      if (filters.search && 
+          !user?.full_name?.toLowerCase().includes(filters.search.toLowerCase()) &&
+          !user?.email?.toLowerCase().includes(filters.search.toLowerCase())) {
+        return false;
+      }
+
+      // Filtro por cargo
+      if (filters.position && !user?.position?.toLowerCase().includes(filters.position.toLowerCase())) {
+        return false;
+      }
+
+      // Filtro por status
+      if (filters.status !== "todos" && user?.user_status !== filters.status) {
+        return false;
+      }
+
+      // Filtro por perfil
+      if (filters.profile !== "todos" && user?.profile_id !== filters.profile) {
+        return false;
+      }
+
+      // Filtro por admin responsável
+      if (filters.admin !== "todos" && user?.admin_responsavel_id !== filters.admin) {
+        return false;
+      }
+
+      // Filtro por último login
+      if (filters.lastLogin !== "todos") {
+        if (filters.lastLogin === "nunca" && user?.last_login_at) return false;
+        if (filters.lastLogin !== "nunca" && !user?.last_login_at) return false;
+        
+        if (user?.last_login_at) {
+          const diasAtras = differenceInDays(new Date(), new Date(user.last_login_at));
+          if (filters.lastLogin === "hoje" && diasAtras !== 0) return false;
+          if (filters.lastLogin === "7dias" && diasAtras > 7) return false;
+          if (filters.lastLogin === "30dias" && diasAtras > 30) return false;
+        }
+      }
+
+      // Filtro por alerta
+      if (filters.alert !== "todos") {
+        if (filters.alert === "primeiro_acesso" && user?.first_login_at) return false;
+        if (filters.alert === "inatividade_30") {
+          if (!user?.last_login_at) return false;
+          const diasSemLogin = differenceInDays(new Date(), new Date(user.last_login_at));
+          if (diasSemLogin <= 30) return false;
+        }
+      }
+
+      return true;
+    });
+  }, [adminUsers, filters]);
 
   // Lista de admins para seleção de responsável (todos os internos podem ser responsáveis)
   const adminList = allUsers;
@@ -235,205 +297,133 @@ export default function UsuariosAdmin() {
     );
   }
 
+  const handleCardClick = (filter) => {
+    if (!filter) {
+      setFilters({
+        search: "",
+        position: "",
+        status: "todos",
+        profile: "todos",
+        admin: "todos",
+        lastLogin: "todos",
+        alert: "todos"
+      });
+      return;
+    }
+
+    const newFilters = { ...filters };
+    
+    if (filter.user_status) {
+      if (Array.isArray(filter.user_status)) {
+        newFilters.status = filter.user_status[0];
+      } else {
+        newFilters.status = filter.user_status;
+      }
+    }
+    
+    if (filter.primeiroAcesso) {
+      newFilters.alert = "primeiro_acesso";
+    }
+    
+    if (filter.inatividade30) {
+      newFilters.alert = "inatividade_30";
+    }
+    
+    setFilters(newFilters);
+  };
+
+  const handleClearFilters = () => {
+    setFilters({
+      search: "",
+      position: "",
+      status: "todos",
+      profile: "todos",
+      admin: "todos",
+      lastLogin: "todos",
+      alert: "todos"
+    });
+  };
+
+  const handleOpenDetailsDrawer = (user) => {
+    setSelectedUser(user);
+    setShowDetailsDrawer(true);
+  };
+
+  const handleResetPassword = (user) => {
+    if (!user?.id) return;
+    if (confirm(`Resetar senha de ${user.full_name}?`)) {
+      setSelectedUser(user);
+      resetPasswordMutation.mutate({ userId: user.id });
+    }
+  };
+
+  const handleDelete = (user) => {
+    if (confirm(`Excluir ${user.full_name}?\n\nEsta ação não pode ser desfeita.`)) {
+      deleteUserMutation.mutate(user.id);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 py-8 px-4">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-1 flex items-center gap-2">
-              <Shield className="w-8 h-8 text-indigo-600" />
-              Usuários Admin (Internos)
-            </h1>
-            <p className="text-gray-600">Gerencie consultores e aceleradores da empresa</p>
-          </div>
-          <Button 
-            onClick={() => {
-              setSelectedUser(null);
-              setIsCreateMode(true);
+    <div className="max-w-7xl mx-auto space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+            <Shield className="w-8 h-8 text-indigo-600" />
+            👔 Usuários Admin (Internos)
+          </h1>
+          <p className="text-gray-600 mt-2">
+            Gerencie consultores e aceleradores da equipe interna
+          </p>
+        </div>
+        <Button 
+          onClick={() => {
+            setSelectedUser(null);
+            setIsCreateMode(true);
+            setIsDialogOpen(true);
+          }}
+          className="bg-indigo-600 hover:bg-indigo-700"
+        >
+          <UserPlus className="w-4 h-4 mr-2" />
+          Novo Usuário Admin
+        </Button>
+      </div>
+
+      {/* Cards de Resumo */}
+      <UserStatsCards 
+        users={adminUsers || []} 
+        onCardClick={handleCardClick}
+      />
+
+      {/* Filtros Avançados */}
+      <UserFilters
+        filters={filters}
+        onFiltersChange={setFilters}
+        profiles={profiles}
+        admins={allUsers}
+        onClearFilters={handleClearFilters}
+      />
+
+      <Card>
+        <CardContent className="pt-6">
+          <UserTable
+            users={filteredUsers}
+            profiles={profiles}
+            admins={allUsers}
+            onViewDetails={handleOpenDetailsDrawer}
+            onEdit={(user) => {
+              setSelectedUser(user);
+              setIsCreateMode(false);
               setIsDialogOpen(true);
             }}
-            className="bg-indigo-600 hover:bg-indigo-700"
-          >
-            <UserPlus className="w-4 h-4 mr-2" />
-            Novo Usuário Admin
-          </Button>
-        </div>
-
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-lg">Buscar</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Input
-              placeholder="Nome, email ou cargo..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </CardContent>
-        </Card>
-
-        {filteredUsers.length === 0 ? (
-          <Card>
-            <CardContent className="p-12 text-center">
-              <UserPlus className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                Nenhum usuário encontrado
-              </h3>
-              <p className="text-gray-600 mb-4">Crie o primeiro usuário admin da sua empresa</p>
-              <Button 
-                onClick={() => {
-                  setIsCreateMode(true);
-                  setIsDialogOpen(true);
-                }}
-                className="bg-indigo-600 hover:bg-indigo-700"
-              >
-                <UserPlus className="w-4 h-4 mr-2" />
-                Criar Usuário
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Nome</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Email</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Perfil</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Status</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Último Acesso</th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase">Ações</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 bg-white">
-                  {filteredUsers.map((user) => {
-                    const userProfile = profiles?.find(p => p?.id === user?.profile_id);
-                    const daysInactive = user?.last_login_at 
-                      ? Math.floor((new Date() - new Date(user.last_login_at)) / (1000 * 60 * 60 * 24))
-                      : null;
-
-                    return (
-                      <tr key={user.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-4">
-                          <div>
-                            <p className="font-medium text-gray-900">{user?.full_name || 'N/A'}</p>
-                            <p className="text-xs text-gray-500">{user?.position || '-'}</p>
-                          </div>
-                        </td>
-                        <td className="px-4 py-4">
-                          <p className="text-sm text-gray-700">{user?.email || '-'}</p>
-                        </td>
-                        <td className="px-4 py-4">
-                          {userProfile ? (
-                            <Badge className="bg-purple-100 text-purple-700">
-                              {userProfile.name}
-                            </Badge>
-                          ) : (
-                            <Badge className="bg-red-100 text-red-700">
-                              Sem perfil
-                            </Badge>
-                          )}
-                        </td>
-                        <td className="px-4 py-4">
-                          <Badge className={
-                            user?.user_status === 'ativo' ? 'bg-green-100 text-green-700' :
-                            user?.user_status === 'bloqueado' ? 'bg-red-100 text-red-700' :
-                            user?.user_status === 'ferias' ? 'bg-blue-100 text-blue-700' :
-                            user?.user_status === 'inativo' ? 'bg-gray-100 text-gray-700' :
-                            'bg-gray-100 text-gray-700'
-                          }>
-                            {user?.user_status === 'ativo' && '✅ Ativo'}
-                            {user?.user_status === 'inativo' && '⏸️ Inativo'}
-                            {user?.user_status === 'bloqueado' && '🔒 Bloqueado'}
-                            {user?.user_status === 'ferias' && '🏖️ Férias'}
-                            {!user?.user_status && '➖ Indefinido'}
-                          </Badge>
-                        </td>
-                        <td className="px-4 py-4">
-                          {user?.last_login_at ? (
-                            <div>
-                              <p className="text-sm text-gray-700">
-                                {format(new Date(user.last_login_at), 'dd/MM/yyyy HH:mm')}
-                              </p>
-                              {daysInactive && daysInactive > 30 && (
-                                <div className="flex items-center gap-1 mt-1">
-                                  <AlertTriangle className="w-3 h-3 text-amber-500" />
-                                  <span className="text-xs text-amber-600">
-                                    {daysInactive}d sem acesso
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-1">
-                              <Clock className="w-3 h-3 text-gray-400" />
-                              <span className="text-xs text-gray-400">Aguardando primeiro acesso</span>
-                            </div>
-                          )}
-                        </td>
-                        <td className="px-4 py-4">
-                          <div className="flex items-center justify-center gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setSelectedUser(user);
-                                setIsCreateMode(false);
-                                setIsDialogOpen(true);
-                              }}
-                              title="Editar"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setSelectedUser(user);
-                                setAuditDialogOpen(true);
-                              }}
-                              title="Ver Auditoria"
-                            >
-                              <FileText className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                if (user.id) {
-                                  if (confirm(`Resetar senha de ${user.full_name}?`)) {
-                                    setSelectedUser(user);
-                                    resetPasswordMutation.mutate({ userId: user.id });
-                                  }
-                                }
-                              }}
-                              title="Resetar Senha"
-                            >
-                              <Key className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => {
-                                if (confirm(`Excluir ${user.full_name}?\n\nEsta ação não pode ser desfeita.`)) {
-                                  deleteUserMutation.mutate(user.id);
-                                }
-                              }}
-                              title="Excluir"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-        )}
+            onResetPassword={handleResetPassword}
+            onViewAudit={(user) => {
+              setSelectedUser(user);
+              setAuditDialogOpen(true);
+            }}
+            onDelete={handleDelete}
+          />
+        </CardContent>
+      </Card>
 
         {/* Dialog de Senha Resetada */}
         <Dialog open={resetPasswordDialog.open} onOpenChange={(open) => setResetPasswordDialog({ ...resetPasswordDialog, open })}>
@@ -542,6 +532,19 @@ export default function UsuariosAdmin() {
             setSelectedUser(null);
           }}
           user={selectedUser}
+        />
+
+        {/* Drawer de Detalhes */}
+        <UserDetailsDrawer
+          open={showDetailsDrawer}
+          onClose={() => {
+            setShowDetailsDrawer(false);
+            setSelectedUser(null);
+          }}
+          user={selectedUser}
+          profile={profiles.find(p => p.id === selectedUser?.profile_id)}
+          admin={allUsers.find(a => a.id === selectedUser?.admin_responsavel_id)}
+          onResetPassword={handleResetPassword}
         />
       </div>
     </div>
