@@ -97,7 +97,7 @@ export default function CourseCard({ course, onRefetch }) {
                   <Users className="w-4 h-4 mr-2" /> Controle de Acesso
                 </DropdownMenuItem>
                 <DropdownMenuItem 
-                  onClick={() => navigate(`${createPageUrl('GerenciarModulo')}?course_id=${course.id}`)}
+                  onClick={() => navigate(`${createPageUrl('GerenciarModulosCurso')}?course_id=${course.id}`)}
                 >
                   <Settings className="w-4 h-4 mr-2" /> Gerenciar Módulos
                 </DropdownMenuItem>
@@ -128,7 +128,7 @@ export default function CourseCard({ course, onRefetch }) {
 
           <Button
             className="w-full"
-            onClick={() => navigate(`${createPageUrl('GerenciarModulo')}?course_id=${course.id}`)}
+            onClick={() => navigate(`${createPageUrl('GerenciarModulosCurso')}?course_id=${course.id}`)}
           >
             <Settings className="w-4 h-4 mr-2" />
             Gerenciar Conteúdo
