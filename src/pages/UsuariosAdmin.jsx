@@ -43,11 +43,13 @@ export default function UsuariosAdmin() {
     queryFn: async () => {
       const allProfiles = await base44.entities.UserProfile.list();
       console.log("📋 Todos os perfis:", allProfiles);
+      // Filtra perfis internos ativos (mesma lógica da Gestão de Perfis)
       const internoProfiles = allProfiles.filter(p => p.type === 'interno' && p.status === 'ativo');
       console.log("✅ Perfis internos ativos:", internoProfiles);
       return internoProfiles;
     },
-    staleTime: 30000
+    staleTime: 30000,
+    refetchOnWindowFocus: true // Atualiza quando voltar para a aba
   });
 
   const { data: allUsers = [] } = useQuery({
