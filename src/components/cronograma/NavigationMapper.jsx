@@ -1,143 +1,342 @@
 import { createPageUrl } from "@/utils";
 
 /**
- * Mapeia códigos de processos/programas para URLs de navegação
- * Permite navegação direta do cronograma para as telas de execução
+ * MATRIZ COMPLETA DE NAVEGAÇÃO - CRONOGRAMA
+ * Mapeia todos os tipos de conteúdo para suas telas correspondentes
+ * Atualizar esta matriz quando novos módulos forem adicionados
+ */
+
+const NAVIGATION_MATRIX = {
+  // === DIAGNÓSTICOS ===
+  diagnosticos: {
+    'diagnostico_empresario': {
+      url: 'DiagnosticoEmpresario',
+      label: '📊 Diagnóstico do Empresário',
+      description: 'Identifique seu perfil empreendedor',
+      keywords: ['empresario', 'perfil', 'aventureiro', 'empreendedor', 'gestor']
+    },
+    'diagnostico_maturidade': {
+      url: 'DiagnosticoMaturidade',
+      label: '📊 Diagnóstico de Maturidade',
+      description: 'Avalie maturidade da equipe',
+      keywords: ['maturidade', 'colaborador', 'equipe']
+    },
+    'diagnostico_producao': {
+      url: 'DiagnosticoProducao',
+      label: '📊 Diagnóstico de Produtividade',
+      description: 'Analise produtividade técnica',
+      keywords: ['producao', 'produtividade', 'tecnico']
+    },
+    'diagnostico_desempenho': {
+      url: 'DiagnosticoDesempenho',
+      label: '📊 Diagnóstico de Desempenho',
+      description: 'Avalie performance individual',
+      keywords: ['desempenho', 'performance', 'matriz']
+    },
+    'diagnostico_gerencial': {
+      url: 'DiagnosticoGerencial',
+      label: '📊 Diagnóstico Gerencial',
+      description: 'Avalie práticas de gestão',
+      keywords: ['gerencial', 'gestao', 'lideranca']
+    },
+    'diagnostico_comercial': {
+      url: 'DiagnosticoComercial',
+      label: '📊 Diagnóstico Comercial',
+      description: 'Analise processos de vendas',
+      keywords: ['comercial', 'vendas', 'atendimento']
+    },
+    'diagnostico_os': {
+      url: 'DiagnosticoOS',
+      label: '📊 Diagnóstico de OS',
+      description: 'Avalie processo de ordem de serviço',
+      keywords: ['os', 'ordem', 'servico']
+    },
+    'diagnostico_disc': {
+      url: 'DiagnosticoDISC',
+      label: '📊 Diagnóstico DISC',
+      description: 'Teste de perfil comportamental',
+      keywords: ['disc', 'comportamental', 'perfil']
+    },
+    'diagnostico_endividamento': {
+      url: 'DiagnosticoEndividamento',
+      label: '📊 Diagnóstico de Endividamento',
+      description: 'Analise saúde financeira',
+      keywords: ['endividamento', 'divida', 'financeiro']
+    },
+    'diagnostico_carga': {
+      url: 'DiagnosticoCarga',
+      label: '📊 Diagnóstico de Carga de Trabalho',
+      description: 'Avalie capacidade de trabalho',
+      keywords: ['carga', 'trabalho', 'capacidade']
+    }
+  },
+
+  // === FERRAMENTAS DE GESTÃO ===
+  ferramentas: {
+    'desdobramento_meta': {
+      url: 'DesdobramentoMeta',
+      label: '🎯 Desdobramento de Metas',
+      description: 'Configure metas estratégicas',
+      keywords: ['meta', 'objetivo', 'target', 'desdobramento']
+    },
+    'dre_tcmp2': {
+      url: 'DRETCMP2',
+      label: '💰 DRE / TCMP2',
+      description: 'Demonstrativo e custos',
+      keywords: ['dre', 'tcmp2', 'financeiro', 'custo']
+    },
+    'qgp': {
+      url: 'QGPBoard',
+      label: '📋 QGP Board',
+      description: 'Quadro de produtividade',
+      keywords: ['qgp', 'quadro', 'produtividade']
+    },
+    'plano_acao': {
+      url: 'PainelAcoes',
+      label: '📋 Plano de Ação',
+      description: 'Execute ações do plano',
+      keywords: ['plano', 'acao', 'tarefa']
+    },
+    'tarefas': {
+      url: 'Tarefas',
+      label: '✅ Tarefas',
+      description: 'Gerencie tarefas diárias',
+      keywords: ['tarefa', 'task', 'atividade']
+    }
+  },
+
+  // === GESTÃO DE PESSOAS ===
+  pessoas: {
+    'colaboradores': {
+      url: 'Colaboradores',
+      label: '👥 Colaboradores',
+      description: 'Gerencie equipe',
+      keywords: ['colaborador', 'funcionario', 'equipe', 'time']
+    },
+    'descricoes_cargo': {
+      url: 'DescricoesCargo',
+      label: '📄 Descrições de Cargo',
+      description: 'Defina cargos e funções',
+      keywords: ['cargo', 'funcao', 'descricao']
+    },
+    'cultura_organizacional': {
+      url: 'CulturaOrganizacional',
+      label: '🏛️ Cultura Organizacional',
+      description: 'Missão, visão e valores',
+      keywords: ['cultura', 'missao', 'visao', 'valores']
+    },
+    'pesquisa_clima': {
+      url: 'PesquisaClima',
+      label: '🌡️ Pesquisa de Clima',
+      description: 'Avalie clima organizacional',
+      keywords: ['clima', 'satisfacao', 'pesquisa']
+    },
+    'rituais': {
+      url: 'RituaisAculturamento',
+      label: '🔄 Rituais',
+      description: 'Rotinas de aculturamento',
+      keywords: ['ritual', 'rotina', 'aculturamento']
+    }
+  },
+
+  // === TREINAMENTO E DESENVOLVIMENTO ===
+  treinamento: {
+    'treinamentos': {
+      url: 'GerenciarTreinamentos',
+      label: '🎓 Treinamentos',
+      description: 'Gerencie cursos e módulos',
+      keywords: ['treinamento', 'curso', 'capacitacao', 'aula']
+    },
+    'academia': {
+      url: 'AcademiaTreinamento',
+      label: '🎓 Academia de Treinamento',
+      description: 'Acesse cursos disponíveis',
+      keywords: ['academia', 'learning']
+    },
+    'acompanhamento_treinamento': {
+      url: 'AcompanhamentoTreinamento',
+      label: '📈 Acompanhamento',
+      description: 'Monitore progresso de treinamentos',
+      keywords: ['acompanhamento', 'progresso', 'evolucao']
+    }
+  },
+
+  // === PROCESSOS E DOCUMENTOS ===
+  processos: {
+    'processos': {
+      url: 'GerenciarProcessos',
+      label: '⚙️ Processos',
+      description: 'Documente processos operacionais',
+      keywords: ['processo', 'procedimento', 'fluxo']
+    },
+    'documentos': {
+      url: 'RepositorioDocumentos',
+      label: '📁 Documentos',
+      description: 'Repositório de documentos',
+      keywords: ['documento', 'arquivo', 'repositorio']
+    },
+    'manual_empresa': {
+      url: 'CulturaOrganizacional',
+      label: '📖 Manual da Empresa',
+      description: 'Manual organizacional',
+      keywords: ['manual', 'empresa']
+    },
+    'cdc': {
+      url: 'CDCList',
+      label: '📋 CDC - Contratos',
+      description: 'Contratos de desempenho',
+      keywords: ['cdc', 'contrato', 'desempenho']
+    },
+    'coex': {
+      url: 'COEXList',
+      label: '📋 COEX - Contratos',
+      description: 'Contratos de experiência',
+      keywords: ['coex', 'experiencia', 'contrato']
+    }
+  },
+
+  // === GESTÃO E RESULTADOS ===
+  gestao: {
+    'dashboard': {
+      url: 'Dashboard',
+      label: '📊 Dashboard',
+      description: 'Painel principal',
+      keywords: ['dashboard', 'painel', 'visao_geral']
+    },
+    'gestao_oficina': {
+      url: 'GestaoOficina',
+      label: '🏢 Gestão da Oficina',
+      description: 'Dados e configurações',
+      keywords: ['gestao', 'oficina', 'cadastro']
+    },
+    'clientes': {
+      url: 'Clientes',
+      label: '👤 Clientes',
+      description: 'Gestão de clientes',
+      keywords: ['cliente', 'customer']
+    },
+    'historico': {
+      url: 'Historico',
+      label: '📜 Histórico',
+      description: 'Histórico de diagnósticos',
+      keywords: ['historico', 'history']
+    },
+    'ia_analytics': {
+      url: 'IAAnalytics',
+      label: '🤖 IA Analytics',
+      description: 'Análises preditivas',
+      keywords: ['ia', 'analytics', 'previsao']
+    }
+  },
+
+  // === GAMIFICAÇÃO E ENGAJAMENTO ===
+  engajamento: {
+    'gamificacao': {
+      url: 'Gamificacao',
+      label: '🎮 Gamificação',
+      description: 'Desafios e recompensas',
+      keywords: ['gamificacao', 'desafio', 'recompensa']
+    },
+    'ranking': {
+      url: 'RankingBrasil',
+      label: '🏆 Ranking',
+      description: 'Ranking nacional',
+      keywords: ['ranking', 'classificacao']
+    }
+  }
+};
+
+/**
+ * Busca navegação por múltiplos critérios
+ */
+const findNavigationMatch = (item) => {
+  const searchText = (item.item_nome || '').toLowerCase();
+  const searchId = (item.item_id || '').toLowerCase();
+  const searchTipo = (item.item_tipo || '').toLowerCase();
+
+  // Buscar em todas as categorias
+  for (const category of Object.values(NAVIGATION_MATRIX)) {
+    for (const [key, config] of Object.entries(category)) {
+      // Match exato por chave
+      if (searchId === key || searchText.includes(key)) {
+        return config;
+      }
+
+      // Match por keywords
+      if (config.keywords?.some(kw => 
+        searchText.includes(kw) || searchId.includes(kw)
+      )) {
+        return config;
+      }
+    }
+  }
+
+  return null;
+};
+
+/**
+ * Função principal de mapeamento
  */
 export const getNavigationForItem = (item, workshop) => {
   if (!item || !item.item_nome) return null;
 
-  const codigo = item.item_id || item.item_nome.toLowerCase();
-  const tipo = item.item_tipo;
-
-  // Mapeamento de diagnósticos
-  const diagnosticosMap = {
-    'diagnostico_empresario': {
-      url: createPageUrl('DiagnosticoEmpresario'),
-      label: '📊 Iniciar Diagnóstico do Empresário',
-      description: 'Responda o diagnóstico para identificar seu perfil'
-    },
-    'diagnostico_maturidade': {
-      url: createPageUrl('DiagnosticoMaturidade'),
-      label: '📊 Iniciar Diagnóstico de Maturidade',
-      description: 'Avalie a maturidade da equipe'
-    },
-    'diagnostico_producao': {
-      url: createPageUrl('DiagnosticoProducao'),
-      label: '📊 Iniciar Diagnóstico de Produção',
-      description: 'Analise a produtividade do time técnico'
-    },
-    'diagnostico_gerencial': {
-      url: createPageUrl('DiagnosticoGerencial'),
-      label: '📊 Iniciar Diagnóstico Gerencial',
-      description: 'Avalie práticas de gestão'
-    },
-    'diagnostico_comercial': {
-      url: createPageUrl('DiagnosticoComercial'),
-      label: '📊 Iniciar Diagnóstico Comercial',
-      description: 'Analise processos comerciais'
+  try {
+    // Buscar match na matriz
+    const match = findNavigationMatch(item);
+    
+    if (match) {
+      return {
+        ...match,
+        url: createPageUrl(match.url)
+      };
     }
-  };
 
-  // Mapeamento de ferramentas e funcionalidades
-  const ferramentasMap = {
-    'desdobramento_meta': {
-      url: createPageUrl('DesdobramentoMeta'),
-      label: '🎯 Acessar Desdobramento de Metas',
-      description: 'Configure e acompanhe metas da oficina'
-    },
-    'dre_tcmp2': {
-      url: createPageUrl('DRETCMP2'),
-      label: '💰 Acessar DRE/TCMP2',
-      description: 'Controle financeiro e custos'
-    },
-    'qgp_board': {
-      url: createPageUrl('QGPBoard'),
-      label: '📋 Acessar QGP Board',
-      description: 'Quadro de gestão de produtividade'
-    },
-    'cultura_organizacional': {
-      url: createPageUrl('CulturaOrganizacional'),
-      label: '🏛️ Acessar Cultura Organizacional',
-      description: 'Defina missão, visão e valores'
-    },
-    'descricoes_cargo': {
-      url: createPageUrl('DescricoesCargo'),
-      label: '📄 Acessar Descrições de Cargo',
-      description: 'Cadastre e gerencie cargos'
-    },
-    'colaboradores': {
-      url: createPageUrl('Colaboradores'),
-      label: '👥 Acessar Colaboradores',
-      description: 'Gerencie equipe e dados'
-    },
-    'treinamentos': {
-      url: createPageUrl('GerenciarTreinamentos'),
-      label: '🎓 Acessar Treinamentos',
-      description: 'Configure módulos de capacitação'
-    },
-    'processos': {
-      url: createPageUrl('GerenciarProcessos'),
-      label: '⚙️ Acessar Processos',
-      description: 'Documente processos operacionais'
-    },
-    'rituais': {
-      url: createPageUrl('RituaisAculturamento'),
-      label: '🔄 Acessar Rituais',
-      description: 'Configure rotinas de aculturamento'
-    },
-    'pesquisa_clima': {
-      url: createPageUrl('PesquisaClima'),
-      label: '🌡️ Acessar Pesquisa de Clima',
-      description: 'Avalie satisfação da equipe'
-    },
-    'gamificacao': {
-      url: createPageUrl('Gamificacao'),
-      label: '🎮 Acessar Gamificação',
-      label: 'Sistema de desafios e recompensas'
-    },
-    'plano_acao': {
-      url: createPageUrl('PainelAcoes'),
-      label: '📋 Acessar Plano de Ação',
-      description: 'Execute ações estratégicas'
+    // Fallback baseado no tipo
+    const tipo = (item.item_tipo || '').toLowerCase();
+    
+    if (tipo.includes('diagnostico')) {
+      return {
+        url: createPageUrl('SelecionarDiagnostico'),
+        label: '📊 Selecionar Diagnóstico',
+        description: 'Escolha o diagnóstico adequado',
+        isFallback: true
+      };
     }
-  };
 
-  // Buscar match exato ou por similaridade
-  const searchKey = Object.keys({ ...diagnosticosMap, ...ferramentasMap }).find(key => {
-    return codigo.includes(key) || item.item_nome.toLowerCase().includes(key);
-  });
+    if (tipo.includes('treinamento') || tipo.includes('aula') || tipo.includes('curso')) {
+      return {
+        url: createPageUrl('AcademiaTreinamento'),
+        label: '🎓 Academia de Treinamento',
+        description: 'Acesse conteúdos de capacitação',
+        isFallback: true
+      };
+    }
 
-  if (searchKey) {
-    return diagnosticosMap[searchKey] || ferramentasMap[searchKey];
+    if (tipo.includes('processo')) {
+      return {
+        url: createPageUrl('GerenciarProcessos'),
+        label: '⚙️ Processos',
+        description: 'Acesse processos documentados',
+        isFallback: true
+      };
+    }
+
+    if (tipo.includes('ferramenta') || tipo.includes('modulo')) {
+      return {
+        url: createPageUrl('Dashboard'),
+        label: '🏠 Dashboard',
+        description: 'Acesse o sistema principal',
+        isFallback: true
+      };
+    }
+
+    // Se não encontrou nada, retorna null (item não navegável)
+    return null;
+
+  } catch (error) {
+    console.error('Erro ao mapear navegação:', error, item);
+    return null;
   }
-
-  // Fallback baseado no tipo
-  if (tipo === 'diagnostico') {
-    return {
-      url: createPageUrl('SelecionarDiagnostico'),
-      label: '📊 Acessar Diagnósticos',
-      description: 'Escolha o diagnóstico a realizar'
-    };
-  }
-
-  if (tipo === 'processo') {
-    return {
-      url: createPageUrl('GerenciarProcessos'),
-      label: '⚙️ Acessar Processos',
-      description: 'Gerencie processos operacionais'
-    };
-  }
-
-  if (tipo === 'ferramenta') {
-    return {
-      url: createPageUrl('Dashboard'),
-      label: '🏠 Acessar Dashboard',
-      description: 'Painel principal do sistema'
-    };
-  }
-
-  return null;
 };
 
 /**
