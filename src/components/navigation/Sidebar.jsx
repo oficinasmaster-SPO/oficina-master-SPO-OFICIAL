@@ -605,6 +605,14 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           description: 'Consultores e aceleradores do sistema',
           adminOnly: true,
           highlight: true
+        },
+        { 
+          name: 'Monitoramento de Usuários', 
+          href: createPageUrl('MonitoramentoUsuarios'), 
+          icon: Activity,
+          description: 'Rastreamento e tempo no sistema',
+          adminOnly: true,
+          highlight: true
         }
       ]
     }

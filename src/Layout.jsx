@@ -10,6 +10,7 @@ import Sidebar from "@/components/navigation/Sidebar";
 import Breadcrumbs from "@/components/navigation/Breadcrumbs";
 import { SharedDataProvider } from "@/components/shared/SharedDataProvider";
 import GlobalSearch from "@/components/navigation/GlobalSearch";
+import ActivityTracker from "@/components/tracking/ActivityTracker";
 
 export default function Layout({ children }) {
   const location = useLocation();
@@ -216,6 +217,8 @@ export default function Layout({ children }) {
           onClose={() => setSidebarOpen(false)}
         />
       )}
+
+      {isAuthenticated && <ActivityTracker user={user} workshop={workshop} />}
 
       <div className={`${isAuthenticated ? 'lg:pl-64' : ''} flex flex-col min-h-screen transition-all duration-300`} style={isAuthenticated ? { paddingLeft: 'var(--sidebar-width, 16rem)' } : {}}>
         <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30 print:hidden">
