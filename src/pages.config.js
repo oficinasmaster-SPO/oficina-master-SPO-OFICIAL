@@ -124,6 +124,7 @@ import AcademiaTreinamento from './pages/AcademiaTreinamento';
 import MonitoramentoUsuarios from './pages/MonitoramentoUsuarios';
 import PainelAcoes from './pages/PainelAcoes';
 import ConfiguracaoAcademia from './pages/ConfiguracaoAcademia';
+import AssistirCurso from './pages/AssistirCurso';
 import __Layout from './Layout.jsx';
 
 
@@ -254,6 +255,7 @@ export const PAGES = {
     "MonitoramentoUsuarios": MonitoramentoUsuarios,
     "PainelAcoes": PainelAcoes,
     "ConfiguracaoAcademia": ConfiguracaoAcademia,
+    "AssistirCurso": AssistirCurso,
 }
 
 export const pagesConfig = {
