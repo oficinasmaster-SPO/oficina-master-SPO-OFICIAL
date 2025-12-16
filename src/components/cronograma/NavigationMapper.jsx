@@ -13,61 +13,81 @@ const NAVIGATION_MATRIX = {
       url: 'DiagnosticoEmpresario',
       label: '📊 Diagnóstico do Empresário',
       description: 'Identifique seu perfil empreendedor',
-      keywords: ['empresario', 'perfil', 'aventureiro', 'empreendedor', 'gestor']
+      keywords: ['diagnostico empresario', 'perfil empresario', 'perfil empreendedor', 'aventureiro gestor'],
+      is_primary: true,
+      stage: 'inicio'
     },
     'diagnostico_maturidade': {
       url: 'DiagnosticoMaturidade',
       label: '📊 Diagnóstico de Maturidade',
       description: 'Avalie maturidade da equipe',
-      keywords: ['maturidade', 'colaborador', 'equipe']
+      keywords: ['diagnostico maturidade', 'maturidade colaborador', 'maturidade equipe'],
+      is_primary: true,
+      stage: 'inicio'
     },
     'diagnostico_producao': {
       url: 'DiagnosticoProducao',
       label: '📊 Diagnóstico de Produtividade',
       description: 'Analise produtividade técnica',
-      keywords: ['producao', 'produtividade', 'tecnico']
+      keywords: ['diagnostico producao', 'diagnostico produtividade', 'produtividade tecnica'],
+      is_primary: true,
+      stage: 'inicio'
     },
     'diagnostico_desempenho': {
       url: 'DiagnosticoDesempenho',
       label: '📊 Diagnóstico de Desempenho',
       description: 'Avalie performance individual',
-      keywords: ['desempenho', 'performance', 'matriz']
+      keywords: ['diagnostico desempenho', 'diagnostico performance', 'matriz desempenho'],
+      is_primary: true,
+      stage: 'inicio'
     },
     'diagnostico_gerencial': {
       url: 'DiagnosticoGerencial',
       label: '📊 Diagnóstico Gerencial',
       description: 'Avalie práticas de gestão',
-      keywords: ['gerencial', 'gestao', 'lideranca']
+      keywords: ['diagnostico gerencial', 'diagnostico gestao', 'praticas gerenciais'],
+      is_primary: true,
+      stage: 'inicio'
     },
     'diagnostico_comercial': {
       url: 'DiagnosticoComercial',
       label: '📊 Diagnóstico Comercial',
       description: 'Analise processos de vendas',
-      keywords: ['comercial', 'vendas', 'atendimento']
+      keywords: ['diagnostico comercial', 'diagnostico vendas', 'processo comercial'],
+      is_primary: true,
+      stage: 'inicio'
     },
-    'diagnostico_os': {
+    'diagnostico_ordem_servico': {
       url: 'DiagnosticoOS',
-      label: '📊 Diagnóstico de OS',
-      description: 'Avalie processo de ordem de serviço',
-      keywords: ['os', 'ordem', 'servico']
+      label: '📊 Diagnóstico de Ordem de Serviço',
+      description: 'Avalie processo de OS',
+      keywords: ['diagnostico os', 'diagnostico ordem servico', 'processo os'],
+      is_primary: true,
+      stage: 'inicio'
     },
     'diagnostico_disc': {
       url: 'DiagnosticoDISC',
       label: '📊 Diagnóstico DISC',
       description: 'Teste de perfil comportamental',
-      keywords: ['disc', 'comportamental', 'perfil']
+      keywords: ['diagnostico disc', 'teste disc', 'perfil comportamental disc'],
+      is_primary: true,
+      stage: 'inicio'
     },
     'diagnostico_endividamento': {
       url: 'DiagnosticoEndividamento',
       label: '📊 Diagnóstico de Endividamento',
       description: 'Analise saúde financeira',
-      keywords: ['endividamento', 'divida', 'financeiro']
+      keywords: ['diagnostico endividamento', 'diagnostico divida', 'analise financeira'],
+      is_primary: true,
+      stage: 'inicio'
     },
-    'diagnostico_carga': {
+    'diagnostico_carga_trabalho': {
       url: 'DiagnosticoCarga',
       label: '📊 Diagnóstico de Carga de Trabalho',
       description: 'Avalie capacidade de trabalho',
-      keywords: ['carga', 'trabalho', 'capacidade']
+      keywords: ['diagnostico carga', 'diagnostico carga trabalho', 'capacidade trabalho'],
+      is_primary: true,
+      stage: 'inicio'
     }
   },
 
@@ -141,57 +161,73 @@ const NAVIGATION_MATRIX = {
 
   // === TREINAMENTO E DESENVOLVIMENTO ===
   treinamento: {
-    'treinamentos': {
+    'gerenciar_treinamentos': {
       url: 'GerenciarTreinamentos',
-      label: '🎓 Treinamentos',
+      label: '🎓 Gerenciar Treinamentos',
       description: 'Gerencie cursos e módulos',
-      keywords: ['treinamento', 'curso', 'capacitacao', 'aula']
+      keywords: ['gerenciar treinamento', 'criar curso', 'configurar treinamento'],
+      is_primary: true
     },
-    'academia': {
+    'academia_treinamento': {
       url: 'AcademiaTreinamento',
       label: '🎓 Academia de Treinamento',
       description: 'Acesse cursos disponíveis',
-      keywords: ['academia', 'learning']
+      keywords: ['academia treinamento', 'cursos disponiveis', 'assistir aula'],
+      is_primary: true
     },
     'acompanhamento_treinamento': {
       url: 'AcompanhamentoTreinamento',
-      label: '📈 Acompanhamento',
+      label: '📈 Acompanhamento de Treinamentos',
       description: 'Monitore progresso de treinamentos',
-      keywords: ['acompanhamento', 'progresso', 'evolucao']
+      keywords: ['acompanhamento treinamento', 'progresso curso', 'evolucao capacitacao']
+    },
+    'meus_treinamentos': {
+      url: 'MeusTreinamentos',
+      label: '🎓 Meus Treinamentos',
+      description: 'Seus cursos em andamento',
+      keywords: ['meus treinamentos', 'meus cursos', 'treinamentos atribuidos']
     }
   },
 
   // === PROCESSOS E DOCUMENTOS ===
   processos: {
-    'processos': {
+    'gerenciar_processos': {
       url: 'GerenciarProcessos',
-      label: '⚙️ Processos',
+      label: '⚙️ Processos Operacionais',
       description: 'Documente processos operacionais',
-      keywords: ['processo', 'procedimento', 'fluxo']
+      keywords: ['gerenciar processos', 'meus processos', 'processos operacionais', 'documentar processo'],
+      is_primary: true
     },
-    'documentos': {
+    'visualizar_processo': {
+      url: 'MeusProcessos',
+      label: '⚙️ Meus Processos',
+      description: 'Visualize processos atribuídos',
+      keywords: ['visualizar processo', 'processos atribuidos', 'meu processo']
+    },
+    'repositorio_documentos': {
       url: 'RepositorioDocumentos',
-      label: '📁 Documentos',
-      description: 'Repositório de documentos',
-      keywords: ['documento', 'arquivo', 'repositorio']
+      label: '📁 Repositório de Documentos',
+      description: 'Central de documentos',
+      keywords: ['repositorio', 'documentos', 'arquivos', 'biblioteca documentos'],
+      is_primary: true
     },
     'manual_empresa': {
       url: 'CulturaOrganizacional',
       label: '📖 Manual da Empresa',
       description: 'Manual organizacional',
-      keywords: ['manual', 'empresa']
+      keywords: ['manual empresa', 'manual organizacional']
     },
-    'cdc': {
+    'cdc_contratos': {
       url: 'CDCList',
-      label: '📋 CDC - Contratos',
-      description: 'Contratos de desempenho',
-      keywords: ['cdc', 'contrato', 'desempenho']
+      label: '📋 CDC - Contratos de Desempenho',
+      description: 'Contratos de desempenho comercial',
+      keywords: ['cdc', 'contrato desempenho', 'contrato comercial']
     },
-    'coex': {
+    'coex_contratos': {
       url: 'COEXList',
-      label: '📋 COEX - Contratos',
-      description: 'Contratos de experiência',
-      keywords: ['coex', 'experiencia', 'contrato']
+      label: '📋 COEX - Contratos de Experiência',
+      description: 'Contratos de experiência cliente',
+      keywords: ['coex', 'contrato experiencia', 'experiencia cliente']
     }
   },
 
@@ -247,31 +283,127 @@ const NAVIGATION_MATRIX = {
 };
 
 /**
- * Busca navegação por múltiplos critérios
+ * Normaliza string para comparação (remove acentos, espaços extras, caracteres especiais)
+ */
+const normalizeString = (str) => {
+  return (str || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s]/g, '')
+    .trim();
+};
+
+/**
+ * Calcula pontuação de correspondência entre item e configuração
+ */
+const calculateMatchScore = (item, key, config) => {
+  const itemName = normalizeString(item.item_nome);
+  const itemId = normalizeString(item.item_id);
+  const itemTipo = normalizeString(item.item_tipo);
+  const keyNormalized = normalizeString(key);
+  
+  let score = 0;
+  
+  // 1. MATCH EXATO (maior prioridade) - 1000 pontos
+  if (itemId === keyNormalized || itemName === keyNormalized) {
+    return 1000;
+  }
+  
+  // 2. MATCH DE CHAVE COMPLETA - 500 pontos
+  if (itemName.includes(keyNormalized) || itemId.includes(keyNormalized)) {
+    // Quanto maior a chave, mais específica
+    score += 500 + (keyNormalized.length * 10);
+  }
+  
+  // 3. MATCH POR KEYWORDS - pontuação variável
+  if (config.keywords) {
+    const matchedKeywords = config.keywords.filter(kw => {
+      const kwNormalized = normalizeString(kw);
+      return itemName.includes(kwNormalized) || itemId.includes(kwNormalized);
+    });
+    
+    if (matchedKeywords.length > 0) {
+      // Mais keywords = mais específico
+      score += matchedKeywords.length * 50;
+      
+      // Keywords mais longas = mais específicas
+      const totalKeywordLength = matchedKeywords.reduce((sum, kw) => sum + kw.length, 0);
+      score += totalKeywordLength * 2;
+    }
+  }
+  
+  // 4. PENALIDADE para matches muito genéricos
+  const genericTerms = ['diagnostico', 'processo', 'ferramenta', 'modulo'];
+  const isGenericMatch = genericTerms.some(term => {
+    return keyNormalized === term && score < 500;
+  });
+  
+  if (isGenericMatch) {
+    score = score * 0.3; // Reduz drasticamente score de termos genéricos
+  }
+  
+  // 5. BÔNUS se item_tipo corresponde à categoria
+  if (config.keywords?.includes(itemTipo)) {
+    score += 30;
+  }
+  
+  // 6. BÔNUS para rotas primárias
+  if (config.is_primary) {
+    score += 100;
+  }
+  
+  // 7. BÔNUS para stages específicos
+  if (config.stage === 'inicio' && (itemName.includes('iniciar') || itemName.includes('comecar'))) {
+    score += 150;
+  }
+  
+  return score;
+};
+
+/**
+ * Busca navegação por múltiplos critérios com sistema de pontuação
  */
 const findNavigationMatch = (item) => {
-  const searchText = (item.item_nome || '').toLowerCase();
-  const searchId = (item.item_id || '').toLowerCase();
-  const searchTipo = (item.item_tipo || '').toLowerCase();
-
-  // Buscar em todas as categorias
+  if (!item || !item.item_nome) return null;
+  
+  const candidates = [];
+  
+  // Coletar TODAS as correspondências possíveis com suas pontuações
   for (const category of Object.values(NAVIGATION_MATRIX)) {
     for (const [key, config] of Object.entries(category)) {
-      // Match exato por chave
-      if (searchId === key || searchText.includes(key)) {
-        return config;
-      }
-
-      // Match por keywords
-      if (config.keywords?.some(kw => 
-        searchText.includes(kw) || searchId.includes(kw)
-      )) {
-        return config;
+      const score = calculateMatchScore(item, key, config);
+      
+      if (score > 0) {
+        candidates.push({
+          key,
+          config,
+          score,
+          category: Object.keys(NAVIGATION_MATRIX).find(k => NAVIGATION_MATRIX[k] === category)
+        });
       }
     }
   }
-
-  return null;
+  
+  // Se não houver candidatos, retorna null
+  if (candidates.length === 0) {
+    return null;
+  }
+  
+  // Ordenar por pontuação (maior primeiro)
+  candidates.sort((a, b) => b.score - a.score);
+  
+  // Log para debug (pode remover em produção)
+  if (candidates.length > 1) {
+    console.log(`🔍 Mapeamento para "${item.item_nome}":`, {
+      vencedor: candidates[0].key,
+      score: candidates[0].score,
+      alternativas: candidates.slice(1, 3).map(c => ({ key: c.key, score: c.score }))
+    });
+  }
+  
+  // Retornar a melhor correspondência
+  return candidates[0].config;
 };
 
 /**
