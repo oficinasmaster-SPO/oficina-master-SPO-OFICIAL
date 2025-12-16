@@ -38,7 +38,8 @@ export default function UsuariosAdmin() {
     queryKey: ['all-users'],
     queryFn: async () => {
       const employees = await base44.entities.Employee.list();
-      return employees.filter(e => e.tipo_vinculo === 'interno');
+      // Busca todos os usuários internos para lista de admins responsáveis
+      return employees.filter(e => e.tipo_vinculo === 'interno' || e.is_internal);
     }
   });
 
@@ -46,7 +47,8 @@ export default function UsuariosAdmin() {
     queryKey: ['admin-users'],
     queryFn: async () => {
       const employees = await base44.entities.Employee.list();
-      return employees.filter(e => e.tipo_vinculo === 'interno' || e.is_internal === true);
+      // Busca usuários internos (consultores/aceleradores)
+      return employees.filter(e => e.tipo_vinculo === 'interno' || e.is_internal);
     }
   });
 
@@ -120,8 +122,14 @@ export default function UsuariosAdmin() {
 
       const currentAuditLog = selectedUser?.audit_log || [];
       
+      // Atualiza Employee com dados completos
       return await base44.entities.Employee.update(userId, {
-        ...data,
+        full_name: data.full_name,
+        telefone: data.telefone,
+        position: data.position,
+        profile_id: data.profile_id,
+        admin_responsavel_id: data.admin_responsavel_id,
+        user_status: data.user_status,
         audit_log: [...currentAuditLog, auditEntry]
       });
     },
@@ -202,7 +210,8 @@ export default function UsuariosAdmin() {
     user.position?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const adminList = allUsers.filter(u => u.role === 'admin');
+  // Lista de admins para seleção de responsável (todos os internos podem ser responsáveis)
+  const adminList = allUsers;
 
   if (currentUser?.role !== 'admin') {
     return (
@@ -295,8 +304,8 @@ export default function UsuariosAdmin() {
                 <tbody className="divide-y divide-gray-200 bg-white">
                   {filteredUsers.map((user) => {
                     const userProfile = profiles.find(p => p.id === user.profile_id);
-                    const daysInactive = user.last_access_date 
-                      ? Math.floor((new Date() - new Date(user.last_access_date)) / (1000 * 60 * 60 * 24))
+                    const daysInactive = user.last_login_at 
+                      ? Math.floor((new Date() - new Date(user.last_login_at)) / (1000 * 60 * 60 * 24))
                       : null;
 
                     return (
@@ -326,16 +335,21 @@ export default function UsuariosAdmin() {
                             user.user_status === 'ativo' ? 'bg-green-100 text-green-700' :
                             user.user_status === 'bloqueado' ? 'bg-red-100 text-red-700' :
                             user.user_status === 'ferias' ? 'bg-blue-100 text-blue-700' :
+                            user.user_status === 'inativo' ? 'bg-gray-100 text-gray-700' :
                             'bg-gray-100 text-gray-700'
                           }>
-                            {user.user_status}
+                            {user.user_status === 'ativo' && '✅ Ativo'}
+                            {user.user_status === 'inativo' && '⏸️ Inativo'}
+                            {user.user_status === 'bloqueado' && '🔒 Bloqueado'}
+                            {user.user_status === 'ferias' && '🏖️ Férias'}
+                            {!user.user_status && '➖ Indefinido'}
                           </Badge>
                         </td>
                         <td className="px-4 py-4">
-                          {user.last_access_date ? (
+                          {user.last_login_at ? (
                             <div>
                               <p className="text-sm text-gray-700">
-                                {format(new Date(user.last_access_date), 'dd/MM/yyyy')}
+                                {format(new Date(user.last_login_at), 'dd/MM/yyyy HH:mm')}
                               </p>
                               {daysInactive > 30 && (
                                 <div className="flex items-center gap-1 mt-1">
@@ -347,7 +361,10 @@ export default function UsuariosAdmin() {
                               )}
                             </div>
                           ) : (
-                            <span className="text-xs text-gray-400">Nunca acessou</span>
+                            <div className="flex items-center gap-1">
+                              <Clock className="w-3 h-3 text-gray-400" />
+                              <span className="text-xs text-gray-400">Aguardando primeiro acesso</span>
+                            </div>
                           )}
                         </td>
                         <td className="px-4 py-4">

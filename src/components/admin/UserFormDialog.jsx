@@ -20,6 +20,15 @@ export default function UserFormDialog({
 }) {
   const [selectedProfileId, setSelectedProfileId] = useState(selectedUser?.profile_id || "");
   
+  // Atualiza selectedProfileId quando selectedUser mudar (modo edição)
+  React.useEffect(() => {
+    if (selectedUser?.profile_id) {
+      setSelectedProfileId(selectedUser.profile_id);
+    } else if (isCreateMode) {
+      setSelectedProfileId("");
+    }
+  }, [selectedUser, isCreateMode]);
+  
   const selectedProfile = profiles?.find(p => p.id === selectedProfileId);
 
   const handleFormSubmit = (e) => {
@@ -31,9 +40,9 @@ export default function UserFormDialog({
       email: formData.get('email'),
       telefone: formData.get('telefone'),
       position: formData.get('position'),
-      profile_id: formData.get('profile_id'),
+      profile_id: selectedProfileId, // Usa o state ao invés do FormData
       admin_responsavel_id: formData.get('admin_responsavel_id'),
-      user_status: formData.get('user_status')
+      user_status: formData.get('user_status') || 'ativo'
     };
 
     onSubmit(data);
@@ -110,21 +119,28 @@ export default function UserFormDialog({
             <div>
               <Label>Perfil *</Label>
               <Select 
-                name="profile_id" 
                 value={selectedProfileId}
                 onValueChange={setSelectedProfileId}
                 required
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione o perfil de acesso" />
+                  <SelectValue placeholder="Selecione o perfil de acesso">
+                    {selectedProfile ? selectedProfile.name : "Selecione o perfil de acesso"}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  {profiles?.filter(p => p.type === 'interno' && p.status === 'ativo').map(profile => (
-                    <SelectItem key={profile.id} value={profile.id}>
-                      {profile.name}
-                      {profile.is_system && " (Sistema)"}
-                    </SelectItem>
-                  ))}
+                  {profiles?.filter(p => p.type === 'interno' && p.status === 'ativo').length === 0 ? (
+                    <div className="p-2 text-xs text-gray-500 text-center">
+                      Nenhum perfil interno disponível
+                    </div>
+                  ) : (
+                    profiles?.filter(p => p.type === 'interno' && p.status === 'ativo').map(profile => (
+                      <SelectItem key={profile.id} value={profile.id}>
+                        {profile.name}
+                        {profile.is_system && " (Sistema)"}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
               <p className="text-xs text-gray-500 mt-1">
