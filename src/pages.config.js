@@ -123,6 +123,7 @@ import UsuariosAdmin from './pages/UsuariosAdmin';
 import AcademiaTreinamento from './pages/AcademiaTreinamento';
 import MonitoramentoUsuarios from './pages/MonitoramentoUsuarios';
 import PainelAcoes from './pages/PainelAcoes';
+import ConfiguracaoAcademia from './pages/ConfiguracaoAcademia';
 import __Layout from './Layout.jsx';
 
 
@@ -252,6 +253,7 @@ export const PAGES = {
     "AcademiaTreinamento": AcademiaTreinamento,
     "MonitoramentoUsuarios": MonitoramentoUsuarios,
     "PainelAcoes": PainelAcoes,
+    "ConfiguracaoAcademia": ConfiguracaoAcademia,
 }
 
 export const pagesConfig = {
