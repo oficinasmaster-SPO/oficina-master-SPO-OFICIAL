@@ -49,7 +49,7 @@ export default function AssistirCurso() {
   });
 
   const handleStartLesson = (lessonId) => {
-    navigate(`${createPageUrl('AssistirAula')}?lesson_id=${lessonId}`);
+    navigate(`${createPageUrl('AssistirAula')}?id=${lessonId}`);
   };
 
   const isLessonCompleted = (lessonId) => {

@@ -12,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Loader2, PlayCircle, CheckCircle, Lock, ArrowLeft, ChevronRight, FileText, Video, CheckCircle2, AlertCircle, Brain, PartyPopper, Clock } from "lucide-react";
+import { Loader2, PlayCircle, CheckCircle, Lock, ArrowLeft, ChevronRight, FileText, Video, CheckCircle2, AlertCircle, Brain, PartyPopper, Clock, Youtube } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from 'react-markdown';
 
@@ -394,38 +394,47 @@ export default function AssistirAula() {
                 
                 {/* Content Player */}
                 <div className="bg-black rounded-xl overflow-hidden shadow-lg aspect-video relative">
-                    {lesson.content_type === 'video_youtube' && lesson.content_url ? (
+                    {!lesson.content_url ? (
+                        <div className="w-full h-full flex flex-col items-center justify-center text-white gap-4">
+                            <Video className="w-16 h-16 text-slate-400" />
+                            <p className="text-slate-400">Conteúdo ainda não configurado</p>
+                        </div>
+                    ) : lesson.content_type === 'video_youtube' ? (
                         <iframe 
                             src={`https://www.youtube.com/embed/${
                                 lesson.content_url.includes('youtu.be/') 
                                     ? lesson.content_url.split('youtu.be/')[1]?.split('?')[0]
+                                    : lesson.content_url.includes('youtube.com/embed/')
+                                    ? lesson.content_url.split('embed/')[1]?.split('?')[0]
                                     : lesson.content_url.split('v=')[1]?.split('&')[0]
                             }`} 
                             title={lesson.title}
                             className="w-full h-full"
                             allowFullScreen
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         />
-                    ) : lesson.content_type === 'video_upload' && lesson.content_url ? (
+                    ) : lesson.content_type === 'video_upload' ? (
                         <video 
                             src={lesson.content_url}
                             controls
-                            className="w-full h-full"
+                            className="w-full h-full bg-black"
+                            controlsList="nodownload"
                         >
                             Seu navegador não suporta vídeo
                         </video>
-                    ) : lesson.content_type === 'text' && lesson.content_url ? (
+                    ) : lesson.content_type === 'text' ? (
                         <div className="bg-white w-full h-full p-8 overflow-y-auto">
                             <article className="prose prose-slate max-w-none">
                                 <ReactMarkdown>{lesson.content_url}</ReactMarkdown>
                             </article>
                         </div>
-                    ) : lesson.content_type === 'pdf' && lesson.content_url ? (
+                    ) : lesson.content_type === 'pdf' ? (
                         <iframe
                             src={lesson.content_url}
                             title={lesson.title}
                             className="w-full h-full"
                         />
-                    ) : lesson.content_url ? (
+                    ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center text-white p-8 gap-4">
                             <FileText className="w-16 h-16 text-slate-400" />
                             <p className="text-center">Conteúdo disponível em link externo</p>
@@ -437,10 +446,6 @@ export default function AssistirAula() {
                             >
                                 Abrir Conteúdo
                             </a>
-                        </div>
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center text-white">
-                            <p className="text-slate-400">Nenhum conteúdo configurado para esta aula</p>
                         </div>
                     )}
                 </div>
