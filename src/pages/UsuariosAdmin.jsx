@@ -30,7 +30,9 @@ export default function UsuariosAdmin() {
     queryKey: ['user-profiles'],
     queryFn: async () => {
       const allProfiles = await base44.entities.UserProfile.list();
-      return allProfiles.filter(p => p.type === 'interno');
+      const internoProfiles = allProfiles.filter(p => p.type === 'interno' && p.status === 'ativo');
+      console.log("📋 Perfis internos carregados:", internoProfiles);
+      return internoProfiles;
     }
   });
 

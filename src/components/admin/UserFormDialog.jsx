@@ -20,16 +20,31 @@ export default function UserFormDialog({
 }) {
   const [selectedProfileId, setSelectedProfileId] = useState(selectedUser?.profile_id || "");
   
+  // Debug: Log profiles recebidos
+  React.useEffect(() => {
+    console.log("🔍 Perfis disponíveis no formulário:", profiles);
+    console.log("👤 Usuário selecionado:", selectedUser);
+    console.log("📝 Modo criação:", isCreateMode);
+  }, [profiles, selectedUser, isCreateMode]);
+  
   // Atualiza selectedProfileId quando selectedUser mudar (modo edição)
   React.useEffect(() => {
     if (selectedUser?.profile_id) {
       setSelectedProfileId(selectedUser.profile_id);
+      console.log("✅ Profile ID definido:", selectedUser.profile_id);
     } else if (isCreateMode) {
       setSelectedProfileId("");
+      console.log("🆕 Modo criação - perfil limpo");
     }
   }, [selectedUser, isCreateMode]);
   
   const selectedProfile = profiles?.find(p => p.id === selectedProfileId);
+  
+  React.useEffect(() => {
+    if (selectedProfile) {
+      console.log("✨ Perfil selecionado encontrado:", selectedProfile.name);
+    }
+  }, [selectedProfile]);
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
@@ -129,12 +144,12 @@ export default function UserFormDialog({
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  {profiles?.filter(p => p.type === 'interno' && p.status === 'ativo').length === 0 ? (
+                  {!profiles || profiles.length === 0 ? (
                     <div className="p-2 text-xs text-gray-500 text-center">
                       Nenhum perfil interno disponível
                     </div>
                   ) : (
-                    profiles?.filter(p => p.type === 'interno' && p.status === 'ativo').map(profile => (
+                    profiles.map(profile => (
                       <SelectItem key={profile.id} value={profile.id}>
                         {profile.name}
                         {profile.is_system && " (Sistema)"}
