@@ -11,6 +11,8 @@ import ProfilePreview from "./ProfilePreview";
 import RoleManager from "./RoleManager";
 import ImpactAnalysis from "./ImpactAnalysis";
 import JobRoleManager from "./JobRoleManager";
+import CustomRoleSelector from "./CustomRoleSelector";
+import PermissionsReport from "./PermissionsReport";
 
 export default function ProfileEditor({ profile, onBack }) {
   const queryClient = useQueryClient();
@@ -99,14 +101,23 @@ export default function ProfileEditor({ profile, onBack }) {
         </div>
       </div>
 
-      <Tabs defaultValue="roles" className="space-y-6">
+      <Tabs defaultValue="custom_roles" className="space-y-6">
         <TabsList>
+          <TabsTrigger value="custom_roles">Roles Customizadas</TabsTrigger>
           <TabsTrigger value="roles">Roles do Sistema</TabsTrigger>
           <TabsTrigger value="job_roles">Funções Vinculadas</TabsTrigger>
           <TabsTrigger value="sidebar">Permissões da Sidebar</TabsTrigger>
           <TabsTrigger value="modules">Módulos e Cadastros</TabsTrigger>
+          <TabsTrigger value="report">Relatório de Permissões</TabsTrigger>
           <TabsTrigger value="impact">Análise de Impacto</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="custom_roles">
+          <CustomRoleSelector
+            profile={editedProfile}
+            onChange={setEditedProfile}
+          />
+        </TabsContent>
 
         <TabsContent value="roles">
           <RoleManager
@@ -134,6 +145,10 @@ export default function ProfileEditor({ profile, onBack }) {
             profile={editedProfile}
             onChange={setEditedProfile}
           />
+        </TabsContent>
+
+        <TabsContent value="report">
+          <PermissionsReport profile={editedProfile} />
         </TabsContent>
 
         <TabsContent value="impact">
