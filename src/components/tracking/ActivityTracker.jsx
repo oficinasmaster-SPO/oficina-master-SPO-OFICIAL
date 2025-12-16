@@ -27,11 +27,23 @@ export default function ActivityTracker({ user, workshop }) {
           session_id: sessionIdRef.current,
           login_time: new Date().toISOString(),
           last_activity_time: new Date().toISOString(),
+          is_active: true,
           device_info: {
             browser: navigator.userAgent,
             os: navigator.platform,
             screen_resolution: `${window.screen.width}x${window.screen.height}`
           }
+        });
+        
+        // Log de login
+        await base44.entities.UserActivityLog.create({
+          user_id: user.id,
+          user_email: user.email,
+          user_name: user.full_name || user.email,
+          workshop_id: workshop?.id || null,
+          activity_type: "login",
+          session_id: sessionIdRef.current,
+          timestamp: new Date().toISOString()
         });
       } catch (error) {
         console.error("Error creating session:", error);
@@ -40,8 +52,18 @@ export default function ActivityTracker({ user, workshop }) {
 
     createSession();
 
+    // Interceptar logout e fechamento de janela
+    const handleBeforeUnload = () => {
+      if (sessionIdRef.current) {
+        endSession();
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
     // Cleanup ao desmontar
     return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
       if (sessionIdRef.current) {
         endSession();
       }
@@ -137,8 +159,21 @@ export default function ActivityTracker({ user, workshop }) {
       });
 
       if (sessions.length > 0) {
-        await base44.entities.UserSession.update(sessions[0].id, {
-          last_activity_time: new Date().toISOString()
+        const session = sessions[0];
+        const now = new Date();
+        const loginTime = new Date(session.login_time);
+        const totalSeconds = Math.floor((now - loginTime) / 1000);
+        
+        // Calcular tempo ativo (total - idle)
+        const activeSeconds = isIdleRef.current 
+          ? (session.active_time_seconds || 0)
+          : totalSeconds - (session.idle_time_seconds || 0);
+
+        await base44.entities.UserSession.update(session.id, {
+          last_activity_time: now.toISOString(),
+          total_time_seconds: totalSeconds,
+          active_time_seconds: activeSeconds,
+          pages_visited: (session.pages_visited || 0) + 1
         });
       }
     } catch (error) {
@@ -153,10 +188,24 @@ export default function ActivityTracker({ user, workshop }) {
       await base44.entities.UserActivityLog.create({
         user_id: user.id,
         user_email: user.email,
+        user_name: user.full_name || user.email,
+        workshop_id: workshop?.id || null,
         activity_type: "idle_start",
         session_id: sessionIdRef.current,
         timestamp: new Date().toISOString()
       });
+      
+      // Atualizar sessão com tempo idle
+      const sessions = await base44.entities.UserSession.filter({
+        session_id: sessionIdRef.current
+      });
+      
+      if (sessions.length > 0) {
+        const session = sessions[0];
+        await base44.entities.UserSession.update(session.id, {
+          idle_time_seconds: (session.idle_time_seconds || 0)
+        });
+      }
     } catch (error) {
       console.error("Error logging idle:", error);
     }
@@ -166,9 +215,34 @@ export default function ActivityTracker({ user, workshop }) {
     if (!user || !sessionIdRef.current) return;
 
     try {
+      // Calcular tempo que ficou idle
+      const idleStartLog = await base44.entities.UserActivityLog.filter({
+        session_id: sessionIdRef.current,
+        activity_type: "idle_start"
+      });
+      
+      if (idleStartLog.length > 0) {
+        const lastIdleStart = idleStartLog[idleStartLog.length - 1];
+        const idleDuration = Math.floor((Date.now() - new Date(lastIdleStart.timestamp)) / 1000);
+        
+        // Atualizar tempo idle na sessão
+        const sessions = await base44.entities.UserSession.filter({
+          session_id: sessionIdRef.current
+        });
+        
+        if (sessions.length > 0) {
+          const session = sessions[0];
+          await base44.entities.UserSession.update(session.id, {
+            idle_time_seconds: (session.idle_time_seconds || 0) + idleDuration
+          });
+        }
+      }
+      
       await base44.entities.UserActivityLog.create({
         user_id: user.id,
         user_email: user.email,
+        user_name: user.full_name || user.email,
+        workshop_id: workshop?.id || null,
         activity_type: "idle_end",
         session_id: sessionIdRef.current,
         timestamp: new Date().toISOString()
@@ -189,11 +263,26 @@ export default function ActivityTracker({ user, workshop }) {
         const now = new Date();
         const loginTime = new Date(session.login_time);
         const totalSeconds = Math.floor((now - loginTime) / 1000);
+        
+        // Calcular tempo ativo final
+        const activeSeconds = totalSeconds - (session.idle_time_seconds || 0);
 
         await base44.entities.UserSession.update(session.id, {
           logout_time: now.toISOString(),
           total_time_seconds: totalSeconds,
+          active_time_seconds: activeSeconds,
           is_active: false
+        });
+        
+        // Log de logout
+        await base44.entities.UserActivityLog.create({
+          user_id: user.id,
+          user_email: user.email,
+          user_name: user.full_name || user.email,
+          workshop_id: workshop?.id || null,
+          activity_type: "logout",
+          session_id: sessionIdRef.current,
+          timestamp: now.toISOString()
         });
       }
     } catch (error) {

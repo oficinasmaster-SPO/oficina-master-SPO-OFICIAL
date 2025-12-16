@@ -162,7 +162,9 @@ export default function MonitoramentoUsuarios() {
         </TabsContent>
 
         <TabsContent value="history" className="space-y-4">
-          <SessionsHistory sessions={allSessions} />
+          <SessionsHistory sessions={allSessions} onRefresh={() => {
+            queryClient.invalidateQueries(['all-sessions']);
+          }} />
         </TabsContent>
 
         <TabsContent value="details" className="space-y-4">
