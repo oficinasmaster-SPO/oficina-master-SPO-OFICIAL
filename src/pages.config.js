@@ -127,7 +127,6 @@ import ConfiguracaoAcademia from './pages/ConfiguracaoAcademia';
 import AssistirCurso from './pages/AssistirCurso';
 import GerenciarModulosCurso from './pages/GerenciarModulosCurso';
 import RelatorioUsuario from './pages/RelatorioUsuario';
-import GerenciarRoles from './pages/GerenciarRoles';
 import __Layout from './Layout.jsx';
 
 
@@ -261,7 +260,6 @@ export const PAGES = {
     "AssistirCurso": AssistirCurso,
     "GerenciarModulosCurso": GerenciarModulosCurso,
     "RelatorioUsuario": RelatorioUsuario,
-    "GerenciarRoles": GerenciarRoles,
 }
 
 export const pagesConfig = {

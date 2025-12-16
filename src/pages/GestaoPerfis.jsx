@@ -5,6 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Copy, Power, Trash2, Shield, AlertCircle, Users, RefreshCw } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import ProfileEditor from "@/components/profiles/ProfileEditor";
 import ProfileCreator from "@/components/profiles/ProfileCreator";
@@ -15,7 +19,7 @@ import { jobRoles } from "@/components/lib/jobRoles";
 export default function GestaoPerfis() {
   const [selectedProfile, setSelectedProfile] = useState(null);
   const [showCreator, setShowCreator] = useState(false);
-  const [viewMode, setViewMode] = useState("list"); // list, edit, audit
+  const [viewMode, setViewMode] = useState("list"); // list, edit, audit, roles
   const queryClient = useQueryClient();
 
   const { data: profiles = [], isLoading, refetch } = useQuery({
@@ -41,6 +45,14 @@ export default function GestaoPerfis() {
   const { data: users = [] } = useQuery({
     queryKey: ["users"],
     queryFn: () => base44.entities.User.list(),
+  });
+
+  const { data: customRoles = [] } = useQuery({
+    queryKey: ["custom-roles"],
+    queryFn: async () => {
+      const roles = await base44.entities.CustomRole.list();
+      return roles || [];
+    },
   });
 
   // Calcular total de roles disponíveis no sistema
@@ -131,6 +143,16 @@ export default function GestaoPerfis() {
     );
   }
 
+  if (viewMode === "roles") {
+    return (
+      <RolesManagement 
+        onBack={() => setViewMode("list")} 
+        customRoles={customRoles}
+        users={users}
+      />
+    );
+  }
+
   if (showCreator) {
     return (
       <ProfileCreator
@@ -156,6 +178,14 @@ export default function GestaoPerfis() {
           </p>
         </div>
         <div className="flex gap-3">
+          <Button
+            onClick={() => setViewMode("roles")}
+            variant="outline"
+            className="gap-2"
+          >
+            <Shield className="w-4 h-4" />
+            Gerenciar Roles
+          </Button>
           <Button
             onClick={() => setViewMode("audit")}
             variant="outline"
@@ -362,5 +392,294 @@ function ProfileSection({
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function RolesManagement({ onBack, customRoles, users }) {
+  const queryClient = useQueryClient();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showDialog, setShowDialog] = useState(false);
+  const [editingRole, setEditingRole] = useState(null);
+  const [expandedModule, setExpandedModule] = useState(null);
+
+  const createRoleMutation = useMutation({
+    mutationFn: (data) => base44.entities.CustomRole.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["custom-roles"]);
+      toast.success("Role criada com sucesso");
+      setShowDialog(false);
+      setEditingRole(null);
+    },
+  });
+
+  const updateRoleMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.CustomRole.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["custom-roles"]);
+      toast.success("Role atualizada");
+      setShowDialog(false);
+      setEditingRole(null);
+    },
+  });
+
+  const deleteRoleMutation = useMutation({
+    mutationFn: (id) => base44.entities.CustomRole.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["custom-roles"]);
+      toast.success("Role excluída");
+    },
+  });
+
+  const getUsersCountByRole = (roleId) => {
+    return users.filter(u => u.custom_role_id === roleId).length;
+  };
+
+  const filteredRoles = customRoles.filter(role =>
+    role.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    role.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const totalSystemRoles = systemRoles.reduce((sum, m) => sum + m.roles.length, 0);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <Button onClick={onBack} variant="outline" className="mb-4">
+            ← Voltar aos Perfis
+          </Button>
+          <h1 className="text-3xl font-bold text-gray-900">Gerenciamento de Roles</h1>
+          <p className="text-gray-600 mt-1">
+            Crie e gerencie roles customizadas com permissões específicas
+          </p>
+        </div>
+        <Button onClick={() => {
+          setEditingRole(null);
+          setShowDialog(true);
+        }}>
+          <Plus className="w-4 h-4 mr-2" />
+          Nova Role
+        </Button>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <Shield className="w-10 h-10 mx-auto text-blue-600 mb-2" />
+              <p className="text-3xl font-bold">{customRoles.length}</p>
+              <p className="text-sm text-gray-600">Roles Customizadas</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <Shield className="w-10 h-10 mx-auto text-green-600 mb-2" />
+              <p className="text-3xl font-bold">{totalSystemRoles}</p>
+              <p className="text-sm text-gray-600">Roles do Sistema</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <Users className="w-10 h-10 mx-auto text-purple-600 mb-2" />
+              <p className="text-3xl font-bold">
+                {users.filter(u => u.custom_role_id).length}
+              </p>
+              <p className="text-sm text-gray-600">Usuários Atribuídos</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* System Roles Reference */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Roles do Sistema</CardTitle>
+          <p className="text-sm text-gray-600">
+            Roles nativas que podem ser combinadas em perfis customizados
+          </p>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            {systemRoles.map((module) => (
+              <div key={module.id} className="border rounded-lg">
+                <button
+                  onClick={() => setExpandedModule(expandedModule === module.id ? null : module.id)}
+                  className="w-full flex items-center justify-between p-4 hover:bg-gray-50"
+                >
+                  <div className="flex items-center gap-3">
+                    <module.icon className="w-5 h-5 text-blue-600" />
+                    <span className="font-semibold">{module.name}</span>
+                    <Badge variant="outline">{module.roles.length} roles</Badge>
+                  </div>
+                  {expandedModule === module.id ? "▼" : "▶"}
+                </button>
+                {expandedModule === module.id && (
+                  <div className="border-t p-4 bg-gray-50 space-y-2">
+                    {module.roles.map((role) => (
+                      <div key={role.id} className="bg-white p-3 rounded border">
+                        <p className="font-medium text-sm">{role.name}</p>
+                        <p className="text-xs text-gray-600">{role.description}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Custom Roles */}
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle>Roles Customizadas</CardTitle>
+            <Input
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Buscar..."
+              className="w-64"
+            />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {filteredRoles.map((role) => {
+              const usersCount = getUsersCountByRole(role.id);
+              return (
+                <div key={role.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3">
+                      <h3 className="font-semibold">{role.name}</h3>
+                      <Badge>{role.status}</Badge>
+                      <Badge variant="outline">{role.system_roles?.length || 0} roles</Badge>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1">{role.description}</p>
+                    <p className="text-xs text-gray-500 mt-2">{usersCount} usuários</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={() => { setEditingRole(role); setShowDialog(true); }} variant="outline" size="sm">
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                      onClick={() => {
+                        if (usersCount > 0) {
+                          toast.error("Role possui usuários vinculados");
+                          return;
+                        }
+                        if (confirm(`Excluir "${role.name}"?`)) {
+                          deleteRoleMutation.mutate(role.id);
+                        }
+                      }} 
+                      variant="destructive" 
+                      size="sm"
+                      disabled={usersCount > 0}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+            {filteredRoles.length === 0 && (
+              <p className="text-center py-8 text-gray-500">
+                {searchTerm ? "Nenhuma role encontrada" : "Nenhuma role customizada criada"}
+              </p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <RoleFormDialog
+        open={showDialog}
+        onClose={() => { setShowDialog(false); setEditingRole(null); }}
+        role={editingRole}
+        onSave={(data) => {
+          if (editingRole) {
+            updateRoleMutation.mutate({ id: editingRole.id, data });
+          } else {
+            createRoleMutation.mutate(data);
+          }
+        }}
+        isLoading={createRoleMutation.isPending || updateRoleMutation.isPending}
+      />
+    </div>
+  );
+}
+
+function RoleFormDialog({ open, onClose, role, onSave, isLoading }) {
+  const [formData, setFormData] = useState({ name: "", description: "", system_roles: [], status: "ativo" });
+  const [selectedModule, setSelectedModule] = useState(null);
+
+  React.useEffect(() => {
+    if (role) {
+      setFormData(role);
+    } else {
+      setFormData({ name: "", description: "", system_roles: [], status: "ativo" });
+    }
+  }, [role, open]);
+
+  const toggleRole = (roleId) => {
+    setFormData(prev => ({
+      ...prev,
+      system_roles: prev.system_roles.includes(roleId)
+        ? prev.system_roles.filter(r => r !== roleId)
+        : [...prev.system_roles, roleId]
+    }));
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{role ? "Editar Role" : "Nova Role"}</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="space-y-4">
+          <div>
+            <Label>Nome *</Label>
+            <Input value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} required />
+          </div>
+          <div>
+            <Label>Descrição</Label>
+            <Textarea value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} rows={3} />
+          </div>
+          <div>
+            <Label>Permissões ({formData.system_roles.length} selecionadas)</Label>
+            <div className="border rounded p-3 max-h-96 overflow-y-auto space-y-2">
+              {systemRoles.map(module => (
+                <div key={module.id} className="border rounded">
+                  <button type="button" onClick={() => setSelectedModule(selectedModule === module.id ? null : module.id)} className="w-full flex justify-between p-2 hover:bg-gray-50">
+                    <span className="font-medium text-sm">{module.name}</span>
+                    {selectedModule === module.id ? "▼" : "▶"}
+                  </button>
+                  {selectedModule === module.id && (
+                    <div className="border-t p-2 space-y-1">
+                      {module.roles.map(r => (
+                        <label key={r.id} className="flex items-start gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                          <input type="checkbox" checked={formData.system_roles.includes(r.id)} onChange={() => toggleRole(r.id)} />
+                          <div>
+                            <p className="text-sm font-medium">{r.name}</p>
+                            <p className="text-xs text-gray-600">{r.description}</p>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-4 border-t">
+            <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
+            <Button type="submit" disabled={isLoading}>{isLoading ? "Salvando..." : "Salvar"}</Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
