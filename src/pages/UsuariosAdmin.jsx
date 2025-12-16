@@ -208,10 +208,10 @@ export default function UsuariosAdmin() {
     }
   };
 
-  const filteredUsers = adminUsers.filter(user =>
-    user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.position?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredUsers = (adminUsers || []).filter(user =>
+    user?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user?.position?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Lista de admins para seleção de responsável (todos os internos podem ser responsáveis)
@@ -307,8 +307,8 @@ export default function UsuariosAdmin() {
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
                   {filteredUsers.map((user) => {
-                    const userProfile = profiles.find(p => p.id === user.profile_id);
-                    const daysInactive = user.last_login_at 
+                    const userProfile = profiles?.find(p => p?.id === user?.profile_id);
+                    const daysInactive = user?.last_login_at 
                       ? Math.floor((new Date() - new Date(user.last_login_at)) / (1000 * 60 * 60 * 24))
                       : null;
 
@@ -316,12 +316,12 @@ export default function UsuariosAdmin() {
                       <tr key={user.id} className="hover:bg-gray-50">
                         <td className="px-4 py-4">
                           <div>
-                            <p className="font-medium text-gray-900">{user.full_name}</p>
-                            <p className="text-xs text-gray-500">{user.position}</p>
+                            <p className="font-medium text-gray-900">{user?.full_name || 'N/A'}</p>
+                            <p className="text-xs text-gray-500">{user?.position || '-'}</p>
                           </div>
                         </td>
                         <td className="px-4 py-4">
-                          <p className="text-sm text-gray-700">{user.email}</p>
+                          <p className="text-sm text-gray-700">{user?.email || '-'}</p>
                         </td>
                         <td className="px-4 py-4">
                           {userProfile ? (
@@ -336,26 +336,26 @@ export default function UsuariosAdmin() {
                         </td>
                         <td className="px-4 py-4">
                           <Badge className={
-                            user.user_status === 'ativo' ? 'bg-green-100 text-green-700' :
-                            user.user_status === 'bloqueado' ? 'bg-red-100 text-red-700' :
-                            user.user_status === 'ferias' ? 'bg-blue-100 text-blue-700' :
-                            user.user_status === 'inativo' ? 'bg-gray-100 text-gray-700' :
+                            user?.user_status === 'ativo' ? 'bg-green-100 text-green-700' :
+                            user?.user_status === 'bloqueado' ? 'bg-red-100 text-red-700' :
+                            user?.user_status === 'ferias' ? 'bg-blue-100 text-blue-700' :
+                            user?.user_status === 'inativo' ? 'bg-gray-100 text-gray-700' :
                             'bg-gray-100 text-gray-700'
                           }>
-                            {user.user_status === 'ativo' && '✅ Ativo'}
-                            {user.user_status === 'inativo' && '⏸️ Inativo'}
-                            {user.user_status === 'bloqueado' && '🔒 Bloqueado'}
-                            {user.user_status === 'ferias' && '🏖️ Férias'}
-                            {!user.user_status && '➖ Indefinido'}
+                            {user?.user_status === 'ativo' && '✅ Ativo'}
+                            {user?.user_status === 'inativo' && '⏸️ Inativo'}
+                            {user?.user_status === 'bloqueado' && '🔒 Bloqueado'}
+                            {user?.user_status === 'ferias' && '🏖️ Férias'}
+                            {!user?.user_status && '➖ Indefinido'}
                           </Badge>
                         </td>
                         <td className="px-4 py-4">
-                          {user.last_login_at ? (
+                          {user?.last_login_at ? (
                             <div>
                               <p className="text-sm text-gray-700">
                                 {format(new Date(user.last_login_at), 'dd/MM/yyyy HH:mm')}
                               </p>
-                              {daysInactive > 30 && (
+                              {daysInactive && daysInactive > 30 && (
                                 <div className="flex items-center gap-1 mt-1">
                                   <AlertTriangle className="w-3 h-3 text-amber-500" />
                                   <span className="text-xs text-amber-600">
