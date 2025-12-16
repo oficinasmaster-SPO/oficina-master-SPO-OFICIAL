@@ -34,45 +34,22 @@ Deno.serve(async (req) => {
       }
       console.log("Senha temporária gerada:", tempPassword);
 
-      // 1. Convidar usuário via API do Base44
-      console.log("Convidando usuário via Base44 Invite API...");
+      // 1. Criar User diretamente na entidade
+      console.log("Criando User na entidade...");
       
-      const inviteResponse = await fetch(`https://api.base44.com/auth/invite`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${Deno.env.get('BASE44_SERVICE_ROLE_KEY')}`,
-          'x-app-id': Deno.env.get('BASE44_APP_ID')
-        },
-        body: JSON.stringify({
-          email: email,
-          full_name: full_name,
-          role: 'admin',
-          send_email: false
-        })
-      });
-
-      if (!inviteResponse.ok) {
-        const errorText = await inviteResponse.text();
-        console.error("Erro na API de convite:", errorText);
-        throw new Error('Falha ao criar conta de autenticação');
-      }
-
-      const inviteData = await inviteResponse.json();
-      const userId = inviteData.user_id || inviteData.id;
-      console.log("✅ Usuário convidado! ID:", userId);
-
-      // 2. Atualizar User com dados completos
-      console.log("Atualizando dados do User...");
-      await base44.asServiceRole.entities.User.update(userId, {
+      const newUser = await base44.asServiceRole.entities.User.create({
+        email: email,
+        full_name: full_name,
+        role: 'admin',
         telefone: user_data.telefone,
         position: user_data.position,
         profile_id: user_data.profile_id,
         user_status: user_data.user_status || 'ativo',
         is_internal: true
       });
-      
-      console.log("✅ User atualizado com dados completos!");
+
+      const userId = newUser.id;
+      console.log("✅ User criado! ID:", userId);
 
       // 3. Criar Employee vinculado ao User
       console.log("Criando Employee vinculado ao User...");
