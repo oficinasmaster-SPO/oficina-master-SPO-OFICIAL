@@ -110,13 +110,7 @@ export default function UsuariosAdmin() {
     onSuccess: (result) => {
       queryClient.invalidateQueries(['admin-users']);
       queryClient.invalidateQueries(['user-profiles']);
-      toast.success("Usuário criado com sucesso!");
-      setResetPasswordDialog({ 
-        open: true, 
-        password: result.password, 
-        email: result.user.email,
-        loginUrl: result.login_url || window.location.origin
-      });
+      toast.success("Usuário interno criado! Agora convide-o via 'Convidar Usuários' no dashboard.");
       setIsDialogOpen(false);
       setIsCreateMode(false);
     },
