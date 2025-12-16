@@ -155,12 +155,28 @@ export default function CronogramaImplementacao() {
   // Mesclar itens do plano com itens já rastreados no cronograma
   const allItemsForTable = allPlanItems.map(planItem => {
     const cronogramaItem = cronograma.find(c => c.item_id === planItem.codigo || c.item_nome === planItem.nome);
-    return cronogramaItem || {
+    
+    // Se já existe no cronograma, garantir que tem os campos necessários
+    if (cronogramaItem) {
+      return {
+        ...cronogramaItem,
+        item_id: cronogramaItem.item_id || planItem.codigo,
+        item_nome: cronogramaItem.item_nome || planItem.nome,
+        item_tipo: cronogramaItem.item_tipo || planItem.tipo
+      };
+    }
+    
+    // Item não iniciado - criar com todos os campos necessários para navegação
+    return {
       id: planItem.codigo,
       item_nome: planItem.nome,
       item_tipo: planItem.tipo,
       item_id: planItem.codigo,
       status: 'a_fazer',
+      workshop_id: workshop?.id,
+      data_inicio_real: new Date().toISOString(),
+      data_termino_previsto: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 dias a partir de hoje
+      progresso_percentual: 0,
       not_started: true // Flag para identificar itens não iniciados
     };
   });
