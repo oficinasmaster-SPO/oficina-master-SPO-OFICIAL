@@ -37,15 +37,16 @@ export default function UsuariosAdmin() {
   const { data: allUsers = [] } = useQuery({
     queryKey: ['all-users'],
     queryFn: async () => {
-      return await base44.entities.User.list();
+      const employees = await base44.entities.Employee.list();
+      return employees.filter(e => e.tipo_vinculo === 'interno');
     }
   });
 
   const { data: adminUsers = [], isLoading } = useQuery({
     queryKey: ['admin-users'],
     queryFn: async () => {
-      const users = await base44.entities.User.list();
-      return users.filter(u => u.is_internal === true);
+      const employees = await base44.entities.Employee.list();
+      return employees.filter(e => e.tipo_vinculo === 'interno' || e.is_internal === true);
     }
   });
 
@@ -119,7 +120,7 @@ export default function UsuariosAdmin() {
 
       const currentAuditLog = selectedUser?.audit_log || [];
       
-      return await base44.entities.User.update(userId, {
+      return await base44.entities.Employee.update(userId, {
         ...data,
         audit_log: [...currentAuditLog, auditEntry]
       });
@@ -136,7 +137,7 @@ export default function UsuariosAdmin() {
 
   const deleteUserMutation = useMutation({
     mutationFn: async (userId) => {
-      return await base44.entities.User.delete(userId);
+      return await base44.entities.Employee.delete(userId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['admin-users']);
