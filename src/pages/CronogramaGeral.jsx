@@ -48,9 +48,16 @@ export default function CronogramaGeral() {
   });
 
   // Carregar features dos planos
-  const { data: planFeatures = [] } = useQuery({
+  const { data: planFeatures = [], isLoading: loadingFeatures } = useQuery({
     queryKey: ['plan-features'],
-    queryFn: () => base44.entities.PlanFeature.list()
+    queryFn: async () => {
+      try {
+        return await base44.entities.PlanFeature.list();
+      } catch (error) {
+        console.error("Erro ao carregar PlanFeature:", error);
+        return [];
+      }
+    }
   });
 
   // Verificar acesso
@@ -71,6 +78,10 @@ export default function CronogramaGeral() {
   // Obter dados do plano selecionado
   const planData = planFeatures.find(p => p.plan_id === selectedPlan);
   
+  console.log("🔍 DEBUG - Plan Data:", planData);
+  console.log("🔍 DEBUG - Selected Plan:", selectedPlan);
+  console.log("🔍 DEBUG - All Plan Features:", planFeatures);
+  
   // Combinar funcionalidades e módulos do cronograma
   const processos = [
     ...(planData?.cronograma_features?.map(featId => ({
@@ -84,6 +95,18 @@ export default function CronogramaGeral() {
       tipo: 'modulo'
     })) || [])
   ];
+
+  // Fallback: Se não há PlanFeature configurado, busca templates do cronograma
+  if (processos.length === 0 && templates.length > 0) {
+    const templateProcessos = templates
+      .filter(t => t.plan_id === selectedPlan || !t.plan_id)
+      .map(t => ({
+        codigo: t.modulo_codigo || t.id,
+        nome: t.nome || t.titulo || 'Processo',
+        tipo: 'template'
+      }));
+    processos.push(...templateProcessos);
+  }
 
   // Calcular contadores por processo
   const getContagemPorProcesso = (codigoProcesso) => {
@@ -332,7 +355,16 @@ export default function CronogramaGeral() {
               {processos.length === 0 ? (
                 <div className="text-center py-12 text-gray-500">
                   <AlertCircle className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                  <p>Nenhum processo registrado para o plano selecionado.</p>
+                  <p className="font-semibold mb-2">Nenhum processo registrado para o plano {selectedPlan}.</p>
+                  <p className="text-sm mb-4">Configure os processos deste plano em PlanFeature ou CronogramaTemplate.</p>
+                  {user.role === 'admin' && (
+                    <div className="text-xs text-left bg-gray-50 p-3 rounded border mt-4 max-w-md mx-auto">
+                      <p className="font-semibold mb-1">💡 Debug Info:</p>
+                      <p>Plan Features carregados: {planFeatures.length}</p>
+                      <p>Templates carregados: {templates.length}</p>
+                      <p>Plan Data encontrado: {planData ? 'Sim' : 'Não'}</p>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="overflow-x-auto">
