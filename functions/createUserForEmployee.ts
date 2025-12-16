@@ -34,23 +34,45 @@ Deno.serve(async (req) => {
       }
       console.log("Senha temporária gerada:", tempPassword);
 
-      // 1. Primeiro criar o User na entidade User (para autenticação)
-      console.log("Criando User na entidade User...");
-      const newUser = await base44.asServiceRole.entities.User.create({
-        email: email,
-        full_name: full_name,
-        role: 'admin', // Usuários internos são admins
+      // 1. Criar conta de autenticação via signup
+      console.log("Criando conta de autenticação...");
+      
+      const signupResult = await fetch(`https://api.base44.com/auth/signup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-app-id': Deno.env.get('BASE44_APP_ID')
+        },
+        body: JSON.stringify({
+          email: email,
+          password: tempPassword,
+          full_name: full_name
+        })
+      });
+
+      if (!signupResult.ok) {
+        const errorData = await signupResult.json();
+        throw new Error(errorData.message || 'Erro ao criar conta de autenticação');
+      }
+
+      const authData = await signupResult.json();
+      const userId = authData.user?.id || authData.id;
+      console.log("✅ Conta de autenticação criada! User ID:", userId);
+
+      // 2. Atualizar o User recém-criado para ser admin e ter dados completos
+      console.log("Atualizando User para role admin...");
+      await base44.asServiceRole.entities.User.update(userId, {
+        role: 'admin',
         telefone: user_data.telefone,
         position: user_data.position,
         profile_id: user_data.profile_id,
         user_status: user_data.user_status || 'ativo',
-        is_internal: true,
-        temporary_password: tempPassword // Salvar senha temporária para mostrar ao admin
+        is_internal: true
       });
 
-      console.log("✅ User criado com sucesso! ID:", newUser.id);
+      console.log("✅ User atualizado para admin!");
 
-      // 2. Criar Employee vinculado ao User
+      // 3. Criar Employee vinculado ao User
       console.log("Criando Employee vinculado ao User...");
       const newEmployee = await base44.asServiceRole.entities.Employee.create({
         full_name: full_name,
@@ -64,7 +86,7 @@ Deno.serve(async (req) => {
         admin_responsavel_id: user_data.admin_responsavel_id,
         user_status: user_data.user_status || 'ativo',
         is_internal: true,
-        user_id: newUser.id, // Vincular ao User criado
+        user_id: userId,
         audit_log: user_data.audit_log || []
       });
 
@@ -74,7 +96,7 @@ Deno.serve(async (req) => {
       return Response.json({
         success: true,
         user: newEmployee,
-        user_auth_id: newUser.id,
+        user_auth_id: userId,
         password: tempPassword,
         login_url: window.location.origin,
         message: 'Usuário interno criado com sucesso'
