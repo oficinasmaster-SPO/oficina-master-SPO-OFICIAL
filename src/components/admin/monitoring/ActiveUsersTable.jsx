@@ -1,12 +1,35 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Eye, Search, Filter } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export default function ActiveUsersTable({ sessions, onSelectUser }) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState("login_time");
+  
+  const filteredSessions = sessions.filter(s =>
+    s.user_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    s.user_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    s.workshop_name?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  
+  const sortedSessions = [...filteredSessions].sort((a, b) => {
+    switch(sortBy) {
+      case "login_time":
+        return new Date(b.login_time) - new Date(a.login_time);
+      case "activity":
+        return new Date(b.last_activity_time) - new Date(a.last_activity_time);
+      case "pages":
+        return (b.pages_visited || 0) - (a.pages_visited || 0);
+      default:
+        return 0;
+    }
+  });
   const formatDuration = (seconds) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -17,7 +40,37 @@ export default function ActiveUsersTable({ sessions, onSelectUser }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Usuários Conectados Agora</CardTitle>
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <CardTitle>Usuários Conectados Agora</CardTitle>
+            <Badge variant="outline" className="bg-green-50 text-green-700">
+              {sortedSessions.length} online
+            </Badge>
+          </div>
+          
+          <div className="flex gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                placeholder="Buscar usuário ou oficina..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="login_time">Último Login</SelectItem>
+                <SelectItem value="activity">Última Atividade</SelectItem>
+                <SelectItem value="pages">Mais Páginas</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
@@ -41,7 +94,7 @@ export default function ActiveUsersTable({ sessions, onSelectUser }) {
                   </td>
                 </tr>
               ) : (
-                sessions.map((session) => {
+                sortedSessions.map((session) => {
                   const now = new Date();
                   const loginTime = session.login_time ? new Date(session.login_time) : now;
                   const onlineDuration = Math.floor((now - loginTime) / 1000);

@@ -14,11 +14,32 @@ export default function ActivityTracker({ user, workshop }) {
   useEffect(() => {
     if (!user) return;
     
-    sessionIdRef.current = `${user.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    
-    // Criar sessão
-    const createSession = async () => {
+    // Verificar se já existe sessão ativa para este usuário
+    const initSession = async () => {
       try {
+        // Buscar sessões ativas do usuário
+        const activeSessions = await base44.entities.UserSession.filter({
+          user_id: user.id,
+          is_active: true
+        });
+        
+        // Se já existe sessão ativa (refresh de página), reutilizar
+        if (activeSessions.length > 0) {
+          const existingSession = activeSessions[0];
+          sessionIdRef.current = existingSession.session_id;
+          console.log("🔄 Sessão existente reutilizada:", sessionIdRef.current);
+          
+          // Atualizar última atividade
+          await base44.entities.UserSession.update(existingSession.id, {
+            last_activity_time: new Date().toISOString()
+          });
+          
+          return; // Não criar nova sessão
+        }
+        
+        // Criar nova sessão apenas se não existir
+        sessionIdRef.current = `${user.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        
         await base44.entities.UserSession.create({
           user_id: user.id,
           user_email: user.email,
@@ -28,6 +49,7 @@ export default function ActivityTracker({ user, workshop }) {
           login_time: new Date().toISOString(),
           last_activity_time: new Date().toISOString(),
           is_active: true,
+          pages_visited: 0,
           device_info: {
             browser: navigator.userAgent,
             os: navigator.platform,
@@ -35,7 +57,9 @@ export default function ActivityTracker({ user, workshop }) {
           }
         });
         
-        // Log de login
+        console.log("✅ Nova sessão criada:", sessionIdRef.current);
+        
+        // Log de login apenas para nova sessão
         await base44.entities.UserActivityLog.create({
           user_id: user.id,
           user_email: user.email,
@@ -46,11 +70,11 @@ export default function ActivityTracker({ user, workshop }) {
           timestamp: new Date().toISOString()
         });
       } catch (error) {
-        console.error("Error creating session:", error);
+        console.error("Error initializing session:", error);
       }
     };
 
-    createSession();
+    initSession();
 
     // Interceptar logout e fechamento de janela
     const handleBeforeUnload = () => {
