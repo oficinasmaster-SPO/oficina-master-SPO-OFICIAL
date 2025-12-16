@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import TrainingBreadcrumbs from "@/components/training/Breadcrumbs";
+import ProgressionRulesConfig from "@/components/training/ProgressionRulesConfig";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,7 +34,14 @@ export default function GerenciarModulo() {
     content_type: "video_youtube",
     content_url: "",
     duration_minutes: 0,
-    transcript: ""
+    transcript: "",
+    progression_rules: {
+      can_advance_if_failed: true,
+      can_retake_assessment: true,
+      can_skip_to_assessment: true,
+      next_lesson_unlock: "always",
+      require_assessment_pass: false
+    }
   });
   const [savingLesson, setSavingLesson] = useState(false);
 
@@ -111,7 +120,14 @@ export default function GerenciarModulo() {
       content_type: lesson.content_type,
       content_url: lesson.content_url || "",
       duration_minutes: lesson.duration_minutes || 0,
-      transcript: lesson.transcript || ""
+      transcript: lesson.transcript || "",
+      progression_rules: lesson.progression_rules || {
+        can_advance_if_failed: true,
+        can_retake_assessment: true,
+        can_skip_to_assessment: true,
+        next_lesson_unlock: "always",
+        require_assessment_pass: false
+      }
     });
     setIsLessonModalOpen(true);
   };
@@ -124,7 +140,14 @@ export default function GerenciarModulo() {
       content_type: "video_youtube",
       content_url: "",
       duration_minutes: 0,
-      transcript: ""
+      transcript: "",
+      progression_rules: {
+        can_advance_if_failed: true,
+        can_retake_assessment: true,
+        can_skip_to_assessment: true,
+        next_lesson_unlock: "always",
+        require_assessment_pass: false
+      }
     });
   };
 
@@ -153,9 +176,12 @@ export default function GerenciarModulo() {
   return (
     <div className="min-h-screen bg-slate-50 p-8">
       <div className="max-w-5xl mx-auto">
-        <Button variant="ghost" onClick={() => navigate(createPageUrl("GerenciarTreinamentos"))} className="mb-4 pl-0">
-            <ArrowLeft className="w-4 h-4 mr-2" /> Voltar para Módulos
-        </Button>
+        <TrainingBreadcrumbs
+          items={[
+            { label: module.title, onClick: () => navigate(createPageUrl("GerenciarModulosCurso") + `?course_id=${module.course_id}`) },
+            { label: "Aulas" }
+          ]}
+        />
 
         <div className="flex justify-between items-start mb-8">
             <div>
@@ -271,6 +297,11 @@ export default function GerenciarModulo() {
                         />
                     </div>
                 </div>
+
+                <ProgressionRulesConfig
+                  rules={lessonData.progression_rules}
+                  onChange={(newRules) => setLessonData({...lessonData, progression_rules: newRules})}
+                />
                 <Button onClick={handleSaveLesson} disabled={savingLesson} className="w-full bg-blue-600 hover:bg-blue-700">
                     {savingLesson ? <Loader2 className="animate-spin" /> : "Salvar Aula"}
                 </Button>

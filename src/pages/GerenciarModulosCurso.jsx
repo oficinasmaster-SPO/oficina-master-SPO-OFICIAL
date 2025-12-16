@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import TrainingBreadcrumbs from "@/components/training/Breadcrumbs";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -140,13 +141,12 @@ export default function GerenciarModulosCurso() {
   return (
     <div className="min-h-screen bg-slate-50 p-8">
       <div className="max-w-5xl mx-auto">
-        <Button
-          variant="ghost"
-          onClick={() => navigate(createPageUrl("GerenciarTreinamentos"))}
-          className="mb-4 pl-0"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" /> Voltar para Cursos
-        </Button>
+        <TrainingBreadcrumbs
+          items={[
+            { label: course.title },
+            { label: "Módulos" }
+          ]}
+        />
 
         <div className="flex justify-between items-start mb-8">
           <div>

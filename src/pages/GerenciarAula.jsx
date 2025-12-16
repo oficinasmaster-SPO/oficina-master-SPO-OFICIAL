@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import TrainingBreadcrumbs from "@/components/training/Breadcrumbs";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +21,7 @@ export default function GerenciarAula() {
 
   const [loading, setLoading] = useState(true);
   const [lesson, setLesson] = useState(null);
+  const [module, setModule] = useState(null);
   const [assessments, setAssessments] = useState([]);
   
   // Assessment Form State
@@ -51,6 +53,10 @@ export default function GerenciarAula() {
     try {
       const l = await base44.entities.CourseLesson.get(lessonId);
       setLesson(l);
+      
+      const m = await base44.entities.CourseModule.get(l.module_id);
+      setModule(m);
+      
       const a = await base44.entities.LessonAssessment.filter({ lesson_id: lessonId });
       setAssessments(a);
     } catch (error) {
@@ -153,9 +159,13 @@ export default function GerenciarAula() {
   return (
     <div className="min-h-screen bg-slate-50 p-8">
       <div className="max-w-4xl mx-auto">
-        <Button variant="ghost" onClick={() => navigate(`${createPageUrl("GerenciarModulo")}?id=${lesson.module_id}`)} className="mb-4 pl-0">
-          <ArrowLeft className="w-4 h-4 mr-2" /> Voltar para Módulo
-        </Button>
+        <TrainingBreadcrumbs
+          items={[
+            { label: module.title, onClick: () => navigate(`${createPageUrl("GerenciarModulo")}?id=${module.id}`) },
+            { label: lesson.title },
+            { label: "Avaliações" }
+          ]}
+        />
 
         <div className="flex justify-between items-center mb-8">
           <div>
