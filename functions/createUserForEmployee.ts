@@ -11,6 +11,17 @@ Deno.serve(async (req) => {
     if (user_data && email && full_name) {
       console.log("Criando usuário interno admin:", email);
 
+      // Verificar se já existe
+      const allUsers = await base44.asServiceRole.entities.User.list();
+      const existingUser = allUsers.find(u => u.email === email);
+      
+      if (existingUser) {
+        return Response.json({ 
+          success: false,
+          error: 'Já existe um usuário com este email' 
+        }, { status: 400 });
+      }
+
       // Gerar senha temporária
       const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%&*';
       let tempPassword = '';
@@ -18,19 +29,40 @@ Deno.serve(async (req) => {
         tempPassword += chars.charAt(Math.floor(Math.random() * chars.length));
       }
 
-      // Criar User com role 'user' (interno)
-      const newUser = await base44.asServiceRole.entities.User.create({
-        email: email,
-        full_name: full_name,
+      // 1. Criar conta de autenticação via Auth API
+      console.log("Criando conta de autenticação...");
+      const authResponse = await fetch(`${Deno.env.get('BASE44_API_URL')}/auth/signup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Deno.env.get('BASE44_SERVICE_ROLE_KEY')}`
+        },
+        body: JSON.stringify({
+          email: email,
+          password: tempPassword,
+          full_name: full_name
+        })
+      });
+
+      if (!authResponse.ok) {
+        const errorData = await authResponse.json();
+        throw new Error(`Erro ao criar conta: ${errorData.error || 'Erro desconhecido'}`);
+      }
+
+      const authData = await authResponse.json();
+      console.log("Conta de autenticação criada:", authData.user.id);
+
+      // 2. Atualizar User com dados adicionais
+      const updatedUser = await base44.asServiceRole.entities.User.update(authData.user.id, {
         role: 'user',
         ...user_data
       });
 
-      console.log("Usuário interno criado:", newUser.id);
+      console.log("Usuário interno criado com sucesso:", updatedUser.id);
 
       return Response.json({
         success: true,
-        user: newUser,
+        user: updatedUser,
         password: tempPassword,
         message: 'Usuário interno criado com sucesso'
       });
