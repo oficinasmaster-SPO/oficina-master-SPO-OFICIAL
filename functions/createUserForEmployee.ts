@@ -9,17 +9,17 @@ Deno.serve(async (req) => {
 
     // Modo novo: criar usuário interno admin
     if (user_data && email && full_name) {
-      console.log("=== Iniciando criação de usuário interno admin ===");
+      console.log("=== Iniciando criação de usuário interno (Employee) ===");
       console.log("Email:", email);
       console.log("Nome:", full_name);
       console.log("Dados adicionais:", JSON.stringify(user_data, null, 2));
 
-      // Verificar se já existe
-      const allUsers = await base44.asServiceRole.entities.User.list();
-      const existingUser = allUsers.find(u => u.email === email);
+      // Verificar se já existe Employee com este email
+      const allEmployees = await base44.asServiceRole.entities.Employee.list();
+      const existingEmployee = allEmployees.find(e => e.email === email);
       
-      if (existingUser) {
-        console.error("Usuário já existe com email:", email);
+      if (existingEmployee) {
+        console.error("Já existe um colaborador com este email:", email);
         return Response.json({ 
           success: false,
           error: 'Já existe um usuário com este email' 
@@ -32,23 +32,31 @@ Deno.serve(async (req) => {
       for (let i = 0; i < 12; i++) {
         tempPassword += chars.charAt(Math.floor(Math.random() * chars.length));
       }
-      console.log("Senha temporária gerada (não mostrar em produção)");
+      console.log("Senha temporária gerada:", tempPassword);
 
-      // Criar diretamente no banco usando service role
-      console.log("Criando usuário no banco de dados...");
-      const newUser = await base44.asServiceRole.entities.User.create({
-        email: email,
+      // Criar Employee interno
+      console.log("Criando Employee no banco de dados...");
+      const newEmployee = await base44.asServiceRole.entities.Employee.create({
         full_name: full_name,
-        role: 'user',
-        ...user_data
+        email: email,
+        telefone: user_data.telefone,
+        position: user_data.position,
+        tipo_vinculo: 'interno', // Marca como usuário interno
+        job_role: 'consultor', // Role padrão para consultores/aceleradores
+        status: 'ativo',
+        profile_id: user_data.profile_id,
+        admin_responsavel_id: user_data.admin_responsavel_id,
+        user_status: user_data.user_status || 'ativo',
+        is_internal: true,
+        audit_log: user_data.audit_log || []
       });
 
-      console.log("✅ Usuário criado com sucesso! ID:", newUser.id);
-      console.log("Dados do usuário:", JSON.stringify(newUser, null, 2));
+      console.log("✅ Employee criado com sucesso! ID:", newEmployee.id);
+      console.log("Dados do colaborador:", JSON.stringify(newEmployee, null, 2));
 
       return Response.json({
         success: true,
-        user: newUser,
+        user: newEmployee,
         password: tempPassword,
         message: 'Usuário interno criado com sucesso'
       });
