@@ -9,60 +9,46 @@ Deno.serve(async (req) => {
 
     // Modo novo: criar usuário interno admin
     if (user_data && email && full_name) {
-      console.log("Criando usuário interno admin:", email);
+      console.log("=== Iniciando criação de usuário interno admin ===");
+      console.log("Email:", email);
+      console.log("Nome:", full_name);
+      console.log("Dados adicionais:", JSON.stringify(user_data, null, 2));
 
       // Verificar se já existe
       const allUsers = await base44.asServiceRole.entities.User.list();
       const existingUser = allUsers.find(u => u.email === email);
       
       if (existingUser) {
+        console.error("Usuário já existe com email:", email);
         return Response.json({ 
           success: false,
           error: 'Já existe um usuário com este email' 
         }, { status: 400 });
       }
 
-      // Gerar senha temporária
+      // Gerar senha temporária forte
       const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%&*';
       let tempPassword = '';
       for (let i = 0; i < 12; i++) {
         tempPassword += chars.charAt(Math.floor(Math.random() * chars.length));
       }
+      console.log("Senha temporária gerada (não mostrar em produção)");
 
-      // 1. Criar conta de autenticação via Auth API
-      console.log("Criando conta de autenticação...");
-      const authResponse = await fetch(`${Deno.env.get('BASE44_API_URL')}/auth/signup`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${Deno.env.get('BASE44_SERVICE_ROLE_KEY')}`
-        },
-        body: JSON.stringify({
-          email: email,
-          password: tempPassword,
-          full_name: full_name
-        })
-      });
-
-      if (!authResponse.ok) {
-        const errorData = await authResponse.json();
-        throw new Error(`Erro ao criar conta: ${errorData.error || 'Erro desconhecido'}`);
-      }
-
-      const authData = await authResponse.json();
-      console.log("Conta de autenticação criada:", authData.user.id);
-
-      // 2. Atualizar User com dados adicionais
-      const updatedUser = await base44.asServiceRole.entities.User.update(authData.user.id, {
+      // Criar diretamente no banco usando service role
+      console.log("Criando usuário no banco de dados...");
+      const newUser = await base44.asServiceRole.entities.User.create({
+        email: email,
+        full_name: full_name,
         role: 'user',
         ...user_data
       });
 
-      console.log("Usuário interno criado com sucesso:", updatedUser.id);
+      console.log("✅ Usuário criado com sucesso! ID:", newUser.id);
+      console.log("Dados do usuário:", JSON.stringify(newUser, null, 2));
 
       return Response.json({
         success: true,
-        user: updatedUser,
+        user: newUser,
         password: tempPassword,
         message: 'Usuário interno criado com sucesso'
       });
