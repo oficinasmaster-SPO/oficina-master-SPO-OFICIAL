@@ -51,11 +51,11 @@ export default function UsuariosAdmin() {
   });
 
   const { data: allUsers = [] } = useQuery({
-    queryKey: ['all-users'],
+    queryKey: ['all-admin-users'],
     queryFn: async () => {
-      const employees = await base44.entities.Employee.list();
-      // Busca todos os usuários internos para lista de admins responsáveis
-      return employees.filter(e => e.tipo_vinculo === 'interno' || e.is_internal);
+      // Busca usuários admin reais do sistema
+      const users = await base44.entities.User.list();
+      return users.filter(u => u.role === 'admin');
     }
   });
 
