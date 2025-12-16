@@ -47,10 +47,10 @@ export default function GerenciarModulo() {
 
   const loadData = async () => {
     try {
-      const mod = await base44.entities.TrainingModule.get(moduleId);
+      const mod = await base44.entities.CourseModule.get(moduleId);
       setModule(mod);
 
-      const ls = await base44.entities.TrainingLesson.filter({ module_id: moduleId });
+      const ls = await base44.entities.CourseLesson.filter({ module_id: moduleId });
       setLessons(ls.sort((a, b) => a.order - b.order));
     } catch (error) {
       console.error(error);
@@ -75,10 +75,10 @@ export default function GerenciarModulo() {
       };
 
       if (editingLesson) {
-        await base44.entities.TrainingLesson.update(editingLesson.id, data);
+        await base44.entities.CourseLesson.update(editingLesson.id, data);
         toast.success("Aula atualizada!");
       } else {
-        await base44.entities.TrainingLesson.create(data);
+        await base44.entities.CourseLesson.create(data);
         toast.success("Aula criada!");
       }
 
@@ -95,7 +95,7 @@ export default function GerenciarModulo() {
   const handleDeleteLesson = async (id) => {
     if (!confirm("Excluir esta aula?")) return;
     try {
-      await base44.entities.TrainingLesson.delete(id);
+      await base44.entities.CourseLesson.delete(id);
       toast.success("Aula excluída");
       loadData();
     } catch (error) {
@@ -141,7 +141,7 @@ export default function GerenciarModulo() {
     // Ideally should be batched or debounced
     try {
       await Promise.all(items.map((lesson, index) => 
-        base44.entities.TrainingLesson.update(lesson.id, { order: index + 1 })
+        base44.entities.CourseLesson.update(lesson.id, { order: index + 1 })
       ));
     } catch (error) {
       console.error("Failed to reorder", error);

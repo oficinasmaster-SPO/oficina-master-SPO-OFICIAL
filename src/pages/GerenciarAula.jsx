@@ -49,7 +49,7 @@ export default function GerenciarAula() {
 
   const loadData = async () => {
     try {
-      const l = await base44.entities.TrainingLesson.get(lessonId);
+      const l = await base44.entities.CourseLesson.get(lessonId);
       setLesson(l);
       const a = await base44.entities.LessonAssessment.filter({ lesson_id: lessonId });
       setAssessments(a);
