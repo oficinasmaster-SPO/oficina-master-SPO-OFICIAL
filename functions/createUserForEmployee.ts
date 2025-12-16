@@ -94,11 +94,13 @@ Deno.serve(async (req) => {
 
       console.log("✅ Employee criado e vinculado! ID:", newEmployee.id);
 
-      // Retornar sucesso
+      // Retornar sucesso com senha
       return Response.json({
         success: true,
         user: newEmployee,
         user_auth_id: userId,
+        password: tempPassword,
+        login_url: `https://${Deno.env.get('BASE44_APP_ID')}.base44.com`,
         message: 'Usuário interno criado com sucesso'
       });
     }
