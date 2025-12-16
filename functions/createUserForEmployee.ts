@@ -34,8 +34,24 @@ Deno.serve(async (req) => {
       }
       console.log("Senha temporária gerada:", tempPassword);
 
-      // Criar Employee interno completo
-      console.log("Criando Employee no banco de dados...");
+      // 1. Primeiro criar o User na entidade User (para autenticação)
+      console.log("Criando User na entidade User...");
+      const newUser = await base44.asServiceRole.entities.User.create({
+        email: email,
+        full_name: full_name,
+        role: 'admin', // Usuários internos são admins
+        telefone: user_data.telefone,
+        position: user_data.position,
+        profile_id: user_data.profile_id,
+        user_status: user_data.user_status || 'ativo',
+        is_internal: true,
+        temporary_password: tempPassword // Salvar senha temporária para mostrar ao admin
+      });
+
+      console.log("✅ User criado com sucesso! ID:", newUser.id);
+
+      // 2. Criar Employee vinculado ao User
+      console.log("Criando Employee vinculado ao User...");
       const newEmployee = await base44.asServiceRole.entities.Employee.create({
         full_name: full_name,
         email: email,
@@ -48,20 +64,19 @@ Deno.serve(async (req) => {
         admin_responsavel_id: user_data.admin_responsavel_id,
         user_status: user_data.user_status || 'ativo',
         is_internal: true,
+        user_id: newUser.id, // Vincular ao User criado
         audit_log: user_data.audit_log || []
       });
 
-      console.log("✅ Employee criado com sucesso! ID:", newEmployee.id);
+      console.log("✅ Employee criado e vinculado! ID:", newEmployee.id);
 
-      // Retornar sucesso
-      const appUrl = Deno.env.get('BASE44_APP_URL') || window.location.origin;
-      const loginUrl = `${appUrl}`;
-
+      // Retornar sucesso com todas as informações
       return Response.json({
         success: true,
         user: newEmployee,
+        user_auth_id: newUser.id,
         password: tempPassword,
-        login_url: loginUrl,
+        login_url: window.location.origin,
         message: 'Usuário interno criado com sucesso'
       });
     }
