@@ -34,15 +34,15 @@ Deno.serve(async (req) => {
       }
       console.log("Senha temporária gerada:", tempPassword);
 
-      // Criar Employee interno
+      // Criar Employee interno completo
       console.log("Criando Employee no banco de dados...");
       const newEmployee = await base44.asServiceRole.entities.Employee.create({
         full_name: full_name,
         email: email,
         telefone: user_data.telefone,
         position: user_data.position,
-        tipo_vinculo: 'interno', // Marca como usuário interno
-        job_role: 'consultor', // Role padrão para consultores/aceleradores
+        tipo_vinculo: 'interno',
+        job_role: 'consultor',
         status: 'ativo',
         profile_id: user_data.profile_id,
         admin_responsavel_id: user_data.admin_responsavel_id,
@@ -53,40 +53,9 @@ Deno.serve(async (req) => {
 
       console.log("✅ Employee criado com sucesso! ID:", newEmployee.id);
 
-      // Criar User na entidade User do Base44 com role admin
-      try {
-        console.log("Criando User com role admin...");
-        
-        const newUser = await base44.asServiceRole.entities.User.create({
-          email: email,
-          full_name: full_name,
-          role: 'admin', // Usuários internos são admins
-          telefone: user_data.telefone,
-          position: user_data.position,
-          profile_id: user_data.profile_id,
-          user_status: user_data.user_status || 'ativo',
-          is_internal: true
-        });
-
-        console.log("✅ User criado com role admin, ID:", newUser.id);
-
-        // Atualizar Employee com user_id
-        await base44.asServiceRole.entities.Employee.update(newEmployee.id, {
-          user_id: newUser.id
-        });
-
-        console.log("✅ Employee atualizado com user_id");
-        
-      } catch (userError) {
-        console.error("Erro ao criar User:", userError);
-        // Deletar o employee se falhar
-        await base44.asServiceRole.entities.Employee.delete(newEmployee.id);
-        throw new Error('Falha ao criar User: ' + userError.message);
-      }
-
-      // Gerar link de primeiro acesso
-      const appUrl = Deno.env.get('BASE44_APP_URL') || 'https://app.base44.com/oficinas-master';
-      const loginUrl = `${appUrl}/login`;
+      // Retornar sucesso
+      const appUrl = Deno.env.get('BASE44_APP_URL') || window.location.origin;
+      const loginUrl = `${appUrl}`;
 
       return Response.json({
         success: true,
