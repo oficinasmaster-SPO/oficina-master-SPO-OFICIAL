@@ -126,6 +126,7 @@ import PainelAcoes from './pages/PainelAcoes';
 import ConfiguracaoAcademia from './pages/ConfiguracaoAcademia';
 import AssistirCurso from './pages/AssistirCurso';
 import GerenciarModulosCurso from './pages/GerenciarModulosCurso';
+import RelatorioUsuario from './pages/RelatorioUsuario';
 import __Layout from './Layout.jsx';
 
 
@@ -258,6 +259,7 @@ export const PAGES = {
     "ConfiguracaoAcademia": ConfiguracaoAcademia,
     "AssistirCurso": AssistirCurso,
     "GerenciarModulosCurso": GerenciarModulosCurso,
+    "RelatorioUsuario": RelatorioUsuario,
 }
 
 export const pagesConfig = {
