@@ -34,22 +34,33 @@ Deno.serve(async (req) => {
       }
       console.log("Senha temporária gerada:", tempPassword);
 
-      // 1. Criar User diretamente na entidade
-      console.log("Criando User na entidade...");
+      // 1. Criar conta de autenticação usando a API signup do Base44
+      console.log("📧 Criando conta de autenticação via API signup...");
+      const appId = Deno.env.get('BASE44_APP_ID');
+      const signupUrl = `https://api.base44.com/auth/v1/signup`;
       
-      const newUser = await base44.asServiceRole.entities.User.create({
-        email: email,
-        full_name: full_name,
-        role: 'admin',
-        telefone: user_data.telefone,
-        position: user_data.position,
-        profile_id: user_data.profile_id,
-        user_status: user_data.user_status || 'ativo',
-        is_internal: true
+      const signupResponse = await fetch(signupUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-App-ID': appId
+        },
+        body: JSON.stringify({
+          email: email,
+          password: tempPassword,
+          full_name: full_name
+        })
       });
 
-      const userId = newUser.id;
-      console.log("✅ User criado! ID:", userId);
+      if (!signupResponse.ok) {
+        const errorText = await signupResponse.text();
+        console.error("❌ Erro na API signup:", signupResponse.status, errorText);
+        throw new Error(`Erro ao criar conta: ${errorText}`);
+      }
+
+      const signupData = await signupResponse.json();
+      const userId = signupData.user?.id || signupData.id;
+      console.log("✅ Conta criada! User ID:", userId);
 
       // 3. Criar Employee vinculado ao User
       console.log("Criando Employee vinculado ao User...");
