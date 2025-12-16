@@ -105,7 +105,7 @@ export default function AssistirAula() {
       setUser(currentUser);
 
       // 1. Fetch current lesson
-      const currentLesson = await base44.entities.TrainingLesson.get(lessonId);
+      const currentLesson = await base44.entities.CourseLesson.get(lessonId);
       if (!currentLesson) {
          toast.error("Aula não encontrada");
          return;
@@ -113,10 +113,10 @@ export default function AssistirAula() {
       setLesson(currentLesson);
 
       // 2. Fetch module and all lessons
-      const mod = await base44.entities.TrainingModule.get(currentLesson.module_id);
+      const mod = await base44.entities.CourseModule.get(currentLesson.module_id);
       setModule(mod);
       
-      const allLessons = await base44.entities.TrainingLesson.filter({ module_id: currentLesson.module_id });
+      const allLessons = await base44.entities.CourseLesson.filter({ module_id: currentLesson.module_id });
       setLessons(allLessons.sort((a, b) => a.order - b.order));
 
       // Ensure Progress Record Exists
