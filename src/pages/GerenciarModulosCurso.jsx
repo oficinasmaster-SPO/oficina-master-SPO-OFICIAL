@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Loader2, ArrowLeft, Plus, GripVertical, Trash2, Edit, Book } from "lucide-react";
+import { Loader2, ArrowLeft, Plus, GripVertical, Trash2, Edit, Book, Upload, X, Image } from "lucide-react";
 import { toast } from "sonner";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
@@ -24,8 +24,10 @@ export default function GerenciarModulosCurso() {
   const [editingModule, setEditingModule] = useState(null);
   const [formData, setFormData] = useState({
     title: "",
-    description: ""
+    description: "",
+    cover_images: []
   });
+  const [uploading, setUploading] = useState(false);
 
   const { data: course, isLoading: loadingCourse } = useQuery({
     queryKey: ['course', courseId],
@@ -95,14 +97,44 @@ export default function GerenciarModulosCurso() {
     setEditingModule(module);
     setFormData({
       title: module.title,
-      description: module.description || ""
+      description: module.description || "",
+      cover_images: module.cover_images || []
     });
     setIsModalOpen(true);
   };
 
   const resetForm = () => {
     setEditingModule(null);
-    setFormData({ title: "", description: "" });
+    setFormData({ title: "", description: "", cover_images: [] });
+  };
+
+  const handleImageUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    setUploading(true);
+    try {
+      const uploadedUrls = [];
+      for (const file of files) {
+        const result = await base44.integrations.Core.UploadFile({ file });
+        uploadedUrls.push(result.file_url);
+      }
+      setFormData({ 
+        ...formData, 
+        cover_images: [...(formData.cover_images || []), ...uploadedUrls]
+      });
+      toast.success(`${files.length} imagem(ns) adicionada(s)`);
+    } catch (error) {
+      toast.error('Erro ao fazer upload');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveImage = (index) => {
+    const newImages = [...formData.cover_images];
+    newImages.splice(index, 1);
+    setFormData({ ...formData, cover_images: newImages });
   };
 
   const onDragEnd = async (result) => {
@@ -260,6 +292,60 @@ export default function GerenciarModulosCurso() {
                 placeholder="Descreva o conteúdo deste módulo..."
                 rows={4}
               />
+            </div>
+            
+            <div>
+              <Label>Capas do Módulo (Até 5 imagens)</Label>
+              <div className="mt-2 space-y-3">
+                {formData.cover_images?.length > 0 && (
+                  <div className="grid grid-cols-2 gap-2">
+                    {formData.cover_images.map((url, idx) => (
+                      <div key={idx} className="relative group">
+                        <img 
+                          src={url} 
+                          alt={`Capa ${idx + 1}`}
+                          className="w-full h-24 object-cover rounded-lg border"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveImage(idx)}
+                          className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {(!formData.cover_images || formData.cover_images.length < 5) && (
+                  <div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      id="cover-upload"
+                      className="hidden"
+                      onChange={handleImageUpload}
+                      disabled={uploading}
+                    />
+                    <label
+                      htmlFor="cover-upload"
+                      className="flex items-center justify-center gap-2 w-full p-4 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 transition-colors"
+                    >
+                      {uploading ? (
+                        <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+                      ) : (
+                        <>
+                          <Upload className="w-5 h-5 text-gray-400" />
+                          <span className="text-sm text-gray-600">
+                            Adicionar Imagens ({formData.cover_images?.length || 0}/5)
+                          </span>
+                        </>
+                      )}
+                    </label>
+                  </div>
+                )}
+              </div>
             </div>
             <Button
               onClick={handleSave}

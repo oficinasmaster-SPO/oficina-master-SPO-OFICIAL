@@ -282,9 +282,49 @@ export default function GerenciarModulo() {
                     </div>
                     <div className="col-span-2">
                         <Label>URL do Conteúdo</Label>
-                        <div className="flex gap-2">
-                            <Input value={lessonData.content_url} onChange={(e) => setLessonData({...lessonData, content_url: e.target.value})} placeholder={lessonData.content_type === 'video_youtube' ? 'https://youtube.com/...' : 'URL do arquivo'} />
-                            {/* Placeholder for upload button logic if needed later */}
+                        <div className="space-y-2">
+                            <Input 
+                                value={lessonData.content_url} 
+                                onChange={(e) => setLessonData({...lessonData, content_url: e.target.value})} 
+                                placeholder={
+                                    lessonData.content_type === 'video_youtube' ? 'https://youtube.com/watch?v=...' :
+                                    lessonData.content_type === 'video_upload' ? 'Clique em "Fazer Upload" abaixo' :
+                                    'URL do arquivo'
+                                } 
+                            />
+                            {lessonData.content_type === 'video_upload' && (
+                                <div>
+                                    <input
+                                        type="file"
+                                        accept="video/*"
+                                        id="video-upload"
+                                        className="hidden"
+                                        onChange={async (e) => {
+                                            const file = e.target.files[0];
+                                            if (!file) return;
+                                            setSavingLesson(true);
+                                            try {
+                                                const result = await base44.integrations.Core.UploadFile({ file });
+                                                setLessonData({...lessonData, content_url: result.file_url});
+                                                toast.success('Vídeo enviado!');
+                                            } catch (error) {
+                                                toast.error('Erro ao enviar vídeo');
+                                            } finally {
+                                                setSavingLesson(false);
+                                            }
+                                        }}
+                                    />
+                                    <label
+                                        htmlFor="video-upload"
+                                        className="flex items-center justify-center gap-2 w-full p-3 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 transition-colors"
+                                    >
+                                        <Video className="w-5 h-5 text-gray-400" />
+                                        <span className="text-sm text-gray-600">
+                                            {lessonData.content_url ? 'Trocar Vídeo' : 'Fazer Upload de Vídeo'}
+                                        </span>
+                                    </label>
+                                </div>
+                            )}
                         </div>
                     </div>
                     <div className="col-span-2">
