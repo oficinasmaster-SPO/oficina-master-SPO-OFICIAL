@@ -26,44 +26,8 @@ Deno.serve(async (req) => {
         }, { status: 400 });
       }
 
-      // Gerar senha temporária forte
-      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%&*';
-      let tempPassword = '';
-      for (let i = 0; i < 12; i++) {
-        tempPassword += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      console.log("Senha temporária gerada:", tempPassword);
-
-      // 1. Criar conta de autenticação usando a API signup do Base44
-      console.log("📧 Criando conta de autenticação via API signup...");
-      const appId = Deno.env.get('BASE44_APP_ID');
-      const signupUrl = `https://api.base44.com/auth/v1/signup`;
-      
-      const signupResponse = await fetch(signupUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-App-ID': appId
-        },
-        body: JSON.stringify({
-          email: email,
-          password: tempPassword,
-          full_name: full_name
-        })
-      });
-
-      if (!signupResponse.ok) {
-        const errorText = await signupResponse.text();
-        console.error("❌ Erro na API signup:", signupResponse.status, errorText);
-        throw new Error(`Erro ao criar conta: ${errorText}`);
-      }
-
-      const signupData = await signupResponse.json();
-      const userId = signupData.user?.id || signupData.id;
-      console.log("✅ Conta criada! User ID:", userId);
-
-      // 3. Criar Employee vinculado ao User
-      console.log("Criando Employee vinculado ao User...");
+      // Criar apenas o Employee - o User será criado quando fizer login
+      console.log("Criando Employee...");
       const newEmployee = await base44.asServiceRole.entities.Employee.create({
         full_name: full_name,
         email: email,
@@ -76,20 +40,17 @@ Deno.serve(async (req) => {
         admin_responsavel_id: user_data.admin_responsavel_id,
         user_status: user_data.user_status || 'ativo',
         is_internal: true,
-        user_id: userId,
         audit_log: user_data.audit_log || []
       });
 
-      console.log("✅ Employee criado e vinculado! ID:", newEmployee.id);
+      console.log("✅ Employee criado! ID:", newEmployee.id);
 
-      // Retornar sucesso com senha
+      // Retornar sucesso com instruções
       return Response.json({
         success: true,
-        user: newEmployee,
-        user_auth_id: userId,
-        password: tempPassword,
-        login_url: `https://${Deno.env.get('BASE44_APP_ID')}.base44.com`,
-        message: 'Usuário interno criado com sucesso'
+        employee: newEmployee,
+        message: 'Colaborador criado. O usuário deve ser convidado manualmente através do painel de administração do Base44.',
+        instructions: 'Acesse o dashboard do Base44 e convide este email para ter acesso ao sistema.'
       });
     }
 
