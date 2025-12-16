@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Upload, X, Image } from "lucide-react";
 
 export default function CourseFormDialog({ open, onClose, onSuccess, course, workshopId }) {
   const [formData, setFormData] = useState({
@@ -15,10 +15,11 @@ export default function CourseFormDialog({ open, onClose, onSuccess, course, wor
     description: "",
     category: "outros",
     difficulty_level: "iniciante",
-    cover_image_url: "",
+    cover_images: [],
     trailer_url: ""
   });
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (course) {
@@ -27,7 +28,7 @@ export default function CourseFormDialog({ open, onClose, onSuccess, course, wor
         description: course.description || "",
         category: course.category || "outros",
         difficulty_level: course.difficulty_level || "iniciante",
-        cover_image_url: course.cover_images?.[0] || "",
+        cover_images: course.cover_images || [],
         trailer_url: course.trailer_url || ""
       });
     } else {
@@ -36,11 +37,40 @@ export default function CourseFormDialog({ open, onClose, onSuccess, course, wor
         description: "",
         category: "outros",
         difficulty_level: "iniciante",
-        cover_image_url: "",
+        cover_images: [],
         trailer_url: ""
       });
     }
   }, [course, open]);
+
+  const handleImageUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    setUploading(true);
+    try {
+      const uploadedUrls = [];
+      for (const file of files) {
+        const result = await base44.integrations.Core.UploadFile({ file });
+        uploadedUrls.push(result.file_url);
+      }
+      setFormData({ 
+        ...formData, 
+        cover_images: [...(formData.cover_images || []), ...uploadedUrls]
+      });
+      toast.success(`${files.length} imagem(ns) adicionada(s)`);
+    } catch (error) {
+      toast.error('Erro ao fazer upload');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveImage = (index) => {
+    const newImages = [...formData.cover_images];
+    newImages.splice(index, 1);
+    setFormData({ ...formData, cover_images: newImages });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -53,7 +83,6 @@ export default function CourseFormDialog({ open, onClose, onSuccess, course, wor
     try {
       const data = {
         ...formData,
-        cover_images: formData.cover_image_url ? [formData.cover_image_url] : [],
         workshop_id: workshopId || null,
         status: course?.status || 'rascunho'
       };
@@ -144,12 +173,57 @@ export default function CourseFormDialog({ open, onClose, onSuccess, course, wor
           </div>
 
           <div>
-            <Label>URL da Imagem de Capa</Label>
-            <Input
-              value={formData.cover_image_url}
-              onChange={(e) => setFormData({ ...formData, cover_image_url: e.target.value })}
-              placeholder="https://..."
-            />
+            <Label>Imagens de Capa (Até 5)</Label>
+            <div className="mt-2 space-y-3">
+              {formData.cover_images?.length > 0 && (
+                <div className="grid grid-cols-3 gap-2">
+                  {formData.cover_images.map((url, idx) => (
+                    <div key={idx} className="relative group">
+                      <img 
+                        src={url} 
+                        alt={`Capa ${idx + 1}`}
+                        className="w-full h-24 object-cover rounded-lg border"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveImage(idx)}
+                        className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {(!formData.cover_images || formData.cover_images.length < 5) && (
+                <div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    id="course-cover-upload"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                    disabled={uploading}
+                  />
+                  <label
+                    htmlFor="course-cover-upload"
+                    className="flex items-center justify-center gap-2 w-full p-4 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 transition-colors"
+                  >
+                    {uploading ? (
+                      <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+                    ) : (
+                      <>
+                        <Upload className="w-5 h-5 text-gray-400" />
+                        <span className="text-sm text-gray-600">
+                          Upload de Imagens ({formData.cover_images?.length || 0}/5)
+                        </span>
+                      </>
+                    )}
+                  </label>
+                </div>
+              )}
+            </div>
           </div>
 
           <div>
