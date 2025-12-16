@@ -26,7 +26,49 @@ Deno.serve(async (req) => {
         }, { status: 400 });
       }
 
-      // Criar apenas o Employee - o User será criado quando fizer login
+      // Gerar senha temporária forte
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%&*';
+      let tempPassword = '';
+      for (let i = 0; i < 12; i++) {
+        tempPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      console.log("Senha temporária gerada:", tempPassword);
+
+      // 1. Convidar usuário usando a API de invite do Base44
+      console.log("📧 Enviando convite de usuário via API...");
+      const serviceRoleKey = Deno.env.get('BASE44_SERVICE_ROLE_KEY');
+      const appId = Deno.env.get('BASE44_APP_ID');
+      
+      const inviteUrl = `https://api.base44.com/apps/${appId}/auth/invite`;
+      
+      const inviteResponse = await fetch(inviteUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${serviceRoleKey}`
+        },
+        body: JSON.stringify({
+          email: email,
+          role: 'admin',
+          metadata: {
+            full_name: full_name,
+            position: user_data.position,
+            profile_id: user_data.profile_id,
+            is_internal: true
+          }
+        })
+      });
+
+      if (!inviteResponse.ok) {
+        const errorText = await inviteResponse.text();
+        console.error("❌ Erro ao convidar usuário:", inviteResponse.status, errorText);
+        throw new Error(`Erro ao criar conta: ${errorText}`);
+      }
+
+      const inviteData = await inviteResponse.json();
+      console.log("✅ Convite enviado com sucesso!");
+
+      // 2. Criar Employee vinculado
       console.log("Criando Employee...");
       const newEmployee = await base44.asServiceRole.entities.Employee.create({
         full_name: full_name,
@@ -45,12 +87,13 @@ Deno.serve(async (req) => {
 
       console.log("✅ Employee criado! ID:", newEmployee.id);
 
-      // Retornar sucesso com instruções
+      // Retornar sucesso com senha temporária
       return Response.json({
         success: true,
         employee: newEmployee,
-        message: 'Colaborador criado. O usuário deve ser convidado manualmente através do painel de administração do Base44.',
-        instructions: 'Acesse o dashboard do Base44 e convide este email para ter acesso ao sistema.'
+        password: tempPassword,
+        invite_url: inviteData.invite_url || `${Deno.env.get('BASE_URL')}/accept-invite`,
+        message: 'Usuário criado e convite enviado por email'
       });
     }
 
