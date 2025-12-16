@@ -1,156 +1,162 @@
-import React, { useState, useRef } from "react";
-import { Card } from "@/components/ui/card";
+import React, { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Play, Clock, CheckCircle, Lock } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { BookOpen, MoreVertical, Edit, Trash2, Eye, Play, Settings, Users } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
+import { base44 } from "@/api/base44Client";
+import { toast } from "sonner";
+import CourseFormDialog from "./CourseFormDialog";
+import PublishCourseDialog from "./PublishCourseDialog";
+import AccessControlDialog from "./AccessControlDialog";
 
-export default function CourseCard({ 
-  course, 
-  progress, 
-  onClick, 
-  showProgress = true,
-  size = "default" 
-}) {
-  const [isHovered, setIsHovered] = useState(false);
-  const [currentCoverIndex, setCurrentCoverIndex] = useState(0);
-  const videoRef = useRef(null);
-  const hoverTimeoutRef = useRef(null);
+export default function CourseCard({ course, onRefetch }) {
+  const navigate = useNavigate();
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isPublishOpen, setIsPublishOpen] = useState(false);
+  const [isAccessOpen, setIsAccessOpen] = useState(false);
 
-  const handleMouseEnter = () => {
-    setIsHovered(true);
-    
-    // Autoplay trailer após 1.5s de hover
-    if (course.trailer_url) {
-      hoverTimeoutRef.current = setTimeout(() => {
-        if (videoRef.current) {
-          videoRef.current.play();
-        }
-      }, 1500);
+  const getStatusColor = (status) => {
+    const colors = {
+      rascunho: "bg-gray-100 text-gray-700",
+      publicado: "bg-green-100 text-green-700",
+      em_breve: "bg-blue-100 text-blue-700",
+      arquivado: "bg-red-100 text-red-700"
+    };
+    return colors[status] || colors.rascunho;
+  };
+
+  const getStatusLabel = (status) => {
+    const labels = {
+      rascunho: "Rascunho",
+      publicado: "Publicado",
+      em_breve: "Em Breve",
+      arquivado: "Arquivado"
+    };
+    return labels[status] || status;
+  };
+
+  const handleDelete = async () => {
+    if (!confirm('Tem certeza que deseja excluir este curso?')) return;
+    try {
+      await base44.entities.TrainingCourse.delete(course.id);
+      toast.success('Curso excluído com sucesso');
+      onRefetch();
+    } catch (error) {
+      toast.error('Erro ao excluir curso');
     }
   };
 
-  const handleMouseLeave = () => {
-    setIsHovered(false);
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-    }
-    if (videoRef.current) {
-      videoRef.current.pause();
-      videoRef.current.currentTime = 0;
-    }
-  };
-
-  const isLocked = course.status === 'em_breve';
-  const isCompleted = progress?.progress_percentage === 100;
-  const hasProgress = progress && progress.progress_percentage > 0;
-
-  const currentCover = course.cover_images?.[currentCoverIndex] || 
-    course.cover_images?.[0];
+  const coverImage = course.cover_images?.[0] || null;
+  const isInternal = !course.workshop_id;
 
   return (
-    <Card
-      className={cn(
-        "group relative overflow-hidden cursor-pointer transition-all duration-300",
-        "hover:scale-105 hover:z-10 hover:shadow-2xl",
-        size === "large" ? "h-80" : "h-64",
-        isLocked && "opacity-70"
-      )}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      onClick={() => !isLocked && onClick?.(course)}
-    >
-      {/* Cover Image */}
-      <div className="relative w-full h-full">
-        <img
-          src={currentCover}
-          alt={course.title}
-          className="w-full h-full object-cover transition-opacity duration-300"
-        />
-        
-        {/* Video Trailer Overlay */}
-        {course.trailer_url && isHovered && (
-          <video
-            ref={videoRef}
-            src={course.trailer_url}
-            className="absolute inset-0 w-full h-full object-cover"
-            muted
-            loop
-            playsInline
-          />
-        )}
-
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
-
-        {/* Status Badges */}
-        <div className="absolute top-3 right-3 flex flex-col gap-2">
-          {isLocked && (
-            <Badge className="bg-gray-800/90 text-white backdrop-blur-sm">
-              <Lock className="w-3 h-3 mr-1" />
-              Em Breve
-            </Badge>
+    <>
+      <Card className="group hover:shadow-lg transition-all overflow-hidden">
+        <div className="relative h-48 bg-gray-200">
+          {coverImage ? (
+            <img src={coverImage} alt={course.title} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50">
+              <BookOpen className="w-16 h-16 text-blue-300" />
+            </div>
           )}
-          {isCompleted && !isLocked && (
-            <Badge className="bg-green-600/90 text-white backdrop-blur-sm">
-              <CheckCircle className="w-3 h-3 mr-1" />
-              Concluído
+          <div className="absolute top-3 right-3 flex gap-2">
+            <Badge className={getStatusColor(course.status)}>
+              {getStatusLabel(course.status)}
             </Badge>
-          )}
-          {course.category && (
-            <Badge className="bg-black/60 text-white backdrop-blur-sm capitalize">
-              {course.category}
-            </Badge>
-          )}
+            {isInternal && (
+              <Badge className="bg-purple-100 text-purple-700">
+                Interno
+              </Badge>
+            )}
+          </div>
         </div>
 
-        {/* Content */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-          <h3 className="font-bold text-lg mb-1 line-clamp-2 group-hover:line-clamp-none transition-all">
-            {course.title}
-          </h3>
-          
-          {isHovered && (
-            <p className="text-sm text-white/90 line-clamp-2 mb-2 animate-fade-in">
-              {course.impact_narratives?.[0] || course.description}
-            </p>
-          )}
+        <CardContent className="p-5 space-y-4">
+          <div className="flex justify-between items-start gap-2">
+            <h3 className="text-lg font-bold text-gray-900 line-clamp-2 flex-1">
+              {course.title}
+            </h3>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <MoreVertical className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setIsEditOpen(true)}>
+                  <Edit className="w-4 h-4 mr-2" /> Editar
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setIsPublishOpen(true)}>
+                  <Play className="w-4 h-4 mr-2" /> Publicar
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setIsAccessOpen(true)}>
+                  <Users className="w-4 h-4 mr-2" /> Controle de Acesso
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => navigate(`${createPageUrl('GerenciarModulo')}?course_id=${course.id}`)}
+                >
+                  <Settings className="w-4 h-4 mr-2" /> Gerenciar Módulos
+                </DropdownMenuItem>
+                <DropdownMenuItem className="text-red-600" onClick={handleDelete}>
+                  <Trash2 className="w-4 h-4 mr-2" /> Excluir
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
 
-          <div className="flex items-center gap-3 text-xs text-white/80">
+          <p className="text-sm text-gray-600 line-clamp-2">
+            {course.description || "Sem descrição"}
+          </p>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge variant="outline" className="capitalize">
+              {course.category || 'outros'}
+            </Badge>
+            <Badge variant="outline" className="capitalize">
+              {course.difficulty_level || 'iniciante'}
+            </Badge>
             {course.total_duration_minutes > 0 && (
-              <span className="flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                {Math.floor(course.total_duration_minutes / 60)}h
-              </span>
-            )}
-            {course.difficulty_level && (
-              <span className="capitalize">{course.difficulty_level}</span>
+              <Badge variant="outline">
+                {course.total_duration_minutes} min
+              </Badge>
             )}
           </div>
 
-          {/* Progress Bar */}
-          {showProgress && hasProgress && !isCompleted && (
-            <div className="mt-3 space-y-1">
-              <Progress 
-                value={progress.progress_percentage} 
-                className="h-1 bg-white/20" 
-              />
-              <span className="text-xs text-white/70">
-                {Math.round(progress.progress_percentage)}% concluído
-              </span>
-            </div>
-          )}
-        </div>
+          <Button
+            className="w-full"
+            onClick={() => navigate(`${createPageUrl('GerenciarModulo')}?course_id=${course.id}`)}
+          >
+            <Settings className="w-4 h-4 mr-2" />
+            Gerenciar Conteúdo
+          </Button>
+        </CardContent>
+      </Card>
 
-        {/* Play Button on Hover */}
-        {!isLocked && isHovered && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/30 animate-fade-in">
-            <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border-2 border-white/50">
-              <Play className="w-8 h-8 text-white fill-white" />
-            </div>
-          </div>
-        )}
-      </div>
-    </Card>
+      <CourseFormDialog
+        open={isEditOpen}
+        onClose={() => setIsEditOpen(false)}
+        onSuccess={onRefetch}
+        course={course}
+        workshopId={course.workshop_id}
+      />
+
+      <PublishCourseDialog
+        open={isPublishOpen}
+        onClose={() => setIsPublishOpen(false)}
+        course={course}
+        onSuccess={onRefetch}
+      />
+
+      <AccessControlDialog
+        open={isAccessOpen}
+        onClose={() => setIsAccessOpen(false)}
+        course={course}
+        onSuccess={onRefetch}
+      />
+    </>
   );
 }
