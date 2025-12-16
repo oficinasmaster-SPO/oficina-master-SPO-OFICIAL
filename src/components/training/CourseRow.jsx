@@ -2,7 +2,7 @@ import React, { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import CourseCard from "./CourseCard";
+import ConsumeCourseCard from "./ConsumeCourseCard";
 
 export default function CourseRow({ 
   title, 
@@ -58,7 +58,7 @@ export default function CourseRow({
         >
           {courses.map((course) => (
             <div key={course.id} className="flex-shrink-0 w-80">
-              <CourseCard
+              <ConsumeCourseCard
                 course={course}
                 progress={progressMap[course.id]}
                 onClick={onCourseClick}
