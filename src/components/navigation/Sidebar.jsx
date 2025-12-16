@@ -438,6 +438,13 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           highlight: true
         },
         { 
+          name: 'Configuração da Academia', 
+          href: createPageUrl('ConfiguracaoAcademia'), 
+          icon: Settings,
+          description: 'Regras e comportamento da academia',
+          adminOnly: true
+        },
+        { 
           name: 'Acompanhamento', 
           href: createPageUrl('AcompanhamentoTreinamento'), 
           icon: Users,
@@ -676,7 +683,9 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       'Rituais de Aculturamento': 'cultura',
       'Cronograma de Aculturação': 'cultura',
       'Pesquisa de Clima': 'cultura',
+      'Academia de Treinamento': 'treinamentos',
       'Gestão de Treinamentos': 'treinamentos',
+      'Configuração da Academia': 'treinamentos',
       'Acompanhamento': 'treinamentos',
       'Meus Treinamentos': 'treinamentos',
       'Dicas da Operação': 'gestao',
