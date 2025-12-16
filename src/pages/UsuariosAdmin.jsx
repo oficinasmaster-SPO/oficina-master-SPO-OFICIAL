@@ -26,14 +26,16 @@ export default function UsuariosAdmin() {
     queryFn: () => base44.auth.me()
   });
 
-  const { data: profiles = [] } = useQuery({
+  const { data: profiles = [], isLoading: loadingProfiles } = useQuery({
     queryKey: ['user-profiles'],
     queryFn: async () => {
       const allProfiles = await base44.entities.UserProfile.list();
+      console.log("📋 Todos os perfis:", allProfiles);
       const internoProfiles = allProfiles.filter(p => p.type === 'interno' && p.status === 'ativo');
-      console.log("📋 Perfis internos carregados:", internoProfiles);
+      console.log("✅ Perfis internos ativos:", internoProfiles);
       return internoProfiles;
-    }
+    },
+    staleTime: 30000
   });
 
   const { data: allUsers = [] } = useQuery({
