@@ -52,12 +52,36 @@ Deno.serve(async (req) => {
       });
 
       console.log("✅ Employee criado com sucesso! ID:", newEmployee.id);
-      console.log("Dados do colaborador:", JSON.stringify(newEmployee, null, 2));
+
+      // Criar conta de acesso no sistema de autenticação
+      try {
+        console.log("Criando conta de acesso no sistema...");
+        await base44.asServiceRole.auth.createUser({
+          email: email,
+          password: tempPassword,
+          metadata: {
+            full_name: full_name,
+            employee_id: newEmployee.id,
+            is_internal: true
+          }
+        });
+        console.log("✅ Conta de acesso criada no sistema de autenticação");
+      } catch (authError) {
+        console.error("Erro ao criar conta de acesso:", authError);
+        // Deletar o employee se falhar a criação da conta
+        await base44.asServiceRole.entities.Employee.delete(newEmployee.id);
+        throw new Error('Falha ao criar conta de acesso: ' + authError.message);
+      }
+
+      // Gerar link de primeiro acesso
+      const appUrl = Deno.env.get('BASE44_APP_URL') || 'https://app.base44.com/oficinas-master';
+      const loginUrl = `${appUrl}/login`;
 
       return Response.json({
         success: true,
         user: newEmployee,
         password: tempPassword,
+        login_url: loginUrl,
         message: 'Usuário interno criado com sucesso'
       });
     }
