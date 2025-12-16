@@ -53,7 +53,9 @@ export default function UserActivityDetails({ user, activities }) {
                         {activity.page_name || activity.activity_type}
                       </p>
                       <span className="text-xs text-gray-500">
-                        {format(new Date(activity.timestamp), "HH:mm:ss", { locale: ptBR })}
+                        {activity.timestamp 
+                          ? format(new Date(activity.timestamp), "HH:mm:ss", { locale: ptBR })
+                          : '-'}
                       </span>
                     </div>
                     

@@ -43,7 +43,7 @@ export default function ActiveUsersTable({ sessions, onSelectUser }) {
               ) : (
                 sessions.map((session) => {
                   const now = new Date();
-                  const loginTime = new Date(session.login_time);
+                  const loginTime = session.login_time ? new Date(session.login_time) : now;
                   const onlineDuration = Math.floor((now - loginTime) / 1000);
 
                   return (
@@ -64,7 +64,9 @@ export default function ActiveUsersTable({ sessions, onSelectUser }) {
                       </td>
                       <td className="py-3 px-4">
                         <span className="text-sm text-gray-700">
-                          {format(new Date(session.last_activity_time), "HH:mm", { locale: ptBR })}
+                          {session.last_activity_time 
+                            ? format(new Date(session.last_activity_time), "HH:mm", { locale: ptBR })
+                            : '-'}
                         </span>
                       </td>
                       <td className="py-3 px-4">

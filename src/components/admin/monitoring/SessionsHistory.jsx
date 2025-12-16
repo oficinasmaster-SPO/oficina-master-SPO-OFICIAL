@@ -61,7 +61,9 @@ export default function SessionsHistory({ sessions }) {
                   </td>
                   <td className="py-3 px-4">
                     <span className="text-sm text-gray-700">
-                      {format(new Date(session.login_time), "dd/MM/yy HH:mm", { locale: ptBR })}
+                      {session.login_time 
+                        ? format(new Date(session.login_time), "dd/MM/yy HH:mm", { locale: ptBR })
+                        : '-'}
                     </span>
                   </td>
                   <td className="py-3 px-4">
