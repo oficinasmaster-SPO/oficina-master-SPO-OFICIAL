@@ -94,13 +94,11 @@ Deno.serve(async (req) => {
 
       console.log("✅ Employee criado e vinculado! ID:", newEmployee.id);
 
-      // Retornar sucesso com todas as informações
+      // Retornar sucesso
       return Response.json({
         success: true,
         user: newEmployee,
         user_auth_id: userId,
-        password: tempPassword,
-        login_url: window.location.origin,
         message: 'Usuário interno criado com sucesso'
       });
     }
