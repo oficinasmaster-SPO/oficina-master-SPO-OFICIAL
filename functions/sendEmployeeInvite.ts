@@ -10,10 +10,14 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { name, email, position, area, job_role, initial_permission, workshop_id, workshop_name, origin, employee_id } = body;
+    const { name, email, position, area, job_role, initial_permission, workshop_id, workshop_name, origin, employee_id, invite_type = 'workshop' } = body;
 
-    if (!name || !email || !workshop_id) {
-      return Response.json({ error: 'Campos obrigatórios: nome, email e workshop_id' }, { status: 400 });
+    if (!name || !email) {
+      return Response.json({ error: 'Campos obrigatórios: nome e email' }, { status: 400 });
+    }
+
+    if (invite_type === 'workshop' && !workshop_id) {
+      return Response.json({ error: 'Workshop obrigatório para colaboradores de oficina' }, { status: 400 });
     }
 
     console.log("📧 Iniciando convite para:", email);
@@ -23,32 +27,37 @@ Deno.serve(async (req) => {
     let employee;
     
     if (!finalEmployeeId) {
-      const employees = await base44.asServiceRole.entities.Employee.filter({ 
-        email: email, 
-        workshop_id: workshop_id 
-      });
+      const filterQuery = invite_type === 'internal'
+        ? { email: email, tipo_vinculo: 'interno' }
+        : { email: email, workshop_id: workshop_id };
+        
+      const employees = await base44.asServiceRole.entities.Employee.filter(filterQuery);
       
       if (employees && employees.length > 0) {
         employee = employees[0];
         finalEmployeeId = employee.id;
         console.log("✅ Employee já existe:", finalEmployeeId);
       } else {
-        // Buscar workshop para pegar owner_id
-        const workshops = await base44.asServiceRole.entities.Workshop.filter({ id: workshop_id });
-        const workshop = workshops[0];
-        
-        // Criar Employee se não existir
-        employee = await base44.asServiceRole.entities.Employee.create({
-          workshop_id: workshop_id,
-          owner_id: workshop?.owner_id || null,
+        const createData = {
           full_name: name,
           email: email,
           position: position || 'Colaborador',
-          area: area || 'tecnico',
-          job_role: job_role || 'outros',
+          area: area || (invite_type === 'internal' ? 'administrativo' : 'tecnico'),
+          job_role: job_role || (invite_type === 'internal' ? 'consultor' : 'outros'),
           status: 'ativo',
+          tipo_vinculo: invite_type === 'internal' ? 'interno' : 'cliente',
+          is_internal: invite_type === 'internal',
           hire_date: new Date().toISOString().split('T')[0]
-        });
+        };
+
+        if (invite_type === 'workshop') {
+          const workshops = await base44.asServiceRole.entities.Workshop.filter({ id: workshop_id });
+          const workshop = workshops[0];
+          createData.workshop_id = workshop_id;
+          createData.owner_id = workshop?.owner_id || null;
+        }
+        
+        employee = await base44.asServiceRole.entities.Employee.create(createData);
         finalEmployeeId = employee.id;
         console.log("✅ Employee criado:", finalEmployeeId);
       }
@@ -59,10 +68,11 @@ Deno.serve(async (req) => {
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
     // Verificar convites existentes
-    const existingInvites = await base44.asServiceRole.entities.EmployeeInvite.filter({ 
-      email: email, 
-      workshop_id: workshop_id 
-    });
+    const inviteFilter = invite_type === 'internal'
+      ? { email: email, invite_type: 'internal' }
+      : { email: email, workshop_id: workshop_id };
+      
+    const existingInvites = await base44.asServiceRole.entities.EmployeeInvite.filter(inviteFilter);
 
     let inviteId;
 
@@ -84,10 +94,11 @@ Deno.serve(async (req) => {
         name,
         email,
         position: position || 'Colaborador',
-        area: area || 'tecnico',
-        job_role: job_role || 'outros',
+        area: area || (invite_type === 'internal' ? 'administrativo' : 'tecnico'),
+        job_role: job_role || (invite_type === 'internal' ? 'consultor' : 'outros'),
         initial_permission: initial_permission || 'colaborador',
-        workshop_id,
+        workshop_id: invite_type === 'workshop' ? workshop_id : null,
+        invite_type,
         employee_id: finalEmployeeId,
         invite_token: token,
         expires_at: expiresAt,
