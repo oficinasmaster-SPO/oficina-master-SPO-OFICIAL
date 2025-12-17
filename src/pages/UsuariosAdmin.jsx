@@ -126,7 +126,7 @@ export default function UsuariosAdmin() {
           password: result.password, 
           email: result.email,
           role: result.role || 'user',
-          loginUrl: result.login_url || window.location.origin
+          loginUrl: result.invite_url || result.login_url || window.location.origin
         });
       } else {
         console.error("❌ Dados incompletos:", result);
