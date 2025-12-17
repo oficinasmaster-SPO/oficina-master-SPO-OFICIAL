@@ -81,7 +81,7 @@ export default function UsuariosAdmin() {
           action: 'created',
           field_changed: 'user_created',
           old_value: null,
-          new_value: `Usuário interno criado com perfil ${data.profile_id}`
+          new_value: `Usuário interno criado com perfil ${data.profile_id} e role ${data.role}`
         };
 
         const userData = {
@@ -92,9 +92,12 @@ export default function UsuariosAdmin() {
           profile_id: data.profile_id,
           admin_responsavel_id: data.admin_responsavel_id,
           user_status: 'ativo',
+          role: data.role || 'user',
           is_internal: true,
           audit_log: [auditEntry]
         };
+
+        console.log("📤 Enviando dados para criação:", userData);
 
         // 2. Criar User via função backend (que cria conta e senha)
         const result = await base44.functions.invoke('createUserForEmployee', {
@@ -103,9 +106,11 @@ export default function UsuariosAdmin() {
           full_name: data.full_name
         });
 
+        console.log("✅ Resultado da criação:", result.data);
+
         return result.data;
       } catch (error) {
-        console.error("Erro ao criar usuário:", error);
+        console.error("❌ Erro ao criar usuário:", error);
         throw error;
       }
     },

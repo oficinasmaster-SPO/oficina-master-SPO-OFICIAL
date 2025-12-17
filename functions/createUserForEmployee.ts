@@ -62,23 +62,30 @@ Deno.serve(async (req) => {
 
       // 2. Criar Employee vinculado
       console.log("Criando Employee...");
+      console.log("Dados do Employee:", {
+        user_id: newUser.id,
+        profile_id: user_data.profile_id,
+        admin_responsavel_id: user_data.admin_responsavel_id
+      });
+
       const newEmployee = await base44.asServiceRole.entities.Employee.create({
         full_name: full_name,
         email: email,
         user_id: newUser.id,
-        telefone: user_data.telefone,
-        position: user_data.position,
+        telefone: user_data.telefone || '',
+        position: user_data.position || '',
         tipo_vinculo: 'interno',
         job_role: 'consultor',
         status: 'ativo',
-        profile_id: user_data.profile_id,
-        admin_responsavel_id: user_data.admin_responsavel_id,
+        profile_id: user_data.profile_id || null,
+        admin_responsavel_id: user_data.admin_responsavel_id || null,
         user_status: user_data.user_status || 'ativo',
         is_internal: true,
         audit_log: user_data.audit_log || []
       });
 
       console.log("✅ Employee criado! ID:", newEmployee.id);
+      console.log("✅ Employee completo:", newEmployee);
 
       // Retornar sucesso com credenciais
       return Response.json({
