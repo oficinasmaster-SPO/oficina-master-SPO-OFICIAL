@@ -521,49 +521,37 @@ export default function UsuariosAdmin() {
               </div>
             </div>
 
-            {resetPasswordDialog.loginUrl && resetPasswordDialog.loginUrl.includes('/PrimeiroAcesso') ? (
-              <Alert className="bg-green-50 border-green-200">
-                <CheckCircle className="w-4 h-4 text-green-600" />
-                <AlertDescription className="text-xs text-green-800">
-                  <p className="font-semibold mb-2">✅ Link de Primeiro Acesso Gerado!</p>
-                  <p className="mb-2">Envie este link para o colaborador completar o cadastro:</p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Input
-                      value={resetPasswordDialog.loginUrl}
-                      readOnly
-                      className="text-xs bg-white"
-                    />
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        navigator.clipboard.writeText(resetPasswordDialog.loginUrl);
-                        toast.success("Link copiado!");
-                      }}
-                    >
-                      <Copy className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  <p className="text-xs text-green-600 mt-2">
-                    💡 O colaborador irá definir sua própria senha ao acessar o link
-                  </p>
-                </AlertDescription>
-              </Alert>
-            ) : (
-              <Alert className="bg-amber-50 border-amber-200">
-                <AlertTriangle className="w-4 h-4 text-amber-600" />
-                <AlertDescription className="text-xs text-amber-800">
-                  <p className="font-semibold mb-2">⚠️ Próximo Passo Obrigatório:</p>
-                  <ol className="list-decimal list-inside space-y-1 ml-2">
-                    <li>Acesse o <strong>Dashboard Base44</strong></li>
-                    <li>Vá em <strong>Configurações → Usuários</strong></li>
-                    <li>Clique em <strong>"Convidar Usuário"</strong></li>
-                    <li>Use o email: <strong>{resetPasswordDialog.email}</strong></li>
-                    <li>Role: <strong>{resetPasswordDialog.role || 'user'}</strong></li>
-                    <li>Envie o convite</li>
+            <Alert className="bg-blue-50 border-blue-200">
+              <AlertTriangle className="w-4 h-4 text-blue-600" />
+              <AlertDescription className="text-xs text-blue-800">
+                <p className="font-semibold mb-3">📋 Instruções para Finalizar Cadastro:</p>
+                
+                <div className="bg-white rounded-lg p-3 mb-3">
+                  <p className="font-semibold text-blue-900 mb-2">1️⃣ Convidar via Dashboard Base44:</p>
+                  <ol className="list-decimal list-inside space-y-1 ml-2 text-xs">
+                    <li>Acesse: <a href="https://base44.com/dashboard" target="_blank" className="text-blue-600 underline">base44.com/dashboard</a></li>
+                    <li>Vá em <strong>Settings → Users → Invite User</strong></li>
+                    <li>Email: <strong className="text-blue-900">{resetPasswordDialog.email}</strong></li>
+                    <li>Role: <strong className="text-blue-900">{resetPasswordDialog.role || 'user'}</strong></li>
+                    <li>Clique em <strong>Send Invite</strong></li>
                   </ol>
-                </AlertDescription>
-              </Alert>
-            )}
+                </div>
+
+                <div className="bg-white rounded-lg p-3">
+                  <p className="font-semibold text-blue-900 mb-2">2️⃣ Enviar Credenciais ao Usuário:</p>
+                  <p className="text-xs mb-2">Compartilhe essas informações com o novo colaborador:</p>
+                  <div className="bg-gray-50 p-2 rounded text-xs space-y-1">
+                    <p>📧 <strong>Email:</strong> {resetPasswordDialog.email}</p>
+                    <p>🔑 <strong>Senha temporária:</strong> {resetPasswordDialog.password}</p>
+                    <p>🌐 <strong>Login:</strong> {window.location.origin}</p>
+                  </div>
+                </div>
+
+                <p className="text-xs text-blue-600 mt-3">
+                  💡 Após seguir esses passos, o usuário poderá fazer login com as credenciais fornecidas.
+                </p>
+              </AlertDescription>
+            </Alert>
 
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
               <p className="text-xs text-gray-600">
