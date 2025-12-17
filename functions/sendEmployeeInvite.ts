@@ -130,65 +130,36 @@ Deno.serve(async (req) => {
     try {
       console.log("📧 Enviando email de convite para:", email);
 
+      const emailSubject = invite_type === 'internal' 
+        ? 'Bem-vindo a Equipe Oficinas Master - Complete seu Cadastro'
+        : 'Bem-vindo - Complete seu Cadastro';
+
       const emailBody = invite_type === 'internal' 
-        ? `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #2563eb;">Bem-vindo à Equipe Oficinas Master!</h2>
-            
-            <p>Olá, <strong>${name}</strong>!</p>
-            
-            <p>Você foi convidado para fazer parte da equipe interna da <strong>Oficinas Master</strong> como <strong>${position}</strong>.</p>
-            
-            <h3 style="color: #1e40af;">Complete seu Cadastro:</h3>
-            
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${inviteUrl}" 
-                 style="background-color: #2563eb; color: white; padding: 15px 30px; 
-                        text-decoration: none; border-radius: 8px; display: inline-block;
-                        font-weight: bold;">
-                Completar Cadastro
-              </a>
-            </div>
-            
-            <p style="color: #666; font-size: 14px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-              <strong>Importante:</strong> Este link expira em 7 dias. Se precisar de um novo link, entre em contato com o administrador.
-            </p>
-            
-            <p style="color: #666; font-size: 12px; margin-top: 20px;">
-              Email de login: <strong>${email}</strong>
-            </p>
-          </div>
-        `
-        : `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #2563eb;">Bem-vindo à ${workshop_name || 'Oficina'}!</h2>
-            
-            <p>Olá, <strong>${name}</strong>!</p>
-            
-            <p>Você foi convidado para fazer parte da equipe como <strong>${position}</strong>.</p>
-            
-            <h3 style="color: #1e40af;">Complete seu Cadastro:</h3>
-            
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${inviteUrl}" 
-                 style="background-color: #2563eb; color: white; padding: 15px 30px; 
-                        text-decoration: none; border-radius: 8px; display: inline-block;
-                        font-weight: bold;">
-                Completar Cadastro
-              </a>
-            </div>
-            
-            <p style="color: #666; font-size: 14px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-              <strong>Importante:</strong> Este link expira em 7 dias.
-            </p>
-          </div>
-        `;
+        ? '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">' +
+          '<h2 style="color: #2563eb;">Bem-vindo a Equipe Oficinas Master!</h2>' +
+          '<p>Ola, <strong>' + name + '</strong>!</p>' +
+          '<p>Voce foi convidado para fazer parte da equipe interna da <strong>Oficinas Master</strong> como <strong>' + position + '</strong>.</p>' +
+          '<h3 style="color: #1e40af;">Complete seu Cadastro:</h3>' +
+          '<div style="text-align: center; margin: 30px 0;">' +
+          '<a href="' + inviteUrl + '" style="background-color: #2563eb; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold;">Completar Cadastro</a>' +
+          '</div>' +
+          '<p style="color: #666; font-size: 14px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;"><strong>Importante:</strong> Este link expira em 7 dias.</p>' +
+          '<p style="color: #666; font-size: 12px; margin-top: 20px;">Email de login: <strong>' + email + '</strong></p>' +
+          '</div>'
+        : '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">' +
+          '<h2 style="color: #2563eb;">Bem-vindo!</h2>' +
+          '<p>Ola, <strong>' + name + '</strong>!</p>' +
+          '<p>Voce foi convidado para fazer parte da equipe como <strong>' + position + '</strong>.</p>' +
+          '<h3 style="color: #1e40af;">Complete seu Cadastro:</h3>' +
+          '<div style="text-align: center; margin: 30px 0;">' +
+          '<a href="' + inviteUrl + '" style="background-color: #2563eb; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold;">Completar Cadastro</a>' +
+          '</div>' +
+          '<p style="color: #666; font-size: 14px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;"><strong>Importante:</strong> Este link expira em 7 dias.</p>' +
+          '</div>';
 
       await base44.asServiceRole.integrations.Core.SendEmail({
         to: email,
-        subject: invite_type === 'internal' 
-          ? 'Bem-vindo à Equipe Oficinas Master - Complete seu Cadastro'
-          : `Bem-vindo à ${workshop_name || 'Oficina'} - Complete seu Cadastro`,
+        subject: emailSubject,
         body: emailBody
       });
 
