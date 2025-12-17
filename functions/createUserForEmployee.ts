@@ -12,7 +12,6 @@ Deno.serve(async (req) => {
       console.log("=== Iniciando criação de usuário interno (Employee) ===");
       console.log("Email:", email);
       console.log("Nome:", full_name);
-      console.log("Dados adicionais:", JSON.stringify(user_data, null, 2));
 
       // Verificar se já existe Employee com este email
       const allEmployees = await base44.asServiceRole.entities.Employee.list();
@@ -26,6 +25,18 @@ Deno.serve(async (req) => {
         }, { status: 400 });
       }
 
+      // Verificar se já existe User com este email
+      const allUsers = await base44.asServiceRole.entities.User.list();
+      const existingUser = allUsers.find(u => u.email === email);
+      
+      if (existingUser) {
+        console.error("Já existe um User com este email:", email);
+        return Response.json({ 
+          success: false,
+          error: 'Já existe um usuário com este email no sistema' 
+        }, { status: 400 });
+      }
+
       // Gerar senha temporária forte
       const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%&*';
       let tempPassword = '';
@@ -34,11 +45,27 @@ Deno.serve(async (req) => {
       }
       console.log("Senha temporária gerada:", tempPassword);
 
+      // 1. Criar User com role admin
+      console.log("Criando User...");
+      const newUser = await base44.asServiceRole.entities.User.create({
+        email: email,
+        full_name: full_name,
+        role: 'admin',
+        position: user_data.position,
+        profile_id: user_data.profile_id,
+        telefone: user_data.telefone,
+        user_status: user_data.user_status || 'ativo',
+        is_internal: true
+      });
+
+      console.log("✅ User criado! ID:", newUser.id);
+
       // 2. Criar Employee vinculado
       console.log("Criando Employee...");
       const newEmployee = await base44.asServiceRole.entities.Employee.create({
         full_name: full_name,
         email: email,
+        user_id: newUser.id,
         telefone: user_data.telefone,
         position: user_data.position,
         tipo_vinculo: 'interno',
@@ -53,13 +80,15 @@ Deno.serve(async (req) => {
 
       console.log("✅ Employee criado! ID:", newEmployee.id);
 
-      // Retornar sucesso com senha temporária e instruções
+      // Retornar sucesso com credenciais
       return Response.json({
         success: true,
+        user: newUser,
         employee: newEmployee,
         password: tempPassword,
+        email: email,
         login_url: new URL(req.url).origin,
-        message: 'Employee criado com sucesso. O usuário deve ser convidado manualmente pelo dashboard do Base44.'
+        message: 'Usuário criado com sucesso'
       });
     }
 

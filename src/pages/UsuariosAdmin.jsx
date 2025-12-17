@@ -433,34 +433,82 @@ export default function UsuariosAdmin() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CheckCircle className="w-5 h-5 text-green-600" />
-              Employee Criado com Sucesso!
+              Usuário Criado com Sucesso!
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <p className="text-sm font-semibold text-blue-800 mb-2">
-                📧 Email do Colaborador
+                📧 Email de Acesso
               </p>
-              <p className="text-sm text-blue-700">{resetPasswordDialog.email}</p>
+              <div className="flex items-center gap-2">
+                <Input
+                  value={resetPasswordDialog.email}
+                  readOnly
+                  className="text-sm bg-white"
+                />
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    navigator.clipboard.writeText(resetPasswordDialog.email);
+                    toast.success("Email copiado!");
+                  }}
+                >
+                  <Copy className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
 
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <p className="text-sm font-semibold text-yellow-800 mb-3 flex items-center gap-2">
-                ⚠️ Próximo Passo Necessário
+              <p className="text-sm font-semibold text-yellow-800 mb-2">
+                🔑 Senha Temporária
               </p>
-              <ol className="text-xs text-yellow-700 space-y-2 list-decimal list-inside">
-                <li>Acesse o <strong>Dashboard do Base44</strong></li>
-                <li>Vá em <strong>Configurações → Usuários</strong></li>
-                <li>Clique em <strong>"Convidar Usuário"</strong></li>
-                <li>Digite o email: <strong>{resetPasswordDialog.email}</strong></li>
-                <li>Defina role como <strong>"admin"</strong></li>
-                <li>O usuário receberá um convite por email</li>
-              </ol>
+              <p className="text-xs text-yellow-700 mb-3">
+                Copie e compartilhe com segurança
+              </p>
+              <div className="flex items-center gap-2">
+                <Input
+                  value={resetPasswordDialog.password}
+                  readOnly
+                  className="font-mono text-sm bg-white"
+                />
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    navigator.clipboard.writeText(resetPasswordDialog.password);
+                    toast.success("Senha copiada!");
+                  }}
+                >
+                  <Copy className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <p className="text-sm font-semibold text-green-800 mb-2">
+                🔗 Link de Acesso
+              </p>
+              <div className="flex items-center gap-2">
+                <Input
+                  value={resetPasswordDialog.loginUrl || window.location.origin}
+                  readOnly
+                  className="text-sm bg-white"
+                />
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    navigator.clipboard.writeText(resetPasswordDialog.loginUrl || window.location.origin);
+                    toast.success("Link copiado!");
+                  }}
+                >
+                  <Copy className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
 
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
               <p className="text-xs text-gray-600">
-                💡 <strong>Importante:</strong> O Employee foi criado no sistema, mas a conta de acesso precisa ser criada manualmente através do dashboard do Base44. Isso garante segurança e controle total sobre os usuários.
+                💡 <strong>Instruções:</strong> Compartilhe o email, senha e link de acesso com o usuário. No primeiro login, ele poderá alterar a senha.
               </p>
             </div>
 
@@ -468,7 +516,7 @@ export default function UsuariosAdmin() {
               className="w-full"
               onClick={() => setResetPasswordDialog({ open: false, password: "", email: "", loginUrl: "" })}
             >
-              Entendi
+              Fechar
             </Button>
           </div>
         </DialogContent>
