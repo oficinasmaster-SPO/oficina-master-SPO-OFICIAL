@@ -118,16 +118,24 @@ export default function UsuariosAdmin() {
       console.log("✅ Sucesso na criação:", result);
       queryClient.invalidateQueries(['admin-users']);
       queryClient.invalidateQueries(['user-profiles']);
-      toast.success("Usuário criado! Siga as instruções na tela.", { duration: 4000 });
       
-      if (result.password && result.email) {
+      if (result.password && result.email && result.dashboard_url) {
+        toast.success("Usuário criado! Abrindo Dashboard Base44...", { duration: 3000 });
+        
         setResetPasswordDialog({ 
           open: true, 
           password: result.password, 
           email: result.email,
           role: result.role || 'user',
-          loginUrl: window.location.origin
+          loginUrl: window.location.origin,
+          dashboardUrl: result.dashboard_url,
+          permissionsCreated: result.permissions_created
         });
+        
+        // Abrir Dashboard Base44 automaticamente após 2 segundos
+        setTimeout(() => {
+          window.open(result.dashboard_url, '_blank');
+        }, 2000);
       } else {
         console.error("❌ Dados incompletos:", result);
         toast.error("Erro ao criar usuário");
