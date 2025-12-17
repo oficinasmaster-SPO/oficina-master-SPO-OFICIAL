@@ -152,15 +152,34 @@ Deno.serve(async (req) => {
       console.log("🔑 Senha temporária:", tempPassword);
       console.log("👤 Role:", user_data.role || 'user');
 
-      // Retornar credenciais para serem compartilhadas
+      // Validar se permissões foram criadas
+      if (!permissionsCreated) {
+        console.error("❌ Falha ao criar permissões - revertendo criação do Employee");
+        await base44.asServiceRole.entities.Employee.delete(newEmployee.id);
+        return Response.json({
+          success: false,
+          error: 'Falha ao criar permissões do usuário'
+        }, { status: 500 });
+      }
+
+      // Retornar credenciais e URL direta para Dashboard Base44
+      const dashboardInviteUrl = `https://base44.com/dashboard?action=invite&email=${encodeURIComponent(email)}&role=${user_data.role || 'user'}`;
+      
+      console.log("✅ Usuário criado com sucesso!");
+      console.log("📧 Email:", email);
+      console.log("🔑 Senha:", tempPassword);
+      console.log("👤 Role:", user_data.role || 'user');
+      console.log("🔗 Dashboard URL:", dashboardInviteUrl);
+
       return Response.json({
         success: true,
         employee: newEmployee,
         password: tempPassword,
         email: email,
         role: user_data.role || 'user',
-        dashboard_url: 'https://base44.com/dashboard',
-        message: 'Usuário interno criado! Siga as instruções para concluir o cadastro no Dashboard Base44.'
+        dashboard_url: dashboardInviteUrl,
+        permissions_created: permissionsCreated,
+        message: 'Usuário interno criado com permissões! Convide via Dashboard Base44.'
       });
     }
 
