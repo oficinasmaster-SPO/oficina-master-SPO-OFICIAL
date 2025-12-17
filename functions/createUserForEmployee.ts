@@ -123,10 +123,37 @@ Deno.serve(async (req) => {
         console.error("❌ Erro ao registrar atividade:", activityError);
       }
 
-      // Email automático não funciona pois o usuário precisa estar no dashboard Base44 primeiro
-      console.log("📝 Email não enviado - usuário precisa ser convidado via dashboard primeiro");
+      // Gerar link de convite automático
+      let inviteUrl = null;
+      try {
+        console.log("🔗 Gerando link de convite...");
+        
+        const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
+        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+        
+        const invite = await base44.asServiceRole.entities.EmployeeInvite.create({
+          name: full_name,
+          email: email,
+          position: user_data.position || 'Colaborador Interno',
+          area: user_data.area || 'administrativo',
+          job_role: user_data.job_role || 'consultor',
+          initial_permission: 'admin',
+          workshop_id: null, // Usuário interno não tem workshop
+          employee_id: newEmployee.id,
+          invite_token: token,
+          expires_at: expiresAt,
+          status: 'enviado'
+        });
+        
+        const baseUrl = new URL(req.url).origin;
+        inviteUrl = `${baseUrl}/PrimeiroAcesso?token=${token}`;
+        
+        console.log("✅ Link de convite gerado:", inviteUrl);
+      } catch (inviteError) {
+        console.error("❌ Erro ao gerar link de convite:", inviteError);
+      }
 
-      // Retornar sucesso com credenciais
+      // Retornar sucesso com credenciais e link
       return Response.json({
         success: true,
         employee: newEmployee,
@@ -134,7 +161,10 @@ Deno.serve(async (req) => {
         email: email,
         role: user_data.role || 'user',
         login_url: new URL(req.url).origin,
-        message: `Colaborador interno criado. Convide pelo dashboard com role '${user_data.role || 'user'}'.`
+        invite_url: inviteUrl,
+        message: inviteUrl 
+          ? `Usuário criado! Envie o link de convite: ${inviteUrl}` 
+          : `Usuário criado! Convide pelo dashboard Base44 com role '${user_data.role || 'user'}'.`
       });
     }
 
