@@ -65,10 +65,9 @@ export default function UsuariosAdmin() {
   const { data: adminUsers = [], isLoading } = useQuery({
     queryKey: ['admin-users'],
     queryFn: async () => {
-      // Buscar APENAS usuários internos da entidade User
-      const allUsers = await base44.entities.User.list();
-      // Filtro único: is_internal === true
-      return allUsers.filter(u => u.is_internal === true);
+      // Buscar usuários internos da entidade Employee (criados no convite)
+      const allEmployees = await base44.entities.Employee.list();
+      return allEmployees.filter(e => e.tipo_vinculo === 'interno' || e.is_internal === true);
     }
   });
 

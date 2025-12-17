@@ -23,13 +23,41 @@ Deno.serve(async (req) => {
     console.log("📧 Iniciando convite para:", email);
     console.log("📋 Tipo de convite:", invite_type);
 
-    // Para usuários internos: NÃO criar Employee ainda
+    // Criar Employee para todos (internos e externos)
     let finalEmployeeId = employee_id;
     let employee;
 
     if (invite_type === 'internal') {
-      console.log("ℹ️ Convite interno - Employee será criado após aceite");
-      finalEmployeeId = null;
+      // Criar Employee interno para aparecer na listagem
+      if (!finalEmployeeId) {
+        const employees = await base44.asServiceRole.entities.Employee.filter({ 
+          email: email, 
+          tipo_vinculo: 'interno'
+        });
+
+        if (employees && employees.length > 0) {
+          employee = employees[0];
+          finalEmployeeId = employee.id;
+          console.log("✅ Employee interno já existe:", finalEmployeeId);
+        } else {
+          employee = await base44.asServiceRole.entities.Employee.create({
+            full_name: name,
+            email: email,
+            position: position || 'Usuário Interno',
+            area: area || 'administrativo',
+            job_role: job_role || 'consultor',
+            telefone: telefone || '',
+            status: 'ativo',
+            user_status: 'pending',
+            tipo_vinculo: 'interno',
+            is_internal: true,
+            hire_date: new Date().toISOString().split('T')[0],
+            profile_id: profile_id || null
+          });
+          finalEmployeeId = employee.id;
+          console.log("✅ Employee interno criado:", finalEmployeeId);
+        }
+      }
     } else {
       // Apenas para colaboradores de oficina: criar Employee
       if (!finalEmployeeId) {
@@ -116,42 +144,6 @@ Deno.serve(async (req) => {
       const newInvite = await base44.asServiceRole.entities.EmployeeInvite.create(inviteData);
       inviteId = newInvite.id;
       console.log("✅ Convite criado:", inviteId);
-    }
-
-    // Para usuários internos, criar User imediatamente para aparecer na listagem
-    if (invite_type === 'internal') {
-      try {
-        const existingUsers = await base44.asServiceRole.entities.User.filter({ email });
-        
-        if (!existingUsers || existingUsers.length === 0) {
-          console.log("📝 Criando User interno para aparecer na listagem...");
-          
-          await base44.asServiceRole.entities.User.create({
-            email,
-            full_name: name,
-            position: position || 'Usuário Interno',
-            job_role: job_role || 'consultor',
-            area: area || 'administrativo',
-            telefone: telefone || '',
-            role: role || 'user',
-            is_internal: true,
-            user_status: 'pending',
-            profile_id: profile_id || null,
-            created_date: new Date().toISOString()
-          });
-          
-          console.log("✅ User interno criado (status: pending)");
-        } else {
-          console.log("ℹ️ User já existe, apenas atualizando...");
-          await base44.asServiceRole.entities.User.update(existingUsers[0].id, {
-            is_internal: true,
-            user_status: 'pending',
-            profile_id: profile_id || existingUsers[0].profile_id
-          });
-        }
-      } catch (userError) {
-        console.error("⚠️ Erro ao criar User (não crítico):", userError);
-      }
     }
 
     // Usa o domínio de origem da requisição (oficinasmastergtr.com em produção)
