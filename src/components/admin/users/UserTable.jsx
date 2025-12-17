@@ -76,7 +76,6 @@ export default function UserTable({
             <th className="text-left py-3 px-4 font-semibold text-gray-700">Usuário</th>
             <th className="text-left py-3 px-4 font-semibold text-gray-700">Cargo</th>
             <th className="text-left py-3 px-4 font-semibold text-gray-700">Perfil</th>
-            <th className="text-left py-3 px-4 font-semibold text-gray-700">Admin Responsável</th>
             <th className="text-left py-3 px-4 font-semibold text-gray-700">Último Login</th>
             <th className="text-center py-3 px-4 font-semibold text-gray-700">Ações</th>
           </tr>
@@ -101,9 +100,6 @@ export default function UserTable({
                 <td className="py-3 px-4 text-sm text-gray-700">{user.position}</td>
                 <td className="py-3 px-4">
                   <Badge variant="outline">{getProfileName(user.profile_id)}</Badge>
-                </td>
-                <td className="py-3 px-4 text-sm text-gray-700">
-                  {getAdminName(user.admin_responsavel_id)}
                 </td>
                 <td className="py-3 px-4">
                   <div className="flex flex-col gap-2">

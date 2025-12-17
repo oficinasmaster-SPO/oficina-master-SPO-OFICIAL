@@ -43,20 +43,11 @@ Deno.serve(async (req) => {
           error: 'Profile ID é obrigatório' 
         }, { status: 400 });
       }
-      
-      if (!user_data.admin_responsavel_id) {
-        console.error("❌ Admin Responsável não fornecido");
-        return Response.json({ 
-          success: false,
-          error: 'Administrador responsável é obrigatório' 
-        }, { status: 400 });
-      }
 
       // Criar Employee com todos os dados
       console.log("Criando Employee com:", {
         email,
         profile_id: user_data.profile_id,
-        admin_responsavel_id: user_data.admin_responsavel_id,
         role: user_data.role
       });
       
@@ -69,7 +60,6 @@ Deno.serve(async (req) => {
         job_role: 'consultor',
         status: 'ativo',
         profile_id: user_data.profile_id,
-        admin_responsavel_id: user_data.admin_responsavel_id,
         user_status: user_data.user_status || 'ativo',
         is_internal: true,
         audit_log: user_data.audit_log || []
@@ -83,14 +73,6 @@ Deno.serve(async (req) => {
       console.log("   - ID:", newEmployee.id);
       console.log("   - Email:", newEmployee.email);
       console.log("   - Profile ID salvo:", newEmployee.profile_id);
-      console.log("   - Admin Responsável:", newEmployee.admin_responsavel_id);
-
-      // Verificar se os dados foram salvos
-      const employeeVerify = await base44.asServiceRole.entities.Employee.get(newEmployee.id);
-      console.log("🔍 Verificando Employee criado:", {
-        profile_id: employeeVerify.profile_id,
-        admin_responsavel_id: employeeVerify.admin_responsavel_id
-      });
 
       // Retornar sucesso com credenciais
       return Response.json({

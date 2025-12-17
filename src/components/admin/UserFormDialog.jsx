@@ -20,7 +20,6 @@ export default function UserFormDialog({
 }) {
   const [selectedProfileId, setSelectedProfileId] = useState(selectedUser?.profile_id || "");
   const [formData, setFormData] = useState({
-    admin_responsavel_id: selectedUser?.admin_responsavel_id || "",
     role: selectedUser?.role || "user"
   });
   
@@ -28,7 +27,6 @@ export default function UserFormDialog({
   React.useEffect(() => {
     console.log("🔍 Estado inicial do formulário:", {
       selectedProfileId,
-      admin_responsavel_id: formData.admin_responsavel_id,
       role: formData.role,
       isCreateMode
     });
@@ -50,14 +48,6 @@ export default function UserFormDialog({
       setSelectedProfileId("");
       console.log("🆕 Modo criação - perfil limpo");
     }
-    
-    if (selectedUser?.admin_responsavel_id) {
-      setFormData({admin_responsavel_id: selectedUser.admin_responsavel_id});
-      console.log("✅ Admin Responsável definido:", selectedUser.admin_responsavel_id);
-    } else if (isCreateMode) {
-      setFormData({admin_responsavel_id: ""});
-      console.log("🆕 Modo criação - admin limpo");
-    }
   }, [selectedUser, isCreateMode]);
   
   const selectedProfile = profiles?.find(p => p.id === selectedProfileId);
@@ -78,26 +68,19 @@ export default function UserFormDialog({
       return;
     }
     
-    if (!formData.admin_responsavel_id) {
-      alert("Por favor, selecione um administrador responsável");
-      return;
-    }
-    
     const data = {
       full_name: formDataObj.get('full_name'),
       email: formDataObj.get('email'),
       telefone: formDataObj.get('telefone'),
       position: formDataObj.get('position'),
       profile_id: selectedProfileId,
-      admin_responsavel_id: formData.admin_responsavel_id,
       user_status: formDataObj.get('user_status') || 'ativo',
       role: isCreateMode ? formData.role : undefined
     };
 
     console.log("📤 Enviando dados:", {
       ...data,
-      profile_name: profiles?.find(p => p.id === selectedProfileId)?.name,
-      admin_name: admins?.find(a => a.id === formData.admin_responsavel_id)?.full_name
+      profile_name: profiles?.find(p => p.id === selectedProfileId)?.name
     });
     
     onSubmit(data);
@@ -244,63 +227,27 @@ export default function UserFormDialog({
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-gray-900 border-b pb-2">Administração</h3>
             
-            {isCreateMode && (
-              <div>
-                <Label>Nível de Acesso no Sistema *</Label>
-                <Select 
-                  value={formData.role}
-                  onValueChange={(value) => setFormData({...formData, role: value})}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="user">Usuário Padrão</SelectItem>
-                    <SelectItem value="admin">Administrador do Sistema</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-gray-500 mt-1">
-                  Admin = acesso total; Usuário = permissões do perfil
-                </p>
-              </div>
-            )}
-            
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Administrador Responsável *</Label>
-                <Select 
-                  name="admin_responsavel_id" 
-                  value={formData.admin_responsavel_id || selectedUser?.admin_responsavel_id || ""}
-                  onValueChange={(value) => setFormData({...formData, admin_responsavel_id: value})}
-                  required
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o admin responsável">
-                      {(() => {
-                        const selectedAdmin = admins?.find(a => a.id === (formData.admin_responsavel_id || selectedUser?.admin_responsavel_id));
-                        return selectedAdmin ? (selectedAdmin.full_name || selectedAdmin.email) : "Selecione o admin responsável";
-                      })()}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {!admins || admins.length === 0 ? (
-                      <div className="p-2 text-xs text-gray-500 text-center">
-                        Nenhum admin disponível
-                      </div>
-                    ) : (
-                      admins.map(admin => (
-                        <SelectItem key={admin.id} value={admin.id}>
-                          {admin.full_name || admin.email}
-                          {admin.position && <span className="text-xs text-gray-500"> • {admin.position}</span>}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-gray-500 mt-1">
-                  Administrador que supervisionará este usuário
-                </p>
-              </div>
+              {isCreateMode && (
+                <div>
+                  <Label>Nível de Acesso no Sistema *</Label>
+                  <Select 
+                    value={formData.role}
+                    onValueChange={(value) => setFormData({...formData, role: value})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="user">Usuário Padrão</SelectItem>
+                      <SelectItem value="admin">Administrador do Sistema</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Admin = acesso total; Usuário = permissões do perfil
+                  </p>
+                </div>
+              )}
 
               {!isCreateMode && (
                 <div>

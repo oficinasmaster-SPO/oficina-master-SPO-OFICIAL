@@ -91,7 +91,6 @@ export default function UsuariosAdmin() {
           telefone: data.telefone,
           position: data.position,
           profile_id: data.profile_id,
-          admin_responsavel_id: data.admin_responsavel_id,
           user_status: 'ativo',
           role: data.role || 'user',
           is_internal: true,
@@ -162,7 +161,6 @@ export default function UsuariosAdmin() {
         telefone: data.telefone,
         position: data.position,
         profile_id: data.profile_id,
-        admin_responsavel_id: data.admin_responsavel_id,
         user_status: data.user_status,
         audit_log: [...currentAuditLog, auditEntry]
       });
