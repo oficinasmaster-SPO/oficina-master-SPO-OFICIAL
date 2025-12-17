@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
       return [...acc, ...(role.system_roles || [])];
     }, []);
 
-    // Mapear módulos acessíveis
+    // Mapear módulos acessíveis com contagem
     const systemRolesMap = {
       dashboard: ['dashboard.view', 'dashboard.edit', 'dashboard.export'],
       workshop: ['workshop.view', 'workshop.edit', 'workshop.manage_goals'],
@@ -56,15 +56,36 @@ Deno.serve(async (req) => {
     };
 
     const accessibleModules = Object.entries(systemRolesMap).reduce((acc, [module, roles]) => {
-      const hasAccess = roles.some(role => allSystemRoles.includes(role));
-      if (hasAccess) {
+      const matchedRoles = roles.filter(role => allSystemRoles.includes(role));
+      if (matchedRoles.length > 0) {
         acc[module] = {
           accessible: true,
-          roles: roles.filter(role => allSystemRoles.includes(role))
+          roles: matchedRoles,
+          permission_count: matchedRoles.length,
+          total_possible: roles.length,
+          coverage_percentage: Math.round((matchedRoles.length / roles.length) * 100)
         };
       }
       return acc;
     }, {});
+
+    // Analytics por role
+    const roleAnalytics = customRoles.map(role => ({
+      role_id: role.id,
+      role_name: role.name,
+      users_with_role: profileUsers.length,
+      system_roles_count: role.system_roles?.length || 0,
+      modules_accessible: Object.keys(systemRolesMap).filter(module =>
+        systemRolesMap[module].some(sr => role.system_roles?.includes(sr))
+      ).length
+    }));
+
+    // Distribuição de permissões
+    const permissionDistribution = Object.entries(accessibleModules).map(([module, data]) => ({
+      module,
+      permissions: data.permission_count,
+      coverage: data.coverage_percentage
+    }));
 
     // Gerar relatório
     const report = {
@@ -86,10 +107,15 @@ Deno.serve(async (req) => {
       permissions_summary: {
         total_custom_roles: customRoles.length,
         total_system_roles: allSystemRoles.length,
+        unique_system_roles: [...new Set(allSystemRoles)].length,
         accessible_modules: Object.keys(accessibleModules).length,
-        users_affected: profileUsers.length
+        total_modules: Object.keys(systemRolesMap).length,
+        users_affected: profileUsers.length,
+        coverage_percentage: Math.round((Object.keys(accessibleModules).length / Object.keys(systemRolesMap).length) * 100)
       },
       accessible_modules: accessibleModules,
+      permission_distribution: permissionDistribution,
+      role_analytics: roleAnalytics,
       users_affected: profileUsers.map(u => ({
         id: u.id,
         email: u.email,
