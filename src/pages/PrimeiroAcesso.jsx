@@ -174,15 +174,12 @@ export default function PrimeiroAcesso() {
       console.log("📥 Resposta registro:", data);
 
       if (data.success) {
-        // Limpar token da URL para evitar revalidação
-        window.history.replaceState({}, document.title, window.location.pathname);
+        toast.success("✅ Cadastro confirmado! Redirecionando para criar sua senha...", { duration: 5000 });
         
-        toast.success("✅ Cadastro confirmado! Redirecionando...", { duration: 2000 });
-        
-        // Redirecionar imediatamente para login
+        // Redirecionar para login após 2 segundos
         setTimeout(() => {
           window.location.href = `${window.location.origin}/login`;
-        }, 1000);
+        }, 2000);
       } else {
         throw new Error(data.error || "Erro ao finalizar cadastro");
       }
