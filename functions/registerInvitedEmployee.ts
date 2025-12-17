@@ -34,6 +34,8 @@ Deno.serve(async (req) => {
 
     // Detectar tipo de convite usando campo explícito
     const isInternalUser = invite.invite_type === 'internal';
+
+    console.log("🔍 Metadados do convite:", invite.metadata);
     
     console.log("🔍 Tipo de convite:", invite.invite_type);
     
@@ -114,8 +116,7 @@ Deno.serve(async (req) => {
 
     console.log("✅ Convite marcado como concluído e token invalidado");
 
-    // Criar ou atualizar User vinculado à oficina
-    // IMPORTANTE: User precisa dos campos obrigatórios preenchidos
+    // Criar ou atualizar User vinculado
     try {
       const allUsers = await base44.asServiceRole.entities.User.filter({ email: email || invite.email });
       const existingUser = allUsers[0];
@@ -124,39 +125,32 @@ Deno.serve(async (req) => {
         position: invite.position,
         job_role: invite.job_role || (isInternalUser ? 'consultor' : 'outros'),
         area: invite.area || (isInternalUser ? 'administrativo' : 'tecnico'),
-        telefone: phone || '(00) 00000-0000',
+        telefone: phone || invite.metadata?.telefone || '(00) 00000-0000',
         profile_picture_url: profile_picture_url || '',
         hire_date: employee.hire_date || new Date().toISOString().split('T')[0],
-        user_status: 'ativo',
+        user_status: 'active',
         is_internal: isInternalUser
       };
-      
-      // Adicionar workshop_id apenas para usuários externos
-      if (!isInternalUser) {
+
+      // Adicionar dados específicos por tipo
+      if (isInternalUser) {
+        userDataToUpdate.role = invite.metadata?.role || 'user';
+        userDataToUpdate.profile_id = invite.metadata?.profile_id || null;
+      } else {
         userDataToUpdate.workshop_id = invite.workshop_id;
       }
 
       console.log("👤 Dados do User a serem salvos:", userDataToUpdate);
 
       if (existingUser) {
-        // Atualizar User existente com dados da oficina
         await base44.asServiceRole.entities.User.update(existingUser.id, userDataToUpdate);
-        
-        // Vincular User ao Employee
-        await base44.asServiceRole.entities.Employee.update(employee.id, {
-          user_id: existingUser.id
-        });
-        
-        console.log("✅ User existente atualizado e vinculado:", existingUser.id);
+        await base44.asServiceRole.entities.Employee.update(employee.id, { user_id: existingUser.id });
+        console.log("✅ User existente atualizado:", existingUser.id);
       } else {
-        // NÃO criar novo User - o usuário precisa criar conta via login
-        // Apenas registrar o Employee para quando ele fizer login ser vinculado
-        console.log("ℹ️ User não existe ainda - será criado no primeiro login");
+        console.log("ℹ️ User será criado no primeiro login");
       }
     } catch (userError) {
-      console.error("❌ Erro ao criar/vincular User:", userError);
-      console.error("❌ Stack trace:", userError.stack);
-      // NÃO bloqueia o processo - colaborador foi criado com sucesso
+      console.error("❌ Erro ao vincular User:", userError);
     }
 
     // Enviar email com instruções de acesso
@@ -166,21 +160,44 @@ Deno.serve(async (req) => {
       const origin = req.headers.get('origin') || 'https://oficinasmastergtr.com';
       const loginUrl = `${origin}/login`;
       
-      // Criar permissões padrão apenas para usuários externos
-      if (!isInternalUser && invite.workshop_id) {
+      // Criar permissões baseadas no tipo
+      if (isInternalUser && invite.metadata?.profile_id) {
         try {
-          console.log("🔐 Criando permissões padrão...");
+          console.log("🔐 Criando permissões para usuário interno...");
+          console.log("📋 Profile ID:", invite.metadata.profile_id);
+
+          const profile = await base44.asServiceRole.entities.UserProfile.get(invite.metadata.profile_id);
+
+          if (profile) {
+            await base44.asServiceRole.entities.UserPermission.create({
+              user_id: employee.id,
+              user_email: email || invite.email,
+              profile_id: invite.metadata.profile_id,
+              profile_name: profile.name,
+              custom_roles: profile.roles || [],
+              custom_role_ids: profile.custom_role_ids || [],
+              module_permissions: profile.module_permissions || {},
+              sidebar_permissions: profile.sidebar_permissions || {},
+              is_active: true,
+              created_at: new Date().toISOString()
+            });
+            console.log("✅ Permissões internas criadas!");
+          }
+        } catch (permError) {
+          console.error("⚠️ Erro ao criar permissões internas:", permError);
+        }
+      } else if (!isInternalUser && invite.workshop_id) {
+        try {
+          console.log("🔐 Criando permissões para colaborador de oficina...");
           await base44.asServiceRole.functions.invoke('createDefaultPermissions', {
             user_id: existingUser?.id || 'pending',
             workshop_id: invite.workshop_id,
             job_role: invite.job_role || 'outros'
           });
-          console.log("✅ Permissões padrão configuradas!");
+          console.log("✅ Permissões de oficina criadas!");
         } catch (permError) {
-          console.error("⚠️ Erro ao criar permissões (não crítico):", permError);
+          console.error("⚠️ Erro ao criar permissões:", permError);
         }
-      } else {
-        console.log("ℹ️ Usuário interno - permissões via perfil configurado");
       }
 
       console.log("📧 Enviando email para:", email || invite.email);
