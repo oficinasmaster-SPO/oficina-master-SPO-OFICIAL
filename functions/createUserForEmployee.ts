@@ -5,7 +5,7 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     
     // Validar autenticação usando service role
-    const { employee_data, workshop_id, employee_id, user_data, email, full_name } = await req.json();
+    const { employee_data, workshop_id, employee_id, user_data, email, full_name, invite_type = 'workshop' } = await req.json();
 
     // Modo novo: criar usuário interno
     if (user_data && email && full_name) {

@@ -104,11 +104,12 @@ export default function UsuariosAdmin() {
 
         console.log("📤 Enviando dados para criação:", userData);
 
-        // 2. Criar User via função backend (que cria conta e senha)
+        // 2. Criar User via função backend (que cria convite interno)
         const result = await base44.functions.invoke('createUserForEmployee', {
           user_data: userData,
           email: data.email,
-          full_name: data.full_name
+          full_name: data.full_name,
+          invite_type: 'internal'
         });
 
         console.log("✅ Resultado da criação:", result.data);
