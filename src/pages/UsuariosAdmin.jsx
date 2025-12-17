@@ -529,20 +529,38 @@ export default function UsuariosAdmin() {
               </div>
             </div>
 
+            {resetPasswordDialog.permissionsCreated && (
+              <Alert className="bg-green-50 border-green-200 mb-3">
+                <CheckCircle className="w-4 h-4 text-green-600" />
+                <AlertDescription className="text-xs text-green-800">
+                  <p className="font-semibold">✅ Permissões Configuradas</p>
+                  <p className="mt-1">Todas as roles e módulos do perfil foram salvos no banco de dados.</p>
+                </AlertDescription>
+              </Alert>
+            )}
+
             <Alert className="bg-blue-50 border-blue-200">
               <AlertTriangle className="w-4 h-4 text-blue-600" />
               <AlertDescription className="text-xs text-blue-800">
                 <p className="font-semibold mb-3">📋 Instruções para Finalizar Cadastro:</p>
                 
                 <div className="bg-white rounded-lg p-3 mb-3">
-                  <p className="font-semibold text-blue-900 mb-2">1️⃣ Convidar via Dashboard Base44:</p>
-                  <ol className="list-decimal list-inside space-y-1 ml-2 text-xs">
-                    <li>Acesse: <a href="https://base44.com/dashboard" target="_blank" className="text-blue-600 underline">base44.com/dashboard</a></li>
-                    <li>Vá em <strong>Settings → Users → Invite User</strong></li>
-                    <li>Email: <strong className="text-blue-900">{resetPasswordDialog.email}</strong></li>
-                    <li>Role: <strong className="text-blue-900">{resetPasswordDialog.role || 'user'}</strong></li>
-                    <li>Clique em <strong>Send Invite</strong></li>
-                  </ol>
+                  <p className="font-semibold text-blue-900 mb-2">1️⃣ Dashboard Base44 está abrindo automaticamente:</p>
+                  <div className="space-y-2">
+                    <p className="text-xs">• Vá em <strong>Settings → Users → Invite User</strong></p>
+                    <p className="text-xs">• Email: <strong className="text-blue-900">{resetPasswordDialog.email}</strong></p>
+                    <p className="text-xs">• Role: <strong className="text-blue-900">{resetPasswordDialog.role || 'user'}</strong></p>
+                    <p className="text-xs">• Clique em <strong>Send Invite</strong></p>
+                  </div>
+                  {resetPasswordDialog.dashboardUrl && (
+                    <Button
+                      size="sm"
+                      className="mt-2 w-full"
+                      onClick={() => window.open(resetPasswordDialog.dashboardUrl, '_blank')}
+                    >
+                      🔗 Abrir Dashboard Base44
+                    </Button>
+                  )}
                 </div>
 
                 <div className="bg-white rounded-lg p-3">
