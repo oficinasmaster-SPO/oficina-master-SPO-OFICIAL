@@ -74,6 +74,55 @@ Deno.serve(async (req) => {
       console.log("   - Email:", newEmployee.email);
       console.log("   - Profile ID salvo:", newEmployee.profile_id);
 
+      // Criar permissões baseadas no perfil
+      try {
+        console.log("🔐 Criando permissões do perfil...");
+        
+        const profile = await base44.asServiceRole.entities.UserProfile.get(user_data.profile_id);
+        
+        if (profile) {
+          // Criar UserPermission baseada no perfil
+          await base44.asServiceRole.entities.UserPermission.create({
+            user_id: newEmployee.id,
+            user_email: email,
+            profile_id: user_data.profile_id,
+            custom_roles: profile.roles || [],
+            module_permissions: profile.module_permissions || {},
+            sidebar_permissions: profile.sidebar_permissions || {},
+            is_active: true
+          });
+          
+          console.log("✅ Permissões criadas com sucesso");
+        }
+      } catch (permError) {
+        console.error("❌ Erro ao criar permissões:", permError);
+      }
+
+      // Registrar atividade
+      try {
+        console.log("📊 Registrando atividade de criação...");
+        
+        const adminUser = await base44.auth.me();
+        
+        await base44.asServiceRole.entities.UserActivityLog.create({
+          user_id: adminUser.id,
+          user_email: adminUser.email,
+          action: 'user_created',
+          module: 'admin_usuarios',
+          details: {
+            created_user_email: email,
+            created_user_name: full_name,
+            profile_id: user_data.profile_id,
+            role: user_data.role || 'user'
+          },
+          timestamp: new Date().toISOString()
+        });
+        
+        console.log("✅ Atividade registrada");
+      } catch (activityError) {
+        console.error("❌ Erro ao registrar atividade:", activityError);
+      }
+
       // Email automático não funciona pois o usuário precisa estar no dashboard Base44 primeiro
       console.log("📝 Email não enviado - usuário precisa ser convidado via dashboard primeiro");
 
