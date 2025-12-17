@@ -119,23 +119,17 @@ export default function UsuariosAdmin() {
       queryClient.invalidateQueries(['admin-users']);
       queryClient.invalidateQueries(['user-profiles']);
       
-      if (result.password && result.email && result.dashboard_url) {
-        toast.success("Usuário criado! Abrindo Dashboard Base44...", { duration: 3000 });
+      if (result.invite_url && result.email) {
+        toast.success("Usuário criado! Email de convite enviado.", { duration: 3000 });
         
         setResetPasswordDialog({ 
           open: true, 
-          password: result.password, 
+          inviteUrl: result.invite_url,
           email: result.email,
           role: result.role || 'user',
           loginUrl: 'https://oficinasmastergtr.com',
-          dashboardUrl: result.dashboard_url,
           permissionsCreated: result.permissions_created
         });
-        
-        // Abrir Dashboard Base44 automaticamente após 2 segundos
-        setTimeout(() => {
-          window.open(result.dashboard_url, '_blank');
-        }, 2000);
       } else {
         console.error("❌ Dados incompletos:", result);
         toast.error("Erro ao criar usuário");
@@ -481,113 +475,68 @@ export default function UsuariosAdmin() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CheckCircle className="w-5 h-5 text-green-600" />
-              Colaborador Criado!
+              Usuário Criado com Sucesso!
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-sm font-semibold text-blue-800 mb-2">
-                📧 Email
-              </p>
-              <div className="flex items-center gap-2">
-                <Input
-                  value={resetPasswordDialog.email}
-                  readOnly
-                  className="text-sm bg-white"
-                />
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    navigator.clipboard.writeText(resetPasswordDialog.email);
-                    toast.success("Email copiado!");
-                  }}
-                >
-                  <Copy className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <p className="text-sm font-semibold text-yellow-800 mb-2">
-                🔑 Senha Temporária
-              </p>
-              <div className="flex items-center gap-2">
-                <Input
-                  value={resetPasswordDialog.password}
-                  readOnly
-                  className="font-mono text-sm bg-white"
-                />
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    navigator.clipboard.writeText(resetPasswordDialog.password);
-                    toast.success("Senha copiada!");
-                  }}
-                >
-                  <Copy className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
+            <Alert className="bg-green-50 border-green-200">
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              <AlertDescription className="text-sm text-green-800">
+                <p className="font-semibold mb-2">✅ Email de Convite Enviado</p>
+                <p>O usuário receberá um email em <strong>{resetPasswordDialog.email}</strong> com o link para completar o cadastro e definir a senha.</p>
+              </AlertDescription>
+            </Alert>
 
             {resetPasswordDialog.permissionsCreated && (
-              <Alert className="bg-green-50 border-green-200 mb-3">
-                <CheckCircle className="w-4 h-4 text-green-600" />
-                <AlertDescription className="text-xs text-green-800">
+              <Alert className="bg-blue-50 border-blue-200">
+                <CheckCircle className="w-4 h-4 text-blue-600" />
+                <AlertDescription className="text-xs text-blue-800">
                   <p className="font-semibold">✅ Permissões Configuradas</p>
-                  <p className="mt-1">Todas as roles e módulos do perfil foram salvos no banco de dados.</p>
+                  <p className="mt-1">Perfil e permissões já estão configurados no sistema.</p>
                 </AlertDescription>
               </Alert>
             )}
 
-            <Alert className="bg-blue-50 border-blue-200">
-              <AlertTriangle className="w-4 h-4 text-blue-600" />
-              <AlertDescription className="text-xs text-blue-800">
-                <p className="font-semibold mb-3">📋 Instruções para Finalizar Cadastro:</p>
-                
-                <div className="bg-white rounded-lg p-3 mb-3">
-                  <p className="font-semibold text-blue-900 mb-2">1️⃣ Dashboard Base44 está abrindo automaticamente:</p>
-                  <div className="space-y-2">
-                    <p className="text-xs">• Vá em <strong>Settings → Users → Invite User</strong></p>
-                    <p className="text-xs">• Email: <strong className="text-blue-900">{resetPasswordDialog.email}</strong></p>
-                    <p className="text-xs">• Role: <strong className="text-blue-900">{resetPasswordDialog.role || 'user'}</strong></p>
-                    <p className="text-xs">• Clique em <strong>Send Invite</strong></p>
-                  </div>
-                  {resetPasswordDialog.dashboardUrl && (
-                    <Button
-                      size="sm"
-                      className="mt-2 w-full"
-                      onClick={() => window.open(resetPasswordDialog.dashboardUrl, '_blank')}
-                    >
-                      🔗 Abrir Dashboard Base44
-                    </Button>
-                  )}
-                </div>
-
-                <div className="bg-white rounded-lg p-3">
-                  <p className="font-semibold text-blue-900 mb-2">2️⃣ Enviar Credenciais ao Usuário:</p>
-                  <p className="text-xs mb-2">Compartilhe essas informações com o novo colaborador:</p>
-                  <div className="bg-gray-50 p-2 rounded text-xs space-y-1">
-                    <p>📧 <strong>Email:</strong> {resetPasswordDialog.email}</p>
-                    <p>🔑 <strong>Senha temporária:</strong> {resetPasswordDialog.password}</p>
-                    <p>🌐 <strong>Login:</strong> https://oficinasmastergtr.com</p>
-                  </div>
-                </div>
-
-                <p className="text-xs text-blue-600 mt-3">
-                  💡 Após seguir esses passos, o usuário poderá fazer login com as credenciais fornecidas.
-                </p>
-              </AlertDescription>
-            </Alert>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-sm font-semibold text-blue-800 mb-2">
+                🔗 Link de Primeiro Acesso
+              </p>
+              <div className="flex items-center gap-2">
+                <Input
+                  value={resetPasswordDialog.inviteUrl || ''}
+                  readOnly
+                  className="text-xs bg-white"
+                />
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    navigator.clipboard.writeText(resetPasswordDialog.inviteUrl);
+                    toast.success("Link copiado!");
+                  }}
+                >
+                  <Copy className="w-4 h-4" />
+                </Button>
+              </div>
+              <p className="text-xs text-gray-600 mt-2">
+                💡 Caso o email não chegue, você pode enviar este link manualmente
+              </p>
+            </div>
 
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
               <p className="text-xs text-gray-600">
-                💡 O perfil e permissões já estão configurados no sistema.
+                <strong>Próximos passos:</strong>
               </p>
+              <ol className="text-xs text-gray-600 mt-2 space-y-1 ml-4 list-decimal">
+                <li>Usuário recebe email com link de convite</li>
+                <li>Clica no link e completa o cadastro</li>
+                <li>Define sua senha de acesso</li>
+                <li>Faz login em: <strong>https://oficinasmastergtr.com</strong></li>
+              </ol>
             </div>
 
             <Button
               className="w-full"
-              onClick={() => setResetPasswordDialog({ open: false, password: "", email: "", loginUrl: "", role: "" })}
+              onClick={() => setResetPasswordDialog({ open: false, inviteUrl: "", email: "", loginUrl: "", role: "" })}
             >
               Entendi
             </Button>

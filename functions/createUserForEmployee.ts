@@ -146,41 +146,90 @@ Deno.serve(async (req) => {
         console.error("❌ Erro ao registrar atividade:", activityError);
       }
 
-      // Usuários internos NÃO usam link de primeiro acesso
-      // Eles devem ser convidados via Dashboard Base44
-      console.log("📝 Usuário interno criado - convite via Dashboard Base44 necessário");
-      console.log("📧 Email:", email);
-      console.log("🔑 Senha temporária:", tempPassword);
-      console.log("👤 Role:", user_data.role || 'user');
+      // Criar convite para primeiro acesso
+      const inviteToken = crypto.randomUUID();
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7); // 7 dias para completar cadastro
+
+      const invite = await base44.asServiceRole.entities.EmployeeInvite.create({
+        employee_id: newEmployee.id,
+        workshop_id: null, // Usuário interno não tem workshop
+        name: full_name,
+        email: email,
+        position: user_data.position,
+        job_role: 'consultor',
+        area: 'administrativo',
+        invite_token: inviteToken,
+        status: 'enviado',
+        sent_at: new Date().toISOString(),
+        expires_at: expiresAt.toISOString()
+      });
+
+      console.log("✅ Convite criado:", invite.id);
+
+      // Enviar email com link de primeiro acesso
+      const origin = 'https://oficinasmastergtr.com';
+      const inviteUrl = `${origin}/PrimeiroAcesso?token=${inviteToken}`;
+
+      try {
+        await base44.asServiceRole.integrations.Core.SendEmail({
+          to: email,
+          subject: 'Bem-vindo à Equipe Oficinas Master - Complete seu Cadastro',
+          body: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #2563eb;">Olá, ${full_name}!</h2>
+              
+              <p>Você foi adicionado à equipe interna da <strong>Oficinas Master</strong> como <strong>${user_data.position}</strong>.</p>
+              
+              <p>Para começar a trabalhar, você precisa completar seu cadastro e criar sua senha de acesso.</p>
+              
+              <h3 style="color: #1e40af;">Complete seu Cadastro:</h3>
+              
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${inviteUrl}" 
+                   style="background-color: #2563eb; color: white; padding: 15px 30px; 
+                          text-decoration: none; border-radius: 8px; display: inline-block;
+                          font-weight: bold;">
+                  Completar Cadastro
+                </a>
+              </div>
+              
+              <p style="color: #666; font-size: 14px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+                <strong>Importante:</strong> Este link expira em 7 dias. Se precisar de um novo link, entre em contato com o administrador.
+              </p>
+              
+              <p style="color: #666; font-size: 12px; margin-top: 20px;">
+                Email de login: <strong>${email}</strong>
+              </p>
+            </div>
+          `
+        });
+        console.log("✅ Email de convite enviado");
+      } catch (emailError) {
+        console.error("❌ Erro ao enviar email:", emailError);
+      }
 
       // Validar se permissões foram criadas
       if (!permissionsCreated) {
-        console.error("❌ Falha ao criar permissões - revertendo criação do Employee");
+        console.error("❌ Falha ao criar permissões - revertendo criação");
         await base44.asServiceRole.entities.Employee.delete(newEmployee.id);
+        await base44.asServiceRole.entities.EmployeeInvite.delete(invite.id);
         return Response.json({
           success: false,
           error: 'Falha ao criar permissões do usuário'
         }, { status: 500 });
       }
 
-      // Retornar credenciais - Dashboard Base44 padrão sem parâmetros
-      const dashboardUrl = 'https://base44.com/dashboard';
-      
-      console.log("✅ Usuário criado com sucesso!");
-      console.log("📧 Email:", email);
-      console.log("🔑 Senha:", tempPassword);
-      console.log("👤 Role:", user_data.role || 'user');
-      console.log("🔗 Dashboard URL:", dashboardUrl);
+      console.log("✅ Usuário interno criado com sucesso!");
 
       return Response.json({
         success: true,
         employee: newEmployee,
-        password: tempPassword,
+        invite_url: inviteUrl,
         email: email,
         role: user_data.role || 'user',
-        dashboard_url: dashboardUrl,
         permissions_created: permissionsCreated,
-        message: 'Usuário interno criado com permissões! Convide via Dashboard Base44.'
+        message: 'Usuário criado! Email de convite enviado.'
       });
     }
 
