@@ -7,11 +7,13 @@ Deno.serve(async (req) => {
     // Validar autenticação usando service role
     const { employee_data, workshop_id, employee_id, user_data, email, full_name } = await req.json();
 
-    // Modo novo: criar usuário interno admin
+    // Modo novo: criar usuário interno
     if (user_data && email && full_name) {
-      console.log("=== Iniciando criação de usuário interno (Employee) ===");
+      console.log("=== Iniciando criação de usuário interno ===");
       console.log("Email:", email);
       console.log("Nome:", full_name);
+      console.log("Role:", user_data.role);
+      console.log("Profile ID:", user_data.profile_id);
 
       // Verificar se já existe Employee com este email
       const allEmployees = await base44.asServiceRole.entities.Employee.list();
@@ -25,74 +27,46 @@ Deno.serve(async (req) => {
         }, { status: 400 });
       }
 
-      // Verificar se já existe User com este email
-      const allUsers = await base44.asServiceRole.entities.User.list();
-      const existingUser = allUsers.find(u => u.email === email);
-      
-      if (existingUser) {
-        console.error("Já existe um User com este email:", email);
-        return Response.json({ 
-          success: false,
-          error: 'Já existe um usuário com este email no sistema' 
-        }, { status: 400 });
-      }
-
       // Gerar senha temporária forte
       const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%&*';
       let tempPassword = '';
       for (let i = 0; i < 12; i++) {
         tempPassword += chars.charAt(Math.floor(Math.random() * chars.length));
       }
-      console.log("Senha temporária gerada:", tempPassword);
+      console.log("✅ Senha temporária gerada:", tempPassword.substring(0, 4) + "...");
 
-      // 1. Criar User com role configurável (User não tem profile_id)
-      console.log("Criando User...");
-      const newUser = await base44.asServiceRole.entities.User.create({
-        email: email,
-        full_name: full_name,
-        role: user_data.role || 'user',
-        is_internal: true
-      });
-
-      console.log("✅ User criado! ID:", newUser.id);
-      console.log("✅ User dados:", JSON.stringify(newUser, null, 2));
-
-      // 2. Criar Employee vinculado
-      console.log("Criando Employee...");
-      console.log("Dados do Employee:", {
-        user_id: newUser.id,
-        profile_id: user_data.profile_id,
-        admin_responsavel_id: user_data.admin_responsavel_id
-      });
-
+      // Criar Employee com todos os dados
+      console.log("Criando Employee com profile_id:", user_data.profile_id);
       const newEmployee = await base44.asServiceRole.entities.Employee.create({
         full_name: full_name,
         email: email,
-        user_id: newUser.id,
         telefone: user_data.telefone || '',
         position: user_data.position || '',
         tipo_vinculo: 'interno',
         job_role: 'consultor',
         status: 'ativo',
-        profile_id: user_data.profile_id || null,
-        admin_responsavel_id: user_data.admin_responsavel_id || null,
+        profile_id: user_data.profile_id,
+        admin_responsavel_id: user_data.admin_responsavel_id,
         user_status: user_data.user_status || 'ativo',
         is_internal: true,
         audit_log: user_data.audit_log || []
       });
 
-      console.log("✅ Employee criado! ID:", newEmployee.id);
-      console.log("✅ Employee completo:", newEmployee);
+      console.log("✅ Employee criado!");
+      console.log("   - ID:", newEmployee.id);
+      console.log("   - Email:", newEmployee.email);
+      console.log("   - Profile ID salvo:", newEmployee.profile_id);
+      console.log("   - Admin Responsável:", newEmployee.admin_responsavel_id);
 
       // Retornar sucesso com credenciais
       return Response.json({
         success: true,
-        user: newUser,
         employee: newEmployee,
         password: tempPassword,
         email: email,
+        role: user_data.role || 'user',
         login_url: new URL(req.url).origin,
-        message: 'Usuário criado com sucesso'
+        message: `Colaborador interno criado. Convide pelo dashboard com role '${user_data.role || 'user'}'.`
       });
     }
 

@@ -125,11 +125,12 @@ export default function UsuariosAdmin() {
           open: true, 
           password: result.password, 
           email: result.email,
+          role: result.role || 'user',
           loginUrl: result.login_url || window.location.origin
         });
       } else {
         console.error("❌ Dados incompletos:", result);
-        toast.error("Usuário criado, mas sem senha gerada");
+        toast.error("Erro ao criar usuário");
       }
       
       setIsDialogOpen(false);
@@ -446,13 +447,13 @@ export default function UsuariosAdmin() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CheckCircle className="w-5 h-5 text-green-600" />
-              Usuário Criado com Sucesso!
+              Colaborador Criado!
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <p className="text-sm font-semibold text-blue-800 mb-2">
-                📧 Email de Acesso
+                📧 Email
               </p>
               <div className="flex items-center gap-2">
                 <Input
@@ -476,9 +477,6 @@ export default function UsuariosAdmin() {
               <p className="text-sm font-semibold text-yellow-800 mb-2">
                 🔑 Senha Temporária
               </p>
-              <p className="text-xs text-yellow-700 mb-3">
-                Copie e compartilhe com segurança
-              </p>
               <div className="flex items-center gap-2">
                 <Input
                   value={resetPasswordDialog.password}
@@ -497,39 +495,32 @@ export default function UsuariosAdmin() {
               </div>
             </div>
 
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <p className="text-sm font-semibold text-green-800 mb-2">
-                🔗 Link de Acesso
-              </p>
-              <div className="flex items-center gap-2">
-                <Input
-                  value={resetPasswordDialog.loginUrl || window.location.origin}
-                  readOnly
-                  className="text-sm bg-white"
-                />
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    navigator.clipboard.writeText(resetPasswordDialog.loginUrl || window.location.origin);
-                    toast.success("Link copiado!");
-                  }}
-                >
-                  <Copy className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
+            <Alert className="bg-amber-50 border-amber-200">
+              <AlertTriangle className="w-4 h-4 text-amber-600" />
+              <AlertDescription className="text-xs text-amber-800">
+                <p className="font-semibold mb-2">⚠️ Próximo Passo Obrigatório:</p>
+                <ol className="list-decimal list-inside space-y-1 ml-2">
+                  <li>Acesse o <strong>Dashboard Base44</strong></li>
+                  <li>Vá em <strong>Configurações → Usuários</strong></li>
+                  <li>Clique em <strong>"Convidar Usuário"</strong></li>
+                  <li>Use o email: <strong>{resetPasswordDialog.email}</strong></li>
+                  <li>Role: <strong>{resetPasswordDialog.role || 'user'}</strong></li>
+                  <li>Envie o convite</li>
+                </ol>
+              </AlertDescription>
+            </Alert>
 
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
               <p className="text-xs text-gray-600">
-                💡 <strong>Instruções:</strong> Compartilhe o email, senha e link de acesso com o usuário. No primeiro login, ele poderá alterar a senha.
+                💡 O perfil e permissões já estão configurados no sistema.
               </p>
             </div>
 
             <Button
               className="w-full"
-              onClick={() => setResetPasswordDialog({ open: false, password: "", email: "", loginUrl: "" })}
+              onClick={() => setResetPasswordDialog({ open: false, password: "", email: "", loginUrl: "", role: "" })}
             >
-              Fechar
+              Entendi
             </Button>
           </div>
         </DialogContent>
