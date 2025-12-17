@@ -43,34 +43,45 @@ ${login_url}
 
 Bem-vindo à equipe! 🚀`;
 
-    // OPÇÃO 1: Se você tiver Evolution API ou similar configurado
+    // Evolution API Integration
     const WHATSAPP_API_URL = Deno.env.get('WHATSAPP_API_URL');
     const WHATSAPP_API_KEY = Deno.env.get('WHATSAPP_API_KEY');
+    const WHATSAPP_INSTANCE = Deno.env.get('WHATSAPP_INSTANCE_NAME');
 
-    if (WHATSAPP_API_URL && WHATSAPP_API_KEY) {
-      const response = await fetch(`${WHATSAPP_API_URL}/message/sendText`, {
+    if (WHATSAPP_API_URL && WHATSAPP_API_KEY && WHATSAPP_INSTANCE) {
+      console.log("📱 Enviando WhatsApp via Evolution API...");
+      
+      // Formatar número no padrão internacional (55 + DDD + número)
+      let formattedPhone = phoneNumber;
+      if (!phoneNumber.startsWith('55')) {
+        formattedPhone = '55' + phoneNumber;
+      }
+
+      const response = await fetch(`${WHATSAPP_API_URL}/message/sendText/${WHATSAPP_INSTANCE}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'apikey': WHATSAPP_API_KEY
         },
         body: JSON.stringify({
-          number: phoneNumber,
-          text: message
+          number: formattedPhone,
+          text: message,
+          delay: 1000
         })
       });
 
       const result = await response.json();
 
       if (response.ok) {
-        console.log("✅ WhatsApp enviado com sucesso");
+        console.log("✅ WhatsApp enviado com sucesso para:", formattedPhone);
         return Response.json({
           success: true,
           message: 'Credenciais enviadas via WhatsApp',
-          phone: phoneNumber
+          phone: formattedPhone,
+          whatsapp_response: result
         });
       } else {
-        console.error("❌ Erro ao enviar WhatsApp:", result);
+        console.error("❌ Erro Evolution API:", result);
         throw new Error(result.message || 'Erro ao enviar WhatsApp');
       }
     }
