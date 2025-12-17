@@ -35,8 +35,31 @@ Deno.serve(async (req) => {
       }
       console.log("✅ Senha temporária gerada:", tempPassword.substring(0, 4) + "...");
 
+      // Validar dados obrigatórios
+      if (!user_data.profile_id) {
+        console.error("❌ Profile ID não fornecido");
+        return Response.json({ 
+          success: false,
+          error: 'Profile ID é obrigatório' 
+        }, { status: 400 });
+      }
+      
+      if (!user_data.admin_responsavel_id) {
+        console.error("❌ Admin Responsável não fornecido");
+        return Response.json({ 
+          success: false,
+          error: 'Administrador responsável é obrigatório' 
+        }, { status: 400 });
+      }
+
       // Criar Employee com todos os dados
-      console.log("Criando Employee com profile_id:", user_data.profile_id);
+      console.log("Criando Employee com:", {
+        email,
+        profile_id: user_data.profile_id,
+        admin_responsavel_id: user_data.admin_responsavel_id,
+        role: user_data.role
+      });
+      
       const newEmployee = await base44.asServiceRole.entities.Employee.create({
         full_name: full_name,
         email: email,

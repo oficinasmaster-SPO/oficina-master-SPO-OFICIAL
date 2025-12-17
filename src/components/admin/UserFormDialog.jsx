@@ -24,6 +24,16 @@ export default function UserFormDialog({
     role: selectedUser?.role || "user"
   });
   
+  // Debug inicial
+  React.useEffect(() => {
+    console.log("🔍 Estado inicial do formulário:", {
+      selectedProfileId,
+      admin_responsavel_id: formData.admin_responsavel_id,
+      role: formData.role,
+      isCreateMode
+    });
+  }, []);
+  
   // Debug: Log profiles recebidos
   React.useEffect(() => {
     console.log("🔍 Perfis disponíveis no formulário:", profiles);
@@ -62,6 +72,17 @@ export default function UserFormDialog({
     e.preventDefault();
     const formDataObj = new FormData(e.target);
     
+    // Validar campos obrigatórios
+    if (!selectedProfileId) {
+      alert("Por favor, selecione um perfil");
+      return;
+    }
+    
+    if (!formData.admin_responsavel_id) {
+      alert("Por favor, selecione um administrador responsável");
+      return;
+    }
+    
     const data = {
       full_name: formDataObj.get('full_name'),
       email: formDataObj.get('email'),
@@ -70,10 +91,15 @@ export default function UserFormDialog({
       profile_id: selectedProfileId,
       admin_responsavel_id: formData.admin_responsavel_id,
       user_status: formDataObj.get('user_status') || 'ativo',
-      role: formData.role
+      role: isCreateMode ? formData.role : undefined
     };
 
-    console.log("📤 Dados do formulário:", data);
+    console.log("📤 Enviando dados:", {
+      ...data,
+      profile_name: profiles?.find(p => p.id === selectedProfileId)?.name,
+      admin_name: admins?.find(a => a.id === formData.admin_responsavel_id)?.full_name
+    });
+    
     onSubmit(data);
   };
 
