@@ -20,7 +20,8 @@ export default function UserFormDialog({
 }) {
   const [selectedProfileId, setSelectedProfileId] = useState(selectedUser?.profile_id || "");
   const [formData, setFormData] = useState({
-    admin_responsavel_id: selectedUser?.admin_responsavel_id || ""
+    admin_responsavel_id: selectedUser?.admin_responsavel_id || "",
+    role: selectedUser?.role || "user"
   });
   
   // Debug: Log profiles recebidos
@@ -67,8 +68,9 @@ export default function UserFormDialog({
       telefone: formDataObj.get('telefone'),
       position: formDataObj.get('position'),
       profile_id: selectedProfileId,
-      admin_responsavel_id: formData.admin_responsavel_id, // Usa o state
-      user_status: formDataObj.get('user_status') || 'ativo'
+      admin_responsavel_id: formData.admin_responsavel_id,
+      user_status: formDataObj.get('user_status') || 'ativo',
+      role: formData.role
     };
 
     console.log("📤 Dados do formulário:", data);
@@ -215,6 +217,27 @@ export default function UserFormDialog({
           {/* Administração */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-gray-900 border-b pb-2">Administração</h3>
+            
+            {isCreateMode && (
+              <div>
+                <Label>Nível de Acesso no Sistema *</Label>
+                <Select 
+                  value={formData.role}
+                  onValueChange={(value) => setFormData({...formData, role: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="user">Usuário Padrão</SelectItem>
+                    <SelectItem value="admin">Administrador do Sistema</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Admin = acesso total; Usuário = permissões do perfil
+                </p>
+              </div>
+            )}
             
             <div className="grid grid-cols-2 gap-4">
               <div>
