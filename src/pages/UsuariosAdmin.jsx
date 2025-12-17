@@ -127,7 +127,7 @@ export default function UsuariosAdmin() {
           password: result.password, 
           email: result.email,
           role: result.role || 'user',
-          loginUrl: window.location.origin,
+          loginUrl: 'https://oficinasmastergtr.com',
           dashboardUrl: result.dashboard_url,
           permissionsCreated: result.permissions_created
         });
@@ -223,7 +223,7 @@ export default function UsuariosAdmin() {
         password: data.temporary_password,
         email: data.email,
         role: data.role,
-        loginUrl: window.location.origin
+        loginUrl: 'https://oficinasmastergtr.com'
       });
       toast.success("Acesso reenviado!");
     },
@@ -569,7 +569,7 @@ export default function UsuariosAdmin() {
                   <div className="bg-gray-50 p-2 rounded text-xs space-y-1">
                     <p>📧 <strong>Email:</strong> {resetPasswordDialog.email}</p>
                     <p>🔑 <strong>Senha temporária:</strong> {resetPasswordDialog.password}</p>
-                    <p>🌐 <strong>Login:</strong> {window.location.origin}</p>
+                    <p>🌐 <strong>Login:</strong> https://oficinasmastergtr.com</p>
                   </div>
                 </div>
 
