@@ -45,20 +45,17 @@ Deno.serve(async (req) => {
       }
       console.log("Senha temporária gerada:", tempPassword);
 
-      // 1. Criar User com role configurável
+      // 1. Criar User com role configurável (User não tem profile_id)
       console.log("Criando User...");
       const newUser = await base44.asServiceRole.entities.User.create({
         email: email,
         full_name: full_name,
         role: user_data.role || 'user',
-        position: user_data.position,
-        profile_id: user_data.profile_id,
-        telefone: user_data.telefone,
-        user_status: user_data.user_status || 'ativo',
         is_internal: true
       });
 
       console.log("✅ User criado! ID:", newUser.id);
+      console.log("✅ User dados:", JSON.stringify(newUser, null, 2));
 
       // 2. Criar Employee vinculado
       console.log("Criando Employee...");

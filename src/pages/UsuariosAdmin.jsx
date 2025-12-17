@@ -115,15 +115,23 @@ export default function UsuariosAdmin() {
       }
     },
     onSuccess: (result) => {
+      console.log("✅ Sucesso na criação:", result);
       queryClient.invalidateQueries(['admin-users']);
       queryClient.invalidateQueries(['user-profiles']);
       toast.success("Usuário criado com sucesso!");
-      setResetPasswordDialog({ 
-        open: true, 
-        password: result.password, 
-        email: result.user.email,
-        loginUrl: result.login_url || window.location.origin
-      });
+      
+      if (result.password && result.email) {
+        setResetPasswordDialog({ 
+          open: true, 
+          password: result.password, 
+          email: result.email,
+          loginUrl: result.login_url || window.location.origin
+        });
+      } else {
+        console.error("❌ Dados incompletos:", result);
+        toast.error("Usuário criado, mas sem senha gerada");
+      }
+      
       setIsDialogOpen(false);
       setIsCreateMode(false);
     },
