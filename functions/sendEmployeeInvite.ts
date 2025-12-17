@@ -118,6 +118,42 @@ Deno.serve(async (req) => {
       console.log("✅ Convite criado:", inviteId);
     }
 
+    // Para usuários internos, criar User imediatamente para aparecer na listagem
+    if (invite_type === 'internal') {
+      try {
+        const existingUsers = await base44.asServiceRole.entities.User.filter({ email });
+        
+        if (!existingUsers || existingUsers.length === 0) {
+          console.log("📝 Criando User interno para aparecer na listagem...");
+          
+          await base44.asServiceRole.entities.User.create({
+            email,
+            full_name: name,
+            position: position || 'Usuário Interno',
+            job_role: job_role || 'consultor',
+            area: area || 'administrativo',
+            telefone: telefone || '',
+            role: role || 'user',
+            is_internal: true,
+            user_status: 'pending',
+            profile_id: profile_id || null,
+            created_date: new Date().toISOString()
+          });
+          
+          console.log("✅ User interno criado (status: pending)");
+        } else {
+          console.log("ℹ️ User já existe, apenas atualizando...");
+          await base44.asServiceRole.entities.User.update(existingUsers[0].id, {
+            is_internal: true,
+            user_status: 'pending',
+            profile_id: profile_id || existingUsers[0].profile_id
+          });
+        }
+      } catch (userError) {
+        console.error("⚠️ Erro ao criar User (não crítico):", userError);
+      }
+    }
+
     // Usa o domínio de origem da requisição (oficinasmastergtr.com em produção)
     const baseUrl = origin || req.headers.get('origin') || 'https://oficinasmastergtr.com';
     const inviteUrl = `${baseUrl}/PrimeiroAcesso?token=${token}`;
