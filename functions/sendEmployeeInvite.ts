@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { name, email, position, area, job_role, initial_permission, workshop_id, workshop_name, origin, employee_id, invite_type = 'workshop', profile_id, role, telefone } = body;
+    const { name, email, position, area, job_role, initial_permission, workshop_id, workshop_name, origin, employee_id, invite_type = 'workshop', profile_id, role, telefone, company_id } = body;
 
     if (!name || !email) {
       return Response.json({ error: 'Campos obrigatórios: nome e email' }, { status: 400 });
@@ -84,6 +84,7 @@ Deno.serve(async (req) => {
       area: area || (invite_type === 'internal' ? 'administrativo' : 'tecnico'),
       job_role: job_role || (invite_type === 'internal' ? 'consultor' : 'outros'),
       initial_permission: initial_permission || 'colaborador',
+      company_id: invite_type === 'internal' ? company_id : null,
       workshop_id: invite_type === 'workshop' ? workshop_id : null,
       invite_type,
       employee_id: finalEmployeeId,

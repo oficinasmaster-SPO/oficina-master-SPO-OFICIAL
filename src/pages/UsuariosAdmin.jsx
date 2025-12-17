@@ -81,6 +81,20 @@ export default function UsuariosAdmin() {
       try {
         console.log("📤 Criando convite para usuário interno:", data);
 
+        // Buscar ou criar company da plataforma
+        let platformCompany;
+        const companies = await base44.entities.Company.filter({ type: 'platform' });
+
+        if (companies && companies.length > 0) {
+          platformCompany = companies[0];
+        } else {
+          platformCompany = await base44.entities.Company.create({
+            name: 'Oficinas Master',
+            type: 'platform',
+            status: 'active'
+          });
+        }
+
         // Enviar convite interno (não cria User/Employee ainda)
         const result = await base44.functions.invoke('sendEmployeeInvite', {
           name: data.full_name,
@@ -89,6 +103,7 @@ export default function UsuariosAdmin() {
           area: 'administrativo',
           job_role: 'consultor',
           invite_type: 'internal',
+          company_id: platformCompany.id,
           profile_id: data.profile_id,
           role: data.role || 'user',
           telefone: data.telefone,

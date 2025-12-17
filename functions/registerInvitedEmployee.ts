@@ -39,7 +39,14 @@ Deno.serve(async (req) => {
     
     console.log("🔍 Tipo de convite:", invite.invite_type);
     
-    // Validar workshop_id para colaboradores de oficina
+    // Validar company_id para internos ou workshop_id para colaboradores
+    if (isInternalUser && !invite.company_id) {
+      return Response.json({ 
+        success: false, 
+        error: 'Company obrigatório para usuários internos' 
+      }, { status: 400 });
+    }
+
     if (!isInternalUser && !invite.workshop_id) {
       return Response.json({ 
         success: false, 
