@@ -59,6 +59,14 @@ export default function Layout({ children }) {
     try {
       const authenticated = await base44.auth.isAuthenticated();
       setIsAuthenticated(authenticated);
+      
+      // Se não autenticado em página protegida, redirecionar para login
+      if (!authenticated) {
+        console.log("❌ Usuário não autenticado - redirecionando para login");
+        const currentPath = location.pathname !== '/' ? location.pathname : '';
+        base44.auth.redirectToLogin(currentPath);
+        return;
+      }
 
       if (authenticated) {
         try {
