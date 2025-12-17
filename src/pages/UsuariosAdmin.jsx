@@ -65,14 +65,10 @@ export default function UsuariosAdmin() {
   const { data: adminUsers = [], isLoading } = useQuery({
     queryKey: ['admin-users'],
     queryFn: async () => {
-      // Buscar usuários internos da entidade User
+      // Buscar APENAS usuários internos da entidade User
       const allUsers = await base44.entities.User.list();
-      // Filtrar por roles internos: admin, user (consultores/aceleradores)
-      // Excluir usuários que têm workshop_id (colaboradores externos)
-      return allUsers.filter(u => 
-        (u.role === 'admin' || u.is_internal === true) && 
-        !u.workshop_id
-      );
+      // Filtro único: is_internal === true
+      return allUsers.filter(u => u.is_internal === true);
     }
   });
 
