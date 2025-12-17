@@ -32,10 +32,18 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: 'Convite já utilizado' }, { status: 400 });
     }
 
-    // Detectar se é usuário interno (sem workshop_id)
-    const isInternalUser = !invite.workshop_id;
+    // Detectar tipo de convite usando campo explícito
+    const isInternalUser = invite.invite_type === 'internal';
     
-    console.log("🔍 Tipo de convite:", isInternalUser ? "INTERNO" : "EXTERNO");
+    console.log("🔍 Tipo de convite:", invite.invite_type);
+    
+    // Validar workshop_id para colaboradores de oficina
+    if (!isInternalUser && !invite.workshop_id) {
+      return Response.json({ 
+        success: false, 
+        error: 'Workshop obrigatório para colaboradores de oficina' 
+      }, { status: 400 });
+    }
 
     let workshop = null;
     let ownerId = null;
@@ -95,15 +103,16 @@ Deno.serve(async (req) => {
       console.log("✅ Employee criado:", employee.id);
     }
 
-    // IMPORTANTE: Atualizar convite ANTES de tentar criar/atualizar User
-    // Isso garante que o registro do colaborador foi feito
+    // Atualizar convite com status de aceito
     await base44.asServiceRole.entities.EmployeeInvite.update(invite.id, {
       status: 'concluido',
       completed_at: new Date().toISOString(),
-      employee_id: employee.id
+      employee_id: employee.id,
+      accepted_at: new Date().toISOString(),
+      created_user_id: employee.id
     });
 
-    console.log("✅ Convite marcado como concluído");
+    console.log("✅ Convite marcado como concluído e token invalidado");
 
     // Criar ou atualizar User vinculado à oficina
     // IMPORTANTE: User precisa dos campos obrigatórios preenchidos

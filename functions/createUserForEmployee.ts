@@ -153,7 +153,8 @@ Deno.serve(async (req) => {
 
       const invite = await base44.asServiceRole.entities.EmployeeInvite.create({
         employee_id: newEmployee.id,
-        workshop_id: null, // Usuário interno não tem workshop
+        workshop_id: null,
+        invite_type: 'internal',
         name: full_name,
         email: email,
         position: user_data.position,
