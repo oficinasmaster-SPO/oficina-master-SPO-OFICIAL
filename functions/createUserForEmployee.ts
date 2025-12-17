@@ -74,47 +74,8 @@ Deno.serve(async (req) => {
       console.log("   - Email:", newEmployee.email);
       console.log("   - Profile ID salvo:", newEmployee.profile_id);
 
-      // Enviar email com credenciais
-      try {
-        console.log("📧 Enviando email com credenciais...");
-        const loginUrl = new URL(req.url).origin;
-        
-        const emailBody = `
-Olá ${full_name}!
-
-Sua conta foi criada com sucesso no sistema Oficinas Master.
-
-**Suas credenciais de acesso:**
-
-📧 Email: ${email}
-🔑 Senha temporária: ${tempPassword}
-
-🌐 Link de acesso: ${loginUrl}
-
-**IMPORTANTE:**
-- Esta é uma senha temporária
-- Recomendamos alterar sua senha no primeiro acesso
-- Não compartilhe suas credenciais com terceiros
-
-Se tiver dúvidas, entre em contato com o administrador.
-
----
-Oficinas Master
-Sistema de Gestão Completa
-        `.trim();
-
-        await base44.asServiceRole.integrations.Core.SendEmail({
-          to: email,
-          subject: '🔐 Suas credenciais de acesso - Oficinas Master',
-          body: emailBody,
-          from_name: 'Oficinas Master'
-        });
-
-        console.log("✅ Email enviado com sucesso para:", email);
-      } catch (emailError) {
-        console.error("❌ Erro ao enviar email:", emailError);
-        // Não falhar a criação se o email falhar
-      }
+      // Email automático não funciona pois o usuário precisa estar no dashboard Base44 primeiro
+      console.log("📝 Email não enviado - usuário precisa ser convidado via dashboard primeiro");
 
       // Retornar sucesso com credenciais
       return Response.json({
