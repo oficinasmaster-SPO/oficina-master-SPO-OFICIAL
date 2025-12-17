@@ -205,6 +205,25 @@ export default function UsuariosAdmin() {
     onError: (error) => toast.error("Erro ao resetar senha: " + error.message)
   });
 
+  const resendAccessMutation = useMutation({
+    mutationFn: async (user) => {
+      // Gera nova senha temporária
+      const result = await base44.functions.invoke('resetUserPassword', { user_id: user.id });
+      return { ...result.data, email: user.email, role: user.role || 'user' };
+    },
+    onSuccess: (data) => {
+      setResetPasswordDialog({ 
+        open: true, 
+        password: data.temporary_password,
+        email: data.email,
+        role: data.role,
+        loginUrl: window.location.origin
+      });
+      toast.success("Acesso reenviado!");
+    },
+    onError: (error) => toast.error("Erro ao reenviar acesso: " + error.message)
+  });
+
   const handleSubmit = (data) => {
     if (isCreateMode) {
       createUserMutation.mutate(data);
@@ -374,6 +393,13 @@ export default function UsuariosAdmin() {
     }
   };
 
+  const handleResendAccess = (user) => {
+    if (!user?.email) return;
+    if (confirm(`Reenviar credenciais de acesso para ${user.full_name}?\n\nUm novo email será enviado com as informações de login.`)) {
+      resendAccessMutation.mutate(user);
+    }
+  };
+
   const handleDelete = (user) => {
     if (confirm(`Excluir ${user.full_name}?\n\nEsta ação não pode ser desfeita.`)) {
       deleteUserMutation.mutate(user.id);
@@ -433,6 +459,7 @@ export default function UsuariosAdmin() {
               setIsDialogOpen(true);
             }}
             onResetPassword={handleResetPassword}
+            onResendAccess={handleResendAccess}
             onViewAudit={(user) => {
               setSelectedUser(user);
               setAuditDialogOpen(true);
