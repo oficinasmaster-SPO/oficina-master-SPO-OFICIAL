@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
         role: user_data.role
       });
       
-      const newEmployee = await base44.asServiceRole.entities.Employee.create({
+      const employeeData = {
         full_name: full_name,
         email: email,
         telefone: user_data.telefone || '',
@@ -73,13 +73,24 @@ Deno.serve(async (req) => {
         user_status: user_data.user_status || 'ativo',
         is_internal: true,
         audit_log: user_data.audit_log || []
-      });
+      };
+
+      console.log("📦 Dados completos do Employee antes de criar:", JSON.stringify(employeeData, null, 2));
+
+      const newEmployee = await base44.asServiceRole.entities.Employee.create(employeeData);
 
       console.log("✅ Employee criado!");
       console.log("   - ID:", newEmployee.id);
       console.log("   - Email:", newEmployee.email);
       console.log("   - Profile ID salvo:", newEmployee.profile_id);
       console.log("   - Admin Responsável:", newEmployee.admin_responsavel_id);
+
+      // Verificar se os dados foram salvos
+      const employeeVerify = await base44.asServiceRole.entities.Employee.get(newEmployee.id);
+      console.log("🔍 Verificando Employee criado:", {
+        profile_id: employeeVerify.profile_id,
+        admin_responsavel_id: employeeVerify.admin_responsavel_id
+      });
 
       // Retornar sucesso com credenciais
       return Response.json({
