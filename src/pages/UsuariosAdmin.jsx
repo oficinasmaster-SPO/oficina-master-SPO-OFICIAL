@@ -108,27 +108,6 @@ export default function UsuariosAdmin() {
 
         console.log("✅ Resultado da criação:", result.data);
 
-        // 3. Enviar credenciais via WhatsApp
-        if (result.data.password && data.telefone) {
-          try {
-            const whatsappResult = await base44.functions.invoke('sendWhatsAppCredentials', {
-              phone: data.telefone,
-              email: data.email,
-              password: result.data.password,
-              login_url: result.data.login_url || window.location.origin,
-              full_name: data.full_name
-            });
-            
-            console.log("✅ WhatsApp enviado:", whatsappResult.data);
-            if (whatsappResult.data.success) {
-              toast.success("Credenciais enviadas via WhatsApp!");
-            }
-          } catch (whatsappError) {
-            console.error("⚠️ Erro ao enviar WhatsApp:", whatsappError);
-            toast.warning("Usuário criado, mas falha ao enviar WhatsApp");
-          }
-        }
-
         return result.data;
       } catch (error) {
         console.error("❌ Erro ao criar usuário:", error);
@@ -228,24 +207,6 @@ export default function UsuariosAdmin() {
     mutationFn: async (user) => {
       // Gera nova senha temporária
       const result = await base44.functions.invoke('resetUserPassword', { user_id: user.id });
-      
-      // Enviar via WhatsApp se tiver telefone
-      if (user.telefone) {
-        try {
-          await base44.functions.invoke('sendWhatsAppCredentials', {
-            phone: user.telefone,
-            email: user.email,
-            password: result.data.temporary_password,
-            login_url: window.location.origin,
-            full_name: user.full_name
-          });
-          toast.success("Credenciais enviadas via WhatsApp!");
-        } catch (whatsappError) {
-          console.error("⚠️ Erro ao enviar WhatsApp:", whatsappError);
-          toast.warning("Senha resetada, mas falha ao enviar WhatsApp");
-        }
-      }
-      
       return { ...result.data, email: user.email, role: user.role || 'user' };
     },
     onSuccess: (data) => {
