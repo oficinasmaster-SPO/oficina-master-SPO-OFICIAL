@@ -123,48 +123,22 @@ Deno.serve(async (req) => {
         console.error("❌ Erro ao registrar atividade:", activityError);
       }
 
-      // Gerar link de convite automático
-      let inviteUrl = null;
-      try {
-        console.log("🔗 Gerando link de convite...");
-        
-        const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
-        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-        
-        const invite = await base44.asServiceRole.entities.EmployeeInvite.create({
-          name: full_name,
-          email: email,
-          position: user_data.position || 'Colaborador Interno',
-          area: user_data.area || 'administrativo',
-          job_role: user_data.job_role || 'consultor',
-          initial_permission: 'admin',
-          workshop_id: null, // Usuário interno não tem workshop
-          employee_id: newEmployee.id,
-          invite_token: token,
-          expires_at: expiresAt,
-          status: 'enviado'
-        });
-        
-        const baseUrl = new URL(req.url).origin;
-        inviteUrl = `${baseUrl}/PrimeiroAcesso?token=${token}`;
-        
-        console.log("✅ Link de convite gerado:", inviteUrl);
-      } catch (inviteError) {
-        console.error("❌ Erro ao gerar link de convite:", inviteError);
-      }
+      // Usuários internos NÃO usam link de primeiro acesso
+      // Eles devem ser convidados via Dashboard Base44
+      console.log("📝 Usuário interno criado - convite via Dashboard Base44 necessário");
+      console.log("📧 Email:", email);
+      console.log("🔑 Senha temporária:", tempPassword);
+      console.log("👤 Role:", user_data.role || 'user');
 
-      // Retornar sucesso com credenciais e link
+      // Retornar credenciais para serem compartilhadas
       return Response.json({
         success: true,
         employee: newEmployee,
         password: tempPassword,
         email: email,
         role: user_data.role || 'user',
-        login_url: new URL(req.url).origin,
-        invite_url: inviteUrl,
-        message: inviteUrl 
-          ? `Usuário criado! Envie o link de convite: ${inviteUrl}` 
-          : `Usuário criado! Convide pelo dashboard Base44 com role '${user_data.role || 'user'}'.`
+        dashboard_url: 'https://base44.com/dashboard',
+        message: 'Usuário interno criado! Siga as instruções para concluir o cadastro no Dashboard Base44.'
       });
     }
 
