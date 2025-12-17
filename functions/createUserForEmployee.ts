@@ -75,27 +75,49 @@ Deno.serve(async (req) => {
       console.log("   - Profile ID salvo:", newEmployee.profile_id);
 
       // Criar permissões baseadas no perfil
+      let permissionsCreated = false;
       try {
         console.log("🔐 Criando permissões do perfil...");
-        
+
         const profile = await base44.asServiceRole.entities.UserProfile.get(user_data.profile_id);
-        
-        if (profile) {
-          // Criar UserPermission baseada no perfil
-          await base44.asServiceRole.entities.UserPermission.create({
-            user_id: newEmployee.id,
-            user_email: email,
-            profile_id: user_data.profile_id,
-            custom_roles: profile.roles || [],
-            module_permissions: profile.module_permissions || {},
-            sidebar_permissions: profile.sidebar_permissions || {},
-            is_active: true
-          });
-          
-          console.log("✅ Permissões criadas com sucesso");
+
+        if (!profile) {
+          console.error("❌ Perfil não encontrado:", user_data.profile_id);
+          throw new Error("Perfil não encontrado");
         }
+
+        console.log("📋 Perfil carregado:", profile.name);
+        console.log("📋 Roles do perfil:", JSON.stringify(profile.roles || []));
+        console.log("📋 Módulos do perfil:", JSON.stringify(profile.module_permissions || {}));
+
+        // Criar UserPermission completa baseada no perfil
+        const permissionData = {
+          user_id: newEmployee.id,
+          user_email: email,
+          profile_id: user_data.profile_id,
+          profile_name: profile.name,
+          custom_roles: profile.roles || [],
+          custom_role_ids: profile.custom_role_ids || [],
+          module_permissions: profile.module_permissions || {},
+          sidebar_permissions: profile.sidebar_permissions || {},
+          is_active: true,
+          created_at: new Date().toISOString()
+        };
+
+        console.log("📤 Dados de permissão a serem salvos:", JSON.stringify(permissionData, null, 2));
+
+        const createdPermission = await base44.asServiceRole.entities.UserPermission.create(permissionData);
+
+        console.log("✅ Permissões criadas com sucesso!");
+        console.log("   - ID:", createdPermission.id);
+        console.log("   - Roles salvas:", JSON.stringify(createdPermission.custom_roles));
+        console.log("   - Módulos salvos:", Object.keys(createdPermission.module_permissions || {}).length);
+
+        permissionsCreated = true;
       } catch (permError) {
         console.error("❌ Erro ao criar permissões:", permError);
+        console.error("Stack:", permError.stack);
+        throw permError;
       }
 
       // Registrar atividade
