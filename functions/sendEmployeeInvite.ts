@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { name, email, position, area, job_role, initial_permission, workshop_id, workshop_name, origin, employee_id, invite_type = 'workshop' } = body;
+    const { name, email, position, area, job_role, initial_permission, workshop_id, workshop_name, origin, employee_id, invite_type = 'workshop', profile_id, role, telefone } = body;
 
     if (!name || !email) {
       return Response.json({ error: 'Campos obrigatórios: nome e email' }, { status: 400 });
@@ -21,45 +21,47 @@ Deno.serve(async (req) => {
     }
 
     console.log("📧 Iniciando convite para:", email);
+    console.log("📋 Tipo de convite:", invite_type);
 
-    // Buscar ou criar Employee
+    // Para usuários internos: NÃO criar Employee ainda
     let finalEmployeeId = employee_id;
     let employee;
-    
-    if (!finalEmployeeId) {
-      const filterQuery = invite_type === 'internal'
-        ? { email: email, tipo_vinculo: 'interno' }
-        : { email: email, workshop_id: workshop_id };
-        
-      const employees = await base44.asServiceRole.entities.Employee.filter(filterQuery);
-      
-      if (employees && employees.length > 0) {
-        employee = employees[0];
-        finalEmployeeId = employee.id;
-        console.log("✅ Employee já existe:", finalEmployeeId);
-      } else {
-        const createData = {
-          full_name: name,
-          email: email,
-          position: position || 'Colaborador',
-          area: area || (invite_type === 'internal' ? 'administrativo' : 'tecnico'),
-          job_role: job_role || (invite_type === 'internal' ? 'consultor' : 'outros'),
-          status: 'ativo',
-          tipo_vinculo: invite_type === 'internal' ? 'interno' : 'cliente',
-          is_internal: invite_type === 'internal',
-          hire_date: new Date().toISOString().split('T')[0]
-        };
 
-        if (invite_type === 'workshop') {
+    if (invite_type === 'internal') {
+      console.log("ℹ️ Convite interno - Employee será criado após aceite");
+      finalEmployeeId = null;
+    } else {
+      // Apenas para colaboradores de oficina: criar Employee
+      if (!finalEmployeeId) {
+        const employees = await base44.asServiceRole.entities.Employee.filter({ 
+          email: email, 
+          workshop_id: workshop_id 
+        });
+
+        if (employees && employees.length > 0) {
+          employee = employees[0];
+          finalEmployeeId = employee.id;
+          console.log("✅ Employee já existe:", finalEmployeeId);
+        } else {
           const workshops = await base44.asServiceRole.entities.Workshop.filter({ id: workshop_id });
           const workshop = workshops[0];
-          createData.workshop_id = workshop_id;
-          createData.owner_id = workshop?.owner_id || null;
+
+          employee = await base44.asServiceRole.entities.Employee.create({
+            full_name: name,
+            email: email,
+            position: position || 'Colaborador',
+            area: area || 'tecnico',
+            job_role: job_role || 'outros',
+            status: 'ativo',
+            tipo_vinculo: 'cliente',
+            is_internal: false,
+            hire_date: new Date().toISOString().split('T')[0],
+            workshop_id: workshop_id,
+            owner_id: workshop?.owner_id || null
+          });
+          finalEmployeeId = employee.id;
+          console.log("✅ Employee criado:", finalEmployeeId);
         }
-        
-        employee = await base44.asServiceRole.entities.Employee.create(createData);
-        finalEmployeeId = employee.id;
-        console.log("✅ Employee criado:", finalEmployeeId);
       }
     }
 
@@ -71,39 +73,46 @@ Deno.serve(async (req) => {
     const inviteFilter = invite_type === 'internal'
       ? { email: email, invite_type: 'internal' }
       : { email: email, workshop_id: workshop_id };
-      
+
     const existingInvites = await base44.asServiceRole.entities.EmployeeInvite.filter(inviteFilter);
 
     let inviteId;
+    const inviteData = {
+      name,
+      email,
+      position: position || (invite_type === 'internal' ? 'Usuário Interno' : 'Colaborador'),
+      area: area || (invite_type === 'internal' ? 'administrativo' : 'tecnico'),
+      job_role: job_role || (invite_type === 'internal' ? 'consultor' : 'outros'),
+      initial_permission: initial_permission || 'colaborador',
+      workshop_id: invite_type === 'workshop' ? workshop_id : null,
+      invite_type,
+      employee_id: finalEmployeeId,
+      invite_token: token,
+      expires_at: expiresAt,
+      status: 'enviado'
+    };
+
+    // Adicionar metadados para convites internos
+    if (invite_type === 'internal' && profile_id) {
+      inviteData.metadata = {
+        profile_id,
+        role: role || 'user',
+        telefone: telefone || ''
+      };
+    }
 
     if (existingInvites && existingInvites.length > 0) {
       const existing = existingInvites[0];
       inviteId = existing.id;
 
       await base44.asServiceRole.entities.EmployeeInvite.update(existing.id, {
-        invite_token: token,
-        expires_at: expiresAt,
-        employee_id: finalEmployeeId,
+        ...inviteData,
         resent_count: (existing.resent_count || 0) + 1,
-        last_resent_at: new Date().toISOString(),
-        status: 'enviado'
+        last_resent_at: new Date().toISOString()
       });
       console.log("🔄 Convite atualizado:", inviteId);
     } else {
-      const newInvite = await base44.asServiceRole.entities.EmployeeInvite.create({
-        name,
-        email,
-        position: position || 'Colaborador',
-        area: area || (invite_type === 'internal' ? 'administrativo' : 'tecnico'),
-        job_role: job_role || (invite_type === 'internal' ? 'consultor' : 'outros'),
-        initial_permission: initial_permission || 'colaborador',
-        workshop_id: invite_type === 'workshop' ? workshop_id : null,
-        invite_type,
-        employee_id: finalEmployeeId,
-        invite_token: token,
-        expires_at: expiresAt,
-        status: 'enviado'
-      });
+      const newInvite = await base44.asServiceRole.entities.EmployeeInvite.create(inviteData);
       inviteId = newInvite.id;
       console.log("✅ Convite criado:", inviteId);
     }

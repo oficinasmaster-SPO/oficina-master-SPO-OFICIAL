@@ -79,66 +79,48 @@ export default function UsuariosAdmin() {
   const createUserMutation = useMutation({
     mutationFn: async (data) => {
       try {
-        // 1. Criar User com auditoria
-        const auditEntry = {
-          changed_by: currentUser.full_name,
-          changed_by_email: currentUser.email,
-          changed_at: new Date().toISOString(),
-          action: 'created',
-          field_changed: 'user_created',
-          old_value: null,
-          new_value: `Usuário interno criado com perfil ${data.profile_id} e role ${data.role}`
-        };
+        console.log("📤 Criando convite para usuário interno:", data);
 
-        const userData = {
-          full_name: data.full_name,
+        // Enviar convite interno (não cria User/Employee ainda)
+        const result = await base44.functions.invoke('sendEmployeeInvite', {
+          name: data.full_name,
           email: data.email,
-          telefone: data.telefone,
-          position: data.position,
+          position: data.position || 'Usuário Interno',
+          area: 'administrativo',
+          job_role: 'consultor',
+          invite_type: 'internal',
           profile_id: data.profile_id,
-          user_status: 'ativo',
           role: data.role || 'user',
-          is_internal: true,
-          audit_log: [auditEntry]
-        };
-
-        console.log("📤 Enviando dados para criação:", userData);
-
-        // 2. Criar User via função backend (que cria convite interno)
-        const result = await base44.functions.invoke('createUserForEmployee', {
-          user_data: userData,
-          email: data.email,
-          full_name: data.full_name,
-          invite_type: 'internal'
+          telefone: data.telefone,
+          origin: window.location.origin
         });
 
-        console.log("✅ Resultado da criação:", result.data);
+        console.log("✅ Convite criado:", result.data);
 
         return result.data;
       } catch (error) {
-        console.error("❌ Erro ao criar usuário:", error);
+        console.error("❌ Erro ao criar convite:", error);
         throw error;
       }
     },
     onSuccess: (result) => {
-      console.log("✅ Sucesso na criação:", result);
+      console.log("✅ Sucesso no convite:", result);
       queryClient.invalidateQueries(['admin-users']);
-      queryClient.invalidateQueries(['user-profiles']);
       
-      if (result.invite_url && result.email) {
-        toast.success("Usuário criado! Email de convite enviado.", { duration: 3000 });
+      if (result.invite_url) {
+        toast.success("Convite enviado!", { duration: 3000 });
         
         setResetPasswordDialog({ 
           open: true, 
           inviteUrl: result.invite_url,
-          email: result.email,
-          role: result.role || 'user',
+          email: result.instructions?.match(/\(([^)]+)\)/)?.[1] || '',
+          role: 'user',
           loginUrl: 'https://oficinasmastergtr.com',
-          permissionsCreated: result.permissions_created
+          permissionsCreated: false
         });
       } else {
-        console.error("❌ Dados incompletos:", result);
-        toast.error("Erro ao criar usuário");
+        console.error("❌ Link não retornado:", result);
+        toast.error("Erro ao gerar convite");
       }
       
       setIsDialogOpen(false);
