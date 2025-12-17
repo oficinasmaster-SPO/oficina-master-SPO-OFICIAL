@@ -32,16 +32,27 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: 'Convite já utilizado' }, { status: 400 });
     }
 
-    // Buscar a oficina para obter o owner_id
-    const workshops = await base44.asServiceRole.entities.Workshop.filter({ id: invite.workshop_id });
-    const workshop = workshops[0];
-    const ownerId = workshop ? workshop.owner_id : null;
+    // Detectar se é usuário interno (sem workshop_id)
+    const isInternalUser = !invite.workshop_id;
+    
+    console.log("🔍 Tipo de convite:", isInternalUser ? "INTERNO" : "EXTERNO");
 
-    // Verificar se já existe colaborador com este email na oficina
-    const existingEmployees = await base44.asServiceRole.entities.Employee.filter({ 
-      email: email || invite.email,
-      workshop_id: invite.workshop_id 
-    });
+    let workshop = null;
+    let ownerId = null;
+
+    if (!isInternalUser) {
+      // Buscar oficina apenas para usuários externos
+      const workshops = await base44.asServiceRole.entities.Workshop.filter({ id: invite.workshop_id });
+      workshop = workshops[0];
+      ownerId = workshop ? workshop.owner_id : null;
+    }
+
+    // Verificar se já existe colaborador com este email
+    const filterQuery = isInternalUser 
+      ? { email: email || invite.email, tipo_vinculo: 'interno' }
+      : { email: email || invite.email, workshop_id: invite.workshop_id };
+    
+    const existingEmployees = await base44.asServiceRole.entities.Employee.filter(filterQuery);
 
     console.log("👤 Employee existente?", existingEmployees.length > 0);
 
@@ -51,9 +62,11 @@ Deno.serve(async (req) => {
       telefone: phone || '(00) 00000-0000',
       profile_picture_url: profile_picture_url || '',
       position: invite.position,
-      area: invite.area || 'tecnico',
-      job_role: invite.job_role || 'outros',
+      area: invite.area || (isInternalUser ? 'administrativo' : 'tecnico'),
+      job_role: invite.job_role || (isInternalUser ? 'consultor' : 'outros'),
       status: 'ativo',
+      tipo_vinculo: isInternalUser ? 'interno' : 'cliente',
+      is_internal: isInternalUser,
       first_login_at: new Date().toISOString()
     };
 
@@ -66,13 +79,19 @@ Deno.serve(async (req) => {
       console.log("✅ Employee atualizado:", employee.id);
     } else {
       // Criar novo
-      employee = await base44.asServiceRole.entities.Employee.create({
-        workshop_id: invite.workshop_id,
-        owner_id: ownerId,
+      const createData = {
         email: email || invite.email,
         hire_date: new Date().toISOString().split('T')[0],
         ...employeeData
-      });
+      };
+      
+      // Adicionar workshop_id apenas se não for interno
+      if (!isInternalUser) {
+        createData.workshop_id = invite.workshop_id;
+        createData.owner_id = ownerId;
+      }
+      
+      employee = await base44.asServiceRole.entities.Employee.create(createData);
       console.log("✅ Employee criado:", employee.id);
     }
 
@@ -93,15 +112,20 @@ Deno.serve(async (req) => {
       const existingUser = allUsers[0];
 
       const userDataToUpdate = {
-        workshop_id: invite.workshop_id,
         position: invite.position,
-        job_role: invite.job_role || 'outros',
-        area: invite.area || 'tecnico',
+        job_role: invite.job_role || (isInternalUser ? 'consultor' : 'outros'),
+        area: invite.area || (isInternalUser ? 'administrativo' : 'tecnico'),
         telefone: phone || '(00) 00000-0000',
         profile_picture_url: profile_picture_url || '',
         hire_date: employee.hire_date || new Date().toISOString().split('T')[0],
-        user_status: 'ativo'
+        user_status: 'ativo',
+        is_internal: isInternalUser
       };
+      
+      // Adicionar workshop_id apenas para usuários externos
+      if (!isInternalUser) {
+        userDataToUpdate.workshop_id = invite.workshop_id;
+      }
 
       console.log("👤 Dados do User a serem salvos:", userDataToUpdate);
 
@@ -133,57 +157,95 @@ Deno.serve(async (req) => {
       const origin = req.headers.get('origin') || 'https://oficinasmastergtr.com';
       const loginUrl = `${origin}/login`;
       
-      // Criar permissões padrão para o colaborador baseado em job_role
-      try {
-        console.log("🔐 Criando permissões padrão...");
-        await base44.asServiceRole.functions.invoke('createDefaultPermissions', {
-          user_id: existingUser?.id || 'pending', // Se não tiver user ainda, será criado no login
-          workshop_id: invite.workshop_id,
-          job_role: invite.job_role || 'outros'
-        });
-        console.log("✅ Permissões padrão configuradas!");
-      } catch (permError) {
-        console.error("⚠️ Erro ao criar permissões (não crítico):", permError);
+      // Criar permissões padrão apenas para usuários externos
+      if (!isInternalUser && invite.workshop_id) {
+        try {
+          console.log("🔐 Criando permissões padrão...");
+          await base44.asServiceRole.functions.invoke('createDefaultPermissions', {
+            user_id: existingUser?.id || 'pending',
+            workshop_id: invite.workshop_id,
+            job_role: invite.job_role || 'outros'
+          });
+          console.log("✅ Permissões padrão configuradas!");
+        } catch (permError) {
+          console.error("⚠️ Erro ao criar permissões (não crítico):", permError);
+        }
+      } else {
+        console.log("ℹ️ Usuário interno - permissões via perfil configurado");
       }
 
       console.log("📧 Enviando email para:", email || invite.email);
       
+      const emailBody = isInternalUser ? `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #2563eb;">Bem-vindo(a) à Equipe Oficinas Master!</h2>
+          
+          <p>Olá, <strong>${name || invite.name}</strong>!</p>
+          
+          <p>Seu cadastro foi concluído com sucesso na plataforma <strong>Oficinas Master</strong>.</p>
+          
+          <p>Você foi cadastrado(a) como <strong>${invite.position}</strong> na equipe interna.</p>
+          
+          <h3 style="color: #1e40af;">Próximos Passos:</h3>
+          <ol>
+            <li>Clique no botão abaixo para acessar a plataforma</li>
+            <li>Use o email: <strong>${email || invite.email}</strong></li>
+            <li>Clique em "Criar Conta" para definir sua senha de acesso</li>
+          </ol>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${loginUrl}" 
+               style="background-color: #2563eb; color: white; padding: 15px 30px; 
+                      text-decoration: none; border-radius: 8px; display: inline-block;
+                      font-weight: bold;">
+              Acessar Plataforma
+            </a>
+          </div>
+          
+          <p style="color: #666; font-size: 14px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+            <strong>Importante:</strong> Use exatamente o email <strong>${email || invite.email}</strong> ao criar sua conta.
+          </p>
+        </div>
+      ` : `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #2563eb;">Olá, ${name || invite.name}!</h2>
+          
+          <p>Seu cadastro foi concluído com sucesso na plataforma <strong>Oficinas Master</strong>.</p>
+          
+          <p>Você foi cadastrado(a) como <strong>${invite.position}</strong> na oficina <strong>${workshop?.name || 'Sua Oficina'}</strong>.</p>
+          
+          <h3 style="color: #1e40af;">Próximos Passos:</h3>
+          <ol>
+            <li>Clique no botão abaixo para acessar a plataforma</li>
+            <li>Use o email: <strong>${email || invite.email}</strong></li>
+            <li>Clique em "Criar Conta" para definir sua senha de acesso</li>
+          </ol>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${loginUrl}" 
+               style="background-color: #2563eb; color: white; padding: 15px 30px; 
+                      text-decoration: none; border-radius: 8px; display: inline-block;
+                      font-weight: bold;">
+              Acessar Plataforma
+            </a>
+          </div>
+          
+          <p style="color: #666; font-size: 14px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+            <strong>Importante:</strong> Use exatamente o email <strong>${email || invite.email}</strong> ao criar sua conta.
+          </p>
+          
+          <p style="color: #666; font-size: 12px; margin-top: 20px;">
+            Se você tiver dúvidas, entre em contato com seu gestor.
+          </p>
+        </div>
+      `;
+
       await base44.asServiceRole.integrations.Core.SendEmail({
         to: email || invite.email,
-        subject: `Bem-vindo(a) à ${workshop?.name || 'Oficina'} - Crie sua Senha`,
-        body: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #2563eb;">Olá, ${name || invite.name}!</h2>
-            
-            <p>Seu cadastro foi concluído com sucesso na plataforma <strong>Oficinas Master</strong>.</p>
-            
-            <p>Você foi cadastrado(a) como <strong>${invite.position}</strong> na oficina <strong>${workshop?.name || 'Sua Oficina'}</strong>.</p>
-            
-            <h3 style="color: #1e40af;">Próximos Passos:</h3>
-            <ol>
-              <li>Clique no botão abaixo para acessar a plataforma</li>
-              <li>Use o email: <strong>${email || invite.email}</strong></li>
-              <li>Clique em "Criar Conta" para definir sua senha de acesso</li>
-            </ol>
-            
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${loginUrl}" 
-                 style="background-color: #2563eb; color: white; padding: 15px 30px; 
-                        text-decoration: none; border-radius: 8px; display: inline-block;
-                        font-weight: bold;">
-                Acessar Plataforma
-              </a>
-            </div>
-            
-            <p style="color: #666; font-size: 14px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-              <strong>Importante:</strong> Use exatamente o email <strong>${email || invite.email}</strong> ao criar sua conta.
-            </p>
-            
-            <p style="color: #666; font-size: 12px; margin-top: 20px;">
-              Se você tiver dúvidas, entre em contato com seu gestor.
-            </p>
-          </div>
-        `
+        subject: isInternalUser 
+          ? 'Bem-vindo à Equipe Oficinas Master - Crie sua Senha'
+          : `Bem-vindo(a) à ${workshop?.name || 'Oficina'} - Crie sua Senha`,
+        body: emailBody
       });
       emailSent = true;
       console.log("✅ Email enviado com sucesso!");
