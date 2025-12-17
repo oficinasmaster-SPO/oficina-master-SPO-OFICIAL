@@ -1,7 +1,7 @@
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, Clock, Eye, Edit, Key, Trash2 } from "lucide-react";
+import { AlertCircle, Clock, Eye, Edit, Key, Trash2, Mail } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -11,7 +11,8 @@ export default function UserTable({
   admins,
   onViewDetails,
   onEdit, 
-  onResetPassword, 
+  onResetPassword,
+  onResendAccess,
   onViewAudit, 
   onDelete 
 }) {
@@ -76,9 +77,7 @@ export default function UserTable({
             <th className="text-left py-3 px-4 font-semibold text-gray-700">Cargo</th>
             <th className="text-left py-3 px-4 font-semibold text-gray-700">Perfil</th>
             <th className="text-left py-3 px-4 font-semibold text-gray-700">Admin Responsável</th>
-            <th className="text-center py-3 px-4 font-semibold text-gray-700">Status</th>
             <th className="text-left py-3 px-4 font-semibold text-gray-700">Último Login</th>
-            <th className="text-left py-3 px-4 font-semibold text-gray-700">Alertas</th>
             <th className="text-center py-3 px-4 font-semibold text-gray-700">Ações</th>
           </tr>
         </thead>
@@ -106,21 +105,21 @@ export default function UserTable({
                 <td className="py-3 px-4 text-sm text-gray-700">
                   {getAdminName(user.admin_responsavel_id)}
                 </td>
-                <td className="py-3 px-4 text-center">
-                  <Badge className={statusBadge.color}>{statusBadge.label}</Badge>
-                </td>
-                <td className="py-3 px-4 text-sm text-gray-700">
-                  {getLastLoginDisplay(user)}
-                </td>
                 <td className="py-3 px-4">
-                  <div className="flex flex-wrap gap-1">
-                    {alerts.map((alert, idx) => (
-                      <Badge key={idx} className={alert.color}>
-                        {alert.type === "primeiro_acesso" && <AlertCircle className="w-3 h-3 mr-1" />}
-                        {alert.type === "inatividade" && <Clock className="w-3 h-3 mr-1" />}
-                        {alert.label}
-                      </Badge>
-                    ))}
+                  <div className="flex flex-col gap-2">
+                    <div className="text-sm text-gray-700">
+                      {getLastLoginDisplay(user)}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge className={statusBadge.color}>{statusBadge.label}</Badge>
+                      {alerts.map((alert, idx) => (
+                        <Badge key={idx} className={alert.color}>
+                          {alert.type === "primeiro_acesso" && <AlertCircle className="w-3 h-3 mr-1" />}
+                          {alert.type === "inatividade" && <Clock className="w-3 h-3 mr-1" />}
+                          {alert.label}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
                 </td>
                 <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
@@ -151,6 +150,15 @@ export default function UserTable({
                       title="Resetar senha"
                     >
                       <Key className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-blue-600"
+                      onClick={() => onResendAccess(user)}
+                      title="Reenviar acesso"
+                    >
+                      <Mail className="w-4 h-4" />
                     </Button>
                     <Button
                       variant="ghost"
