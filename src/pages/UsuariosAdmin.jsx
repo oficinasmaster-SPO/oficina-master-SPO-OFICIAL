@@ -118,7 +118,7 @@ export default function UsuariosAdmin() {
       console.log("✅ Sucesso na criação:", result);
       queryClient.invalidateQueries(['admin-users']);
       queryClient.invalidateQueries(['user-profiles']);
-      toast.success("Usuário criado com sucesso!");
+      toast.success("Usuário criado! Siga as instruções na tela.", { duration: 4000 });
       
       if (result.password && result.email) {
         setResetPasswordDialog({ 
@@ -126,7 +126,7 @@ export default function UsuariosAdmin() {
           password: result.password, 
           email: result.email,
           role: result.role || 'user',
-          loginUrl: result.invite_url || result.login_url || window.location.origin
+          loginUrl: window.location.origin
         });
       } else {
         console.error("❌ Dados incompletos:", result);
