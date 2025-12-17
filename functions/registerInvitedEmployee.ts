@@ -123,180 +123,50 @@ Deno.serve(async (req) => {
 
     console.log("✅ Convite marcado como concluído e token invalidado");
 
-    // Criar ou atualizar User vinculado
+    // NÃO criar User aqui - será criado no primeiro login
+    console.log("ℹ️ User será criado quando o usuário fizer login pela primeira vez");
+
+    // Criar permissões agora, antes do primeiro login
     try {
-      const allUsers = await base44.asServiceRole.entities.User.filter({ email: email || invite.email });
-      const existingUser = allUsers[0];
-
-      const userDataToUpdate = {
-        position: invite.position,
-        job_role: invite.job_role || (isInternalUser ? 'consultor' : 'outros'),
-        area: invite.area || (isInternalUser ? 'administrativo' : 'tecnico'),
-        telefone: phone || invite.metadata?.telefone || '(00) 00000-0000',
-        profile_picture_url: profile_picture_url || '',
-        hire_date: employee.hire_date || new Date().toISOString().split('T')[0],
-        user_status: 'active',
-        is_internal: isInternalUser
-      };
-
-      // Adicionar dados específicos por tipo
-      if (isInternalUser) {
-        userDataToUpdate.role = invite.metadata?.role || 'user';
-        userDataToUpdate.profile_id = invite.metadata?.profile_id || null;
-      } else {
-        userDataToUpdate.workshop_id = invite.workshop_id;
-      }
-
-      console.log("👤 Dados do User a serem salvos:", userDataToUpdate);
-
-      if (existingUser) {
-        await base44.asServiceRole.entities.User.update(existingUser.id, userDataToUpdate);
-        await base44.asServiceRole.entities.Employee.update(employee.id, { user_id: existingUser.id });
-        console.log("✅ User existente atualizado:", existingUser.id);
-      } else {
-        console.log("ℹ️ User será criado no primeiro login");
-      }
-    } catch (userError) {
-      console.error("❌ Erro ao vincular User:", userError);
-    }
-
-    // Enviar email com instruções de acesso
-    let emailSent = false;
-    let emailError = null;
-    try {
-      const origin = req.headers.get('origin') || 'https://oficinasmastergtr.com';
-      const loginUrl = `${origin}/login`;
-      
-      // Criar permissões baseadas no tipo
       if (isInternalUser && invite.metadata?.profile_id) {
-        try {
-          console.log("🔐 Criando permissões para usuário interno...");
-          console.log("📋 Profile ID:", invite.metadata.profile_id);
+        console.log("🔐 Criando permissões para usuário interno...");
+        const profile = await base44.asServiceRole.entities.UserProfile.get(invite.metadata.profile_id);
 
-          const profile = await base44.asServiceRole.entities.UserProfile.get(invite.metadata.profile_id);
-
-          if (profile) {
-            await base44.asServiceRole.entities.UserPermission.create({
-              user_id: employee.id,
-              user_email: email || invite.email,
-              profile_id: invite.metadata.profile_id,
-              profile_name: profile.name,
-              custom_roles: profile.roles || [],
-              custom_role_ids: profile.custom_role_ids || [],
-              module_permissions: profile.module_permissions || {},
-              sidebar_permissions: profile.sidebar_permissions || {},
-              is_active: true,
-              created_at: new Date().toISOString()
-            });
-            console.log("✅ Permissões internas criadas!");
-          }
-        } catch (permError) {
-          console.error("⚠️ Erro ao criar permissões internas:", permError);
+        if (profile) {
+          await base44.asServiceRole.entities.UserPermission.create({
+            user_id: employee.id,
+            user_email: email || invite.email,
+            profile_id: invite.metadata.profile_id,
+            profile_name: profile.name,
+            custom_roles: profile.roles || [],
+            custom_role_ids: profile.custom_role_ids || [],
+            module_permissions: profile.module_permissions || {},
+            sidebar_permissions: profile.sidebar_permissions || {},
+            is_active: true,
+            created_at: new Date().toISOString()
+          });
+          console.log("✅ Permissões internas criadas!");
         }
       } else if (!isInternalUser && invite.workshop_id) {
-        try {
-          console.log("🔐 Criando permissões para colaborador de oficina...");
-          await base44.asServiceRole.functions.invoke('createDefaultPermissions', {
-            user_id: existingUser?.id || 'pending',
-            workshop_id: invite.workshop_id,
-            job_role: invite.job_role || 'outros'
-          });
-          console.log("✅ Permissões de oficina criadas!");
-        } catch (permError) {
-          console.error("⚠️ Erro ao criar permissões:", permError);
-        }
+        console.log("🔐 Criando permissões para colaborador de oficina...");
+        await base44.asServiceRole.functions.invoke('createDefaultPermissions', {
+          user_id: employee.id,
+          workshop_id: invite.workshop_id,
+          job_role: invite.job_role || 'outros'
+        });
+        console.log("✅ Permissões de oficina criadas!");
       }
-
-      console.log("📧 Enviando email para:", email || invite.email);
-      
-      const emailBody = isInternalUser ? `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #2563eb;">Bem-vindo(a) à Equipe Oficinas Master!</h2>
-          
-          <p>Olá, <strong>${name || invite.name}</strong>!</p>
-          
-          <p>Seu cadastro foi concluído com sucesso na plataforma <strong>Oficinas Master</strong>.</p>
-          
-          <p>Você foi cadastrado(a) como <strong>${invite.position}</strong> na equipe interna.</p>
-          
-          <h3 style="color: #1e40af;">Próximos Passos:</h3>
-          <ol>
-            <li>Clique no botão abaixo para acessar a plataforma</li>
-            <li>Use o email: <strong>${email || invite.email}</strong></li>
-            <li>Clique em "Criar Conta" para definir sua senha de acesso</li>
-          </ol>
-          
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${loginUrl}" 
-               style="background-color: #2563eb; color: white; padding: 15px 30px; 
-                      text-decoration: none; border-radius: 8px; display: inline-block;
-                      font-weight: bold;">
-              Acessar Plataforma
-            </a>
-          </div>
-          
-          <p style="color: #666; font-size: 14px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-            <strong>Importante:</strong> Use exatamente o email <strong>${email || invite.email}</strong> ao criar sua conta.
-          </p>
-        </div>
-      ` : `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #2563eb;">Olá, ${name || invite.name}!</h2>
-          
-          <p>Seu cadastro foi concluído com sucesso na plataforma <strong>Oficinas Master</strong>.</p>
-          
-          <p>Você foi cadastrado(a) como <strong>${invite.position}</strong> na oficina <strong>${workshop?.name || 'Sua Oficina'}</strong>.</p>
-          
-          <h3 style="color: #1e40af;">Próximos Passos:</h3>
-          <ol>
-            <li>Clique no botão abaixo para acessar a plataforma</li>
-            <li>Use o email: <strong>${email || invite.email}</strong></li>
-            <li>Clique em "Criar Conta" para definir sua senha de acesso</li>
-          </ol>
-          
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${loginUrl}" 
-               style="background-color: #2563eb; color: white; padding: 15px 30px; 
-                      text-decoration: none; border-radius: 8px; display: inline-block;
-                      font-weight: bold;">
-              Acessar Plataforma
-            </a>
-          </div>
-          
-          <p style="color: #666; font-size: 14px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-            <strong>Importante:</strong> Use exatamente o email <strong>${email || invite.email}</strong> ao criar sua conta.
-          </p>
-          
-          <p style="color: #666; font-size: 12px; margin-top: 20px;">
-            Se você tiver dúvidas, entre em contato com seu gestor.
-          </p>
-        </div>
-      `;
-
-      await base44.asServiceRole.integrations.Core.SendEmail({
-        to: email || invite.email,
-        subject: isInternalUser 
-          ? 'Bem-vindo à Equipe Oficinas Master - Crie sua Senha'
-          : `Bem-vindo(a) à ${workshop?.name || 'Oficina'} - Crie sua Senha`,
-        body: emailBody
-      });
-      emailSent = true;
-      console.log("✅ Email enviado com sucesso!");
-    } catch (error) {
-      emailError = error.message;
-      console.error('❌ Erro ao enviar email de boas-vindas:', error);
+    } catch (permError) {
+      console.error("⚠️ Erro ao criar permissões (não crítico):", permError);
     }
 
-    console.log("✅ Colaborador registrado com sucesso!");
+    console.log("✅ Convite aceito com sucesso!");
     console.log("📊 Employee ID:", employee.id);
-    console.log("📧 Email enviado:", emailSent);
 
     return Response.json({ 
       success: true, 
       employee_id: employee.id,
-      message: 'Colaborador registrado com sucesso',
-      email_sent: emailSent,
-      email_error: emailError
+      message: 'Cadastro concluído! Agora você pode fazer login com seu email e senha.'
     });
 
   } catch (error) {
