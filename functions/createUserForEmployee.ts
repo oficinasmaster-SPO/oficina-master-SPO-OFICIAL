@@ -123,13 +123,14 @@ Deno.serve(async (req) => {
       // Registrar atividade
       try {
         console.log("📊 Registrando atividade de criação...");
-        
+
         const adminUser = await base44.auth.me();
-        
+
         await base44.asServiceRole.entities.UserActivityLog.create({
           user_id: adminUser.id,
           user_email: adminUser.email,
-          action: 'user_created',
+          activity_type: 'user_created',
+          action: 'create',
           module: 'admin_usuarios',
           details: {
             created_user_email: email,
@@ -139,7 +140,7 @@ Deno.serve(async (req) => {
           },
           timestamp: new Date().toISOString()
         });
-        
+
         console.log("✅ Atividade registrada");
       } catch (activityError) {
         console.error("❌ Erro ao registrar atividade:", activityError);
