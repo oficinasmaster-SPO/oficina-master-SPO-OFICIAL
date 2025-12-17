@@ -51,14 +51,18 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Buscar oficina usando filter (mais eficiente)
+    // Buscar oficina apenas para convites de workshop
     let workshop = null;
-    try {
-      const workshops = await base44.asServiceRole.entities.Workshop.filter({ id: invite.workshop_id });
-      workshop = workshops[0];
-      console.log("✅ Oficina encontrada:", workshop?.name);
-    } catch (e) {
-      console.error('Erro ao carregar oficina:', e);
+    if (invite.workshop_id) {
+      try {
+        const workshops = await base44.asServiceRole.entities.Workshop.filter({ id: invite.workshop_id });
+        workshop = workshops[0];
+        console.log("✅ Oficina encontrada:", workshop?.name);
+      } catch (e) {
+        console.error('Erro ao carregar oficina:', e);
+      }
+    } else {
+      console.log("ℹ️ Convite interno - sem oficina");
     }
 
     console.log("✅ Convite validado com sucesso:", invite.email);
@@ -73,7 +77,9 @@ Deno.serve(async (req) => {
         area: invite.area,
         workshop_id: invite.workshop_id,
         invite_token: invite.invite_token,
-        job_role: invite.job_role
+        job_role: invite.job_role,
+        invite_type: invite.invite_type,
+        metadata: invite.metadata
       },
       workshop: workshop ? {
         id: workshop.id,
