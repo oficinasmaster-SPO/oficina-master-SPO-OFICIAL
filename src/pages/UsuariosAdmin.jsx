@@ -521,20 +521,49 @@ export default function UsuariosAdmin() {
               </div>
             </div>
 
-            <Alert className="bg-amber-50 border-amber-200">
-              <AlertTriangle className="w-4 h-4 text-amber-600" />
-              <AlertDescription className="text-xs text-amber-800">
-                <p className="font-semibold mb-2">⚠️ Próximo Passo Obrigatório:</p>
-                <ol className="list-decimal list-inside space-y-1 ml-2">
-                  <li>Acesse o <strong>Dashboard Base44</strong></li>
-                  <li>Vá em <strong>Configurações → Usuários</strong></li>
-                  <li>Clique em <strong>"Convidar Usuário"</strong></li>
-                  <li>Use o email: <strong>{resetPasswordDialog.email}</strong></li>
-                  <li>Role: <strong>{resetPasswordDialog.role || 'user'}</strong></li>
-                  <li>Envie o convite</li>
-                </ol>
-              </AlertDescription>
-            </Alert>
+            {resetPasswordDialog.loginUrl && resetPasswordDialog.loginUrl.includes('/PrimeiroAcesso') ? (
+              <Alert className="bg-green-50 border-green-200">
+                <CheckCircle className="w-4 h-4 text-green-600" />
+                <AlertDescription className="text-xs text-green-800">
+                  <p className="font-semibold mb-2">✅ Link de Primeiro Acesso Gerado!</p>
+                  <p className="mb-2">Envie este link para o colaborador completar o cadastro:</p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <Input
+                      value={resetPasswordDialog.loginUrl}
+                      readOnly
+                      className="text-xs bg-white"
+                    />
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        navigator.clipboard.writeText(resetPasswordDialog.loginUrl);
+                        toast.success("Link copiado!");
+                      }}
+                    >
+                      <Copy className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <p className="text-xs text-green-600 mt-2">
+                    💡 O colaborador irá definir sua própria senha ao acessar o link
+                  </p>
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <Alert className="bg-amber-50 border-amber-200">
+                <AlertTriangle className="w-4 h-4 text-amber-600" />
+                <AlertDescription className="text-xs text-amber-800">
+                  <p className="font-semibold mb-2">⚠️ Próximo Passo Obrigatório:</p>
+                  <ol className="list-decimal list-inside space-y-1 ml-2">
+                    <li>Acesse o <strong>Dashboard Base44</strong></li>
+                    <li>Vá em <strong>Configurações → Usuários</strong></li>
+                    <li>Clique em <strong>"Convidar Usuário"</strong></li>
+                    <li>Use o email: <strong>{resetPasswordDialog.email}</strong></li>
+                    <li>Role: <strong>{resetPasswordDialog.role || 'user'}</strong></li>
+                    <li>Envie o convite</li>
+                  </ol>
+                </AlertDescription>
+              </Alert>
+            )}
 
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
               <p className="text-xs text-gray-600">
