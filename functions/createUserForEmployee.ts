@@ -163,14 +163,14 @@ Deno.serve(async (req) => {
         }, { status: 500 });
       }
 
-      // Retornar credenciais e URL direta para Dashboard Base44
-      const dashboardInviteUrl = `https://base44.com/dashboard?action=invite&email=${encodeURIComponent(email)}&role=${user_data.role || 'user'}`;
+      // Retornar credenciais - Dashboard Base44 padrão sem parâmetros
+      const dashboardUrl = 'https://base44.com/dashboard';
       
       console.log("✅ Usuário criado com sucesso!");
       console.log("📧 Email:", email);
       console.log("🔑 Senha:", tempPassword);
       console.log("👤 Role:", user_data.role || 'user');
-      console.log("🔗 Dashboard URL:", dashboardInviteUrl);
+      console.log("🔗 Dashboard URL:", dashboardUrl);
 
       return Response.json({
         success: true,
@@ -178,7 +178,7 @@ Deno.serve(async (req) => {
         password: tempPassword,
         email: email,
         role: user_data.role || 'user',
-        dashboard_url: dashboardInviteUrl,
+        dashboard_url: dashboardUrl,
         permissions_created: permissionsCreated,
         message: 'Usuário interno criado com permissões! Convide via Dashboard Base44.'
       });
