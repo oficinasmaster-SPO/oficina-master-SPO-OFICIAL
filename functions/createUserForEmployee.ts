@@ -45,12 +45,12 @@ Deno.serve(async (req) => {
       }
       console.log("Senha temporária gerada:", tempPassword);
 
-      // 1. Criar User com role admin
+      // 1. Criar User com role configurável
       console.log("Criando User...");
       const newUser = await base44.asServiceRole.entities.User.create({
         email: email,
         full_name: full_name,
-        role: 'admin',
+        role: user_data.role || 'user',
         position: user_data.position,
         profile_id: user_data.profile_id,
         telefone: user_data.telefone,
