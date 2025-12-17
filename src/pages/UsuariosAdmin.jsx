@@ -433,70 +433,34 @@ export default function UsuariosAdmin() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CheckCircle className="w-5 h-5 text-green-600" />
-              Usuário Criado com Sucesso!
+              Employee Criado com Sucesso!
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <p className="text-sm font-semibold text-yellow-800 mb-2">
-                🔑 Senha Temporária
-              </p>
-              <p className="text-xs text-yellow-700 mb-3">
-                Copie e compartilhe com segurança
-              </p>
-              <div className="flex items-center gap-2">
-                <Input
-                  value={resetPasswordDialog.password}
-                  readOnly
-                  className="font-mono text-lg bg-white"
-                />
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    navigator.clipboard.writeText(resetPasswordDialog.password);
-                    toast.success("Senha copiada!");
-                  }}
-                >
-                  <Copy className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <p className="text-sm font-semibold text-blue-800 mb-2">
-                📧 Email do Usuário
+                📧 Email do Colaborador
               </p>
               <p className="text-sm text-blue-700">{resetPasswordDialog.email}</p>
             </div>
 
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <p className="text-sm font-semibold text-green-800 mb-2">
-                🔗 Link de Acesso
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <p className="text-sm font-semibold text-yellow-800 mb-3 flex items-center gap-2">
+                ⚠️ Próximo Passo Necessário
               </p>
-              <p className="text-xs text-green-700 mb-2">
-                Compartilhe este link para o primeiro acesso
-              </p>
-              <div className="flex items-center gap-2">
-                <Input
-                  value={resetPasswordDialog.loginUrl || window.location.origin}
-                  readOnly
-                  className="text-sm bg-white"
-                />
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    navigator.clipboard.writeText(resetPasswordDialog.loginUrl || window.location.origin);
-                    toast.success("Link copiado!");
-                  }}
-                >
-                  <Copy className="w-4 h-4" />
-                </Button>
-              </div>
+              <ol className="text-xs text-yellow-700 space-y-2 list-decimal list-inside">
+                <li>Acesse o <strong>Dashboard do Base44</strong></li>
+                <li>Vá em <strong>Configurações → Usuários</strong></li>
+                <li>Clique em <strong>"Convidar Usuário"</strong></li>
+                <li>Digite o email: <strong>{resetPasswordDialog.email}</strong></li>
+                <li>Defina role como <strong>"admin"</strong></li>
+                <li>O usuário receberá um convite por email</li>
+              </ol>
             </div>
 
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
               <p className="text-xs text-gray-600">
-                💡 <strong>Instruções:</strong> O usuário deve acessar o link acima e fazer login com o email e senha temporária. Após o primeiro acesso, ele poderá alterar a senha.
+                💡 <strong>Importante:</strong> O Employee foi criado no sistema, mas a conta de acesso precisa ser criada manualmente através do dashboard do Base44. Isso garante segurança e controle total sobre os usuários.
               </p>
             </div>
 
@@ -504,7 +468,7 @@ export default function UsuariosAdmin() {
               className="w-full"
               onClick={() => setResetPasswordDialog({ open: false, password: "", email: "", loginUrl: "" })}
             >
-              Fechar
+              Entendi
             </Button>
           </div>
         </DialogContent>

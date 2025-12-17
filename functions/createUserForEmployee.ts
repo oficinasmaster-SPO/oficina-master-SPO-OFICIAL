@@ -34,40 +34,6 @@ Deno.serve(async (req) => {
       }
       console.log("Senha temporária gerada:", tempPassword);
 
-      // 1. Convidar usuário usando a API de invite do Base44
-      console.log("📧 Enviando convite de usuário via API...");
-      const serviceRoleKey = Deno.env.get('BASE44_SERVICE_ROLE_KEY');
-      const appId = Deno.env.get('BASE44_APP_ID');
-      
-      const inviteUrl = `https://api.base44.com/apps/${appId}/auth/invite`;
-      
-      const inviteResponse = await fetch(inviteUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${serviceRoleKey}`
-        },
-        body: JSON.stringify({
-          email: email,
-          role: 'admin',
-          metadata: {
-            full_name: full_name,
-            position: user_data.position,
-            profile_id: user_data.profile_id,
-            is_internal: true
-          }
-        })
-      });
-
-      if (!inviteResponse.ok) {
-        const errorText = await inviteResponse.text();
-        console.error("❌ Erro ao convidar usuário:", inviteResponse.status, errorText);
-        throw new Error(`Erro ao criar conta: ${errorText}`);
-      }
-
-      const inviteData = await inviteResponse.json();
-      console.log("✅ Convite enviado com sucesso!");
-
       // 2. Criar Employee vinculado
       console.log("Criando Employee...");
       const newEmployee = await base44.asServiceRole.entities.Employee.create({
@@ -87,13 +53,13 @@ Deno.serve(async (req) => {
 
       console.log("✅ Employee criado! ID:", newEmployee.id);
 
-      // Retornar sucesso com senha temporária
+      // Retornar sucesso com senha temporária e instruções
       return Response.json({
         success: true,
         employee: newEmployee,
         password: tempPassword,
-        invite_url: inviteData.invite_url || `${Deno.env.get('BASE_URL')}/accept-invite`,
-        message: 'Usuário criado e convite enviado por email'
+        login_url: new URL(req.url).origin,
+        message: 'Employee criado com sucesso. O usuário deve ser convidado manualmente pelo dashboard do Base44.'
       });
     }
 
