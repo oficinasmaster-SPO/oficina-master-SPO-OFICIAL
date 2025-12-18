@@ -143,67 +143,42 @@ export default function Layout({ children }) {
     loadUser();
   }, [loadUser, location.pathname]);
 
-  // Hook para vincular User ao Employee no primeiro login
+  // Verificar status de aprovação no primeiro login
   useEffect(() => {
-    const linkUserToEmployee = async () => {
+    const checkUserApproval = async () => {
       if (!user || !user.email) return;
 
       try {
-        // Buscar Employee pelo email
+        // Se usuário está pending, mostrar mensagem de aguardando aprovação
+        if (user.user_status === 'pending') {
+          console.log("⏳ Usuário aguardando aprovação");
+          // O acesso será bloqueado pela lógica abaixo
+          return;
+        }
+
+        // Sincronizar dados do Employee se necessário
         const employees = await base44.entities.Employee.filter({ email: user.email });
 
         if (employees && employees.length > 0) {
           const emp = employees[0];
 
-          // Vincular workshop_id ao User se ainda não tiver
-          if (emp.workshop_id && (!user.workshop_id || !user.job_role)) {
-            console.log("🔗 Vinculando User à oficina do Employee...");
-            console.log("📋 Dados do Employee:", { workshop_id: emp.workshop_id, area: emp.area, job_role: emp.job_role });
-
-            await base44.auth.updateMe({ 
-              workshop_id: emp.workshop_id,
-              area: emp.area || 'tecnico',
-              job_role: emp.job_role || 'outros',
-              position: emp.position || 'Colaborador'
-            });
-
-            // Atualizar Employee com user_id se ainda não tiver
-            if (!emp.user_id) {
-              await base44.entities.Employee.update(emp.id, {
-                user_id: user.id,
-                first_login_at: emp.first_login_at || new Date().toISOString(),
-                last_login_at: new Date().toISOString()
-              });
-            }
-
-            // Criar permissões padrão se não existir
-            const permissions = await base44.entities.UserPermission.filter({ 
+          // Vincular user_id ao Employee se ainda não tiver
+          if (!emp.user_id) {
+            await base44.entities.Employee.update(emp.id, {
               user_id: user.id,
-              workshop_id: emp.workshop_id
+              first_login_at: emp.first_login_at || new Date().toISOString(),
+              last_login_at: new Date().toISOString()
             });
-
-            if (!permissions || permissions.length === 0) {
-              console.log("🔐 Criando permissões padrão via função...");
-              await base44.functions.invoke('createDefaultPermissions', {
-                user_id: user.id,
-                workshop_id: emp.workshop_id,
-                job_role: emp.job_role || 'outros'
-              });
-            }
-
-            // Recarregar usuário
-            setTimeout(() => {
-              window.location.reload();
-            }, 500);
+            console.log("🔗 Employee vinculado ao User");
           }
         }
       } catch (error) {
-        console.error("Erro ao vincular User ao Employee:", error);
+        console.error("Erro ao verificar aprovação:", error);
       }
     };
 
-    linkUserToEmployee();
-  }, [user?.id, user?.email]);
+    checkUserApproval();
+  }, [user?.id, user?.email, user?.user_status]);
 
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ['unread-notifications', user?.id],
@@ -338,7 +313,30 @@ export default function Layout({ children }) {
           <div className={`${isAuthenticated ? 'px-4 sm:px-6 lg:px-8 py-6' : ''}`}>
             {isAuthenticated && <Breadcrumbs />}
             {isAuthenticated ? (
-              workshop ? (
+              // Verificar se usuário está pendente de aprovação
+              user?.user_status === 'pending' ? (
+                <div className="flex flex-col items-center justify-center h-[60vh] text-center px-4">
+                  <div className="bg-yellow-100 p-4 rounded-full mb-4">
+                    <LogOut className="w-8 h-8 text-yellow-600" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Aguardando Aprovação</h2>
+                  <p className="text-gray-600 max-w-md mb-4">
+                    Seu cadastro foi realizado com sucesso! No momento, seu acesso está 
+                    <strong> aguardando aprovação</strong> de um administrador.
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Você receberá um email assim que seu acesso for liberado.
+                  </p>
+                  <Button 
+                    onClick={handleLogout}
+                    variant="outline"
+                    className="mt-6"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sair
+                  </Button>
+                </div>
+              ) : workshop ? (
                 workshop.status === 'inativo' && user?.role !== 'admin' ? (
                   <div className="flex flex-col items-center justify-center h-[60vh] text-center px-4">
                     <div className="bg-red-100 p-4 rounded-full mb-4">

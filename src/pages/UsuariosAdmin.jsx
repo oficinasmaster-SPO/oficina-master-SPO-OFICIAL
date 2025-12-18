@@ -15,6 +15,7 @@ import UserStatsCards from "@/components/admin/users/UserStatsCards";
 import UserFilters from "@/components/admin/users/UserFilters";
 import UserTable from "@/components/admin/users/UserTable";
 import UserDetailsDrawer from "@/components/admin/users/UserDetailsDrawer";
+import ApprovalBanner from "@/components/admin/users/ApprovalBanner";
 
 export default function UsuariosAdmin() {
   const queryClient = useQueryClient();
@@ -220,6 +221,23 @@ export default function UsuariosAdmin() {
       toast.success("Acesso reenviado!");
     },
     onError: (error) => toast.error("Erro ao reenviar acesso: " + error.message)
+  });
+
+  const approveAccessMutation = useMutation({
+    mutationFn: async ({ employeeId, profileId }) => {
+      const result = await base44.functions.invoke('approveUserAccess', { 
+        employee_id: employeeId,
+        profile_id: profileId
+      });
+      return result.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['admin-users']);
+      toast.success("Acesso aprovado! Usuário pode fazer login agora.");
+      setShowDetailsDrawer(false);
+      setSelectedUser(null);
+    },
+    onError: (error) => toast.error("Erro ao aprovar acesso: " + error.message)
   });
 
   const handleSubmit = (data) => {
@@ -579,6 +597,12 @@ export default function UsuariosAdmin() {
         profile={profiles.find(p => p.id === selectedUser?.profile_id)}
         admin={allUsers.find(a => a.id === selectedUser?.admin_responsavel_id)}
         onResetPassword={handleResetPassword}
+        onApprove={(profileId) => approveAccessMutation.mutate({ 
+          employeeId: selectedUser.id, 
+          profileId 
+        })}
+        isApproving={approveAccessMutation.isPending}
+        profiles={profiles}
       />
     </div>
   );
