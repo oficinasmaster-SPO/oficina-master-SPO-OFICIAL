@@ -187,11 +187,11 @@ Deno.serve(async (req) => {
       console.log("📊 Dados do User a serem salvos:", userData);
 
       if (existingUsers && existingUsers.length > 0) {
-        await base44.asServiceRole.entities.User.update(existingUsers[0].id, userData);
+        await base44.entities.User.update(existingUsers[0].id, userData);
         userId = existingUsers[0].id;
         console.log("✅ User atualizado:", userId);
       } else {
-        const newUser = await base44.asServiceRole.entities.User.create({
+        const newUser = await base44.entities.User.create({
           email: email || invite.email,
           role: isInternalUser ? (invite.metadata?.role || 'user') : 'user',
           ...userData
@@ -201,7 +201,7 @@ Deno.serve(async (req) => {
       }
 
       // Vincular user_id ao Employee E garantir que os dados estejam sincronizados
-      await base44.asServiceRole.entities.Employee.update(employee.id, {
+      await base44.entities.Employee.update(employee.id, {
         user_id: userId,
         full_name: name || invite.name,
         telefone: phone || invite.metadata?.telefone || '',
