@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, CheckCircle2, Upload, User, Lock, AlertCircle, Building2 } from "lucide-react";
 import { toast } from "sonner";
+import { registerEmployeeViaBackend } from "@/components/onboarding/EmployeeRegistrationHelper";
 
 export default function PrimeiroAcesso() {
   // VERSION MARKER: v20251218-1600-BACKEND-ONLY
