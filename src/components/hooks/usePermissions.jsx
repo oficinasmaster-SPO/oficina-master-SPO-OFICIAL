@@ -7,15 +7,21 @@ export function usePermissions(user) {
     queryFn: async () => {
       if (!user?.id) return null;
       
-      const perms = await base44.entities.UserPermission.filter({ 
-        user_id: user.id,
-        is_active: true
-      });
-      
-      return perms[0] || null;
+      try {
+        const perms = await base44.entities.UserPermission.filter({ 
+          user_id: user.id,
+          is_active: true
+        });
+        
+        return perms && perms.length > 0 ? perms[0] : null;
+      } catch (error) {
+        console.error("Erro ao buscar permissões:", error);
+        return null;
+      }
     },
     enabled: !!user?.id,
     staleTime: 300000, // 5 minutos
+    retry: 1
   });
 
   const hasPermission = (module, action) => {

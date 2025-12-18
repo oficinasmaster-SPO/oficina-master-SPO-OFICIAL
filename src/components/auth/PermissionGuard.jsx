@@ -9,13 +9,20 @@ export default function PermissionGuard({
   action = "view",
   fallback = null 
 }) {
-  const user = React.useMemo(() => {
-    try {
-      // Simula busca do user - em produção viria do contexto
-      return window.__currentUser || null;
-    } catch {
-      return null;
-    }
+  // Busca user do contexto global ou estado
+  const [user, setUser] = React.useState(null);
+  
+  React.useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const { base44 } = await import("@/api/base44Client");
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
+      } catch {
+        setUser(null);
+      }
+    };
+    loadUser();
   }, []);
 
   const { hasPermission, isLoading, isAdmin } = usePermissions(user);
