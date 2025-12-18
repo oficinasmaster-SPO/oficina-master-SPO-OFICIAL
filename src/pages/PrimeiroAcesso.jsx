@@ -11,6 +11,9 @@ import { Loader2, CheckCircle2, Upload, User, Lock, AlertCircle, Building2 } fro
 import { toast } from "sonner";
 
 export default function PrimeiroAcesso() {
+  // VERSION MARKER: v20251218-1600-BACKEND-ONLY
+  console.log("🆕 PrimeiroAcesso v20251218-1600-BACKEND-ONLY carregado");
+  
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
