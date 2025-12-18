@@ -80,7 +80,7 @@ Deno.serve(async (req) => {
 
     if (!isInternalUser) {
       // Buscar oficina apenas para usuários externos
-      const workshops = await base44.asServiceRole.entities.Workshop.filter({ id: invite.workshop_id });
+      const workshops = await base44.entities.Workshop.filter({ id: invite.workshop_id });
       workshop = workshops[0];
       ownerId = workshop ? workshop.owner_id : null;
     }
