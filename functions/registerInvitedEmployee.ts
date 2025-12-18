@@ -33,8 +33,8 @@ Deno.serve(async (req) => {
 
     console.log("🔍 Buscando convite com token:", token);
 
-    // Buscar convite pelo token usando service role - filter é mais eficiente
-    const invites = await base44.asServiceRole.entities.EmployeeInvite.filter({ invite_token: token });
+    // Buscar convite pelo token - filter é mais eficiente
+    const invites = await base44.entities.EmployeeInvite.filter({ invite_token: token });
     const invite = invites[0];
     
     console.log("📋 Convite encontrado:", invite ? "SIM" : "NÃO");
