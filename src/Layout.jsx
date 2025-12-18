@@ -280,7 +280,26 @@ export default function Layout({ children }) {
                           {user.full_name || user.email}
                         </p>
                         <p className="text-xs text-gray-600 capitalize">
-                          {user.role === 'admin' ? 'Administrador' : user.job_role === 'acelerador' ? 'Acelerador' : user.role === 'user' ? 'Consultor' : 'Usuário'}
+                          {user.role === 'admin' ? 'Administrador' : 
+                           user.job_role === 'socio' ? 'Sócio' :
+                           user.job_role === 'diretor' ? 'Diretor' :
+                           user.job_role === 'supervisor_loja' ? 'Supervisor de Loja' :
+                           user.job_role === 'gerente' ? 'Gerente' :
+                           user.job_role === 'lider_tecnico' ? 'Líder Técnico' :
+                           user.job_role === 'financeiro' ? 'Financeiro' :
+                           user.job_role === 'rh' ? 'RH' :
+                           user.job_role === 'tecnico' ? 'Técnico' :
+                           user.job_role === 'funilaria_pintura' ? 'Funilaria/Pintura' :
+                           user.job_role === 'comercial' ? 'Comercial' :
+                           user.job_role === 'consultor_vendas' ? 'Consultor de Vendas' :
+                           user.job_role === 'marketing' ? 'Marketing' :
+                           user.job_role === 'estoque' ? 'Estoque' :
+                           user.job_role === 'administrativo' ? 'Administrativo' :
+                           user.job_role === 'motoboy' ? 'Motoboy' :
+                           user.job_role === 'lavador' ? 'Lavador' :
+                           user.job_role === 'acelerador' ? 'Acelerador' :
+                           user.job_role === 'consultor' ? 'Consultor' :
+                           user.position || 'Usuário'}
                         </p>
                       </div>
                       <Button
