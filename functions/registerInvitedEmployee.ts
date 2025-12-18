@@ -150,7 +150,7 @@ Deno.serve(async (req) => {
       // Tentar buscar user existente (pode não existir ainda)
       let existingUsers = [];
       try {
-        existingUsers = await base44.asServiceRole.entities.User.filter({ email: email || invite.email });
+        existingUsers = await base44.entities.User.filter({ email: email || invite.email });
       } catch (userFetchError) {
         console.log("⚠️ Não foi possível buscar Users (normal se não existir ainda)");
       }
