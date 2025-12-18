@@ -151,70 +151,31 @@ export default function PrimeiroAcesso() {
     setSubmitting(true);
 
     try {
-      console.log("📤 Criando Employee...");
+      console.log("📤 Registrando colaborador via backend...");
 
-      // Criar ou atualizar Employee
-      let employee;
-      if (invite.employee_id) {
-        employee = await base44.entities.Employee.update(invite.employee_id, {
-          full_name: formData.name,
+      // Usar fetch direto pois SDK requer autenticação
+      const response = await fetch(`${window.location.origin}/.functions/registerInvitedEmployee`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          token: invite.invite_token,
+          name: formData.name,
           email: formData.email,
-          telefone: formData.phone,
-          profile_picture_url: formData.profile_picture_url,
-          position: invite.position,
-          area: invite.area,
-          job_role: invite.job_role,
-          workshop_id: invite.workshop_id,
-          tipo_vinculo: invite.invite_type === 'internal' ? 'interno' : 'cliente',
-          is_internal: invite.invite_type === 'internal',
-          user_status: 'ativo'
-        });
-      } else {
-        employee = await base44.entities.Employee.create({
-          full_name: formData.name,
-          email: formData.email,
-          telefone: formData.phone,
-          profile_picture_url: formData.profile_picture_url,
-          position: invite.position,
-          area: invite.area,
-          job_role: invite.job_role,
-          workshop_id: invite.workshop_id,
-          tipo_vinculo: invite.invite_type === 'internal' ? 'interno' : 'cliente',
-          is_internal: invite.invite_type === 'internal',
-          user_status: 'ativo'
-        });
+          phone: formData.phone,
+          profile_picture_url: formData.profile_picture_url
+        })
+      });
 
-        // Atualizar invite com employee_id
-        await base44.entities.EmployeeInvite.update(invite.id, {
-          employee_id: employee.id
-        });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Erro HTTP: ${response.status}`);
       }
 
-      console.log("✅ Employee criado:", employee.id);
-
-      // Criar User com status pending
-      const newUser = await base44.entities.User.create({
-        full_name: formData.name,
-        email: formData.email,
-        workshop_id: invite.workshop_id,
-        position: invite.position,
-        job_role: invite.job_role,
-        area: invite.area,
-        user_status: 'pending',
-        is_internal: invite.invite_type === 'internal',
-        profile_picture_url: formData.profile_picture_url,
-        phone: formData.phone
-      });
-
-      console.log("✅ User criado:", newUser.id);
-
-      // Atualizar convite
-      await base44.entities.EmployeeInvite.update(invite.id, {
-        status: 'acessado',
-        accessed_at: new Date().toISOString()
-      });
-
-      const data = { success: true };
+      const data = await response.json();
+      console.log("✅ Resposta do backend:", data);
 
       if (data.success) {
         toast.success("✅ Cadastro confirmado! Redirecionando para criar sua senha...", { duration: 5000 });
