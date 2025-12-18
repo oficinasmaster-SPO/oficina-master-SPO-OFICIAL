@@ -36,42 +36,74 @@ export default function MonitoramentoUsuarios() {
   const { data: allUsers = [] } = useQuery({
     queryKey: ['all-users-monitoring'],
     queryFn: async () => {
-      const employees = await base44.entities.Employee.list();
-      return employees;
+      try {
+        const employees = await base44.entities.Employee.list();
+        return employees || [];
+      } catch (error) {
+        console.error("Erro ao buscar usuários:", error);
+        return [];
+      }
     }
   });
 
   const { data: activeSessions = [], isLoading: loadingSessions } = useQuery({
     queryKey: ['active-sessions'],
     queryFn: async () => {
-      const sessions = await base44.entities.UserSession.filter(
-        { is_active: true },
-        '-last_activity_time'
-      );
-      return sessions;
+      try {
+        const sessions = await base44.entities.UserSession.filter(
+          { is_active: true },
+          '-last_activity_time'
+        );
+        return sessions || [];
+      } catch (error) {
+        console.error("Erro ao buscar sessões ativas:", error);
+        return [];
+      }
     },
     refetchInterval: 10000
   });
 
   const { data: allSessions = [] } = useQuery({
     queryKey: ['all-sessions'],
-    queryFn: () => base44.entities.UserSession.list('-login_time', 500)
+    queryFn: async () => {
+      try {
+        const sessions = await base44.entities.UserSession.list('-login_time', 500);
+        return sessions || [];
+      } catch (error) {
+        console.error("Erro ao buscar todas as sessões:", error);
+        return [];
+      }
+    }
   });
 
   const { data: allActivityLogs = [] } = useQuery({
     queryKey: ['all-activity-logs'],
-    queryFn: () => base44.entities.UserActivityLog.list('-timestamp', 1000)
+    queryFn: async () => {
+      try {
+        const logs = await base44.entities.UserActivityLog.list('-timestamp', 1000);
+        return logs || [];
+      } catch (error) {
+        console.error("Erro ao buscar logs de atividade:", error);
+        return [];
+      }
+    }
   });
 
   const { data: userActivityLogs = [] } = useQuery({
     queryKey: ['activity-logs', selectedUser?.id],
-    queryFn: () => {
+    queryFn: async () => {
       if (!selectedUser) return [];
-      return base44.entities.UserActivityLog.filter(
-        { user_id: selectedUser.id },
-        '-timestamp',
-        200
-      );
+      try {
+        const logs = await base44.entities.UserActivityLog.filter(
+          { user_id: selectedUser.id },
+          '-timestamp',
+          200
+        );
+        return logs || [];
+      } catch (error) {
+        console.error("Erro ao buscar logs do usuário:", error);
+        return [];
+      }
     },
     enabled: !!selectedUser
   });
