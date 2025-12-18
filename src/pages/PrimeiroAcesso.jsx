@@ -43,9 +43,10 @@ export default function PrimeiroAcesso() {
       }
 
       // Validar token via backend (sem autenticação necessária)
-      console.log("📡 Chamando validateInviteToken...");
+      console.log("📡 Token a validar:", token);
+      console.log("📡 URL completa:", `${window.location.origin}/.functions/validateInviteToken`);
       
-      const response = await fetch(`/.functions/validateInviteToken`, {
+      const response = await fetch(`${window.location.origin}/.functions/validateInviteToken`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -55,16 +56,23 @@ export default function PrimeiroAcesso() {
       });
 
       console.log("📡 Status da resposta:", response.status);
+      console.log("📡 Response headers:", [...response.headers.entries()]);
+
+      const responseText = await response.text();
+      console.log("📡 Response raw:", responseText);
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        setError(errorData.error || `Erro ao validar convite (HTTP ${response.status})`);
+        let errorData = {};
+        try {
+          errorData = JSON.parse(responseText);
+        } catch {}
+        setError(errorData.error || `Erro ao validar convite (HTTP ${response.status}). Detalhes: ${responseText}`);
         setLoading(false);
         return;
       }
 
-      const data = await response.json();
-      console.log("📥 Resposta recebida:", data);
+      const data = JSON.parse(responseText);
+      console.log("📥 Resposta parseada:", data);
       
       if (!data.success) {
         setError(data.error || "Convite não encontrado ou inválido.");
