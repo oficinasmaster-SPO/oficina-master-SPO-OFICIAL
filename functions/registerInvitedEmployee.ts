@@ -123,21 +123,23 @@ Deno.serve(async (req) => {
 
     // Criar User com status pending para permitir login (mas acesso bloqueado até aprovação)
     console.log("📝 Criando User com status pending...");
-    
+
     let userId;
     try {
       const existingUsers = await base44.asServiceRole.entities.User.filter({ email: email || invite.email });
-      
+
+      // Construir dados completos do User baseados no Employee e no Invite
       const userData = {
         full_name: name || invite.name,
-        position: invite.position,
+        position: invite.position, // Cargo real do convite
         job_role: invite.job_role || 'outros',
         area: invite.area || (isInternalUser ? 'administrativo' : 'tecnico'),
-        telefone: phone || '',
+        telefone: phone || invite.metadata?.telefone || '',
         profile_picture_url: profile_picture_url || '',
         is_internal: isInternalUser,
         user_status: 'pending',
-        invite_id: invite.id
+        invite_id: invite.id,
+        hire_date: new Date().toISOString().split('T')[0]
       };
 
       // Adicionar workshop_id apenas para colaboradores de oficina
@@ -145,10 +147,17 @@ Deno.serve(async (req) => {
         userData.workshop_id = invite.workshop_id;
       }
 
-      // Adicionar profile_id para usuários internos (será usado na aprovação)
+      // Adicionar profile_id e role para usuários internos (será usado na aprovação)
       if (isInternalUser && invite.metadata?.profile_id) {
         userData.profile_id = invite.metadata.profile_id;
       }
+
+      // Para usuários internos, adicionar role se disponível no metadata
+      if (isInternalUser && invite.metadata?.role) {
+        userData.role = invite.metadata.role;
+      }
+
+      console.log("📊 Dados do User a serem salvos:", userData);
 
       if (existingUsers && existingUsers.length > 0) {
         await base44.asServiceRole.entities.User.update(existingUsers[0].id, userData);
@@ -157,20 +166,27 @@ Deno.serve(async (req) => {
       } else {
         const newUser = await base44.asServiceRole.entities.User.create({
           email: email || invite.email,
-          role: 'user',
+          role: isInternalUser ? (invite.metadata?.role || 'user') : 'user',
           ...userData
         });
         userId = newUser.id;
         console.log("✅ User criado com status pending:", userId);
       }
 
-      // Vincular user_id ao Employee
+      // Vincular user_id ao Employee E garantir que os dados estejam sincronizados
       await base44.asServiceRole.entities.Employee.update(employee.id, {
-        user_id: userId
+        user_id: userId,
+        full_name: name || invite.name,
+        telefone: phone || invite.metadata?.telefone || '',
+        profile_picture_url: profile_picture_url || '',
+        first_login_at: new Date().toISOString()
       });
+
+      console.log("✅ Employee atualizado com user_id e dados sincronizados");
 
     } catch (userError) {
       console.error("⚠️ Erro ao criar User:", userError);
+      console.error("⚠️ Stack completo:", userError.stack);
       return Response.json({ 
         success: false, 
         error: 'Erro ao criar conta de acesso: ' + userError.message 

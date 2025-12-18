@@ -38,26 +38,46 @@ Deno.serve(async (req) => {
 
     const userId = existingUsers[0].id;
     
+    // Buscar dados atualizados do User antes de aprovar
+    const currentUser = existingUsers[0];
+
     // Atualizar User para status active e configurar profile_id
     const userData = {
       user_status: 'active',
       approved_at: new Date().toISOString(),
-      approved_by: admin.id
+      approved_by: admin.id,
+      full_name: currentUser.full_name || employee.full_name,
+      position: employee.position, // Garantir que position vem do Employee
+      job_role: employee.job_role || currentUser.job_role || 'outros',
+      area: employee.area || currentUser.area,
+      telefone: employee.telefone || currentUser.telefone,
+      profile_picture_url: employee.profile_picture_url || currentUser.profile_picture_url
     };
 
-    // Adicionar profile_id se fornecido na aprovação
+    // Adicionar profile_id se fornecido na aprovação OU se já existe no user
     if (profile_id) {
       userData.profile_id = profile_id;
+    } else if (currentUser.profile_id) {
+      userData.profile_id = currentUser.profile_id;
     }
+
+    // Adicionar workshop_id se for colaborador de oficina
+    if (employee.workshop_id) {
+      userData.workshop_id = employee.workshop_id;
+    }
+
+    console.log("📊 Dados do User na aprovação:", userData);
 
     await base44.asServiceRole.entities.User.update(userId, userData);
     console.log("✅ User aprovado e ativado:", userId);
 
-    // Vincular user_id ao Employee
+    // Vincular user_id ao Employee e sincronizar status
     await base44.asServiceRole.entities.Employee.update(employee.id, {
       user_id: userId,
-      user_status: 'active'
+      user_status: 'ativo' // Employee usa 'ativo', não 'active'
     });
+
+    console.log("✅ Employee atualizado com status ativo");
 
     // Criar permissões baseadas no perfil
     try {
