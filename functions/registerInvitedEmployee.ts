@@ -4,11 +4,21 @@ Deno.serve(async (req) => {
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type'
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Content-Type': 'application/json'
   };
 
+  // CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 200, headers: corsHeaders });
+  }
+
+  // Só aceita POST
+  if (req.method !== 'POST') {
+    return new Response(
+      JSON.stringify({ success: false, error: 'Método não permitido' }), 
+      { status: 405, headers: corsHeaders }
+    );
   }
 
   try {
@@ -19,30 +29,30 @@ Deno.serve(async (req) => {
     
     const { token, name, email, phone, profile_picture_url } = await req.json();
 
-    console.log("🔍 Token:", token);
+    console.log("🔍 Token recebido:", token);
 
     const invites = await base44.entities.EmployeeInvite.filter({ invite_token: token });
     const invite = invites[0];
 
     if (!invite) {
-      return Response.json({ success: false, error: 'Convite não encontrado' }, { 
-        status: 404, 
-        headers: corsHeaders 
-      });
+      return new Response(
+        JSON.stringify({ success: false, error: 'Convite não encontrado' }), 
+        { status: 404, headers: corsHeaders }
+      );
     }
 
     if (invite.expires_at && new Date(invite.expires_at) < new Date()) {
-      return Response.json({ success: false, error: 'Convite expirado' }, { 
-        status: 400, 
-        headers: corsHeaders 
-      });
+      return new Response(
+        JSON.stringify({ success: false, error: 'Convite expirado' }), 
+        { status: 400, headers: corsHeaders }
+      );
     }
 
     if (invite.status === 'concluido') {
-      return Response.json({ success: false, error: 'Convite já utilizado' }, { 
-        status: 400, 
-        headers: corsHeaders 
-      });
+      return new Response(
+        JSON.stringify({ success: false, error: 'Convite já utilizado' }), 
+        { status: 400, headers: corsHeaders }
+      );
     }
 
     const isInternal = invite.invite_type === 'internal';
@@ -53,7 +63,7 @@ Deno.serve(async (req) => {
       ownerId = workshops[0]?.owner_id;
     }
 
-    // Employee
+    // Criar/Atualizar Employee
     const existingEmps = await base44.entities.Employee.filter({ 
       email: email || invite.email,
       ...(isInternal ? { tipo_vinculo: 'interno' } : { workshop_id: invite.workshop_id })
@@ -87,16 +97,16 @@ Deno.serve(async (req) => {
       });
     }
 
-    console.log("✅ Employee:", employee.id);
+    console.log("✅ Employee criado/atualizado:", employee.id);
 
-    // Update invite
+    // Atualizar convite
     await base44.entities.EmployeeInvite.update(invite.id, {
       status: 'acessado',
       accepted_at: new Date().toISOString(),
       employee_id: employee.id
     });
 
-    // User
+    // Criar/Atualizar User
     const existingUsers = await base44.entities.User.filter({ email: email || invite.email });
 
     const userData = {
@@ -135,21 +145,31 @@ Deno.serve(async (req) => {
       userId = newUser.id;
     }
 
-    console.log("✅ User:", userId);
+    console.log("✅ User criado/atualizado:", userId);
 
+    // Vincular user_id ao Employee
     await base44.entities.Employee.update(employee.id, { user_id: userId });
 
-    return Response.json({ 
-      success: true, 
-      employee_id: employee.id,
-      user_id: userId
-    }, { headers: corsHeaders });
+    return new Response(
+      JSON.stringify({ 
+        success: true, 
+        employee_id: employee.id,
+        user_id: userId,
+        message: 'Cadastro realizado com sucesso'
+      }), 
+      { status: 200, headers: corsHeaders }
+    );
 
   } catch (error) {
-    console.error('❌ Erro:', error);
-    return Response.json({ 
-      success: false, 
-      error: error.message 
-    }, { status: 500, headers: { 'Access-Control-Allow-Origin': '*' } });
+    console.error('❌ Erro na função:', error);
+    console.error('Stack:', error.stack);
+    
+    return new Response(
+      JSON.stringify({ 
+        success: false, 
+        error: error.message || 'Erro ao processar cadastro'
+      }), 
+      { status: 500, headers: corsHeaders }
+    );
   }
 });
