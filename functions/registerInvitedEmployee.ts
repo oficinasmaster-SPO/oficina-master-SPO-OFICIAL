@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
       ? { email: email || invite.email, tipo_vinculo: 'interno' }
       : { email: email || invite.email, workshop_id: invite.workshop_id };
     
-    const existingEmployees = await base44.asServiceRole.entities.Employee.filter(filterQuery);
+    const existingEmployees = await base44.entities.Employee.filter(filterQuery);
 
     console.log("👤 Employee existente?", existingEmployees.length > 0);
 
