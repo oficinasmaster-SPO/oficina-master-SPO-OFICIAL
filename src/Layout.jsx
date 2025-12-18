@@ -64,33 +64,18 @@ export default function Layout({ children }) {
         try {
           const currentUser = await base44.auth.me();
           
-          // Atualizar status no primeiro login
-          if (currentUser && (currentUser.user_status === 'pending' || !currentUser.first_login_at)) {
-            try {
-              await base44.auth.updateMe({
-                user_status: 'active',
-                first_login_at: new Date().toISOString(),
-                last_login_at: new Date().toISOString()
-              });
-              console.log("✅ Status atualizado para active no primeiro login");
-              // Recarregar dados do usuário
-              const updatedUser = await base44.auth.me();
-              setUser(updatedUser);
-            } catch (updateError) {
-              console.error("⚠️ Erro ao atualizar status (não crítico):", updateError);
-              setUser(currentUser);
-            }
-          } else {
-            // Atualizar apenas last_login_at para logins subsequentes
-            try {
-              await base44.auth.updateMe({
-                last_login_at: new Date().toISOString()
-              });
-            } catch (updateError) {
-              console.error("⚠️ Erro ao atualizar last_login (não crítico):", updateError);
-            }
-            setUser(currentUser);
+          // Apenas atualizar last_login_at (não mexer em user_status aqui)
+          // user_status deve ser gerenciado apenas pelo admin via approveUserAccess
+          try {
+            await base44.auth.updateMe({
+              first_login_at: currentUser.first_login_at || new Date().toISOString(),
+              last_login_at: new Date().toISOString()
+            });
+            console.log("✅ Login registrado");
+          } catch (updateError) {
+            console.error("⚠️ Erro ao atualizar login (não crítico):", updateError);
           }
+          setUser(currentUser);
 
           console.log("👤 User autenticado:", currentUser.email);
           console.log("🏢 Workshop_id do User:", currentUser.workshop_id);
