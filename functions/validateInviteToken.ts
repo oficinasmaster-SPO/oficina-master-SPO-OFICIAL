@@ -1,6 +1,22 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
 
 Deno.serve(async (req) => {
+  // Permitir CORS e aceitar POST
+  if (req.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Accept'
+      }
+    });
+  }
+
+  if (req.method !== 'POST') {
+    return Response.json({ success: false, error: 'Método não permitido' }, { status: 405 });
+  }
+
   try {
     const base44 = createClientFromRequest(req);
     
