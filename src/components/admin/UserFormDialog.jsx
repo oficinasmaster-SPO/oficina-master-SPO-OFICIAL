@@ -23,40 +23,31 @@ export default function UserFormDialog({
     role: selectedUser?.role || "user"
   });
   
-  // Debug inicial
-  React.useEffect(() => {
-    console.log("🔍 Estado inicial do formulário:", {
-      selectedProfileId,
-      role: formData.role,
-      isCreateMode
-    });
-  }, []);
-  
-  // Debug: Log profiles recebidos
-  React.useEffect(() => {
-    console.log("🔍 Perfis disponíveis no formulário:", profiles);
-    console.log("👤 Usuário selecionado:", selectedUser);
-    console.log("📝 Modo criação:", isCreateMode);
-  }, [profiles, selectedUser, isCreateMode]);
-  
   // Atualiza selectedProfileId e formData quando selectedUser mudar (modo edição)
   React.useEffect(() => {
     if (selectedUser?.profile_id) {
       setSelectedProfileId(selectedUser.profile_id);
-      console.log("✅ Profile ID definido:", selectedUser.profile_id);
     } else if (isCreateMode) {
       setSelectedProfileId("");
-      console.log("🆕 Modo criação - perfil limpo");
     }
   }, [selectedUser, isCreateMode]);
   
   const selectedProfile = profiles?.find(p => p.id === selectedProfileId);
   
+  // Auto-seleciona o nível de acesso baseado no perfil
   React.useEffect(() => {
-    if (selectedProfile) {
-      console.log("✨ Perfil selecionado encontrado:", selectedProfile.name);
+    if (selectedProfile && isCreateMode) {
+      // Se o perfil tem permissões de admin, define role como admin
+      const hasAdminAccess = selectedProfile.roles?.some(role => 
+        role.includes('admin') || role.includes('sistema')
+      );
+      
+      const newRole = hasAdminAccess ? 'admin' : 'user';
+      setFormData(prev => ({ ...prev, role: newRole }));
+      
+      console.log("🔐 Nível de acesso auto-definido:", newRole, "para perfil:", selectedProfile.name);
     }
-  }, [selectedProfile]);
+  }, [selectedProfile, isCreateMode]);
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
