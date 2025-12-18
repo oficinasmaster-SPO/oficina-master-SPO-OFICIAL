@@ -145,8 +145,7 @@ export default function ConvidarColaborador() {
         const payload = {
           ...data,
           workshop_id: workshop.id,
-          workshop_name: workshop.name,
-          origin: window.location.origin
+          workshop_name: workshop.name
         };
         
         console.log("Payload enviado:", payload);

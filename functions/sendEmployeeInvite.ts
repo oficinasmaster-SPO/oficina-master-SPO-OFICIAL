@@ -183,8 +183,8 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Usa o domínio de origem da requisição (oficinasmastergtr.com em produção)
-    const baseUrl = origin || req.headers.get('origin') || 'https://oficinasmastergtr.com';
+    // Usa o domínio oficial da aplicação
+    const baseUrl = 'https://oficina-master-b2bc845b.base44.app';
     const inviteUrl = `${baseUrl}/PrimeiroAcesso?token=${token}`;
 
     console.log("✅ Link de convite gerado:", inviteUrl);
