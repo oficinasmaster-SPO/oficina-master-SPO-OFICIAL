@@ -277,42 +277,83 @@ export default function ConvidarColaborador() {
 
         {/* Link Gerado */}
         {generatedLink && (
-          <Card className="border-green-200 bg-green-50 shadow-lg">
+          <Card className="border-green-200 bg-green-50 shadow-lg mb-6">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg text-green-800">
                 <CheckCircle2 className="w-5 h-5" />
-                Link de Acesso Gerado!
+                ✅ Link de Acesso Gerado com Sucesso!
               </CardTitle>
-              <CardDescription className="text-green-700">
-                Copie e compartilhe este link com o colaborador
+              <CardDescription className="text-green-700 font-medium">
+                Envie este link via WhatsApp, Email ou outro meio para o colaborador
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="bg-white p-4 rounded-lg border border-green-200">
+            <CardContent className="space-y-4">
+              {/* Alerta importante */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex gap-3">
+                  <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm">
+                    <p className="font-semibold text-blue-900 mb-1">📧 Email automático não disponível</p>
+                    <p className="text-blue-800">
+                      Por limitação da plataforma, você precisa <strong>enviar o link manualmente</strong> via WhatsApp, Email pessoal ou SMS.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Link */}
+              <div className="bg-white p-4 rounded-lg border-2 border-green-300">
                 <div className="flex items-center gap-2 mb-2">
                   <Link2 className="w-4 h-4 text-green-600" />
-                  <span className="text-xs font-semibold text-gray-700">Link de Primeiro Acesso</span>
+                  <span className="text-xs font-semibold text-gray-700 uppercase">Link de Primeiro Acesso</span>
                 </div>
-                <p className="text-sm text-gray-600 break-all font-mono bg-gray-50 p-2 rounded">
+                <p className="text-sm text-gray-600 break-all font-mono bg-gray-50 p-3 rounded border border-gray-200">
                   {generatedLink}
                 </p>
               </div>
-              <Button 
-                onClick={copyToClipboard}
-                className="w-full bg-green-600 hover:bg-green-700"
-              >
-                {copied ? (
-                  <>
-                    <Check className="w-4 h-4 mr-2" />
-                    Link Copiado!
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-4 h-4 mr-2" />
-                    Copiar Link
-                  </>
-                )}
-              </Button>
+
+              {/* Botões de ação */}
+              <div className="grid grid-cols-2 gap-3">
+                <Button 
+                  onClick={copyToClipboard}
+                  className="bg-green-600 hover:bg-green-700 h-11"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="w-4 h-4 mr-2" />
+                      Copiado!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4 mr-2" />
+                      Copiar Link
+                    </>
+                  )}
+                </Button>
+                
+                <Button
+                  onClick={() => {
+                    const message = `Olá! Você foi convidado para acessar o sistema Oficinas Master.\n\nClique no link abaixo para completar seu cadastro:\n\n${generatedLink}`;
+                    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+                  }}
+                  variant="outline"
+                  className="border-green-600 text-green-700 hover:bg-green-50 h-11"
+                >
+                  <Mail className="w-4 h-4 mr-2" />
+                  Enviar via WhatsApp
+                </Button>
+              </div>
+
+              {/* Instruções */}
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                <p className="text-xs font-semibold text-gray-700 mb-2">📋 Próximos passos:</p>
+                <ol className="text-xs text-gray-600 space-y-1 ml-4 list-decimal">
+                  <li>Copie o link usando o botão acima</li>
+                  <li>Envie para o colaborador via WhatsApp ou Email</li>
+                  <li>O colaborador deve clicar no link e completar o cadastro</li>
+                  <li>Após conclusão, ele poderá fazer login normalmente</li>
+                </ol>
+              </div>
             </CardContent>
           </Card>
         )}
@@ -360,8 +401,18 @@ export default function ConvidarColaborador() {
                 Gerar Link de Acesso
               </CardTitle>
               <CardDescription>
-                Preencha os dados para gerar um link que você pode compartilhar
+                Preencha os dados para gerar um link de primeiro acesso para o colaborador
               </CardDescription>
+              
+              {/* Aviso sobre envio manual */}
+              <div className="mt-3 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                <div className="flex gap-2 items-start">
+                  <AlertCircle className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-yellow-800">
+                    <strong>Importante:</strong> Após gerar o link, você precisará enviá-lo manualmente via WhatsApp ou Email para o colaborador.
+                  </p>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
