@@ -171,6 +171,7 @@ export default function ConvidarColaborador() {
       }
     },
     onSuccess: (data) => {
+      console.log("✅ Resposta completa do backend:", data);
       queryClient.invalidateQueries({ queryKey: ['employee-invites'] });
       
       setFormData({ 
@@ -185,8 +186,12 @@ export default function ConvidarColaborador() {
       
       // Salva o link gerado para exibir
       if (data.invite_url) {
+        console.log("🔗 Link gerado:", data.invite_url);
         setGeneratedLink(data.invite_url);
         toast.success("Link de acesso gerado com sucesso!");
+      } else {
+        console.error("❌ Link não retornado pelo backend");
+        toast.error("Erro: Link não foi gerado corretamente");
       }
     },
     onError: (error) => {
