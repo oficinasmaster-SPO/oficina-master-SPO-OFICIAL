@@ -564,6 +564,14 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           adminOnly: true
         },
         { 
+          name: 'Teste de Usuários', 
+          href: createPageUrl('TesteUsuarios'), 
+          icon: Settings,
+          description: 'Validação de cadastro padronizado',
+          adminOnly: true,
+          highlight: true
+        },
+        { 
           name: 'Templates de Mensagem', 
           href: createPageUrl('AdminMensagens'), 
           icon: MessageCircle,
