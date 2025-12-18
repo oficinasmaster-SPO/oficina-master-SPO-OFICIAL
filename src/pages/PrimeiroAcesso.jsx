@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,37 +43,13 @@ export default function PrimeiroAcesso() {
         return;
       }
 
-      // Validar token via backend (sem autenticação necessária)
+      // Validar token via backend usando SDK
       console.log("📡 Token a validar:", token);
-      console.log("📡 URL sendo chamada:", `.functions/validateInviteToken`);
       
-      const response = await fetch(`.functions/validateInviteToken`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({ token })
-      });
-
-      console.log("📡 Status da resposta:", response.status);
-      console.log("📡 Response headers:", [...response.headers.entries()]);
-
-      const responseText = await response.text();
-      console.log("📡 Response raw:", responseText);
-
-      if (!response.ok) {
-        let errorData = {};
-        try {
-          errorData = JSON.parse(responseText);
-        } catch {}
-        setError(errorData.error || `Erro ao validar convite (HTTP ${response.status}). Detalhes: ${responseText}`);
-        setLoading(false);
-        return;
-      }
-
-      const data = JSON.parse(responseText);
-      console.log("📥 Resposta parseada:", data);
+      const response = await base44.functions.invoke('validateInviteToken', { token });
+      const data = response.data;
+      
+      console.log("📥 Resposta recebida:", data);
       
       if (!data.success) {
         setError(data.error || "Convite não encontrado ou inválido.");
@@ -145,36 +122,16 @@ export default function PrimeiroAcesso() {
     try {
       // Chamar função de backend para registrar colaborador (sem autenticação)
       console.log("📤 Registrando colaborador...");
-      console.log("📤 Dados enviados:", {
+
+      const response = await base44.functions.invoke('registerInvitedEmployee', {
         token: invite.invite_token,
         name: formData.name,
         email: formData.email,
-        phone: formData.phone
+        phone: formData.phone,
+        profile_picture_url: formData.profile_picture_url
       });
 
-      const response = await fetch(`.functions/registerInvitedEmployee`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          token: invite.invite_token,
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          profile_picture_url: formData.profile_picture_url
-        })
-      });
-
-      console.log("📡 Status resposta registro:", response.status);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Erro HTTP: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = response.data;
       console.log("📥 Resposta registro:", data);
 
       if (data.success) {
