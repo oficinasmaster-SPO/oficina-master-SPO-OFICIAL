@@ -14,23 +14,43 @@ import { toast } from "sonner";
 export default function TesteUsuarios() {
   const queryClient = useQueryClient();
   const [userType, setUserType] = useState("interno");
+  const [selectedProfile, setSelectedProfile] = useState("");
+  const [selectedJobRole, setSelectedJobRole] = useState("");
+  const [selectedArea, setSelectedArea] = useState("");
+  const [selectedRole, setSelectedRole] = useState("user");
+  const [selectedWorkshop, setSelectedWorkshop] = useState("");
 
-  const { data: currentUser } = useQuery({
+  const { data: currentUser, isLoading: loadingUser } = useQuery({
     queryKey: ['current-user'],
-    queryFn: () => base44.auth.me()
+    queryFn: () => base44.auth.me(),
+    retry: 1
   });
 
-  const { data: profiles = [] } = useQuery({
+  const { data: profiles = [], isLoading: loadingProfiles } = useQuery({
     queryKey: ['profiles'],
     queryFn: async () => {
-      const all = await base44.entities.UserProfile.list();
-      return all.filter(p => p.status === 'ativo');
-    }
+      try {
+        const all = await base44.entities.UserProfile.list();
+        return all.filter(p => p.status === 'ativo');
+      } catch (error) {
+        console.error("Erro ao carregar perfis:", error);
+        return [];
+      }
+    },
+    enabled: !!currentUser
   });
 
-  const { data: workshops = [] } = useQuery({
+  const { data: workshops = [], isLoading: loadingWorkshops } = useQuery({
     queryKey: ['workshops'],
-    queryFn: () => base44.entities.Workshop.list()
+    queryFn: async () => {
+      try {
+        return await base44.entities.Workshop.list();
+      } catch (error) {
+        console.error("Erro ao carregar oficinas:", error);
+        return [];
+      }
+    },
+    enabled: !!currentUser
   });
 
   const createUserMutation = useMutation({
@@ -85,34 +105,40 @@ export default function TesteUsuarios() {
       email: formData.get('email'),
       telefone: formData.get('telefone'),
       position: formData.get('position'),
-      job_role: formData.get('job_role'),
-      area: formData.get('area'),
-      role: formData.get('role'),
-      profile_id: formData.get('profile_id'),
+      job_role: selectedJobRole,
+      area: selectedArea,
+      role: selectedRole,
+      profile_id: selectedProfile || null,
       is_internal: userType === 'interno',
-      workshop_id: userType === 'colaborador' ? formData.get('workshop_id') : null,
+      workshop_id: userType === 'colaborador' ? selectedWorkshop : null,
       hire_date: userType === 'colaborador' ? formData.get('hire_date') : null
     };
 
+    console.log("📋 Dados do formulário:", data);
+
     // Validações
     if (userType === 'interno') {
-      if (!data.profile_id) {
-        toast.error("Profile é obrigatório para usuário interno");
+      if (!selectedProfile) {
+        toast.error("Perfil é obrigatório para usuário interno");
         return;
       }
-      if (!data.job_role || !data.area) {
-        toast.error("job_role e area são obrigatórios para usuário interno");
+      if (!selectedJobRole || !selectedArea) {
+        toast.error("Job role e área são obrigatórios para usuário interno");
         return;
       }
     }
 
     if (userType === 'colaborador') {
-      if (!data.workshop_id) {
+      if (!selectedWorkshop) {
         toast.error("Oficina é obrigatória para colaborador");
         return;
       }
-      if (!data.position || !data.job_role || !data.hire_date) {
-        toast.error("position, job_role e hire_date são obrigatórios para colaborador");
+      if (!selectedJobRole) {
+        toast.error("Job role é obrigatório para colaborador");
+        return;
+      }
+      if (!formData.get('hire_date')) {
+        toast.error("Data de contratação é obrigatória");
         return;
       }
     }
@@ -120,7 +146,15 @@ export default function TesteUsuarios() {
     createUserMutation.mutate(data);
   };
 
-  if (currentUser?.role !== 'admin') {
+  if (loadingUser) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  if (!currentUser || currentUser?.role !== 'admin') {
     return (
       <div className="flex items-center justify-center h-screen">
         <Alert className="max-w-md">
@@ -266,21 +300,27 @@ export default function TesteUsuarios() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>Perfil de Acesso *</Label>
-                    <Select name="profile_id" required>
+                    <Select value={selectedProfile} onValueChange={setSelectedProfile}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o perfil" />
                       </SelectTrigger>
                       <SelectContent>
-                        {profiles.filter(p => p.type === 'interno').map(p => (
-                          <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                        ))}
+                        {loadingProfiles ? (
+                          <div className="p-2 text-center text-xs">Carregando...</div>
+                        ) : profiles.filter(p => p.type === 'interno').length === 0 ? (
+                          <div className="p-2 text-center text-xs text-gray-500">Nenhum perfil interno</div>
+                        ) : (
+                          profiles.filter(p => p.type === 'interno').map(p => (
+                            <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div>
                     <Label>Job Role *</Label>
-                    <Select name="job_role" required>
+                    <Select value={selectedJobRole} onValueChange={setSelectedJobRole}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione a função" />
                       </SelectTrigger>
@@ -297,7 +337,7 @@ export default function TesteUsuarios() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>Área *</Label>
-                    <Select name="area" required>
+                    <Select value={selectedArea} onValueChange={setSelectedArea}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione a área" />
                       </SelectTrigger>
@@ -312,7 +352,7 @@ export default function TesteUsuarios() {
 
                   <div>
                     <Label>Role no Sistema *</Label>
-                    <Select name="role" required defaultValue="user">
+                    <Select value={selectedRole} onValueChange={setSelectedRole}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -331,21 +371,27 @@ export default function TesteUsuarios() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>Oficina *</Label>
-                    <Select name="workshop_id" required>
+                    <Select value={selectedWorkshop} onValueChange={setSelectedWorkshop}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione a oficina" />
                       </SelectTrigger>
                       <SelectContent>
-                        {workshops.map(w => (
-                          <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
-                        ))}
+                        {loadingWorkshops ? (
+                          <div className="p-2 text-center text-xs">Carregando...</div>
+                        ) : workshops.length === 0 ? (
+                          <div className="p-2 text-center text-xs text-gray-500">Nenhuma oficina cadastrada</div>
+                        ) : (
+                          workshops.map(w => (
+                            <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div>
                     <Label>Job Role *</Label>
-                    <Select name="job_role" required>
+                    <Select value={selectedJobRole} onValueChange={setSelectedJobRole}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione a função" />
                       </SelectTrigger>
@@ -362,9 +408,9 @@ export default function TesteUsuarios() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>Área</Label>
-                    <Select name="area" defaultValue="tecnico">
+                    <Select value={selectedArea} onValueChange={setSelectedArea}>
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="Selecione a área" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="tecnico">Técnico</SelectItem>
@@ -383,7 +429,7 @@ export default function TesteUsuarios() {
 
                 <div>
                   <Label>Role no Sistema *</Label>
-                  <Select name="role" required defaultValue="user">
+                  <Select value={selectedRole} onValueChange={setSelectedRole}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
