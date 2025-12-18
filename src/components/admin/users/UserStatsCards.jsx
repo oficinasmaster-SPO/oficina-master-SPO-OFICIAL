@@ -5,12 +5,12 @@ import { Users, CheckCircle, XCircle, Plane, AlertCircle, Clock } from "lucide-r
 export default function UserStatsCards({ users, onCardClick }) {
   const stats = {
     total: users.length,
-    ativos: users.filter(u => u.user_status === 'ativo').length,
-    inativos: users.filter(u => u.user_status === 'inativo' || u.user_status === 'bloqueado').length,
-    ferias: users.filter(u => u.user_status === 'ferias').length,
-    aguardandoPrimeiroAcesso: users.filter(u => !u.first_login_at).length,
+    pending: users.filter(u => u.user_status === 'pending').length,
+    active: users.filter(u => u.user_status === 'active').length,
+    inactive: users.filter(u => u.user_status === 'inactive' || u.user_status === 'blocked').length,
+    aguardandoPrimeiroAcesso: users.filter(u => !u.first_login_at && u.user_status === 'active').length,
     inativos30dias: users.filter(u => {
-      if (!u.last_login_at) return false;
+      if (!u.last_login_at || u.user_status !== 'active') return false;
       const diasSemLogin = Math.floor((Date.now() - new Date(u.last_login_at).getTime()) / (1000 * 60 * 60 * 24));
       return diasSemLogin > 30;
     }).length
@@ -26,28 +26,28 @@ export default function UserStatsCards({ users, onCardClick }) {
       filter: null
     },
     {
+      title: "Aguardando Aprovação",
+      value: stats.pending,
+      icon: Clock,
+      color: "text-yellow-600",
+      bgColor: "bg-yellow-50",
+      filter: { user_status: 'pending' }
+    },
+    {
       title: "Usuários Ativos",
-      value: stats.ativos,
+      value: stats.active,
       icon: CheckCircle,
       color: "text-green-600",
       bgColor: "bg-green-50",
-      filter: { user_status: 'ativo' }
+      filter: { user_status: 'active' }
     },
     {
       title: "Inativos/Bloqueados",
-      value: stats.inativos,
+      value: stats.inactive,
       icon: XCircle,
       color: "text-red-600",
       bgColor: "bg-red-50",
-      filter: { user_status: ['inativo', 'bloqueado'] }
-    },
-    {
-      title: "Em Férias",
-      value: stats.ferias,
-      icon: Plane,
-      color: "text-blue-600",
-      bgColor: "bg-blue-50",
-      filter: { user_status: 'ferias' }
+      filter: { user_status: ['inactive', 'blocked'] }
     },
     {
       title: "Aguardando 1º Acesso",

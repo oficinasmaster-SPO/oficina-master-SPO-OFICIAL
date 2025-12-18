@@ -65,10 +65,10 @@ export default function UserFilters({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="todos">Todos os Status</SelectItem>
-              <SelectItem value="ativo">✅ Ativo</SelectItem>
-              <SelectItem value="inativo">⏸️ Inativo</SelectItem>
-              <SelectItem value="bloqueado">🔒 Bloqueado</SelectItem>
-              <SelectItem value="ferias">🏖️ Férias</SelectItem>
+              <SelectItem value="pending">⏳ Aguardando Aprovação</SelectItem>
+              <SelectItem value="active">✅ Ativo</SelectItem>
+              <SelectItem value="inactive">⏸️ Inativo</SelectItem>
+              <SelectItem value="blocked">🔒 Bloqueado</SelectItem>
             </SelectContent>
           </Select>
 

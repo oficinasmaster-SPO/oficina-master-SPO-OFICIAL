@@ -18,12 +18,12 @@ export default function UserTable({
 }) {
   const getStatusBadge = (status) => {
     const badges = {
-      ativo: { label: "✅ Ativo", color: "bg-green-100 text-green-700" },
-      inativo: { label: "⏸️ Inativo", color: "bg-gray-100 text-gray-700" },
-      bloqueado: { label: "🔒 Bloqueado", color: "bg-red-100 text-red-700" },
-      ferias: { label: "🏖️ Férias", color: "bg-blue-100 text-blue-700" }
+      active: { label: "✅ Ativo", color: "bg-green-100 text-green-700" },
+      pending: { label: "⏳ Aprovação", color: "bg-yellow-100 text-yellow-700" },
+      inactive: { label: "⏸️ Inativo", color: "bg-gray-100 text-gray-700" },
+      blocked: { label: "🔒 Bloqueado", color: "bg-red-100 text-red-700" }
     };
-    return badges[status] || badges.ativo;
+    return badges[status] || badges.pending;
   };
 
   const getProfileName = (profileId) => {

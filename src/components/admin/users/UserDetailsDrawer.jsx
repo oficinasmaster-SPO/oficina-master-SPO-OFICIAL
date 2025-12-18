@@ -3,6 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { 
   User, Shield, Activity, History, Key, Copy, CheckCircle, XCircle,
   AlertCircle, Clock 
@@ -17,9 +19,13 @@ export default function UserDetailsDrawer({
   user, 
   profile, 
   admin,
-  onResetPassword 
+  onResetPassword,
+  onApprove,
+  isApproving,
+  profiles 
 }) {
   const [copiedField, setCopiedField] = useState(null);
+  const [selectedProfileId, setSelectedProfileId] = useState(user?.profile_id || "");
 
   if (!user) return null;
 
@@ -32,12 +38,12 @@ export default function UserDetailsDrawer({
 
   const getStatusBadge = (status) => {
     const badges = {
-      ativo: { label: "✅ Ativo", color: "bg-green-100 text-green-700" },
-      inativo: { label: "⏸️ Inativo", color: "bg-gray-100 text-gray-700" },
-      bloqueado: { label: "🔒 Bloqueado", color: "bg-red-100 text-red-700" },
-      ferias: { label: "🏖️ Férias", color: "bg-blue-100 text-blue-700" }
+      active: { label: "✅ Ativo", color: "bg-green-100 text-green-700" },
+      pending: { label: "⏳ Aguardando Aprovação", color: "bg-yellow-100 text-yellow-700" },
+      inactive: { label: "⏸️ Inativo", color: "bg-gray-100 text-gray-700" },
+      blocked: { label: "🔒 Bloqueado", color: "bg-red-100 text-red-700" }
     };
-    return badges[status] || badges.ativo;
+    return badges[status] || badges.pending;
   };
 
   const statusBadge = getStatusBadge(user.user_status);
@@ -59,6 +65,59 @@ export default function UserDetailsDrawer({
             </div>
           </DialogTitle>
         </DialogHeader>
+
+        {/* Banner de Aprovação */}
+        {user?.user_status === 'pending' && onApprove && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 space-y-3">
+            <div className="flex items-center gap-2 text-yellow-800">
+              <Clock className="w-5 h-5" />
+              <span className="font-semibold">⏳ Aguardando Aprovação</span>
+            </div>
+            
+            <p className="text-sm text-yellow-700">
+              Este usuário completou o cadastro mas ainda não pode acessar o sistema. Selecione um perfil e aprove o acesso.
+            </p>
+
+            <div className="space-y-2">
+              <Label htmlFor="approval-profile" className="text-xs text-yellow-800 font-medium">
+                Selecione o Perfil de Acesso:
+              </Label>
+              <Select 
+                value={selectedProfileId} 
+                onValueChange={setSelectedProfileId}
+              >
+                <SelectTrigger id="approval-profile" className="bg-white">
+                  <SelectValue placeholder="Escolha o perfil..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {profiles?.map(p => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button
+              onClick={() => onApprove(selectedProfileId)}
+              disabled={isApproving || !selectedProfileId}
+              className="w-full bg-green-600 hover:bg-green-700"
+            >
+              {isApproving ? (
+                <>
+                  <Clock className="w-4 h-4 mr-2 animate-spin" />
+                  Aprovando...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Aprovar e Liberar Acesso
+                </>
+              )}
+            </Button>
+          </div>
+        )}
 
         <Tabs defaultValue="dados" className="flex-1 overflow-hidden flex flex-col">
           <TabsList className="grid w-full grid-cols-4">
