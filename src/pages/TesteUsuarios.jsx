@@ -37,50 +37,42 @@ export default function TesteUsuarios() {
     mutationFn: async (data) => {
       console.log("📤 Criando usuário com dados:", data);
       
-      // Criar Employee primeiro
-      const employeeData = {
-        full_name: data.full_name,
-        email: data.email,
-        telefone: data.telefone,
-        position: data.position,
-        job_role: data.job_role,
-        area: data.area,
-        is_internal: data.is_internal,
-        workshop_id: data.workshop_id || null,
-        hire_date: data.hire_date || new Date().toISOString().split('T')[0],
-        admin_responsavel_id: currentUser.id,
-        user_status: 'pending',
-        profile_id: data.profile_id || null,
-        tipo_vinculo: data.is_internal ? 'interno' : 'cliente'
-      };
+      try {
+        // Criar Employee primeiro
+        const employeeData = {
+          full_name: data.full_name,
+          email: data.email,
+          telefone: data.telefone,
+          position: data.position,
+          job_role: data.job_role,
+          area: data.area,
+          is_internal: data.is_internal,
+          workshop_id: data.workshop_id || null,
+          hire_date: data.hire_date || new Date().toISOString().split('T')[0],
+          admin_responsavel_id: currentUser?.id || null,
+          user_status: 'pending',
+          profile_id: data.profile_id || null,
+          tipo_vinculo: data.is_internal ? 'interno' : 'cliente'
+        };
 
-      const employee = await base44.entities.Employee.create(employeeData);
-      console.log("✅ Employee criado:", employee.id);
+        console.log("📋 Criando Employee com dados:", employeeData);
+        const employee = await base44.entities.Employee.create(employeeData);
+        console.log("✅ Employee criado:", employee.id);
 
-      // Criar User vinculado
-      const userData = {
-        email: data.email,
-        full_name: data.full_name,
-        role: data.role,
-        workshop_id: data.workshop_id || null,
-        job_role: data.job_role,
-        area: data.area,
-        position: data.position,
-        user_status: 'pending',
-        profile_id: data.profile_id || null
-      };
-
-      // Nota: User será criado via convite ou função de backend
-      console.log("📋 Dados para User:", userData);
-
-      return { employee, userData };
+        return { employee, success: true };
+      } catch (error) {
+        console.error("❌ Erro ao criar Employee:", error);
+        throw error;
+      }
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries(['employees']);
-      toast.success("✅ Usuário criado com sucesso!");
+      console.log("✅ Sucesso:", result);
+      toast.success("✅ Usuário criado com sucesso! ID: " + result.employee.id);
     },
     onError: (error) => {
-      toast.error("❌ Erro: " + error.message);
+      console.error("❌ Erro na mutation:", error);
+      toast.error("❌ Erro ao criar usuário: " + error.message);
     }
   });
 
