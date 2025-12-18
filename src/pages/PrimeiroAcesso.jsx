@@ -145,6 +145,8 @@ export default function PrimeiroAcesso() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    console.log("🔵 SUBMIT HANDLER v20251218-1600 - BACKEND ONLY!");
 
     if (!formData.accept_terms) {
       toast.error("Você precisa aceitar os termos de uso");
@@ -154,7 +156,7 @@ export default function PrimeiroAcesso() {
     setSubmitting(true);
 
     try {
-      console.log("📤 [v2025-12-18-15:30] Registrando via BACKEND function...");
+      console.log("📤 Chamando FUNÇÃO BACKEND registerInvitedEmployee...");
 
       // Usar fetch direto pois SDK requer autenticação
       const response = await fetch(`${window.location.origin}/.functions/registerInvitedEmployee`, {
