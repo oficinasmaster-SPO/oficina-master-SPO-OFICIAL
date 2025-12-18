@@ -43,13 +43,46 @@ export default function PrimeiroAcesso() {
         return;
       }
 
-      // Validar token via backend usando SDK
-      console.log("📡 Token a validar:", token);
+      // Buscar convite diretamente no banco (público)
+      console.log("📡 Buscando convite...");
       
-      const response = await base44.functions.invoke('validateInviteToken', { token });
-      const data = response.data;
+      const invites = await base44.entities.EmployeeInvite.filter({ invite_token: token });
+      const foundInvite = invites[0];
       
-      console.log("📥 Resposta recebida:", data);
+      console.log("📥 Convite encontrado:", foundInvite);
+      
+      if (!foundInvite) {
+        setError("Convite não encontrado ou link inválido. Solicite um novo convite ao gestor.");
+        setLoading(false);
+        return;
+      }
+
+      // Verificar se expirou
+      if (foundInvite.expires_at && new Date(foundInvite.expires_at) < new Date()) {
+        setError("Este convite expirou. Solicite um novo convite ao gestor.");
+        setLoading(false);
+        return;
+      }
+
+      // Verificar status
+      if (foundInvite.status === 'concluido') {
+        setError("Este convite já foi utilizado completamente. Faça login na sua conta.");
+        setLoading(false);
+        return;
+      }
+
+      // Buscar oficina se houver workshop_id
+      let foundWorkshop = null;
+      if (foundInvite.workshop_id) {
+        try {
+          const workshops = await base44.entities.Workshop.filter({ id: foundInvite.workshop_id });
+          foundWorkshop = workshops[0];
+        } catch (e) {
+          console.log("Aviso: não foi possível carregar oficina");
+        }
+      }
+      
+      const data = { success: true, invite: foundInvite, workshop: foundWorkshop };
       
       if (!data.success) {
         setError(data.error || "Convite não encontrado ou inválido.");
@@ -57,17 +90,15 @@ export default function PrimeiroAcesso() {
         return;
       }
 
-      const { invite: foundInvite, workshop: foundWorkshop } = data;
-
-      if (foundWorkshop) {
-        setWorkshop(foundWorkshop);
+      if (data.workshop) {
+        setWorkshop(data.workshop);
       }
 
-      setInvite(foundInvite);
+      setInvite(data.invite);
       setFormData(prev => ({
         ...prev,
-        name: foundInvite.name || "",
-        email: foundInvite.email || ""
+        name: data.invite.name || "",
+        email: data.invite.email || ""
       }));
 
       console.log("✅ Dados carregados com sucesso!");
@@ -120,19 +151,70 @@ export default function PrimeiroAcesso() {
     setSubmitting(true);
 
     try {
-      // Chamar função de backend para registrar colaborador (sem autenticação)
-      console.log("📤 Registrando colaborador...");
+      console.log("📤 Criando Employee...");
 
-      const response = await base44.functions.invoke('registerInvitedEmployee', {
-        token: invite.invite_token,
-        name: formData.name,
+      // Criar ou atualizar Employee
+      let employee;
+      if (invite.employee_id) {
+        employee = await base44.entities.Employee.update(invite.employee_id, {
+          full_name: formData.name,
+          email: formData.email,
+          telefone: formData.phone,
+          profile_picture_url: formData.profile_picture_url,
+          position: invite.position,
+          area: invite.area,
+          job_role: invite.job_role,
+          workshop_id: invite.workshop_id,
+          tipo_vinculo: invite.invite_type === 'internal' ? 'interno' : 'cliente',
+          is_internal: invite.invite_type === 'internal',
+          user_status: 'ativo'
+        });
+      } else {
+        employee = await base44.entities.Employee.create({
+          full_name: formData.name,
+          email: formData.email,
+          telefone: formData.phone,
+          profile_picture_url: formData.profile_picture_url,
+          position: invite.position,
+          area: invite.area,
+          job_role: invite.job_role,
+          workshop_id: invite.workshop_id,
+          tipo_vinculo: invite.invite_type === 'internal' ? 'interno' : 'cliente',
+          is_internal: invite.invite_type === 'internal',
+          user_status: 'ativo'
+        });
+
+        // Atualizar invite com employee_id
+        await base44.entities.EmployeeInvite.update(invite.id, {
+          employee_id: employee.id
+        });
+      }
+
+      console.log("✅ Employee criado:", employee.id);
+
+      // Criar User com status pending
+      const newUser = await base44.entities.User.create({
+        full_name: formData.name,
         email: formData.email,
-        phone: formData.phone,
-        profile_picture_url: formData.profile_picture_url
+        workshop_id: invite.workshop_id,
+        position: invite.position,
+        job_role: invite.job_role,
+        area: invite.area,
+        user_status: 'pending',
+        is_internal: invite.invite_type === 'internal',
+        profile_picture_url: formData.profile_picture_url,
+        phone: formData.phone
       });
 
-      const data = response.data;
-      console.log("📥 Resposta registro:", data);
+      console.log("✅ User criado:", newUser.id);
+
+      // Atualizar convite
+      await base44.entities.EmployeeInvite.update(invite.id, {
+        status: 'acessado',
+        accessed_at: new Date().toISOString()
+      });
+
+      const data = { success: true };
 
       if (data.success) {
         toast.success("✅ Cadastro confirmado! Redirecionando para criar sua senha...", { duration: 5000 });
