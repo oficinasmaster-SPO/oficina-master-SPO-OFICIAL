@@ -151,7 +151,7 @@ export default function PrimeiroAcesso() {
     setSubmitting(true);
 
     try {
-      console.log("📤 Registrando colaborador via backend...");
+      console.log("📤 [v2025-12-18-15:30] Registrando via BACKEND function...");
 
       // Usar fetch direto pois SDK requer autenticação
       const response = await fetch(`${window.location.origin}/.functions/registerInvitedEmployee`, {
