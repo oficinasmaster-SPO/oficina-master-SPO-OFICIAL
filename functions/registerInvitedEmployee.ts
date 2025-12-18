@@ -112,60 +112,80 @@ Deno.serve(async (req) => {
       console.log("✅ Employee criado:", employee.id);
     }
 
-    // Atualizar convite para "acessado" (NÃO marcar como concluído ainda)
-    // O convite só será marcado como concluído após o primeiro login bem-sucedido
+    // Atualizar convite para "acessado"
     await base44.asServiceRole.entities.EmployeeInvite.update(invite.id, {
       status: 'acessado',
       accepted_at: new Date().toISOString(),
       employee_id: employee.id
     });
 
-    console.log("✅ Convite atualizado para 'acessado' - aguardando primeiro login");
+    console.log("✅ Convite atualizado para 'acessado'");
 
-    // NÃO criar User aqui - será criado no primeiro login
-    console.log("ℹ️ User será criado quando o usuário fizer login pela primeira vez");
-
-    // Criar permissões agora, antes do primeiro login
+    // Criar User com status pending para permitir login (mas acesso bloqueado até aprovação)
+    console.log("📝 Criando User com status pending...");
+    
+    let userId;
     try {
-      if (isInternalUser && invite.metadata?.profile_id) {
-        console.log("🔐 Criando permissões para usuário interno...");
-        const profile = await base44.asServiceRole.entities.UserProfile.get(invite.metadata.profile_id);
+      const existingUsers = await base44.asServiceRole.entities.User.filter({ email: email || invite.email });
+      
+      const userData = {
+        full_name: name || invite.name,
+        position: invite.position,
+        job_role: invite.job_role || 'outros',
+        area: invite.area || (isInternalUser ? 'administrativo' : 'tecnico'),
+        telefone: phone || '',
+        profile_picture_url: profile_picture_url || '',
+        is_internal: isInternalUser,
+        user_status: 'pending',
+        invite_id: invite.id
+      };
 
-        if (profile) {
-          await base44.asServiceRole.entities.UserPermission.create({
-            user_id: employee.id,
-            user_email: email || invite.email,
-            profile_id: invite.metadata.profile_id,
-            profile_name: profile.name,
-            custom_roles: profile.roles || [],
-            custom_role_ids: profile.custom_role_ids || [],
-            module_permissions: profile.module_permissions || {},
-            sidebar_permissions: profile.sidebar_permissions || {},
-            is_active: true,
-            created_at: new Date().toISOString()
-          });
-          console.log("✅ Permissões internas criadas!");
-        }
-      } else if (!isInternalUser && invite.workshop_id) {
-        console.log("🔐 Criando permissões para colaborador de oficina...");
-        await base44.asServiceRole.functions.invoke('createDefaultPermissions', {
-          user_id: employee.id,
-          workshop_id: invite.workshop_id,
-          job_role: invite.job_role || 'outros'
-        });
-        console.log("✅ Permissões de oficina criadas!");
+      // Adicionar workshop_id apenas para colaboradores de oficina
+      if (!isInternalUser && invite.workshop_id) {
+        userData.workshop_id = invite.workshop_id;
       }
-    } catch (permError) {
-      console.error("⚠️ Erro ao criar permissões (não crítico):", permError);
+
+      // Adicionar profile_id para usuários internos (será usado na aprovação)
+      if (isInternalUser && invite.metadata?.profile_id) {
+        userData.profile_id = invite.metadata.profile_id;
+      }
+
+      if (existingUsers && existingUsers.length > 0) {
+        await base44.asServiceRole.entities.User.update(existingUsers[0].id, userData);
+        userId = existingUsers[0].id;
+        console.log("✅ User atualizado:", userId);
+      } else {
+        const newUser = await base44.asServiceRole.entities.User.create({
+          email: email || invite.email,
+          role: 'user',
+          ...userData
+        });
+        userId = newUser.id;
+        console.log("✅ User criado com status pending:", userId);
+      }
+
+      // Vincular user_id ao Employee
+      await base44.asServiceRole.entities.Employee.update(employee.id, {
+        user_id: userId
+      });
+
+    } catch (userError) {
+      console.error("⚠️ Erro ao criar User:", userError);
+      return Response.json({ 
+        success: false, 
+        error: 'Erro ao criar conta de acesso: ' + userError.message 
+      }, { status: 500 });
     }
 
-    console.log("✅ Convite aceito com sucesso!");
+    console.log("✅ Cadastro concluído - usuário pode fazer login (status: pending)");
     console.log("📊 Employee ID:", employee.id);
+    console.log("📊 User ID:", userId);
 
     return Response.json({ 
       success: true, 
       employee_id: employee.id,
-      message: 'Cadastro concluído! Agora você pode fazer login com seu email e senha.'
+      user_id: userId,
+      message: 'Cadastro concluído! Você pode fazer login, mas seu acesso será liberado após aprovação do administrador.'
     });
 
   } catch (error) {
