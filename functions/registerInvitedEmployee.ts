@@ -1,5 +1,3 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
-
 Deno.serve(async (req) => {
   // Permitir CORS e aceitar POST
   if (req.method === 'OPTIONS') {
