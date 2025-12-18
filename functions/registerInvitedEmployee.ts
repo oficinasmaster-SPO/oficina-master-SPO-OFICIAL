@@ -1,5 +1,5 @@
 Deno.serve(async (req) => {
-  // Permitir CORS e aceitar POST
+  // Permitir CORS
   if (req.method === 'OPTIONS') {
     return new Response(null, {
       status: 204,
@@ -12,11 +12,14 @@ Deno.serve(async (req) => {
   }
 
   if (req.method !== 'POST') {
-    return Response.json({ success: false, error: 'Método não permitido' }, { status: 405 });
+    return new Response(JSON.stringify({ success: false, error: 'Método não permitido' }), {
+      status: 405,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
   }
 
   try {
-    // Criar client diretamente com service role (não precisa de usuário autenticado)
+    // Criar client com service role
     const { createClient } = await import('npm:@base44/sdk@0.8.4');
     const base44 = createClient(
       Deno.env.get('BASE44_APP_ID'),
@@ -26,51 +29,67 @@ Deno.serve(async (req) => {
     const { token, name, email, phone, profile_picture_url } = await req.json();
 
     if (!token) {
-      return Response.json({ success: false, error: 'Token não fornecido' }, { status: 400 });
+      return new Response(JSON.stringify({ success: false, error: 'Token não fornecido' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+      });
     }
 
     console.log("🔍 Buscando convite com token:", token);
 
-    // Buscar convite pelo token - filter é mais eficiente
+    // Buscar convite
     const invites = await base44.entities.EmployeeInvite.filter({ invite_token: token });
     const invite = invites[0];
     
     console.log("📋 Convite encontrado:", invite ? "SIM" : "NÃO");
 
     if (!invite) {
-      return Response.json({ success: false, error: 'Convite não encontrado' }, { status: 404 });
+      return new Response(JSON.stringify({ success: false, error: 'Convite não encontrado' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+      });
     }
 
     // Verificar se expirou
     if (invite.expires_at && new Date(invite.expires_at) < new Date()) {
-      return Response.json({ success: false, error: 'Convite expirado' }, { status: 400 });
+      return new Response(JSON.stringify({ success: false, error: 'Convite expirado' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+      });
     }
 
     // Verificar se já foi concluído
     if (invite.status === 'concluido') {
-      return Response.json({ success: false, error: 'Convite já utilizado' }, { status: 400 });
+      return new Response(JSON.stringify({ success: false, error: 'Convite já utilizado' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+      });
     }
 
-    // Detectar tipo de convite usando campo explícito
+    // Detectar tipo de convite
     const isInternalUser = invite.invite_type === 'internal';
 
-    console.log("🔍 Metadados do convite:", invite.metadata);
-    
     console.log("🔍 Tipo de convite:", invite.invite_type);
     
     // Validar company_id para internos ou workshop_id para colaboradores
     if (isInternalUser && !invite.company_id) {
-      return Response.json({ 
+      return new Response(JSON.stringify({ 
         success: false, 
         error: 'Company obrigatório para usuários internos' 
-      }, { status: 400 });
+      }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+      });
     }
 
     if (!isInternalUser && !invite.workshop_id) {
-      return Response.json({ 
+      return new Response(JSON.stringify({ 
         success: false, 
         error: 'Workshop obrigatório para colaboradores de oficina' 
-      }, { status: 400 });
+      }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+      });
     }
 
     let workshop = null;
@@ -140,23 +159,23 @@ Deno.serve(async (req) => {
 
     console.log("✅ Convite atualizado para 'acessado'");
 
-    // Criar User com status pending para permitir login (mas acesso bloqueado até aprovação)
+    // Criar User com status pending
     console.log("📝 Criando User com status pending...");
 
     let userId;
     try {
-      // Tentar buscar user existente (pode não existir ainda)
+      // Tentar buscar user existente
       let existingUsers = [];
       try {
         existingUsers = await base44.entities.User.filter({ email: email || invite.email });
       } catch (userFetchError) {
-        console.log("⚠️ Não foi possível buscar Users (normal se não existir ainda)");
+        console.log("⚠️ Não foi possível buscar Users");
       }
 
-      // Construir dados completos do User baseados no Employee e no Invite
+      // Construir dados do User
       const userData = {
         full_name: name || invite.name,
-        position: invite.position, // Cargo real do convite
+        position: invite.position,
         job_role: invite.job_role || 'outros',
         area: invite.area || (isInternalUser ? 'administrativo' : 'tecnico'),
         telefone: phone || invite.metadata?.telefone || '',
@@ -167,22 +186,21 @@ Deno.serve(async (req) => {
         hire_date: new Date().toISOString().split('T')[0]
       };
 
-      // Adicionar workshop_id apenas para colaboradores de oficina
+      // Adicionar workshop_id apenas para colaboradores
       if (!isInternalUser && invite.workshop_id) {
         userData.workshop_id = invite.workshop_id;
       }
 
-      // Adicionar profile_id e role para usuários internos (será usado na aprovação)
+      // Adicionar profile_id e role para internos
       if (isInternalUser && invite.metadata?.profile_id) {
         userData.profile_id = invite.metadata.profile_id;
       }
 
-      // Para usuários internos, adicionar role se disponível no metadata
       if (isInternalUser && invite.metadata?.role) {
         userData.role = invite.metadata.role;
       }
 
-      console.log("📊 Dados do User a serem salvos:", userData);
+      console.log("📊 Dados do User:", userData);
 
       if (existingUsers && existingUsers.length > 0) {
         await base44.entities.User.update(existingUsers[0].id, userData);
@@ -198,7 +216,7 @@ Deno.serve(async (req) => {
         console.log("✅ User criado com status pending:", userId);
       }
 
-      // Vincular user_id ao Employee E garantir que os dados estejam sincronizados
+      // Vincular user_id ao Employee
       await base44.entities.Employee.update(employee.id, {
         user_id: userId,
         full_name: name || invite.name,
@@ -207,35 +225,39 @@ Deno.serve(async (req) => {
         first_login_at: new Date().toISOString()
       });
 
-      console.log("✅ Employee atualizado com user_id e dados sincronizados");
+      console.log("✅ Employee atualizado com user_id");
 
     } catch (userError) {
       console.error("⚠️ Erro ao criar User:", userError);
-      console.error("⚠️ Stack completo:", userError.stack);
-      return Response.json({ 
+      return new Response(JSON.stringify({ 
         success: false, 
         error: 'Erro ao criar conta de acesso: ' + userError.message 
-      }, { status: 500 });
+      }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+      });
     }
 
-    console.log("✅ Cadastro concluído - usuário pode fazer login (status: pending)");
-    console.log("📊 Employee ID:", employee.id);
-    console.log("📊 User ID:", userId);
+    console.log("✅ Cadastro concluído");
 
-    return Response.json({ 
+    return new Response(JSON.stringify({ 
       success: true, 
       employee_id: employee.id,
       user_id: userId,
-      message: 'Cadastro concluído! Você pode fazer login, mas seu acesso será liberado após aprovação do administrador.'
+      message: 'Cadastro concluído! Você pode fazer login, mas seu acesso será liberado após aprovação.'
+    }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
     });
 
   } catch (error) {
     console.error('❌ Erro ao registrar colaborador:', error);
-    console.error('❌ Stack trace completo:', error.stack);
-    return Response.json({ 
+    return new Response(JSON.stringify({ 
       success: false, 
-      error: error.message || 'Erro interno do servidor',
-      details: error.stack
-    }, { status: 500 });
+      error: error.message || 'Erro interno do servidor'
+    }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
   }
 });
