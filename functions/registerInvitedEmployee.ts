@@ -110,7 +110,7 @@ Deno.serve(async (req) => {
 
     if (existingEmployees && existingEmployees.length > 0) {
       // Atualizar existente
-      employee = await base44.asServiceRole.entities.Employee.update(existingEmployees[0].id, {
+      employee = await base44.entities.Employee.update(existingEmployees[0].id, {
         ...employeeData,
         owner_id: ownerId
       });
@@ -129,12 +129,12 @@ Deno.serve(async (req) => {
         createData.owner_id = ownerId;
       }
       
-      employee = await base44.asServiceRole.entities.Employee.create(createData);
+      employee = await base44.entities.Employee.create(createData);
       console.log("✅ Employee criado:", employee.id);
     }
 
     // Atualizar convite para "acessado"
-    await base44.asServiceRole.entities.EmployeeInvite.update(invite.id, {
+    await base44.entities.EmployeeInvite.update(invite.id, {
       status: 'acessado',
       accepted_at: new Date().toISOString(),
       employee_id: employee.id
