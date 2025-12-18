@@ -341,8 +341,9 @@ export default function PrimeiroAcesso() {
                   <span>
                     <strong>Como funciona:</strong><br/>
                     1. Ao clicar em "Confirmar", seu cadastro será salvo<br/>
-                    2. Você receberá um email com instruções<br/>
-                    3. Use o email <strong className="text-blue-900">{formData.email}</strong> para criar sua senha de acesso
+                    2. Você será redirecionado para a tela de login<br/>
+                    3. Na tela de login, use <strong className="text-blue-900">{formData.email}</strong> e crie sua senha de acesso<br/>
+                    4. Após criar a senha, você poderá entrar no sistema normalmente
                   </span>
                 </p>
               </div>

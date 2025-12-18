@@ -31,11 +31,12 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
-    // Verificar se já foi concluído
+    // Permitir que convites "acessados" ainda sejam válidos (até o primeiro login)
+    // Apenas bloquear se estiver "concluido" de verdade
     if (invite.status === 'concluido') {
       return Response.json({ 
         success: false, 
-        error: 'Este convite já foi utilizado. Faça login na sua conta.' 
+        error: 'Este convite já foi utilizado completamente. Faça login na sua conta.' 
       }, { status: 400 });
     }
 

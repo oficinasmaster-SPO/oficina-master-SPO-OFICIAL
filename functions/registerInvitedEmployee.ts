@@ -112,16 +112,15 @@ Deno.serve(async (req) => {
       console.log("✅ Employee criado:", employee.id);
     }
 
-    // Atualizar convite com status de aceito
+    // Atualizar convite para "acessado" (NÃO marcar como concluído ainda)
+    // O convite só será marcado como concluído após o primeiro login bem-sucedido
     await base44.asServiceRole.entities.EmployeeInvite.update(invite.id, {
-      status: 'concluido',
-      completed_at: new Date().toISOString(),
-      employee_id: employee.id,
+      status: 'acessado',
       accepted_at: new Date().toISOString(),
-      created_user_id: employee.id
+      employee_id: employee.id
     });
 
-    console.log("✅ Convite marcado como concluído e token invalidado");
+    console.log("✅ Convite atualizado para 'acessado' - aguardando primeiro login");
 
     // NÃO criar User aqui - será criado no primeiro login
     console.log("ℹ️ User será criado quando o usuário fizer login pela primeira vez");
