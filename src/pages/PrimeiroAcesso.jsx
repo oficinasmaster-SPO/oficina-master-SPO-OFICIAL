@@ -44,9 +44,9 @@ export default function PrimeiroAcesso() {
 
       // Validar token via backend (sem autenticação necessária)
       console.log("📡 Token a validar:", token);
-      console.log("📡 URL completa:", `${window.location.origin}/.functions/validateInviteToken`);
+      console.log("📡 URL sendo chamada:", `.functions/validateInviteToken`);
       
-      const response = await fetch(`${window.location.origin}/.functions/validateInviteToken`, {
+      const response = await fetch(`.functions/validateInviteToken`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -152,7 +152,7 @@ export default function PrimeiroAcesso() {
         phone: formData.phone
       });
 
-      const response = await fetch(`/.functions/registerInvitedEmployee`, {
+      const response = await fetch(`.functions/registerInvitedEmployee`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
