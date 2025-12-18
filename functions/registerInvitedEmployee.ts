@@ -18,7 +18,12 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const base44 = createClientFromRequest(req);
+    // Criar client diretamente com service role (não precisa de usuário autenticado)
+    const { createClient } = await import('npm:@base44/sdk@0.8.4');
+    const base44 = createClient(
+      Deno.env.get('BASE44_APP_ID'),
+      Deno.env.get('BASE44_SERVICE_ROLE_KEY')
+    );
     
     const { token, name, email, phone, profile_picture_url } = await req.json();
 
