@@ -128,6 +128,7 @@ import AssistirCurso from './pages/AssistirCurso';
 import GerenciarModulosCurso from './pages/GerenciarModulosCurso';
 import RelatorioUsuario from './pages/RelatorioUsuario';
 import TesteUsuarios from './pages/TesteUsuarios';
+import AuditLogs from './pages/AuditLogs';
 import __Layout from './Layout.jsx';
 
 
@@ -262,6 +263,7 @@ export const PAGES = {
     "GerenciarModulosCurso": GerenciarModulosCurso,
     "RelatorioUsuario": RelatorioUsuario,
     "TesteUsuarios": TesteUsuarios,
+    "AuditLogs": AuditLogs,
 }
 
 export const pagesConfig = {

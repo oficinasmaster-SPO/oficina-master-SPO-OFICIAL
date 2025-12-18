@@ -79,6 +79,25 @@ Deno.serve(async (req) => {
 
     console.log("✅ Employee atualizado com status ativo");
 
+    // Registrar aprovação no log de auditoria
+    try {
+      await base44.asServiceRole.functions.invoke('auditLog', {
+        user_id: admin.id,
+        action: 'user_approved',
+        entity_type: 'User',
+        entity_id: userId,
+        details: {
+          approved_user_email: employee.email,
+          approved_user_name: employee.full_name,
+          profile_id: userData.profile_id || null,
+          workshop_id: employee.workshop_id || null,
+          is_internal: isInternalUser
+        }
+      });
+    } catch (auditError) {
+      console.error("⚠️ Erro ao registrar auditoria:", auditError);
+    }
+
     // Criar permissões baseadas no perfil
     try {
       if (isInternalUser && userData.profile_id) {

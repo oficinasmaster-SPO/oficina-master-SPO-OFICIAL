@@ -72,6 +72,19 @@ export default function Layout({ children }) {
               last_login_at: new Date().toISOString()
             });
             console.log("✅ Login registrado");
+
+            // Registrar login no log de auditoria
+            try {
+              await base44.functions.invoke('auditLog', {
+                user_id: currentUser.id,
+                action: 'login',
+                details: {
+                  timestamp: new Date().toISOString()
+                }
+              });
+            } catch (auditError) {
+              console.error("⚠️ Erro ao registrar auditoria (não crítico):", auditError);
+            }
           } catch (updateError) {
             console.error("⚠️ Erro ao atualizar login (não crítico):", updateError);
           }
@@ -186,6 +199,21 @@ export default function Layout({ children }) {
 
   const handleLogout = async () => {
     try {
+      // Registrar logout no log de auditoria
+      if (user?.id) {
+        try {
+          await base44.functions.invoke('auditLog', {
+            user_id: user.id,
+            action: 'logout',
+            details: {
+              timestamp: new Date().toISOString()
+            }
+          });
+        } catch (auditError) {
+          console.error("⚠️ Erro ao registrar auditoria:", auditError);
+        }
+      }
+      
       await base44.auth.logout();
       window.location.href = createPageUrl("Home");
     } catch (error) {
