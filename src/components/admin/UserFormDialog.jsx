@@ -37,15 +37,23 @@ export default function UserFormDialog({
   // Auto-seleciona o nível de acesso baseado no perfil
   React.useEffect(() => {
     if (selectedProfile && isCreateMode) {
-      // Se o perfil tem permissões de admin, define role como admin
-      const hasAdminAccess = selectedProfile.roles?.some(role => 
-        role.includes('admin') || role.includes('sistema')
-      );
+      // Detecta se é perfil de administrador baseado no nome ou permissões
+      const profileName = selectedProfile.name?.toLowerCase() || '';
+      const isAdminProfile = 
+        profileName.includes('admin') || 
+        profileName.includes('diretor') ||
+        profileName.includes('gestor') ||
+        selectedProfile.roles?.some(role => 
+          role.includes('admin_') || 
+          role.includes('sistema_') ||
+          role.includes('gerenciar_')
+        );
       
-      const newRole = hasAdminAccess ? 'admin' : 'user';
+      const newRole = isAdminProfile ? 'admin' : 'user';
       setFormData(prev => ({ ...prev, role: newRole }));
       
-      console.log("🔐 Nível de acesso auto-definido:", newRole, "para perfil:", selectedProfile.name);
+      console.log("🔐 Perfil selecionado:", selectedProfile.name);
+      console.log("🔐 Nível de acesso auto-definido:", newRole === 'admin' ? 'Administrador' : 'Usuário Padrão');
     }
   }, [selectedProfile, isCreateMode]);
 
