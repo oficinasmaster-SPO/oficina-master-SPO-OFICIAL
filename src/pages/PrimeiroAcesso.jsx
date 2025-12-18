@@ -46,7 +46,7 @@ export default function PrimeiroAcesso() {
       console.log("📡 Chamando validateInviteToken...");
       
       try {
-        const response = await fetch(`${window.location.origin}/.functions/validateInviteToken`, {
+        const response = await fetch(`/.functions/validateInviteToken`, {
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',
@@ -148,7 +148,7 @@ export default function PrimeiroAcesso() {
         phone: formData.phone
       });
 
-      const response = await fetch(`${window.location.origin}/.functions/registerInvitedEmployee`, {
+      const response = await fetch(`/.functions/registerInvitedEmployee`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
