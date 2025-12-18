@@ -157,31 +157,11 @@ export default function PrimeiroAcesso() {
     setSubmitting(true);
 
     try {
-      console.log("📤 Chamando FUNÇÃO BACKEND registerInvitedEmployee...");
-
-      // Usar fetch direto pois SDK requer autenticação
-      const response = await fetch(`${window.location.origin}/.functions/registerInvitedEmployee`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          token: invite.invite_token,
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          profile_picture_url: formData.profile_picture_url
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Erro HTTP: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log("✅ Resposta do backend:", data);
+      console.log("📤 [v2-ISOLATED] Chamando helper isolado...");
+      
+      const data = await registerEmployeeViaBackend(invite.invite_token, formData);
+      
+      console.log("✅ Resposta do helper:", data);
 
       if (data.success) {
         toast.success("✅ Cadastro confirmado! Redirecionando para criar sua senha...", { duration: 5000 });
