@@ -27,50 +27,31 @@ Deno.serve(async (req) => {
 
     const isInternalUser = employee.tipo_vinculo === 'interno' || employee.is_internal === true;
 
-    // Criar registro na entidade User (autenticação)
-    let userId;
+    // Buscar User existente (já deve existir com status pending)
     const existingUsers = await base44.asServiceRole.entities.User.filter({ email: employee.email });
     
+    if (!existingUsers || existingUsers.length === 0) {
+      return Response.json({ 
+        error: 'Usuário não encontrado. O colaborador precisa completar o cadastro primeiro.' 
+      }, { status: 404 });
+    }
+
+    const userId = existingUsers[0].id;
+    
+    // Atualizar User para status active e configurar profile_id
     const userData = {
-      full_name: employee.full_name,
-      position: employee.position,
-      job_role: employee.job_role || 'outros',
-      area: employee.area || 'administrativo',
-      telefone: employee.telefone || '',
-      is_internal: isInternalUser,
       user_status: 'active',
       approved_at: new Date().toISOString(),
-      approved_by: admin.id,
-      invite_id: employee.id
+      approved_by: admin.id
     };
 
-    // Adicionar workshop_id apenas para colaboradores de oficina
-    if (!isInternalUser && employee.workshop_id) {
-      userData.workshop_id = employee.workshop_id;
-    }
-
-    // Adicionar profile_id se fornecido (para internos)
+    // Adicionar profile_id se fornecido na aprovação
     if (profile_id) {
       userData.profile_id = profile_id;
-    } else if (employee.profile_id) {
-      userData.profile_id = employee.profile_id;
     }
 
-    if (existingUsers && existingUsers.length > 0) {
-      // Atualizar User existente
-      await base44.asServiceRole.entities.User.update(existingUsers[0].id, userData);
-      userId = existingUsers[0].id;
-      console.log("✅ User atualizado:", userId);
-    } else {
-      // Criar novo User
-      const newUser = await base44.asServiceRole.entities.User.create({
-        email: employee.email,
-        role: isInternalUser ? 'user' : 'user',
-        ...userData
-      });
-      userId = newUser.id;
-      console.log("✅ User criado:", userId);
-    }
+    await base44.asServiceRole.entities.User.update(userId, userData);
+    console.log("✅ User aprovado e ativado:", userId);
 
     // Vincular user_id ao Employee
     await base44.asServiceRole.entities.Employee.update(employee.id, {

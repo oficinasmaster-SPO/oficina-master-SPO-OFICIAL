@@ -176,10 +176,13 @@ export default function PrimeiroAcesso() {
       if (data.success) {
         toast.success("✅ Cadastro confirmado! Redirecionando para criar sua senha...", { duration: 5000 });
         
-        // Redirecionar para login após 2 segundos
+        // Informar sobre aprovação pendente
+        toast.info("⏳ Seu acesso será liberado após aprovação do administrador", { duration: 6000 });
+        
+        // Redirecionar para login após 3 segundos
         setTimeout(() => {
           window.location.href = `${window.location.origin}/login`;
-        }, 2000);
+        }, 3000);
       } else {
         throw new Error(data.error || "Erro ao finalizar cadastro");
       }
@@ -341,9 +344,9 @@ export default function PrimeiroAcesso() {
                   <span>
                     <strong>Como funciona:</strong><br/>
                     1. Ao clicar em "Confirmar", seu cadastro será salvo<br/>
-                    2. Você será redirecionado para a tela de login<br/>
-                    3. Na tela de login, use <strong className="text-blue-900">{formData.email}</strong> e crie sua senha de acesso<br/>
-                    4. Após criar a senha, você poderá entrar no sistema normalmente
+                    2. Você será redirecionado para criar sua senha de acesso<br/>
+                    3. Após criar a senha, aguarde a aprovação do administrador<br/>
+                    4. Você receberá um email quando seu acesso for liberado
                   </span>
                 </p>
               </div>
