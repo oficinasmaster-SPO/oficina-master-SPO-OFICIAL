@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { systemRoles } from "@/components/lib/systemRoles";
+import { pagePermissions } from "@/components/lib/pagePermissions";
 
 /**
  * Hook para verificar permissões do usuário atual
@@ -106,29 +107,34 @@ export function usePermissions() {
   /**
    * Verifica se o usuário pode acessar uma página
    * Sistema RBAC Granular: Usa mapeamento de página → permissão
+   * Browser-safe: Não usa require() ou imports dinâmicos
    */
   const canAccessPage = (pageName) => {
-    if (!user) return false;
-    if (user.role === 'admin') return true;
+    try {
+      if (!user) return false;
+      if (user.role === 'admin') return true;
 
-    // Importar dinamicamente para evitar erro de import circular
-    const { getRequiredPermission, isPublicPage } = require('@/components/lib/pagePermissions');
+      // Páginas públicas não requerem autenticação
+      const isPublicPage = pagePermissions[pageName] === null;
+      if (isPublicPage) {
+        return true;
+      }
 
-    // Páginas públicas não requerem autenticação
-    if (isPublicPage(pageName)) {
-      return true;
+      // Obter permissão necessária para a página
+      const requiredPermission = pagePermissions[pageName];
+      
+      // Se não há permissão mapeada, permitir acesso (fallback)
+      if (!requiredPermission) {
+        return true;
+      }
+
+      // Verificar se o usuário tem a permissão granular necessária
+      return hasPermission(requiredPermission);
+    } catch (error) {
+      console.error("❌ Erro ao verificar acesso à página:", error);
+      // Em caso de erro, bloquear acesso por segurança
+      return user?.role === 'admin';
     }
-
-    // Obter permissão necessária para a página
-    const requiredPermission = getRequiredPermission(pageName);
-    
-    // Se não há permissão mapeada, permitir acesso (fallback)
-    if (!requiredPermission) {
-      return true;
-    }
-
-    // Verificar se o usuário tem a permissão granular necessária
-    return hasPermission(requiredPermission);
   };
 
   /**

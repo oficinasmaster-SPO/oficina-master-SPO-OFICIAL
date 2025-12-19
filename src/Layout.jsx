@@ -331,21 +331,49 @@ export default function Layout({ children, currentPageName }) {
           <div className={`${isAuthenticated ? 'px-4 sm:px-6 lg:px-8 py-6' : ''}`}>
             {isAuthenticated && <Breadcrumbs />}
             {isAuthenticated ? (
-              // Verificar permissão de acesso à página
-              currentPageName && !canAccessPage(currentPageName) ? (
-                <div className="flex flex-col items-center justify-center h-[60vh] text-center px-4">
-                  <div className="bg-red-100 p-4 rounded-full mb-4">
-                    <LogOut className="w-8 h-8 text-red-600" />
-                  </div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Acesso Negado</h2>
-                  <p className="text-gray-600 max-w-md mb-4">
-                    Você não tem permissão para acessar esta página.
-                  </p>
-                  <Button onClick={() => window.location.href = createPageUrl("Home")}>
-                    Voltar ao Início
-                  </Button>
-                </div>
-              ) : user?.user_status === 'pending' ? (
+              (() => {
+                try {
+                  // Verificar permissão de acesso à página de forma segura
+                  const hasAccess = !currentPageName || canAccessPage(currentPageName);
+
+                  if (!hasAccess) {
+                    return (
+                      <div className="flex flex-col items-center justify-center h-[60vh] text-center px-4">
+                        <div className="bg-red-100 p-4 rounded-full mb-4">
+                          <LogOut className="w-8 h-8 text-red-600" />
+                        </div>
+                        <h2 className="text-2xl font-bold text-gray-900 mb-2">Acesso Negado</h2>
+                        <p className="text-gray-600 max-w-md mb-4">
+                          Você não tem permissão para acessar esta página.
+                        </p>
+                        <Button onClick={() => window.location.href = createPageUrl("Home")}>
+                          Voltar ao Início
+                        </Button>
+                      </div>
+                    );
+                  }
+                } catch (error) {
+                  console.error("❌ Erro crítico ao verificar permissões:", error);
+                  // Em caso de erro, mostrar página de erro ao invés de tela branca
+                  return (
+                    <div className="flex flex-col items-center justify-center h-[60vh] text-center px-4">
+                      <div className="bg-yellow-100 p-4 rounded-full mb-4">
+                        <LogOut className="w-8 h-8 text-yellow-600" />
+                      </div>
+                      <h2 className="text-2xl font-bold text-gray-900 mb-2">Erro ao Verificar Permissões</h2>
+                      <p className="text-gray-600 max-w-md mb-4">
+                        Ocorreu um erro ao verificar suas permissões. Por favor, recarregue a página.
+                      </p>
+                      <Button onClick={() => window.location.reload()}>
+                        Recarregar Página
+                      </Button>
+                    </div>
+                  );
+                }
+
+                // Verificar status do usuário
+                if (user?.user_status === 'pending') {
+                  return (
                 <div className="flex flex-col items-center justify-center h-[60vh] text-center px-4">
                   <div className="bg-yellow-100 p-4 rounded-full mb-4">
                     <LogOut className="w-8 h-8 text-yellow-600" />
@@ -367,25 +395,28 @@ export default function Layout({ children, currentPageName }) {
                     Sair
                   </Button>
                 </div>
-              ) : workshop ? (
-                workshop.status === 'inativo' && user?.role !== 'admin' ? (
-                  <div className="flex flex-col items-center justify-center h-[60vh] text-center px-4">
-                    <div className="bg-red-100 p-4 rounded-full mb-4">
-                      <LogOut className="w-8 h-8 text-red-600" />
-                    </div>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Acesso em Análise</h2>
-                    <p className="text-gray-600 max-w-md">
-                      Sua oficina está com status <strong>Inativo</strong>. 
-                      Entre em contato com o suporte para regularizar seu acesso.
-                    </p>
-                  </div>
-                ) : (
-                  <SharedDataProvider workshopId={workshop.id} userId={user?.id}>
-                    {children}
-                  </SharedDataProvider>
-                )
+              <div className="flex flex-col items-center justify-center h-[60vh] text-center px-4">
+                <div className="bg-red-100 p-4 rounded-full mb-4">
+                  <LogOut className="w-8 h-8 text-red-600" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Acesso em Análise</h2>
+                <p className="text-gray-600 max-w-md">
+                  Sua oficina está com status <strong>Inativo</strong>. 
+                  Entre em contato com o suporte para regularizar seu acesso.
+                </p>
+              </div>
+              );
+              }
+
+              // Renderizar conteúdo com SharedDataProvider
+              return (
+              <SharedDataProvider workshopId={workshop.id} userId={user?.id}>
+                {children}
+              </SharedDataProvider>
+              );
+              })()
               ) : (
-                children
+              children
               )
             ) : (
               children

@@ -1,6 +1,9 @@
 /**
  * Mapeamento centralizado de páginas para permissões granulares
  * Fonte única da verdade para controle de acesso baseado em páginas
+ * 
+ * IMPORTANTE: Este arquivo é usado no browser (frontend)
+ * Não use require(), fs, path ou qualquer dependência Node.js
  */
 
 export const pagePermissions = {
