@@ -425,14 +425,11 @@ export default function Layout({ children, currentPageName }) {
                   </SharedDataProvider>
                 );
               })()
-              ) : (
-              children
-              )
             ) : (
               children
             )}
-              </div>
-            </main>
+          </div>
+        </main>
 
         <footer className="bg-white border-t border-gray-200 mt-auto print:hidden">
           <div className="px-4 sm:px-6 lg:px-8 py-6">
