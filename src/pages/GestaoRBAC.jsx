@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, Users } from "lucide-react";
+import { Shield, Users, Eye } from "lucide-react";
 import PermissionGuard from "@/components/auth/PermissionGuard";
 import ProfilesManagement from "@/components/rbac/ProfilesManagement";
 import RolesManagement from "@/components/rbac/RolesManagement";
+import UserPermissionsViewer from "@/components/rbac/UserPermissionsViewer";
 
 export default function GestaoRBAC() {
   const [activeTab, setActiveTab] = useState("profiles");
@@ -24,7 +25,7 @@ export default function GestaoRBAC() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsList className="grid w-full max-w-2xl grid-cols-3">
             <TabsTrigger value="profiles" className="gap-2">
               <Users className="w-4 h-4" />
               Gestão de Perfis
@@ -32,6 +33,10 @@ export default function GestaoRBAC() {
             <TabsTrigger value="roles" className="gap-2">
               <Shield className="w-4 h-4" />
               Gerenciar Roles
+            </TabsTrigger>
+            <TabsTrigger value="user-permissions" className="gap-2">
+              <Eye className="w-4 h-4" />
+              Permissões por Usuário
             </TabsTrigger>
           </TabsList>
 
@@ -41,6 +46,10 @@ export default function GestaoRBAC() {
 
           <TabsContent value="roles">
             <RolesManagement />
+          </TabsContent>
+
+          <TabsContent value="user-permissions">
+            <UserPermissionsViewer />
           </TabsContent>
         </Tabs>
       </div>
