@@ -13,13 +13,15 @@ import GlobalSearch from "@/components/navigation/GlobalSearch";
 import ActivityTracker from "@/components/tracking/ActivityTracker";
 import { usePermissions } from "@/components/hooks/usePermissions";
 
-export default function Layout({ children }) {
+export default function Layout({ children, currentPageName }) {
   const location = useLocation();
   const [user, setUser] = useState(null);
   const [workshop, setWorkshop] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [isAdminView, setIsAdminView] = useState(false);
+  const { canAccessPage } = usePermissions();
 
   // Monitora mudanças no estado de colapso da sidebar
   useEffect(() => {
@@ -107,8 +109,10 @@ export default function Layout({ children }) {
             // MODO ADMIN: Carregar oficina do cliente
             console.log("🔐 MODO ADMIN: Carregando oficina do cliente...");
             userWorkshop = await base44.entities.Workshop.get(adminWorkshopId);
+            setIsAdminView(true);
             console.log("✅ Workshop do cliente carregado:", userWorkshop?.name);
           } else {
+            setIsAdminView(false);
             // MODO NORMAL: Carregar oficina do próprio usuário
             if (currentUser.workshop_id) {
               // Se já tem workshop_id, busca diretamente
@@ -327,8 +331,21 @@ export default function Layout({ children }) {
           <div className={`${isAuthenticated ? 'px-4 sm:px-6 lg:px-8 py-6' : ''}`}>
             {isAuthenticated && <Breadcrumbs />}
             {isAuthenticated ? (
-              // Verificar se usuário está pendente de aprovação
-              user?.user_status === 'pending' ? (
+              // Verificar permissão de acesso à página
+              currentPageName && !canAccessPage(currentPageName) ? (
+                <div className="flex flex-col items-center justify-center h-[60vh] text-center px-4">
+                  <div className="bg-red-100 p-4 rounded-full mb-4">
+                    <LogOut className="w-8 h-8 text-red-600" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Acesso Negado</h2>
+                  <p className="text-gray-600 max-w-md mb-4">
+                    Você não tem permissão para acessar esta página.
+                  </p>
+                  <Button onClick={() => window.location.href = createPageUrl("Home")}>
+                    Voltar ao Início
+                  </Button>
+                </div>
+              ) : user?.user_status === 'pending' ? (
                 <div className="flex flex-col items-center justify-center h-[60vh] text-center px-4">
                   <div className="bg-yellow-100 p-4 rounded-full mb-4">
                     <LogOut className="w-8 h-8 text-yellow-600" />
