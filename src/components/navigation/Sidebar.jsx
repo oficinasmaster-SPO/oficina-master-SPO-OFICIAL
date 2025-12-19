@@ -59,7 +59,7 @@ import { cn } from "@/lib/utils";
 
 export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
   const location = useLocation();
-  const { canViewModule, canEditModule, isAdmin, permissionLevel } = usePermissions(user);
+  const { profile, hasPermission, canAccessPage } = usePermissions();
   
   const [expandedGroups, setExpandedGroups] = React.useState(['dashboard', 'patio', 'treinamentos']);
   const [isCollapsed, setIsCollapsed] = React.useState(() => {
