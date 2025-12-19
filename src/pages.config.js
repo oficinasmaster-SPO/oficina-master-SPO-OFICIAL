@@ -131,6 +131,7 @@ import TesteUsuarios from './pages/TesteUsuarios';
 import AuditLogs from './pages/AuditLogs';
 import GerenciarRoles from './pages/GerenciarRoles';
 import GestaoRBAC from './pages/GestaoRBAC';
+import DocumentacaoRBAC from './pages/DocumentacaoRBAC';
 import __Layout from './Layout.jsx';
 
 
@@ -268,6 +269,7 @@ export const PAGES = {
     "AuditLogs": AuditLogs,
     "GerenciarRoles": GerenciarRoles,
     "GestaoRBAC": GestaoRBAC,
+    "DocumentacaoRBAC": DocumentacaoRBAC,
 }
 
 export const pagesConfig = {
