@@ -1,25 +1,35 @@
-
 // Funções específicas do sistema - sincronizado com Employee entity
+// IMPORTANTE: Manter sincronizado com o enum job_role da entidade Employee
 export const jobRoles = [
+  // Gestão
   { value: "socio", label: "Sócio", category: "gestao" },
   { value: "diretor", label: "Diretor", category: "gestao" },
   { value: "supervisor_loja", label: "Supervisor de Loja", category: "gestao" },
   { value: "gerente", label: "Gerente", category: "gestao" },
+  
+  // Operacional
   { value: "lider_tecnico", label: "Líder Técnico", category: "operacional" },
-  { value: "financeiro", label: "Financeiro", category: "administrativo" },
-  { value: "rh", label: "RH", category: "administrativo" },
   { value: "tecnico", label: "Técnico", category: "operacional" },
   { value: "funilaria_pintura", label: "Funilaria/Pintura", category: "operacional" },
+  { value: "estoque", label: "Estoque", category: "operacional" },
+  { value: "motoboy", label: "Motoboy", category: "operacional" },
+  { value: "lavador", label: "Lavador", category: "operacional" },
+  
+  // Vendas
   { value: "comercial", label: "Comercial", category: "vendas" },
   { value: "consultor_vendas", label: "Consultor de Vendas", category: "vendas" },
   { value: "marketing", label: "Marketing", category: "vendas" },
-  { value: "estoque", label: "Estoque", category: "operacional" },
+  
+  // Administrativo
+  { value: "financeiro", label: "Financeiro", category: "administrativo" },
+  { value: "rh", label: "RH", category: "administrativo" },
   { value: "administrativo", label: "Administrativo", category: "administrativo" },
-  { value: "motoboy", label: "Motoboy", category: "operacional" },
-  { value: "lavador", label: "Lavador", category: "operacional" },
+  
+  // Consultoria (Funções Internas)
   { value: "acelerador", label: "Acelerador", category: "consultoria" },
   { value: "consultor", label: "Consultor", category: "consultoria" },
-  { value: "mentor", label: "Mentor", category: "consultoria" },
+  
+  // Outros
   { value: "outros", label: "Outros", category: "outros" }
 ];
 
