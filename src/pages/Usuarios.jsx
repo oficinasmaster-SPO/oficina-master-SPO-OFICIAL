@@ -110,14 +110,36 @@ export default function Usuarios() {
 
     const formData = new FormData(e.target);
     const workshopId = formData.get('workshop_id');
-    const planoSelecionado = formData.get('plano');
+    const jobRole = formData.get('job_role');
+    
+    // Buscar perfil correspondente à job_role
+    let profileId = selectedUser.profile_id;
+    if (jobRole) {
+      try {
+        const allProfiles = await base44.entities.UserProfile.list();
+        const matchingProfile = allProfiles.find(
+          (p) =>
+            p.status === "ativo" &&
+            p.job_roles &&
+            Array.isArray(p.job_roles) &&
+            p.job_roles.includes(jobRole)
+        );
+        if (matchingProfile) {
+          profileId = matchingProfile.id;
+          console.log(`✅ Auto-vinculado ao perfil: ${matchingProfile.name}`);
+        }
+      } catch (error) {
+        console.warn("Erro ao buscar perfil:", error);
+      }
+    }
     
     const data = {
       workshop_id: workshopId,
       position: formData.get('position'),
-      job_role: formData.get('job_role'),
+      job_role: jobRole,
       area: formData.get('area'),
-      telefone: formData.get('telefone')
+      telefone: formData.get('telefone'),
+      profile_id: profileId
     };
 
     // Atualizar usuário

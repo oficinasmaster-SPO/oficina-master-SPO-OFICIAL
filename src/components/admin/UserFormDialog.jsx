@@ -77,7 +77,7 @@ export default function UserFormDialog({
       role: isCreateMode ? formData.role : undefined
     };
 
-    console.log("📤 Enviando dados:", {
+    console.log("📤 Enviando dados do usuário interno:", {
       ...data,
       profile_name: profiles?.find(p => p.id === selectedProfileId)?.name
     });
