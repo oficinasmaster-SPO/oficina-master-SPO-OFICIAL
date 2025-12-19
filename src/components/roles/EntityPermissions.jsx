@@ -72,9 +72,7 @@ const operationColors = {
 };
 
 export default function EntityPermissions({ role, onChange }) {
-  const [entityPermissions, setEntityPermissions] = useState(
-    role?.entity_permissions || {}
-  );
+  const entityPermissions = role?.entity_permissions || {};
 
   const handleTogglePermission = (entityId, operation) => {
     const currentPerms = entityPermissions[entityId] || [];
@@ -86,10 +84,16 @@ export default function EntityPermissions({ role, onChange }) {
 
     const updated = {
       ...entityPermissions,
-      [entityId]: newPerms
+      [entityId]: newPerms.length > 0 ? newPerms : undefined
     };
 
-    setEntityPermissions(updated);
+    // Remove chaves com arrays vazios
+    Object.keys(updated).forEach(key => {
+      if (!updated[key] || (Array.isArray(updated[key]) && updated[key].length === 0)) {
+        delete updated[key];
+      }
+    });
+
     onChange({
       ...role,
       entity_permissions: updated
