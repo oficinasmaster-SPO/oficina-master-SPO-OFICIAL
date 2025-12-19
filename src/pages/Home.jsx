@@ -75,13 +75,21 @@ export default function Home() {
               ? ownedWorkshops[0] 
               : null;
 
-            // 2. Se não encontrou como dono, tenta encontrar como colaborador
+            // 2. Se não encontrou como dono e tem workshop_id no User, usar direto
+            if (!userWorkshop && currentUser.workshop_id) {
+                try {
+                  userWorkshop = await base44.entities.Workshop.get(currentUser.workshop_id);
+                } catch (err) {
+                  console.error("Erro ao buscar workshop pelo workshop_id do User:", err);
+                }
+            }
+
+            // 3. Se ainda não encontrou, tenta via Employee (fallback)
             if (!userWorkshop) {
                 const employees = await base44.entities.Employee.filter({ user_id: currentUser.id });
                 const myEmployeeRecord = Array.isArray(employees) && employees.length > 0 ? employees[0] : null;
                 
                 if (myEmployeeRecord && myEmployeeRecord.workshop_id) {
-                    // Busca a oficina específica do colaborador
                     userWorkshop = await base44.entities.Workshop.get(myEmployeeRecord.workshop_id);
                 }
             }
