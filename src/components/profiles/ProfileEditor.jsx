@@ -21,9 +21,14 @@ export default function ProfileEditor({ profile, onBack }) {
 
   const updateMutation = useMutation({
     mutationFn: (data) => base44.entities.UserProfile.update(profile.id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries(["user-profiles"]);
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["user-profiles"] });
+      await queryClient.refetchQueries({ queryKey: ["user-profiles"] });
       toast.success("Perfil atualizado com sucesso");
+    },
+    onError: (error) => {
+      console.error("Erro ao atualizar perfil:", error);
+      toast.error("Erro ao atualizar perfil: " + error.message);
     },
   });
 

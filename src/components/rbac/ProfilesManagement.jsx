@@ -17,12 +17,14 @@ export default function ProfilesManagement() {
   const [viewMode, setViewMode] = useState("list");
   const queryClient = useQueryClient();
 
-  const { data: profiles = [], isLoading } = useQuery({
+  const { data: profiles = [], isLoading, refetch } = useQuery({
     queryKey: ["user-profiles"],
     queryFn: async () => {
       const data = await base44.entities.UserProfile.list();
       return data || [];
     },
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
   });
 
   const { data: users = [] } = useQuery({
