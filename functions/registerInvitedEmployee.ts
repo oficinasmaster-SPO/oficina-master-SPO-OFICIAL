@@ -1,6 +1,8 @@
 import { createClient } from 'npm:@base44/sdk@0.8.4';
 
 Deno.serve(async (req) => {
+  console.log("🔵 registerInvitedEmployee - Método:", req.method);
+
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -8,15 +10,13 @@ Deno.serve(async (req) => {
     'Content-Type': 'application/json'
   };
 
-  // CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
 
-  // Só aceita POST
   if (req.method !== 'POST') {
     return new Response(
-      JSON.stringify({ success: false, error: 'Método não permitido' }), 
+      JSON.stringify({ error: 'Somente POST é permitido' }), 
       { status: 405, headers: corsHeaders }
     );
   }
@@ -27,10 +27,12 @@ Deno.serve(async (req) => {
       Deno.env.get('BASE44_SERVICE_ROLE_KEY')
     );
     
-    const { token, name, email, phone, profile_picture_url } = await req.json();
+    const body = await req.json();
+    const { token, name, email, phone, profile_picture_url } = body;
 
-    console.log("🔍 Token recebido:", token);
+    console.log("📥 Dados recebidos:", { token, email });
 
+    // Buscar convite
     const invites = await base44.entities.EmployeeInvite.filter({ invite_token: token });
     const invite = invites[0];
 
@@ -41,6 +43,7 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Validações
     if (invite.expires_at && new Date(invite.expires_at) < new Date()) {
       return new Response(
         JSON.stringify({ success: false, error: 'Convite expirado' }), 
@@ -56,24 +59,25 @@ Deno.serve(async (req) => {
     }
 
     const isInternal = invite.invite_type === 'internal';
-    
+    const finalEmail = email || invite.email;
+
+    // Buscar owner_id se necessário
     let ownerId = null;
     if (!isInternal && invite.workshop_id) {
       const workshops = await base44.entities.Workshop.filter({ id: invite.workshop_id });
-      ownerId = workshops[0]?.owner_id;
+      if (workshops[0]) {
+        ownerId = workshops[0].owner_id;
+      }
     }
 
-    // Criar/Atualizar Employee
-    const existingEmps = await base44.entities.Employee.filter({ 
-      email: email || invite.email,
-      ...(isInternal ? { tipo_vinculo: 'interno' } : { workshop_id: invite.workshop_id })
-    });
-
+    // 1. Criar/Atualizar Employee
+    const existingEmps = await base44.entities.Employee.filter({ email: finalEmail });
+    
     const empData = {
       full_name: name || invite.name,
       telefone: phone || '',
       profile_picture_url: profile_picture_url || '',
-      position: invite.position,
+      position: invite.position || 'Colaborador',
       area: invite.area || 'tecnico',
       job_role: invite.job_role || 'outros',
       status: 'ativo',
@@ -82,42 +86,45 @@ Deno.serve(async (req) => {
       first_login_at: new Date().toISOString()
     };
 
+    if (!isInternal && invite.workshop_id) {
+      empData.workshop_id = invite.workshop_id;
+      if (ownerId) empData.owner_id = ownerId;
+    }
+
     let employee;
-    if (existingEmps?.[0]) {
-      employee = await base44.entities.Employee.update(existingEmps[0].id, {
-        ...empData,
-        owner_id: ownerId
-      });
+    if (existingEmps && existingEmps.length > 0) {
+      console.log("📝 Atualizando Employee existente");
+      employee = await base44.entities.Employee.update(existingEmps[0].id, empData);
     } else {
+      console.log("✨ Criando novo Employee");
       employee = await base44.entities.Employee.create({
-        email: email || invite.email,
+        email: finalEmail,
         hire_date: new Date().toISOString().split('T')[0],
-        ...empData,
-        ...(isInternal ? {} : { workshop_id: invite.workshop_id, owner_id: ownerId })
+        ...empData
       });
     }
 
-    console.log("✅ Employee criado/atualizado:", employee.id);
+    console.log("✅ Employee ID:", employee.id);
 
-    // Atualizar convite
+    // 2. Atualizar convite
     await base44.entities.EmployeeInvite.update(invite.id, {
       status: 'acessado',
       accepted_at: new Date().toISOString(),
       employee_id: employee.id
     });
 
-    // Criar/Atualizar User
-    const existingUsers = await base44.entities.User.filter({ email: email || invite.email });
+    // 3. Criar/Atualizar User (com status pending)
+    const existingUsers = await base44.entities.User.filter({ email: finalEmail });
 
     const userData = {
       full_name: name || invite.name,
-      position: invite.position,
+      position: invite.position || 'Colaborador',
       job_role: invite.job_role || 'outros',
       area: invite.area || 'tecnico',
       telefone: phone || '',
       profile_picture_url: profile_picture_url || '',
       is_internal: isInternal,
-      user_status: 'pending',
+      user_status: 'pending', // Aguardando aprovação
       invite_id: invite.id,
       hire_date: new Date().toISOString().split('T')[0],
       first_login_at: new Date().toISOString()
@@ -127,41 +134,39 @@ Deno.serve(async (req) => {
       userData.workshop_id = invite.workshop_id;
     }
 
-    if (isInternal && invite.metadata) {
-      if (invite.metadata.profile_id) userData.profile_id = invite.metadata.profile_id;
-      if (invite.metadata.role) userData.role = invite.metadata.role;
-    }
-
     let userId;
-    if (existingUsers?.[0]) {
+    if (existingUsers && existingUsers.length > 0) {
+      console.log("📝 Atualizando User existente");
       await base44.entities.User.update(existingUsers[0].id, userData);
       userId = existingUsers[0].id;
     } else {
+      console.log("✨ Criando novo User");
       const newUser = await base44.entities.User.create({
-        email: email || invite.email,
-        role: isInternal ? (invite.metadata?.role || 'user') : 'user',
+        email: finalEmail,
+        role: 'user',
         ...userData
       });
       userId = newUser.id;
     }
 
-    console.log("✅ User criado/atualizado:", userId);
+    console.log("✅ User ID:", userId);
 
-    // Vincular user_id ao Employee
+    // 4. Vincular user_id ao Employee
     await base44.entities.Employee.update(employee.id, { user_id: userId });
+
+    console.log("🎉 Cadastro concluído com sucesso!");
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         employee_id: employee.id,
-        user_id: userId,
-        message: 'Cadastro realizado com sucesso'
+        user_id: userId
       }), 
       { status: 200, headers: corsHeaders }
     );
 
   } catch (error) {
-    console.error('❌ Erro na função:', error);
+    console.error('❌ Erro:', error.message);
     console.error('Stack:', error.stack);
     
     return new Response(
