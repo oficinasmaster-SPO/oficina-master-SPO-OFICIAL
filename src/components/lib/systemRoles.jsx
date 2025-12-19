@@ -13,13 +13,13 @@ export const systemRoles = [
       {
         id: "dashboard.view",
         name: "Visualizar Dashboard",
-        description: "Acesso à visão geral e métricas",
+        description: "Acesso à visão geral e métricas da oficina. Permite visualizar indicadores-chave de desempenho, gráficos e estatísticas em tempo real.",
         permissions: ["view"],
       },
       {
         id: "dashboard.edit",
         name: "Editar Dashboard",
-        description: "Configurar widgets e indicadores",
+        description: "Configurar widgets e indicadores personalizados. Permite personalizar a visualização do dashboard, adicionar/remover widgets e ajustar métricas exibidas.",
         permissions: ["view", "edit"],
       },
       {
@@ -63,7 +63,7 @@ export const systemRoles = [
       {
         id: "employees.view",
         name: "Visualizar Colaboradores",
-        description: "Ver lista e dados dos colaboradores",
+        description: "Ver lista completa e dados detalhados dos colaboradores. Inclui acesso a informações pessoais, cargos, e histórico básico de cada colaborador.",
         permissions: ["view"],
       },
       {
@@ -87,7 +87,7 @@ export const systemRoles = [
       {
         id: "employees.manage_permissions",
         name: "Gerenciar Permissões",
-        description: "Controlar acessos de colaboradores",
+        description: "Controlar níveis de acesso e permissões de colaboradores. Permite aprovar novos usuários, definir perfis de acesso e modificar permissões individuais.",
         permissions: ["view", "edit", "approve"],
       },
     ],
