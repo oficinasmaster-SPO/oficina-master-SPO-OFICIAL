@@ -9,11 +9,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, CheckCircle2, Upload, User, Lock, AlertCircle, Building2 } from "lucide-react";
 import { toast } from "sonner";
-import { registerEmployeeViaBackend } from "@/components/onboarding/EmployeeRegistrationHelper";
+import { registerEmployeeDirectly } from "@/components/onboarding/EmployeeRegistrationHelper";
 
 export default function PrimeiroAcesso() {
-  // VERSION MARKER: v20251218-1600-BACKEND-ONLY
-  console.log("🆕 PrimeiroAcesso v20251218-1600-BACKEND-ONLY carregado");
+  // VERSION MARKER: v20251218-1700-DIRECT-FRONTEND
+  console.log("🆕 PrimeiroAcesso v20251218-1700-DIRECT-FRONTEND carregado");
   
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -157,11 +157,11 @@ export default function PrimeiroAcesso() {
     setSubmitting(true);
 
     try {
-      console.log("📤 [v2-ISOLATED] Chamando helper isolado...");
-      
-      const data = await registerEmployeeViaBackend(invite.invite_token, formData);
-      
-      console.log("✅ Resposta do helper:", data);
+      console.log("📤 [v3-DIRECT] Chamando registro direto...");
+
+      const data = await registerEmployeeDirectly(invite.invite_token, formData);
+
+      console.log("✅ Resposta:", data);
 
       if (data.success) {
         toast.success("✅ Cadastro confirmado! Redirecionando para criar sua senha...", { duration: 5000 });
