@@ -1,77 +1,42 @@
-import { createClient } from 'npm:@base44/sdk@0.8.4';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
 
 Deno.serve(async (req) => {
-  console.log("🔵 registerInvitedEmployee - Método:", req.method);
-
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Content-Type': 'application/json'
-  };
-
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { status: 200, headers: corsHeaders });
-  }
-
-  if (req.method !== 'POST') {
-    return new Response(
-      JSON.stringify({ error: 'Somente POST é permitido' }), 
-      { status: 405, headers: corsHeaders }
-    );
-  }
+  console.log("🔵 [registerInvitedEmployee] Iniciando...");
 
   try {
-    const base44 = createClient(
-      Deno.env.get('BASE44_APP_ID'),
-      Deno.env.get('BASE44_SERVICE_ROLE_KEY')
-    );
+    const base44 = createClientFromRequest(req);
     
-    const body = await req.json();
-    const { token, name, email, phone, profile_picture_url } = body;
+    const { token, name, email, phone, profile_picture_url } = await req.json();
 
-    console.log("📥 Dados recebidos:", { token, email });
+    console.log("📥 Token:", token);
 
-    // Buscar convite
-    const invites = await base44.entities.EmployeeInvite.filter({ invite_token: token });
+    // Buscar convite com service role
+    const invites = await base44.asServiceRole.entities.EmployeeInvite.filter({ invite_token: token });
     const invite = invites[0];
 
     if (!invite) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Convite não encontrado' }), 
-        { status: 404, headers: corsHeaders }
-      );
+      return Response.json({ error: 'Convite não encontrado' }, { status: 404 });
     }
 
-    // Validações
     if (invite.expires_at && new Date(invite.expires_at) < new Date()) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Convite expirado' }), 
-        { status: 400, headers: corsHeaders }
-      );
+      return Response.json({ error: 'Convite expirado' }, { status: 400 });
     }
 
     if (invite.status === 'concluido') {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Convite já utilizado' }), 
-        { status: 400, headers: corsHeaders }
-      );
+      return Response.json({ error: 'Convite já utilizado' }, { status: 400 });
     }
 
     const isInternal = invite.invite_type === 'internal';
     const finalEmail = email || invite.email;
 
-    // Buscar owner_id se necessário
     let ownerId = null;
     if (!isInternal && invite.workshop_id) {
-      const workshops = await base44.entities.Workshop.filter({ id: invite.workshop_id });
-      if (workshops[0]) {
-        ownerId = workshops[0].owner_id;
-      }
+      const workshop = await base44.asServiceRole.entities.Workshop.get(invite.workshop_id);
+      ownerId = workshop?.owner_id;
     }
 
-    // 1. Criar/Atualizar Employee
-    const existingEmps = await base44.entities.Employee.filter({ email: finalEmail });
+    // Criar/Atualizar Employee
+    const existingEmps = await base44.asServiceRole.entities.Employee.filter({ email: finalEmail });
     
     const empData = {
       full_name: name || invite.name,
@@ -93,28 +58,25 @@ Deno.serve(async (req) => {
 
     let employee;
     if (existingEmps && existingEmps.length > 0) {
-      console.log("📝 Atualizando Employee existente");
-      employee = await base44.entities.Employee.update(existingEmps[0].id, empData);
+      employee = await base44.asServiceRole.entities.Employee.update(existingEmps[0].id, empData);
     } else {
-      console.log("✨ Criando novo Employee");
-      employee = await base44.entities.Employee.create({
+      employee = await base44.asServiceRole.entities.Employee.create({
         email: finalEmail,
         hire_date: new Date().toISOString().split('T')[0],
         ...empData
       });
     }
 
-    console.log("✅ Employee ID:", employee.id);
+    console.log("✅ Employee:", employee.id);
 
-    // 2. Atualizar convite
-    await base44.entities.EmployeeInvite.update(invite.id, {
+    await base44.asServiceRole.entities.EmployeeInvite.update(invite.id, {
       status: 'acessado',
       accepted_at: new Date().toISOString(),
       employee_id: employee.id
     });
 
-    // 3. Criar/Atualizar User (com status pending)
-    const existingUsers = await base44.entities.User.filter({ email: finalEmail });
+    // Criar/Atualizar User com service role
+    const existingUsers = await base44.asServiceRole.entities.User.filter({ email: finalEmail });
 
     const userData = {
       full_name: name || invite.name,
@@ -136,12 +98,10 @@ Deno.serve(async (req) => {
 
     let userId;
     if (existingUsers && existingUsers.length > 0) {
-      console.log("📝 Atualizando User existente");
-      await base44.entities.User.update(existingUsers[0].id, userData);
+      await base44.asServiceRole.entities.User.update(existingUsers[0].id, userData);
       userId = existingUsers[0].id;
     } else {
-      console.log("✨ Criando novo User");
-      const newUser = await base44.entities.User.create({
+      const newUser = await base44.asServiceRole.entities.User.create({
         email: finalEmail,
         role: 'user',
         ...userData
@@ -149,32 +109,20 @@ Deno.serve(async (req) => {
       userId = newUser.id;
     }
 
-    console.log("✅ User ID:", userId);
+    console.log("✅ User:", userId);
 
-    // 4. Vincular user_id ao Employee
-    await base44.entities.Employee.update(employee.id, { user_id: userId });
+    await base44.asServiceRole.entities.Employee.update(employee.id, { user_id: userId });
 
-    console.log("🎉 Cadastro concluído com sucesso!");
+    console.log("🎉 Sucesso!");
 
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        employee_id: employee.id,
-        user_id: userId
-      }), 
-      { status: 200, headers: corsHeaders }
-    );
+    return Response.json({ 
+      success: true, 
+      employee_id: employee.id,
+      user_id: userId
+    });
 
   } catch (error) {
-    console.error('❌ Erro:', error.message);
-    console.error('Stack:', error.stack);
-    
-    return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error.message || 'Erro ao processar cadastro'
-      }), 
-      { status: 500, headers: corsHeaders }
-    );
+    console.error('❌', error);
+    return Response.json({ error: error.message }, { status: 500 });
   }
 });
