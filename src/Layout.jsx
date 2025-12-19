@@ -374,46 +374,56 @@ export default function Layout({ children, currentPageName }) {
                 // Verificar status do usuário
                 if (user?.user_status === 'pending') {
                   return (
-                <div className="flex flex-col items-center justify-center h-[60vh] text-center px-4">
-                  <div className="bg-yellow-100 p-4 rounded-full mb-4">
-                    <LogOut className="w-8 h-8 text-yellow-600" />
-                  </div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Aguardando Aprovação</h2>
-                  <p className="text-gray-600 max-w-md mb-4">
-                    Seu cadastro foi realizado com sucesso! No momento, seu acesso está 
-                    <strong> aguardando aprovação</strong> de um administrador.
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    Você receberá um email assim que seu acesso for liberado.
-                  </p>
-                  <Button 
-                    onClick={handleLogout}
-                    variant="outline"
-                    className="mt-6"
-                  >
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Sair
-                  </Button>
-                </div>
-              <div className="flex flex-col items-center justify-center h-[60vh] text-center px-4">
-                <div className="bg-red-100 p-4 rounded-full mb-4">
-                  <LogOut className="w-8 h-8 text-red-600" />
-                </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Acesso em Análise</h2>
-                <p className="text-gray-600 max-w-md">
-                  Sua oficina está com status <strong>Inativo</strong>. 
-                  Entre em contato com o suporte para regularizar seu acesso.
-                </p>
-              </div>
-              );
-              }
+                    <div className="flex flex-col items-center justify-center h-[60vh] text-center px-4">
+                      <div className="bg-yellow-100 p-4 rounded-full mb-4">
+                        <LogOut className="w-8 h-8 text-yellow-600" />
+                      </div>
+                      <h2 className="text-2xl font-bold text-gray-900 mb-2">Aguardando Aprovação</h2>
+                      <p className="text-gray-600 max-w-md mb-4">
+                        Seu cadastro foi realizado com sucesso! No momento, seu acesso está 
+                        <strong> aguardando aprovação</strong> de um administrador.
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        Você receberá um email assim que seu acesso for liberado.
+                      </p>
+                      <Button 
+                        onClick={handleLogout}
+                        variant="outline"
+                        className="mt-6"
+                      >
+                        <LogOut className="w-4 h-4 mr-2" />
+                        Sair
+                      </Button>
+                    </div>
+                  );
+                }
 
-              // Renderizar conteúdo com SharedDataProvider
-              return (
-              <SharedDataProvider workshopId={workshop.id} userId={user?.id}>
-                {children}
-              </SharedDataProvider>
-              );
+                // Verificar workshop
+                if (!workshop) {
+                  return children;
+                }
+
+                if (workshop.status === 'inativo' && user?.role !== 'admin') {
+                  return (
+                    <div className="flex flex-col items-center justify-center h-[60vh] text-center px-4">
+                      <div className="bg-red-100 p-4 rounded-full mb-4">
+                        <LogOut className="w-8 h-8 text-red-600" />
+                      </div>
+                      <h2 className="text-2xl font-bold text-gray-900 mb-2">Acesso em Análise</h2>
+                      <p className="text-gray-600 max-w-md">
+                        Sua oficina está com status <strong>Inativo</strong>. 
+                        Entre em contato com o suporte para regularizar seu acesso.
+                      </p>
+                    </div>
+                  );
+                }
+
+                // Renderizar conteúdo com SharedDataProvider
+                return (
+                  <SharedDataProvider workshopId={workshop.id} userId={user?.id}>
+                    {children}
+                  </SharedDataProvider>
+                );
               })()
               ) : (
               children
