@@ -85,10 +85,13 @@ export default function ProfileCreator({ onBack, onCreated, profiles }) {
 
       return base44.entities.UserProfile.create(newProfile);
     },
-    onSuccess: (newProfile) => {
-      queryClient.invalidateQueries(["user-profiles"]);
+    onSuccess: async (newProfile) => {
+      await queryClient.invalidateQueries({ queryKey: ["user-profiles"] });
+      await queryClient.refetchQueries({ queryKey: ["user-profiles"] });
       toast.success("Perfil criado com sucesso");
-      onCreated(newProfile);
+      setTimeout(() => {
+        onCreated(newProfile);
+      }, 300);
     },
     onError: (error) => {
       toast.error("Erro ao criar perfil: " + error.message);
