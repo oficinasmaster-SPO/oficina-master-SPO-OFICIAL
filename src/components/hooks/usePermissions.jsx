@@ -30,19 +30,45 @@ export function usePermissions() {
         if (currentUser.role === 'admin') {
           aggregatedPermissions = systemRoles.flatMap(m => m.roles.map(r => r.id));
         } else {
+          // Buscar Employee vinculado para obter profile_id
+          let employeeProfileId = null;
+          try {
+            const employees = await base44.entities.Employee.filter({ user_id: currentUser.id });
+            if (employees && employees.length > 0) {
+              employeeProfileId = employees[0].profile_id;
+            }
+          } catch (empError) {
+            console.error("Erro ao buscar Employee:", empError);
+          }
+
           // Carregar perfil do usuário
-          if (currentUser.profile_id) {
+          const profileId = currentUser.profile_id || employeeProfileId;
+          if (profileId) {
             try {
-              const userProfile = await base44.entities.UserProfile.get(currentUser.profile_id);
+              const userProfile = await base44.entities.UserProfile.get(profileId);
               setProfile(userProfile);
+              
+              // Agregar permissões do perfil (roles antigas)
               aggregatedPermissions = [...aggregatedPermissions, ...(userProfile.roles || [])];
+              
+              // Agregar custom_role_ids do perfil
+              if (userProfile.custom_role_ids && userProfile.custom_role_ids.length > 0) {
+                for (const roleId of userProfile.custom_role_ids) {
+                  try {
+                    const customRole = await base44.entities.CustomRole.get(roleId);
+                    aggregatedPermissions = [...aggregatedPermissions, ...(customRole.system_roles || [])];
+                  } catch (roleError) {
+                    console.error(`Erro ao carregar CustomRole ${roleId}:`, roleError);
+                  }
+                }
+              }
             } catch (profileError) {
               console.error("Erro ao carregar UserProfile:", profileError);
               setProfile(null);
             }
           }
 
-          // Carregar custom role se existir
+          // Carregar custom role se existir (fallback antigo)
           if (currentUser.custom_role_id) {
             try {
               const role = await base44.entities.CustomRole.get(currentUser.custom_role_id);
