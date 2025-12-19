@@ -42,6 +42,12 @@ export default function Cadastro() {
       if (workshops && workshops.length > 0) {
         setWorkshop(workshops[0]);
       } else {
+        // Se não é owner e já tem workshop_id (colaborador), redirecionar para Home
+        if (currentUser.workshop_id) {
+          toast.info("Você já está vinculado a uma oficina!");
+          navigate(createPageUrl("Home"));
+          return;
+        }
         setWorkshop(null); // Nenhum workshop encontrado, mostraremos tela de criação
       }
     } catch (error) {
