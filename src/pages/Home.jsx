@@ -77,8 +77,8 @@ export default function Home() {
 
             // 2. Se não encontrou como dono, tenta encontrar como colaborador
             if (!userWorkshop) {
-                const employees = await base44.entities.Employee.filter({ email: currentUser.email });
-                const myEmployeeRecord = Array.isArray(employees) ? employees[0] : null;
+                const employees = await base44.entities.Employee.filter({ user_id: currentUser.id });
+                const myEmployeeRecord = Array.isArray(employees) && employees.length > 0 ? employees[0] : null;
                 
                 if (myEmployeeRecord && myEmployeeRecord.workshop_id) {
                     // Busca a oficina específica do colaborador
