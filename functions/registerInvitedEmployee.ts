@@ -8,15 +8,22 @@ Deno.serve(async (req) => {
     
     const { token, name, email, phone, profile_picture_url } = await req.json();
 
-    console.log("📥 Token:", token);
+    console.log("📥 Token recebido:", token);
+    console.log("📧 Email:", email);
 
     // Buscar convite com service role
+    console.log("🔍 Buscando convite...");
     const invites = await base44.asServiceRole.entities.EmployeeInvite.filter({ invite_token: token });
+    console.log("📊 Convites encontrados:", invites?.length || 0);
+    
     const invite = invites[0];
 
     if (!invite) {
-      return Response.json({ error: 'Convite não encontrado' }, { status: 404 });
+      console.error("❌ Convite não encontrado com token:", token);
+      return Response.json({ error: 'Convite não encontrado. Verifique o link ou solicite novo convite.' }, { status: 404 });
     }
+    
+    console.log("✅ Convite encontrado:", invite.id, "Status:", invite.status);
 
     if (invite.expires_at && new Date(invite.expires_at) < new Date()) {
       return Response.json({ error: 'Convite expirado' }, { status: 400 });
