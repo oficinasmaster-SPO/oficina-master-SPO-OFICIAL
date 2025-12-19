@@ -79,19 +79,30 @@ export function usePermissions() {
 
   /**
    * Verifica se o usuário pode acessar uma página
-   * UNIFICADO: Agora usa apenas o UserProfile.modules_allowed
+   * Sistema RBAC Granular: Usa mapeamento de página → permissão
    */
   const canAccessPage = (pageName) => {
     if (!user) return false;
     if (user.role === 'admin') return true;
 
-    // Se tem perfil definido, verificar módulos permitidos
-    if (profile?.modules_allowed) {
-      return profile.modules_allowed.includes(pageName);
+    // Importar dinamicamente para evitar erro de import circular
+    const { getRequiredPermission, isPublicPage } = require('@/components/lib/pagePermissions');
+
+    // Páginas públicas não requerem autenticação
+    if (isPublicPage(pageName)) {
+      return true;
     }
 
-    // Se não tem perfil configurado, permitir acesso (fallback)
-    return true;
+    // Obter permissão necessária para a página
+    const requiredPermission = getRequiredPermission(pageName);
+    
+    // Se não há permissão mapeada, permitir acesso (fallback)
+    if (!requiredPermission) {
+      return true;
+    }
+
+    // Verificar se o usuário tem a permissão granular necessária
+    return hasPermission(requiredPermission);
   };
 
   /**
