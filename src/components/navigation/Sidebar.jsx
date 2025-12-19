@@ -615,6 +615,14 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           highlight: true
         },
         { 
+          name: 'Gerenciar Roles', 
+          href: createPageUrl('GerenciarRoles'), 
+          icon: Shield,
+          description: 'Permissões granulares do sistema',
+          adminOnly: true,
+          highlight: true
+        },
+        { 
           name: 'Usuários Internos', 
           href: createPageUrl('UsuariosAdmin'), 
           icon: Users,

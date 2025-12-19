@@ -2,12 +2,14 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
-import { Loader2, Award, TrendingUp } from "lucide-react";
+import { Loader2, Award, TrendingUp, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import PlanCard from "../components/plans/PlanCard";
+import { usePermissions } from "@/components/hooks/usePermissions";
 
 export default function Planos() {
   const navigate = useNavigate();
+  const { canPerform, user, loading: permLoading } = usePermissions();
   const [loading, setLoading] = useState(true);
   const [plans, setPlans] = useState([]);
   const [currentPlan, setCurrentPlan] = useState(null);
@@ -96,10 +98,39 @@ export default function Planos() {
     return "select";
   };
 
-  if (loading) {
+  if (loading || permLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  // Bloquear acesso para perfis específicos (mentor, consultor)
+  if (user?.job_role === 'mentor' || user?.job_role === 'consultor' || user?.job_role === 'acelerador') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 p-6">
+        <div className="max-w-md text-center">
+          <div className="bg-yellow-100 p-6 rounded-full w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+            <AlertCircle className="w-12 h-12 text-yellow-600" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-3">
+            Acesso Restrito
+          </h2>
+          <p className="text-gray-600 mb-6">
+            Como <strong>{user.job_role === 'mentor' ? 'Mentor' : user.job_role === 'consultor' ? 'Consultor' : 'Acelerador'}</strong>, 
+            você não tem permissão para alterar o plano da oficina.
+          </p>
+          <p className="text-sm text-gray-500 mb-6">
+            Entre em contato com o administrador do sistema se precisar de acesso.
+          </p>
+          <button
+            onClick={() => navigate(createPageUrl("Home"))}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Voltar ao Início
+          </button>
+        </div>
       </div>
     );
   }
