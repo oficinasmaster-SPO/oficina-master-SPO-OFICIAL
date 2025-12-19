@@ -1,19 +1,20 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Copy, Power, Trash2, Shield, AlertCircle, Users, RefreshCw } from "lucide-react";
-import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import ProfileEditor from "@/components/profiles/ProfileEditor";
-import ProfileCreator from "@/components/profiles/ProfileCreator";
-import ProfileAudit from "@/components/profiles/ProfileAudit";
-import { systemRoles } from "@/components/lib/systemRoles";
 
+// DEPRECATED: Esta página foi movida para GestaoRBAC
+// Redireciona automaticamente para a nova página unificada
 export default function GestaoPerfis() {
+  const navigate = useNavigate();
+  
+  React.useEffect(() => {
+    navigate(createPageUrl("GestaoRBAC"));
+  }, [navigate]);
+  
+  return null;
+}
+
+function GestaoPerfisDeprecated() {
   const navigate = useNavigate();
   const [selectedProfile, setSelectedProfile] = useState(null);
   const [showCreator, setShowCreator] = useState(false);

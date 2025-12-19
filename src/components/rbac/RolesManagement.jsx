@@ -1,25 +1,20 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
-import { createPageUrl } from "@/utils";
+import React, { useState } from "react";
+import { base44 } from "@/api/base44Client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Edit, Trash2, Shield, Users } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+import RoleFormDialog from "@/components/roles/RoleFormDialog";
+import SystemRolesReference from "@/components/roles/SystemRolesReference";
 
-// DEPRECATED: Esta página foi movida para GestaoRBAC
-// Redireciona automaticamente para a nova página unificada
-export default function GerenciarRoles() {
-  const navigate = useNavigate();
-  
-  React.useEffect(() => {
-    navigate(createPageUrl("GestaoRBAC") + "?tab=roles");
-  }, [navigate]);
-  
-  return null;
-}
-
-function GerenciarRolesDeprecated() {
+export default function RolesManagement() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [showDialog, setShowDialog] = useState(false);
   const [editingRole, setEditingRole] = useState(null);
-  const { hasPermission, loading } = usePermissions();
 
   const { data: customRoles = [], isLoading } = useQuery({
     queryKey: ["custom-roles"],
@@ -109,40 +104,8 @@ function GerenciarRolesDeprecated() {
     }
   };
 
-  if (loading || isLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
-      </div>
-    );
-  }
-
-  if (!hasPermission('gerenciar_roles')) {
-    return (
-      <div className="flex flex-col items-center justify-center h-96">
-        <AlertCircle className="w-16 h-16 text-red-500 mb-4" />
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Acesso Negado</h2>
-        <p className="text-gray-600">Você não tem permissão para gerenciar roles.</p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gerenciamento de Roles</h1>
-          <p className="text-gray-600 mt-1">
-            Crie e gerencie roles customizadas com permissões específicas
-          </p>
-        </div>
-        <Button onClick={handleCreateNew} className="gap-2">
-          <Plus className="w-4 h-4" />
-          Nova Role
-        </Button>
-      </div>
-
-      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardContent className="pt-6">
@@ -177,9 +140,13 @@ function GerenciarRolesDeprecated() {
         </Card>
       </div>
 
+      <Button onClick={handleCreateNew} className="gap-2">
+        <Plus className="w-4 h-4" />
+        Nova Role
+      </Button>
+
       <SystemRolesReference />
 
-      {/* Custom Roles */}
       <Card>
         <CardHeader>
           <div className="flex justify-between items-center">

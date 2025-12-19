@@ -607,18 +607,10 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           adminOnly: true
         },
         { 
-          name: 'Gestão de Perfis', 
-          href: createPageUrl('GestaoPerfis'), 
+          name: 'Gestão RBAC', 
+          href: createPageUrl('GestaoRBAC'), 
           icon: Shield,
           description: 'Perfis e permissões centralizados',
-          adminOnly: true,
-          highlight: true
-        },
-        { 
-          name: 'Gerenciar Roles', 
-          href: createPageUrl('GerenciarRoles'), 
-          icon: Shield,
-          description: 'Permissões granulares do sistema',
           adminOnly: true,
           highlight: true
         },
