@@ -123,8 +123,8 @@ export default function ProfilesManagement() {
     return <ProfileAudit profiles={profiles} onBack={() => setViewMode("list")} />;
   }
 
-  const internalProfiles = profiles.filter(p => p.is_internal);
-  const externalProfiles = profiles.filter(p => !p.is_internal);
+  const internalProfiles = (profiles || []).filter(p => p.type === 'interno' || p.is_internal);
+  const externalProfiles = (profiles || []).filter(p => p.type === 'externo' && !p.is_internal);
 
   return (
     <div className="space-y-6">

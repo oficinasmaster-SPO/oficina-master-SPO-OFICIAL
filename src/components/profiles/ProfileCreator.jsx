@@ -188,7 +188,7 @@ export default function ProfileCreator({ onBack, onCreated, profiles }) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={null}>Nenhum</SelectItem>
-                  {profiles.map((profile) => (
+                  {(profiles || []).map((profile) => (
                     <SelectItem key={profile.id} value={profile.id}>
                       {profile.name} ({profile.type})
                     </SelectItem>

@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
     
     try {
       const allProfiles = await base44.asServiceRole.entities.UserProfile.list();
-      const matchingProfile = allProfiles.find(
+      const matchingProfile = (allProfiles || []).find(
         (p) =>
           p.status === "ativo" &&
           p.job_roles &&
