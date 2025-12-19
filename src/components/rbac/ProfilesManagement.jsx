@@ -37,16 +37,18 @@ export default function ProfilesManagement() {
   const toggleStatusMutation = useMutation({
     mutationFn: ({ id, status }) => 
       base44.entities.UserProfile.update(id, { status }),
-    onSuccess: () => {
-      queryClient.invalidateQueries(["user-profiles"]);
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["user-profiles"] });
+      await refetch();
       toast.success("Status atualizado");
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.UserProfile.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries(["user-profiles"]);
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["user-profiles"] });
+      await refetch();
       toast.success("Perfil excluído");
     },
   });
@@ -59,8 +61,9 @@ export default function ProfilesManagement() {
         name: `${data.name} (Cópia)`,
       });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries(["user-profiles"]);
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["user-profiles"] });
+      await refetch();
       toast.success("Perfil duplicado");
     },
   });
@@ -115,8 +118,12 @@ export default function ProfilesManagement() {
   if (showCreator) {
     return (
       <ProfileCreator
+        profiles={profiles}
         onBack={() => setShowCreator(false)}
-        onCreate={() => setShowCreator(false)}
+        onCreated={async () => {
+          await refetch();
+          setShowCreator(false);
+        }}
       />
     );
   }
