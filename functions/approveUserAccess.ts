@@ -42,23 +42,48 @@ Deno.serve(async (req) => {
     const currentUser = existingUsers[0];
 
     // Atualizar User para status active e configurar profile_id
+    const jobRole = employee.job_role || currentUser.job_role || 'outros';
+    
     const userData = {
       user_status: 'active',
       approved_at: new Date().toISOString(),
       approved_by: admin.id,
       full_name: currentUser.full_name || employee.full_name,
-      position: employee.position, // Garantir que position vem do Employee
-      job_role: employee.job_role || currentUser.job_role || 'outros',
+      position: employee.position,
+      job_role: jobRole,
       area: employee.area || currentUser.area,
       telefone: employee.telefone || currentUser.telefone,
       profile_picture_url: employee.profile_picture_url || currentUser.profile_picture_url
     };
 
-    // Adicionar profile_id se fornecido na aprovação OU se já existe no user
-    if (profile_id) {
-      userData.profile_id = profile_id;
-    } else if (currentUser.profile_id) {
-      userData.profile_id = currentUser.profile_id;
+    // 🔄 AUTO-VINCULAÇÃO: Buscar perfil baseado em job_role
+    let finalProfileId = profile_id || currentUser.profile_id;
+    
+    // Se não tem perfil definido, tentar encontrar um automaticamente
+    if (!finalProfileId) {
+      try {
+        const allProfiles = await base44.asServiceRole.entities.UserProfile.list();
+        const matchingProfile = allProfiles.find(
+          (p) =>
+            p.status === "ativo" &&
+            p.job_roles &&
+            Array.isArray(p.job_roles) &&
+            p.job_roles.includes(jobRole)
+        );
+        
+        if (matchingProfile) {
+          finalProfileId = matchingProfile.id;
+          console.log(`✅ Auto-vinculado ao perfil: ${matchingProfile.name} (job_role: ${jobRole})`);
+        } else {
+          console.warn(`⚠️ Nenhum perfil encontrado para job_role: ${jobRole}`);
+        }
+      } catch (error) {
+        console.warn("⚠️ Erro ao buscar perfil:", error);
+      }
+    }
+    
+    if (finalProfileId) {
+      userData.profile_id = finalProfileId;
     }
 
     // Adicionar workshop_id se for colaborador de oficina
