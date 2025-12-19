@@ -85,10 +85,34 @@ Deno.serve(async (req) => {
     // Criar/Atualizar User com service role
     const existingUsers = await base44.asServiceRole.entities.User.filter({ email: finalEmail });
 
+    // 🔄 AUTO-VINCULAÇÃO: Buscar perfil baseado em job_role
+    let profileId = null;
+    const jobRole = invite.job_role || 'outros';
+    
+    try {
+      const allProfiles = await base44.asServiceRole.entities.UserProfile.list();
+      const matchingProfile = allProfiles.find(
+        (p) =>
+          p.status === "ativo" &&
+          p.job_roles &&
+          Array.isArray(p.job_roles) &&
+          p.job_roles.includes(jobRole)
+      );
+      
+      if (matchingProfile) {
+        profileId = matchingProfile.id;
+        console.log(`✅ Auto-vinculado ao perfil: ${matchingProfile.name} (job_role: ${jobRole})`);
+      } else {
+        console.warn(`⚠️ Nenhum perfil encontrado para job_role: ${jobRole}`);
+      }
+    } catch (error) {
+      console.warn("⚠️ Erro ao buscar perfil:", error);
+    }
+
     const userData = {
       full_name: name || invite.name,
       position: invite.position || 'Colaborador',
-      job_role: invite.job_role || 'outros',
+      job_role: jobRole,
       area: invite.area || 'tecnico',
       telefone: phone || '',
       profile_picture_url: profile_picture_url || '',
@@ -96,7 +120,8 @@ Deno.serve(async (req) => {
       user_status: 'pending', // Aguardando aprovação
       invite_id: invite.id,
       hire_date: new Date().toISOString().split('T')[0],
-      first_login_at: new Date().toISOString()
+      first_login_at: new Date().toISOString(),
+      profile_id: profileId
     };
 
     if (!isInternal && invite.workshop_id) {
