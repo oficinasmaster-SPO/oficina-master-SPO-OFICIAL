@@ -1,3 +1,4 @@
+
 // Funções específicas do sistema - sincronizado com Employee entity
 export const jobRoles = [
   { value: "socio", label: "Sócio", category: "gestao" },
@@ -18,6 +19,7 @@ export const jobRoles = [
   { value: "lavador", label: "Lavador", category: "operacional" },
   { value: "acelerador", label: "Acelerador", category: "consultoria" },
   { value: "consultor", label: "Consultor", category: "consultoria" },
+  { value: "mentor", label: "Mentor", category: "consultoria" },
   { value: "outros", label: "Outros", category: "outros" }
 ];
 
