@@ -5,21 +5,19 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Copy, Power, Trash2, Shield, AlertCircle, Users, RefreshCw } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 import ProfileEditor from "@/components/profiles/ProfileEditor";
 import ProfileCreator from "@/components/profiles/ProfileCreator";
 import ProfileAudit from "@/components/profiles/ProfileAudit";
 import { systemRoles } from "@/components/lib/systemRoles";
-import { jobRoles } from "@/components/lib/jobRoles";
 
 export default function GestaoPerfis() {
+  const navigate = useNavigate();
   const [selectedProfile, setSelectedProfile] = useState(null);
   const [showCreator, setShowCreator] = useState(false);
-  const [viewMode, setViewMode] = useState("list"); // list, edit, audit, roles
+  const [viewMode, setViewMode] = useState("list"); // list, edit, audit
   const queryClient = useQueryClient();
 
   const { data: profiles = [], isLoading, refetch } = useQuery({
@@ -45,14 +43,6 @@ export default function GestaoPerfis() {
   const { data: users = [] } = useQuery({
     queryKey: ["users"],
     queryFn: () => base44.entities.User.list(),
-  });
-
-  const { data: customRoles = [] } = useQuery({
-    queryKey: ["custom-roles"],
-    queryFn: async () => {
-      const roles = await base44.entities.CustomRole.list();
-      return roles || [];
-    },
   });
 
   // Calcular total de roles disponíveis no sistema
@@ -144,13 +134,9 @@ export default function GestaoPerfis() {
   }
 
   if (viewMode === "roles") {
-    return (
-      <RolesManagement 
-        onBack={() => setViewMode("list")} 
-        customRoles={customRoles}
-        users={users}
-      />
-    );
+    // Redirecionar para página dedicada
+    navigate(createPageUrl("GerenciarRoles"));
+    return null;
   }
 
   if (showCreator) {
@@ -179,7 +165,7 @@ export default function GestaoPerfis() {
         </div>
         <div className="flex gap-3">
           <Button
-            onClick={() => setViewMode("roles")}
+            onClick={() => navigate(createPageUrl("GerenciarRoles"))}
             variant="outline"
             className="gap-2"
           >
@@ -395,7 +381,9 @@ function ProfileSection({
   );
 }
 
-function RolesManagement({ onBack, customRoles, users }) {
+// RolesManagement movido para pages/GerenciarRoles.js
+
+function RolesManagementDeprecated({ onBack, customRoles, users }) {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [showDialog, setShowDialog] = useState(false);

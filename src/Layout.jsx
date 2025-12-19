@@ -11,6 +11,7 @@ import Breadcrumbs from "@/components/navigation/Breadcrumbs";
 import { SharedDataProvider } from "@/components/shared/SharedDataProvider";
 import GlobalSearch from "@/components/navigation/GlobalSearch";
 import ActivityTracker from "@/components/tracking/ActivityTracker";
+import { usePermissions } from "@/components/hooks/usePermissions";
 
 export default function Layout({ children }) {
   const location = useLocation();

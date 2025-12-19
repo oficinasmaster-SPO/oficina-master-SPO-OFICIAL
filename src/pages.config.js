@@ -129,6 +129,7 @@ import GerenciarModulosCurso from './pages/GerenciarModulosCurso';
 import RelatorioUsuario from './pages/RelatorioUsuario';
 import TesteUsuarios from './pages/TesteUsuarios';
 import AuditLogs from './pages/AuditLogs';
+import GerenciarRoles from './pages/GerenciarRoles';
 import __Layout from './Layout.jsx';
 
 
@@ -264,6 +265,7 @@ export const PAGES = {
     "RelatorioUsuario": RelatorioUsuario,
     "TesteUsuarios": TesteUsuarios,
     "AuditLogs": AuditLogs,
+    "GerenciarRoles": GerenciarRoles,
 }
 
 export const pagesConfig = {
