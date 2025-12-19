@@ -103,20 +103,23 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('DashboardOverview'), 
           icon: LayoutDashboard,
           description: 'Resumo da sua oficina',
-          highlight: true
+          highlight: true,
+          requiredPermission: 'dashboard.view'
         },
         { 
           name: 'Dashboard Nacional', 
           href: createPageUrl('Dashboard'), 
           icon: TrendingUp,
           description: 'Métricas, rankings e KPIs',
-          adminOnly: true
+          adminOnly: true,
+          requiredPermission: 'admin.audit'
         },
         { 
           name: 'Desafios & Conquistas', 
           href: createPageUrl('Gamificacao'), 
           icon: Trophy,
-          description: 'Rankings, desafios e recompensas'
+          description: 'Rankings, desafios e recompensas',
+          requiredPermission: 'operations.view_qgp'
         }
       ]
     },
@@ -130,7 +133,8 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('GestaoOficina'), 
           icon: Building2,
           description: 'Dados, serviços, metas e cultura',
-          highlight: true
+          highlight: true,
+          requiredPermission: 'workshop.view'
         },
 
       ]
@@ -145,21 +149,24 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('Tarefas'), 
           icon: ListTodo,
           description: 'Gestão de tarefas do dia a dia',
-          highlight: true
+          highlight: true,
+          requiredPermission: 'operations.manage_tasks'
         },
         { 
           name: 'Notificações', 
           href: createPageUrl('Notificacoes'), 
           icon: Bell,
           badge: unreadCount,
-          description: 'Alertas e prazos'
+          description: 'Alertas e prazos',
+          requiredPermission: 'dashboard.view'
         },
         { 
           name: 'Diário de Produção', 
           href: createPageUrl('RegistroDiario'), 
           icon: ClipboardList,
           description: 'Registro diário de métricas',
-          highlight: true
+          highlight: true,
+          requiredPermission: 'operations.daily_log'
         },
         { 
           name: 'Quadro Geral (TV)', 
@@ -167,7 +174,8 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: Truck,
           description: 'Visão aeroporto do pátio',
           highlight: true,
-          technicianOnly: true
+          technicianOnly: true,
+          requiredPermission: 'operations.view_qgp'
         },
         { 
           name: 'Minha Fila (Técnico)', 
@@ -175,7 +183,8 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: Wrench,
           description: 'Painel do executor',
           highlight: true,
-          technicianOnly: true
+          technicianOnly: true,
+          requiredPermission: 'operations.view_qgp'
         }
       ]
     },
@@ -189,14 +198,16 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('HistoricoMetas'), 
           icon: BarChart2,
           description: 'Relatórios e gráficos de metas',
-          highlight: true
+          highlight: true,
+          requiredPermission: 'workshop.manage_goals'
         },
         { 
           name: 'Desdobramento de Metas', 
           href: createPageUrl('DesdobramentoMeta'), 
           icon: GitBranch,
           description: 'Esforço e Resultado - Meta por área',
-          highlight: true
+          highlight: true,
+          requiredPermission: 'workshop.manage_goals'
         },
 
         { 
@@ -204,32 +215,37 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('DRETCMP2'), 
           icon: Calculator,
           description: 'DRE mensal e cálculo TCMP²',
-          highlight: true
+          highlight: true,
+          requiredPermission: 'financeiro.view'
         },
         { 
           name: 'OS - R70/I30', 
           href: createPageUrl('DiagnosticoOS'), 
           icon: DollarSign,
-          description: 'Rentabilidade de Ordens de Serviço'
+          description: 'Rentabilidade de Ordens de Serviço',
+          requiredPermission: 'diagnostics.create'
         },
         { 
           name: 'Produção vs Salário', 
           href: createPageUrl('DiagnosticoProducao'), 
           icon: Calculator,
-          description: 'Relação custo x produtividade'
+          description: 'Relação custo x produtividade',
+          requiredPermission: 'diagnostics.create'
         },
         { 
           name: 'Curva de Endividamento',
           href: createPageUrl('DiagnosticoEndividamento'), 
           icon: TrendingDown,
-          description: 'Análise 12 meses com IA'
+          description: 'Análise 12 meses com IA',
+          requiredPermission: 'financeiro.view'
         },
         { 
           name: 'Diagnóstico Gerencial', 
           href: createPageUrl('DiagnosticoGerencial'), 
           icon: Building2,
           description: 'Análise de áreas da empresa',
-          highlight: true
+          highlight: true,
+          requiredPermission: 'diagnostics.create'
         }
       ]
     },
@@ -243,35 +259,40 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('Autoavaliacoes'), 
           icon: Target,
           description: 'Vendas, Comercial, Marketing, RH...',
-          highlight: true
+          highlight: true,
+          requiredPermission: 'diagnostics.view'
         },
         { 
           name: 'Colaboradores', 
           href: createPageUrl('Colaboradores'), 
           icon: Briefcase,
           description: 'Gestão de equipe e RH',
-          highlight: true
+          highlight: true,
+          requiredPermission: 'employees.view'
         },
         { 
           name: 'Convidar Colaborador', 
           href: createPageUrl('ConvidarColaborador'), 
           icon: Users,
           description: 'Enviar convite por e-mail',
-          highlight: true
+          highlight: true,
+          requiredPermission: 'employees.create'
         },
         { 
           name: 'CDC - Conexão do Colaborador', 
           href: createPageUrl('CDCList'), 
           icon: Heart,
           description: 'Conhecer e conectar com a equipe',
-          highlight: true
+          highlight: true,
+          requiredPermission: 'processes.view'
         },
         { 
           name: 'COEX - Contrato Expectativa', 
           href: createPageUrl('COEXList'), 
           icon: FilePenLine,
           description: 'Alinhamento de metas e comportamentos',
-          highlight: true
+          highlight: true,
+          requiredPermission: 'processes.view'
         },
 // { 
         //   name: 'Descrições de Cargo', 
@@ -283,31 +304,36 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           name: 'Perfil do Empresário', 
           href: createPageUrl('DiagnosticoEmpresario'), 
           icon: User,
-          description: 'Aventureiro, Empreendedor, Gestor'
+          description: 'Aventureiro, Empreendedor, Gestor',
+          requiredPermission: 'diagnostics.create'
         },
         { 
           name: 'Teste DISC', 
           href: createPageUrl('DiagnosticoDISC'), 
           icon: Smile,
-          description: 'Perfil comportamental DEUSA'
+          description: 'Perfil comportamental DEUSA',
+          requiredPermission: 'diagnostics.create'
         },
         { 
           name: 'Maturidade do Colaborador', 
           href: createPageUrl('DiagnosticoMaturidade'), 
           icon: Users,
-          description: 'Bebê, Criança, Adolescente, Adulto'
+          description: 'Bebê, Criança, Adolescente, Adulto',
+          requiredPermission: 'diagnostics.create'
         },
         { 
           name: 'Matriz de Desempenho', 
           href: createPageUrl('DiagnosticoDesempenho'), 
           icon: Award,
-          description: 'Competências técnicas e emocionais'
+          description: 'Competências técnicas e emocionais',
+          requiredPermission: 'diagnostics.create'
         },
         { 
           name: 'Carga de Trabalho', 
           href: createPageUrl('DiagnosticoCarga'), 
           icon: BarChart4,
-          description: 'Distribuição e sobrecarga'
+          description: 'Distribuição e sobrecarga',
+          requiredPermission: 'diagnostics.create'
         }
       ]
     },
@@ -321,33 +347,38 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('IAAnalytics'), 
           icon: Sparkles,
           description: 'Previsões, gargalos e recomendações',
-          highlight: true
+          highlight: true,
+          requiredPermission: 'diagnostics.ai_access'
         },
         { 
           name: 'Treinamento de Vendas', 
           href: createPageUrl('TreinamentoVendas'), 
           icon: Award,
           description: 'Pratique cenários com IA',
-          highlight: true
+          highlight: true,
+          requiredPermission: 'training.view'
         },
         { 
           name: 'Diagnóstico Comercial', 
           href: createPageUrl('DiagnosticoComercial'), 
           icon: TrendingUp,
           description: 'Avaliação de processos comerciais',
-          highlight: true
+          highlight: true,
+          requiredPermission: 'diagnostics.create'
         },
         { 
           name: 'Selecionar Diagnóstico', 
           href: createPageUrl('SelecionarDiagnostico'), 
           icon: FileText,
-          description: 'Central de diagnósticos'
+          description: 'Central de diagnósticos',
+          requiredPermission: 'diagnostics.view'
         },
         { 
           name: 'Histórico de Diagnósticos', 
           href: createPageUrl('Historico'), 
           icon: History,
-          description: 'Todos os diagnósticos realizados'
+          description: 'Todos os diagnósticos realizados',
+          requiredPermission: 'diagnostics.view'
         }
       ]
     },
@@ -360,7 +391,8 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           name: 'Meus Processos (MAPs)', 
           href: createPageUrl('MeusProcessos'), 
           icon: Package,
-          description: 'Biblioteca de processos padrão'
+          description: 'Biblioteca de processos padrão',
+          requiredPermission: 'processes.view'
         }
       ]
     },
@@ -373,7 +405,8 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           name: 'Repositório de Documentos', 
           href: createPageUrl('RepositorioDocumentos'), 
           icon: FileCheck,
-          description: 'Central segura de documentos'
+          description: 'Central segura de documentos',
+          requiredPermission: 'documents.upload'
         }
       ]
     },
@@ -387,34 +420,39 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('CulturaOrganizacional'), 
           icon: BookOpen,
           description: 'Pilares, expectativas e rituais',
-          highlight: true
+          highlight: true,
+          requiredPermission: 'culture.view'
         },
         { 
           name: 'Missão, Visão e Valores', 
           href: createPageUrl('MissaoVisaoValores'), 
           icon: Heart,
-          description: 'Cultura organizacional'
+          description: 'Cultura organizacional',
+          requiredPermission: 'culture.edit'
         },
         { 
           name: 'Rituais de Aculturamento', 
           href: createPageUrl('RituaisAculturamento'), 
           icon: Flame,
           description: '34 rituais para fortalecer a cultura',
-          highlight: true
+          highlight: true,
+          requiredPermission: 'culture.manage_rituals'
         },
         { 
           name: 'Cronograma de Aculturação', 
           href: createPageUrl('CronogramaAculturacao'), 
           icon: Calendar,
           description: 'Atividades automáticas programadas',
-          highlight: true
+          highlight: true,
+          requiredPermission: 'culture.manage_rituals'
         },
         { 
           name: 'Pesquisa de Clima', 
           href: createPageUrl('PesquisaClima'), 
           icon: BarChart2,
           description: 'Desempenho e satisfação da equipe',
-          highlight: true
+          highlight: true,
+          requiredPermission: 'culture.view'
         }
       ]
     },
@@ -428,33 +466,38 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('AcademiaTreinamento'), 
           icon: Video,
           description: 'Plataforma estilo Netflix',
-          highlight: true
+          highlight: true,
+          requiredPermission: 'training.view'
         },
         { 
           name: 'Gestão de Treinamentos', 
           href: createPageUrl('GerenciarTreinamentos'), 
           icon: BookOpen,
           description: 'Módulos, aulas e avaliações',
-          highlight: true
+          highlight: true,
+          requiredPermission: 'training.manage'
         },
         { 
           name: 'Configuração da Academia', 
           href: createPageUrl('ConfiguracaoAcademia'), 
           icon: Settings,
           description: 'Regras e comportamento da academia',
-          adminOnly: true
+          adminOnly: true,
+          requiredPermission: 'training.manage'
         },
         { 
           name: 'Acompanhamento', 
           href: createPageUrl('AcompanhamentoTreinamento'), 
           icon: Users,
-          description: 'Progresso e notas da equipe'
+          description: 'Progresso e notas da equipe',
+          requiredPermission: 'training.evaluate'
         },
         { 
           name: 'Meus Treinamentos', 
           href: createPageUrl('MeusTreinamentos'), 
           icon: GraduationCap,
-          description: 'Área do aluno'
+          description: 'Área do aluno',
+          requiredPermission: 'training.view'
         }
       ]
     },
@@ -468,13 +511,15 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('DicasOperacao'), 
           icon: Lightbulb,
           description: 'Mural de avisos para a equipe',
-          highlight: true
+          highlight: true,
+          requiredPermission: 'operations.view_qgp'
         },
         { 
           name: 'Criar Desafios Internos', 
           href: createPageUrl('GestaoDesafios'), 
           icon: Target,
-          description: 'Crie competições para sua equipe'
+          description: 'Crie competições para sua equipe',
+          requiredPermission: 'operations.manage_tasks'
         }
       ]
     },
@@ -488,14 +533,16 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('PainelClienteAceleracao'), 
           icon: Sparkles,
           description: 'Plano mensal gerado por IA',
-          highlight: true
+          highlight: true,
+          requiredPermission: 'acceleration.view'
         },
         { 
           name: 'CheckPoint / Cronograma', 
           href: createPageUrl('CronogramaImplementacao'), 
           icon: ListTodo,
           description: 'Progresso detalhado do plano',
-          highlight: true
+          highlight: true,
+          requiredPermission: 'acceleration.view'
         },
         { 
           name: 'Controle da Aceleração', 
@@ -503,14 +550,16 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: Briefcase,
           description: 'Painel completo de gestão',
           highlight: true,
-          aceleradorOnly: true
+          aceleradorOnly: true,
+          requiredPermission: 'acceleration.manage'
         },
         { 
           name: 'Relatórios de Aceleração', 
           href: createPageUrl('RelatoriosAceleracao'), 
           icon: FileText,
           description: 'Testes, diagnósticos e desempenho',
-          aceleradorOnly: true
+          aceleradorOnly: true,
+          requiredPermission: 'acceleration.manage'
         }
       ]
     },
@@ -525,7 +574,8 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: Users,
           description: 'Gerenciar usuários e empresas',
           highlight: true,
-          adminOnly: true
+          adminOnly: true,
+          requiredPermission: 'admin.users'
         },
         { 
           name: 'Gerenciar Tela Inicial', 
@@ -533,35 +583,40 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: LayoutDashboard,
           description: 'Widgets e indicadores da Home',
           adminOnly: true,
-          highlight: true
+          highlight: true,
+          requiredPermission: 'admin.system_config'
         },
         { 
           name: 'Gerenciar Permissões', 
           href: createPageUrl('GerenciarPermissoes'), 
           icon: Shield,
           description: 'Acesso aos módulos laterais',
-          adminOnly: true
+          adminOnly: true,
+          requiredPermission: 'admin.profiles'
         },
         { 
           name: 'Config. Produtividade', 
           href: createPageUrl('AdminProdutividade'), 
           icon: Target,
           description: 'Métricas e KPIs globais',
-          adminOnly: true
+          adminOnly: true,
+          requiredPermission: 'admin.system_config'
         },
         { 
           name: 'Gestão Desafios Globais', 
           href: createPageUrl('AdminDesafios'), 
           icon: Trophy,
           description: 'Desafios nível Brasil',
-          adminOnly: true
+          adminOnly: true,
+          requiredPermission: 'admin.system_config'
         },
         { 
           name: 'Gerenciar Planos', 
           href: createPageUrl('GerenciarPlanos'), 
           icon: CreditCard,
           description: 'Controle de permissões e recursos por plano',
-          adminOnly: true
+          adminOnly: true,
+          requiredPermission: 'admin.system_config'
         },
         { 
           name: 'Teste de Usuários', 
@@ -569,42 +624,48 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: Settings,
           description: 'Validação de cadastro padronizado',
           adminOnly: true,
-          highlight: true
+          highlight: true,
+          requiredPermission: 'admin.system_config'
         },
         { 
           name: 'Templates de Mensagem', 
           href: createPageUrl('AdminMensagens'), 
           icon: MessageCircle,
           description: 'Configurar mensagens de incentivo',
-          adminOnly: true
+          adminOnly: true,
+          requiredPermission: 'admin.system_config'
         },
         { 
           name: 'Automação de E-mails', 
           href: createPageUrl('AdminNotificacoes'), 
           icon: Mail,
           description: 'Alertas de inatividade e resumos',
-          adminOnly: true
+          adminOnly: true,
+          requiredPermission: 'admin.system_config'
         },
         { 
           name: 'Gestão de Clientes', 
           href: createPageUrl('AdminClientes'), 
           icon: Users,
           description: 'Painel administrativo de clientes',
-          adminOnly: true
+          adminOnly: true,
+          requiredPermission: 'admin.users'
         },
         { 
           name: 'Gerenciar Tours e Vídeos', 
           href: createPageUrl('GerenciarToursVideos'), 
           icon: Video,
           description: 'Configure ajuda e tours guiados',
-          adminOnly: true
+          adminOnly: true,
+          requiredPermission: 'admin.system_config'
         },
         { 
           name: 'Gerenciar Processos', 
           href: createPageUrl('GerenciarProcessos'), 
           icon: FileText,
           description: 'Upload e gestão de MAPs',
-          adminOnly: true
+          adminOnly: true,
+          requiredPermission: 'admin.system_config'
         },
         { 
           name: 'Gestão RBAC', 
@@ -612,7 +673,8 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: Shield,
           description: 'Perfis e permissões centralizados',
           adminOnly: true,
-          highlight: true
+          highlight: true,
+          requiredPermission: 'admin.profiles'
         },
         { 
           name: 'Usuários Internos', 
@@ -620,7 +682,8 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: Users,
           description: 'Consultores e aceleradores do sistema',
           adminOnly: true,
-          highlight: true
+          highlight: true,
+          requiredPermission: 'admin.users'
         },
         { 
           name: 'Monitoramento de Usuários', 
@@ -628,7 +691,8 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: Activity,
           description: 'Rastreamento e tempo no sistema',
           adminOnly: true,
-          highlight: true
+          highlight: true,
+          requiredPermission: 'admin.audit'
         }
       ]
     }
