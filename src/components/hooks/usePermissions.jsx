@@ -19,42 +19,51 @@ export function usePermissions() {
 
   const loadUserPermissions = async () => {
     try {
+      setLoading(true);
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
-      // Admin tem todas as permissões
-      if (currentUser.role === 'admin') {
-        const allPermissions = systemRoles.flatMap(m => m.roles.map(r => r.id));
-        setPermissions(allPermissions);
-        setLoading(false);
-        return;
-      }
+      let aggregatedPermissions = [];
 
-      // Carregar perfil do usuário
-      if (currentUser.profile_id) {
-        try {
-          const userProfile = await base44.entities.UserProfile.get(currentUser.profile_id);
-          setProfile(userProfile);
-          setPermissions(userProfile.roles || []);
-        } catch (error) {
-          console.error("Erro ao carregar perfil:", error);
+      if (currentUser) {
+        // Admin tem todas as permissões
+        if (currentUser.role === 'admin') {
+          aggregatedPermissions = systemRoles.flatMap(m => m.roles.map(r => r.id));
+        } else {
+          // Carregar perfil do usuário
+          if (currentUser.profile_id) {
+            try {
+              const userProfile = await base44.entities.UserProfile.get(currentUser.profile_id);
+              setProfile(userProfile);
+              aggregatedPermissions = [...aggregatedPermissions, ...(userProfile.roles || [])];
+            } catch (profileError) {
+              console.error("Erro ao carregar UserProfile:", profileError);
+              setProfile(null);
+            }
+          }
+
+          // Carregar custom role se existir
+          if (currentUser.custom_role_id) {
+            try {
+              const role = await base44.entities.CustomRole.get(currentUser.custom_role_id);
+              setCustomRole(role);
+              aggregatedPermissions = [...aggregatedPermissions, ...(role.system_roles || [])];
+            } catch (customRoleError) {
+              console.error("Erro ao carregar CustomRole:", customRoleError);
+              setCustomRole(null);
+            }
+          }
         }
       }
 
-      // Carregar custom role se existir
-      if (currentUser.custom_role_id) {
-        try {
-          const role = await base44.entities.CustomRole.get(currentUser.custom_role_id);
-          setCustomRole(role);
-          setPermissions(prev => [...new Set([...prev, ...(role.system_roles || [])])]);
-        } catch (error) {
-          console.error("Erro ao carregar custom role:", error);
-        }
-      }
-
+      setPermissions([...new Set(aggregatedPermissions)]);
       setLoading(false);
     } catch (error) {
-      console.error("Erro ao carregar permissões:", error);
+      console.error("Erro ao carregar permissões ou usuário não autenticado:", error);
+      setUser(null);
+      setProfile(null);
+      setCustomRole(null);
+      setPermissions([]);
       setLoading(false);
     }
   };
@@ -70,27 +79,18 @@ export function usePermissions() {
 
   /**
    * Verifica se o usuário pode acessar uma página
+   * UNIFICADO: Agora usa apenas o UserProfile.modules_allowed
    */
   const canAccessPage = (pageName) => {
     if (!user) return false;
     if (user.role === 'admin') return true;
 
-    // Páginas bloqueadas por job_role
-    const blockedPages = {
-      'mentor': ['Planos', 'GerenciarPlanos', 'MeuPlano'],
-      'tecnico': ['GerenciarPlanos', 'AdminClientes', 'Usuarios'],
-    };
-
-    const userJobRole = user.job_role || 'outros';
-    if (blockedPages[userJobRole]?.includes(pageName)) {
-      return false;
-    }
-
-    // Verificar módulos permitidos no perfil
+    // Se tem perfil definido, verificar módulos permitidos
     if (profile?.modules_allowed) {
       return profile.modules_allowed.includes(pageName);
     }
 
+    // Se não tem perfil configurado, permitir acesso (fallback)
     return true;
   };
 
