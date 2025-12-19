@@ -706,8 +706,15 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
     // Se não mapeou, permite acesso (fallback seguro para itens novos)
     if (!module) return true;
     
-    // Verificar se tem permissão de visualização para o módulo
-    return canViewModule(module);
+    // Se tem perfil, verificar permissão pelo módulo
+    if (profile) {
+      const modulePermission = profile.module_permissions?.[module];
+      if (!modulePermission || modulePermission === 'bloqueado') return false;
+      return true; // visualizacao ou total
+    }
+    
+    // Sem perfil, permite acesso (fallback)
+    return true;
   };
 
   return (
