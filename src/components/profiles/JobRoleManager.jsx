@@ -3,8 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { jobRoles, jobRoleCategories } from "@/components/lib/jobRoles";
-import { Briefcase } from "lucide-react";
+import { Briefcase, X, Save } from "lucide-react";
+import { toast } from "sonner";
 
 export default function JobRoleManager({ profile, onChange }) {
   const handleToggleJobRole = (roleValue) => {
@@ -18,18 +20,38 @@ export default function JobRoleManager({ profile, onChange }) {
       job_roles: updated,
     });
   };
+  
+  const handleRemoveJobRole = (roleValue) => {
+    const currentJobRoles = profile.job_roles || [];
+    const updated = currentJobRoles.filter(r => r !== roleValue);
+    
+    onChange({
+      ...profile,
+      job_roles: updated,
+    });
+    
+    toast.success("Função removida do perfil");
+  };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Briefcase className="w-5 h-5 text-purple-600" />
-          Funções Vinculadas (job_role)
-        </CardTitle>
-        <CardDescription>
-          Selecione quais funções terão este perfil automaticamente quando um colaborador for cadastrado.
-          Isso garante que cada função tenha as permissões corretas desde o início.
-        </CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Briefcase className="w-5 h-5 text-purple-600" />
+              Funções Vinculadas (job_role)
+            </CardTitle>
+            <CardDescription className="mt-1">
+              Selecione quais funções terão este perfil automaticamente quando um colaborador for cadastrado.
+              Isso garante que cada função tenha as permissões corretas desde o início.
+            </CardDescription>
+          </div>
+          <div className="text-sm text-gray-500 flex flex-col items-end gap-1">
+            <span className="font-medium">{(profile.job_roles || []).length} funções</span>
+            <span className="text-xs">vinculadas</span>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
@@ -85,16 +107,31 @@ export default function JobRoleManager({ profile, onChange }) {
 
         {profile.job_roles && profile.job_roles.length > 0 && (
           <div className="mt-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
-            <p className="text-sm font-medium text-purple-900 mb-2">
-              Funções selecionadas ({profile.job_roles.length}):
-            </p>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm font-medium text-purple-900">
+                Funções selecionadas ({profile.job_roles.length}):
+              </p>
+              <p className="text-xs text-purple-700">
+                Clique no X para remover uma função
+              </p>
+            </div>
             <div className="flex flex-wrap gap-2">
               {profile.job_roles.map((jr) => {
                 const role = jobRoles.find(r => r.value === jr);
                 const category = jobRoleCategories[role?.category];
                 return (
-                  <Badge key={jr} className={category?.color || "bg-gray-100 text-gray-700"}>
-                    {role?.label || jr}
+                  <Badge 
+                    key={jr} 
+                    className={`${category?.color || "bg-gray-100 text-gray-700"} flex items-center gap-1.5 pr-1 cursor-pointer hover:opacity-80 transition-opacity`}
+                  >
+                    <span>{role?.label || jr}</span>
+                    <button
+                      onClick={() => handleRemoveJobRole(jr)}
+                      className="ml-1 hover:bg-black/10 rounded-full p-0.5 transition-colors"
+                      title="Remover função"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
                   </Badge>
                 );
               })}
