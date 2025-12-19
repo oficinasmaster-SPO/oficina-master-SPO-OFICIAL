@@ -19,6 +19,12 @@ export default function JobRoleManager({ profile, onChange }) {
       ...profile,
       job_roles: updated,
     });
+    
+    toast.success(
+      currentJobRoles.includes(roleValue) 
+        ? "Função removida" 
+        : "Função adicionada"
+    );
   };
   
   const handleRemoveJobRole = (roleValue) => {
