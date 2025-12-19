@@ -651,69 +651,12 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
     // Verificar permissões específicas de admin
     if (item.adminOnly) return false;
     
-    // Mapear item para módulo de permissão
-    const moduleMap = {
-      'Visão Geral': 'dashboard',
-      'Dashboard Nacional': 'dashboard',
-      'Desafios & Conquistas': 'dashboard',
-      'Gestão da Oficina': 'cadastros',
-      'Tarefas Operacionais': 'patio',
-      'Notificações': 'patio',
-      'Diário de Produção': 'patio',
-      'Quadro Geral (TV)': 'patio',
-      'Minha Fila (Técnico)': 'patio',
-      'Histórico de Metas': 'resultados',
-      'Desdobramento de Metas': 'resultados',
-      'DRE & TCMP²': 'resultados',
-      'OS - R70/I30': 'resultados',
-      'Produção vs Salário': 'resultados',
-      'Curva de Endividamento': 'resultados',
-      'Diagnóstico Gerencial': 'resultados',
-      'Mapas de Autoavaliação': 'pessoas',
-      'Colaboradores': 'pessoas',
-      'Convidar Colaborador': 'pessoas',
-      'CDC - Conexão do Colaborador': 'pessoas',
-      'COEX - Contrato Expectativa': 'pessoas',
-      'Perfil do Empresário': 'pessoas',
-      'Teste DISC': 'pessoas',
-      'Maturidade do Colaborador': 'pessoas',
-      'Matriz de Desempenho': 'pessoas',
-      'Carga de Trabalho': 'pessoas',
-      'IA Analytics': 'diagnosticos',
-      'Treinamento de Vendas': 'diagnosticos',
-      'Diagnóstico Comercial': 'diagnosticos',
-      'Selecionar Diagnóstico': 'diagnosticos',
-      'Histórico de Diagnósticos': 'diagnosticos',
-      'Meus Processos (MAPs)': 'processos',
-      'Repositório de Documentos': 'documentos',
-      'Manual da Cultura': 'cultura',
-      'Missão, Visão e Valores': 'cultura',
-      'Rituais de Aculturamento': 'cultura',
-      'Cronograma de Aculturação': 'cultura',
-      'Pesquisa de Clima': 'cultura',
-      'Academia de Treinamento': 'treinamentos',
-      'Gestão de Treinamentos': 'treinamentos',
-      'Configuração da Academia': 'treinamentos',
-      'Acompanhamento': 'treinamentos',
-      'Meus Treinamentos': 'treinamentos',
-      'Dicas da Operação': 'gestao',
-      'Criar Desafios Internos': 'gestao',
-      'CheckPoint / Cronograma': 'admin'
-    };
-    
-    const module = moduleMap[item.name];
-    
-    // Se não mapeou, permite acesso (fallback seguro para itens novos)
-    if (!module) return true;
-    
-    // Se tem perfil, verificar permissão pelo módulo
-    if (profile) {
-      const modulePermission = profile.module_permissions?.[module];
-      if (!modulePermission || modulePermission === 'bloqueado') return false;
-      return true; // visualizacao ou total
+    // Sistema RBAC Granular: Verificar permissão granular se definida
+    if (item.requiredPermission) {
+      return hasPermission(item.requiredPermission);
     }
     
-    // Sem perfil, permite acesso (fallback)
+    // Fallback: permite acesso se não há permissão definida
     return true;
   };
 
