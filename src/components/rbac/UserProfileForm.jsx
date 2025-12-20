@@ -12,6 +12,7 @@ import { jobRoles } from "@/components/lib/jobRoles";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import TemplateSelector from "./templates/TemplateSelector";
+import SaveAsTemplateButton from "./templates/SaveAsTemplateButton";
 
 export default function UserProfileForm({ initialData = {}, onSave, onCancel, isSaving }) {
   const [selectedTemplateId, setSelectedTemplateId] = useState(null);

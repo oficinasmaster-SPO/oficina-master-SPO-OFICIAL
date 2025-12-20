@@ -12,6 +12,7 @@ import { systemRoles } from "@/components/lib/systemRoles";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import TemplateSelector from "./templates/TemplateSelector";
+import SaveAsTemplateButton from "./templates/SaveAsTemplateButton";
 
 export default function CustomRoleForm({ initialData = {}, onSave, onCancel, isSaving }) {
   const [selectedTemplateId, setSelectedTemplateId] = useState(null);
@@ -194,11 +195,20 @@ export default function CustomRoleForm({ initialData = {}, onSave, onCancel, isS
         </TabsContent>
       </Tabs>
 
-      <div className="flex justify-end gap-2 mt-6">
-        <Button variant="outline" onClick={onCancel} type="button">Cancelar</Button>
-        <Button type="submit" disabled={isSaving}>
-          {isSaving ? "Salvando..." : "Salvar Role"}
-        </Button>
+      <div className="flex justify-between items-center mt-6">
+        <SaveAsTemplateButton 
+          data={{
+            system_roles: watch('system_roles'),
+            entity_permissions: watch('entity_permissions')
+          }}
+          type="role"
+        />
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={onCancel} type="button">Cancelar</Button>
+          <Button type="submit" disabled={isSaving}>
+            {isSaving ? "Salvando..." : "Salvar Role"}
+          </Button>
+        </div>
       </div>
     </form>
   );

@@ -526,8 +526,8 @@ export default function UsuariosAdmin() {
             onResetPassword={handleResetPassword}
             onResendAccess={handleResendAccess}
             onViewAudit={(user) => {
-              setSelectedUser(user);
-              setAuditDialogOpen(true);
+              setUserForAudit(user);
+              setAuditViewOpen(true);
             }}
             onDelete={handleDelete}
           />
