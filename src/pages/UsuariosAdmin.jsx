@@ -18,6 +18,8 @@ import UserDetailsDrawer from "@/components/admin/users/UserDetailsDrawer";
 import ApprovalBanner from "@/components/admin/users/ApprovalBanner";
 import PermissionRequestForm from "@/components/rbac/PermissionRequestForm";
 import { usePermissionChangeRequest, prepareProfileChangeRequest, prepareCustomRolesChangeRequest, prepareStatusChangeRequest } from "@/components/rbac/PermissionChangeManager";
+import AuditHistoryViewer from "@/components/rbac/audit/AuditHistoryViewer";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function UsuariosAdmin() {
   const queryClient = useQueryClient();
@@ -30,6 +32,8 @@ export default function UsuariosAdmin() {
   const [requestFormOpen, setRequestFormOpen] = useState(false);
   const [pendingChangeData, setPendingChangeData] = useState(null);
   const { createRequest, isCreating } = usePermissionChangeRequest();
+  const [auditViewOpen, setAuditViewOpen] = useState(false);
+  const [userForAudit, setUserForAudit] = useState(null);
   const [filters, setFilters] = useState({
     search: "",
     position: "",
@@ -529,6 +533,18 @@ export default function UsuariosAdmin() {
           />
         </CardContent>
       </Card>
+
+      {/* Dialog de Histórico de Auditoria */}
+      <Dialog open={auditViewOpen} onOpenChange={setAuditViewOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Histórico de Auditoria - {userForAudit?.full_name}
+            </DialogTitle>
+          </DialogHeader>
+          <AuditHistoryViewer auditLog={userForAudit?.audit_log || []} />
+        </DialogContent>
+      </Dialog>
 
       {/* Dialog de Solicitação de Aprovação */}
       {pendingChangeData && (

@@ -133,6 +133,7 @@ import GerenciarRoles from './pages/GerenciarRoles';
 import GestaoRBAC from './pages/GestaoRBAC';
 import DocumentacaoRBAC from './pages/DocumentacaoRBAC';
 import DocumentacaoCompleta from './pages/DocumentacaoCompleta';
+import AuditoriaPermissoes from './pages/AuditoriaPermissoes';
 import __Layout from './Layout.jsx';
 
 
@@ -272,6 +273,7 @@ export const PAGES = {
     "GestaoRBAC": GestaoRBAC,
     "DocumentacaoRBAC": DocumentacaoRBAC,
     "DocumentacaoCompleta": DocumentacaoCompleta,
+    "AuditoriaPermissoes": AuditoriaPermissoes,
 }
 
 export const pagesConfig = {

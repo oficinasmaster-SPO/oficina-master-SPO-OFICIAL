@@ -9,6 +9,10 @@ import PendingRequestsList from "@/components/rbac/PendingRequestsList";
 import ProfileTemplateManager from "@/components/rbac/templates/ProfileTemplateManager";
 import RoleTemplateManager from "@/components/rbac/templates/RoleTemplateManager";
 import TemplateFormDialog from "@/components/rbac/templates/TemplateFormDialog";
+import AuditStats from "@/components/rbac/audit/AuditStats";
+import AuditFilters from "@/components/rbac/audit/AuditFilters";
+import AuditLogTable from "@/components/rbac/audit/AuditLogTable";
+import AuditDetailsDialog from "@/components/rbac/audit/AuditDetailsDialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
@@ -17,12 +21,61 @@ export default function GestaoPerfis() {
   const [activeTab, setActiveTab] = useState("profiles");
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState(null);
+  const [auditFilters, setAuditFilters] = useState({
+    searchTerm: '',
+    actionType: 'all',
+    dateFrom: '',
+    dateTo: ''
+  });
+  const [selectedAuditLog, setSelectedAuditLog] = useState(null);
+  const [auditDetailsOpen, setAuditDetailsOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: pendingRequests = [] } = useQuery({
     queryKey: ['permissionRequests'],
     queryFn: () => base44.entities.PermissionChangeRequest.list(),
   });
+
+  const { data: employees = [] } = useQuery({
+    queryKey: ['employees-audit'],
+    queryFn: () => base44.entities.Employee.list(),
+  });
+
+  const allAuditLogs = React.useMemo(() => {
+    const logs = [];
+    employees.forEach(emp => {
+      if (emp.audit_log && Array.isArray(emp.audit_log)) {
+        emp.audit_log.forEach(log => {
+          logs.push({
+            ...log,
+            employee_id: emp.id,
+            employee_name: emp.full_name
+          });
+        });
+      }
+    });
+    return logs.sort((a, b) => {
+      const dateA = new Date(a.changed_at || 0);
+      const dateB = new Date(b.changed_at || 0);
+      return dateB - dateA;
+    });
+  }, [employees]);
+
+  const filteredAuditLogs = React.useMemo(() => {
+    return allAuditLogs.filter(log => {
+      const matchesSearch = !auditFilters.searchTerm || 
+        log.employee_name?.toLowerCase().includes(auditFilters.searchTerm.toLowerCase()) ||
+        log.changed_by?.toLowerCase().includes(auditFilters.searchTerm.toLowerCase());
+
+      const matchesAction = auditFilters.actionType === 'all' || log.action === auditFilters.actionType;
+
+      const logDate = new Date(log.changed_at);
+      const matchesDateFrom = !auditFilters.dateFrom || logDate >= new Date(auditFilters.dateFrom);
+      const matchesDateTo = !auditFilters.dateTo || logDate <= new Date(auditFilters.dateTo + 'T23:59:59');
+
+      return matchesSearch && matchesAction && matchesDateFrom && matchesDateTo;
+    });
+  }, [allAuditLogs, auditFilters]);
 
   const pendingCount = pendingRequests.filter(r => r.status === 'pendente').length;
 
@@ -64,22 +117,25 @@ export default function GestaoPerfis() {
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="profiles">Perfis</TabsTrigger>
           <TabsTrigger value="roles">Roles</TabsTrigger>
           <TabsTrigger value="profile-templates">
             <Sparkles className="w-3 h-3 mr-1" />
-            Templates Perfis
+            Templates
           </TabsTrigger>
           <TabsTrigger value="role-templates">
             <Sparkles className="w-3 h-3 mr-1" />
-            Templates Roles
+            Templates
           </TabsTrigger>
           <TabsTrigger value="pending" className="relative">
             Solicitações
             {pendingCount > 0 && (
               <Badge className="ml-2 bg-red-500 text-white">{pendingCount}</Badge>
             )}
+          </TabsTrigger>
+          <TabsTrigger value="audit">
+            Auditoria
           </TabsTrigger>
         </TabsList>
         <TabsContent value="profiles" className="mt-6">
@@ -117,7 +173,40 @@ export default function GestaoPerfis() {
         <TabsContent value="pending" className="mt-6">
           <PendingRequestsList />
         </TabsContent>
+        <TabsContent value="audit" className="mt-6">
+          <div className="space-y-6">
+            <AuditStats logs={filteredAuditLogs} />
+            <AuditFilters 
+              filters={auditFilters}
+              onFiltersChange={setAuditFilters}
+              onClearFilters={() => setAuditFilters({
+                searchTerm: '',
+                actionType: 'all',
+                dateFrom: '',
+                dateTo: ''
+              })}
+            />
+            <div className="bg-white rounded-lg border p-4">
+              <h2 className="text-lg font-semibold mb-4">
+                Logs de Auditoria ({filteredAuditLogs.length})
+              </h2>
+              <AuditLogTable 
+                logs={filteredAuditLogs}
+                onViewDetails={(log) => {
+                  setSelectedAuditLog(log);
+                  setAuditDetailsOpen(true);
+                }}
+              />
+            </div>
+          </div>
+        </TabsContent>
       </Tabs>
+
+      <AuditDetailsDialog
+        open={auditDetailsOpen}
+        onClose={() => setAuditDetailsOpen(false)}
+        log={selectedAuditLog}
+      />
 
       <TemplateFormDialog
         open={templateDialogOpen}
