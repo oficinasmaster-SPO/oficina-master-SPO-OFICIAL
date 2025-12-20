@@ -19,7 +19,6 @@ import ApprovalBanner from "@/components/admin/users/ApprovalBanner";
 import PermissionRequestForm from "@/components/rbac/PermissionRequestForm";
 import { usePermissionChangeRequest, prepareProfileChangeRequest, prepareCustomRolesChangeRequest, prepareStatusChangeRequest } from "@/components/rbac/PermissionChangeManager";
 import AuditHistoryViewer from "@/components/rbac/audit/AuditHistoryViewer";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function UsuariosAdmin() {
   const queryClient = useQueryClient();
