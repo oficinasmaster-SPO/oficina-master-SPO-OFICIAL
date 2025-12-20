@@ -20,8 +20,10 @@ export default function PendingRequestsList({ onRequestProcessed }) {
     queryFn: () => base44.entities.PermissionChangeRequest.list('-created_date'),
   });
 
-  const filteredRequests = requests.filter(req => {
-    const matchesSearch = req.employee_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const filteredRequests = (requests || []).filter(req => {
+    if (!req) return false;
+    const matchesSearch = !searchTerm || 
+                         req.employee_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          req.requested_by_name?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "todos" || req.status === statusFilter;
     return matchesSearch && matchesStatus;
@@ -110,17 +112,17 @@ export default function PendingRequestsList({ onRequestProcessed }) {
               <CardContent>
                 <div className="space-y-2 text-sm">
                   <div>
-                    <span className="font-medium">Tipo de mudança:</span>{' '}
-                    {request.change_type === 'profile_change' ? 'Mudança de Perfil' :
-                     request.change_type === 'custom_roles_add' ? 'Adicionar Roles' :
-                     request.change_type === 'custom_roles_remove' ? 'Remover Roles' :
-                     'Mudança de Status'}
+                   <span className="font-medium">Tipo de mudança:</span>{' '}
+                   {request.change_type === 'profile_change' ? 'Mudança de Perfil' :
+                    request.change_type === 'custom_roles_add' ? 'Adicionar Roles' :
+                    request.change_type === 'custom_roles_remove' ? 'Remover Roles' :
+                    'Mudança de Status'}
                   </div>
                   {request.change_type === 'profile_change' && (
-                    <div>
-                      <span className="font-medium">De:</span> {request.current_profile_name || 'Sem perfil'} → 
-                      <span className="font-medium"> Para:</span> {request.requested_profile_name}
-                    </div>
+                   <div>
+                     <span className="font-medium">De:</span> {request.current_profile_name || 'Sem perfil'} → 
+                     <span className="font-medium"> Para:</span> {request.requested_profile_name || 'N/A'}
+                   </div>
                   )}
                   {request.change_type === 'status_change' && (
                     <div>
@@ -128,10 +130,12 @@ export default function PendingRequestsList({ onRequestProcessed }) {
                       <span className="font-medium"> Para:</span> {request.requested_status}
                     </div>
                   )}
-                  <div>
-                    <span className="font-medium">Justificativa:</span>
-                    <p className="text-gray-700 mt-1">{request.justification}</p>
-                  </div>
+                  {request.justification && (
+                    <div>
+                      <span className="font-medium">Justificativa:</span>
+                      <p className="text-gray-700 mt-1">{request.justification}</p>
+                    </div>
+                  )}
                   <div className="text-xs text-gray-500">
                     Criado em: {format(new Date(request.created_date), 'dd/MM/yyyy HH:mm')}
                   </div>
