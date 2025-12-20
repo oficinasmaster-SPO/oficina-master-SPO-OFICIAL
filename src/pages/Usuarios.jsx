@@ -19,7 +19,7 @@ import {
 import { toast } from "sonner";
 import { format } from "date-fns";
 
-export default function Usuarios() {
+export default function GestaoUsuariosEmpresas() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
@@ -240,7 +240,7 @@ export default function Usuarios() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-1">Gestão de Usuários e Empresas</h1>
-            <p className="text-gray-600">Visualize e gerencie todos os usuários cadastrados</p>
+            <p className="text-gray-600">Central única para gerenciar usuários, oficinas e acessos do sistema</p>
           </div>
           <div className="flex items-center gap-3">
             <Badge variant="outline" className="text-lg px-4 py-2">

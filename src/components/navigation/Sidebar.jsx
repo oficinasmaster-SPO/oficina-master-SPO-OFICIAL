@@ -569,10 +569,10 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       icon: Shield,
       items: [
         { 
-          name: 'Usuários do Sistema', 
-          href: createPageUrl('Usuarios'), 
+          name: 'Usuários e Empresas', 
+          href: createPageUrl('GestaoUsuariosEmpresas'), 
           icon: Users,
-          description: 'Gerenciar usuários e empresas',
+          description: 'Central de gestão de usuários e oficinas',
           highlight: true,
           adminOnly: true,
           requiredPermission: 'admin.users'

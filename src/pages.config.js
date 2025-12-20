@@ -69,7 +69,6 @@ import ConvidarColaborador from './pages/ConvidarColaborador';
 import PrimeiroAcesso from './pages/PrimeiroAcesso';
 import PortalColaborador from './pages/PortalColaborador';
 import SelecionarDiagnostico from './pages/SelecionarDiagnostico';
-import GerenciarTelaInicial from './pages/GerenciarTelaInicial';
 import DicasOperacao from './pages/DicasOperacao';
 import AdminProdutividade from './pages/AdminProdutividade';
 import RegistroDiario from './pages/RegistroDiario';
@@ -207,7 +206,6 @@ export const PAGES = {
     "PrimeiroAcesso": PrimeiroAcesso,
     "PortalColaborador": PortalColaborador,
     "SelecionarDiagnostico": SelecionarDiagnostico,
-    "GerenciarTelaInicial": GerenciarTelaInicial,
     "DicasOperacao": DicasOperacao,
     "AdminProdutividade": AdminProdutividade,
     "RegistroDiario": RegistroDiario,
