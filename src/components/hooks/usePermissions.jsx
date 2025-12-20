@@ -37,8 +37,16 @@ export function usePermissions() {
           let employeeProfileId = null;
           try {
             console.log("🔍 [usePermissions] Buscando Employee com user_id:", currentUser.id);
-            const employees = await base44.entities.Employee.filter({ user_id: currentUser.id });
-            console.log("👷 [usePermissions] Employees encontrados:", employees?.length || 0);
+            let employees = await base44.entities.Employee.filter({ user_id: currentUser.id });
+            console.log("👷 [usePermissions] Employees encontrados por user_id:", employees?.length || 0);
+            
+            // Se não encontrou por user_id, buscar por email (fallback)
+            if (!employees || employees.length === 0) {
+              console.log("🔍 [usePermissions] Tentando buscar Employee por email:", currentUser.email);
+              employees = await base44.entities.Employee.filter({ email: currentUser.email });
+              console.log("👷 [usePermissions] Employees encontrados por email:", employees?.length || 0);
+            }
+            
             console.log("📦 [usePermissions] Employees data:", JSON.stringify(employees, null, 2));
             if (employees && employees.length > 0) {
               employeeProfileId = employees[0].profile_id;
