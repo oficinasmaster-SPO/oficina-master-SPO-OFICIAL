@@ -93,7 +93,7 @@ export function usePermissions() {
                         console.log("➕ [usePermissions] Permissões da CustomRole:", customRole.name, "->", customRole.system_roles?.length || 0);
                       }
                     } catch (roleError) {
-                      console.warn(`⚠️ [usePermissions] CustomRole ${roleId} não encontrada (ignorando)`, roleError.message);
+                      console.warn(`⚠️ [usePermissions] CustomRole ${roleId} não encontrada (ignorando)`, roleError?.message || roleError);
                     }
                   }
                 }
