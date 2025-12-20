@@ -114,16 +114,40 @@ export default function Layout({ children, currentPageName }) {
           } else {
             setIsAdminView(false);
             // MODO NORMAL: Carregar oficina do próprio usuário
-            if (currentUser.workshop_id) {
-              // Se já tem workshop_id, busca diretamente
-              const workshopsById = await base44.entities.Workshop.filter({ id: currentUser.workshop_id });
-              userWorkshop = workshopsById[0];
-              console.log("✅ Workshop encontrado pelo ID:", userWorkshop?.name);
-            } else {
-              // Fallback: busca onde é owner
-              const workshopsByOwner = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
-              userWorkshop = workshopsByOwner[0];
+
+            // 1. Tenta buscar como dono
+            const ownedWorkshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
+            userWorkshop = Array.isArray(ownedWorkshops) && ownedWorkshops.length > 0 
+              ? ownedWorkshops[0] 
+              : null;
+
+            if (userWorkshop) {
               console.log("✅ Workshop encontrado como owner:", userWorkshop?.name);
+            }
+
+            // 2. Se não encontrou como dono e tem workshop_id no User, usar direto
+            if (!userWorkshop && currentUser.workshop_id) {
+              try {
+                userWorkshop = await base44.entities.Workshop.get(currentUser.workshop_id);
+                console.log("✅ Workshop encontrado pelo workshop_id do User:", userWorkshop?.name);
+              } catch (err) {
+                console.error("Erro ao buscar workshop pelo workshop_id do User:", err);
+              }
+            }
+
+            // 3. Se ainda não encontrou, tenta via Employee (fallback)
+            if (!userWorkshop) {
+              try {
+                const employees = await base44.entities.Employee.filter({ user_id: currentUser.id });
+                const myEmployeeRecord = Array.isArray(employees) && employees.length > 0 ? employees[0] : null;
+
+                if (myEmployeeRecord && myEmployeeRecord.workshop_id) {
+                  userWorkshop = await base44.entities.Workshop.get(myEmployeeRecord.workshop_id);
+                  console.log("✅ Workshop encontrado via Employee:", userWorkshop?.name);
+                }
+              } catch (empError) {
+                console.error("Erro ao buscar workshop via Employee:", empError);
+              }
             }
           }
 
