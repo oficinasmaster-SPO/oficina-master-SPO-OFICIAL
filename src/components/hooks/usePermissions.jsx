@@ -36,11 +36,14 @@ export function usePermissions() {
           // Buscar Employee vinculado para obter profile_id
           let employeeProfileId = null;
           try {
+            console.log("🔍 [usePermissions] Buscando Employee com user_id:", currentUser.id);
             const employees = await base44.entities.Employee.filter({ user_id: currentUser.id });
             console.log("👷 [usePermissions] Employees encontrados:", employees?.length || 0);
+            console.log("📦 [usePermissions] Employees data:", JSON.stringify(employees, null, 2));
             if (employees && employees.length > 0) {
               employeeProfileId = employees[0].profile_id;
               console.log("📋 [usePermissions] Employee profile_id:", employeeProfileId);
+              console.log("👤 [usePermissions] Employee completo:", JSON.stringify(employees[0], null, 2));
             }
           } catch (empError) {
             console.error("❌ [usePermissions] Erro ao buscar Employee:", empError);
