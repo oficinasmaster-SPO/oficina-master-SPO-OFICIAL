@@ -42,7 +42,6 @@ import GestaoOficina from './pages/GestaoOficina';
 import Tarefas from './pages/Tarefas';
 import Gamificacao from './pages/Gamificacao';
 import IAAnalytics from './pages/IAAnalytics';
-import AdminClientes from './pages/AdminClientes';
 import GerenciarToursVideos from './pages/GerenciarToursVideos';
 import CDCForm from './pages/CDCForm';
 import COEXForm from './pages/COEXForm';
@@ -70,7 +69,6 @@ import ConvidarColaborador from './pages/ConvidarColaborador';
 import PrimeiroAcesso from './pages/PrimeiroAcesso';
 import PortalColaborador from './pages/PortalColaborador';
 import SelecionarDiagnostico from './pages/SelecionarDiagnostico';
-import GerenciarPermissoes from './pages/GerenciarPermissoes';
 import GerenciarTelaInicial from './pages/GerenciarTelaInicial';
 import DicasOperacao from './pages/DicasOperacao';
 import AdminProdutividade from './pages/AdminProdutividade';
@@ -182,7 +180,6 @@ export const PAGES = {
     "Tarefas": Tarefas,
     "Gamificacao": Gamificacao,
     "IAAnalytics": IAAnalytics,
-    "AdminClientes": AdminClientes,
     "GerenciarToursVideos": GerenciarToursVideos,
     "CDCForm": CDCForm,
     "COEXForm": COEXForm,
@@ -210,7 +207,6 @@ export const PAGES = {
     "PrimeiroAcesso": PrimeiroAcesso,
     "PortalColaborador": PortalColaborador,
     "SelecionarDiagnostico": SelecionarDiagnostico,
-    "GerenciarPermissoes": GerenciarPermissoes,
     "GerenciarTelaInicial": GerenciarTelaInicial,
     "DicasOperacao": DicasOperacao,
     "AdminProdutividade": AdminProdutividade,

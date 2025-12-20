@@ -13,6 +13,7 @@ import AuditStats from "@/components/rbac/audit/AuditStats";
 import AuditFilters from "@/components/rbac/audit/AuditFilters";
 import AuditLogTable from "@/components/rbac/audit/AuditLogTable";
 import AuditDetailsDialog from "@/components/rbac/audit/AuditDetailsDialog";
+import HomeWidgetsManager from "@/components/rbac/HomeWidgetsManager";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
@@ -117,7 +118,7 @@ export default function GestaoPerfis() {
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6 gap-1">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-7 gap-1">
           <TabsTrigger value="profiles">Perfis de Usuário</TabsTrigger>
           <TabsTrigger value="roles">Roles Customizadas</TabsTrigger>
           <TabsTrigger value="profile-templates">
@@ -128,8 +129,11 @@ export default function GestaoPerfis() {
             <Sparkles className="w-3 h-3 mr-1" />
             Templates Roles
           </TabsTrigger>
+          <TabsTrigger value="home-widgets">
+            Widgets Home
+          </TabsTrigger>
           <TabsTrigger value="pending" className="relative">
-            Solicitações Pendentes
+            Solicitações
             {pendingCount > 0 && (
               <Badge className="ml-2 bg-red-500 text-white">{pendingCount}</Badge>
             )}
@@ -169,6 +173,9 @@ export default function GestaoPerfis() {
             </Button>
           </div>
           <RoleTemplateManager onEdit={handleEditTemplate} />
+        </TabsContent>
+        <TabsContent value="home-widgets" className="mt-6">
+          <HomeWidgetsManager />
         </TabsContent>
         <TabsContent value="pending" className="mt-6">
           <PendingRequestsList />

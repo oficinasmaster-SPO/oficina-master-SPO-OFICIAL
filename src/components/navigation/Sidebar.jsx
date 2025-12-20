@@ -577,23 +577,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           adminOnly: true,
           requiredPermission: 'admin.users'
         },
-        { 
-          name: 'Gerenciar Tela Inicial', 
-          href: createPageUrl('GerenciarTelaInicial'), 
-          icon: LayoutDashboard,
-          description: 'Widgets e indicadores da Home',
-          adminOnly: true,
-          highlight: true,
-          requiredPermission: 'admin.system_config'
-        },
-        { 
-          name: 'Gerenciar Permissões', 
-          href: createPageUrl('GerenciarPermissoes'), 
-          icon: Shield,
-          description: 'Acesso aos módulos laterais',
-          adminOnly: true,
-          requiredPermission: 'admin.profiles'
-        },
+
         { 
           name: 'Config. Produtividade', 
           href: createPageUrl('AdminProdutividade'), 
@@ -643,14 +627,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           adminOnly: true,
           requiredPermission: 'admin.system_config'
         },
-        { 
-          name: 'Gestão de Clientes', 
-          href: createPageUrl('AdminClientes'), 
-          icon: Users,
-          description: 'Painel administrativo de clientes',
-          adminOnly: true,
-          requiredPermission: 'admin.users'
-        },
+
         { 
           name: 'Gerenciar Tours e Vídeos', 
           href: createPageUrl('GerenciarToursVideos'), 
