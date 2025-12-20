@@ -47,25 +47,45 @@ export function usePermissions() {
           if (profileId) {
             try {
               const userProfile = await base44.entities.UserProfile.get(profileId);
-              setProfile(userProfile);
               
-              // Agregar permissões do perfil (roles antigas)
-              aggregatedPermissions = [...aggregatedPermissions, ...(userProfile.roles || [])];
-              
-              // Agregar custom_role_ids do perfil
-              if (userProfile.custom_role_ids && userProfile.custom_role_ids.length > 0) {
-                for (const roleId of userProfile.custom_role_ids) {
-                  try {
-                    const customRole = await base44.entities.CustomRole.get(roleId);
-                    aggregatedPermissions = [...aggregatedPermissions, ...(customRole.system_roles || [])];
-                  } catch (roleError) {
-                    console.error(`Erro ao carregar CustomRole ${roleId}:`, roleError);
+              // Verificar se o perfil existe e é válido
+              if (userProfile && userProfile.id) {
+                setProfile(userProfile);
+                
+                // Agregar permissões do perfil (roles antigas)
+                aggregatedPermissions = [...aggregatedPermissions, ...(userProfile.roles || [])];
+                
+                // Agregar custom_role_ids do perfil
+                if (userProfile.custom_role_ids && userProfile.custom_role_ids.length > 0) {
+                  for (const roleId of userProfile.custom_role_ids) {
+                    try {
+                      const customRole = await base44.entities.CustomRole.get(roleId);
+                      if (customRole && customRole.system_roles) {
+                        aggregatedPermissions = [...aggregatedPermissions, ...(customRole.system_roles || [])];
+                      }
+                    } catch (roleError) {
+                      console.warn(`⚠️ CustomRole ${roleId} não encontrada (ignorando)`, roleError.message);
+                    }
                   }
                 }
               }
             } catch (profileError) {
-              console.error("Erro ao carregar UserProfile:", profileError);
+              // Perfil não encontrado ou erro ao carregar
+              console.warn("⚠️ UserProfile não encontrado ou inválido (ignorando):", profileError.message);
               setProfile(null);
+              
+              // Se o perfil não existe, limpar o profile_id do Employee
+              if (profileError.message?.includes('not found') && employeeProfileId) {
+                try {
+                  const employees = await base44.entities.Employee.filter({ user_id: currentUser.id });
+                  if (employees && employees.length > 0) {
+                    await base44.entities.Employee.update(employees[0].id, { profile_id: null });
+                    console.log("🧹 profile_id inválido removido do Employee");
+                  }
+                } catch (cleanupError) {
+                  console.error("Erro ao limpar profile_id:", cleanupError);
+                }
+              }
             }
           }
 
