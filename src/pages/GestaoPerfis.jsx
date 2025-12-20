@@ -117,19 +117,19 @@ export default function GestaoPerfis() {
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="profiles">Perfis</TabsTrigger>
-          <TabsTrigger value="roles">Roles</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6 gap-1">
+          <TabsTrigger value="profiles">Perfis de Usuário</TabsTrigger>
+          <TabsTrigger value="roles">Roles Customizadas</TabsTrigger>
           <TabsTrigger value="profile-templates">
             <Sparkles className="w-3 h-3 mr-1" />
-            Templates
+            Templates Perfis
           </TabsTrigger>
           <TabsTrigger value="role-templates">
             <Sparkles className="w-3 h-3 mr-1" />
-            Templates
+            Templates Roles
           </TabsTrigger>
           <TabsTrigger value="pending" className="relative">
-            Solicitações
+            Solicitações Pendentes
             {pendingCount > 0 && (
               <Badge className="ml-2 bg-red-500 text-white">{pendingCount}</Badge>
             )}
