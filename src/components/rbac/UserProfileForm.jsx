@@ -207,11 +207,27 @@ export default function UserProfileForm({ initialData = {}, onSave, onCancel, is
         </ScrollArea>
       )}
 
-      <div className="flex justify-end gap-2 mt-6">
-        <Button variant="outline" onClick={onCancel} type="button">Cancelar</Button>
-        <Button type="submit" disabled={isSaving}>
-          {isSaving ? "Salvando..." : "Salvar Perfil"}
-        </Button>
+      <div className="flex justify-between items-center pt-4 border-t mt-6">
+        {initialData.name && (
+          <SaveAsTemplateButton 
+            data={{
+              type: watch('type'),
+              permission_type: watch('permission_type'),
+              custom_role_ids: watch('custom_role_ids'),
+              job_roles: watch('job_roles'),
+              sidebar_permissions: watch('sidebar_permissions'),
+              module_permissions: watch('module_permissions'),
+              roles: watch('roles')
+            }}
+            type="profile"
+          />
+        )}
+        <div className="flex gap-2 ml-auto">
+          <Button variant="outline" onClick={onCancel} type="button">Cancelar</Button>
+          <Button type="submit" disabled={isSaving}>
+            {isSaving ? "Salvando..." : "Salvar Perfil"}
+          </Button>
+        </div>
       </div>
     </form>
   );

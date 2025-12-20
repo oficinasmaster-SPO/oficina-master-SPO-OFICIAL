@@ -195,15 +195,17 @@ export default function CustomRoleForm({ initialData = {}, onSave, onCancel, isS
         </TabsContent>
       </Tabs>
 
-      <div className="flex justify-between items-center mt-6">
-        <SaveAsTemplateButton 
-          data={{
-            system_roles: watch('system_roles'),
-            entity_permissions: watch('entity_permissions')
-          }}
-          type="role"
-        />
-        <div className="flex gap-2">
+      <div className="flex justify-between items-center mt-6 pt-4 border-t">
+        {initialData.name && (
+          <SaveAsTemplateButton 
+            data={{
+              system_roles: watch('system_roles'),
+              entity_permissions: watch('entity_permissions')
+            }}
+            type="role"
+          />
+        )}
+        <div className="flex gap-2 ml-auto">
           <Button variant="outline" onClick={onCancel} type="button">Cancelar</Button>
           <Button type="submit" disabled={isSaving}>
             {isSaving ? "Salvando..." : "Salvar Role"}
