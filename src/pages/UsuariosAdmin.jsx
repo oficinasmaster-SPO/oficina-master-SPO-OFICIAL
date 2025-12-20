@@ -54,6 +54,11 @@ export default function UsuariosAdmin() {
     refetchOnWindowFocus: true // Atualiza quando voltar para a aba
   });
 
+  const { data: customRoles = [] } = useQuery({
+    queryKey: ['customRoles'],
+    queryFn: () => base44.entities.CustomRole.list(),
+  });
+
   const { data: allUsers = [] } = useQuery({
     queryKey: ['all-admin-users'],
     queryFn: async () => {
@@ -156,15 +161,22 @@ export default function UsuariosAdmin() {
 
       const currentAuditLog = selectedUser?.audit_log || [];
       
-      // Atualiza Employee com dados completos
-      return await base44.entities.Employee.update(userId, {
+      // Atualiza Employee com dados completos, incluindo custom_role_ids se fornecido
+      const updateData = {
         full_name: data.full_name,
         telefone: data.telefone,
         position: data.position,
         profile_id: data.profile_id,
         user_status: data.user_status,
         audit_log: [...currentAuditLog, auditEntry]
-      });
+      };
+
+      // Adiciona custom_role_ids se fornecido
+      if (data.custom_role_ids !== undefined) {
+        updateData.custom_role_ids = data.custom_role_ids;
+      }
+
+      return await base44.entities.Employee.update(userId, updateData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['admin-users']);
@@ -571,6 +583,7 @@ export default function UsuariosAdmin() {
         isCreateMode={isCreateMode}
         selectedUser={selectedUser}
         profiles={profiles}
+        customRoles={customRoles}
         admins={adminList}
         onSubmit={handleSubmit}
         isLoading={createUserMutation.isPending || updateUserMutation.isPending}
