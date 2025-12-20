@@ -1,7 +1,7 @@
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, Clock, Eye, Edit, Key, Trash2, Mail } from "lucide-react";
+import { AlertCircle, Clock, Eye, Edit, Key, Trash2, Mail, FileText } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -137,6 +137,15 @@ export default function UserTable({
                       title="Editar"
                     >
                       <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-purple-600"
+                      onClick={() => onViewAudit(user)}
+                      title="Ver Auditoria"
+                    >
+                      <FileText className="w-4 h-4" />
                     </Button>
                     <Button
                       variant="ghost"
