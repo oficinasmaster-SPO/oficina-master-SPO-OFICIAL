@@ -76,15 +76,6 @@ Deno.serve(async (req) => {
 
     console.log("✅ Employee:", employee.id);
 
-    await base44.asServiceRole.entities.EmployeeInvite.update(invite.id, {
-      status: 'acessado',
-      accepted_at: new Date().toISOString(),
-      employee_id: employee.id
-    });
-
-    // Criar/Atualizar User com service role
-    const existingUsers = await base44.asServiceRole.entities.User.filter({ email: finalEmail });
-
     // 🔄 AUTO-VINCULAÇÃO: Buscar perfil baseado em job_role
     let profileId = null;
     const jobRole = invite.job_role || 'outros';
@@ -102,6 +93,11 @@ Deno.serve(async (req) => {
       if (matchingProfile) {
         profileId = matchingProfile.id;
         console.log(`✅ Auto-vinculado ao perfil: ${matchingProfile.name} (job_role: ${jobRole})`);
+        
+        // Atualizar Employee com profile_id
+        await base44.asServiceRole.entities.Employee.update(employee.id, { 
+          profile_id: profileId 
+        });
       } else {
         console.warn(`⚠️ Nenhum perfil encontrado para job_role: ${jobRole}`);
       }
@@ -109,48 +105,17 @@ Deno.serve(async (req) => {
       console.warn("⚠️ Erro ao buscar perfil:", error);
     }
 
-    const userData = {
-      full_name: name || invite.name,
-      position: invite.position || 'Colaborador',
-      job_role: jobRole,
-      area: invite.area || 'tecnico',
-      telefone: phone || '',
-      profile_picture_url: profile_picture_url || '',
-      is_internal: isInternal,
-      user_status: 'pending', // Aguardando aprovação
-      invite_id: invite.id,
-      hire_date: new Date().toISOString().split('T')[0],
-      first_login_at: new Date().toISOString(),
-      profile_id: profileId
-    };
-
-    if (!isInternal && invite.workshop_id) {
-      userData.workshop_id = invite.workshop_id;
-    }
-
-    let userId;
-    if (existingUsers && existingUsers.length > 0) {
-      await base44.asServiceRole.entities.User.update(existingUsers[0].id, userData);
-      userId = existingUsers[0].id;
-    } else {
-      const newUser = await base44.asServiceRole.entities.User.create({
-        email: finalEmail,
-        role: 'user',
-        ...userData
-      });
-      userId = newUser.id;
-    }
-
-    console.log("✅ User:", userId);
-
-    await base44.asServiceRole.entities.Employee.update(employee.id, { user_id: userId });
+    await base44.asServiceRole.entities.EmployeeInvite.update(invite.id, {
+      status: 'concluido',
+      completed_at: new Date().toISOString(),
+      employee_id: employee.id
+    });
 
     console.log("🎉 Sucesso!");
 
     return Response.json({ 
       success: true, 
-      employee_id: employee.id,
-      user_id: userId
+      employee_id: employee.id
     });
 
   } catch (error) {
