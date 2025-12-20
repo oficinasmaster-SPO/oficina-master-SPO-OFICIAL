@@ -14,21 +14,29 @@ export default function UserFormDialog({
   isCreateMode, 
   selectedUser, 
   profiles,
+  customRoles = [],
   admins,
   onSubmit,
   isLoading
 }) {
   const [selectedProfileId, setSelectedProfileId] = useState(selectedUser?.profile_id || "");
+  const [selectedCustomRoles, setSelectedCustomRoles] = useState(selectedUser?.custom_role_ids || []);
   const [formData, setFormData] = useState({
     role: selectedUser?.role || "user"
   });
   
-  // Atualiza selectedProfileId e formData quando selectedUser mudar (modo edição)
+  // Atualiza selectedProfileId, selectedCustomRoles e formData quando selectedUser mudar (modo edição)
   React.useEffect(() => {
     if (selectedUser?.profile_id) {
       setSelectedProfileId(selectedUser.profile_id);
     } else if (isCreateMode) {
       setSelectedProfileId("");
+    }
+    
+    if (selectedUser?.custom_role_ids) {
+      setSelectedCustomRoles(selectedUser.custom_role_ids);
+    } else if (isCreateMode) {
+      setSelectedCustomRoles([]);
     }
   }, [selectedUser, isCreateMode]);
   
@@ -73,6 +81,7 @@ export default function UserFormDialog({
       telefone: formDataObj.get('telefone'),
       position: formDataObj.get('position'),
       profile_id: selectedProfileId,
+      custom_role_ids: selectedCustomRoles,
       user_status: formDataObj.get('user_status') || 'ativo',
       role: isCreateMode ? formData.role : undefined
     };
@@ -182,6 +191,39 @@ export default function UserFormDialog({
               </Select>
               <p className="text-xs text-gray-500 mt-1">
                 O usuário herdará todas as permissões do perfil selecionado
+              </p>
+            </div>
+
+            {/* Roles Customizadas Adicionais */}
+            <div>
+              <Label>Roles Customizadas Adicionais (Opcional)</Label>
+              <div className="mt-2 space-y-2 max-h-40 overflow-y-auto border rounded-md p-3">
+                {(customRoles || []).filter(r => r.status === 'ativo').map(role => (
+                  <div key={role.id} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id={`custom-role-${role.id}`}
+                      checked={selectedCustomRoles.includes(role.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedCustomRoles([...selectedCustomRoles, role.id]);
+                        } else {
+                          setSelectedCustomRoles(selectedCustomRoles.filter(id => id !== role.id));
+                        }
+                      }}
+                      className="rounded"
+                    />
+                    <label htmlFor={`custom-role-${role.id}`} className="text-sm">
+                      {role.name}
+                    </label>
+                  </div>
+                ))}
+                {(!customRoles || customRoles.filter(r => r.status === 'ativo').length === 0) && (
+                  <p className="text-sm text-gray-500">Nenhuma role customizada disponível</p>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Roles customizadas complementam as permissões do perfil base
               </p>
             </div>
 
