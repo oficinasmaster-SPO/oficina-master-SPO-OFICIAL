@@ -100,21 +100,8 @@ export function usePermissions() {
               }
             } catch (profileError) {
               // Perfil não encontrado ou erro ao carregar
-              console.error("❌ [usePermissions] Erro ao carregar UserProfile:", profileError.message);
+              console.error("❌ [usePermissions] Erro ao carregar UserProfile:", profileError?.message || profileError);
               setProfile(null);
-              
-              // Se o perfil não existe, limpar o profile_id do Employee
-              if (profileError.message?.includes('not found') && employeeProfileId) {
-                try {
-                  const employees = await base44.entities.Employee.filter({ user_id: currentUser.id });
-                  if (employees && employees.length > 0) {
-                    await base44.entities.Employee.update(employees[0].id, { profile_id: null });
-                    console.log("🧹 [usePermissions] profile_id inválido removido do Employee");
-                  }
-                } catch (cleanupError) {
-                  console.error("❌ [usePermissions] Erro ao limpar profile_id:", cleanupError);
-                }
-              }
             }
           } else {
             console.warn("⚠️ [usePermissions] Nenhum profile_id encontrado!");
