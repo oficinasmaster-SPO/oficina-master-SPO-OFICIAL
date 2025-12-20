@@ -58,12 +58,25 @@ export function usePermissions() {
           if (profileId) {
             try {
               const userProfile = await base44.entities.UserProfile.get(profileId);
-              console.log("✅ [usePermissions] Perfil carregado:", userProfile?.name);
-              console.log("📦 [usePermissions] Roles do perfil:", userProfile?.roles);
-              console.log("🔗 [usePermissions] Custom role IDs:", userProfile?.custom_role_ids);
-              
+
               // Verificar se o perfil existe e é válido
-              if (userProfile && userProfile.id) {
+              if (!userProfile || !userProfile.id) {
+                console.warn("⚠️ [usePermissions] UserProfile retornado é inválido ou null");
+                setProfile(null);
+                // Limpar profile_id inválido do Employee
+                try {
+                  const employees = await base44.entities.Employee.filter({ user_id: currentUser.id });
+                  if (employees && employees.length > 0 && employees[0].profile_id === profileId) {
+                    await base44.entities.Employee.update(employees[0].id, { profile_id: null });
+                    console.log("🧹 [usePermissions] profile_id inválido removido do Employee");
+                  }
+                } catch (cleanupError) {
+                  console.error("❌ [usePermissions] Erro ao limpar profile_id:", cleanupError);
+                }
+              } else {
+                console.log("✅ [usePermissions] Perfil carregado:", userProfile.name || 'sem nome');
+                console.log("📦 [usePermissions] Roles do perfil:", userProfile.roles || []);
+                console.log("🔗 [usePermissions] Custom role IDs:", userProfile.custom_role_ids || []);
                 setProfile(userProfile);
                 
                 // Agregar permissões do perfil (roles antigas)
