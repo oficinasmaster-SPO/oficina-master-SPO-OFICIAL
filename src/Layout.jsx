@@ -183,21 +183,12 @@ export default function Layout({ children, currentPageName }) {
           return;
         }
 
-        // Sincronizar dados do Employee se necessário
-        const employees = await base44.entities.Employee.filter({ email: user.email });
-
-        if (employees && employees.length > 0) {
-          const emp = employees[0];
-
-          // Vincular user_id ao Employee se ainda não tiver
-          if (!emp.user_id) {
-            await base44.entities.Employee.update(emp.id, {
-              user_id: user.id,
-              first_login_at: emp.first_login_at || new Date().toISOString(),
-              last_login_at: new Date().toISOString()
-            });
-            console.log("🔗 Employee vinculado ao User");
-          }
+        // Vincular user_id ao Employee via backend (evita erro 403)
+        try {
+          await base44.functions.invoke('linkUserToEmployee', {});
+          console.log("🔗 Employee vinculado ao User");
+        } catch (linkError) {
+          console.error("⚠️ Erro ao vincular Employee (não crítico):", linkError);
         }
       } catch (error) {
         console.error("Erro ao verificar aprovação:", error);
