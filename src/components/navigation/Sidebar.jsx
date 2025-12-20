@@ -669,7 +669,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
         },
         { 
           name: 'Gestão RBAC', 
-          href: createPageUrl('GestaoRBAC'), 
+          href: createPageUrl('GestaoPerfis'), 
           icon: Shield,
           description: 'Perfis e permissões centralizados',
           adminOnly: true,
