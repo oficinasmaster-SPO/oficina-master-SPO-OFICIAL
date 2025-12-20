@@ -16,6 +16,8 @@ import UserFilters from "@/components/admin/users/UserFilters";
 import UserTable from "@/components/admin/users/UserTable";
 import UserDetailsDrawer from "@/components/admin/users/UserDetailsDrawer";
 import ApprovalBanner from "@/components/admin/users/ApprovalBanner";
+import PermissionRequestForm from "@/components/rbac/PermissionRequestForm";
+import { usePermissionChangeRequest, prepareProfileChangeRequest, prepareCustomRolesChangeRequest, prepareStatusChangeRequest } from "@/components/rbac/PermissionChangeManager";
 
 export default function UsuariosAdmin() {
   const queryClient = useQueryClient();
@@ -25,6 +27,9 @@ export default function UsuariosAdmin() {
   const [resetPasswordDialog, setResetPasswordDialog] = useState({ open: false, password: "", email: "", loginUrl: "" });
   const [auditDialogOpen, setAuditDialogOpen] = useState(false);
   const [showDetailsDrawer, setShowDetailsDrawer] = useState(false);
+  const [requestFormOpen, setRequestFormOpen] = useState(false);
+  const [pendingChangeData, setPendingChangeData] = useState(null);
+  const { createRequest, isCreating } = usePermissionChangeRequest();
   const [filters, setFilters] = useState({
     search: "",
     position: "",
@@ -256,33 +261,61 @@ export default function UsuariosAdmin() {
     if (isCreateMode) {
       createUserMutation.mutate(data);
     } else if (selectedUser) {
-      // Detectar mudanças
-      let changes = { action: 'updated', field: 'dados_basicos', oldValue: '', newValue: '' };
+      // Verificar se há mudanças críticas que requerem aprovação
+      const profileChanged = selectedUser.profile_id !== data.profile_id;
+      const customRolesChanged = JSON.stringify(selectedUser.custom_role_ids || []) !== JSON.stringify(data.custom_role_ids || []);
+      const statusChanged = selectedUser.user_status !== data.user_status;
       
-      if (selectedUser.profile_id !== data.profile_id) {
-        const oldProfile = profiles.find(p => p.id === selectedUser.profile_id);
-        const newProfile = profiles.find(p => p.id === data.profile_id);
-        changes = {
-          action: 'profile_changed',
-          field: 'profile_id',
-          oldValue: oldProfile?.name || 'Sem perfil',
-          newValue: newProfile?.name || 'Sem perfil'
-        };
-      } else if (selectedUser.user_status !== data.user_status) {
-        changes = {
-          action: 'status_changed',
-          field: 'user_status',
-          oldValue: selectedUser.user_status,
-          newValue: data.user_status
-        };
-      }
+      const requiresApproval = profileChanged || customRolesChanged || statusChanged;
 
-      updateUserMutation.mutate({ 
-        userId: selectedUser.id, 
-        data,
-        changes 
-      });
+      if (requiresApproval) {
+        // Preparar dados para solicitação de aprovação
+        let requestData;
+        
+        if (profileChanged) {
+          const oldProfile = profiles.find(p => p.id === selectedUser.profile_id);
+          const newProfile = profiles.find(p => p.id === data.profile_id);
+          requestData = prepareProfileChangeRequest(selectedUser, oldProfile, newProfile, '');
+        } else if (customRolesChanged) {
+          requestData = prepareCustomRolesChangeRequest(selectedUser, selectedUser.custom_role_ids, data.custom_role_ids, '');
+        } else if (statusChanged) {
+          requestData = prepareStatusChangeRequest(selectedUser, selectedUser.user_status, data.user_status, '');
+        }
+
+        // Armazenar dados para usar no formulário de aprovação
+        setPendingChangeData({ ...requestData, formData: data });
+        setIsDialogOpen(false);
+        setRequestFormOpen(true);
+      } else {
+        // Mudanças não críticas (nome, telefone, cargo) - aplicar diretamente
+        let changes = { action: 'updated', field: 'dados_basicos', oldValue: '', newValue: '' };
+        
+        updateUserMutation.mutate({ 
+          userId: selectedUser.id, 
+          data,
+          changes 
+        });
+      }
     }
+  };
+
+  const handleRequestSubmit = (justification) => {
+    if (!pendingChangeData) return;
+    
+    const requestData = {
+      ...pendingChangeData,
+      justification
+    };
+    
+    delete requestData.formData;
+    
+    createRequest(requestData, {
+      onSuccess: () => {
+        setRequestFormOpen(false);
+        setPendingChangeData(null);
+        setSelectedUser(null);
+      }
+    });
   };
 
   const filteredUsers = useMemo(() => {
@@ -496,6 +529,29 @@ export default function UsuariosAdmin() {
           />
         </CardContent>
       </Card>
+
+      {/* Dialog de Solicitação de Aprovação */}
+      {pendingChangeData && (
+        <PermissionRequestForm
+          open={requestFormOpen}
+          onClose={() => {
+            setRequestFormOpen(false);
+            setPendingChangeData(null);
+          }}
+          employee={selectedUser}
+          changeType={pendingChangeData.change_type}
+          newProfileId={pendingChangeData.requested_profile_id}
+          newProfileName={pendingChangeData.requested_profile_name}
+          newCustomRoleIds={pendingChangeData.requested_custom_role_ids}
+          newStatus={pendingChangeData.requested_status}
+          currentProfileId={pendingChangeData.current_profile_id}
+          currentProfileName={pendingChangeData.current_profile_name}
+          currentCustomRoleIds={pendingChangeData.current_custom_role_ids}
+          currentStatus={pendingChangeData.current_status}
+          onSubmit={handleRequestSubmit}
+          isLoading={isCreating}
+        />
+      )}
 
       {/* Dialog de Senha Resetada */}
       <Dialog open={resetPasswordDialog.open} onOpenChange={(open) => setResetPasswordDialog({ ...resetPasswordDialog, open })}>
