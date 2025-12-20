@@ -209,10 +209,10 @@ export function usePermissions() {
   };
 
   return {
-    user,
-    profile,
-    customRole,
-    permissions,
+    user: user || null,
+    profile: profile || null,
+    customRole: customRole || null,
+    permissions: permissions || [],
     loading,
     hasPermission,
     canAccessPage,
