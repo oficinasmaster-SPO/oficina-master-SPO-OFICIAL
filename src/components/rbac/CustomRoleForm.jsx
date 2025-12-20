@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,8 +9,18 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { systemRoles } from "@/components/lib/systemRoles";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
+import TemplateSelector from "./templates/TemplateSelector";
 
 export default function CustomRoleForm({ initialData = {}, onSave, onCancel, isSaving }) {
+  const [selectedTemplateId, setSelectedTemplateId] = useState(null);
+
+  const { data: templates = [] } = useQuery({
+    queryKey: ['roleTemplates'],
+    queryFn: () => base44.entities.RoleTemplate.list(),
+  });
+
   const { register, handleSubmit, control, watch, setValue } = useForm({
     defaultValues: {
       name: initialData.name || '',
@@ -20,6 +30,26 @@ export default function CustomRoleForm({ initialData = {}, onSave, onCancel, isS
       status: initialData.status || 'ativo',
     },
   });
+
+  const handleTemplateSelect = async (templateId) => {
+    setSelectedTemplateId(templateId);
+    if (!templateId) return;
+
+    const template = templates.find(t => t.id === templateId);
+    if (template) {
+      setValue('system_roles', template.system_roles || []);
+      setValue('entity_permissions', template.entity_permissions || {});
+      
+      // Incrementar contador de uso
+      try {
+        await base44.entities.RoleTemplate.update(templateId, {
+          usage_count: (template.usage_count || 0) + 1
+        });
+      } catch (err) {
+        console.error('Erro ao atualizar contador de template:', err);
+      }
+    }
+  };
 
   const watchedSystemRoles = watch('system_roles');
   const watchedEntityPermissions = watch('entity_permissions');
@@ -70,6 +100,14 @@ export default function CustomRoleForm({ initialData = {}, onSave, onCancel, isS
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      {!initialData.name && (
+        <TemplateSelector
+          templates={templates}
+          selectedTemplateId={selectedTemplateId}
+          onTemplateSelect={handleTemplateSelect}
+        />
+      )}
+
       <div>
         <Label htmlFor="name">Nome da Role</Label>
         <Input id="name" {...register('name', { required: true })} />

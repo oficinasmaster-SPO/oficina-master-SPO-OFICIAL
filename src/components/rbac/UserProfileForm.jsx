@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,8 +11,16 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { jobRoles } from "@/components/lib/jobRoles";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import TemplateSelector from "./templates/TemplateSelector";
 
 export default function UserProfileForm({ initialData = {}, onSave, onCancel, isSaving }) {
+  const [selectedTemplateId, setSelectedTemplateId] = useState(null);
+
+  const { data: templates = [] } = useQuery({
+    queryKey: ['profileTemplates'],
+    queryFn: () => base44.entities.ProfileTemplate.list(),
+  });
+
   const { register, handleSubmit, control, watch, setValue } = useForm({
     defaultValues: {
       name: initialData.name || '',
@@ -24,6 +32,31 @@ export default function UserProfileForm({ initialData = {}, onSave, onCancel, is
       status: initialData.status || 'ativo',
     },
   });
+
+  const handleTemplateSelect = async (templateId) => {
+    setSelectedTemplateId(templateId);
+    if (!templateId) return;
+
+    const template = templates.find(t => t.id === templateId);
+    if (template) {
+      setValue('type', template.type);
+      setValue('permission_type', template.permission_type);
+      setValue('custom_role_ids', template.custom_role_ids || []);
+      setValue('job_roles', template.job_roles || []);
+      setValue('sidebar_permissions', template.sidebar_permissions || {});
+      setValue('module_permissions', template.module_permissions || {});
+      setValue('roles', template.roles || []);
+      
+      // Incrementar contador de uso
+      try {
+        await base44.entities.ProfileTemplate.update(templateId, {
+          usage_count: (template.usage_count || 0) + 1
+        });
+      } catch (err) {
+        console.error('Erro ao atualizar contador de template:', err);
+      }
+    }
+  };
 
   const watchedPermissionType = watch('permission_type');
   const watchedJobRoles = watch('job_roles');
@@ -68,6 +101,14 @@ export default function UserProfileForm({ initialData = {}, onSave, onCancel, is
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      {!initialData.name && (
+        <TemplateSelector
+          templates={templates}
+          selectedTemplateId={selectedTemplateId}
+          onTemplateSelect={handleTemplateSelect}
+        />
+      )}
+
       <div>
         <Label htmlFor="name">Nome do Perfil</Label>
         <Input id="name" {...register('name', { required: true })} />
