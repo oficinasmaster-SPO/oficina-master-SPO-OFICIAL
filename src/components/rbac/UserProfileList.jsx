@@ -72,7 +72,7 @@ export default function UserProfileList({ profiles, onEdit, onClone, getUserCoun
             </CardHeader>
             <CardContent>
               <div className="text-sm text-gray-700 mb-2">
-                <span className="font-medium">Tipo:</span> {profile.type}
+                <span className="font-medium">Tipo:</span> {profile?.type || 'N/A'}
               </div>
               <div className="text-sm text-gray-700 mb-2">
                 <span className="font-medium">Permissões por:</span> {
@@ -81,7 +81,7 @@ export default function UserProfileList({ profiles, onEdit, onClone, getUserCoun
                   profile.permission_type === 'role' ? 'Permissões Diretas' : 'N/A'
                 }
               </div>
-              {profile.permission_type === 'job_role' && profile.job_roles && profile.job_roles.length > 0 && (
+              {profile?.permission_type === 'job_role' && profile?.job_roles && profile.job_roles.length > 0 && (
                 <div className="text-sm text-gray-700 mb-2">
                   <span className="font-medium">Cargos:</span> 
                   <div className="flex flex-wrap gap-1 mt-1">
@@ -94,7 +94,7 @@ export default function UserProfileList({ profiles, onEdit, onClone, getUserCoun
                   </div>
                 </div>
               )}
-              {profile.permission_type === 'custom_role' && profile.custom_role_ids && profile.custom_role_ids.length > 0 && customRolesMap && (
+              {profile?.permission_type === 'custom_role' && profile?.custom_role_ids && profile.custom_role_ids.length > 0 && customRolesMap && (
                 <div className="text-sm text-gray-700 mb-2">
                   <span className="font-medium">Roles:</span> 
                   <div className="flex flex-wrap gap-1 mt-1">

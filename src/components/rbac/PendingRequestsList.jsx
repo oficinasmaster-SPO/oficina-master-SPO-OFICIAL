@@ -23,9 +23,9 @@ export default function PendingRequestsList({ onRequestProcessed }) {
   const filteredRequests = (requests || []).filter(req => {
     if (!req) return false;
     const matchesSearch = !searchTerm || 
-                         req.employee_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         req.requested_by_name?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "todos" || req.status === statusFilter;
+                         req?.employee_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         req?.requested_by_name?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "todos" || req?.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 

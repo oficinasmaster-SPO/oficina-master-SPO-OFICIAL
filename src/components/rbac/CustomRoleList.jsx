@@ -68,10 +68,10 @@ export default function CustomRoleList({ roles, onEdit, onClone, getDependencies
             </CardHeader>
             <CardContent>
               <div className="text-sm text-gray-700 mb-2">
-                <span className="font-medium">Permissões de Sistema:</span> {role.system_roles?.length || 0}
+                <span className="font-medium">Permissões de Sistema:</span> {role?.system_roles?.length || 0}
               </div>
               <div className="text-sm text-gray-700 mb-3">
-                <span className="font-medium">Permissões de Entidade:</span> {Object.keys(role.entity_permissions || {}).length}
+                <span className="font-medium">Permissões de Entidade:</span> {Object.keys(role?.entity_permissions || {}).length}
               </div>
               
               <Dialog>
