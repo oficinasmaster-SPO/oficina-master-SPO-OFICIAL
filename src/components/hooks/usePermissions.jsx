@@ -33,28 +33,22 @@ export function usePermissions() {
           aggregatedPermissions = systemRoles.flatMap(m => m.roles.map(r => r.id));
           console.log("👑 [usePermissions] Admin detectado - permissões totais");
         } else {
-          // Buscar Employee vinculado para obter profile_id
+          // Buscar Employee vinculado para obter profile_id via backend
+          // Usar backend para evitar problemas de RLS
           let employeeProfileId = null;
           try {
-            console.log("🔍 [usePermissions] Buscando Employee com user_id:", currentUser.id);
-            let employees = await base44.entities.Employee.filter({ user_id: currentUser.id });
-            console.log("👷 [usePermissions] Employees encontrados por user_id:", employees?.length || 0);
+            console.log("🔍 [usePermissions] Buscando profile_id via backend...");
+            const result = await base44.functions.invoke('getUserProfile', {});
+            console.log("📦 [usePermissions] Resultado backend:", JSON.stringify(result.data, null, 2));
             
-            // Se não encontrou por user_id, buscar por email (fallback)
-            if (!employees || employees.length === 0) {
-              console.log("🔍 [usePermissions] Tentando buscar Employee por email:", currentUser.email);
-              employees = await base44.entities.Employee.filter({ email: currentUser.email });
-              console.log("👷 [usePermissions] Employees encontrados por email:", employees?.length || 0);
-            }
-            
-            console.log("📦 [usePermissions] Employees data:", JSON.stringify(employees, null, 2));
-            if (employees && employees.length > 0) {
-              employeeProfileId = employees[0].profile_id;
-              console.log("📋 [usePermissions] Employee profile_id:", employeeProfileId);
-              console.log("👤 [usePermissions] Employee completo:", JSON.stringify(employees[0], null, 2));
+            if (result.data && result.data.profile_id) {
+              employeeProfileId = result.data.profile_id;
+              console.log("✅ [usePermissions] Profile ID obtido via backend:", employeeProfileId);
+            } else {
+              console.warn("⚠️ [usePermissions] Nenhum profile_id retornado pelo backend");
             }
           } catch (empError) {
-            console.error("❌ [usePermissions] Erro ao buscar Employee:", empError);
+            console.error("❌ [usePermissions] Erro ao buscar profile_id:", empError);
           }
 
           // Carregar perfil do usuário
