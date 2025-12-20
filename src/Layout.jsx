@@ -349,9 +349,12 @@ export default function Layout({ children, currentPageName }) {
               (() => {
                 try {
                   // Verificar permissão de acesso à página de forma segura
+                  console.log("🔐 [Layout] Verificando acesso à página:", currentPageName);
                   const hasAccess = !currentPageName || canAccessPage(currentPageName);
+                  console.log("🔐 [Layout] Resultado do canAccessPage:", hasAccess);
 
                   if (!hasAccess) {
+                    console.error("❌ [Layout] ACESSO NEGADO à página:", currentPageName);
                     return (
                       <div className="flex flex-col items-center justify-center h-[60vh] text-center px-4">
                         <div className="bg-red-100 p-4 rounded-full mb-4">
@@ -367,6 +370,7 @@ export default function Layout({ children, currentPageName }) {
                       </div>
                     );
                   }
+                  console.log("✅ [Layout] Acesso PERMITIDO à página:", currentPageName);
                 } catch (error) {
                   console.error("❌ Erro crítico ao verificar permissões:", error);
                   // Em caso de erro, mostrar página de erro ao invés de tela branca
