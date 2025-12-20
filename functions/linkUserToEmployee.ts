@@ -35,10 +35,19 @@ Deno.serve(async (req) => {
       console.log(`✅ User ${user.id} vinculado ao Employee ${employee.id}`);
     }
 
+    // Atualizar workshop_id no User se o Employee tiver
+    if (employee.workshop_id && user.workshop_id !== employee.workshop_id) {
+      await base44.auth.updateMe({
+        workshop_id: employee.workshop_id
+      });
+      console.log(`✅ Workshop ${employee.workshop_id} vinculado ao User ${user.id}`);
+    }
+
     return Response.json({ 
       success: true,
       employee_id: employee.id,
-      user_id: user.id
+      user_id: user.id,
+      workshop_id: employee.workshop_id
     });
   } catch (error) {
     console.error("❌ Erro ao vincular User ao Employee:", error);
