@@ -71,37 +71,41 @@ export default function ModuleAccessConfig({ permissions, onChange, jobRoles }) 
           </div>
 
           <div className="grid md:grid-cols-2 gap-4">
-            {modules.map((module) => {
+            {(modules || []).map((module) => {
+              if (!module) return null;
               const Icon = module.icon;
-              const currentLevel = getAccessLevel(role.value, module.id);
+              const currentLevel = getAccessLevel(role?.value || '', module?.id || '');
               
               return (
-                <div key={module.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                <div key={module?.id || Math.random()} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <Icon className={`w-5 h-5 ${module.color}`} />
-                      <span className="font-medium text-gray-900">{module.label}</span>
+                      {Icon && <Icon className={`w-5 h-5 ${module?.color || 'text-gray-600'}`} />}
+                      <span className="font-medium text-gray-900">{module?.label || 'Módulo'}</span>
                     </div>
                     <Badge className={getAccessLevelColor(currentLevel)}>
-                      {accessLevels.find(l => l.value === currentLevel)?.label}
+                      {accessLevels.find(l => l?.value === currentLevel)?.label || 'N/A'}
                     </Badge>
                   </div>
 
                   <Select
                     value={currentLevel}
-                    onValueChange={(value) => handleAccessChange(role.value, module.id, value)}
+                    onValueChange={(value) => handleAccessChange(role?.value || '', module?.id || '', value)}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {accessLevels.map((level) => (
-                        <SelectItem key={level.value} value={level.value}>
+                      {(accessLevels || []).map((level) => {
+                        if (!level) return null;
+                        return (
+                          <SelectItem key={level?.value || Math.random()} value={level?.value || ''}>
                           <span className="flex items-center gap-2">
-                            {level.label}
+                            {level?.label || 'N/A'}
                           </span>
                         </SelectItem>
-                      ))}
+                      );
+                    })}
                     </SelectContent>
                   </Select>
                 </div>

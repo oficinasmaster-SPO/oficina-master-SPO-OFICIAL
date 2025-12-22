@@ -73,16 +73,17 @@ export default function PermissionMatrix({ permissions, onChange, jobRoles }) {
           </div>
 
           <div className="grid gap-4">
-            {resources.map((resource) => {
+            {(resources || []).map((resource) => {
+              if (!resource) return null;
               const Icon = resource.icon;
-              const permCount = getResourcePermissionCount(role.value, resource.id);
+              const permCount = getResourcePermissionCount(role?.value || '', resource?.id || '');
               
               return (
-                <div key={resource.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                <div key={resource?.id || Math.random()} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <Icon className={`w-5 h-5 ${resource.color}`} />
-                      <span className="font-medium text-gray-900">{resource.label}</span>
+                      {Icon && <Icon className={`w-5 h-5 ${resource?.color || 'text-gray-600'}`} />}
+                      <span className="font-medium text-gray-900">{resource?.label || 'Recurso'}</span>
                       {permCount > 0 && (
                         <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
                           {permCount}/{actions.length}
@@ -92,18 +93,21 @@ export default function PermissionMatrix({ permissions, onChange, jobRoles }) {
                   </div>
 
                   <div className="grid grid-cols-4 gap-4">
-                    {actions.map((action) => (
-                      <label
-                        key={action.id}
-                        className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-2 rounded transition-colors"
-                      >
-                        <Checkbox
-                          checked={isChecked(role.value, resource.id, action.id)}
-                          onCheckedChange={() => handleToggle(role.value, resource.id, action.id)}
-                        />
-                        <span className="text-sm text-gray-700">{action.label}</span>
-                      </label>
-                    ))}
+                    {(actions || []).map((action) => {
+                      if (!action) return null;
+                      return (
+                        <label
+                          key={action?.id || Math.random()}
+                          className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-2 rounded transition-colors"
+                        >
+                          <Checkbox
+                            checked={isChecked(role?.value || '', resource?.id || '', action?.id || '')}
+                            onCheckedChange={() => handleToggle(role?.value || '', resource?.id || '', action?.id || '')}
+                          />
+                          <span className="text-sm text-gray-700">{action?.label || 'Ação'}</span>
+                        </label>
+                      );
+                    })}
                   </div>
                 </div>
               );

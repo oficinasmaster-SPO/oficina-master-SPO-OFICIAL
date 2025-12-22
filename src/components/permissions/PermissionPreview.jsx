@@ -21,13 +21,14 @@ export default function PermissionPreview({ permissions, jobRoles }) {
   };
 
   const countTotalPermissions = (roleId) => {
+    if (!roleId || !permissions) return 0;
     const rolePerms = permissions[roleId] || {};
     let count = 0;
     
     Object.keys(rolePerms).forEach(key => {
-      if (key !== 'modules') {
+      if (key !== 'modules' && rolePerms[key]) {
         const resource = rolePerms[key];
-        count += Object.values(resource).filter(Boolean).length;
+        count += Object.values(resource || {}).filter(Boolean).length;
       }
     });
     
@@ -91,8 +92,8 @@ export default function PermissionPreview({ permissions, jobRoles }) {
               <div>
                 <p className="text-sm text-gray-600">Módulos Configurados</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {Object.keys(permissions).reduce((sum, role) => 
-                    sum + Object.keys(permissions[role]?.modules || {}).length, 0
+                  {Object.keys(permissions || {}).reduce((sum, role) => 
+                    sum + Object.keys((permissions[role] || {}).modules || {}).length, 0
                   )}
                 </p>
               </div>
