@@ -654,6 +654,15 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           requiredPermission: 'admin.profiles'
         },
         { 
+          name: 'Permissões Granulares', 
+          href: createPageUrl('ConfiguracaoPermissoesGranulares'), 
+          icon: Settings,
+          description: 'Configure por cargo e módulo',
+          adminOnly: true,
+          highlight: true,
+          requiredPermission: 'admin.system_config'
+        },
+        { 
           name: 'Usuários Internos', 
           href: createPageUrl('UsuariosAdmin'), 
           icon: Users,
