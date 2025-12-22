@@ -47,6 +47,8 @@ export default function ConfiguracaoPermissoesGranulares() {
   const saveMutation = useMutation({
     mutationFn: async (newPermissions) => {
       try {
+        const oldConfig = permissionsConfig?.config || {};
+        
         if (permissionsConfig?.id) {
           await base44.entities.SystemSetting.update(permissionsConfig.id, {
             value: JSON.stringify(newPermissions)
@@ -58,6 +60,18 @@ export default function ConfiguracaoPermissoesGranulares() {
             description: 'Configuração de permissões granulares por cargo e módulo'
           });
         }
+
+        // Registrar log de auditoria
+        await base44.functions.invoke('logRBACAction', {
+          action_type: 'granular_permission_updated',
+          target_type: 'granular_config',
+          target_name: 'Configuração Granular de Permissões',
+          changes: {
+            before: oldConfig,
+            after: newPermissions
+          },
+          notes: 'Atualização via interface de configuração'
+        });
       } catch (error) {
         throw new Error("Erro ao salvar configurações");
       }

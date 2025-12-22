@@ -663,6 +663,14 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           requiredPermission: 'admin.system_config'
         },
         { 
+          name: 'Logs de Auditoria RBAC', 
+          href: createPageUrl('LogsAuditoriaRBAC'), 
+          icon: Activity,
+          description: 'Histórico de alterações em permissões',
+          adminOnly: true,
+          requiredPermission: 'admin.audit'
+        },
+        { 
           name: 'Usuários Internos', 
           href: createPageUrl('UsuariosAdmin'), 
           icon: Users,

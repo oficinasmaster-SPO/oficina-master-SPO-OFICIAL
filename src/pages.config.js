@@ -133,6 +133,7 @@ import Usuarios from './pages/Usuarios';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
 import ConfiguracaoPermissoesGranulares from './pages/ConfiguracaoPermissoesGranulares';
+import LogsAuditoriaRBAC from './pages/LogsAuditoriaRBAC';
 import __Layout from './Layout.jsx';
 
 
@@ -272,6 +273,7 @@ export const PAGES = {
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
     "ConfiguracaoPermissoesGranulares": ConfiguracaoPermissoesGranulares,
+    "LogsAuditoriaRBAC": LogsAuditoriaRBAC,
 }
 
 export const pagesConfig = {
