@@ -66,7 +66,7 @@ export default function ConvidarColaborador() {
 
         // Busca oficina onde o usuário é dono (mais seguro que listar todas)
         const workshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
-        const userWorkshop = workshops[0];
+        const userWorkshop = Array.isArray(workshops) && workshops.length > 0 ? workshops[0] : null;
 
         if (userWorkshop) {
           setWorkshop(userWorkshop);
@@ -144,8 +144,8 @@ export default function ConvidarColaborador() {
 
         const payload = {
           ...data,
-          workshop_id: workshop.id,
-          workshop_name: workshop.name
+          workshop_id: workshop?.id,
+          workshop_name: workshop?.name || "Oficina"
         };
         
         console.log("Payload enviado:", payload);
