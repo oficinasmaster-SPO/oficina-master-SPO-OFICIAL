@@ -311,10 +311,10 @@ export default function DashboardHub({ user, workshop }) {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Bem-vindo, {user?.full_name || user?.email || 'Usuário'}!
+          Bem-vindo, {user.full_name || user.email}!
         </h1>
         <p className="text-gray-600">
-          {workshop?.name ? `Resumo da ${workshop.name}` : 'Resumo da sua oficina'}
+          Aqui está o resumo da sua oficina
         </p>
       </div>
 
@@ -451,16 +451,16 @@ export default function DashboardHub({ user, workshop }) {
               <div className="flex items-center gap-6">
                 <div className={cn(
                   "w-24 h-24 rounded-full flex items-center justify-center text-4xl font-bold text-white shadow-lg",
-                  phaseColors[userWorkshop.maturity_level] || "bg-gray-500"
+                  phaseColors[userWorkshop?.maturity_level] || "bg-gray-500"
                 )}>
-                  {userWorkshop.maturity_level || 1}
+                  {userWorkshop?.maturity_level || 1}
                 </div>
                 <div>
                   <h3 className="text-2xl font-bold text-gray-900">
-                    {phaseLabels[userWorkshop.maturity_level || 1]}
+                    {phaseLabels[userWorkshop?.maturity_level || 1]}
                   </h3>
                   <p className="text-gray-600 mt-1 max-w-md">
-                    Sua oficina está na fase de {phaseLabels[userWorkshop.maturity_level || 1].toLowerCase()}. 
+                    Sua oficina está na fase de {phaseLabels[userWorkshop?.maturity_level || 1]?.toLowerCase()}. 
                     Continue realizando diagnósticos para evoluir.
                   </p>
                 </div>
