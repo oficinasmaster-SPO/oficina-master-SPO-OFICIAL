@@ -319,7 +319,7 @@ export default function Home() {
         
         <div className="px-4 sm:px-6 lg:px-8 py-8">
           {isAdminView && workshop && (
-            <AdminViewBanner workshopName={workshop.name} />
+            <AdminViewBanner workshopName={workshop?.name} />
           )}
           
           <QuickTipsBar tips={dashboardTips} pageName="home-dashboard" />
