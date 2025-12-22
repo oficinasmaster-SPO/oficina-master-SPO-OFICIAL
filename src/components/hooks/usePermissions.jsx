@@ -147,6 +147,18 @@ export function usePermissions() {
   };
 
   /**
+   * Verifica permissão granular (recurso + ação)
+   */
+  const hasGranularPermission = (resourceId, actionId) => {
+    if (!user) return false;
+    if (user.role === 'admin') return true;
+    
+    // Buscar permissões granulares do cargo
+    // Essa função deve ser usada em conjunto com granular_permissions
+    return false; // Implementar conforme necessidade
+  };
+
+  /**
    * Verifica se o usuário pode acessar uma página
    * Sistema RBAC Granular: Usa mapeamento de página → permissão
    * Browser-safe: Não usa require() ou imports dinâmicos
@@ -215,6 +227,7 @@ export function usePermissions() {
     permissions: permissions || [],
     loading,
     hasPermission,
+    hasGranularPermission,
     canAccessPage,
     canPerform,
     isInternal,
