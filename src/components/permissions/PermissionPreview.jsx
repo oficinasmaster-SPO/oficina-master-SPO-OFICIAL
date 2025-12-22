@@ -6,7 +6,7 @@ import { CheckCircle2, XCircle, Eye, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function PermissionPreview({ permissions, jobRoles }) {
-  const [selectedRole, setSelectedRole] = useState(jobRoles[0]?.value);
+  const [selectedRole, setSelectedRole] = useState((jobRoles && jobRoles[0]) ? jobRoles[0].value : null);
 
   const getRolePermissions = (roleId) => {
     return permissions[roleId] || {};
@@ -107,28 +107,28 @@ export default function PermissionPreview({ permissions, jobRoles }) {
           <CardTitle>Visualizar Permissões por Cargo</CardTitle>
         </CardHeader>
         <CardContent>
-          <Tabs value={selectedRole} onValueChange={setSelectedRole}>
+          <Tabs value={selectedRole || ''} onValueChange={setSelectedRole}>
             <TabsList className="grid grid-cols-3 lg:grid-cols-6 mb-6">
-              {jobRoles.map((role) => (
-                <TabsTrigger key={role.value} value={role.value}>
-                  {role.label}
+              {(jobRoles || []).map((role) => (
+                <TabsTrigger key={role?.value || 'unknown'} value={role?.value || ''}>
+                  {role?.label || 'Sem nome'}
                 </TabsTrigger>
               ))}
             </TabsList>
 
-            {jobRoles.map((role) => (
-              <TabsContent key={role.value} value={role.value}>
+            {(jobRoles || []).map((role) => (
+              <TabsContent key={role?.value || 'unknown'} value={role?.value || ''}>
                 <div className="space-y-6">
                   {/* Resource Permissions */}
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                      Permissões CRUD por Recurso
-                    </h3>
-                    <div className="grid md:grid-cols-2 gap-4">
-                      {Object.keys(getRolePermissions(role.value))
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    Permissões CRUD por Recurso
+                  </h3>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {Object.keys(getRolePermissions(role?.value || ''))
                         .filter(key => key !== 'modules')
                         .map((resourceId) => {
-                          const resourcePerms = getResourcePermissions(role.value, resourceId);
+                          const resourcePerms = getResourcePermissions(role?.value || '', resourceId);
                           const permArray = Object.entries(resourcePerms);
                           
                           if (permArray.length === 0) return null;
@@ -172,7 +172,7 @@ export default function PermissionPreview({ permissions, jobRoles }) {
                       Acesso por Módulo
                     </h3>
                     <div className="grid md:grid-cols-3 gap-3">
-                      {Object.entries(getRolePermissions(role.value).modules || {}).map(([moduleId, level]) => (
+                      {Object.entries(getRolePermissions(role?.value || '').modules || {}).map(([moduleId, level]) => (
                         <Card key={moduleId} className="border-2">
                           <CardContent className="p-4">
                             <div className="flex items-center justify-between">

@@ -56,13 +56,13 @@ export default function ModuleAccessConfig({ permissions, onChange, jobRoles }) 
 
   return (
     <div className="space-y-6">
-      {jobRoles.map((role) => (
-        <Card key={role.value} className="p-6">
+      {(jobRoles || []).map((role) => (
+        <Card key={role?.value || 'unknown'} className="p-6">
           <div className="mb-4">
             <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              {role.label}
+              {role?.label || 'Sem nome'}
               <Badge variant="outline" className="text-xs">
-                {role.value}
+                {role?.value || 'N/A'}
               </Badge>
             </h3>
             <p className="text-sm text-gray-600 mt-1">
