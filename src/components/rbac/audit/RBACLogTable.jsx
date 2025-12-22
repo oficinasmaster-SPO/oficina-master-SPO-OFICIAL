@@ -72,40 +72,43 @@ export default function RBACLogTable({ logs, isLoading, onViewDetails }) {
           </tr>
         </thead>
         <tbody className="divide-y">
-          {logs.map((log) => (
-            <tr key={log.id} className="hover:bg-gray-50 transition-colors">
-              <td className="px-4 py-3 text-sm text-gray-900">
-                {format(new Date(log.created_date), "dd/MM/yyyy HH:mm", { locale: ptBR })}
-              </td>
-              <td className="px-4 py-3">
-                <Badge className={actionTypeColors[log.action_type] || "bg-gray-100 text-gray-700"}>
-                  {actionTypeLabels[log.action_type] || log.action_type}
-                </Badge>
-              </td>
-              <td className="px-4 py-3 text-sm">
-                <div className="font-medium text-gray-900">{log.performed_by_name || 'N/A'}</div>
-                <div className="text-xs text-gray-500">{log.performed_by}</div>
-              </td>
-              <td className="px-4 py-3 text-sm text-gray-700">
-                {targetTypeLabels[log.target_type] || log.target_type}
-              </td>
-              <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                {log.target_name || log.target_id || 'N/A'}
-              </td>
-              <td className="px-4 py-3 text-sm text-gray-700">
-                {log.affected_users_count > 0 ? `${log.affected_users_count} usuários` : '-'}
-              </td>
-              <td className="px-4 py-3">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onViewDetails(log)}
-                >
-                  <Eye className="w-4 h-4" />
-                </Button>
-              </td>
-            </tr>
-          ))}
+          {logs.map((log) => {
+            if (!log) return null;
+            return (
+              <tr key={log.id} className="hover:bg-gray-50 transition-colors">
+                <td className="px-4 py-3 text-sm text-gray-900">
+                  {log.created_date ? format(new Date(log.created_date), "dd/MM/yyyy HH:mm", { locale: ptBR }) : 'N/A'}
+                </td>
+                <td className="px-4 py-3">
+                  <Badge className={actionTypeColors[log.action_type] || "bg-gray-100 text-gray-700"}>
+                    {actionTypeLabels[log.action_type] || log.action_type || 'N/A'}
+                  </Badge>
+                </td>
+                <td className="px-4 py-3 text-sm">
+                  <div className="font-medium text-gray-900">{log.performed_by_name || 'N/A'}</div>
+                  <div className="text-xs text-gray-500">{log.performed_by || 'N/A'}</div>
+                </td>
+                <td className="px-4 py-3 text-sm text-gray-700">
+                  {targetTypeLabels[log.target_type] || log.target_type || 'N/A'}
+                </td>
+                <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                  {log.target_name || log.target_id || 'N/A'}
+                </td>
+                <td className="px-4 py-3 text-sm text-gray-700">
+                  {(log.affected_users_count || 0) > 0 ? `${log.affected_users_count} usuários` : '-'}
+                </td>
+                <td className="px-4 py-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onViewDetails(log)}
+                  >
+                    <Eye className="w-4 h-4" />
+                  </Button>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

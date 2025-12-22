@@ -18,27 +18,29 @@ export default function RBACLogDetailsDialog({ log, open, onClose }) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-sm font-semibold text-gray-600">Data/Hora</p>
-              <p className="text-sm">{format(new Date(log.created_date), "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR })}</p>
+              <p className="text-sm">
+                {log.created_date ? format(new Date(log.created_date), "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR }) : 'N/A'}
+              </p>
             </div>
             <div>
               <p className="text-sm font-semibold text-gray-600">Tipo de Ação</p>
-              <Badge className="mt-1">{log.action_type}</Badge>
+              <Badge className="mt-1">{log.action_type || 'N/A'}</Badge>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-sm font-semibold text-gray-600">Realizado Por</p>
-              <p className="text-sm font-medium">{log.performed_by_name}</p>
-              <p className="text-xs text-gray-500">{log.performed_by}</p>
+              <p className="text-sm font-medium">{log.performed_by_name || 'N/A'}</p>
+              <p className="text-xs text-gray-500">{log.performed_by || 'N/A'}</p>
             </div>
             <div>
               <p className="text-sm font-semibold text-gray-600">Recurso Afetado</p>
-              <p className="text-sm">{log.target_type}: {log.target_name || log.target_id}</p>
+              <p className="text-sm">{log.target_type || 'N/A'}: {log.target_name || log.target_id || 'N/A'}</p>
             </div>
           </div>
 
-          {log.affected_users_count > 0 && (
+          {(log.affected_users_count || 0) > 0 && (
             <div>
               <p className="text-sm font-semibold text-gray-600">Usuários Impactados</p>
               <p className="text-sm">{log.affected_users_count} usuário(s)</p>

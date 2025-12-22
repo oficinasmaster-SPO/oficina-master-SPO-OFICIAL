@@ -32,8 +32,8 @@ export default function LogsAuditoriaRBAC() {
     enabled: user?.role === 'admin'
   });
 
-  const filteredLogs = logs.filter(log => {
-    if (!log) return false;
+  const filteredLogs = (logs || []).filter(log => {
+    if (!log || !log.id) return false;
     
     if (filters.actionType !== "all" && log.action_type !== filters.actionType) return false;
     if (filters.targetType !== "all" && log.target_type !== filters.targetType) return false;
@@ -47,14 +47,18 @@ export default function LogsAuditoriaRBAC() {
       if (!matchesSearch) return false;
     }
 
-    if (filters.dateRange !== "all") {
-      const logDate = new Date(log.created_date);
-      const now = new Date();
-      const daysDiff = Math.floor((now - logDate) / (1000 * 60 * 60 * 24));
-      
-      if (filters.dateRange === "today" && daysDiff > 0) return false;
-      if (filters.dateRange === "week" && daysDiff > 7) return false;
-      if (filters.dateRange === "month" && daysDiff > 30) return false;
+    if (filters.dateRange !== "all" && log.created_date) {
+      try {
+        const logDate = new Date(log.created_date);
+        const now = new Date();
+        const daysDiff = Math.floor((now - logDate) / (1000 * 60 * 60 * 24));
+        
+        if (filters.dateRange === "today" && daysDiff > 0) return false;
+        if (filters.dateRange === "week" && daysDiff > 7) return false;
+        if (filters.dateRange === "month" && daysDiff > 30) return false;
+      } catch (e) {
+        console.error('Error parsing date:', e);
+      }
     }
 
     return true;
