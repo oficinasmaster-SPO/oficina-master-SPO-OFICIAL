@@ -18,7 +18,7 @@ export default function AdminViewBanner({ workshopName, onClose }) {
           <div>
             <p className="font-bold text-lg">Modo Admin: Visualizando Backoffice do Cliente</p>
             <p className="text-sm text-orange-100">
-              Você está visualizando os dados de: <span className="font-semibold">{workshopName}</span>
+              Você está visualizando os dados de: <span className="font-semibold">{workshopName || 'Cliente'}</span>
             </p>
           </div>
         </div>
