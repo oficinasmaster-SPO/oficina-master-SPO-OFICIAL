@@ -13,7 +13,10 @@ export default function LogsAuditoriaRBAC() {
     actionType: "all",
     targetType: "all",
     dateRange: "all",
-    searchTerm: ""
+    searchTerm: "",
+    performedBy: "all",
+    startDate: "",
+    endDate: ""
   });
   const [selectedLog, setSelectedLog] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -43,7 +46,9 @@ export default function LogsAuditoriaRBAC() {
       const matchesSearch = 
         (log.target_name || '').toLowerCase().includes(search) ||
         (log.performed_by || '').toLowerCase().includes(search) ||
-        (log.performed_by_name || '').toLowerCase().includes(search);
+        (log.performed_by_name || '').toLowerCase().includes(search) ||
+        (log.ip_address || '').toLowerCase().includes(search) ||
+        (log.notes || '').toLowerCase().includes(search);
       if (!matchesSearch) return false;
     }
 
@@ -51,11 +56,26 @@ export default function LogsAuditoriaRBAC() {
       try {
         const logDate = new Date(log.created_date);
         const now = new Date();
-        const daysDiff = Math.floor((now - logDate) / (1000 * 60 * 60 * 24));
         
-        if (filters.dateRange === "today" && daysDiff > 0) return false;
-        if (filters.dateRange === "week" && daysDiff > 7) return false;
-        if (filters.dateRange === "month" && daysDiff > 30) return false;
+        if (filters.dateRange === "custom") {
+          if (filters.startDate) {
+            const startDate = new Date(filters.startDate);
+            if (logDate < startDate) return false;
+          }
+          if (filters.endDate) {
+            const endDate = new Date(filters.endDate);
+            endDate.setHours(23, 59, 59, 999);
+            if (logDate > endDate) return false;
+          }
+        } else {
+          const daysDiff = Math.floor((now - logDate) / (1000 * 60 * 60 * 24));
+          
+          if (filters.dateRange === "today" && daysDiff > 0) return false;
+          if (filters.dateRange === "week" && daysDiff > 7) return false;
+          if (filters.dateRange === "month" && daysDiff > 30) return false;
+          if (filters.dateRange === "quarter" && daysDiff > 90) return false;
+          if (filters.dateRange === "year" && daysDiff > 365) return false;
+        }
       } catch (e) {
         console.error('Error parsing date:', e);
       }
@@ -128,7 +148,19 @@ export default function LogsAuditoriaRBAC() {
           <CardTitle>Filtros</CardTitle>
         </CardHeader>
         <CardContent>
-          <RBACLogFilters filters={filters} onChange={setFilters} />
+          <RBACLogFilters 
+            filters={filters} 
+            onChange={setFilters}
+            onReset={() => setFilters({
+              actionType: "all",
+              targetType: "all",
+              dateRange: "all",
+              searchTerm: "",
+              performedBy: "all",
+              startDate: "",
+              endDate: ""
+            })}
+          />
         </CardContent>
       </Card>
 
