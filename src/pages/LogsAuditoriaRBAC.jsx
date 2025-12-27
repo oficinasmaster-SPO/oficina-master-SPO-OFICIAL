@@ -2,7 +2,10 @@ import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Shield, Download } from "lucide-react";
+import { Shield, Download, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import RBACLogTable from "@/components/rbac/audit/RBACLogTable";
 import RBACLogFilters from "@/components/rbac/audit/RBACLogFilters";
 import RBACLogStats from "@/components/rbac/audit/RBACLogStats";
@@ -26,13 +29,15 @@ export default function LogsAuditoriaRBAC() {
     queryFn: () => base44.auth.me()
   });
 
-  const { data: logs = [], isLoading } = useQuery({
+  const { data: logs = [], isLoading, refetch } = useQuery({
     queryKey: ['rbac-logs'],
     queryFn: async () => {
-      const result = await base44.entities.RBACLog.list('-created_date', 500);
+      const result = await base44.entities.RBACLog.list('-created_date', 1000);
       return Array.isArray(result) ? result : [];
     },
-    enabled: user?.role === 'admin'
+    enabled: user?.role === 'admin',
+    refetchOnWindowFocus: false,
+    staleTime: 30000
   });
 
   const filteredLogs = (logs || []).filter(log => {
@@ -91,23 +96,29 @@ export default function LogsAuditoriaRBAC() {
 
   const handleExport = () => {
     const csv = [
-      ['Data', 'Ação', 'Usuário', 'Tipo Alvo', 'Nome Alvo', 'Usuários Impactados'].join(','),
+      ['Data', 'Hora', 'Ação', 'Usuário', 'Email', 'Tipo Alvo', 'Nome Alvo', 'ID Alvo', 'Usuários Impactados', 'IP', 'Observações'].join(';'),
       ...filteredLogs.map(log => [
-        new Date(log.created_date).toLocaleString('pt-BR'),
-        log.action_type,
-        log.performed_by_name || log.performed_by,
-        log.target_type,
-        log.target_name || log.target_id,
-        log.affected_users_count || 0
-      ].join(','))
+        log.created_date ? format(new Date(log.created_date), "dd/MM/yyyy", { locale: ptBR }) : '',
+        log.created_date ? format(new Date(log.created_date), "HH:mm:ss", { locale: ptBR }) : '',
+        log.action_type || '',
+        log.performed_by_name || '',
+        log.performed_by || '',
+        log.target_type || '',
+        log.target_name || '',
+        log.target_id || '',
+        log.affected_users_count || 0,
+        log.ip_address || '',
+        (log.notes || '').replace(/;/g, ',')
+      ].join(';'))
     ].join('\n');
 
-    const blob = new Blob([csv], { type: 'text/csv' });
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `rbac-audit-${Date.now()}.csv`;
+    a.download = `rbac-audit-${format(new Date(), "yyyy-MM-dd-HHmm")}.csv`;
     a.click();
+    window.URL.revokeObjectURL(url);
   };
 
   if (user?.role !== 'admin') {
@@ -132,13 +143,23 @@ export default function LogsAuditoriaRBAC() {
             <p className="text-gray-600">Histórico completo de alterações em permissões</p>
           </div>
         </div>
-        <button
-          onClick={handleExport}
-          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-        >
-          <Download className="w-4 h-4" />
-          Exportar CSV
-        </button>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => refetch()}
+            variant="outline"
+            className="gap-2"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Atualizar
+          </Button>
+          <Button
+            onClick={handleExport}
+            className="gap-2 bg-green-600 hover:bg-green-700"
+          >
+            <Download className="w-4 h-4" />
+            Exportar CSV
+          </Button>
+        </div>
       </div>
 
       <RBACLogStats logs={filteredLogs} />

@@ -40,6 +40,34 @@ const actionTypeColors = {
 };
 
 export default function RBACLogTable({ logs, isLoading, onViewDetails }) {
+  const [sortField, setSortField] = React.useState('created_date');
+  const [sortOrder, setSortOrder] = React.useState('desc');
+
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('desc');
+    }
+  };
+
+  const sortedLogs = [...(logs || [])].sort((a, b) => {
+    let aVal = a[sortField];
+    let bVal = b[sortField];
+
+    if (sortField === 'created_date') {
+      aVal = new Date(aVal).getTime();
+      bVal = new Date(bVal).getTime();
+    }
+
+    if (sortOrder === 'asc') {
+      return aVal > bVal ? 1 : -1;
+    } else {
+      return aVal < bVal ? 1 : -1;
+    }
+  });
+
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
@@ -62,9 +90,24 @@ export default function RBACLogTable({ logs, isLoading, onViewDetails }) {
       <table className="w-full">
         <thead className="bg-gray-50 border-b">
           <tr>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Data/Hora</th>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Ação</th>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Usuário</th>
+            <th 
+              className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase cursor-pointer hover:bg-gray-100"
+              onClick={() => handleSort('created_date')}
+            >
+              Data/Hora {sortField === 'created_date' && (sortOrder === 'asc' ? '↑' : '↓')}
+            </th>
+            <th 
+              className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase cursor-pointer hover:bg-gray-100"
+              onClick={() => handleSort('action_type')}
+            >
+              Ação {sortField === 'action_type' && (sortOrder === 'asc' ? '↑' : '↓')}
+            </th>
+            <th 
+              className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase cursor-pointer hover:bg-gray-100"
+              onClick={() => handleSort('performed_by_name')}
+            >
+              Usuário {sortField === 'performed_by_name' && (sortOrder === 'asc' ? '↑' : '↓')}
+            </th>
             <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Tipo Alvo</th>
             <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Nome Alvo</th>
             <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Impacto</th>
@@ -72,12 +115,21 @@ export default function RBACLogTable({ logs, isLoading, onViewDetails }) {
           </tr>
         </thead>
         <tbody className="divide-y">
-          {logs.map((log) => {
+          {sortedLogs.map((log) => {
             if (!log) return null;
+            const hasChanges = log.changes && (log.changes.before || log.changes.after);
+            
             return (
               <tr key={log.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-4 py-3 text-sm text-gray-900">
-                  {log.created_date ? format(new Date(log.created_date), "dd/MM/yyyy HH:mm", { locale: ptBR }) : 'N/A'}
+                  <div className="flex flex-col">
+                    <span className="font-medium">
+                      {log.created_date ? format(new Date(log.created_date), "dd/MM/yyyy", { locale: ptBR }) : 'N/A'}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {log.created_date ? format(new Date(log.created_date), "HH:mm:ss", { locale: ptBR }) : ''}
+                    </span>
+                  </div>
                 </td>
                 <td className="px-4 py-3">
                   <Badge className={actionTypeColors[log.action_type] || "bg-gray-100 text-gray-700"}>
@@ -86,24 +138,36 @@ export default function RBACLogTable({ logs, isLoading, onViewDetails }) {
                 </td>
                 <td className="px-4 py-3 text-sm">
                   <div className="font-medium text-gray-900">{log.performed_by_name || 'N/A'}</div>
-                  <div className="text-xs text-gray-500">{log.performed_by || 'N/A'}</div>
+                  <div className="text-xs text-gray-500 truncate max-w-[150px]" title={log.performed_by}>
+                    {log.performed_by || 'N/A'}
+                  </div>
                 </td>
-                <td className="px-4 py-3 text-sm text-gray-700">
-                  {targetTypeLabels[log.target_type] || log.target_type || 'N/A'}
+                <td className="px-4 py-3">
+                  <Badge variant="outline">
+                    {targetTypeLabels[log.target_type] || log.target_type || 'N/A'}
+                  </Badge>
                 </td>
-                <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                <td className="px-4 py-3 text-sm font-medium text-gray-900 max-w-[200px] truncate" title={log.target_name || log.target_id}>
                   {log.target_name || log.target_id || 'N/A'}
                 </td>
-                <td className="px-4 py-3 text-sm text-gray-700">
-                  {(log.affected_users_count || 0) > 0 ? `${log.affected_users_count} usuários` : '-'}
+                <td className="px-4 py-3 text-sm">
+                  {(log.affected_users_count || 0) > 0 ? (
+                    <Badge className="bg-orange-100 text-orange-700">
+                      {log.affected_users_count} usuários
+                    </Badge>
+                  ) : (
+                    <span className="text-gray-400">-</span>
+                  )}
                 </td>
                 <td className="px-4 py-3">
                   <Button
-                    variant="ghost"
+                    variant={hasChanges ? "default" : "outline"}
                     size="sm"
                     onClick={() => onViewDetails(log)}
+                    className="gap-1"
                   >
                     <Eye className="w-4 h-4" />
+                    {hasChanges && <span className="text-xs">Ver Diff</span>}
                   </Button>
                 </td>
               </tr>
