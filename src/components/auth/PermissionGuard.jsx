@@ -10,7 +10,7 @@ import { Loader2, Lock } from "lucide-react";
  * @param {React.ReactNode} fallback - Conteúdo alternativo se não tiver permissão
  * @param {boolean} hideOnDenied - Se true, não renderiza nada quando negado
  */
-export function PermissionGuard({ 
+export default function PermissionGuard({ 
   resource, 
   action, 
   children, 
@@ -62,6 +62,8 @@ export function PermissionGuard({
 
   return <>{children}</>;
 }
+
+export { PermissionGuard };
 
 /**
  * Hook para verificar permissão granular de forma assíncrona
