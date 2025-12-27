@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Save } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Loader2 } from "lucide-react";
 
 export default function AreaFormDialog({ open, onClose, onSubmit, area, isLoading }) {
   const [formData, setFormData] = useState({
@@ -38,11 +38,11 @@ export default function AreaFormDialog({ open, onClose, onSubmit, area, isLoadin
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label>Nome da Área *</Label>
+            <Label>Nome da Área</Label>
             <Input
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Ex: Vendas"
+              placeholder="Ex: Vendas, Comercial, RH..."
               required
             />
           </div>
@@ -51,7 +51,7 @@ export default function AreaFormDialog({ open, onClose, onSubmit, area, isLoadin
             <Textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Descreva o objetivo desta área..."
+              placeholder="Breve descrição da área..."
               rows={3}
             />
           </div>
@@ -60,21 +60,18 @@ export default function AreaFormDialog({ open, onClose, onSubmit, area, isLoadin
             <Input
               type="number"
               value={formData.order}
-              onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) })}
+              onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) || 0 })}
             />
           </div>
-          <div className="flex justify-end gap-2">
+          <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Salvando...</>
-              ) : (
-                <><Save className="w-4 h-4 mr-2" />Salvar</>
-              )}
+              {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {area ? "Atualizar" : "Criar"}
             </Button>
-          </div>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

@@ -1,148 +1,120 @@
 import React, { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, UserPlus } from "lucide-react";
+import { Label } from "@/components/ui/label";
 import { base44 } from "@/api/base44Client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { Loader2, UserPlus } from "lucide-react";
 
-export default function AccessControlDialog({ open, onClose, process, processType, workshop }) {
+export default function AccessControlDialog({ open, onClose, processType, processId, workshopId }) {
   const queryClient = useQueryClient();
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
+  const [selectedEmployee, setSelectedEmployee] = useState("");
   const [accessLevel, setAccessLevel] = useState("visualizacao");
 
   const { data: employees = [] } = useQuery({
-    queryKey: ['workshop-employees', workshop?.id],
+    queryKey: ['employees-active', workshopId],
     queryFn: async () => {
-      if (!workshop?.id) return [];
-      return await base44.entities.Employee.filter({ 
-        workshop_id: workshop.id,
+      if (!workshopId) return [];
+      const all = await base44.entities.Employee.filter({ 
+        workshop_id: workshopId,
         user_status: 'ativo'
       });
+      return all.filter(e => e.email);
     },
-    enabled: !!workshop?.id && open
+    enabled: !!workshopId && open
   });
 
-  const { data: existingAccess = [] } = useQuery({
-    queryKey: ['process-access', process?.id],
-    queryFn: async () => {
-      if (!process?.id) return [];
-      return await base44.entities.ProcessAccess.filter({
-        process_id: process.id,
-        status: 'ativo'
-      });
-    },
-    enabled: !!process?.id && open
-  });
-
-  const grantAccessM = useMutation({
+  const grantAccessMutation = useMutation({
     mutationFn: async () => {
-      const employee = employees.find(e => e.id === selectedEmployeeId);
+      const employee = employees.find(e => e.id === selectedEmployee);
       if (!employee) throw new Error("Colaborador não encontrado");
 
-      const user = await base44.auth.me();
-
       return await base44.entities.ProcessAccess.create({
-        workshop_id: workshop.id,
+        workshop_id: workshopId,
         process_type: processType,
-        process_id: process.id,
+        process_id: processId,
         employee_id: employee.id,
         employee_name: employee.full_name,
         employee_email: employee.email,
-        granted_by: user.email,
-        granted_at: new Date().toISOString(),
         access_level: accessLevel,
-        status: 'ativo'
+        status: "ativo"
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['process-access']);
-      toast.success("Acesso liberado!");
-      setSelectedEmployeeId("");
+      toast.success("Acesso concedido!");
+      setSelectedEmployee("");
+      setAccessLevel("visualizacao");
+      onClose();
     },
     onError: (error) => {
-      toast.error("Erro: " + error.message);
+      toast.error("Erro ao conceder acesso: " + error.message);
     }
   });
 
-  const revokeM = useMutation({
-    mutationFn: async (accessId) => {
-      return await base44.entities.ProcessAccess.update(accessId, { status: 'revogado' });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['process-access']);
-      toast.success("Acesso revogado!");
+  const handleGrant = () => {
+    if (!selectedEmployee) {
+      toast.error("Selecione um colaborador");
+      return;
     }
-  });
+    grantAccessMutation.mutate();
+  };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Controle de Acesso</DialogTitle>
-          <p className="text-sm text-gray-600">{process?.title}</p>
+          <DialogTitle className="flex items-center gap-2">
+            <UserPlus className="w-5 h-5" />
+            Conceder Acesso ao Processo
+          </DialogTitle>
         </DialogHeader>
-
-        <div className="space-y-6 py-4">
-          <div className="space-y-4">
-            <Label>Liberar Acesso para Colaborador</Label>
-            <div className="flex gap-2">
-              <Select value={selectedEmployeeId} onValueChange={setSelectedEmployeeId}>
-                <SelectTrigger className="flex-1">
-                  <SelectValue placeholder="Selecione colaborador..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {employees.filter(e => !existingAccess.some(a => a.employee_id === e.id)).map(emp => (
-                    <SelectItem key={emp.id} value={emp.id}>{emp.full_name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={accessLevel} onValueChange={setAccessLevel}>
-                <SelectTrigger className="w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="visualizacao">Visualização</SelectItem>
-                  <SelectItem value="execucao">Execução</SelectItem>
-                  <SelectItem value="edicao">Edição</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button onClick={() => grantAccessM.mutate()} disabled={!selectedEmployeeId || grantAccessM.isPending}>
-                <UserPlus className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-
-          <div className="border-t pt-4">
-            <Label className="mb-3 block">Acessos Ativos</Label>
-            {existingAccess.length === 0 ? (
-              <p className="text-sm text-gray-500">Nenhum acesso liberado ainda</p>
-            ) : (
-              <div className="space-y-2">
-                {existingAccess.map(access => (
-                  <div key={access.id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
-                    <div>
-                      <p className="font-medium text-sm">{access.employee_name}</p>
-                      <p className="text-xs text-gray-600">{access.employee_email}</p>
-                      <Badge variant="outline" className="mt-1">{access.access_level}</Badge>
-                    </div>
-                    <Button 
-                      size="sm" 
-                      variant="destructive" 
-                      onClick={() => revokeM.mutate(access.id)}
-                      disabled={revokeM.isPending}
-                    >
-                      Revogar
-                    </Button>
-                  </div>
+        <div className="space-y-4 py-4">
+          <div>
+            <Label>Colaborador</Label>
+            <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o colaborador" />
+              </SelectTrigger>
+              <SelectContent>
+                {employees.map(emp => (
+                  <SelectItem key={emp.id} value={emp.id}>
+                    {emp.full_name} ({emp.email})
+                  </SelectItem>
                 ))}
-              </div>
-            )}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Nível de Acesso</Label>
+            <Select value={accessLevel} onValueChange={setAccessLevel}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="visualizacao">Visualização</SelectItem>
+                <SelectItem value="execucao">Execução</SelectItem>
+                <SelectItem value="edicao">Edição</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-gray-500 mt-1">
+              {accessLevel === "visualizacao" && "Apenas visualizar o processo"}
+              {accessLevel === "execucao" && "Visualizar e registrar execuções"}
+              {accessLevel === "edicao" && "Visualizar, executar e editar"}
+            </p>
           </div>
         </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button onClick={handleGrant} disabled={grantAccessMutation.isPending}>
+            {grantAccessMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            Conceder Acesso
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

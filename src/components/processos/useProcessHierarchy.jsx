@@ -5,8 +5,8 @@ export function useProcessHierarchy(workshopId) {
   const { data: areas = [], isLoading: loadingAreas } = useQuery({
     queryKey: ['process-areas', workshopId],
     queryFn: async () => {
-      const allAreas = await base44.entities.ProcessArea.list();
-      return allAreas.filter(a => !a.workshop_id || a.workshop_id === workshopId);
+      const all = await base44.entities.ProcessArea.list();
+      return all.sort((a, b) => (a.order || 0) - (b.order || 0));
     },
     enabled: !!workshopId
   });
@@ -14,7 +14,9 @@ export function useProcessHierarchy(workshopId) {
   const { data: maps = [], isLoading: loadingMaps } = useQuery({
     queryKey: ['process-maps', workshopId],
     queryFn: async () => {
-      return await base44.entities.ProcessMAP.filter({ workshop_id: workshopId });
+      if (!workshopId) return [];
+      const all = await base44.entities.ProcessMAP.filter({ workshop_id: workshopId });
+      return all;
     },
     enabled: !!workshopId
   });
@@ -22,41 +24,26 @@ export function useProcessHierarchy(workshopId) {
   const { data: its = [], isLoading: loadingITs } = useQuery({
     queryKey: ['process-its', workshopId],
     queryFn: async () => {
-      return await base44.entities.ProcessIT.list();
+      const all = await base44.entities.ProcessIT.list();
+      return all;
     },
     enabled: !!workshopId
   });
 
-  const { data: supportDocs = [], isLoading: loadingDocs } = useQuery({
-    queryKey: ['process-support-docs', workshopId],
-    queryFn: async () => {
-      return await base44.entities.ProcessSupportDoc.list();
-    },
-    enabled: !!workshopId
-  });
+  const getMapsByArea = (areaId) => {
+    return maps.filter(m => m.area_id === areaId);
+  };
 
   const getITsByMap = (mapId) => {
     return its.filter(it => it.map_id === mapId);
-  };
-
-  const getSupportDocsByParent = (parentType, parentId) => {
-    return supportDocs.filter(doc => 
-      doc.parent_type === parentType && doc.parent_id === parentId
-    );
-  };
-
-  const getMapsByArea = (areaId) => {
-    return maps.filter(map => map.area_id === areaId);
   };
 
   return {
     areas,
     maps,
     its,
-    supportDocs,
-    isLoading: loadingAreas || loadingMaps || loadingITs || loadingDocs,
+    getMapsByArea,
     getITsByMap,
-    getSupportDocsByParent,
-    getMapsByArea
+    isLoading: loadingAreas || loadingMaps || loadingITs
   };
 }
