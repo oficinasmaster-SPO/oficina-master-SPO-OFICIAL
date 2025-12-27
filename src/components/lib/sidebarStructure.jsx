@@ -71,8 +71,7 @@ export const sidebarStructure = [
     id: "processos",
     label: "Processos",
     items: [
-      { name: "Biblioteca de Processos", description: "MAPs → ITs → Docs" },
-      { name: "Meus Processos (MAPs)", description: "Visualização rápida" },
+      { name: "Meus Processos (MAPs)", description: "Biblioteca" },
     ],
   },
   {

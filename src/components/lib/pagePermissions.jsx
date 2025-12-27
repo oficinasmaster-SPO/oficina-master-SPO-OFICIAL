@@ -76,11 +76,8 @@ export const pagePermissions = {
   ResultadoAutoavaliacao: "diagnostics.view",
   
   // Processos e Documentos
-  BibliotecaProcessos: "processes.view",
   MeusProcessos: "processes.view",
   VisualizarProcesso: "processes.view",
-  VisualizarMAP: "processes.view",
-  VisualizarIT: "processes.view",
   GerenciarProcessos: "processes.create",
   RepositorioDocumentos: "documents.upload",
   EvidenceUpload: "documents.upload",
