@@ -139,9 +139,12 @@ export default function BibliotecaProcessos() {
           </div>
         </div>
 
-        <Tabs defaultValue="areas" className="space-y-6">
+        <Tabs value={selectedMAP ? "its" : selectedArea ? "maps" : "areas"} className="space-y-6">
           <TabsList>
-            <TabsTrigger value="areas" onClick={() => { setSelectedArea(null); setSelectedMAP(null); }}>
+            <TabsTrigger 
+              value="areas" 
+              onClick={() => { setSelectedArea(null); setSelectedMAP(null); }}
+            >
               Áreas ({areas.length})
             </TabsTrigger>
             {selectedArea && (
