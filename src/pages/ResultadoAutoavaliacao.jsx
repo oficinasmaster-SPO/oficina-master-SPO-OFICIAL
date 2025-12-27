@@ -104,7 +104,7 @@ export default function ResultadoAutoavaliacao() {
 
       if (!assessmentId) {
         toast.error("Avaliação não encontrada");
-        navigate(createPageUrl("Home"));
+        navigate(createPageUrl("Autoavaliacoes"));
         return;
       }
 
@@ -113,14 +113,15 @@ export default function ResultadoAutoavaliacao() {
 
       if (!current) {
         toast.error("Avaliação não encontrada");
-        navigate(createPageUrl("Home"));
+        navigate(createPageUrl("Autoavaliacoes"));
         return;
       }
 
       setAssessment(current);
     } catch (error) {
-      console.error(error);
-      toast.error("Erro ao carregar resultado");
+      console.error("Erro ao carregar resultado:", error);
+      toast.error("Erro ao carregar resultado: " + (error.message || "Tente novamente"));
+      navigate(createPageUrl("Autoavaliacoes"));
     } finally {
       setLoading(false);
     }

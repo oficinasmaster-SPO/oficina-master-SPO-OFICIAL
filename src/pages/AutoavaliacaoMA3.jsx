@@ -56,17 +56,19 @@ export default function AutoavaliacaoMA3() {
       
       const weakPoints = Object.entries(scores)
         .filter(([_, score]) => score < 6)
-        .map(([key, _]) => criteria.criteria.find(c => c.key === key)?.label);
+        .map(([key, _]) => criteria.criteria.find(c => c.key === key)?.label)
+        .filter(Boolean);
 
       const strongPoints = Object.entries(scores)
         .filter(([_, score]) => score >= 8)
-        .map(([key, _]) => criteria.criteria.find(c => c.key === key)?.label);
+        .map(([key, _]) => criteria.criteria.find(c => c.key === key)?.label)
+        .filter(Boolean);
 
       const aiPrompt = `
 Analise a autoavaliação das Áreas MA3 de uma oficina automotiva com as seguintes notas (0-10):
 ${Object.entries(scores).map(([key, score]) => {
   const crit = criteria.criteria.find(c => c.key === key);
-  return `${crit.label}: ${score}/10`;
+  return `${crit?.label || key}: ${score}/10`;
 }).join('\n')}
 
 Média geral: ${average.toFixed(1)}/10
@@ -86,25 +88,33 @@ Feedback adicional do usuário para consideração: """${userFeedback}"""
         prompt: aiPrompt
       });
 
+      if (!aiResponse) {
+        throw new Error("Falha ao gerar análise com IA");
+      }
+
       const assessment = await base44.entities.ProcessAssessment.create({
         workshop_id: workshop?.id || null,
-        evaluator_id: user.id,
+        evaluator_id: user?.id || null,
         assessment_type: "ma3",
         scores: scores,
         average_score: average,
         strengths: strongPoints,
         weaknesses: weakPoints,
         bottlenecks: weakPoints,
-        ai_recommendations: aiResponse,
-        user_feedback: userFeedback,
+        ai_recommendations: typeof aiResponse === 'string' ? aiResponse : JSON.stringify(aiResponse),
+        user_feedback: userFeedback || "",
         completed: true
       });
 
-      toast.success("Avaliação concluída!");
+      if (!assessment?.id) {
+        throw new Error("Falha ao criar avaliação");
+      }
+
+      toast.success("Avaliação concluída com sucesso!");
       navigate(createPageUrl("ResultadoAutoavaliacao") + `?id=${assessment.id}`);
     } catch (error) {
-      console.error(error);
-      toast.error("Erro ao processar avaliação");
+      console.error("Erro ao processar avaliação:", error);
+      toast.error("Erro ao processar avaliação: " + (error.message || "Tente novamente"));
     } finally {
       setSubmitting(false);
     }
