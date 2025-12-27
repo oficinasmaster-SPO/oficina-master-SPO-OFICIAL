@@ -55,15 +55,29 @@ export default function MeusProcessos() {
     loadData();
   }, []);
 
-  const { data: documents = [], isLoading } = useQuery({
+  const { data: documents = [], isLoading: loadingDocs } = useQuery({
     queryKey: ['my-processes', user?.id],
     queryFn: async () => {
-      // Fetch all templates and custom documents for this workshop
       const allDocs = await base44.entities.ProcessDocument.list();
       return allDocs;
     },
     enabled: !!user
   });
+
+  const { data: mapsFromLibrary = [], isLoading: loadingMaps } = useQuery({
+    queryKey: ['process-maps-my', workshop?.id],
+    queryFn: async () => {
+      if (!workshop?.id) return [];
+      const maps = await base44.entities.ProcessMAP.filter({ 
+        workshop_id: workshop.id,
+        status: 'ativo'
+      });
+      return maps;
+    },
+    enabled: !!workshop?.id
+  });
+
+  const isLoading = loadingDocs || loadingMaps;
 
   // Filter documents based on user access and workshop
   const accessibleDocs = documents.filter(doc => {
@@ -76,10 +90,24 @@ export default function MeusProcessos() {
     return isRelevant;
   });
 
-  const filteredDocs = accessibleDocs.filter(doc => {
-    const matchesSearch = doc.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          (doc.code && doc.code.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesTab = activeTab === "Todos" || doc.category === activeTab;
+  const combinedProcesses = [
+    ...accessibleDocs.map(doc => ({ ...doc, sourceType: 'document' })),
+    ...mapsFromLibrary.map(map => ({
+      id: map.id,
+      title: map.title,
+      code: map.code,
+      category: 'Geral',
+      description: map.description,
+      pdf_url: null,
+      sourceType: 'map',
+      mapData: map
+    }))
+  ];
+
+  const filteredDocs = combinedProcesses.filter(item => {
+    const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          (item.code && item.code.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesTab = activeTab === "Todos" || item.category === activeTab;
     return matchesSearch && matchesTab;
   });
 
@@ -193,31 +221,46 @@ export default function MeusProcessos() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredDocs.map((doc) => {
-                  const CategoryIcon = getCategoryIcon(doc.category);
+                {filteredDocs.map((item) => {
+                  const CategoryIcon = getCategoryIcon(item.category);
+                  const isMAP = item.sourceType === 'map';
+
                   return (
-                    <Card key={doc.id} className="hover:shadow-lg transition-shadow duration-300 flex flex-col">
+                    <Card key={item.id} className="hover:shadow-lg transition-shadow duration-300 flex flex-col">
                       <CardHeader className="pb-3">
                         <div className="flex justify-between items-start mb-2">
                           <Badge variant="outline" className="flex items-center gap-1">
                             <CategoryIcon className="w-3 h-3" />
-                            {doc.category}
+                            {item.category}
                           </Badge>
-                          {doc.code && (
-                            <span className="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                              {doc.code}
-                            </span>
-                          )}
+                          <div className="flex items-center gap-2">
+                            {isMAP && (
+                              <Badge className="bg-blue-100 text-blue-700 text-xs">
+                                MAP
+                              </Badge>
+                            )}
+                            {item.code && (
+                              <span className="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                {item.code}
+                              </span>
+                            )}
+                          </div>
                         </div>
                         <CardTitle className="text-lg leading-tight text-gray-900">
-                          {doc.title}
+                          {item.title}
                         </CardTitle>
                         <CardDescription className="line-clamp-2 mt-2">
-                          {doc.description || "Sem descrição disponível."}
+                          {item.description || "Sem descrição disponível."}
                         </CardDescription>
                       </CardHeader>
                       <CardContent className="flex-1">
-                        <div className="w-full h-32 bg-gray-100 rounded-md flex items-center justify-center border border-gray-200 mb-2 group cursor-pointer" onClick={() => window.open(doc.pdf_url, '_blank')}>
+                        <div className="w-full h-32 bg-gray-100 rounded-md flex items-center justify-center border border-gray-200 mb-2 group cursor-pointer" onClick={() => {
+                          if (isMAP) {
+                            navigate(createPageUrl('VisualizarMAP') + `?id=${item.id}`);
+                          } else if (item.pdf_url) {
+                            window.open(item.pdf_url, '_blank');
+                          }
+                        }}>
                           <FileText className="w-12 h-12 text-gray-400 group-hover:text-red-500 transition-colors" />
                         </div>
                       </CardContent>
@@ -225,54 +268,64 @@ export default function MeusProcessos() {
                         <Button 
                           className="flex-1 bg-red-600 hover:bg-red-700" 
                           onClick={() => {
-                            navigate(createPageUrl('VisualizarProcesso') + `?id=${doc.id}`);
+                            if (isMAP) {
+                              navigate(createPageUrl('VisualizarMAP') + `?id=${item.id}`);
+                            } else {
+                              navigate(createPageUrl('VisualizarProcesso') + `?id=${item.id}`);
+                            }
                           }}
                         >
                           <Eye className="w-4 h-4 mr-2" />
                           Visualizar
                         </Button>
-                        <Button 
-                          variant="outline" 
-                          size="icon" 
-                          onClick={() => {
-                            setSelectedProcess(doc);
-                            setShareDialogOpen(true);
-                          }}
-                          title="Compartilhar com Colaborador"
-                          className="text-green-600 hover:text-green-700 border-green-200 hover:bg-green-50"
-                        >
-                          <Mail className="w-4 h-4" />
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="icon" 
-                          onClick={() => {
-                            setSelectedProcess(doc);
-                            setHistoryDialogOpen(true);
-                          }}
-                          title="Ver Histórico de Compartilhamentos"
-                          className="text-purple-600 hover:text-purple-700 border-purple-200 hover:bg-purple-50"
-                        >
-                          <History className="w-4 h-4" />
-                        </Button>
-                        <Button variant="outline" size="icon" onClick={() => window.open(doc.pdf_url, '_blank')} title="Baixar PDF">
-                          <Download className="w-4 h-4" />
-                        </Button>
-                        {doc.is_template && user?.role !== 'admin' && (
-                          <Button 
-                            variant="outline" 
-                            size="icon" 
-                            onClick={() => duplicateMutation.mutate(doc)}
-                            disabled={duplicateMutation.isPending}
-                            title="Usar como Modelo"
-                            className="text-blue-600 hover:text-blue-700 border-blue-200 hover:bg-blue-50"
-                          >
-                            {duplicateMutation.isPending ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <Copy className="w-4 h-4" />
+                        {!isMAP && (
+                          <>
+                            <Button 
+                              variant="outline" 
+                              size="icon" 
+                              onClick={() => {
+                                setSelectedProcess(item);
+                                setShareDialogOpen(true);
+                              }}
+                              title="Compartilhar com Colaborador"
+                              className="text-green-600 hover:text-green-700 border-green-200 hover:bg-green-50"
+                            >
+                              <Mail className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="icon" 
+                              onClick={() => {
+                                setSelectedProcess(item);
+                                setHistoryDialogOpen(true);
+                              }}
+                              title="Ver Histórico de Compartilhamentos"
+                              className="text-purple-600 hover:text-purple-700 border-purple-200 hover:bg-purple-50"
+                            >
+                              <History className="w-4 h-4" />
+                            </Button>
+                            {item.pdf_url && (
+                              <Button variant="outline" size="icon" onClick={() => window.open(item.pdf_url, '_blank')} title="Baixar PDF">
+                                <Download className="w-4 h-4" />
+                              </Button>
                             )}
-                          </Button>
+                            {item.is_template && user?.role !== 'admin' && (
+                              <Button 
+                                variant="outline" 
+                                size="icon" 
+                                onClick={() => duplicateMutation.mutate(item)}
+                                disabled={duplicateMutation.isPending}
+                                title="Usar como Modelo"
+                                className="text-blue-600 hover:text-blue-700 border-blue-200 hover:bg-blue-50"
+                              >
+                                {duplicateMutation.isPending ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Copy className="w-4 h-4" />
+                                )}
+                              </Button>
+                            )}
+                          </>
                         )}
                       </CardFooter>
                     </Card>

@@ -252,6 +252,7 @@ export default function BibliotecaProcessos() {
           map={editingMAP}
           areaId={selectedArea?.id}
           areas={areas}
+          workshopId={workshop?.id}
           isLoading={mapM.isPending}
         />
 
