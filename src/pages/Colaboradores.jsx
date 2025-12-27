@@ -14,6 +14,7 @@ import AITrainingSuggestions from "../components/rh/AITrainingSuggestions";
 import DynamicHelpSystem from "../components/help/DynamicHelpSystem";
 import QuickTipsBar from "../components/help/QuickTipsBar";
 import AdvancedFilter from "@/components/shared/AdvancedFilter";
+import PermissionGuard from "@/components/auth/PermissionGuard";
 // import ActivityNotificationSettings from "../components/rh/ActivityNotificationSettings"; // Removed
 // import { Settings } from "lucide-react"; // Removed if unused elsewhere
 
@@ -155,14 +156,16 @@ export default function Colaboradores() {
             <h1 className="text-4xl font-bold text-gray-900 mb-2">Colaboradores</h1>
             <p className="text-gray-600">Gerencie sua equipe com inteligência artificial</p>
           </div>
-          <Button
-            onClick={() => navigate(createPageUrl("CadastroColaborador"))}
-            className="bg-blue-600 hover:bg-blue-700"
-            id="btn-novo-colaborador"
-          >
-            <UserPlus className="w-5 h-5 mr-2" />
-            Novo Colaborador
-          </Button>
+          <PermissionGuard resource="employees" action="create" hideOnDenied>
+            <Button
+              onClick={() => navigate(createPageUrl("CadastroColaborador"))}
+              className="bg-blue-600 hover:bg-blue-700"
+              id="btn-novo-colaborador"
+            >
+              <UserPlus className="w-5 h-5 mr-2" />
+              Novo Colaborador
+            </Button>
+          </PermissionGuard>
           
           {/* Button Notificações removido e movido para Admin */}
         </div>
@@ -288,67 +291,77 @@ export default function Colaboradores() {
                       
                       <div className="space-y-2 mt-4">
                         <div className="flex gap-2">
-                          <Button
-                            onClick={() => navigate(createPageUrl("DetalhesColaborador") + `?id=${employee.id}`)}
-                            className="flex-1"
-                            size="sm"
-                            variant="outline"
-                          >
-                            Ver Detalhes
-                          </Button>
-                          <Button
-                            onClick={() => navigate(createPageUrl("ConvidarColaborador") + `?id=${employee.id}`)}
-                            size="sm"
-                            className="bg-blue-600 hover:bg-blue-700"
-                            title="Convidar para o Portal"
-                          >
-                            <UserPlus className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            onClick={() => setSelectedEmployee(employee)}
-                            size="sm"
-                            className="bg-purple-600 hover:bg-purple-700"
-                            title="Sugestões de IA"
-                          >
-                            <Sparkles className="w-4 h-4" />
-                          </Button>
+                          <PermissionGuard resource="employees" action="read" hideOnDenied>
+                            <Button
+                              onClick={() => navigate(createPageUrl("DetalhesColaborador") + `?id=${employee.id}`)}
+                              className="flex-1"
+                              size="sm"
+                              variant="outline"
+                            >
+                              Ver Detalhes
+                            </Button>
+                          </PermissionGuard>
+                          <PermissionGuard resource="employees" action="create" hideOnDenied>
+                            <Button
+                              onClick={() => navigate(createPageUrl("ConvidarColaborador") + `?id=${employee.id}`)}
+                              size="sm"
+                              className="bg-blue-600 hover:bg-blue-700"
+                              title="Convidar para o Portal"
+                            >
+                              <UserPlus className="w-4 h-4" />
+                            </Button>
+                          </PermissionGuard>
+                          <PermissionGuard resource="employees" action="update" hideOnDenied>
+                            <Button
+                              onClick={() => setSelectedEmployee(employee)}
+                              size="sm"
+                              className="bg-purple-600 hover:bg-purple-700"
+                              title="Sugestões de IA"
+                            >
+                              <Sparkles className="w-4 h-4" />
+                            </Button>
+                          </PermissionGuard>
                         </div>
                         <div className="flex gap-2">
-                          <Button
-                            onClick={async () => {
-                              if (confirm(`${employee.status === 'ativo' ? 'Inativar' : 'Ativar'} ${employee.full_name}?`)) {
-                                try {
-                                  await base44.entities.Employee.update(employee.id, {
-                                    status: employee.status === 'ativo' ? 'inativo' : 'ativo'
-                                  });
-                                  window.location.reload();
-                                } catch (error) {
-                                  console.error(error);
+                          <PermissionGuard resource="employees" action="update" hideOnDenied>
+                            <Button
+                              onClick={async () => {
+                                if (confirm(`${employee.status === 'ativo' ? 'Inativar' : 'Ativar'} ${employee.full_name}?`)) {
+                                  try {
+                                    await base44.entities.Employee.update(employee.id, {
+                                      status: employee.status === 'ativo' ? 'inativo' : 'ativo'
+                                    });
+                                    window.location.reload();
+                                  } catch (error) {
+                                    console.error(error);
+                                  }
                                 }
-                              }
-                            }}
-                            size="sm"
-                            variant="outline"
-                            className="flex-1"
-                          >
-                            {employee.status === 'ativo' ? 'Inativar' : 'Ativar'}
-                          </Button>
-                          <Button
-                            onClick={async () => {
-                              if (confirm(`EXCLUIR ${employee.full_name}? Ação irreversível!`)) {
-                                try {
-                                  await base44.entities.Employee.delete(employee.id);
-                                  window.location.reload();
-                                } catch (error) {
-                                  console.error(error);
+                              }}
+                              size="sm"
+                              variant="outline"
+                              className="flex-1"
+                            >
+                              {employee.status === 'ativo' ? 'Inativar' : 'Ativar'}
+                            </Button>
+                          </PermissionGuard>
+                          <PermissionGuard resource="employees" action="delete" hideOnDenied>
+                            <Button
+                              onClick={async () => {
+                                if (confirm(`EXCLUIR ${employee.full_name}? Ação irreversível!`)) {
+                                  try {
+                                    await base44.entities.Employee.delete(employee.id);
+                                    window.location.reload();
+                                  } catch (error) {
+                                    console.error(error);
+                                  }
                                 }
-                              }
-                            }}
-                            size="sm"
-                            variant="destructive"
-                          >
-                            Excluir
-                          </Button>
+                              }}
+                              size="sm"
+                              variant="destructive"
+                            >
+                              Excluir
+                            </Button>
+                          </PermissionGuard>
                         </div>
                       </div>
                     </div>
