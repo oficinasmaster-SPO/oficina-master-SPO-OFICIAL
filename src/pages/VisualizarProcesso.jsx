@@ -98,7 +98,7 @@ export default function VisualizarProcesso() {
         </div>
 
         <div className="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-200 print:shadow-none print:border-0">
-          {/* Cabeçalho IT */}
+          {/* Cabeçalho MAP */}
           <div className="border-b-2 border-gray-800 p-6 flex justify-between items-center">
             <div className="flex items-center gap-4">
               {/* Logo Placeholder - poderia vir da oficina */}
@@ -106,15 +106,23 @@ export default function VisualizarProcesso() {
                 OM
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 uppercase">Instrução de Trabalho</h1>
+                <h1 className="text-2xl font-bold text-gray-900 uppercase">Mapa da Auto Gestão do Processo</h1>
                 <h2 className="text-lg text-gray-600">{doc.title}</h2>
               </div>
             </div>
             <div className="text-right text-sm text-gray-600">
               <p><strong>Código:</strong> {doc.code || "N/A"}</p>
-              <p><strong>Revisão:</strong> {doc.revision || "0"}</p>
+              <p><strong>Versão:</strong> {doc.revision || "1"}</p>
               <p><strong>Data:</strong> {new Date(doc.updated_date || doc.created_date).toLocaleDateString()}</p>
               <Badge variant="outline" className="mt-1">{doc.category}</Badge>
+              {doc.status && (
+                <Badge 
+                  variant={doc.status === 'ativo' ? 'default' : doc.status === 'obsoleto' ? 'destructive' : 'secondary'} 
+                  className="mt-1 ml-2"
+                >
+                  {doc.status}
+                </Badge>
+              )}
             </div>
           </div>
 

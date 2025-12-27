@@ -90,6 +90,17 @@ export default function GerenciarProcessos() {
     enabled: !!user && (user.role === 'admin' || !!workshop)
   });
 
+  const generateMapCode = async () => {
+    const allDocs = await base44.entities.ProcessDocument.list();
+    const mapDocs = allDocs.filter(d => d.code && d.code.startsWith('MAP-'));
+    const numbers = mapDocs.map(d => {
+      const match = d.code.match(/MAP-(\d+)/);
+      return match ? parseInt(match[1]) : 0;
+    });
+    const maxNumber = numbers.length > 0 ? Math.max(...numbers) : 0;
+    return `MAP-${String(maxNumber + 1).padStart(4, '0')}`;
+  };
+
   // Handle auto-open edit dialog from URL
   useEffect(() => {
     const editId = searchParams.get('edit');
@@ -104,8 +115,31 @@ export default function GerenciarProcessos() {
   const saveMutation = useMutation({
     mutationFn: async (data) => {
       if (editingDoc) {
-        return await base44.entities.ProcessDocument.update(editingDoc.id, data);
+        // Ao atualizar, registrar no histórico de versões
+        const versionEntry = {
+          revision: data.revision,
+          date: new Date().toISOString(),
+          changed_by: user.full_name || user.email,
+          changes: "Atualização do documento"
+        };
+        const updatedHistory = [...(editingDoc.version_history || []), versionEntry];
+        return await base44.entities.ProcessDocument.update(editingDoc.id, {
+          ...data,
+          version_history: updatedHistory
+        });
       } else {
+        // Gerar código automaticamente se não foi fornecido
+        if (!data.code || data.code.trim() === "") {
+          data.code = await generateMapCode();
+        }
+        // Criar histórico inicial
+        data.version_history = [{
+          revision: data.revision || "1",
+          date: new Date().toISOString(),
+          changed_by: user.full_name || user.email,
+          changes: "Criação do documento"
+        }];
+        data.status = "ativo";
         return await base44.entities.ProcessDocument.create(data);
       }
     },
@@ -219,7 +253,7 @@ export default function GerenciarProcessos() {
     try {
       const prompt = `
         Atue como um consultor de processos especializado em oficinas mecânicas (Metodologia Oficinas Master).
-        Gere o conteúdo COMPLETO para uma Instrução de Trabalho (IT), correlacionando todas as etapas.
+        Gere o conteúdo COMPLETO para um Mapa da Auto Gestão do Processo (MAP), correlacionando todas as etapas.
         
         Dados de entrada:
         Título: ${formData.title}
@@ -436,12 +470,16 @@ export default function GerenciarProcessos() {
                       />
                     </div>
                     <div>
-                      <Label>Código</Label>
+                      <Label>Código (auto-gerado se vazio)</Label>
                       <Input 
                         value={formData.code} 
                         onChange={e => setFormData({...formData, code: e.target.value})} 
-                        placeholder="Ex: MAP.0003"
+                        placeholder="Ex: MAP-0001 (gerado automaticamente)"
+                        disabled={!editingDoc}
                       />
+                      <p className="text-xs text-gray-500 mt-1">
+                        {editingDoc ? "Editar código manualmente" : "Será gerado automaticamente ao salvar"}
+                      </p>
                     </div>
                   </div>
 
@@ -463,11 +501,15 @@ export default function GerenciarProcessos() {
                       </Select>
                     </div>
                     <div>
-                      <Label>Revisão</Label>
+                      <Label>Versão do Documento</Label>
                       <Input 
                         value={formData.revision} 
-                        onChange={e => setFormData({...formData, revision: e.target.value})} 
+                        onChange={e => setFormData({...formData, revision: e.target.value})}
+                        placeholder="Ex: 1, 2, 3..."
                       />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Incrementar ao atualizar o processo
+                      </p>
                     </div>
                   </div>
 
