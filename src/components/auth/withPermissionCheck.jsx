@@ -1,46 +1,24 @@
 import React from "react";
-import { usePermissions } from "@/components/hooks/usePermissions";
+import { PermissionGuard } from "./PermissionGuard";
 
 /**
- * HOC para proteger componentes com verificação de permissão
- * Uso: export default withPermissionCheck(MeuComponente, 'gerenciar_roles');
+ * HOC para proteger componentes com verificação de permissões granulares
+ * @param {React.Component} Component - Componente a ser protegido
+ * @param {string} resource - ID do recurso
+ * @param {string} action - Ação necessária
+ * @param {object} options - Opções adicionais (fallback, hideOnDenied)
  */
-export function withPermissionCheck(Component, requiredPermission, requiredAction) {
+export function withPermissionCheck(Component, resource, action, options = {}) {
   return function ProtectedComponent(props) {
-    const { hasPermission, canPerform, loading } = usePermissions();
-
-    if (loading) {
-      return (
-        <div className="flex items-center justify-center h-96">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
-        </div>
-      );
-    }
-
-    const hasAccess = requiredPermission 
-      ? hasPermission(requiredPermission) 
-      : (requiredAction ? canPerform(requiredAction) : true);
-
-    if (!hasAccess) {
-      return null; // Não renderiza o componente
-    }
-
-    return <Component {...props} />;
+    return (
+      <PermissionGuard 
+        resource={resource} 
+        action={action}
+        fallback={options.fallback}
+        hideOnDenied={options.hideOnDenied}
+      >
+        <Component {...props} />
+      </PermissionGuard>
+    );
   };
-}
-
-/**
- * Componente para renderização condicional baseada em permissão
- * Uso: <IfHasPermission permission="gerenciar_roles">...</IfHasPermission>
- */
-export function IfHasPermission({ children, permission, action }) {
-  const { hasPermission, canPerform, loading } = usePermissions();
-
-  if (loading) return null;
-
-  const hasAccess = permission 
-    ? hasPermission(permission) 
-    : (action ? canPerform(action) : true);
-
-  return hasAccess ? <>{children}</> : null;
 }

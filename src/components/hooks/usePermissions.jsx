@@ -148,14 +148,52 @@ export function usePermissions() {
 
   /**
    * Verifica permissão granular (recurso + ação)
+   * @param {string} resourceId - ID do recurso (ex: 'employees', 'workshops')
+   * @param {string} actionId - ID da ação (ex: 'create', 'read', 'update', 'delete')
+   * @returns {boolean} - true se o usuário tem a permissão
    */
-  const hasGranularPermission = (resourceId, actionId) => {
+  const hasGranularPermission = async (resourceId, actionId) => {
     if (!user) return false;
     if (user.role === 'admin') return true;
     
-    // Buscar permissões granulares do cargo
-    // Essa função deve ser usada em conjunto com granular_permissions
-    return false; // Implementar conforme necessidade
+    try {
+      // Buscar configuração de permissões granulares
+      const settings = await base44.entities.SystemSetting.filter({ key: 'granular_permissions' });
+      
+      if (!settings || settings.length === 0) {
+        console.warn("⚠️ [hasGranularPermission] Configuração granular não encontrada");
+        return false;
+      }
+      
+      const granularConfig = JSON.parse(settings[0].value || '{}');
+      
+      // Verificar permissão por job_role via Employee
+      if (profile?.job_roles && profile.job_roles.length > 0) {
+        for (const jobRole of profile.job_roles) {
+          const roleConfig = granularConfig[jobRole];
+          if (roleConfig && roleConfig.resources && roleConfig.resources[resourceId]) {
+            const actions = roleConfig.resources[resourceId].actions || [];
+            if (actions.includes(actionId)) {
+              console.log(`✅ [hasGranularPermission] ${jobRole} tem ${actionId} em ${resourceId}`);
+              return true;
+            }
+          }
+        }
+      }
+      
+      // Verificar permissões de módulos
+      if (profile?.module_permissions) {
+        const moduleAccess = profile.module_permissions[resourceId];
+        if (moduleAccess === 'total') return true;
+        if (moduleAccess === 'visualizacao' && actionId === 'read') return true;
+      }
+      
+      console.log(`❌ [hasGranularPermission] Sem permissão ${actionId} em ${resourceId}`);
+      return false;
+    } catch (error) {
+      console.error("❌ [hasGranularPermission] Erro:", error);
+      return false;
+    }
   };
 
   /**

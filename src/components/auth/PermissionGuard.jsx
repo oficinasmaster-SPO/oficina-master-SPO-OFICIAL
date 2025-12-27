@@ -1,42 +1,100 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { usePermissions } from "@/components/hooks/usePermissions";
-import { AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
-import { createPageUrl } from "@/utils";
+import { Loader2, Lock } from "lucide-react";
 
 /**
- * Componente para proteger páginas por permissão
- * Uso: <PermissionGuard permission="gerenciar_roles">...</PermissionGuard>
+ * Componente para proteger recursos com permissões granulares
+ * @param {string} resource - ID do recurso (ex: 'employees', 'workshops')
+ * @param {string} action - Ação necessária (ex: 'create', 'read', 'update', 'delete')
+ * @param {React.ReactNode} children - Conteúdo a ser renderizado se tiver permissão
+ * @param {React.ReactNode} fallback - Conteúdo alternativo se não tiver permissão
+ * @param {boolean} hideOnDenied - Se true, não renderiza nada quando negado
  */
-export default function PermissionGuard({ children, permission, action, redirectTo = "Home" }) {
-  const { hasPermission, canPerform, loading } = usePermissions();
-  const navigate = useNavigate();
+export function PermissionGuard({ 
+  resource, 
+  action, 
+  children, 
+  fallback = null,
+  hideOnDenied = false 
+}) {
+  const { user, hasGranularPermission, loading } = usePermissions();
+  const [hasAccess, setHasAccess] = useState(false);
+  const [checking, setChecking] = useState(true);
 
-  if (loading) {
+  useEffect(() => {
+    const checkPermission = async () => {
+      if (!user || loading) return;
+      
+      setChecking(true);
+      try {
+        const allowed = await hasGranularPermission(resource, action);
+        setHasAccess(allowed);
+      } catch (error) {
+        console.error("Error checking permission:", error);
+        setHasAccess(false);
+      } finally {
+        setChecking(false);
+      }
+    };
+
+    checkPermission();
+  }, [user, resource, action, loading]);
+
+  if (loading || checking) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+      <div className="flex items-center gap-2 text-gray-400">
+        <Loader2 className="w-4 h-4 animate-spin" />
+        <span className="text-sm">Verificando permissões...</span>
       </div>
     );
   }
 
-  const hasAccess = permission ? hasPermission(permission) : (action ? canPerform(action) : true);
-
   if (!hasAccess) {
-    return (
-      <div className="flex flex-col items-center justify-center h-96 p-6">
-        <AlertCircle className="w-16 h-16 text-red-500 mb-4" />
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Acesso Negado</h2>
-        <p className="text-gray-600 text-center mb-6">
-          Você não tem permissão para acessar esta funcionalidade.
-        </p>
-        <Button onClick={() => navigate(createPageUrl(redirectTo))}>
-          Voltar ao Início
-        </Button>
+    if (hideOnDenied) return null;
+    
+    return fallback || (
+      <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg text-gray-500">
+        <Lock className="w-4 h-4" />
+        <span className="text-sm">Você não tem permissão para esta ação.</span>
       </div>
     );
   }
 
   return <>{children}</>;
+}
+
+/**
+ * Hook para verificar permissão granular de forma assíncrona
+ * @param {string} resource - ID do recurso
+ * @param {string} action - Ação necessária
+ * @returns {object} - { hasAccess, checking }
+ */
+export function useGranularPermission(resource, action) {
+  const { user, hasGranularPermission, loading } = usePermissions();
+  const [hasAccess, setHasAccess] = useState(false);
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    const checkPermission = async () => {
+      if (!user || loading) {
+        setChecking(false);
+        return;
+      }
+      
+      setChecking(true);
+      try {
+        const allowed = await hasGranularPermission(resource, action);
+        setHasAccess(allowed);
+      } catch (error) {
+        console.error("Error checking permission:", error);
+        setHasAccess(false);
+      } finally {
+        setChecking(false);
+      }
+    };
+
+    checkPermission();
+  }, [user, resource, action, loading]);
+
+  return { hasAccess, checking };
 }
