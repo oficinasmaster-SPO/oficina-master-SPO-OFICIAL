@@ -2,10 +2,15 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, PieChart, Users, Activity } from "lucide-react";
+import { BarChart3, Users, Activity, TrendingUp, AlertCircle, Flame } from "lucide-react";
 import ProfileUsageStats from "./ProfileUsageStats";
 import PermissionDistribution from "./PermissionDistribution";
 import RBACLogStats from "../audit/RBACLogStats";
+import PermissionTrendsChart from "./PermissionTrendsChart";
+import UnusedPermissions from "./UnusedPermissions";
+import ProfileComplexityAnalysis from "./ProfileComplexityAnalysis";
+import PermissionUsageHeatmap from "./PermissionUsageHeatmap";
+import PermissionChangeTimeline from "./PermissionChangeTimeline";
 
 export default function RBACAnalyticsDashboard() {
   const { data: profiles = [] } = useQuery({
@@ -35,21 +40,33 @@ export default function RBACAnalyticsDashboard() {
   const { data: logs = [] } = useQuery({
     queryKey: ['rbac-logs-analytics'],
     queryFn: async () => {
-      const result = await base44.entities.RBACLog.list('-created_date', 500);
+      const result = await base44.entities.RBACLog.list('-created_date', 1000);
       return Array.isArray(result) ? result : [];
     }
   });
 
   return (
-    <Tabs defaultValue="usage" className="w-full">
-      <TabsList className="grid w-full grid-cols-3">
+    <Tabs defaultValue="overview" className="w-full">
+      <TabsList className="grid w-full grid-cols-6">
+        <TabsTrigger value="overview" className="gap-2">
+          <BarChart3 className="w-4 h-4" />
+          Visão Geral
+        </TabsTrigger>
+        <TabsTrigger value="trends" className="gap-2">
+          <TrendingUp className="w-4 h-4" />
+          Tendências
+        </TabsTrigger>
         <TabsTrigger value="usage" className="gap-2">
           <Users className="w-4 h-4" />
-          Uso de Perfis
+          Uso
         </TabsTrigger>
-        <TabsTrigger value="distribution" className="gap-2">
-          <BarChart3 className="w-4 h-4" />
-          Distribuição
+        <TabsTrigger value="heatmap" className="gap-2">
+          <Flame className="w-4 h-4" />
+          Mapa Calor
+        </TabsTrigger>
+        <TabsTrigger value="complexity" className="gap-2">
+          <AlertCircle className="w-4 h-4" />
+          Complexidade
         </TabsTrigger>
         <TabsTrigger value="activity" className="gap-2">
           <Activity className="w-4 h-4" />
@@ -57,12 +74,30 @@ export default function RBACAnalyticsDashboard() {
         </TabsTrigger>
       </TabsList>
 
-      <TabsContent value="usage" className="mt-6">
-        <ProfileUsageStats profiles={profiles} employees={employees} />
+      <TabsContent value="overview" className="mt-6">
+        <div className="space-y-6">
+          <ProfileUsageStats profiles={profiles} employees={employees} />
+          <PermissionDistribution profiles={profiles} customRoles={customRoles} />
+        </div>
       </TabsContent>
 
-      <TabsContent value="distribution" className="mt-6">
-        <PermissionDistribution profiles={profiles} customRoles={customRoles} />
+      <TabsContent value="trends" className="mt-6">
+        <div className="space-y-6">
+          <PermissionTrendsChart logs={logs} />
+          <PermissionChangeTimeline logs={logs} />
+        </div>
+      </TabsContent>
+
+      <TabsContent value="usage" className="mt-6">
+        <UnusedPermissions profiles={profiles} />
+      </TabsContent>
+
+      <TabsContent value="heatmap" className="mt-6">
+        <PermissionUsageHeatmap profiles={profiles} />
+      </TabsContent>
+
+      <TabsContent value="complexity" className="mt-6">
+        <ProfileComplexityAnalysis profiles={profiles} />
       </TabsContent>
 
       <TabsContent value="activity" className="mt-6">
