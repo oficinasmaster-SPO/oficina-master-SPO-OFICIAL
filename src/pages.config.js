@@ -127,7 +127,6 @@ import RituaisAculturamento from './pages/RituaisAculturamento';
 import SelecionarDiagnostico from './pages/SelecionarDiagnostico';
 import Tarefas from './pages/Tarefas';
 import TechnicianQGP from './pages/TechnicianQGP';
-import TesteUsuarios from './pages/TesteUsuarios';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import Usuarios from './pages/Usuarios';
 import UsuariosAdmin from './pages/UsuariosAdmin';
@@ -267,7 +266,6 @@ export const PAGES = {
     "SelecionarDiagnostico": SelecionarDiagnostico,
     "Tarefas": Tarefas,
     "TechnicianQGP": TechnicianQGP,
-    "TesteUsuarios": TesteUsuarios,
     "TreinamentoVendas": TreinamentoVendas,
     "Usuarios": Usuarios,
     "UsuariosAdmin": UsuariosAdmin,
