@@ -6,12 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Search, FileText, Download, Eye, Filter, Briefcase, DollarSign, Settings, Users, BarChart3, Truck, Copy, Loader2 } from "lucide-react";
+import { Search, FileText, Download, Eye, Filter, Briefcase, DollarSign, Settings, Users, BarChart3, Truck, Copy, Loader2, Mail, History } from "lucide-react";
 import { createPageUrl } from "@/utils";
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import AdminViewBanner from "../components/shared/AdminViewBanner";
+import ShareProcessDialog from "../components/processes/ShareProcessDialog";
+import ShareHistoryDialog from "../components/processes/ShareHistoryDialog";
 
 export default function MeusProcessos() {
   const navigate = useNavigate();
@@ -21,6 +23,9 @@ export default function MeusProcessos() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("Todos");
   const [isAdminView, setIsAdminView] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
+  const [selectedProcess, setSelectedProcess] = useState(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -216,12 +221,10 @@ export default function MeusProcessos() {
                           <FileText className="w-12 h-12 text-gray-400 group-hover:text-red-500 transition-colors" />
                         </div>
                       </CardContent>
-                      <CardFooter className="pt-0 gap-2">
+                      <CardFooter className="pt-0 gap-2 flex-wrap">
                         <Button 
                           className="flex-1 bg-red-600 hover:bg-red-700" 
                           onClick={() => {
-                            // SEMPRE tenta abrir o visualizador interno primeiro
-                            // O visualizador interno agora trata tanto conteúdo estruturado quanto PDF embed
                             navigate(createPageUrl('VisualizarProcesso') + `?id=${doc.id}`);
                           }}
                         >
@@ -247,6 +250,34 @@ export default function MeusProcessos() {
                             )}
                           </Button>
                         )}
+                        {!doc.is_template && (
+                          <>
+                            <Button 
+                              variant="outline" 
+                              size="icon" 
+                              onClick={() => {
+                                setSelectedProcess(doc);
+                                setShareDialogOpen(true);
+                              }}
+                              title="Compartilhar com Colaborador"
+                              className="text-green-600 hover:text-green-700 border-green-200 hover:bg-green-50"
+                            >
+                              <Mail className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="icon" 
+                              onClick={() => {
+                                setSelectedProcess(doc);
+                                setHistoryDialogOpen(true);
+                              }}
+                              title="Ver Histórico de Compartilhamentos"
+                              className="text-purple-600 hover:text-purple-700 border-purple-200 hover:bg-purple-50"
+                            >
+                              <History className="w-4 h-4" />
+                            </Button>
+                          </>
+                        )}
                       </CardFooter>
                     </Card>
                   );
@@ -255,6 +286,25 @@ export default function MeusProcessos() {
             )}
           </TabsContent>
         </Tabs>
+
+        <ShareProcessDialog
+          open={shareDialogOpen}
+          onClose={() => {
+            setShareDialogOpen(false);
+            setSelectedProcess(null);
+          }}
+          process={selectedProcess}
+          workshop={workshop}
+        />
+
+        <ShareHistoryDialog
+          open={historyDialogOpen}
+          onClose={() => {
+            setHistoryDialogOpen(false);
+            setSelectedProcess(null);
+          }}
+          process={selectedProcess}
+        />
       </div>
     </div>
   );
