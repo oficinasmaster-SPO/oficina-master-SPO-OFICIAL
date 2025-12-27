@@ -231,6 +231,30 @@ export default function MeusProcessos() {
                           <Eye className="w-4 h-4 mr-2" />
                           Visualizar
                         </Button>
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+                          onClick={() => {
+                            setSelectedProcess(doc);
+                            setShareDialogOpen(true);
+                          }}
+                          title="Compartilhar com Colaborador"
+                          className="text-green-600 hover:text-green-700 border-green-200 hover:bg-green-50"
+                        >
+                          <Mail className="w-4 h-4" />
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+                          onClick={() => {
+                            setSelectedProcess(doc);
+                            setHistoryDialogOpen(true);
+                          }}
+                          title="Ver Histórico de Compartilhamentos"
+                          className="text-purple-600 hover:text-purple-700 border-purple-200 hover:bg-purple-50"
+                        >
+                          <History className="w-4 h-4" />
+                        </Button>
                         <Button variant="outline" size="icon" onClick={() => window.open(doc.pdf_url, '_blank')} title="Baixar PDF">
                           <Download className="w-4 h-4" />
                         </Button>
@@ -249,34 +273,6 @@ export default function MeusProcessos() {
                               <Copy className="w-4 h-4" />
                             )}
                           </Button>
-                        )}
-                        {!doc.is_template && (
-                          <>
-                            <Button 
-                              variant="outline" 
-                              size="icon" 
-                              onClick={() => {
-                                setSelectedProcess(doc);
-                                setShareDialogOpen(true);
-                              }}
-                              title="Compartilhar com Colaborador"
-                              className="text-green-600 hover:text-green-700 border-green-200 hover:bg-green-50"
-                            >
-                              <Mail className="w-4 h-4" />
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="icon" 
-                              onClick={() => {
-                                setSelectedProcess(doc);
-                                setHistoryDialogOpen(true);
-                              }}
-                              title="Ver Histórico de Compartilhamentos"
-                              className="text-purple-600 hover:text-purple-700 border-purple-200 hover:bg-purple-50"
-                            >
-                              <History className="w-4 h-4" />
-                            </Button>
-                          </>
                         )}
                       </CardFooter>
                     </Card>
