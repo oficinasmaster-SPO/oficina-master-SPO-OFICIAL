@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, Users, Eye, FileText } from "lucide-react";
+import { Shield, Users, Eye, FileText, BarChart3 } from "lucide-react";
 import PermissionGuard from "@/components/auth/PermissionGuard";
 import ProfilesManagement from "@/components/rbac/ProfilesManagement";
 import RolesManagement from "@/components/rbac/RolesManagement";
 import UserPermissionsViewer from "@/components/rbac/UserPermissionsViewer";
 import DocumentacaoRBAC from "@/pages/DocumentacaoRBAC";
+import RBACAnalyticsDashboard from "@/components/rbac/analytics/RBACAnalyticsDashboard";
 
 export default function GestaoRBAC() {
   const [activeTab, setActiveTab] = useState("profiles");
@@ -26,24 +27,32 @@ export default function GestaoRBAC() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-3xl grid-cols-4">
+          <TabsList className="grid w-full max-w-4xl grid-cols-5">
+            <TabsTrigger value="analytics" className="gap-2">
+              <BarChart3 className="w-4 h-4" />
+              Analytics
+            </TabsTrigger>
             <TabsTrigger value="profiles" className="gap-2">
               <Users className="w-4 h-4" />
-              Gestão de Perfis
+              Perfis
             </TabsTrigger>
             <TabsTrigger value="roles" className="gap-2">
               <Shield className="w-4 h-4" />
-              Gerenciar Roles
+              Roles
             </TabsTrigger>
             <TabsTrigger value="user-permissions" className="gap-2">
               <Eye className="w-4 h-4" />
-              Permissões por Usuário
+              Usuários
             </TabsTrigger>
             <TabsTrigger value="documentation" className="gap-2">
               <FileText className="w-4 h-4" />
-              Documentação
+              Docs
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="analytics">
+            <RBACAnalyticsDashboard />
+          </TabsContent>
 
           <TabsContent value="profiles">
             <ProfilesManagement />
