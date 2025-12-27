@@ -1,15 +1,28 @@
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, Users, Eye, FileText, BarChart3 } from "lucide-react";
+import { Shield, Users, Eye, FileText, BarChart3, GitPullRequest } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
+import { Badge } from "@/components/ui/badge";
 import PermissionGuard from "@/components/auth/PermissionGuard";
 import ProfilesManagement from "@/components/rbac/ProfilesManagement";
 import RolesManagement from "@/components/rbac/RolesManagement";
 import UserPermissionsViewer from "@/components/rbac/UserPermissionsViewer";
 import DocumentacaoRBAC from "@/pages/DocumentacaoRBAC";
 import RBACAnalyticsDashboard from "@/components/rbac/analytics/RBACAnalyticsDashboard";
+import PendingRequestsList from "@/components/rbac/PendingRequestsList";
 
 export default function GestaoRBAC() {
   const [activeTab, setActiveTab] = useState("profiles");
+
+  const { data: pendingCount = 0 } = useQuery({
+    queryKey: ['pending-requests-count'],
+    queryFn: async () => {
+      const requests = await base44.entities.PermissionChangeRequest.filter({ status: 'pendente' });
+      return Array.isArray(requests) ? requests.length : 0;
+    },
+    refetchInterval: 30000
+  });
 
   return (
     <PermissionGuard resource="admin" action="read">
@@ -27,10 +40,19 @@ export default function GestaoRBAC() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-4xl grid-cols-5">
+          <TabsList className="grid w-full max-w-5xl grid-cols-6">
             <TabsTrigger value="analytics" className="gap-2">
               <BarChart3 className="w-4 h-4" />
               Analytics
+            </TabsTrigger>
+            <TabsTrigger value="approvals" className="gap-2 relative">
+              <GitPullRequest className="w-4 h-4" />
+              Aprovações
+              {pendingCount > 0 && (
+                <Badge className="ml-1 bg-orange-600 text-white h-5 min-w-5 px-1.5">
+                  {pendingCount}
+                </Badge>
+              )}
             </TabsTrigger>
             <TabsTrigger value="profiles" className="gap-2">
               <Users className="w-4 h-4" />
@@ -52,6 +74,10 @@ export default function GestaoRBAC() {
 
           <TabsContent value="analytics">
             <RBACAnalyticsDashboard />
+          </TabsContent>
+
+          <TabsContent value="approvals">
+            <PendingRequestsList />
           </TabsContent>
 
           <TabsContent value="profiles">
