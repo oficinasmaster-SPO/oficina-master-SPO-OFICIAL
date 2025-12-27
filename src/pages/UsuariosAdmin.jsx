@@ -17,7 +17,7 @@ import UserTable from "@/components/admin/users/UserTable";
 import UserDetailsDrawer from "@/components/admin/users/UserDetailsDrawer";
 import ApprovalBanner from "@/components/admin/users/ApprovalBanner";
 import PermissionRequestForm from "@/components/rbac/PermissionRequestForm";
-import { usePermissionChangeRequest, prepareProfileChangeRequest, prepareCustomRolesChangeRequest, prepareStatusChangeRequest } from "@/components/rbac/PermissionChangeManager";
+import { usePermissionChangeRequest, prepareProfileChangeRequest, prepareCustomRolesChangeRequest, prepareStatusChangeRequest } from "@/components/rbac/hooks/usePermissionChangeRequest";
 import AuditHistoryViewer from "@/components/rbac/audit/AuditHistoryViewer";
 
 export default function UsuariosAdmin() {
