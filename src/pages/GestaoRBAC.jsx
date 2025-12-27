@@ -11,7 +11,7 @@ export default function GestaoRBAC() {
   const [activeTab, setActiveTab] = useState("profiles");
 
   return (
-    <PermissionGuard action="gerenciar_roles">
+    <PermissionGuard resource="admin" action="read">
       <div className="space-y-6">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl flex items-center justify-center">
