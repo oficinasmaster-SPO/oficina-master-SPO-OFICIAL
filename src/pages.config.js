@@ -72,7 +72,6 @@ import GerenciarToursVideos from './pages/GerenciarToursVideos';
 import GerenciarTreinamentos from './pages/GerenciarTreinamentos';
 import GestaoDesafios from './pages/GestaoDesafios';
 import GestaoOficina from './pages/GestaoOficina';
-import GestaoPerfis from './pages/GestaoPerfis';
 import GestaoRBAC from './pages/GestaoRBAC';
 import GestaoRoles from './pages/GestaoRoles';
 import Historico from './pages/Historico';
@@ -211,7 +210,6 @@ export const PAGES = {
     "GerenciarTreinamentos": GerenciarTreinamentos,
     "GestaoDesafios": GestaoDesafios,
     "GestaoOficina": GestaoOficina,
-    "GestaoPerfis": GestaoPerfis,
     "GestaoRBAC": GestaoRBAC,
     "GestaoRoles": GestaoRoles,
     "Historico": Historico,
