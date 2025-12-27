@@ -8,7 +8,7 @@ import { Plus, Search, FolderOpen, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { toast } from "sonner";
-import { useProcessHierarchy } from "@/hooks/useProcessHierarchy";
+import { useProcessHierarchy } from "@/components/processos/useProcessHierarchy";
 import AreaCard from "@/components/processos/AreaCard";
 import MAPCard from "@/components/processos/MAPCard";
 import ITCard from "@/components/processos/ITCard";

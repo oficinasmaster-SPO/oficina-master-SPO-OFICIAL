@@ -134,6 +134,8 @@ import ConfiguracaoPermissoesGranulares from './pages/ConfiguracaoPermissoesGran
 import LogsAuditoriaRBAC from './pages/LogsAuditoriaRBAC';
 import SolicitarPermissoes from './pages/SolicitarPermissoes';
 import BibliotecaProcessos from './pages/BibliotecaProcessos';
+import VisualizarMAP from './pages/VisualizarMAP';
+import VisualizarIT from './pages/VisualizarIT';
 import __Layout from './Layout.jsx';
 
 
@@ -274,6 +276,8 @@ export const PAGES = {
     "LogsAuditoriaRBAC": LogsAuditoriaRBAC,
     "SolicitarPermissoes": SolicitarPermissoes,
     "BibliotecaProcessos": BibliotecaProcessos,
+    "VisualizarMAP": VisualizarMAP,
+    "VisualizarIT": VisualizarIT,
 }
 
 export const pagesConfig = {
