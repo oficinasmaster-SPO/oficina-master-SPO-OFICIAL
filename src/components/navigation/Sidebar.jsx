@@ -388,10 +388,18 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       icon: Package,
       items: [
         { 
+          name: 'Biblioteca de Processos', 
+          href: createPageUrl('BibliotecaProcessos'), 
+          icon: FileText,
+          description: 'Hierarquia: Áreas → MAPs → ITs',
+          highlight: true,
+          requiredPermission: 'processes.view'
+        },
+        { 
           name: 'Meus Processos (MAPs)', 
           href: createPageUrl('MeusProcessos'), 
           icon: Package,
-          description: 'Biblioteca de processos padrão',
+          description: 'Visualização rápida',
           requiredPermission: 'processes.view'
         }
       ]
