@@ -276,13 +276,28 @@ export default function UsuariosAdmin() {
         let requestData;
         
         if (profileChanged) {
-          const oldProfile = profiles.find(p => p.id === selectedUser.profile_id);
           const newProfile = profiles.find(p => p.id === data.profile_id);
-          requestData = prepareProfileChangeRequest(selectedUser, oldProfile, newProfile, '');
+          requestData = prepareProfileChangeRequest(
+            selectedUser, 
+            data.profile_id,
+            newProfile?.name || '',
+            currentUser,
+            ''
+          );
         } else if (customRolesChanged) {
-          requestData = prepareCustomRolesChangeRequest(selectedUser, selectedUser.custom_role_ids, data.custom_role_ids, '');
+          requestData = prepareCustomRolesChangeRequest(
+            selectedUser, 
+            data.custom_role_ids,
+            currentUser,
+            ''
+          );
         } else if (statusChanged) {
-          requestData = prepareStatusChangeRequest(selectedUser, selectedUser.user_status, data.user_status, '');
+          requestData = prepareStatusChangeRequest(
+            selectedUser, 
+            data.user_status,
+            currentUser,
+            ''
+          );
         }
 
         // Armazenar dados para usar no formulário de aprovação
