@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import DynamicHelpSystem from "../components/help/DynamicHelpSystem";
 import QuickTipsBar from "../components/help/QuickTipsBar";
 import AdvancedFilter from "@/components/shared/AdvancedFilter";
 import PermissionGuard from "@/components/auth/PermissionGuard";
+import { useProfileAutoAssignment } from "@/components/hooks/useProfileAutoAssignment";
 // import ActivityNotificationSettings from "../components/rh/ActivityNotificationSettings"; // Removed
 // import { Settings } from "lucide-react"; // Removed if unused elsewhere
 
@@ -24,6 +25,12 @@ export default function Colaboradores() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [maturityFilter, setMaturityFilter] = useState("all");
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const queryClient = useQueryClient();
+  
+  // Hook de atribuição automática de perfis
+  useProfileAutoAssignment(false, (employee, result) => {
+    queryClient.invalidateQueries({ queryKey: ['employees', workshop?.id] });
+  });
   // const [showSettings, setShowSettings] = useState(false);
 
   // Fetch user first to get workshop context
