@@ -138,11 +138,18 @@ export default function GerenciarProcessos() {
     mutationFn: async (data) => {
       if (editingDoc) {
         // Ao atualizar, registrar no histórico de versões
+        const reason = searchParams.get('reason');
+        const origin = searchParams.get('origin');
+        const impact = searchParams.get('impact');
+        
         const versionEntry = {
           revision: data.revision,
           date: new Date().toISOString(),
           changed_by: user.full_name || user.email,
-          changes: "Atualização do documento"
+          changes: reason ? decodeURIComponent(reason) : "Atualização do documento",
+          reason: reason ? decodeURIComponent(reason) : undefined,
+          origin: origin || "melhoria_continua",
+          expected_impact: impact ? decodeURIComponent(impact) : undefined
         };
         const updatedHistory = [...(editingDoc.version_history || []), versionEntry];
         return await base44.entities.ProcessDocument.update(editingDoc.id, {

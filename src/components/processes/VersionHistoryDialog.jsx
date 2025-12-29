@@ -101,42 +101,71 @@ export default function VersionHistoryDialog({ open, onClose, versionHistory, on
           </div>
 
           <div>
-            <h4 className="font-semibold mb-3">Histórico</h4>
+            <h4 className="font-semibold mb-3">Histórico de Versões</h4>
             {!versionHistory || versionHistory.length === 0 ? (
               <p className="text-sm text-gray-500 text-center py-4">Nenhuma versão registrada</p>
             ) : (
-              <div className="space-y-3">
-                {versionHistory.map((version, idx) => (
-                  <div key={idx} className="border rounded-lg p-4 hover:bg-gray-50">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline">v{version.revision}</Badge>
-                        {version.origin && (
-                          <Badge className={getOriginColor(version.origin)} variant="outline">
-                            {version.origin.replace(/_/g, ' ')}
-                          </Badge>
-                        )}
-                      </div>
-                      <span className="text-xs text-gray-500">
-                        {new Date(version.date).toLocaleDateString()}
-                      </span>
+              <div className="space-y-2">
+                {versionHistory.slice().reverse().map((version, idx) => {
+                  const [expanded, setExpanded] = React.useState(false);
+                  
+                  return (
+                    <div key={idx} className="border rounded-lg overflow-hidden hover:shadow-sm transition-shadow">
+                      <button
+                        onClick={() => setExpanded(!expanded)}
+                        className="w-full flex items-center justify-between p-3 hover:bg-gray-50 text-left"
+                      >
+                        <div className="flex items-center gap-3 flex-1">
+                          <Badge variant="outline" className="font-mono">v{version.revision}</Badge>
+                          {version.origin && (
+                            <Badge className={getOriginColor(version.origin)} variant="outline">
+                              {version.origin.replace(/_/g, ' ')}
+                            </Badge>
+                          )}
+                          <span className="text-sm text-gray-700 truncate flex-1">
+                            {version.changes || version.reason || 'Sem descrição'}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-gray-500">
+                            {new Date(version.date).toLocaleDateString('pt-BR')}
+                          </span>
+                          <span className="text-xs text-gray-400">
+                            {expanded ? '▼' : '▶'}
+                          </span>
+                        </div>
+                      </button>
+                      
+                      {expanded && (
+                        <div className="px-4 pb-3 bg-gray-50 border-t space-y-2">
+                          {version.changes && (
+                            <div>
+                              <p className="text-xs font-semibold text-gray-700">Alteração:</p>
+                              <p className="text-sm text-gray-600">{version.changes}</p>
+                            </div>
+                          )}
+                          {version.reason && (
+                            <div>
+                              <p className="text-xs font-semibold text-gray-700">Motivo:</p>
+                              <p className="text-sm text-gray-600">{version.reason}</p>
+                            </div>
+                          )}
+                          {version.expected_impact && (
+                            <div>
+                              <p className="text-xs font-semibold text-gray-700">Impacto Esperado:</p>
+                              <p className="text-sm text-gray-600">{version.expected_impact}</p>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-2 text-xs text-gray-500 pt-1">
+                            <span>👤 {version.changed_by}</span>
+                            <span>•</span>
+                            <span>🕐 {new Date(version.date).toLocaleString('pt-BR')}</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <p className="text-sm text-gray-700 mb-1">
-                      <strong>Alteração:</strong> {version.changes}
-                    </p>
-                    {version.reason && (
-                      <p className="text-sm text-gray-600">
-                        <strong>Motivo:</strong> {version.reason}
-                      </p>
-                    )}
-                    {version.expected_impact && (
-                      <p className="text-sm text-gray-600">
-                        <strong>Impacto:</strong> {version.expected_impact}
-                      </p>
-                    )}
-                    <p className="text-xs text-gray-500 mt-1">Por: {version.changed_by}</p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
