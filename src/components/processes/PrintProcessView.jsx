@@ -6,17 +6,15 @@ export default function PrintProcessView({ processDoc, its = [], workshop }) {
   const styles = {
     container: {
       width: '210mm',
+      maxWidth: '100%',
       margin: '0 auto',
-      padding: '15mm',
+      padding: '20mm',
       backgroundColor: 'white',
       color: '#000',
       fontFamily: 'Arial, sans-serif',
       fontSize: '11pt',
       lineHeight: '1.6',
-      boxSizing: 'border-box',
-      position: 'relative',
-      left: '50%',
-      transform: 'translateX(-50%)'
+      boxSizing: 'border-box'
     },
     header: {
       marginBottom: '20px',
