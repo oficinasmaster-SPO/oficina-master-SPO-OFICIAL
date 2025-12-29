@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Search, FileText, Download, Eye, Filter, Briefcase, DollarSign, Settings, Users, BarChart3, Truck, Copy, Loader2, Mail, History } from "lucide-react";
+import { Search, FileText, Download, Eye, Filter, Briefcase, DollarSign, Settings, Users, BarChart3, Truck, Copy, Loader2, Mail, History, LayoutGrid, List } from "lucide-react";
 import { createPageUrl } from "@/utils";
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -14,6 +14,8 @@ import { toast } from "sonner";
 import AdminViewBanner from "../components/shared/AdminViewBanner";
 import ShareProcessDialog from "../components/processes/ShareProcessDialog";
 import ShareHistoryDialog from "../components/processes/ShareHistoryDialog";
+import AreaGroupedView from "../components/processes/AreaGroupedView";
+import ProcessHierarchyView from "../components/processes/ProcessHierarchyView";
 
 export default function MeusProcessos() {
   const navigate = useNavigate();
@@ -64,6 +66,18 @@ export default function MeusProcessos() {
       return allDocs;
     },
     enabled: !!user
+  });
+
+  const { data: areas = [] } = useQuery({
+    queryKey: ['process-areas'],
+    queryFn: async () => await base44.entities.ProcessArea.list(),
+    initialData: []
+  });
+
+  const { data: its = [] } = useQuery({
+    queryKey: ['instruction-documents'],
+    queryFn: async () => await base44.entities.InstructionDocument.list(),
+    initialData: []
   });
 
   // Filter documents based on user access and workshop
@@ -154,7 +168,7 @@ export default function MeusProcessos() {
           </Link>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between mb-6">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
             <Input 
@@ -163,6 +177,32 @@ export default function MeusProcessos() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant={viewMode === "cards" ? "default" : "outline"}
+              onClick={() => setViewMode("cards")}
+              size="sm"
+            >
+              <LayoutGrid className="w-4 h-4 mr-2" />
+              Cards
+            </Button>
+            <Button
+              variant={viewMode === "areas" ? "default" : "outline"}
+              onClick={() => setViewMode("areas")}
+              size="sm"
+            >
+              <List className="w-4 h-4 mr-2" />
+              Por Área
+            </Button>
+            <Button
+              variant={viewMode === "hierarchy" ? "default" : "outline"}
+              onClick={() => setViewMode("hierarchy")}
+              size="sm"
+            >
+              <List className="w-4 h-4 mr-2" />
+              Hierarquia
+            </Button>
           </div>
         </div>
 
@@ -192,6 +232,19 @@ export default function MeusProcessos() {
                 <h3 className="text-lg font-medium text-gray-900">Nenhum processo encontrado</h3>
                 <p className="text-gray-500">Tente mudar os filtros ou busque por outro termo.</p>
               </div>
+            ) : viewMode === "areas" ? (
+              <AreaGroupedView
+                areas={areas}
+                processes={filteredDocs}
+                onSelectProcess={(process) => navigate(createPageUrl('VisualizarProcesso') + '?id=' + process.id)}
+              />
+            ) : viewMode === "hierarchy" ? (
+              <ProcessHierarchyView
+                maps={filteredDocs}
+                its={its}
+                onSelectMap={(map) => navigate(createPageUrl('VisualizarProcesso') + '?id=' + map.id)}
+                onSelectIT={(it) => toast.info("Visualização de IT em desenvolvimento")}
+              />
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredDocs.map((doc) => {
