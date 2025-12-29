@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Sparkles, Loader2, CheckCircle2, X } from "lucide-react";
+import { Sparkles, Loader2, CheckCircle2, X, AlertCircle } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
@@ -18,36 +18,87 @@ export default function AIFieldAssist({
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState("");
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    console.log("🔧 AIFieldAssist montado:", {
+      fieldName,
+      hasFieldValue: !!fieldValue,
+      hasItData: !!itData,
+      hasMapData: !!mapData,
+      suggestionsCount: suggestions.length
+    });
+  }, []);
 
   const handleSuggestion = async (suggestionType) => {
+    console.log("🚀 INÍCIO handleSuggestion:", suggestionType);
+    
     setLoading(true);
     setResult("");
+    setError("");
 
     try {
       const prompt = buildPrompt(suggestionType);
-      console.log("🤖 Enviando prompt para IA:", prompt);
+      console.log("📝 Prompt construído:", {
+        type: suggestionType,
+        promptLength: prompt.length,
+        preview: prompt.substring(0, 200) + "..."
+      });
+      
+      toast.info("Gerando sugestão com IA...", { duration: 2000 });
       
       const response = await base44.integrations.Core.InvokeLLM({ 
         prompt,
         add_context_from_internet: false
       });
       
-      console.log("✅ Resposta da IA:", response);
+      console.log("✅ Resposta recebida da IA:", {
+        type: typeof response,
+        isString: typeof response === 'string',
+        hasResponse: !!response?.response,
+        preview: typeof response === 'string' ? response.substring(0, 100) : JSON.stringify(response).substring(0, 100)
+      });
       
-      // A resposta vem como string direta
-      if (typeof response === 'string') {
-        setResult(response);
-      } else if (response?.response) {
-        setResult(response.response);
-      } else {
-        setResult(JSON.stringify(response));
+      // Tratamento robusto da resposta
+      let finalResult = "";
+      
+      if (typeof response === 'string' && response.trim()) {
+        finalResult = response.trim();
+      } else if (response?.response && typeof response.response === 'string') {
+        finalResult = response.response.trim();
+      } else if (response?.output && typeof response.output === 'string') {
+        finalResult = response.output.trim();
+      } else if (response?.content && typeof response.content === 'string') {
+        finalResult = response.content.trim();
+      } else if (response) {
+        finalResult = JSON.stringify(response, null, 2);
       }
+      
+      if (!finalResult) {
+        throw new Error("Resposta vazia da IA");
+      }
+      
+      console.log("✨ Resultado final processado:", {
+        length: finalResult.length,
+        preview: finalResult.substring(0, 100)
+      });
+      
+      setResult(finalResult);
+      toast.success("Sugestão gerada! Revise antes de aplicar.");
+      
     } catch (error) {
-      console.error("❌ Erro na IA:", error);
-      toast.error("Erro ao gerar sugestão: " + error.message);
-      setResult("");
+      console.error("❌ ERRO completo na IA:", {
+        message: error.message,
+        stack: error.stack,
+        error
+      });
+      
+      const errorMsg = error.message || "Erro desconhecido ao gerar sugestão";
+      setError(errorMsg);
+      toast.error("Erro: " + errorMsg);
     } finally {
       setLoading(false);
+      console.log("🏁 handleSuggestion finalizado");
     }
   };
 
@@ -116,51 +167,106 @@ Gere uma sugestão contextualizada e operacional para este campo.`
   };
 
   const handleApply = () => {
-    if (result) {
+    console.log("✅ APLICANDO sugestão:", {
+      hasResult: !!result,
+      resultLength: result?.length,
+      hasOnApply: typeof onApply === 'function'
+    });
+    
+    if (!result) {
+      toast.error("Nenhuma sugestão para aplicar");
+      return;
+    }
+    
+    if (typeof onApply !== 'function') {
+      console.error("❌ onApply não é uma função!", typeof onApply);
+      toast.error("Erro: função de aplicação não encontrada");
+      return;
+    }
+    
+    try {
       onApply(result);
-      setResult("");
-      setOpen(false);
+      console.log("✅ Sugestão aplicada com sucesso");
       toast.success("Sugestão aplicada! Revise antes de salvar.");
+      setResult("");
+      setError("");
+      setOpen(false);
+    } catch (error) {
+      console.error("❌ Erro ao aplicar sugestão:", error);
+      toast.error("Erro ao aplicar: " + error.message);
     }
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={(newOpen) => {
+      console.log("🔄 Popover mudou estado:", newOpen);
+      setOpen(newOpen);
+      if (!newOpen) {
+        setResult("");
+        setError("");
+      }
+    }}>
       <PopoverTrigger asChild>
         <Button
           type="button"
           variant="ghost"
           size="sm"
           className={cn(
-            "absolute right-2 top-2 h-7 w-7 p-0 hover:bg-purple-50",
+            "absolute right-2 top-2 h-7 w-7 p-0 hover:bg-purple-50 transition-colors",
             fieldValue && "text-purple-600"
           )}
           title="Assistência IA"
+          onClick={() => console.log("✨ Botão IA clicado")}
         >
           <Sparkles className="w-4 h-4" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-96" align="end">
+      <PopoverContent className="w-96" align="end" side="left">
         <div className="space-y-3">
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center border-b pb-2">
             <h4 className="font-semibold text-sm flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-purple-600" />
-              Assistência IA
+              Assistência IA - {fieldName}
             </h4>
-            <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => {
+                console.log("❌ Fechar popover");
+                setOpen(false);
+              }}
+            >
               <X className="w-4 h-4" />
             </Button>
           </div>
 
-          {!result && !loading && (
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded p-3 flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-red-600 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-xs font-semibold text-red-800">Erro ao gerar</p>
+                <p className="text-xs text-red-700">{error}</p>
+              </div>
+            </div>
+          )}
+
+          {!result && !loading && !error && (
             <div className="space-y-2">
+              {suggestions.length === 0 && (
+                <p className="text-xs text-gray-500 text-center py-4">
+                  Nenhuma sugestão disponível
+                </p>
+              )}
               {suggestions.map((sug, idx) => (
                 <Button
                   key={idx}
                   variant="outline"
                   size="sm"
-                  className="w-full justify-start text-xs"
-                  onClick={() => handleSuggestion(sug.type)}
+                  className="w-full justify-start text-xs hover:bg-purple-50"
+                  onClick={() => {
+                    console.log("🎯 Sugestão clicada:", sug.type);
+                    handleSuggestion(sug.type);
+                  }}
                 >
                   {sug.icon && <sug.icon className="w-3 h-3 mr-2" />}
                   {sug.label}
@@ -170,27 +276,43 @@ Gere uma sugestão contextualizada e operacional para este campo.`
           )}
 
           {loading && (
-            <div className="text-center py-4">
-              <Loader2 className="w-5 h-5 animate-spin mx-auto text-purple-600" />
-              <p className="text-xs text-gray-600 mt-2">Gerando sugestão...</p>
+            <div className="text-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin mx-auto text-purple-600" />
+              <p className="text-xs text-gray-600 mt-3 font-medium">Gerando sugestão...</p>
+              <p className="text-xs text-gray-500 mt-1">Isso pode levar alguns segundos</p>
             </div>
           )}
 
           {result && !loading && (
             <div className="space-y-3">
-              <div className="max-h-64 overflow-y-auto bg-gray-50 rounded p-3 text-xs prose prose-sm">
+              <div className="max-h-64 overflow-y-auto bg-gray-50 border rounded p-3 text-xs prose prose-sm">
                 <ReactMarkdown>{result}</ReactMarkdown>
               </div>
               <div className="flex gap-2">
-                <Button size="sm" onClick={handleApply} className="flex-1 bg-purple-600 hover:bg-purple-700">
+                <Button 
+                  size="sm" 
+                  onClick={() => {
+                    console.log("🎯 Aplicar clicado");
+                    handleApply();
+                  }}
+                  className="flex-1 bg-purple-600 hover:bg-purple-700"
+                >
                   <CheckCircle2 className="w-3 h-3 mr-1" />
                   Aplicar Sugestão
                 </Button>
-                <Button size="sm" variant="outline" onClick={() => setResult("")}>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={() => {
+                    console.log("🗑️ Descartar clicado");
+                    setResult("");
+                    setError("");
+                  }}
+                >
                   Descartar
                 </Button>
               </div>
-              <p className="text-xs text-yellow-700 bg-yellow-50 p-2 rounded">
+              <p className="text-xs text-yellow-700 bg-yellow-50 p-2 rounded border border-yellow-200">
                 ⚠️ Revise antes de salvar. Conteúdo gerado por IA.
               </p>
             </div>
