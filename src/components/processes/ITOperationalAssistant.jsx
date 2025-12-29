@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { base44 } from "@/api/base44Client";
 import { Sparkles, Loader2, AlertCircle, CheckCircle2, Lightbulb } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "react-hot-toast";
 
 export default function ITOperationalAssistant({ open, onClose, mapData, existingITs, onCreateIT }) {
   const [context, setContext] = useState("");
@@ -142,34 +142,29 @@ Retorne um JSON estruturado:
       ? existingITs.find(it => it.code === suggestions.target_it_code)
       : null;
 
-    const content = {
-    objetivo: suggestions.suggested_objective,
-    campo_aplicacao: "Operação diária",
-    atividades: suggestions.suggested_steps.map((step, idx) => ({
-      atividade: step,
-      responsavel: "A definir",
-      ferramentas: ""
-    })),
-    riscos: suggestions.common_errors.map((error, idx) => ({
-      identificacao: error,
-      severidade: suggestions.urgency === "alta" ? "Alto" : suggestions.urgency === "média" ? "Médio" : "Baixo",
-      controle: "A definir durante implementação"
-    })),
-    indicadores: [{
-      indicador: suggestions.affected_indicator,
-      meta: "A definir",
-      como_medir: "Diário"
-    }]
-    };
-
     const newITData = {
-    type: "IT",
-    title: suggestions.suggested_title,
-    description: suggestions.change_summary,
-    content,
-    reason: suggestions.change_reason,
-    origin: "assistente_ia",
-    expected_impact: suggestions.operational_impact
+      type: "IT",
+      title: suggestions.suggested_title,
+      objective: suggestions.suggested_objective,
+      description: suggestions.change_summary,
+      activities: suggestions.suggested_steps.map((step, idx) => ({
+        sequence: idx + 1,
+        activity: step,
+        responsible: "A definir"
+      })),
+      risks: suggestions.common_errors.map((error, idx) => ({
+        risk: error,
+        severity: suggestions.urgency === "alta" ? "alto" : suggestions.urgency === "média" ? "médio" : "baixo",
+        mitigation: "A definir durante implementação"
+      })),
+      indicators: [{
+        name: suggestions.affected_indicator,
+        target: "A definir",
+        frequency: "Diário"
+      }],
+      reason: suggestions.change_reason,
+      origin: "melhoria_continua",
+      expected_impact: suggestions.operational_impact
     };
 
     if (suggestions.action_type === "update_it" && targetIT) {
