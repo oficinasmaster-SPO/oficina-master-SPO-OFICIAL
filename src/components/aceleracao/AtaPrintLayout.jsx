@@ -4,67 +4,133 @@ import { ptBR } from "date-fns/locale";
 import ReactMarkdown from "react-markdown";
 
 export default function AtaPrintLayout({ atendimento, workshop }) {
+  const styles = {
+    container: {
+      width: '210mm',
+      maxWidth: '100%',
+      margin: '0 auto',
+      padding: '20mm',
+      backgroundColor: 'white',
+      color: '#000',
+      fontFamily: 'Arial, sans-serif',
+      fontSize: '11pt',
+      lineHeight: '1.6',
+      boxSizing: 'border-box'
+    },
+    header: {
+      marginBottom: '20px',
+      paddingBottom: '15px',
+      borderBottom: '3px solid #dc2626',
+      textAlign: 'left'
+    },
+    h1: {
+      fontSize: '18pt',
+      fontWeight: 'bold',
+      margin: '0 0 8px 0',
+      textTransform: 'uppercase',
+      color: '#000'
+    },
+    h2: {
+      fontSize: '14pt',
+      fontWeight: 'bold',
+      margin: '20px 0 12px 0',
+      paddingBottom: '4px',
+      borderBottom: '2px solid #000',
+      textTransform: 'uppercase',
+      color: '#000'
+    },
+    subtitle: {
+      fontSize: '10pt',
+      margin: '4px 0',
+      color: '#666'
+    },
+    metadata: {
+      fontSize: '10pt',
+      margin: '15px 0 0 0',
+      lineHeight: '1.8'
+    },
+    metadataItem: {
+      margin: '3px 0',
+      color: '#000'
+    },
+    section: {
+      marginBottom: '24px',
+      textAlign: 'left',
+      pageBreakInside: 'avoid'
+    },
+    content: {
+      fontSize: '11pt',
+      lineHeight: '1.6',
+      color: '#000',
+      marginBottom: '16px',
+      whiteSpace: 'pre-line',
+      textAlign: 'left'
+    },
+    list: {
+      listStyleType: 'disc',
+      paddingLeft: '20px',
+      margin: '8px 0'
+    },
+    listItem: {
+      margin: '4px 0',
+      fontSize: '10pt',
+      color: '#000'
+    },
+    decisao: {
+      borderLeft: '4px solid #2563eb',
+      paddingLeft: '12px',
+      marginBottom: '12px',
+      backgroundColor: '#f0f9ff'
+    },
+    acao: {
+      borderLeft: '4px solid #16a34a',
+      paddingLeft: '12px',
+      marginBottom: '12px',
+      backgroundColor: '#f0fdf4'
+    },
+    footer: {
+      marginTop: '30px',
+      paddingTop: '15px',
+      borderTop: '1px solid #ccc',
+      fontSize: '9pt',
+      textAlign: 'center',
+      color: '#666'
+    }
+  };
+
   return (
-    <div className="print-content bg-white p-8 max-w-4xl mx-auto">
+    <div style={styles.container}>
       {/* Cabeçalho */}
-      <div className="border-b-2 border-gray-800 pb-4 mb-6">
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">
-              ATA DE REUNIÃO - CONSULTORIA
-            </h1>
-            <p className="text-sm text-gray-600">
-              Oficinas Master - Programa de Aceleração
-            </p>
-          </div>
-          {workshop?.logo_url && (
-            <img src={workshop.logo_url} alt="Logo" className="h-16 object-contain" />
-          )}
-        </div>
+      <div style={styles.header}>
+        {workshop?.logo_url && (
+          <img src={workshop.logo_url} alt="Logo" style={{ height: '45px', marginBottom: '12px' }} />
+        )}
+        <h1 style={styles.h1}>ATA DE REUNIÃO - CONSULTORIA</h1>
+        <p style={styles.subtitle}>Oficinas Master - Programa de Aceleração</p>
       </div>
 
       {/* Informações Básicas */}
-      <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
-        <div>
-          <p className="font-semibold text-gray-700">Oficina Cliente:</p>
-          <p className="text-gray-900">{workshop?.name || 'Não informado'}</p>
-        </div>
-        <div>
-          <p className="font-semibold text-gray-700">Consultor:</p>
-          <p className="text-gray-900">{atendimento.consultor_nome}</p>
-        </div>
-        <div>
-          <p className="font-semibold text-gray-700">Data:</p>
-          <p className="text-gray-900">
-            {format(new Date(atendimento.data_agendada), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-          </p>
-        </div>
-        <div>
-          <p className="font-semibold text-gray-700">Horário:</p>
-          <p className="text-gray-900">
-            {format(new Date(atendimento.data_agendada), "HH:mm")} ({atendimento.duracao_minutos}min)
-          </p>
-        </div>
-        <div>
-          <p className="font-semibold text-gray-700">Tipo:</p>
-          <p className="text-gray-900">{atendimento.tipo_atendimento.replace(/_/g, ' ')}</p>
-        </div>
-        <div>
-          <p className="font-semibold text-gray-700">Status:</p>
-          <p className="text-gray-900 capitalize">{atendimento.status}</p>
-        </div>
+      <div style={styles.metadata}>
+        <p style={styles.metadataItem}><strong>Oficina Cliente:</strong> {workshop?.name || 'Não informado'}</p>
+        <p style={styles.metadataItem}><strong>Consultor:</strong> {atendimento.consultor_nome}</p>
+        <p style={styles.metadataItem}>
+          <strong>Data:</strong> {format(new Date(atendimento.data_agendada), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+        </p>
+        <p style={styles.metadataItem}>
+          <strong>Horário:</strong> {format(new Date(atendimento.data_agendada), "HH:mm")} ({atendimento.duracao_minutos}min)
+        </p>
+        <p style={styles.metadataItem}><strong>Tipo:</strong> {atendimento.tipo_atendimento.replace(/_/g, ' ')}</p>
+        <p style={styles.metadataItem}><strong>Status:</strong> {atendimento.status}</p>
       </div>
 
       {/* Participantes */}
       {atendimento.participantes && atendimento.participantes.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-3 border-b border-gray-300 pb-2">
-            Participantes
-          </h2>
-          <ul className="space-y-1 text-sm">
+        <div style={styles.section}>
+          <h2 style={styles.h2}>Participantes</h2>
+          <ul style={styles.list}>
             {atendimento.participantes.map((p, idx) => (
-              <li key={idx} className="text-gray-900">
-                • {p.nome} - {p.cargo} ({p.email})
+              <li key={idx} style={styles.listItem}>
+                {p.nome} - {p.cargo} ({p.email})
               </li>
             ))}
           </ul>
@@ -73,17 +139,21 @@ export default function AtaPrintLayout({ atendimento, workshop }) {
 
       {/* Pauta */}
       {atendimento.pauta && atendimento.pauta.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-3 border-b border-gray-300 pb-2">
-            Pauta da Reunião
-          </h2>
-          <div className="space-y-3">
+        <div style={styles.section}>
+          <h2 style={styles.h2}>Pauta da Reunião</h2>
+          <div>
             {atendimento.pauta.map((item, idx) => (
-              <div key={idx} className="text-sm">
-                <p className="font-semibold text-gray-900">{idx + 1}. {item.titulo}</p>
-                {item.descricao && <p className="text-gray-700 ml-4 mt-1">{item.descricao}</p>}
+              <div key={idx} style={{ marginBottom: '12px' }}>
+                <p style={{ fontWeight: 'bold', margin: '4px 0', fontSize: '10pt' }}>
+                  {idx + 1}. {item.titulo}
+                </p>
+                {item.descricao && (
+                  <p style={{ marginLeft: '16px', fontSize: '10pt', color: '#333' }}>{item.descricao}</p>
+                )}
                 {item.tempo_estimado && (
-                  <p className="text-gray-600 text-xs ml-4">Tempo estimado: {item.tempo_estimado} min</p>
+                  <p style={{ marginLeft: '16px', fontSize: '9pt', color: '#666' }}>
+                    Tempo estimado: {item.tempo_estimado} min
+                  </p>
                 )}
               </div>
             ))}
@@ -93,25 +163,21 @@ export default function AtaPrintLayout({ atendimento, workshop }) {
 
       {/* Objetivos */}
       {atendimento.objetivos && atendimento.objetivos.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-3 border-b border-gray-300 pb-2">
-            Objetivos
-          </h2>
-          <ul className="space-y-1 text-sm">
+        <div style={styles.section}>
+          <h2 style={styles.h2}>Objetivos</h2>
+          <ul style={styles.list}>
             {atendimento.objetivos.map((obj, idx) => (
-              <li key={idx} className="text-gray-900">• {obj}</li>
+              <li key={idx} style={styles.listItem}>{obj}</li>
             ))}
           </ul>
         </div>
       )}
 
-      {/* Ata Gerada por IA */}
+      {/* Resumo da Reunião */}
       {atendimento.ata_ia && (
-        <div className="mb-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-3 border-b border-gray-300 pb-2">
-            Resumo da Reunião
-          </h2>
-          <div className="prose prose-sm max-w-none text-gray-900">
+        <div style={styles.section}>
+          <h2 style={styles.h2}>Resumo da Reunião</h2>
+          <div style={styles.content}>
             <ReactMarkdown>{atendimento.ata_ia}</ReactMarkdown>
           </div>
         </div>
@@ -119,18 +185,20 @@ export default function AtaPrintLayout({ atendimento, workshop }) {
 
       {/* Decisões Tomadas */}
       {atendimento.decisoes_tomadas && atendimento.decisoes_tomadas.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-3 border-b border-gray-300 pb-2">
-            Decisões Tomadas
-          </h2>
-          <div className="space-y-2 text-sm">
+        <div style={styles.section}>
+          <h2 style={styles.h2}>Decisões Tomadas</h2>
+          <div>
             {atendimento.decisoes_tomadas.map((decisao, idx) => (
-              <div key={idx} className="border-l-4 border-blue-500 pl-3">
-                <p className="font-semibold text-gray-900">{decisao.decisao}</p>
-                <p className="text-gray-700">Responsável: {decisao.responsavel}</p>
+              <div key={idx} style={{...styles.decisao, padding: '12px', marginBottom: '12px'}}>
+                <p style={{ fontWeight: 'bold', margin: '0 0 4px 0', fontSize: '10pt' }}>
+                  {decisao.decisao}
+                </p>
+                <p style={{ margin: '2px 0', fontSize: '10pt' }}>
+                  <strong>Responsável:</strong> {decisao.responsavel}
+                </p>
                 {decisao.prazo && (
-                  <p className="text-gray-600">
-                    Prazo: {format(new Date(decisao.prazo), "dd/MM/yyyy")}
+                  <p style={{ margin: '2px 0', fontSize: '10pt', color: '#666' }}>
+                    <strong>Prazo:</strong> {format(new Date(decisao.prazo), "dd/MM/yyyy")}
                   </p>
                 )}
               </div>
@@ -141,18 +209,20 @@ export default function AtaPrintLayout({ atendimento, workshop }) {
 
       {/* Ações Geradas */}
       {atendimento.acoes_geradas && atendimento.acoes_geradas.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-3 border-b border-gray-300 pb-2">
-            Ações de Acompanhamento
-          </h2>
-          <div className="space-y-2 text-sm">
+        <div style={styles.section}>
+          <h2 style={styles.h2}>Ações de Acompanhamento</h2>
+          <div>
             {atendimento.acoes_geradas.map((acao, idx) => (
-              <div key={idx} className="border-l-4 border-green-500 pl-3">
-                <p className="font-semibold text-gray-900">{acao.acao}</p>
-                <p className="text-gray-700">Responsável: {acao.responsavel}</p>
+              <div key={idx} style={{...styles.acao, padding: '12px', marginBottom: '12px'}}>
+                <p style={{ fontWeight: 'bold', margin: '0 0 4px 0', fontSize: '10pt' }}>
+                  {acao.acao}
+                </p>
+                <p style={{ margin: '2px 0', fontSize: '10pt' }}>
+                  <strong>Responsável:</strong> {acao.responsavel}
+                </p>
                 {acao.prazo && (
-                  <p className="text-gray-600">
-                    Prazo: {format(new Date(acao.prazo), "dd/MM/yyyy")}
+                  <p style={{ margin: '2px 0', fontSize: '10pt', color: '#666' }}>
+                    <strong>Prazo:</strong> {format(new Date(acao.prazo), "dd/MM/yyyy")}
                   </p>
                 )}
               </div>
@@ -163,14 +233,12 @@ export default function AtaPrintLayout({ atendimento, workshop }) {
 
       {/* Processos Vinculados */}
       {atendimento.processos_vinculados && atendimento.processos_vinculados.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-3 border-b border-gray-300 pb-2">
-            Processos Compartilhados (MAPs)
-          </h2>
-          <ul className="space-y-1 text-sm">
+        <div style={styles.section}>
+          <h2 style={styles.h2}>Processos Compartilhados (MAPs)</h2>
+          <ul style={styles.list}>
             {atendimento.processos_vinculados.map((proc, idx) => (
-              <li key={idx} className="text-gray-900">
-                • {proc.titulo} - {proc.categoria}
+              <li key={idx} style={styles.listItem}>
+                {proc.titulo} - {proc.categoria}
               </li>
             ))}
           </ul>
@@ -179,15 +247,11 @@ export default function AtaPrintLayout({ atendimento, workshop }) {
 
       {/* Videoaulas Vinculadas */}
       {atendimento.videoaulas_vinculadas && atendimento.videoaulas_vinculadas.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-3 border-b border-gray-300 pb-2">
-            Videoaulas e Treinamentos
-          </h2>
-          <ul className="space-y-1 text-sm">
+        <div style={styles.section}>
+          <h2 style={styles.h2}>Videoaulas e Treinamentos</h2>
+          <ul style={styles.list}>
             {atendimento.videoaulas_vinculadas.map((video, idx) => (
-              <li key={idx} className="text-gray-900">
-                • {video.titulo}
-              </li>
+              <li key={idx} style={styles.listItem}>{video.titulo}</li>
             ))}
           </ul>
         </div>
@@ -195,64 +259,25 @@ export default function AtaPrintLayout({ atendimento, workshop }) {
 
       {/* Observações e Próximos Passos */}
       {atendimento.observacoes_consultor && (
-        <div className="mb-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-3 border-b border-gray-300 pb-2">
-            Observações do Consultor
-          </h2>
-          <p className="text-sm text-gray-900 whitespace-pre-line">{atendimento.observacoes_consultor}</p>
+        <div style={styles.section}>
+          <h2 style={styles.h2}>Observações do Consultor</h2>
+          <p style={styles.content}>{atendimento.observacoes_consultor}</p>
         </div>
       )}
 
       {atendimento.proximos_passos && (
-        <div className="mb-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-3 border-b border-gray-300 pb-2">
-            Próximos Passos
-          </h2>
-          <p className="text-sm text-gray-900 whitespace-pre-line">{atendimento.proximos_passos}</p>
+        <div style={styles.section}>
+          <h2 style={styles.h2}>Próximos Passos</h2>
+          <p style={styles.content}>{atendimento.proximos_passos}</p>
         </div>
       )}
 
       {/* Rodapé */}
-      <div className="mt-12 pt-6 border-t border-gray-300 text-xs text-gray-600">
-        <div className="flex justify-between items-center">
-          <div>
-            <p>Ata gerada em: {format(new Date(), "dd/MM/yyyy 'às' HH:mm")}</p>
-            <p>Oficinas Master - Programa de Aceleração</p>
-          </div>
-          <div className="text-right">
-            <p className="font-semibold">Documento Confidencial</p>
-            <p>Uso Interno</p>
-          </div>
-        </div>
+      <div style={styles.footer}>
+        <p>Ata gerada em: {format(new Date(), "dd/MM/yyyy 'às' HH:mm")}</p>
+        <p>Oficinas Master - Programa de Aceleração</p>
+        <p style={{ marginTop: '8px', fontWeight: 'bold' }}>Documento Confidencial - Uso Interno</p>
       </div>
-
-      {/* Estilos de Impressão */}
-      <style jsx>{`
-        @media print {
-          .print-content {
-            padding: 20mm;
-            font-size: 11pt;
-          }
-          
-          h1 {
-            font-size: 18pt;
-          }
-          
-          h2 {
-            font-size: 14pt;
-            page-break-after: avoid;
-          }
-          
-          p, li {
-            orphans: 3;
-            widows: 3;
-          }
-          
-          .border-b-2 {
-            border-bottom: 2pt solid #1f2937;
-          }
-        }
-      `}</style>
     </div>
   );
 }
