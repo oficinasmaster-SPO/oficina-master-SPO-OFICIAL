@@ -174,8 +174,8 @@ export default function ITManager({ mapId, workshopId, printMode = false }) {
 
   const handleAICreate = (suggestedData) => {
     setEditingIT(suggestedData);
-    setIsDialogOpen(true);
     setShowAIAssistant(false);
+    setIsDialogOpen(true);
   };
 
   if (isLoading) {
