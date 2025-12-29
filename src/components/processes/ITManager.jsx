@@ -11,8 +11,8 @@ import ITViewer from "./ITViewer";
 
 export default function ITManager({ mapId, workshopId, printMode = false }) {
   const queryClient = useQueryClient();
-  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
-  const [editingIT, setEditingIT] = React.useState(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingIT, setEditingIT] = useState(null);
 
   const { data: its = [], isLoading } = useQuery({
     queryKey: ['its', mapId],
