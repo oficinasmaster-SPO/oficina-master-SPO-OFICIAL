@@ -17,89 +17,54 @@ export default function PrintProcessView({ processDoc, its = [], workshop }) {
       boxSizing: 'border-box'
     },
     header: {
-      textAlign: 'center',
-      marginBottom: '16px'
+      marginBottom: '20px',
+      paddingBottom: '15px',
+      borderBottom: '3px solid #dc2626',
+      textAlign: 'left'
     },
-    title: {
-      fontSize: '20pt',
+    h1: {
+      fontSize: '18pt',
       fontWeight: 'bold',
-      margin: '0 0 4px 0',
+      margin: '0 0 8px 0',
       textTransform: 'uppercase',
-      color: '#000',
-      letterSpacing: '1px'
+      color: '#000'
     },
     subtitle: {
+      fontSize: '10pt',
+      margin: '4px 0',
+      color: '#666'
+    },
+    h2: {
       fontSize: '14pt',
-      margin: '0 0 16px 0',
-      color: '#000',
-      fontWeight: 'normal'
-    },
-    metaLine: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      fontSize: '10pt',
-      marginBottom: '12px',
-      color: '#000',
-      textAlign: 'left'
-    },
-    redLine: {
-      height: '3px',
-      backgroundColor: '#dc2626',
-      marginBottom: '16px'
-    },
-    highlightBox: {
-      fontSize: '12pt',
-      margin: '16px 0',
-      color: '#dc2626',
       fontWeight: 'bold',
-      textAlign: 'left'
-    },
-    infoTable: {
-      width: '100%',
-      borderCollapse: 'collapse',
-      marginBottom: '20px',
-      fontSize: '10pt',
-      border: 'none'
-    },
-    tableHeader: {
-      backgroundColor: '#e5e5e5',
-      padding: '12px',
-      textAlign: 'left',
-      fontWeight: 'bold',
-      color: '#666',
+      margin: '20px 0 12px 0',
+      paddingBottom: '4px',
+      borderBottom: '2px solid #000',
       textTransform: 'uppercase',
-      fontSize: '9pt',
-      letterSpacing: '0.5px',
-      border: 'none'
+      color: '#000'
     },
-    tableCell: {
-      padding: '16px 12px',
-      verticalAlign: 'top',
-      color: '#000',
-      lineHeight: '1.6',
-      border: 'none'
+
+    metadata: {
+      fontSize: '10pt',
+      margin: '15px 0 0 0',
+      lineHeight: '1.8'
     },
-    sectionCard: {
-      border: '1px solid #e0e0e0',
-      borderRadius: '8px',
-      padding: '20px',
-      marginBottom: '16px',
-      backgroundColor: '#fafafa',
+    metadataItem: {
+      margin: '3px 0',
+      color: '#000'
+    },
+    section: {
+      marginBottom: '24px',
+      textAlign: 'left',
       pageBreakInside: 'avoid'
     },
-    sectionTitle: {
-      fontSize: '12pt',
-      fontWeight: 'bold',
-      margin: '0 0 12px 0',
-      color: '#000',
-      textTransform: 'uppercase'
-    },
-    sectionContent: {
+    content: {
       fontSize: '11pt',
       lineHeight: '1.6',
       color: '#000',
-      whiteSpace: 'pre-line'
+      marginBottom: '16px',
+      whiteSpace: 'pre-line',
+      textAlign: 'left'
     },
     table: {
       width: '100%',
@@ -172,90 +137,51 @@ export default function PrintProcessView({ processDoc, its = [], workshop }) {
   return (
     <div style={styles.container}>
       {/* Cabeçalho MAP */}
-      <div style={styles.header}>
+      <header style={styles.header}>
         {workshop?.logo_url && (
-          <img src={workshop.logo_url} alt="Logo" style={{ height: '40px', marginBottom: '16px' }} />
+          <img src={workshop.logo_url} alt="Logo" style={{ height: '45px', marginBottom: '12px' }} />
         )}
-        <h1 style={styles.title}>GESTÃO DE PROCESSOS</h1>
-        <p style={styles.subtitle}>MAP - Mapa de Auto Gestão do Processo</p>
-      </div>
+        <h1 style={styles.h1}>MAPA DA AUTO GESTÃO DO PROCESSO</h1>
+        <p style={styles.subtitle}>{processDoc.title}</p>
+        <div style={styles.metadata}>
+          <p style={styles.metadataItem}><strong>Código:</strong> {processDoc.code || "N/A"}</p>
+          <p style={styles.metadataItem}><strong>Versão:</strong> {processDoc.revision || "1"}</p>
+          <p style={styles.metadataItem}><strong>Categoria:</strong> {processDoc.category}</p>
+          <p style={styles.metadataItem}><strong>Status:</strong> {processDoc.status || 'ativo'}</p>
+          <p style={styles.metadataItem}><strong>Data de Emissão:</strong> {new Date(processDoc.updated_date || processDoc.created_date).toLocaleDateString('pt-BR')}</p>
+        </div>
+      </header>
 
-      {/* Linha de Metadados */}
-      <div style={styles.metaLine}>
-        <span><strong>Código:</strong> {processDoc.code || "N/A"}</span>
-        <span><strong>Data/Hora:</strong> {new Date(processDoc.updated_date || processDoc.created_date).toLocaleString('pt-BR')}</span>
-        <span style={{ 
-          padding: '4px 12px', 
-          backgroundColor: '#22c55e', 
-          color: 'white', 
-          borderRadius: '4px',
-          fontSize: '9pt',
-          fontWeight: 'bold'
-        }}>{processDoc.status || 'Ativo'}</span>
-      </div>
-
-      {/* Linha Vermelha */}
-      <div style={styles.redLine}></div>
-
-      {/* Destaque Categoria */}
-      <div style={styles.highlightBox}>
-        Categoria: <span style={{ textTransform: 'uppercase' }}>{processDoc.category}</span>
-      </div>
-
-      {/* Tabela de Informações */}
-      <table style={styles.infoTable}>
-        <thead>
-          <tr>
-            <th style={styles.tableHeader}>PROCESSO</th>
-            <th style={styles.tableHeader}>RESPONSÁVEL</th>
-            <th style={styles.tableHeader}>VERSÃO</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td style={styles.tableCell}>
-              <strong>{processDoc.title}</strong>
-            </td>
-            <td style={styles.tableCell}>
-              {processDoc.created_by || 'Não definido'}
-            </td>
-            <td style={styles.tableCell}>
-              Versão {processDoc.revision || "1"}
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      {/* Conteúdo MAP em Cards */}
+      {/* Conteúdo MAP */}
       <section>
-        <div style={styles.sectionCard}>
-          <h3 style={styles.sectionTitle}>1. Objetivo</h3>
-          <p style={styles.sectionContent}>{content.objetivo || "Não definido."}</p>
+        <div style={styles.section}>
+          <h2 style={styles.h2}>1. Objetivo</h2>
+          <p style={styles.content}>{content.objetivo || "Não definido."}</p>
         </div>
 
-        <div style={styles.sectionCard}>
-          <h3 style={styles.sectionTitle}>2. Campo de Aplicação</h3>
-          <p style={styles.sectionContent}>{content.campo_aplicacao || "Não definido."}</p>
+        <div style={styles.section}>
+          <h2 style={styles.h2}>2. Campo de Aplicação</h2>
+          <p style={styles.content}>{content.campo_aplicacao || "Não definido."}</p>
         </div>
 
         {content.informacoes_complementares && (
-          <div style={styles.sectionCard}>
-            <h3 style={styles.sectionTitle}>3. Informações Complementares</h3>
-            <p style={styles.sectionContent}>{content.informacoes_complementares}</p>
+          <div style={styles.section}>
+            <h2 style={styles.h2}>3. Informações Complementares</h2>
+            <p style={styles.content}>{content.informacoes_complementares}</p>
           </div>
         )}
 
-        <div style={styles.sectionCard}>
-          <h3 style={styles.sectionTitle}>4. Fluxo do Processo</h3>
-          {content.fluxo_processo && <p style={styles.sectionContent}>{content.fluxo_processo}</p>}
+        <div style={styles.section}>
+          <h2 style={styles.h2}>4. Fluxo do Processo</h2>
+          {content.fluxo_processo && <p style={styles.content}>{content.fluxo_processo}</p>}
           {content.fluxo_image_url && (
             <img src={content.fluxo_image_url} alt="Fluxograma" style={styles.image} />
           )}
         </div>
 
         {content.atividades && content.atividades.length > 0 && (
-          <div style={styles.sectionCard}>
-            <h3 style={styles.sectionTitle}>5. Atividades e Responsabilidades</h3>
+          <div style={styles.section}>
+            <h2 style={styles.h2}>5. Atividades e Responsabilidades</h2>
             <table style={styles.table}>
               <thead>
                 <tr>
@@ -278,8 +204,8 @@ export default function PrintProcessView({ processDoc, its = [], workshop }) {
         )}
 
         {content.matriz_riscos && content.matriz_riscos.length > 0 && (
-          <div style={styles.sectionCard}>
-            <h3 style={styles.sectionTitle}>6. Matriz de Riscos</h3>
+          <div style={styles.section}>
+            <h2 style={styles.h2}>6. Matriz de Riscos</h2>
             <table style={styles.table}>
               <thead>
                 <tr>
@@ -306,8 +232,8 @@ export default function PrintProcessView({ processDoc, its = [], workshop }) {
         )}
 
         {content.inter_relacoes && content.inter_relacoes.length > 0 && (
-          <div style={styles.sectionCard}>
-            <h3 style={styles.sectionTitle}>7. Inter-relação entre Áreas</h3>
+          <div style={styles.section}>
+            <h2 style={styles.h2}>7. Inter-relação entre Áreas</h2>
             <table style={styles.table}>
               <thead>
                 <tr>
@@ -328,8 +254,8 @@ export default function PrintProcessView({ processDoc, its = [], workshop }) {
         )}
 
         {content.indicadores && content.indicadores.length > 0 && (
-          <div style={styles.sectionCard}>
-            <h3 style={styles.sectionTitle}>8. Indicadores de Desempenho</h3>
+          <div style={styles.section}>
+            <h2 style={styles.h2}>8. Indicadores de Desempenho</h2>
             <table style={styles.table}>
               <thead>
                 <tr>
@@ -373,88 +299,55 @@ function PrintITContent({ it, index, styles }) {
 
   return (
     <div style={styles.container}>
-      {/* Cabeçalho IT */}
-      <div style={styles.header}>
-        <h1 style={styles.title}>GESTÃO DE PROCESSOS</h1>
-        <p style={styles.subtitle}>{it.type} - {it.type === 'IT' ? 'Instrução de Trabalho' : 'Formulário/Registro'}</p>
-      </div>
-
-      {/* Linha de Metadados */}
-      <div style={styles.metaLine}>
-        <span><strong>Código:</strong> {it.code}</span>
-        <span><strong>Data/Hora:</strong> {new Date(it.updated_date || it.created_date).toLocaleString('pt-BR')}</span>
-        <span style={{ 
-          padding: '4px 12px', 
+      <header style={styles.header}>
+        <div style={{ 
+          display: 'inline-block', 
+          padding: '8px 16px', 
           backgroundColor: it.type === 'IT' ? '#16a34a' : '#ea580c', 
           color: 'white', 
-          borderRadius: '4px',
-          fontSize: '9pt',
-          fontWeight: 'bold'
-        }}>{it.status || 'Ativo'}</span>
+          fontWeight: 'bold',
+          marginBottom: '12px',
+          fontSize: '11pt'
+        }}>
+          {it.type}
+        </div>
+        <h1 style={styles.h1}>{it.title}</h1>
+        {it.description && <p style={styles.subtitle}>{it.description}</p>}
+        <div style={styles.metadata}>
+          <p style={styles.metadataItem}><strong>Código:</strong> {it.code}</p>
+          <p style={styles.metadataItem}><strong>Versão:</strong> {it.version || "1"}</p>
+          <p style={styles.metadataItem}><strong>Status:</strong> {it.status || "ativo"}</p>
+        </div>
+      </header>
+
+      <div style={styles.section}>
+        <h2 style={styles.h2}>1. Objetivo</h2>
+        <p style={styles.content}>{content.objetivo || "Não definido."}</p>
       </div>
 
-      {/* Linha Vermelha */}
-      <div style={styles.redLine}></div>
-
-      {/* Destaque Tipo */}
-      <div style={styles.highlightBox}>
-        Tipo de Documento: <span style={{ textTransform: 'uppercase' }}>{it.type === 'IT' ? 'INSTRUÇÃO DE TRABALHO' : 'FORMULÁRIO/REGISTRO'}</span>
-      </div>
-
-      {/* Tabela de Informações */}
-      <table style={styles.infoTable}>
-        <thead>
-          <tr>
-            <th style={styles.tableHeader}>DOCUMENTO</th>
-            <th style={styles.tableHeader}>RESPONSÁVEL</th>
-            <th style={styles.tableHeader}>VERSÃO</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td style={styles.tableCell}>
-              <strong>{it.title}</strong>
-              {it.description && <><br /><span style={{ fontSize: '9pt', color: '#666' }}>{it.description}</span></>}
-            </td>
-            <td style={styles.tableCell}>
-              {it.created_by || 'Não definido'}
-            </td>
-            <td style={styles.tableCell}>
-              Versão {it.version || "1"}
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      {/* Seções em Cards */}
-      <div style={styles.sectionCard}>
-        <h3 style={styles.sectionTitle}>1. Objetivo</h3>
-        <p style={styles.sectionContent}>{content.objetivo || "Não definido."}</p>
-      </div>
-
-      <div style={styles.sectionCard}>
-        <h3 style={styles.sectionTitle}>2. Campo de Aplicação</h3>
-        <p style={styles.sectionContent}>{content.campo_aplicacao || "Não definido."}</p>
+      <div style={styles.section}>
+        <h2 style={styles.h2}>2. Campo de Aplicação</h2>
+        <p style={styles.content}>{content.campo_aplicacao || "Não definido."}</p>
       </div>
 
       {content.informacoes_complementares && (
-        <div style={styles.sectionCard}>
-          <h3 style={styles.sectionTitle}>3. Informações Complementares</h3>
-          <p style={styles.sectionContent}>{content.informacoes_complementares}</p>
+        <div style={styles.section}>
+          <h2 style={styles.h2}>3. Informações Complementares</h2>
+          <p style={styles.content}>{content.informacoes_complementares}</p>
         </div>
       )}
 
-      <div style={styles.sectionCard}>
-        <h3 style={styles.sectionTitle}>4. Fluxo de Execução</h3>
-        {content.fluxo_descricao && <p style={styles.sectionContent}>{content.fluxo_descricao}</p>}
+      <div style={styles.section}>
+        <h2 style={styles.h2}>4. Fluxo de Execução</h2>
+        {content.fluxo_descricao && <p style={styles.content}>{content.fluxo_descricao}</p>}
         {content.fluxo_image_url && (
           <img src={content.fluxo_image_url} alt="Fluxograma IT" style={{...styles.image, maxHeight: '150mm'}} />
         )}
       </div>
 
       {content.atividades && content.atividades.length > 0 && (
-        <div style={styles.sectionCard}>
-          <h3 style={styles.sectionTitle}>5. Atividades e Responsabilidades</h3>
+        <div style={styles.section}>
+          <h2 style={styles.h2}>5. Atividades e Responsabilidades</h2>
           <table style={styles.table}>
             <thead>
               <tr>
@@ -477,8 +370,8 @@ function PrintITContent({ it, index, styles }) {
       )}
 
       {content.matriz_riscos && content.matriz_riscos.filter(r => r.risco).length > 0 && (
-        <div style={styles.sectionCard}>
-          <h3 style={styles.sectionTitle}>6. Matriz de Riscos</h3>
+        <div style={styles.section}>
+          <h2 style={styles.h2}>6. Matriz de Riscos</h2>
           <table style={styles.table}>
             <thead>
               <tr>
@@ -503,8 +396,8 @@ function PrintITContent({ it, index, styles }) {
       )}
 
       {content.inter_relacoes && content.inter_relacoes.length > 0 && (
-        <div style={styles.sectionCard}>
-          <h3 style={styles.sectionTitle}>7. Inter-relações</h3>
+        <div style={styles.section}>
+          <h2 style={styles.h2}>7. Inter-relações</h2>
           <table style={styles.table}>
             <thead>
               <tr>
@@ -525,8 +418,8 @@ function PrintITContent({ it, index, styles }) {
       )}
 
       {content.indicadores && content.indicadores.filter(i => i.nome).length > 0 && (
-        <div style={styles.sectionCard}>
-          <h3 style={styles.sectionTitle}>8. Indicadores</h3>
+        <div style={styles.section}>
+          <h2 style={styles.h2}>8. Indicadores</h2>
           <table style={styles.table}>
             <thead>
               <tr>
@@ -549,8 +442,8 @@ function PrintITContent({ it, index, styles }) {
       )}
 
       {content.evidencia_execucao?.tipo_evidencia && (
-        <div style={styles.sectionCard}>
-          <h3 style={styles.sectionTitle}>9. Evidência de Execução</h3>
+        <div style={styles.section}>
+          <h2 style={styles.h2}>9. Evidência de Execução</h2>
           <div style={styles.evidenceBox}>
             <p style={styles.evidenceItem}><strong>Tipo:</strong> {content.evidencia_execucao.tipo_evidencia}</p>
             {content.evidencia_execucao.descricao && (
