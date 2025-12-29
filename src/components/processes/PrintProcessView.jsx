@@ -17,54 +17,89 @@ export default function PrintProcessView({ processDoc, its = [], workshop }) {
       boxSizing: 'border-box'
     },
     header: {
-      marginBottom: '20px',
-      paddingBottom: '15px',
-      borderBottom: '3px solid #dc2626',
-      textAlign: 'left'
+      textAlign: 'center',
+      marginBottom: '16px'
     },
-    h1: {
-      fontSize: '18pt',
+    title: {
+      fontSize: '20pt',
       fontWeight: 'bold',
-      margin: '0 0 8px 0',
+      margin: '0 0 4px 0',
       textTransform: 'uppercase',
-      color: '#000'
+      color: '#000',
+      letterSpacing: '1px'
     },
     subtitle: {
-      fontSize: '10pt',
-      margin: '4px 0',
-      color: '#666'
-    },
-    h2: {
       fontSize: '14pt',
-      fontWeight: 'bold',
-      margin: '20px 0 12px 0',
-      paddingBottom: '4px',
-      borderBottom: '2px solid #000',
-      textTransform: 'uppercase',
-      color: '#000'
+      margin: '0 0 16px 0',
+      color: '#000',
+      fontWeight: 'normal'
     },
-
-    metadata: {
+    metaLine: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
       fontSize: '10pt',
-      margin: '15px 0 0 0',
-      lineHeight: '1.8'
+      marginBottom: '12px',
+      color: '#000',
+      textAlign: 'left'
     },
-    metadataItem: {
-      margin: '3px 0',
-      color: '#000'
+    redLine: {
+      height: '3px',
+      backgroundColor: '#dc2626',
+      marginBottom: '16px'
     },
-    section: {
-      marginBottom: '24px',
+    highlightBox: {
+      fontSize: '12pt',
+      margin: '16px 0',
+      color: '#dc2626',
+      fontWeight: 'bold',
+      textAlign: 'left'
+    },
+    infoTable: {
+      width: '100%',
+      borderCollapse: 'collapse',
+      marginBottom: '20px',
+      fontSize: '10pt',
+      border: 'none'
+    },
+    tableHeader: {
+      backgroundColor: '#e5e5e5',
+      padding: '12px',
       textAlign: 'left',
+      fontWeight: 'bold',
+      color: '#666',
+      textTransform: 'uppercase',
+      fontSize: '9pt',
+      letterSpacing: '0.5px',
+      border: 'none'
+    },
+    tableCell: {
+      padding: '16px 12px',
+      verticalAlign: 'top',
+      color: '#000',
+      lineHeight: '1.6',
+      border: 'none'
+    },
+    sectionCard: {
+      border: '1px solid #e0e0e0',
+      borderRadius: '8px',
+      padding: '20px',
+      marginBottom: '16px',
+      backgroundColor: '#fafafa',
       pageBreakInside: 'avoid'
     },
-    content: {
+    sectionTitle: {
+      fontSize: '12pt',
+      fontWeight: 'bold',
+      margin: '0 0 12px 0',
+      color: '#000',
+      textTransform: 'uppercase'
+    },
+    sectionContent: {
       fontSize: '11pt',
       lineHeight: '1.6',
       color: '#000',
-      marginBottom: '16px',
-      whiteSpace: 'pre-line',
-      textAlign: 'left'
+      whiteSpace: 'pre-line'
     },
     table: {
       width: '100%',
