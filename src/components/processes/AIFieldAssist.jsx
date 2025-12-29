@@ -56,14 +56,51 @@ export default function AIFieldAssist({
         }
       });
       
-      const messageResult = await base44.agents.addMessage(conversation, {
-        role: "user",
-        content: prompt
+      console.log("📦 Conversa criada:", conversation);
+      
+      // Subscrever para receber atualizações em tempo real
+      let finalMessages = [];
+      
+      await new Promise((resolve, reject) => {
+        const unsubscribe = base44.agents.subscribeToConversation(conversation.id, (data) => {
+          console.log("📨 Atualização recebida:", data);
+          finalMessages = data.messages || [];
+          
+          // Verificar se a última mensagem é do assistente e está completa
+          const lastMsg = finalMessages[finalMessages.length - 1];
+          if (lastMsg && lastMsg.role === 'assistant' && lastMsg.content) {
+            unsubscribe();
+            resolve();
+          }
+        });
+        
+        // Adicionar mensagem do usuário
+        base44.agents.addMessage(conversation, {
+          role: "user",
+          content: prompt
+        }).catch(err => {
+          unsubscribe();
+          reject(err);
+        });
+        
+        // Timeout de segurança
+        setTimeout(() => {
+          unsubscribe();
+          if (finalMessages.length === 0) {
+            reject(new Error("Timeout: sem resposta do agente"));
+          } else {
+            resolve();
+          }
+        }, 30000);
       });
       
       // Pegar a última mensagem do assistente
-      const assistantMessages = conversation.messages.filter(m => m.role === 'assistant');
-      const response = assistantMessages[assistantMessages.length - 1]?.content || messageResult?.content;
+      const assistantMessages = finalMessages.filter(m => m.role === 'assistant');
+      const response = assistantMessages[assistantMessages.length - 1]?.content;
+      
+      if (!response) {
+        throw new Error("Agente não retornou resposta");
+      }
       
       console.log("✅ Resposta recebida da IA:", {
         type: typeof response,
