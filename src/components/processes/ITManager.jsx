@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Loader2, FileCheck, ClipboardList, Trash2, Edit } from "lucide-react";
+import { Plus, Loader2, FileCheck, ClipboardList, Trash2, Edit, FileText } from "lucide-react";
 import { toast } from "sonner";
 import ITFormDialog from "./ITFormDialog";
 import ITViewer from "./ITViewer";
@@ -189,11 +189,13 @@ export default function ITManager({ mapId, workshopId, printMode = false }) {
               <Card key={it.id} className={`${bgColor} border-2 hover:shadow-lg transition-all`}>
                 <CardContent className="p-5">
                   <div className="flex items-start gap-4">
-                    <div className={`flex-shrink-0 w-14 h-14 rounded-xl ${it.type === 'IT' ? 'bg-green-600' : 'bg-orange-600'} flex items-center justify-center text-white font-bold text-sm shadow-md`}>
-                      {it.type}
-                      <div className="absolute -top-1 -right-1 w-6 h-6 bg-white rounded-full border-2 border-gray-300 flex items-center justify-center text-xs text-gray-700 font-bold">
-                        {index + 1}
-                      </div>
+                    <div className="relative flex-shrink-0">
+                     <div className={`w-14 h-14 rounded-xl ${it.type === 'IT' ? 'bg-green-600' : 'bg-orange-600'} flex items-center justify-center text-white font-bold text-sm shadow-md`}>
+                       {it.type}
+                     </div>
+                     <div className="absolute -top-1 -right-1 w-6 h-6 bg-white rounded-full border-2 border-gray-300 flex items-center justify-center text-xs text-gray-700 font-bold">
+                       {index + 1}
+                     </div>
                     </div>
                     
                     <div className="flex-1 min-w-0">
