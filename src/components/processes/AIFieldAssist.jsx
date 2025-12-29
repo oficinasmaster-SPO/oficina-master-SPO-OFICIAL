@@ -47,10 +47,23 @@ export default function AIFieldAssist({
       
       toast.info("Gerando sugestão com IA...", { duration: 2000 });
       
-      const response = await base44.integrations.Core.InvokeLLM({ 
-        prompt,
-        add_context_from_internet: false
+      // Usar agente ao invés de integração direta
+      const conversation = await base44.agents.createConversation({
+        agent_name: "it_assistant",
+        metadata: { 
+          field: fieldName,
+          it_title: itData?.title 
+        }
       });
+      
+      const messageResult = await base44.agents.addMessage(conversation, {
+        role: "user",
+        content: prompt
+      });
+      
+      // Pegar a última mensagem do assistente
+      const assistantMessages = conversation.messages.filter(m => m.role === 'assistant');
+      const response = assistantMessages[assistantMessages.length - 1]?.content || messageResult?.content;
       
       console.log("✅ Resposta recebida da IA:", {
         type: typeof response,
