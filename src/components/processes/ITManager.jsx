@@ -56,24 +56,38 @@ export default function ITManager({ mapId, workshopId, printMode = false }) {
           version_history: [...(editingIT.version_history || []), versionEntry]
         });
       } else {
-        // Criar novo
+        // Criar novo - Gerar código único
         const code = await generateCode(data.type);
+        
+        // Inicializar histórico de versão
+        const initialVersionEntry = {
+          version: "1",
+          date: new Date().toISOString(),
+          changed_by: user.full_name || user.email,
+          changes: "Criação do documento",
+          origin: "criacao_inicial"
+        };
+        
         return await base44.entities.InstructionDocument.create({
           parent_map_id: mapId,
           workshop_id: workshopId,
           code,
           version: "1",
           status: "ativo",
-          version_history: [],
+          version_history: [initialVersionEntry],
           ...data
         });
       }
     },
     onSuccess: () => {
-      toast.success(editingIT ? "IT atualizada!" : "IT criada!");
+      toast.success(editingIT ? "IT atualizada!" : "IT criada com sucesso!");
       queryClient.invalidateQueries(['its', mapId]);
       setIsDialogOpen(false);
       setEditingIT(null);
+    },
+    onError: (error) => {
+      console.error("Erro ao salvar IT:", error);
+      toast.error("Erro ao salvar IT: " + (error.message || "Tente novamente"));
     }
   });
 
