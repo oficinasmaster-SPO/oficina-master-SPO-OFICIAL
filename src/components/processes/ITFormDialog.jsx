@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import ITFluxoTab from "./ITFluxoTab";
@@ -14,9 +14,12 @@ import ITAtividadesTab from "./ITAtividadesTab";
 import ITRiscosTab from "./ITRiscosTab";
 import ITIndicadoresTab from "./ITIndicadoresTab";
 import ITInterRelacoesTab from "./ITInterRelacoesTab";
+import ITAIAssistant from "./ITAIAssistant";
 
 export default function ITFormDialog({ open, onClose, it, mapId, workshopId, onSave }) {
   const [uploading, setUploading] = React.useState(false);
+  const [aiCollapsed, setAiCollapsed] = React.useState(false);
+  const [mapData, setMapData] = React.useState(null);
   const [formData, setFormData] = React.useState({
     title: "",
     type: "IT",
@@ -35,6 +38,20 @@ export default function ITFormDialog({ open, onClose, it, mapId, workshopId, onS
     },
     file_url: ""
   });
+
+  React.useEffect(() => {
+    const loadMapData = async () => {
+      if (mapId) {
+        try {
+          const map = await base44.entities.ProcessDocument.get(mapId);
+          setMapData(map);
+        } catch (error) {
+          console.error("Erro ao carregar MAP:", error);
+        }
+      }
+    };
+    loadMapData();
+  }, [mapId]);
 
   React.useEffect(() => {
     if (it) {
@@ -168,10 +185,29 @@ export default function ITFormDialog({ open, onClose, it, mapId, workshopId, onS
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+    <>
+      <ITAIAssistant
+        itData={formData}
+        mapData={mapData}
+        collapsed={aiCollapsed}
+        onToggle={() => setAiCollapsed(!aiCollapsed)}
+      />
+      
+      <Dialog open={open} onOpenChange={onClose}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{it ? 'Editar IT/FR' : 'Nova IT/FR'}</DialogTitle>
+          <div className="flex justify-between items-center">
+            <DialogTitle>{it ? 'Editar IT/FR' : 'Nova IT/FR'}</DialogTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setAiCollapsed(false)}
+              className="text-purple-600 border-purple-200 hover:bg-purple-50"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              Assistente IA
+            </Button>
+          </div>
         </DialogHeader>
 
         <Tabs defaultValue="basico" className="mt-4">
@@ -329,5 +365,6 @@ export default function ITFormDialog({ open, onClose, it, mapId, workshopId, onS
         </div>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
