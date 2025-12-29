@@ -338,10 +338,14 @@ export default function ITFormDialog({ open, onClose, it, mapId, workshopId, onS
             <ITAtividadesTab
               atividades={formData.content.atividades}
               onChange={(updated) => setFormData({ ...formData, content: { ...formData.content, atividades: updated } })}
+              itData={formData}
+              mapData={mapData}
             />
             <ITInterRelacoesTab
               interRelacoes={formData.content.inter_relacoes}
               onChange={(updated) => setFormData({ ...formData, content: { ...formData.content, inter_relacoes: updated } })}
+              itData={formData}
+              mapData={mapData}
             />
           </TabsContent>
 
