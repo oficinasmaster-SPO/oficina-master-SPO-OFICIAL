@@ -14,6 +14,7 @@ import ITAtividadesTab from "./ITAtividadesTab";
 import ITRiscosTab from "./ITRiscosTab";
 import ITIndicadoresTab from "./ITIndicadoresTab";
 import ITInterRelacoesTab from "./ITInterRelacoesTab";
+import ITEvidenciaTab from "./ITEvidenciaTab";
 import ITAIAssistant from "./ITAIAssistant";
 import AIFieldAssist from "./AIFieldAssist";
 
@@ -35,7 +36,7 @@ export default function ITFormDialog({ open, onClose, it, mapId, workshopId, onS
       matriz_riscos: [{ risco: "", categoria: "", causa: "", impacto: "", controle: "" }],
       inter_relacoes: [],
       indicadores: [{ nome: "", formula: "", meta: "", frequencia: "mensal" }],
-      evidencia_execucao: { tipo_evidencia: "", descricao: "" }
+      evidencia_execucao: { tipo_evidencia: "", descricao: "", periodo_retencao: "", justificativa_retencao: "" }
     },
     file_url: ""
   });
@@ -70,7 +71,7 @@ export default function ITFormDialog({ open, onClose, it, mapId, workshopId, onS
           matriz_riscos: it.content?.matriz_riscos?.length > 0 ? it.content.matriz_riscos : [{ risco: "", categoria: "", causa: "", impacto: "", controle: "" }],
           inter_relacoes: it.content?.inter_relacoes || [],
           indicadores: it.content?.indicadores?.length > 0 ? it.content.indicadores : [{ nome: "", formula: "", meta: "", frequencia: "mensal" }],
-          evidencia_execucao: it.content?.evidencia_execucao || { tipo_evidencia: "", descricao: "" }
+          evidencia_execucao: it.content?.evidencia_execucao || { tipo_evidencia: "", descricao: "", periodo_retencao: "", justificativa_retencao: "" }
         },
         file_url: it.file_url || ""
       });
@@ -89,7 +90,7 @@ export default function ITFormDialog({ open, onClose, it, mapId, workshopId, onS
           matriz_riscos: [{ risco: "", categoria: "", causa: "", impacto: "", controle: "" }],
           inter_relacoes: [],
           indicadores: [{ nome: "", formula: "", meta: "", frequencia: "mensal" }],
-          evidencia_execucao: { tipo_evidencia: "", descricao: "" }
+          evidencia_execucao: { tipo_evidencia: "", descricao: "", periodo_retencao: "", justificativa_retencao: "" }
         },
         file_url: ""
       });
@@ -368,35 +369,12 @@ export default function ITFormDialog({ open, onClose, it, mapId, workshopId, onS
           </TabsContent>
 
           <TabsContent value="evidencia" className="space-y-4">
-            <div>
-              <Label>Tipo de Evidência *</Label>
-              <Input
-                value={formData.content.evidencia_execucao.tipo_evidencia}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  content: {
-                    ...formData.content,
-                    evidencia_execucao: { ...formData.content.evidencia_execucao, tipo_evidencia: e.target.value }
-                  }
-                })}
-                placeholder="Ex: OS preenchida, Checklist assinado"
-              />
-            </div>
-            <div>
-              <Label>Descrição da Evidência *</Label>
-              <Textarea
-                value={formData.content.evidencia_execucao.descricao}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  content: {
-                    ...formData.content,
-                    evidencia_execucao: { ...formData.content.evidencia_execucao, descricao: e.target.value }
-                  }
-                })}
-                placeholder="O que deve ser registrado para comprovar execução..."
-                rows={3}
-              />
-            </div>
+            <ITEvidenciaTab
+              evidencia={formData.content.evidencia_execucao}
+              onChange={(updated) => setFormData({ ...formData, content: { ...formData.content, evidencia_execucao: updated } })}
+              itData={formData}
+              mapData={mapData}
+            />
           </TabsContent>
         </Tabs>
 
