@@ -369,7 +369,7 @@ export default function VisualizarProcesso() {
           </TabsContent>
 
           <TabsContent value="its" className="mt-6 print:block">
-            <ITManager mapId={doc.id} workshopId={workshop?.id} />
+            <ITManager mapId={doc.id} workshopId={workshop?.id} printMode />
           </TabsContent>
 
           <TabsContent value="implementacao" className="mt-6">
