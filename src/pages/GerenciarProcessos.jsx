@@ -38,6 +38,8 @@ export default function GerenciarProcessos() {
     pdf_url: "",
     plan_access: ["FREE", "START", "BRONZE", "PRATA", "GOLD", "IOM", "MILLIONS"],
     is_template: true,
+    area_id: "",
+    operational_status: "em_elaboracao",
     content_json: {
       objetivo: "",
       campo_aplicacao: "",
@@ -187,6 +189,8 @@ export default function GerenciarProcessos() {
       pdf_url: "",
       plan_access: ["FREE", "START", "BRONZE", "PRATA", "GOLD", "IOM", "MILLIONS"],
       is_template: user?.role === 'admin',
+      area_id: "",
+      operational_status: "em_elaboracao",
       content_json: {
         objetivo: "",
         campo_aplicacao: "",
@@ -214,6 +218,8 @@ export default function GerenciarProcessos() {
       pdf_url: doc.pdf_url,
       plan_access: doc.plan_access || [],
       is_template: doc.is_template,
+      area_id: doc.area_id || "",
+      operational_status: doc.operational_status || "em_elaboracao",
       content_json: doc.content_json || {
         objetivo: "",
         campo_aplicacao: "",
@@ -520,6 +526,25 @@ export default function GerenciarProcessos() {
                       onChange={e => setFormData({...formData, description: e.target.value})} 
                       placeholder="Breve resumo do processo..."
                     />
+                  </div>
+
+                  <div>
+                    <Label>Status Operacional</Label>
+                    <Select 
+                      value={formData.operational_status} 
+                      onValueChange={value => setFormData({...formData, operational_status: value})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="em_elaboracao">Em Elaboração</SelectItem>
+                        <SelectItem value="em_implementacao">Em Implementação</SelectItem>
+                        <SelectItem value="em_auditoria">Em Auditoria</SelectItem>
+                        <SelectItem value="em_melhoria_continua">Em Melhoria Contínua</SelectItem>
+                        <SelectItem value="operacional">Operacional</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div>

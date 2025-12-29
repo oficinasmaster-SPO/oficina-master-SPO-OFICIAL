@@ -264,13 +264,30 @@ export default function MeusProcessos() {
                           )}
                         </div>
                         <CardTitle className="text-lg leading-tight text-gray-900">
-                          {doc.title}
+                         {doc.title}
                         </CardTitle>
                         <CardDescription className="line-clamp-2 mt-2">
-                          {doc.description || "Sem descrição disponível."}
+                         {doc.description || "Sem descrição disponível."}
                         </CardDescription>
-                      </CardHeader>
-                      <CardContent className="flex-1">
+                        <div className="flex flex-wrap gap-1 mt-3">
+                         {doc.operational_status && (
+                           <Badge variant="outline" className="text-xs">
+                             {doc.operational_status.replace(/_/g, ' ')}
+                           </Badge>
+                         )}
+                         {doc.child_its_count > 0 && (
+                           <Badge variant="secondary" className="text-xs">
+                             {doc.child_its_count} ITs
+                           </Badge>
+                         )}
+                         {doc.indicators_count > 0 && (
+                           <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800">
+                             {doc.indicators_count} KPIs
+                           </Badge>
+                         )}
+                        </div>
+                        </CardHeader>
+                        <CardContent className="flex-1">
                         <div className="w-full h-32 bg-gray-100 rounded-md flex items-center justify-center border border-gray-200 mb-2 group cursor-pointer" onClick={() => window.open(doc.pdf_url, '_blank')}>
                           <FileText className="w-12 h-12 text-gray-400 group-hover:text-red-500 transition-colors" />
                         </div>
