@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,8 +11,8 @@ import ITViewer from "./ITViewer";
 
 export default function ITManager({ mapId, workshopId, printMode = false }) {
   const queryClient = useQueryClient();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingIT, setEditingIT] = useState(null);
+  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+  const [editingIT, setEditingIT] = React.useState(null);
 
   const { data: its = [], isLoading } = useQuery({
     queryKey: ['its', mapId],
@@ -23,7 +23,7 @@ export default function ITManager({ mapId, workshopId, printMode = false }) {
     enabled: !!mapId
   });
 
-  const generateCode = useCallback(async (type) => {
+  const generateCode = async (type) => {
     const prefix = type === 'IT' ? 'IT' : 'FR';
     const existingCodes = its.filter(it => it.code?.startsWith(prefix));
     const numbers = existingCodes.map(it => {
@@ -32,7 +32,7 @@ export default function ITManager({ mapId, workshopId, printMode = false }) {
     });
     const maxNumber = numbers.length > 0 ? Math.max(...numbers) : 0;
     return `${prefix}-${String(maxNumber + 1).padStart(4, '0')}`;
-  }, [its]);
+  };
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
@@ -156,12 +156,11 @@ export default function ITManager({ mapId, workshopId, printMode = false }) {
     }
   };
 
-  // Loading state
   if (isLoading) {
     return <div className="flex justify-center p-8"><Loader2 className="w-6 h-6 animate-spin" /></div>;
   }
 
-  // Modo impressão
+  // Modo impressão - mostrar conteúdo completo das ITs
   if (printMode && its.length > 0) {
     return (
       <div className="space-y-8 print:space-y-12">

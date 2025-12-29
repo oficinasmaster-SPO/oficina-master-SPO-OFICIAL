@@ -56,29 +56,6 @@ export default function ITFormDialog({ open, onClose, it, mapId, workshopId, onS
   }, [mapId]);
 
   React.useEffect(() => {
-    if (!open) {
-      // Limpar form quando fechar dialog
-      setFormData({
-        title: "",
-        type: "IT",
-        description: "",
-        content: {
-          objetivo: "",
-          campo_aplicacao: "",
-          informacoes_complementares: "",
-          fluxo_descricao: "",
-          fluxo_image_url: "",
-          atividades: [],
-          matriz_riscos: [{ risco: "", categoria: "", causa: "", impacto: "", controle: "" }],
-          inter_relacoes: [],
-          indicadores: [{ nome: "", formula: "", meta: "", frequencia: "mensal" }],
-          evidencia_execucao: { tipo_evidencia: "", descricao: "", periodo_retencao: "", justificativa_retencao: "" }
-        },
-        file_url: ""
-      });
-      return;
-    }
-
     if (it) {
       setFormData({
         title: it.title || "",
@@ -97,6 +74,25 @@ export default function ITFormDialog({ open, onClose, it, mapId, workshopId, onS
           evidencia_execucao: it.content?.evidencia_execucao || { tipo_evidencia: "", descricao: "", periodo_retencao: "", justificativa_retencao: "" }
         },
         file_url: it.file_url || ""
+      });
+    } else {
+      setFormData({
+        title: "",
+        type: "IT",
+        description: "",
+        content: {
+          objetivo: "",
+          campo_aplicacao: "",
+          informacoes_complementares: "",
+          fluxo_descricao: "",
+          fluxo_image_url: "",
+          atividades: [],
+          matriz_riscos: [{ risco: "", categoria: "", causa: "", impacto: "", controle: "" }],
+          inter_relacoes: [],
+          indicadores: [{ nome: "", formula: "", meta: "", frequencia: "mensal" }],
+          evidencia_execucao: { tipo_evidencia: "", descricao: "", periodo_retencao: "", justificativa_retencao: "" }
+        },
+        file_url: ""
       });
     }
   }, [it, open]);
