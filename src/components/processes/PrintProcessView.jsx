@@ -162,11 +162,11 @@ export default function PrintProcessView({ processDoc, its = [], workshop }) {
       </section>
 
       <footer className="print-footer">
-        <p style={{ margin: '1mm 0' }}>Documento Controlado - Status: {processDoc.operational_status || 'Em elaboração'}</p>
-        <p style={{ margin: '1mm 0' }}>Oficinas Master - Impresso em {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+        <p>Documento Controlado - Status: {processDoc.operational_status || 'Em elaboração'}</p>
+        <p>Oficinas Master - {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
       </footer>
 
-      {/* ITs/FRs Vinculadas */}
+      {/* ITs/FRs */}
       {its && its.length > 0 && its.map((it, idx) => (
         <div key={it.id} className="page-break-before">
           <PrintITView it={it} index={idx + 1} />
@@ -187,13 +187,10 @@ function PrintITView({ it, index }) {
             {it.type}
           </div>
           <h2 style={{ fontSize: '16pt', fontWeight: 'bold', margin: '3mm 0 2mm 0' }}>{it.title}</h2>
-          {it.description && (
-            <p style={{ fontSize: '10pt', color: '#333', margin: '2mm 0' }}>{it.description}</p>
-          )}
+          {it.description && <p style={{ fontSize: '10pt', margin: '2mm 0' }}>{it.description}</p>}
           <div style={{ marginTop: '4mm', fontSize: '10pt' }}>
             <p style={{ margin: '1mm 0' }}><strong>Código:</strong> {it.code}</p>
             <p style={{ margin: '1mm 0' }}><strong>Versão:</strong> {it.version || "1"}</p>
-            <p style={{ margin: '1mm 0' }}><strong>Status:</strong> {it.status || "ativo"}</p>
           </div>
         </div>
       </header>
@@ -223,9 +220,8 @@ function PrintITView({ it, index }) {
         {content.fluxo_image_url && (
           <img 
             src={content.fluxo_image_url} 
-            alt="Fluxograma IT" 
-            className="flowchart-image"
-            style={{ margin: '5mm auto', display: 'block', maxHeight: '150mm' }}
+            alt="Fluxograma IT"
+            style={{ margin: '5mm auto', display: 'block', maxHeight: '150mm', maxWidth: '100%' }}
           />
         )}
       </div>
@@ -323,6 +319,28 @@ function PrintITView({ it, index }) {
               ))}
             </TableBody>
           </Table>
+        </div>
+      )}
+
+      {content.evidencia_execucao?.tipo_evidencia && (
+        <div className="print-section page-break-inside-avoid">
+          <h4 className="subsection-title">9. Evidência de Execução</h4>
+          <div style={{ border: '1pt solid #333', padding: '4mm', backgroundColor: '#f9f9f9', marginTop: '3mm' }}>
+            <p style={{ margin: '2mm 0' }}><strong>Tipo:</strong> {content.evidencia_execucao.tipo_evidencia}</p>
+            {content.evidencia_execucao.descricao && (
+              <p style={{ margin: '2mm 0' }}><strong>Descrição:</strong> {content.evidencia_execucao.descricao}</p>
+            )}
+            {content.evidencia_execucao.periodo_retencao && (
+              <>
+                <div style={{ borderTop: '1pt solid #ccc', marginTop: '3mm', paddingTop: '3mm' }}>
+                  <p style={{ margin: '2mm 0' }}><strong>Período de Retenção:</strong> {content.evidencia_execucao.periodo_retencao.replace(/_/g, ' ')}</p>
+                </div>
+                {content.evidencia_execucao.justificativa_retencao && (
+                  <p style={{ margin: '2mm 0', fontSize: '10pt' }}><strong>Justificativa:</strong> {content.evidencia_execucao.justificativa_retencao}</p>
+                )}
+              </>
+            )}
+          </div>
         </div>
       )}
 
@@ -441,9 +459,31 @@ function PrintITView({ it, index }) {
         </div>
       )}
 
+      {content.inter_relacoes && content.inter_relacoes.length > 0 && (
+        <div className="print-section page-break-inside-avoid">
+          <h4 className="subsection-title">7. Inter-relações</h4>
+          <Table className="print-table">
+            <TableHeader>
+              <TableRow>
+                <TableHead style={{ width: '35%' }}>Área</TableHead>
+                <TableHead>Interação</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {content.inter_relacoes.map((item, idx) => (
+                <TableRow key={idx}>
+                  <TableCell>{item.area}</TableCell>
+                  <TableCell>{item.interacao}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
       {content.indicadores && content.indicadores.filter(i => i.nome).length > 0 && (
         <div className="print-section page-break-inside-avoid">
-          <h4 className="subsection-title">7. Indicadores</h4>
+          <h4 className="subsection-title">8. Indicadores</h4>
           <Table className="print-table">
             <TableHeader>
               <TableRow>
@@ -467,7 +507,7 @@ function PrintITView({ it, index }) {
 
       {content.evidencia_execucao?.tipo_evidencia && (
         <div className="print-section page-break-inside-avoid">
-          <h4 className="subsection-title">8. Evidência de Execução</h4>
+          <h4 className="subsection-title">9. Evidência de Execução</h4>
           <div style={{ border: '1pt solid #333', padding: '4mm', backgroundColor: '#f9f9f9', marginTop: '3mm' }}>
             <p style={{ margin: '2mm 0' }}><strong>Tipo:</strong> {content.evidencia_execucao.tipo_evidencia}</p>
             {content.evidencia_execucao.descricao && (
