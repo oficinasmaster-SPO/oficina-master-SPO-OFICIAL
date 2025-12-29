@@ -225,10 +225,41 @@ Use verbos de ação e seja específico.`,
 Liste 3-5 riscos operacionais críticos relacionados a esta IT.
 Formato: Risco | Causa | Impacto | Controle`,
 
+      // Atividades
+      'atividades_gerar': `${context}
+Gere uma lista de 3-5 atividades operacionais para esta IT em formato JSON.
+IMPORTANTE: Retorne apenas o JSON array puro, sem markdown.
+Formato: [{"atividade": "descrição", "responsavel": "cargo", "frequencia": "período", "observacao": "detalhes"}]`,
+
+      'atividades_completa': `${context}
+Gere atividades detalhadas com responsável, frequência e observações em JSON puro.`,
+
+      // Inter-relações
+      'interrelacoes_gerar': `${context}
+Liste 2-4 áreas que interagem com esta IT em formato JSON.
+IMPORTANTE: Retorne apenas o JSON array puro, sem markdown.
+Formato: [{"area": "nome da área", "interacao": "como interagem"}]`,
+
+      'interrelacoes_areas': `${context}
+Mapeie todas as áreas envolvidas na execução desta IT em JSON puro.`,
+
+      // Riscos
+      'riscos_gerar': `${context}
+Gere 3-5 riscos operacionais em formato JSON.
+IMPORTANTE: Retorne apenas o JSON array puro, sem markdown.
+Formato: [{"risco": "descrição", "categoria": "tipo", "causa": "origem", "impacto": "consequência", "controle": "medida preventiva"}]`,
+
+      'riscos_criticos': `${context}
+Identifique os riscos mais críticos desta IT em JSON puro.`,
+
       // Indicadores
       'indicadores_gerar': `${context}
-Sugira 1-2 indicadores-chave (KPIs) para medir a eficácia desta IT.
-Formato: Nome | Fórmula | Meta | Frequência`,
+Sugira 1-2 indicadores KPIs mensuráveis em formato JSON.
+IMPORTANTE: Retorne apenas o JSON array puro, sem markdown.
+Formato: [{"nome": "nome do KPI", "formula": "como calcular", "meta": "objetivo", "frequencia": "periodicidade"}]`,
+
+      'indicadores_kpi': `${context}
+Defina KPIs específicos e mensuráveis para esta IT em JSON puro.`,
 
       // Genérico
       'default': `${context}

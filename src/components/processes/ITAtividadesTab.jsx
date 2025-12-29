@@ -3,11 +3,54 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Sparkles, List } from "lucide-react";
+import AIFieldAssist from "./AIFieldAssist";
 
-export default function ITAtividadesTab({ atividades = [], onChange }) {
+export default function ITAtividadesTab({ atividades = [], onChange, itData, mapData }) {
   const addActivity = () => {
     onChange([...atividades, { atividade: "", responsavel: "", frequencia: "", observacao: "" }]);
+  };
+
+  const handleAIGenerate = (aiText) => {
+    try {
+      // Tentar parsear como JSON primeiro
+      let parsed;
+      try {
+        parsed = JSON.parse(aiText);
+      } catch {
+        // Se não for JSON, tentar extrair do markdown
+        const jsonMatch = aiText.match(/```json\n?([\s\S]*?)\n?```/);
+        if (jsonMatch) {
+          parsed = JSON.parse(jsonMatch[1]);
+        } else {
+          // Parsing manual de lista
+          const lines = aiText.split('\n').filter(l => l.trim());
+          parsed = [];
+          
+          for (let line of lines) {
+            // Formato esperado: "Atividade | Responsável | Frequência | Observação"
+            const parts = line.split('|').map(p => p.trim());
+            if (parts.length >= 2 && !line.includes('Atividade') && !line.includes('---')) {
+              parsed.push({
+                atividade: parts[0] || "",
+                responsavel: parts[1] || "",
+                frequencia: parts[2] || "",
+                observacao: parts[3] || ""
+              });
+            }
+          }
+        }
+      }
+
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        onChange(parsed);
+      } else {
+        throw new Error("Formato inválido");
+      }
+    } catch (err) {
+      console.error("Erro ao parsear atividades:", err);
+      alert("Não foi possível aplicar automaticamente. Copie e cole manualmente.");
+    }
   };
 
   const updateActivity = (index, field, value) => {
@@ -21,7 +64,7 @@ export default function ITAtividadesTab({ atividades = [], onChange }) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 relative">
       <div className="flex justify-between items-center">
         <Label>Atividades e Responsabilidades</Label>
         <Button size="sm" onClick={addActivity} variant="outline">
@@ -31,7 +74,20 @@ export default function ITAtividadesTab({ atividades = [], onChange }) {
       </div>
 
       {atividades.length === 0 ? (
-        <p className="text-sm text-gray-500 text-center py-8">Nenhuma atividade definida</p>
+        <div className="relative">
+          <p className="text-sm text-gray-500 text-center py-8">Nenhuma atividade definida</p>
+          <AIFieldAssist
+            fieldName="Atividades"
+            fieldValue=""
+            itData={itData}
+            mapData={mapData}
+            onApply={handleAIGenerate}
+            suggestions={[
+              { type: 'atividades_gerar', label: 'Gerar Lista de Atividades', icon: Sparkles },
+              { type: 'atividades_completa', label: 'Atividades Completas (3-5)', icon: List }
+            ]}
+          />
+        </div>
       ) : (
         <div className="space-y-3">
           {atividades.map((ativ, idx) => (
