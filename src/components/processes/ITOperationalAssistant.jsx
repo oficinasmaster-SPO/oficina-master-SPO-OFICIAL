@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { base44 } from "@/api/base44Client";
 import { Sparkles, Loader2, AlertCircle, CheckCircle2, Lightbulb } from "lucide-react";
-import { toast } from "react-hot-toast";
+import { toast } from "sonner";
 
 export default function ITOperationalAssistant({ open, onClose, mapData, existingITs, onCreateIT }) {
   const [context, setContext] = useState("");
@@ -52,9 +52,9 @@ ESCOPO DE ANÁLISE (OBRIGATÓRIO VERIFICAR SEMPRE):
 
 CONTEXTO DO PROCESSO (MAP - REFERÊNCIA):
 Título: ${mapData?.title || "Não informado"}
-Objetivo: ${mapData?.objective || "Não informado"}
-Etapas principais: ${mapData?.activities?.map(a => a.activity).join(", ") || "Não informado"}
-Indicadores: ${mapData?.indicators?.map(i => i.name).join(", ") || "Não definidos"}
+Objetivo: ${mapData?.content_json?.objetivo || mapData?.objective || "Não informado"}
+Etapas principais: ${mapData?.content_json?.atividades?.map(a => a.atividade).join(", ") || "Não informado"}
+Indicadores: ${mapData?.content_json?.indicadores?.map(i => i.indicador).join(", ") || "Não definidos"}
 
 ITs EXISTENTES:
 ${existingITs.map(it => `- ${it.code}: ${it.title} (v${it.version}) - Última alteração: ${it.version_history?.[it.version_history.length - 1]?.changes || "Criação inicial"}`).join("\n") || "Nenhuma IT criada ainda"}
@@ -145,23 +145,29 @@ Retorne um JSON estruturado:
     const newITData = {
       type: "IT",
       title: suggestions.suggested_title,
-      objective: suggestions.suggested_objective,
       description: suggestions.change_summary,
-      activities: suggestions.suggested_steps.map((step, idx) => ({
-        sequence: idx + 1,
-        activity: step,
-        responsible: "A definir"
-      })),
-      risks: suggestions.common_errors.map((error, idx) => ({
-        risk: error,
-        severity: suggestions.urgency === "alta" ? "alto" : suggestions.urgency === "média" ? "médio" : "baixo",
-        mitigation: "A definir durante implementação"
-      })),
-      indicators: [{
-        name: suggestions.affected_indicator,
-        target: "A definir",
-        frequency: "Diário"
-      }],
+      content: {
+        objetivo: suggestions.suggested_objective,
+        campo_aplicacao: "Processo operacional identificado pela análise da IA",
+        fluxo_descricao: suggestions.suggested_steps?.join("\n\n") || "",
+        atividades: suggestions.suggested_steps?.map((step, idx) => ({
+          atividade: step,
+          responsavel: "A definir",
+          ferramentas: "A definir"
+        })) || [],
+        matriz_riscos: suggestions.common_errors?.map((error) => ({
+          identificacao: error,
+          fonte: "Análise IA",
+          impacto: suggestions.urgency === "alta" ? "Alto" : suggestions.urgency === "média" ? "Médio" : "Baixo",
+          categoria: suggestions.urgency === "alta" ? "Alto" : suggestions.urgency === "média" ? "Médio" : "Baixo",
+          controle: "A definir durante implementação"
+        })) || [],
+        indicadores: [{
+          indicador: suggestions.affected_indicator || "Qualidade do processo",
+          meta: "A definir",
+          como_medir: "A definir"
+        }]
+      },
       reason: suggestions.change_reason,
       origin: "melhoria_continua",
       expected_impact: suggestions.operational_impact
