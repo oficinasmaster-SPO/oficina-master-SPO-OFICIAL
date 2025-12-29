@@ -56,8 +56,27 @@ export default function ITFormDialog({ open, onClose, it, mapId, workshopId, onS
         },
         file_url: it.file_url || ""
       });
+    } else {
+      setFormData({
+        title: "",
+        type: "IT",
+        description: "",
+        content: {
+          objetivo: "",
+          campo_aplicacao: "",
+          informacoes_complementares: "",
+          fluxo_descricao: "",
+          fluxo_image_url: "",
+          atividades: [],
+          matriz_riscos: [{ risco: "", categoria: "", causa: "", impacto: "", controle: "" }],
+          inter_relacoes: [],
+          indicadores: [{ nome: "", formula: "", meta: "", frequencia: "mensal" }],
+          evidencia_execucao: { tipo_evidencia: "", descricao: "" }
+        },
+        file_url: ""
+      });
     }
-  }, [it]);
+  }, [it, open]);
 
   const handleFileUpload = async (e, field) => {
     const file = e.target.files[0];
