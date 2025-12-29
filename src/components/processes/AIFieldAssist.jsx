@@ -25,10 +25,27 @@ export default function AIFieldAssist({
 
     try {
       const prompt = buildPrompt(suggestionType);
-      const response = await base44.integrations.Core.InvokeLLM({ prompt });
-      setResult(response);
+      console.log("🤖 Enviando prompt para IA:", prompt);
+      
+      const response = await base44.integrations.Core.InvokeLLM({ 
+        prompt,
+        add_context_from_internet: false
+      });
+      
+      console.log("✅ Resposta da IA:", response);
+      
+      // A resposta vem como string direta
+      if (typeof response === 'string') {
+        setResult(response);
+      } else if (response?.response) {
+        setResult(response.response);
+      } else {
+        setResult(JSON.stringify(response));
+      }
     } catch (error) {
+      console.error("❌ Erro na IA:", error);
       toast.error("Erro ao gerar sugestão: " + error.message);
+      setResult("");
     } finally {
       setLoading(false);
     }
