@@ -1,0 +1,245 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Print Styles - Professional Document Layout */
+@media print {
+  /* Hide non-printable elements */
+  .print\\:hidden,
+  button:not(.print-show),
+  .no-print,
+  nav,
+  header:not(.print-header),
+  footer:not(.print-footer),
+  aside,
+  .sidebar {
+    display: none !important;
+  }
+
+  /* Show print-only elements */
+  .print\\:block {
+    display: block !important;
+  }
+
+  /* Reset page margins */
+  @page {
+    size: A4;
+    margin: 1.5cm 1cm 1.5cm 1cm;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background: white !important;
+    color: black !important;
+    font-size: 11pt;
+    line-height: 1.4;
+  }
+
+  /* Print container */
+  .print-container {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    background: white;
+  }
+
+  /* Page breaks */
+  .page-break-before {
+    page-break-before: always;
+    break-before: page;
+  }
+
+  .page-break-after {
+    page-break-after: always;
+    break-after: page;
+  }
+
+  .page-break-inside-avoid {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Headers and footers */
+  .print-header {
+    margin-bottom: 1cm;
+  }
+
+  .print-footer {
+    margin-top: 0.5cm;
+    padding-top: 0.3cm;
+    border-top: 1px solid #ccc;
+    font-size: 9pt;
+  }
+
+  /* Section titles */
+  .section-title {
+    font-size: 14pt;
+    font-weight: bold;
+    color: #1a1a1a;
+    margin-top: 0.5cm;
+    margin-bottom: 0.3cm;
+    padding-bottom: 0.2cm;
+    border-bottom: 2px solid #333;
+  }
+
+  .subsection-title {
+    font-size: 12pt;
+    font-weight: bold;
+    color: #333;
+    margin-top: 0.4cm;
+    margin-bottom: 0.2cm;
+    padding-bottom: 0.1cm;
+    border-bottom: 1px solid #666;
+  }
+
+  .section-content {
+    font-size: 11pt;
+    line-height: 1.5;
+    color: #333;
+    margin-bottom: 0.3cm;
+    white-space: pre-line;
+  }
+
+  /* Print sections */
+  .print-section {
+    margin-bottom: 0.6cm;
+  }
+
+  /* Tables */
+  .print-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0.2cm;
+    margin-bottom: 0.4cm;
+    font-size: 10pt;
+  }
+
+  .print-table th {
+    background-color: #f0f0f0 !important;
+    border: 1px solid #333 !important;
+    padding: 0.2cm !important;
+    text-align: left;
+    font-weight: bold;
+    color: #000 !important;
+  }
+
+  .print-table td {
+    border: 1px solid #666 !important;
+    padding: 0.15cm !important;
+    vertical-align: top;
+    color: #000 !important;
+  }
+
+  .print-table tbody tr:nth-child(even) {
+    background-color: #fafafa !important;
+  }
+
+  /* Badges and status */
+  .badge,
+  [class*="badge"] {
+    border: 1px solid #333 !important;
+    padding: 0.05cm 0.15cm;
+    font-size: 9pt;
+    background-color: white !important;
+    color: black !important;
+  }
+
+  /* Images */
+  img {
+    max-width: 100% !important;
+    height: auto !important;
+    page-break-inside: avoid;
+  }
+
+  /* IT containers */
+  .print-it-container {
+    margin-top: 1cm;
+  }
+
+  .print-it-header {
+    margin-bottom: 0.6cm;
+  }
+
+  /* Remove shadows and rounded corners for print */
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+    border-radius: 0 !important;
+  }
+
+  /* Ensure black text */
+  p, td, th, li, span, div {
+    color: #000 !important;
+  }
+
+  /* Links */
+  a {
+    text-decoration: underline;
+    color: #000 !important;
+  }
+
+  /* Code and pre blocks */
+  pre, code {
+    background: #f5f5f5 !important;
+    border: 1px solid #ccc !important;
+    page-break-inside: avoid;
+  }
+}
