@@ -15,7 +15,6 @@ import ImplementationTab from "@/components/processes/ImplementationTab";
 import AuditTab from "@/components/processes/AuditTab";
 import IndicatorsTab from "@/components/processes/IndicatorsTab";
 import ITManager from "@/components/processes/ITManager";
-import ITViewer from "@/components/processes/ITViewer";
 import VersionHistoryDialog from "@/components/processes/VersionHistoryDialog";
 
 export default function VisualizarProcesso() {
@@ -56,16 +55,6 @@ export default function VisualizarProcesso() {
     enabled: !!docId
   });
 
-  // Buscar ITs para impressão
-  const { data: allITs = [] } = useQuery({
-    queryKey: ['its-print', docId],
-    queryFn: async () => {
-      const result = await base44.entities.InstructionDocument.filter({ parent_map_id: docId });
-      return result.sort((a, b) => (a.order || 0) - (b.order || 0));
-    },
-    enabled: !!docId
-  });
-
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -97,7 +86,7 @@ export default function VisualizarProcesso() {
       itemNome={doc?.title}
       itemCategoria={doc?.category}
     >
-      <div className="min-h-screen bg-gray-50 py-8 px-4 print:bg-white print:p-4">
+      <div className="min-h-screen bg-gray-50 py-8 px-4 print:bg-white print:p-0">
       <div className="max-w-6xl mx-auto print:max-w-full">
         <div className="flex justify-between items-center mb-6 print:hidden">
           <Button variant="ghost" onClick={() => navigate(createPageUrl('MeusProcessos'))}>
@@ -129,7 +118,7 @@ export default function VisualizarProcesso() {
 
           <TabsContent value="conteudo" className="mt-6 print:block">
 
-        <div className="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-200 print:shadow-none print:border-0 print:mb-0">
+        <div className="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-200 print:shadow-none print:border-0">
           {/* Cabeçalho MAP */}
           <div className="border-b-2 border-gray-800 p-6 flex justify-between items-center">
             <div className="flex items-center gap-4">
@@ -363,16 +352,7 @@ export default function VisualizarProcesso() {
           </TabsContent>
 
           <TabsContent value="its" className="mt-6 print:block">
-            <div className="hidden print:block space-y-8">
-              {allITs.map((it, idx) => (
-                <div key={it.id} className={idx > 0 ? "page-break-before" : ""}>
-                  <ITViewer it={it} />
-                </div>
-              ))}
-            </div>
-            <div className="print:hidden">
-              <ITManager mapId={doc.id} workshopId={workshop?.id} />
-            </div>
+            <ITManager mapId={doc.id} workshopId={workshop?.id} printMode />
           </TabsContent>
 
           <TabsContent value="implementacao" className="mt-6">
