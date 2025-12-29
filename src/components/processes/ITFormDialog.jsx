@@ -18,7 +18,7 @@ import ITEvidenciaTab from "./ITEvidenciaTab";
 import ITAIAssistant from "./ITAIAssistant";
 import AIFieldAssist from "./AIFieldAssist";
 
-export default function ITFormDialog({ open, onClose, it, mapId, workshopId, onSave }) {
+export default function ITFormDialog({ open, onClose, it, mapId, workshopId, onSave, isSaving }) {
   const [uploading, setUploading] = React.useState(false);
   const [aiCollapsed, setAiCollapsed] = React.useState(false);
   const [mapData, setMapData] = React.useState(null);
@@ -199,7 +199,14 @@ export default function ITFormDialog({ open, onClose, it, mapId, workshopId, onS
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex justify-between items-center">
-            <DialogTitle>{it ? 'Editar IT/FR' : 'Nova IT/FR'}</DialogTitle>
+            <div>
+              <DialogTitle className="text-2xl">
+                {it ? 'Editar' : 'Nova'} {formData.type === 'IT' ? 'Instrução de Trabalho' : 'Formulário/Registro'}
+              </DialogTitle>
+              <p className="text-sm text-gray-600 mt-1">
+                {it ? `Editando ${it.code}` : 'Preencha os campos obrigatórios marcados com *'}
+              </p>
+            </div>
             <Button
               variant="outline"
               size="sm"
@@ -378,10 +385,25 @@ export default function ITFormDialog({ open, onClose, it, mapId, workshopId, onS
           </TabsContent>
         </Tabs>
 
-        <div className="flex justify-end gap-2 mt-6">
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={handleSubmit} disabled={uploading}>
-            {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Salvar IT/FR'}
+        <div className="flex justify-end gap-2 mt-6 pt-4 border-t">
+          <Button variant="outline" onClick={onClose} disabled={isSaving || uploading}>
+            Cancelar
+          </Button>
+          <Button 
+            onClick={handleSubmit} 
+            disabled={uploading || isSaving}
+            className={`${formData.type === 'IT' ? 'bg-green-600 hover:bg-green-700' : 'bg-orange-600 hover:bg-orange-700'}`}
+          >
+            {(uploading || isSaving) ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                Salvando...
+              </>
+            ) : (
+              <>
+                {it ? '✓ Atualizar' : '+ Criar'} {formData.type}
+              </>
+            )}
           </Button>
         </div>
       </DialogContent>

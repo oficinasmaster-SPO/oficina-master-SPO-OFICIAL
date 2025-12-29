@@ -124,16 +124,28 @@ export default function ITManager({ mapId, workshopId, printMode = false }) {
 
   return (
     <div className="space-y-4 print:hidden">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">Instruções de Trabalho & Formulários</h3>
-        <Button className="bg-green-600 hover:bg-green-700" onClick={() => {
-          setEditingIT(null);
-          setIsDialogOpen(true);
-        }}>
-          <Plus className="w-4 h-4 mr-2" />
-          Adicionar IT/FR
-        </Button>
-      </div>
+      <Card className="bg-gradient-to-br from-green-50 to-orange-50 border-2">
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle className="text-xl">Instruções de Trabalho & Formulários</CardTitle>
+              <p className="text-sm text-gray-600 mt-1">
+                {its.length === 0 ? 'Nenhum documento vinculado' : `${its.length} documento(s) vinculado(s)`}
+              </p>
+            </div>
+            <Button 
+              className="bg-green-600 hover:bg-green-700 shadow-lg" 
+              onClick={() => {
+                setEditingIT(null);
+                setIsDialogOpen(true);
+              }}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Nova IT/FR
+            </Button>
+          </div>
+        </CardHeader>
+      </Card>
 
       <ITFormDialog
         open={isDialogOpen}
@@ -145,51 +157,85 @@ export default function ITManager({ mapId, workshopId, printMode = false }) {
         mapId={mapId}
         workshopId={workshopId}
         onSave={(data) => saveMutation.mutate(data)}
+        isSaving={saveMutation.isPending}
       />
 
       {its.length === 0 ? (
-        <Card className="border-2 border-dashed">
-          <CardContent className="p-8 text-center">
-            <FileCheck className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">Nenhuma IT ou FR vinculada</p>
+        <Card className="border-2 border-dashed border-gray-300 bg-white">
+          <CardContent className="p-12 text-center">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-100 mb-4">
+              <FileCheck className="w-10 h-10 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Nenhuma IT ou FR vinculada</h3>
+            <p className="text-gray-600 mb-4">Comece adicionando instruções de trabalho ou formulários</p>
+            <Button 
+              variant="outline" 
+              className="border-green-600 text-green-600 hover:bg-green-50"
+              onClick={() => setIsDialogOpen(true)}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Adicionar Primeira IT/FR
+            </Button>
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-2">
-          {its.map((it) => {
+        <div className="grid gap-3">
+          {its.map((it, index) => {
             const Icon = it.type === 'IT' ? FileCheck : ClipboardList;
+            const bgColor = it.type === 'IT' ? 'bg-green-50 border-green-200' : 'bg-orange-50 border-orange-200';
+            const iconColor = it.type === 'IT' ? 'text-green-600' : 'text-orange-600';
+            
             return (
-              <Card key={it.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <Icon className={`w-5 h-5 ${it.type === 'IT' ? 'text-green-600' : 'text-orange-600'}`} />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-sm font-semibold">{it.code}</span>
-                        <span className="text-gray-900">{it.title}</span>
-                        <Badge variant="outline">{it.type}</Badge>
+              <Card key={it.id} className={`${bgColor} border-2 hover:shadow-lg transition-all`}>
+                <CardContent className="p-5">
+                  <div className="flex items-start gap-4">
+                    <div className={`flex-shrink-0 w-14 h-14 rounded-xl ${it.type === 'IT' ? 'bg-green-600' : 'bg-orange-600'} flex items-center justify-center text-white font-bold text-sm shadow-md`}>
+                      {it.type}
+                      <div className="absolute -top-1 -right-1 w-6 h-6 bg-white rounded-full border-2 border-gray-300 flex items-center justify-center text-xs text-gray-700 font-bold">
+                        {index + 1}
                       </div>
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge variant="outline" className="font-mono bg-white">{it.code}</Badge>
+                        <Badge className={it.type === 'IT' ? 'bg-green-600' : 'bg-orange-600'}>{it.type}</Badge>
+                        <Badge variant="secondary" className="bg-white">v{it.version || '1'}</Badge>
+                      </div>
+                      <h4 className="text-base font-bold text-gray-900 mb-1">{it.title}</h4>
                       {it.description && (
-                        <p className="text-sm text-gray-600 mt-1">{it.description}</p>
+                        <p className="text-sm text-gray-600 line-clamp-2">{it.description}</p>
                       )}
                     </div>
-                    <div className="flex gap-2">
+                    
+                    <div className="flex gap-1 flex-shrink-0">
                       {it.file_url && (
-                        <Button size="sm" variant="ghost" onClick={() => window.open(it.file_url, '_blank')}>
-                          Ver Arquivo
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={() => window.open(it.file_url, '_blank')}
+                          className="hover:bg-white"
+                        >
+                          <FileText className="w-4 h-4" />
                         </Button>
                       )}
-                      <Button size="sm" variant="ghost" onClick={() => handleEdit(it)}>
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        onClick={() => handleEdit(it)}
+                        className="hover:bg-white"
+                      >
                         <Edit className="w-4 h-4 text-blue-600" />
                       </Button>
                       <Button
                         size="sm"
                         variant="ghost"
                         onClick={() => {
-                          if (confirm("Excluir este documento?")) {
+                          if (confirm(`Excluir ${it.type} "${it.title}"?`)) {
                             deleteMutation.mutate(it.id);
                           }
                         }}
+                        className="hover:bg-white"
                       >
                         <Trash2 className="w-4 h-4 text-red-600" />
                       </Button>
