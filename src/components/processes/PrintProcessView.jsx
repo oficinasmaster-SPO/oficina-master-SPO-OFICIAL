@@ -18,7 +18,7 @@ export default function PrintProcessView({ processDoc, its = [], workshop }) {
     },
     header: {
       marginBottom: '20px',
-      paddingBottom: '15px',
+      paddingBottom: '10px',
       borderBottom: '3px solid #dc2626',
       textAlign: 'left'
     },
@@ -29,34 +29,41 @@ export default function PrintProcessView({ processDoc, its = [], workshop }) {
       textTransform: 'uppercase',
       color: '#000'
     },
-    subtitle: {
-      fontSize: '10pt',
-      margin: '4px 0',
-      color: '#666'
-    },
     h2: {
+      fontSize: '16pt',
+      fontWeight: 'bold',
+      margin: '8px 0',
+      color: '#000'
+    },
+    h3: {
       fontSize: '14pt',
       fontWeight: 'bold',
-      margin: '20px 0 12px 0',
+      margin: '24px 0 8px 0',
       paddingBottom: '4px',
       borderBottom: '2px solid #000',
       textTransform: 'uppercase',
       color: '#000'
     },
-
+    h4: {
+      fontSize: '12pt',
+      fontWeight: 'bold',
+      margin: '16px 0 8px 0',
+      paddingBottom: '2px',
+      borderBottom: '1px solid #666',
+      color: '#000'
+    },
     metadata: {
       fontSize: '10pt',
-      margin: '15px 0 0 0',
-      lineHeight: '1.8'
+      margin: '10px 0 0 0',
+      lineHeight: '1.5'
     },
     metadataItem: {
-      margin: '3px 0',
+      margin: '2px 0',
       color: '#000'
     },
     section: {
       marginBottom: '24px',
-      textAlign: 'left',
-      pageBreakInside: 'avoid'
+      textAlign: 'left'
     },
     content: {
       fontSize: '11pt',
@@ -101,22 +108,12 @@ export default function PrintProcessView({ processDoc, its = [], workshop }) {
       objectFit: 'contain'
     },
     footer: {
-      marginTop: '30px',
-      paddingTop: '15px',
+      marginTop: '20px',
+      paddingTop: '10px',
       borderTop: '1px solid #ccc',
       fontSize: '9pt',
       textAlign: 'center',
       color: '#666'
-    },
-    list: {
-      listStyleType: 'disc',
-      paddingLeft: '20px',
-      margin: '8px 0'
-    },
-    listItem: {
-      margin: '4px 0',
-      fontSize: '10pt',
-      color: '#000'
     },
     evidenceBox: {
       border: '1px solid #333',
@@ -139,10 +136,10 @@ export default function PrintProcessView({ processDoc, its = [], workshop }) {
       {/* Cabeçalho MAP */}
       <header style={styles.header}>
         {workshop?.logo_url && (
-          <img src={workshop.logo_url} alt="Logo" style={{ height: '45px', marginBottom: '12px' }} />
+          <img src={workshop.logo_url} alt="Logo" style={{ height: '40px', marginBottom: '10px' }} />
         )}
-        <h1 style={styles.h1}>MAPA DA AUTO GESTÃO DO PROCESSO</h1>
-        <p style={styles.subtitle}>{processDoc.title}</p>
+        <h1 style={styles.h1}>Mapa da Auto Gestão do Processo</h1>
+        <h2 style={styles.h2}>{processDoc.title}</h2>
         <div style={styles.metadata}>
           <p style={styles.metadataItem}><strong>Código:</strong> {processDoc.code || "N/A"}</p>
           <p style={styles.metadataItem}><strong>Versão:</strong> {processDoc.revision || "1"}</p>
@@ -155,24 +152,24 @@ export default function PrintProcessView({ processDoc, its = [], workshop }) {
       {/* Conteúdo MAP */}
       <section>
         <div style={styles.section}>
-          <h2 style={styles.h2}>1. Objetivo</h2>
+          <h3 style={styles.h3}>1. Objetivo</h3>
           <p style={styles.content}>{content.objetivo || "Não definido."}</p>
         </div>
 
         <div style={styles.section}>
-          <h2 style={styles.h2}>2. Campo de Aplicação</h2>
+          <h3 style={styles.h3}>2. Campo de Aplicação</h3>
           <p style={styles.content}>{content.campo_aplicacao || "Não definido."}</p>
         </div>
 
         {content.informacoes_complementares && (
           <div style={styles.section}>
-            <h2 style={styles.h2}>3. Informações Complementares</h2>
+            <h3 style={styles.h3}>3. Informações Complementares</h3>
             <p style={styles.content}>{content.informacoes_complementares}</p>
           </div>
         )}
 
         <div style={styles.section}>
-          <h2 style={styles.h2}>4. Fluxo do Processo</h2>
+          <h3 style={styles.h3}>4. Fluxo do Processo</h3>
           {content.fluxo_processo && <p style={styles.content}>{content.fluxo_processo}</p>}
           {content.fluxo_image_url && (
             <img src={content.fluxo_image_url} alt="Fluxograma" style={styles.image} />
@@ -181,7 +178,7 @@ export default function PrintProcessView({ processDoc, its = [], workshop }) {
 
         {content.atividades && content.atividades.length > 0 && (
           <div style={styles.section}>
-            <h2 style={styles.h2}>5. Atividades e Responsabilidades</h2>
+            <h3 style={styles.h3}>5. Atividades e Responsabilidades</h3>
             <table style={styles.table}>
               <thead>
                 <tr>
@@ -205,7 +202,7 @@ export default function PrintProcessView({ processDoc, its = [], workshop }) {
 
         {content.matriz_riscos && content.matriz_riscos.length > 0 && (
           <div style={styles.section}>
-            <h2 style={styles.h2}>6. Matriz de Riscos</h2>
+            <h3 style={styles.h3}>6. Matriz de Riscos</h3>
             <table style={styles.table}>
               <thead>
                 <tr>
@@ -233,7 +230,7 @@ export default function PrintProcessView({ processDoc, its = [], workshop }) {
 
         {content.inter_relacoes && content.inter_relacoes.length > 0 && (
           <div style={styles.section}>
-            <h2 style={styles.h2}>7. Inter-relação entre Áreas</h2>
+            <h3 style={styles.h3}>7. Inter-relação entre Áreas</h3>
             <table style={styles.table}>
               <thead>
                 <tr>
@@ -255,7 +252,7 @@ export default function PrintProcessView({ processDoc, its = [], workshop }) {
 
         {content.indicadores && content.indicadores.length > 0 && (
           <div style={styles.section}>
-            <h2 style={styles.h2}>8. Indicadores de Desempenho</h2>
+            <h3 style={styles.h3}>8. Indicadores de Desempenho</h3>
             <table style={styles.table}>
               <thead>
                 <tr>
@@ -279,9 +276,8 @@ export default function PrintProcessView({ processDoc, its = [], workshop }) {
       </section>
 
       <footer style={styles.footer}>
-        <p>Gerado em: {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
-        <p>Oficinas Master - Gestão de Processos</p>
-        <p style={{ marginTop: '8px', fontWeight: 'bold' }}>Documento Controlado - Uso Interno</p>
+        <p>Documento Controlado - Status: {processDoc.operational_status || 'Em elaboração'}</p>
+        <p>Oficinas Master - Impresso em {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
       </footer>
 
       {/* ITs/FRs - cada um em nova página */}
@@ -302,17 +298,16 @@ function PrintITContent({ it, index, styles }) {
       <header style={styles.header}>
         <div style={{ 
           display: 'inline-block', 
-          padding: '8px 16px', 
+          padding: '8px 12px', 
           backgroundColor: it.type === 'IT' ? '#16a34a' : '#ea580c', 
           color: 'white', 
           fontWeight: 'bold',
-          marginBottom: '12px',
-          fontSize: '11pt'
+          marginBottom: '8px'
         }}>
           {it.type}
         </div>
-        <h1 style={styles.h1}>{it.title}</h1>
-        {it.description && <p style={styles.subtitle}>{it.description}</p>}
+        <h2 style={styles.h2}>{it.title}</h2>
+        {it.description && <p style={{ fontSize: '10pt', margin: '4px 0', color: '#333' }}>{it.description}</p>}
         <div style={styles.metadata}>
           <p style={styles.metadataItem}><strong>Código:</strong> {it.code}</p>
           <p style={styles.metadataItem}><strong>Versão:</strong> {it.version || "1"}</p>
@@ -321,24 +316,24 @@ function PrintITContent({ it, index, styles }) {
       </header>
 
       <div style={styles.section}>
-        <h2 style={styles.h2}>1. Objetivo</h2>
+        <h4 style={styles.h4}>1. Objetivo</h4>
         <p style={styles.content}>{content.objetivo || "Não definido."}</p>
       </div>
 
       <div style={styles.section}>
-        <h2 style={styles.h2}>2. Campo de Aplicação</h2>
+        <h4 style={styles.h4}>2. Campo de Aplicação</h4>
         <p style={styles.content}>{content.campo_aplicacao || "Não definido."}</p>
       </div>
 
       {content.informacoes_complementares && (
         <div style={styles.section}>
-          <h2 style={styles.h2}>3. Informações Complementares</h2>
+          <h4 style={styles.h4}>3. Informações Complementares</h4>
           <p style={styles.content}>{content.informacoes_complementares}</p>
         </div>
       )}
 
       <div style={styles.section}>
-        <h2 style={styles.h2}>4. Fluxo de Execução</h2>
+        <h4 style={styles.h4}>4. Fluxo de Execução</h4>
         {content.fluxo_descricao && <p style={styles.content}>{content.fluxo_descricao}</p>}
         {content.fluxo_image_url && (
           <img src={content.fluxo_image_url} alt="Fluxograma IT" style={{...styles.image, maxHeight: '150mm'}} />
@@ -347,7 +342,7 @@ function PrintITContent({ it, index, styles }) {
 
       {content.atividades && content.atividades.length > 0 && (
         <div style={styles.section}>
-          <h2 style={styles.h2}>5. Atividades e Responsabilidades</h2>
+          <h4 style={styles.h4}>5. Atividades e Responsabilidades</h4>
           <table style={styles.table}>
             <thead>
               <tr>
@@ -371,7 +366,7 @@ function PrintITContent({ it, index, styles }) {
 
       {content.matriz_riscos && content.matriz_riscos.filter(r => r.risco).length > 0 && (
         <div style={styles.section}>
-          <h2 style={styles.h2}>6. Matriz de Riscos</h2>
+          <h4 style={styles.h4}>6. Matriz de Riscos</h4>
           <table style={styles.table}>
             <thead>
               <tr>
@@ -397,7 +392,7 @@ function PrintITContent({ it, index, styles }) {
 
       {content.inter_relacoes && content.inter_relacoes.length > 0 && (
         <div style={styles.section}>
-          <h2 style={styles.h2}>7. Inter-relações</h2>
+          <h4 style={styles.h4}>7. Inter-relações</h4>
           <table style={styles.table}>
             <thead>
               <tr>
@@ -419,7 +414,7 @@ function PrintITContent({ it, index, styles }) {
 
       {content.indicadores && content.indicadores.filter(i => i.nome).length > 0 && (
         <div style={styles.section}>
-          <h2 style={styles.h2}>8. Indicadores</h2>
+          <h4 style={styles.h4}>8. Indicadores</h4>
           <table style={styles.table}>
             <thead>
               <tr>
@@ -443,7 +438,7 @@ function PrintITContent({ it, index, styles }) {
 
       {content.evidencia_execucao?.tipo_evidencia && (
         <div style={styles.section}>
-          <h2 style={styles.h2}>9. Evidência de Execução</h2>
+          <h4 style={styles.h4}>9. Evidência de Execução</h4>
           <div style={styles.evidenceBox}>
             <p style={styles.evidenceItem}><strong>Tipo:</strong> {content.evidencia_execucao.tipo_evidencia}</p>
             {content.evidencia_execucao.descricao && (
@@ -464,9 +459,7 @@ function PrintITContent({ it, index, styles }) {
       )}
 
       <footer style={styles.footer}>
-        <p>Gerado em: {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
-        <p>Oficinas Master - {it.type} {it.code}</p>
-        <p style={{ marginTop: '8px', fontWeight: 'bold' }}>Documento Controlado - Uso Interno</p>
+        <p>{it.type} - {it.code} - Versão {it.version || "1"}</p>
       </footer>
     </div>
   );
