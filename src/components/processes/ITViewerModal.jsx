@@ -8,6 +8,8 @@ import jsPDF from "jspdf";
 
 export default function ITViewerModal({ open, onClose, it, workshop }) {
   const handleDownloadPDF = () => {
+    if (!it) return;
+    
     try {
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
@@ -128,6 +130,8 @@ export default function ITViewerModal({ open, onClose, it, workshop }) {
       toast.error('Erro ao gerar PDF');
     }
   };
+
+  if (!it) return null;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
