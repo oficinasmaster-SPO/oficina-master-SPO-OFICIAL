@@ -113,7 +113,6 @@ export default function ITManager({ mapId, workshopId, printMode = false }) {
       const user = await base44.auth.me();
       const newCode = await generateCode(it.type);
       
-      // Criar cópia sem ID para forçar criação de novo documento
       const clonedData = {
         type: it.type,
         title: `${it.title} (Cópia)`,
@@ -131,8 +130,7 @@ export default function ITManager({ mapId, workshopId, printMode = false }) {
         file_url: it.file_url
       };
       
-      // Salvar diretamente como novo documento
-      const newDoc = await base44.entities.InstructionDocument.create({
+      await base44.entities.InstructionDocument.create({
         parent_map_id: mapId,
         workshop_id: workshopId,
         code: newCode,
@@ -149,11 +147,17 @@ export default function ITManager({ mapId, workshopId, printMode = false }) {
       });
       
       queryClient.invalidateQueries(['its', mapId]);
-      toast.success(`${it.type} clonado com sucesso! Código: ${newCode}`);
+      toast.success(`${it.type} clonado! Código: ${newCode}`);
     } catch (error) {
       console.error("Erro ao clonar:", error);
       toast.error("Erro ao clonar documento");
     }
+  };
+
+  const handleAICreate = (suggestedData) => {
+    setEditingIT(suggestedData);
+    setIsDialogOpen(true);
+    setShowAIAssistant(false);
   };
 
   if (isLoading) {
