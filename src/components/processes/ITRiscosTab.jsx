@@ -22,6 +22,46 @@ export default function ITRiscosTab({ riscos = [], onChange, itData, mapData }) 
     onChange(riscos.filter((_, i) => i !== index));
   };
 
+  const handleAIGenerate = (aiText) => {
+    try {
+      let parsed;
+      try {
+        parsed = JSON.parse(aiText);
+      } catch {
+        const jsonMatch = aiText.match(/```json\n?([\s\S]*?)\n?```/);
+        if (jsonMatch) {
+          parsed = JSON.parse(jsonMatch[1]);
+        } else {
+          const lines = aiText.split('\n').filter(l => l.trim());
+          parsed = [];
+          
+          for (let line of lines) {
+            const parts = line.split('|').map(p => p.trim());
+            if (parts.length >= 4 && !line.includes('Risco') && !line.includes('---')) {
+              parsed.push({
+                risco: parts[0] || "",
+                categoria: parts[1] || "",
+                causa: parts[2] || "",
+                impacto: parts[3] || "",
+                controle: parts[4] || ""
+              });
+            }
+          }
+        }
+      }
+
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        onChange(parsed);
+        toast.success(`${parsed.length} riscos adicionados!`);
+      } else {
+        throw new Error("Formato inválido");
+      }
+    } catch (err) {
+      console.error("Erro ao parsear riscos:", err);
+      toast.error("Não foi possível aplicar automaticamente. Copie e cole manualmente.");
+    }
+  };
+
   const filledRisks = riscos.filter(r => r.risco?.trim());
 
   return (
@@ -34,36 +74,26 @@ export default function ITRiscosTab({ riscos = [], onChange, itData, mapData }) 
             Mínimo 3 riscos preenchidos - Atual: {filledRisks.length}
           </p>
         </div>
-        <div className="flex gap-2">
-          {riscos.length === 0 && (
-            <div className="relative">
-              <Button size="sm" variant="ghost" className="text-purple-600">
-                <span className="mr-2">Gerar com IA</span>
-              </Button>
-              <AIFieldAssist
-                fieldName="Matriz de Riscos"
-                fieldValue=""
-                itData={itData}
-                mapData={mapData}
-                onApply={(suggestion) => {
-                  // Parse sugestão e adicionar riscos
-                  toast.info("Aplicar sugestões manualmente ou melhorar parse");
-                }}
-                suggestions={[
-                  { type: 'riscos_gerar', label: '⚠️ Gerar matriz de riscos (mín. 3)' }
-                ]}
-              />
-            </div>
-          )}
-          <Button size="sm" onClick={addRisk} variant="outline">
-            <Plus className="w-4 h-4 mr-2" />
-            Adicionar Risco
-          </Button>
-        </div>
+        <Button size="sm" onClick={addRisk} variant="outline">
+          <Plus className="w-4 h-4 mr-2" />
+          Adicionar Risco
+        </Button>
       </div>
 
       {riscos.length === 0 ? (
-        <p className="text-sm text-gray-500 text-center py-8">Nenhum risco cadastrado</p>
+        <div className="relative">
+          <p className="text-sm text-gray-500 text-center py-8">Nenhum risco cadastrado</p>
+          <AIFieldAssist
+            fieldName="Riscos"
+            fieldValue=""
+            itData={itData}
+            mapData={mapData}
+            onApply={handleAIGenerate}
+            suggestions={[
+              { type: 'riscos_gerar', label: 'Gerar Matriz de Riscos (3-5)', icon: AlertTriangle }
+            ]}
+          />
+        </div>
       ) : (
         <div className="space-y-3">
           {riscos.map((risco, idx) => (

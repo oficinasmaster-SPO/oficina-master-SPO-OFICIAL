@@ -23,6 +23,45 @@ export default function ITIndicadoresTab({ indicadores = [], onChange, itData, m
     onChange(indicadores.filter((_, i) => i !== index));
   };
 
+  const handleAIGenerate = (aiText) => {
+    try {
+      let parsed;
+      try {
+        parsed = JSON.parse(aiText);
+      } catch {
+        const jsonMatch = aiText.match(/```json\n?([\s\S]*?)\n?```/);
+        if (jsonMatch) {
+          parsed = JSON.parse(jsonMatch[1]);
+        } else {
+          const lines = aiText.split('\n').filter(l => l.trim());
+          parsed = [];
+          
+          for (let line of lines) {
+            const parts = line.split('|').map(p => p.trim());
+            if (parts.length >= 3 && !line.includes('Nome') && !line.includes('---')) {
+              parsed.push({
+                nome: parts[0] || "",
+                formula: parts[1] || "",
+                meta: parts[2] || "",
+                frequencia: parts[3] || "mensal"
+              });
+            }
+          }
+        }
+      }
+
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        onChange(parsed);
+        toast.success(`${parsed.length} indicadores adicionados!`);
+      } else {
+        throw new Error("Formato inválido");
+      }
+    } catch (err) {
+      console.error("Erro ao parsear indicadores:", err);
+      toast.error("Não foi possível aplicar automaticamente. Copie e cole manualmente.");
+    }
+  };
+
   const filledIndicators = indicadores.filter(i => i.nome?.trim());
 
   return (
@@ -35,35 +74,26 @@ export default function ITIndicadoresTab({ indicadores = [], onChange, itData, m
             Mínimo 1 indicador preenchido - Atual: {filledIndicators.length}
           </p>
         </div>
-        <div className="flex gap-2">
-          {indicadores.filter(i => i.nome).length === 0 && (
-            <div className="relative">
-              <Button size="sm" variant="ghost" className="text-purple-600">
-                <span className="mr-2">Gerar com IA</span>
-              </Button>
-              <AIFieldAssist
-                fieldName="Indicadores"
-                fieldValue=""
-                itData={itData}
-                mapData={mapData}
-                onApply={(suggestion) => {
-                  toast.info("Aplicar sugestões manualmente");
-                }}
-                suggestions={[
-                  { type: 'indicadores_gerar', label: '📊 Gerar indicadores-chave' }
-                ]}
-              />
-            </div>
-          )}
-          <Button size="sm" onClick={addIndicator} variant="outline">
-            <Plus className="w-4 h-4 mr-2" />
-            Adicionar Indicador
-          </Button>
-        </div>
+        <Button size="sm" onClick={addIndicator} variant="outline">
+          <Plus className="w-4 h-4 mr-2" />
+          Adicionar Indicador
+        </Button>
       </div>
 
       {indicadores.length === 0 ? (
-        <p className="text-sm text-gray-500 text-center py-8">Nenhum indicador cadastrado</p>
+        <div className="relative">
+          <p className="text-sm text-gray-500 text-center py-8">Nenhum indicador cadastrado</p>
+          <AIFieldAssist
+            fieldName="Indicadores"
+            fieldValue=""
+            itData={itData}
+            mapData={mapData}
+            onApply={handleAIGenerate}
+            suggestions={[
+              { type: 'indicadores_gerar', label: 'Gerar Indicadores (1-2)', icon: TrendingUp }
+            ]}
+          />
+        </div>
       ) : (
         <div className="space-y-3">
           {indicadores.map((ind, idx) => (
