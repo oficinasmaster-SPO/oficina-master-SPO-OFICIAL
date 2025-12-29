@@ -56,6 +56,16 @@ export default function VisualizarProcesso() {
     enabled: !!docId
   });
 
+  // Buscar ITs para impressão
+  const { data: allITs = [] } = useQuery({
+    queryKey: ['its-print', docId],
+    queryFn: async () => {
+      const result = await base44.entities.InstructionDocument.filter({ parent_map_id: docId });
+      return result.sort((a, b) => (a.order || 0) - (b.order || 0));
+    },
+    enabled: !!docId
+  });
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -74,16 +84,6 @@ export default function VisualizarProcesso() {
   }
 
   const content = doc.content_json || {};
-
-  // Buscar ITs para impressão
-  const { data: allITs = [] } = useQuery({
-    queryKey: ['its-print', docId],
-    queryFn: async () => {
-      const result = await base44.entities.InstructionDocument.filter({ parent_map_id: docId });
-      return result.sort((a, b) => (a.order || 0) - (b.order || 0));
-    },
-    enabled: !!docId
-  });
 
   const handlePrint = () => {
     window.print();
