@@ -4,10 +4,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Loader2, FileCheck, ClipboardList, Trash2, Edit, FileText, Copy, Sparkles, TrendingUp } from "lucide-react";
+import { Plus, Loader2, FileCheck, ClipboardList, Trash2, Edit, FileText, Copy, Sparkles, TrendingUp, Eye } from "lucide-react";
 import { toast } from "sonner";
 import ITFormDialog from "./ITFormDialog";
 import ITViewer from "./ITViewer";
+import ITViewerModal from "./ITViewerModal";
 import ITOperationalAssistant from "./ITOperationalAssistant";
 
 export default function ITManager({ mapId, workshopId, printMode = false }) {
@@ -15,6 +16,7 @@ export default function ITManager({ mapId, workshopId, printMode = false }) {
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingIT, setEditingIT] = React.useState(null);
   const [showAIAssistant, setShowAIAssistant] = React.useState(false);
+  const [viewingIT, setViewingIT] = React.useState(null);
   const [mapData, setMapData] = React.useState(null);
 
   // Buscar dados do MAP para contexto da IA
@@ -255,6 +257,13 @@ export default function ITManager({ mapId, workshopId, printMode = false }) {
         onCreateIT={handleAICreate}
       />
 
+      <ITViewerModal
+        open={!!viewingIT}
+        onClose={() => setViewingIT(null)}
+        it={viewingIT}
+        workshop={workshopId}
+      />
+
       {its.length === 0 ? (
         <Card className="border-2 border-dashed border-gray-300 bg-white">
           <CardContent className="p-12 text-center">
@@ -316,6 +325,15 @@ export default function ITManager({ mapId, workshopId, printMode = false }) {
                     </div>
                     
                     <div className="flex gap-1 flex-shrink-0">
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        onClick={() => setViewingIT(it)}
+                        className="hover:bg-white"
+                        title="Visualizar IT/FR"
+                      >
+                        <Eye className="w-4 h-4 text-indigo-600" />
+                      </Button>
                       {it.file_url && (
                         <Button 
                           size="sm" 
