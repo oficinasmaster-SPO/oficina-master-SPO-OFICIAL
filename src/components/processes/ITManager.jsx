@@ -39,34 +39,38 @@ export default function ITManager({ mapId, workshopId, printMode = false }) {
       const user = await base44.auth.me();
       
       if (editingIT?.id) {
-        // Atualizar existente e adicionar ao histórico
-        const newVersion = String(parseInt(editingIT.version || "1") + 1);
+        // Atualizar existente e incrementar versão
+        const currentVersion = parseInt(editingIT.version || "1");
+        const newVersion = String(currentVersion + 1);
+        
         const versionEntry = {
           version: newVersion,
           date: new Date().toISOString(),
           changed_by: user.full_name || user.email,
-          reason: "Atualização de conteúdo",
-          origin: "melhoria_continua",
-          expected_impact: "Melhoria na execução"
+          changes: data.reason || "Atualização de conteúdo",
+          reason: data.reason || "Atualização de conteúdo",
+          origin: data.origin || "melhoria_continua",
+          expected_impact: data.expected_impact || "Melhoria na execução"
         };
+
+        const updatedHistory = [...(editingIT.version_history || []), versionEntry];
 
         return await base44.entities.InstructionDocument.update(editingIT.id, {
           ...data,
           version: newVersion,
-          version_history: [...(editingIT.version_history || []), versionEntry]
+          version_history: updatedHistory
         });
       } else {
-        // Criar novo (incluindo clones)
-        const code = editingIT?.code || await generateCode(data.type);
+        // Criar novo documento (não clone)
+        const code = await generateCode(data.type);
         
-        // Usar histórico de versão existente (clone) ou criar novo
-        const versionHistory = editingIT?.version_history || [{
+        const initialVersionEntry = {
           version: "1",
           date: new Date().toISOString(),
           changed_by: user.full_name || user.email,
           changes: "Criação do documento",
           origin: "criacao_inicial"
-        }];
+        };
         
         return await base44.entities.InstructionDocument.create({
           parent_map_id: mapId,
@@ -74,7 +78,7 @@ export default function ITManager({ mapId, workshopId, printMode = false }) {
           code,
           version: "1",
           status: "ativo",
-          version_history: versionHistory,
+          version_history: [initialVersionEntry],
           ...data
         });
       }
@@ -106,26 +110,46 @@ export default function ITManager({ mapId, workshopId, printMode = false }) {
 
   const handleClone = async (it) => {
     try {
+      const user = await base44.auth.me();
       const newCode = await generateCode(it.type);
+      
+      // Criar cópia sem ID para forçar criação de novo documento
       const clonedData = {
-        ...it,
-        id: undefined,
-        code: newCode,
+        type: it.type,
         title: `${it.title} (Cópia)`,
+        description: it.description,
+        objective: it.objective,
+        scope: it.scope,
+        complementary_info: it.complementary_info,
+        flow_image_url: it.flow_image_url,
+        flow_description: it.flow_description,
+        activities: it.activities,
+        risks: it.risks,
+        inter_relations: it.inter_relations,
+        indicators: it.indicators,
+        evidence_types: it.evidence_types,
+        file_url: it.file_url
+      };
+      
+      // Salvar diretamente como novo documento
+      const newDoc = await base44.entities.InstructionDocument.create({
+        parent_map_id: mapId,
+        workshop_id: workshopId,
+        code: newCode,
         version: "1",
+        status: "ativo",
         version_history: [{
           version: "1",
           date: new Date().toISOString(),
-          changed_by: (await base44.auth.me()).full_name || (await base44.auth.me()).email,
+          changed_by: user.full_name || user.email,
           changes: `Clonado de ${it.code}`,
           origin: "clonagem"
         }],
-        created_date: undefined,
-        updated_date: undefined
-      };
-      setEditingIT(clonedData);
-      setIsDialogOpen(true);
-      toast.success(`${it.type} clonado! Edite e salve para criar.`);
+        ...clonedData
+      });
+      
+      queryClient.invalidateQueries(['its', mapId]);
+      toast.success(`${it.type} clonado com sucesso! Código: ${newCode}`);
     } catch (error) {
       console.error("Erro ao clonar:", error);
       toast.error("Erro ao clonar documento");
