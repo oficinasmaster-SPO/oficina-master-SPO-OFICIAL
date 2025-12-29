@@ -23,7 +23,7 @@ export default function ITManager({ mapId, workshopId, printMode = false }) {
     enabled: !!mapId
   });
 
-  const generateCode = async (type) => {
+  const generateCode = useCallback(async (type) => {
     const prefix = type === 'IT' ? 'IT' : 'FR';
     const existingCodes = its.filter(it => it.code?.startsWith(prefix));
     const numbers = existingCodes.map(it => {
@@ -32,7 +32,7 @@ export default function ITManager({ mapId, workshopId, printMode = false }) {
     });
     const maxNumber = numbers.length > 0 ? Math.max(...numbers) : 0;
     return `${prefix}-${String(maxNumber + 1).padStart(4, '0')}`;
-  };
+  }, [its]);
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
