@@ -156,11 +156,12 @@ export default function ITManager({ mapId, workshopId, printMode = false }) {
     }
   };
 
+  // Loading state
   if (isLoading) {
     return <div className="flex justify-center p-8"><Loader2 className="w-6 h-6 animate-spin" /></div>;
   }
 
-  // Modo impressão - mostrar conteúdo completo das ITs
+  // Modo impressão
   if (printMode && its.length > 0) {
     return (
       <div className="space-y-8 print:space-y-12">
