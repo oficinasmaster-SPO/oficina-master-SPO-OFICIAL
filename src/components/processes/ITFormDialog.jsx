@@ -6,9 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Upload, Trash2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
+import ITFluxoTab from "./ITFluxoTab";
+import ITAtividadesTab from "./ITAtividadesTab";
+import ITRiscosTab from "./ITRiscosTab";
+import ITIndicadoresTab from "./ITIndicadoresTab";
+import ITInterRelacoesTab from "./ITInterRelacoesTab";
 
 export default function ITFormDialog({ open, onClose, it, mapId, workshopId, onSave }) {
   const [uploading, setUploading] = React.useState(false);
@@ -151,9 +156,10 @@ export default function ITFormDialog({ open, onClose, it, mapId, workshopId, onS
         </DialogHeader>
 
         <Tabs defaultValue="basico" className="mt-4">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="basico">Básico</TabsTrigger>
             <TabsTrigger value="fluxo">Fluxo</TabsTrigger>
+            <TabsTrigger value="atividades">Atividades</TabsTrigger>
             <TabsTrigger value="riscos">Riscos</TabsTrigger>
             <TabsTrigger value="indicadores">Indicadores</TabsTrigger>
             <TabsTrigger value="evidencia">Evidência</TabsTrigger>
@@ -230,18 +236,37 @@ export default function ITFormDialog({ open, onClose, it, mapId, workshopId, onS
           </TabsContent>
 
           <TabsContent value="fluxo" className="space-y-4">
-            {/* Implementar em outro componente se necessário */}
-            <p className="text-sm text-gray-600">Conteúdo do fluxo será implementado no próximo passo</p>
+            <ITFluxoTab
+              content={formData.content}
+              onChange={(updated) => setFormData({ ...formData, content: updated })}
+              onFileUpload={handleFileUpload}
+              uploading={uploading}
+            />
+          </TabsContent>
+
+          <TabsContent value="atividades" className="space-y-4">
+            <ITAtividadesTab
+              atividades={formData.content.atividades}
+              onChange={(updated) => setFormData({ ...formData, content: { ...formData.content, atividades: updated } })}
+            />
+            <ITInterRelacoesTab
+              interRelacoes={formData.content.inter_relacoes}
+              onChange={(updated) => setFormData({ ...formData, content: { ...formData.content, inter_relacoes: updated } })}
+            />
           </TabsContent>
 
           <TabsContent value="riscos" className="space-y-4">
-            {/* Implementar em outro componente se necessário */}
-            <p className="text-sm text-gray-600">Matriz de riscos será implementada no próximo passo</p>
+            <ITRiscosTab
+              riscos={formData.content.matriz_riscos}
+              onChange={(updated) => setFormData({ ...formData, content: { ...formData.content, matriz_riscos: updated } })}
+            />
           </TabsContent>
 
           <TabsContent value="indicadores" className="space-y-4">
-            {/* Implementar em outro componente se necessário */}
-            <p className="text-sm text-gray-600">Indicadores serão implementados no próximo passo</p>
+            <ITIndicadoresTab
+              indicadores={formData.content.indicadores}
+              onChange={(updated) => setFormData({ ...formData, content: { ...formData.content, indicadores: updated } })}
+            />
           </TabsContent>
 
           <TabsContent value="evidencia" className="space-y-4">
