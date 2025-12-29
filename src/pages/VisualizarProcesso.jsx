@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, ArrowLeft, Printer, FileText, AlertTriangle, Share2, GitBranch } from "lucide-react";
+import { Loader2, ArrowLeft, Download, FileText, AlertTriangle, Share2, GitBranch } from "lucide-react";
 import { createPageUrl } from "@/utils";
 import { toast } from "sonner";
 import TrackingWrapper from "@/components/shared/TrackingWrapper";
@@ -16,8 +16,7 @@ import AuditTab from "@/components/processes/AuditTab";
 import IndicatorsTab from "@/components/processes/IndicatorsTab";
 import ITManager from "@/components/processes/ITManager";
 import VersionHistoryDialog from "@/components/processes/VersionHistoryDialog";
-import PrintProcessView from "@/components/processes/PrintProcessView";
-import PrintOptionsDialog from "@/components/processes/PrintOptionsDialog";
+import { downloadProcessPDF } from "@/components/processes/ProcessPDFGenerator";
 
 export default function VisualizarProcesso() {
   const [searchParams] = useSearchParams();
@@ -26,9 +25,6 @@ export default function VisualizarProcesso() {
   const [user, setUser] = useState(null);
   const [workshop, setWorkshop] = useState(null);
   const [versionDialogOpen, setVersionDialogOpen] = useState(false);
-  const [printOptionsOpen, setPrintOptionsOpen] = useState(false);
-  const [printMode, setPrintMode] = useState(false);
-  const [printOptions, setPrintOptions] = useState(null);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -88,31 +84,16 @@ export default function VisualizarProcesso() {
 
   const content = doc.content_json || {};
 
-  const handlePrint = (options) => {
-    setPrintOptions(options);
-    setPrintMode(true);
-    
-    // Aguardar render e então imprimir
-    setTimeout(() => {
-      window.print();
-      // Resetar após impressão
-      setTimeout(() => {
-        setPrintMode(false);
-        setPrintOptions(null);
-      }, 100);
-    }, 500);
-  };
-
-  // Modo impressão - renderizar vista específica
-  if (printMode && printOptions) {
-    return (
-      <PrintProcessView
-        processDoc={doc}
-        its={printOptions.includeIts ? its : []}
-        workshop={workshop}
-      />
+  const handleDownloadPDF = () => {
+    toast.promise(
+      Promise.resolve(downloadProcessPDF(doc, its, workshop)),
+      {
+        loading: 'Gerando PDF...',
+        success: 'PDF baixado com sucesso!',
+        error: 'Erro ao gerar PDF'
+      }
     );
-  }
+  };
 
   return (
     <TrackingWrapper
@@ -137,8 +118,8 @@ export default function VisualizarProcesso() {
                 <FileText className="w-4 h-4 mr-2" /> Ver PDF
               </Button>
             )}
-            <Button onClick={() => setPrintOptionsOpen(true)} className="bg-blue-600 hover:bg-blue-700">
-              <Printer className="w-4 h-4 mr-2" /> Imprimir / Exportar
+            <Button onClick={handleDownloadPDF} className="bg-blue-600 hover:bg-blue-700">
+              <Download className="w-4 h-4 mr-2" /> Download PDF
             </Button>
           </div>
         </div>
@@ -412,12 +393,6 @@ export default function VisualizarProcesso() {
             toast.info("Adicionar versão via edição do processo em Gerenciar Processos");
             setVersionDialogOpen(false);
           }}
-        />
-
-        <PrintOptionsDialog
-          open={printOptionsOpen}
-          onClose={() => setPrintOptionsOpen(false)}
-          onPrint={handlePrint}
         />
       </div>
       </div>
