@@ -60,17 +60,41 @@ export default function AIFieldAssist({
       
       // Subscrever para receber atualizações em tempo real
       let finalMessages = [];
+      let lastContentLength = 0;
+      let stableCount = 0;
       
       await new Promise((resolve, reject) => {
         const unsubscribe = base44.agents.subscribeToConversation(conversation.id, (data) => {
-          console.log("📨 Atualização recebida:", data);
+          console.log("📨 Atualização recebida:", {
+            messagesCount: data.messages?.length,
+            lastMessageRole: data.messages?.[data.messages.length - 1]?.role,
+            contentLength: data.messages?.[data.messages.length - 1]?.content?.length
+          });
+          
           finalMessages = data.messages || [];
           
-          // Verificar se a última mensagem é do assistente e está completa
           const lastMsg = finalMessages[finalMessages.length - 1];
+          
+          // Verificar se é uma mensagem do assistente
           if (lastMsg && lastMsg.role === 'assistant' && lastMsg.content) {
-            unsubscribe();
-            resolve();
+            const currentLength = lastMsg.content.length;
+            
+            // Se o tamanho não mudou, incrementar contador
+            if (currentLength === lastContentLength && currentLength > 0) {
+              stableCount++;
+              console.log(`🔄 Conteúdo estável (${stableCount}/3):`, currentLength);
+              
+              // Após 3 verificações consecutivas sem mudança, considerar completo
+              if (stableCount >= 3) {
+                console.log("✅ Mensagem completa detectada");
+                unsubscribe();
+                resolve();
+              }
+            } else {
+              // Tamanho mudou, resetar contador
+              stableCount = 0;
+              lastContentLength = currentLength;
+            }
           }
         });
         
@@ -83,15 +107,16 @@ export default function AIFieldAssist({
           reject(err);
         });
         
-        // Timeout de segurança
+        // Timeout de segurança aumentado
         setTimeout(() => {
           unsubscribe();
           if (finalMessages.length === 0) {
             reject(new Error("Timeout: sem resposta do agente"));
           } else {
+            console.log("⏱️ Timeout atingido, usando última mensagem disponível");
             resolve();
           }
-        }, 30000);
+        }, 60000); // 60 segundos
       });
       
       // Pegar a última mensagem do assistente
