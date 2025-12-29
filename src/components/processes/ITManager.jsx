@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Loader2, FileCheck, ClipboardList, Trash2, Edit, FileText } from "lucide-react";
+import { Plus, Loader2, FileCheck, ClipboardList, Trash2, Edit, FileText, Copy } from "lucide-react";
 import { toast } from "sonner";
 import ITFormDialog from "./ITFormDialog";
 import ITViewer from "./ITViewer";
@@ -38,8 +38,8 @@ export default function ITManager({ mapId, workshopId, printMode = false }) {
     mutationFn: async (data) => {
       const user = await base44.auth.me();
       
-      if (editingIT) {
-        // Atualizar e adicionar ao histórico
+      if (editingIT?.id) {
+        // Atualizar existente e adicionar ao histórico
         const newVersion = String(parseInt(editingIT.version || "1") + 1);
         const versionEntry = {
           version: newVersion,
@@ -56,17 +56,17 @@ export default function ITManager({ mapId, workshopId, printMode = false }) {
           version_history: [...(editingIT.version_history || []), versionEntry]
         });
       } else {
-        // Criar novo - Gerar código único
-        const code = await generateCode(data.type);
+        // Criar novo (incluindo clones)
+        const code = editingIT?.code || await generateCode(data.type);
         
-        // Inicializar histórico de versão
-        const initialVersionEntry = {
+        // Usar histórico de versão existente (clone) ou criar novo
+        const versionHistory = editingIT?.version_history || [{
           version: "1",
           date: new Date().toISOString(),
           changed_by: user.full_name || user.email,
           changes: "Criação do documento",
           origin: "criacao_inicial"
-        };
+        }];
         
         return await base44.entities.InstructionDocument.create({
           parent_map_id: mapId,
@@ -74,7 +74,7 @@ export default function ITManager({ mapId, workshopId, printMode = false }) {
           code,
           version: "1",
           status: "ativo",
-          version_history: [initialVersionEntry],
+          version_history: versionHistory,
           ...data
         });
       }
@@ -102,6 +102,34 @@ export default function ITManager({ mapId, workshopId, printMode = false }) {
   const handleEdit = (it) => {
     setEditingIT(it);
     setIsDialogOpen(true);
+  };
+
+  const handleClone = async (it) => {
+    try {
+      const newCode = await generateCode(it.type);
+      const clonedData = {
+        ...it,
+        id: undefined,
+        code: newCode,
+        title: `${it.title} (Cópia)`,
+        version: "1",
+        version_history: [{
+          version: "1",
+          date: new Date().toISOString(),
+          changed_by: (await base44.auth.me()).full_name || (await base44.auth.me()).email,
+          changes: `Clonado de ${it.code}`,
+          origin: "clonagem"
+        }],
+        created_date: undefined,
+        updated_date: undefined
+      };
+      setEditingIT(clonedData);
+      setIsDialogOpen(true);
+      toast.success(`${it.type} clonado! Edite e salve para criar.`);
+    } catch (error) {
+      console.error("Erro ao clonar:", error);
+      toast.error("Erro ao clonar documento");
+    }
   };
 
   if (isLoading) {
@@ -217,6 +245,7 @@ export default function ITManager({ mapId, workshopId, printMode = false }) {
                           variant="ghost" 
                           onClick={() => window.open(it.file_url, '_blank')}
                           className="hover:bg-white"
+                          title="Ver arquivo anexo"
                         >
                           <FileText className="w-4 h-4" />
                         </Button>
@@ -224,8 +253,18 @@ export default function ITManager({ mapId, workshopId, printMode = false }) {
                       <Button 
                         size="sm" 
                         variant="ghost" 
+                        onClick={() => handleClone(it)}
+                        className="hover:bg-white"
+                        title="Clonar IT/FR"
+                      >
+                        <Copy className="w-4 h-4 text-purple-600" />
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
                         onClick={() => handleEdit(it)}
                         className="hover:bg-white"
+                        title="Editar"
                       >
                         <Edit className="w-4 h-4 text-blue-600" />
                       </Button>
@@ -238,6 +277,7 @@ export default function ITManager({ mapId, workshopId, printMode = false }) {
                           }
                         }}
                         className="hover:bg-white"
+                        title="Excluir"
                       >
                         <Trash2 className="w-4 h-4 text-red-600" />
                       </Button>
