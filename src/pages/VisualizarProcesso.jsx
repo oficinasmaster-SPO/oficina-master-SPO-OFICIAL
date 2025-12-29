@@ -99,180 +99,6 @@ export default function VisualizarProcesso() {
     >
       <div className="min-h-screen bg-gray-50 py-8 px-4 print:bg-white print:p-4">
       <div className="max-w-6xl mx-auto print:max-w-full">
-        
-        {/* CONTEÚDO PARA IMPRESSÃO - Oculto na tela, visível na impressão */}
-        <div className="hidden print:block space-y-8">
-          {/* Conteúdo do MAP */}
-          <div className="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-200 print:shadow-none print:border-0">
-            <div className="border-b-2 border-gray-800 p-6 flex justify-between items-center">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-red-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
-                  OM
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900 uppercase">Mapa da Auto Gestão do Processo</h1>
-                  <h2 className="text-lg text-gray-600">{doc.title}</h2>
-                </div>
-              </div>
-              <div className="text-right text-sm text-gray-600">
-                <p><strong>Código:</strong> {doc.code || "N/A"}</p>
-                <p><strong>Versão:</strong> {doc.revision || "1"}</p>
-                <p><strong>Data:</strong> {new Date(doc.updated_date || doc.created_date).toLocaleDateString()}</p>
-                <Badge variant="outline" className="mt-1">{doc.category}</Badge>
-              </div>
-            </div>
-
-            <div className="p-8 space-y-8">
-              <section>
-                <h3 className="text-lg font-bold text-gray-900 border-b pb-2 mb-3 uppercase">1. Objetivo</h3>
-                <p className="text-gray-700 leading-relaxed whitespace-pre-line">{content.objetivo || "Não definido."}</p>
-              </section>
-
-              <section>
-                <h3 className="text-lg font-bold text-gray-900 border-b pb-2 mb-3 uppercase">2. Campo de Aplicação</h3>
-                <p className="text-gray-700 leading-relaxed whitespace-pre-line">{content.campo_aplicacao || "Não definido."}</p>
-              </section>
-
-              <section>
-                <h3 className="text-lg font-bold text-gray-900 border-b pb-2 mb-3 uppercase">3. Informações Complementares</h3>
-                <p className="text-gray-700 leading-relaxed whitespace-pre-line">{content.informacoes_complementares || "Não definido."}</p>
-              </section>
-
-              <section>
-                <h3 className="text-lg font-bold text-gray-900 border-b pb-2 mb-3 uppercase">4. Fluxo do Processo</h3>
-                <p className="text-gray-700 leading-relaxed whitespace-pre-line mb-4">{content.fluxo_processo || "Ver fluxograma abaixo."}</p>
-                {content.fluxo_image_url && (
-                  <div className="border rounded-lg p-2 bg-gray-50 flex justify-center">
-                    <img src={content.fluxo_image_url} alt="Fluxograma" className="max-w-full h-auto max-h-[600px] object-contain" />
-                  </div>
-                )}
-              </section>
-
-              {content.atividades && content.atividades.length > 0 && (
-                <section className="break-inside-avoid">
-                  <h3 className="text-lg font-bold text-gray-900 border-b pb-2 mb-3 uppercase">5. Atividades e Responsabilidades</h3>
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-gray-100">
-                        <TableHead className="w-[50%] font-bold text-gray-900">Atividade</TableHead>
-                        <TableHead className="font-bold text-gray-900">Responsável</TableHead>
-                        <TableHead className="font-bold text-gray-900">Ferramentas/Docs</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {content.atividades.map((item, idx) => (
-                        <TableRow key={idx}>
-                          <TableCell className="align-top">{item.atividade}</TableCell>
-                          <TableCell className="align-top">{item.responsavel}</TableCell>
-                          <TableCell className="align-top">{item.ferramentas}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </section>
-              )}
-
-              {content.matriz_riscos && content.matriz_riscos.length > 0 && (
-                <section className="break-inside-avoid">
-                  <h3 className="text-lg font-bold text-gray-900 border-b pb-2 mb-3 uppercase">6. Matriz de Riscos</h3>
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-gray-100">
-                        <TableHead className="font-bold text-gray-900">Identificação</TableHead>
-                        <TableHead className="font-bold text-gray-900">Fonte</TableHead>
-                        <TableHead className="font-bold text-gray-900">Impacto</TableHead>
-                        <TableHead className="font-bold text-gray-900">Categoria</TableHead>
-                        <TableHead className="font-bold text-gray-900">Controle</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {content.matriz_riscos.map((item, idx) => (
-                        <TableRow key={idx}>
-                          <TableCell className="font-medium">{item.identificacao}</TableCell>
-                          <TableCell>{item.fonte}</TableCell>
-                          <TableCell>{item.impacto}</TableCell>
-                          <TableCell>
-                            <Badge variant={item.categoria === 'Alto' ? 'destructive' : item.categoria === 'Médio' ? 'secondary' : 'outline'}>
-                              {item.categoria}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{item.controle}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </section>
-              )}
-
-              {content.inter_relacoes && content.inter_relacoes.length > 0 && (
-                <section className="break-inside-avoid">
-                  <h3 className="text-lg font-bold text-gray-900 border-b pb-2 mb-3 uppercase">7. Inter-relação entre Áreas</h3>
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-gray-100">
-                        <TableHead className="w-[30%] font-bold text-gray-900">Área</TableHead>
-                        <TableHead className="font-bold text-gray-900">Interação (Entrada/Saída)</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {content.inter_relacoes.map((item, idx) => (
-                        <TableRow key={idx}>
-                          <TableCell className="font-medium">{item.area}</TableCell>
-                          <TableCell>{item.interacao}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </section>
-              )}
-
-              {content.indicadores && content.indicadores.length > 0 && (
-                <section className="break-inside-avoid">
-                  <h3 className="text-lg font-bold text-gray-900 border-b pb-2 mb-3 uppercase">8. Indicadores de Desempenho</h3>
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-gray-100">
-                        <TableHead className="font-bold text-gray-900">Indicador</TableHead>
-                        <TableHead className="font-bold text-gray-900">Meta</TableHead>
-                        <TableHead className="font-bold text-gray-900">Como Medir</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {content.indicadores.map((item, idx) => (
-                        <TableRow key={idx}>
-                          <TableCell className="font-medium">{item.indicador}</TableCell>
-                          <TableCell>{item.meta}</TableCell>
-                          <TableCell>{item.como_medir}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </section>
-              )}
-            </div>
-
-            <div className="bg-gray-50 p-4 border-t text-center text-xs text-gray-500">
-              Documento gerado eletronicamente pela plataforma Oficinas Master. Impresso em {new Date().toLocaleDateString()}.
-            </div>
-          </div>
-
-          {/* ITs e FRs para impressão */}
-          {allITs.length > 0 && (
-            <div className="space-y-8 mt-12">
-              <div className="border-t-4 border-gray-800 pt-8">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">INSTRUÇÕES DE TRABALHO E FORMULÁRIOS/REGISTROS</h2>
-              </div>
-              {allITs.map((it, idx) => (
-                <div key={it.id} className={idx > 0 ? "page-break-before" : ""}>
-                  {idx > 0 && <div className="border-t-4 border-gray-300 mb-8" />}
-                  <ITViewer it={it} />
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* INTERFACE NORMAL - Visível na tela, oculta na impressão */}
         <div className="flex justify-between items-center mb-6 print:hidden">
           <Button variant="ghost" onClick={() => navigate(createPageUrl('MeusProcessos'))}>
             <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
@@ -301,9 +127,9 @@ export default function VisualizarProcesso() {
             <TabsTrigger value="indicadores">Indicadores</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="conteudo" className="mt-6">
+          <TabsContent value="conteudo" className="mt-6 print:block">
 
-        <div className="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-200 print:shadow-none print:border-0">
+        <div className="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-200 print:shadow-none print:border-0 print:mb-0">
           {/* Cabeçalho MAP */}
           <div className="border-b-2 border-gray-800 p-6 flex justify-between items-center">
             <div className="flex items-center gap-4">
@@ -536,8 +362,17 @@ export default function VisualizarProcesso() {
         </div>
           </TabsContent>
 
-          <TabsContent value="its" className="mt-6">
-            <ITManager mapId={doc.id} workshopId={workshop?.id} />
+          <TabsContent value="its" className="mt-6 print:block">
+            <div className="hidden print:block space-y-8">
+              {allITs.map((it, idx) => (
+                <div key={it.id} className={idx > 0 ? "page-break-before" : ""}>
+                  <ITViewer it={it} />
+                </div>
+              ))}
+            </div>
+            <div className="print:hidden">
+              <ITManager mapId={doc.id} workshopId={workshop?.id} />
+            </div>
           </TabsContent>
 
           <TabsContent value="implementacao" className="mt-6">
