@@ -10,73 +10,64 @@ export default function PrintProcessView({ processDoc, its = [], workshop }) {
     <div className="print-container">
       {/* Cabeçalho Institucional */}
       <header className="print-header">
-        <div className="flex items-center justify-between border-b-4 border-red-600 pb-4 mb-6">
-          <div className="flex items-center gap-4">
-            {workshop?.logo_url ? (
-              <img src={workshop.logo_url} alt="Logo" className="h-16 w-16 object-contain" />
-            ) : (
-              <div className="h-16 w-16 bg-red-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
-                OM
-              </div>
-            )}
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 uppercase">
-                Mapa da Auto Gestão do Processo
-              </h1>
-              <p className="text-lg text-gray-700">{processDoc.title}</p>
-            </div>
-          </div>
-          <div className="text-right text-sm">
-            <p><strong>Código:</strong> {processDoc.code || "N/A"}</p>
-            <p><strong>Versão:</strong> {processDoc.revision || "1"}</p>
-            <p><strong>Data:</strong> {new Date(processDoc.updated_date || processDoc.created_date).toLocaleDateString('pt-BR')}</p>
-            <Badge variant="outline" className="mt-1">{processDoc.category}</Badge>
-            <Badge className="mt-1 ml-2">
-              {processDoc.status === 'ativo' ? 'Ativo' : processDoc.status === 'obsoleto' ? 'Obsoleto' : 'Em Revisão'}
-            </Badge>
+        {workshop?.logo_url && (
+          <img src={workshop.logo_url} alt="Logo Oficina" style={{ height: '40px', marginBottom: '10px' }} />
+        )}
+        <div style={{ borderBottom: '3pt solid #dc2626', paddingBottom: '8mm', marginBottom: '8mm' }}>
+          <h1 style={{ fontSize: '18pt', fontWeight: 'bold', margin: 0, textTransform: 'uppercase' }}>
+            Mapa da Auto Gestão do Processo
+          </h1>
+          <h2 style={{ fontSize: '16pt', fontWeight: 'bold', margin: '3mm 0 0 0' }}>
+            {processDoc.title}
+          </h2>
+          <div style={{ marginTop: '5mm', fontSize: '10pt' }}>
+            <p style={{ margin: '1mm 0' }}><strong>Código:</strong> {processDoc.code || "N/A"}</p>
+            <p style={{ margin: '1mm 0' }}><strong>Versão:</strong> {processDoc.revision || "1"}</p>
+            <p style={{ margin: '1mm 0' }}><strong>Categoria:</strong> {processDoc.category}</p>
+            <p style={{ margin: '1mm 0' }}><strong>Status:</strong> {processDoc.status || 'ativo'}</p>
+            <p style={{ margin: '1mm 0' }}><strong>Data de Emissão:</strong> {new Date(processDoc.updated_date || processDoc.created_date).toLocaleDateString('pt-BR')}</p>
           </div>
         </div>
       </header>
 
       {/* Conteúdo do MAP */}
-      <section className="mb-8">
-        <div className="space-y-6">
-          {/* 1. Objetivo */}
-          <div className="print-section">
-            <h3 className="section-title">1. Objetivo</h3>
-            <p className="section-content">{content.objetivo || "Não definido."}</p>
-          </div>
+      <section style={{ marginBottom: '10mm' }}>
+        {/* 1. Objetivo */}
+        <div className="print-section">
+          <h3 className="section-title">1. Objetivo</h3>
+          <p className="section-content">{content.objetivo || "Não definido."}</p>
+        </div>
 
-          {/* 2. Campo de Aplicação */}
-          <div className="print-section">
-            <h3 className="section-title">2. Campo de Aplicação</h3>
-            <p className="section-content">{content.campo_aplicacao || "Não definido."}</p>
-          </div>
+        {/* 2. Campo de Aplicação */}
+        <div className="print-section">
+          <h3 className="section-title">2. Campo de Aplicação</h3>
+          <p className="section-content">{content.campo_aplicacao || "Não definido."}</p>
+        </div>
 
-          {/* 3. Informações Complementares */}
-          {content.informacoes_complementares && (
-            <div className="print-section">
-              <h3 className="section-title">3. Informações Complementares</h3>
-              <p className="section-content">{content.informacoes_complementares}</p>
+        {/* 3. Informações Complementares */}
+        {content.informacoes_complementares && (
+          <div className="print-section">
+            <h3 className="section-title">3. Informações Complementares</h3>
+            <p className="section-content">{content.informacoes_complementares}</p>
+          </div>
+        )}
+
+        {/* 4. Fluxo do Processo */}
+        <div className="print-section">
+          <h3 className="section-title">4. Fluxo do Processo</h3>
+          {content.fluxo_processo && (
+            <p className="section-content" style={{ marginBottom: '5mm' }}>{content.fluxo_processo}</p>
+          )}
+          {content.fluxo_image_url && (
+            <div style={{ textAlign: 'center', margin: '5mm 0' }}>
+              <img 
+                src={content.fluxo_image_url} 
+                alt="Fluxograma" 
+                style={{ maxWidth: '100%', maxHeight: '180mm', objectFit: 'contain' }}
+              />
             </div>
           )}
-
-          {/* 4. Fluxo do Processo */}
-          <div className="print-section">
-            <h3 className="section-title">4. Fluxo do Processo</h3>
-            {content.fluxo_processo && (
-              <p className="section-content mb-3">{content.fluxo_processo}</p>
-            )}
-            {content.fluxo_image_url && (
-              <div className="flex justify-center my-4">
-                <img 
-                  src={content.fluxo_image_url} 
-                  alt="Fluxograma" 
-                  className="max-w-full max-h-96 object-contain border rounded"
-                />
-              </div>
-            )}
-          </div>
+        </div>
 
           {/* 5. Atividades */}
           {content.atividades && content.atividades.length > 0 && (
@@ -187,9 +178,9 @@ export default function PrintProcessView({ processDoc, its = [], workshop }) {
       </section>
 
       {/* Rodapé do MAP */}
-      <footer className="print-footer text-center text-xs text-gray-500 border-t pt-3 mt-6">
-        <p>Documento Controlado - {processDoc.operational_status || 'Em elaboração'}</p>
-        <p>Oficinas Master - Impresso em {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR')}</p>
+      <footer className="print-footer">
+        <p style={{ margin: '1mm 0' }}>Documento Controlado - Status: {processDoc.operational_status || 'Em elaboração'}</p>
+        <p style={{ margin: '1mm 0' }}>Oficinas Master - Impresso em {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
       </footer>
 
       {/* ITs/FRs Vinculadas */}
@@ -210,66 +201,60 @@ function PrintITView({ it, index }) {
   const content = it?.content || {};
 
   return (
-    <div className="print-it-container">
+    <div className="print-container">
       {/* Cabeçalho IT */}
-      <header className="print-it-header border-b-2 border-gray-800 pb-4 mb-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className={`h-12 w-12 rounded-lg flex items-center justify-center text-white font-bold ${
-              it.type === 'IT' ? 'bg-green-600' : 'bg-orange-600'
-            }`}>
-              {it.type}
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-gray-900">{it.title}</h2>
-              <p className="text-sm text-gray-600">{it.description || "Sem descrição"}</p>
-            </div>
+      <header className="print-header">
+        <div style={{ borderBottom: '2pt solid #000', paddingBottom: '6mm', marginBottom: '8mm' }}>
+          <div style={{ display: 'inline-block', padding: '3mm', backgroundColor: it.type === 'IT' ? '#16a34a' : '#ea580c', color: 'white', fontWeight: 'bold', marginBottom: '3mm' }}>
+            {it.type}
           </div>
-          <div className="text-right text-sm">
-            <p><strong>Código:</strong> {it.code}</p>
-            <p><strong>Versão:</strong> {it.version || "1"}</p>
-            <Badge className="mt-1">{it.status || "ativo"}</Badge>
+          <h2 style={{ fontSize: '16pt', fontWeight: 'bold', margin: '3mm 0 2mm 0' }}>{it.title}</h2>
+          {it.description && (
+            <p style={{ fontSize: '10pt', color: '#333', margin: '2mm 0' }}>{it.description}</p>
+          )}
+          <div style={{ marginTop: '4mm', fontSize: '10pt' }}>
+            <p style={{ margin: '1mm 0' }}><strong>Código:</strong> {it.code}</p>
+            <p style={{ margin: '1mm 0' }}><strong>Versão:</strong> {it.version || "1"}</p>
+            <p style={{ margin: '1mm 0' }}><strong>Status:</strong> {it.status || "ativo"}</p>
           </div>
         </div>
       </header>
 
-      <div className="space-y-6">
-        {/* 1. Objetivo */}
-        <div className="print-section">
-          <h4 className="subsection-title">1. Objetivo</h4>
-          <p className="section-content">{content.objetivo || "Não definido."}</p>
-        </div>
+      {/* 1. Objetivo */}
+      <div className="print-section">
+        <h4 className="subsection-title">1. Objetivo</h4>
+        <p className="section-content">{content.objetivo || "Não definido."}</p>
+      </div>
 
-        {/* 2. Campo de Aplicação */}
-        <div className="print-section">
-          <h4 className="subsection-title">2. Campo de Aplicação</h4>
-          <p className="section-content">{content.campo_aplicacao || "Não definido."}</p>
-        </div>
+      {/* 2. Campo de Aplicação */}
+      <div className="print-section">
+        <h4 className="subsection-title">2. Campo de Aplicação</h4>
+        <p className="section-content">{content.campo_aplicacao || "Não definido."}</p>
+      </div>
 
-        {/* 3. Informações Complementares */}
-        {content.informacoes_complementares && (
-          <div className="print-section">
-            <h4 className="subsection-title">3. Informações Complementares</h4>
-            <p className="section-content">{content.informacoes_complementares}</p>
-          </div>
+      {/* 3. Informações Complementares */}
+      {content.informacoes_complementares && (
+        <div className="print-section">
+          <h4 className="subsection-title">3. Informações Complementares</h4>
+          <p className="section-content">{content.informacoes_complementares}</p>
+        </div>
+      )}
+
+      {/* 4. Fluxo */}
+      <div className="print-section">
+        <h4 className="subsection-title">4. Fluxo de Execução</h4>
+        {content.fluxo_descricao && (
+          <p className="section-content" style={{ marginBottom: '5mm' }}>{content.fluxo_descricao}</p>
         )}
-
-        {/* 4. Fluxo */}
-        <div className="print-section">
-          <h4 className="subsection-title">4. Fluxo de Execução</h4>
-          {content.fluxo_descricao && (
-            <p className="section-content mb-3">{content.fluxo_descricao}</p>
-          )}
-          {content.fluxo_image_url && (
-            <div className="flex justify-center my-3">
-              <img 
-                src={content.fluxo_image_url} 
-                alt="Fluxograma IT" 
-                className="max-w-full max-h-64 object-contain border rounded" 
-              />
-            </div>
-          )}
-        </div>
+        {content.fluxo_image_url && (
+          <img 
+            src={content.fluxo_image_url} 
+            alt="Fluxograma IT" 
+            className="flowchart-image"
+            style={{ margin: '5mm auto', display: 'block' }}
+          />
+        )}
+      </div>
 
         {/* 5. Atividades */}
         {content.atividades && content.atividades.length > 0 && (

@@ -62,13 +62,19 @@
 @media print {
   /* Hide non-printable elements */
   .print\\:hidden,
-  button:not(.print-show),
+  button,
+  input,
+  textarea,
+  select,
   .no-print,
   nav,
   header:not(.print-header),
   footer:not(.print-footer),
   aside,
-  .sidebar {
+  .sidebar,
+  [role="dialog"],
+  .tabs-list,
+  .popover {
     display: none !important;
   }
 
@@ -79,26 +85,32 @@
 
   /* Reset page margins */
   @page {
-    size: A4;
-    margin: 1.5cm 1cm 1.5cm 1cm;
+    size: A4 portrait;
+    margin: 15mm 10mm;
   }
 
-  body {
-    margin: 0;
-    padding: 0;
+  /* Reset body and root */
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
     background: white !important;
     color: black !important;
     font-size: 11pt;
-    line-height: 1.4;
+    line-height: 1.5;
+    width: 100%;
+    height: auto;
   }
 
-  /* Print container */
+  /* Main print container - CENTRALIZADO E LIMITADO */
   .print-container {
-    width: 100%;
-    max-width: 100%;
-    margin: 0;
-    padding: 0;
-    background: white;
+    width: 100% !important;
+    max-width: 210mm !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    background: white !important;
+    position: relative;
+    left: 0 !important;
+    right: 0 !important;
   }
 
   /* Page breaks */
@@ -119,94 +131,125 @@
 
   /* Headers and footers */
   .print-header {
-    margin-bottom: 1cm;
+    margin-bottom: 8mm !important;
+    padding-bottom: 5mm !important;
+    text-align: left !important;
   }
 
   .print-footer {
-    margin-top: 0.5cm;
-    padding-top: 0.3cm;
-    border-top: 1px solid #ccc;
-    font-size: 9pt;
+    margin-top: 8mm !important;
+    padding-top: 3mm !important;
+    border-top: 1px solid #ccc !important;
+    font-size: 9pt !important;
+    text-align: center !important;
+    page-break-inside: avoid;
   }
 
-  /* Section titles */
+  /* Section titles - HIERARQUIA CLARA */
   .section-title {
-    font-size: 14pt;
-    font-weight: bold;
-    color: #1a1a1a;
-    margin-top: 0.5cm;
-    margin-bottom: 0.3cm;
-    padding-bottom: 0.2cm;
-    border-bottom: 2px solid #333;
+    font-size: 14pt !important;
+    font-weight: bold !important;
+    color: #000 !important;
+    margin-top: 6mm !important;
+    margin-bottom: 3mm !important;
+    padding-bottom: 2mm !important;
+    border-bottom: 2px solid #000 !important;
+    text-align: left !important;
+    text-transform: uppercase;
   }
 
   .subsection-title {
-    font-size: 12pt;
-    font-weight: bold;
-    color: #333;
-    margin-top: 0.4cm;
-    margin-bottom: 0.2cm;
-    padding-bottom: 0.1cm;
-    border-bottom: 1px solid #666;
+    font-size: 12pt !important;
+    font-weight: bold !important;
+    color: #000 !important;
+    margin-top: 5mm !important;
+    margin-bottom: 2mm !important;
+    padding-bottom: 1mm !important;
+    border-bottom: 1px solid #333 !important;
+    text-align: left !important;
   }
 
   .section-content {
-    font-size: 11pt;
-    line-height: 1.5;
-    color: #333;
-    margin-bottom: 0.3cm;
+    font-size: 11pt !important;
+    line-height: 1.6 !important;
+    color: #000 !important;
+    margin-bottom: 4mm !important;
     white-space: pre-line;
+    text-align: left !important;
   }
 
   /* Print sections */
   .print-section {
-    margin-bottom: 0.6cm;
+    margin-bottom: 8mm !important;
+    page-break-inside: avoid;
   }
 
-  /* Tables */
+  /* Tables - PADRONIZAÇÃO TOTAL */
   .print-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 0.2cm;
-    margin-bottom: 0.4cm;
-    font-size: 10pt;
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin-top: 3mm !important;
+    margin-bottom: 5mm !important;
+    font-size: 10pt !important;
+    table-layout: auto;
   }
 
   .print-table th {
-    background-color: #f0f0f0 !important;
-    border: 1px solid #333 !important;
-    padding: 0.2cm !important;
-    text-align: left;
-    font-weight: bold;
+    background-color: #e5e5e5 !important;
+    border: 1.5pt solid #000 !important;
+    padding: 3mm !important;
+    text-align: left !important;
+    font-weight: bold !important;
     color: #000 !important;
+    vertical-align: middle;
   }
 
   .print-table td {
-    border: 1px solid #666 !important;
-    padding: 0.15cm !important;
-    vertical-align: top;
+    border: 1pt solid #333 !important;
+    padding: 2.5mm !important;
+    vertical-align: top !important;
     color: #000 !important;
+    text-align: left !important;
   }
 
   .print-table tbody tr:nth-child(even) {
-    background-color: #fafafa !important;
+    background-color: #f9f9f9 !important;
+  }
+
+  /* Fix table wrapping */
+  .print-table tbody tr {
+    page-break-inside: avoid;
   }
 
   /* Badges and status */
   .badge,
-  [class*="badge"] {
-    border: 1px solid #333 !important;
-    padding: 0.05cm 0.15cm;
-    font-size: 9pt;
+  [class*="badge"],
+  [data-badge] {
+    border: 1pt solid #000 !important;
+    padding: 1mm 3mm !important;
+    font-size: 9pt !important;
     background-color: white !important;
     color: black !important;
+    display: inline-block;
+    border-radius: 0 !important;
   }
 
-  /* Images */
+  /* Images - CENTRALIZADAS */
   img {
     max-width: 100% !important;
     height: auto !important;
+    display: block !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
     page-break-inside: avoid;
+  }
+
+  /* Garantir que imagens de fluxo não quebrem */
+  .flowchart-image,
+  [alt*="Fluxograma"],
+  [alt*="fluxo"] {
+    max-height: 180mm !important;
+    object-fit: contain;
   }
 
   /* IT containers */
@@ -225,14 +268,23 @@
     border-radius: 0 !important;
   }
 
-  /* Ensure black text */
-  p, td, th, li, span, div {
+  /* Ensure black text - RESET TOTAL */
+  p, td, th, li, span, div, h1, h2, h3, h4, h5, label, strong {
     color: #000 !important;
+    text-align: left !important;
+  }
+
+  /* Remove flexbox alignment issues */
+  .flex,
+  .grid,
+  [class*="flex"],
+  [class*="grid"] {
+    display: block !important;
   }
 
   /* Links */
   a {
-    text-decoration: underline;
+    text-decoration: underline !important;
     color: #000 !important;
   }
 
@@ -241,5 +293,27 @@
     background: #f5f5f5 !important;
     border: 1px solid #ccc !important;
     page-break-inside: avoid;
+    font-size: 9pt;
+  }
+
+  /* Reset padding/margin de containers do app */
+  .max-w-6xl,
+  .max-w-7xl,
+  .container,
+  main,
+  [class*="mx-auto"] {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Garantir alinhamento correto */
+  .text-right,
+  .text-center,
+  .justify-end,
+  .items-end {
+    text-align: left !important;
+    justify-content: flex-start !important;
+    align-items: flex-start !important;
   }
 }
