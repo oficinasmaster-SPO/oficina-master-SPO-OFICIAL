@@ -358,14 +358,14 @@ export const generateProcessPDF = (processDoc, its = [], workshop) => {
     its.forEach((it, idx) => {
       doc.addPage();
       y = margin;
-      addITtoDoc(doc, it, idx + 1, pageWidth, pageHeight, margin, contentWidth, processDoc);
+      addITtoDoc(doc, it, idx + 1, pageWidth, pageHeight, margin, contentWidth);
     });
   }
 
   return doc;
 };
 
-const addITtoDoc = (doc, it, index, pageWidth, pageHeight, margin, contentWidth, mapDoc) => {
+const addITtoDoc = (doc, it, index, pageWidth, pageHeight, margin, contentWidth) => {
   let y = margin;
   const content = it?.content || {};
 
@@ -378,66 +378,36 @@ const addITtoDoc = (doc, it, index, pageWidth, pageHeight, margin, contentWidth,
     return false;
   };
 
-  // Header Institucional Padronizado
-  doc.setFontSize(18);
+  // Cabeçalho IT
+  doc.setFillColor(it.type === 'IT' ? 22 : 234, it.type === 'IT' ? 163 : 88, it.type === 'IT' ? 74 : 12);
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(12);
   doc.setFont(undefined, 'bold');
+  doc.rect(margin, y, contentWidth, 10, 'F');
+  doc.text(it.type, margin + 2, y + 7);
+
+  y += 15;
+
   doc.setTextColor(0, 0, 0);
-  doc.text(it.type === 'IT' ? 'INSTRUÇÃO DE TRABALHO' : 'FORMULÁRIO/REGISTRO', pageWidth / 2, y, { align: 'center' });
-  
-  y += 8;
   doc.setFontSize(14);
   doc.text(it.title, pageWidth / 2, y, { align: 'center' });
 
-  y += 12;
+  y += 8;
 
-  // Metadados em linha
-  doc.setFontSize(10);
-  doc.setFont(undefined, 'bold');
-  doc.text('Código:', margin, y);
-  doc.setFont(undefined, 'normal');
-  doc.text(it.code || 'N/A', margin + 18, y);
-
-  doc.setFont(undefined, 'bold');
-  doc.text('Versão:', pageWidth / 2 - 10, y);
-  doc.setFont(undefined, 'normal');
-  doc.text(it.version || '1', pageWidth / 2 + 10, y);
-
-  doc.setFont(undefined, 'bold');
-  const statusText = it.status || 'ativo';
-  doc.text(statusText, pageWidth - margin - doc.getTextWidth(statusText), y);
-
-  y += 6;
-
-  doc.setFontSize(9);
-  if (mapDoc) {
-    doc.setFont(undefined, 'bold');
-    doc.text('MAP Pai:', margin, y);
+  if (it.description) {
+    doc.setFontSize(10);
     doc.setFont(undefined, 'normal');
-    doc.text(mapDoc.code || 'N/A', margin + 18, y);
-
-    doc.setFont(undefined, 'bold');
-    doc.text('Área:', pageWidth / 2 - 10, y);
-    doc.setFont(undefined, 'normal');
-    doc.text(mapDoc.category || 'N/A', pageWidth / 2 + 10, y);
-
+    doc.text(it.description, pageWidth / 2, y, { align: 'center' });
     y += 6;
   }
 
-  if (it.description) {
-    doc.setFontSize(9);
-    doc.setFont(undefined, 'normal');
-    const descLines = doc.splitTextToSize(it.description, contentWidth);
-    descLines.forEach(line => {
-      doc.text(line, pageWidth / 2, y, { align: 'center' });
-      y += 4;
-    });
-  }
+  doc.setFontSize(9);
+  doc.text(`Código: ${it.code} | Versão: ${it.version || '1'} | Status: ${it.status || 'ativo'}`, pageWidth / 2, y, { align: 'center' });
 
-  y += 8;
+  y += 10;
 
-  // Linha vermelha separadora
-  doc.setDrawColor(220, 38, 38);
-  doc.setLineWidth(1);
+  doc.setDrawColor(0, 0, 0);
+  doc.setLineWidth(0.5);
   doc.line(margin, y, pageWidth - margin, y);
 
   y += 10;
@@ -474,17 +444,10 @@ const addITtoDoc = (doc, it, index, pageWidth, pageHeight, margin, contentWidth,
     addITSection('4. Fluxo de Execução', content.fluxo_descricao);
   }
 
-  // Rodapé Institucional
-  const finalY = pageHeight - 15;
-  doc.setFontSize(9);
-  doc.setFont(undefined, 'normal');
-  doc.setTextColor(100, 100, 100);
-  
-  const footerLine1 = `Documento Controlado - ${it.type} - ${it.code} - Versão ${it.version || '1'}`;
-  const footerLine2 = `Oficinas Master - Impresso em ${format(new Date(), "dd/MM/yyyy 'às' HH:mm")}`;
-  
-  doc.text(footerLine1, pageWidth / 2, finalY, { align: 'center' });
-  doc.text(footerLine2, pageWidth / 2, finalY + 5, { align: 'center' });
+  // Rodapé
+  doc.setFontSize(8);
+  doc.setTextColor(128);
+  doc.text(`${it.type} - ${it.code} - Versão ${it.version || '1'}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
 };
 
 export const downloadProcessPDF = (processDoc, its = [], workshop) => {
