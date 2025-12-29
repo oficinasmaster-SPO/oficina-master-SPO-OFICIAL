@@ -4,15 +4,33 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Loader2, FileCheck, ClipboardList, Trash2, Edit, FileText, Copy } from "lucide-react";
+import { Plus, Loader2, FileCheck, ClipboardList, Trash2, Edit, FileText, Copy, Sparkles, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import ITFormDialog from "./ITFormDialog";
 import ITViewer from "./ITViewer";
+import ITOperationalAssistant from "./ITOperationalAssistant";
 
 export default function ITManager({ mapId, workshopId, printMode = false }) {
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingIT, setEditingIT] = React.useState(null);
+  const [showAIAssistant, setShowAIAssistant] = React.useState(false);
+  const [mapData, setMapData] = React.useState(null);
+
+  // Buscar dados do MAP para contexto da IA
+  React.useEffect(() => {
+    const fetchMapData = async () => {
+      if (mapId) {
+        try {
+          const map = await base44.entities.ProcessDocument.get(mapId);
+          setMapData(map);
+        } catch (error) {
+          console.error("Erro ao buscar MAP:", error);
+        }
+      }
+    };
+    fetchMapData();
+  }, [mapId]);
 
   const { data: its = [], isLoading } = useQuery({
     queryKey: ['its', mapId],
@@ -180,25 +198,38 @@ export default function ITManager({ mapId, workshopId, printMode = false }) {
 
   return (
     <div className="space-y-4 print:hidden">
-      <Card className="bg-gradient-to-br from-green-50 to-orange-50 border-2">
+      <Card className="bg-gradient-to-br from-purple-50 via-green-50 to-orange-50 border-2">
         <CardHeader>
           <div className="flex justify-between items-center">
             <div>
-              <CardTitle className="text-xl">Instruções de Trabalho & Formulários</CardTitle>
+              <CardTitle className="text-xl flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-purple-600" />
+                Gestão Operacional de ITs & FRs
+              </CardTitle>
               <p className="text-sm text-gray-600 mt-1">
-                {its.length === 0 ? 'Nenhum documento vinculado' : `${its.length} documento(s) vinculado(s)`}
+                {its.length === 0 ? 'Nenhum documento operacional' : `${its.length} documento(s) - Evoluem independentemente do MAP`}
               </p>
             </div>
-            <Button 
-              className="bg-green-600 hover:bg-green-700 shadow-lg" 
-              onClick={() => {
-                setEditingIT(null);
-                setIsDialogOpen(true);
-              }}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Nova IT/FR
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline"
+                className="border-purple-600 text-purple-600 hover:bg-purple-50"
+                onClick={() => setShowAIAssistant(true)}
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                Assistente IA
+              </Button>
+              <Button 
+                className="bg-green-600 hover:bg-green-700 shadow-lg" 
+                onClick={() => {
+                  setEditingIT(null);
+                  setIsDialogOpen(true);
+                }}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Nova IT/FR
+              </Button>
+            </div>
           </div>
         </CardHeader>
       </Card>
@@ -214,6 +245,14 @@ export default function ITManager({ mapId, workshopId, printMode = false }) {
         workshopId={workshopId}
         onSave={(data) => saveMutation.mutate(data)}
         isSaving={saveMutation.isPending}
+      />
+
+      <ITOperationalAssistant
+        open={showAIAssistant}
+        onClose={() => setShowAIAssistant(false)}
+        mapData={mapData}
+        existingITs={its}
+        onCreateIT={handleAICreate}
       />
 
       {its.length === 0 ? (
@@ -255,14 +294,24 @@ export default function ITManager({ mapId, workshopId, printMode = false }) {
                     </div>
                     
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <Badge variant="outline" className="font-mono bg-white">{it.code}</Badge>
                         <Badge className={it.type === 'IT' ? 'bg-green-600' : 'bg-orange-600'}>{it.type}</Badge>
-                        <Badge variant="secondary" className="bg-white">v{it.version || '1'}</Badge>
+                        <Badge className="bg-purple-100 text-purple-800">v{it.version || '1'}</Badge>
+                        {it.version_history && it.version_history.length > 1 && (
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700 text-xs">
+                            {it.version_history.length} versões
+                          </Badge>
+                        )}
                       </div>
                       <h4 className="text-base font-bold text-gray-900 mb-1">{it.title}</h4>
                       {it.description && (
                         <p className="text-sm text-gray-600 line-clamp-2">{it.description}</p>
+                      )}
+                      {it.version_history && it.version_history.length > 0 && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          Última alteração: {it.version_history[it.version_history.length - 1]?.changes || "Criação inicial"}
+                        </p>
                       )}
                     </div>
                     
