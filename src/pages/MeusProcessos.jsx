@@ -26,6 +26,7 @@ export default function MeusProcessos() {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
   const [selectedProcess, setSelectedProcess] = useState(null);
+  const [viewMode, setViewMode] = useState("cards"); // cards, areas, hierarchy
 
   useEffect(() => {
     const loadData = async () => {

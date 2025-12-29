@@ -29,6 +29,7 @@ import ClientRegistration from './pages/ClientRegistration';
 import Clientes from './pages/Clientes';
 import Colaboradores from './pages/Colaboradores';
 import ConfiguracaoAcademia from './pages/ConfiguracaoAcademia';
+import ConfiguracaoPermissoesGranulares from './pages/ConfiguracaoPermissoesGranulares';
 import ConsolidadoMensal from './pages/ConsolidadoMensal';
 import ControleAceleracao from './pages/ControleAceleracao';
 import ConvidarColaborador from './pages/ConvidarColaborador';
@@ -81,6 +82,7 @@ import HistoricoMaturidade from './pages/HistoricoMaturidade';
 import HistoricoMetas from './pages/HistoricoMetas';
 import Home from './pages/Home';
 import IAAnalytics from './pages/IAAnalytics';
+import LogsAuditoriaRBAC from './pages/LogsAuditoriaRBAC';
 import MeuPlano from './pages/MeuPlano';
 import MeusProcessos from './pages/MeusProcessos';
 import MeusTreinamentos from './pages/MeusTreinamentos';
@@ -103,7 +105,6 @@ import Questionario from './pages/Questionario';
 import RankingBrasil from './pages/RankingBrasil';
 import RegistrarAtendimento from './pages/RegistrarAtendimento';
 import RegistroDiario from './pages/RegistroDiario';
-import Rituais from './pages/Rituais';
 import RelatorioUsuario from './pages/RelatorioUsuario';
 import RelatoriosAceleracao from './pages/RelatoriosAceleracao';
 import RelatoriosAvancados from './pages/RelatoriosAvancados';
@@ -122,17 +123,16 @@ import ResultadoEndividamento from './pages/ResultadoEndividamento';
 import ResultadoMaturidade from './pages/ResultadoMaturidade';
 import ResultadoOS from './pages/ResultadoOS';
 import ResultadoProducao from './pages/ResultadoProducao';
+import Rituais from './pages/Rituais';
 import RituaisAculturamento from './pages/RituaisAculturamento';
 import SelecionarDiagnostico from './pages/SelecionarDiagnostico';
+import SolicitarPermissoes from './pages/SolicitarPermissoes';
 import Tarefas from './pages/Tarefas';
 import TechnicianQGP from './pages/TechnicianQGP';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import Usuarios from './pages/Usuarios';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
-import ConfiguracaoPermissoesGranulares from './pages/ConfiguracaoPermissoesGranulares';
-import LogsAuditoriaRBAC from './pages/LogsAuditoriaRBAC';
-import SolicitarPermissoes from './pages/SolicitarPermissoes';
 import __Layout from './Layout.jsx';
 
 
@@ -168,6 +168,7 @@ export const PAGES = {
     "Clientes": Clientes,
     "Colaboradores": Colaboradores,
     "ConfiguracaoAcademia": ConfiguracaoAcademia,
+    "ConfiguracaoPermissoesGranulares": ConfiguracaoPermissoesGranulares,
     "ConsolidadoMensal": ConsolidadoMensal,
     "ControleAceleracao": ControleAceleracao,
     "ConvidarColaborador": ConvidarColaborador,
@@ -220,6 +221,7 @@ export const PAGES = {
     "HistoricoMetas": HistoricoMetas,
     "Home": Home,
     "IAAnalytics": IAAnalytics,
+    "LogsAuditoriaRBAC": LogsAuditoriaRBAC,
     "MeuPlano": MeuPlano,
     "MeusProcessos": MeusProcessos,
     "MeusTreinamentos": MeusTreinamentos,
@@ -242,7 +244,6 @@ export const PAGES = {
     "RankingBrasil": RankingBrasil,
     "RegistrarAtendimento": RegistrarAtendimento,
     "RegistroDiario": RegistroDiario,
-    "Rituais": Rituais,
     "RelatorioUsuario": RelatorioUsuario,
     "RelatoriosAceleracao": RelatoriosAceleracao,
     "RelatoriosAvancados": RelatoriosAvancados,
@@ -261,17 +262,16 @@ export const PAGES = {
     "ResultadoMaturidade": ResultadoMaturidade,
     "ResultadoOS": ResultadoOS,
     "ResultadoProducao": ResultadoProducao,
+    "Rituais": Rituais,
     "RituaisAculturamento": RituaisAculturamento,
     "SelecionarDiagnostico": SelecionarDiagnostico,
+    "SolicitarPermissoes": SolicitarPermissoes,
     "Tarefas": Tarefas,
     "TechnicianQGP": TechnicianQGP,
     "TreinamentoVendas": TreinamentoVendas,
     "Usuarios": Usuarios,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
-    "ConfiguracaoPermissoesGranulares": ConfiguracaoPermissoesGranulares,
-    "LogsAuditoriaRBAC": LogsAuditoriaRBAC,
-    "SolicitarPermissoes": SolicitarPermissoes,
 }
 
 export const pagesConfig = {

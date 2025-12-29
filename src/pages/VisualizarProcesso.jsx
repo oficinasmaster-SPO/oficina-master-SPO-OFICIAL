@@ -6,10 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, ArrowLeft, Printer, FileText, AlertTriangle, Share2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, ArrowLeft, Printer, FileText, AlertTriangle, Share2, GitBranch } from "lucide-react";
 import { createPageUrl } from "@/utils";
 import { toast } from "sonner";
 import TrackingWrapper from "@/components/shared/TrackingWrapper";
+import ImplementationTab from "@/components/processes/ImplementationTab";
+import AuditTab from "@/components/processes/AuditTab";
+import IndicatorsTab from "@/components/processes/IndicatorsTab";
+import ITManager from "@/components/processes/ITManager";
+import VersionHistoryDialog from "@/components/processes/VersionHistoryDialog";
 
 export default function VisualizarProcesso() {
   const [searchParams] = useSearchParams();
@@ -17,6 +23,7 @@ export default function VisualizarProcesso() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [workshop, setWorkshop] = useState(null);
+  const [versionDialogOpen, setVersionDialogOpen] = useState(false);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -80,15 +87,18 @@ export default function VisualizarProcesso() {
       itemCategoria={doc?.category}
     >
       <div className="min-h-screen bg-gray-50 py-8 px-4 print:bg-white print:p-0">
-      <div className="max-w-4xl mx-auto print:max-w-full">
+      <div className="max-w-6xl mx-auto print:max-w-full">
         <div className="flex justify-between items-center mb-6 print:hidden">
           <Button variant="ghost" onClick={() => navigate(createPageUrl('MeusProcessos'))}>
             <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
           </Button>
           <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setVersionDialogOpen(true)}>
+              <GitBranch className="w-4 h-4 mr-2" /> Versões
+            </Button>
             {doc.pdf_url && (
               <Button variant="outline" onClick={() => window.open(doc.pdf_url, '_blank')}>
-                <FileText className="w-4 h-4 mr-2" /> Ver PDF Original
+                <FileText className="w-4 h-4 mr-2" /> Ver PDF
               </Button>
             )}
             <Button onClick={handlePrint} className="bg-blue-600 hover:bg-blue-700">
@@ -96,6 +106,17 @@ export default function VisualizarProcesso() {
             </Button>
           </div>
         </div>
+
+        <Tabs defaultValue="conteudo" className="mb-6 print:hidden">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="conteudo">Conteúdo MAP</TabsTrigger>
+            <TabsTrigger value="its">ITs & FRs</TabsTrigger>
+            <TabsTrigger value="implementacao">Implementação</TabsTrigger>
+            <TabsTrigger value="auditoria">Auditoria</TabsTrigger>
+            <TabsTrigger value="indicadores">Indicadores</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="conteudo" className="mt-6">
 
         <div className="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-200 print:shadow-none print:border-0">
           {/* Cabeçalho MAP */}
@@ -328,6 +349,34 @@ export default function VisualizarProcesso() {
             Documento gerado eletronicamente pela plataforma Oficinas Master. Impresso em {new Date().toLocaleDateString()}.
           </div>
         </div>
+          </TabsContent>
+
+          <TabsContent value="its" className="mt-6">
+            <ITManager mapId={doc.id} workshopId={workshop?.id} />
+          </TabsContent>
+
+          <TabsContent value="implementacao" className="mt-6">
+            <ImplementationTab processId={doc.id} workshopId={workshop?.id} />
+          </TabsContent>
+
+          <TabsContent value="auditoria" className="mt-6">
+            <AuditTab processId={doc.id} workshopId={workshop?.id} />
+          </TabsContent>
+
+          <TabsContent value="indicadores" className="mt-6">
+            <IndicatorsTab processId={doc.id} workshopId={workshop?.id} />
+          </TabsContent>
+        </Tabs>
+
+        <VersionHistoryDialog
+          open={versionDialogOpen}
+          onClose={() => setVersionDialogOpen(false)}
+          versionHistory={doc?.version_history || []}
+          onAddVersion={(versionData) => {
+            toast.info("Adicionar versão via edição do processo em Gerenciar Processos");
+            setVersionDialogOpen(false);
+          }}
+        />
       </div>
       </div>
     </TrackingWrapper>
