@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, TrendingUp } from "lucide-react";
+import AIFieldAssist from "./AIFieldAssist";
+import { toast } from "sonner";
 
-export default function ITIndicadoresTab({ indicadores = [], onChange }) {
+export default function ITIndicadoresTab({ indicadores = [], onChange, itData, mapData }) {
   const addIndicator = () => {
     onChange([...indicadores, { nome: "", formula: "", meta: "", frequencia: "mensal" }]);
   };
@@ -33,10 +35,31 @@ export default function ITIndicadoresTab({ indicadores = [], onChange }) {
             Mínimo 1 indicador preenchido - Atual: {filledIndicators.length}
           </p>
         </div>
-        <Button size="sm" onClick={addIndicator} variant="outline">
-          <Plus className="w-4 h-4 mr-2" />
-          Adicionar Indicador
-        </Button>
+        <div className="flex gap-2">
+          {indicadores.filter(i => i.nome).length === 0 && (
+            <div className="relative">
+              <Button size="sm" variant="ghost" className="text-purple-600">
+                <span className="mr-2">Gerar com IA</span>
+              </Button>
+              <AIFieldAssist
+                fieldName="Indicadores"
+                fieldValue=""
+                itData={itData}
+                mapData={mapData}
+                onApply={(suggestion) => {
+                  toast.info("Aplicar sugestões manualmente");
+                }}
+                suggestions={[
+                  { type: 'indicadores_gerar', label: '📊 Gerar indicadores-chave' }
+                ]}
+              />
+            </div>
+          )}
+          <Button size="sm" onClick={addIndicator} variant="outline">
+            <Plus className="w-4 h-4 mr-2" />
+            Adicionar Indicador
+          </Button>
+        </div>
       </div>
 
       {indicadores.length === 0 ? (

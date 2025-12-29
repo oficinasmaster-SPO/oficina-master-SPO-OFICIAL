@@ -15,6 +15,7 @@ import ITRiscosTab from "./ITRiscosTab";
 import ITIndicadoresTab from "./ITIndicadoresTab";
 import ITInterRelacoesTab from "./ITInterRelacoesTab";
 import ITAIAssistant from "./ITAIAssistant";
+import AIFieldAssist from "./AIFieldAssist";
 
 export default function ITFormDialog({ open, onClose, it, mapId, workshopId, onSave }) {
   const [uploading, setUploading] = React.useState(false);
@@ -244,41 +245,73 @@ export default function ITFormDialog({ open, onClose, it, mapId, workshopId, onS
 
             <div>
               <Label>Descrição Resumida</Label>
-              <Textarea
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                rows={2}
-              />
+              <div className="relative">
+                <Textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  rows={2}
+                />
+              </div>
             </div>
 
             <div>
               <Label>Objetivo da IT *</Label>
-              <Textarea
-                value={formData.content.objetivo}
-                onChange={(e) => setFormData({ ...formData, content: { ...formData.content, objetivo: e.target.value } })}
-                placeholder="Garantir que..."
-                rows={3}
-              />
+              <div className="relative">
+                <Textarea
+                  value={formData.content.objetivo}
+                  onChange={(e) => setFormData({ ...formData, content: { ...formData.content, objetivo: e.target.value } })}
+                  placeholder="Garantir que..."
+                  rows={3}
+                />
+                <AIFieldAssist
+                  fieldName="Objetivo da IT"
+                  fieldValue={formData.content.objetivo}
+                  itData={formData}
+                  mapData={mapData}
+                  onApply={(suggestion) => setFormData({ ...formData, content: { ...formData.content, objetivo: suggestion } })}
+                  suggestions={[
+                    { type: 'objetivo_gerar', label: '✍️ Gerar objetivo com base no título' },
+                    { type: 'objetivo_melhorar', label: '✨ Melhorar clareza do objetivo' },
+                    { type: 'objetivo_auditoria', label: '🔍 Ajustar para auditoria' }
+                  ]}
+                />
+              </div>
             </div>
 
             <div>
               <Label>Campo de Aplicação *</Label>
-              <Textarea
-                value={formData.content.campo_aplicacao}
-                onChange={(e) => setFormData({ ...formData, content: { ...formData.content, campo_aplicacao: e.target.value } })}
-                placeholder="Quando e para quem aplicar..."
-                rows={2}
-              />
+              <div className="relative">
+                <Textarea
+                  value={formData.content.campo_aplicacao}
+                  onChange={(e) => setFormData({ ...formData, content: { ...formData.content, campo_aplicacao: e.target.value } })}
+                  placeholder="Quando e para quem aplicar..."
+                  rows={2}
+                />
+                <AIFieldAssist
+                  fieldName="Campo de Aplicação"
+                  fieldValue={formData.content.campo_aplicacao}
+                  itData={formData}
+                  mapData={mapData}
+                  onApply={(suggestion) => setFormData({ ...formData, content: { ...formData.content, campo_aplicacao: suggestion } })}
+                  suggestions={[
+                    { type: 'aplicacao_quem', label: '👥 Definir quem aplica' },
+                    { type: 'aplicacao_quando', label: '📍 Definir quando aplicar' },
+                    { type: 'aplicacao_excecoes', label: '⚠️ Apontar exceções' }
+                  ]}
+                />
+              </div>
             </div>
 
             <div>
               <Label>Informações Complementares</Label>
-              <Textarea
-                value={formData.content.informacoes_complementares}
-                onChange={(e) => setFormData({ ...formData, content: { ...formData.content, informacoes_complementares: e.target.value } })}
-                placeholder="Orientações, regras, restrições..."
-                rows={3}
-              />
+              <div className="relative">
+                <Textarea
+                  value={formData.content.informacoes_complementares}
+                  onChange={(e) => setFormData({ ...formData, content: { ...formData.content, informacoes_complementares: e.target.value } })}
+                  placeholder="Orientações, regras, restrições..."
+                  rows={3}
+                />
+              </div>
             </div>
 
             <div>
@@ -296,6 +329,8 @@ export default function ITFormDialog({ open, onClose, it, mapId, workshopId, onS
               onChange={(updated) => setFormData({ ...formData, content: updated })}
               onFileUpload={handleFileUpload}
               uploading={uploading}
+              itData={formData}
+              mapData={mapData}
             />
           </TabsContent>
 
@@ -314,6 +349,8 @@ export default function ITFormDialog({ open, onClose, it, mapId, workshopId, onS
             <ITRiscosTab
               riscos={formData.content.matriz_riscos}
               onChange={(updated) => setFormData({ ...formData, content: { ...formData.content, matriz_riscos: updated } })}
+              itData={formData}
+              mapData={mapData}
             />
           </TabsContent>
 
@@ -321,6 +358,8 @@ export default function ITFormDialog({ open, onClose, it, mapId, workshopId, onS
             <ITIndicadoresTab
               indicadores={formData.content.indicadores}
               onChange={(updated) => setFormData({ ...formData, content: { ...formData.content, indicadores: updated } })}
+              itData={formData}
+              mapData={mapData}
             />
           </TabsContent>
 

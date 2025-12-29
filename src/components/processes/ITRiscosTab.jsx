@@ -4,8 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Plus, Trash2, AlertTriangle } from "lucide-react";
+import AIFieldAssist from "./AIFieldAssist";
+import { toast } from "sonner";
 
-export default function ITRiscosTab({ riscos = [], onChange }) {
+export default function ITRiscosTab({ riscos = [], onChange, itData, mapData }) {
   const addRisk = () => {
     onChange([...riscos, { risco: "", categoria: "", causa: "", impacto: "", controle: "" }]);
   };
@@ -32,10 +34,32 @@ export default function ITRiscosTab({ riscos = [], onChange }) {
             Mínimo 3 riscos preenchidos - Atual: {filledRisks.length}
           </p>
         </div>
-        <Button size="sm" onClick={addRisk} variant="outline">
-          <Plus className="w-4 h-4 mr-2" />
-          Adicionar Risco
-        </Button>
+        <div className="flex gap-2">
+          {riscos.length === 0 && (
+            <div className="relative">
+              <Button size="sm" variant="ghost" className="text-purple-600">
+                <span className="mr-2">Gerar com IA</span>
+              </Button>
+              <AIFieldAssist
+                fieldName="Matriz de Riscos"
+                fieldValue=""
+                itData={itData}
+                mapData={mapData}
+                onApply={(suggestion) => {
+                  // Parse sugestão e adicionar riscos
+                  toast.info("Aplicar sugestões manualmente ou melhorar parse");
+                }}
+                suggestions={[
+                  { type: 'riscos_gerar', label: '⚠️ Gerar matriz de riscos (mín. 3)' }
+                ]}
+              />
+            </div>
+          )}
+          <Button size="sm" onClick={addRisk} variant="outline">
+            <Plus className="w-4 h-4 mr-2" />
+            Adicionar Risco
+          </Button>
+        </div>
       </div>
 
       {riscos.length === 0 ? (

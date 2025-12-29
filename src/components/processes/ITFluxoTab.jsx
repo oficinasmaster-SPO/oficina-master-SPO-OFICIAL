@@ -4,18 +4,31 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Upload, X } from "lucide-react";
+import AIFieldAssist from "./AIFieldAssist";
 
-export default function ITFluxoTab({ content, onChange, onFileUpload, uploading }) {
+export default function ITFluxoTab({ content, onChange, onFileUpload, uploading, itData, mapData }) {
   return (
     <div className="space-y-4">
       <div>
         <Label>Descrição do Fluxo - Passo a Passo *</Label>
-        <Textarea
-          value={content.fluxo_descricao || ""}
-          onChange={(e) => onChange({ ...content, fluxo_descricao: e.target.value })}
-          placeholder="1. Primeiro passo...&#10;2. Segundo passo...&#10;3. Terceiro passo..."
-          rows={8}
-        />
+        <div className="relative">
+          <Textarea
+            value={content.fluxo_descricao || ""}
+            onChange={(e) => onChange({ ...content, fluxo_descricao: e.target.value })}
+            placeholder="1. Primeiro passo...&#10;2. Segundo passo...&#10;3. Terceiro passo..."
+            rows={8}
+          />
+          <AIFieldAssist
+            fieldName="Fluxo Operacional"
+            fieldValue={content.fluxo_descricao}
+            itData={itData}
+            mapData={mapData}
+            onApply={(suggestion) => onChange({ ...content, fluxo_descricao: suggestion })}
+            suggestions={[
+              { type: 'fluxo_gerar', label: '✍️ Gerar fluxo passo a passo' }
+            ]}
+          />
+        </div>
         <p className="text-xs text-gray-500 mt-1">Descreva o passo a passo sequencial da execução desta IT</p>
       </div>
 
