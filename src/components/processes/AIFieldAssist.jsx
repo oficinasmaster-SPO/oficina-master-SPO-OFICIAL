@@ -261,6 +261,33 @@ Formato: [{"nome": "nome do KPI", "formula": "como calcular", "meta": "objetivo"
       'indicadores_kpi': `${context}
 Defina KPIs específicos e mensuráveis para esta IT em JSON puro.`,
 
+      // Evidência
+      'evidencia_tipo': `${context}
+Sugira o tipo de evidência mais adequado para comprovar a execução desta IT.
+Exemplos: OS preenchida, Checklist assinado, Foto digital, Relatório técnico, Formulário carimbado.`,
+
+      'evidencia_auditavel': `${context}
+Defina uma evidência clara e auditável para esta IT.`,
+
+      'evidencia_descricao': `${context}
+Descreva detalhadamente O QUE deve ser registrado, ONDE deve constar, e COMO deve ser preenchido para comprovar a execução correta desta IT.`,
+
+      'evidencia_detalhada': `${context}
+Gere descrição operacional detalhada da evidência.`,
+
+      // Retenção de Registros
+      'retencao_sugerir': `${context}
+Com base na natureza desta IT (${itData?.type}), sugira um período adequado de retenção da evidência.
+Considere: requisitos legais, necessidade de auditoria, complexidade do serviço.
+Responda APENAS com o período: "1 ano", "2 anos", "3 anos", "5 anos", "10 anos", "permanente" ou "conforme legislação".`,
+
+      'retencao_legal': `${context}
+Baseado em requisitos legais e normativos do setor automotivo, qual o período mínimo de retenção desta evidência?`,
+
+      'justificativa_retencao': `${context}
+Período de retenção: ${fieldValue}
+Justifique este período de retenção baseando-se em: requisitos legais, normas do setor automotivo, necessidades de auditoria e rastreabilidade.`,
+
       // Genérico
       'default': `${context}
 Campo: ${fieldName}
