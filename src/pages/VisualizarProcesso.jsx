@@ -389,9 +389,11 @@ export default function VisualizarProcesso() {
           open={versionDialogOpen}
           onClose={() => setVersionDialogOpen(false)}
           versionHistory={doc?.version_history || []}
+          currentRevision={doc?.revision || "1"}
           onAddVersion={(versionData) => {
-            toast.info("Adicionar versão via edição do processo em Gerenciar Processos");
             setVersionDialogOpen(false);
+            // Redirecionar para edição com nova versão
+            navigate(createPageUrl('GerenciarProcessos') + `?edit=${doc.id}&new_version=${versionData.revision}&reason=${encodeURIComponent(versionData.reason)}&origin=${versionData.origin}&impact=${encodeURIComponent(versionData.expected_impact || '')}`);
           }}
         />
       </div>

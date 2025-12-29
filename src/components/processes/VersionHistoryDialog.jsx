@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, GitBranch, AlertCircle } from "lucide-react";
 
-export default function VersionHistoryDialog({ open, onClose, versionHistory, onAddVersion }) {
+export default function VersionHistoryDialog({ open, onClose, versionHistory, onAddVersion, currentRevision }) {
   const [formData, setFormData] = React.useState({
     reason: "",
     origin: "melhoria_continua",
@@ -20,7 +20,15 @@ export default function VersionHistoryDialog({ open, onClose, versionHistory, on
       alert("Por favor, informe o motivo da alteração");
       return;
     }
-    onAddVersion(formData);
+    
+    // Incrementar versão automaticamente
+    const nextRevision = String(parseInt(currentRevision || "1") + 1);
+    
+    onAddVersion({
+      ...formData,
+      revision: nextRevision
+    });
+    
     setFormData({ reason: "", origin: "melhoria_continua", expected_impact: "" });
   };
 
@@ -48,6 +56,9 @@ export default function VersionHistoryDialog({ open, onClose, versionHistory, on
         <div className="space-y-6 mt-4">
           <div className="border rounded-lg p-4 bg-blue-50">
             <h4 className="font-semibold mb-3">Registrar Nova Versão</h4>
+            <p className="text-sm text-gray-600 mb-3">
+              Nova versão será: <strong className="text-blue-700">v{String(parseInt(currentRevision || "1") + 1)}</strong>
+            </p>
             <div className="space-y-3">
               <div>
                 <Label>Motivo da Alteração *</Label>
@@ -84,7 +95,7 @@ export default function VersionHistoryDialog({ open, onClose, versionHistory, on
                 </div>
               </div>
               <Button onClick={handleSubmit} className="w-full bg-blue-600 hover:bg-blue-700">
-                Adicionar ao Histórico
+                Criar Nova Versão e Editar Documento
               </Button>
             </div>
           </div>

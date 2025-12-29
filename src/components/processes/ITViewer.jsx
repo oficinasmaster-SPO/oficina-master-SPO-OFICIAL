@@ -8,7 +8,7 @@ export default function ITViewer({ it }) {
 
   return (
     <div className="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-200 print:shadow-none print:border-0">
-      {/* Cabeçalho IT/FR */}
+      {/* Cabeçalho IT/FR - APENAS Metadados */}
       <div className="border-b-2 border-gray-800 p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -19,7 +19,6 @@ export default function ITViewer({ it }) {
             </div>
             <div>
               <h2 className="text-xl font-bold text-gray-900">{it.title}</h2>
-              <p className="text-sm text-gray-600">{it.description || "Sem descrição"}</p>
             </div>
           </div>
           <div className="text-right text-sm">
@@ -29,6 +28,14 @@ export default function ITViewer({ it }) {
           </div>
         </div>
       </div>
+
+      {/* Resumo/Descrição - Seção Separada */}
+      {it.description && (
+        <div className="bg-blue-50 border-b border-blue-200 p-4">
+          <h4 className="text-sm font-semibold text-blue-900 mb-2">Resumo do Documento</h4>
+          <p className="text-sm text-gray-700 leading-relaxed">{it.description}</p>
+        </div>
+      )}
 
       <div className="p-6 space-y-6">
         {/* 1. Objetivo */}

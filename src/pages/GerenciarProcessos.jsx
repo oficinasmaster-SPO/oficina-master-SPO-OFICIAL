@@ -106,10 +106,30 @@ export default function GerenciarProcessos() {
   // Handle auto-open edit dialog from URL
   useEffect(() => {
     const editId = searchParams.get('edit');
+    const newVersion = searchParams.get('new_version');
+    const reason = searchParams.get('reason');
+    const origin = searchParams.get('origin');
+    const impact = searchParams.get('impact');
+    
     if (editId && documents.length > 0 && !isDialogOpen) {
       const docToEdit = documents.find(d => d.id === editId);
       if (docToEdit) {
         handleEdit(docToEdit);
+        
+        // Se for uma nova versão, atualizar o formData com a nova revisão
+        if (newVersion) {
+          setTimeout(() => {
+            setFormData(prev => ({
+              ...prev,
+              revision: newVersion
+            }));
+            
+            toast.info(
+              `Nova versão ${newVersion} criada. Motivo: ${decodeURIComponent(reason || '')}`,
+              { duration: 5000 }
+            );
+          }, 100);
+        }
       }
     }
   }, [searchParams, documents]);
