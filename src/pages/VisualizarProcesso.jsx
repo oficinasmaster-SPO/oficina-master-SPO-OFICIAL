@@ -301,7 +301,7 @@ export default function VisualizarProcesso() {
             <TabsTrigger value="indicadores">Indicadores</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="conteudo" className="mt-6 print:block">
+          <TabsContent value="conteudo" className="mt-6">
 
         <div className="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-200 print:shadow-none print:border-0">
           {/* Cabeçalho MAP */}
@@ -536,8 +536,8 @@ export default function VisualizarProcesso() {
         </div>
           </TabsContent>
 
-          <TabsContent value="its" className="mt-6 print:block">
-            <ITManager mapId={doc.id} workshopId={workshop?.id} printMode />
+          <TabsContent value="its" className="mt-6">
+            <ITManager mapId={doc.id} workshopId={workshop?.id} />
           </TabsContent>
 
           <TabsContent value="implementacao" className="mt-6">

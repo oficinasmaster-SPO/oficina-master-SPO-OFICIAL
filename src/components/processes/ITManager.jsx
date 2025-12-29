@@ -7,9 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Loader2, FileCheck, ClipboardList, Trash2, Edit } from "lucide-react";
 import { toast } from "sonner";
 import ITFormDialog from "./ITFormDialog";
-import ITViewer from "./ITViewer";
 
-export default function ITManager({ mapId, workshopId, printMode = false }) {
+export default function ITManager({ mapId, workshopId }) {
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingIT, setEditingIT] = React.useState(null);
@@ -94,22 +93,8 @@ export default function ITManager({ mapId, workshopId, printMode = false }) {
     return <div className="flex justify-center p-8"><Loader2 className="w-6 h-6 animate-spin" /></div>;
   }
 
-  // Modo impressão - mostrar conteúdo completo das ITs
-  if (printMode && its.length > 0) {
-    return (
-      <div className="space-y-8 print:space-y-12">
-        {its.map((it, idx) => (
-          <div key={it.id} className="page-break-before">
-            {idx > 0 && <div className="border-t-4 border-gray-300 my-8" />}
-            <ITViewer it={it} />
-          </div>
-        ))}
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-4 print:hidden">
+    <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold">Instruções de Trabalho & Formulários</h3>
         <Button className="bg-green-600 hover:bg-green-700" onClick={() => {
