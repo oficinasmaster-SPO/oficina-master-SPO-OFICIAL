@@ -3,31 +3,15 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Loader2, FileCheck, ClipboardList, Trash2, Edit, Upload } from "lucide-react";
+import { Plus, Loader2, FileCheck, ClipboardList, Trash2, Edit } from "lucide-react";
 import { toast } from "sonner";
+import ITFormDialog from "./ITFormDialog";
 
 export default function ITManager({ mapId, workshopId }) {
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
-  const [uploading, setUploading] = React.useState(false);
-  const [formData, setFormData] = React.useState({
-    title: "",
-    type: "IT",
-    description: "",
-    content: {
-      objetivo: "",
-      procedimento: "",
-      recursos_necessarios: [],
-      pontos_criticos: []
-    },
-    file_url: ""
-  });
+  const [editingIT, setEditingIT] = React.useState(null);
 
   const { data: its = [], isLoading } = useQuery({
     queryKey: ['its', mapId],
@@ -51,21 +35,44 @@ export default function ITManager({ mapId, workshopId }) {
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
-      const code = await generateCode(data.type);
-      return await base44.entities.InstructionDocument.create({
-        parent_map_id: mapId,
-        workshop_id: workshopId,
-        code,
-        version: "1",
-        status: "ativo",
-        ...data
-      });
+      const user = await base44.auth.me();
+      
+      if (editingIT) {
+        // Atualizar e adicionar ao histórico
+        const newVersion = String(parseInt(editingIT.version || "1") + 1);
+        const versionEntry = {
+          version: newVersion,
+          date: new Date().toISOString(),
+          changed_by: user.full_name || user.email,
+          reason: "Atualização de conteúdo",
+          origin: "melhoria_continua",
+          expected_impact: "Melhoria na execução"
+        };
+
+        return await base44.entities.InstructionDocument.update(editingIT.id, {
+          ...data,
+          version: newVersion,
+          version_history: [...(editingIT.version_history || []), versionEntry]
+        });
+      } else {
+        // Criar novo
+        const code = await generateCode(data.type);
+        return await base44.entities.InstructionDocument.create({
+          parent_map_id: mapId,
+          workshop_id: workshopId,
+          code,
+          version: "1",
+          status: "ativo",
+          version_history: [],
+          ...data
+        });
+      }
     },
     onSuccess: () => {
-      toast.success("Documento criado!");
+      toast.success(editingIT ? "IT atualizada!" : "IT criada!");
       queryClient.invalidateQueries(['its', mapId]);
       setIsDialogOpen(false);
-      resetForm();
+      setEditingIT(null);
     }
   });
 
@@ -77,30 +84,9 @@ export default function ITManager({ mapId, workshopId }) {
     }
   });
 
-  const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    setUploading(true);
-    try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      setFormData({ ...formData, file_url });
-      toast.success("Arquivo enviado!");
-    } catch (error) {
-      toast.error("Erro no upload");
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const resetForm = () => {
-    setFormData({
-      title: "",
-      type: "IT",
-      description: "",
-      content: { objetivo: "", procedimento: "", recursos_necessarios: [], pontos_criticos: [] },
-      file_url: ""
-    });
+  const handleEdit = (it) => {
+    setEditingIT(it);
+    setIsDialogOpen(true);
   };
 
   if (isLoading) {
@@ -111,59 +97,26 @@ export default function ITManager({ mapId, workshopId }) {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold">Instruções de Trabalho & Formulários</h3>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-green-600 hover:bg-green-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Adicionar IT/FR
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Nova Instrução/Formulário</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 mt-4">
-              <div>
-                <Label>Título</Label>
-                <Input
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="Ex: Abertura de OS"
-                />
-              </div>
-              <div>
-                <Label>Tipo</Label>
-                <Select value={formData.type} onValueChange={(v) => setFormData({ ...formData, type: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="IT">IT - Instrução de Trabalho</SelectItem>
-                    <SelectItem value="FR">FR - Formulário/Registro</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Descrição</Label>
-                <Textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows={2}
-                />
-              </div>
-              <div>
-                <Label>Upload de Arquivo (Opcional)</Label>
-                <Input type="file" onChange={handleFileUpload} disabled={uploading} />
-              </div>
-              <Button
-                onClick={() => saveMutation.mutate(formData)}
-                disabled={saveMutation.isPending || !formData.title}
-                className="w-full"
-              >
-                {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Criar Documento'}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <Button className="bg-green-600 hover:bg-green-700" onClick={() => {
+          setEditingIT(null);
+          setIsDialogOpen(true);
+        }}>
+          <Plus className="w-4 h-4 mr-2" />
+          Adicionar IT/FR
+        </Button>
       </div>
+
+      <ITFormDialog
+        open={isDialogOpen}
+        onClose={() => {
+          setIsDialogOpen(false);
+          setEditingIT(null);
+        }}
+        it={editingIT}
+        mapId={mapId}
+        workshopId={workshopId}
+        onSave={(data) => saveMutation.mutate(data)}
+      />
 
       {its.length === 0 ? (
         <Card className="border-2 border-dashed">
@@ -197,6 +150,9 @@ export default function ITManager({ mapId, workshopId }) {
                           Ver Arquivo
                         </Button>
                       )}
+                      <Button size="sm" variant="ghost" onClick={() => handleEdit(it)}>
+                        <Edit className="w-4 h-4 text-blue-600" />
+                      </Button>
                       <Button
                         size="sm"
                         variant="ghost"
