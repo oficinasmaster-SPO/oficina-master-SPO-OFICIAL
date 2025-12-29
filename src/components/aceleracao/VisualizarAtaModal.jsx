@@ -34,10 +34,6 @@ export default function VisualizarAtaModal({ ata, workshop, onClose }) {
               ATA de Atendimento - {ata.code}
             </span>
             <div className="flex gap-2">
-              <Button size="sm" variant="outline" onClick={handlePrint}>
-                <Printer className="w-4 h-4 mr-2" />
-                Imprimir
-              </Button>
               <Button size="sm" variant="outline" onClick={handleDownload}>
                 <Download className="w-4 h-4 mr-2" />
                 Download PDF
