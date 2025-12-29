@@ -31,39 +31,72 @@ export default function ITOperationalAssistant({ open, onClose, mapData, existin
     setLoading(true);
     try {
       const prompt = `
-Você é um especialista em gestão de processos operacionais de oficinas mecânicas.
+VOCÊ É A IA OPERACIONAL DO BASE44.
 
-CONTEXTO DO PROCESSO (MAP):
+MISSÃO PRINCIPAL:
+Atuar de forma ativa na melhoria contínua dos processos, operando no nível de INSTRUÇÃO DE TRABALHO (IT).
+O MAP é apenas referência estrutural e NÃO deve ser alterado, salvo solicitação explícita.
+
+MODO DE OPERAÇÃO:
+- Proibido atuar apenas em modo análise.
+- É OBRIGATÓRIO propor melhorias sempre que houver qualquer falha, ambiguidade ou oportunidade operacional.
+
+ESCOPO DE ANÁLISE (OBRIGATÓRIO VERIFICAR SEMPRE):
+1. Passos genéricos ou subjetivos
+2. Falta de critério objetivo de execução
+3. Risco de erro humano
+4. Falta de responsável claro
+5. Ausência de indicador ou impacto mensurável
+6. Repetição de dúvida ou retrabalho potencial
+7. Dependência excessiva de conhecimento tácito
+
+CONTEXTO DO PROCESSO (MAP - REFERÊNCIA):
 Título: ${mapData?.title || "Não informado"}
 Objetivo: ${mapData?.objective || "Não informado"}
 Etapas principais: ${mapData?.activities?.map(a => a.activity).join(", ") || "Não informado"}
+Indicadores: ${mapData?.indicators?.map(i => i.name).join(", ") || "Não definidos"}
 
 ITs EXISTENTES:
-${existingITs.map(it => `- ${it.code}: ${it.title} (v${it.version})`).join("\n") || "Nenhuma IT criada ainda"}
+${existingITs.map(it => `- ${it.code}: ${it.title} (v${it.version}) - Última alteração: ${it.version_history?.[it.version_history.length - 1]?.changes || "Criação inicial"}`).join("\n") || "Nenhuma IT criada ainda"}
 
 SITUAÇÃO OPERACIONAL RELATADA:
 ${context}
 
-TAREFA:
-Analise a situação e determine:
-1. Se é necessário CRIAR UMA NOVA IT ou ATUALIZAR UMA EXISTENTE
-2. Justifique sua recomendação
-3. Sugira título, objetivo e principais passos da IT
-4. Indique qual indicador do MAP será impactado
-5. Classifique a urgência (baixa/média/alta)
+REGRA DE GERAÇÃO DE IT:
+- Sempre que QUALQUER item do escopo acima for identificado, você DEVE:
+  a) Gerar uma ATUALIZAÇÃO SUGERIDA
+  b) Criar nova IT ou versionar IT existente
+  c) Registrar motivo da alteração
+  d) Manter o MAP inalterado
 
-Retorne um JSON com esta estrutura:
+VERSIONAMENTO:
+- v1.0 → Criação inicial
+- v1.1 → Ajuste leve (clareza, texto, critério)
+- v2.0 → Mudança operacional relevante
+- v3.0 → Mudança estrutural
+
+REGRA CRÍTICA:
+Se NÃO houver melhoria, você DEVE justificar explicitamente por que o processo está operacionalmente correto.
+É proibido responder sem propor melhoria ou justificativa formal.
+
+Retorne um JSON estruturado:
 {
-  "action": "create" | "update",
-  "target_it_code": "código da IT existente se for update, null se create",
-  "justification": "por que essa IT é necessária agora",
-  "suggested_title": "título sugerido",
-  "suggested_objective": "objetivo claro e operacional",
-  "suggested_steps": ["passo 1", "passo 2", "passo 3"],
-  "impacted_indicator": "qual KPI do MAP será afetado",
+  "action_required": true | false,
+  "action_type": "create_it" | "update_it" | "validated",
+  "target_it_code": "IT-XXX ou null se criar nova",
+  "current_version": "X.X",
+  "proposed_version": "X.X",
+  "change_reason": "motivo técnico detalhado",
+  "change_summary": "resumo executivo da alteração",
+  "operational_impact": "impacto esperado na execução",
+  "affected_indicator": "qual indicador será impactado",
   "urgency": "baixa" | "média" | "alta",
+  "suggested_title": "título da IT",
+  "suggested_objective": "objetivo operacional claro",
+  "suggested_steps": ["passo 1 objetivo", "passo 2 objetivo"],
   "common_errors": ["erro comum 1", "erro comum 2"],
-  "version_rationale": "por que incrementar versão (se update)"
+  "controlled_risks": ["risco já controlado 1", "risco já controlado 2"],
+  "validation_justification": "por que NÃO versionar (se aplicável)"
 }
 `;
 
@@ -72,16 +105,22 @@ Retorne um JSON com esta estrutura:
         response_json_schema: {
           type: "object",
           properties: {
-            action: { type: "string", enum: ["create", "update"] },
+            action_required: { type: "boolean" },
+            action_type: { type: "string", enum: ["create_it", "update_it", "validated"] },
             target_it_code: { type: "string" },
-            justification: { type: "string" },
+            current_version: { type: "string" },
+            proposed_version: { type: "string" },
+            change_reason: { type: "string" },
+            change_summary: { type: "string" },
+            operational_impact: { type: "string" },
+            affected_indicator: { type: "string" },
+            urgency: { type: "string", enum: ["baixa", "média", "alta"] },
             suggested_title: { type: "string" },
             suggested_objective: { type: "string" },
             suggested_steps: { type: "array", items: { type: "string" } },
-            impacted_indicator: { type: "string" },
-            urgency: { type: "string", enum: ["baixa", "média", "alta"] },
             common_errors: { type: "array", items: { type: "string" } },
-            version_rationale: { type: "string" }
+            controlled_risks: { type: "array", items: { type: "string" } },
+            validation_justification: { type: "string" }
           }
         }
       });
@@ -97,7 +136,7 @@ Retorne um JSON com esta estrutura:
   };
 
   const applyRecommendation = () => {
-    if (!suggestions) return;
+    if (!suggestions || !suggestions.action_required) return;
 
     const targetIT = suggestions.target_it_code 
       ? existingITs.find(it => it.code === suggestions.target_it_code)
@@ -107,7 +146,7 @@ Retorne um JSON com esta estrutura:
       type: "IT",
       title: suggestions.suggested_title,
       objective: suggestions.suggested_objective,
-      description: suggestions.justification,
+      description: suggestions.change_summary,
       activities: suggestions.suggested_steps.map((step, idx) => ({
         sequence: idx + 1,
         activity: step,
@@ -119,18 +158,21 @@ Retorne um JSON com esta estrutura:
         mitigation: "A definir durante implementação"
       })),
       indicators: [{
-        name: suggestions.impacted_indicator,
+        name: suggestions.affected_indicator,
         target: "A definir",
         frequency: "Diário"
-      }]
+      }],
+      reason: suggestions.change_reason,
+      origin: "melhoria_continua",
+      expected_impact: suggestions.operational_impact
     };
 
-    if (suggestions.action === "update" && targetIT) {
+    if (suggestions.action_type === "update_it" && targetIT) {
       onCreateIT({
         ...targetIT,
         ...newITData,
-        title: `${targetIT.title} (Atualizado)`,
-        version_rationale: suggestions.version_rationale
+        title: suggestions.suggested_title,
+        version_rationale: suggestions.change_reason
       });
     } else {
       onCreateIT(newITData);
@@ -214,88 +256,162 @@ Retorne um JSON com esta estrutura:
             </div>
           </div>
 
-          {/* Sugestões da IA */}
+          {/* Sugestões da IA - Formato Estruturado Base44 */}
           {suggestions && (
-            <div className="border-2 border-purple-200 rounded-lg p-4 bg-purple-50 space-y-4">
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-purple-600 rounded-lg">
-                  <Lightbulb className="w-5 h-5 text-white" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Badge className={getUrgencyColor(suggestions.urgency)}>
-                      Urgência: {suggestions.urgency}
-                    </Badge>
-                    <Badge variant="outline" className="bg-white">
-                      {suggestions.action === "create" ? "Criar Nova IT" : "Atualizar IT Existente"}
-                    </Badge>
+            <>
+              {suggestions.action_required && suggestions.action_type !== "validated" ? (
+                <div className="border-2 border-purple-200 rounded-lg p-5 bg-purple-50 space-y-4">
+                  <div className="flex items-start gap-3 pb-3 border-b border-purple-200">
+                    <div className="p-2 bg-purple-600 rounded-lg">
+                      <Sparkles className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-purple-900 mb-1">🔄 ATUALIZAÇÃO SUGERIDA</h3>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge className={getUrgencyColor(suggestions.urgency)}>
+                          Urgência: {suggestions.urgency}
+                        </Badge>
+                        <Badge variant="outline" className="bg-white">
+                          {suggestions.action_type === "create_it" ? "Nova IT" : "Atualização de IT"}
+                        </Badge>
+                        {suggestions.target_it_code && (
+                          <Badge className="bg-purple-700 text-white font-mono">
+                            {suggestions.target_it_code}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <h4 className="font-semibold text-lg">{suggestions.suggested_title}</h4>
-                  {suggestions.target_it_code && (
-                    <p className="text-sm text-gray-600 mt-1">
-                      Atualizar: <span className="font-mono text-purple-700">{suggestions.target_it_code}</span>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-3 bg-white rounded-lg">
+                      <Label className="text-xs font-semibold text-gray-600">IT Impactada</Label>
+                      <p className="text-sm font-bold text-gray-900 mt-1">
+                        {suggestions.target_it_code || "Nova IT"}
+                      </p>
+                    </div>
+                    <div className="p-3 bg-white rounded-lg">
+                      <Label className="text-xs font-semibold text-gray-600">Versão</Label>
+                      <p className="text-sm font-bold text-gray-900 mt-1">
+                        {suggestions.current_version ? `${suggestions.current_version} → ${suggestions.proposed_version}` : suggestions.proposed_version || "v1.0"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="p-4 bg-white rounded-lg border border-purple-200">
+                      <Label className="text-sm font-bold text-gray-900 mb-2 block">Motivo da Alteração</Label>
+                      <p className="text-sm text-gray-700 leading-relaxed">{suggestions.change_reason}</p>
+                    </div>
+
+                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <Label className="text-sm font-bold text-blue-900 mb-2 block">Resumo da Alteração</Label>
+                      <p className="text-sm text-gray-700 leading-relaxed">{suggestions.change_summary}</p>
+                    </div>
+
+                    <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                      <Label className="text-sm font-bold text-green-900 mb-2 block">Impacto Operacional</Label>
+                      <p className="text-sm text-gray-700 leading-relaxed">{suggestions.operational_impact}</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-sm font-semibold mb-2 block">Título da IT</Label>
+                    <p className="text-base font-bold text-gray-900 p-3 bg-white rounded-lg border">
+                      {suggestions.suggested_title}
                     </p>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <Label className="text-sm font-semibold">Justificativa</Label>
-                <p className="text-sm text-gray-700 mt-1">{suggestions.justification}</p>
-              </div>
-
-              <div>
-                <Label className="text-sm font-semibold">Objetivo da IT</Label>
-                <p className="text-sm text-gray-700 mt-1">{suggestions.suggested_objective}</p>
-              </div>
-
-              <div>
-                <Label className="text-sm font-semibold">Passos Sugeridos</Label>
-                <ol className="list-decimal list-inside space-y-1 mt-2">
-                  {suggestions.suggested_steps.map((step, idx) => (
-                    <li key={idx} className="text-sm text-gray-700">{step}</li>
-                  ))}
-                </ol>
-              </div>
-
-              <div>
-                <Label className="text-sm font-semibold">Erros Comuns a Evitar</Label>
-                <ul className="list-disc list-inside space-y-1 mt-2">
-                  {suggestions.common_errors.map((error, idx) => (
-                    <li key={idx} className="text-sm text-red-700">{error}</li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="flex items-center gap-2 p-3 bg-blue-100 rounded-lg">
-                <AlertCircle className="w-5 h-5 text-blue-700" />
-                <div className="text-sm">
-                  <strong>Indicador Impactado:</strong> {suggestions.impacted_indicator}
-                </div>
-              </div>
-
-              {suggestions.version_rationale && (
-                <div className="flex items-center gap-2 p-3 bg-yellow-100 rounded-lg">
-                  <CheckCircle2 className="w-5 h-5 text-yellow-700" />
-                  <div className="text-sm">
-                    <strong>Motivo da Nova Versão:</strong> {suggestions.version_rationale}
                   </div>
+
+                  <div>
+                    <Label className="text-sm font-semibold mb-2 block">Objetivo Operacional</Label>
+                    <p className="text-sm text-gray-700 p-3 bg-white rounded-lg border">
+                      {suggestions.suggested_objective}
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label className="text-sm font-semibold mb-2 block">Passos Operacionais Objetivos</Label>
+                    <ol className="space-y-2">
+                      {suggestions.suggested_steps.map((step, idx) => (
+                        <li key={idx} className="flex gap-3 p-3 bg-white rounded-lg border">
+                          <span className="flex-shrink-0 w-6 h-6 rounded-full bg-purple-600 text-white text-xs font-bold flex items-center justify-center">
+                            {idx + 1}
+                          </span>
+                          <span className="text-sm text-gray-700 flex-1">{step}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+
+                  <div>
+                    <Label className="text-sm font-semibold mb-2 block text-red-700">Erros Comuns a Evitar</Label>
+                    <ul className="space-y-2">
+                      {suggestions.common_errors.map((error, idx) => (
+                        <li key={idx} className="flex gap-2 p-3 bg-red-50 rounded-lg border border-red-200">
+                          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                          <span className="text-sm text-red-900">{error}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="p-4 bg-blue-100 rounded-lg flex items-center gap-3">
+                    <Lightbulb className="w-6 h-6 text-blue-700" />
+                    <div className="flex-1">
+                      <Label className="text-sm font-bold text-blue-900 block mb-1">Indicador Afetado</Label>
+                      <p className="text-sm text-blue-900 font-semibold">{suggestions.affected_indicator}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 pt-4 border-t-2 border-purple-300">
+                    <Button
+                      onClick={applyRecommendation}
+                      className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3"
+                    >
+                      <CheckCircle2 className="w-5 h-5 mr-2" />
+                      Aplicar Atualização Sugerida
+                    </Button>
+                    <Button variant="outline" onClick={() => setSuggestions(null)} className="px-6">
+                      Descartar
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="border-2 border-green-200 rounded-lg p-5 bg-green-50 space-y-4">
+                  <div className="flex items-start gap-3 pb-3 border-b border-green-200">
+                    <div className="p-2 bg-green-600 rounded-lg">
+                      <CheckCircle2 className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-green-900 mb-1">✅ PROCESSO OPERACIONALMENTE VÁLIDO</h3>
+                      <p className="text-sm text-green-700">Nenhuma melhoria crítica identificada no momento</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="p-4 bg-white rounded-lg border border-green-200">
+                      <Label className="text-sm font-bold text-gray-900 mb-2 block">Justificativa Técnica</Label>
+                      <p className="text-sm text-gray-700 leading-relaxed">{suggestions.validation_justification}</p>
+                    </div>
+
+                    {suggestions.controlled_risks && suggestions.controlled_risks.length > 0 && (
+                      <div className="p-4 bg-white rounded-lg border border-green-200">
+                        <Label className="text-sm font-bold text-gray-900 mb-2 block">Riscos Controlados</Label>
+                        <ul className="list-disc list-inside space-y-1">
+                          {suggestions.controlled_risks.map((risk, idx) => (
+                            <li key={idx} className="text-sm text-gray-700">{risk}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+
+                  <Button variant="outline" onClick={() => setSuggestions(null)} className="w-full">
+                    Fechar
+                  </Button>
                 </div>
               )}
-
-              <div className="flex gap-3 pt-4 border-t">
-                <Button
-                  onClick={applyRecommendation}
-                  className="flex-1 bg-purple-600 hover:bg-purple-700"
-                >
-                  <CheckCircle2 className="w-4 h-4 mr-2" />
-                  Aplicar Recomendação
-                </Button>
-                <Button variant="outline" onClick={() => setSuggestions(null)}>
-                  Descartar
-                </Button>
-              </div>
-            </div>
+            </>
           )}
         </div>
       </DialogContent>
