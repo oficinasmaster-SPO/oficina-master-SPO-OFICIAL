@@ -1,10 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import OpenAI from 'npm:openai@4.72.0';
 
-const openai = new OpenAI({
-  apiKey: Deno.env.get("OPENAI_API_KEY"),
-});
-
 Deno.serve(async (req) => {
   try {
     console.log("🔵 Início da função invokeLLMUnlimited");
@@ -36,6 +32,11 @@ Deno.serve(async (req) => {
     }
 
     console.log("🤖 Chamando OpenAI diretamente (ilimitado)...");
+    
+    // Initialize OpenAI client inside handler
+    const openai = new OpenAI({
+      apiKey: Deno.env.get("OPENAI_API_KEY"),
+    });
 
     // Chamar OpenAI diretamente
     const completion = await openai.chat.completions.create({
