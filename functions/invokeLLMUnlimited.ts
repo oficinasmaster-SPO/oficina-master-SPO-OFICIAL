@@ -7,16 +7,29 @@ const openai = new OpenAI({
 
 Deno.serve(async (req) => {
   try {
+    console.log("🔵 Início da função invokeLLMUnlimited");
     const base44 = createClientFromRequest(req);
     
     // Verificar autenticação
-    const user = await base44.auth.me();
+    console.log("🔐 Verificando autenticação...");
+    let user;
+    try {
+      user = await base44.auth.me();
+      console.log("✅ Usuário autenticado:", user?.email);
+    } catch (authError) {
+      console.error("❌ Erro de autenticação:", authError.message);
+      return Response.json({ error: 'Unauthorized', details: authError.message }, { status: 401 });
+    }
+    
     if (!user) {
+      console.error("❌ Usuário não autenticado");
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Parse do payload
+    console.log("📦 Parseando payload...");
     const { prompt, response_json_schema = null } = await req.json();
+    console.log("📝 Prompt recebido, tamanho:", prompt?.length || 0);
 
     if (!prompt) {
       return Response.json({ error: 'Prompt is required' }, { status: 400 });
