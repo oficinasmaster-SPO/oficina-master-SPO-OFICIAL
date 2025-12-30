@@ -2,24 +2,39 @@ import jsPDF from "jspdf";
 import "jspdf-autotable";
 import { base44 } from "@/api/base44Client";
 
+const severidadeColors = {
+  critica: [220, 38, 38],
+  maior: [249, 115, 22],
+  menor: [234, 179, 8]
+};
+
+const maturidadeColors = {
+  0: [107, 114, 128],
+  1: [239, 68, 68],
+  2: [249, 115, 22],
+  3: [234, 179, 8],
+  4: [59, 130, 246],
+  5: [34, 197, 94]
+};
+
 export async function generateStructuredReportPDF(formData, workshop) {
   console.log("📄 [PDF] Iniciando geração do PDF");
-  console.log("📄 [PDF] FormData recebido:", formData);
-  console.log("📄 [PDF] Workshop recebido:", workshop);
   
   const doc = new jsPDF();
   let yPos = 20;
 
-  // Header
+  // Header com logo placeholder
   doc.setFillColor(220, 38, 38);
-  doc.rect(0, 0, 210, 25, 'F');
+  doc.rect(0, 0, 210, 30, 'F');
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(18);
-  doc.text("RELATÓRIO DE IMPLEMENTAÇÃO ESTRUTURADA", 105, 12, { align: 'center' });
+  doc.setFontSize(16);
+  doc.text("RELATÓRIO DE IMPLEMENTAÇÃO", 105, 12, { align: 'center' });
   doc.setFontSize(11);
-  doc.text("Oficinas Master", 105, 19, { align: 'center' });
+  doc.text("Oficinas Master - Consultoria em Gestão", 105, 20, { align: 'center' });
+  doc.setFontSize(9);
+  doc.text(`Empresa: ${formData.empresa || 'N/A'} | Data: ${new Date(formData.data).toLocaleDateString('pt-BR')}`, 105, 27, { align: 'center' });
 
-  yPos = 35;
+  yPos = 40;
   doc.setTextColor(0, 0, 0);
 
   // 1. Informações Iniciais
