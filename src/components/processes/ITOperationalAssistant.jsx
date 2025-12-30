@@ -110,9 +110,9 @@ Para PROCESSO OK:
 }`;
 
       console.log("📤 Enviando prompt para IA...");
-      const response = await base44.functions.invoke('invokeLLMUnlimited', { prompt });
-      console.log("📦 Resposta bruta da função:", response);
-      const rawResponse = response.result || response.data?.result;
+      const apiResponse = await base44.functions.invoke('invokeLLMUnlimited', { prompt });
+      console.log("📦 Resposta bruta da função:", apiResponse);
+      const rawResponse = apiResponse.result || apiResponse.data?.result;
       
       console.log("📥 Resposta RAW da IA:", rawResponse);
       console.log("📏 Tipo da resposta:", typeof rawResponse);
