@@ -300,26 +300,46 @@ export async function generateStructuredReportPDF(formData, workshop) {
     const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
     console.log("📄 [PDF] File criado:", pdfFile);
     
-    console.log("📄 [PDF] Fazendo upload...");
-    const uploadResult = await base44.integrations.Core.UploadFile({ file: pdfFile });
-    console.log("📄 [PDF] Upload completo:", uploadResult);
-    
-    if (!uploadResult || !uploadResult.file_url) {
-      console.error("📄 [PDF] ❌ Upload result inválido:", uploadResult);
-      throw new Error("URL do arquivo não retornada pelo servidor");
+    console.log("📄 [PDF] Tentando upload...");
+    try {
+      const uploadResult = await base44.integrations.Core.UploadFile({ file: pdfFile });
+      console.log("📄 [PDF] Upload completo:", uploadResult);
+      
+      if (!uploadResult || !uploadResult.file_url) {
+        throw new Error("URL do arquivo não retornada");
+      }
+      
+      console.log("📄 [PDF] ✅ PDF enviado com sucesso:", uploadResult.file_url);
+      return { file_url: uploadResult.file_url, downloadMode: false };
+      
+    } catch (uploadError) {
+      // Se erro de limite (402), fazer download local
+      if (uploadError.message && (uploadError.message.includes('limit') || uploadError.message.includes('upgrade') || uploadError.message.includes('402'))) {
+        console.log("⚠️ [PDF] Limite atingido - ativando modo download");
+        
+        // Download automático do PDF
+        const url = URL.createObjectURL(pdfBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        console.log("✅ [PDF] Download local iniciado");
+        return { 
+          file_url: 'local_download', 
+          downloadMode: true,
+          fileName: fileName
+        };
+      }
+      
+      throw uploadError;
     }
-    
-    console.log("📄 [PDF] ✅ PDF gerado e enviado com sucesso:", uploadResult.file_url);
-    return { file_url: uploadResult.file_url };
     
   } catch (error) {
-    console.error("📄 [PDF] ❌ ERRO ao fazer upload:", error.message);
-    
-    // Verificar se é erro de limite de plano
-    if (error.message && (error.message.includes('limit') || error.message.includes('upgrade') || error.message.includes('402'))) {
-      throw new Error('LIMITE_PLANO: Limite de uploads do plano atingido. Entre em contato com o suporte para upgrade.');
-    }
-    
-    throw new Error("Falha ao fazer upload do PDF: " + error.message);
+    console.error("📄 [PDF] ❌ ERRO:", error.message);
+    throw new Error("Falha ao gerar PDF: " + error.message);
   }
 }

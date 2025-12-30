@@ -171,11 +171,30 @@ export default function StructuredReportForm({ open, onClose, onSave, workshop }
       const result = await generateStructuredReportPDF(dataCompleta, workshop);
       console.log("✅ PDF gerado, resultado:", result);
       
-      if (!result || !result.file_url) {
-        console.error("❌ Resultado inválido:", result);
-        throw new Error("URL do arquivo não foi retornada");
+      if (!result) {
+        throw new Error("Falha ao gerar PDF");
       }
       
+      // Modo download local (limite atingido)
+      if (result.downloadMode) {
+        toast.success("✅ PDF gerado e baixado! (Upload temporariamente indisponível)", {
+          duration: 6000
+        });
+        
+        const reportData = {
+          type: 'relatorio_implementacao',
+          title: `Relatório de Implementação - ${formData.unidade_area || 'Geral'}`,
+          file_url: `pending_upload/${result.fileName}`,
+          data: dataCompleta,
+          pending_upload: true
+        };
+        
+        await onSave(reportData);
+        onClose();
+        return;
+      }
+      
+      // Modo normal (upload bem-sucedido)
       const reportData = {
         type: 'relatorio_implementacao',
         title: `Relatório de Implementação - ${formData.unidade_area || 'Geral'}`,
@@ -188,24 +207,13 @@ export default function StructuredReportForm({ open, onClose, onSave, workshop }
       console.log("✅ Evidência salva com sucesso");
       
       toast.success("Relatório gerado e salvo com sucesso!");
-      
-      console.log("🚪 Fechando modal...");
       onClose();
-      console.log("✅ Processo concluído");
       
     } catch (error) {
       console.error("❌ Erro ao gerar relatório:", error.message);
-      
-      // Mensagem específica para erro de limite de plano
-      if (error.message && error.message.includes('LIMITE_PLANO')) {
-        toast.error("⚠️ Limite de uploads atingido. Por favor, entre em contato com o suporte para upgrade do plano.", {
-          duration: 8000
-        });
-      } else {
-        toast.error("Erro ao gerar relatório: " + (error.message || "Falha desconhecida"), {
-          duration: 5000
-        });
-      }
+      toast.error("Erro: " + (error.message || "Falha ao gerar relatório"), {
+        duration: 5000
+      });
     } finally {
       setLoading(false);
     }
