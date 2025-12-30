@@ -151,24 +151,53 @@ export async function generateStructuredReportPDF(formData, workshop) {
     doc.text("Não Conformidades / Lacunas", 15, yPos);
     yPos += 6;
 
+    // Agrupar por severidade
+    const criticas = formData.nao_conformidades.filter(nc => nc.severidade === 'critica');
+    const maiores = formData.nao_conformidades.filter(nc => nc.severidade === 'maior');
+    const menores = formData.nao_conformidades.filter(nc => nc.severidade === 'menor' || !nc.severidade);
+
     doc.autoTable({
       startY: yPos,
-      head: [['Nº', 'Descrição', 'Requisito OM', 'Evidência']],
+      head: [['Nº', 'Severidade', 'Descrição', 'Requisito OM']],
       body: formData.nao_conformidades.map(nc => [
         nc.numero,
+        nc.severidade === 'critica' ? 'CRÍTICA' : nc.severidade === 'maior' ? 'MAIOR' : 'MENOR',
         nc.descricao,
-        nc.requisito_om,
-        nc.evidencia
+        nc.requisito_om
       ]),
       theme: 'grid',
       headStyles: { fillColor: [220, 38, 38] },
       margin: { left: 15, right: 15 },
       columnStyles: {
         0: { cellWidth: 10 },
-        1: { cellWidth: 80 }
+        1: { cellWidth: 22 },
+        2: { cellWidth: 95 },
+        3: { cellWidth: 35 }
+      },
+      didParseCell: function(data) {
+        if (data.section === 'body' && data.column.index === 1) {
+          const sev = data.cell.raw;
+          if (sev === 'CRÍTICA') {
+            data.cell.styles.fillColor = [254, 226, 226];
+            data.cell.styles.textColor = [185, 28, 28];
+            data.cell.styles.fontStyle = 'bold';
+          } else if (sev === 'MAIOR') {
+            data.cell.styles.fillColor = [255, 237, 213];
+            data.cell.styles.textColor = [194, 65, 12];
+          } else {
+            data.cell.styles.fillColor = [254, 249, 195];
+            data.cell.styles.textColor = [161, 98, 7];
+          }
+        }
       }
     });
-    yPos = doc.lastAutoTable.finalY + 10;
+    yPos = doc.lastAutoTable.finalY + 8;
+
+    // Resumo de não conformidades
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Resumo: ${criticas.length} Crítica(s) | ${maiores.length} Maior(es) | ${menores.length} Menor(es)`, 15, yPos);
+    yPos += 8;
   }
 
   // 6. Oportunidades de Melhoria
