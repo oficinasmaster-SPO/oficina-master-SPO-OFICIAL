@@ -111,10 +111,11 @@ Para PROCESSO OK:
 
       console.log("📤 Enviando prompt para IA...");
       const apiResponse = await base44.functions.invoke('invokeLLMUnlimited', { prompt });
-      console.log("📦 Resposta bruta da função:", apiResponse);
-      const rawResponse = apiResponse.result || apiResponse.data?.result;
+      console.log("📦 Resposta completa:", JSON.stringify(apiResponse, null, 2));
       
-      console.log("📥 Resposta RAW da IA:", rawResponse);
+      // Extrair resultado de múltiplos formatos possíveis
+      const rawResponse = apiResponse?.data?.result || apiResponse?.result || apiResponse?.data;
+      console.log("📥 Resposta RAW extraída:", rawResponse);
       console.log("📏 Tipo da resposta:", typeof rawResponse);
       
       // Parse manual com tratamento de erro
