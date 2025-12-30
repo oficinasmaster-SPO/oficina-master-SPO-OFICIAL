@@ -4,19 +4,25 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, Eye, TrendingUp, Users, BarChart3, Rocket, Filter, LayoutGrid, User, CheckCircle2, Clock, Calculator, Activity, Brain, Heart, DollarSign, FileText } from "lucide-react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { Filter, TrendingUp, Users, BarChart3, User, Calculator, Activity, Brain, DollarSign, FileText } from "lucide-react";
 import { assessmentCriteria } from "../components/assessment/AssessmentCriteria";
+import StatsCards from "@/components/historico/StatsCards";
+import ViewToggle from "@/components/historico/ViewToggle";
+import SearchBar from "@/components/historico/SearchBar";
+import CardsView from "@/components/historico/CardsView";
+import TableView from "@/components/historico/TableView";
+import TimelineView from "@/components/historico/TimelineView";
+import AIInsightsButton from "@/components/historico/AIInsightsButton";
 
 export default function Historico() {
   const navigate = useNavigate();
   const [filterType, setFilterType] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterPeriod, setFilterPeriod] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [viewMode, setViewMode] = useState("cards");
 
   // Combine all queries
   const { data: allAssessments = [], isLoading } = useQuery({
@@ -162,6 +168,16 @@ export default function Historico() {
   const filterItems = () => {
     let filtered = [...allAssessments];
 
+    // Search filter
+    if (searchTerm) {
+      const search = searchTerm.toLowerCase();
+      filtered = filtered.filter(item => 
+        item.title.toLowerCase().includes(search) ||
+        item.typeName.toLowerCase().includes(search) ||
+        (item.score && String(item.score).toLowerCase().includes(search))
+      );
+    }
+
     if (filterType !== "all") {
       filtered = filtered.filter(item => item.type === filterType);
     }
@@ -204,28 +220,36 @@ export default function Historico() {
     }
   };
 
-  const getStatusBadge = (status) => {
-    if (status === 'concluido') {
-      return <Badge className="bg-green-100 text-green-700 border-green-200 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Concluído</Badge>;
-    }
-    return <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200 flex items-center gap-1"><Clock className="w-3 h-3" /> Pendente</Badge>;
+  const handleViewDetails = (item) => {
+    navigate(createPageUrl(item.detailsUrl.split('?')[0]) + `?id=${item.id}`);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            Minhas Avaliações Realizadas
-          </h1>
-          <p className="text-gray-600">
-            Histórico completo de diagnósticos e autoavaliações
-          </p>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+            <div>
+              <h1 className="text-4xl font-bold text-gray-900 mb-2">
+                Minhas Avaliações Realizadas
+              </h1>
+              <p className="text-gray-600">
+                Histórico completo de diagnósticos e autoavaliações
+              </p>
+            </div>
+            <AIInsightsButton assessments={allAssessments} />
+          </div>
         </div>
 
-        {/* Filters */}
-        <Card className="mb-8 shadow-lg">
+        <StatsCards assessments={allAssessments} />
+
+        {/* Search & Filters */}
+        <Card className="mb-6 shadow-lg">
           <CardContent className="p-6">
+            <div className="flex flex-col gap-4 mb-4">
+              <SearchBar value={searchTerm} onChange={setSearchTerm} />
+              <ViewToggle currentView={viewMode} onViewChange={setViewMode} />
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
@@ -289,7 +313,7 @@ export default function Historico() {
           </CardContent>
         </Card>
 
-        {/* List */}
+        {/* Content */}
         {isLoading ? (
           <div className="text-center py-12">
             <p className="text-gray-600">Carregando histórico...</p>
@@ -298,7 +322,7 @@ export default function Historico() {
           <Card className="shadow-lg">
             <CardContent className="p-12 text-center">
               <p className="text-gray-600 mb-4">
-                Nenhuma avaliação encontrada com os filtros selecionados
+                {searchTerm ? "Nenhuma avaliação encontrada para sua busca" : "Nenhuma avaliação encontrada com os filtros selecionados"}
               </p>
               <Button onClick={() => navigate(createPageUrl("SelecionarDiagnostico"))}>
                 Realizar Nova Avaliação
@@ -306,54 +330,29 @@ export default function Historico() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-4">
-            {filteredItems.map((item) => {
-              const TypeIcon = getTypeIcon(item.type);
-
-              return (
-                <Card key={`${item.type}-${item.id}`} className="shadow-lg hover:shadow-xl transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex flex-col md:flex-row md:items-center gap-4 justify-between">
-                      <div className="flex items-center gap-4 flex-1">
-                        <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0">
-                          <TypeIcon className="w-6 h-6" />
-                        </div>
-                        
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center flex-wrap gap-2 mb-1">
-                            <Badge variant="secondary" className="font-normal">
-                              {item.typeName}
-                            </Badge>
-                            {getStatusBadge(item.status)}
-                            <span className="text-xs text-gray-500 flex items-center">
-                              <Calendar className="w-3 h-3 mr-1" />
-                              {format(new Date(item.date), "dd/MM/yyyy HH:mm", { locale: ptBR })}
-                            </span>
-                          </div>
-                          <h3 className="font-bold text-gray-900 text-lg truncate">
-                            {item.title}
-                          </h3>
-                          {item.score && (
-                            <p className="text-sm text-gray-600">
-                              Resultado: <span className="font-medium">{item.score}</span>
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      <Button
-                        onClick={() => navigate(createPageUrl(item.detailsUrl.split('?')[0]) + `?id=${item.id}`)}
-                        className="bg-blue-600 hover:bg-blue-700 w-full md:w-auto whitespace-nowrap"
-                      >
-                        <Eye className="w-4 h-4 mr-2" />
-                        Ver Detalhes
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+          <>
+            {viewMode === "cards" && (
+              <CardsView 
+                items={filteredItems} 
+                onViewDetails={handleViewDetails} 
+                getTypeIcon={getTypeIcon} 
+              />
+            )}
+            {viewMode === "table" && (
+              <TableView 
+                items={filteredItems} 
+                onViewDetails={handleViewDetails} 
+                getTypeIcon={getTypeIcon} 
+              />
+            )}
+            {viewMode === "timeline" && (
+              <TimelineView 
+                items={filteredItems} 
+                onViewDetails={handleViewDetails} 
+                getTypeIcon={getTypeIcon} 
+              />
+            )}
+          </>
         )}
       </div>
     </div>
