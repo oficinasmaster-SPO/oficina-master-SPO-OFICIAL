@@ -82,23 +82,49 @@ export default function RepositorioDocumentos() {
   const { data: documents = [], isLoading } = useQuery({
     queryKey: ['company-documents', workshop?.id],
     queryFn: async () => {
+      console.log("🔍 [QUERY] Iniciando busca de documentos");
+      console.log("🔍 [QUERY] Workshop:", workshop);
+      console.log("🔍 [QUERY] User:", user?.email, user?.role);
+      
       if (!workshop) {
-        console.log("❌ Workshop não encontrado - não pode buscar documentos");
+        console.error("❌ [QUERY] Workshop não encontrado - não pode buscar documentos");
         return [];
       }
       
-      console.log("🔍 Buscando documentos para workshop:", workshop.id, workshop.name);
-      const docs = await base44.entities.CompanyDocument.filter({ workshop_id: workshop.id }, '-created_date');
-      console.log(`✅ Encontrados ${docs.length} documentos`);
+      console.log(`🔍 [QUERY] Buscando documentos para workshop_id: "${workshop.id}"`);
+      console.log(`🔍 [QUERY] Nome do workshop: "${workshop.name}"`);
       
-      // Debug: mostrar IDs dos documentos
-      if (docs.length > 0) {
-        console.log("📄 Documentos:", docs.map(d => ({ id: d.id, title: d.title, workshop_id: d.workshop_id })));
+      try {
+        const docs = await base44.entities.CompanyDocument.filter({ workshop_id: workshop.id }, '-created_date');
+        console.log(`✅ [QUERY] Query retornou ${docs.length} documentos`);
+        
+        if (docs.length > 0) {
+          console.log("📄 [QUERY] Documentos encontrados:");
+          docs.forEach((d, i) => {
+            console.log(`  ${i + 1}. ID: ${d.id} | Title: ${d.title} | Workshop: ${d.workshop_id}`);
+          });
+        } else {
+          console.warn("⚠️ [QUERY] Nenhum documento retornado pela query");
+          console.log("⚠️ [QUERY] Tentando buscar TODOS os documentos (debug)...");
+          const allDocs = await base44.entities.CompanyDocument.list();
+          console.log(`⚠️ [QUERY] Total de documentos no sistema: ${allDocs.length}`);
+          if (allDocs.length > 0) {
+            console.log("⚠️ [QUERY] Workshops nos documentos existentes:");
+            const uniqueWorkshops = [...new Set(allDocs.map(d => d.workshop_id))];
+            uniqueWorkshops.forEach(wid => {
+              const count = allDocs.filter(d => d.workshop_id === wid).length;
+              console.log(`  - Workshop "${wid}": ${count} documentos`);
+            });
+          }
+        }
+        
+        return docs;
+      } catch (error) {
+        console.error("❌ [QUERY] Erro ao buscar documentos:", error);
+        return [];
       }
-      
-      return docs;
     },
-    enabled: !!workshop,
+    enabled: !!workshop && !!user,
     refetchOnMount: true,
     refetchOnWindowFocus: false
   });
@@ -138,9 +164,9 @@ export default function RepositorioDocumentos() {
   // Create Document
   const createMutation = useMutation({
     mutationFn: async () => {
-      console.log("📄 Salvando documento...");
-      console.log("📄 Workshop:", workshop?.id, workshop?.name);
-      console.log("📄 User:", user?.email);
+      console.log("📄 [CREATE] Salvando documento...");
+      console.log("📄 [CREATE] Workshop:", workshop?.id, workshop?.name);
+      console.log("📄 [CREATE] User:", user?.email);
       
       if (!workshop?.id) {
         throw new Error("Workshop não identificado");
@@ -153,12 +179,12 @@ export default function RepositorioDocumentos() {
       setUploading(true);
       try {
         // 1. Upload File
-        console.log("📤 Fazendo upload do arquivo...");
+        console.log("📤 [CREATE] Fazendo upload do arquivo...");
         const { file_url } = await base44.integrations.Core.UploadFile({ file: newDoc.file });
-        console.log("✅ Arquivo enviado:", file_url);
+        console.log("✅ [CREATE] Arquivo enviado:", file_url);
         
         // 2. Create Record
-        console.log("💾 Criando registro no banco...");
+        console.log("💾 [CREATE] Criando registro no banco...");
         const docData = {
           workshop_id: workshop.id,
           title: newDoc.title,
@@ -168,14 +194,17 @@ export default function RepositorioDocumentos() {
           file_url: file_url,
           expiry_date: newDoc.expiry_date || null
         };
-        console.log("📄 Dados do documento:", docData);
+        console.log("📄 [CREATE] Dados que serão salvos:", docData);
         
         const created = await base44.entities.CompanyDocument.create(docData);
-        console.log("✅ Salvo - ID:", created.id, "Workshop:", created.workshop_id);
+        console.log("✅ [CREATE] Documento salvo com sucesso!");
+        console.log("✅ [CREATE] ID:", created.id);
+        console.log("✅ [CREATE] Workshop ID salvo:", created.workshop_id);
+        console.log("✅ [CREATE] Título:", created.title);
 
         return created;
       } catch (error) {
-        console.error("❌ Erro ao salvar documento:", error);
+        console.error("❌ [CREATE] Erro ao salvar documento:", error);
         throw error;
       } finally {
         setUploading(false);
