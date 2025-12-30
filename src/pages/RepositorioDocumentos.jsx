@@ -20,12 +20,18 @@ import AdminViewBanner from "../components/shared/AdminViewBanner";
 import DocumentViewer from "@/components/documents/DocumentViewer";
 import DragDropUpload from "@/components/documents/DragDropUpload";
 import DocumentsDashboard from "@/components/documents/DocumentsDashboard";
+import DigitalSignature from "@/components/documents/DigitalSignature";
+import OCRExtractor from "@/components/documents/OCRExtractor";
+import ComplianceAnalyzer from "@/components/documents/ComplianceAnalyzer";
 
 export default function RepositorioDocumentos() {
   const queryClient = useQueryClient();
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedDocForAnalysis, setSelectedDocForAnalysis] = useState(null);
   const [selectedDocForPreview, setSelectedDocForPreview] = useState(null);
+  const [selectedDocForSignature, setSelectedDocForSignature] = useState(null);
+  const [selectedDocForOCR, setSelectedDocForOCR] = useState(null);
+  const [selectedDocForCompliance, setSelectedDocForCompliance] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [filterParams, setFilterParams] = useState({ search: "", category: "all", type: "all" });
   const [isAdminView, setIsAdminView] = useState(false);
@@ -172,6 +178,22 @@ export default function RepositorioDocumentos() {
     } catch (error) {
       console.error("Erro ao registrar download:", error);
       window.open(doc.file_url, '_blank');
+    }
+  };
+
+  const handleSign = async (signatureDataUrl) => {
+    try {
+      // Aqui você pode salvar a assinatura no documento
+      // Por exemplo, atualizando o campo digital_signature_url
+      await base44.entities.CompanyDocument.update(selectedDocForSignature.id, {
+        digital_signature_url: signatureDataUrl,
+        signed_at: new Date().toISOString(),
+        signed_by: user.id
+      });
+      
+      queryClient.invalidateQueries(['company-documents']);
+    } catch (error) {
+      throw error;
     }
   };
 
@@ -332,9 +354,36 @@ export default function RepositorioDocumentos() {
                             size="sm" 
                             className="h-8 px-2 text-purple-600 hover:bg-purple-50"
                             onClick={() => setSelectedDocForAnalysis(doc)}
-                            title="Analisar com IA"
+                            title="Extrair Dados"
                           >
-                            IA
+                            Dados
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-8 px-2 text-orange-600 hover:bg-orange-50"
+                            onClick={() => setSelectedDocForSignature(doc)}
+                            title="Assinar"
+                          >
+                            Assinar
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-8 px-2 text-indigo-600 hover:bg-indigo-50"
+                            onClick={() => setSelectedDocForOCR(doc)}
+                            title="OCR"
+                          >
+                            OCR
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-8 px-2 text-pink-600 hover:bg-pink-50"
+                            onClick={() => setSelectedDocForCompliance(doc)}
+                            title="Conformidade"
+                          >
+                            Conf
                           </Button>
                         </div>
                       </TableCell>
@@ -357,6 +406,22 @@ export default function RepositorioDocumentos() {
           document={selectedDocForPreview}
           onClose={() => setSelectedDocForPreview(null)}
           onDownload={handleDownload}
+        />
+
+        <DigitalSignature
+          document={selectedDocForSignature}
+          onClose={() => setSelectedDocForSignature(null)}
+          onSign={handleSign}
+        />
+
+        <OCRExtractor
+          document={selectedDocForOCR}
+          onClose={() => setSelectedDocForOCR(null)}
+        />
+
+        <ComplianceAnalyzer
+          document={selectedDocForCompliance}
+          onClose={() => setSelectedDocForCompliance(null)}
         />
 
         {/* Upload Modal */}
