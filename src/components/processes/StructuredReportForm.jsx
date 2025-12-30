@@ -194,14 +194,19 @@ export default function StructuredReportForm({ open, onClose, onSave, workshop }
       console.log("✅ Processo concluído");
       
     } catch (error) {
-      console.error("❌ ERRO DETALHADO:", {
-        message: error.message,
-        stack: error.stack,
-        error: error
-      });
-      toast.error("Erro: " + (error.message || "Falha ao gerar relatório"));
+      console.error("❌ Erro ao gerar relatório:", error.message);
+      
+      // Mensagem específica para erro de limite de plano
+      if (error.message && error.message.includes('LIMITE_PLANO')) {
+        toast.error("⚠️ Limite de uploads atingido. Por favor, entre em contato com o suporte para upgrade do plano.", {
+          duration: 8000
+        });
+      } else {
+        toast.error("Erro ao gerar relatório: " + (error.message || "Falha desconhecida"), {
+          duration: 5000
+        });
+      }
     } finally {
-      console.log("🔄 Finalizando loading...");
       setLoading(false);
     }
   };

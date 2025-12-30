@@ -313,8 +313,13 @@ export async function generateStructuredReportPDF(formData, workshop) {
     return { file_url: uploadResult.file_url };
     
   } catch (error) {
-    console.error("📄 [PDF] ❌ ERRO ao fazer upload:", error);
-    console.error("📄 [PDF] Stack:", error.stack);
+    console.error("📄 [PDF] ❌ ERRO ao fazer upload:", error.message);
+    
+    // Verificar se é erro de limite de plano
+    if (error.message && (error.message.includes('limit') || error.message.includes('upgrade') || error.message.includes('402'))) {
+      throw new Error('LIMITE_PLANO: Limite de uploads do plano atingido. Entre em contato com o suporte para upgrade.');
+    }
+    
     throw new Error("Falha ao fazer upload do PDF: " + error.message);
   }
 }
