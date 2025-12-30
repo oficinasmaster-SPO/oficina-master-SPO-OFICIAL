@@ -2,9 +2,11 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { base44 } from "@/api/base44Client";
-import { AlertTriangle, CheckCircle2, Copy, RefreshCw, Loader2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Copy, RefreshCw, Loader2, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
+import IntegrationCreditsMonitor from "@/components/credits/IntegrationCreditsMonitor";
 
 export default function DiagnosticoPlano() {
   const [loading, setLoading] = useState(true);
