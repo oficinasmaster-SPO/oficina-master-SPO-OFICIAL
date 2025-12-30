@@ -175,21 +175,11 @@ export default function StructuredReportForm({ open, onClose, onSave, workshop }
         throw new Error("Falha ao gerar PDF");
       }
       
-      // Modo download local (limite atingido)
+      // Modo download local (limite atingido) - não salva evidência
       if (result.downloadMode) {
-        toast.success("✅ PDF gerado e baixado! (Upload temporariamente indisponível)", {
-          duration: 6000
+        toast.success("✅ PDF gerado e baixado no seu computador!", {
+          duration: 5000
         });
-        
-        const reportData = {
-          type: 'relatorio_implementacao',
-          title: `Relatório de Implementação - ${formData.unidade_area || 'Geral'}`,
-          file_url: `pending_upload/${result.fileName}`,
-          data: dataCompleta,
-          pending_upload: true
-        };
-        
-        await onSave(reportData);
         onClose();
         return;
       }
