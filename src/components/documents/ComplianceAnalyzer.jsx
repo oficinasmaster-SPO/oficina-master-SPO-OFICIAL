@@ -268,22 +268,22 @@ Seja rigoroso e específico. Cite artigos de lei quando relevante.`,
                     <div className="grid grid-cols-2 gap-4 mb-4">
                       <div>
                         <span className="text-sm text-gray-600">Pontuação LGPD</span>
-                        <p className="text-2xl font-bold text-blue-600">{analysis.lgpd_analysis.score}/100</p>
+                        <p className="text-2xl font-bold text-blue-600">{analysis.lgpd_analysis?.score || 0}/100</p>
                       </div>
                       <div>
                         <span className="text-sm text-gray-600">Dados Pessoais Identificados</span>
-                        <Badge variant={analysis.lgpd_analysis.personal_data_found ? "default" : "secondary"} className="mt-1">
-                          {analysis.lgpd_analysis.personal_data_found ? "Sim" : "Não"}
+                        <Badge variant={analysis.lgpd_analysis?.personal_data_found ? "default" : "secondary"} className="mt-1">
+                          {analysis.lgpd_analysis?.personal_data_found ? "Sim" : "Não"}
                         </Badge>
                       </div>
                     </div>
-                    {analysis.lgpd_analysis.legal_basis && (
+                    {analysis.lgpd_analysis?.legal_basis && (
                       <div className="mb-3">
                         <span className="text-sm font-semibold">Base Legal Identificada:</span>
-                        <p className="text-sm text-gray-700 mt-1">{analysis.lgpd_analysis.legal_basis}</p>
+                        <p className="text-sm text-gray-700 mt-1">{analysis.lgpd_analysis?.legal_basis}</p>
                       </div>
                     )}
-                    {analysis.lgpd_analysis.issues && analysis.lgpd_analysis.issues.length > 0 && (
+                    {analysis.lgpd_analysis?.issues && analysis.lgpd_analysis.issues.length > 0 && (
                       <div className="bg-red-50 border border-red-200 rounded p-3">
                         <span className="text-sm font-semibold text-red-800 flex items-center gap-2">
                           <AlertCircle className="w-4 h-4" />
@@ -315,25 +315,25 @@ Seja rigoroso e específico. Cite artigos de lei quando relevante.`,
                   <CardContent className="pt-4">
                     <div className="flex items-center justify-between mb-4">
                       <span className="text-sm text-gray-600">Pontuação ISO 9001</span>
-                      <span className="text-2xl font-bold text-green-600">{analysis.iso9001_analysis.score}/100</span>
+                      <span className="text-2xl font-bold text-green-600">{analysis.iso9001_analysis?.score || 0}/100</span>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="flex items-center gap-2 p-2 bg-gray-50 rounded">
-                        {analysis.iso9001_analysis.version_control ? 
+                        {analysis.iso9001_analysis?.version_control ? 
                           <CheckCircle className="w-5 h-5 text-green-600" /> : 
                           <XCircle className="w-5 h-5 text-red-600" />
                         }
                         <span className="text-sm">Controle de Versão</span>
                       </div>
                       <div className="flex items-center gap-2 p-2 bg-gray-50 rounded">
-                        {analysis.iso9001_analysis.approval_process ? 
+                        {analysis.iso9001_analysis?.approval_process ? 
                           <CheckCircle className="w-5 h-5 text-green-600" /> : 
                           <XCircle className="w-5 h-5 text-red-600" />
                         }
                         <span className="text-sm">Processo de Aprovação</span>
                       </div>
                     </div>
-                    {analysis.iso9001_analysis.issues && analysis.iso9001_analysis.issues.length > 0 && (
+                    {analysis.iso9001_analysis?.issues && analysis.iso9001_analysis.issues.length > 0 && (
                       <div className="bg-yellow-50 border border-yellow-200 rounded p-3 mt-3">
                         <span className="text-sm font-semibold text-yellow-800">Melhorias Necessárias:</span>
                         <ul className="mt-2 space-y-1">
