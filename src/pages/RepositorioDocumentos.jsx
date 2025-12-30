@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Loader2, Upload, FileText, Trash2, Download, Filter, Plus, Search, ShieldCheck, Globe, Building } from "lucide-react";
+import { Loader2, Upload, FileText, Trash2, Download, Filter, Plus, Search, ShieldCheck, Globe, Building, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
