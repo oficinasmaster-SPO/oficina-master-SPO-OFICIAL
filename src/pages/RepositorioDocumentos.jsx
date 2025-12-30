@@ -20,7 +20,7 @@ import AdminViewBanner from "../components/shared/AdminViewBanner";
 
 export default function RepositorioDocumentos() {
   const queryClient = useQueryClient();
-  const [showUploadModal, setShowActionModal] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedDocForAnalysis, setSelectedDocForAnalysis] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [filterParams, setFilterParams] = useState({ search: "", category: "all", type: "all" });
@@ -177,7 +177,7 @@ export default function RepositorioDocumentos() {
             <h1 className="text-3xl font-bold text-gray-900">Repositório de Documentos</h1>
             <p className="text-gray-600">Centralize e organize todos os documentos da sua empresa</p>
           </div>
-          <Button onClick={() => setShowActionModal(true)} className="bg-blue-600 hover:bg-blue-700">
+          <Button onClick={() => setShowUploadModal(true)} className="bg-blue-600 hover:bg-blue-700">
             <Plus className="w-5 h-5 mr-2" />
             Novo Documento
           </Button>
@@ -293,7 +293,7 @@ export default function RepositorioDocumentos() {
         )}
 
         {/* Upload Modal */}
-        <Dialog open={showUploadModal} onOpenChange={setShowActionModal}>
+        <Dialog open={showUploadModal} onOpenChange={setShowUploadModal}>
           <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>Novo Documento</DialogTitle>
@@ -374,7 +374,7 @@ export default function RepositorioDocumentos() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setShowActionModal(false)}>Cancelar</Button>
+              <Button variant="outline" onClick={() => setShowUploadModal(false)}>Cancelar</Button>
               <Button onClick={() => createMutation.mutate()} disabled={uploading}>
                 {uploading ? (
                   <>

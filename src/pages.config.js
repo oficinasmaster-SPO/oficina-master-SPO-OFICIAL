@@ -55,6 +55,7 @@ import DiagnosticoEndividamento from './pages/DiagnosticoEndividamento';
 import DiagnosticoGerencial from './pages/DiagnosticoGerencial';
 import DiagnosticoMaturidade from './pages/DiagnosticoMaturidade';
 import DiagnosticoOS from './pages/DiagnosticoOS';
+import DiagnosticoPlano from './pages/DiagnosticoPlano';
 import DiagnosticoProducao from './pages/DiagnosticoProducao';
 import DicasOperacao from './pages/DicasOperacao';
 import DocumentacaoCompleta from './pages/DocumentacaoCompleta';
@@ -133,7 +134,6 @@ import TreinamentoVendas from './pages/TreinamentoVendas';
 import Usuarios from './pages/Usuarios';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
-import DiagnosticoPlano from './pages/DiagnosticoPlano';
 import __Layout from './Layout.jsx';
 
 
@@ -195,6 +195,7 @@ export const PAGES = {
     "DiagnosticoGerencial": DiagnosticoGerencial,
     "DiagnosticoMaturidade": DiagnosticoMaturidade,
     "DiagnosticoOS": DiagnosticoOS,
+    "DiagnosticoPlano": DiagnosticoPlano,
     "DiagnosticoProducao": DiagnosticoProducao,
     "DicasOperacao": DicasOperacao,
     "DocumentacaoCompleta": DocumentacaoCompleta,
@@ -273,7 +274,6 @@ export const PAGES = {
     "Usuarios": Usuarios,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
-    "DiagnosticoPlano": DiagnosticoPlano,
 }
 
 export const pagesConfig = {
