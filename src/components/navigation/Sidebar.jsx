@@ -53,7 +53,8 @@ import {
   MessageCircle,
   Truck,
   Mail,
-  Activity
+  Activity,
+  Bug
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
