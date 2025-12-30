@@ -3,6 +3,10 @@ import "jspdf-autotable";
 import { base44 } from "@/api/base44Client";
 
 export async function generateStructuredReportPDF(formData, workshop) {
+  console.log("📄 [PDF] Iniciando geração do PDF");
+  console.log("📄 [PDF] FormData recebido:", formData);
+  console.log("📄 [PDF] Workshop recebido:", workshop);
+  
   const doc = new jsPDF();
   let yPos = 20;
 
@@ -286,18 +290,31 @@ export async function generateStructuredReportPDF(formData, workshop) {
 
   // Convert to Blob and upload
   try {
+    console.log("📄 [PDF] Gerando blob do documento...");
     const pdfBlob = doc.output('blob');
-    const pdfFile = new File([pdfBlob], `relatorio_implementacao_${Date.now()}.pdf`, { type: 'application/pdf' });
+    console.log("📄 [PDF] Blob gerado:", pdfBlob.size, "bytes");
     
-    const { file_url } = await base44.integrations.Core.UploadFile({ file: pdfFile });
+    const fileName = `relatorio_implementacao_${Date.now()}.pdf`;
+    console.log("📄 [PDF] Nome do arquivo:", fileName);
     
-    if (!file_url) {
-      throw new Error("URL do arquivo não retornada");
+    const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
+    console.log("📄 [PDF] File criado:", pdfFile);
+    
+    console.log("📄 [PDF] Fazendo upload...");
+    const uploadResult = await base44.integrations.Core.UploadFile({ file: pdfFile });
+    console.log("📄 [PDF] Upload completo:", uploadResult);
+    
+    if (!uploadResult || !uploadResult.file_url) {
+      console.error("📄 [PDF] ❌ Upload result inválido:", uploadResult);
+      throw new Error("URL do arquivo não retornada pelo servidor");
     }
     
-    return { file_url };
+    console.log("📄 [PDF] ✅ PDF gerado e enviado com sucesso:", uploadResult.file_url);
+    return { file_url: uploadResult.file_url };
+    
   } catch (error) {
-    console.error("Erro ao fazer upload do PDF:", error);
+    console.error("📄 [PDF] ❌ ERRO ao fazer upload:", error);
+    console.error("📄 [PDF] Stack:", error.stack);
     throw new Error("Falha ao fazer upload do PDF: " + error.message);
   }
 }

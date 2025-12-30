@@ -602,18 +602,36 @@ export default function StructuredReportForm({ open, onClose, onSave, workshop }
         <div className="flex justify-between mt-6">
           <Button
             variant="outline"
-            onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
+            onClick={() => {
+              console.log("⬅️ Botão Anterior clicado");
+              setCurrentStep(Math.max(1, currentStep - 1));
+            }}
             disabled={currentStep === 1}
           >
             Anterior
           </Button>
           
           {currentStep < totalSteps ? (
-            <Button onClick={() => setCurrentStep(Math.min(totalSteps, currentStep + 1))}>
+            <Button onClick={() => {
+              console.log("➡️ Botão Próximo clicado");
+              setCurrentStep(Math.min(totalSteps, currentStep + 1));
+            }}>
               Próximo
             </Button>
           ) : (
-            <Button onClick={handleGeneratePDF} disabled={loading} className="bg-blue-600 hover:bg-blue-700">
+            <Button 
+              onClick={(e) => {
+                console.log("🔘 Botão Gerar Relatório CLICADO!");
+                console.log("🔘 Event:", e);
+                console.log("🔘 Loading atual:", loading);
+                e.preventDefault();
+                e.stopPropagation();
+                handleGeneratePDF();
+              }} 
+              disabled={loading} 
+              className="bg-blue-600 hover:bg-blue-700"
+              type="button"
+            >
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
