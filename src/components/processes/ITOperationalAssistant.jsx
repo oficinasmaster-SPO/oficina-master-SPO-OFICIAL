@@ -107,9 +107,9 @@ Retorne um JSON estruturado:
           properties: {
             action_required: { type: "boolean" },
             action_type: { type: "string", enum: ["create_it", "update_it", "validated"] },
-            target_it_code: { type: "string" },
-            current_version: { type: "string" },
-            proposed_version: { type: "string" },
+            target_it_code: { type: ["string", "null"] },
+            current_version: { type: ["string", "null"] },
+            proposed_version: { type: ["string", "null"] },
             change_reason: { type: "string" },
             change_summary: { type: "string" },
             operational_impact: { type: "string" },
@@ -120,11 +120,13 @@ Retorne um JSON estruturado:
             suggested_steps: { type: "array", items: { type: "string" } },
             common_errors: { type: "array", items: { type: "string" } },
             controlled_risks: { type: "array", items: { type: "string" } },
-            validation_justification: { type: "string" }
-          }
+            validation_justification: { type: ["string", "null"] }
+          },
+          required: ["action_required", "action_type", "change_reason", "suggested_title", "suggested_objective", "suggested_steps", "common_errors", "urgency"]
         }
       });
 
+      console.log("IA Response:", response);
       setSuggestions(response);
       toast.success("Análise concluída!");
     } catch (error) {
@@ -136,7 +138,10 @@ Retorne um JSON estruturado:
   };
 
   const applyRecommendation = () => {
-    if (!suggestions || !suggestions.action_required) return;
+    if (!suggestions || !suggestions.action_required) {
+      console.error("No suggestions or action not required", suggestions);
+      return;
+    }
 
     const targetIT = suggestions.target_it_code 
       ? existingITs.find(it => it.code === suggestions.target_it_code)
@@ -144,34 +149,44 @@ Retorne um JSON estruturado:
 
     const newITData = {
       type: "IT",
-      title: suggestions.suggested_title,
-      description: suggestions.change_summary,
+      title: suggestions.suggested_title || "IT Gerada pela IA",
+      description: suggestions.change_summary || suggestions.change_reason,
       content: {
-        objetivo: suggestions.suggested_objective,
+        objetivo: suggestions.suggested_objective || "",
         campo_aplicacao: "Processo operacional identificado pela análise da IA",
-        fluxo_descricao: suggestions.suggested_steps?.join("\n\n") || "",
-        atividades: suggestions.suggested_steps?.map((step, idx) => ({
+        fluxo_descricao: Array.isArray(suggestions.suggested_steps) ? suggestions.suggested_steps.join("\n\n") : "",
+        atividades: Array.isArray(suggestions.suggested_steps) ? suggestions.suggested_steps.map((step, idx) => ({
           atividade: step,
           responsavel: "A definir",
-          ferramentas: "A definir"
-        })) || [],
-        matriz_riscos: suggestions.common_errors?.map((error) => ({
-          identificacao: error,
-          fonte: "Análise IA",
-          impacto: suggestions.urgency === "alta" ? "Alto" : suggestions.urgency === "média" ? "Médio" : "Baixo",
+          frequencia: "A definir",
+          observacao: ""
+        })) : [],
+        matriz_riscos: Array.isArray(suggestions.common_errors) ? suggestions.common_errors.map((error) => ({
+          risco: error,
           categoria: suggestions.urgency === "alta" ? "Alto" : suggestions.urgency === "média" ? "Médio" : "Baixo",
+          causa: "Identificado pela análise operacional",
+          impacto: suggestions.urgency === "alta" ? "Alto" : suggestions.urgency === "média" ? "Médio" : "Baixo",
           controle: "A definir durante implementação"
-        })) || [],
+        })) : [],
+        inter_relacoes: [],
         indicadores: [{
-          indicador: suggestions.affected_indicator || "Qualidade do processo",
+          nome: suggestions.affected_indicator || "Qualidade do processo",
+          formula: "A definir",
           meta: "A definir",
-          como_medir: "A definir"
-        }]
+          frequencia: "Mensal"
+        }],
+        evidencia_execucao: {
+          tipo_evidencia: "Registro manual",
+          descricao: "A definir durante implementação",
+          periodo_retencao: "12_meses"
+        }
       },
       reason: suggestions.change_reason,
       origin: "melhoria_continua",
       expected_impact: suggestions.operational_impact
     };
+
+    console.log("Applying IT data:", newITData);
 
     if (suggestions.action_type === "update_it" && targetIT) {
       onCreateIT({
@@ -184,6 +199,7 @@ Retorne um JSON estruturado:
       onCreateIT(newITData);
     }
 
+    toast.success("IT criada! Revise e ajuste os campos antes de salvar.");
     onClose();
     setSuggestions(null);
     setContext("");
