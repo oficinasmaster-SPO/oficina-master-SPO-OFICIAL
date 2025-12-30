@@ -6,7 +6,7 @@ import { createPageUrl } from "@/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Filter, TrendingUp, Users, BarChart3, User, Calculator, Activity, Brain, DollarSign, FileText } from "lucide-react";
+import { Filter, TrendingUp, Users, BarChart3, User, Calculator, Activity, Brain, DollarSign, FileText, LayoutGrid } from "lucide-react";
 import { assessmentCriteria } from "../components/assessment/AssessmentCriteria";
 import StatsCards from "@/components/historico/StatsCards";
 import ViewToggle from "@/components/historico/ViewToggle";
