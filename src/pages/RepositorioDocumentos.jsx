@@ -10,11 +10,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Loader2, Upload, FileText, Trash2, Download, Filter, Plus, Search, ShieldCheck, Globe, Building, AlertTriangle } from "lucide-react";
+import { Loader2, Upload, FileText, Trash2, Download, Plus, Search, ShieldCheck, Globe, Building, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import AdvancedFilter from "@/components/shared/AdvancedFilter";
+
 import AIDocumentAnalyzer from "@/components/documents/AIDocumentAnalyzer";
 import AdminViewBanner from "../components/shared/AdminViewBanner";
 import DocumentViewer from "@/components/documents/DocumentViewer";
@@ -40,7 +40,7 @@ export default function RepositorioDocumentos() {
   const [selectedDocForShare, setSelectedDocForShare] = useState(null);
   const [selectedDocForReport, setSelectedDocForReport] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const [filterParams, setFilterParams] = useState({ search: "", category: "", type: "" });
+  const [searchTerm, setSearchTerm] = useState("");
   const [isAdminView, setIsAdminView] = useState(false);
   
   const [newDoc, setNewDoc] = useState({
@@ -139,15 +139,15 @@ export default function RepositorioDocumentos() {
     enabled: !!workshop
   });
 
-  const filteredDocuments = documents.filter(doc => {
-    const matchesSearch = !filterParams.search || doc.title.toLowerCase().includes(filterParams.search.toLowerCase());
-    const matchesCategory = !filterParams.category || filterParams.category === 'all' || doc.category === filterParams.category;
-    const matchesType = !filterParams.type || filterParams.type === 'all' || doc.type === filterParams.type;
+  const filteredDocuments = React.useMemo(() => {
+    if (!searchTerm) return documents;
     
-    return matchesSearch && matchesCategory && matchesType;
-  });
+    return documents.filter(doc => 
+      doc.title.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [documents, searchTerm]);
   
-  console.log(`📊 [FILTER] Total: ${documents.length} | Filtrados: ${filteredDocuments.length}`);
+  console.log(`📊 Total: ${documents.length} | Exibindo: ${filteredDocuments.length}`);
 
   // Verificar documentos vencidos
   const getExpiryStatus = (expiryDate) => {
@@ -295,22 +295,7 @@ export default function RepositorioDocumentos() {
     { value: "externo", label: "Externo", icon: Globe }
   ];
 
-  const filterConfig = [
-    {
-      key: "category",
-      label: "Categoria",
-      type: "select",
-      defaultValue: "all",
-      options: [{ value: "all", label: "Todas" }, ...categories]
-    },
-    {
-      key: "type",
-      label: "Tipo",
-      type: "select",
-      defaultValue: "all",
-      options: [{ value: "all", label: "Todos" }, ...docTypes.map(d => ({ value: d.value, label: d.label }))]
-    }
-  ];
+
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-screen"><Loader2 className="w-10 h-10 animate-spin text-blue-600" /></div>;
@@ -344,11 +329,17 @@ export default function RepositorioDocumentos() {
 
         <DocumentsDashboard documents={documents} />
 
-        <AdvancedFilter 
-          onFilter={setFilterParams}
-          filterConfig={filterConfig}
-          placeholder="Buscar documentos..."
-        />
+        <div className="mb-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Input
+              placeholder="Buscar documentos..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 bg-white"
+            />
+          </div>
+        </div>
 
         <Card className="shadow-md overflow-hidden border-t-4 border-t-blue-500">
           <div className="overflow-x-auto">
