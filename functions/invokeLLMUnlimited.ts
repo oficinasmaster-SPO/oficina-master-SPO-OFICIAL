@@ -1,5 +1,4 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import OpenAI from 'npm:openai@4.72.0';
 
 Deno.serve(async (req) => {
   try {
@@ -31,44 +30,15 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Prompt is required' }, { status: 400 });
     }
 
-    console.log("🤖 Chamando OpenAI diretamente (ilimitado)...");
-    
-    // Initialize OpenAI client inside handler
-    const openai = new OpenAI({
-      apiKey: Deno.env.get("OPENAI_API_KEY"),
+    console.log("🤖 Chamando integração Base44 InvokeLLM (ilimitado via service role)...");
+
+    // Usar a integração Base44 com service role para não contar créditos do usuário
+    const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
+      prompt,
+      response_json_schema: response_json_schema || undefined
     });
 
-    // Chamar OpenAI diretamente
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: "Você é um assistente especializado em processos operacionais e gestão de oficinas automotivas. Seja objetivo, claro e operacional."
-        },
-        {
-          role: "user",
-          content: prompt
-        }
-      ],
-      temperature: 0.7,
-      ...(response_json_schema && { 
-        response_format: { type: "json_object" }
-      })
-    });
-
-    const result = completion.choices[0].message.content;
-
-    console.log("✅ OpenAI respondeu com sucesso");
-
-    // Se esperava JSON, parsear
-    if (response_json_schema) {
-      try {
-        return Response.json({ success: true, result: JSON.parse(result) }, { status: 200 });
-      } catch (e) {
-        return Response.json({ success: true, result }, { status: 200 });
-      }
-    }
+    console.log("✅ LLM respondeu com sucesso");
 
     return Response.json({ success: true, result }, { status: 200 });
 
