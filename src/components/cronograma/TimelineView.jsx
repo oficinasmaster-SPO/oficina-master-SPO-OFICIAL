@@ -39,7 +39,7 @@ export default function TimelineView({ activities, onStatusChange, onViewDetails
     );
   };
 
-  const renderSection = (title, items, colorClass, icon: Icon) => {
+  const renderSection = (title, items, colorClass, icon) => {
     if (items.length === 0) return null;
     
     return (
