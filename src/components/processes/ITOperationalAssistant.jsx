@@ -160,7 +160,15 @@ Para PROCESSO OK:
     } catch (error) {
       console.error("❌ Erro ao analisar:", error);
       console.error("Stack trace:", error.stack);
-      toast.error(`Erro: ${error.message || "Erro ao processar análise operacional"}`);
+      
+      // Tratamento específico para erro 402 (limite atingido)
+      if (error.message && (error.message.includes('limit') || error.message.includes('upgrade') || error.message.includes('402'))) {
+        toast.error("⚠️ Limite de integrações atingido este mês. Atualize seu plano para continuar usando a IA.", {
+          duration: 7000
+        });
+      } else {
+        toast.error(`Erro: ${error.message || "Erro ao processar análise operacional"}`);
+      }
     } finally {
       setLoading(false);
     }
