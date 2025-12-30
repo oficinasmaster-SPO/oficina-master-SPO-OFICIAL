@@ -105,12 +105,25 @@ export default function RepositorioDocumentos() {
     return matchesSearch && matchesCategory && matchesType;
   });
 
+  // Verificar documentos vencidos
+  const getExpiryStatus = (expiryDate) => {
+    if (!expiryDate) return null;
+    const now = new Date();
+    const expiry = new Date(expiryDate);
+    const daysUntilExpiry = Math.floor((expiry - now) / (1000 * 60 * 60 * 24));
+    
+    if (daysUntilExpiry < 0) return { status: 'expired', label: 'Vencido', color: 'bg-red-100 text-red-800 border-red-300' };
+    if (daysUntilExpiry <= 7) return { status: 'critical', label: `Vence em ${daysUntilExpiry}d`, color: 'bg-orange-100 text-orange-800 border-orange-300' };
+    if (daysUntilExpiry <= 30) return { status: 'warning', label: `Vence em ${daysUntilExpiry}d`, color: 'bg-yellow-100 text-yellow-800 border-yellow-300' };
+    return null;
+  };
+
   // Create Document
   const createMutation = useMutation({
     mutationFn: async () => {
-      console.log("📄 Iniciando salvamento do documento...");
-      console.log("📄 Workshop ID:", workshop?.id);
-      console.log("📄 newDoc:", newDoc);
+      console.log("📄 Salvando documento...");
+      console.log("📄 Workshop:", workshop?.id, workshop?.name);
+      console.log("📄 User:", user?.email);
       
       if (!workshop?.id) {
         throw new Error("Workshop não identificado");
@@ -141,8 +154,8 @@ export default function RepositorioDocumentos() {
         console.log("📄 Dados do documento:", docData);
         
         const created = await base44.entities.CompanyDocument.create(docData);
-        console.log("✅ Documento criado:", created);
-        
+        console.log("✅ Salvo - ID:", created.id, "Workshop:", created.workshop_id);
+
         return created;
       } catch (error) {
         console.error("❌ Erro ao salvar documento:", error);
@@ -305,18 +318,28 @@ export default function RepositorioDocumentos() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredDocuments.map((doc) => (
-                    <TableRow key={doc.id} className="hover:bg-slate-50">
+                  filteredDocuments.map((doc) => {
+                    const expiryStatus = getExpiryStatus(doc.expiry_date);
+                    return (
+                    <TableRow key={doc.id} className={`hover:bg-slate-50 ${expiryStatus?.status === 'expired' ? 'bg-red-50' : ''}`}>
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
                             <FileText className="w-5 h-5" />
                           </div>
                           <div className="flex-1">
-                            <p className="font-medium text-gray-900">{doc.title}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium text-gray-900">{doc.title}</p>
+                              {expiryStatus && (
+                                <Badge className={`${expiryStatus.color} border`}>
+                                  <AlertTriangle className="w-3 h-3 mr-1" />
+                                  {expiryStatus.label}
+                                </Badge>
+                              )}
+                            </div>
                             {doc.expiry_date && (
                               <p className="text-xs text-gray-500">
-                                Vence: {format(new Date(doc.expiry_date), "dd/MM/yyyy")}
+                                Validade: {format(new Date(doc.expiry_date), "dd/MM/yyyy")}
                               </p>
                             )}
                             <TagsManager 
@@ -443,9 +466,10 @@ export default function RepositorioDocumentos() {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
+                    );
+                    })
+                    )}
+                    </TableBody>
             </Table>
           </div>
         </Card>
