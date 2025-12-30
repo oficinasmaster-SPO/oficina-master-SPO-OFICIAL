@@ -43,7 +43,7 @@ export default function ITOperationalAssistant({ open, onClose, mapData, existin
       // Modo Livre - sem JSON schema
       if (mode === "free") {
         const freePrompt = `
-VOCÊ É A IA OPERACIONAL DO BASE44 - MODO CONSULTIVO LIVRE.
+VOCÊ É A IA OPERACIONAL DO BASE44 - MODO CONSULTIVO PROATIVO.
 
 CONTEXTO DO PROCESSO (MAP - REFERÊNCIA):
 Título: ${mapData?.title || "Não informado"}
@@ -56,14 +56,39 @@ ${existingITs.map(it => `- ${it.code}: ${it.title} (v${it.version})`).join("\n")
 SITUAÇÃO OPERACIONAL RELATADA:
 ${context}
 
-INSTRUÇÃO:
-Analise livremente a situação operacional descrita.
-- Se houver necessidade de criar/atualizar IT, explique o porquê e sugira os elementos principais
-- Se o processo estiver adequado, justifique tecnicamente
-- Seja prático, objetivo e operacional
-- Use formatação Markdown para organizar a resposta
+INSTRUÇÃO - SEJA PROATIVO E ACIONÁVEL:
+Analise a situação operacional e forneça uma resposta estruturada com **sugestões práticas e acionáveis**.
 
-Responda de forma estruturada mas livre, sem JSON.`;
+**Formato da resposta:**
+
+## 🔍 Análise da Situação
+[Diagnóstico claro do problema/contexto operacional]
+
+## 💡 Recomendações Proativas
+
+### 1️⃣ [NOME DA AÇÃO SUGERIDA]
+**Tipo:** [Criar nova IT | Atualizar IT existente | Adicionar indicador | Implementar controle | Outro]
+**Justificativa:** [Por que essa ação é necessária]
+**Objetivo:** [O que será alcançado]
+**Elementos principais:** [Passos, responsáveis, ou componentes chave]
+**Prioridade:** [Alta | Média | Baixa]
+
+### 2️⃣ [PRÓXIMA AÇÃO, SE HOUVER]
+...
+
+## ⚠️ Riscos Identificados
+[Listar riscos operacionais detectados na situação]
+
+## 📊 Indicadores Sugeridos
+[Sugerir métricas para monitorar o processo]
+
+## ✅ Próximos Passos Imediatos
+1. [Ação específica 1]
+2. [Ação específica 2]
+3. [Ação específica 3]
+
+**SEJA ESPECÍFICO E ACIONÁVEL** - Ao invés de "considere melhorar", diga "Crie uma IT chamada 'Processo X' com objetivo Y contendo os passos A, B, C".
+Use formatação Markdown clara. Seja consultivo, mas prático e direto.`;
 
         const { result } = await base44.functions.invoke('invokeLLMUnlimited', { prompt: freePrompt });
         setFreeResponse(result);
