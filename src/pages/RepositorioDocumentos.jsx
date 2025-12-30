@@ -23,6 +23,10 @@ import DocumentsDashboard from "@/components/documents/DocumentsDashboard";
 import DigitalSignature from "@/components/documents/DigitalSignature";
 import OCRExtractor from "@/components/documents/OCRExtractor";
 import ComplianceAnalyzer from "@/components/documents/ComplianceAnalyzer";
+import TagsManager from "@/components/documents/TagsManager";
+import VersionHistory from "@/components/documents/VersionHistory";
+import ShareDocumentDialog from "@/components/documents/ShareDocumentDialog";
+import AccessReport from "@/components/documents/AccessReport";
 
 export default function RepositorioDocumentos() {
   const queryClient = useQueryClient();
@@ -32,6 +36,9 @@ export default function RepositorioDocumentos() {
   const [selectedDocForSignature, setSelectedDocForSignature] = useState(null);
   const [selectedDocForOCR, setSelectedDocForOCR] = useState(null);
   const [selectedDocForCompliance, setSelectedDocForCompliance] = useState(null);
+  const [selectedDocForVersions, setSelectedDocForVersions] = useState(null);
+  const [selectedDocForShare, setSelectedDocForShare] = useState(null);
+  const [selectedDocForReport, setSelectedDocForReport] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [filterParams, setFilterParams] = useState({ search: "", category: "all", type: "all" });
   const [isAdminView, setIsAdminView] = useState(false);
@@ -77,6 +84,16 @@ export default function RepositorioDocumentos() {
     queryFn: async () => {
       if (!workshop) return [];
       return await base44.entities.CompanyDocument.filter({ workshop_id: workshop.id }, '-created_date');
+    },
+    enabled: !!workshop
+  });
+
+  // Fetch Download Logs
+  const { data: downloadLogs = [] } = useQuery({
+    queryKey: ['download-logs', workshop?.id],
+    queryFn: async () => {
+      if (!workshop) return [];
+      return await base44.entities.DownloadLog.filter({ workshop_id: workshop.id });
     },
     enabled: !!workshop
   });
@@ -183,17 +200,24 @@ export default function RepositorioDocumentos() {
 
   const handleSign = async (signatureDataUrl) => {
     try {
-      // Aqui você pode salvar a assinatura no documento
-      // Por exemplo, atualizando o campo digital_signature_url
       await base44.entities.CompanyDocument.update(selectedDocForSignature.id, {
         digital_signature_url: signatureDataUrl,
         signed_at: new Date().toISOString(),
         signed_by: user.id
       });
-      
       queryClient.invalidateQueries(['company-documents']);
     } catch (error) {
       throw error;
+    }
+  };
+
+  const handleUpdateTags = async (docId, tags) => {
+    try {
+      await base44.entities.CompanyDocument.update(docId, { tags });
+      queryClient.invalidateQueries(['company-documents']);
+      toast.success("Tags atualizadas");
+    } catch (error) {
+      toast.error("Erro ao atualizar tags");
     }
   };
 
@@ -288,13 +312,17 @@ export default function RepositorioDocumentos() {
                           <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
                             <FileText className="w-5 h-5" />
                           </div>
-                          <div>
+                          <div className="flex-1">
                             <p className="font-medium text-gray-900">{doc.title}</p>
                             {doc.expiry_date && (
                               <p className="text-xs text-gray-500">
                                 Vence: {format(new Date(doc.expiry_date), "dd/MM/yyyy")}
                               </p>
                             )}
+                            <TagsManager 
+                              document={doc}
+                              onUpdate={(tags) => handleUpdateTags(doc.id, tags)}
+                            />
                           </div>
                         </div>
                       </TableCell>
@@ -385,6 +413,33 @@ export default function RepositorioDocumentos() {
                           >
                             Conf
                           </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-8 px-2 text-gray-600 hover:bg-gray-50"
+                            onClick={() => setSelectedDocForVersions(doc)}
+                            title="Versões"
+                          >
+                            Ver
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-8 px-2 text-teal-600 hover:bg-teal-50"
+                            onClick={() => setSelectedDocForShare(doc)}
+                            title="Compartilhar"
+                          >
+                            Share
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-8 px-2 text-amber-600 hover:bg-amber-50"
+                            onClick={() => setSelectedDocForReport(doc)}
+                            title="Relatório"
+                          >
+                            Log
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -422,6 +477,23 @@ export default function RepositorioDocumentos() {
         <ComplianceAnalyzer
           document={selectedDocForCompliance}
           onClose={() => setSelectedDocForCompliance(null)}
+        />
+
+        <VersionHistory
+          document={selectedDocForVersions}
+          versions={documents.filter(d => d.previous_version_id === selectedDocForVersions?.id)}
+          onClose={() => setSelectedDocForVersions(null)}
+        />
+
+        <ShareDocumentDialog
+          document={selectedDocForShare}
+          onClose={() => setSelectedDocForShare(null)}
+        />
+
+        <AccessReport
+          document={selectedDocForReport}
+          logs={downloadLogs.filter(l => l.document_id === selectedDocForReport?.id)}
+          onClose={() => setSelectedDocForReport(null)}
         />
 
         {/* Upload Modal */}
