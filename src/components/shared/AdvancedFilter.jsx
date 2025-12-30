@@ -29,6 +29,8 @@ export default function AdvancedFilter({ onFilter, filterConfig = [], placeholde
       if (conf.defaultValue) initialFilters[conf.key] = conf.defaultValue;
     });
     setFilters(initialFilters);
+    // Notificar imediatamente com filtros padrão
+    handleApplyFilters(initialFilters);
   }, []);
 
   const handleApplyFilters = (currentFilters = filters) => {
