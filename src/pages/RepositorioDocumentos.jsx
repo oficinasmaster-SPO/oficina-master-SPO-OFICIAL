@@ -82,10 +82,25 @@ export default function RepositorioDocumentos() {
   const { data: documents = [], isLoading } = useQuery({
     queryKey: ['company-documents', workshop?.id],
     queryFn: async () => {
-      if (!workshop) return [];
-      return await base44.entities.CompanyDocument.filter({ workshop_id: workshop.id }, '-created_date');
+      if (!workshop) {
+        console.log("❌ Workshop não encontrado - não pode buscar documentos");
+        return [];
+      }
+      
+      console.log("🔍 Buscando documentos para workshop:", workshop.id, workshop.name);
+      const docs = await base44.entities.CompanyDocument.filter({ workshop_id: workshop.id }, '-created_date');
+      console.log(`✅ Encontrados ${docs.length} documentos`);
+      
+      // Debug: mostrar IDs dos documentos
+      if (docs.length > 0) {
+        console.log("📄 Documentos:", docs.map(d => ({ id: d.id, title: d.title, workshop_id: d.workshop_id })));
+      }
+      
+      return docs;
     },
-    enabled: !!workshop
+    enabled: !!workshop,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false
   });
 
   // Fetch Download Logs
@@ -104,6 +119,8 @@ export default function RepositorioDocumentos() {
     const matchesType = filterParams.type === 'all' || doc.type === filterParams.type;
     return matchesSearch && matchesCategory && matchesType;
   });
+  
+  console.log(`📊 Total: ${documents.length} | Filtrados: ${filteredDocuments.length}`);
 
   // Verificar documentos vencidos
   const getExpiryStatus = (expiryDate) => {
@@ -280,7 +297,14 @@ export default function RepositorioDocumentos() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Repositório de Documentos</h1>
-            <p className="text-gray-600">Centralize e organize todos os documentos da sua empresa</p>
+            <p className="text-gray-600">
+              Centralize e organize todos os documentos da sua empresa
+              {documents.length > 0 && (
+                <Badge variant="secondary" className="ml-2">
+                  {documents.length} {documents.length === 1 ? 'documento' : 'documentos'}
+                </Badge>
+              )}
+            </p>
           </div>
           <Button onClick={() => setShowUploadModal(true)} className="bg-blue-600 hover:bg-blue-700">
             <Plus className="w-5 h-5 mr-2" />
