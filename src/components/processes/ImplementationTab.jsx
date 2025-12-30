@@ -268,7 +268,12 @@ export default function ImplementationTab({ processId, workshopId }) {
                     </p>
                   </div>
                   <div className="flex gap-2">
-                    {evidence.file_url && !evidence.file_url.includes('pending_upload') && (
+                    {evidence.type === 'relatorio_implementacao' ? (
+                      <Button size="sm" variant="ghost" onClick={() => setViewingReport(evidence)}>
+                        <Eye className="w-4 h-4 mr-1" />
+                        Visualizar
+                      </Button>
+                    ) : evidence.file_url && !evidence.file_url.includes('pending_upload') && (
                       <Button size="sm" variant="ghost" onClick={() => window.open(evidence.file_url, '_blank')}>
                         Ver
                       </Button>
