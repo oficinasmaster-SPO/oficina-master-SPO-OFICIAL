@@ -29,7 +29,12 @@ export default function ITOperationalAssistant({ open, onClose, mapData, existin
     }
 
     setLoading(true);
+    setSuggestions(null);
+    
     try {
+      console.log("🔍 Iniciando análise operacional...");
+      console.log("📝 Contexto:", context);
+      
       const prompt = `
 VOCÊ É A IA OPERACIONAL DO BASE44.
 
@@ -126,12 +131,20 @@ Retorne um JSON estruturado:
         }
       });
 
-      console.log("IA Response:", response);
+      console.log("✅ IA Response:", response);
+      
+      if (!response || typeof response !== 'object') {
+        console.error("❌ Resposta inválida da IA:", response);
+        toast.error("Resposta inválida da IA");
+        return;
+      }
+
       setSuggestions(response);
       toast.success("Análise concluída!");
     } catch (error) {
-      console.error("Erro ao analisar:", error);
-      toast.error("Erro ao processar análise operacional");
+      console.error("❌ Erro ao analisar:", error);
+      console.error("Stack trace:", error.stack);
+      toast.error(`Erro: ${error.message || "Erro ao processar análise operacional"}`);
     } finally {
       setLoading(false);
     }
