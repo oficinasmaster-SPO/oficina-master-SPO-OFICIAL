@@ -33,11 +33,22 @@ export default function DiagnosticoPlano() {
         setTestResult({ success: true, data: result });
       } catch (integrationError) {
         // Captura os detalhes do erro
+        const errorDetails = integrationError.response?.data || integrationError;
         setTestResult({
           success: false,
           error: integrationError.message,
-          details: integrationError.response?.data || integrationError
+          details: errorDetails
         });
+
+        // Extrair informações de créditos do erro
+        const extraData = errorDetails?.data?.extra_data || integrationError?.data?.extra_data;
+        if (extraData) {
+          setCreditsInfo({
+            creditsUsed: extraData.credits_this_month || 0,
+            creditsLimit: extraData.user_tier_credits || 100,
+            userTier: extraData.user_tier || 'free'
+          });
+        }
       }
 
       setDiagnosticData({
