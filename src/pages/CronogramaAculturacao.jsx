@@ -1,19 +1,24 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Calendar, CheckCircle2, Clock, AlertCircle, Plus } from "lucide-react";
+import { Loader2, Calendar, CheckCircle2, Clock, AlertCircle, Plus, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { format, subDays, isWithinInterval, isPast, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+
+import TimelineView from "@/components/cronograma/TimelineView";
+import CompletionModal from "@/components/cronograma/CompletionModal";
+import ActivityFilters from "@/components/cronograma/ActivityFilters";
+import ActivityDetailsModal from "@/components/cronograma/ActivityDetailsModal";
 
 export default function CronogramaAculturacao() {
   const navigate = useNavigate();
@@ -27,6 +32,14 @@ export default function CronogramaAculturacao() {
     type: "ritual",
     scheduled_date: ""
   });
+  const [filters, setFilters] = useState({
+    period: 'all',
+    status: 'all',
+    type: 'all',
+    search: ''
+  });
+  const [selectedForCompletion, setSelectedForCompletion] = useState(null);
+  const [selectedForDetails, setSelectedForDetails] = useState(null);
 
   const handleCreateActivity = async () => {
     if (!newActivity.title || !newActivity.scheduled_date) {
@@ -103,28 +116,42 @@ export default function CronogramaAculturacao() {
   };
 
   const handleStatusChange = async (activityId, newStatus) => {
-    try {
-      const activity = activities.find(a => a.id === activityId);
-      
-      if (activity?.source === 'ritual') {
-        // Atualizar ScheduledRitual
-        const ritualStatus = newStatus === 'concluida' ? 'concluido' : 
-                            newStatus === 'em_andamento' ? 'realizado' : 'agendado';
-        await base44.entities.ScheduledRitual.update(activityId, { status: ritualStatus });
-      } else {
-        // Atualizar AcculturationActivity
-        const updateData = { status: newStatus };
-        if (newStatus === "concluida") {
-          updateData.completion_date = new Date().toISOString();
+    const activity = activities.find(a => a.id === activityId);
+    
+    if (newStatus === "concluida") {
+      // Abrir modal de conclusão
+      setSelectedForCompletion(activity);
+    } else {
+      // Atualização simples de status
+      try {
+        if (activity?.source === 'ritual') {
+          const ritualStatus = newStatus === 'em_andamento' ? 'realizado' : 'agendado';
+          await base44.entities.ScheduledRitual.update(activityId, { status: ritualStatus });
+        } else {
+          await base44.entities.AcculturationActivity.update(activityId, { status: newStatus });
         }
-        await base44.entities.AcculturationActivity.update(activityId, updateData);
+        toast.success("Status atualizado!");
+        loadData();
+      } catch (error) {
+        console.error("Erro ao atualizar status:", error);
+        toast.error("Erro ao atualizar status");
       }
-      
-      toast.success("Status atualizado!");
+    }
+  };
+
+  const handleCompleteActivity = async (activityId, completionData, source) => {
+    try {
+      if (source === 'ritual') {
+        await base44.entities.ScheduledRitual.update(activityId, {
+          status: 'concluido',
+          ...completionData
+        });
+      } else {
+        await base44.entities.AcculturationActivity.update(activityId, completionData);
+      }
       loadData();
     } catch (error) {
-      console.error("Erro ao atualizar status:", error);
-      toast.error("Erro ao atualizar status");
+      throw error;
     }
   };
 
@@ -158,11 +185,65 @@ export default function CronogramaAculturacao() {
     return <Badge variant="outline">{labels[type] || type}</Badge>;
   };
 
-  const groupedActivities = {
-    pendentes: activities.filter(a => a.status === "pendente"),
-    em_andamento: activities.filter(a => a.status === "em_andamento"),
-    concluidas: activities.filter(a => a.status === "concluida")
-  };
+  // Filtrar atividades
+  const filteredActivities = useMemo(() => {
+    return activities.filter(activity => {
+      // Filtro de busca
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        if (!activity.title?.toLowerCase().includes(searchLower) &&
+            !activity.description?.toLowerCase().includes(searchLower)) {
+          return false;
+        }
+      }
+
+      // Filtro de status
+      if (filters.status !== 'all' && activity.status !== filters.status) {
+        return false;
+      }
+
+      // Filtro de tipo
+      if (filters.type !== 'all' && activity.type !== filters.type) {
+        return false;
+      }
+
+      // Filtro de período
+      const activityDate = new Date(activity.scheduled_date);
+      const today = new Date();
+      
+      switch (filters.period) {
+        case 'today':
+          return isToday(activityDate);
+        case 'week':
+          return isWithinInterval(activityDate, { start: subDays(today, 7), end: today });
+        case 'month':
+          return isWithinInterval(activityDate, { start: subDays(today, 30), end: today });
+        case 'quarter':
+          return isWithinInterval(activityDate, { start: subDays(today, 90), end: today });
+        case 'overdue':
+          return isPast(activityDate) && !isToday(activityDate) && activity.status === 'pendente';
+        case 'upcoming':
+          return activityDate > today;
+        default:
+          return true;
+      }
+    });
+  }, [activities, filters]);
+
+  const stats = useMemo(() => ({
+    total: filteredActivities.length,
+    pendentes: filteredActivities.filter(a => a.status === "pendente").length,
+    em_andamento: filteredActivities.filter(a => a.status === "em_andamento").length,
+    concluidas: filteredActivities.filter(a => a.status === "concluida").length,
+    atrasadas: filteredActivities.filter(a => 
+      isPast(new Date(a.scheduled_date)) && 
+      !isToday(new Date(a.scheduled_date)) && 
+      a.status === 'pendente'
+    ).length,
+    completionRate: filteredActivities.length > 0 
+      ? Math.round((filteredActivities.filter(a => a.status === "concluida").length / filteredActivities.length) * 100)
+      : 0
+  }), [filteredActivities]);
 
   if (loading) {
     return (
@@ -245,100 +326,96 @@ export default function CronogramaAculturacao() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* Métricas */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600">Pendentes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-yellow-600">{groupedActivities.pendentes.length}</div>
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-gray-900">{stats.total}</div>
+                <p className="text-sm text-gray-600 mt-1">Total</p>
+              </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600">Em Andamento</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-blue-600">{groupedActivities.em_andamento.length}</div>
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-yellow-600">{stats.pendentes}</div>
+                <p className="text-sm text-gray-600 mt-1">Pendentes</p>
+              </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600">Concluídas</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-green-600">{groupedActivities.concluidas.length}</div>
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-blue-600">{stats.em_andamento}</div>
+                <p className="text-sm text-gray-600 mt-1">Em Andamento</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-green-600">{stats.concluidas}</div>
+                <p className="text-sm text-gray-600 mt-1">Concluídas</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-indigo-600" />
+                  <span className="text-3xl font-bold text-indigo-600">{stats.completionRate}%</span>
+                </div>
+                <p className="text-sm text-gray-600 mt-1">Taxa Conclusão</p>
+              </div>
             </CardContent>
           </Card>
         </div>
 
-        <div className="space-y-4">
+        {/* Filtros */}
+        <ActivityFilters 
+          filters={filters}
+          onFilterChange={setFilters}
+          onClearFilters={() => setFilters({ period: 'all', status: 'all', type: 'all', search: '' })}
+        />
+
+        {/* Timeline de Atividades */}
+        <div className="mt-8">
           {activities.length === 0 ? (
             <Card>
               <CardContent className="text-center py-12">
                 <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-600 mb-4">Nenhuma atividade programada</p>
-                <Button onClick={() => navigate(createPageUrl("CulturaOrganizacional"))}>
-                  Configurar Manual da Cultura
+                <Button onClick={() => navigate(createPageUrl("RituaisAculturamento"))}>
+                  Agendar Rituais
                 </Button>
               </CardContent>
             </Card>
           ) : (
-            activities.map((activity) => (
-              <Card key={activity.id} className="hover:shadow-lg transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold">{activity.title}</h3>
-                        {activity.auto_generated && (
-                          <Badge variant="secondary" className="text-xs">Auto-gerada</Badge>
-                        )}
-                      </div>
-                      
-                      <p className="text-gray-600 mb-3">{activity.description}</p>
-                      
-                      <div className="flex flex-wrap items-center gap-3">
-                        {getStatusBadge(activity.status)}
-                        {getTypeBadge(activity.type)}
-                        <Badge variant="outline" className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          {format(new Date(activity.scheduled_date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                        </Badge>
-                      </div>
-                      
-                      {activity.notes && (
-                        <p className="text-sm text-gray-500 mt-3 italic">{activity.notes}</p>
-                      )}
-                    </div>
-                    
-                    <div className="flex flex-col gap-2 ml-4">
-                      {activity.status === "pendente" && (
-                        <Button
-                          size="sm"
-                          onClick={() => handleStatusChange(activity.id, "em_andamento")}
-                        >
-                          Iniciar
-                        </Button>
-                      )}
-                      {activity.status === "em_andamento" && (
-                        <Button
-                          size="sm"
-                          className="bg-green-600 hover:bg-green-700"
-                          onClick={() => handleStatusChange(activity.id, "concluida")}
-                        >
-                          Concluir
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
+            <TimelineView 
+              activities={filteredActivities}
+              onStatusChange={handleStatusChange}
+              onViewDetails={setSelectedForDetails}
+            />
           )}
         </div>
+
+        {/* Modais */}
+        <CompletionModal
+          activity={selectedForCompletion}
+          onClose={() => setSelectedForCompletion(null)}
+          onComplete={handleCompleteActivity}
+        />
+
+        <ActivityDetailsModal
+          activity={selectedForDetails}
+          onClose={() => setSelectedForDetails(null)}
+        />
       </div>
     </div>
   );
