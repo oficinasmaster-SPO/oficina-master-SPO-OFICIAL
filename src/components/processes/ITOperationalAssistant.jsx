@@ -65,7 +65,7 @@ Analise livremente a situação operacional descrita.
 
 Responda de forma estruturada mas livre, sem JSON.`;
 
-        const result = await base44.integrations.Core.InvokeLLM({ prompt: freePrompt });
+        const { result } = await base44.functions.invoke('invokeLLMUnlimited', { prompt: freePrompt });
         setFreeResponse(result);
         console.log("✅ Resposta livre recebida");
         toast.success("Análise concluída!");
@@ -110,7 +110,7 @@ Para PROCESSO OK:
 }`;
 
       console.log("📤 Enviando prompt para IA...");
-      const rawResponse = await base44.integrations.Core.InvokeLLM({ prompt });
+      const { result: rawResponse } = await base44.functions.invoke('invokeLLMUnlimited', { prompt });
       
       console.log("📥 Resposta RAW da IA:", rawResponse);
       console.log("📏 Tipo da resposta:", typeof rawResponse);
