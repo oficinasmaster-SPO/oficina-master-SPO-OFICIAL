@@ -384,14 +384,25 @@ export async function generateStructuredReportPDF(formData, workshop) {
   doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 152.5, yPos + 43, { align: 'center' });
   doc.setTextColor(0);
 
-  // Footer
+  // Footer profissional em todas as páginas
   const pageCount = doc.internal.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
-    doc.setFontSize(8);
+    
+    // Linha separadora
+    doc.setDrawColor(220, 38, 38);
+    doc.setLineWidth(0.5);
+    doc.line(15, 282, 195, 282);
+    
+    // Textos do rodapé
+    doc.setFontSize(7);
     doc.setTextColor(100);
-    doc.text(`Página ${i} de ${pageCount}`, 105, 290, { align: 'center' });
-    doc.text(`Gerado em ${new Date().toLocaleDateString('pt-BR')}`, 195, 290, { align: 'right' });
+    doc.text("Oficinas Master - Consultoria em Gestão de Oficinas Automotivas", 15, 287);
+    doc.text(`Documento: REL-${formData.data?.replace(/-/g, '') || 'DRAFT'}-${formData.unidade_area?.substring(0,3).toUpperCase() || 'GER'}`, 105, 287, { align: 'center' });
+    doc.text(`Página ${i} de ${pageCount}`, 195, 287, { align: 'right' });
+    
+    doc.setFontSize(6);
+    doc.text(`Gerado em ${new Date().toLocaleString('pt-BR')} | Documento confidencial`, 105, 292, { align: 'center' });
   }
 
   // Helper functions
