@@ -105,7 +105,7 @@ export default function RepositorioDocumentos() {
     },
     onSuccess: () => {
       toast.success("Documento salvo com sucesso!");
-      setShowActionModal(false);
+      setShowUploadModal(false);
       setNewDoc({ title: "", category: "empresa", type: "interno", is_controlled_copy: false, file: null, expiry_date: "" });
       queryClient.invalidateQueries(['company-documents']);
     },
