@@ -116,6 +116,45 @@ Please verify my subscription status.
         </Button>
       </div>
 
+      {/* Monitor de Créditos com Alertas */}
+      {creditsInfo && (
+        <IntegrationCreditsMonitor
+          creditsUsed={creditsInfo.creditsUsed}
+          creditsLimit={creditsInfo.creditsLimit}
+          userTier={creditsInfo.userTier}
+        />
+      )}
+
+      {/* Barra de Progresso de Créditos */}
+      {creditsInfo && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-blue-600" />
+              Uso de Créditos de Integração
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex justify-between text-sm">
+                <span>Créditos utilizados este mês</span>
+                <span className="font-bold">
+                  {creditsInfo.creditsUsed} / {creditsInfo.creditsLimit}
+                </span>
+              </div>
+              <Progress 
+                value={Math.min((creditsInfo.creditsUsed / creditsInfo.creditsLimit) * 100, 100)} 
+                className="h-3"
+              />
+              <div className="flex justify-between text-xs text-gray-500">
+                <span>Plano atual: <Badge variant="outline">{creditsInfo.userTier}</Badge></span>
+                <span>{Math.round((creditsInfo.creditsUsed / creditsInfo.creditsLimit) * 100)}% utilizado</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Status do Teste */}
       <Card className={testResult?.success ? "border-green-500" : "border-red-500"}>
         <CardHeader>
