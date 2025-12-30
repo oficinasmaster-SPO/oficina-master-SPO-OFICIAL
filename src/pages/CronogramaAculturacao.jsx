@@ -61,10 +61,41 @@ export default function CronogramaAculturacao() {
       const userWorkshop = workshops.find(w => w.owner_id === user.id);
       setWorkshop(userWorkshop);
 
-      const allActivities = await base44.entities.AcculturationActivity.list();
-      const workshopActivities = allActivities.filter(a => a.workshop_id === userWorkshop?.id);
-      setActivities(workshopActivities);
+      if (!userWorkshop) {
+        setActivities([]);
+        return;
+      }
+
+      // Buscar ScheduledRitual (rituais agendados)
+      const scheduledRituals = await base44.entities.ScheduledRitual.filter({ 
+        workshop_id: userWorkshop.id 
+      });
+
+      // Buscar AcculturationActivity (outras atividades)
+      const acculturationActivities = await base44.entities.AcculturationActivity.filter({ 
+        workshop_id: userWorkshop.id 
+      });
+
+      // Converter ScheduledRitual para formato de atividade
+      const ritualActivities = scheduledRituals.map(ritual => ({
+        id: ritual.id,
+        workshop_id: ritual.workshop_id,
+        title: ritual.ritual_name,
+        description: ritual.notes || '',
+        type: 'ritual',
+        scheduled_date: ritual.scheduled_date,
+        status: ritual.status === 'concluido' ? 'concluida' : ritual.status === 'realizado' ? 'em_andamento' : 'pendente',
+        auto_generated: false,
+        source: 'ritual' // Marca a origem
+      }));
+
+      // Combinar e ordenar por data
+      const allActivities = [...ritualActivities, ...acculturationActivities]
+        .sort((a, b) => new Date(a.scheduled_date) - new Date(b.scheduled_date));
+
+      setActivities(allActivities);
     } catch (error) {
+      console.error("Erro ao carregar atividades:", error);
       toast.error("Erro ao carregar atividades");
     } finally {
       setLoading(false);
@@ -73,15 +104,26 @@ export default function CronogramaAculturacao() {
 
   const handleStatusChange = async (activityId, newStatus) => {
     try {
-      const updateData = { status: newStatus };
-      if (newStatus === "concluida") {
-        updateData.completion_date = new Date().toISOString();
+      const activity = activities.find(a => a.id === activityId);
+      
+      if (activity?.source === 'ritual') {
+        // Atualizar ScheduledRitual
+        const ritualStatus = newStatus === 'concluida' ? 'concluido' : 
+                            newStatus === 'em_andamento' ? 'realizado' : 'agendado';
+        await base44.entities.ScheduledRitual.update(activityId, { status: ritualStatus });
+      } else {
+        // Atualizar AcculturationActivity
+        const updateData = { status: newStatus };
+        if (newStatus === "concluida") {
+          updateData.completion_date = new Date().toISOString();
+        }
+        await base44.entities.AcculturationActivity.update(activityId, updateData);
       }
       
-      await base44.entities.AcculturationActivity.update(activityId, updateData);
       toast.success("Status atualizado!");
       loadData();
     } catch (error) {
+      console.error("Erro ao atualizar status:", error);
       toast.error("Erro ao atualizar status");
     }
   };
