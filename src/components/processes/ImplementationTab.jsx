@@ -268,9 +268,11 @@ export default function ImplementationTab({ processId, workshopId }) {
                     </p>
                   </div>
                   <div className="flex gap-2">
-                    <Button size="sm" variant="ghost" onClick={() => window.open(evidence.file_url, '_blank')}>
-                      Ver
-                    </Button>
+                    {evidence.file_url && !evidence.file_url.includes('pending_upload') && (
+                      <Button size="sm" variant="ghost" onClick={() => window.open(evidence.file_url, '_blank')}>
+                        Ver
+                      </Button>
+                    )}
                     <Button size="sm" variant="ghost" onClick={() => removeEvidence(idx)}>
                       <Trash2 className="w-4 h-4 text-red-600" />
                     </Button>
