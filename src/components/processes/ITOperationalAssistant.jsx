@@ -111,35 +111,43 @@ Retorne um JSON estruturado:
           type: "object",
           properties: {
             action_required: { type: "boolean" },
-            action_type: { type: "string", enum: ["create_it", "update_it", "validated"] },
-            target_it_code: { type: ["string", "null"] },
-            current_version: { type: ["string", "null"] },
-            proposed_version: { type: ["string", "null"] },
+            action_type: { type: "string" },
+            target_it_code: { type: "string" },
+            current_version: { type: "string" },
+            proposed_version: { type: "string" },
             change_reason: { type: "string" },
             change_summary: { type: "string" },
             operational_impact: { type: "string" },
             affected_indicator: { type: "string" },
-            urgency: { type: "string", enum: ["baixa", "média", "alta"] },
+            urgency: { type: "string" },
             suggested_title: { type: "string" },
             suggested_objective: { type: "string" },
             suggested_steps: { type: "array", items: { type: "string" } },
             common_errors: { type: "array", items: { type: "string" } },
             controlled_risks: { type: "array", items: { type: "string" } },
-            validation_justification: { type: ["string", "null"] }
-          },
-          required: ["action_required", "action_type", "change_reason", "suggested_title", "suggested_objective", "suggested_steps", "common_errors", "urgency"]
+            validation_justification: { type: "string" }
+          }
         }
       });
 
-      console.log("✅ IA Response:", response);
+      console.log("✅ IA Response completa:", JSON.stringify(response, null, 2));
       
       if (!response || typeof response !== 'object') {
         console.error("❌ Resposta inválida da IA:", response);
         toast.error("Resposta inválida da IA");
+        setLoading(false);
+        return;
+      }
+
+      if (!response.suggested_title || !response.suggested_steps) {
+        console.error("❌ Resposta incompleta da IA:", response);
+        toast.error("Resposta incompleta da IA - tente descrever mais detalhes");
+        setLoading(false);
         return;
       }
 
       setSuggestions(response);
+      console.log("✅ Sugestões definidas com sucesso");
       toast.success("Análise concluída!");
     } catch (error) {
       console.error("❌ Erro ao analisar:", error);
