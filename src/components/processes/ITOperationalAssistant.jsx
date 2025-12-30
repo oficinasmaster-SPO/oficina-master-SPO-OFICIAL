@@ -7,11 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { base44 } from "@/api/base44Client";
 import { Sparkles, Loader2, AlertCircle, CheckCircle2, Lightbulb } from "lucide-react";
 import { toast } from "sonner";
+import ReactMarkdown from "react-markdown";
 
 export default function ITOperationalAssistant({ open, onClose, mapData, existingITs, onCreateIT }) {
   const [context, setContext] = useState("");
   const [loading, setLoading] = useState(false);
   const [suggestions, setSuggestions] = useState(null);
+  const [mode, setMode] = useState("structured"); // "structured" | "free"
+  const [freeResponse, setFreeResponse] = useState("");
 
   const scenarios = [
     { id: "error", label: "Erro Recorrente", description: "Algo está dando errado na execução" },
@@ -30,11 +33,46 @@ export default function ITOperationalAssistant({ open, onClose, mapData, existin
 
     setLoading(true);
     setSuggestions(null);
+    setFreeResponse("");
     
     try {
       console.log("🔍 Iniciando análise operacional...");
       console.log("📝 Contexto:", context);
-      
+      console.log("🎯 Modo:", mode);
+
+      // Modo Livre - sem JSON schema
+      if (mode === "free") {
+        const freePrompt = `
+VOCÊ É A IA OPERACIONAL DO BASE44 - MODO CONSULTIVO LIVRE.
+
+CONTEXTO DO PROCESSO (MAP - REFERÊNCIA):
+Título: ${mapData?.title || "Não informado"}
+Objetivo: ${mapData?.content_json?.objetivo || mapData?.objective || "Não informado"}
+Etapas principais: ${mapData?.content_json?.atividades?.map(a => a.atividade).join(", ") || "Não informado"}
+
+ITs EXISTENTES:
+${existingITs.map(it => `- ${it.code}: ${it.title} (v${it.version})`).join("\n") || "Nenhuma IT criada ainda"}
+
+SITUAÇÃO OPERACIONAL RELATADA:
+${context}
+
+INSTRUÇÃO:
+Analise livremente a situação operacional descrita.
+- Se houver necessidade de criar/atualizar IT, explique o porquê e sugira os elementos principais
+- Se o processo estiver adequado, justifique tecnicamente
+- Seja prático, objetivo e operacional
+- Use formatação Markdown para organizar a resposta
+
+Responda de forma estruturada mas livre, sem JSON.`;
+
+        const result = await base44.integrations.Core.InvokeLLM({ prompt: freePrompt });
+        setFreeResponse(result);
+        console.log("✅ Resposta livre recebida");
+        toast.success("Análise concluída!");
+        return;
+      }
+
+      // Modo Estruturado - com JSON schema
       const prompt = `
 VOCÊ É A IA OPERACIONAL DO BASE44.
 
@@ -289,6 +327,35 @@ Se NÃO houver melhoria, você DEVE justificar explicitamente por que o processo
             </div>
           </div>
 
+          {/* Seletor de Modo */}
+          <div>
+            <Label className="text-sm font-semibold mb-2 block">Modo de Análise</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setMode("structured")}
+                className={`p-4 border-2 rounded-lg transition-all ${
+                  mode === "structured"
+                    ? "border-purple-600 bg-purple-50"
+                    : "border-gray-200 hover:border-purple-300"
+                }`}
+              >
+                <div className="font-semibold text-sm">📋 Estruturado</div>
+                <div className="text-xs text-gray-600 mt-1">Gera IT pronta para aplicar</div>
+              </button>
+              <button
+                onClick={() => setMode("free")}
+                className={`p-4 border-2 rounded-lg transition-all ${
+                  mode === "free"
+                    ? "border-blue-600 bg-blue-50"
+                    : "border-gray-200 hover:border-blue-300"
+                }`}
+              >
+                <div className="font-semibold text-sm">💭 Consultivo Livre</div>
+                <div className="text-xs text-gray-600 mt-1">IA responde livremente</div>
+              </button>
+            </div>
+          </div>
+
           {/* Input de Contexto */}
           <div>
             <Label>Descreva o Contexto Operacional</Label>
@@ -317,13 +384,45 @@ Se NÃO houver melhoria, você DEVE justificar explicitamente por que o processo
                   </>
                 )}
               </Button>
-              {suggestions && (
-                <Button variant="outline" onClick={() => setSuggestions(null)}>
+              {(suggestions || freeResponse) && (
+                <Button variant="outline" onClick={() => {
+                  setSuggestions(null);
+                  setFreeResponse("");
+                }}>
                   Nova Análise
                 </Button>
               )}
             </div>
           </div>
+
+          {/* Resposta Livre da IA */}
+          {freeResponse && (
+            <div className="border-2 border-blue-200 rounded-lg p-5 bg-blue-50 space-y-4">
+              <div className="flex items-start gap-3 pb-3 border-b border-blue-200">
+                <div className="p-2 bg-blue-600 rounded-lg">
+                  <Sparkles className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold text-blue-900 mb-1">💭 Análise Consultiva</h3>
+                  <p className="text-sm text-blue-700">Resposta livre da IA especialista</p>
+                </div>
+              </div>
+              
+              <div className="prose prose-sm max-w-none bg-white p-4 rounded-lg">
+                <ReactMarkdown>{freeResponse}</ReactMarkdown>
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t-2 border-blue-300">
+                <Button
+                  variant="outline"
+                  onClick={() => setFreeResponse("")}
+                  className="flex-1"
+                >
+                  Fechar
+                </Button>
+              </div>
+            </div>
+          )}
 
           {/* Sugestões da IA - Formato Estruturado Base44 */}
           {suggestions && (
