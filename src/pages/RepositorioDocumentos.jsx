@@ -81,24 +81,45 @@ export default function RepositorioDocumentos() {
   // Create Document
   const createMutation = useMutation({
     mutationFn: async () => {
-      if (!newDoc.file || !newDoc.title) throw new Error("Preencha os campos obrigatórios");
+      console.log("📄 Iniciando salvamento do documento...");
+      console.log("📄 Workshop ID:", workshop?.id);
+      console.log("📄 newDoc:", newDoc);
+      
+      if (!workshop?.id) {
+        throw new Error("Workshop não identificado");
+      }
+      
+      if (!newDoc.file || !newDoc.title) {
+        throw new Error("Preencha os campos obrigatórios");
+      }
       
       setUploading(true);
       try {
         // 1. Upload File
+        console.log("📤 Fazendo upload do arquivo...");
         const { file_url } = await base44.integrations.Core.UploadFile({ file: newDoc.file });
+        console.log("✅ Arquivo enviado:", file_url);
         
         // 2. Create Record
-        await base44.entities.CompanyDocument.create({
+        console.log("💾 Criando registro no banco...");
+        const docData = {
           workshop_id: workshop.id,
           title: newDoc.title,
           category: newDoc.category,
           type: newDoc.type,
           is_controlled_copy: newDoc.is_controlled_copy,
           file_url: file_url,
-          expiry_date: newDoc.expiry_date || null,
-          created_at: new Date().toISOString()
-        });
+          expiry_date: newDoc.expiry_date || null
+        };
+        console.log("📄 Dados do documento:", docData);
+        
+        const created = await base44.entities.CompanyDocument.create(docData);
+        console.log("✅ Documento criado:", created);
+        
+        return created;
+      } catch (error) {
+        console.error("❌ Erro ao salvar documento:", error);
+        throw error;
       } finally {
         setUploading(false);
       }
