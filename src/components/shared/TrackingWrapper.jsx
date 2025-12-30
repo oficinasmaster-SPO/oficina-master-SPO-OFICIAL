@@ -30,7 +30,8 @@ export default function TrackingWrapper({
           item_categoria: itemCategoria || ''
         });
       } catch (error) {
-        console.error('Erro ao registrar tracking:', error);
+        // Erro silencioso - tracking não deve bloquear a UI
+        console.warn('⚠️ Tracking falhou (não crítico):', error.message);
       }
     };
 
