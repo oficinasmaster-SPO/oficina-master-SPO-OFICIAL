@@ -140,13 +140,22 @@ export default function RepositorioDocumentos() {
   });
 
   const filteredDocuments = documents.filter(doc => {
-    const matchesSearch = doc.title.toLowerCase().includes(filterParams.search.toLowerCase());
+    console.log("🔍 [FILTER] Checando documento:", doc.title);
+    console.log("  - Busca:", filterParams.search, "| Match:", doc.title.toLowerCase().includes(filterParams.search.toLowerCase()));
+    console.log("  - Categoria:", filterParams.category, "| Doc:", doc.category, "| Match:", filterParams.category === 'all' || doc.category === filterParams.category);
+    console.log("  - Tipo:", filterParams.type, "| Doc:", doc.type, "| Match:", filterParams.type === 'all' || doc.type === filterParams.type);
+    
+    const matchesSearch = !filterParams.search || doc.title.toLowerCase().includes(filterParams.search.toLowerCase());
     const matchesCategory = filterParams.category === 'all' || doc.category === filterParams.category;
     const matchesType = filterParams.type === 'all' || doc.type === filterParams.type;
-    return matchesSearch && matchesCategory && matchesType;
+    
+    const passes = matchesSearch && matchesCategory && matchesType;
+    console.log("  - Resultado:", passes ? "✅ PASSA" : "❌ BLOQUEADO");
+    
+    return passes;
   });
   
-  console.log(`📊 Total: ${documents.length} | Filtrados: ${filteredDocuments.length}`);
+  console.log(`📊 [FILTER] Total: ${documents.length} | Filtrados: ${filteredDocuments.length}`);
 
   // Verificar documentos vencidos
   const getExpiryStatus = (expiryDate) => {
