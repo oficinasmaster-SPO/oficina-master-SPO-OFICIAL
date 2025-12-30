@@ -104,6 +104,7 @@ export default function RituaisAculturamento() {
       
       await base44.entities.ScheduledRitual.create({
         workshop_id: workshop.id,
+        ritual_id: selectedRitual.id,
         ritual_name: selectedRitual.name,
         scheduled_date: dateTime.toISOString(),
         status: "agendado",
@@ -123,204 +124,238 @@ export default function RituaisAculturamento() {
 
   const rituais = [
     {
+      id: "ritual_alinhamento_cultural",
       name: "Ritual de Alinhamento Cultural",
       frequency: "semanal",
       description: "Reunião semanal para reforçar os valores, missão e visão da empresa, garantindo que todos estejam alinhados com a cultura organizacional.",
       icon: Compass
     },
     {
+      id: "ritual_dono",
       name: "Ritual do Dono (Pensar Como Dono)",
       frequency: "diario",
       description: "Momento diário para cada colaborador refletir sobre suas responsabilidades como se fosse dono do negócio, tomando decisões com visão de longo prazo.",
       icon: Star
     },
     {
+      id: "ritual_excelencia",
       name: "Ritual da Excelência",
       frequency: "diario",
       description: "Prática diária de buscar a excelência em cada tarefa, revisando o trabalho antes de entregar e garantindo qualidade máxima.",
       icon: Award
     },
     {
+      id: "ritual_clareza",
       name: "Ritual de Clareza",
       frequency: "semanal",
       description: "Sessão semanal para esclarecer dúvidas, alinhar expectativas e garantir que todos entendam suas metas e responsabilidades.",
       icon: Eye
     },
     {
+      id: "ritual_conexao",
       name: "Ritual de Conexão",
       frequency: "semanal",
       description: "Momento para fortalecer os laços entre a equipe, compartilhando experiências pessoais e profissionais que aproximam o time.",
       icon: Heart
     },
     {
+      id: "ritual_mesa_redonda",
       name: "Ritual da Mesa Redonda",
       frequency: "quinzenal",
       description: "Reunião onde todos têm voz igual para discutir problemas, propor soluções e tomar decisões colaborativas.",
       icon: Users
     },
     {
+      id: "ritual_start_diario",
       name: "Ritual do Start Diário",
       frequency: "diario",
       description: "Reunião rápida no início do dia para alinhar prioridades, compartilhar desafios e energizar a equipe para o trabalho.",
       icon: Play
     },
     {
+      id: "ritual_entrega",
       name: "Ritual da Entrega",
       frequency: "diario",
       description: "Momento ao final do dia para revisar o que foi entregue, celebrar conquistas e identificar pendências para o próximo dia.",
       icon: CheckCircle2
     },
     {
+      id: "ritual_responsabilidade",
       name: "Ritual da Responsabilidade",
       frequency: "semanal",
       description: "Prática de assumir responsabilidade pelos resultados, reconhecendo erros e buscando soluções ao invés de culpados.",
       icon: Shield
     },
     {
+      id: "ritual_maturidade",
       name: "Ritual da Maturidade Profissional",
       frequency: "mensal",
       description: "Avaliação mensal do crescimento profissional de cada colaborador, identificando evolução e áreas de desenvolvimento.",
       icon: TrendingUp
     },
     {
+      id: "ritual_alta_performance",
       name: "Ritual da Alta Performance",
       frequency: "semanal",
       description: "Sessão para revisar métricas de desempenho, celebrar resultados excepcionais e definir metas desafiadoras.",
       icon: Zap
     },
     {
+      id: "ritual_foco_cliente",
       name: "Ritual do Foco no Cliente",
       frequency: "diario",
       description: "Lembrete diário de que o cliente é a razão do negócio, revisando feedbacks e buscando formas de superar expectativas.",
       icon: Target
     },
     {
+      id: "ritual_confianca",
       name: "Ritual da Confiança",
       frequency: "semanal",
       description: "Prática de construir e manter a confiança na equipe através de transparência, cumprimento de promessas e apoio mútuo.",
       icon: Heart
     },
     {
+      id: "ritual_voz_ativa",
       name: "Ritual da Voz Ativa",
       frequency: "semanal",
       description: "Momento em que todos são incentivados a expressar opiniões, sugestões e preocupações sem medo de julgamento.",
       icon: MessageCircle
     },
     {
+      id: "ritual_consistencia",
       name: "Ritual da Consistência",
       frequency: "diario",
       description: "Prática de manter padrões consistentes de qualidade e comportamento, independente das circunstâncias.",
       icon: Repeat
     },
     {
+      id: "ritual_cultura_viva",
       name: "Ritual da Cultura Viva",
       frequency: "mensal",
       description: "Revisão mensal de como a cultura está sendo vivida na prática, identificando gaps e celebrando exemplos positivos.",
       icon: Flame
     },
     {
+      id: "ritual_transparencia",
       name: "Ritual da Transparência",
       frequency: "semanal",
       description: "Compartilhamento aberto de informações relevantes sobre o negócio, resultados e desafios com toda a equipe.",
       icon: Eye
     },
     {
+      id: "ritual_acao_imediata",
       name: "Ritual da Ação Imediata",
       frequency: "diario",
       description: "Cultura de resolver problemas assim que identificados, sem procrastinação ou transferência de responsabilidade.",
       icon: Zap
     },
     {
+      id: "ritual_planejamento_vivo",
       name: "Ritual do Planejamento Vivo",
       frequency: "semanal",
       description: "Revisão e ajuste semanal dos planos, garantindo flexibilidade e adaptação às mudanças do mercado.",
       icon: Calendar
     },
     {
+      id: "ritual_kick_off",
       name: "Ritual de Abertura de Semana (Kick Off)",
       frequency: "semanal",
       description: "Reunião na segunda-feira para definir prioridades da semana, alinhar expectativas e motivar a equipe.",
       icon: Flag
     },
     {
+      id: "ritual_virada",
       name: "Ritual da Virada",
       frequency: "eventual",
       description: "Momento especial quando há mudança de padrão ou direção, garantindo que todos entendam e se comprometam com o novo rumo.",
       icon: RefreshCw
     },
     {
+      id: "ritual_compromisso",
       name: "Ritual do Compromisso",
       frequency: "semanal",
       description: "Prática de assumir compromissos públicos com a equipe e honrá-los, fortalecendo a cultura de accountability.",
       icon: CheckCircle2
     },
     {
+      id: "ritual_semana_dono",
       name: "Ritual da Semana do Dono",
       frequency: "semanal",
       description: "Semana em que cada colaborador assume responsabilidades extras, vivenciando os desafios de ser dono do negócio.",
       icon: Star
     },
     {
+      id: "ritual_checkpoint",
       name: "Ritual do Checkpoint",
       frequency: "diario",
       description: "Verificação rápida ao meio do dia para garantir que as prioridades estão sendo cumpridas e ajustar rotas se necessário.",
       icon: Target
     },
     {
+      id: "ritual_feedback_continuo",
       name: "Ritual do Feedback Contínuo",
       frequency: "diario",
       description: "Cultura de dar e receber feedback constante, de forma construtiva e respeitosa, para melhoria contínua.",
       icon: MessageCircle
     },
     {
+      id: "ritual_pulso_cultura",
       name: "Ritual do Pulso da Cultura",
       frequency: "mensal",
       description: "Pesquisa mensal rápida para medir o engajamento e a percepção da equipe sobre a cultura organizacional.",
       icon: Heart
     },
     {
+      id: "ritual_norte_claro",
       name: "Ritual do Norte Claro",
       frequency: "mensal",
       description: "Revisão mensal dos objetivos estratégicos, garantindo que todos saibam para onde a empresa está indo.",
       icon: Compass
     },
     {
+      id: "ritual_postura",
       name: "Ritual da Postura",
       frequency: "diario",
       description: "Lembrete diário sobre a importância da postura profissional, comunicação adequada e comportamento exemplar.",
       icon: Shield
     },
     {
+      id: "ritual_presenca",
       name: "Ritual da Presença",
       frequency: "diario",
       description: "Prática de estar 100% presente nas atividades, evitando distrações e dando atenção total ao que está sendo feito.",
       icon: Eye
     },
     {
+      id: "ritual_identidade",
       name: "Ritual da Identidade",
       frequency: "mensal",
       description: "Momento para reforçar a identidade da empresa, seus valores únicos e o que a diferencia no mercado.",
       icon: Flag
     },
     {
+      id: "ritual_forca_operacional",
       name: "Ritual da Força Operacional",
       frequency: "semanal",
       description: "Avaliação da capacidade operacional da equipe, identificando gargalos e otimizando processos.",
       icon: Zap
     },
     {
+      id: "ritual_flow_equipe",
       name: "Ritual do Flow da Equipe",
       frequency: "semanal",
       description: "Análise de como a equipe está fluindo junto, identificando conflitos e promovendo harmonia no trabalho.",
       icon: Users
     },
     {
+      id: "ritual_compromisso_ativo",
       name: "Ritual do Compromisso Ativo",
       frequency: "diario",
       description: "Renovação diária do compromisso com as metas e valores da empresa, mantendo a motivação alta.",
       icon: CheckCircle2
     },
     {
+      id: "ritual_3_verdades",
       name: "Ritual das 3 Verdades",
       frequency: "diario",
       description: "Prática diária de revisitar os três pilares fundamentais: Clareza (saber o que fazer), Responsabilidade (assumir o que é seu) e Entrega (cumprir o prometido).",
