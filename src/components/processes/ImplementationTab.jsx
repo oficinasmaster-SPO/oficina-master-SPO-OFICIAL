@@ -102,21 +102,40 @@ export default function ImplementationTab({ processId, workshopId }) {
   };
 
   const handleSaveStructuredReport = async (reportData) => {
-    const newEvidence = {
-      type: reportData.type,
-      title: reportData.title,
-      file_url: reportData.file_url,
-      uploaded_at: new Date().toISOString(),
-      uploaded_by: (await base44.auth.me()).full_name,
-      metadata: reportData.data
-    };
+    console.log("💾 Salvando relatório estruturado:", reportData);
+    
+    try {
+      const user = await base44.auth.me();
+      console.log("👤 Usuário atual:", user.full_name);
+      
+      const newEvidence = {
+        type: reportData.type,
+        title: reportData.title,
+        file_url: reportData.file_url,
+        uploaded_at: new Date().toISOString(),
+        uploaded_by: user.full_name,
+        metadata: reportData.data
+      };
 
-    const updatedEvidences = [...(implementation?.evidences || []), newEvidence];
-    await saveMutation.mutateAsync({
-      evidences: updatedEvidences,
-      checklist: { ...implementation?.checklist, evidencias_anexadas: true }
-    });
-    setShowReportForm(false);
+      console.log("📎 Nova evidência:", newEvidence);
+      
+      const updatedEvidences = [...(implementation?.evidences || []), newEvidence];
+      console.log("📋 Total de evidências:", updatedEvidences.length);
+      
+      await saveMutation.mutateAsync({
+        evidences: updatedEvidences,
+        checklist: { ...implementation?.checklist, evidencias_anexadas: true }
+      });
+      
+      console.log("✅ Mutation executada com sucesso");
+      setShowReportForm(false);
+      toast.success("Relatório adicionado às evidências!");
+      
+    } catch (error) {
+      console.error("❌ Erro ao salvar relatório:", error);
+      toast.error("Erro ao salvar relatório: " + error.message);
+      throw error;
+    }
   };
 
   if (isLoading) {

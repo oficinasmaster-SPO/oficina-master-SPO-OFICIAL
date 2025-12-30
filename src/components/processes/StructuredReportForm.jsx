@@ -155,31 +155,53 @@ export default function StructuredReportForm({ open, onClose, onSave, workshop }
   };
 
   const handleGeneratePDF = async () => {
+    console.log("🔵 Iniciando geração do relatório...");
     setLoading(true);
+    
     try {
       const horario_termino = formData.horario_termino || new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
       const dataCompleta = { ...formData, horario_termino };
       
-      toast.info("Gerando PDF...");
-      const { file_url } = await generateStructuredReportPDF(dataCompleta, workshop);
+      console.log("📄 Dados do formulário:", dataCompleta);
+      console.log("🏢 Workshop:", workshop);
       
-      if (!file_url) {
-        throw new Error("Falha ao gerar PDF");
+      toast.info("Gerando PDF...", { duration: 5000 });
+      
+      console.log("📋 Chamando generateStructuredReportPDF...");
+      const result = await generateStructuredReportPDF(dataCompleta, workshop);
+      console.log("✅ PDF gerado, resultado:", result);
+      
+      if (!result || !result.file_url) {
+        console.error("❌ Resultado inválido:", result);
+        throw new Error("URL do arquivo não foi retornada");
       }
       
-      await onSave({
+      const reportData = {
         type: 'relatorio_implementacao',
         title: `Relatório de Implementação - ${formData.unidade_area || 'Geral'}`,
-        file_url,
+        file_url: result.file_url,
         data: dataCompleta
-      });
+      };
       
-      toast.success("Relatório salvo com sucesso!");
+      console.log("💾 Salvando evidência:", reportData);
+      await onSave(reportData);
+      console.log("✅ Evidência salva com sucesso");
+      
+      toast.success("Relatório gerado e salvo com sucesso!");
+      
+      console.log("🚪 Fechando modal...");
       onClose();
+      console.log("✅ Processo concluído");
+      
     } catch (error) {
-      console.error("Erro ao gerar relatório:", error);
-      toast.error("Erro ao gerar relatório: " + (error.message || "Tente novamente"));
+      console.error("❌ ERRO DETALHADO:", {
+        message: error.message,
+        stack: error.stack,
+        error: error
+      });
+      toast.error("Erro: " + (error.message || "Falha ao gerar relatório"));
     } finally {
+      console.log("🔄 Finalizando loading...");
       setLoading(false);
     }
   };
