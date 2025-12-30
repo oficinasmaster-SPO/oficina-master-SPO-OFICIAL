@@ -72,146 +72,90 @@ Responda de forma estruturada mas livre, sem JSON.`;
         return;
       }
 
-      // Modo Estruturado - com JSON schema
-      const prompt = `
-VOCÊ É A IA OPERACIONAL DO BASE44.
+      // Modo Estruturado - SEM schema, parse manual
+      const prompt = `Você é a IA Operacional do BASE44.
 
-MISSÃO PRINCIPAL:
-Atuar de forma ativa na melhoria contínua dos processos, operando no nível de INSTRUÇÃO DE TRABALHO (IT).
-O MAP é apenas referência estrutural e NÃO deve ser alterado, salvo solicitação explícita.
-
-MODO DE OPERAÇÃO:
-- Proibido atuar apenas em modo análise.
-- É OBRIGATÓRIO propor melhorias sempre que houver qualquer falha, ambiguidade ou oportunidade operacional.
-
-ESCOPO DE ANÁLISE (OBRIGATÓRIO VERIFICAR SEMPRE):
-1. Passos genéricos ou subjetivos
-2. Falta de critério objetivo de execução
-3. Risco de erro humano
-4. Falta de responsável claro
-5. Ausência de indicador ou impacto mensurável
-6. Repetição de dúvida ou retrabalho potencial
-7. Dependência excessiva de conhecimento tácito
-
-CONTEXTO DO PROCESSO (MAP - REFERÊNCIA):
+CONTEXTO DO PROCESSO:
 Título: ${mapData?.title || "Não informado"}
-Objetivo: ${mapData?.content_json?.objetivo || mapData?.objective || "Não informado"}
-Etapas principais: ${mapData?.content_json?.atividades?.map(a => a.atividade).join(", ") || "Não informado"}
-Indicadores: ${mapData?.content_json?.indicadores?.map(i => i.indicador).join(", ") || "Não definidos"}
+Objetivo: ${mapData?.content_json?.objetivo || "Não informado"}
 
 ITs EXISTENTES:
-${existingITs.map(it => `- ${it.code}: ${it.title} (v${it.version}) - Última alteração: ${it.version_history?.[it.version_history.length - 1]?.changes || "Criação inicial"}`).join("\n") || "Nenhuma IT criada ainda"}
+${existingITs.map(it => `- ${it.code}: ${it.title} (v${it.version})`).join("\n") || "Nenhuma IT criada"}
 
-SITUAÇÃO OPERACIONAL RELATADA:
+SITUAÇÃO:
 ${context}
 
-REGRA DE GERAÇÃO DE IT:
-- Sempre que QUALQUER item do escopo acima for identificado, você DEVE:
-  a) Gerar uma ATUALIZAÇÃO SUGERIDA
-  b) Criar nova IT ou versionar IT existente
-  c) Registrar motivo da alteração
-  d) Manter o MAP inalterado
+RETORNE APENAS UM JSON VÁLIDO (sem markdown, sem \`\`\`):
 
-VERSIONAMENTO:
-- v1.0 → Criação inicial
-- v1.1 → Ajuste leve (clareza, texto, critério)
-- v2.0 → Mudança operacional relevante
-- v3.0 → Mudança estrutural
-
-REGRA CRÍTICA:
-Se NÃO houver melhoria, você DEVE justificar explicitamente por que o processo está operacionalmente correto.
-É proibido responder sem propor melhoria ou justificativa formal.
-
-**FORMATO DE RESPOSTA JSON:**
-
-**Caso 1: Ação Necessária (action_required = true)**
+Para AÇÃO NECESSÁRIA:
 {
   "action_required": true,
-  "action_type": "create_it" ou "update_it",
-  "target_it_code": "IT-XXX" ou null,
-  "current_version": "X.X" ou null,
-  "proposed_version": "X.X" ou null,
-  "change_reason": "motivo técnico obrigatório",
-  "change_summary": "resumo executivo obrigatório",
-  "operational_impact": "impacto esperado obrigatório",
-  "affected_indicator": "indicador impactado obrigatório",
-  "urgency": "baixa" | "média" | "alta",
-  "suggested_title": "OBRIGATÓRIO - título da IT",
-  "suggested_objective": "OBRIGATÓRIO - objetivo claro",
-  "suggested_steps": ["OBRIGATÓRIO - mínimo 3 passos"],
-  "common_errors": ["OBRIGATÓRIO - mínimo 2 erros comuns"],
-  "controlled_risks": [],
-  "validation_justification": null
+  "action_type": "create_it",
+  "change_reason": "motivo",
+  "change_summary": "resumo",
+  "operational_impact": "impacto",
+  "affected_indicator": "indicador",
+  "urgency": "alta",
+  "suggested_title": "Título da IT",
+  "suggested_objective": "Objetivo",
+  "suggested_steps": ["Passo 1", "Passo 2", "Passo 3"],
+  "common_errors": ["Erro 1", "Erro 2"]
 }
 
-**Caso 2: Processo Validado (action_required = false)**
+Para PROCESSO OK:
 {
   "action_required": false,
   "action_type": "validated",
-  "target_it_code": null,
-  "current_version": null,
-  "proposed_version": null,
-  "change_reason": "Análise realizada sem identificar necessidade de melhoria",
-  "change_summary": "Processo operacionalmente adequado",
-  "operational_impact": "Manutenção do padrão atual",
-  "affected_indicator": "N/A",
-  "urgency": "baixa",
-  "suggested_title": "",
-  "suggested_objective": "",
-  "suggested_steps": [],
-  "common_errors": [],
-  "controlled_risks": ["risco 1 já controlado", "risco 2 já controlado"],
-  "validation_justification": "OBRIGATÓRIO - justificativa detalhada"
-}
-`;
+  "validation_justification": "justificativa detalhada"
+}`;
 
-      const response = await base44.integrations.Core.InvokeLLM({
-        prompt,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            action_required: { type: "boolean" },
-            action_type: { type: "string", enum: ["create_it", "update_it", "validated"] },
-            target_it_code: { type: ["string", "null"] },
-            current_version: { type: ["string", "null"] },
-            proposed_version: { type: ["string", "null"] },
-            change_reason: { type: "string" },
-            change_summary: { type: "string" },
-            operational_impact: { type: "string" },
-            affected_indicator: { type: "string" },
-            urgency: { type: "string", enum: ["baixa", "média", "alta"] },
-            suggested_title: { type: "string" },
-            suggested_objective: { type: "string" },
-            suggested_steps: { type: "array", items: { type: "string" } },
-            common_errors: { type: "array", items: { type: "string" } },
-            controlled_risks: { type: "array", items: { type: "string" } },
-            validation_justification: { type: ["string", "null"] }
-          },
-          required: ["action_required", "action_type", "change_reason"]
-        }
-      });
-
-      console.log("✅ IA Response completa:", JSON.stringify(response, null, 2));
+      console.log("📤 Enviando prompt para IA...");
+      const rawResponse = await base44.integrations.Core.InvokeLLM({ prompt });
       
-      if (!response || typeof response !== 'object') {
-        console.error("❌ Resposta inválida da IA:", response);
-        toast.error("Resposta inválida da IA");
+      console.log("📥 Resposta RAW da IA:", rawResponse);
+      console.log("📏 Tipo da resposta:", typeof rawResponse);
+      
+      // Parse manual com tratamento de erro
+      let response;
+      try {
+        // Se já for objeto, use direto
+        if (typeof rawResponse === 'object' && rawResponse !== null) {
+          response = rawResponse;
+          console.log("✅ Resposta já é objeto");
+        } else {
+          // Se for string, tenta parse
+          const cleanJson = String(rawResponse).replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+          console.log("🧹 JSON limpo:", cleanJson);
+          response = JSON.parse(cleanJson);
+          console.log("✅ Parse JSON bem-sucedido");
+        }
+      } catch (parseError) {
+        console.error("❌ ERRO DE PARSE:", parseError);
+        console.error("❌ String que falhou:", rawResponse);
+        toast.error("IA retornou formato inválido. Ver console para detalhes.");
         setLoading(false);
         return;
       }
 
-      // Validação condicional baseada no action_type
-      if (response.action_required && response.action_type !== "validated") {
-        if (!response.suggested_title || !Array.isArray(response.suggested_steps) || response.suggested_steps.length === 0) {
-          console.error("❌ Resposta incompleta para action_required:", response);
-          toast.error("IA não retornou campos obrigatórios - tente descrever mais detalhes");
-          setLoading(false);
-          return;
-        }
+      console.log("✅ Response parseado:", JSON.stringify(response, null, 2));
+
+      // Validação simples
+      if (!response || typeof response !== 'object') {
+        console.error("❌ Response não é objeto:", response);
+        toast.error("Formato inválido da IA");
+        setLoading(false);
+        return;
+      }
+
+      if (response.action_required && !response.suggested_title) {
+        console.error("❌ Faltam campos obrigatórios:", response);
+        toast.error("IA não retornou dados completos");
+        setLoading(false);
+        return;
       }
 
       setSuggestions(response);
-      console.log("✅ Sugestões definidas com sucesso");
+      console.log("✅ Sugestões aplicadas");
       toast.success("Análise concluída!");
     } catch (error) {
       console.error("❌ Erro ao analisar:", error);
