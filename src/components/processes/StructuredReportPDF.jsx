@@ -329,27 +329,60 @@ export async function generateStructuredReportPDF(formData, workshop) {
   doc.setTextColor(0);
   yPos += 12;
 
-  // 11. Assinaturas
-  checkPageBreak(40);
+  // 11. Assinaturas com Assinatura Digital
+  checkPageBreak(60);
   doc.setFontSize(14);
   doc.setFont(undefined, 'bold');
   doc.text("11. ASSINATURAS", 15, yPos);
-  yPos += 15;
+  yPos += 10;
 
-  doc.setFontSize(10);
-  doc.setFont(undefined, 'normal');
-  doc.line(15, yPos, 90, yPos);
-  doc.line(120, yPos, 195, yPos);
-  yPos += 5;
-  doc.text(`${formData.consultor_nome || 'Consultor'}`, 15, yPos);
-  doc.text(`${formData.representante_nome || 'Representante da Empresa'}`, 120, yPos);
-  yPos += 5;
+  // Caixa do Consultor
+  doc.setDrawColor(200);
+  doc.setFillColor(249, 250, 251);
+  doc.roundedRect(15, yPos, 85, 45, 2, 2, 'FD');
+  
+  // Caixa do Representante
+  doc.roundedRect(110, yPos, 85, 45, 2, 2, 'FD');
+
+  // Assinatura digital do consultor (se existir)
+  if (formData.consultor_assinatura) {
+    try {
+      doc.addImage(formData.consultor_assinatura, 'PNG', 20, yPos + 5, 75, 20);
+    } catch (e) {
+      console.log("Erro ao adicionar assinatura consultor");
+    }
+  }
+  
+  // Assinatura digital do representante (se existir)
+  if (formData.representante_assinatura) {
+    try {
+      doc.addImage(formData.representante_assinatura, 'PNG', 115, yPos + 5, 75, 20);
+    } catch (e) {
+      console.log("Erro ao adicionar assinatura representante");
+    }
+  }
+
+  // Linhas de assinatura
+  doc.setDrawColor(0);
+  doc.line(20, yPos + 28, 95, yPos + 28);
+  doc.line(115, yPos + 28, 190, yPos + 28);
+  
+  // Nomes e cargos
   doc.setFontSize(9);
-  doc.text(`${formData.consultor_cargo || 'Cargo'}`, 15, yPos);
-  doc.text(`${formData.representante_cargo || 'Cargo'}`, 120, yPos);
-  yPos += 5;
-  doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 15, yPos);
-  doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 120, yPos);
+  doc.setFont(undefined, 'bold');
+  doc.text(`${formData.consultor_nome || 'Consultor'}`, 57.5, yPos + 33, { align: 'center' });
+  doc.text(`${formData.representante_nome || 'Representante'}`, 152.5, yPos + 33, { align: 'center' });
+  
+  doc.setFont(undefined, 'normal');
+  doc.setFontSize(8);
+  doc.text(`${formData.consultor_cargo || 'Consultor Oficinas Master'}`, 57.5, yPos + 38, { align: 'center' });
+  doc.text(`${formData.representante_cargo || 'Representante da Empresa'}`, 152.5, yPos + 38, { align: 'center' });
+  
+  doc.setFontSize(7);
+  doc.setTextColor(100);
+  doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 57.5, yPos + 43, { align: 'center' });
+  doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 152.5, yPos + 43, { align: 'center' });
+  doc.setTextColor(0);
 
   // Footer
   const pageCount = doc.internal.getNumberOfPages();
