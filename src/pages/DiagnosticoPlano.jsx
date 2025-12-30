@@ -13,6 +13,7 @@ export default function DiagnosticoPlano() {
   const [user, setUser] = useState(null);
   const [diagnosticData, setDiagnosticData] = useState(null);
   const [testResult, setTestResult] = useState(null);
+  const [creditsInfo, setCreditsInfo] = useState(null);
 
   useEffect(() => {
     loadDiagnostics();
