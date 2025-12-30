@@ -220,18 +220,7 @@ Responda de forma prática, clara e operacional.`;
   };
 
   if (collapsed) {
-    return (
-      <div className="fixed right-0 top-1/2 -translate-y-1/2 z-50">
-        <Button
-          onClick={onToggle}
-          className="rounded-l-lg rounded-r-none bg-purple-600 hover:bg-purple-700"
-          size="sm"
-        >
-          <ChevronLeft className="w-4 h-4 mr-1" />
-          <Sparkles className="w-4 h-4" />
-        </Button>
-      </div>
-    );
+    return null;
   }
 
   return (
