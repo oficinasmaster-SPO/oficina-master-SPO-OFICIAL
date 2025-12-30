@@ -8,12 +8,25 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Upload, Loader2, Trash2, Calendar, CheckCircle2 } from "lucide-react";
+import { Upload, Loader2, Trash2, Calendar, CheckCircle2, FileText } from "lucide-react";
 import { toast } from "sonner";
+import StructuredReportForm from "./StructuredReportForm";
 
 export default function ImplementationTab({ processId, workshopId }) {
   const queryClient = useQueryClient();
   const [uploading, setUploading] = React.useState(false);
+  const [showReportForm, setShowReportForm] = React.useState(false);
+  const [workshop, setWorkshop] = React.useState(null);
+
+  React.useEffect(() => {
+    const loadWorkshop = async () => {
+      if (workshopId) {
+        const w = await base44.entities.Workshop.get(workshopId);
+        setWorkshop(w);
+      }
+    };
+    loadWorkshop();
+  }, [workshopId]);
 
   const { data: implementation, isLoading } = useQuery({
     queryKey: ['implementation', processId],
@@ -86,6 +99,24 @@ export default function ImplementationTab({ processId, workshopId }) {
     const updatedEvidences = [...(implementation?.evidences || [])];
     updatedEvidences.splice(index, 1);
     saveMutation.mutate({ evidences: updatedEvidences });
+  };
+
+  const handleSaveStructuredReport = async (reportData) => {
+    const newEvidence = {
+      type: reportData.type,
+      title: reportData.title,
+      file_url: reportData.file_url,
+      uploaded_at: new Date().toISOString(),
+      uploaded_by: (await base44.auth.me()).full_name,
+      metadata: reportData.data
+    };
+
+    const updatedEvidences = [...(implementation?.evidences || []), newEvidence];
+    await saveMutation.mutateAsync({
+      evidences: updatedEvidences,
+      checklist: { ...implementation?.checklist, evidencias_anexadas: true }
+    });
+    setShowReportForm(false);
   };
 
   if (isLoading) {
@@ -165,9 +196,19 @@ export default function ImplementationTab({ processId, workshopId }) {
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Upload className="w-5 h-5" />
-            Evidências da Implementação
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Upload className="w-5 h-5" />
+              Evidências da Implementação
+            </div>
+            <Button
+              onClick={() => setShowReportForm(true)}
+              className="bg-blue-600 hover:bg-blue-700"
+              size="sm"
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              Relatório Estruturado
+            </Button>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -221,6 +262,13 @@ export default function ImplementationTab({ processId, workshopId }) {
           )}
         </CardContent>
       </Card>
+
+      <StructuredReportForm
+        open={showReportForm}
+        onClose={() => setShowReportForm(false)}
+        onSave={handleSaveStructuredReport}
+        workshop={workshop}
+      />
     </div>
   );
 }
