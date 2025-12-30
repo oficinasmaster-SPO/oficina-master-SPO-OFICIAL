@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
   try {
@@ -67,10 +67,12 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Erro ao registrar tracking:', error);
+    console.error('❌ [trackImplementacao] Erro:', error);
+    console.error('❌ [trackImplementacao] Stack:', error.stack);
     return Response.json({ 
       error: 'Erro ao registrar tracking',
-      details: error.message 
+      details: error.message,
+      stack: error.stack 
     }, { status: 500 });
   }
 });
