@@ -72,10 +72,13 @@ Deno.serve(async (req) => {
     return Response.json({ success: true, result }, { status: 200 });
 
   } catch (error) {
-    console.error("❌ Erro ao invocar OpenAI:", error);
+    console.error("❌ ERRO CRÍTICO na função:", error);
+    console.error("❌ Stack:", error.stack);
+    console.error("❌ Tipo:", error.constructor.name);
     return Response.json({ 
       error: error.message || 'Internal server error',
-      details: error.toString()
+      details: error.toString(),
+      stack: error.stack
     }, { status: 500 });
   }
 });
