@@ -160,7 +160,12 @@ export default function StructuredReportForm({ open, onClose, onSave, workshop }
       const horario_termino = formData.horario_termino || new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
       const dataCompleta = { ...formData, horario_termino };
       
+      toast.info("Gerando PDF...");
       const { file_url } = await generateStructuredReportPDF(dataCompleta, workshop);
+      
+      if (!file_url) {
+        throw new Error("Falha ao gerar PDF");
+      }
       
       await onSave({
         type: 'relatorio_implementacao',
@@ -169,11 +174,11 @@ export default function StructuredReportForm({ open, onClose, onSave, workshop }
         data: dataCompleta
       });
       
-      toast.success("Relatório gerado e salvo com sucesso!");
+      toast.success("Relatório salvo com sucesso!");
       onClose();
     } catch (error) {
       console.error("Erro ao gerar relatório:", error);
-      toast.error("Erro ao gerar relatório");
+      toast.error("Erro ao gerar relatório: " + (error.message || "Tente novamente"));
     } finally {
       setLoading(false);
     }

@@ -285,10 +285,19 @@ export async function generateStructuredReportPDF(formData, workshop) {
   }
 
   // Convert to Blob and upload
-  const pdfBlob = doc.output('blob');
-  const pdfFile = new File([pdfBlob], `relatorio_implementacao_${Date.now()}.pdf`, { type: 'application/pdf' });
-  
-  const { file_url } = await base44.integrations.Core.UploadFile({ file: pdfFile });
-  
-  return { file_url };
+  try {
+    const pdfBlob = doc.output('blob');
+    const pdfFile = new File([pdfBlob], `relatorio_implementacao_${Date.now()}.pdf`, { type: 'application/pdf' });
+    
+    const { file_url } = await base44.integrations.Core.UploadFile({ file: pdfFile });
+    
+    if (!file_url) {
+      throw new Error("URL do arquivo não retornada");
+    }
+    
+    return { file_url };
+  } catch (error) {
+    console.error("Erro ao fazer upload do PDF:", error);
+    throw new Error("Falha ao fazer upload do PDF: " + error.message);
+  }
 }
