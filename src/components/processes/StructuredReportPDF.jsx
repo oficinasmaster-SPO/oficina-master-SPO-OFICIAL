@@ -270,27 +270,64 @@ export async function generateStructuredReportPDF(formData, workshop) {
     yPos += 10;
   }
 
-  // 10. Nível de Maturidade
-  checkPageBreak();
+  // 10. Nível de Maturidade com Gráfico Visual
+  checkPageBreak(50);
   doc.setFontSize(14);
   doc.setFont(undefined, 'bold');
   doc.text("10. NÍVEL DE MATURIDADE", 15, yPos);
-  yPos += 8;
-  doc.setFontSize(12);
-  doc.setFont(undefined, 'normal');
+  yPos += 10;
   
   const maturidadeLevels = [
-    { nivel: 0, label: "Inexistente", icon: "❌" },
-    { nivel: 1, label: "Inicial", icon: "⚠️" },
-    { nivel: 2, label: "Documentado", icon: "📄" },
-    { nivel: 3, label: "Implementado", icon: "✔️" },
-    { nivel: 4, label: "Gerenciado", icon: "✔️✔️" },
-    { nivel: 5, label: "Otimizado", icon: "⭐" }
+    { nivel: 0, label: "Inexistente" },
+    { nivel: 1, label: "Inicial" },
+    { nivel: 2, label: "Documentado" },
+    { nivel: 3, label: "Implementado" },
+    { nivel: 4, label: "Gerenciado" },
+    { nivel: 5, label: "Otimizado" }
   ];
   
+  // Desenhar barra de progresso visual
+  const barX = 15;
+  const barY = yPos;
+  const barWidth = 180;
+  const barHeight = 15;
+  const segmentWidth = barWidth / 6;
+
+  // Fundo cinza
+  doc.setFillColor(229, 231, 235);
+  doc.roundedRect(barX, barY, barWidth, barHeight, 3, 3, 'F');
+
+  // Preenchimento colorido até o nível atual
+  for (let i = 0; i <= formData.nivel_maturidade && i <= 5; i++) {
+    const color = maturidadeColors[i];
+    doc.setFillColor(color[0], color[1], color[2]);
+    if (i === 0) {
+      doc.roundedRect(barX, barY, segmentWidth, barHeight, 3, 0, 'F');
+    } else if (i === formData.nivel_maturidade) {
+      doc.rect(barX + (i * segmentWidth), barY, segmentWidth, barHeight, 'F');
+    } else {
+      doc.rect(barX + (i * segmentWidth), barY, segmentWidth, barHeight, 'F');
+    }
+  }
+
+  // Labels dos níveis
+  yPos += barHeight + 3;
+  doc.setFontSize(7);
+  doc.setTextColor(100);
+  for (let i = 0; i <= 5; i++) {
+    doc.text(String(i), barX + (i * segmentWidth) + (segmentWidth / 2), yPos, { align: 'center' });
+  }
+  
+  yPos += 8;
   const selectedLevel = maturidadeLevels.find(l => l.nivel === formData.nivel_maturidade);
+  doc.setFontSize(12);
+  doc.setTextColor(0);
+  doc.setFont(undefined, 'bold');
+  const levelColor = maturidadeColors[formData.nivel_maturidade];
+  doc.setTextColor(levelColor[0], levelColor[1], levelColor[2]);
   doc.text(`Nível ${formData.nivel_maturidade} - ${selectedLevel?.label || 'Não informado'}`, 15, yPos);
-  yPos += 10;
+  doc.setTextColor(0);
+  yPos += 12;
 
   // 11. Assinaturas
   checkPageBreak(40);
