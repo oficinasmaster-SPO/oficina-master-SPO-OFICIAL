@@ -8,14 +8,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Upload, Loader2, Trash2, Calendar, CheckCircle2, FileText } from "lucide-react";
+import { Upload, Loader2, Trash2, Calendar, CheckCircle2, FileText, Eye } from "lucide-react";
 import { toast } from "sonner";
 import StructuredReportForm from "./StructuredReportForm";
+import ViewStructuredReportModal from "./ViewStructuredReportModal";
 
 export default function ImplementationTab({ processId, workshopId }) {
   const queryClient = useQueryClient();
   const [uploading, setUploading] = React.useState(false);
   const [showReportForm, setShowReportForm] = React.useState(false);
+  const [viewingReport, setViewingReport] = React.useState(null);
   const [workshop, setWorkshop] = React.useState(null);
 
   React.useEffect(() => {
@@ -114,7 +116,7 @@ export default function ImplementationTab({ processId, workshopId }) {
         file_url: reportData.file_url,
         uploaded_at: new Date().toISOString(),
         uploaded_by: user.full_name,
-        metadata: reportData.data
+        data: reportData.data
       };
 
       console.log("📎 Nova evidência:", newEvidence);
@@ -293,6 +295,13 @@ export default function ImplementationTab({ processId, workshopId }) {
         open={showReportForm}
         onClose={() => setShowReportForm(false)}
         onSave={handleSaveStructuredReport}
+        workshop={workshop}
+      />
+
+      <ViewStructuredReportModal
+        open={!!viewingReport}
+        onClose={() => setViewingReport(null)}
+        reportData={viewingReport}
         workshop={workshop}
       />
     </div>
