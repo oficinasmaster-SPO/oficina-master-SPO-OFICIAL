@@ -15,12 +15,10 @@ import ITRiscosTab from "./ITRiscosTab";
 import ITIndicadoresTab from "./ITIndicadoresTab";
 import ITInterRelacoesTab from "./ITInterRelacoesTab";
 import ITEvidenciaTab from "./ITEvidenciaTab";
-import ITAIAssistant from "./ITAIAssistant";
 import AIFieldAssist from "./AIFieldAssist";
 
 export default function ITFormDialog({ open, onClose, it, mapId, workshopId, onSave, isSaving }) {
   const [uploading, setUploading] = React.useState(false);
-  const [aiCollapsed, setAiCollapsed] = React.useState(false);
   const [mapData, setMapData] = React.useState(null);
   const [formData, setFormData] = React.useState({
     title: "",
@@ -187,35 +185,16 @@ export default function ITFormDialog({ open, onClose, it, mapId, workshopId, onS
   };
 
   return (
-    <>
-      <ITAIAssistant
-        itData={formData}
-        mapData={mapData}
-        collapsed={aiCollapsed}
-        onToggle={() => setAiCollapsed(!aiCollapsed)}
-      />
-      
       <Dialog open={open} onOpenChange={onClose}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex justify-between items-center">
-            <div>
-              <DialogTitle className="text-2xl">
-                {it ? 'Editar' : 'Nova'} {formData.type === 'IT' ? 'Instrução de Trabalho' : 'Formulário/Registro'}
-              </DialogTitle>
-              <p className="text-sm text-gray-600 mt-1">
-                {it ? `Editando ${it.code}` : 'Preencha os campos obrigatórios marcados com *'}
-              </p>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setAiCollapsed(false)}
-              className="text-purple-600 border-purple-200 hover:bg-purple-50"
-            >
-              <Sparkles className="w-4 h-4 mr-2" />
-              Assistente IA
-            </Button>
+            <DialogTitle className="text-2xl">
+              {it ? 'Editar' : 'Nova'} {formData.type === 'IT' ? 'Instrução de Trabalho' : 'Formulário/Registro'}
+            </DialogTitle>
+            <p className="text-sm text-gray-600 mt-1">
+              {it ? `Editando ${it.code}` : 'Preencha os campos obrigatórios marcados com *'}
+            </p>
           </div>
         </DialogHeader>
 
@@ -408,6 +387,5 @@ export default function ITFormDialog({ open, onClose, it, mapId, workshopId, onS
         </div>
       </DialogContent>
     </Dialog>
-    </>
   );
 }
