@@ -84,24 +84,46 @@ REGRA CRÍTICA:
 Se NÃO houver melhoria, você DEVE justificar explicitamente por que o processo está operacionalmente correto.
 É proibido responder sem propor melhoria ou justificativa formal.
 
-Retorne um JSON estruturado:
+**FORMATO DE RESPOSTA JSON:**
+
+**Caso 1: Ação Necessária (action_required = true)**
 {
-  "action_required": true | false,
-  "action_type": "create_it" | "update_it" | "validated",
-  "target_it_code": "IT-XXX ou null se criar nova",
-  "current_version": "X.X",
-  "proposed_version": "X.X",
-  "change_reason": "motivo técnico detalhado",
-  "change_summary": "resumo executivo da alteração",
-  "operational_impact": "impacto esperado na execução",
-  "affected_indicator": "qual indicador será impactado",
+  "action_required": true,
+  "action_type": "create_it" ou "update_it",
+  "target_it_code": "IT-XXX" ou null,
+  "current_version": "X.X" ou null,
+  "proposed_version": "X.X" ou null,
+  "change_reason": "motivo técnico obrigatório",
+  "change_summary": "resumo executivo obrigatório",
+  "operational_impact": "impacto esperado obrigatório",
+  "affected_indicator": "indicador impactado obrigatório",
   "urgency": "baixa" | "média" | "alta",
-  "suggested_title": "título da IT",
-  "suggested_objective": "objetivo operacional claro",
-  "suggested_steps": ["passo 1 objetivo", "passo 2 objetivo"],
-  "common_errors": ["erro comum 1", "erro comum 2"],
-  "controlled_risks": ["risco já controlado 1", "risco já controlado 2"],
-  "validation_justification": "por que NÃO versionar (se aplicável)"
+  "suggested_title": "OBRIGATÓRIO - título da IT",
+  "suggested_objective": "OBRIGATÓRIO - objetivo claro",
+  "suggested_steps": ["OBRIGATÓRIO - mínimo 3 passos"],
+  "common_errors": ["OBRIGATÓRIO - mínimo 2 erros comuns"],
+  "controlled_risks": [],
+  "validation_justification": null
+}
+
+**Caso 2: Processo Validado (action_required = false)**
+{
+  "action_required": false,
+  "action_type": "validated",
+  "target_it_code": null,
+  "current_version": null,
+  "proposed_version": null,
+  "change_reason": "Análise realizada sem identificar necessidade de melhoria",
+  "change_summary": "Processo operacionalmente adequado",
+  "operational_impact": "Manutenção do padrão atual",
+  "affected_indicator": "N/A",
+  "urgency": "baixa",
+  "suggested_title": "",
+  "suggested_objective": "",
+  "suggested_steps": [],
+  "common_errors": [],
+  "controlled_risks": ["risco 1 já controlado", "risco 2 já controlado"],
+  "validation_justification": "OBRIGATÓRIO - justificativa detalhada"
 }
 `;
 
@@ -111,22 +133,23 @@ Retorne um JSON estruturado:
           type: "object",
           properties: {
             action_required: { type: "boolean" },
-            action_type: { type: "string" },
-            target_it_code: { type: "string" },
-            current_version: { type: "string" },
-            proposed_version: { type: "string" },
+            action_type: { type: "string", enum: ["create_it", "update_it", "validated"] },
+            target_it_code: { type: ["string", "null"] },
+            current_version: { type: ["string", "null"] },
+            proposed_version: { type: ["string", "null"] },
             change_reason: { type: "string" },
             change_summary: { type: "string" },
             operational_impact: { type: "string" },
             affected_indicator: { type: "string" },
-            urgency: { type: "string" },
+            urgency: { type: "string", enum: ["baixa", "média", "alta"] },
             suggested_title: { type: "string" },
             suggested_objective: { type: "string" },
             suggested_steps: { type: "array", items: { type: "string" } },
             common_errors: { type: "array", items: { type: "string" } },
             controlled_risks: { type: "array", items: { type: "string" } },
-            validation_justification: { type: "string" }
-          }
+            validation_justification: { type: ["string", "null"] }
+          },
+          required: ["action_required", "action_type", "change_reason"]
         }
       });
 
@@ -139,11 +162,14 @@ Retorne um JSON estruturado:
         return;
       }
 
-      if (!response.suggested_title || !response.suggested_steps) {
-        console.error("❌ Resposta incompleta da IA:", response);
-        toast.error("Resposta incompleta da IA - tente descrever mais detalhes");
-        setLoading(false);
-        return;
+      // Validação condicional baseada no action_type
+      if (response.action_required && response.action_type !== "validated") {
+        if (!response.suggested_title || !Array.isArray(response.suggested_steps) || response.suggested_steps.length === 0) {
+          console.error("❌ Resposta incompleta para action_required:", response);
+          toast.error("IA não retornou campos obrigatórios - tente descrever mais detalhes");
+          setLoading(false);
+          return;
+        }
       }
 
       setSuggestions(response);
