@@ -18,6 +18,9 @@ export default function ITViewer({ it }) {
               {it.type}
             </div>
             <div>
+              <p className="text-sm font-semibold text-gray-600 uppercase">
+                {it.type === 'IT' ? 'IT - Instrução de Trabalho' : 'FR - Formulário de Registro'}
+              </p>
               <h2 className="text-xl font-bold text-gray-900">{it.title}</h2>
             </div>
           </div>
