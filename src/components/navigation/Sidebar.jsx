@@ -688,6 +688,14 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           adminOnly: true,
           highlight: true,
           requiredPermission: 'admin.audit'
+        },
+        { 
+          name: 'Diagnóstico de Plano', 
+          href: createPageUrl('DiagnosticoPlano'), 
+          icon: Bug,
+          description: 'Verificar status do plano Base44',
+          adminOnly: true,
+          requiredPermission: 'admin.system_config'
         }
       ]
     }
