@@ -18,7 +18,7 @@ import { ptBR } from "date-fns/locale";
 import AIDocumentAnalyzer from "@/components/documents/AIDocumentAnalyzer";
 import AdminViewBanner from "../components/shared/AdminViewBanner";
 import DocumentViewer from "@/components/documents/DocumentViewer";
-import DragDropUpload from "@/components/documents/DragDropUpload";
+import MultiFileUpload from "@/components/documents/MultiFileUpload";
 import DocumentsDashboard from "@/components/documents/DocumentsDashboard";
 import DigitalSignature from "@/components/documents/DigitalSignature";
 import OCRExtractor from "@/components/documents/OCRExtractor";
@@ -43,14 +43,7 @@ export default function RepositorioDocumentos() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAdminView, setIsAdminView] = useState(false);
   
-  const [newDoc, setNewDoc] = useState({
-    title: "",
-    category: "empresa",
-    type: "interno",
-    is_controlled_copy: false,
-    file: null,
-    expiry_date: ""
-  });
+
 
   // Fetch Current User & Workshop
   const { data: user } = useQuery({
@@ -162,63 +155,7 @@ export default function RepositorioDocumentos() {
     return null;
   };
 
-  // Create Document
-  const createMutation = useMutation({
-    mutationFn: async () => {
-      console.log("📄 [CREATE] Salvando documento...");
-      console.log("📄 [CREATE] Workshop:", workshop?.id, workshop?.name);
-      console.log("📄 [CREATE] User:", user?.email);
-      
-      if (!workshop?.id) {
-        throw new Error("Workshop não identificado");
-      }
-      
-      if (!newDoc.file || !newDoc.title) {
-        throw new Error("Preencha os campos obrigatórios");
-      }
-      
-      setUploading(true);
-      try {
-        // 1. Upload File
-        console.log("📤 [CREATE] Fazendo upload do arquivo...");
-        const { file_url } = await base44.integrations.Core.UploadFile({ file: newDoc.file });
-        console.log("✅ [CREATE] Arquivo enviado:", file_url);
-        
-        // 2. Create Record
-        console.log("💾 [CREATE] Criando registro no banco...");
-        const docData = {
-          workshop_id: workshop.id,
-          title: newDoc.title,
-          category: newDoc.category,
-          type: newDoc.type,
-          is_controlled_copy: newDoc.is_controlled_copy,
-          file_url: file_url,
-          expiry_date: newDoc.expiry_date || null
-        };
-        console.log("📄 [CREATE] Dados que serão salvos:", docData);
-        
-        const created = await base44.entities.CompanyDocument.create(docData);
-        console.log("✅ [CREATE] Documento salvo com sucesso!");
-        console.log("✅ [CREATE] ID:", created.id);
-        console.log("✅ [CREATE] Workshop ID salvo:", created.workshop_id);
-        console.log("✅ [CREATE] Título:", created.title);
 
-        return created;
-      } catch (error) {
-        console.error("❌ [CREATE] Erro ao salvar documento:", error);
-        throw error;
-      } finally {
-        setUploading(false);
-      }
-    },
-    onSuccess: () => {
-      toast.success("Documento salvo com sucesso!");
-      setShowUploadModal(false);
-      setNewDoc({ title: "", category: "empresa", type: "interno", is_controlled_copy: false, file: null, expiry_date: "" });
-      queryClient.invalidateQueries(['company-documents']);
-    },
-    onError: (e) => toast.error("Erro ao salvar: " + e.message)
-  });
 
   // Delete Document
   const deleteMutation = useMutation({
@@ -565,103 +502,18 @@ export default function RepositorioDocumentos() {
           onClose={() => setSelectedDocForReport(null)}
         />
 
-        {/* Upload Modal */}
         <Dialog open={showUploadModal} onOpenChange={setShowUploadModal}>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Novo Documento</DialogTitle>
+              <DialogTitle>Upload de Documentos</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div>
-                <Label>Título do Documento *</Label>
-                <Input 
-                  value={newDoc.title}
-                  onChange={(e) => setNewDoc({...newDoc, title: e.target.value})}
-                  placeholder="Ex: Contrato Social"
-                />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Categoria *</Label>
-                  <Select value={newDoc.category} onValueChange={(v) => setNewDoc({...newDoc, category: v})}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map(c => (
-                        <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Tipo *</Label>
-                  <Select value={newDoc.type} onValueChange={(v) => setNewDoc({...newDoc, type: v})}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {docTypes.map(t => (
-                        <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-2 border p-3 rounded-lg bg-slate-50">
-                <Checkbox 
-                  id="controlled" 
-                  checked={newDoc.is_controlled_copy}
-                  onCheckedChange={(checked) => setNewDoc({...newDoc, is_controlled_copy: checked})}
-                />
-                <div className="grid gap-1.5 leading-none">
-                  <Label htmlFor="controlled" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    Cópia Controlada
-                  </Label>
-                  <p className="text-xs text-muted-foreground">
-                    Marque se este documento requer controle de versão rigoroso.
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                <Label>Arquivo *</Label>
-                <div className="mt-2">
-                  <DragDropUpload 
-                    onFileSelect={(file) => setNewDoc({...newDoc, file})}
-                  />
-                  {newDoc.file && (
-                    <p className="text-sm text-green-600 mt-2">
-                      ✓ Arquivo selecionado: {newDoc.file.name}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <Label>Data de Validade (Opcional)</Label>
-                <Input 
-                  type="date"
-                  value={newDoc.expiry_date}
-                  onChange={(e) => setNewDoc({...newDoc, expiry_date: e.target.value})}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowUploadModal(false)}>Cancelar</Button>
-              <Button onClick={() => createMutation.mutate()} disabled={uploading}>
-                {uploading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Enviando...
-                  </>
-                ) : (
-                  "Salvar Documento"
-                )}
-              </Button>
-            </DialogFooter>
+            <MultiFileUpload 
+              workshopId={workshop?.id}
+              onComplete={() => {
+                setShowUploadModal(false);
+                queryClient.invalidateQueries(['company-documents']);
+              }}
+            />
           </DialogContent>
         </Dialog>
       </div>
