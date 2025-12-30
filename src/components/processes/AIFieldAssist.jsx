@@ -47,81 +47,8 @@ export default function AIFieldAssist({
       
       toast.info("Gerando sugestão com IA...", { duration: 2000 });
       
-      // Usar agente ao invés de integração direta
-      const conversation = await base44.agents.createConversation({
-        agent_name: "it_assistant",
-        metadata: { 
-          field: fieldName,
-          it_title: itData?.title 
-        }
-      });
-      
-      console.log("📦 Conversa criada:", conversation);
-      
-      // Subscrever para receber atualizações em tempo real
-      let finalMessages = [];
-      let lastContentLength = 0;
-      let stableCount = 0;
-      
-      await new Promise((resolve, reject) => {
-        const unsubscribe = base44.agents.subscribeToConversation(conversation.id, (data) => {
-          console.log("📨 Atualização recebida:", {
-            messagesCount: data.messages?.length,
-            lastMessageRole: data.messages?.[data.messages.length - 1]?.role,
-            contentLength: data.messages?.[data.messages.length - 1]?.content?.length
-          });
-          
-          finalMessages = data.messages || [];
-          
-          const lastMsg = finalMessages[finalMessages.length - 1];
-          
-          // Verificar se é uma mensagem do assistente
-          if (lastMsg && lastMsg.role === 'assistant' && lastMsg.content) {
-            const currentLength = lastMsg.content.length;
-            
-            // Se o tamanho não mudou, incrementar contador
-            if (currentLength === lastContentLength && currentLength > 0) {
-              stableCount++;
-              console.log(`🔄 Conteúdo estável (${stableCount}/3):`, currentLength);
-              
-              // Após 3 verificações consecutivas sem mudança, considerar completo
-              if (stableCount >= 3) {
-                console.log("✅ Mensagem completa detectada");
-                unsubscribe();
-                resolve();
-              }
-            } else {
-              // Tamanho mudou, resetar contador
-              stableCount = 0;
-              lastContentLength = currentLength;
-            }
-          }
-        });
-        
-        // Adicionar mensagem do usuário
-        base44.agents.addMessage(conversation, {
-          role: "user",
-          content: prompt
-        }).catch(err => {
-          unsubscribe();
-          reject(err);
-        });
-        
-        // Timeout de segurança aumentado
-        setTimeout(() => {
-          unsubscribe();
-          if (finalMessages.length === 0) {
-            reject(new Error("Timeout: sem resposta do agente"));
-          } else {
-            console.log("⏱️ Timeout atingido, usando última mensagem disponível");
-            resolve();
-          }
-        }, 60000); // 60 segundos
-      });
-      
-      // Pegar a última mensagem do assistente
-      const assistantMessages = finalMessages.filter(m => m.role === 'assistant');
-      const response = assistantMessages[assistantMessages.length - 1]?.content;
+      // Usar função backend ilimitada
+      const { result: response } = await base44.functions.invoke('invokeLLMUnlimited', { prompt });
       
       if (!response) {
         throw new Error("Agente não retornou resposta");
