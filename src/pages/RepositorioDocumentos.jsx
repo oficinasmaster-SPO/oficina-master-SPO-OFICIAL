@@ -17,11 +17,15 @@ import { ptBR } from "date-fns/locale";
 import AdvancedFilter from "@/components/shared/AdvancedFilter";
 import AIDocumentAnalyzer from "@/components/documents/AIDocumentAnalyzer";
 import AdminViewBanner from "../components/shared/AdminViewBanner";
+import DocumentViewer from "@/components/documents/DocumentViewer";
+import DragDropUpload from "@/components/documents/DragDropUpload";
+import DocumentsDashboard from "@/components/documents/DocumentsDashboard";
 
 export default function RepositorioDocumentos() {
   const queryClient = useQueryClient();
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedDocForAnalysis, setSelectedDocForAnalysis] = useState(null);
+  const [selectedDocForPreview, setSelectedDocForPreview] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [filterParams, setFilterParams] = useState({ search: "", category: "all", type: "all" });
   const [isAdminView, setIsAdminView] = useState(false);
@@ -150,6 +154,27 @@ export default function RepositorioDocumentos() {
     }
   };
 
+  const handleDownload = async (doc) => {
+    try {
+      // Registrar download
+      await base44.entities.DownloadLog.create({
+        document_id: doc.id,
+        document_title: doc.title,
+        user_id: user.id,
+        user_email: user.email,
+        workshop_id: workshop.id,
+        download_date: new Date().toISOString()
+      });
+
+      // Abrir documento
+      window.open(doc.file_url, '_blank');
+      toast.success("Download registrado");
+    } catch (error) {
+      console.error("Erro ao registrar download:", error);
+      window.open(doc.file_url, '_blank');
+    }
+  };
+
   const categories = [
     { value: "empresa", label: "Empresa" },
     { value: "juridico", label: "Jurídico" },
@@ -203,6 +228,8 @@ export default function RepositorioDocumentos() {
             Novo Documento
           </Button>
         </div>
+
+        <DocumentsDashboard documents={documents} />
 
         <AdvancedFilter 
           onFilter={setFilterParams}
@@ -274,11 +301,24 @@ export default function RepositorioDocumentos() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <a href={doc.file_url} target="_blank" rel="noopener noreferrer">
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50">
-                              <Download className="w-4 h-4" />
-                            </Button>
-                          </a>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                            onClick={() => setSelectedDocForPreview(doc)}
+                            title="Visualizar"
+                          >
+                            <Search className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            onClick={() => handleDownload(doc)}
+                            title="Baixar"
+                          >
+                            <Download className="w-4 h-4" />
+                          </Button>
                           <Button 
                             variant="ghost" 
                             size="icon" 
@@ -294,7 +334,7 @@ export default function RepositorioDocumentos() {
                             onClick={() => setSelectedDocForAnalysis(doc)}
                             title="Analisar com IA"
                           >
-                            <Search className="w-4 h-4 mr-1" /> IA
+                            IA
                           </Button>
                         </div>
                       </TableCell>
@@ -312,6 +352,12 @@ export default function RepositorioDocumentos() {
             onClose={() => setSelectedDocForAnalysis(null)} 
           />
         )}
+
+        <DocumentViewer 
+          document={selectedDocForPreview}
+          onClose={() => setSelectedDocForPreview(null)}
+          onDownload={handleDownload}
+        />
 
         {/* Upload Modal */}
         <Dialog open={showUploadModal} onOpenChange={setShowUploadModal}>
@@ -377,11 +423,14 @@ export default function RepositorioDocumentos() {
               <div>
                 <Label>Arquivo *</Label>
                 <div className="mt-2">
-                  <Input 
-                    type="file" 
-                    onChange={(e) => setNewDoc({...newDoc, file: e.target.files[0]})}
-                    className="cursor-pointer"
+                  <DragDropUpload 
+                    onFileSelect={(file) => setNewDoc({...newDoc, file})}
                   />
+                  {newDoc.file && (
+                    <p className="text-sm text-green-600 mt-2">
+                      ✓ Arquivo selecionado: {newDoc.file.name}
+                    </p>
+                  )}
                 </div>
               </div>
 
