@@ -19,6 +19,8 @@ import TimelineView from "@/components/cronograma/TimelineView";
 import CompletionModal from "@/components/cronograma/CompletionModal";
 import ActivityFilters from "@/components/cronograma/ActivityFilters";
 import ActivityDetailsModal from "@/components/cronograma/ActivityDetailsModal";
+import PillarDashboard from "@/components/cultura/PillarDashboard";
+import PillarManager from "@/components/cultura/PillarManager";
 
 export default function CronogramaAculturacao() {
   const navigate = useNavigate();
@@ -40,6 +42,8 @@ export default function CronogramaAculturacao() {
   });
   const [selectedForCompletion, setSelectedForCompletion] = useState(null);
   const [selectedForDetails, setSelectedForDetails] = useState(null);
+  const [culturalPillars, setCulturalPillars] = useState([]);
+  const [showPillarManager, setShowPillarManager] = useState(false);
 
   const handleCreateActivity = async () => {
     if (!newActivity.title || !newActivity.scheduled_date) {
@@ -324,6 +328,38 @@ export default function CronogramaAculturacao() {
               </DialogContent>
             </Dialog>
           </div>
+        </div>
+
+        {/* Gestão de Pilares */}
+        <div className="mb-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Pilares Culturais</CardTitle>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowPillarManager(!showPillarManager)}
+                >
+                  {showPillarManager ? "Ver Dashboard" : "Gerenciar Pilares"}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {showPillarManager ? (
+                <PillarManager
+                  pillars={culturalPillars}
+                  workshopId={workshop?.id}
+                  onUpdate={loadData}
+                />
+              ) : (
+                <PillarDashboard
+                  pillars={culturalPillars}
+                  activities={activities}
+                />
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         {/* Métricas */}
