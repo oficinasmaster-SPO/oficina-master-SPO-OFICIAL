@@ -40,6 +40,47 @@ export default function ITOperationalAssistant({ open, onClose, mapData, existin
       console.log("📝 Contexto:", context);
       console.log("🎯 Modo:", mode);
 
+      // Buscar material de referência contextual
+      console.log("📚 Buscando material de referência...");
+      let referenceMaterial = "";
+      
+      try {
+        // Buscar MAPs relacionados
+        const allMaps = await base44.entities.ProcessDocument.list();
+        const relevantMaps = allMaps.filter(m => 
+          m.category === mapData?.category || 
+          m.title?.toLowerCase().includes(context.toLowerCase().split(" ")[0])
+        ).slice(0, 3);
+
+        if (relevantMaps.length > 0) {
+          referenceMaterial += "\n\n📋 MATERIAL DE REFERÊNCIA - MAPs RELACIONADOS:\n";
+          relevantMaps.forEach(map => {
+            referenceMaterial += `\n--- MAP: ${map.title} (${map.code}) ---\n`;
+            referenceMaterial += `Objetivo: ${map.content_json?.objetivo || "N/A"}\n`;
+            if (map.content_json?.atividades) {
+              referenceMaterial += `Atividades:\n${map.content_json.atividades.map(a => `  • ${a.atividade} (${a.responsavel})`).join("\n")}\n`;
+            }
+            if (map.content_json?.indicadores) {
+              referenceMaterial += `Indicadores:\n${map.content_json.indicadores.map(i => `  • ${i.indicador}: ${i.meta}`).join("\n")}\n`;
+            }
+          });
+        }
+
+        // Buscar ITs completas com conteúdo
+        if (existingITs.length > 0) {
+          referenceMaterial += "\n\n📄 ITs EXISTENTES DETALHADAS:\n";
+          for (const it of existingITs.slice(0, 5)) {
+            referenceMaterial += `\n--- IT: ${it.code} - ${it.title} ---\n`;
+            referenceMaterial += `Objetivo: ${it.content?.objetivo || "N/A"}\n`;
+            if (it.content?.atividades) {
+              referenceMaterial += `Passos:\n${it.content.atividades.map((a, i) => `  ${i+1}. ${a.atividade}`).join("\n")}\n`;
+            }
+          }
+        }
+      } catch (searchError) {
+        console.error("Erro ao buscar material:", searchError);
+      }
+
       // Modo Livre - sem JSON schema
       if (mode === "free") {
         const freePrompt = `
@@ -49,9 +90,7 @@ CONTEXTO DO PROCESSO (MAP - REFERÊNCIA):
 Título: ${mapData?.title || "Não informado"}
 Objetivo: ${mapData?.content_json?.objetivo || mapData?.objective || "Não informado"}
 Etapas principais: ${mapData?.content_json?.atividades?.map(a => a.atividade).join(", ") || "Não informado"}
-
-ITs EXISTENTES:
-${existingITs.map(it => `- ${it.code}: ${it.title} (v${it.version})`).join("\n") || "Nenhuma IT criada ainda"}
+${referenceMaterial}
 
 SITUAÇÃO OPERACIONAL RELATADA:
 ${context}
@@ -103,12 +142,14 @@ Use formatação Markdown clara. Seja consultivo, mas prático e direto.`;
 CONTEXTO DO PROCESSO:
 Título: ${mapData?.title || "Não informado"}
 Objetivo: ${mapData?.content_json?.objetivo || "Não informado"}
-
-ITs EXISTENTES:
-${existingITs.map(it => `- ${it.code}: ${it.title} (v${it.version})`).join("\n") || "Nenhuma IT criada"}
+${referenceMaterial}
 
 SITUAÇÃO:
 ${context}
+
+IMPORTANTE: Use o MATERIAL DE REFERÊNCIA acima para basear suas sugestões. 
+Analise os MAPs e ITs existentes e sugira melhorias BASEADAS nesse conteúdo real, 
+não crie sugestões genéricas. Reutilize padrões, atividades e estruturas já documentadas.
 
 RETORNE APENAS UM JSON VÁLIDO (sem markdown, sem \`\`\`):
 
