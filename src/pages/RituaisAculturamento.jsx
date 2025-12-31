@@ -34,7 +34,9 @@ import {
   Flag,
   Repeat,
   FileText,
-  Settings
+  Settings,
+  Bell,
+  Upload
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -48,6 +50,9 @@ import MAPViewerDialog from "@/components/rituais/MAPViewerDialog";
 import RitualAnalytics from "@/components/rituais/RitualAnalytics";
 import RitualAuditLog from "@/components/rituais/RitualAuditLog";
 import RitualNotifications from "@/components/rituais/RitualNotifications";
+import RitualRecurrenceSettings from "@/components/rituais/RitualRecurrenceSettings";
+import RitualReminders from "@/components/rituais/RitualReminders";
+import RitualEvidenceUpload from "@/components/rituais/RitualEvidenceUpload";
 
 export default function RituaisAculturamento() {
   const navigate = useNavigate();
@@ -80,6 +85,12 @@ export default function RituaisAculturamento() {
   const [activeTab, setActiveTab] = useState("library");
   const [selectedMAP, setSelectedMAP] = useState(null);
   const [isMAPViewerOpen, setIsMAPViewerOpen] = useState(false);
+  const [selectedRitualForRecurrence, setSelectedRitualForRecurrence] = useState(null);
+  const [isRecurrenceOpen, setIsRecurrenceOpen] = useState(false);
+  const [selectedScheduleForReminder, setSelectedScheduleForReminder] = useState(null);
+  const [isReminderOpen, setIsReminderOpen] = useState(false);
+  const [selectedScheduleForEvidence, setSelectedScheduleForEvidence] = useState(null);
+  const [isEvidenceOpen, setIsEvidenceOpen] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -598,28 +609,46 @@ export default function RituaisAculturamento() {
                             {ritual.description}
                           </p>
                         </CardContent>
-                        <CardFooter className="pt-0 flex gap-2">
+                        <CardFooter className="pt-0 flex flex-col gap-2">
                           {ritual.isCustom && (
                             <Badge className="absolute top-2 right-2 bg-purple-600 text-white">
                               Custom
                             </Badge>
                           )}
-                          <Button 
-                            className="flex-1 bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200"
-                            variant="ghost"
-                            onClick={() => navigate(createPageUrl('CriarRitualMAP') + `?ritual_id=${ritual.id}`)}
-                          >
-                            <FileText className="w-4 h-4 mr-2" />
-                            MAP
-                          </Button>
-                          <Button 
-                            className="flex-1 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200"
-                            variant="ghost"
-                            onClick={() => handleSchedule(ritual)}
-                          >
-                            <Calendar className="w-4 h-4 mr-2" />
-                            Agendar
-                          </Button>
+                          <div className="flex gap-2 w-full">
+                            <Button 
+                              className="flex-1 bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => navigate(createPageUrl('CriarRitualMAP') + `?ritual_id=${ritual.id}`)}
+                            >
+                              <FileText className="w-3 h-3 mr-1" />
+                              MAP
+                            </Button>
+                            <Button 
+                              className="flex-1 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleSchedule(ritual)}
+                            >
+                              <Calendar className="w-3 h-3 mr-1" />
+                              Agendar
+                            </Button>
+                          </div>
+                          {ritual.isCustom && (
+                            <Button
+                              className="w-full bg-green-50 text-green-700 hover:bg-green-100 border border-green-200"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedRitualForRecurrence(ritual);
+                                setIsRecurrenceOpen(true);
+                              }}
+                            >
+                              <Repeat className="w-3 h-3 mr-1" />
+                              Auto-Agendar
+                            </Button>
+                          )}
                         </CardFooter>
                       </Card>
                     );
@@ -779,6 +808,34 @@ export default function RituaisAculturamento() {
                           {schedule.notes && (
                             <p className="text-xs text-gray-500 mt-2 italic">"{schedule.notes}"</p>
                           )}
+                          <div className="flex gap-2 mt-3">
+                            {schedule.status === "agendado" && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setSelectedScheduleForReminder(schedule);
+                                    setIsReminderOpen(true);
+                                  }}
+                                >
+                                  <Bell className="w-3 h-3 mr-1" />
+                                  Lembrete
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  className="bg-green-600 hover:bg-green-700 text-white"
+                                  onClick={() => {
+                                    setSelectedScheduleForEvidence(schedule);
+                                    setIsEvidenceOpen(true);
+                                  }}
+                                >
+                                  <Upload className="w-3 h-3 mr-1" />
+                                  Concluir
+                                </Button>
+                              </>
+                            )}
+                          </div>
                         </CardContent>
                       </Card>
                     );
@@ -829,7 +886,7 @@ export default function RituaisAculturamento() {
           </Tabs>
         </div>
 
-        {/* MAP Viewer Dialog */}
+        {/* Dialogs */}
         <MAPViewerDialog 
           map={selectedMAP}
           open={isMAPViewerOpen}
@@ -837,6 +894,38 @@ export default function RituaisAculturamento() {
           ritualsData={ritualsDB}
           user={user}
           workshop={workshop}
+        />
+
+        <RitualRecurrenceSettings
+          ritual={selectedRitualForRecurrence}
+          open={isRecurrenceOpen}
+          onClose={() => {
+            setIsRecurrenceOpen(false);
+            setSelectedRitualForRecurrence(null);
+          }}
+          workshop={workshop}
+        />
+
+        <RitualReminders
+          schedule={selectedScheduleForReminder}
+          open={isReminderOpen}
+          onClose={() => {
+            setIsReminderOpen(false);
+            setSelectedScheduleForReminder(null);
+          }}
+          employees={employees}
+        />
+
+        <RitualEvidenceUpload
+          schedule={selectedScheduleForEvidence}
+          open={isEvidenceOpen}
+          onClose={() => {
+            setIsEvidenceOpen(false);
+            setSelectedScheduleForEvidence(null);
+          }}
+          onComplete={() => {
+            loadScheduledRituals(workshop.id);
+          }}
         />
       </div>
     </div>
