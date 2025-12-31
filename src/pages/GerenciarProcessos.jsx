@@ -447,7 +447,7 @@ export default function GerenciarProcessos() {
 
   const categories = [
     "Vendas", "Comercial", "Pátio", "Financeiro", "Estoque", 
-    "Compras", "Contratação", "RH", "Marketing", "Qualidade", "Geral"
+    "Compras", "Contratação", "RH", "Marketing", "Qualidade", "Geral", "Ritual"
   ];
 
   const plans = ["FREE", "START", "BRONZE", "PRATA", "GOLD", "IOM", "MILLIONS"];

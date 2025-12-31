@@ -125,7 +125,6 @@ import ResultadoMaturidade from './pages/ResultadoMaturidade';
 import ResultadoOS from './pages/ResultadoOS';
 import ResultadoProducao from './pages/ResultadoProducao';
 import Rituais from './pages/Rituais';
-import RituaisAculturamento from './pages/RituaisAculturamento';
 import SelecionarDiagnostico from './pages/SelecionarDiagnostico';
 import SolicitarPermissoes from './pages/SolicitarPermissoes';
 import Tarefas from './pages/Tarefas';
@@ -134,6 +133,8 @@ import TreinamentoVendas from './pages/TreinamentoVendas';
 import Usuarios from './pages/Usuarios';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
+import RituaisAculturamento from './pages/RituaisAculturamento';
+import CriarRitualMAP from './pages/CriarRitualMAP';
 import __Layout from './Layout.jsx';
 
 
@@ -265,7 +266,6 @@ export const PAGES = {
     "ResultadoOS": ResultadoOS,
     "ResultadoProducao": ResultadoProducao,
     "Rituais": Rituais,
-    "RituaisAculturamento": RituaisAculturamento,
     "SelecionarDiagnostico": SelecionarDiagnostico,
     "SolicitarPermissoes": SolicitarPermissoes,
     "Tarefas": Tarefas,
@@ -274,6 +274,8 @@ export const PAGES = {
     "Usuarios": Usuarios,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
+    "RituaisAculturamento": RituaisAculturamento,
+    "CriarRitualMAP": CriarRitualMAP,
 }
 
 export const pagesConfig = {
