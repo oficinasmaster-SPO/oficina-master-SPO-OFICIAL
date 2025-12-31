@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Search, FileText, Download, Eye, Filter, Briefcase, DollarSign, Settings, Users, BarChart3, Truck, Copy, Loader2, Mail, History, LayoutGrid, List, Flame, Sparkles } from "lucide-react";
+import { Search, FileText, Download, Eye, Filter, Briefcase, DollarSign, Settings, Users, BarChart3, Truck, Copy, Loader2, Mail, History, LayoutGrid, List } from "lucide-react";
 import { createPageUrl } from "@/utils";
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -14,7 +14,6 @@ import { toast } from "sonner";
 import AdminViewBanner from "../components/shared/AdminViewBanner";
 import ShareProcessDialog from "../components/processes/ShareProcessDialog";
 import ShareHistoryDialog from "../components/processes/ShareHistoryDialog";
-import RitualMAPGenerator from "../components/processes/RitualMAPGenerator";
 import AreaGroupedView from "../components/processes/AreaGroupedView";
 import ProcessHierarchyView from "../components/processes/ProcessHierarchyView";
 
@@ -30,9 +29,6 @@ export default function MeusProcessos() {
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
   const [selectedProcess, setSelectedProcess] = useState(null);
   const [viewMode, setViewMode] = useState("cards"); // cards, areas, hierarchy
-  const [statusFilter, setStatusFilter] = useState("todos");
-  const [dateFilter, setDateFilter] = useState("todos");
-  const [mapGeneratorOpen, setMapGeneratorOpen] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -84,10 +80,6 @@ export default function MeusProcessos() {
     initialData: []
   });
 
-  // Contar processos excluindo rituais
-  const processosCount = accessibleDocs.filter(d => d.category !== 'Ritual').length;
-  const ritualsCount = accessibleDocs.filter(d => d.category === 'Ritual').length;
-
   // Filter documents based on user access and workshop
   const accessibleDocs = documents.filter(doc => {
     // Check if it's a template or belongs to this workshop
@@ -99,88 +91,11 @@ export default function MeusProcessos() {
     return isRelevant;
   });
 
-  // Função para buscar em todo o conteúdo JSON
-  const searchInContent = (doc, term) => {
-    if (!term) return true;
-    const lowerTerm = term.toLowerCase();
-    
-    // Busca em campos básicos
-    if (doc.title?.toLowerCase().includes(lowerTerm) ||
-        doc.code?.toLowerCase().includes(lowerTerm) ||
-        doc.description?.toLowerCase().includes(lowerTerm)) {
-      return true;
-    }
-    
-    // Busca no content_json
-    if (doc.content_json) {
-      const content = doc.content_json;
-      
-      // Busca em objetivo, campo_aplicacao, informacoes_complementares, fluxo_processo
-      if (content.objetivo?.toLowerCase().includes(lowerTerm) ||
-          content.campo_aplicacao?.toLowerCase().includes(lowerTerm) ||
-          content.informacoes_complementares?.toLowerCase().includes(lowerTerm) ||
-          content.fluxo_processo?.toLowerCase().includes(lowerTerm)) {
-        return true;
-      }
-      
-      // Busca em atividades
-      if (content.atividades?.some(a => 
-        a.atividade?.toLowerCase().includes(lowerTerm) ||
-        a.responsavel?.toLowerCase().includes(lowerTerm) ||
-        a.ferramentas?.toLowerCase().includes(lowerTerm)
-      )) {
-        return true;
-      }
-      
-      // Busca em riscos
-      if (content.matriz_riscos?.some(r => 
-        r.identificacao?.toLowerCase().includes(lowerTerm) ||
-        r.fonte?.toLowerCase().includes(lowerTerm) ||
-        r.impacto?.toLowerCase().includes(lowerTerm) ||
-        r.controle?.toLowerCase().includes(lowerTerm)
-      )) {
-        return true;
-      }
-      
-      // Busca em indicadores
-      if (content.indicadores?.some(i => 
-        i.indicador?.toLowerCase().includes(lowerTerm) ||
-        i.meta?.toLowerCase().includes(lowerTerm) ||
-        i.como_medir?.toLowerCase().includes(lowerTerm)
-      )) {
-        return true;
-      }
-      
-      // Busca em inter-relações
-      if (content.inter_relacoes?.some(ir => 
-        ir.area?.toLowerCase().includes(lowerTerm) ||
-        ir.interacao?.toLowerCase().includes(lowerTerm)
-      )) {
-        return true;
-      }
-    }
-    
-    return false;
-  };
-
   const filteredDocs = accessibleDocs.filter(doc => {
-    const matchesSearch = searchInContent(doc, searchTerm);
+    const matchesSearch = doc.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          (doc.code && doc.code.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesTab = activeTab === "Todos" || doc.category === activeTab;
-    const matchesStatus = statusFilter === "todos" || doc.status === statusFilter;
-    
-    // Filtro de data
-    let matchesDate = true;
-    if (dateFilter !== "todos" && doc.created_date) {
-      const docDate = new Date(doc.created_date);
-      const now = new Date();
-      const diffDays = Math.floor((now - docDate) / (1000 * 60 * 60 * 24));
-      
-      if (dateFilter === "7dias") matchesDate = diffDays <= 7;
-      else if (dateFilter === "30dias") matchesDate = diffDays <= 30;
-      else if (dateFilter === "90dias") matchesDate = diffDays <= 90;
-    }
-    
-    return matchesSearch && matchesTab && matchesStatus && matchesDate;
+    return matchesSearch && matchesTab;
   });
 
   const duplicateMutation = useMutation({
@@ -218,12 +133,10 @@ export default function MeusProcessos() {
     { id: "Pátio", label: "Pátio", icon: Truck },
     { id: "Financeiro", label: "Financeiro", icon: BarChart3 },
     { id: "RH", label: "RH & Pessoas", icon: Users },
-    { id: "Ritual", label: "Rituais", icon: Briefcase },
     { id: "Geral", label: "Geral", icon: Settings },
   ];
 
   const getCategoryIcon = (cat) => {
-    if (cat === "Ritual") return Flame;
     const found = categories.find(c => c.id === cat);
     return found ? found.icon : FileText;
   };
@@ -247,111 +160,25 @@ export default function MeusProcessos() {
             </p>
           </div>
           
-          <div className="flex gap-2">
-            <Button
-              onClick={() => setMapGeneratorOpen(true)}
-              className="bg-purple-600 hover:bg-purple-700 text-white"
-            >
-              <Sparkles className="w-4 h-4 mr-2" />
-              Gerar MAPs de Rituais
+          <Link to={createPageUrl('GerenciarProcessos')}>
+            <Button className="bg-red-600 hover:bg-red-700 text-white border-0">
+              <Settings className="w-4 h-4 mr-2" /> 
+              {user?.role === 'admin' ? 'Gerenciar Biblioteca (Admin)' : 'Criar e Gerenciar Processos'}
             </Button>
-            <Link to={createPageUrl('GerenciarProcessos')}>
-              <Button className="bg-red-600 hover:bg-red-700 text-white border-0">
-                <Settings className="w-4 h-4 mr-2" /> 
-                {user?.role === 'admin' ? 'Gerenciar Biblioteca (Admin)' : 'Criar e Gerenciar Processos'}
-              </Button>
-            </Link>
-          </div>
+          </Link>
         </div>
 
-        {/* Estatísticas e contador */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <Card className="bg-gradient-to-br from-blue-50 to-blue-100">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-blue-600 font-medium">Processos</p>
-                  <p className="text-3xl font-bold text-blue-900">{processosCount}</p>
-                </div>
-                <FileText className="w-8 h-8 text-blue-600" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-gradient-to-br from-green-50 to-green-100">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-green-600 font-medium">Operacionais</p>
-                  <p className="text-3xl font-bold text-green-900">
-                    {accessibleDocs.filter(d => d.operational_status === 'operacional').length}
-                  </p>
-                </div>
-                <BarChart3 className="w-8 h-8 text-green-600" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-yellow-600 font-medium">ITs e FRs</p>
-                  <p className="text-3xl font-bold text-yellow-900">{its.length}</p>
-                </div>
-                <FileText className="w-8 h-8 text-yellow-600" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-gradient-to-br from-orange-50 to-orange-100">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-orange-600 font-medium">Filtrados</p>
-                  <p className="text-3xl font-bold text-orange-900">{filteredDocs.length}</p>
-                </div>
-                <Filter className="w-8 h-8 text-orange-600" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Busca e filtros */}
-        <div className="bg-white p-4 rounded-lg shadow-sm border mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="relative lg:col-span-2">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <Input 
-                placeholder="Buscar em todo conteúdo (título, objetivo, atividades, riscos, indicadores...)" 
-                className="pl-10 bg-white"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-            >
-              <option value="todos">Todos os Status</option>
-              <option value="ativo">Ativo</option>
-              <option value="em_revisao">Em Revisão</option>
-              <option value="obsoleto">Obsoleto</option>
-            </select>
-
-            <select
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-            >
-              <option value="todos">Todas as Datas</option>
-              <option value="7dias">Últimos 7 dias</option>
-              <option value="30dias">Últimos 30 dias</option>
-              <option value="90dias">Últimos 90 dias</option>
-            </select>
+        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between mb-6">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Input 
+              placeholder="Buscar processos..." 
+              className="pl-10 bg-white"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
-
-          <div className="flex items-center gap-2 mt-3 flex-wrap">
-            <span className="text-sm text-gray-600">Visualização:</span>
+          <div className="flex gap-2">
             <Button
               variant={viewMode === "cards" ? "default" : "outline"}
               onClick={() => setViewMode("cards")}
@@ -376,21 +203,6 @@ export default function MeusProcessos() {
               <List className="w-4 h-4 mr-2" />
               Hierarquia
             </Button>
-
-            {(searchTerm || statusFilter !== "todos" || dateFilter !== "todos") && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setSearchTerm("");
-                  setStatusFilter("todos");
-                  setDateFilter("todos");
-                }}
-                className="ml-auto text-red-600 hover:text-red-700"
-              >
-                Limpar Filtros
-              </Button>
-            )}
           </div>
         </div>
 
@@ -560,21 +372,6 @@ export default function MeusProcessos() {
           }}
           process={selectedProcess}
         />
-
-        {mapGeneratorOpen && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-auto">
-              <div className="p-6">
-                <RitualMAPGenerator
-                  onClose={() => {
-                    setMapGeneratorOpen(false);
-                    queryClient.invalidateQueries(['my-processes']);
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

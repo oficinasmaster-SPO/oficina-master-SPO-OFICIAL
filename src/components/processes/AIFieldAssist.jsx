@@ -104,79 +104,33 @@ export default function AIFieldAssist({
     }
   };
 
-  const analyzeDocumentContext = () => {
-    // Análise dinâmica do contexto do documento
-    const category = mapData?.category || itData?.category || "Geral";
-    const isRitual = category === "Ritual";
-    const isTechnical = ["Pátio", "Estoque"].includes(category);
-    const isCommercial = ["Vendas", "Comercial"].includes(category);
-    const isAdministrative = ["Financeiro", "RH", "Qualidade"].includes(category);
-
-    return {
-      category,
-      isRitual,
-      isTechnical,
-      isCommercial,
-      isAdministrative,
-      title: itData?.title || mapData?.title || "",
-      objective: itData?.content?.objetivo || mapData?.description || "",
-      hasFlow: !!(itData?.content?.fluxo_descricao || mapData?.content_json?.fluxo_processo)
-    };
-  };
-
   const buildPrompt = (type) => {
-    const docContext = analyzeDocumentContext();
-    
     const context = `
-**Contexto do Documento:**
-- Categoria: ${docContext.category}
-- Título: ${docContext.title}
-- Objetivo atual: ${docContext.objective || "Não definido"}
-- Tipo: ${docContext.isRitual ? "Ritual Cultural" : docContext.isTechnical ? "Técnico Operacional" : docContext.isCommercial ? "Comercial/Vendas" : "Administrativo"}
+**MAP Pai:**
+- Título: ${mapData?.title || "Não informado"}
+- Área: ${mapData?.category || "Não informada"}
 
-**Instruções:**
-Analise o contexto acima e gere sugestões específicas e contextualizadas para este documento.
-${docContext.isRitual ? "Como é um ritual, foque em aspectos culturais, comportamentais e de engajamento da equipe." : ""}
-${docContext.isTechnical ? "Como é técnico, seja específico quanto a procedimentos, ferramentas e segurança." : ""}
-${docContext.isCommercial ? "Como é comercial, foque em processos de vendas, atendimento e relacionamento com cliente." : ""}
+**IT Atual:**
+- Título: ${itData.title || "Não informado"}
+- Objetivo: ${itData.content?.objetivo || "Não informado"}
+- Fluxo: ${itData.content?.fluxo_descricao ? "Preenchido" : "Vazio"}
 `;
 
     const prompts = {
-      // Objetivo - Contextualizado
+      // Objetivo
       'objetivo_gerar': `${context}
-
-**Campo a preencher:** Objetivo
-**Título do documento:** ${docContext.title}
-
-Analise o título e contexto acima e gere um objetivo específico que:
-1. Seja claro e mensurável
-2. Reflita a natureza do documento (${docContext.category})
-3. Indique o resultado esperado
-4. Seja verificável na prática
-
-Retorne apenas o texto do objetivo, sem formatação adicional.`,
+Com base no título da IT, gere um objetivo claro, mensurável e operacional.
+Formato: "Garantir que [ação] seja executada corretamente para [resultado esperado]"`,
       
       'objetivo_melhorar': `${context}
+Objetivo atual: ${fieldValue || "Vazio"}
 
-**Objetivo atual:** ${fieldValue || "Não definido"}
-
-Analise este objetivo considerando:
-- O contexto do documento (${docContext.category})
-- As especificidades da área
-- A mensurabilidade e clareza
-
-Melhore o objetivo tornando-o mais preciso e operacional. Retorne apenas o texto melhorado.`,
+Melhore a clareza e precisão deste objetivo. Torne-o mais específico e mensurável.`,
 
       'objetivo_auditoria': `${context}
+Objetivo atual: ${fieldValue || "Vazio"}
 
-**Objetivo atual:** ${fieldValue || "Não definido"}
-
-Transforme este objetivo em algo facilmente auditável, considerando:
-- O tipo de documento (${docContext.category})
-- Como será verificado na prática
-- Quais evidências podem comprovar seu cumprimento
-
-Retorne apenas o objetivo ajustado.`,
+Ajuste este objetivo para ser facilmente auditável e verificável.`,
 
       // Campo de Aplicação
       'aplicacao_quem': `${context}
@@ -188,49 +142,24 @@ Defina claramente QUANDO esta IT deve ser aplicada (gatilhos, frequência).`,
       'aplicacao_excecoes': `${context}
 Liste as exceções ou situações onde esta IT NÃO se aplica.`,
 
-      // Fluxo - Contextualizado
+      // Fluxo
       'fluxo_gerar': `${context}
+Gere um fluxo passo a passo numerado e sequencial para executar esta IT.
+Use verbos de ação e seja específico.`,
 
-**Campo a preencher:** Fluxo do Processo
+      // Riscos
+      'riscos_gerar': `${context}
+Liste 3-5 riscos operacionais críticos relacionados a esta IT.
+Formato: Risco | Causa | Impacto | Controle`,
 
-Para "${docContext.title}" (${docContext.category}), crie um fluxo sequencial:
-
-1. Análise o tipo de processo e sua complexidade
-2. Defina etapas lógicas e sequenciais
-3. Use verbos de ação no imperativo
-4. Seja específico e prático
-
-${docContext.isRitual ? "Para rituais culturais, inclua: preparação, execução, reflexão e registro." : ""}
-${docContext.isTechnical ? "Para processos técnicos, seja detalhado em cada etapa operacional." : ""}
-${docContext.isCommercial ? "Para processos comerciais, siga o funil: prospecção, qualificação, proposta, fechamento." : ""}
-
-Retorne um texto estruturado com passos numerados e claros.`,
-
-      // Atividades - Contextualizadas
+      // Atividades
       'atividades_gerar': `${context}
-
-**Campo a preencher:** Lista de Atividades
-
-Baseado no contexto do documento "${docContext.title}" na categoria ${docContext.category}:
-
-1. Identifique 3-5 atividades operacionais específicas
-2. Para cada atividade, defina:
-   - Descrição clara da tarefa
-   - Responsável (cargo específico do contexto)
-   - Frequência realista
-   - Observações práticas
-
-${docContext.isRitual ? "Como é um ritual cultural, inclua atividades de engajamento, comunicação e reforço de valores." : ""}
-${docContext.isTechnical ? "Como é técnico, seja específico quanto a procedimentos, ferramentas e verificações." : ""}
-${docContext.isCommercial ? "Como é comercial, foque em etapas do processo de vendas/atendimento." : ""}
-
-IMPORTANTE: Retorne APENAS um JSON array puro, sem \`\`\`json ou markdown:
-[{"atividade": "...", "responsavel": "...", "frequencia": "...", "observacao": "..."}]`,
+Gere uma lista de 3-5 atividades operacionais para esta IT em formato JSON.
+IMPORTANTE: Retorne apenas o JSON array puro, sem markdown.
+Formato: [{"atividade": "descrição", "responsavel": "cargo", "frequencia": "período", "observacao": "detalhes"}]`,
 
       'atividades_completa': `${context}
-
-Gere atividades DETALHADAS e CONTEXTUALIZADAS para ${docContext.title}.
-Retorne JSON array puro com estrutura completa.`,
+Gere atividades detalhadas com responsável, frequência e observações em JSON puro.`,
 
       // Inter-relações
       'interrelacoes_gerar': `${context}
@@ -241,32 +170,14 @@ Formato: [{"area": "nome da área", "interacao": "como interagem"}]`,
       'interrelacoes_areas': `${context}
 Mapeie todas as áreas envolvidas na execução desta IT em JSON puro.`,
 
-      // Riscos - Contextualizados
+      // Riscos
       'riscos_gerar': `${context}
-
-**Campo a preencher:** Matriz de Riscos
-
-Para o documento "${docContext.title}" (${docContext.category}), identifique 3-5 riscos ESPECÍFICOS:
-
-${docContext.isRitual ? "- Riscos culturais: baixo engajamento, perda de sentido, execução mecânica" : ""}
-${docContext.isTechnical ? "- Riscos operacionais: falhas técnicas, retrabalho, segurança" : ""}
-${docContext.isCommercial ? "- Riscos comerciais: perda de clientes, baixa conversão, insatisfação" : ""}
-${docContext.isAdministrative ? "- Riscos administrativos: não conformidade, erros, atrasos" : ""}
-
-Para cada risco, defina:
-- Descrição do risco
-- Categoria (operacional, qualidade, segurança, financeiro, etc)
-- Causa raiz
-- Impacto no processo
-- Controle preventivo específico
-
-RETORNE APENAS JSON array puro:
-[{"risco": "...", "categoria": "...", "causa": "...", "impacto": "...", "controle": "..."}]`,
+Gere 3-5 riscos operacionais em formato JSON.
+IMPORTANTE: Retorne apenas o JSON array puro, sem markdown.
+Formato: [{"risco": "descrição", "categoria": "tipo", "causa": "origem", "impacto": "consequência", "controle": "medida preventiva"}]`,
 
       'riscos_criticos': `${context}
-
-Identifique os riscos MAIS CRÍTICOS para ${docContext.title} considerando o contexto ${docContext.category}.
-Retorne JSON puro.`,
+Identifique os riscos mais críticos desta IT em JSON puro.`,
 
       // Indicadores
       'indicadores_gerar': `${context}

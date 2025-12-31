@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, ArrowLeft, Download, FileText, AlertTriangle, Share2, GitBranch, Target, Workflow, CheckSquare, Shield, TrendingUp, Network } from "lucide-react";
+import { Loader2, ArrowLeft, Download, FileText, AlertTriangle, Share2, GitBranch } from "lucide-react";
 import { createPageUrl } from "@/utils";
 import { toast } from "sonner";
 import TrackingWrapper from "@/components/shared/TrackingWrapper";
@@ -167,9 +167,8 @@ export default function VisualizarProcesso() {
           <div className="p-8 space-y-8">
             
             {/* 1. Objetivo */}
-            <section className="bg-blue-50 p-4 rounded-lg">
-              <h3 className="text-lg font-bold text-gray-900 border-b border-blue-200 pb-2 mb-3 uppercase flex items-center gap-2">
-                <Target className="w-5 h-5 text-blue-600" />
+            <section>
+              <h3 className="text-lg font-bold text-gray-900 border-b pb-2 mb-3 uppercase flex items-center gap-2">
                 1. Objetivo
               </h3>
               <p className="text-gray-700 leading-relaxed whitespace-pre-line">
@@ -198,9 +197,8 @@ export default function VisualizarProcesso() {
             </section>
 
             {/* 4. Fluxo do Processo */}
-            <section className="bg-purple-50 p-4 rounded-lg">
-              <h3 className="text-lg font-bold text-gray-900 border-b border-purple-200 pb-2 mb-3 uppercase flex items-center gap-2">
-                <Workflow className="w-5 h-5 text-purple-600" />
+            <section>
+              <h3 className="text-lg font-bold text-gray-900 border-b pb-2 mb-3 uppercase flex items-center gap-2">
                 4. Fluxo do Processo
               </h3>
               <p className="text-gray-700 leading-relaxed whitespace-pre-line mb-4">
@@ -240,9 +238,8 @@ export default function VisualizarProcesso() {
             )}
 
             {/* 5. Atividades */}
-            <section className="break-inside-avoid bg-green-50 p-4 rounded-lg">
-              <h3 className="text-lg font-bold text-gray-900 border-b border-green-200 pb-2 mb-3 uppercase flex items-center gap-2">
-                <CheckSquare className="w-5 h-5 text-green-600" />
+            <section className="break-inside-avoid">
+              <h3 className="text-lg font-bold text-gray-900 border-b pb-2 mb-3 uppercase flex items-center gap-2">
                 5. Atividades e Responsabilidades
               </h3>
               {content.atividades && content.atividades.length > 0 ? (
@@ -270,9 +267,8 @@ export default function VisualizarProcesso() {
             </section>
 
             {/* 6. Matriz de Riscos */}
-            <section className="break-inside-avoid bg-red-50 p-4 rounded-lg">
-              <h3 className="text-lg font-bold text-gray-900 border-b border-red-200 pb-2 mb-3 uppercase flex items-center gap-2">
-                <Shield className="w-5 h-5 text-red-600" />
+            <section className="break-inside-avoid">
+              <h3 className="text-lg font-bold text-gray-900 border-b pb-2 mb-3 uppercase flex items-center gap-2">
                 6. Matriz de Riscos
               </h3>
               {content.matriz_riscos && content.matriz_riscos.length > 0 ? (
@@ -308,9 +304,8 @@ export default function VisualizarProcesso() {
             </section>
 
             {/* 7. Inter-relação */}
-            <section className="break-inside-avoid bg-indigo-50 p-4 rounded-lg">
-              <h3 className="text-lg font-bold text-gray-900 border-b border-indigo-200 pb-2 mb-3 uppercase flex items-center gap-2">
-                <Network className="w-5 h-5 text-indigo-600" />
+            <section className="break-inside-avoid">
+              <h3 className="text-lg font-bold text-gray-900 border-b pb-2 mb-3 uppercase flex items-center gap-2">
                 7. Inter-relação entre Áreas
               </h3>
               {content.inter_relacoes && content.inter_relacoes.length > 0 ? (
@@ -336,9 +331,8 @@ export default function VisualizarProcesso() {
             </section>
 
             {/* 8. Indicadores */}
-            <section className="break-inside-avoid bg-yellow-50 p-4 rounded-lg">
-              <h3 className="text-lg font-bold text-gray-900 border-b border-yellow-200 pb-2 mb-3 uppercase flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-yellow-600" />
+            <section className="break-inside-avoid">
+              <h3 className="text-lg font-bold text-gray-900 border-b pb-2 mb-3 uppercase flex items-center gap-2">
                 8. Indicadores de Desempenho
               </h3>
               {content.indicadores && content.indicadores.length > 0 ? (
