@@ -80,18 +80,17 @@ export default function CronogramaAculturacao() {
 
       if (!userWorkshop) {
         setActivities([]);
+        setCulturalPillars([]);
         return;
       }
 
-      // Buscar ScheduledRitual (rituais agendados)
-      const scheduledRituals = await base44.entities.ScheduledRitual.filter({ 
-        workshop_id: userWorkshop.id 
-      });
+      const [scheduledRituals, acculturationActivities, pillars] = await Promise.all([
+        base44.entities.ScheduledRitual.filter({ workshop_id: userWorkshop.id }),
+        base44.entities.AcculturationActivity.filter({ workshop_id: userWorkshop.id }),
+        base44.entities.CulturalPillar.filter({ workshop_id: userWorkshop.id })
+      ]);
 
-      // Buscar AcculturationActivity (outras atividades)
-      const acculturationActivities = await base44.entities.AcculturationActivity.filter({ 
-        workshop_id: userWorkshop.id 
-      });
+      setCulturalPillars(pillars || []);
 
       // Converter ScheduledRitual para formato de atividade
       const ritualActivities = scheduledRituals.map(ritual => ({
