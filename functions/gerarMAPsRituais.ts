@@ -216,10 +216,13 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Apenas admin pode gerar MAPs' }, { status: 403 });
     }
 
+    const { batch_size = 10, start_index = 0 } = await req.json().catch(() => ({}));
+    
+    const ritualsToProcess = RITUAIS.slice(start_index, start_index + batch_size);
     const created = [];
     const errors = [];
 
-    for (const ritual of RITUAIS) {
+    for (const ritual of ritualsToProcess) {
       try {
         console.log(`🔄 Gerando MAP para: ${ritual.name}`);
 
@@ -358,7 +361,11 @@ Retorne APENAS JSON estruturado.
     return Response.json({
       success: true,
       created: created.length,
-      total: RITUAIS.length,
+      total_rituais: RITUAIS.length,
+      processed: ritualsToProcess.length,
+      start_index,
+      has_more: start_index + batch_size < RITUAIS.length,
+      next_index: start_index + batch_size,
       details: created,
       errors
     });
