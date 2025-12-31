@@ -81,8 +81,8 @@ export default function CriarRitualMAP() {
         savedMap = await base44.entities.ProcessDocument.update(processDocument.id, {
           title: formData.title,
           description: formData.description,
-          content: formData.content,
-          file_url: formData.file_url,
+          content_json: formData.content,
+          pdf_url: formData.file_url,
           operational_status: "operacional"
         });
         toast.success("MAP do Ritual atualizado!");
@@ -92,11 +92,10 @@ export default function CriarRitualMAP() {
         savedMap = await base44.entities.ProcessDocument.create({
           code,
           title: formData.title,
-          type: "IT",
           category: "Ritual",
           description: formData.description || `Mapa de Processo do Ritual: ${ritual.name}`,
-          content: formData.content,
-          file_url: formData.file_url,
+          content_json: formData.content,
+          pdf_url: formData.file_url,
           workshop_id: workshop.id,
           is_template: false,
           operational_status: "operacional",
@@ -181,8 +180,8 @@ export default function CriarRitualMAP() {
                 title: processDocument.title,
                 type: processDocument.type || "IT",
                 description: processDocument.description,
-                content: processDocument.content,
-                file_url: processDocument.file_url
+                content: processDocument.content_json || {},
+                file_url: processDocument.pdf_url
               } : {
                 title: ritual?.name || "",
                 type: "IT",
