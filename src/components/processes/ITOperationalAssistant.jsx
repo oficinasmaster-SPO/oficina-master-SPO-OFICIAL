@@ -13,8 +13,9 @@ export default function ITOperationalAssistant({ open, onClose, mapData, existin
   const [context, setContext] = useState("");
   const [loading, setLoading] = useState(false);
   const [suggestions, setSuggestions] = useState(null);
-  const [mode, setMode] = useState("structured"); // "structured" | "free"
+  const [mode, setMode] = useState("structured"); // "structured" | "free" | "auto"
   const [freeResponse, setFreeResponse] = useState("");
+  const [autoAnalysis, setAutoAnalysis] = useState(null);
 
   const scenarios = [
     { id: "error", label: "Erro Recorrente", description: "Algo está dando errado na execução" },
@@ -25,6 +26,104 @@ export default function ITOperationalAssistant({ open, onClose, mapData, existin
     { id: "improvement", label: "Melhoria Operacional", description: "Forma de fazer pode ser melhor" }
   ];
 
+  const analyzeMapAutomatically = async () => {
+    setLoading(true);
+    setAutoAnalysis(null);
+    
+    try {
+      console.log("🤖 Análise automática do MAP iniciada...");
+      
+      // Montar conteúdo COMPLETO do MAP
+      const mapContent = {
+        title: mapData?.title || "",
+        code: mapData?.code || "",
+        objetivo: mapData?.content_json?.objetivo || "",
+        atividades: mapData?.content_json?.atividades || [],
+        matriz_riscos: mapData?.content_json?.matriz_riscos || [],
+        indicadores: mapData?.content_json?.indicadores || [],
+        fluxo_descricao: mapData?.content_json?.fluxo_descricao || "",
+        inter_relacoes: mapData?.content_json?.inter_relacoes || []
+      };
+
+      // ITs existentes
+      const itsInfo = existingITs.map(it => ({
+        code: it.code,
+        title: it.title,
+        objetivo: it.content?.objetivo || "",
+        atividades: it.content?.atividades?.map(a => a.atividade) || []
+      }));
+
+      const autoPrompt = `
+VOCÊ É A IA OPERACIONAL DO BASE44 - ANÁLISE AUTOMÁTICA DE MAP.
+
+MISSÃO: Analisar o MAP completo e identificar quais ITs (Instruções de Trabalho) DEVEM ser criadas.
+
+📋 MAP ATUAL:
+Código: ${mapContent.code}
+Título: ${mapContent.title}
+Objetivo: ${mapContent.objetivo}
+
+ATIVIDADES DO MAP:
+${mapContent.atividades.map((a, i) => `${i+1}. ${a.atividade} (Responsável: ${a.responsavel})`).join("\n") || "Nenhuma atividade definida"}
+
+MATRIZ DE RISCOS:
+${mapContent.matriz_riscos.map(r => `- ${r.risco} (Controle: ${r.controle})`).join("\n") || "Nenhum risco mapeado"}
+
+INDICADORES:
+${mapContent.indicadores.map(ind => `- ${ind.indicador}: ${ind.meta}`).join("\n") || "Nenhum indicador definido"}
+
+ITs JÁ EXISTENTES:
+${itsInfo.map(it => `- ${it.code}: ${it.title}`).join("\n") || "Nenhuma IT criada ainda"}
+
+INSTRUÇÃO - RETORNE JSON ESTRUTURADO (sem markdown):
+{
+  "missing_its": [
+    {
+      "priority": "alta | média | baixa",
+      "title": "Nome da IT sugerida",
+      "objective": "Objetivo específico baseado no MAP",
+      "justification": "Por que esta IT é necessária baseado no conteúdo do MAP",
+      "based_on": "atividade | risco | indicador | fluxo",
+      "suggested_steps": ["Passo 1 específico", "Passo 2 específico", "Passo 3 específico"],
+      "related_map_section": "Qual seção do MAP originou esta necessidade",
+      "common_errors": ["Erro 1 a evitar", "Erro 2 a evitar"]
+    }
+  ],
+  "map_coverage_score": 85,
+  "gaps_identified": ["Gap 1", "Gap 2"],
+  "recommendations": ["Recomendação 1", "Recomendação 2"]
+}
+
+REGRAS:
+1. Baseie-se EXCLUSIVAMENTE no conteúdo do MAP fornecido
+2. Sugira ITs APENAS para atividades/riscos/indicadores que realmente precisam de detalhamento
+3. Não sugira ITs duplicadas das que já existem
+4. Seja específico nos passos - use informações reais do MAP
+5. Priorize ITs que fechem gaps críticos de execução`;
+
+      const { result } = await base44.functions.invoke('invokeLLMUnlimited', { prompt: autoPrompt });
+      
+      let parsedResult;
+      try {
+        const cleanJson = String(result).replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        parsedResult = JSON.parse(cleanJson);
+      } catch (parseError) {
+        console.error("Erro ao fazer parse:", parseError);
+        toast.error("IA retornou formato inválido");
+        return;
+      }
+
+      setAutoAnalysis(parsedResult);
+      toast.success(`${parsedResult.missing_its?.length || 0} ITs sugeridas!`);
+      
+    } catch (error) {
+      console.error("Erro na análise automática:", error);
+      toast.error(`Erro: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const analyzeContext = async () => {
     if (!context.trim()) {
       toast.error("Descreva o contexto operacional");
@@ -34,6 +133,7 @@ export default function ITOperationalAssistant({ open, onClose, mapData, existin
     setLoading(true);
     setSuggestions(null);
     setFreeResponse("");
+    setAutoAnalysis(null);
     
     try {
       console.log("🔍 Iniciando análise operacional...");
@@ -345,9 +445,48 @@ Para PROCESSO OK:
             </div>
           </div>
 
+          {/* Análise Automática - DESTAQUE */}
+          <div className="border-2 border-green-200 rounded-lg p-5 bg-gradient-to-br from-green-50 to-emerald-50">
+            <div className="flex items-start gap-3 mb-3">
+              <Sparkles className="w-6 h-6 text-green-600 mt-1" />
+              <div className="flex-1">
+                <h3 className="font-bold text-green-900">🤖 Análise Automática do MAP</h3>
+                <p className="text-sm text-green-700 mt-1">
+                  A IA analisará TODO o conteúdo do MAP e sugerirá automaticamente quais ITs devem ser criadas
+                </p>
+              </div>
+            </div>
+            <Button
+              onClick={analyzeMapAutomatically}
+              disabled={loading}
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Analisando MAP...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Analisar MAP e Sugerir ITs
+                </>
+              )}
+            </Button>
+          </div>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">ou análise manual</span>
+            </div>
+          </div>
+
           {/* Seletor de Modo */}
           <div>
-            <Label className="text-sm font-semibold mb-2 block">Modo de Análise</Label>
+            <Label className="text-sm font-semibold mb-2 block">Modo de Análise Manual</Label>
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => setMode("structured")}
@@ -412,6 +551,198 @@ Para PROCESSO OK:
               )}
             </div>
           </div>
+
+          {/* Análise Automática - Resultados */}
+          {autoAnalysis && (
+            <div className="border-2 border-green-200 rounded-lg p-5 bg-green-50 space-y-4">
+              <div className="flex items-start gap-3 pb-3 border-b border-green-200">
+                <div className="p-2 bg-green-600 rounded-lg">
+                  <Sparkles className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold text-green-900 mb-1">
+                    🤖 Análise Automática Concluída
+                  </h3>
+                  <div className="flex items-center gap-2 flex-wrap mt-2">
+                    <Badge className="bg-green-700 text-white">
+                      Cobertura: {autoAnalysis.map_coverage_score}%
+                    </Badge>
+                    <Badge variant="outline" className="bg-white">
+                      {autoAnalysis.missing_its?.length || 0} ITs sugeridas
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+
+              {autoAnalysis.gaps_identified?.length > 0 && (
+                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <Label className="text-sm font-bold text-yellow-900 mb-2 block">
+                    ⚠️ Gaps Identificados no MAP
+                  </Label>
+                  <ul className="space-y-1">
+                    {autoAnalysis.gaps_identified.map((gap, idx) => (
+                      <li key={idx} className="text-sm text-yellow-900">• {gap}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {autoAnalysis.missing_its?.length > 0 ? (
+                <div className="space-y-4">
+                  <Label className="text-base font-bold text-green-900 block">
+                    📋 ITs Sugeridas Baseadas no MAP
+                  </Label>
+                  {autoAnalysis.missing_its.map((it, idx) => (
+                    <div key={idx} className="border-2 border-purple-200 rounded-lg p-4 bg-white">
+                      <div className="flex items-start gap-3 mb-3">
+                        <span className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-600 text-white text-sm font-bold flex items-center justify-center">
+                          {idx + 1}
+                        </span>
+                        <div className="flex-1">
+                          <h4 className="font-bold text-gray-900">{it.title}</h4>
+                          <div className="flex items-center gap-2 mt-1 flex-wrap">
+                            <Badge className={
+                              it.priority === "alta" ? "bg-red-100 text-red-800" :
+                              it.priority === "média" ? "bg-yellow-100 text-yellow-800" :
+                              "bg-green-100 text-green-800"
+                            }>
+                              Prioridade: {it.priority}
+                            </Badge>
+                            <Badge variant="outline" className="bg-blue-50">
+                              Baseado em: {it.based_on}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="p-3 bg-blue-50 rounded-lg">
+                          <Label className="text-xs font-semibold text-blue-900 block mb-1">
+                            🎯 Objetivo
+                          </Label>
+                          <p className="text-sm text-gray-700">{it.objective}</p>
+                        </div>
+
+                        <div className="p-3 bg-purple-50 rounded-lg">
+                          <Label className="text-xs font-semibold text-purple-900 block mb-1">
+                            💡 Justificativa
+                          </Label>
+                          <p className="text-sm text-gray-700">{it.justification}</p>
+                          <p className="text-xs text-purple-700 mt-1">
+                            <strong>Origem:</strong> {it.related_map_section}
+                          </p>
+                        </div>
+
+                        <div>
+                          <Label className="text-xs font-semibold mb-2 block">
+                            📝 Passos Sugeridos
+                          </Label>
+                          <ol className="space-y-2">
+                            {it.suggested_steps.map((step, sIdx) => (
+                              <li key={sIdx} className="flex gap-2 text-sm text-gray-700">
+                                <span className="font-bold text-purple-600">{sIdx + 1}.</span>
+                                <span>{step}</span>
+                              </li>
+                            ))}
+                          </ol>
+                        </div>
+
+                        {it.common_errors?.length > 0 && (
+                          <div className="p-3 bg-red-50 rounded-lg">
+                            <Label className="text-xs font-semibold text-red-900 block mb-1">
+                              ⚠️ Erros Comuns a Evitar
+                            </Label>
+                            <ul className="space-y-1">
+                              {it.common_errors.map((error, eIdx) => (
+                                <li key={eIdx} className="text-sm text-red-900">• {error}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        <Button
+                          onClick={() => {
+                            const itData = {
+                              type: "IT",
+                              title: it.title,
+                              description: it.justification,
+                              content: {
+                                objetivo: it.objective,
+                                campo_aplicacao: `Baseado em: ${it.related_map_section}`,
+                                fluxo_descricao: it.suggested_steps.join("\n\n"),
+                                atividades: it.suggested_steps.map((step, i) => ({
+                                  atividade: step,
+                                  responsavel: "A definir",
+                                  frequencia: "A definir",
+                                  observacao: ""
+                                })),
+                                matriz_riscos: it.common_errors.map(error => ({
+                                  risco: error,
+                                  categoria: it.priority === "alta" ? "Alto" : "Médio",
+                                  causa: "Identificado pela análise do MAP",
+                                  impacto: it.priority === "alta" ? "Alto" : "Médio",
+                                  controle: "A definir"
+                                })),
+                                inter_relacoes: [],
+                                indicadores: [{
+                                  nome: "Qualidade de execução",
+                                  formula: "A definir",
+                                  meta: "A definir",
+                                  frequencia: "Mensal"
+                                }],
+                                evidencia_execucao: {
+                                  tipo_evidencia: "Registro manual",
+                                  descricao: "A definir",
+                                  periodo_retencao: "12_meses"
+                                }
+                              },
+                              reason: it.justification,
+                              origin: "melhoria_continua",
+                              expected_impact: `Fechar gap identificado: ${it.related_map_section}`
+                            };
+                            onCreateIT(itData);
+                            toast.success("IT criada! Revise antes de salvar.");
+                          }}
+                          className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                        >
+                          <CheckCircle2 className="w-4 h-4 mr-2" />
+                          Criar Esta IT
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-4 bg-green-100 rounded-lg text-center">
+                  <CheckCircle2 className="w-12 h-12 text-green-600 mx-auto mb-2" />
+                  <p className="text-green-900 font-semibold">
+                    MAP bem coberto! Nenhuma IT crítica faltando.
+                  </p>
+                </div>
+              )}
+
+              {autoAnalysis.recommendations?.length > 0 && (
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <Label className="text-sm font-bold text-blue-900 mb-2 block">
+                    💡 Recomendações Gerais
+                  </Label>
+                  <ul className="space-y-1">
+                    {autoAnalysis.recommendations.map((rec, idx) => (
+                      <li key={idx} className="text-sm text-blue-900">• {rec}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <Button 
+                variant="outline" 
+                onClick={() => setAutoAnalysis(null)} 
+                className="w-full"
+              >
+                Nova Análise
+              </Button>
+            </div>
+          )}
 
           {/* Resposta Livre da IA */}
           {freeResponse && (
