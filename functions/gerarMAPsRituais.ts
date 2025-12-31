@@ -313,12 +313,24 @@ Retorne APENAS JSON estruturado.
         const maxNumber = numbers.length > 0 ? Math.max(...numbers) : 0;
         const newCode = `MAP-RIT-${String(maxNumber + created.length + 1).padStart(4, '0')}`;
 
+        // Normalizar dados (converter arrays em strings se necessário)
+        const normalizedContent = {
+          objetivo: typeof aiResponse.objetivo === 'string' ? aiResponse.objetivo : (Array.isArray(aiResponse.objetivo) ? aiResponse.objetivo.join('\n') : ''),
+          campo_aplicacao: typeof aiResponse.campo_aplicacao === 'string' ? aiResponse.campo_aplicacao : (Array.isArray(aiResponse.campo_aplicacao) ? aiResponse.campo_aplicacao.join('\n') : ''),
+          informacoes_complementares: typeof aiResponse.informacoes_complementares === 'string' ? aiResponse.informacoes_complementares : (Array.isArray(aiResponse.informacoes_complementares) ? aiResponse.informacoes_complementares.join('\n') : ''),
+          fluxo_processo: typeof aiResponse.fluxo_processo === 'string' ? aiResponse.fluxo_processo : (Array.isArray(aiResponse.fluxo_processo) ? aiResponse.fluxo_processo.join('\n') : ''),
+          atividades: aiResponse.atividades || [],
+          matriz_riscos: aiResponse.matriz_riscos || [],
+          inter_relacoes: aiResponse.inter_relacoes || [],
+          indicadores: aiResponse.indicadores || []
+        };
+
         const mapData = {
           code: newCode,
           title: ritual.name,
           category: "Ritual",
           description: ritual.description,
-          content_json: aiResponse,
+          content_json: normalizedContent,
           is_template: true,
           plan_access: ["FREE", "START", "BRONZE", "PRATA", "GOLD", "IOM", "MILLIONS"],
           operational_status: "operacional",
@@ -336,9 +348,6 @@ Retorne APENAS JSON estruturado.
         created.push({ ritual: ritual.name, map_id: createdMap.id, code: newCode });
 
         console.log(`✅ MAP criado: ${newCode} - ${ritual.name}`);
-        
-        // Pequeno delay para evitar sobrecarga
-        await new Promise(resolve => setTimeout(resolve, 1000));
 
       } catch (error) {
         console.error(`❌ Erro ao criar MAP para ${ritual.name}:`, error);
