@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -32,10 +33,14 @@ import {
   Play,
   Flag,
   Repeat,
-  FileText
+  FileText,
+  Settings
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import RitualAdminPanel from "@/components/rituais/RitualAdminPanel";
+import ScheduleFilters from "@/components/rituais/ScheduleFilters";
+import RitualStatsCards from "@/components/rituais/RitualStatsCards";
 
 export default function RituaisAculturamento() {
   const navigate = useNavigate();
@@ -51,6 +56,14 @@ export default function RituaisAculturamento() {
   const [workshop, setWorkshop] = useState(null);
   const [scheduledRituals, setScheduledRituals] = useState([]);
   const [ritualsWithMaps, setRitualsWithMaps] = useState([]);
+  const [ritualsDB, setRitualsDB] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [scheduleFilters, setScheduleFilters] = useState({
+    frequency: "all",
+    status: "all",
+    responsible: "all"
+  });
+  const [activeTab, setActiveTab] = useState("library");
 
   useEffect(() => {
     loadData();
@@ -68,9 +81,22 @@ export default function RituaisAculturamento() {
       if (userWorkshop) {
         loadScheduledRituals(userWorkshop.id);
         loadRitualsWithMaps(userWorkshop.id);
+        loadEmployees(userWorkshop.id);
       }
     } catch (error) {
       console.error("Error loading data:", error);
+    }
+  };
+
+  const loadEmployees = async (workshopId) => {
+    try {
+      const employeesData = await base44.entities.Employee.filter({ 
+        workshop_id: workshopId, 
+        status: "ativo" 
+      });
+      setEmployees(employeesData);
+    } catch (error) {
+      console.error("Error loading employees:", error);
     }
   };
 
@@ -86,8 +112,7 @@ export default function RituaisAculturamento() {
   const loadScheduledRituals = async (workshopId) => {
     try {
       const schedules = await base44.entities.ScheduledRitual.filter({ 
-        workshop_id: workshopId,
-        status: "agendado"
+        workshop_id: workshopId
       });
       setScheduledRituals(schedules);
     } catch (error) {
@@ -386,11 +411,29 @@ export default function RituaisAculturamento() {
     eventual: { label: "Eventual", color: "bg-gray-100 text-gray-800" }
   };
 
-  const filteredRituais = rituais.filter(ritual => {
+  // Combinar rituais padrão + personalizados
+  const allRituals = [...rituais, ...ritualsDB.map(r => ({
+    ...r,
+    id: r.id,
+    icon: Flame,
+    isCustom: true
+  }))];
+
+  const filteredRituais = allRituals.filter(ritual => {
     const matchesSearch = ritual.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           ritual.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFrequency = frequencyFilter === "all" || ritual.frequency === frequencyFilter;
     return matchesSearch && matchesFrequency;
+  });
+
+  // Filtrar agendamentos
+  const filteredSchedules = scheduledRituals.filter(schedule => {
+    const matchesFreq = scheduleFilters.frequency === "all" || 
+      ritualsDB.find(r => r.id === schedule.ritual_id)?.frequency === scheduleFilters.frequency;
+    const matchesStatus = scheduleFilters.status === "all" || schedule.status === scheduleFilters.status;
+    const matchesResp = scheduleFilters.responsible === "all" || 
+      ritualsDB.find(r => r.id === schedule.ritual_id)?.responsible_user_id === scheduleFilters.responsible;
+    return matchesFreq && matchesStatus && matchesResp;
   });
 
   const groupedByFrequency = {
@@ -406,45 +449,62 @@ export default function RituaisAculturamento() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl flex items-center justify-center">
-              <Flame className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Rituais de Aculturamento</h1>
-              <p className="text-gray-600">Práticas para fortalecer a cultura organizacional</p>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl flex items-center justify-center">
+                <Flame className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Rituais de Aculturamento</h1>
+                <p className="text-gray-600">Práticas para fortalecer a cultura organizacional</p>
+              </div>
             </div>
           </div>
 
-          {/* Filters */}
-          <div className="flex flex-col sm:flex-row gap-4 mt-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <Input
-                placeholder="Buscar ritual..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Select value={frequencyFilter} onValueChange={setFrequencyFilter}>
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Frequência" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas as frequências</SelectItem>
-                <SelectItem value="diario">Diário</SelectItem>
-                <SelectItem value="semanal">Semanal</SelectItem>
-                <SelectItem value="quinzenal">Quinzenal</SelectItem>
-                <SelectItem value="mensal">Mensal</SelectItem>
-                <SelectItem value="eventual">Eventual</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+          <RitualStatsCards 
+            scheduledRituals={scheduledRituals} 
+            ritualsDB={ritualsDB}
+          />
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
+            <TabsList className="grid w-full max-w-md grid-cols-3">
+              <TabsTrigger value="library">Biblioteca</TabsTrigger>
+              <TabsTrigger value="schedules">Agendamentos</TabsTrigger>
+              <TabsTrigger value="admin">
+                <Settings className="w-4 h-4 mr-2" />
+                Admin
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="library" className="mt-6">
+              {/* Filters */}
+              <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <Input
+                    placeholder="Buscar ritual..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Select value={frequencyFilter} onValueChange={setFrequencyFilter}>
+                  <SelectTrigger className="w-full sm:w-48">
+                    <SelectValue placeholder="Frequência" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas as frequências</SelectItem>
+                    <SelectItem value="diario">Diário</SelectItem>
+                    <SelectItem value="semanal">Semanal</SelectItem>
+                    <SelectItem value="quinzenal">Quinzenal</SelectItem>
+                    <SelectItem value="mensal">Mensal</SelectItem>
+                    <SelectItem value="eventual">Eventual</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Stats */}
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
           {Object.entries(frequencyLabels).map(([key, value]) => (
             <Card key={key} className="bg-white">
               <CardContent className="p-4 text-center">
@@ -496,6 +556,11 @@ export default function RituaisAculturamento() {
                           </p>
                         </CardContent>
                         <CardFooter className="pt-0 flex gap-2">
+                          {ritual.isCustom && (
+                            <Badge className="absolute top-2 right-2 bg-purple-600 text-white">
+                              Custom
+                            </Badge>
+                          )}
                           <Button 
                             className="flex-1 bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200"
                             variant="ghost"
@@ -635,12 +700,63 @@ export default function RituaisAculturamento() {
           </div>
         )}
 
-        {filteredRituais.length === 0 && (
-          <div className="text-center py-12">
-            <Flame className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">Nenhum ritual encontrado</p>
-          </div>
-        )}
+              {filteredRituais.length === 0 && (
+                <div className="text-center py-12">
+                  <Flame className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500">Nenhum ritual encontrado</p>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="schedules" className="mt-6">
+              <ScheduleFilters 
+                filters={scheduleFilters}
+                onFiltersChange={setScheduleFilters}
+                employees={employees}
+              />
+
+              {filteredSchedules.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+                  {filteredSchedules.map((schedule) => {
+                    const ritual = ritualsDB.find(r => r.id === schedule.ritual_id);
+                    const statusColors = {
+                      agendado: "bg-blue-50 border-blue-500",
+                      realizado: "bg-green-50 border-green-500",
+                      concluido: "bg-purple-50 border-purple-500"
+                    };
+                    return (
+                      <Card key={schedule.id} className={`border-l-4 ${statusColors[schedule.status]}`}>
+                        <CardContent className="p-4">
+                          <h3 className="font-semibold text-gray-900">{schedule.ritual_name}</h3>
+                          <div className="flex items-center gap-2 text-sm text-gray-600 mt-2">
+                            <Calendar className="w-4 h-4" />
+                            {format(new Date(schedule.scheduled_date), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                          </div>
+                          <Badge className="mt-2">{schedule.status}</Badge>
+                          {schedule.notes && (
+                            <p className="text-xs text-gray-500 mt-2 italic">"{schedule.notes}"</p>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-12 mt-6">
+                  <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500">Nenhum agendamento encontrado</p>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="admin" className="mt-6">
+              <RitualAdminPanel 
+                workshop={workshop}
+                onRitualsUpdate={setRitualsDB}
+              />
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
     </div>
   );

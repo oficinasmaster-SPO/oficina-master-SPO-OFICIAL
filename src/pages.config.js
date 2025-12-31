@@ -65,7 +65,6 @@ import EditarDescricaoCargo from './pages/EditarDescricaoCargo';
 import EvidenceUpload from './pages/EvidenceUpload';
 import Feedbacks from './pages/Feedbacks';
 import Gamificacao from './pages/Gamificacao';
-import MeusProcessos from './pages/MeusProcessos';
 import GerenciarAula from './pages/GerenciarAula';
 import GerenciarModulo from './pages/GerenciarModulo';
 import GerenciarModulosCurso from './pages/GerenciarModulosCurso';
@@ -87,6 +86,7 @@ import Home from './pages/Home';
 import IAAnalytics from './pages/IAAnalytics';
 import LogsAuditoriaRBAC from './pages/LogsAuditoriaRBAC';
 import MeuPlano from './pages/MeuPlano';
+import MeusProcessos from './pages/MeusProcessos';
 import MeusTreinamentos from './pages/MeusTreinamentos';
 import MissaoVisaoValores from './pages/MissaoVisaoValores';
 import MonitoramentoRH from './pages/MonitoramentoRH';
@@ -126,6 +126,7 @@ import ResultadoMaturidade from './pages/ResultadoMaturidade';
 import ResultadoOS from './pages/ResultadoOS';
 import ResultadoProducao from './pages/ResultadoProducao';
 import Rituais from './pages/Rituais';
+import RituaisAculturamento from './pages/RituaisAculturamento';
 import SelecionarDiagnostico from './pages/SelecionarDiagnostico';
 import SolicitarPermissoes from './pages/SolicitarPermissoes';
 import Tarefas from './pages/Tarefas';
@@ -134,7 +135,6 @@ import TreinamentoVendas from './pages/TreinamentoVendas';
 import Usuarios from './pages/Usuarios';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
-import RituaisAculturamento from './pages/RituaisAculturamento';
 import __Layout from './Layout.jsx';
 
 
@@ -206,7 +206,6 @@ export const PAGES = {
     "EvidenceUpload": EvidenceUpload,
     "Feedbacks": Feedbacks,
     "Gamificacao": Gamificacao,
-    "MeusProcessos": MeusProcessos,
     "GerenciarAula": GerenciarAula,
     "GerenciarModulo": GerenciarModulo,
     "GerenciarModulosCurso": GerenciarModulosCurso,
@@ -228,6 +227,7 @@ export const PAGES = {
     "IAAnalytics": IAAnalytics,
     "LogsAuditoriaRBAC": LogsAuditoriaRBAC,
     "MeuPlano": MeuPlano,
+    "MeusProcessos": MeusProcessos,
     "MeusTreinamentos": MeusTreinamentos,
     "MissaoVisaoValores": MissaoVisaoValores,
     "MonitoramentoRH": MonitoramentoRH,
@@ -267,6 +267,7 @@ export const PAGES = {
     "ResultadoOS": ResultadoOS,
     "ResultadoProducao": ResultadoProducao,
     "Rituais": Rituais,
+    "RituaisAculturamento": RituaisAculturamento,
     "SelecionarDiagnostico": SelecionarDiagnostico,
     "SolicitarPermissoes": SolicitarPermissoes,
     "Tarefas": Tarefas,
@@ -275,7 +276,6 @@ export const PAGES = {
     "Usuarios": Usuarios,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
-    "RituaisAculturamento": RituaisAculturamento,
 }
 
 export const pagesConfig = {
