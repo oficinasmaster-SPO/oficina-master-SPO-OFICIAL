@@ -45,6 +45,8 @@ import RitualMAPHierarchy from "@/components/rituais/RitualMAPHierarchy";
 import AdvancedMAPSearch from "@/components/rituais/AdvancedMAPSearch";
 import AdvancedFilters from "@/components/rituais/AdvancedFilters";
 import MAPViewerDialog from "@/components/rituais/MAPViewerDialog";
+import RitualAnalytics from "@/components/rituais/RitualAnalytics";
+import RitualAuditLog from "@/components/rituais/RitualAuditLog";
 
 export default function RituaisAculturamento() {
   const navigate = useNavigate();
@@ -488,11 +490,13 @@ export default function RituaisAculturamento() {
           />
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-            <TabsList className="grid w-full max-w-2xl grid-cols-5">
+            <TabsList className="grid w-full max-w-4xl grid-cols-7">
               <TabsTrigger value="library">Biblioteca</TabsTrigger>
               <TabsTrigger value="schedules">Agendamentos</TabsTrigger>
               <TabsTrigger value="hierarchy">Hierarquia</TabsTrigger>
               <TabsTrigger value="search">Busca MAP</TabsTrigger>
+              <TabsTrigger value="analytics">Analytics</TabsTrigger>
+              <TabsTrigger value="audit">Auditoria</TabsTrigger>
               <TabsTrigger value="admin">
                 <Settings className="w-4 h-4 mr-1" />
                 Admin
@@ -798,6 +802,14 @@ export default function RituaisAculturamento() {
               />
             </TabsContent>
 
+            <TabsContent value="analytics" className="mt-6">
+              <RitualAnalytics workshop={workshop} />
+            </TabsContent>
+
+            <TabsContent value="audit" className="mt-6">
+              <RitualAuditLog workshop={workshop} />
+            </TabsContent>
+
             <TabsContent value="admin" className="mt-6">
               <RitualAdminPanel 
                 workshop={workshop}
@@ -812,6 +824,7 @@ export default function RituaisAculturamento() {
           map={selectedMAP}
           open={isMAPViewerOpen}
           onClose={() => setIsMAPViewerOpen(false)}
+          ritualsData={ritualsDB}
         />
       </div>
     </div>

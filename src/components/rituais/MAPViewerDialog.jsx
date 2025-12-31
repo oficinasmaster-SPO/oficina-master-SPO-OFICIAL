@@ -3,8 +3,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, Target, Activity, AlertTriangle, TrendingUp, Image } from "lucide-react";
+import MAPExporter from "./MAPExporter";
 
-export default function MAPViewerDialog({ map, open, onClose }) {
+export default function MAPViewerDialog({ map, open, onClose, ritualsData = [] }) {
   if (!map) return null;
 
   const content = map.content_json || {};
@@ -13,16 +14,21 @@ export default function MAPViewerDialog({ map, open, onClose }) {
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FileText className="w-5 h-5 text-purple-600" />
-            {map.title}
-          </DialogTitle>
-          <div className="flex items-center gap-2 mt-2">
-            <Badge variant="outline">{map.code}</Badge>
-            <Badge className="bg-purple-100 text-purple-800">
-              {map.operational_status}
-            </Badge>
-            <Badge variant="secondary">Rev. {map.revision}</Badge>
+          <div className="flex items-start justify-between">
+            <div>
+              <DialogTitle className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-purple-600" />
+                {map.title}
+              </DialogTitle>
+              <div className="flex items-center gap-2 mt-2">
+                <Badge variant="outline">{map.code}</Badge>
+                <Badge className="bg-purple-100 text-purple-800">
+                  {map.operational_status}
+                </Badge>
+                <Badge variant="secondary">Rev. {map.revision}</Badge>
+              </div>
+            </div>
+            <MAPExporter map={map} ritualsData={ritualsData} />
           </div>
         </DialogHeader>
 
