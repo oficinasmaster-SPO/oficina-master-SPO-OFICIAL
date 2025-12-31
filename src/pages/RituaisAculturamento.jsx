@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { useNavigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -31,10 +33,12 @@ import {
   RefreshCw,
   Play,
   Flag,
-  Repeat
+  Repeat,
+  FileText
 } from "lucide-react";
 
 export default function RituaisAculturamento() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [frequencyFilter, setFrequencyFilter] = useState("all");
   const [selectedRitual, setSelectedRitual] = useState(null);
@@ -480,9 +484,17 @@ export default function RituaisAculturamento() {
                             {ritual.description}
                           </p>
                         </CardContent>
-                        <CardFooter className="pt-0">
+                        <CardFooter className="pt-0 flex gap-2">
                           <Button 
-                            className="w-full bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200"
+                            className="flex-1 bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200"
+                            variant="ghost"
+                            onClick={() => navigate(createPageUrl(`CriarRitualMAP?ritual_id=${ritual.id}`))}
+                          >
+                            <FileText className="w-4 h-4 mr-2" />
+                            MAP
+                          </Button>
+                          <Button 
+                            className="flex-1 bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200"
                             variant="ghost"
                             onClick={() => handleSchedule(ritual)}
                           >
@@ -522,9 +534,17 @@ export default function RituaisAculturamento() {
                       {ritual.description}
                     </p>
                   </CardContent>
-                  <CardFooter className="pt-0">
+                  <CardFooter className="pt-0 flex gap-2">
                     <Button 
-                      className="w-full bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200"
+                      className="flex-1 bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200"
+                      variant="ghost"
+                      onClick={() => navigate(createPageUrl(`CriarRitualMAP?ritual_id=${ritual.id}`))}
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      MAP
+                    </Button>
+                    <Button 
+                      className="flex-1 bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200"
                       variant="ghost"
                       onClick={() => handleSchedule(ritual)}
                     >
