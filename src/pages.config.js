@@ -34,6 +34,7 @@ import ConsolidadoMensal from './pages/ConsolidadoMensal';
 import ControleAceleracao from './pages/ControleAceleracao';
 import ConvidarColaborador from './pages/ConvidarColaborador';
 import CriarDescricaoCargo from './pages/CriarDescricaoCargo';
+import CriarRitualMAP from './pages/CriarRitualMAP';
 import CronogramaAculturacao from './pages/CronogramaAculturacao';
 import CronogramaConsultoria from './pages/CronogramaConsultoria';
 import CronogramaDetalhado from './pages/CronogramaDetalhado';
@@ -64,6 +65,7 @@ import EditarDescricaoCargo from './pages/EditarDescricaoCargo';
 import EvidenceUpload from './pages/EvidenceUpload';
 import Feedbacks from './pages/Feedbacks';
 import Gamificacao from './pages/Gamificacao';
+import MeusProcessos from './pages/MeusProcessos';
 import GerenciarAula from './pages/GerenciarAula';
 import GerenciarModulo from './pages/GerenciarModulo';
 import GerenciarModulosCurso from './pages/GerenciarModulosCurso';
@@ -85,7 +87,6 @@ import Home from './pages/Home';
 import IAAnalytics from './pages/IAAnalytics';
 import LogsAuditoriaRBAC from './pages/LogsAuditoriaRBAC';
 import MeuPlano from './pages/MeuPlano';
-import MeusProcessos from './pages/MeusProcessos';
 import MeusTreinamentos from './pages/MeusTreinamentos';
 import MissaoVisaoValores from './pages/MissaoVisaoValores';
 import MonitoramentoRH from './pages/MonitoramentoRH';
@@ -134,7 +135,6 @@ import Usuarios from './pages/Usuarios';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
 import RituaisAculturamento from './pages/RituaisAculturamento';
-import CriarRitualMAP from './pages/CriarRitualMAP';
 import __Layout from './Layout.jsx';
 
 
@@ -175,6 +175,7 @@ export const PAGES = {
     "ControleAceleracao": ControleAceleracao,
     "ConvidarColaborador": ConvidarColaborador,
     "CriarDescricaoCargo": CriarDescricaoCargo,
+    "CriarRitualMAP": CriarRitualMAP,
     "CronogramaAculturacao": CronogramaAculturacao,
     "CronogramaConsultoria": CronogramaConsultoria,
     "CronogramaDetalhado": CronogramaDetalhado,
@@ -205,6 +206,7 @@ export const PAGES = {
     "EvidenceUpload": EvidenceUpload,
     "Feedbacks": Feedbacks,
     "Gamificacao": Gamificacao,
+    "MeusProcessos": MeusProcessos,
     "GerenciarAula": GerenciarAula,
     "GerenciarModulo": GerenciarModulo,
     "GerenciarModulosCurso": GerenciarModulosCurso,
@@ -226,7 +228,6 @@ export const PAGES = {
     "IAAnalytics": IAAnalytics,
     "LogsAuditoriaRBAC": LogsAuditoriaRBAC,
     "MeuPlano": MeuPlano,
-    "MeusProcessos": MeusProcessos,
     "MeusTreinamentos": MeusTreinamentos,
     "MissaoVisaoValores": MissaoVisaoValores,
     "MonitoramentoRH": MonitoramentoRH,
@@ -275,7 +276,6 @@ export const PAGES = {
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
     "RituaisAculturamento": RituaisAculturamento,
-    "CriarRitualMAP": CriarRitualMAP,
 }
 
 export const pagesConfig = {

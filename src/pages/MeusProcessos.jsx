@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Search, FileText, Download, Eye, Filter, Briefcase, DollarSign, Settings, Users, BarChart3, Truck, Copy, Loader2, Mail, History, LayoutGrid, List } from "lucide-react";
+import { Search, FileText, Download, Eye, Filter, Briefcase, DollarSign, Settings, Users, BarChart3, Truck, Copy, Loader2, Mail, History, LayoutGrid, List, Flame } from "lucide-react";
 import { createPageUrl } from "@/utils";
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -128,6 +128,7 @@ export default function MeusProcessos() {
 
   const categories = [
     { id: "Todos", label: "Todos", icon: Filter },
+    { id: "Ritual", label: "Rituais", icon: Flame },
     { id: "Vendas", label: "Vendas", icon: DollarSign },
     { id: "Comercial", label: "Comercial", icon: Briefcase },
     { id: "Pátio", label: "Pátio", icon: Truck },
