@@ -29,6 +29,8 @@ export default function MeusProcessos() {
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
   const [selectedProcess, setSelectedProcess] = useState(null);
   const [viewMode, setViewMode] = useState("cards"); // cards, areas, hierarchy
+  const [statusFilter, setStatusFilter] = useState("todos");
+  const [dateFilter, setDateFilter] = useState("todos");
 
   useEffect(() => {
     const loadData = async () => {
@@ -91,11 +93,88 @@ export default function MeusProcessos() {
     return isRelevant;
   });
 
+  // Função para buscar em todo o conteúdo JSON
+  const searchInContent = (doc, term) => {
+    if (!term) return true;
+    const lowerTerm = term.toLowerCase();
+    
+    // Busca em campos básicos
+    if (doc.title?.toLowerCase().includes(lowerTerm) ||
+        doc.code?.toLowerCase().includes(lowerTerm) ||
+        doc.description?.toLowerCase().includes(lowerTerm)) {
+      return true;
+    }
+    
+    // Busca no content_json
+    if (doc.content_json) {
+      const content = doc.content_json;
+      
+      // Busca em objetivo, campo_aplicacao, informacoes_complementares, fluxo_processo
+      if (content.objetivo?.toLowerCase().includes(lowerTerm) ||
+          content.campo_aplicacao?.toLowerCase().includes(lowerTerm) ||
+          content.informacoes_complementares?.toLowerCase().includes(lowerTerm) ||
+          content.fluxo_processo?.toLowerCase().includes(lowerTerm)) {
+        return true;
+      }
+      
+      // Busca em atividades
+      if (content.atividades?.some(a => 
+        a.atividade?.toLowerCase().includes(lowerTerm) ||
+        a.responsavel?.toLowerCase().includes(lowerTerm) ||
+        a.ferramentas?.toLowerCase().includes(lowerTerm)
+      )) {
+        return true;
+      }
+      
+      // Busca em riscos
+      if (content.matriz_riscos?.some(r => 
+        r.identificacao?.toLowerCase().includes(lowerTerm) ||
+        r.fonte?.toLowerCase().includes(lowerTerm) ||
+        r.impacto?.toLowerCase().includes(lowerTerm) ||
+        r.controle?.toLowerCase().includes(lowerTerm)
+      )) {
+        return true;
+      }
+      
+      // Busca em indicadores
+      if (content.indicadores?.some(i => 
+        i.indicador?.toLowerCase().includes(lowerTerm) ||
+        i.meta?.toLowerCase().includes(lowerTerm) ||
+        i.como_medir?.toLowerCase().includes(lowerTerm)
+      )) {
+        return true;
+      }
+      
+      // Busca em inter-relações
+      if (content.inter_relacoes?.some(ir => 
+        ir.area?.toLowerCase().includes(lowerTerm) ||
+        ir.interacao?.toLowerCase().includes(lowerTerm)
+      )) {
+        return true;
+      }
+    }
+    
+    return false;
+  };
+
   const filteredDocs = accessibleDocs.filter(doc => {
-    const matchesSearch = doc.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          (doc.code && doc.code.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesSearch = searchInContent(doc, searchTerm);
     const matchesTab = activeTab === "Todos" || doc.category === activeTab;
-    return matchesSearch && matchesTab;
+    const matchesStatus = statusFilter === "todos" || doc.status === statusFilter;
+    
+    // Filtro de data
+    let matchesDate = true;
+    if (dateFilter !== "todos" && doc.created_date) {
+      const docDate = new Date(doc.created_date);
+      const now = new Date();
+      const diffDays = Math.floor((now - docDate) / (1000 * 60 * 60 * 24));
+      
+      if (dateFilter === "7dias") matchesDate = diffDays <= 7;
+      else if (dateFilter === "30dias") matchesDate = diffDays <= 30;
+      else if (dateFilter === "90dias") matchesDate = diffDays <= 90;
+    }
+    
+    return matchesSearch && matchesTab && matchesStatus && matchesDate;
   });
 
   const duplicateMutation = useMutation({
@@ -170,17 +249,96 @@ export default function MeusProcessos() {
           </Link>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between mb-6">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-            <Input 
-              placeholder="Buscar processos..." 
-              className="pl-10 bg-white"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+        {/* Estatísticas e contador */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-blue-600 font-medium">Total de MAPs</p>
+                  <p className="text-3xl font-bold text-blue-900">{accessibleDocs.length}</p>
+                </div>
+                <FileText className="w-8 h-8 text-blue-600" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="bg-gradient-to-br from-green-50 to-green-100">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-green-600 font-medium">Operacionais</p>
+                  <p className="text-3xl font-bold text-green-900">
+                    {accessibleDocs.filter(d => d.operational_status === 'operacional').length}
+                  </p>
+                </div>
+                <BarChart3 className="w-8 h-8 text-green-600" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-purple-600 font-medium">Rituais</p>
+                  <p className="text-3xl font-bold text-purple-900">
+                    {accessibleDocs.filter(d => d.category === 'Ritual').length}
+                  </p>
+                </div>
+                <Flame className="w-8 h-8 text-purple-600" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="bg-gradient-to-br from-orange-50 to-orange-100">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-orange-600 font-medium">Filtrados</p>
+                  <p className="text-3xl font-bold text-orange-900">{filteredDocs.length}</p>
+                </div>
+                <Filter className="w-8 h-8 text-orange-600" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Busca e filtros */}
+        <div className="bg-white p-4 rounded-lg shadow-sm border mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="relative lg:col-span-2">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Input 
+                placeholder="Buscar em todo conteúdo (título, objetivo, atividades, riscos, indicadores...)" 
+                className="pl-10 bg-white"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+            >
+              <option value="todos">Todos os Status</option>
+              <option value="ativo">Ativo</option>
+              <option value="em_revisao">Em Revisão</option>
+              <option value="obsoleto">Obsoleto</option>
+            </select>
+
+            <select
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+            >
+              <option value="todos">Todas as Datas</option>
+              <option value="7dias">Últimos 7 dias</option>
+              <option value="30dias">Últimos 30 dias</option>
+              <option value="90dias">Últimos 90 dias</option>
+            </select>
           </div>
-          <div className="flex gap-2">
+
+          <div className="flex items-center gap-2 mt-3 flex-wrap">
+            <span className="text-sm text-gray-600">Visualização:</span>
             <Button
               variant={viewMode === "cards" ? "default" : "outline"}
               onClick={() => setViewMode("cards")}
@@ -205,6 +363,21 @@ export default function MeusProcessos() {
               <List className="w-4 h-4 mr-2" />
               Hierarquia
             </Button>
+
+            {(searchTerm || statusFilter !== "todos" || dateFilter !== "todos") && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSearchTerm("");
+                  setStatusFilter("todos");
+                  setDateFilter("todos");
+                }}
+                className="ml-auto text-red-600 hover:text-red-700"
+              >
+                Limpar Filtros
+              </Button>
+            )}
           </div>
         </div>
 
