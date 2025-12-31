@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Search, FileText, Download, Eye, Filter, Briefcase, DollarSign, Settings, Users, BarChart3, Truck, Copy, Loader2, Mail, History, LayoutGrid, List, Flame } from "lucide-react";
+import { Search, FileText, Download, Eye, Filter, Briefcase, DollarSign, Settings, Users, BarChart3, Truck, Copy, Loader2, Mail, History, LayoutGrid, List, Flame, Sparkles } from "lucide-react";
 import { createPageUrl } from "@/utils";
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -14,6 +14,8 @@ import { toast } from "sonner";
 import AdminViewBanner from "../components/shared/AdminViewBanner";
 import ShareProcessDialog from "../components/processes/ShareProcessDialog";
 import ShareHistoryDialog from "../components/processes/ShareHistoryDialog";
+import RitualMAPGenerator from "../components/processes/RitualMAPGenerator";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import AreaGroupedView from "../components/processes/AreaGroupedView";
 import ProcessHierarchyView from "../components/processes/ProcessHierarchyView";
 
@@ -31,6 +33,7 @@ export default function MeusProcessos() {
   const [viewMode, setViewMode] = useState("cards"); // cards, areas, hierarchy
   const [statusFilter, setStatusFilter] = useState("todos");
   const [dateFilter, setDateFilter] = useState("todos");
+  const [mapGeneratorOpen, setMapGeneratorOpen] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -241,12 +244,21 @@ export default function MeusProcessos() {
             </p>
           </div>
           
-          <Link to={createPageUrl('GerenciarProcessos')}>
-            <Button className="bg-red-600 hover:bg-red-700 text-white border-0">
-              <Settings className="w-4 h-4 mr-2" /> 
-              {user?.role === 'admin' ? 'Gerenciar Biblioteca (Admin)' : 'Criar e Gerenciar Processos'}
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setMapGeneratorOpen(true)}
+              className="bg-purple-600 hover:bg-purple-700 text-white"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              Gerar MAPs de Rituais
             </Button>
-          </Link>
+            <Link to={createPageUrl('GerenciarProcessos')}>
+              <Button className="bg-red-600 hover:bg-red-700 text-white border-0">
+                <Settings className="w-4 h-4 mr-2" /> 
+                {user?.role === 'admin' ? 'Gerenciar Biblioteca (Admin)' : 'Criar e Gerenciar Processos'}
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Estatísticas e contador */}
@@ -547,6 +559,20 @@ export default function MeusProcessos() {
           }}
           process={selectedProcess}
         />
+
+        <Dialog open={mapGeneratorOpen} onOpenChange={setMapGeneratorOpen}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Gerador de MAPs para Rituais</DialogTitle>
+            </DialogHeader>
+            <RitualMAPGenerator
+              onClose={() => {
+                setMapGeneratorOpen(false);
+                queryClient.invalidateQueries(['my-processes']);
+              }}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

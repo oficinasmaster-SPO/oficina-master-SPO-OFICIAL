@@ -65,6 +65,7 @@ import EditarDescricaoCargo from './pages/EditarDescricaoCargo';
 import EvidenceUpload from './pages/EvidenceUpload';
 import Feedbacks from './pages/Feedbacks';
 import Gamificacao from './pages/Gamificacao';
+import GerarMAPsRituais from './pages/GerarMAPsRituais';
 import GerenciarAula from './pages/GerenciarAula';
 import GerenciarModulo from './pages/GerenciarModulo';
 import GerenciarModulosCurso from './pages/GerenciarModulosCurso';
@@ -135,7 +136,6 @@ import TreinamentoVendas from './pages/TreinamentoVendas';
 import Usuarios from './pages/Usuarios';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
-import GerarMAPsRituais from './pages/GerarMAPsRituais';
 import __Layout from './Layout.jsx';
 
 
@@ -207,6 +207,7 @@ export const PAGES = {
     "EvidenceUpload": EvidenceUpload,
     "Feedbacks": Feedbacks,
     "Gamificacao": Gamificacao,
+    "GerarMAPsRituais": GerarMAPsRituais,
     "GerenciarAula": GerenciarAula,
     "GerenciarModulo": GerenciarModulo,
     "GerenciarModulosCurso": GerenciarModulosCurso,
@@ -277,7 +278,6 @@ export const PAGES = {
     "Usuarios": Usuarios,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
-    "GerarMAPsRituais": GerarMAPsRituais,
 }
 
 export const pagesConfig = {
