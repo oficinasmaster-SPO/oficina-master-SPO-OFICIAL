@@ -84,6 +84,10 @@ export default function MeusProcessos() {
     initialData: []
   });
 
+  // Contar processos excluindo rituais
+  const processosCount = accessibleDocs.filter(d => d.category !== 'Ritual').length;
+  const ritualsCount = accessibleDocs.filter(d => d.category === 'Ritual').length;
+
   // Filter documents based on user access and workshop
   const accessibleDocs = documents.filter(doc => {
     // Check if it's a template or belongs to this workshop
@@ -266,8 +270,8 @@ export default function MeusProcessos() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-blue-600 font-medium">Total de MAPs</p>
-                  <p className="text-3xl font-bold text-blue-900">{accessibleDocs.length}</p>
+                  <p className="text-sm text-blue-600 font-medium">Processos</p>
+                  <p className="text-3xl font-bold text-blue-900">{processosCount}</p>
                 </div>
                 <FileText className="w-8 h-8 text-blue-600" />
               </div>
@@ -286,16 +290,14 @@ export default function MeusProcessos() {
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-purple-50 to-purple-100">
+          <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-purple-600 font-medium">Rituais</p>
-                  <p className="text-3xl font-bold text-purple-900">
-                    {accessibleDocs.filter(d => d.category === 'Ritual').length}
-                  </p>
+                  <p className="text-sm text-yellow-600 font-medium">ITs e FRs</p>
+                  <p className="text-3xl font-bold text-yellow-900">{its.length}</p>
                 </div>
-                <Flame className="w-8 h-8 text-purple-600" />
+                <FileText className="w-8 h-8 text-yellow-600" />
               </div>
             </CardContent>
           </Card>
