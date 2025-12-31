@@ -41,6 +41,10 @@ import { createPageUrl } from "@/utils";
 import RitualAdminPanel from "@/components/rituais/RitualAdminPanel";
 import ScheduleFilters from "@/components/rituais/ScheduleFilters";
 import RitualStatsCards from "@/components/rituais/RitualStatsCards";
+import RitualMAPHierarchy from "@/components/rituais/RitualMAPHierarchy";
+import AdvancedMAPSearch from "@/components/rituais/AdvancedMAPSearch";
+import AdvancedFilters from "@/components/rituais/AdvancedFilters";
+import MAPViewerDialog from "@/components/rituais/MAPViewerDialog";
 
 export default function RituaisAculturamento() {
   const navigate = useNavigate();
@@ -63,7 +67,16 @@ export default function RituaisAculturamento() {
     status: "all",
     responsible: "all"
   });
+  const [advancedFilters, setAdvancedFilters] = useState({
+    frequency: "all",
+    pillar: "all",
+    dateFrom: "",
+    dateTo: "",
+    hasMAP: "all"
+  });
   const [activeTab, setActiveTab] = useState("library");
+  const [selectedMAP, setSelectedMAP] = useState(null);
+  const [isMAPViewerOpen, setIsMAPViewerOpen] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -423,7 +436,15 @@ export default function RituaisAculturamento() {
     const matchesSearch = ritual.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           ritual.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFrequency = frequencyFilter === "all" || ritual.frequency === frequencyFilter;
-    return matchesSearch && matchesFrequency;
+    
+    // Filtros avançados
+    const matchesAdvFreq = advancedFilters.frequency === "all" || ritual.frequency === advancedFilters.frequency;
+    const matchesPillar = advancedFilters.pillar === "all" || ritual.pillar === advancedFilters.pillar;
+    const matchesMAP = advancedFilters.hasMAP === "all" || 
+      (advancedFilters.hasMAP === "yes" && ritual.process_document_id) ||
+      (advancedFilters.hasMAP === "no" && !ritual.process_document_id);
+    
+    return matchesSearch && matchesFrequency && matchesAdvFreq && matchesPillar && matchesMAP;
   });
 
   // Filtrar agendamentos
@@ -467,18 +488,26 @@ export default function RituaisAculturamento() {
           />
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-            <TabsList className="grid w-full max-w-md grid-cols-3">
+            <TabsList className="grid w-full max-w-2xl grid-cols-5">
               <TabsTrigger value="library">Biblioteca</TabsTrigger>
               <TabsTrigger value="schedules">Agendamentos</TabsTrigger>
+              <TabsTrigger value="hierarchy">Hierarquia</TabsTrigger>
+              <TabsTrigger value="search">Busca MAP</TabsTrigger>
               <TabsTrigger value="admin">
-                <Settings className="w-4 h-4 mr-2" />
+                <Settings className="w-4 h-4 mr-1" />
                 Admin
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="library" className="mt-6">
-              {/* Filters */}
-              <div className="flex flex-col sm:flex-row gap-4 mb-6">
+              {/* Advanced Filters */}
+              <AdvancedFilters 
+                filters={advancedFilters}
+                onFiltersChange={setAdvancedFilters}
+              />
+
+              {/* Basic Filters */}
+              <div className="flex flex-col sm:flex-row gap-4 mb-6 mt-6">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <Input
@@ -749,6 +778,26 @@ export default function RituaisAculturamento() {
               )}
             </TabsContent>
 
+            <TabsContent value="hierarchy" className="mt-6">
+              <RitualMAPHierarchy 
+                workshop={workshop}
+                onViewMAP={(map) => {
+                  setSelectedMAP(map);
+                  setIsMAPViewerOpen(true);
+                }}
+              />
+            </TabsContent>
+
+            <TabsContent value="search" className="mt-6">
+              <AdvancedMAPSearch 
+                workshop={workshop}
+                onViewMAP={(map) => {
+                  setSelectedMAP(map);
+                  setIsMAPViewerOpen(true);
+                }}
+              />
+            </TabsContent>
+
             <TabsContent value="admin" className="mt-6">
               <RitualAdminPanel 
                 workshop={workshop}
@@ -757,6 +806,13 @@ export default function RituaisAculturamento() {
             </TabsContent>
           </Tabs>
         </div>
+
+        {/* MAP Viewer Dialog */}
+        <MAPViewerDialog 
+          map={selectedMAP}
+          open={isMAPViewerOpen}
+          onClose={() => setIsMAPViewerOpen(false)}
+        />
       </div>
     </div>
   );
