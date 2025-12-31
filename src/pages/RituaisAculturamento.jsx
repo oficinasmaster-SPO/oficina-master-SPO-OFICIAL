@@ -9,8 +9,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import RitualMAPCreator from "@/components/rituais/RitualMAPCreator";
-import RitualMAPViewer from "@/components/rituais/RitualMAPViewer";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { 
@@ -33,15 +31,12 @@ import {
   RefreshCw,
   Play,
   Flag,
-  Repeat,
-  FileText
+  Repeat
 } from "lucide-react";
 
 export default function RituaisAculturamento() {
   const [searchTerm, setSearchTerm] = useState("");
   const [frequencyFilter, setFrequencyFilter] = useState("all");
-  const [showMAPCreator, setShowMAPCreator] = useState(null);
-  const [viewingMAPId, setViewingMAPId] = useState(null);
   const [selectedRitual, setSelectedRitual] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [scheduleDate, setScheduleDate] = useState("");
@@ -103,14 +98,6 @@ export default function RituaisAculturamento() {
       return;
     }
 
-    // Verificar se o ritual tem MAP
-    if (!selectedRitual.process_document_id) {
-      toast.error("Este ritual precisa de um MAP documentado antes de ser agendado");
-      setShowMAPCreator(selectedRitual);
-      setIsDialogOpen(false);
-      return;
-    }
-
     setSaving(true);
     try {
       const dateTime = new Date(`${scheduleDate}T${scheduleTime}`);
@@ -133,11 +120,6 @@ export default function RituaisAculturamento() {
     } finally {
       setSaving(false);
     }
-  };
-
-  const handleMAPCreated = (mapId) => {
-    setShowMAPCreator(null);
-    toast.success("MAP criado! Agora você pode agendar o ritual.");
   };
 
   const rituais = [
@@ -498,30 +480,10 @@ export default function RituaisAculturamento() {
                             {ritual.description}
                           </p>
                         </CardContent>
-                        <CardFooter className="pt-0 flex gap-2">
-                          {ritual.process_document_id ? (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setViewingMAPId(ritual.process_document_id)}
-                              className="flex-1"
-                            >
-                              <Eye className="w-4 h-4 mr-1" />
-                              MAP
-                            </Button>
-                          ) : (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setShowMAPCreator(ritual)}
-                              className="flex-1"
-                            >
-                              <FileText className="w-4 h-4 mr-1" />
-                              Criar MAP
-                            </Button>
-                          )}
+                        <CardFooter className="pt-0">
                           <Button 
-                            className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
+                            className="w-full bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200"
+                            variant="ghost"
                             onClick={() => handleSchedule(ritual)}
                           >
                             <Calendar className="w-4 h-4 mr-2" />
@@ -560,30 +522,10 @@ export default function RituaisAculturamento() {
                       {ritual.description}
                     </p>
                   </CardContent>
-                  <CardFooter className="pt-0 flex gap-2">
-                    {ritual.process_document_id ? (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setViewingMAPId(ritual.process_document_id)}
-                        className="flex-1"
-                      >
-                        <Eye className="w-4 h-4 mr-1" />
-                        MAP
-                      </Button>
-                    ) : (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setShowMAPCreator(ritual)}
-                        className="flex-1"
-                      >
-                        <FileText className="w-4 h-4 mr-1" />
-                        Criar MAP
-                      </Button>
-                    )}
+                  <CardFooter className="pt-0">
                     <Button 
-                      className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
+                      className="w-full bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200"
+                      variant="ghost"
                       onClick={() => handleSchedule(ritual)}
                     >
                       <Calendar className="w-4 h-4 mr-2" />
@@ -668,19 +610,6 @@ export default function RituaisAculturamento() {
             <p className="text-gray-500">Nenhum ritual encontrado</p>
           </div>
         )}
-
-        {/* Modais */}
-        <RitualMAPCreator
-          ritual={showMAPCreator}
-          workshopId={workshop?.id}
-          onMAPCreated={handleMAPCreated}
-          onClose={() => setShowMAPCreator(null)}
-        />
-
-        <RitualMAPViewer
-          mapId={viewingMAPId}
-          onClose={() => setViewingMAPId(null)}
-        />
       </div>
     </div>
   );
