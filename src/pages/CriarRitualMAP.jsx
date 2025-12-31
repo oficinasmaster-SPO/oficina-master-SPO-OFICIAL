@@ -30,9 +30,14 @@ export default function CriarRitualMAP() {
       setWorkshop(userWorkshop);
 
       const ritualId = searchParams.get('ritual_id');
-      if (ritualId) {
-        const ritualData = await base44.entities.Ritual.get(ritualId);
-        setRitual(ritualData);
+      if (!ritualId) {
+        toast.error("ID do ritual não informado");
+        navigate(createPageUrl("RituaisAculturamento"));
+        return;
+      }
+
+      const ritualData = await base44.entities.Ritual.get(ritualId);
+      setRitual(ritualData);
 
         // Verificar se já existe MAP para este ritual
         const existingMaps = await base44.entities.ProcessDocument.filter({
@@ -49,7 +54,8 @@ export default function CriarRitualMAP() {
       setIsFormOpen(true);
     } catch (error) {
       console.error("Erro ao carregar:", error);
-      toast.error("Erro ao carregar dados");
+      toast.error(`Erro ao carregar dados: ${error.message || 'Erro desconhecido'}`);
+      navigate(createPageUrl("RituaisAculturamento"));
     } finally {
       setLoading(false);
     }
@@ -120,7 +126,7 @@ export default function CriarRitualMAP() {
       }, 1500);
     } catch (error) {
       console.error("Erro ao salvar MAP:", error);
-      toast.error("Erro ao salvar MAP");
+      toast.error(`Erro ao salvar MAP: ${error.message || 'Erro desconhecido'}`);
     } finally {
       setIsSaving(false);
     }
