@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Search, FileText, Download, Eye, Filter, Briefcase, DollarSign, Settings, Users, BarChart3, Truck, Copy, Loader2, Mail, History, LayoutGrid, List } from "lucide-react";
+import { Search, FileText, Download, Eye, Filter, Briefcase, DollarSign, Settings, Users, BarChart3, Truck, Copy, Loader2, Mail, History, LayoutGrid, List, Flame } from "lucide-react";
 import { createPageUrl } from "@/utils";
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -133,10 +133,12 @@ export default function MeusProcessos() {
     { id: "Pátio", label: "Pátio", icon: Truck },
     { id: "Financeiro", label: "Financeiro", icon: BarChart3 },
     { id: "RH", label: "RH & Pessoas", icon: Users },
+    { id: "Ritual", label: "Rituais", icon: Briefcase },
     { id: "Geral", label: "Geral", icon: Settings },
   ];
 
   const getCategoryIcon = (cat) => {
+    if (cat === "Ritual") return Flame;
     const found = categories.find(c => c.id === cat);
     return found ? found.icon : FileText;
   };
