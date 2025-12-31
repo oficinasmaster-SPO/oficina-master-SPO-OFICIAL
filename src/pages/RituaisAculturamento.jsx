@@ -47,6 +47,7 @@ import AdvancedFilters from "@/components/rituais/AdvancedFilters";
 import MAPViewerDialog from "@/components/rituais/MAPViewerDialog";
 import RitualAnalytics from "@/components/rituais/RitualAnalytics";
 import RitualAuditLog from "@/components/rituais/RitualAuditLog";
+import RitualNotifications from "@/components/rituais/RitualNotifications";
 
 export default function RituaisAculturamento() {
   const navigate = useNavigate();
@@ -489,6 +490,15 @@ export default function RituaisAculturamento() {
             ritualsDB={ritualsDB}
           />
 
+          <RitualNotifications 
+            workshop={workshop}
+            onNotificationClick={(notif) => {
+              if (notif.id === "today-rituals" || notif.id === "tomorrow-rituals" || notif.id === "overdue-rituals") {
+                setActiveTab("schedules");
+              }
+            }}
+          />
+
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
             <TabsList className="grid w-full max-w-4xl grid-cols-7">
               <TabsTrigger value="library">Biblioteca</TabsTrigger>
@@ -825,6 +835,8 @@ export default function RituaisAculturamento() {
           open={isMAPViewerOpen}
           onClose={() => setIsMAPViewerOpen(false)}
           ritualsData={ritualsDB}
+          user={user}
+          workshop={workshop}
         />
       </div>
     </div>

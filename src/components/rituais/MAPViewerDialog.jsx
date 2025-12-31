@@ -1,11 +1,17 @@
-import React from "react";
+import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Target, Activity, AlertTriangle, TrendingUp, Image } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { FileText, Target, Activity, AlertTriangle, TrendingUp, Image, Share2, MessageCircle, History } from "lucide-react";
 import MAPExporter from "./MAPExporter";
+import ShareMAPDialog from "./ShareMAPDialog";
+import MAPComments from "./MAPComments";
+import MAPVersionHistory from "./MAPVersionHistory";
 
-export default function MAPViewerDialog({ map, open, onClose, ritualsData = [] }) {
+export default function MAPViewerDialog({ map, open, onClose, ritualsData = [], user, workshop }) {
+  const [isShareOpen, setIsShareOpen] = useState(false);
+
   if (!map) return null;
 
   const content = map.content_json || {};
@@ -32,8 +38,15 @@ export default function MAPViewerDialog({ map, open, onClose, ritualsData = [] }
           </div>
         </DialogHeader>
 
+        <div className="flex justify-end gap-2 mt-4">
+          <Button size="sm" variant="outline" onClick={() => setIsShareOpen(true)}>
+            <Share2 className="w-4 h-4 mr-1" />
+            Compartilhar
+          </Button>
+        </div>
+
         <Tabs defaultValue="basics" className="mt-4">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="basics">
               <Target className="w-4 h-4 mr-1" />
               Básico
@@ -53,6 +66,14 @@ export default function MAPViewerDialog({ map, open, onClose, ritualsData = [] }
             <TabsTrigger value="flow">
               <Image className="w-4 h-4 mr-1" />
               Fluxo
+            </TabsTrigger>
+            <TabsTrigger value="comments">
+              <MessageCircle className="w-4 h-4 mr-1" />
+              Comentários
+            </TabsTrigger>
+            <TabsTrigger value="versions">
+              <History className="w-4 h-4 mr-1" />
+              Versões
             </TabsTrigger>
           </TabsList>
 
@@ -184,7 +205,25 @@ export default function MAPViewerDialog({ map, open, onClose, ritualsData = [] }
               </p>
             )}
           </TabsContent>
+
+          <TabsContent value="comments" className="mt-4">
+            {user && <MAPComments mapId={map.id} user={user} />}
+          </TabsContent>
+
+          <TabsContent value="versions" className="mt-4">
+            <MAPVersionHistory mapId={map.id} />
+          </TabsContent>
         </Tabs>
+
+        {/* Share Dialog */}
+        {workshop && (
+          <ShareMAPDialog
+            map={map}
+            open={isShareOpen}
+            onClose={() => setIsShareOpen(false)}
+            workshop={workshop}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );
