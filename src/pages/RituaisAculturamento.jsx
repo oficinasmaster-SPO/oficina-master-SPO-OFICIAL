@@ -31,10 +31,14 @@ import {
   RefreshCw,
   Play,
   Flag,
-  Repeat
+  Repeat,
+  FileText
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 
 export default function RituaisAculturamento() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [frequencyFilter, setFrequencyFilter] = useState("all");
   const [selectedRitual, setSelectedRitual] = useState(null);
@@ -46,6 +50,7 @@ export default function RituaisAculturamento() {
   const [user, setUser] = useState(null);
   const [workshop, setWorkshop] = useState(null);
   const [scheduledRituals, setScheduledRituals] = useState([]);
+  const [ritualsWithMaps, setRitualsWithMaps] = useState([]);
 
   useEffect(() => {
     loadData();
@@ -62,9 +67,19 @@ export default function RituaisAculturamento() {
 
       if (userWorkshop) {
         loadScheduledRituals(userWorkshop.id);
+        loadRitualsWithMaps(userWorkshop.id);
       }
     } catch (error) {
       console.error("Error loading data:", error);
+    }
+  };
+
+  const loadRitualsWithMaps = async (workshopId) => {
+    try {
+      const allRituals = await base44.entities.Ritual.filter({ workshop_id: workshopId });
+      setRitualsWithMaps(allRituals);
+    } catch (error) {
+      console.error("Error loading rituals with maps:", error);
     }
   };
 
@@ -480,9 +495,17 @@ export default function RituaisAculturamento() {
                             {ritual.description}
                           </p>
                         </CardContent>
-                        <CardFooter className="pt-0">
+                        <CardFooter className="pt-0 flex gap-2">
                           <Button 
-                            className="w-full bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200"
+                            className="flex-1 bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200"
+                            variant="ghost"
+                            onClick={() => navigate(createPageUrl('CriarRitualMAP') + `?ritual_id=${ritual.id}`)}
+                          >
+                            <FileText className="w-4 h-4 mr-2" />
+                            MAP
+                          </Button>
+                          <Button 
+                            className="flex-1 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200"
                             variant="ghost"
                             onClick={() => handleSchedule(ritual)}
                           >
@@ -522,9 +545,17 @@ export default function RituaisAculturamento() {
                       {ritual.description}
                     </p>
                   </CardContent>
-                  <CardFooter className="pt-0">
+                  <CardFooter className="pt-0 flex gap-2">
                     <Button 
-                      className="w-full bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200"
+                      className="flex-1 bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200"
+                      variant="ghost"
+                      onClick={() => navigate(createPageUrl('CriarRitualMAP') + `?ritual_id=${ritual.id}`)}
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      MAP
+                    </Button>
+                    <Button 
+                      className="flex-1 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200"
                       variant="ghost"
                       onClick={() => handleSchedule(ritual)}
                     >
