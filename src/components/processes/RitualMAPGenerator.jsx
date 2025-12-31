@@ -107,30 +107,72 @@ export default function RitualMAPGenerator({ onClose }) {
     setResults([]);
     setErrors([]);
 
-    const totalSelected = selectedRituais.length;
-    let processed = 0;
+    try {
+      // Processar em lotes usando a função existente
+      const BATCH_SIZE = 5;
+      let currentIndex = 0;
+      const allCreated = [];
+      const allErrors = [];
 
-    for (const ritualId of selectedRituais) {
-      const ritual = rituais.find(r => r.id === ritualId);
-      
-      try {
-        // Aqui você chamaria a API para gerar o MAP individual
-        // Por enquanto, vou simular
-        await new Promise(resolve => setTimeout(resolve, 1000));
+      // Encontrar os índices dos rituais selecionados na lista completa
+      const allRituaisIds = [
+        "ritual_alinhamento_cultural", "ritual_dono", "ritual_excelencia",
+        "ritual_clareza", "ritual_conexao", "ritual_mesa_redonda",
+        "ritual_start_diario", "ritual_entrega", "ritual_responsabilidade",
+        "ritual_maturidade", "ritual_alta_performance", "ritual_foco_cliente",
+        "ritual_confianca", "ritual_voz_ativa", "ritual_consistencia",
+        "ritual_cultura_viva", "ritual_transparencia", "ritual_acao_imediata",
+        "ritual_planejamento_vivo", "ritual_kick_off", "ritual_virada",
+        "ritual_compromisso", "ritual_semana_dono", "ritual_checkpoint",
+        "ritual_feedback_continuo", "ritual_pulso_cultura", "ritual_norte_claro",
+        "ritual_postura", "ritual_presenca", "ritual_identidade",
+        "ritual_forca_operacional", "ritual_flow_equipe", "ritual_compromisso_ativo",
+        "ritual_3_verdades"
+      ];
+
+      while (currentIndex < selectedRituais.length) {
+        const batch = selectedRituais.slice(currentIndex, currentIndex + BATCH_SIZE);
         
-        setResults(prev => [...prev, { ritual: ritual.name, success: true }]);
-        toast.success(`MAP criado para ${ritual.name}`);
-      } catch (error) {
-        setErrors(prev => [...prev, { ritual: ritual.name, error: error.message }]);
-        toast.error(`Erro ao criar MAP para ${ritual.name}`);
+        for (const ritualId of batch) {
+          const ritual = rituais.find(r => r.id === ritualId);
+          const globalIndex = allRituaisIds.indexOf(ritualId);
+          
+          try {
+            const response = await base44.functions.invoke('gerarMAPsRituais', {
+              batch_size: 1,
+              start_index: globalIndex
+            });
+
+            if (response.data.details && response.data.details.length > 0) {
+              allCreated.push({ ritual: ritual.name, success: true });
+            } else {
+              allErrors.push({ ritual: ritual.name, error: "Não foi possível criar o MAP" });
+            }
+          } catch (error) {
+            console.error(`Erro ao gerar MAP para ${ritual.name}:`, error);
+            allErrors.push({ ritual: ritual.name, error: error.message || "Erro desconhecido" });
+          }
+        }
+
+        currentIndex += BATCH_SIZE;
+        const progress = Math.round((currentIndex / selectedRituais.length) * 100);
+        setProgress(Math.min(100, progress));
+        setResults(allCreated);
+        setErrors(allErrors);
       }
 
-      processed++;
-      setProgress(Math.round((processed / totalSelected) * 100));
+      if (allCreated.length > 0) {
+        toast.success(`${allCreated.length} MAPs criados com sucesso!`);
+      }
+      if (allErrors.length > 0) {
+        toast.error(`${allErrors.length} erros encontrados`);
+      }
+    } catch (error) {
+      console.error("Erro geral na geração:", error);
+      toast.error("Erro ao gerar MAPs");
+    } finally {
+      setGenerating(false);
     }
-
-    setGenerating(false);
-    toast.success(`${results.length} MAPs criados com sucesso!`);
   };
 
   if (loading) {

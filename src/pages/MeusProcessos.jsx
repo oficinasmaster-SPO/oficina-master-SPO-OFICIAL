@@ -15,7 +15,6 @@ import AdminViewBanner from "../components/shared/AdminViewBanner";
 import ShareProcessDialog from "../components/processes/ShareProcessDialog";
 import ShareHistoryDialog from "../components/processes/ShareHistoryDialog";
 import RitualMAPGenerator from "../components/processes/RitualMAPGenerator";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import AreaGroupedView from "../components/processes/AreaGroupedView";
 import ProcessHierarchyView from "../components/processes/ProcessHierarchyView";
 
@@ -560,19 +559,20 @@ export default function MeusProcessos() {
           process={selectedProcess}
         />
 
-        <Dialog open={mapGeneratorOpen} onOpenChange={setMapGeneratorOpen}>
-          <DialogContent className="max-w-3xl">
-            <DialogHeader>
-              <DialogTitle>Gerador de MAPs para Rituais</DialogTitle>
-            </DialogHeader>
-            <RitualMAPGenerator
-              onClose={() => {
-                setMapGeneratorOpen(false);
-                queryClient.invalidateQueries(['my-processes']);
-              }}
-            />
-          </DialogContent>
-        </Dialog>
+        {mapGeneratorOpen && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-auto">
+              <div className="p-6">
+                <RitualMAPGenerator
+                  onClose={() => {
+                    setMapGeneratorOpen(false);
+                    queryClient.invalidateQueries(['my-processes']);
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
