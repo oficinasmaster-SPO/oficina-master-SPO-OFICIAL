@@ -50,10 +50,21 @@ export default function RituaisAculturamento() {
   const [user, setUser] = useState(null);
   const [workshop, setWorkshop] = useState(null);
   const [scheduledRituals, setScheduledRituals] = useState([]);
+  const [mapsCount, setMapsCount] = useState(0);
 
   useEffect(() => {
     loadData();
+    loadMapsCount();
   }, []);
+
+  const loadMapsCount = async () => {
+    try {
+      const allMaps = await base44.entities.ProcessDocument.filter({ category: "Ritual" });
+      setMapsCount(allMaps.length);
+    } catch (error) {
+      console.error("Error loading maps count:", error);
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -402,6 +413,14 @@ export default function RituaisAculturamento() {
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Rituais de Aculturamento</h1>
               <p className="text-gray-600">Práticas para fortalecer a cultura organizacional</p>
+              <div className="mt-2 flex items-center gap-2">
+                <Badge className="bg-purple-100 text-purple-700 text-sm">
+                  {rituais.length} Rituais Disponíveis
+                </Badge>
+                <Badge className="bg-green-100 text-green-700 text-sm">
+                  {mapsCount} MAPs Criados
+                </Badge>
+              </div>
             </div>
           </div>
 
