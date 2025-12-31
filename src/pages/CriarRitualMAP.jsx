@@ -39,16 +39,15 @@ export default function CriarRitualMAP() {
       const ritualData = await base44.entities.Ritual.get(ritualId);
       setRitual(ritualData);
 
-        // Verificar se já existe MAP para este ritual
-        const existingMaps = await base44.entities.ProcessDocument.filter({
-          category: "Ritual",
-          title: ritualData.name,
-          workshop_id: userWorkshop.id
-        });
+      // Verificar se já existe MAP para este ritual
+      const existingMaps = await base44.entities.ProcessDocument.filter({
+        category: "Ritual",
+        title: ritualData.name,
+        workshop_id: userWorkshop.id
+      });
 
-        if (existingMaps.length > 0) {
-          setProcessDocument(existingMaps[0]);
-        }
+      if (existingMaps.length > 0) {
+        setProcessDocument(existingMaps[0]);
       }
 
       setIsFormOpen(true);
