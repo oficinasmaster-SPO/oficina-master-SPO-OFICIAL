@@ -129,10 +129,11 @@ export default function CadastroColaborador() {
         }
       }
 
-      // Salvar Employee com owner_id
+      // Salvar Employee com owner_id e profile_id
       const newEmployee = await base44.entities.Employee.create({
         ...formData,
         owner_id: workshop.owner_id,
+        profile_id: formData.user_profile_id || null,
         production_percentage: productionPercentage,
         is_partner: isPartner
       });
