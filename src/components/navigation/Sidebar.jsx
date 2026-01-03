@@ -604,10 +604,10 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           requiredPermission: 'admin.system_config'
         },
         { 
-          name: 'Teste de Usuários', 
-          href: createPageUrl('TesteUsuarios'), 
-          icon: Settings,
-          description: 'Validação de cadastro padronizado',
+          name: 'Debug Permissões', 
+          href: createPageUrl('TestUsuarios'), 
+          icon: Bug,
+          description: 'Diagnóstico de permissões e perfis',
           adminOnly: true,
           highlight: true,
           requiredPermission: 'admin.system_config'
