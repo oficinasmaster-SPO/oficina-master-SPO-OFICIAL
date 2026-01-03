@@ -28,7 +28,7 @@ export default function EmployeeProfileViewer({ employee, open, onClose }) {
   };
 
   const profileCustomRoles = customRoles.filter(r => 
-    profile?.custom_role_ids?.includes(r.id)
+    profile?.custom_role_ids?.includes(r?.id)
   );
 
   const getAllSystemRoles = () => {

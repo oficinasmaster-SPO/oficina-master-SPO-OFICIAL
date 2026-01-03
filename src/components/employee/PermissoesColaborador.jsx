@@ -25,7 +25,7 @@ export default function PermissoesColaborador({ employee }) {
   if (!employee?.id) return null;
 
   const profileCustomRoles = customRoles.filter(r => 
-    profile?.custom_role_ids?.includes(r.id)
+    profile?.custom_role_ids?.includes(r?.id)
   );
 
   const getModulePermissions = () => {

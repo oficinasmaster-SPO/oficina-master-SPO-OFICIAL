@@ -13,20 +13,20 @@ export default function ProfileDetailsModal({ profile, open, onClose }) {
   const { data: customRoles = [] } = useQuery({
     queryKey: ['customRoles'],
     queryFn: () => base44.entities.CustomRole.list(),
-    enabled: !!profile
+    enabled: !!profile?.id && open
   });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
     queryFn: () => base44.entities.Employee.list(),
-    enabled: !!profile
+    enabled: !!profile?.id && open
   });
 
-  if (!profile) return null;
+  if (!profile || !open) return null;
 
-  const usersCount = employees.filter(e => e.profile_id === profile.id).length;
+  const usersCount = employees.filter(e => e?.profile_id === profile?.id).length;
   const profileCustomRoles = customRoles.filter(r => 
-    profile.custom_role_ids?.includes(r.id)
+    profile?.custom_role_ids?.includes(r?.id)
   );
 
   const getJobRoleLabel = (value) => {
