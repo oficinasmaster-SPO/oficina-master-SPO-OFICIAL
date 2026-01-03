@@ -74,7 +74,23 @@ Deno.serve(async (req) => {
       });
     }
 
-    console.log("✅ Employee:", employee.id);
+    console.log("✅ Employee criado/atualizado:", employee.id);
+    
+    // CRÍTICO: Buscar User pelo email e vincular ao Employee
+    try {
+      const users = await base44.asServiceRole.entities.User.filter({ email: finalEmail });
+      if (users && users.length > 0) {
+        const userId = users[0].id;
+        await base44.asServiceRole.entities.Employee.update(employee.id, { 
+          user_id: userId 
+        });
+        console.log("🔗 User vinculado ao Employee:", userId);
+      } else {
+        console.warn("⚠️ User não encontrado para vincular ao Employee");
+      }
+    } catch (linkError) {
+      console.error("❌ Erro ao vincular User ao Employee:", linkError);
+    }
 
     // 🔄 AUTO-VINCULAÇÃO: Buscar perfil baseado em job_role
     let profileId = null;
