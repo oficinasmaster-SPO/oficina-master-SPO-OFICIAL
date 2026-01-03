@@ -18,9 +18,25 @@ export default function TestUsuarios() {
     try {
       const user = await base44.auth.me();
       
-      // Buscar Employee
-      const employees = await base44.entities.Employee.filter({ email: user.email });
-      const employee = employees?.[0];
+      // Buscar Employee por user_id primeiro, depois por email como fallback
+      let employee = null;
+      try {
+        // Tentar buscar por user_id
+        const empsByUserId = await base44.entities.Employee.filter({ user_id: user.id });
+        employee = empsByUserId?.[0];
+      } catch (e) {
+        console.log("Erro ao buscar por user_id:", e);
+      }
+
+      // Se não encontrou por user_id, buscar por email
+      if (!employee) {
+        try {
+          const empsByEmail = await base44.entities.Employee.filter({ email: user.email });
+          employee = empsByEmail?.[0];
+        } catch (e) {
+          console.log("Erro ao buscar por email:", e);
+        }
+      }
 
       // Buscar Profile via backend
       let profileBackend = null;
