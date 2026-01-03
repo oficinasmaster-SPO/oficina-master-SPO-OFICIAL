@@ -4,7 +4,7 @@ import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, ArrowLeft, User, FileText, MessageSquare, AlertTriangle, Award, TrendingUp, FileCheck, Heart, FilePenLine, Activity, GraduationCap, BarChart3, Rocket, Target, Trash2, UserX } from "lucide-react";
+import { Loader2, ArrowLeft, User, FileText, MessageSquare, AlertTriangle, Award, TrendingUp, FileCheck, Heart, FilePenLine, Activity, GraduationCap, BarChart3, Rocket, Target, Trash2, UserX, Shield } from "lucide-react";
 import { toast } from "sonner";
 import DadosPessoais from "../components/employee/DadosPessoais";
 import RemuneracaoProducao from "../components/employee/RemuneracaoProducao";
@@ -20,6 +20,7 @@ import EvolucaoMaturidade from "../components/employee/EvolucaoMaturidade";
 import ContratoTrabalho from "../components/employee/ContratoTrabalho";
 import AI_PDI_Generator from "../components/rh/AI_PDI_Generator";
 import EmployeeGoals from "../components/employee/EmployeeGoals";
+import PermissoesColaborador from "../components/employee/PermissoesColaborador";
 
 export default function DetalhesColaborador() {
   const navigate = useNavigate();
@@ -154,6 +155,10 @@ export default function DetalhesColaborador() {
               <User className="w-4 h-4 mr-2" />
               Dados
             </TabsTrigger>
+            <TabsTrigger value="permissoes" className="data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700">
+              <Shield className="w-4 h-4 mr-2" />
+              Permissões
+            </TabsTrigger>
             <TabsTrigger value="remuneracao">
               <TrendingUp className="w-4 h-4 mr-2" />
               Produção
@@ -206,6 +211,10 @@ export default function DetalhesColaborador() {
 
           <TabsContent value="dados">
             <DadosPessoais employee={employee} onUpdate={handleUpdate} />
+          </TabsContent>
+
+          <TabsContent value="permissoes">
+            <PermissoesColaborador employee={employee} />
           </TabsContent>
 
           <TabsContent value="remuneracao">

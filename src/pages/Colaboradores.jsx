@@ -4,13 +4,14 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { UserPlus, Loader2, Sparkles, Heart, FilePenLine } from "lucide-react";
+import { UserPlus, Loader2, Sparkles, Heart, FilePenLine, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import AITrainingSuggestions from "../components/rh/AITrainingSuggestions";
+import EmployeeProfileViewer from "../components/employee/EmployeeProfileViewer";
 import DynamicHelpSystem from "../components/help/DynamicHelpSystem";
 import QuickTipsBar from "../components/help/QuickTipsBar";
 import AdvancedFilter from "@/components/shared/AdvancedFilter";
@@ -25,6 +26,7 @@ export default function Colaboradores() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [maturityFilter, setMaturityFilter] = useState("all");
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [profileViewerEmployee, setProfileViewerEmployee] = useState(null);
   const queryClient = useQueryClient();
   
   // Hook de atribuição automática de perfis
@@ -308,6 +310,16 @@ export default function Colaboradores() {
                               Ver Detalhes
                             </Button>
                           </PermissionGuard>
+                          <PermissionGuard resource="employees" action="read" hideOnDenied>
+                            <Button
+                              onClick={() => setProfileViewerEmployee(employee)}
+                              size="sm"
+                              variant="outline"
+                              title="Ver Perfil de Acesso"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          </PermissionGuard>
                           <PermissionGuard resource="employees" action="create" hideOnDenied>
                             <Button
                               onClick={() => navigate(createPageUrl("ConvidarColaborador") + `?id=${employee.id}`)}
@@ -390,7 +402,11 @@ export default function Colaboradores() {
           </DialogContent>
         </Dialog>
 
-        {/* ActivityNotificationSettings removido */}
+        <EmployeeProfileViewer
+          employee={profileViewerEmployee}
+          open={!!profileViewerEmployee}
+          onClose={() => setProfileViewerEmployee(null)}
+        />
       </div>
     </div>
   );
