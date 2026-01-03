@@ -13,14 +13,16 @@ export default function PermissoesColaborador({ employee }) {
   const { data: profile } = useQuery({
     queryKey: ['userProfile', employee?.profile_id],
     queryFn: () => base44.entities.UserProfile.get(employee.profile_id),
-    enabled: !!employee?.profile_id
+    enabled: !!employee?.id && !!employee?.profile_id
   });
 
   const { data: customRoles = [] } = useQuery({
     queryKey: ['customRoles'],
     queryFn: () => base44.entities.CustomRole.list(),
-    enabled: !!employee && !!profile
+    enabled: !!employee?.id && !!profile
   });
+
+  if (!employee?.id) return null;
 
   const profileCustomRoles = customRoles.filter(r => 
     profile?.custom_role_ids?.includes(r.id)

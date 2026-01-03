@@ -12,16 +12,16 @@ export default function EmployeeProfileViewer({ employee, open, onClose }) {
   const { data: profile } = useQuery({
     queryKey: ['userProfile', employee?.profile_id],
     queryFn: () => base44.entities.UserProfile.get(employee.profile_id),
-    enabled: !!employee?.profile_id
+    enabled: !!employee?.profile_id && open
   });
 
   const { data: customRoles = [] } = useQuery({
     queryKey: ['customRoles'],
     queryFn: () => base44.entities.CustomRole.list(),
-    enabled: !!employee && !!profile
+    enabled: !!employee?.id && !!profile && open
   });
 
-  if (!employee) return null;
+  if (!employee || !open) return null;
 
   const getJobRoleLabel = (value) => {
     return jobRoles.find(jr => jr.value === value)?.label || value;
