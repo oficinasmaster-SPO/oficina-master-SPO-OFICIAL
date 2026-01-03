@@ -9,6 +9,7 @@ import { Save, Building2, Info, Store, Loader2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { Checkbox } from "@/components/ui/checkbox";
 import SliderWithMax from "@/components/ui/slider-with-max";
+import { toast } from "sonner";
 
 export default function DadosBasicosOficina({ workshop, onUpdate }) {
   const [editing, setEditing] = useState(false);
@@ -70,8 +71,15 @@ export default function DadosBasicosOficina({ workshop, onUpdate }) {
   }, [workshop]);
 
   const handleSave = async () => {
-    await onUpdate(formData);
-    setEditing(false);
+    try {
+      await onUpdate(formData);
+      toast.success("Dados básicos salvos!");
+    } catch (error) {
+      console.error("Erro ao salvar:", error);
+      toast.error("Erro ao salvar dados");
+    } finally {
+      setEditing(false);
+    }
   };
 
   const handleCEPChange = async (cep) => {

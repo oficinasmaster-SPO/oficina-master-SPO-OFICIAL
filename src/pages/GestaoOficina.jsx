@@ -156,8 +156,8 @@ export default function GestaoOficina() {
 
   const handleUpdate = async (data) => {
     try {
-      await base44.entities.Workshop.update(workshop.id, data);
-      await loadData();
+      const updatedWorkshop = await base44.entities.Workshop.update(workshop.id, data);
+      setWorkshop(updatedWorkshop);
       toast.success("Oficina atualizada!");
     } catch (error) {
       console.error(error);

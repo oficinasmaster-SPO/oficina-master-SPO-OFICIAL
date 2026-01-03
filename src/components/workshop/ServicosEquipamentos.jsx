@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Settings, Package, Plus, Trash2, Save } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
 
 export default function ServicosEquipamentos({ workshop, onUpdate, showServicesOnly, showEquipmentOnly }) {
   const [editing, setEditing] = useState(false);
@@ -285,8 +286,15 @@ export default function ServicosEquipamentos({ workshop, onUpdate, showServicesO
   };
 
   const handleSave = async () => {
-    await onUpdate(formData);
-    setEditing(false);
+    try {
+      await onUpdate(formData);
+      toast.success("Serviços e equipamentos salvos!");
+    } catch (error) {
+      console.error("Erro ao salvar:", error);
+      toast.error("Erro ao salvar");
+    } finally {
+      setEditing(false);
+    }
   };
 
   const shouldShowServices = !showEquipmentOnly;

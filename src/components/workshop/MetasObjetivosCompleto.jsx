@@ -153,32 +153,44 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
   }, [workshop]);
 
   const handleSave = async () => {
-    await onUpdate(formData);
-    toast.success("Dados salvos com sucesso!");
-    setEditing(false);
+    try {
+      await onUpdate(formData);
+      toast.success("Metas salvas com sucesso!");
+    } catch (error) {
+      console.error("Erro ao salvar:", error);
+      toast.error("Erro ao salvar metas");
+    } finally {
+      setEditing(false);
+    }
   };
 
   const handleSaveGrowth = async () => {
-    const bestMonthRevenue = formData.best_month_history?.revenue_total || 0;
-    const newGrowthPercentage = growthPercentageInput || 10;
-    const newProjectedRevenue = bestMonthRevenue > 0 ?
-    bestMonthRevenue * (1 + newGrowthPercentage / 100) :
-    bestMonthRevenue * 1.1;
+    try {
+      const bestMonthRevenue = formData.best_month_history?.revenue_total || 0;
+      const newGrowthPercentage = growthPercentageInput || 10;
+      const newProjectedRevenue = bestMonthRevenue > 0 ?
+        bestMonthRevenue * (1 + newGrowthPercentage / 100) :
+        bestMonthRevenue * 1.1;
 
-    const updatedMonthlyGoals = {
-      ...formData.monthly_goals,
-      growth_percentage: newGrowthPercentage,
-      projected_revenue: newProjectedRevenue,
-      month: getCurrentMonth()
-    };
+      const updatedMonthlyGoals = {
+        ...formData.monthly_goals,
+        growth_percentage: newGrowthPercentage,
+        projected_revenue: newProjectedRevenue,
+        month: getCurrentMonth()
+      };
 
-    await onUpdate({ monthly_goals: updatedMonthlyGoals });
-    setFormData((prev) => ({
-      ...prev,
-      monthly_goals: updatedMonthlyGoals
-    }));
-    toast.success("Crescimento geral atualizado e meta projetada recalculada!");
-    setEditingGrowth(false);
+      await onUpdate({ monthly_goals: updatedMonthlyGoals });
+      setFormData((prev) => ({
+        ...prev,
+        monthly_goals: updatedMonthlyGoals
+      }));
+      toast.success("Crescimento geral atualizado!");
+    } catch (error) {
+      console.error("Erro ao salvar crescimento:", error);
+      toast.error("Erro ao salvar crescimento");
+    } finally {
+      setEditingGrowth(false);
+    }
   };
 
   const updateBestMonth = (field, value) => {
