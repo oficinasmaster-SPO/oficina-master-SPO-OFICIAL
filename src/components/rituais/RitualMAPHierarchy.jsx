@@ -24,18 +24,22 @@ export default function RitualMAPHierarchy({ workshop, onViewMAP }) {
         base44.entities.ProcessDocument.filter({ 
           workshop_id: workshop.id,
           category: "Ritual" 
-        })
+        }, '-updated_date', 100)
       ]);
 
-      const ritualsWithMapsData = rituals.map(ritual => {
-        const linkedMap = maps.find(m => m.id === ritual.process_document_id);
+      const safeRituals = Array.isArray(rituals) ? rituals : [];
+      const safeMaps = Array.isArray(maps) ? maps : [];
+
+      const ritualsWithMapsData = safeRituals.map(ritual => {
+        const linkedMap = safeMaps.find(m => m.id === ritual.process_document_id);
         return { ...ritual, map: linkedMap };
       });
 
       setRitualsWithMaps(ritualsWithMapsData);
     } catch (error) {
       console.error("Erro ao carregar hierarquia:", error);
-      toast.error("Erro ao carregar hierarquia de rituais");
+      toast.error(`Erro ao carregar: ${error?.message || 'Erro desconhecido'}`);
+      setRitualsWithMaps([]);
     } finally {
       setLoading(false);
     }

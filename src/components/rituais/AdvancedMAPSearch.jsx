@@ -32,16 +32,24 @@ export default function AdvancedMAPSearch({ workshop, onViewMAP }) {
       const mapsData = await base44.entities.ProcessDocument.filter({
         workshop_id: workshop.id,
         category: "Ritual"
-      });
-      setMaps(mapsData);
+      }, '-updated_date', 100);
+      setMaps(Array.isArray(mapsData) ? mapsData : []);
     } catch (error) {
       console.error("Erro ao carregar MAPs:", error);
+      toast.error(`Erro ao carregar: ${error?.message || 'Erro desconhecido'}`);
+      setMaps([]);
     }
   };
 
   const performSearch = () => {
     setSearching(true);
     const term = searchTerm.toLowerCase();
+    
+    if (!Array.isArray(maps)) {
+      setSearchResults([]);
+      setSearching(false);
+      return;
+    }
 
     const results = maps.filter(map => {
       // Busca no título e descrição
