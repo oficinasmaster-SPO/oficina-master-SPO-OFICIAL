@@ -111,6 +111,7 @@ export default function GestaoUsuariosEmpresas() {
     const formData = new FormData(e.target);
     const workshopId = formData.get('workshop_id');
     const jobRole = formData.get('job_role');
+    const newPlan = formData.get('plano');
     
     // Buscar perfil correspondente à job_role
     let profileId = selectedUser.profile_id;
@@ -142,8 +143,22 @@ export default function GestaoUsuariosEmpresas() {
       profile_id: profileId
     };
 
-    // Atualizar usuário
-    await updateUserMutation.mutateAsync({ userId: selectedUser.id, data });
+    try {
+      // Atualizar usuário
+      await updateUserMutation.mutateAsync({ userId: selectedUser.id, data });
+
+      // Se o plano foi alterado, atualizar a Workshop
+      if (workshopId && newPlan && newPlan !== selectedUser.workshopPlan) {
+        await base44.entities.Workshop.update(workshopId, {
+          planoAtual: newPlan,
+          dataAssinatura: new Date().toISOString()
+        });
+        toast.success("Plano da oficina atualizado!");
+        queryClient.invalidateQueries(['workshops']);
+      }
+    } catch (error) {
+      toast.error("Erro ao salvar: " + error.message);
+    }
   };
 
   // Combinar users com workshops para tabela
@@ -846,6 +861,24 @@ export default function GestaoUsuariosEmpresas() {
                           {w.name} - {w.planoAtual || "FREE"}
                         </SelectItem>
                       ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label>Plano da Oficina *</Label>
+                  <Select name="plano" defaultValue={selectedUser.workshopPlan || "FREE"} required>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o plano" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="FREE">FREE</SelectItem>
+                      <SelectItem value="START">START</SelectItem>
+                      <SelectItem value="BRONZE">BRONZE</SelectItem>
+                      <SelectItem value="PRATA">PRATA</SelectItem>
+                      <SelectItem value="GOLD">GOLD</SelectItem>
+                      <SelectItem value="IOM">IOM</SelectItem>
+                      <SelectItem value="MILLIONS">MILLIONS</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

@@ -77,6 +77,7 @@ import GestaoDesafios from './pages/GestaoDesafios';
 import GestaoOficina from './pages/GestaoOficina';
 import GestaoRBAC from './pages/GestaoRBAC';
 import GestaoRoles from './pages/GestaoRoles';
+import GestaoUsuariosEmpresas from './pages/GestaoUsuariosEmpresas';
 import Historico from './pages/Historico';
 import HistoricoDISC from './pages/HistoricoDISC';
 import HistoricoDesempenho from './pages/HistoricoDesempenho';
@@ -134,7 +135,6 @@ import TechnicianQGP from './pages/TechnicianQGP';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
-import GestaoUsuariosEmpresas from './pages/GestaoUsuariosEmpresas';
 import __Layout from './Layout.jsx';
 
 
@@ -218,6 +218,7 @@ export const PAGES = {
     "GestaoOficina": GestaoOficina,
     "GestaoRBAC": GestaoRBAC,
     "GestaoRoles": GestaoRoles,
+    "GestaoUsuariosEmpresas": GestaoUsuariosEmpresas,
     "Historico": Historico,
     "HistoricoDISC": HistoricoDISC,
     "HistoricoDesempenho": HistoricoDesempenho,
@@ -275,7 +276,6 @@ export const PAGES = {
     "TreinamentoVendas": TreinamentoVendas,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
-    "GestaoUsuariosEmpresas": GestaoUsuariosEmpresas,
 }
 
 export const pagesConfig = {
