@@ -4,17 +4,20 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Copy, Power, Trash2, Shield, AlertCircle, Users, RefreshCw } from "lucide-react";
+import { Plus, Edit, Copy, Power, Trash2, Shield, AlertCircle, Users, RefreshCw, Eye } from "lucide-react";
 import { toast } from "sonner";
 import ProfileEditor from "@/components/profiles/ProfileEditor";
 import ProfileCreator from "@/components/profiles/ProfileCreator";
 import ProfileAudit from "@/components/profiles/ProfileAudit";
+import ProfileDetailsModal from "@/components/rbac/ProfileDetailsModal";
 import { systemRoles } from "@/components/lib/systemRoles";
 
 export default function ProfilesManagement() {
   const [selectedProfile, setSelectedProfile] = useState(null);
   const [showCreator, setShowCreator] = useState(false);
   const [viewMode, setViewMode] = useState("list");
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [profileForDetails, setProfileForDetails] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: profiles = [], isLoading, refetch } = useQuery({
@@ -97,6 +100,11 @@ export default function ProfilesManagement() {
     if (confirm(`Excluir perfil "${profile.name}"?`)) {
       deleteMutation.mutate(profile.id);
     }
+  };
+
+  const handleViewDetails = (profile) => {
+    setProfileForDetails(profile);
+    setDetailsModalOpen(true);
   };
 
   if (viewMode === "edit" && selectedProfile) {
@@ -187,6 +195,7 @@ export default function ProfilesManagement() {
         onDuplicate={handleDuplicate}
         onToggleStatus={handleToggleStatus}
         onDelete={handleDelete}
+        onViewDetails={handleViewDetails}
         getUsersCount={getUsersCountByProfile}
       />
 
@@ -199,13 +208,23 @@ export default function ProfilesManagement() {
         onDuplicate={handleDuplicate}
         onToggleStatus={handleToggleStatus}
         onDelete={handleDelete}
+        onViewDetails={handleViewDetails}
         getUsersCount={getUsersCountByProfile}
+      />
+
+      <ProfileDetailsModal
+        profile={profileForDetails}
+        open={detailsModalOpen}
+        onClose={() => {
+          setDetailsModalOpen(false);
+          setProfileForDetails(null);
+        }}
       />
     </div>
   );
 }
 
-function ProfileSection({ title, subtitle, profiles, users, onEdit, onDuplicate, onToggleStatus, onDelete, getUsersCount }) {
+function ProfileSection({ title, subtitle, profiles, users, onEdit, onDuplicate, onToggleStatus, onDelete, onViewDetails, getUsersCount }) {
   return (
     <Card>
       <CardHeader>
@@ -226,10 +245,12 @@ function ProfileSection({ title, subtitle, profiles, users, onEdit, onDuplicate,
                     </Badge>
                     <Badge variant="outline">{profile.roles?.length || 0} roles</Badge>
                   </div>
-                  <p className="text-sm text-gray-600 mt-1">{profile.description}</p>
                   <p className="text-xs text-gray-500 mt-2">{usersCount} usuários</p>
                 </div>
                 <div className="flex gap-2">
+                  <Button onClick={() => onViewDetails(profile)} variant="outline" size="sm" className="gap-2" title="Ver detalhes completos">
+                    <Eye className="w-4 h-4" />
+                  </Button>
                   <Button onClick={() => onEdit(profile)} variant="outline" size="sm" className="gap-2">
                     <Edit className="w-4 h-4" />
                   </Button>
