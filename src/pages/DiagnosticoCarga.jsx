@@ -5,8 +5,12 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, Brain } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, Brain, User, LinkIcon, History, Copy, X } from "lucide-react";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import DynamicHelpSystem from "@/components/help/DynamicHelpSystem";
 import TrackingWrapper from "@/components/shared/TrackingWrapper";
 
@@ -70,6 +74,11 @@ export default function DiagnosticoCarga() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [workshop, setWorkshop] = useState(null);
+  const [user, setUser] = useState(null);
+  const [employees, setEmployees] = useState([]);
+  const [inviteLink, setInviteLink] = useState("");
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [generatingInvite, setGeneratingInvite] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -77,15 +86,16 @@ export default function DiagnosticoCarga() {
 
   const checkAuth = async () => {
     try {
-      const user = await base44.auth.me();
+      const currentUser = await base44.auth.me();
+      setUser(currentUser);
+      
       const workshops = await base44.entities.Workshop.list();
-      let loadedWorkshop = workshops.find(w => w.owner_id === user.id);
+      let loadedWorkshop = workshops.find(w => w.owner_id === currentUser.id);
       
       if (!loadedWorkshop) {
-        // Fallback for employees
-        const employees = await base44.entities.Employee.filter({ email: user.email });
-        if (employees.length > 0 && employees[0].workshop_id) {
-            loadedWorkshop = workshops.find(w => w.id === employees[0].workshop_id);
+        const empList = await base44.entities.Employee.filter({ email: currentUser.email });
+        if (empList.length > 0 && empList[0].workshop_id) {
+            loadedWorkshop = workshops.find(w => w.id === empList[0].workshop_id);
         }
       }
 
@@ -94,7 +104,14 @@ export default function DiagnosticoCarga() {
         navigate(createPageUrl("Home"));
         return;
       }
+      
       setWorkshop(loadedWorkshop);
+
+      const activeEmployees = await base44.entities.Employee.filter({ 
+        workshop_id: loadedWorkshop.id, 
+        status: "ativo" 
+      });
+      setEmployees(activeEmployees || []);
     } catch (error) {
       base44.auth.redirectToLogin(createPageUrl("DiagnosticoCarga"));
     } finally {
@@ -119,6 +136,33 @@ export default function DiagnosticoCarga() {
     if (currentQuestion > 0) setCurrentQuestion(currentQuestion - 1);
   };
 
+  const handleGenerateInvite = async () => {
+    setGeneratingInvite(true);
+    try {
+      const response = await base44.functions.invoke('generateDiagnosticInvite', {
+        workshop_id: workshop?.id,
+        diagnostic_type: 'WORKLOAD'
+      });
+
+      if (response.data.success) {
+        const link = `${window.location.origin}/${response.data.path}?token=${response.data.invite_token}`;
+        setInviteLink(link);
+      } else {
+        toast.error("Erro ao gerar link");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao gerar link");
+    } finally {
+      setGeneratingInvite(false);
+    }
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(inviteLink);
+    toast.success("Link copiado!");
+  };
+
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
@@ -139,13 +183,14 @@ export default function DiagnosticoCarga() {
 
       const response = await base44.functions.invoke('submitAppForms', {
         form_type: 'workload_diagnostic',
-        workshop_id: workshop.id,
+        workshop_id: workshop?.id,
+        evaluator_id: user?.id,
         answers: answers,
         overall_health,
         average_score: average
       });
 
-      if (response.data.error) throw new Error(response.data.error);
+      if (response?.data?.error) throw new Error(response.data.error);
 
       toast.success("Diagnóstico concluído!");
       navigate(createPageUrl("ResultadoCarga") + `?id=${response.data.id}`);
@@ -174,12 +219,80 @@ export default function DiagnosticoCarga() {
         <DynamicHelpSystem pageName="DiagnosticoCarga" />
       <div className="max-w-3xl mx-auto">
         <div className="mb-8">
-           <div className="flex justify-between items-center mb-2">
-             <h1 className="text-2xl font-bold">Diagnóstico de Carga de Trabalho</h1>
-             <span className="text-sm text-gray-500">{currentQuestion + 1}/{workloadQuestions.length}</span>
+           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+             <div>
+               <h1 className="text-2xl font-bold text-gray-900">
+                 Diagnóstico de Carga de Trabalho
+               </h1>
+               {workshop && (
+                 <p className="text-sm text-gray-600 mt-1">
+                   {workshop.name}
+                 </p>
+               )}
+             </div>
+             <div className="flex gap-2 w-full md:w-auto">
+               <Button variant="outline" onClick={() => navigate(createPageUrl("Historico"))}>
+                 <History className="w-4 h-4 mr-2" />
+                 Histórico
+               </Button>
+               <Button onClick={() => setIsInviteModalOpen(true)} className="bg-orange-600 hover:bg-orange-700">
+                 <LinkIcon className="w-4 h-4 mr-2" />
+                 Gerar Link
+               </Button>
+             </div>
+           </div>
+           
+           <div className="flex justify-between text-sm text-gray-600 mb-2">
+             <span>Pergunta {currentQuestion + 1} de {workloadQuestions.length}</span>
+             <span>{progress.toFixed(0)}%</span>
            </div>
            <Progress value={progress} className="h-2" />
         </div>
+
+        <Dialog open={isInviteModalOpen} onOpenChange={setIsInviteModalOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Gerar Link de Diagnóstico</DialogTitle>
+              <DialogDescription>
+                Envie este link para avaliação colaborativa da carga de trabalho.
+              </DialogDescription>
+            </DialogHeader>
+            
+            {!inviteLink ? (
+              <div className="space-y-4 py-4">
+                <p className="text-sm text-gray-600">
+                  O link permitirá que outros membros da equipe respondam o diagnóstico.
+                </p>
+                <Button 
+                  onClick={handleGenerateInvite} 
+                  disabled={generatingInvite}
+                  className="w-full"
+                >
+                  {generatingInvite ? <Loader2 className="animate-spin mr-2 w-4 h-4" /> : "Gerar Link"}
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4 py-4">
+                <div className="p-4 bg-green-50 rounded border border-green-200 text-center text-green-800">
+                  Link gerado com sucesso!
+                </div>
+                <div className="flex gap-2">
+                  <Input value={inviteLink} readOnly />
+                  <Button onClick={copyToClipboard} size="icon">
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  onClick={() => { setInviteLink(""); setIsInviteModalOpen(false); }} 
+                  className="w-full"
+                >
+                  Fechar
+                </Button>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
 
         <Card>
           <CardContent className="p-8">
