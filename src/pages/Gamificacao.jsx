@@ -17,6 +17,7 @@ import EvidenceSubmission from "@/components/gamification/EvidenceSubmission";
 import QualityDashboard from "@/components/gamification/QualityDashboard";
 import AdminViewBanner from "../components/shared/AdminViewBanner";
 import FinalizeChallengeModal from "@/components/gamification/FinalizeChallengeModal";
+import UpdateProgressModal from "@/components/gamification/UpdateProgressModal";
 
 export default function Gamificacao() {
   const queryClient = useQueryClient();
@@ -29,6 +30,7 @@ export default function Gamificacao() {
   const [isAdminView, setIsAdminView] = useState(false);
   const [selectedChallengeToFinalize, setSelectedChallengeToFinalize] = useState(null);
   const [selectedChallengeToEdit, setSelectedChallengeToEdit] = useState(null);
+  const [selectedChallengeToUpdate, setSelectedChallengeToUpdate] = useState(null);
 
   useEffect(() => {
     loadUser();
@@ -317,7 +319,7 @@ export default function Gamificacao() {
   const myRewards = Array.isArray(rewards) ? rewards.filter((r) => r.user_id === user?.id) : [];
 
   const handleUpdateProgress = (challenge) => {
-    toast.info("Use a seção de Evidências para registrar progresso");
+    setSelectedChallengeToUpdate(challenge);
   };
 
   const handleEditChallenge = (challenge) => {
@@ -643,6 +645,17 @@ export default function Gamificacao() {
           onSuccess={() => {
             queryClient.invalidateQueries({ queryKey: ['challenges'] });
             setSelectedChallengeToFinalize(null);
+          }}
+        />
+
+        {/* Modal de Atualização de Progresso */}
+        <UpdateProgressModal
+          open={!!selectedChallengeToUpdate}
+          onClose={() => setSelectedChallengeToUpdate(null)}
+          challenge={selectedChallengeToUpdate}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['challenges'] });
+            setSelectedChallengeToUpdate(null);
           }}
         />
       </div>
