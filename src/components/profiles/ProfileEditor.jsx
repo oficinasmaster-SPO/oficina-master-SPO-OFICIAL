@@ -3,8 +3,14 @@ import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Save, Eye } from "lucide-react";
+import { ArrowLeft, Save, Eye, FileText } from "lucide-react";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Card, CardContent } from "@/components/ui/card";
 import SidebarPermissions from "./SidebarPermissions";
 import ModulePermissions from "./ModulePermissions";
 import ProfilePreview from "./ProfilePreview";
@@ -106,8 +112,9 @@ export default function ProfileEditor({ profile, onBack }) {
         </div>
       </div>
 
-      <Tabs defaultValue="custom_roles" className="space-y-6">
+      <Tabs defaultValue="basic_info" className="space-y-6">
         <TabsList>
+          <TabsTrigger value="basic_info">Informações Básicas</TabsTrigger>
           <TabsTrigger value="custom_roles">Roles Customizadas</TabsTrigger>
           <TabsTrigger value="roles">Roles do Sistema</TabsTrigger>
           <TabsTrigger value="job_roles">Funções Vinculadas</TabsTrigger>
@@ -116,6 +123,75 @@ export default function ProfileEditor({ profile, onBack }) {
           <TabsTrigger value="report">Relatório de Permissões</TabsTrigger>
           <TabsTrigger value="impact">Análise de Impacto</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="basic_info">
+          <Card>
+            <CardContent className="pt-6 space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="profile-name">Nome do Perfil</Label>
+                <Input
+                  id="profile-name"
+                  value={editedProfile.name || ""}
+                  onChange={(e) =>
+                    setEditedProfile({ ...editedProfile, name: e.target.value })
+                  }
+                  placeholder="Ex: Consultor de Sucesso"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="profile-description">Descrição</Label>
+                <Textarea
+                  id="profile-description"
+                  value={editedProfile.description || ""}
+                  onChange={(e) =>
+                    setEditedProfile({ ...editedProfile, description: e.target.value })
+                  }
+                  placeholder="Descreva as responsabilidades e objetivos deste perfil"
+                  rows={4}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="profile-type">Tipo do Perfil</Label>
+                <Select
+                  value={editedProfile.type || "interno"}
+                  onValueChange={(value) =>
+                    setEditedProfile({ ...editedProfile, type: value })
+                  }
+                >
+                  <SelectTrigger id="profile-type">
+                    <SelectValue placeholder="Selecione o tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="interno">Interno</SelectItem>
+                    <SelectItem value="externo">Externo</SelectItem>
+                    <SelectItem value="sistema">Sistema</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="profile-status">Status do Perfil</Label>
+                  <p className="text-sm text-gray-500">
+                    Perfis inativos não podem ser atribuídos a novos usuários
+                  </p>
+                </div>
+                <Switch
+                  id="profile-status"
+                  checked={editedProfile.status === "ativo"}
+                  onCheckedChange={(checked) =>
+                    setEditedProfile({
+                      ...editedProfile,
+                      status: checked ? "ativo" : "inativo",
+                    })
+                  }
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="custom_roles">
           <CustomRoleSelector
