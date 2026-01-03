@@ -20,11 +20,15 @@ Deno.serve(async (req) => {
     console.log("📦 [getUserProfile] Employees encontrados:", employees?.length || 0);
 
     if (!employees || employees.length === 0) {
+      console.log("⚠️ [getUserProfile] Employee não encontrado para:", user.email);
       return Response.json({ 
-        error: 'Employee not found',
-        email: user.email,
-        profile_id: null
-      }, { status: 404 });
+        success: true,
+        employee_id: null,
+        profile_id: null,
+        custom_role_ids: [],
+        job_role: null,
+        message: 'Employee not found - user may need profile assignment'
+      }, { status: 200 });
     }
 
     const employee = employees[0];
@@ -39,12 +43,15 @@ Deno.serve(async (req) => {
       console.log("🔗 [getUserProfile] User vinculado ao Employee");
     }
 
+    // Retornar sucesso mesmo se não tiver profile_id
+    // O sistema de permissões tratará com permissões vazias até a aprovação
     return Response.json({ 
       success: true,
       employee_id: employee.id,
-      profile_id: employee.profile_id,
+      profile_id: employee.profile_id || null,
       custom_role_ids: employee.custom_role_ids || [],
-      job_role: employee.job_role
+      job_role: employee.job_role || null,
+      message: employee.profile_id ? 'Profile found' : 'No profile assigned yet'
     });
   } catch (error) {
     console.error("❌ [getUserProfile] Erro:", error);
