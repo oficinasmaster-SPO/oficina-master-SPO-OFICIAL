@@ -109,9 +109,24 @@ export default function ChallengeCard({ challenge, userProgress, isManager, onEd
         {/* Ações de Gerenciamento */}
         {isManager && (
           <div className="pt-4 border-t flex flex-wrap gap-2 justify-end">
+             {challenge.status === 'ativo' && onUpdateProgress && (
+                <Button variant="outline" size="sm" onClick={() => onUpdateProgress(challenge)}>
+                  Atualizar Progresso
+                </Button>
+             )}
              {challenge.status === 'ativo' && onFinalize && (
                 <Button variant="secondary" size="sm" onClick={() => onFinalize(challenge)} className="bg-green-100 text-green-800 hover:bg-green-200">
                   Finalizar
+                </Button>
+             )}
+             {onEdit && (
+                <Button variant="ghost" size="sm" onClick={() => onEdit(challenge)}>
+                  Editar
+                </Button>
+             )}
+             {onDelete && (
+                <Button variant="ghost" size="sm" onClick={() => onDelete(challenge.id)} className="text-red-500 hover:bg-red-50">
+                  Excluir
                 </Button>
              )}
           </div>

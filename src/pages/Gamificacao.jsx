@@ -28,6 +28,7 @@ export default function Gamificacao() {
   const [workshop, setWorkshop] = useState(null);
   const [isAdminView, setIsAdminView] = useState(false);
   const [selectedChallengeToFinalize, setSelectedChallengeToFinalize] = useState(null);
+  const [selectedChallengeToEdit, setSelectedChallengeToEdit] = useState(null);
 
   useEffect(() => {
     loadUser();
@@ -315,6 +316,27 @@ export default function Gamificacao() {
   // Minhas recompensas
   const myRewards = Array.isArray(rewards) ? rewards.filter((r) => r.user_id === user?.id) : [];
 
+  const handleUpdateProgress = (challenge) => {
+    toast.info("Use a seção de Evidências para registrar progresso");
+  };
+
+  const handleEditChallenge = (challenge) => {
+    setSelectedChallengeToEdit(challenge);
+    toast.info("Edição de desafios em desenvolvimento");
+  };
+
+  const handleDeleteChallenge = async (challengeId) => {
+    if (!confirm("Tem certeza que deseja excluir este desafio?")) return;
+    
+    try {
+      await base44.entities.Challenge.delete(challengeId);
+      queryClient.invalidateQueries({ queryKey: ['challenges'] });
+      toast.success("Desafio excluído com sucesso!");
+    } catch (error) {
+      toast.error(`Erro ao excluir: ${error?.message || 'Erro desconhecido'}`);
+    }
+  };
+
   if (loadingChallenges || loadingRewards) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -491,7 +513,10 @@ export default function Gamificacao() {
                     challenge={challenge}
                     userProgress={getUserProgress(challenge)}
                     isManager={currentWorkshop?.owner_id === user?.id}
-                    onFinalize={(ch) => setSelectedChallengeToFinalize(ch)} />
+                    onUpdateProgress={handleUpdateProgress}
+                    onFinalize={(ch) => setSelectedChallengeToFinalize(ch)}
+                    onEdit={handleEditChallenge}
+                    onDelete={handleDeleteChallenge} />
 
                   )}
                   </div>
