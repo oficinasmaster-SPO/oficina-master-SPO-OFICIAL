@@ -21,19 +21,25 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Colaborador não encontrado' }, { status: 404 });
     }
 
+    console.log('📋 Employee:', { id: employee.id, email: employee.email, user_id: employee.user_id });
+
     // Buscar User por email OU usar user_id do Employee
     let userId = employee.user_id;
     
     if (!userId) {
+      console.log('🔍 Buscando User por email:', employee.email);
       const users = await base44.asServiceRole.entities.User.filter({ email: employee.email });
+      
+      console.log('👥 Users encontrados:', users?.length || 0);
       
       if (!users || users.length === 0) {
         return Response.json({ 
-          error: 'Usuário precisa completar o cadastro primeiro' 
+          error: 'Usuário precisa fazer o primeiro login antes de ser aprovado. Peça ao usuário para criar a senha primeiro.' 
         }, { status: 404 });
       }
 
       userId = users[0].id;
+      console.log('✅ User encontrado:', userId);
     }
     const jobRole = employee.job_role || users[0].job_role || 'outros';
     let finalProfileId = profile_id || employee.profile_id || users[0].profile_id;
