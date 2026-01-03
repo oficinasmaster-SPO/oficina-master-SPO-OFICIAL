@@ -13,6 +13,28 @@ export default function TestUsuarios() {
     loadDebugData();
   }, []);
 
+  const handleFixIssues = async () => {
+    if (!confirm('Corrigir automaticamente os problemas encontrados?')) return;
+    
+    setLoading(true);
+    try {
+      // Chamar função backend que corrige tudo
+      const result = await base44.functions.invoke('linkUserToEmployee', {});
+      
+      if (result.data.success) {
+        alert('✅ Problemas corrigidos com sucesso!');
+        await loadDebugData();
+      } else {
+        alert('❌ Erro: ' + result.data.error);
+      }
+    } catch (error) {
+      console.error('Erro ao corrigir:', error);
+      alert('❌ Erro ao corrigir: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const loadDebugData = async () => {
     setLoading(true);
     try {
@@ -96,10 +118,16 @@ export default function TestUsuarios() {
     <div className="max-w-6xl mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Debug de Permissões do Usuário</h1>
-        <Button onClick={loadDebugData} variant="outline">
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Recarregar
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={handleFixIssues} className="bg-green-600 hover:bg-green-700">
+            <CheckCircle2 className="w-4 h-4 mr-2" />
+            Corrigir Problemas
+          </Button>
+          <Button onClick={loadDebugData} variant="outline">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Recarregar
+          </Button>
+        </div>
       </div>
 
       {/* User */}
