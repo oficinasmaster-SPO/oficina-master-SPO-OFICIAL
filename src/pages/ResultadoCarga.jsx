@@ -58,34 +58,41 @@ export default function ResultadoCarga() {
   };
 
   const { data: actionPlan } = useQuery({
-    queryKey: ['action-plan', diagnostic.id],
+    queryKey: ['action-plan', diagnostic?.id],
     queryFn: async () => {
+      if (!diagnostic?.id) return null;
       const plans = await base44.entities.DiagnosticActionPlan.filter({
         diagnostic_id: diagnostic.id,
         diagnostic_type: 'WorkloadDiagnostic'
       });
-      return plans.sort((a, b) => new Date(b.created_date) - new Date(a.created_date))[0];
+      return plans?.length > 0 ? plans.sort((a, b) => new Date(b.created_date) - new Date(a.created_date))[0] : null;
     },
     enabled: !!diagnostic?.id
   });
 
   const generatePlanMutation = useMutation({
-    mutationFn: async () => base44.functions.invoke('generateActionPlanWorkload', { diagnostic_id: diagnostic.id }),
+    mutationFn: async () => {
+      if (!diagnostic?.id) throw new Error('Diagnóstico não encontrado');
+      return base44.functions.invoke('generateActionPlanWorkload', { diagnostic_id: diagnostic.id });
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries(['action-plan', diagnostic.id]);
+      queryClient.invalidateQueries(['action-plan', diagnostic?.id]);
       toast.success('Plano gerado!');
     }
   });
 
   const refinePlanMutation = useMutation({
-    mutationFn: async ({ feedback }) => base44.functions.invoke('refineActionPlan', {
-      plan_id: actionPlan.id,
-      feedback_content: feedback.content,
-      feedback_type: feedback.type,
-      audio_url: feedback.audio_url
-    }),
+    mutationFn: async ({ feedback }) => {
+      if (!actionPlan?.id) throw new Error('Plano não encontrado');
+      return base44.functions.invoke('refineActionPlan', {
+        plan_id: actionPlan.id,
+        feedback_content: feedback.content,
+        feedback_type: feedback.type,
+        audio_url: feedback.audio_url
+      });
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries(['action-plan', diagnostic.id]);
+      queryClient.invalidateQueries(['action-plan', diagnostic?.id]);
       setShowFeedbackModal(false);
       toast.success('Plano refinado!');
     }
@@ -93,6 +100,9 @@ export default function ResultadoCarga() {
 
   const updateActivityMutation = useMutation({
     mutationFn: async ({ activityIndex, status }) => {
+      if (!actionPlan?.id || !actionPlan?.plan_data?.implementation_schedule) {
+        throw new Error('Plano não encontrado');
+      }
       const updatedSchedule = [...actionPlan.plan_data.implementation_schedule];
       updatedSchedule[activityIndex].status = status;
       if (status === 'concluida') updatedSchedule[activityIndex].completed_date = new Date().toISOString();
@@ -103,7 +113,7 @@ export default function ResultadoCarga() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['action-plan', diagnostic.id]);
+      queryClient.invalidateQueries(['action-plan', diagnostic?.id]);
       toast.success('Atividade atualizada!');
     }
   });
@@ -149,20 +159,21 @@ export default function ResultadoCarga() {
   const HealthIcon = currentHealth.icon;
 
   // Preparar dados para o gráfico
-  const chartData = (diagnostic.workload_data || []).map(emp => {
-    const employee = employees.find(e => e.id === emp.employee_id);
-    const utilization = emp.ideal_weekly_hours > 0 ? (emp.weekly_hours_worked / emp.ideal_weekly_hours) * 100 : 0;
+  const chartData = (diagnostic?.workload_data || []).map(emp => {
+    const employee = employees.find(e => e?.id === emp?.employee_id);
+    const utilization = emp?.ideal_weekly_hours > 0 ? (emp.weekly_hours_worked / emp.ideal_weekly_hours) * 100 : 0;
     
     return {
-      name: employee?.full_name || emp.position_title || "Colaborador",
+      name: employee?.full_name || emp?.position_title || "Colaborador",
       utilizacao: utilization,
       ideal: 100,
-      horas: emp.weekly_hours_worked
+      horas: emp?.weekly_hours_worked || 0
     };
   });
 
   const getEmployeeName = (employeeId) => {
-    const employee = employees.find(e => e.id === employeeId);
+    if (!employeeId) return "Colaborador";
+    const employee = employees.find(e => e?.id === employeeId);
     return employee?.full_name || "Colaborador";
   };
 

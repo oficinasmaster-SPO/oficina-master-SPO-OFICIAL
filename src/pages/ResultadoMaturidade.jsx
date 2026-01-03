@@ -37,22 +37,28 @@ export default function ResultadoMaturidade() {
   });
 
   const generatePlanMutation = useMutation({
-    mutationFn: async () => base44.functions.invoke('generateActionPlanMaturity', { diagnostic_id: diagnostic.id }),
+    mutationFn: async () => {
+      if (!diagnostic?.id) throw new Error('Diagnóstico não encontrado');
+      return base44.functions.invoke('generateActionPlanMaturity', { diagnostic_id: diagnostic.id });
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries(['action-plan', diagnostic.id]);
+      queryClient.invalidateQueries(['action-plan', diagnostic?.id]);
       toast.success('Plano gerado!');
     }
   });
 
   const refinePlanMutation = useMutation({
-    mutationFn: async ({ feedback }) => base44.functions.invoke('refineActionPlan', {
-      plan_id: actionPlan.id,
-      feedback_content: feedback.content,
-      feedback_type: feedback.type,
-      audio_url: feedback.audio_url
-    }),
+    mutationFn: async ({ feedback }) => {
+      if (!actionPlan?.id) throw new Error('Plano não encontrado');
+      return base44.functions.invoke('refineActionPlan', {
+        plan_id: actionPlan.id,
+        feedback_content: feedback.content,
+        feedback_type: feedback.type,
+        audio_url: feedback.audio_url
+      });
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries(['action-plan', diagnostic.id]);
+      queryClient.invalidateQueries(['action-plan', diagnostic?.id]);
       setShowFeedbackModal(false);
       toast.success('Plano refinado!');
     }
@@ -60,6 +66,9 @@ export default function ResultadoMaturidade() {
 
   const updateActivityMutation = useMutation({
     mutationFn: async ({ activityIndex, status }) => {
+      if (!actionPlan?.id || !actionPlan?.plan_data?.implementation_schedule) {
+        throw new Error('Plano não encontrado');
+      }
       const updatedSchedule = [...actionPlan.plan_data.implementation_schedule];
       updatedSchedule[activityIndex].status = status;
       if (status === 'concluida') updatedSchedule[activityIndex].completed_date = new Date().toISOString();
@@ -70,7 +79,7 @@ export default function ResultadoMaturidade() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['action-plan', diagnostic.id]);
+      queryClient.invalidateQueries(['action-plan', diagnostic?.id]);
       toast.success('Atividade atualizada!');
     }
   });
@@ -125,20 +134,20 @@ export default function ResultadoMaturidade() {
 
   if (!diagnostic || !employee) return null;
 
-  const levelInfo = maturityLevels[diagnostic.maturity_level];
+  const levelInfo = maturityLevels[diagnostic?.maturity_level] || maturityLevels.bebe;
   
   const chartData = [
-    { name: "Bebê (Direção)", value: diagnostic.maturity_scores.bebe, color: "#ef4444" },
-    { name: "Criança (Orientação)", value: diagnostic.maturity_scores.crianca, color: "#f59e0b" },
-    { name: "Adolescente (Apoio)", value: diagnostic.maturity_scores.adolescente, color: "#3b82f6" },
-    { name: "Adulto (Delegação)", value: diagnostic.maturity_scores.adulto, color: "#10b981" }
+    { name: "Bebê (Direção)", value: diagnostic?.maturity_scores?.bebe || 0, color: "#ef4444" },
+    { name: "Criança (Orientação)", value: diagnostic?.maturity_scores?.crianca || 0, color: "#f59e0b" },
+    { name: "Adolescente (Apoio)", value: diagnostic?.maturity_scores?.adolescente || 0, color: "#3b82f6" },
+    { name: "Adulto (Delegação)", value: diagnostic?.maturity_scores?.adulto || 0, color: "#10b981" }
   ];
 
   const barData = [
-    { name: "Bebê", value: diagnostic.maturity_scores.bebe, fill: "#ef4444" },
-    { name: "Criança", value: diagnostic.maturity_scores.crianca, fill: "#f59e0b" },
-    { name: "Adolescente", value: diagnostic.maturity_scores.adolescente, fill: "#3b82f6" },
-    { name: "Adulto", value: diagnostic.maturity_scores.adulto, fill: "#10b981" }
+    { name: "Bebê", value: diagnostic?.maturity_scores?.bebe || 0, fill: "#ef4444" },
+    { name: "Criança", value: diagnostic?.maturity_scores?.crianca || 0, fill: "#f59e0b" },
+    { name: "Adolescente", value: diagnostic?.maturity_scores?.adolescente || 0, fill: "#3b82f6" },
+    { name: "Adulto", value: diagnostic?.maturity_scores?.adulto || 0, fill: "#10b981" }
   ];
 
   return (
