@@ -121,18 +121,20 @@ export default function RituaisAculturamento() {
         workshop_id: workshopId, 
         status: "ativo" 
       });
-      setEmployees(employeesData);
+      setEmployees(Array.isArray(employeesData) ? employeesData : []);
     } catch (error) {
       console.error("Error loading employees:", error);
+      setEmployees([]);
     }
   };
 
   const loadRitualsWithMaps = async (workshopId) => {
     try {
       const allRituals = await base44.entities.Ritual.filter({ workshop_id: workshopId });
-      setRitualsWithMaps(allRituals);
+      setRitualsWithMaps(Array.isArray(allRituals) ? allRituals : []);
     } catch (error) {
       console.error("Error loading rituals with maps:", error);
+      setRitualsWithMaps([]);
     }
   };
 
@@ -141,9 +143,10 @@ export default function RituaisAculturamento() {
       const schedules = await base44.entities.ScheduledRitual.filter({ 
         workshop_id: workshopId
       });
-      setScheduledRituals(schedules);
+      setScheduledRituals(Array.isArray(schedules) ? schedules : []);
     } catch (error) {
       console.error("Error loading schedules:", error);
+      setScheduledRituals([]);
     }
   };
 
@@ -182,8 +185,8 @@ export default function RituaisAculturamento() {
       setIsDialogOpen(false);
       loadScheduledRituals(workshop.id);
     } catch (error) {
-      console.error(error);
-      toast.error("Erro ao agendar ritual.");
+      console.error("Erro ao agendar ritual:", error);
+      toast.error(`Erro ao agendar: ${error?.message || 'Erro desconhecido'}`);
     } finally {
       setSaving(false);
     }

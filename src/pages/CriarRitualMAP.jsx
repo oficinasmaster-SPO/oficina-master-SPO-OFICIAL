@@ -53,7 +53,7 @@ export default function CriarRitualMAP() {
       setIsFormOpen(true);
     } catch (error) {
       console.error("Erro ao carregar:", error);
-      toast.error(`Erro ao carregar dados: ${error.message || 'Erro desconhecido'}`);
+      toast.error(`Erro ao carregar dados: ${error?.message || JSON.stringify(error) || 'Erro desconhecido'}`);
       navigate(createPageUrl("RituaisAculturamento"));
     } finally {
       setLoading(false);
@@ -72,10 +72,15 @@ export default function CriarRitualMAP() {
   };
 
   const handleSaveMap = async (formData) => {
+    if (!workshop?.id) {
+      toast.error("Oficina não identificada. Recarregue a página.");
+      return;
+    }
+
     setIsSaving(true);
     try {
       let savedMap;
-      
+
       if (processDocument) {
         // Atualizar MAP existente
         savedMap = await base44.entities.ProcessDocument.update(processDocument.id, {
@@ -124,7 +129,7 @@ export default function CriarRitualMAP() {
       }, 1500);
     } catch (error) {
       console.error("Erro ao salvar MAP:", error);
-      toast.error(`Erro ao salvar MAP: ${error.message || 'Erro desconhecido'}`);
+      toast.error(`Erro ao salvar MAP: ${error?.message || JSON.stringify(error) || 'Erro desconhecido'}`);
     } finally {
       setIsSaving(false);
     }

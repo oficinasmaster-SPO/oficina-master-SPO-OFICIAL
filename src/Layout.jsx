@@ -173,11 +173,11 @@ export default function Layout({ children, currentPageName }) {
   // Verificar status de aprovação no primeiro login
   useEffect(() => {
     const checkUserApproval = async () => {
-      if (!user || !user.email) return;
+      if (!user?.email) return;
 
       try {
         // Se usuário está pending, mostrar mensagem de aguardando aprovação
-        if (user.user_status === 'pending') {
+        if (user?.user_status === 'pending') {
           console.log("⏳ Usuário aguardando aprovação");
           // O acesso será bloqueado pela lógica abaixo
           return;
@@ -391,7 +391,7 @@ export default function Layout({ children, currentPageName }) {
                 }
 
                 // Verificar status do usuário
-                if (user?.user_status === 'pending') {
+                if (user && user.user_status === 'pending') {
                   return (
                     <div className="flex flex-col items-center justify-center h-[60vh] text-center px-4">
                       <div className="bg-yellow-100 p-4 rounded-full mb-4">
@@ -422,7 +422,7 @@ export default function Layout({ children, currentPageName }) {
                   return children;
                 }
 
-                if (workshop.status === 'inativo' && user?.role !== 'admin') {
+                if (workshop?.status === 'inativo' && user && user.role !== 'admin') {
                   return (
                     <div className="flex flex-col items-center justify-center h-[60vh] text-center px-4">
                       <div className="bg-red-100 p-4 rounded-full mb-4">
