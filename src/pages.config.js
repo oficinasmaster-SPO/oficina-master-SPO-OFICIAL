@@ -135,6 +135,7 @@ import TechnicianQGP from './pages/TechnicianQGP';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
+import TestUsuario from './pages/TestUsuario';
 import __Layout from './Layout.jsx';
 
 
@@ -276,6 +277,7 @@ export const PAGES = {
     "TreinamentoVendas": TreinamentoVendas,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
+    "TestUsuario": TestUsuario,
 }
 
 export const pagesConfig = {
