@@ -39,16 +39,17 @@ export function usePermissions() {
           try {
             console.log("🔍 [usePermissions] Buscando profile_id via backend...");
             const result = await base44.functions.invoke('getUserProfile', {});
-            console.log("📦 [usePermissions] Resultado backend:", JSON.stringify(result.data, null, 2));
+            console.log("📦 [usePermissions] Resultado backend:", result?.data);
             
-            if (result.data && result.data.profile_id) {
+            if (result?.data?.success && result.data.profile_id) {
               employeeProfileId = result.data.profile_id;
               console.log("✅ [usePermissions] Profile ID obtido via backend:", employeeProfileId);
             } else {
-              console.warn("⚠️ [usePermissions] Nenhum profile_id retornado pelo backend");
+              console.warn("⚠️ [usePermissions] Nenhum profile_id retornado pelo backend:", result?.data?.message);
             }
           } catch (empError) {
-            console.error("❌ [usePermissions] Erro ao buscar profile_id:", empError);
+            console.error("❌ [usePermissions] Erro ao buscar profile_id:", empError?.message || empError);
+            // Não bloquear o fluxo - usuário pode estar em pending approval
           }
 
           // Carregar perfil do usuário
