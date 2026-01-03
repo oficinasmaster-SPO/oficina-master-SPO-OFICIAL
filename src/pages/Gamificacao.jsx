@@ -16,6 +16,7 @@ import RankingSection from "@/components/gamification/RankingSection";
 import EvidenceSubmission from "@/components/gamification/EvidenceSubmission";
 import QualityDashboard from "@/components/gamification/QualityDashboard";
 import AdminViewBanner from "../components/shared/AdminViewBanner";
+import FinalizeChallengeModal from "@/components/gamification/FinalizeChallengeModal";
 
 export default function Gamificacao() {
   const queryClient = useQueryClient();
@@ -26,6 +27,7 @@ export default function Gamificacao() {
   const [challengeScopeFilter, setChallengeScopeFilter] = useState("all");
   const [workshop, setWorkshop] = useState(null);
   const [isAdminView, setIsAdminView] = useState(false);
+  const [selectedChallengeToFinalize, setSelectedChallengeToFinalize] = useState(null);
 
   useEffect(() => {
     loadUser();
@@ -487,7 +489,9 @@ export default function Gamificacao() {
                   <ChallengeCard
                     key={challenge.id}
                     challenge={challenge}
-                    userProgress={getUserProgress(challenge)} />
+                    userProgress={getUserProgress(challenge)}
+                    isManager={currentWorkshop?.owner_id === user?.id}
+                    onFinalize={(ch) => setSelectedChallengeToFinalize(ch)} />
 
                   )}
                   </div>
@@ -605,6 +609,17 @@ export default function Gamificacao() {
             }
           </TabsContent>
         </Tabs>
+
+        {/* Modal de Finalização */}
+        <FinalizeChallengeModal
+          open={!!selectedChallengeToFinalize}
+          onClose={() => setSelectedChallengeToFinalize(null)}
+          challenge={selectedChallengeToFinalize}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['challenges'] });
+            setSelectedChallengeToFinalize(null);
+          }}
+        />
       </div>
     </div>);
 
