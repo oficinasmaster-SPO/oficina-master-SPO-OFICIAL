@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Save, Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function ServicosTerceirizados({ workshop, onUpdate }) {
   const [editing, setEditing] = useState(false);
@@ -22,8 +23,15 @@ export default function ServicosTerceirizados({ workshop, onUpdate }) {
   }, [workshop]);
 
   const handleSave = async () => {
-    await onUpdate(formData);
-    setEditing(false);
+    try {
+      await onUpdate(formData);
+      toast.success("Serviços terceirizados salvos!");
+    } catch (error) {
+      console.error("Erro ao salvar:", error);
+      toast.error("Erro ao salvar serviços");
+    } finally {
+      setEditing(false);
+    }
   };
 
   const addService = () => {

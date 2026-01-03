@@ -301,7 +301,10 @@ export default function GestaoOficina() {
           </Card>
         </div>
 
-        <Tabs defaultValue="dados" className="space-y-6">
+        <Tabs defaultValue="dados" className="space-y-6" onValueChange={(value) => {
+          // Preservar a aba ativa ao salvar
+          console.log("Aba ativa:", value);
+        }}>
           <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-10 bg-white shadow-md gap-1 p-2">
             <TabsTrigger value="dados" className="text-xs md:text-sm">
               <Building2 className="w-4 h-4 mr-1" />

@@ -168,8 +168,15 @@ export default function EquipamentosCompletos({ workshop, onUpdate }) {
   }, [workshop]);
 
   const handleSave = async () => {
-    await onUpdate({ equipment_list: equipmentList });
-    setEditing(false);
+    try {
+      await onUpdate({ equipment_list: equipmentList });
+      toast.success("Equipamentos salvos!");
+    } catch (error) {
+      console.error("Erro ao salvar:", error);
+      toast.error("Erro ao salvar equipamentos");
+    } finally {
+      setEditing(false);
+    }
   };
 
   const toggleEquipment = (category, name, isSpecial = false) => {
