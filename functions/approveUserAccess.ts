@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
   try {
@@ -41,11 +41,11 @@ Deno.serve(async (req) => {
     // Buscar dados atualizados do User antes de aprovar
     const currentUser = existingUsers[0];
 
-    // Atualizar User para status active e configurar profile_id
+    // Atualizar User para status approved (não active) e configurar profile_id
     const jobRole = employee.job_role || currentUser.job_role || 'outros';
     
     const userData = {
-      user_status: 'active',
+      user_status: 'approved',
       approved_at: new Date().toISOString(),
       approved_by: admin.id,
       full_name: currentUser.full_name || employee.full_name,
@@ -96,10 +96,11 @@ Deno.serve(async (req) => {
     await base44.asServiceRole.entities.User.update(userId, userData);
     console.log("✅ User aprovado e ativado:", userId);
 
-    // Vincular user_id ao Employee e sincronizar status
+    // Vincular user_id ao Employee, profile_id e sincronizar status
     await base44.asServiceRole.entities.Employee.update(employee.id, {
       user_id: userId,
-      user_status: 'ativo' // Employee usa 'ativo', não 'active'
+      user_status: 'approved',
+      profile_id: finalProfileId || null
     });
 
     console.log("✅ Employee atualizado com status ativo");
