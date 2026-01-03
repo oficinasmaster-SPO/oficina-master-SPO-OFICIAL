@@ -12,22 +12,32 @@ Deno.serve(async (req) => {
 
     console.log("🔍 [getUserProfile] Buscando Employee para:", user.email);
 
-    // Buscar Employee pelo email do usuário usando service role
-    const employees = await base44.asServiceRole.entities.Employee.filter({ 
+    // Buscar Employee pelo email OU user_id do usuário usando service role
+    let employees = await base44.asServiceRole.entities.Employee.filter({ 
       email: user.email 
     });
+
+    // Se não encontrar por email, buscar por user_id
+    if (!employees || employees.length === 0) {
+      console.log("⚠️ [getUserProfile] Tentando buscar por user_id:", user.id);
+      employees = await base44.asServiceRole.entities.Employee.filter({ 
+        user_id: user.id 
+      });
+    }
 
     console.log("📦 [getUserProfile] Employees encontrados:", employees?.length || 0);
 
     if (!employees || employees.length === 0) {
       console.log("⚠️ [getUserProfile] Employee não encontrado para:", user.email);
+      
+      // Retorna perfil do próprio User se existir
       return Response.json({ 
         success: true,
         employee_id: null,
-        profile_id: null,
-        custom_role_ids: [],
-        job_role: null,
-        message: 'Employee not found - user may need profile assignment'
+        profile_id: user.profile_id || null,
+        custom_role_ids: user.custom_role_ids || [],
+        job_role: user.job_role || null,
+        message: 'Using User profile data'
       }, { status: 200 });
     }
 
