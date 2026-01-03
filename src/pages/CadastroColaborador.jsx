@@ -377,8 +377,34 @@ export default function CadastroColaborador() {
                     <Label>CEP</Label>
                     <Input
                       value={formData.endereco.cep}
-                      onChange={(e) => setFormData({...formData, endereco: {...formData.endereco, cep: e.target.value}})}
+                      onChange={async (e) => {
+                        const cep = e.target.value.replace(/\D/g, '');
+                        setFormData({...formData, endereco: {...formData.endereco, cep: e.target.value}});
+                        
+                        if (cep.length === 8) {
+                          try {
+                            const result = await base44.functions.invoke('consultarCEP', { cep });
+                            if (result.data && !result.data.erro) {
+                              setFormData(prev => ({
+                                ...prev,
+                                endereco: {
+                                  ...prev.endereco,
+                                  rua: result.data.logradouro || prev.endereco.rua,
+                                  bairro: result.data.bairro || prev.endereco.bairro,
+                                  cidade: result.data.localidade || prev.endereco.cidade,
+                                  estado: result.data.uf || prev.endereco.estado,
+                                  cep: e.target.value
+                                }
+                              }));
+                              toast.success("Endereço preenchido automaticamente!");
+                            }
+                          } catch (error) {
+                            console.error("Erro ao buscar CEP:", error);
+                          }
+                        }
+                      }}
                       placeholder="00000-000"
+                      maxLength={9}
                     />
                   </div>
                 </div>
