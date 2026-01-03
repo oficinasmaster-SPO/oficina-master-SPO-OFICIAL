@@ -56,6 +56,29 @@ Deno.serve(async (req) => {
       profile_id: finalProfileId || null
     });
 
+    // Buscar o perfil e vincular as custom_role_ids ao UserProfile
+    if (finalProfileId) {
+      try {
+        const selectedProfile = await base44.asServiceRole.entities.UserProfile.get(finalProfileId);
+        
+        if (selectedProfile && selectedProfile.custom_role_ids && selectedProfile.custom_role_ids.length > 0) {
+          // Atualizar User com as custom_role_ids do perfil
+          await base44.asServiceRole.entities.User.update(userId, {
+            custom_role_ids: selectedProfile.custom_role_ids
+          });
+
+          // Atualizar Employee também
+          await base44.asServiceRole.entities.Employee.update(employee.id, {
+            custom_role_ids: selectedProfile.custom_role_ids
+          });
+          
+          console.log('✅ Custom roles vinculadas:', selectedProfile.custom_role_ids);
+        }
+      } catch (error) {
+        console.error('⚠️ Erro ao vincular custom roles (não crítico):', error);
+      }
+    }
+
     return Response.json({ 
       success: true,
       user_id: userId,
