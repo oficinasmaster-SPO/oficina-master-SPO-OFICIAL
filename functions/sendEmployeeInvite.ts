@@ -276,11 +276,10 @@ Deno.serve(async (req) => {
 </html>
     `;
 
-    // PRIORIDADE: Email personalizado PRIMEIRO (PT-BR + logo)
+    // Enviar email personalizado com link correto
     let emailSent = false;
     let emailError = null;
 
-    // PASSO 1: Tentar enviar email PERSONALIZADO em português
     try {
       console.log("📧 Enviando email PERSONALIZADO em português brasileiro...");
       
@@ -292,23 +291,11 @@ Deno.serve(async (req) => {
       });
 
       emailSent = true;
-      console.log("✅ EMAIL PERSONALIZADO ENVIADO COM SUCESSO!");
+      console.log("✅ EMAIL ENVIADO COM LINK CORRETO: " + inviteUrl);
 
     } catch (error) {
       emailError = error.message;
-      console.error("❌ Email personalizado falhou:", error.message);
-    }
-
-    // PASSO 2: Se email personalizado falhou, usar inviteUser como fallback
-    if (!emailSent) {
-      try {
-        console.log("📧 Fallback: criando usuário via Base44...");
-        await base44.users.inviteUser(email, "user");
-        emailSent = true;
-        console.log("✅ Usuário criado via Base44 (email padrão enviado)");
-      } catch (error) {
-        console.error("❌ inviteUser também falhou:", error.message);
-      }
+      console.error("❌ Email falhou:", error.message);
     }
 
     return Response.json({ 
