@@ -276,24 +276,13 @@ Deno.serve(async (req) => {
 </html>
     `;
 
-    // SOLUÇÃO HÍBRIDA: inviteUser (funciona) + SendEmail (personalizado)
+    // PRIORIDADE: Email personalizado PRIMEIRO (PT-BR + logo)
     let emailSent = false;
     let emailError = null;
-    let inviteUserSent = false;
 
-    // PASSO 1: Criar usuário via inviteUser (email padrão Base44 como fallback)
+    // PASSO 1: Tentar enviar email PERSONALIZADO em português
     try {
-      console.log("📧 Criando usuário no sistema Base44:", email);
-      await base44.users.inviteUser(email, "user");
-      inviteUserSent = true;
-      console.log("✅ Usuário criado - email padrão Base44 enviado como fallback");
-    } catch (error) {
-      console.log("⚠️ Usuário já existe ou erro:", error.message);
-    }
-
-    // PASSO 2: Tentar enviar email PERSONALIZADO (português + logo)
-    try {
-      console.log("📧 Tentando enviar email PERSONALIZADO em português...");
+      console.log("📧 Enviando email PERSONALIZADO em português brasileiro...");
       
       await base44.asServiceRole.integrations.Core.SendEmail({
         from_name: "Oficinas Master",
@@ -307,8 +296,19 @@ Deno.serve(async (req) => {
 
     } catch (error) {
       emailError = error.message;
-      console.error("❌ Email personalizado não pôde ser enviado:", error.message);
-      console.error("ℹ️ Usuário receberá o email padrão do Base44");
+      console.error("❌ Email personalizado falhou:", error.message);
+    }
+
+    // PASSO 2: Se email personalizado falhou, usar inviteUser como fallback
+    if (!emailSent) {
+      try {
+        console.log("📧 Fallback: criando usuário via Base44...");
+        await base44.users.inviteUser(email, "user");
+        emailSent = true;
+        console.log("✅ Usuário criado via Base44 (email padrão enviado)");
+      } catch (error) {
+        console.error("❌ inviteUser também falhou:", error.message);
+      }
     }
 
     return Response.json({ 
