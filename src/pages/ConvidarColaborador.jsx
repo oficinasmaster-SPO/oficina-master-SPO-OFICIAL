@@ -63,8 +63,13 @@ export default function ConvidarColaborador() {
     queryKey: ['user-profiles'],
     queryFn: async () => {
       const allProfiles = await base44.entities.UserProfile.list();
-      const filtered = allProfiles.filter(p => p.type === 'cliente' && p.status === 'ativo');
+      // CORRIGIDO: Busca perfis 'externo' ao invés de 'cliente'
+      const filtered = allProfiles.filter(p => 
+        (p.type === 'externo' || p.type === 'cliente') && 
+        p.status === 'ativo'
+      );
       console.log("📋 Perfis carregados:", filtered);
+      console.log("📋 Total de perfis no sistema:", allProfiles.length);
       return filtered;
     }
   });
