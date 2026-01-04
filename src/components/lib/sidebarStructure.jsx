@@ -87,6 +87,7 @@ export const sidebarStructure = [
     label: "Cultura",
     items: [
       { name: "Manual da Cultura", description: "Pilares e rituais" },
+      { name: "Regimento Interno", description: "Regulamento jurídico" },
       { name: "Missão, Visão e Valores", description: "Cultura org" },
       { name: "Rituais", description: "34 rituais" },
       { name: "Cronograma Aculturação", description: "Atividades" },
