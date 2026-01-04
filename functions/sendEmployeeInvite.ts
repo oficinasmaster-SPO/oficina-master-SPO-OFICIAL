@@ -156,7 +156,7 @@ Deno.serve(async (req) => {
     console.log("ℹ️ User será criado no primeiro login após aprovação do admin");
 
     // Usa o domínio correto da aplicação
-    const baseUrl = 'https://oficina-master-copy-b54d47aa.base44.app';
+    const baseUrl = 'https://oficina-master-b2bc845b.base44.app';
     const inviteUrl = `${baseUrl}/PrimeiroAcesso?token=${token}`;
     
     console.log("🔗 Link gerado:", inviteUrl);
