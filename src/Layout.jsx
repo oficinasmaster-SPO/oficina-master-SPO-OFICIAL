@@ -357,9 +357,9 @@ export default function Layout({ children, currentPageName }) {
             )}
 
             <main className="flex-1">
-          <div className={`${isAuthenticated ? 'px-4 sm:px-6 lg:px-8 py-6' : ''}`}>
-            {isAuthenticated && <Breadcrumbs />}
-            {isAuthenticated ? (
+              <div className={`${isAuthenticated && !isPublicPage ? 'px-4 sm:px-6 lg:px-8 py-6' : ''}`}>
+                {isAuthenticated && !isPublicPage && <Breadcrumbs />}
+                {isAuthenticated && !isPublicPage ? (
               (() => {
                 try {
                   // Verificar permissão de acesso à página de forma segura
