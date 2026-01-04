@@ -276,26 +276,21 @@ Deno.serve(async (req) => {
 </html>
     `;
 
-    // Enviar email de convite
+    // Convidar usuário via Base44 (cria User automaticamente)
     let emailSent = false;
     let emailError = null;
 
     try {
-      console.log("📧 Enviando email de convite para:", email);
+      console.log("📧 Convidando usuário via Base44:", email);
 
-      await base44.asServiceRole.integrations.Core.SendEmail({
-        from_name: "Oficinas Master",
-        to: email,
-        subject: `🎉 Bem-vindo à ${workshop_name || 'Oficinas Master'}! Complete seu cadastro`,
-        body: emailHTML
-      });
+      await base44.users.inviteUser(email, "user");
 
       emailSent = true;
-      console.log("✅ Email enviado com sucesso para:", email);
+      console.log("✅ Convite enviado com sucesso via Base44 para:", email);
 
     } catch (error) {
       emailError = error.message;
-      console.error("❌ Erro ao enviar email:", error);
+      console.error("❌ Erro ao convidar usuário:", error);
     }
 
     return Response.json({ 
