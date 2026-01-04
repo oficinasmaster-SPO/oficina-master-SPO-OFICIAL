@@ -39,11 +39,20 @@ export default function FeedbacksSection({ employee }) {
     status: "all"
   });
 
-  // Fetch Feedbacks from new entity
+  // Fetch Feedbacks - busca feedbacks recebidos pelo colaborador
   const { data: feedbacks = [], isLoading } = useQuery({
     queryKey: ['employee-feedbacks', employee.id],
     queryFn: async () => {
-      return await base44.entities.EmployeeFeedback.filter({ employee_id: employee.id }, '-created_date');
+      try {
+        const allFeedbacks = await base44.entities.EmployeeFeedback.list();
+        // Filtrar feedbacks onde o employee é o destinatário
+        const received = allFeedbacks.filter(f => f.employee_id === employee.id);
+        // Ordenar por data (mais recentes primeiro)
+        return received.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+      } catch (error) {
+        console.error("Erro ao buscar feedbacks:", error);
+        return [];
+      }
     },
     enabled: !!employee.id
   });
@@ -52,11 +61,14 @@ export default function FeedbacksSection({ employee }) {
     mutationFn: async (data) => {
       const user = await base44.auth.me();
       return await base44.entities.EmployeeFeedback.create({
-        ...data,
+        type: data.type,
+        content: data.content,
+        action_plan: data.action_plan || null,
+        action_plan_deadline: data.action_plan_deadline || null,
+        privacy: data.privacy,
         employee_id: employee.id,
         evaluator_id: user.id,
-        workshop_id: employee.workshop_id,
-        created_at: new Date().toISOString()
+        workshop_id: employee.workshop_id
       });
     },
     onSuccess: () => {
@@ -64,6 +76,10 @@ export default function FeedbacksSection({ employee }) {
       setShowDialog(false);
       setFormData({ type: "one_on_one", content: "", action_plan: "", action_plan_deadline: "", privacy: "privado_gestor" });
       queryClient.invalidateQueries(['employee-feedbacks']);
+    },
+    onError: (error) => {
+      console.error("Erro ao criar feedback:", error);
+      toast.error("Erro ao registrar: " + error.message);
     }
   });
 
@@ -288,7 +304,9 @@ export default function FeedbacksSection({ employee }) {
                                 {feedback.created_at ? format(new Date(feedback.created_at), "dd 'de' MMMM", { locale: ptBR }) : '-'}
                             </Badge>
                         </div>
-                        <p className="text-xs text-gray-500">Registrado por: {feedback.created_by || 'Gestor'}</p>
+                        <p className="text-xs text-gray-500">
+                          Registrado por: {feedback.created_by || 'Gestor'} em {feedback.created_date ? format(new Date(feedback.created_date), "dd/MM/yyyy HH:mm") : '-'}
+                        </p>
                       </div>
                     </div>
                     
