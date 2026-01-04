@@ -3,7 +3,7 @@ import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, User, FileText, MessageSquare, AlertTriangle, Award, TrendingUp, FileCheck, Heart, Activity, GraduationCap, BarChart3, Rocket, Target, Shield } from "lucide-react";
+import { Loader2, User, FileText, MessageSquare, AlertTriangle, Award, TrendingUp, FileCheck, Heart, Activity, GraduationCap, BarChart3, Rocket, Target, Shield, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 import DadosPessoais from "../components/employee/DadosPessoais";
 import RemuneracaoProducao from "../components/employee/RemuneracaoProducao";
@@ -11,6 +11,7 @@ import FeedbacksSection from "../components/employee/FeedbacksSection";
 import AdvertenciasSection from "../components/employee/AdvertenciasSection";
 import DiagnosticosVinculados from "../components/employee/DiagnosticosVinculados";
 import DocumentosAnexos from "../components/employee/DocumentosAnexos";
+import DocumentsTab from "@/components/profile/DocumentsTab";
 import HistoricoDiarioProducao from "../components/employee/HistoricoDiarioProducao";
 import COEXCDCIntegration from "../components/rh/COEXCDCIntegration";
 import PerformanceMonitoring from "../components/rh/PerformanceMonitoring";
@@ -166,6 +167,10 @@ export default function MeuPerfil() {
               <Shield className="w-4 h-4 mr-2" />
               Permissões
             </TabsTrigger>
+            <TabsTrigger value="documentos_empresa" className="data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700">
+              <BookOpen className="w-4 h-4 mr-2" />
+              Regimento
+            </TabsTrigger>
             <TabsTrigger value="remuneracao">
               <TrendingUp className="w-4 h-4 mr-2" />
               Produção
@@ -207,8 +212,8 @@ export default function MeuPerfil() {
               Testes
             </TabsTrigger>
             <TabsTrigger value="documentos">
-              <FileText className="w-4 h-4 mr-2" />
-              Docs
+              <FileCheck className="w-4 h-4 mr-2" />
+              Anexos
             </TabsTrigger>
             <TabsTrigger value="pdi" className="data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700">
               <Rocket className="w-4 h-4 mr-2" />
@@ -233,6 +238,10 @@ export default function MeuPerfil() {
 
           <TabsContent value="metas">
             <EmployeeGoals employee={employee} onUpdate={handleUpdate} />
+          </TabsContent>
+
+          <TabsContent value="documentos_empresa">
+            <DocumentsTab employee={employee} />
           </TabsContent>
 
           <TabsContent value="engajamento">
