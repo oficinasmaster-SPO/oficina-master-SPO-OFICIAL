@@ -47,49 +47,21 @@ export default function PrimeiroAcesso() {
         return;
       }
 
-      // Buscar convite diretamente no banco (público)
-      console.log("📡 Buscando convite...");
+      // Validar convite via backend (acesso público)
+      console.log("📡 Validando convite via backend...");
       
-      const invites = await base44.entities.EmployeeInvite.filter({ invite_token: token });
-      const foundInvite = invites[0];
-      
-      console.log("📥 Convite encontrado:", foundInvite);
-      
-      if (!foundInvite) {
-        setError("Convite não encontrado ou link inválido. Solicite um novo convite ao gestor.");
-        setLoading(false);
-        return;
-      }
+      const response = await fetch(`${window.location.origin}/.functions/validateInvitePublic`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token })
+      });
 
-      // Verificar se expirou
-      if (foundInvite.expires_at && new Date(foundInvite.expires_at) < new Date()) {
-        setError("Este convite expirou. Solicite um novo convite ao gestor.");
-        setLoading(false);
-        return;
-      }
-
-      // Verificar status
-      if (foundInvite.status === 'concluido') {
-        setError("Este convite já foi utilizado completamente. Faça login na sua conta.");
-        setLoading(false);
-        return;
-      }
-
-      // Buscar oficina se houver workshop_id
-      let foundWorkshop = null;
-      if (foundInvite.workshop_id) {
-        try {
-          const workshops = await base44.entities.Workshop.filter({ id: foundInvite.workshop_id });
-          foundWorkshop = workshops[0];
-        } catch (e) {
-          console.log("Aviso: não foi possível carregar oficina");
-        }
-      }
+      const data = await response.json();
       
-      const data = { success: true, invite: foundInvite, workshop: foundWorkshop };
+      console.log("📥 Resposta do backend:", data);
       
       if (!data.success) {
-        setError(data.error || "Convite não encontrado ou inválido.");
+        setError(data.error || "Convite não encontrado ou inválido. Solicite um novo convite ao gestor.");
         setLoading(false);
         return;
       }
