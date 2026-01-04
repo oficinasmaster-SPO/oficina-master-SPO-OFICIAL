@@ -62,8 +62,14 @@ export default function AdvertenciasSection({ employee }) {
       const user = await base44.auth.me();
       const warningNumber = warnings.length + 1;
       
+      // Gerar custom_id sequencial (AD001, AD002, etc)
+      const allWarnings = await base44.entities.EmployeeWarning.filter({ workshop_id: employee.workshop_id });
+      const nextNumber = allWarnings.length + 1;
+      const customId = `AD${String(nextNumber).padStart(3, '0')}`;
+      
       return await base44.entities.EmployeeWarning.create({
         ...data,
+        custom_id: customId,
         employee_id: employee.id,
         workshop_id: employee.workshop_id,
         evaluator_id: user.id,
@@ -322,8 +328,13 @@ JSON: { "rule_violated": "...", "corrective_guidance": "..." }`;
                 return (
                   <div key={warning.id} className={`p-4 rounded-lg border-2 ${config.color}`}>
                     <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <AlertTriangle className="w-5 h-5 text-orange-600" />
+                        {warning.custom_id && (
+                          <Badge className="bg-orange-600 text-white text-xs font-mono">
+                            {warning.custom_id}
+                          </Badge>
+                        )}
                         <span className="font-bold">#{warning.warning_number} - {warning.reason}</span>
                         <Badge className={config.badge}>{config.label}</Badge>
                         {warning.employee_acknowledged && (
@@ -349,7 +360,7 @@ JSON: { "rule_violated": "...", "corrective_guidance": "..." }`;
                       📍 Local: {warning.occurrence_location} • 👤 Aplicada por: {warning.created_by}
                     </p>
                     
-                    <div className="flex gap-2 mt-3">
+                    <div className="flex gap-2 mt-3 flex-wrap">
                       <Button
                         variant="outline"
                         size="sm"
@@ -361,15 +372,39 @@ JSON: { "rule_violated": "...", "corrective_guidance": "..." }`;
                         <Eye className="w-3 h-3 mr-1" />
                         Ver Detalhes
                       </Button>
-                      {!warning.email_sent && (
+                      
+                      <div className="flex flex-col gap-1">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => sendEmailNotification(warning)}
+                          className={warning.email_sent ? "bg-blue-50 text-blue-700 border-blue-200 opacity-70" : ""}
                         >
                           <Mail className="w-3 h-3 mr-1" />
-                          Enviar Email
+                          {warning.email_sent ? "Reenviar Email" : "Enviar Email"}
                         </Button>
+                        {warning.email_sent && warning.email_sent_at && (
+                          <span className="text-xs text-gray-500 ml-1">
+                            Enviado: {format(new Date(warning.email_sent_at), "dd/MM/yyyy 'às' HH:mm")}
+                          </span>
+                        )}
+                      </div>
+
+                      {warning.employee_acknowledged && warning.employee_acknowledged_at && (
+                        <div className="flex flex-col gap-1">
+                          <Badge className="bg-green-100 text-green-700 border-green-200 opacity-70">
+                            <CheckCircle2 className="w-3 h-3 mr-1" />
+                            Ciência ✓
+                          </Badge>
+                          <span className="text-xs text-gray-500 ml-1">
+                            Dado em: {format(new Date(warning.employee_acknowledged_at), "dd/MM/yyyy 'às' HH:mm")}
+                          </span>
+                        </div>
+                      )}
+                      {!warning.employee_acknowledged && !warning.employee_refused && (
+                        <Badge className="bg-red-100 text-red-700 border-red-200">
+                          Aguardando Ciência
+                        </Badge>
                       )}
                     </div>
                   </div>
