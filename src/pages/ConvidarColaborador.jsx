@@ -182,20 +182,32 @@ export default function ConvidarColaborador() {
         console.log("✅ Employee atualizado:", employeeId);
       }
 
-      // 2. Convidar User via Base44 (ele recebe email para criar senha)
-      await base44.users.inviteUser(data.email, "user");
-      console.log("✅ Convite enviado para:", data.email);
+      // 2. Enviar convite via backend (SendEmail com template personalizado)
+      const response = await base44.functions.invoke('sendEmployeeInvite', {
+        name: data.name,
+        email: data.email,
+        position: data.position,
+        area: data.area,
+        job_role: data.job_role,
+        profile_id: data.profile_id,
+        employee_id: employeeId,
+        workshop_id: workshop.id,
+        workshop_name: workshop.name
+      });
 
-      return { 
-        success: true, 
-        message: "Convite enviado! O colaborador receberá um email para criar a senha." 
-      };
+      console.log("✅ Convite enviado:", response);
+
+      return response;
     },
-    onSuccess: () => {
+    onSuccess: (response) => {
       console.log("✅ Colaborador convidado com sucesso!");
       queryClient.invalidateQueries({ queryKey: ['employee-invites', 'employees-list'] });
       
-      toast.success("✅ Convite enviado! O colaborador receberá um email para definir senha e fazer login.", { duration: 5000 });
+      if (response?.data?.invite_link) {
+        setGeneratedLink(response.data.invite_link);
+      }
+      
+      toast.success("✅ Convite enviado! O colaborador receberá um email com link de acesso.", { duration: 5000 });
       
       setFormData({ 
         name: "", 
@@ -350,7 +362,7 @@ export default function ConvidarColaborador() {
                 Convidar Colaborador
               </CardTitle>
               <CardDescription>
-                Preencha os dados e o colaborador receberá um email para criar sua senha
+                Preencha os dados e o colaborador receberá um email personalizado com link de acesso
               </CardDescription>
               
               {/* Aviso sobre email automático */}
@@ -358,7 +370,7 @@ export default function ConvidarColaborador() {
                 <div className="flex gap-2 items-start">
                   <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
                   <p className="text-xs text-green-800">
-                    <strong>✅ Email automático:</strong> O colaborador receberá um email do sistema para criar sua senha e fazer login.
+                    <strong>✅ Email personalizado:</strong> Email enviado em nome da Oficinas Master com logo e dados da empresa.
                   </p>
                 </div>
               </div>
