@@ -59,11 +59,13 @@ export default function ConvidarColaborador() {
   ];
 
   // Buscar perfis disponíveis
-  const { data: profiles = [] } = useQuery({
+  const { data: profiles = [], isLoading: isLoadingProfiles } = useQuery({
     queryKey: ['user-profiles'],
     queryFn: async () => {
       const allProfiles = await base44.entities.UserProfile.list();
-      return allProfiles.filter(p => p.type === 'cliente' && p.status === 'ativo');
+      const filtered = allProfiles.filter(p => p.type === 'cliente' && p.status === 'ativo');
+      console.log("📋 Perfis carregados:", filtered);
+      return filtered;
     }
   });
 
@@ -212,15 +214,26 @@ export default function ConvidarColaborador() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    console.log("🔍 Verificando envio...", { formData, profiles });
+    
     if (!formData.name || !formData.email || !formData.position || !formData.area) {
       toast.error("Preencha todos os campos obrigatórios (*)");
       return;
     }
+    
+    if (profiles.length === 0) {
+      toast.error("❌ Nenhum perfil de acesso disponível. Entre em contato com o suporte.", { duration: 6000 });
+      console.error("❌ Lista de perfis vazia");
+      return;
+    }
+    
     if (!formData.profile_id) {
       toast.error("⚠️ Selecione um Perfil de Acesso para o colaborador");
       return;
     }
-    setGeneratedLink(null); // Limpa link anterior
+    
+    setGeneratedLink(null);
     sendInviteMutation.mutate(formData);
   };
 
@@ -527,30 +540,49 @@ export default function ConvidarColaborador() {
                     <AlertCircle className="w-5 h-5" />
                     Perfil de Acesso * (Define Permissões)
                   </Label>
-                  <Select value={formData.profile_id} onValueChange={(value) => setFormData({ ...formData, profile_id: value })}>
-                    <SelectTrigger id="profile_id" className="mt-2 bg-white">
-                      <SelectValue placeholder="Selecione o perfil de acesso" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {profiles.map((profile) => (
-                        <SelectItem key={profile.id} value={profile.id}>
-                          {profile.name}
-                          {profile.description && (
-                            <span className="text-xs text-gray-500"> - {profile.description}</span>
-                          )}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-blue-700 mt-2">
-                    ✅ <strong>Acesso liberado automaticamente</strong> - O colaborador poderá fazer login assim que completar o cadastro
-                  </p>
+                  
+                  {isLoadingProfiles ? (
+                    <div className="mt-2 flex items-center gap-2 text-sm text-gray-600">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Carregando perfis...
+                    </div>
+                  ) : profiles.length === 0 ? (
+                    <div className="mt-2 bg-red-50 border border-red-200 rounded p-3">
+                      <p className="text-sm text-red-800 font-medium mb-2">
+                        ❌ Nenhum perfil de acesso disponível
+                      </p>
+                      <p className="text-xs text-red-700">
+                        Entre em contato com o suporte para configurar perfis de acesso antes de convidar colaboradores.
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <Select value={formData.profile_id} onValueChange={(value) => setFormData({ ...formData, profile_id: value })}>
+                        <SelectTrigger id="profile_id" className="mt-2 bg-white">
+                          <SelectValue placeholder="Selecione o perfil de acesso" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {profiles.map((profile) => (
+                            <SelectItem key={profile.id} value={profile.id}>
+                              {profile.name}
+                              {profile.description && (
+                                <span className="text-xs text-gray-500"> - {profile.description}</span>
+                              )}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-blue-700 mt-2">
+                        ✅ <strong>Acesso liberado automaticamente</strong> - O colaborador poderá fazer login assim que completar o cadastro
+                      </p>
+                    </>
+                  )}
                 </div>
 
                 <Button 
                   type="submit" 
                   className="w-full bg-blue-600 hover:bg-blue-700 h-11 text-base shadow-sm"
-                  disabled={sendInviteMutation.isPending}
+                  disabled={sendInviteMutation.isPending || profiles.length === 0}
                 >
                   {sendInviteMutation.isPending ? (
                     <>
