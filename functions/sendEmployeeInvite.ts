@@ -276,14 +276,14 @@ Deno.serve(async (req) => {
 </html>
     `;
 
-    // Enviar email personalizado com link correto
+    // SEMPRE enviar email personalizado com link correto de PrimeiroAcesso
     let emailSent = false;
     let emailError = null;
 
     try {
-      console.log("📧 Enviando email PERSONALIZADO em português brasileiro...");
+      console.log("📧 Enviando email com link: " + inviteUrl);
       
-      await base44.asServiceRole.integrations.Core.SendEmail({
+      const emailResult = await base44.asServiceRole.integrations.Core.SendEmail({
         from_name: "Oficinas Master",
         to: email,
         subject: `Convite para acessar ${workshop_name || 'Oficinas Master'} 🎉`,
@@ -291,11 +291,12 @@ Deno.serve(async (req) => {
       });
 
       emailSent = true;
-      console.log("✅ EMAIL ENVIADO COM LINK CORRETO: " + inviteUrl);
+      console.log("✅ EMAIL ENVIADO! Link: " + inviteUrl);
 
     } catch (error) {
       emailError = error.message;
-      console.error("❌ Email falhou:", error.message);
+      console.error("❌ Erro ao enviar email:", error);
+      // NÃO usar inviteUser como fallback - ele envia link errado
     }
 
     return Response.json({ 
