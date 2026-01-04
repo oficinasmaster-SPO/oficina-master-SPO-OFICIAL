@@ -4,7 +4,7 @@ import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, CheckCircle2, Building2, Wrench, Settings, DollarSign, Target, ArrowRight, Rocket, PlayCircle } from "lucide-react";
+import { Loader2, CheckCircle2, Building2, Wrench, Settings, DollarSign, Target, ArrowRight, Rocket, PlayCircle, User } from "lucide-react";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -13,6 +13,7 @@ import DadosBasicosOficina from "../components/workshop/DadosBasicosOficina";
 import ServicosEquipamentos from "../components/workshop/ServicosEquipamentos";
 import ServicosTerceirizados from "../components/workshop/ServicosTerceirizados";
 import MetasObjetivosCompleto from "../components/workshop/MetasObjetivosCompleto";
+import CadastroPerfilSocio from "../components/workshop/CadastroPerfilSocio";
 
 export default function Cadastro() {
   const navigate = useNavigate();
@@ -202,7 +203,7 @@ export default function Cadastro() {
         )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 bg-white shadow-sm p-1 h-auto">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-6 bg-white shadow-sm p-1 h-auto">
             <TabsTrigger value="dados" className="py-3">
               <Building2 className="w-4 h-4 mr-2" />
               Dados
@@ -222,6 +223,10 @@ export default function Cadastro() {
             <TabsTrigger value="metas" className="py-3">
               <Target className="w-4 h-4 mr-2" />
               Metas
+            </TabsTrigger>
+            <TabsTrigger value="perfil-socio" className="py-3">
+              <User className="w-4 h-4 mr-2" />
+              Meu Perfil
             </TabsTrigger>
           </TabsList>
 
@@ -288,15 +293,22 @@ export default function Cadastro() {
               <div className="flex flex-col items-end gap-2">
                 <p className="text-sm text-slate-500">Tudo preenchido?</p>
                 <Button 
-                  onClick={handleFinish} 
-                  size="lg" 
-                  className="bg-green-600 hover:bg-green-700 shadow-lg hover:shadow-xl transition-all text-lg px-8"
+                  onClick={() => setActiveTab("perfil-socio")}
+                  className="bg-blue-600 hover:bg-blue-700 shadow-lg"
                 >
-                  <CheckCircle2 className="w-5 h-5 mr-2" />
-                  Finalizar Cadastro e Ir para Gestão
+                  Próximo: Meu Perfil como Sócio <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="perfil-socio" className="animate-in fade-in-50 duration-300">
+            <CadastroPerfilSocio 
+              workshop={workshop}
+              user={user}
+              onComplete={handleFinish}
+              onBack={() => setActiveTab("metas")}
+            />
           </TabsContent>
         </Tabs>
       </div>

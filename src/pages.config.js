@@ -137,6 +137,7 @@ import TestUsuarios from './pages/TestUsuarios';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
+import MeuPerfil from './pages/MeuPerfil';
 import __Layout from './Layout.jsx';
 
 
@@ -280,6 +281,7 @@ export const PAGES = {
     "TreinamentoVendas": TreinamentoVendas,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
+    "MeuPerfil": MeuPerfil,
 }
 
 export const pagesConfig = {

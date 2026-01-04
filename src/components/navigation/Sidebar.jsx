@@ -802,6 +802,19 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                 <Home className="w-5 h-5" />
                 <span>Início</span>
               </Link>
+              <Link
+                to={createPageUrl('MeuPerfil')}
+                onClick={onClose}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all",
+                  isActive(createPageUrl('MeuPerfil'))
+                    ? "bg-blue-50 text-blue-700 font-medium"
+                    : "text-gray-700 hover:bg-gray-100"
+                )}
+              >
+                <User className="w-5 h-5" />
+                <span>Meu Perfil</span>
+              </Link>
             </div>
           )}
 
@@ -819,6 +832,19 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                 title="Início"
               >
                 <Home className="w-5 h-5" />
+              </Link>
+              <Link
+                to={createPageUrl('MeuPerfil')}
+                onClick={onClose}
+                className={cn(
+                  "p-3 rounded-lg transition-all",
+                  isActive(createPageUrl('MeuPerfil'))
+                    ? "bg-blue-50 text-blue-700"
+                    : "text-gray-700 hover:bg-gray-100"
+                )}
+                title="Meu Perfil"
+              >
+                <User className="w-5 h-5" />
               </Link>
             </div>
           )}
