@@ -157,7 +157,7 @@ Deno.serve(async (req) => {
 
     // Usa o domínio correto da aplicação
     const baseUrl = 'https://oficina-master-copy-b54d47aa.base44.app';
-    const inviteUrl = `${baseUrl}/primeiroacesso?token=${token}`;
+    const inviteUrl = `${baseUrl}/PrimeiroAcesso?token=${token}`;
     
     console.log("🔗 Link gerado:", inviteUrl);
 
