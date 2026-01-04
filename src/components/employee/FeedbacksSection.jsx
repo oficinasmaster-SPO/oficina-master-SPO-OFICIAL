@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, MessageSquare, ThumbsUp, ThumbsDown, Users, Wand2, Printer, Filter, Calendar, CheckCircle2, Clock, AlertCircle, Target, Activity } from "lucide-react";
+import { Plus, MessageSquare, ThumbsUp, ThumbsDown, Users, Wand2, Printer, Filter, Calendar, CheckCircle2, Clock, AlertCircle, Target, Activity, Mic } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import AudioRecorder from "@/components/audio/AudioRecorder";
 
 export default function FeedbacksSection({ employee }) {
   const queryClient = useQueryClient();
@@ -23,6 +24,9 @@ export default function FeedbacksSection({ employee }) {
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
   const [analysisResult, setAnalysisResult] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
+  const [processingAudio, setProcessingAudio] = useState(false);
+  const [showContentRecorder, setShowContentRecorder] = useState(false);
+  const [showActionPlanRecorder, setShowActionPlanRecorder] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -205,6 +209,60 @@ export default function FeedbacksSection({ employee }) {
       toast.error("Erro ao gerar com IA");
     } finally {
       setGeneratingAI(false);
+    }
+  };
+
+  const handleAudioTranscription = async (audioBlob, targetField) => {
+    setProcessingAudio(true);
+    try {
+      // Upload áudio
+      const file = new File([audioBlob], "audio.webm", { type: audioBlob.type });
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+
+      // Transcrever e melhorar com IA
+      const prompt = targetField === 'content' 
+        ? `Transcreva e melhore este áudio de feedback ${formData.type === 'positivo' ? 'POSITIVO' : formData.type === 'negativo' ? 'CORRETIVO' : 'DE REUNIÃO 1:1'} para o colaborador ${employee.full_name} (${employee.position}).
+        
+        Use a metodologia CNV (Comunicação Não Violenta):
+        - Observação: fatos concretos observados
+        - Sentimento: impacto emocional
+        - Necessidade: o que precisa melhorar/manter
+        - Pedido: ação específica clara
+        
+        Torne o texto profissional, claro e empático.
+        Retorne JSON: { "text": "texto melhorado..." }`
+        : `Transcreva e melhore este áudio sobre PLANO DE AÇÃO para o colaborador ${employee.full_name}.
+        
+        Estruture como:
+        - O que será feito (ação específica)
+        - Como será medido (indicadores)
+        - Prazo sugerido
+        
+        Retorne JSON: { "text": "plano de ação..." }`;
+
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt,
+        file_urls: [file_url],
+        response_json_schema: {
+          type: "object",
+          properties: { text: { type: "string" } }
+        }
+      });
+
+      if (targetField === 'content') {
+        setFormData({ ...formData, content: response.text });
+        setShowContentRecorder(false);
+      } else {
+        setFormData({ ...formData, action_plan: response.text });
+        setShowActionPlanRecorder(false);
+      }
+
+      toast.success("Áudio transcrito e melhorado com IA!");
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao processar áudio: " + error.message);
+    } finally {
+      setProcessingAudio(false);
     }
   };
 
@@ -431,27 +489,84 @@ export default function FeedbacksSection({ employee }) {
             </div>
 
             <div>
-              <div className="flex justify-between mb-1">
+              <div className="flex justify-between items-center mb-1">
                 <Label>Conteúdo da Conversa *</Label>
-                <Button variant="ghost" size="xs" onClick={generateWithAI} disabled={generatingAI} className="text-purple-600 h-6 text-xs">
-                  <Wand2 className="w-3 h-3 mr-1" />
-                  {generatingAI ? "Gerando..." : "IA: Gerar Texto"}
-                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="ghost" 
+                    size="xs" 
+                    onClick={() => setShowContentRecorder(!showContentRecorder)} 
+                    disabled={processingAudio}
+                    className="text-red-600 h-6 text-xs hover:bg-red-50"
+                  >
+                    <Mic className="w-3 h-3 mr-1" />
+                    Gravar Áudio
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="xs" 
+                    onClick={generateWithAI} 
+                    disabled={generatingAI} 
+                    className="text-purple-600 h-6 text-xs"
+                  >
+                    <Wand2 className="w-3 h-3 mr-1" />
+                    {generatingAI ? "Gerando..." : "IA: Gerar"}
+                  </Button>
+                </div>
               </div>
+              
+              {showContentRecorder && (
+                <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <AudioRecorder
+                    onRecordingComplete={(blob) => handleAudioTranscription(blob, 'content')}
+                    onCancel={() => setShowContentRecorder(false)}
+                  />
+                  <p className="text-xs text-red-700 mt-2">
+                    🎙️ Grave o feedback falado - a IA irá transcrever e aplicar a metodologia CNV
+                  </p>
+                </div>
+              )}
+              
               <Textarea
                 rows={6}
                 value={formData.content}
                 onChange={(e) => setFormData({...formData, content: e.target.value})}
                 placeholder="Descreva o que foi conversado..."
                 className="bg-slate-50"
+                disabled={processingAudio}
               />
             </div>
 
             <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 space-y-3">
-                <h4 className="font-semibold text-blue-900 text-sm flex items-center gap-2">
-                    <Target className="w-4 h-4" />
-                    Plano de Ação (Opcional)
-                </h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="font-semibold text-blue-900 text-sm flex items-center gap-2">
+                      <Target className="w-4 h-4" />
+                      Plano de Ação (Opcional)
+                  </h4>
+                  <Button 
+                    variant="ghost" 
+                    size="xs" 
+                    onClick={() => setShowActionPlanRecorder(!showActionPlanRecorder)} 
+                    disabled={processingAudio}
+                    className="text-red-600 h-6 text-xs hover:bg-red-50"
+                  >
+                    <Mic className="w-3 h-3 mr-1" />
+                    Gravar
+                  </Button>
+                </div>
+
+                {showActionPlanRecorder && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <AudioRecorder
+                      onRecordingComplete={(blob) => handleAudioTranscription(blob, 'action_plan')}
+                      onCancel={() => setShowActionPlanRecorder(false)}
+                    />
+                    <p className="text-xs text-red-700 mt-2">
+                      🎙️ Grave o plano de ação - a IA irá estruturar com ações, indicadores e prazo
+                    </p>
+                  </div>
+                )}
+
                 <div>
                     <Label className="text-xs">Ação Corretiva / Meta</Label>
                     <Textarea 
@@ -460,6 +575,7 @@ export default function FeedbacksSection({ employee }) {
                         onChange={(e) => setFormData({...formData, action_plan: e.target.value})}
                         placeholder="O que será feito para melhorar ou manter?"
                         className="bg-white text-sm"
+                        disabled={processingAudio}
                     />
                 </div>
                 <div>
