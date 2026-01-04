@@ -276,22 +276,12 @@ Deno.serve(async (req) => {
 </html>
     `;
 
-    // ESTRATÉGIA: Criar usuário primeiro, depois enviar email personalizado
+    // Enviar email personalizado com link correto para /PrimeiroAcesso
     let emailSent = false;
     let emailError = null;
 
-    // PASSO 1: Criar usuário no sistema (SEM enviar email padrão)
     try {
-      console.log("📧 Registrando usuário no sistema...");
-      await base44.users.inviteUser(email, "user");
-      console.log("✅ Usuário registrado no sistema");
-    } catch (error) {
-      console.log("⚠️ Usuário já existe:", error.message);
-    }
-
-    // PASSO 2: Enviar email PERSONALIZADO (PT-BR + logo)
-    try {
-      console.log("📧 Enviando email PERSONALIZADO em português...");
+      console.log("📧 Enviando email PERSONALIZADO com link de cadastro...");
       
       await base44.asServiceRole.integrations.Core.SendEmail({
         from_name: "Oficinas Master",
@@ -301,11 +291,11 @@ Deno.serve(async (req) => {
       });
 
       emailSent = true;
-      console.log("✅ EMAIL PERSONALIZADO ENVIADO!");
+      console.log("✅ EMAIL ENVIADO - Link aponta para /PrimeiroAcesso");
 
     } catch (error) {
       emailError = error.message;
-      console.error("❌ Email personalizado falhou:", error.message);
+      console.error("❌ Erro ao enviar email:", error.message);
     }
 
     return Response.json({ 
