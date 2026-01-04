@@ -47,6 +47,7 @@ export const sidebarStructure = [
       { name: "Mapas de Autoavaliação", description: "Autoavaliações" },
       { name: "Colaboradores", description: "Gestão de equipe" },
       { name: "Convidar Colaborador", description: "Envio de convites" },
+      { name: "Aprovar Colaboradores", description: "Aprovar acessos pendentes" },
       { name: "CDC", description: "Conexão do colaborador" },
       { name: "COEX", description: "Contrato expectativa" },
       { name: "Perfil do Empresário", description: "Teste de perfil" },
