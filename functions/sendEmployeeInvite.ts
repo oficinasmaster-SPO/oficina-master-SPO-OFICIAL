@@ -276,12 +276,13 @@ Deno.serve(async (req) => {
 </html>
     `;
 
-    // Enviar email personalizado com link correto para /PrimeiroAcesso
+    // PRIORIDADE: Email personalizado PRIMEIRO (PT-BR + logo)
     let emailSent = false;
     let emailError = null;
 
+    // PASSO 1: Tentar enviar email PERSONALIZADO em português
     try {
-      console.log("📧 Enviando email PERSONALIZADO com link de cadastro...");
+      console.log("📧 Enviando email PERSONALIZADO em português brasileiro...");
       
       await base44.asServiceRole.integrations.Core.SendEmail({
         from_name: "Oficinas Master",
@@ -291,11 +292,23 @@ Deno.serve(async (req) => {
       });
 
       emailSent = true;
-      console.log("✅ EMAIL ENVIADO - Link aponta para /PrimeiroAcesso");
+      console.log("✅ EMAIL PERSONALIZADO ENVIADO COM SUCESSO!");
 
     } catch (error) {
       emailError = error.message;
-      console.error("❌ Erro ao enviar email:", error.message);
+      console.error("❌ Email personalizado falhou:", error.message);
+    }
+
+    // PASSO 2: Se email personalizado falhou, usar inviteUser como fallback
+    if (!emailSent) {
+      try {
+        console.log("📧 Fallback: criando usuário via Base44...");
+        await base44.users.inviteUser(email, "user");
+        emailSent = true;
+        console.log("✅ Usuário criado via Base44 (email padrão enviado)");
+      } catch (error) {
+        console.error("❌ inviteUser também falhou:", error.message);
+      }
     }
 
     return Response.json({ 
