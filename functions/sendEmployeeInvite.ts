@@ -97,9 +97,11 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Gerar token
+    // SEMPRE gerar novo token (inclusive no reenvio)
     const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    console.log("🔑 Novo token gerado:", token);
 
     // Verificar convites existentes
     const inviteFilter = invite_type === 'internal'
@@ -120,8 +122,8 @@ Deno.serve(async (req) => {
       workshop_id: invite_type === 'workshop' ? workshop_id : null,
       invite_type,
       employee_id: finalEmployeeId,
-      invite_token: token,
-      expires_at: expiresAt,
+      invite_token: token, // SEMPRE novo token
+      expires_at: expiresAt, // SEMPRE nova data de expiração
       status: 'enviado'
     };
 
@@ -161,8 +163,9 @@ Deno.serve(async (req) => {
     // Usa o domínio correto da aplicação
     const baseUrl = 'https://oficina-master-b2bc845b.base44.app';
     const inviteUrl = `${baseUrl}/PrimeiroAcesso?token=${token}`;
-    
-    console.log("🔗 Link gerado:", inviteUrl);
+
+    console.log("🔗 Link CORRETO do PrimeiroAcesso gerado:", inviteUrl);
+    console.log("📧 Email será enviado para:", email);
 
     // Template HTML personalizado com logo e cores da marca
     const emailHTML = `
