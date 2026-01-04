@@ -145,11 +145,15 @@ Deno.serve(async (req) => {
       await base44.asServiceRole.entities.EmployeeInvite.update(existing.id, {
         ...inviteData,
         resent_count: (existing.resent_count || 0) + 1,
-        last_resent_at: new Date().toISOString()
+        last_resent_at: new Date().toISOString(),
+        metadata: { email_sent: false } // Resetar status email
       });
       console.log("🔄 Convite atualizado:", inviteId);
     } else {
-      const newInvite = await base44.asServiceRole.entities.EmployeeInvite.create(inviteData);
+      const newInvite = await base44.asServiceRole.entities.EmployeeInvite.create({
+        ...inviteData,
+        metadata: { email_sent: false }
+      });
       inviteId = newInvite.id;
       console.log("✅ Convite criado:", inviteId);
     }
@@ -293,15 +297,24 @@ Deno.serve(async (req) => {
       emailSent = true;
       console.log("✅ EMAIL ENVIADO! Link: " + inviteUrl);
 
+      // Atualizar metadata do convite com status do email
+      await base44.asServiceRole.entities.EmployeeInvite.update(inviteId, {
+        metadata: { email_sent: true }
+      });
+
     } catch (error) {
       emailError = error.message;
       console.error("❌ Erro ao enviar email:", error);
-      // NÃO usar inviteUser como fallback - ele envia link errado
+      
+      // Atualizar metadata com erro
+      await base44.asServiceRole.entities.EmployeeInvite.update(inviteId, {
+        metadata: { email_sent: false, email_error: error.message }
+      });
     }
 
     return Response.json({ 
       success: true, 
-      message: emailSent ? 'Convite enviado por email com sucesso!' : 'Convite criado. Email não pôde ser enviado.',
+      message: emailSent ? 'Convite enviado por email com sucesso!' : 'Convite criado mas email falhou.',
       data: {
         invite_id: inviteId,
         invite_link: inviteUrl,

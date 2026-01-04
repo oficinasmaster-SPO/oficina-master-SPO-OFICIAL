@@ -195,7 +195,7 @@ export default function ConvidarColaborador() {
         workshop_name: workshop.name
       });
 
-      console.log("✅ Convite enviado:", response);
+      console.log("✅ Resposta backend:", response);
 
       return response;
     },
@@ -267,6 +267,10 @@ export default function ConvidarColaborador() {
     }
     if (invite.status === "acessado") {
       return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200"><Clock className="w-3 h-3 mr-1" />Acessado</Badge>;
+    }
+    // Verifica se email foi enviado (metadata.email_sent)
+    if (invite.metadata?.email_sent === false) {
+      return <Badge className="bg-red-100 text-red-700 hover:bg-red-200"><AlertCircle className="w-3 h-3 mr-1" />Erro no Email</Badge>;
     }
     return <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-200"><Mail className="w-3 h-3 mr-1" />Enviado</Badge>;
   };
@@ -550,28 +554,49 @@ export default function ConvidarColaborador() {
                       </div>
                       
                       {invite.status !== "concluido" && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full text-xs h-8"
-                          onClick={() => {
-                            if (confirm('Deseja reenviar convite para ' + invite.email + '?')) {
-                                sendInviteMutation.mutate({
-                                    name: invite.name,
-                                    email: invite.email,
-                                    position: invite.position,
-                                    area: invite.area,
-                                    job_role: invite.job_role,
-                                    profile_id: invite.profile_id,
-                                    employee_id: invite.employee_id
-                                });
-                            }
-                          }}
-                          disabled={sendInviteMutation.isPending}
-                        >
-                          <RefreshCw className="w-3 h-3 mr-2" />
-                          Reenviar Convite
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1 text-xs h-8"
+                            onClick={() => {
+                              if (confirm('Deseja reenviar convite para ' + invite.email + '?')) {
+                                  sendInviteMutation.mutate({
+                                      name: invite.name,
+                                      email: invite.email,
+                                      position: invite.position,
+                                      area: invite.area,
+                                      job_role: invite.job_role,
+                                      profile_id: invite.profile_id,
+                                      employee_id: invite.employee_id
+                                  });
+                              }
+                            }}
+                            disabled={sendInviteMutation.isPending}
+                          >
+                            <RefreshCw className="w-3 h-3 mr-2" />
+                            Reenviar
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1 text-xs h-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={async () => {
+                              if (confirm('Deseja excluir o convite de ' + invite.name + '?')) {
+                                try {
+                                  await base44.entities.EmployeeInvite.delete(invite.id);
+                                  queryClient.invalidateQueries({ queryKey: ['employee-invites'] });
+                                  toast.success('Convite excluído');
+                                } catch (error) {
+                                  toast.error('Erro ao excluir: ' + error.message);
+                                }
+                              }
+                            }}
+                          >
+                            <XCircle className="w-3 h-3 mr-2" />
+                            Excluir
+                          </Button>
+                        </div>
                       )}
                     </div>
                   ))}
