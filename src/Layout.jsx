@@ -198,12 +198,6 @@ export default function Layout({ children, currentPageName }) {
     checkUserApproval();
   }, [user?.id, user?.email, user?.user_status]);
 
-  // Verificar se a página atual é pública (não precisa de autenticação)
-  const publicPages = ['/PrimeiroAcesso', '/ClientRegistration', '/CadastroSucesso'];
-  const isPublicPage = publicPages.some(page => 
-    location.pathname.toLowerCase().includes(page.toLowerCase())
-  );
-
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ['unread-notifications', user?.id],
     queryFn: async () => {
