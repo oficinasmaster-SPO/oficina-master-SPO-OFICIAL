@@ -103,7 +103,6 @@ import PesquisaClima from './pages/PesquisaClima';
 import PlanoAcao from './pages/PlanoAcao';
 import Planos from './pages/Planos';
 import PortalColaborador from './pages/PortalColaborador';
-import PrimeiroAcesso from './pages/PrimeiroAcesso';
 import PublicFeedback from './pages/PublicFeedback';
 import QGPBoard from './pages/QGPBoard';
 import Questionario from './pages/Questionario';
@@ -247,7 +246,6 @@ export const PAGES = {
     "PlanoAcao": PlanoAcao,
     "Planos": Planos,
     "PortalColaborador": PortalColaborador,
-    "PrimeiroAcesso": PrimeiroAcesso,
     "PublicFeedback": PublicFeedback,
     "QGPBoard": QGPBoard,
     "Questionario": Questionario,

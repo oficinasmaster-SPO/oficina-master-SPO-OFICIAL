@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -10,20 +8,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Loader2, Send, UserPlus, Mail, RefreshCw, CheckCircle2, 
-  Clock, AlertCircle, XCircle, Users, Link2, Copy, Check, User
+  Loader2, UserPlus, CheckCircle2, Users, Copy, Key
 } from "lucide-react";
 import { toast } from "sonner";
-import { format, isPast } from "date-fns";
-import { ptBR } from "date-fns/locale";
+
 
 export default function ConvidarColaborador() {
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
   const [workshop, setWorkshop] = useState(null);
-  const [generatedLink, setGeneratedLink] = useState(null);
-  const [copied, setCopied] = useState(false);
+  const [createdUser, setCreatedUser] = useState(null);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -31,8 +25,6 @@ export default function ConvidarColaborador() {
     position: "",
     area: "",
     job_role: "outros",
-    initial_permission: "colaborador",
-    employee_id: null,
     profile_id: ""
   });
 
@@ -107,136 +99,55 @@ export default function ConvidarColaborador() {
     loadUserAndWorkshop();
   }, []);
 
-  // Busca convites da oficina
-  const { data: invites = [], isLoading: isLoadingInvites } = useQuery({
-    queryKey: ['employee-invites', workshop?.id],
-    queryFn: async () => {
-      if (!workshop?.id) return [];
-      const result = await base44.entities.EmployeeInvite.filter({ workshop_id: workshop.id }, '-created_date');
-      return Array.isArray(result) ? result : [];
-    },
-    enabled: !!workshop?.id
-  });
-
-  // Busca colaboradores para sugerir convites
-  const { data: employees = [] } = useQuery({
+  // Busca colaboradores cadastrados
+  const { data: employees = [], isLoading: isLoadingEmployees } = useQuery({
     queryKey: ['employees-list', workshop?.id],
     queryFn: async () => {
       if (!workshop?.id) return [];
-      const result = await base44.entities.Employee.filter({ workshop_id: workshop.id });
+      const result = await base44.entities.Employee.filter({ workshop_id: workshop.id }, '-created_date');
       return Array.isArray(result) ? result : [];
     },
     enabled: !!workshop?.id
   });
 
-  // Filtra colaboradores que ainda não têm convite
-  const uninvitedEmployees = employees.filter(emp => {
-    if (!emp.email) return false;
-    const hasInvite = invites.some(inv => inv.email === emp.email);
-    return !hasInvite;
-  });
 
-  const fillFormWithEmployee = (emp) => {
-    setFormData({
-      name: emp.full_name,
-      email: emp.email,
-      position: emp.position,
-      area: emp.area || "",
-      job_role: emp.job_role || "outros",
-      initial_permission: "colaborador",
-      employee_id: emp.id
-    });
-    toast.info("Dados preenchidos! Clique em Gerar Link de Acesso.");
-  };
 
-  // Mutação para convidar colaborador
-  const sendInviteMutation = useMutation({
+  // Mutação para criar colaborador
+  const createUserMutation = useMutation({
     mutationFn: async (data) => {
-      console.log("🚀 Convidando colaborador...", data);
-      
       if (!workshop?.id) {
-        throw new Error("ID da oficina não encontrado. Recarregue a página.");
+        throw new Error("Oficina não encontrada");
       }
 
-      // 1. Criar/atualizar Employee
-      let employeeId = data.employee_id;
-      
-      if (!employeeId) {
-        const newEmployee = await base44.entities.Employee.create({
-          workshop_id: workshop.id,
-          full_name: data.name,
-          email: data.email,
-          position: data.position,
-          area: data.area,
-          job_role: data.job_role,
-          profile_id: data.profile_id,
-          user_status: 'ativo' // Já aprovado
-        });
-        employeeId = newEmployee.id;
-        console.log("✅ Employee criado:", employeeId);
-      } else {
-        await base44.entities.Employee.update(employeeId, {
-          profile_id: data.profile_id,
-          user_status: 'ativo'
-        });
-        console.log("✅ Employee atualizado:", employeeId);
-      }
-
-      // 2. Enviar convite via backend
-      console.log("📤 Enviando dados:", {
-        name: data.name,
-        email: data.email,
-        workshop_id: workshop.id,
-        workshop_name: workshop.name
-      });
-      
-      const response = await base44.functions.invoke('sendEmployeeInvite', {
+      const response = await base44.functions.invoke('createEmployeeUser', {
         name: data.name,
         email: data.email,
         position: data.position,
         area: data.area,
         job_role: data.job_role,
         profile_id: data.profile_id,
-        employee_id: employeeId,
-        workshop_id: workshop.id,
-        workshop_name: workshop.name
+        workshop_id: workshop.id
       });
 
-      console.log("✅ Resposta backend:", response);
-
-      return response;
+      return response.data;
     },
-    onSuccess: (response) => {
-      console.log("✅ Resposta do backend:", response);
-      
-      // Invalidar queries para atualizar lista
-      queryClient.invalidateQueries({ queryKey: ['employee-invites'] });
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['employees-list'] });
       
-      if (response?.data?.invite_link) {
-        setGeneratedLink(response.data.invite_link);
-      }
-      
-      // Verificar se email foi enviado com sucesso
-      if (response?.email_sent) {
-        toast.success("✅ Convite enviado! Email entregue com link de acesso.", { duration: 5000 });
-      } else {
-        toast.error("❌ Convite criado mas email falhou: " + (response?.email_error || "Erro desconhecido"), { duration: 7000 });
-      }
+      setCreatedUser(data);
+      toast.success("✅ Colaborador criado com sucesso!", { duration: 5000 });
       
       setFormData({ 
         name: "", 
         email: "", 
         position: "", 
         area: "", 
-        job_role: "outros", 
-        initial_permission: "colaborador", 
-        employee_id: null,
+        job_role: "outros",
         profile_id: ""
       });
     },
     onError: (error) => {
-      console.error("❌ Erro ao convidar:", error);
+      console.error("❌ Erro:", error);
       toast.error("Erro: " + error.message);
     }
   });
@@ -250,69 +161,27 @@ export default function ConvidarColaborador() {
     }
     
     if (profiles.length === 0) {
-      toast.error("❌ Nenhum perfil de acesso disponível. Entre em contato com o suporte.", { duration: 6000 });
+      toast.error("❌ Nenhum perfil disponível. Configure perfis antes.", { duration: 6000 });
       return;
     }
     
     if (!formData.profile_id) {
-      toast.error("⚠️ Selecione um Perfil de Acesso para o colaborador");
+      toast.error("⚠️ Selecione um Perfil de Acesso");
       return;
     }
     
-    sendInviteMutation.mutate(formData);
+    createUserMutation.mutate(formData);
   };
 
-  const copyToClipboard = () => {
-    if (generatedLink) {
-      navigator.clipboard.writeText(generatedLink);
-      setCopied(true);
-      toast.success("Link copiado!");
-      setTimeout(() => setCopied(false), 2000);
+  const copyCredentials = () => {
+    if (createdUser) {
+      const text = `Email: ${createdUser.email}\nSenha: ${createdUser.temporary_password}`;
+      navigator.clipboard.writeText(text);
+      toast.success("✅ Credenciais copiadas!");
     }
   };
 
-  const getStatusBadge = (invite) => {
-    const isExpired = invite.expires_at && isPast(new Date(invite.expires_at));
-    
-    if (invite.status === "concluido") {
-      return <Badge className="bg-green-100 text-green-700 hover:bg-green-200"><CheckCircle2 className="w-3 h-3 mr-1" />Concluído</Badge>;
-    }
-    if (isExpired || invite.status === "expirado") {
-      return <Badge className="bg-red-100 text-red-700 hover:bg-red-200"><XCircle className="w-3 h-3 mr-1" />Expirado</Badge>;
-    }
-    if (invite.status === "acessado") {
-      return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200"><Clock className="w-3 h-3 mr-1" />Acessado</Badge>;
-    }
-    // Verifica se email foi enviado (metadata.email_sent)
-    if (invite.metadata?.email_sent === false) {
-      return <Badge className="bg-red-100 text-red-700 hover:bg-red-200"><AlertCircle className="w-3 h-3 mr-1" />Erro no Email</Badge>;
-    }
-    return <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-200"><Mail className="w-3 h-3 mr-1" />Enviado</Badge>;
-  };
 
-  const checkExistingEmployee = async (email) => {
-    if (!email || !email.includes('@') || !workshop) return;
-    
-    try {
-      // Busca colaboradores com este email na oficina atual
-      const employees = await base44.entities.Employee.filter({ email: email, workshop_id: workshop.id });
-      
-      if (employees && employees.length > 0) {
-        const emp = employees[0];
-        setFormData(prev => ({
-          ...prev,
-          name: emp.full_name || prev.name,
-          position: emp.position || prev.position,
-          area: emp.area || prev.area,
-          job_role: emp.job_role || prev.job_role,
-          employee_id: emp.id
-        }));
-        toast.info("Colaborador encontrado! Dados vinculados.");
-      }
-    } catch (error) {
-      console.log("Erro ao buscar colaborador:", error);
-    }
-  };
 
   if (!workshop) {
     return (
@@ -338,58 +207,59 @@ export default function ConvidarColaborador() {
 
 
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Colaboradores Cadastrados (Pendentes) */}
-          {uninvitedEmployees.length > 0 && (
-            <Card className="lg:col-span-2 border-orange-200 bg-orange-50 shadow-sm">
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-lg text-orange-800">
-                  <Users className="w-5 h-5" />
-                  Colaboradores Cadastrados (Sem Convite)
-                </CardTitle>
-                <CardDescription className="text-orange-700">
-                  Estes colaboradores já estão cadastrados. Selecione um para enviar o convite.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {uninvitedEmployees.map(emp => (
-                    <div 
-                        key={emp.id} 
-                        className="bg-white p-3 rounded-lg border border-orange-200 shadow-sm flex justify-between items-center hover:shadow-md transition-shadow cursor-pointer group" 
-                        onClick={() => fillFormWithEmployee(emp)}
-                    >
-                      <div className="overflow-hidden">
-                        <p className="font-medium text-gray-900 truncate" title={emp.full_name}>{emp.full_name}</p>
-                        <p className="text-xs text-gray-500 truncate">{emp.position}</p>
-                      </div>
-                      <Button size="sm" variant="ghost" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 shrink-0 group-hover:bg-blue-50">
-                        Convidar
-                      </Button>
-                    </div>
-                  ))}
+        {/* Modal de credenciais */}
+        {createdUser && (
+          <Card className="mb-6 border-green-300 bg-green-50">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-green-800">
+                <CheckCircle2 className="w-6 h-6" />
+                Colaborador Criado com Sucesso!
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-white rounded-lg p-4 border-2 border-green-300">
+                <p className="text-sm text-gray-700 mb-3">
+                  <strong>Envie estas credenciais para o colaborador:</strong>
+                </p>
+                <div className="bg-gray-50 p-4 rounded border mb-3 font-mono text-sm">
+                  <p className="mb-1"><strong>Email:</strong> {createdUser.email}</p>
+                  <p><strong>Senha:</strong> {createdUser.temporary_password}</p>
                 </div>
-              </CardContent>
-            </Card>
-          )}
+                <div className="flex gap-2">
+                  <Button onClick={copyCredentials} className="flex-1">
+                    <Copy className="w-4 h-4 mr-2" />
+                    Copiar Credenciais
+                  </Button>
+                  <Button onClick={() => setCreatedUser(null)} variant="outline">
+                    Fechar
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-600 mt-3">
+                  💡 O colaborador deve trocar a senha no primeiro login
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-          {/* Formulário de Convite */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Formulário */}
+
           <Card className="shadow-md border-t-4 border-t-blue-600">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Send className="w-5 h-5 text-blue-600" />
-                Convidar Colaborador
+                <UserPlus className="w-5 h-5 text-blue-600" />
+                Criar Colaborador
               </CardTitle>
               <CardDescription>
-                Preencha os dados e o colaborador receberá um email personalizado com link de acesso
+                Crie o acesso e envie as credenciais para o colaborador
               </CardDescription>
-              
-              {/* Aviso sobre email automático */}
-              <div className="mt-3 bg-green-50 border border-green-200 rounded-lg p-3">
+
+              <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3">
                 <div className="flex gap-2 items-start">
-                  <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-xs text-green-800">
-                    <strong>✅ Email personalizado:</strong> Email enviado em nome da Oficinas Master com logo e dados da empresa.
+                  <Key className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-blue-800">
+                    <strong>🔑 Senha temporária:</strong> Sistema gera senha "Oficina@2025" - colaborador troca no primeiro login
                   </p>
                 </div>
               </div>
@@ -414,7 +284,6 @@ export default function ConvidarColaborador() {
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    onBlur={(e) => checkExistingEmployee(e.target.value)}
                     placeholder="email@exemplo.com"
                     className="bg-gray-50 focus:bg-white transition-colors"
                   />
@@ -511,17 +380,17 @@ export default function ConvidarColaborador() {
                 <Button 
                   type="submit" 
                   className="w-full bg-blue-600 hover:bg-blue-700 h-11 text-base shadow-sm"
-                  disabled={sendInviteMutation.isPending || profiles.length === 0}
+                  disabled={createUserMutation.isPending || profiles.length === 0}
                 >
-                  {sendInviteMutation.isPending ? (
+                  {createUserMutation.isPending ? (
                     <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Enviando Convite...
+                        Criando Acesso...
                     </>
                   ) : (
                     <>
-                        <Send className="w-4 h-4 mr-2" />
-                        Enviar Convite
+                        <UserPlus className="w-4 h-4 mr-2" />
+                        Criar Acesso
                     </>
                   )}
                 </Button>
@@ -529,93 +398,46 @@ export default function ConvidarColaborador() {
             </CardContent>
           </Card>
 
-          {/* Lista de Convites */}
+          {/* Lista de Colaboradores */}
           <Card className="shadow-md h-fit">
             <CardHeader className="border-b bg-gray-50/50">
               <CardTitle className="flex items-center gap-2 text-base">
-                <Mail className="w-5 h-5 text-gray-500" />
-                Convites Enviados
+                <Users className="w-5 h-5 text-gray-500" />
+                Colaboradores Cadastrados
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              {isLoadingInvites ? (
+              {isLoadingEmployees ? (
                 <div className="flex justify-center py-12">
                   <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
                 </div>
-              ) : invites.length === 0 ? (
+              ) : employees.length === 0 ? (
                 <div className="text-center py-12 px-4 text-gray-500">
                   <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Mail className="w-8 h-8 text-gray-400" />
+                    <Users className="w-8 h-8 text-gray-400" />
                   </div>
-                  <p className="font-medium text-gray-900">Nenhum convite enviado</p>
-                  <p className="text-sm mt-1">Preencha o formulário para enviar o primeiro convite.</p>
+                  <p className="font-medium text-gray-900">Nenhum colaborador</p>
+                  <p className="text-sm mt-1">Crie o primeiro acesso usando o formulário.</p>
                 </div>
               ) : (
                 <div className="divide-y max-h-[600px] overflow-y-auto">
-                  {invites.map((invite) => (
-                    <div key={invite.id} className="p-4 hover:bg-gray-50 transition-colors">
+                  {employees.map((emp) => (
+                    <div key={emp.id} className="p-4 hover:bg-gray-50 transition-colors">
                       <div className="flex items-start justify-between mb-2">
                         <div>
-                          <p className="font-semibold text-gray-900">{invite.name}</p>
-                          <p className="text-sm text-gray-600">{invite.email}</p>
+                          <p className="font-semibold text-gray-900">{emp.full_name}</p>
+                          <p className="text-sm text-gray-600">{emp.email}</p>
                         </div>
-                        {getStatusBadge(invite)}
+                        <Badge className={emp.user_status === 'ativo' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
+                          {emp.user_status === 'ativo' ? 'Ativo' : 'Pendente'}
+                        </Badge>
                       </div>
-                      
-                      <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
-                        <span className="bg-gray-100 px-2 py-1 rounded">{invite.position}</span>
+
+                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <span className="bg-gray-100 px-2 py-1 rounded">{emp.position}</span>
                         <span>•</span>
-                        <span>{format(new Date(invite.created_date), "dd/MM/yyyy HH:mm", { locale: ptBR })}</span>
+                        <span>{emp.area}</span>
                       </div>
-                      
-                      {invite.status !== "concluido" && (
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex-1 text-xs h-8"
-                            onClick={() => {
-                              if (confirm('Deseja reenviar convite para ' + invite.email + '?')) {
-                                  console.log("🔄 Reenviando convite para:", invite.email);
-                                  sendInviteMutation.mutate({
-                                      name: invite.name,
-                                      email: invite.email,
-                                      position: invite.position,
-                                      area: invite.area,
-                                      job_role: invite.job_role,
-                                      profile_id: invite.profile_id,
-                                      employee_id: invite.employee_id,
-                                      workshop_id: workshop.id,
-                                      workshop_name: workshop.name
-                                  });
-                              }
-                            }}
-                            disabled={sendInviteMutation.isPending}
-                          >
-                            <RefreshCw className="w-3 h-3 mr-2" />
-                            Reenviar
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex-1 text-xs h-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                            onClick={async () => {
-                              if (confirm('Deseja excluir o convite de ' + invite.name + '?')) {
-                                try {
-                                  await base44.entities.EmployeeInvite.delete(invite.id);
-                                  queryClient.invalidateQueries({ queryKey: ['employee-invites'] });
-                                  toast.success('Convite excluído');
-                                } catch (error) {
-                                  toast.error('Erro ao excluir: ' + error.message);
-                                }
-                              }
-                            }}
-                          >
-                            <XCircle className="w-3 h-3 mr-2" />
-                            Excluir
-                          </Button>
-                        </div>
-                      )}
                     </div>
                   ))}
                 </div>
