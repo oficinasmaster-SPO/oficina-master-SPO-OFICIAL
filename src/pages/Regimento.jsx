@@ -64,9 +64,18 @@ export default function Regimento() {
     setShowViewer(true);
   };
 
-  const handleCreateNew = () => {
-    setSelectedRegiment(null);
-    setShowEditor(true);
+  const handleCreateNew = async () => {
+    try {
+      const response = await base44.functions.invoke('createDefaultRegiment', {
+        workshop_id: workshop.id
+      });
+      if (response.data.success) {
+        toast.success("Modelo padrão criado!");
+        refetch();
+      }
+    } catch (error) {
+      toast.error("Erro: " + error.message);
+    }
   };
 
   if (showEditor) {
