@@ -135,9 +135,45 @@ export default function FeedbacksSection({ employee }) {
       id: selectedFeedback.id,
       data: { 
         action_plan_status: status,
-        // Se quiser permitir editar texto também, pegaria de um state local do modal
       }
     });
+  };
+
+  const sendEmailNotification = async (feedback) => {
+    try {
+      const typeLabel = feedback.feedback_type === 'positivo' ? 'Feedback Positivo' :
+                        feedback.feedback_type === 'corretivo' ? 'Feedback Corretivo' : 'Reunião 1:1';
+      
+      await base44.integrations.Core.SendEmail({
+        to: employee.email,
+        subject: `Novo Feedback: ${typeLabel}`,
+        body: `Prezado(a) ${employee.full_name},\n\nVocê recebeu um novo feedback na plataforma.\n\nTipo: ${typeLabel}\nData: ${format(new Date(feedback.feedback_date || feedback.created_date), 'dd/MM/yyyy')}\n\nAcesse a plataforma para ler o conteúdo completo e dar ciência.\n\nAtenciosamente,\nEquipe de Gestão`
+      });
+      
+      await base44.entities.EmployeeFeedback.update(feedback.id, {
+        email_sent: true,
+        email_sent_at: new Date().toISOString()
+      });
+      
+      toast.success("Email enviado com sucesso!");
+      queryClient.invalidateQueries(['employee-feedbacks']);
+    } catch (error) {
+      toast.error("Erro ao enviar email: " + error.message);
+    }
+  };
+
+  const handleAcknowledge = async (feedback) => {
+    try {
+      await base44.entities.EmployeeFeedback.update(feedback.id, {
+        employee_acknowledged: true,
+        employee_acknowledged_at: new Date().toISOString()
+      });
+      
+      toast.success("Ciência registrada!");
+      queryClient.invalidateQueries(['employee-feedbacks']);
+    } catch (error) {
+      toast.error("Erro: " + error.message);
+    }
   };
 
   const analyzeFeedbacks = async () => {
@@ -411,6 +447,28 @@ export default function FeedbacksSection({ employee }) {
                   <div className="pl-12">
                     <div className="text-sm text-gray-700 whitespace-pre-wrap bg-slate-50 p-3 rounded border border-slate-100 mb-3">
                         {feedback.content}
+                    </div>
+
+                    {/* Botões de ação */}
+                    <div className="flex gap-2 flex-wrap mb-3">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => sendEmailNotification(feedback)}
+                      >
+                        <Mail className="w-3 h-3 mr-1" />
+                        {feedback.email_sent ? "Reenviar Email" : "Enviar Email"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleAcknowledge(feedback)}
+                        disabled={feedback.employee_acknowledged}
+                        className={feedback.employee_acknowledged ? "bg-green-50 text-green-700" : ""}
+                      >
+                        <CheckCircle2 className="w-3 h-3 mr-1" />
+                        {feedback.employee_acknowledged ? "Ciente ✓" : "Dar Ciência"}
+                      </Button>
                     </div>
 
                     {/* Plano de Ação Section */}
