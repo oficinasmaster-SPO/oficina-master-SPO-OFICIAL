@@ -569,10 +569,9 @@ export default function ConvidarColaborador() {
                         <SelectContent>
                           {profiles.map((profile) => (
                             <SelectItem key={profile.id} value={profile.id}>
-                              {profile.name}
-                              {profile.description && (
-                                <span className="text-xs text-gray-500"> - {profile.description}</span>
-                              )}
+                              {profile.name.length > 25 
+                                ? profile.name.substring(0, 25) + '...' 
+                                : profile.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
