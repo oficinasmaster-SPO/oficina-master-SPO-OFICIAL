@@ -272,8 +272,9 @@ export default function Layout({ children, currentPageName }) {
 
       {isAuthenticated && <ActivityTracker user={user} workshop={workshop} />}
 
-      <div className={`${isAuthenticated ? 'lg:pl-64' : ''} flex flex-col min-h-screen transition-all duration-300`} style={isAuthenticated ? { paddingLeft: 'var(--sidebar-width, 16rem)' } : {}}>
-        <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30 print:hidden">
+      <div className={`${isAuthenticated && !isPublicPage ? 'lg:pl-64' : ''} flex flex-col min-h-screen transition-all duration-300`} style={isAuthenticated && !isPublicPage ? { paddingLeft: 'var(--sidebar-width, 16rem)' } : {}}>
+        {!isPublicPage && (
+          <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30 print:hidden">
           <div className="px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               {isAuthenticated && (
