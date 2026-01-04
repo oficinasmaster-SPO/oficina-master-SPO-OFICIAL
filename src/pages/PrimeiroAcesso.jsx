@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, CheckCircle2, Upload, User, Lock, AlertCircle, Building2 } from "lucide-react";
+import { Loader2, CheckCircle2, Upload, User, Lock, AlertCircle, Building2, Clock, Briefcase } from "lucide-react";
 import { toast } from "sonner";
 import { registerEmployeeViaBackend } from "@/components/onboarding/EmployeeRegistrationHelper";
 
@@ -227,13 +227,33 @@ export default function PrimeiroAcesso() {
       <div className="max-w-2xl mx-auto px-4 py-12">
         <Card className="shadow-2xl">
           <CardHeader className="text-center pb-2">
-            <div className="w-20 h-20 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full mx-auto mb-4 flex items-center justify-center">
-              <CheckCircle2 className="w-10 h-10 text-white" />
+            <div className="w-20 h-20 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+              <User className="w-10 h-10 text-white" />
             </div>
-            <CardTitle className="text-2xl">Bem-vindo(a), {invite?.name || 'Colaborador'}!</CardTitle>
-            <p className="text-gray-600 mt-2">
-              Complete seu cadastro para acessar a plataforma{invite?.position ? ` como ` : ''}<strong>{invite?.position || ''}</strong>
+            <CardTitle className="text-3xl mb-2">
+              Olá, {invite?.name || 'Colaborador'}! 👋
+            </CardTitle>
+            <p className="text-lg text-gray-700 mb-4">
+              Você foi convidado para se juntar à equipe {workshop?.name && (
+                <span className="font-bold text-blue-700">{workshop.name}</span>
+              )}
             </p>
+            <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 text-left">
+              <p className="text-sm text-blue-900 font-semibold mb-2">
+                📋 Complete seu cadastro para acessar a plataforma
+              </p>
+              <div className="flex items-start gap-3">
+                <Briefcase className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm text-blue-800">
+                    <strong>Cargo:</strong> {invite?.position || 'Colaborador'}
+                  </p>
+                  <p className="text-sm text-blue-800">
+                    <strong>Área:</strong> {invite?.area ? invite.area.charAt(0).toUpperCase() + invite.area.slice(1) : 'Não especificada'}
+                  </p>
+                </div>
+              </div>
+            </div>
           </CardHeader>
 
           <CardContent>
@@ -295,17 +315,29 @@ export default function PrimeiroAcesso() {
                 </div>
               </div>
 
-              {/* Informações do Cargo */}
-              <div className="bg-blue-50 rounded-lg p-4">
-                <h3 className="font-medium text-blue-900 mb-2">Suas Informações</h3>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-blue-600">Cargo:</span>
-                    <p className="font-medium text-blue-900">{invite?.position}</p>
+              {/* ALERTA PRINCIPAL - APROVAÇÃO NECESSÁRIA */}
+              <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-lg p-5 shadow-md">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Clock className="w-6 h-6 text-yellow-900" />
                   </div>
-                  <div>
-                    <span className="text-blue-600">Área:</span>
-                    <p className="font-medium text-blue-900 capitalize">{invite?.area}</p>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-yellow-900 text-lg mb-2">
+                      ⚠️ Importante: Aprovação Necessária
+                    </h3>
+                    <p className="text-yellow-800 text-sm leading-relaxed mb-3">
+                      Após completar seu cadastro, <strong className="text-yellow-900">seu acesso precisará ser aprovado pelo gestor</strong> da oficina. 
+                      Você receberá um email quando seu acesso for liberado.
+                    </p>
+                    <div className="bg-yellow-100 rounded p-3 text-xs text-yellow-900">
+                      <p className="font-semibold mb-1">📝 O que acontece depois:</p>
+                      <ol className="list-decimal ml-4 space-y-1">
+                        <li>Você completa este cadastro</li>
+                        <li>Aguarda aprovação do gestor</li>
+                        <li>Recebe email de confirmação</li>
+                        <li>Faz login normalmente no sistema</li>
+                      </ol>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -323,31 +355,28 @@ export default function PrimeiroAcesso() {
                 </label>
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                <p className="text-sm text-blue-800 flex items-start">
-                  <AlertCircle className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0 text-blue-600" />
-                  <span>
-                    <strong>Como funciona:</strong><br/>
-                    1. Ao clicar em "Confirmar", seu cadastro será salvo<br/>
-                    2. Você será redirecionado para criar sua senha de acesso<br/>
-                    3. Após criar a senha, aguarde a aprovação do administrador<br/>
-                    4. Você receberá um email quando seu acesso for liberado
-                  </span>
-                </p>
-              </div>
+
 
               <Button
                 type="submit"
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 py-6 text-lg"
+                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 py-7 text-lg font-bold shadow-lg"
                 disabled={submitting}
               >
                 {submitting ? (
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Finalizando Cadastro...
+                  </>
                 ) : (
-                  <CheckCircle2 className="w-5 h-5 mr-2" />
+                  <>
+                    <CheckCircle2 className="w-5 h-5 mr-2" />
+                    Finalizar Cadastro
+                  </>
                 )}
-                Confirmar Cadastro e Criar Senha
               </Button>
+              <p className="text-center text-xs text-gray-500 mt-3">
+                Ao clicar, você será redirecionado para criar sua senha de acesso
+              </p>
             </form>
           </CardContent>
         </Card>
