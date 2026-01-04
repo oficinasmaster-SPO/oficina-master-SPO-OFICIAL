@@ -200,14 +200,22 @@ export default function ConvidarColaborador() {
       return response;
     },
     onSuccess: (response) => {
-      console.log("✅ Colaborador convidado com sucesso!");
-      queryClient.invalidateQueries({ queryKey: ['employee-invites', 'employees-list'] });
+      console.log("✅ Resposta do backend:", response);
+      
+      // Invalidar queries para atualizar lista
+      queryClient.invalidateQueries({ queryKey: ['employee-invites'] });
+      queryClient.invalidateQueries({ queryKey: ['employees-list'] });
       
       if (response?.data?.invite_link) {
         setGeneratedLink(response.data.invite_link);
       }
       
-      toast.success("✅ Convite enviado! O colaborador receberá um email com link de acesso.", { duration: 5000 });
+      // Verificar se email foi enviado com sucesso
+      if (response?.email_sent) {
+        toast.success("✅ Convite enviado! Email entregue com link de acesso.", { duration: 5000 });
+      } else {
+        toast.error("❌ Convite criado mas email falhou: " + (response?.email_error || "Erro desconhecido"), { duration: 7000 });
+      }
       
       setFormData({ 
         name: "", 
@@ -561,6 +569,7 @@ export default function ConvidarColaborador() {
                             className="flex-1 text-xs h-8"
                             onClick={() => {
                               if (confirm('Deseja reenviar convite para ' + invite.email + '?')) {
+                                  console.log("🔄 Reenviando convite para:", invite.email);
                                   sendInviteMutation.mutate({
                                       name: invite.name,
                                       email: invite.email,
@@ -568,7 +577,9 @@ export default function ConvidarColaborador() {
                                       area: invite.area,
                                       job_role: invite.job_role,
                                       profile_id: invite.profile_id,
-                                      employee_id: invite.employee_id
+                                      employee_id: invite.employee_id,
+                                      workshop_id: workshop.id,
+                                      workshop_name: workshop.name
                                   });
                               }
                             }}
