@@ -182,7 +182,14 @@ export default function ConvidarColaborador() {
         console.log("✅ Employee atualizado:", employeeId);
       }
 
-      // 2. Enviar convite via backend (SendEmail com template personalizado)
+      // 2. Enviar convite via backend
+      console.log("📤 Enviando dados:", {
+        name: data.name,
+        email: data.email,
+        workshop_id: workshop.id,
+        workshop_name: workshop.name
+      });
+      
       const response = await base44.functions.invoke('sendEmployeeInvite', {
         name: data.name,
         email: data.email,
