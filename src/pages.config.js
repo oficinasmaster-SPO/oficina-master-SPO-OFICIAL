@@ -5,6 +5,7 @@ import AdminDesafios from './pages/AdminDesafios';
 import AdminMensagens from './pages/AdminMensagens';
 import AdminNotificacoes from './pages/AdminNotificacoes';
 import AdminProdutividade from './pages/AdminProdutividade';
+import AprovarColaboradores from './pages/AprovarColaboradores';
 import AssistirAula from './pages/AssistirAula';
 import AssistirCurso from './pages/AssistirCurso';
 import AuditLogs from './pages/AuditLogs';
@@ -25,6 +26,7 @@ import COEXList from './pages/COEXList';
 import Cadastro from './pages/Cadastro';
 import CadastroColaborador from './pages/CadastroColaborador';
 import CadastroPlanos from './pages/CadastroPlanos';
+import CadastroSucesso from './pages/CadastroSucesso';
 import ClientRegistration from './pages/ClientRegistration';
 import Clientes from './pages/Clientes';
 import Colaboradores from './pages/Colaboradores';
@@ -136,8 +138,6 @@ import TestUsuarios from './pages/TestUsuarios';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
-import CadastroSucesso from './pages/CadastroSucesso';
-import AprovarColaboradores from './pages/AprovarColaboradores';
 import __Layout from './Layout.jsx';
 
 
@@ -149,6 +149,7 @@ export const PAGES = {
     "AdminMensagens": AdminMensagens,
     "AdminNotificacoes": AdminNotificacoes,
     "AdminProdutividade": AdminProdutividade,
+    "AprovarColaboradores": AprovarColaboradores,
     "AssistirAula": AssistirAula,
     "AssistirCurso": AssistirCurso,
     "AuditLogs": AuditLogs,
@@ -169,6 +170,7 @@ export const PAGES = {
     "Cadastro": Cadastro,
     "CadastroColaborador": CadastroColaborador,
     "CadastroPlanos": CadastroPlanos,
+    "CadastroSucesso": CadastroSucesso,
     "ClientRegistration": ClientRegistration,
     "Clientes": Clientes,
     "Colaboradores": Colaboradores,
@@ -280,8 +282,6 @@ export const PAGES = {
     "TreinamentoVendas": TreinamentoVendas,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
-    "CadastroSucesso": CadastroSucesso,
-    "AprovarColaboradores": AprovarColaboradores,
 }
 
 export const pagesConfig = {
