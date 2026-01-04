@@ -149,47 +149,53 @@ export default function ConvidarColaborador() {
     toast.info("Dados preenchidos! Clique em Gerar Link de Acesso.");
   };
 
-  // Mutação para enviar convite
+  // Mutação para convidar colaborador
   const sendInviteMutation = useMutation({
     mutationFn: async (data) => {
-      console.log("Iniciando envio...", data);
-      try {
-        // Garante que workshop.id existe
-        if (!workshop || !workshop.id) {
-            throw new Error("ID da oficina não encontrado. Recarregue a página.");
-        }
-
-        const payload = {
-          ...data,
-          workshop_id: workshop?.id,
-          workshop_name: workshop?.name || "Oficina"
-        };
-        
-        console.log("Payload enviado:", payload);
-
-        const response = await base44.functions.invoke('sendEmployeeInvite', payload);
-        
-        console.log("Resposta do servidor:", response);
-
-        // Verifica status HTTP e corpo da resposta
-        if (response.status !== 200) {
-             const errorMsg = response.data?.error || "Erro desconhecido no servidor";
-             throw new Error(errorMsg);
-        }
-        
-        if (response.data && response.data.error) {
-            throw new Error(response.data.error);
-        }
-        
-        return response.data;
-      } catch (error) {
-        console.error("Erro capturado no frontend:", error);
-        throw new Error(error.message || "Falha na comunicação. Verifique sua conexão.");
+      console.log("🚀 Convidando colaborador...", data);
+      
+      if (!workshop?.id) {
+        throw new Error("ID da oficina não encontrado. Recarregue a página.");
       }
+
+      // 1. Criar/atualizar Employee
+      let employeeId = data.employee_id;
+      
+      if (!employeeId) {
+        const newEmployee = await base44.entities.Employee.create({
+          workshop_id: workshop.id,
+          full_name: data.name,
+          email: data.email,
+          position: data.position,
+          area: data.area,
+          job_role: data.job_role,
+          profile_id: data.profile_id,
+          user_status: 'ativo' // Já aprovado
+        });
+        employeeId = newEmployee.id;
+        console.log("✅ Employee criado:", employeeId);
+      } else {
+        await base44.entities.Employee.update(employeeId, {
+          profile_id: data.profile_id,
+          user_status: 'ativo'
+        });
+        console.log("✅ Employee atualizado:", employeeId);
+      }
+
+      // 2. Convidar User via Base44 (ele recebe email para criar senha)
+      await base44.users.inviteUser(data.email, "user");
+      console.log("✅ Convite enviado para:", data.email);
+
+      return { 
+        success: true, 
+        message: "Convite enviado! O colaborador receberá um email para criar a senha." 
+      };
     },
-    onSuccess: (data) => {
-      console.log("✅ Resposta completa do backend:", data);
-      queryClient.invalidateQueries({ queryKey: ['employee-invites'] });
+    onSuccess: () => {
+      console.log("✅ Colaborador convidado com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ['employee-invites', 'employees-list'] });
+      
+      toast.success("✅ Convite enviado! O colaborador receberá um email para definir senha e fazer login.", { duration: 5000 });
       
       setFormData({ 
         name: "", 
@@ -201,26 +207,15 @@ export default function ConvidarColaborador() {
         employee_id: null,
         profile_id: ""
       });
-      
-      // Salva o link gerado para exibir
-      if (data.invite_url) {
-        console.log("🔗 Link gerado:", data.invite_url);
-        setGeneratedLink(data.invite_url);
-        toast.success("Link de acesso gerado com sucesso!");
-      } else {
-        console.error("❌ Link não retornado pelo backend");
-        toast.error("Erro: Link não foi gerado corretamente");
-      }
     },
     onError: (error) => {
-      toast.error("Erro ao gerar link: " + error.message);
+      console.error("❌ Erro ao convidar:", error);
+      toast.error("Erro: " + error.message);
     }
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    console.log("🔍 Verificando envio...", { formData, profiles });
     
     if (!formData.name || !formData.email || !formData.position || !formData.area) {
       toast.error("Preencha todos os campos obrigatórios (*)");
@@ -229,7 +224,6 @@ export default function ConvidarColaborador() {
     
     if (profiles.length === 0) {
       toast.error("❌ Nenhum perfil de acesso disponível. Entre em contato com o suporte.", { duration: 6000 });
-      console.error("❌ Lista de perfis vazia");
       return;
     }
     
@@ -238,7 +232,6 @@ export default function ConvidarColaborador() {
       return;
     }
     
-    setGeneratedLink(null);
     sendInviteMutation.mutate(formData);
   };
 
@@ -312,106 +305,7 @@ export default function ConvidarColaborador() {
           </div>
         </div>
 
-        {/* Link Gerado */}
-        {generatedLink && (
-          <Card className="border-green-200 bg-green-50 shadow-lg mb-6">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg text-green-800">
-                <CheckCircle2 className="w-5 h-5" />
-                ✅ Link de Acesso Gerado com Sucesso!
-              </CardTitle>
-              <CardDescription className="text-green-700 font-medium">
-                Envie este link via WhatsApp, Email ou outro meio para o colaborador
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Informações do Colaborador */}
-              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
-                    <User className="w-6 h-6" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs uppercase font-semibold mb-1 text-blue-100">Link Específico Para:</p>
-                    <p className="text-lg font-bold mb-1">{formData.name}</p>
-                    <p className="text-sm text-blue-100 mb-3">{formData.email}</p>
-                    <div className="bg-white/10 rounded px-3 py-2 text-xs">
-                      <p className="font-semibold mb-1">⚠️ IMPORTANTE:</p>
-                      <p>Este link é <strong>exclusivo</strong> para este colaborador e contém os dados de acesso dele. Não compartilhe com outras pessoas.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
 
-              {/* Alerta importante */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex gap-3">
-                  <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <div className="text-sm">
-                    <p className="font-semibold text-blue-900 mb-1">📧 Email automático não disponível</p>
-                    <p className="text-blue-800">
-                      Por limitação da plataforma, você precisa <strong>enviar o link manualmente</strong> via WhatsApp, Email pessoal ou SMS.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Link */}
-              <div className="bg-white p-4 rounded-lg border-2 border-green-300">
-                <div className="flex items-center gap-2 mb-2">
-                  <Link2 className="w-4 h-4 text-green-600" />
-                  <span className="text-xs font-semibold text-gray-700 uppercase">Link de Primeiro Acesso</span>
-                </div>
-                <p className="text-sm text-gray-600 break-all font-mono bg-gray-50 p-3 rounded border border-gray-200">
-                  {generatedLink}
-                </p>
-              </div>
-
-              {/* Botões de ação */}
-              <div className="grid grid-cols-2 gap-3">
-                <Button 
-                  onClick={copyToClipboard}
-                  className="bg-green-600 hover:bg-green-700 h-11"
-                >
-                  {copied ? (
-                    <>
-                      <Check className="w-4 h-4 mr-2" />
-                      Copiado!
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-4 h-4 mr-2" />
-                      Copiar Link
-                    </>
-                  )}
-                </Button>
-                
-                <Button
-                  onClick={() => {
-                    const message = `Olá! Você foi convidado para acessar o sistema Oficinas Master.\n\nClique no link abaixo para completar seu cadastro:\n\n${generatedLink}`;
-                    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
-                  }}
-                  variant="outline"
-                  className="border-green-600 text-green-700 hover:bg-green-50 h-11"
-                >
-                  <Mail className="w-4 h-4 mr-2" />
-                  Enviar via WhatsApp
-                </Button>
-              </div>
-
-              {/* Instruções */}
-              <div className="bg-green-50 border border-green-300 rounded-lg p-4">
-                <p className="text-xs font-semibold text-green-900 mb-2">✅ Próximos passos:</p>
-                <ol className="text-xs text-green-800 space-y-1 ml-4 list-decimal">
-                  <li>Copie o link usando o botão acima</li>
-                  <li>Envie para o colaborador via WhatsApp ou Email</li>
-                  <li>O colaborador clica no link e completa o cadastro</li>
-                  <li><strong>Acesso liberado imediatamente</strong> - ele pode fazer login na hora! ✨</li>
-                </ol>
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Colaboradores Cadastrados (Pendentes) */}
@@ -420,10 +314,10 @@ export default function ConvidarColaborador() {
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-lg text-orange-800">
                   <Users className="w-5 h-5" />
-                  Colaboradores Cadastrados (Sem Link de Acesso)
+                  Colaboradores Cadastrados (Sem Convite)
                 </CardTitle>
                 <CardDescription className="text-orange-700">
-                  Estes colaboradores já estão cadastrados. Selecione um para gerar o link de acesso.
+                  Estes colaboradores já estão cadastrados. Selecione um para enviar o convite.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -453,18 +347,18 @@ export default function ConvidarColaborador() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Send className="w-5 h-5 text-blue-600" />
-                Gerar Link de Acesso
+                Convidar Colaborador
               </CardTitle>
               <CardDescription>
-                Preencha os dados para gerar um link de primeiro acesso para o colaborador
+                Preencha os dados e o colaborador receberá um email para criar sua senha
               </CardDescription>
               
-              {/* Aviso sobre envio manual */}
-              <div className="mt-3 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+              {/* Aviso sobre email automático */}
+              <div className="mt-3 bg-green-50 border border-green-200 rounded-lg p-3">
                 <div className="flex gap-2 items-start">
-                  <AlertCircle className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-xs text-yellow-800">
-                    <strong>Importante:</strong> Após gerar o link, você precisará enviá-lo manualmente via WhatsApp ou Email para o colaborador.
+                  <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-green-800">
+                    <strong>✅ Email automático:</strong> O colaborador receberá um email do sistema para criar sua senha e fazer login.
                   </p>
                 </div>
               </div>
@@ -591,12 +485,12 @@ export default function ConvidarColaborador() {
                   {sendInviteMutation.isPending ? (
                     <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Gerando Link...
+                        Enviando Convite...
                     </>
                   ) : (
                     <>
                         <Send className="w-4 h-4 mr-2" />
-                        Gerar Link de Acesso
+                        Enviar Convite
                     </>
                   )}
                 </Button>
@@ -609,7 +503,7 @@ export default function ConvidarColaborador() {
             <CardHeader className="border-b bg-gray-50/50">
               <CardTitle className="flex items-center gap-2 text-base">
                 <Mail className="w-5 h-5 text-gray-500" />
-                Links de Acesso Gerados
+                Convites Enviados
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
@@ -622,8 +516,8 @@ export default function ConvidarColaborador() {
                   <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Mail className="w-8 h-8 text-gray-400" />
                   </div>
-                  <p className="font-medium text-gray-900">Nenhum link gerado</p>
-                  <p className="text-sm mt-1">Preencha o formulário para gerar o primeiro link de acesso.</p>
+                  <p className="font-medium text-gray-900">Nenhum convite enviado</p>
+                  <p className="text-sm mt-1">Preencha o formulário para enviar o primeiro convite.</p>
                 </div>
               ) : (
                 <div className="divide-y max-h-[600px] overflow-y-auto">
@@ -649,9 +543,14 @@ export default function ConvidarColaborador() {
                           size="sm"
                           className="w-full text-xs h-8"
                           onClick={() => {
-                            if (confirm('Deseja gerar um novo link de acesso para ' + invite.email + '?')) {
+                            if (confirm('Deseja reenviar convite para ' + invite.email + '?')) {
                                 sendInviteMutation.mutate({
-                                    ...invite,
+                                    name: invite.name,
+                                    email: invite.email,
+                                    position: invite.position,
+                                    area: invite.area,
+                                    job_role: invite.job_role,
+                                    profile_id: invite.profile_id,
                                     employee_id: invite.employee_id
                                 });
                             }
@@ -659,7 +558,7 @@ export default function ConvidarColaborador() {
                           disabled={sendInviteMutation.isPending}
                         >
                           <RefreshCw className="w-3 h-3 mr-2" />
-                          Gerar Novo Link
+                          Reenviar Convite
                         </Button>
                       )}
                     </div>
