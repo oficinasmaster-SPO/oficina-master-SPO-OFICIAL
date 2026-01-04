@@ -129,6 +129,9 @@ export default function CadastroPerfilSocio({ workshop, user, onComplete, onBack
         full_name: formData.full_name
       });
 
+      // Pequeno delay para garantir sincronização
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       onComplete();
     } catch (error) {
       console.error("Erro ao salvar perfil:", error);

@@ -96,25 +96,35 @@ export default function Layout({ children, currentPageName }) {
           console.log("👤 User autenticado:", currentUser.email);
           console.log("🏢 Workshop_id do User:", currentUser.workshop_id);
 
-          // PRIMEIRO LOGIN: Redirecionar para Meu Perfil se cadastro incompleto
-          if (!currentUser.first_login_at || currentUser.first_login_at === currentUser.last_login_at) {
-            // Verificar se tem Employee vinculado
-            try {
-              const employees = await base44.entities.Employee.filter({ user_id: currentUser.id });
-              if (employees && employees.length > 0) {
-                const emp = employees[0];
-                // Se dados básicos estão incompletos, redirecionar
-                if (!emp.cpf || !emp.telefone || !emp.profile_picture_url) {
-                  console.log("🔄 Primeiro acesso - redirecionando para Meu Perfil");
-                  if (location.pathname !== '/MeuPerfil') {
-                    window.location.href = createPageUrl("MeuPerfil");
-                    return;
-                  }
+          // VERIFICAR SE USUÁRIO TEM EMPLOYEE CADASTRADO
+          try {
+            const employees = await base44.entities.Employee.filter({ user_id: currentUser.id });
+
+            // Se não tem Employee E tem workshop vinculado, precisa completar perfil
+            if ((!employees || employees.length === 0) && currentUser.workshop_id) {
+              console.log("⚠️ Usuário sem Employee - redirecionando para Meu Perfil");
+              if (location.pathname !== '/MeuPerfil') {
+                window.location.href = createPageUrl("MeuPerfil");
+                return;
+              }
+            }
+
+            // Se tem Employee mas dados incompletos no primeiro acesso
+            if (employees && employees.length > 0) {
+              const emp = employees[0];
+              const isFirstAccess = !currentUser.first_login_at || 
+                                  currentUser.first_login_at === currentUser.last_login_at;
+
+              if (isFirstAccess && (!emp.cpf || !emp.telefone)) {
+                console.log("🔄 Primeiro acesso - redirecionando para Meu Perfil");
+                if (location.pathname !== '/MeuPerfil') {
+                  window.location.href = createPageUrl("MeuPerfil");
+                  return;
                 }
               }
-            } catch (empError) {
-              console.error("Erro ao verificar Employee:", empError);
             }
+          } catch (empError) {
+            console.error("Erro ao verificar Employee:", empError);
           }
 
           // Verificar se há workshop_id na URL (admin visualizando cliente)
