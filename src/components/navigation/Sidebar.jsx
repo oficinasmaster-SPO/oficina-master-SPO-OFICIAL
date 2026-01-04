@@ -434,6 +434,14 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           requiredPermission: 'culture.view'
         },
         { 
+          name: 'Regimento Interno', 
+          href: createPageUrl('Regimento'), 
+          icon: FileText,
+          description: 'Regulamento jurídico da empresa',
+          highlight: true,
+          requiredPermission: 'culture.edit'
+        },
+        { 
           name: 'Missão, Visão e Valores', 
           href: createPageUrl('MissaoVisaoValores'), 
           icon: Heart,
