@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { 
   Loader2, Send, UserPlus, Mail, RefreshCw, CheckCircle2, 
-  Clock, AlertCircle, XCircle, Users, Link2, Copy, Check
+  Clock, AlertCircle, XCircle, Users, Link2, Copy, Check, User
 } from "lucide-react";
 import { toast } from "sonner";
 import { format, isPast } from "date-fns";
@@ -307,6 +307,24 @@ export default function ConvidarColaborador() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Informações do Colaborador */}
+              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                    <User className="w-6 h-6" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs uppercase font-semibold mb-1 text-blue-100">Link Específico Para:</p>
+                    <p className="text-lg font-bold mb-1">{formData.name}</p>
+                    <p className="text-sm text-blue-100 mb-3">{formData.email}</p>
+                    <div className="bg-white/10 rounded px-3 py-2 text-xs">
+                      <p className="font-semibold mb-1">⚠️ IMPORTANTE:</p>
+                      <p>Este link é <strong>exclusivo</strong> para este colaborador e contém os dados de acesso dele. Não compartilhe com outras pessoas.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Alerta importante */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <div className="flex gap-3">
