@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Mic, Square, Play, Pause, Trash2, Upload } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
-export default function AudioRecorder({ onAudioRecorded, disabled = false }) {
+export default function AudioRecorder({ onAudioRecorded, onRecordingComplete, onCancel, disabled = false }) {
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [audioURL, setAudioURL] = useState(null);
@@ -105,17 +105,20 @@ export default function AudioRecorder({ onAudioRecorded, disabled = false }) {
 
     setIsUploading(true);
     try {
-      const file = new File([audioBlob], `recording-${Date.now()}.webm`, { type: 'audio/webm' });
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      
-      if (onAudioRecorded) {
+      if (onRecordingComplete) {
+        // Modo direto: retorna blob para processamento externo
+        onRecordingComplete(audioBlob);
+        deleteRecording();
+      } else if (onAudioRecorded) {
+        // Modo legado: faz upload e retorna URL
+        const file = new File([audioBlob], `recording-${Date.now()}.webm`, { type: 'audio/webm' });
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
         onAudioRecorded(file_url, recordingTime);
+        deleteRecording();
       }
-      
-      deleteRecording();
     } catch (error) {
-      console.error('Erro ao fazer upload:', error);
-      alert('Erro ao enviar áudio. Tente novamente.');
+      console.error('Erro ao processar áudio:', error);
+      alert('Erro ao processar áudio. Tente novamente.');
     } finally {
       setIsUploading(false);
     }
@@ -128,8 +131,8 @@ export default function AudioRecorder({ onAudioRecorded, disabled = false }) {
   };
 
   return (
-    <Card className="shadow-lg">
-      <CardContent className="p-6 space-y-4">
+    <div className="space-y-3">
+      <div className="space-y-4">
         <div className="flex items-center justify-center">
           <div className="text-4xl font-bold text-blue-600 font-mono">
             {formatTime(recordingTime)}
@@ -209,24 +212,35 @@ export default function AudioRecorder({ onAudioRecorded, disabled = false }) {
               </Button>
               
               <Button
-                size="lg"
+                size="sm"
                 variant="destructive"
                 onClick={deleteRecording}
                 disabled={isUploading}
               >
-                <Trash2 className="w-5 h-5 mr-2" />
+                <Trash2 className="w-4 h-4 mr-2" />
                 Excluir
               </Button>
               
               <Button
-                size="lg"
+                size="sm"
                 onClick={uploadAudio}
                 disabled={isUploading}
                 className="bg-green-600 hover:bg-green-700"
               >
-                <Upload className="w-5 h-5 mr-2" />
-                {isUploading ? 'Enviando...' : 'Enviar Áudio'}
+                <Upload className="w-4 h-4 mr-2" />
+                {isUploading ? 'Processando...' : 'Usar Áudio'}
               </Button>
+              
+              {onCancel && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={onCancel}
+                  disabled={isUploading}
+                >
+                  Cancelar
+                </Button>
+              )}
             </div>
           </div>
         )}
@@ -241,7 +255,7 @@ export default function AudioRecorder({ onAudioRecorded, disabled = false }) {
             </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
