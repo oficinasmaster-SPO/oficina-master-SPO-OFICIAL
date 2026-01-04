@@ -276,24 +276,36 @@ Deno.serve(async (req) => {
 </html>
     `;
 
-    // Enviar convite via Base44 - GARANTE FUNCIONAMENTO
+    // PASSO 1: Criar usuário no sistema Base44
     let emailSent = false;
     let emailError = null;
 
     try {
-      console.log("📧 Convidando usuário:", email);
+      console.log("📧 Criando usuário no sistema:", email);
+      await base44.users.inviteUser(email, "user");
+      console.log("✅ Usuário criado no sistema");
+    } catch (error) {
+      console.log("⚠️ Usuário já existe ou erro ao criar:", error.message);
+    }
 
-      // Base44 inviteUser: cria usuário E envia email automaticamente
-      const inviteResult = await base44.users.inviteUser(email, "user");
+    // PASSO 2: Enviar email PERSONALIZADO com template HTML
+    try {
+      console.log("📧 Enviando email personalizado para:", email);
+      
+      await base44.asServiceRole.integrations.Core.SendEmail({
+        from_name: "Oficinas Master",
+        to: email,
+        subject: `Convite para acessar ${workshop_name || 'Oficinas Master'} 🎉`,
+        body: emailHTML
+      });
 
       emailSent = true;
-      console.log("✅ Email enviado automaticamente pelo Base44 para:", email);
-      console.log("✅ Resultado:", inviteResult);
+      console.log("✅ Email personalizado enviado com sucesso!");
 
     } catch (error) {
       emailError = error.message;
-      console.error("❌ Erro ao enviar convite:", error);
-      console.error("❌ Detalhes completos:", JSON.stringify(error, null, 2));
+      console.error("❌ Erro ao enviar email:", error);
+      console.error("❌ Detalhes:", JSON.stringify(error, null, 2));
     }
 
     return Response.json({ 
