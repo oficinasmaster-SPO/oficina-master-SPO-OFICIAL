@@ -496,19 +496,26 @@ JSON: { "rule_violated": "...", "corrective_guidance": "..." }`;
               </Select>
             </div>
 
+            {formData.rule_source === 'manual_cultura' && (
+              <>
+                <CultureManualSelector
+                  workshopId={employee.workshop_id}
+                  currentValue={formData.culture_manual_rule}
+                  onSelect={(value) => setFormData({...formData, culture_manual_rule: value})}
+                />
+                <ProcessSelector
+                  workshopId={employee.workshop_id}
+                  selectedProcessId={formData.process_id}
+                  onSelect={(data) => setFormData({...formData, ...data})}
+                />
+              </>
+            )}
+
             {formData.rule_source === 'processo_it' && (
               <ProcessSelector
                 workshopId={employee.workshop_id}
                 selectedProcessId={formData.process_id}
                 onSelect={(data) => setFormData({...formData, ...data})}
-              />
-            )}
-
-            {formData.rule_source === 'manual_cultura' && (
-              <CultureManualSelector
-                workshopId={employee.workshop_id}
-                currentValue={formData.culture_manual_rule}
-                onSelect={(value) => setFormData({...formData, culture_manual_rule: value})}
               />
             )}
 
