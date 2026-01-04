@@ -276,13 +276,14 @@ Deno.serve(async (req) => {
 </html>
     `;
 
-    // Convidar usuário via Base44 (cria User automaticamente)
+    // Enviar convite via Base44 (funciona para usuários externos)
     let emailSent = false;
     let emailError = null;
 
     try {
-      console.log("📧 Convidando usuário via Base44:", email);
+      console.log("📧 Convidando usuário via Base44 inviteUser:", email);
 
+      // inviteUser cria o usuário e envia email automaticamente
       await base44.users.inviteUser(email, "user");
 
       emailSent = true;
@@ -290,7 +291,7 @@ Deno.serve(async (req) => {
 
     } catch (error) {
       emailError = error.message;
-      console.error("❌ Erro ao convidar usuário:", error);
+      console.error("❌ Erro ao convidar usuário via Base44:", error);
     }
 
     return Response.json({ 
