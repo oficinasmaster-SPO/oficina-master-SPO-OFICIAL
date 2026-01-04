@@ -252,10 +252,16 @@ export default function Layout({ children, currentPageName }) {
     base44.auth.redirectToLogin(window.location.pathname);
   };
 
+  // Verificar se a página atual é pública (não precisa de autenticação)
+  const publicPages = ['/PrimeiroAcesso', '/ClientRegistration', '/CadastroSucesso'];
+  const isPublicPage = publicPages.some(page => 
+    location.pathname.toLowerCase().includes(page.toLowerCase())
+  );
+
   return (
     <div className="min-h-screen bg-gray-50">
-      
-      {isAuthenticated && (
+
+      {isAuthenticated && !isPublicPage && (
         <Sidebar 
           user={user}
           unreadCount={unreadCount}
