@@ -136,6 +136,8 @@ import TestUsuarios from './pages/TestUsuarios';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
+import CadastroSucesso from './pages/CadastroSucesso';
+import AprovarColaboradores from './pages/AprovarColaboradores';
 import __Layout from './Layout.jsx';
 
 
@@ -278,6 +280,8 @@ export const PAGES = {
     "TreinamentoVendas": TreinamentoVendas,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
+    "CadastroSucesso": CadastroSucesso,
+    "AprovarColaboradores": AprovarColaboradores,
 }
 
 export const pagesConfig = {

@@ -164,15 +164,10 @@ export default function PrimeiroAcesso() {
       console.log("✅ Resposta:", data);
 
       if (data.success) {
-        toast.success("✅ Cadastro confirmado! Redirecionando para criar sua senha...", { duration: 5000 });
+        toast.success("✅ Cadastro realizado com sucesso!", { duration: 5000 });
         
-        // Informar sobre aprovação pendente
-        toast.info("⏳ Seu acesso será liberado após aprovação do administrador", { duration: 6000 });
-        
-        // Redirecionar para login após 3 segundos
-        setTimeout(() => {
-          window.location.href = `${window.location.origin}/login`;
-        }, 3000);
+        // Redirecionar para página de aguardando aprovação
+        navigate(createPageUrl("CadastroSucesso"));
       } else {
         throw new Error(data.error || "Erro ao finalizar cadastro");
       }
