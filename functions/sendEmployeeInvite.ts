@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
@@ -87,7 +87,9 @@ Deno.serve(async (req) => {
             is_internal: false,
             hire_date: new Date().toISOString().split('T')[0],
             workshop_id: workshop_id,
-            owner_id: workshop?.owner_id || null
+            owner_id: workshop?.owner_id || null,
+            profile_id: profile_id || null,
+            user_status: 'ativo'
           });
           finalEmployeeId = employee.id;
           console.log("✅ Employee criado:", finalEmployeeId);
@@ -152,55 +154,140 @@ Deno.serve(async (req) => {
       console.log("✅ Convite criado:", inviteId);
     }
 
-    // NÃO criar User aqui - será criado apenas no primeiro login após aprovação
-    console.log("ℹ️ User será criado no primeiro login após aprovação do admin");
-
     // Usa o domínio correto da aplicação
     const baseUrl = 'https://oficina-master-b2bc845b.base44.app';
     const inviteUrl = `${baseUrl}/PrimeiroAcesso?token=${token}`;
     
     console.log("🔗 Link gerado:", inviteUrl);
 
-    console.log("✅ Link de convite gerado:", inviteUrl);
+    // Template HTML personalizado com logo e cores da marca
+    const emailHTML = `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Convite - ${workshop_name || 'Oficinas Master'}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); overflow: hidden;">
+          
+          <!-- Header com logo -->
+          <tr>
+            <td style="background-color: #ffffff; padding: 40px 30px; text-align: center; border-bottom: 3px solid #DC2626;">
+              <img src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69540822472c4a70b54d47aa/34d4cdd0e_CpiadeCarrossel-COLOQUESUAOFICINANOBOTOAUTOMTICO1.png" alt="Oficinas Master" style="max-width: 250px; height: auto; margin-bottom: 20px;">
+              <h1 style="color: #1F2937; margin: 0; font-size: 26px; font-weight: bold;">Bem-vindo à Equipe! 🎉</h1>
+            </td>
+          </tr>
+          
+          <!-- Corpo do email -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="color: #111827; font-size: 18px; margin: 0 0 20px 0; font-weight: 600;">
+                Olá, ${name}! 👋
+              </p>
+              
+              <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 25px 0;">
+                Você foi <strong>convidado(a)</strong> para acessar a plataforma de gestão da <strong style="color: #DC2626;">${workshop_name || 'sua oficina'}</strong>.
+              </p>
+              
+              <!-- Dados do convite -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #FEE2E2; border-left: 4px solid #DC2626; border-radius: 8px; margin-bottom: 25px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="color: #991B1B; font-size: 14px; margin: 0 0 8px 0; font-weight: 600;">📋 Seus Dados de Acesso:</p>
+                    <p style="color: #7F1D1D; font-size: 14px; margin: 5px 0; line-height: 1.5;">
+                      <strong>Cargo:</strong> ${position}<br>
+                      <strong>Área:</strong> ${area ? area.charAt(0).toUpperCase() + area.slice(1) : 'Não especificada'}<br>
+                      <strong>E-mail:</strong> ${email}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 25px 0;">
+                Clique no botão abaixo para <strong>completar seu cadastro</strong> e acessar o sistema:
+              </p>
+              
+              <!-- Botão de ação -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding: 10px 0 30px 0;">
+                    <a href="${inviteUrl}" style="display: inline-block; background-color: #DC2626; color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px; font-weight: bold; box-shadow: 0 4px 6px rgba(220, 38, 38, 0.4);">
+                      ✅ Completar Cadastro
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin: 0 0 10px 0;">
+                Ou copie e cole o link abaixo no seu navegador:
+              </p>
+              <p style="color: #DC2626; font-size: 12px; word-break: break-all; background-color: #f9fafb; padding: 12px; border-radius: 6px; margin: 0 0 25px 0;">
+                ${inviteUrl}
+              </p>
+              
+              <!-- Aviso importante -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #FEF3C7; border-left: 4px solid #F59E0B; border-radius: 8px; margin-bottom: 20px;">
+                <tr>
+                  <td style="padding: 15px;">
+                    <p style="color: #78350F; font-size: 13px; margin: 0; line-height: 1.5;">
+                      <strong>⚠️ Importante:</strong> Este link expira em 7 dias. Complete seu cadastro o quanto antes!
+                    </p>
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin: 0;">
+                Se tiver dúvidas, entre em contato com o gestor da sua oficina.
+              </p>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #1F2937; padding: 30px; border-top: 3px solid #DC2626;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <p style="color: #ffffff; font-size: 14px; margin: 0 0 10px 0; font-weight: bold;">
+                      Oficinas Master Aceleradora
+                    </p>
+                    <p style="color: #D1D5DB; font-size: 12px; margin: 0 0 5px 0;">
+                      Plataforma de Gestão para Oficinas Mecânicas
+                    </p>
+                    <p style="color: #D1D5DB; font-size: 12px; margin: 0;">
+                      📧 contato@oficinasmaster.com.br | 📱 (11) 99999-9999
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `;
 
-    // Enviar email com convite
+    // Enviar email de convite
     let emailSent = false;
     let emailError = null;
 
     try {
       console.log("📧 Enviando email de convite para:", email);
 
-      const emailSubject = invite_type === 'internal' 
-        ? 'Bem-vindo a Equipe Oficinas Master - Complete seu Cadastro'
-        : 'Bem-vindo - Complete seu Cadastro';
-
-      const emailBody = invite_type === 'internal' 
-        ? '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">' +
-          '<h2 style="color: #2563eb;">Bem-vindo a Equipe Oficinas Master!</h2>' +
-          '<p>Ola, <strong>' + name + '</strong>!</p>' +
-          '<p>Voce foi convidado para fazer parte da equipe interna da <strong>Oficinas Master</strong> como <strong>' + position + '</strong>.</p>' +
-          '<h3 style="color: #1e40af;">Complete seu Cadastro:</h3>' +
-          '<div style="text-align: center; margin: 30px 0;">' +
-          '<a href="' + inviteUrl + '" style="background-color: #2563eb; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold;">Completar Cadastro</a>' +
-          '</div>' +
-          '<p style="color: #666; font-size: 14px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;"><strong>Importante:</strong> Este link expira em 7 dias.</p>' +
-          '<p style="color: #666; font-size: 12px; margin-top: 20px;">Email de login: <strong>' + email + '</strong></p>' +
-          '</div>'
-        : '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">' +
-          '<h2 style="color: #2563eb;">Bem-vindo!</h2>' +
-          '<p>Ola, <strong>' + name + '</strong>!</p>' +
-          '<p>Voce foi convidado para fazer parte da equipe como <strong>' + position + '</strong>.</p>' +
-          '<h3 style="color: #1e40af;">Complete seu Cadastro:</h3>' +
-          '<div style="text-align: center; margin: 30px 0;">' +
-          '<a href="' + inviteUrl + '" style="background-color: #2563eb; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold;">Completar Cadastro</a>' +
-          '</div>' +
-          '<p style="color: #666; font-size: 14px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;"><strong>Importante:</strong> Este link expira em 7 dias.</p>' +
-          '</div>';
-
       await base44.asServiceRole.integrations.Core.SendEmail({
+        from_name: "Oficinas Master",
         to: email,
-        subject: emailSubject,
-        body: emailBody
+        subject: `🎉 Bem-vindo à ${workshop_name || 'Oficinas Master'}! Complete seu cadastro`,
+        body: emailHTML
       });
 
       emailSent = true;
@@ -214,14 +301,13 @@ Deno.serve(async (req) => {
     return Response.json({ 
       success: true, 
       message: emailSent ? 'Convite enviado por email com sucesso!' : 'Convite criado. Email não pôde ser enviado.',
-      invite_id: inviteId,
-      invite_url: inviteUrl,
-      employee_id: finalEmployeeId,
+      data: {
+        invite_id: inviteId,
+        invite_link: inviteUrl,
+        employee_id: finalEmployeeId
+      },
       email_sent: emailSent,
-      email_error: emailError,
-      instructions: emailSent 
-        ? `Email enviado para ${email}` 
-        : `Envie este link manualmente para ${name} (${email}): ${inviteUrl}`
+      email_error: emailError
     });
 
   } catch (error) {
