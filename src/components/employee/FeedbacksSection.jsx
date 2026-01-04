@@ -26,6 +26,7 @@ export default function FeedbacksSection({ employee }) {
 
   // Form State
   const [formData, setFormData] = useState({
+    employee_id: employee?.id || "",
     type: "one_on_one",
     content: "",
     action_plan: "",
@@ -37,6 +38,17 @@ export default function FeedbacksSection({ employee }) {
   const [filters, setFilters] = useState({
     type: "all",
     status: "all"
+  });
+
+  // Buscar todos colaboradores do workshop para seleção
+  const { data: allEmployees = [] } = useQuery({
+    queryKey: ['workshop-employees', employee?.workshop_id],
+    queryFn: async () => {
+      if (!employee?.workshop_id) return [];
+      const result = await base44.entities.Employee.filter({ workshop_id: employee.workshop_id }, 'full_name');
+      return Array.isArray(result) ? result : [];
+    },
+    enabled: !!employee?.workshop_id
   });
 
   // Fetch Feedbacks - busca feedbacks recebidos pelo colaborador
@@ -66,7 +78,7 @@ export default function FeedbacksSection({ employee }) {
         action_plan: data.action_plan || null,
         action_plan_deadline: data.action_plan_deadline || null,
         privacy: data.privacy,
-        employee_id: employee.id,
+        employee_id: data.employee_id,
         evaluator_id: user.id,
         workshop_id: employee.workshop_id
       });
@@ -74,7 +86,14 @@ export default function FeedbacksSection({ employee }) {
     onSuccess: () => {
       toast.success("Feedback registrado com sucesso!");
       setShowDialog(false);
-      setFormData({ type: "one_on_one", content: "", action_plan: "", action_plan_deadline: "", privacy: "privado_gestor" });
+      setFormData({ 
+        employee_id: employee?.id || "", 
+        type: "one_on_one", 
+        content: "", 
+        action_plan: "", 
+        action_plan_deadline: "", 
+        privacy: "privado_gestor" 
+      });
       queryClient.invalidateQueries(['employee-feedbacks']);
     },
     onError: (error) => {
@@ -95,6 +114,10 @@ export default function FeedbacksSection({ employee }) {
   });
 
   const handleAdd = () => {
+    if (!formData.employee_id) {
+      toast.error("Selecione o colaborador");
+      return;
+    }
     if (!formData.content.trim()) {
       toast.error("Digite o conteúdo do feedback");
       return;
@@ -301,8 +324,9 @@ export default function FeedbacksSection({ employee }) {
                                 {feedback.created_at ? format(new Date(feedback.created_at), "dd 'de' MMMM", { locale: ptBR }) : '-'}
                             </Badge>
                         </div>
-                        <p className="text-xs text-gray-500">
-                          Registrado por: {feedback.created_by || 'Gestor'} em {feedback.created_date ? format(new Date(feedback.created_date), "dd/MM/yyyy HH:mm") : '-'}
+                        <p className="text-xs text-gray-500 font-medium">
+                          Registrado por: <span className="text-blue-700">{feedback.created_by || 'Sistema'}</span>
+                          {' • '} {feedback.created_date ? format(new Date(feedback.created_date), "dd/MM/yyyy 'às' HH:mm") : '-'}
                         </p>
                       </div>
                     </div>
@@ -362,6 +386,22 @@ export default function FeedbacksSection({ employee }) {
             <DialogTitle>Novo Registro de Feedback</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
+            <div>
+              <Label>Colaborador *</Label>
+              <Select value={formData.employee_id} onValueChange={v => setFormData({...formData, employee_id: v})}>
+                <SelectTrigger className="bg-slate-50">
+                  <SelectValue placeholder="Selecione o colaborador" />
+                </SelectTrigger>
+                <SelectContent>
+                  {allEmployees.map(emp => (
+                    <SelectItem key={emp.id} value={emp.id}>
+                      {emp.full_name} - {emp.position}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <Label>Tipo</Label>
