@@ -21,21 +21,39 @@ const DEFAULT_TEXTS = {
 
 export default function RegimentEditor({ regiment, workshop, onSave, onCancel }) {
   const queryClient = useQueryClient();
-  const [formData, setFormData] = useState(regiment || {
-    workshop_id: workshop?.id,
-    version: "1.0",
-    effective_date: new Date().toISOString().split('T')[0],
-    replaces_previous: true,
-    identification: {
-      company_name: workshop?.name || "",
-      cnpj: workshop?.cnpj || "",
-      address: workshop?.endereco_completo || ""
-    },
-    objective: DEFAULT_TEXTS.objective,
-    status: "draft",
-    warning_legal_text: DEFAULT_TEXTS.warning_legal_text,
-    acknowledgment_text: DEFAULT_TEXTS.acknowledgment_text,
-    final_provisions: DEFAULT_TEXTS.final_provisions
+  const [formData, setFormData] = useState(() => {
+    // Se está editando regimento existente
+    if (regiment) {
+      return {
+        ...regiment,
+        identification: {
+          company_name: regiment.identification?.company_name || workshop?.name || "",
+          cnpj: regiment.identification?.cnpj || workshop?.cnpj || "",
+          address: regiment.identification?.address || workshop?.endereco_completo || ""
+        },
+        warning_legal_text: regiment.warning_legal_text || DEFAULT_TEXTS.warning_legal_text,
+        acknowledgment_text: regiment.acknowledgment_text || DEFAULT_TEXTS.acknowledgment_text,
+        final_provisions: regiment.final_provisions || DEFAULT_TEXTS.final_provisions
+      };
+    }
+    
+    // Se está criando novo
+    return {
+      workshop_id: workshop?.id,
+      version: "1.0",
+      effective_date: new Date().toISOString().split('T')[0],
+      replaces_previous: true,
+      identification: {
+        company_name: workshop?.name || "",
+        cnpj: workshop?.cnpj || "",
+        address: workshop?.endereco_completo || ""
+      },
+      sections: [],
+      status: "draft",
+      warning_legal_text: DEFAULT_TEXTS.warning_legal_text,
+      acknowledgment_text: DEFAULT_TEXTS.acknowledgment_text,
+      final_provisions: DEFAULT_TEXTS.final_provisions
+    };
   });
 
   const saveMutation = useMutation({
@@ -137,6 +155,7 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
           <Card>
             <CardHeader>
               <CardTitle>1️⃣ Identificação do Documento</CardTitle>
+              <p className="text-xs text-gray-500 mt-1">📌 Dados preenchidos automaticamente do cadastro da oficina</p>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -148,6 +167,7 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
                       ...formData,
                       identification: { ...formData.identification, company_name: e.target.value }
                     })}
+                    className="bg-blue-50"
                   />
                 </div>
                 <div>
@@ -158,6 +178,7 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
                       ...formData,
                       identification: { ...formData.identification, cnpj: e.target.value }
                     })}
+                    className="bg-blue-50"
                   />
                 </div>
               </div>
@@ -170,6 +191,7 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
                     ...formData,
                     identification: { ...formData.identification, address: e.target.value }
                   })}
+                  className="bg-blue-50"
                 />
               </div>
 
@@ -209,43 +231,127 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
         </TabsContent>
 
         <TabsContent value="work">
-          <RegimentSectionEditor
-            title="3️⃣ Jornada de Trabalho e Pontualidade"
-            description="Base legal: CLT – art. 58 e 74"
-            sectionKey="work_schedule"
-            formData={formData}
-            setFormData={setFormData}
-          />
+          <Card>
+            <CardHeader>
+              <CardTitle>3️⃣ Jornada de Trabalho, Ponto e Atrasos</CardTitle>
+              <p className="text-sm text-gray-600">Base legal: CLT – art. 58 e 74</p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {formData.sections?.filter(s => s.id === "3").map(section => (
+                <div key={section.id}>
+                  {section.subsections?.map((sub, index) => (
+                    <div key={sub.id} className="mb-3">
+                      <Label className="text-xs text-gray-600">{sub.number}</Label>
+                      <Textarea
+                        rows={2}
+                        value={sub.content}
+                        onChange={(e) => {
+                          const newSections = [...(formData.sections || [])];
+                          const sectionIndex = newSections.findIndex(s => s.id === "3");
+                          newSections[sectionIndex].subsections[index].content = e.target.value;
+                          setFormData({ ...formData, sections: newSections });
+                        }}
+                        className="text-sm"
+                      />
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="conduct">
-          <RegimentSectionEditor
-            title="4️⃣ Conduta e Comportamento Profissional"
-            description="Base legal: CLT – art. 482 (b, k) | Constituição Federal – art. 225"
-            sectionKey="professional_conduct"
-            formData={formData}
-            setFormData={setFormData}
-          />
+          <Card>
+            <CardHeader>
+              <CardTitle>5️⃣ Conduta e Comportamento Profissional</CardTitle>
+              <p className="text-sm text-gray-600">Base legal: CLT – art. 482 (b, k) | Constituição Federal – art. 225</p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {formData.sections?.filter(s => s.id === "5").map(section => (
+                <div key={section.id}>
+                  {section.subsections?.map((sub, index) => (
+                    <div key={sub.id} className="mb-3">
+                      <Label className="text-xs text-gray-600">{sub.number}</Label>
+                      <Textarea
+                        rows={2}
+                        value={sub.content}
+                        onChange={(e) => {
+                          const newSections = [...(formData.sections || [])];
+                          const sectionIndex = newSections.findIndex(s => s.id === "5");
+                          newSections[sectionIndex].subsections[index].content = e.target.value;
+                          setFormData({ ...formData, sections: newSections });
+                        }}
+                        className="text-sm"
+                      />
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="safety">
-          <RegimentSectionEditor
-            title="6️⃣ Uniforme, EPI e Segurança"
-            description="Base legal: CLT – art. 158 | NR-06 (EPI)"
-            sectionKey="uniform_epi_safety"
-            formData={formData}
-            setFormData={setFormData}
-          />
+          <Card>
+            <CardHeader>
+              <CardTitle>6️⃣ Uniforme, EPI e Segurança</CardTitle>
+              <p className="text-sm text-gray-600">Base legal: CLT – art. 158 | NR-06 (EPI)</p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {formData.sections?.filter(s => s.id === "6").map(section => (
+                <div key={section.id}>
+                  {section.subsections?.map((sub, index) => (
+                    <div key={sub.id} className="mb-3">
+                      <Label className="text-xs text-gray-600">{sub.number}</Label>
+                      <Textarea
+                        rows={2}
+                        value={sub.content}
+                        onChange={(e) => {
+                          const newSections = [...(formData.sections || [])];
+                          const sectionIndex = newSections.findIndex(s => s.id === "6");
+                          newSections[sectionIndex].subsections[index].content = e.target.value;
+                          setFormData({ ...formData, sections: newSections });
+                        }}
+                        className="text-sm"
+                      />
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="assets">
-          <RegimentSectionEditor
-            title="7️⃣ Patrimônio, Ferramentas e Estoque"
-            description="Base legal: CLT – art. 462, 482 (a e b)"
-            sectionKey="assets_tools_inventory"
-            formData={formData}
-            setFormData={setFormData}
-          />
+          <Card>
+            <CardHeader>
+              <CardTitle>7️⃣ Patrimônio, Ferramentas e Estoque</CardTitle>
+              <p className="text-sm text-gray-600">Base legal: CLT – art. 462, 482 (a e b)</p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {formData.sections?.filter(s => s.id === "7").map(section => (
+                <div key={section.id}>
+                  {section.subsections?.map((sub, index) => (
+                    <div key={sub.id} className="mb-3">
+                      <Label className="text-xs text-gray-600">{sub.number}</Label>
+                      <Textarea
+                        rows={2}
+                        value={sub.content}
+                        onChange={(e) => {
+                          const newSections = [...(formData.sections || [])];
+                          const sectionIndex = newSections.findIndex(s => s.id === "7");
+                          newSections[sectionIndex].subsections[index].content = e.target.value;
+                          setFormData({ ...formData, sections: newSections });
+                        }}
+                        className="text-sm"
+                      />
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="disciplinary">
