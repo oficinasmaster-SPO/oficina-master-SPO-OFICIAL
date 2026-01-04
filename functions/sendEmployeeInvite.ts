@@ -155,9 +155,11 @@ Deno.serve(async (req) => {
     // NÃO criar User aqui - será criado apenas no primeiro login após aprovação
     console.log("ℹ️ User será criado no primeiro login após aprovação do admin");
 
-    // Usa o domínio oficial da aplicação
-    const baseUrl = 'https://oficina-master-b2bc845b.base44.app';
-    const inviteUrl = `${baseUrl}/PrimeiroAcesso?token=${token}`;
+    // Usa o domínio da aplicação (produção ou local)
+    const baseUrl = typeof Deno !== 'undefined' && Deno.env.get('BASE44_APP_URL') 
+      ? Deno.env.get('BASE44_APP_URL')
+      : 'https://oficina-master-copy-b54d47aa.base44.app';
+    const inviteUrl = `${baseUrl}/primeiroacesso?token=${token}`;
 
     console.log("✅ Link de convite gerado:", inviteUrl);
 
