@@ -43,8 +43,38 @@ export default function AdvertenciasSection({ employee }) {
   
   const [filters, setFilters] = useState({
     severity: "all",
-    acknowledged: "all"
+    acknowledged: "all",
+    employee_id: "all"
   });
+
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isManager, setIsManager] = useState(false);
+  const [allEmployees, setAllEmployees] = useState([]);
+
+  // Verificar se é gestor e buscar colaboradores
+  React.useEffect(() => {
+    const init = async () => {
+      try {
+        const user = await base44.auth.me();
+        setCurrentUser(user);
+        
+        const employees = await base44.entities.Employee.filter({ user_id: user.id });
+        const userEmployee = employees?.[0];
+        
+        const managerRoles = ['socio', 'diretor', 'supervisor_loja', 'gerente'];
+        const isManagerRole = user.role === 'admin' || managerRoles.includes(userEmployee?.job_role);
+        setIsManager(isManagerRole);
+
+        if (isManagerRole && employee?.workshop_id) {
+          const workshopEmployees = await base44.entities.Employee.filter({ workshop_id: employee.workshop_id });
+          setAllEmployees(Array.isArray(workshopEmployees) ? workshopEmployees : []);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    init();
+  }, [employee?.workshop_id]);
 
   // Buscar advertências
   const { data: warnings = [], isLoading } = useQuery({
@@ -260,12 +290,31 @@ JSON: { "rule_violated": "...", "corrective_guidance": "..." }`;
     });
   };
 
+  const handleViewDetail = async (warning) => {
+    setSelectedWarning(warning);
+    setShowAckModal(true);
+    
+    // Se não for gestor e ainda não deu ciência, dar automaticamente
+    if (!isManager && !warning.employee_acknowledged && !warning.employee_refused) {
+      try {
+        await base44.entities.EmployeeWarning.update(warning.id, {
+          employee_acknowledged: true,
+          employee_acknowledged_at: new Date().toISOString()
+        });
+        queryClient.invalidateQueries(['employee-warnings']);
+      } catch (error) {
+        console.error("Erro ao dar ciência:", error);
+      }
+    }
+  };
+
   const filteredWarnings = warnings.filter(w => {
     const severityMatch = filters.severity === "all" || w.severity === filters.severity;
     const ackMatch = filters.acknowledged === "all" || 
       (filters.acknowledged === "yes" && w.employee_acknowledged) ||
       (filters.acknowledged === "no" && !w.employee_acknowledged);
-    return severityMatch && ackMatch;
+    const employeeMatch = filters.employee_id === "all" || w.employee_id === filters.employee_id;
+    return severityMatch && ackMatch && employeeMatch;
   });
 
   const severityConfig = {
@@ -289,7 +338,22 @@ JSON: { "rule_violated": "...", "corrective_guidance": "..." }`;
             </Button>
           </div>
 
-          <div className="flex gap-2 mt-4">
+          <div className="flex gap-2 mt-4 flex-wrap">
+            {isManager && (
+              <Select value={filters.employee_id} onValueChange={(v) => setFilters({...filters, employee_id: v})}>
+                <SelectTrigger className="h-8 w-48">
+                  <SelectValue placeholder="Colaborador" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos Colaboradores</SelectItem>
+                  {allEmployees.map(emp => (
+                    <SelectItem key={emp.id} value={emp.id}>
+                      {emp.full_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             <Select value={filters.severity} onValueChange={(v) => setFilters({...filters, severity: v})}>
               <SelectTrigger className="h-8 w-32">
                 <SelectValue />
@@ -322,94 +386,80 @@ JSON: { "rule_violated": "...", "corrective_guidance": "..." }`;
           ) : filteredWarnings.length === 0 ? (
             <p className="text-center text-gray-500 py-8">Nenhuma advertência encontrada</p>
           ) : (
-            <div className="space-y-3">
-              {filteredWarnings.map((warning) => {
-                const config = severityConfig[warning.severity];
-                return (
-                  <div key={warning.id} className={`p-4 rounded-lg border-2 ${config.color}`}>
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <AlertTriangle className="w-5 h-5 text-orange-600" />
-                        {warning.custom_id && (
-                          <Badge className="bg-orange-600 text-white text-xs font-mono">
-                            {warning.custom_id}
-                          </Badge>
-                        )}
-                        <span className="font-bold">#{warning.warning_number} - {warning.reason}</span>
-                        <Badge className={config.badge}>{config.label}</Badge>
-                        {warning.employee_acknowledged && (
-                          <Badge className="bg-green-100 text-green-800">
-                            <CheckCircle2 className="w-3 h-3 mr-1" />
-                            Ciente
-                          </Badge>
-                        )}
-                        {warning.employee_refused && (
-                          <Badge className="bg-red-100 text-red-800">
-                            <XCircle className="w-3 h-3 mr-1" />
-                            Recusou
-                          </Badge>
-                        )}
-                      </div>
-                      <span className="text-sm text-gray-600">
-                        {format(new Date(warning.occurrence_date), 'dd/MM/yyyy')}
-                      </span>
-                    </div>
-                    
-                    <p className="text-sm text-gray-700 mb-2">{warning.description}</p>
-                    <p className="text-xs text-gray-500 mt-2">
-                      📍 Local: {warning.occurrence_location} • 👤 Aplicada por: {warning.created_by}
-                    </p>
-                    
-                    <div className="flex gap-2 mt-3 flex-wrap">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedWarning(warning);
-                          setShowAckModal(true);
-                        }}
-                      >
-                        <Eye className="w-3 h-3 mr-1" />
-                        Ver Detalhes
-                      </Button>
-                      
-                      <div className="flex flex-col gap-1">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => sendEmailNotification(warning)}
-                          className={warning.email_sent ? "bg-blue-50 text-blue-700 border-blue-200 opacity-70" : ""}
-                        >
-                          <Mail className="w-3 h-3 mr-1" />
-                          {warning.email_sent ? "Reenviar Email" : "Enviar Email"}
-                        </Button>
-                        {warning.email_sent && warning.email_sent_at && (
-                          <span className="text-xs text-gray-500 ml-1">
-                            Enviado: {format(new Date(warning.email_sent_at), "dd/MM/yyyy 'às' HH:mm")}
-                          </span>
-                        )}
-                      </div>
+            <div className="bg-white rounded-lg border overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b">
+                  <tr>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600">ID</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600">Gravidade</th>
+                    {isManager && <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600">Colaborador</th>}
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600">Motivo</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600">Data</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600">Status</th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-gray-600">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {filteredWarnings.map((warning) => {
+                    const config = severityConfig[warning.severity];
+                    const employeeData = allEmployees.find(e => e.id === warning.employee_id);
 
-                      {warning.employee_acknowledged && warning.employee_acknowledged_at && (
-                        <div className="flex flex-col gap-1">
-                          <Badge className="bg-green-100 text-green-700 border-green-200 opacity-70">
-                            <CheckCircle2 className="w-3 h-3 mr-1" />
-                            Ciência ✓
+                    return (
+                      <tr key={warning.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-4 py-3">
+                          <Badge className="bg-orange-600 text-white text-xs font-mono">
+                            {warning.custom_id || '-'}
                           </Badge>
-                          <span className="text-xs text-gray-500 ml-1">
-                            Dado em: {format(new Date(warning.employee_acknowledged_at), "dd/MM/yyyy 'às' HH:mm")}
+                        </td>
+                        <td className="px-4 py-3">
+                          <Badge className={config.badge}>{config.label}</Badge>
+                        </td>
+                        {isManager && (
+                          <td className="px-4 py-3">
+                            <span className="text-sm text-gray-900">{employeeData?.full_name || '-'}</span>
+                          </td>
+                        )}
+                        <td className="px-4 py-3">
+                          <span className="text-sm font-medium">{warning.reason}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-sm text-gray-600">
+                            {format(new Date(warning.occurrence_date), 'dd/MM/yyyy')}
                           </span>
-                        </div>
-                      )}
-                      {!warning.employee_acknowledged && !warning.employee_refused && (
-                        <Badge className="bg-red-100 text-red-700 border-red-200">
-                          Aguardando Ciência
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+                        </td>
+                        <td className="px-4 py-3">
+                          {warning.employee_acknowledged ? (
+                            <Badge className="bg-green-100 text-green-700">
+                              <CheckCircle2 className="w-3 h-3 mr-1" />
+                              Ciente
+                            </Badge>
+                          ) : warning.employee_refused ? (
+                            <Badge className="bg-red-100 text-red-700">
+                              <XCircle className="w-3 h-3 mr-1" />
+                              Recusou
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-red-100 text-red-700">
+                              <Clock className="w-3 h-3 mr-1" />
+                              Pendente
+                            </Badge>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleViewDetail(warning)}
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            Ver
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           )}
         </CardContent>

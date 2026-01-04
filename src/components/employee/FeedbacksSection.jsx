@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, MessageSquare, ThumbsUp, ThumbsDown, Users, Wand2, Printer, Filter, Calendar, CheckCircle2, Clock, AlertCircle, Target, Activity, Mic, Mail, Loader2 } from "lucide-react";
+import { Plus, MessageSquare, ThumbsUp, ThumbsDown, Users, Wand2, Printer, Filter, Calendar, CheckCircle2, Clock, AlertCircle, Target, Activity, Mic, Mail, Loader2, Eye } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,27 @@ import AudioRecorder from "@/components/audio/AudioRecorder";
 
 export default function FeedbacksSection({ employee }) {
   const queryClient = useQueryClient();
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isManager, setIsManager] = useState(false);
+
+  // Verificar se é gestor
+  React.useEffect(() => {
+    const checkRole = async () => {
+      try {
+        const user = await base44.auth.me();
+        setCurrentUser(user);
+        
+        const employees = await base44.entities.Employee.filter({ user_id: user.id });
+        const userEmployee = employees?.[0];
+        
+        const managerRoles = ['socio', 'diretor', 'supervisor_loja', 'gerente'];
+        setIsManager(user.role === 'admin' || managerRoles.includes(userEmployee?.job_role));
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    checkRole();
+  }, []);
   const [showDialog, setShowDialog] = useState(false);
   const [generatingAI, setGeneratingAI] = useState(false);
   const [selectedFeedback, setSelectedFeedback] = useState(null);
@@ -41,8 +62,12 @@ export default function FeedbacksSection({ employee }) {
   // Filters
   const [filters, setFilters] = useState({
     type: "all",
-    status: "all"
+    status: "all",
+    employee_id: "all"
   });
+
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedFeedbackDetail, setSelectedFeedbackDetail] = useState(null);
 
   // Buscar todos colaboradores do workshop para seleção
   const { data: allEmployees = [] } = useQuery({
@@ -322,10 +347,29 @@ export default function FeedbacksSection({ employee }) {
     // Implementar depois adaptando para a nova estrutura
   };
 
+  const handleViewDetail = async (feedback) => {
+    setSelectedFeedbackDetail(feedback);
+    setShowDetailModal(true);
+    
+    // Se não for gestor e ainda não deu ciência, dar automaticamente
+    if (!isManager && !feedback.employee_acknowledged) {
+      try {
+        await base44.entities.EmployeeFeedback.update(feedback.id, {
+          employee_acknowledged: true,
+          employee_acknowledged_at: new Date().toISOString()
+        });
+        queryClient.invalidateQueries(['employee-feedbacks']);
+      } catch (error) {
+        console.error("Erro ao dar ciência:", error);
+      }
+    }
+  };
+
   const filteredFeedbacks = feedbacks.filter(fb => {
     const typeMatch = filters.type === "all" || fb.type === filters.type;
     const statusMatch = filters.status === "all" || fb.action_plan_status === filters.status || (!fb.action_plan && filters.status === 'sem_plano');
-    return typeMatch && statusMatch;
+    const employeeMatch = filters.employee_id === "all" || fb.employee_id === filters.employee_id;
+    return typeMatch && statusMatch && employeeMatch;
   });
 
   const feedbackConfig = {
@@ -365,6 +409,23 @@ export default function FeedbacksSection({ employee }) {
         </div>
         
         <div className="flex gap-2 mt-4 flex-wrap">
+          {isManager && (
+            <div className="w-48">
+              <Select value={filters.employee_id} onValueChange={(v) => setFilters({...filters, employee_id: v})}>
+                <SelectTrigger className="h-8 bg-white">
+                  <SelectValue placeholder="Colaborador" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos Colaboradores</SelectItem>
+                  {allEmployees.map(emp => (
+                    <SelectItem key={emp.id} value={emp.id}>
+                      {emp.full_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="w-40">
             <Select value={filters.type} onValueChange={(v) => setFilters({...filters, type: v})}>
               <SelectTrigger className="h-8 bg-white">
@@ -403,124 +464,79 @@ export default function FeedbacksSection({ employee }) {
             <p>Nenhum feedback registrado com estes filtros.</p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {filteredFeedbacks.map((feedback) => {
-              const config = feedbackConfig[feedback.type] || feedbackConfig.one_on_one;
-              const Icon = config.icon;
-              const status = statusConfig[feedback.action_plan_status || 'pendente'];
-              const StatusIcon = status.icon;
+          <div className="bg-white rounded-lg border overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b">
+                <tr>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600">ID</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600">Tipo</th>
+                  {isManager && <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600">Colaborador</th>}
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600">Data</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600">Status</th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-600">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {filteredFeedbacks.map((feedback) => {
+                  const config = feedbackConfig[feedback.type] || feedbackConfig.one_on_one;
+                  const Icon = config.icon;
+                  const employeeData = allEmployees.find(e => e.id === feedback.employee_id);
 
-              return (
-                <div key={feedback.id} className={`p-5 rounded-xl border transition-all hover:shadow-md bg-white`}>
-                  {/* Header do Card */}
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${config.badge}`}>
-                        <Icon className="w-5 h-5" />
-                      </div>
-                      <div>
+                  return (
+                    <tr key={feedback.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3">
+                        <Badge className="bg-indigo-600 text-white text-xs font-mono">
+                          {feedback.custom_id || '-'}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                            {feedback.custom_id && (
-                              <Badge className="bg-indigo-600 text-white text-xs font-mono">
-                                {feedback.custom_id}
-                              </Badge>
-                            )}
-                            <span className="font-bold text-gray-900 capitalize">{feedback.type.replace('_', ' ')}</span>
-                            <Badge variant="secondary" className="text-xs font-normal bg-gray-100 text-gray-600">
-                                {feedback.created_at ? format(new Date(feedback.created_at), "dd 'de' MMMM", { locale: ptBR }) : '-'}
+                          <div className={`p-1.5 rounded ${config.badge}`}>
+                            <Icon className="w-3.5 h-3.5" />
+                          </div>
+                          <span className="text-sm font-medium capitalize">{feedback.type?.replace('_', ' ')}</span>
+                        </div>
+                      </td>
+                      {isManager && (
+                        <td className="px-4 py-3">
+                          <span className="text-sm text-gray-900">{employeeData?.full_name || '-'}</span>
+                        </td>
+                      )}
+                      <td className="px-4 py-3">
+                        <span className="text-sm text-gray-600">
+                          {feedback.created_date ? format(new Date(feedback.created_date), "dd/MM/yyyy") : '-'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-col gap-1">
+                          {feedback.employee_acknowledged ? (
+                            <Badge className="bg-green-100 text-green-700 w-fit">
+                              <CheckCircle2 className="w-3 h-3 mr-1" />
+                              Ciente
                             </Badge>
-                        </div>
-                        <p className="text-xs text-gray-500 font-medium">
-                          Registrado por: <span className="text-blue-700">{feedback.created_by || 'Sistema'}</span>
-                          {' • '} {feedback.created_date ? format(new Date(feedback.created_date), "dd/MM/yyyy 'às' HH:mm") : '-'}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    {feedback.action_plan && (
-                        <div className="flex items-center gap-2">
-                            <Badge className={`${status.class} flex items-center gap-1`}>
-                                <StatusIcon className="w-3 h-3" />
-                                {status.label}
+                          ) : (
+                            <Badge className="bg-red-100 text-red-700 w-fit">
+                              <Clock className="w-3 h-3 mr-1" />
+                              Pendente
                             </Badge>
-                            <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-8 w-8"
-                                onClick={() => { setSelectedFeedback(feedback); setShowActionPlanModal(true); }}
-                            >
-                                <Target className="w-4 h-4 text-gray-500" />
-                            </Button>
+                          )}
                         </div>
-                    )}
-                  </div>
-
-                  {/* Conteúdo */}
-                  <div className="pl-12">
-                    <div className="text-sm text-gray-700 whitespace-pre-wrap bg-slate-50 p-3 rounded border border-slate-100 mb-3">
-                        {feedback.content}
-                    </div>
-
-                    {/* Botões de ação */}
-                    <div className="flex gap-2 flex-wrap mb-3">
-                      <div className="flex flex-col gap-1">
+                      </td>
+                      <td className="px-4 py-3 text-right">
                         <Button
-                          variant="outline"
+                          variant="ghost"
                           size="sm"
-                          onClick={() => sendEmailNotification(feedback)}
-                          className={feedback.email_sent ? "bg-blue-50 text-blue-700 border-blue-200 opacity-70" : ""}
+                          onClick={() => handleViewDetail(feedback)}
                         >
-                          <Mail className="w-3 h-3 mr-1" />
-                          {feedback.email_sent ? "Reenviar Email" : "Enviar Email"}
+                          <Eye className="w-4 h-4 mr-1" />
+                          Ver
                         </Button>
-                        {feedback.email_sent && feedback.email_sent_at && (
-                          <span className="text-xs text-gray-500 ml-1">
-                            Enviado: {format(new Date(feedback.email_sent_at), "dd/MM/yyyy 'às' HH:mm")}
-                          </span>
-                        )}
-                      </div>
-                      
-                      <div className="flex flex-col gap-1">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleAcknowledge(feedback)}
-                          disabled={feedback.employee_acknowledged}
-                          className={feedback.employee_acknowledged 
-                            ? "bg-green-100 text-green-700 border-green-200 opacity-70 cursor-not-allowed" 
-                            : "bg-red-50 text-red-700 border-red-200 hover:bg-red-100"}
-                        >
-                          <CheckCircle2 className="w-3 h-3 mr-1" />
-                          {feedback.employee_acknowledged ? "Ciente ✓" : "Dar Ciência"}
-                        </Button>
-                        {feedback.employee_acknowledged && feedback.employee_acknowledged_at && (
-                          <span className="text-xs text-gray-500 ml-1">
-                            Dado em: {format(new Date(feedback.employee_acknowledged_at), "dd/MM/yyyy 'às' HH:mm")}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Plano de Ação Section */}
-                    {feedback.action_plan && (
-                        <div className="mt-3 border-l-4 border-blue-400 pl-3 bg-blue-50/30 py-2 rounded-r">
-                            <div className="flex items-center gap-2 text-blue-800 font-semibold text-sm mb-1">
-                                <Target className="w-4 h-4" />
-                                Plano de Ação / Compromisso
-                            </div>
-                            <p className="text-sm text-gray-700">{feedback.action_plan}</p>
-                            {feedback.action_plan_deadline && (
-                                <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
-                                    <AlertCircle className="w-3 h-3" />
-                                    Prazo: {format(new Date(feedback.action_plan_deadline), "dd/MM/yyyy")}
-                                </p>
-                            )}
-                        </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
       </CardContent>
@@ -742,6 +758,117 @@ export default function FeedbacksSection({ employee }) {
               </div>
             </div>
           ) : null}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Visualização Detalhada */}
+      <Dialog open={showDetailModal} onOpenChange={setShowDetailModal}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageSquare className="w-5 h-5" />
+              Detalhes do Feedback
+              {selectedFeedbackDetail?.custom_id && (
+                <Badge className="bg-indigo-600 text-white text-xs font-mono ml-2">
+                  {selectedFeedbackDetail.custom_id}
+                </Badge>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+
+          {selectedFeedbackDetail && (
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs text-gray-500">Tipo</Label>
+                  <p className="text-sm font-medium capitalize">{selectedFeedbackDetail.type?.replace('_', ' ')}</p>
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-500">Data</Label>
+                  <p className="text-sm">
+                    {selectedFeedbackDetail.created_date 
+                      ? format(new Date(selectedFeedbackDetail.created_date), "dd/MM/yyyy 'às' HH:mm") 
+                      : '-'}
+                  </p>
+                </div>
+                {isManager && (
+                  <div>
+                    <Label className="text-xs text-gray-500">Colaborador</Label>
+                    <p className="text-sm font-medium">
+                      {allEmployees.find(e => e.id === selectedFeedbackDetail.employee_id)?.full_name || '-'}
+                    </p>
+                  </div>
+                )}
+                <div>
+                  <Label className="text-xs text-gray-500">Registrado por</Label>
+                  <p className="text-sm">{selectedFeedbackDetail.created_by || '-'}</p>
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-xs text-gray-500">Conteúdo</Label>
+                <div className="bg-slate-50 p-4 rounded-lg border text-sm whitespace-pre-wrap mt-1">
+                  {selectedFeedbackDetail.content}
+                </div>
+              </div>
+
+              {selectedFeedbackDetail.action_plan && (
+                <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+                  <div className="flex items-center gap-2 text-blue-800 font-semibold mb-2">
+                    <Target className="w-4 h-4" />
+                    Plano de Ação
+                  </div>
+                  <p className="text-sm text-gray-700">{selectedFeedbackDetail.action_plan}</p>
+                  {selectedFeedbackDetail.action_plan_deadline && (
+                    <p className="text-xs text-red-600 mt-2">
+                      Prazo: {format(new Date(selectedFeedbackDetail.action_plan_deadline), "dd/MM/yyyy")}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <div className="flex gap-2 pt-4 border-t">
+                <div className="flex flex-col gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => sendEmailNotification(selectedFeedbackDetail)}
+                    className={selectedFeedbackDetail.email_sent ? "bg-blue-50 text-blue-700 border-blue-200 opacity-70" : ""}
+                  >
+                    <Mail className="w-3 h-3 mr-1" />
+                    {selectedFeedbackDetail.email_sent ? "Reenviar Email" : "Enviar Email"}
+                  </Button>
+                  {selectedFeedbackDetail.email_sent && selectedFeedbackDetail.email_sent_at && (
+                    <span className="text-xs text-gray-500 ml-1">
+                      Enviado: {format(new Date(selectedFeedbackDetail.email_sent_at), "dd/MM/yyyy 'às' HH:mm")}
+                    </span>
+                  )}
+                </div>
+                
+                {isManager && (
+                  <div className="flex flex-col gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleAcknowledge(selectedFeedbackDetail)}
+                      disabled={selectedFeedbackDetail.employee_acknowledged}
+                      className={selectedFeedbackDetail.employee_acknowledged 
+                        ? "bg-green-100 text-green-700 border-green-200 opacity-70 cursor-not-allowed" 
+                        : "bg-red-50 text-red-700 border-red-200 hover:bg-red-100"}
+                    >
+                      <CheckCircle2 className="w-3 h-3 mr-1" />
+                      {selectedFeedbackDetail.employee_acknowledged ? "Ciente ✓" : "Dar Ciência"}
+                    </Button>
+                    {selectedFeedbackDetail.employee_acknowledged && selectedFeedbackDetail.employee_acknowledged_at && (
+                      <span className="text-xs text-gray-500 ml-1">
+                        Dado em: {format(new Date(selectedFeedbackDetail.employee_acknowledged_at), "dd/MM/yyyy 'às' HH:mm")}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
