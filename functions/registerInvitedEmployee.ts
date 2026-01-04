@@ -45,6 +45,10 @@ Deno.serve(async (req) => {
     // Criar/Atualizar Employee
     const existingEmps = await base44.asServiceRole.entities.Employee.filter({ email: finalEmail });
     
+    // Se o convite já tem profile_id, aprovar automaticamente
+    const autoApprove = !!invite.profile_id;
+    console.log("🔐 Auto-aprovar?", autoApprove, "Profile ID:", invite.profile_id);
+
     const empData = {
       full_name: name || invite.name,
       telefone: phone || '',
@@ -53,6 +57,8 @@ Deno.serve(async (req) => {
       area: invite.area || 'tecnico',
       job_role: invite.job_role || 'outros',
       status: 'ativo',
+      user_status: autoApprove ? 'approved' : 'pending',
+      profile_id: invite.profile_id || null,
       tipo_vinculo: isInternal ? 'interno' : 'cliente',
       is_internal: isInternal,
       first_login_at: new Date().toISOString()
@@ -92,33 +98,35 @@ Deno.serve(async (req) => {
       console.error("❌ Erro ao vincular User ao Employee:", linkError);
     }
 
-    // 🔄 AUTO-VINCULAÇÃO: Buscar perfil baseado em job_role
-    let profileId = null;
-    const jobRole = invite.job_role || 'outros';
-    
-    try {
-      const allProfiles = await base44.asServiceRole.entities.UserProfile.list();
-      const matchingProfile = (allProfiles || []).find(
-        (p) =>
-          p.status === "ativo" &&
-          p.job_roles &&
-          Array.isArray(p.job_roles) &&
-          p.job_roles.includes(jobRole)
-      );
+    // 🔄 AUTO-VINCULAÇÃO: Buscar perfil baseado em job_role (apenas se não foi pré-aprovado)
+    if (!invite.profile_id) {
+      const jobRole = invite.job_role || 'outros';
       
-      if (matchingProfile) {
-        profileId = matchingProfile.id;
-        console.log(`✅ Auto-vinculado ao perfil: ${matchingProfile.name} (job_role: ${jobRole})`);
+      try {
+        const allProfiles = await base44.asServiceRole.entities.UserProfile.list();
+        const matchingProfile = (allProfiles || []).find(
+          (p) =>
+            p.status === "ativo" &&
+            p.job_roles &&
+            Array.isArray(p.job_roles) &&
+            p.job_roles.includes(jobRole)
+        );
         
-        // Atualizar Employee com profile_id
-        await base44.asServiceRole.entities.Employee.update(employee.id, { 
-          profile_id: profileId 
-        });
-      } else {
-        console.warn(`⚠️ Nenhum perfil encontrado para job_role: ${jobRole}`);
+        if (matchingProfile) {
+          console.log(`✅ Auto-vinculado ao perfil: ${matchingProfile.name} (job_role: ${jobRole})`);
+          
+          await base44.asServiceRole.entities.Employee.update(employee.id, { 
+            profile_id: matchingProfile.id,
+            user_status: 'approved'
+          });
+        } else {
+          console.warn(`⚠️ Nenhum perfil encontrado para job_role: ${jobRole}`);
+        }
+      } catch (error) {
+        console.warn("⚠️ Erro ao buscar perfil:", error);
       }
-    } catch (error) {
-      console.warn("⚠️ Erro ao buscar perfil:", error);
+    } else {
+      console.log("✅ Perfil já definido no convite:", invite.profile_id);
     }
 
     await base44.asServiceRole.entities.EmployeeInvite.update(invite.id, {

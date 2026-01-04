@@ -315,27 +315,26 @@ export default function PrimeiroAcesso() {
                 </div>
               </div>
 
-              {/* ALERTA PRINCIPAL - APROVAÇÃO NECESSÁRIA */}
-              <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-lg p-5 shadow-md">
+              {/* ALERTA PRINCIPAL - ACESSO PRÉ-APROVADO */}
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-lg p-5 shadow-md">
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Clock className="w-6 h-6 text-yellow-900" />
+                  <div className="w-12 h-12 bg-green-400 rounded-full flex items-center justify-center flex-shrink-0">
+                    <CheckCircle2 className="w-6 h-6 text-green-900" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-bold text-yellow-900 text-lg mb-2">
-                      ⚠️ Importante: Aprovação Necessária
+                    <h3 className="font-bold text-green-900 text-lg mb-2">
+                      ✅ Acesso Pré-Aprovado pelo Gestor
                     </h3>
-                    <p className="text-yellow-800 text-sm leading-relaxed mb-3">
-                      Após completar seu cadastro, <strong className="text-yellow-900">seu acesso precisará ser aprovado pelo gestor</strong> da oficina. 
-                      Você receberá um email quando seu acesso for liberado.
+                    <p className="text-green-800 text-sm leading-relaxed mb-3">
+                      Seu acesso já foi <strong className="text-green-900">pré-aprovado</strong> pelo gestor da oficina. 
+                      Após completar o cadastro, você poderá fazer login imediatamente!
                     </p>
-                    <div className="bg-yellow-100 rounded p-3 text-xs text-yellow-900">
-                      <p className="font-semibold mb-1">📝 O que acontece depois:</p>
+                    <div className="bg-green-100 rounded p-3 text-xs text-green-900">
+                      <p className="font-semibold mb-1">📝 Próximos passos:</p>
                       <ol className="list-decimal ml-4 space-y-1">
-                        <li>Você completa este cadastro</li>
-                        <li>Aguarda aprovação do gestor</li>
-                        <li>Recebe email de confirmação</li>
-                        <li>Faz login normalmente no sistema</li>
+                        <li>Complete este cadastro com seus dados</li>
+                        <li>Crie sua senha de acesso</li>
+                        <li>Faça login no sistema ✅</li>
                       </ol>
                     </div>
                   </div>

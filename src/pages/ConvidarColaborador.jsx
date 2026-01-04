@@ -32,7 +32,8 @@ export default function ConvidarColaborador() {
     area: "",
     job_role: "outros",
     initial_permission: "colaborador",
-    employee_id: null
+    employee_id: null,
+    profile_id: ""
   });
 
   const jobRoles = [
@@ -56,6 +57,15 @@ export default function ConvidarColaborador() {
     { value: "consultor", label: "Consultor" },
     { value: "outros", label: "Outros" }
   ];
+
+  // Buscar perfis disponíveis
+  const { data: profiles = [] } = useQuery({
+    queryKey: ['user-profiles'],
+    queryFn: async () => {
+      const allProfiles = await base44.entities.UserProfile.list();
+      return allProfiles.filter(p => p.type === 'cliente' && p.status === 'ativo');
+    }
+  });
 
   // Carregar usuário e oficina
   useEffect(() => {
@@ -181,7 +191,8 @@ export default function ConvidarColaborador() {
         area: "", 
         job_role: "outros", 
         initial_permission: "colaborador", 
-        employee_id: null 
+        employee_id: null,
+        profile_id: ""
       });
       
       // Salva o link gerado para exibir
@@ -203,6 +214,10 @@ export default function ConvidarColaborador() {
     e.preventDefault();
     if (!formData.name || !formData.email || !formData.position || !formData.area) {
       toast.error("Preencha todos os campos obrigatórios (*)");
+      return;
+    }
+    if (!formData.profile_id) {
+      toast.error("⚠️ Selecione um Perfil de Acesso para o colaborador");
       return;
     }
     setGeneratedLink(null); // Limpa link anterior
@@ -349,13 +364,13 @@ export default function ConvidarColaborador() {
               </div>
 
               {/* Instruções */}
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                <p className="text-xs font-semibold text-gray-700 mb-2">📋 Próximos passos:</p>
-                <ol className="text-xs text-gray-600 space-y-1 ml-4 list-decimal">
+              <div className="bg-green-50 border border-green-300 rounded-lg p-4">
+                <p className="text-xs font-semibold text-green-900 mb-2">✅ Próximos passos:</p>
+                <ol className="text-xs text-green-800 space-y-1 ml-4 list-decimal">
                   <li>Copie o link usando o botão acima</li>
                   <li>Envie para o colaborador via WhatsApp ou Email</li>
-                  <li>O colaborador deve clicar no link e completar o cadastro</li>
-                  <li>Após conclusão, ele poderá fazer login normalmente</li>
+                  <li>O colaborador clica no link e completa o cadastro</li>
+                  <li><strong>Acesso liberado imediatamente</strong> - ele pode fazer login na hora! ✨</li>
                 </ol>
               </div>
             </CardContent>
@@ -489,18 +504,29 @@ export default function ConvidarColaborador() {
                   </Select>
                 </div>
 
-                <div>
-                  <Label htmlFor="permission">Permissão Inicial</Label>
-                  <Select value={formData.initial_permission} onValueChange={(value) => setFormData({ ...formData, initial_permission: value })}>
-                    <SelectTrigger className="bg-gray-50 focus:bg-white transition-colors">
-                      <SelectValue />
+                <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-4">
+                  <Label htmlFor="profile_id" className="text-blue-900 font-bold flex items-center gap-2">
+                    <AlertCircle className="w-5 h-5" />
+                    Perfil de Acesso * (Define Permissões)
+                  </Label>
+                  <Select value={formData.profile_id} onValueChange={(value) => setFormData({ ...formData, profile_id: value })}>
+                    <SelectTrigger id="profile_id" className="mt-2 bg-white">
+                      <SelectValue placeholder="Selecione o perfil de acesso" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="colaborador">Colaborador</SelectItem>
-                      <SelectItem value="lider">Líder de Equipe</SelectItem>
-                      <SelectItem value="supervisor">Supervisor</SelectItem>
+                      {profiles.map((profile) => (
+                        <SelectItem key={profile.id} value={profile.id}>
+                          {profile.name}
+                          {profile.description && (
+                            <span className="text-xs text-gray-500"> - {profile.description}</span>
+                          )}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
+                  <p className="text-xs text-blue-700 mt-2">
+                    ✅ <strong>Acesso liberado automaticamente</strong> - O colaborador poderá fazer login assim que completar o cadastro
+                  </p>
                 </div>
 
                 <Button 

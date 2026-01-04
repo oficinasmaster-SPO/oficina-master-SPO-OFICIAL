@@ -11,6 +11,8 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
     const { name, email, position, area, job_role, initial_permission, workshop_id, workshop_name, origin, employee_id, invite_type = 'workshop', profile_id, role, telefone, company_id } = body;
+    
+    console.log("📋 Profile ID recebido:", profile_id);
 
     if (!name || !email) {
       return Response.json({ error: 'Campos obrigatórios: nome e email' }, { status: 400 });
@@ -121,13 +123,17 @@ Deno.serve(async (req) => {
       status: 'enviado'
     };
 
-    // Adicionar metadados para convites internos
-    if (invite_type === 'internal' && profile_id) {
-      inviteData.metadata = {
-        profile_id,
-        role: role || 'user',
-        telefone: telefone || ''
-      };
+    // Adicionar profile_id ao convite (interno ou workshop)
+    if (profile_id) {
+      inviteData.profile_id = profile_id;
+      
+      // Metadados extras para internos
+      if (invite_type === 'internal') {
+        inviteData.metadata = {
+          role: role || 'user',
+          telefone: telefone || ''
+        };
+      }
     }
 
     if (existingInvites && existingInvites.length > 0) {
