@@ -54,7 +54,8 @@ import {
   Truck,
   Mail,
   Activity,
-  Bug
+  Bug,
+  UserCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -276,6 +277,14 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('ConvidarColaborador'), 
           icon: Users,
           description: 'Enviar convite por e-mail',
+          highlight: true,
+          requiredPermission: 'employees.create'
+        },
+        { 
+          name: 'Aprovar Colaboradores', 
+          href: createPageUrl('AprovarColaboradores'), 
+          icon: UserCheck,
+          description: 'Aprovar acessos pendentes',
           highlight: true,
           requiredPermission: 'employees.create'
         },
