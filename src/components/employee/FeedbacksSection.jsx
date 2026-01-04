@@ -76,7 +76,14 @@ export default function FeedbacksSection({ employee }) {
   const createMutation = useMutation({
     mutationFn: async (data) => {
       const user = await base44.auth.me();
+      
+      // Gerar custom_id sequencial (F001, F002, etc)
+      const allFeedbacks = await base44.entities.EmployeeFeedback.filter({ workshop_id: employee.workshop_id });
+      const nextNumber = allFeedbacks.length + 1;
+      const customId = `F${String(nextNumber).padStart(3, '0')}`;
+      
       return await base44.entities.EmployeeFeedback.create({
+        custom_id: customId,
         type: data.type,
         content: data.content,
         action_plan: data.action_plan || null,
@@ -413,6 +420,11 @@ export default function FeedbacksSection({ employee }) {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
+                            {feedback.custom_id && (
+                              <Badge className="bg-indigo-600 text-white text-xs font-mono">
+                                {feedback.custom_id}
+                              </Badge>
+                            )}
                             <span className="font-bold text-gray-900 capitalize">{feedback.type.replace('_', ' ')}</span>
                             <Badge variant="secondary" className="text-xs font-normal bg-gray-100 text-gray-600">
                                 {feedback.created_at ? format(new Date(feedback.created_at), "dd 'de' MMMM", { locale: ptBR }) : '-'}
@@ -451,24 +463,42 @@ export default function FeedbacksSection({ employee }) {
 
                     {/* Botões de ação */}
                     <div className="flex gap-2 flex-wrap mb-3">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => sendEmailNotification(feedback)}
-                      >
-                        <Mail className="w-3 h-3 mr-1" />
-                        {feedback.email_sent ? "Reenviar Email" : "Enviar Email"}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleAcknowledge(feedback)}
-                        disabled={feedback.employee_acknowledged}
-                        className={feedback.employee_acknowledged ? "bg-green-50 text-green-700" : ""}
-                      >
-                        <CheckCircle2 className="w-3 h-3 mr-1" />
-                        {feedback.employee_acknowledged ? "Ciente ✓" : "Dar Ciência"}
-                      </Button>
+                      <div className="flex flex-col gap-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => sendEmailNotification(feedback)}
+                          className={feedback.email_sent ? "bg-blue-50 text-blue-700 border-blue-200 opacity-70" : ""}
+                        >
+                          <Mail className="w-3 h-3 mr-1" />
+                          {feedback.email_sent ? "Reenviar Email" : "Enviar Email"}
+                        </Button>
+                        {feedback.email_sent && feedback.email_sent_at && (
+                          <span className="text-xs text-gray-500 ml-1">
+                            Enviado: {format(new Date(feedback.email_sent_at), "dd/MM/yyyy 'às' HH:mm")}
+                          </span>
+                        )}
+                      </div>
+                      
+                      <div className="flex flex-col gap-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleAcknowledge(feedback)}
+                          disabled={feedback.employee_acknowledged}
+                          className={feedback.employee_acknowledged 
+                            ? "bg-green-100 text-green-700 border-green-200 opacity-70 cursor-not-allowed" 
+                            : "bg-red-50 text-red-700 border-red-200 hover:bg-red-100"}
+                        >
+                          <CheckCircle2 className="w-3 h-3 mr-1" />
+                          {feedback.employee_acknowledged ? "Ciente ✓" : "Dar Ciência"}
+                        </Button>
+                        {feedback.employee_acknowledged && feedback.employee_acknowledged_at && (
+                          <span className="text-xs text-gray-500 ml-1">
+                            Dado em: {format(new Date(feedback.employee_acknowledged_at), "dd/MM/yyyy 'às' HH:mm")}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     {/* Plano de Ação Section */}
