@@ -41,8 +41,21 @@ export default function PrimeiroAcesso() {
 
       console.log("🔍 Token recebido:", token);
 
+      // MODO DEMONSTRAÇÃO - Se não tem token, mostra com dados de exemplo
       if (!token) {
-        setError("Token de convite não encontrado. Verifique o link recebido.");
+        console.log("👁️ MODO VISUALIZAÇÃO - Sem token, carregando dados demo");
+        setWorkshop({
+          name: "Oficina Exemplo",
+          city: "São Paulo",
+          state: "SP"
+        });
+        setInvite({
+          name: "Mourcina Silva",
+          email: "mourcina@exemplo.com",
+          position: "Mecânica Automotiva",
+          area: "tecnico",
+          invite_token: "demo-token"
+        });
         setLoading(false);
         return;
       }
