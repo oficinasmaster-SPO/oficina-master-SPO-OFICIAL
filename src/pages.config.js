@@ -88,6 +88,7 @@ import HistoricoMetas from './pages/HistoricoMetas';
 import Home from './pages/Home';
 import IAAnalytics from './pages/IAAnalytics';
 import LogsAuditoriaRBAC from './pages/LogsAuditoriaRBAC';
+import MeuPerfil from './pages/MeuPerfil';
 import MeuPlano from './pages/MeuPlano';
 import MeusProcessos from './pages/MeusProcessos';
 import MeusTreinamentos from './pages/MeusTreinamentos';
@@ -102,9 +103,9 @@ import PainelMetas from './pages/PainelMetas';
 import PesquisaClima from './pages/PesquisaClima';
 import PlanoAcao from './pages/PlanoAcao';
 import Planos from './pages/Planos';
+import QGPBoard from './pages/QGPBoard';
 import PortalColaborador from './pages/PortalColaborador';
 import PublicFeedback from './pages/PublicFeedback';
-import QGPBoard from './pages/QGPBoard';
 import Questionario from './pages/Questionario';
 import RankingBrasil from './pages/RankingBrasil';
 import RegistrarAtendimento from './pages/RegistrarAtendimento';
@@ -137,7 +138,7 @@ import TestUsuarios from './pages/TestUsuarios';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
-import MeuPerfil from './pages/MeuPerfil';
+import Regimento from './pages/Regimento';
 import __Layout from './Layout.jsx';
 
 
@@ -232,6 +233,7 @@ export const PAGES = {
     "Home": Home,
     "IAAnalytics": IAAnalytics,
     "LogsAuditoriaRBAC": LogsAuditoriaRBAC,
+    "MeuPerfil": MeuPerfil,
     "MeuPlano": MeuPlano,
     "MeusProcessos": MeusProcessos,
     "MeusTreinamentos": MeusTreinamentos,
@@ -246,9 +248,9 @@ export const PAGES = {
     "PesquisaClima": PesquisaClima,
     "PlanoAcao": PlanoAcao,
     "Planos": Planos,
+    "QGPBoard": QGPBoard,
     "PortalColaborador": PortalColaborador,
     "PublicFeedback": PublicFeedback,
-    "QGPBoard": QGPBoard,
     "Questionario": Questionario,
     "RankingBrasil": RankingBrasil,
     "RegistrarAtendimento": RegistrarAtendimento,
@@ -281,7 +283,7 @@ export const PAGES = {
     "TreinamentoVendas": TreinamentoVendas,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
-    "MeuPerfil": MeuPerfil,
+    "Regimento": Regimento,
 }
 
 export const pagesConfig = {
