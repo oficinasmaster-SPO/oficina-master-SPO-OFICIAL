@@ -345,6 +345,9 @@ JSON: { "rule_violated": "...", "corrective_guidance": "..." }`;
                     </div>
                     
                     <p className="text-sm text-gray-700 mb-2">{warning.description}</p>
+                    <p className="text-xs text-gray-500 mt-2">
+                      📍 Local: {warning.occurrence_location} • 👤 Aplicada por: {warning.created_by}
+                    </p>
                     
                     <div className="flex gap-2 mt-3">
                       <Button
@@ -386,6 +389,25 @@ JSON: { "rule_violated": "...", "corrective_guidance": "..." }`;
               Registrar Advertência Trabalhista
             </DialogTitle>
           </DialogHeader>
+
+          {/* Cabeçalho com dados do colaborador */}
+          <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+            <h4 className="font-bold text-blue-900 mb-2">Colaborador</h4>
+            <div className="grid grid-cols-3 gap-3 text-sm">
+              <div>
+                <span className="text-blue-700 font-medium">Nome:</span>
+                <p className="text-blue-900">{employee.full_name}</p>
+              </div>
+              <div>
+                <span className="text-blue-700 font-medium">Cargo:</span>
+                <p className="text-blue-900">{employee.position}</p>
+              </div>
+              <div>
+                <span className="text-blue-700 font-medium">Área:</span>
+                <p className="text-blue-900">{employee.area || 'Não definida'}</p>
+              </div>
+            </div>
+          </div>
           
           <div className="space-y-4 py-2">
             <div className="grid grid-cols-2 gap-4">
@@ -455,7 +477,7 @@ JSON: { "rule_violated": "...", "corrective_guidance": "..." }`;
                 />
               )}
               <p className="text-xs text-red-700 mt-2">
-                🎙️ A IA irá transcrever e estruturar juridicamente o áudio
+                🎙️ <strong>Áudio preenche automaticamente:</strong> Descrição do ocorrido, Regra violada e Orientação de correção
               </p>
             </div>
 
