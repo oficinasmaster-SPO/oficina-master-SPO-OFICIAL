@@ -10,7 +10,7 @@ import Sidebar from "@/components/navigation/Sidebar";
 import Breadcrumbs from "@/components/navigation/Breadcrumbs";
 import { SharedDataProvider } from "@/components/shared/SharedDataProvider";
 import GlobalSearch from "@/components/navigation/GlobalSearch";
-import ActivityTracker from "@/components/tracking/ActivityTracker";
+// import ActivityTracker from "@/components/tracking/ActivityTracker";
 import { usePermissions } from "@/components/hooks/usePermissions";
 
 export default function Layout({ children, currentPageName }) {
@@ -264,7 +264,7 @@ export default function Layout({ children, currentPageName }) {
         />
       )}
 
-      {isAuthenticated && <ActivityTracker user={user} workshop={workshop} />}
+      {/* {isAuthenticated && <ActivityTracker user={user} workshop={workshop} />} */}
 
       <div className={`${isAuthenticated && !isPublicPage ? 'lg:pl-64' : ''} flex flex-col min-h-screen transition-all duration-300`} style={isAuthenticated && !isPublicPage ? { paddingLeft: 'var(--sidebar-width, 16rem)' } : {}}>
         {!isPublicPage && (
