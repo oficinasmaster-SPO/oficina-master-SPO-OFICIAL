@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { ArrowLeft, Search, ClipboardList } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import InterviewForm from "@/components/cespe/InterviewForm";
+import LeadScoreInterviewForm from "@/components/cespe/LeadScoreInterviewForm";
 import ScoreCalculator from "@/components/cespe/ScoreCalculator";
 import DreamScriptModal from "@/components/cespe/DreamScriptModal";
 import InterviewFormsManager from "@/components/cespe/InterviewFormsManager";
@@ -28,6 +29,7 @@ export default function CESPEEntrevista() {
   const [showPPE, setShowPPE] = useState(false);
   const [selectedForm, setSelectedForm] = useState(null);
   const [selectedScript, setSelectedScript] = useState(null);
+  const [leadScores, setLeadScores] = useState({});
 
   useEffect(() => {
     const loadData = async () => {
@@ -55,6 +57,9 @@ export default function CESPEEntrevista() {
   const { data: questions = [] } = useQuery({
     queryKey: ['interview-questions', workshop?.id, selectedForm?.id],
     queryFn: async () => {
+      if (selectedForm?.is_lead_score_form) {
+        return selectedForm.scoring_criteria || [];
+      }
       if (selectedForm?.id) {
         return selectedForm.questions || [];
       }
@@ -80,7 +85,44 @@ export default function CESPEEntrevista() {
 
   const saveInterviewMutation = useMutation({
     mutationFn: async (data) => {
-      const scores = ScoreCalculator.calculate(answers);
+      let scores;
+      let finalAnswers;
+
+      if (selectedForm?.is_lead_score_form) {
+        // Calcular scores do Lead Score
+        const totalScore = Object.values(leadScores).reduce((sum, v) => sum + v, 0);
+        const technicalScore = Object.entries(leadScores)
+          .filter(([k]) => k.startsWith('tecnico_'))
+          .reduce((sum, [, v]) => sum + v, 0);
+        const behavioralScore = Object.entries(leadScores)
+          .filter(([k]) => k.startsWith('comportamental_'))
+          .reduce((sum, [, v]) => sum + v, 0);
+        const culturalScore = Object.entries(leadScores)
+          .filter(([k]) => k.startsWith('cultural_'))
+          .reduce((sum, [, v]) => sum + v, 0);
+
+        scores = {
+          final_score: totalScore,
+          technical_score: technicalScore,
+          behavioral_score: behavioralScore,
+          cultural_score: culturalScore
+        };
+
+        // Converter scores em formato de resposta
+        finalAnswers = Object.entries(leadScores).map(([key, value]) => {
+          const [block, index] = key.split('_');
+          const criteria = selectedForm.scoring_criteria[parseInt(index)];
+          return {
+            question_id: key,
+            question_text: criteria?.criteria_name || key,
+            answer: `Pontuação: ${value}/${criteria?.max_points || 10}`,
+            score: value
+          };
+        });
+      } else {
+        scores = ScoreCalculator.calculate(answers);
+        finalAnswers = answers;
+      }
       
       const interviewData = {
         candidate_id: candidateId,
@@ -97,7 +139,7 @@ export default function CESPEEntrevista() {
           growth_opportunities: selectedScript.growth_opportunities,
           not_fit_profile: selectedScript.not_fit_profile
         }) : null,
-        answers,
+        answers: finalAnswers,
         ...scores,
         recommendation,
         interviewer_notes: interviewerNotes,
@@ -203,19 +245,35 @@ export default function CESPEEntrevista() {
             <Progress value={progress} />
           </div>
 
-          <InterviewForm
-            questions={questions}
-            currentStep={currentStep}
-            answers={answers}
-            onAnswerChange={setAnswers}
-            onStepChange={setCurrentStep}
-            interviewerNotes={interviewerNotes}
-            onNotesChange={setInterviewerNotes}
-            recommendation={recommendation}
-            onRecommendationChange={setRecommendation}
-            onSubmit={() => saveInterviewMutation.mutate()}
-            isLoading={saveInterviewMutation.isPending}
-          />
+          {selectedForm?.is_lead_score_form ? (
+            <LeadScoreInterviewForm
+              form={selectedForm}
+              currentStep={currentStep}
+              scores={leadScores}
+              onScoreChange={(key, value) => setLeadScores({...leadScores, [key]: value})}
+              onStepChange={setCurrentStep}
+              interviewerNotes={interviewerNotes}
+              onNotesChange={setInterviewerNotes}
+              recommendation={recommendation}
+              onRecommendationChange={setRecommendation}
+              onSubmit={() => saveInterviewMutation.mutate()}
+              isLoading={saveInterviewMutation.isPending}
+            />
+          ) : (
+            <InterviewForm
+              questions={questions}
+              currentStep={currentStep}
+              answers={answers}
+              onAnswerChange={setAnswers}
+              onStepChange={setCurrentStep}
+              interviewerNotes={interviewerNotes}
+              onNotesChange={setInterviewerNotes}
+              recommendation={recommendation}
+              onRecommendationChange={setRecommendation}
+              onSubmit={() => saveInterviewMutation.mutate()}
+              isLoading={saveInterviewMutation.isPending}
+            />
+          )}
         </Card>
 
         <DreamScriptModal
@@ -238,6 +296,7 @@ export default function CESPEEntrevista() {
           onSelectForm={(form) => {
             setSelectedForm(form);
             setAnswers([]);
+            setLeadScores({});
             setCurrentStep(0);
             setShowPPE(false);
             toast.success(`Formulário "${form.form_name}" selecionado`);
