@@ -78,6 +78,7 @@ import EvidenceUpload from './pages/EvidenceUpload';
 import Feedbacks from './pages/Feedbacks';
 import Gamificacao from './pages/Gamificacao';
 import GerenciarAula from './pages/GerenciarAula';
+import GerenciarChecklists from './pages/GerenciarChecklists';
 import GerenciarModulo from './pages/GerenciarModulo';
 import GerenciarModulosCurso from './pages/GerenciarModulosCurso';
 import GerenciarPlanos from './pages/GerenciarPlanos';
@@ -150,7 +151,6 @@ import TestUsuarios from './pages/TestUsuarios';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
-import GerenciarChecklists from './pages/GerenciarChecklists';
 import __Layout from './Layout.jsx';
 
 
@@ -235,6 +235,7 @@ export const PAGES = {
     "Feedbacks": Feedbacks,
     "Gamificacao": Gamificacao,
     "GerenciarAula": GerenciarAula,
+    "GerenciarChecklists": GerenciarChecklists,
     "GerenciarModulo": GerenciarModulo,
     "GerenciarModulosCurso": GerenciarModulosCurso,
     "GerenciarPlanos": GerenciarPlanos,
@@ -307,7 +308,6 @@ export const PAGES = {
     "TreinamentoVendas": TreinamentoVendas,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
-    "GerenciarChecklists": GerenciarChecklists,
 }
 
 export const pagesConfig = {

@@ -53,6 +53,37 @@ export default class InterviewPDFGenerator {
 
     yPos += 45;
 
+    // Nível de Senioridade
+    if (interview.seniority_level) {
+      const seniorityColors = {
+        junior: [239, 68, 68],
+        pleno: [250, 204, 21],
+        senior: [34, 197, 94],
+        master: [168, 85, 247]
+      };
+      const seniorityLabels = {
+        junior: "🔴 JÚNIOR",
+        pleno: "🟡 PLENO",
+        senior: "🟢 SÊNIOR",
+        master: "🟣 MASTER"
+      };
+
+      doc.setFillColor(249, 250, 251);
+      doc.roundedRect(15, yPos, 180, 20, 3, 3, "F");
+      
+      doc.setFontSize(12);
+      doc.setFont(undefined, "bold");
+      doc.text("Nível de Senioridade:", 20, yPos + 8);
+      
+      const [r, g, b] = seniorityColors[interview.seniority_level];
+      doc.setTextColor(r, g, b);
+      doc.setFontSize(16);
+      doc.text(seniorityLabels[interview.seniority_level], 20, yPos + 15);
+      doc.setTextColor(0, 0, 0);
+
+      yPos += 30;
+    }
+
     // Análise por Competência
     doc.setFontSize(16);
     doc.setFont(undefined, "bold");

@@ -172,6 +172,17 @@ export default function CESPEEntrevista() {
           (completedForms.reduce((sum, f) => sum + (f.scores?.historico || 0), 0) / completedForms.length)
         );
       }
+
+      // Calcular nível de senioridade automaticamente
+      const finalScore = aggregatedScores.final_score;
+      let seniorityLevel = "junior";
+      if (finalScore >= 85) {
+        seniorityLevel = "master";
+      } else if (finalScore >= 70) {
+        seniorityLevel = "senior";
+      } else if (finalScore >= 55) {
+        seniorityLevel = "pleno";
+      }
       
       const interviewData = {
         candidate_id: candidateId,
@@ -189,6 +200,7 @@ export default function CESPEEntrevista() {
         }) : null,
         answers: currentForm.answers,
         ...aggregatedScores,
+        seniority_level: seniorityLevel,
         recommendation,
         interviewer_notes: interviewerNotes,
         completed: updatedForms.every(f => f.completed)
