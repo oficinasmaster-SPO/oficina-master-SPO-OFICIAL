@@ -148,6 +148,16 @@ function DISCQuestionCard({ question, onAnswer }) {
   const [selected, setSelected] = useState({});
 
   const handleSelect = (trait, value) => {
+    // Validar se o número já foi usado
+    const usedNumbers = Object.entries(selected)
+      .filter(([key]) => key !== trait)
+      .map(([, val]) => val);
+
+    if (usedNumbers.includes(value)) {
+      toast.error(`Número ${value} já foi usado. Escolha outro número (1-4).`);
+      return;
+    }
+
     const newSelected = { ...selected, [trait]: value };
     setSelected(newSelected);
 
@@ -164,11 +174,20 @@ function DISCQuestionCard({ question, onAnswer }) {
     }
   };
 
+  const isNumberUsed = (num) => {
+    return Object.values(selected).includes(num);
+  };
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
+      <div className="bg-amber-50 border border-amber-300 rounded-lg p-3 mb-4">
+        <p className="text-sm text-amber-900">
+          <strong>⚠️ Use cada número apenas uma vez:</strong> Ordene as características de 1 (menos) a 4 (mais).
+        </p>
+      </div>
       {Object.entries(question.traits).map(([key, trait]) => (
-        <div key={key} className="border-2 rounded-lg p-4 hover:border-purple-300 transition-colors">
-          <p className="text-gray-700 mb-3">{trait}</p>
+        <div key={key} className="border-2 rounded-lg p-4 hover:border-purple-300 transition-colors bg-white">
+          <p className="text-gray-700 mb-3 font-medium">{trait}</p>
           <div className="flex gap-2">
             {[1, 2, 3, 4].map(val => (
               <Button
@@ -176,12 +195,16 @@ function DISCQuestionCard({ question, onAnswer }) {
                 variant={selected[key] === val ? "default" : "outline"}
                 size="sm"
                 onClick={() => handleSelect(key, val)}
-                className={selected[key] === val ? "bg-purple-600" : ""}
+                disabled={isNumberUsed(val) && selected[key] !== val}
+                className={`${selected[key] === val ? "bg-purple-600" : ""} ${isNumberUsed(val) && selected[key] !== val ? "opacity-40" : ""}`}
               >
                 {val}
               </Button>
             ))}
           </div>
+          {selected[key] && (
+            <p className="text-xs text-green-600 mt-2">✓ Selecionado: {selected[key]}</p>
+          )}
         </div>
       ))}
     </div>

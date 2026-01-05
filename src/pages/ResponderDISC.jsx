@@ -58,6 +58,19 @@ export default function ResponderDISC() {
     if (value !== "" && (isNaN(value) || parseInt(value) < 1 || parseInt(value) > 4)) {
       return;
     }
+
+    // Validar números únicos
+    const currentAnswers = answers[questionId] || {};
+    const usedNumbers = Object.entries(currentAnswers)
+      .filter(([key]) => key !== profile)
+      .map(([, val]) => val)
+      .filter(v => v !== "");
+
+    if (value !== "" && usedNumbers.includes(value)) {
+      toast.error(`Número ${value} já foi usado neste conjunto. Escolha outro.`);
+      return;
+    }
+
     setAnswers({
       ...answers,
       [questionId]: { ...answers[questionId], [profile]: value }
@@ -66,7 +79,15 @@ export default function ResponderDISC() {
 
   const isQuestionComplete = (questionId) => {
     const answer = answers[questionId];
-    return answer && answer.d !== "" && answer.i !== "" && answer.s !== "" && answer.c !== "";
+    if (!answer) return false;
+
+    const allFilled = answer.d !== "" && answer.i !== "" && answer.s !== "" && answer.c !== "";
+    if (!allFilled) return false;
+
+    // Validar números únicos
+    const values = [answer.d, answer.i, answer.s, answer.c];
+    const uniqueValues = new Set(values);
+    return uniqueValues.size === 4 && values.every(v => ['1', '2', '3', '4'].includes(v));
   };
 
   const getFilledQuestions = () => {
@@ -210,10 +231,15 @@ export default function ResponderDISC() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <Card className="bg-amber-50 border-amber-200">
+          <Card className="bg-amber-50 border-2 border-amber-300">
             <CardContent className="p-4 text-sm text-amber-900">
-              <strong>Instruções:</strong> Para cada grupo, pontue de <strong>1 (Menos identificado)</strong> a <strong>4 (Mais identificado)</strong>.
-              Não repita números no mesmo grupo.
+              <strong>⚠️ IMPORTANTE - Ordenação Única:</strong> Para cada grupo, use os números de <strong>1 a 4 apenas UMA VEZ cada</strong>:
+              <br />• <strong>4</strong> = Característica que MAIS se identifica com você
+              <br />• <strong>3</strong> = Segunda característica mais identificada
+              <br />• <strong>2</strong> = Terceira característica
+              <br />• <strong>1</strong> = Característica que MENOS se identifica
+              <br /><br />
+              <strong>Exemplo:</strong> Se você colocar "4" na Opção A, não pode usar "4" novamente. Cada número só pode ser usado uma vez por grupo.
             </CardContent>
           </Card>
 

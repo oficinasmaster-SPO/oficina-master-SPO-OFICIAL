@@ -71,6 +71,18 @@ export default function DiagnosticoDISC() {
       return;
     }
 
+    // Validar números únicos: não permitir duplicatas
+    const currentAnswers = answers[questionId] || {};
+    const usedNumbers = Object.entries(currentAnswers)
+      .filter(([key]) => key !== profile)
+      .map(([, val]) => val)
+      .filter(v => v !== "");
+
+    if (value !== "" && usedNumbers.includes(value)) {
+      toast.error(`Número ${value} já foi usado neste conjunto. Escolha outro.`);
+      return;
+    }
+
     setAnswers({
       ...answers,
       [questionId]: {
@@ -85,7 +97,16 @@ export default function DiagnosticoDISC() {
     if (!answer) return false;
 
     // Verifica se todos os 4 campos estão preenchidos
-    return answer.d !== "" && answer.i !== "" && answer.s !== "" && answer.c !== "";
+    const allFilled = answer.d !== "" && answer.i !== "" && answer.s !== "" && answer.c !== "";
+    if (!allFilled) return false;
+
+    // Verifica se os números são únicos (1, 2, 3, 4)
+    const values = [answer.d, answer.i, answer.s, answer.c];
+    const uniqueValues = new Set(values);
+    const hasAllNumbers = uniqueValues.size === 4 && 
+                         values.every(v => ['1', '2', '3', '4'].includes(v));
+
+    return hasAllNumbers;
   };
 
   const validateAnswers = () => {
@@ -435,11 +456,14 @@ export default function DiagnosticoDISC() {
               <div className="flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-amber-900">
-                  <strong>Instruções:</strong> Para cada conjunto, preencha com números de <strong>1 a 4</strong>:
-                  <br />• <strong>4</strong> = Característica que MAIS se identifica
-                  <br />• <strong>3</strong> = Segunda característica
+                  <strong>⚠️ IMPORTANTE - Ordenação Única:</strong> Em cada conjunto, use os números de <strong>1 a 4 apenas UMA VEZ cada</strong>:
+                  <br />• <strong>4</strong> = Característica que MAIS se identifica com o colaborador
+                  <br />• <strong>3</strong> = Segunda característica mais identificada
                   <br />• <strong>2</strong> = Terceira característica
                   <br />• <strong>1</strong> = Característica que MENOS se identifica
+                  <br /><br />
+                  <strong>Exemplo:</strong> Se você colocar "4" na Opção A, não pode usar "4" novamente nas Opções B, C ou D.
+                  Cada número deve aparecer apenas uma vez por conjunto.
                 </div>
               </div>
             </CardContent>
