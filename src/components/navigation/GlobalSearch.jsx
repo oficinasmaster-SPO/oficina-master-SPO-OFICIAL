@@ -107,45 +107,27 @@ export default function GlobalSearch({ workshopId }) {
                 {query.length < 2 ? "Digite para buscar..." : "Nenhum resultado encontrado."}
               </Command.Empty>
               
-              {(() => {
-                console.log("🎨 [Render] Renderizando resultados:", results.length);
-                console.log("📋 [Render] Tipos únicos:", [...new Set(results.map(r => r.type))]);
-                return null;
-              })()}
-
-              {results.length > 0 && (
-                <div className="space-y-1">
-                    {/* Group by Type */}
-                    {['ProcessDocument', 'InstructionDocument', 'CompanyDocument', 'TrainingCourse', 'Challenge', 'Employee', 'Task', 'Goal', 'EmployeeFeedback', 'Client', 'Workshop'].map(type => {
-                        const typeResults = results.filter(r => r.type === type);
-                        if (typeResults.length === 0) return null;
-                        
-                        return (
-                            <Command.Group key={type} heading={translateType(type)} className="text-xs font-medium text-gray-500 mb-2">
-                                {typeResults.map(result => {
-                                    const Icon = icons[result.icon] || Search;
-                                    return (
-                                        <Command.Item
-                                            key={result.id}
-                                            value={`${result.title} ${result.subtitle}`}
-                                            onSelect={() => handleSelect(result.url)}
-                                            className="relative flex cursor-default select-none items-center rounded-sm px-2 py-2 text-sm outline-none aria-selected:bg-slate-100 aria-selected:text-slate-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
-                                        >
-                                            <Icon className="mr-2 h-4 w-4 text-slate-500" />
-                                            <div className="flex flex-col">
-                                                <span className="font-medium text-slate-900">{result.title}</span>
-                                                {result.subtitle && (
-                                                    <span className="text-xs text-slate-500">{result.subtitle}</span>
-                                                )}
-                                            </div>
-                                        </Command.Item>
-                                    );
-                                })}
-                            </Command.Group>
-                        );
-                    })}
-                </div>
-              )}
+              {results.map((result, idx) => {
+                  const Icon = icons[result.icon] || Search;
+                  console.log(`🔹 [Render Item ${idx}]`, result);
+                  return (
+                      <Command.Item
+                          key={result.id}
+                          value={`${result.title} ${result.subtitle || ''}`}
+                          onSelect={() => handleSelect(result.url)}
+                          className="relative flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-3 text-sm outline-none hover:bg-slate-100 aria-selected:bg-slate-100"
+                      >
+                          <Icon className="h-4 w-4 text-slate-500 flex-shrink-0" />
+                          <div className="flex flex-col flex-1 min-w-0">
+                              <span className="font-medium text-slate-900 truncate">{result.title}</span>
+                              {result.subtitle && (
+                                  <span className="text-xs text-slate-500 truncate">{result.subtitle}</span>
+                              )}
+                          </div>
+                          <span className="text-xs text-slate-400">{translateType(result.type)}</span>
+                      </Command.Item>
+                  );
+              })}
             </Command.List>
           </Command>
         </DialogContent>
