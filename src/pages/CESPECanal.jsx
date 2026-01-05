@@ -5,13 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Users, TrendingUp, Filter, Search, Smartphone } from "lucide-react";
+import { Plus, Users, TrendingUp, Filter, Search, Smartphone, ClipboardList } from "lucide-react";
 import { toast } from "sonner";
 import CandidateFormDialog from "@/components/cespe/CandidateFormDialog";
 import CandidateCard from "@/components/cespe/CandidateCard";
 import ChannelStats from "@/components/cespe/ChannelStats";
 import WebhookSetupGuide from "@/components/cespe/WebhookSetupGuide";
 import DreamScriptModal from "@/components/cespe/DreamScriptModal";
+import QuestionFormsManager from "@/components/cespe/QuestionFormsManager";
 
 export default function CESPECanal() {
   const queryClient = useQueryClient();
@@ -23,6 +24,7 @@ export default function CESPECanal() {
   const [filterChannel, setFilterChannel] = useState("all");
   const [showWebhookGuide, setShowWebhookGuide] = useState(false);
   const [showDreamScript, setShowDreamScript] = useState(false);
+  const [showQuestionForms, setShowQuestionForms] = useState(false);
 
   React.useEffect(() => {
     const loadData = async () => {
@@ -127,6 +129,10 @@ export default function CESPECanal() {
             <p className="text-gray-600">Centralize e gerencie leads de candidatos</p>
           </div>
           <div className="flex gap-2">
+            <Button onClick={() => setShowQuestionForms(true)} variant="outline">
+              <ClipboardList className="w-4 h-4 mr-2" />
+              Perguntas
+            </Button>
             <Button onClick={() => setShowDreamScript(true)} variant="outline">
               <TrendingUp className="w-4 h-4 mr-2" />
               Script de Sonho
@@ -228,6 +234,12 @@ export default function CESPECanal() {
           workshop={workshop}
           script={cultureScript}
           onSave={(data) => saveCultureScriptMutation.mutate(data)}
+        />
+
+        <QuestionFormsManager
+          open={showQuestionForms}
+          onClose={() => setShowQuestionForms(false)}
+          workshopId={workshop?.id}
         />
         </div>
         </div>
