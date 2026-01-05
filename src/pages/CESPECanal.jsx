@@ -11,6 +11,7 @@ import CandidateFormDialog from "@/components/cespe/CandidateFormDialog";
 import CandidateCard from "@/components/cespe/CandidateCard";
 import ChannelStats from "@/components/cespe/ChannelStats";
 import WebhookSetupGuide from "@/components/cespe/WebhookSetupGuide";
+import DreamScriptModal from "@/components/cespe/DreamScriptModal";
 
 export default function CESPECanal() {
   const queryClient = useQueryClient();
@@ -21,6 +22,7 @@ export default function CESPECanal() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterChannel, setFilterChannel] = useState("all");
   const [showWebhookGuide, setShowWebhookGuide] = useState(false);
+  const [showDreamScript, setShowDreamScript] = useState(false);
 
   React.useEffect(() => {
     const loadData = async () => {
@@ -49,6 +51,19 @@ export default function CESPECanal() {
     enabled: !!workshop?.id
   });
 
+  const { data: cultureScript } = useQuery({
+    queryKey: ['culture-script', workshop?.id],
+    queryFn: async () => {
+      if (!workshop?.id) return null;
+      const scripts = await base44.entities.CultureScript.filter({
+        workshop_id: workshop.id,
+        is_active: true
+      });
+      return Array.isArray(scripts) && scripts.length > 0 ? scripts[0] : null;
+    },
+    enabled: !!workshop?.id
+  });
+
   const createCandidateMutation = useMutation({
     mutationFn: async (data) => {
       return await base44.entities.Candidate.create({
@@ -70,6 +85,23 @@ export default function CESPECanal() {
     },
     onError: (error) => {
       toast.error(error.message || "Erro ao cadastrar candidato");
+    }
+  });
+
+  const saveCultureScriptMutation = useMutation({
+    mutationFn: async (data) => {
+      if (cultureScript?.id) {
+        return await base44.entities.CultureScript.update(cultureScript.id, data);
+      } else {
+        return await base44.entities.CultureScript.create({
+          ...data,
+          workshop_id: workshop.id,
+          is_active: true
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['culture-script'] });
     }
   });
 
@@ -95,6 +127,10 @@ export default function CESPECanal() {
             <p className="text-gray-600">Centralize e gerencie leads de candidatos</p>
           </div>
           <div className="flex gap-2">
+            <Button onClick={() => setShowDreamScript(true)} variant="outline">
+              <TrendingUp className="w-4 h-4 mr-2" />
+              Script de Sonho
+            </Button>
             <Button onClick={() => setShowWebhookGuide(true)} variant="outline">
               <Smartphone className="w-4 h-4 mr-2" />
               Captura WhatsApp
@@ -185,7 +221,15 @@ export default function CESPECanal() {
           onClose={() => setShowWebhookGuide(false)}
           workshopId={workshop?.id}
         />
-      </div>
-    </div>
-  );
-}
+
+        <DreamScriptModal
+          open={showDreamScript}
+          onClose={() => setShowDreamScript(false)}
+          workshop={workshop}
+          script={cultureScript}
+          onSave={(data) => saveCultureScriptMutation.mutate(data)}
+        />
+        </div>
+        </div>
+        );
+        }
