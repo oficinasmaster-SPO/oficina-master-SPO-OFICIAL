@@ -215,11 +215,15 @@ export default function ChecklistManager({ workshopId }) {
                   value={editingTemplate.job_role}
                   onChange={(e) => setEditingTemplate({...editingTemplate, job_role: e.target.value})}
                   className="w-full px-3 py-2 border rounded-md"
+                  disabled={editingTemplate.isFromForm}
                 >
                   {Object.entries(jobRoleLabels).map(([key, label]) => (
                     <option key={key} value={key}>{label}</option>
                   ))}
                 </select>
+                {editingTemplate.isFromForm && (
+                  <p className="text-xs text-gray-500 mt-1">Campo fixo para checklists do Lead Score</p>
+                )}
               </div>
 
               <div>
@@ -228,11 +232,15 @@ export default function ChecklistManager({ workshopId }) {
                   value={editingTemplate.checklist_type}
                   onChange={(e) => setEditingTemplate({...editingTemplate, checklist_type: e.target.value})}
                   className="w-full px-3 py-2 border rounded-md"
+                  disabled={editingTemplate.isFromForm}
                 >
                   {Object.entries(checklistTypeLabels).map(([key, label]) => (
                     <option key={key} value={key}>{label}</option>
                   ))}
                 </select>
+                {editingTemplate.isFromForm && (
+                  <p className="text-xs text-gray-500 mt-1">Campo fixo para checklists do Lead Score</p>
+                )}
               </div>
             </div>
 
