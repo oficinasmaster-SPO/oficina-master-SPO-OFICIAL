@@ -144,8 +144,20 @@ export default function CESPEEntrevista() {
           // Mapear tipo de critério para checklist_type
           const typeMap = {
             'conhecimento técnico': 'conhecimento_tecnico',
+            'conhecimento': 'conhecimento_tecnico',
+            'técnico': 'conhecimento_tecnico',
             'experiência prática': 'experiencia_pratica',
-            'capacidade de diagnóstico': 'capacidade_diagnostico'
+            'experiência': 'experiencia_pratica',
+            'prática': 'experiencia_pratica',
+            'capacidade de diagnóstico': 'capacidade_diagnostico',
+            'capacidade': 'capacidade_diagnostico',
+            'diagnóstico': 'capacidade_diagnostico',
+            'habilidades de vendas': 'habilidades_vendas',
+            'habilidades vendas': 'habilidades_vendas',
+            'atendimento ao cliente': 'atendimento_cliente',
+            'atendimento': 'atendimento_cliente',
+            'organização': 'organizacao',
+            'financeiro': 'financeiro'
           };
 
           const criterionNameLower = criterion.criteria_name?.toLowerCase() || '';
@@ -163,17 +175,24 @@ export default function CESPEEntrevista() {
             
             if (matchedChecklist) {
               console.log('✅ Checklist injetado:', criterion.criteria_name, '→', matchedChecklist.template_name);
+              // 🔥 FORÇAR sobrescrever checklist (ignorar o que está salvo no form)
               return {
                 ...criterion,
                 has_checklist: true,
-                checklist_items: matchedChecklist.items,
+                checklist_items: matchedChecklist.items, // SEMPRE sobrescreve
                 job_role: detectedJobRole,
                 checklist_type: matchedChecklistType
               };
             }
           }
 
-          return criterion;
+          // Se não encontrou checklist, REMOVER qualquer checklist antigo
+          return {
+            ...criterion,
+            has_checklist: false,
+            checklist_items: [],
+            job_role: detectedJobRole
+          };
         });
 
         return enrichedCriteria;
