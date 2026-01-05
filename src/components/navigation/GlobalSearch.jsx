@@ -18,7 +18,6 @@ export default function GlobalSearch({ workshopId }) {
   const [selectedTypes, setSelectedTypes] = useState([]);
   const navigate = useNavigate();
 
-  // Toggle with keyboard shortcut
   useEffect(() => {
     const down = (e) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
@@ -30,7 +29,6 @@ export default function GlobalSearch({ workshopId }) {
     return () => document.removeEventListener("keydown", down);
   }, []);
 
-  // Debounce search
   useEffect(() => {
     if (!query || query.length < 2) {
       setResults([]);
@@ -41,7 +39,6 @@ export default function GlobalSearch({ workshopId }) {
 
     const timer = setTimeout(async () => {
       setLoading(true);
-      console.log("🔍 [GlobalSearch] Iniciando busca:", { query, workshopId, selectedTypes });
       try {
         const response = await base44.functions.invoke("globalSearch", {
           query,
@@ -50,7 +47,6 @@ export default function GlobalSearch({ workshopId }) {
           limit: 20,
           entity_types: selectedTypes
         });
-        console.log("📦 [GlobalSearch] Resposta:", response.data);
         setResults(response.data?.results || []);
         setTotal(response.data?.total || 0);
         setHasMore(response.data?.hasMore || false);
@@ -80,8 +76,8 @@ export default function GlobalSearch({ workshopId }) {
   };
 
   const availableTypes = [
-    { value: 'ProcessDocument', label: 'Processos (MAPs)' },
-    { value: 'InstructionDocument', label: 'Instruções (ITs)' },
+    { value: 'ProcessDocument', label: 'Processos' },
+    { value: 'InstructionDocument', label: 'ITs' },
     { value: 'CompanyDocument', label: 'Documentos' },
     { value: 'TrainingCourse', label: 'Treinamentos' },
     { value: 'Employee', label: 'Colaboradores' },
@@ -121,30 +117,29 @@ export default function GlobalSearch({ workshopId }) {
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="p-0 overflow-hidden max-w-[650px] top-[15%] translate-y-0">
-          <Command className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-group]]:px-2 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5">
+          <Command className="[&_[cmdk-input]]:h-12">
             <div className="flex items-center border-b px-3" cmdk-input-wrapper="">
               <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
               <Command.Input 
-                placeholder="Busque por processos, documentos, treinamentos, colaboradores..." 
-                className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                placeholder="Busque por processos, documentos, treinamentos..." 
+                className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
                 value={query}
                 onValueChange={setQuery}
               />
               {loading && <Loader2 className="h-4 w-4 animate-spin opacity-50" />}
             </div>
             
-            {/* Filtros por tipo */}
-            <div className="border-b px-3 py-2">
+            <div className="border-b px-3 py-2 bg-gray-50">
               <div className="flex items-center gap-2 mb-2">
                 <Filter className="h-3 w-3 text-gray-500" />
-                <span className="text-xs text-gray-600 font-medium">Filtrar por tipo:</span>
+                <span className="text-xs text-gray-600 font-medium">Filtrar por:</span>
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {availableTypes.map(type => (
                   <Badge
                     key={type.value}
                     variant={selectedTypes.includes(type.value) ? "default" : "outline"}
-                    className="cursor-pointer text-xs"
+                    className="cursor-pointer text-xs hover:bg-blue-100"
                     onClick={() => toggleTypeFilter(type.value)}
                   >
                     {type.label}
@@ -153,32 +148,52 @@ export default function GlobalSearch({ workshopId }) {
               </div>
             </div>
             
-            <Command.List className="max-h-[300px] overflow-y-auto overflow-x-hidden py-2 px-2">
-              <Command.Empty className="py-6 text-center text-sm">
-                {query.length < 2 ? "Digite para buscar..." : "Nenhum resultado encontrado."}
+            <Command.List className="max-h-[400px] overflow-y-auto py-2 px-2">
+              <Command.Empty className="py-6 text-center text-sm text-gray-500">
+                {query.length < 2 ? "Digite ao menos 2 caracteres para buscar..." : "Nenhum resultado encontrado."}
               </Command.Empty>
-              
-              {results.map((result, idx) => {
+
+              {results.map((result) => {
                   const Icon = icons[result.icon] || Search;
-                  console.log(`🔹 [Render Item ${idx}]`, result);
                   return (
                       <Command.Item
                           key={result.id}
                           value={`${result.title} ${result.subtitle || ''}`}
                           onSelect={() => handleSelect(result.url)}
-                          className="relative flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-3 text-sm outline-none hover:bg-slate-100 aria-selected:bg-slate-100"
+                          className="relative flex cursor-pointer select-none items-center gap-3 rounded-md px-3 py-3 text-sm outline-none hover:bg-blue-50 aria-selected:bg-blue-50 mb-1"
                       >
-                          <Icon className="h-4 w-4 text-slate-500 flex-shrink-0" />
+                          <Icon className="h-4 w-4 text-blue-600 flex-shrink-0" />
                           <div className="flex flex-col flex-1 min-w-0">
                               <span className="font-medium text-slate-900 truncate">{result.title}</span>
                               {result.subtitle && (
                                   <span className="text-xs text-slate-500 truncate">{result.subtitle}</span>
                               )}
                           </div>
-                          <span className="text-xs text-slate-400">{translateType(result.type)}</span>
+                          <Badge variant="outline" className="text-xs flex-shrink-0">
+                            {translateType(result.type)}
+                          </Badge>
                       </Command.Item>
                   );
               })}
+              
+              {results.length > 0 && (
+                <div className="px-3 py-3 border-t mt-2 flex items-center justify-between text-xs text-gray-600 bg-gray-50">
+                  <span className="font-medium">
+                    {results.length} {results.length === 1 ? 'resultado' : 'resultados'} 
+                    {total > results.length && ` de ${total} no total`}
+                  </span>
+                  {selectedTypes.length > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedTypes([])}
+                      className="h-6 text-xs"
+                    >
+                      Limpar filtros
+                    </Button>
+                  )}
+                </div>
+              )}
             </Command.List>
           </Command>
         </DialogContent>
@@ -189,16 +204,16 @@ export default function GlobalSearch({ workshopId }) {
 
 function translateType(type) {
     switch(type) {
-        case 'Employee': return 'Colaboradores';
-        case 'Task': return 'Tarefas';
-        case 'Goal': return 'Metas';
-        case 'EmployeeFeedback': return 'Feedbacks';
-        case 'Client': return 'Clientes';
-        case 'ProcessDocument': return 'Processos (MAPs)';
-        case 'CompanyDocument': return 'Documentos';
-        case 'InstructionDocument': return 'Instruções (ITs)';
-        case 'TrainingCourse': return 'Treinamentos';
-        case 'Challenge': return 'Desafios';
+        case 'Employee': return 'Colaborador';
+        case 'Task': return 'Tarefa';
+        case 'Goal': return 'Meta';
+        case 'EmployeeFeedback': return 'Feedback';
+        case 'Client': return 'Cliente';
+        case 'ProcessDocument': return 'Processo';
+        case 'CompanyDocument': return 'Documento';
+        case 'InstructionDocument': return 'IT';
+        case 'TrainingCourse': return 'Treinamento';
+        case 'Challenge': return 'Desafio';
         case 'Workshop': return 'Oficina';
         default: return type;
     }
