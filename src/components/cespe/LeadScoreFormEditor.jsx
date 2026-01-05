@@ -254,29 +254,16 @@ export default function LeadScoreFormEditor({ form, workshopId, onSaveComplete, 
                         />
                       </div>
 
-                      <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
-                        <div className="flex items-center gap-2">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
                           <CheckSquare className="w-5 h-5 text-blue-600" />
-                          <div>
-                            <Label className="text-sm font-semibold text-blue-900">Habilitar Checklist</Label>
-                            <p className="text-xs text-blue-700">Adicione itens para avaliação detalhada</p>
-                          </div>
+                          <Label className="text-sm font-semibold text-blue-900">Checklist do Critério (Obrigatório)</Label>
                         </div>
-                        <Switch
-                          checked={c.has_checklist || false}
-                          onCheckedChange={(checked) => updateCriteria(index, "has_checklist", checked)}
+                        <ChecklistEditor
+                          items={c.checklist_items || []}
+                          onChange={(items) => updateCriteria(index, "checklist_items", items)}
                         />
                       </div>
-
-                      {c.has_checklist && (
-                        <div className="space-y-2">
-                          <Label className="text-sm font-semibold">Itens do Checklist</Label>
-                          <ChecklistEditor
-                            items={c.checklist_items || []}
-                            onChange={(items) => updateCriteria(index, "checklist_items", items)}
-                          />
-                        </div>
-                      )}
                     </CardContent>
                   </Card>
                 );
