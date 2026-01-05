@@ -121,6 +121,30 @@ export default function DocumentosAnexos({ employee, onUpdate }) {
       const updatedAtestados = [...(employee.medical_certificates || []), newAtestado];
       await onUpdate({ medical_certificates: updatedAtestados });
 
+      // Notificar gestores sobre atestado
+      try {
+        const currentUser = await base44.auth.me();
+        const managers = await base44.entities.Employee.filter({
+          workshop_id: employee.workshop_id,
+          job_role: { $in: ['socio', 'diretor', 'gerente', 'rh', 'supervisor_loja'] }
+        });
+
+        for (const manager of managers) {
+          if (manager.user_id && manager.user_id !== currentUser.id) {
+            await base44.entities.Notification.create({
+              user_id: manager.user_id,
+              type: 'medical_certificate',
+              title: '🏥 Atestado Médico Anexado',
+              message: `${employee.full_name} anexou um atestado médico de ${atestadoForm.days} dias.`,
+              is_read: false
+            });
+          }
+        }
+      } catch (notifError) {
+        console.error("Erro ao criar notificação:", notifError);
+      }
+
+      toast.success("Atestado adicionado!");
       setShowAtestadoDialog(false);
       setAtestadoForm({ days: "", notes: "", file: null });
     } catch (error) {
@@ -141,22 +165,23 @@ export default function DocumentosAnexos({ employee, onUpdate }) {
     await onUpdate({ medical_certificates: updatedAtestados });
   };
 
+  const docTypeLabels = {
+    cnh: "CNH",
+    certificado_tecnico: "Certificado Técnico",
+    curso_nr: "Curso NR",
+    autorizacao_desconto: "Autorização Desconto",
+    declaracao_dependentes: "Declaração Dependentes",
+    comprovante_escolaridade: "Comprovante Escolaridade",
+    carteira_trabalho: "Carteira de Trabalho",
+    comprovante_residencia: "Comprovante Residência",
+    rg: "RG",
+    cpf: "CPF",
+    contrato: "Contrato",
+    outros: "Outros"
+  };
+
   const getDocTypeLabel = (type) => {
-    const labels = {
-      cnh: "CNH",
-      certificado_tecnico: "Certificado Técnico",
-      curso_nr: "Curso NR",
-      autorizacao_desconto: "Autorização Desconto",
-      declaracao_dependentes: "Declaração Dependentes",
-      comprovante_escolaridade: "Comprovante Escolaridade",
-      carteira_trabalho: "Carteira de Trabalho",
-      comprovante_residencia: "Comprovante Residência",
-      rg: "RG",
-      cpf: "CPF",
-      contrato: "Contrato",
-      outros: "Outros"
-    };
-    return labels[type] || type;
+    return docTypeLabels[type] || type;
   };
 
   return (

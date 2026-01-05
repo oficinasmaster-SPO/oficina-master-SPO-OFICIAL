@@ -164,6 +164,10 @@ export default function Notificacoes() {
       'status_alterado': <CheckCircle2 className="w-5 h-5 text-green-600" />,
       'nova_subtarefa': <Bell className="w-5 h-5 text-blue-600" />,
       'document_expiring': <Clock className="w-5 h-5 text-orange-600" />,
+      'document_expired': <AlertTriangle className="w-5 h-5 text-red-600" />,
+      'document_uploaded': <CheckCircle2 className="w-5 h-5 text-blue-600" />,
+      'medical_certificate': <AlertTriangle className="w-5 h-5 text-red-600" />,
+      'course_deadline': <Clock className="w-5 h-5 text-purple-600" />,
       'new_document': <CheckCircle2 className="w-5 h-5 text-green-600" />,
       'high_legal_impact': <AlertTriangle className="w-5 h-5 text-red-600" />
     };
