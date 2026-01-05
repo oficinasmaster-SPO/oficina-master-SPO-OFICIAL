@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
-import { Loader2, Sparkles, Target, Calendar, Award, Rocket } from "lucide-react";
+import { Loader2, Sparkles, Target, Calendar, Award, Rocket, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 

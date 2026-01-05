@@ -108,6 +108,7 @@ import PortalColaborador from './pages/PortalColaborador';
 import PublicFeedback from './pages/PublicFeedback';
 import Questionario from './pages/Questionario';
 import RankingBrasil from './pages/RankingBrasil';
+import Regimento from './pages/Regimento';
 import RegistrarAtendimento from './pages/RegistrarAtendimento';
 import RegistroDiario from './pages/RegistroDiario';
 import RelatorioUsuario from './pages/RelatorioUsuario';
@@ -138,7 +139,7 @@ import TestUsuarios from './pages/TestUsuarios';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
-import Regimento from './pages/Regimento';
+import AnalisesRH from './pages/AnalisesRH';
 import __Layout from './Layout.jsx';
 
 
@@ -253,6 +254,7 @@ export const PAGES = {
     "PublicFeedback": PublicFeedback,
     "Questionario": Questionario,
     "RankingBrasil": RankingBrasil,
+    "Regimento": Regimento,
     "RegistrarAtendimento": RegistrarAtendimento,
     "RegistroDiario": RegistroDiario,
     "RelatorioUsuario": RelatorioUsuario,
@@ -283,7 +285,7 @@ export const PAGES = {
     "TreinamentoVendas": TreinamentoVendas,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
-    "Regimento": Regimento,
+    "AnalisesRH": AnalisesRH,
 }
 
 export const pagesConfig = {
