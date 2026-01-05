@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { ArrowLeft, Search, ClipboardList, Brain } from "lucide-react";
+import { ArrowLeft, Search, ClipboardList } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import InterviewForm from "@/components/cespe/InterviewForm";
 import LeadScoreInterviewForm from "@/components/cespe/LeadScoreInterviewForm";
@@ -13,8 +13,6 @@ import AttachedFormsList from "@/components/cespe/AttachedFormsList";
 import ScoreCalculator from "@/components/cespe/ScoreCalculator";
 import DreamScriptModal from "@/components/cespe/DreamScriptModal";
 import InterviewFormsManager from "@/components/cespe/InterviewFormsManager";
-import InterviewerInfoCard from "@/components/cespe/InterviewerInfoCard";
-import AIReportModal from "@/components/cespe/AIReportModal";
 
 export default function CESPEEntrevista() {
   const navigate = useNavigate();
@@ -36,10 +34,6 @@ export default function CESPEEntrevista() {
   const [leadScores, setLeadScores] = useState({});
   const [criteriaObservations, setCriteriaObservations] = useState({});
   const [criteriaAudios, setCriteriaAudios] = useState({});
-  const [checklistResponses, setChecklistResponses] = useState({});
-  const [interviewerData, setInterviewerData] = useState(null);
-  const [showAIReport, setShowAIReport] = useState(false);
-  const [savedInterview, setSavedInterview] = useState(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -50,32 +44,6 @@ export default function CESPEEntrevista() {
         const workshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
         if (workshops && workshops.length > 0) {
           setWorkshop(workshops[0]);
-        }
-
-        // Carregar dados do entrevistador via Employee
-        try {
-          const employees = await base44.entities.Employee.filter({ user_id: currentUser.id });
-          if (employees && employees.length > 0) {
-            const emp = employees[0];
-            setInterviewerData({
-              name: emp.full_name || currentUser.full_name,
-              position: emp.position || "",
-              area: emp.area || ""
-            });
-          } else {
-            setInterviewerData({
-              name: currentUser.full_name,
-              position: "",
-              area: ""
-            });
-          }
-        } catch (empError) {
-          console.error("Erro ao carregar Employee:", empError);
-          setInterviewerData({
-            name: currentUser.full_name,
-            position: "",
-            area: ""
-          });
         }
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
@@ -154,17 +122,13 @@ export default function CESPEEntrevista() {
         currentForm.answers = Object.entries(leadScores).map(([key, value]) => {
           const [block, index] = key.split('_');
           const criteria = currentForm.form_data.scoring_criteria[parseInt(index)];
-          const checklistKey = `${key}_checklist`;
-          const checklistData = checklistResponses[checklistKey] || {};
-          
           return {
             question_id: key,
             question_text: criteria?.criteria_name || key,
             answer: `Pontuação: ${value}/${criteria?.max_points || 10}`,
             score: value,
             observation: criteriaObservations[key] || "",
-            audio_url: criteriaAudios[key] || null,
-            checklist_responses: checklistData
+            audio_url: criteriaAudios[key] || null
           };
         });
       } else {
@@ -211,9 +175,6 @@ export default function CESPEEntrevista() {
         candidate_id: candidateId,
         workshop_id: workshop.id,
         interviewer_id: user.id,
-        interviewer_name: interviewerData?.name || user.full_name,
-        interviewer_position: interviewerData?.position || "",
-        interviewer_area: interviewerData?.area || "",
         interview_date: new Date().toISOString(),
         forms_used: updatedForms,
         script_used_id: selectedScript?.id || null,
@@ -232,7 +193,6 @@ export default function CESPEEntrevista() {
       };
 
       const interview = await base44.entities.CandidateInterview.create(interviewData);
-      setSavedInterview(interview);
 
       await base44.entities.Candidate.update(candidateId, {
         status: 'em_entrevista',
@@ -255,7 +215,7 @@ export default function CESPEEntrevista() {
 
       return interview;
     },
-    onSuccess: (interview) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['candidates'] });
       
       // Verificar se há mais formulários a responder
@@ -269,12 +229,10 @@ export default function CESPEEntrevista() {
         setLeadScores({});
         setCriteriaObservations({});
         setCriteriaAudios({});
-        setChecklistResponses({});
         toast.success("Formulário salvo! Responda o próximo formulário.");
       } else {
-        toast.success("Entrevista completa salva! Deseja gerar relatório IA?");
-        setSavedInterview(interview);
-        setShowAIReport(true);
+        toast.success("Entrevista completa salva com sucesso!");
+        navigate(-1);
       }
     }
   });
@@ -325,9 +283,6 @@ export default function CESPEEntrevista() {
             </Button>
           </div>
         </div>
-
-        {/* Card do Entrevistador */}
-        <InterviewerInfoCard interviewer={interviewerData} />
 
         <AttachedFormsList
           attachedForms={attachedForms}
@@ -390,8 +345,6 @@ export default function CESPEEntrevista() {
               onObservationChange={(key, value) => setCriteriaObservations({...criteriaObservations, [key]: value})}
               criteriaAudios={criteriaAudios}
               onAudioChange={(key, url) => setCriteriaAudios({...criteriaAudios, [key]: url})}
-              checklistResponses={checklistResponses}
-              onChecklistChange={setChecklistResponses}
               onStepChange={setCurrentStep}
               interviewerNotes={interviewerNotes}
               onNotesChange={setInterviewerNotes}
@@ -469,25 +422,11 @@ export default function CESPEEntrevista() {
               setLeadScores({});
               setCriteriaObservations({});
               setCriteriaAudios({});
-              setChecklistResponses({});
               toast.success(`Formulário "${form.form_name}" anexado`);
             } else {
               toast.info("Formulário já está anexado");
             }
             setShowPPE(false);
-          }}
-        />
-
-        {/* Modal de Relatório IA */}
-        <AIReportModal
-          open={showAIReport}
-          onClose={() => {
-            setShowAIReport(false);
-            navigate(-1);
-          }}
-          interview={savedInterview}
-          onReportGenerated={(report) => {
-            setSavedInterview(prev => ({ ...prev, ai_report: report }));
           }}
         />
       </div>

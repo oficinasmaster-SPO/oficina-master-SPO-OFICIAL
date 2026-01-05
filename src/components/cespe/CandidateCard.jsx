@@ -2,13 +2,12 @@ import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { createPageUrl } from "@/utils";
-import { Star, Eye, FileText, Edit } from "lucide-react";
+import { Star, Eye, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import CandidateDetailsModal from "./CandidateDetailsModal";
 import InterviewReportDialog from "./InterviewReportDialog";
-import PrimaryInfoForm from "./PrimaryInfoForm";
 
 const statusColors = {
   novo_lead: "bg-blue-100 text-blue-800",
@@ -28,10 +27,8 @@ const statusLabels = {
 
 export default function CandidateCard({ candidate }) {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [showDetails, setShowDetails] = useState(false);
   const [showReport, setShowReport] = useState(false);
-  const [showPrimaryInfo, setShowPrimaryInfo] = useState(false);
 
   const { data: interview } = useQuery({
     queryKey: ['candidate-interview', candidate.id],
@@ -60,15 +57,6 @@ export default function CandidateCard({ candidate }) {
           candidate={candidate}
         />
       )}
-
-      <PrimaryInfoForm
-        open={showPrimaryInfo}
-        onClose={() => setShowPrimaryInfo(false)}
-        candidate={candidate}
-        onUpdate={() => {
-          queryClient.invalidateQueries({ queryKey: ['candidates'] });
-        }}
-      />
     <div className="grid grid-cols-2 gap-4 px-4 py-3 bg-white border-b border-gray-200 hover:bg-gray-50 transition-colors items-center">
       {/* Coluna 1 */}
       <div className="space-y-1">
@@ -96,15 +84,6 @@ export default function CandidateCard({ candidate }) {
           ) : (
             <span className="text-gray-400 text-sm">Sem score</span>
           )}
-          <Button
-            onClick={() => setShowPrimaryInfo(true)}
-            size="sm"
-            variant="outline"
-            className="border-blue-600 text-blue-600 hover:bg-blue-50"
-            title="Informações Primárias"
-          >
-            <Edit className="w-4 h-4" />
-          </Button>
           <Button
             onClick={() => setShowDetails(true)}
             size="sm"

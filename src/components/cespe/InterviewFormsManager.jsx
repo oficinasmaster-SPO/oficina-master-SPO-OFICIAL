@@ -2,21 +2,19 @@ import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Award, List } from "lucide-react";
+import { Plus, Award } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import InterviewFormsList from "./InterviewFormsList";
 import InterviewFormEditor from "./InterviewFormEditor";
 import LeadScoreFormEditor from "./LeadScoreFormEditor";
-import ChecklistManager from "./ChecklistManager";
 
 export default function InterviewFormsManager({ open, onClose, workshopId, onSelectForm }) {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("list");
   const [editingForm, setEditingForm] = useState(null);
   const [editingLeadScore, setEditingLeadScore] = useState(false);
-  const [showChecklistManager, setShowChecklistManager] = useState(false);
 
   const { data: forms = [] } = useQuery({
     queryKey: ['interview-forms', workshopId],
@@ -71,82 +69,65 @@ export default function InterviewFormsManager({ open, onClose, workshopId, onSel
   };
 
   return (
-    <>
-      <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
-              <span>Perguntas Poderosas de Entrevista (PPE)</span>
-              <div className="flex gap-2">
-                <Button 
-                  onClick={() => setShowChecklistManager(true)} 
-                  size="sm"
-                  variant="outline"
-                  className="border-blue-600 text-blue-600"
-                >
-                  <List className="w-4 h-4 mr-2" />
-                  Checklists
-                </Button>
-                <Button 
-                  onClick={handleCreateLeadScore} 
-                  size="sm"
-                  className="bg-green-600 hover:bg-green-700"
-                  disabled={createDefaultFormMutation.isPending}
-                >
-                  <Award className="w-4 h-4 mr-2" />
-                  {createDefaultFormMutation.isPending ? "Criando..." : "Lead Score"}
-                </Button>
-                <Button onClick={handleCreateNew} size="sm">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Novo Formulário
-                </Button>
-              </div>
-            </DialogTitle>
-          </DialogHeader>
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center justify-between">
+            <span>Perguntas Poderosas de Entrevista (PPE)</span>
+            <div className="flex gap-2">
+              <Button 
+                onClick={handleCreateLeadScore} 
+                size="sm"
+                className="bg-green-600 hover:bg-green-700"
+                disabled={createDefaultFormMutation.isPending}
+              >
+                <Award className="w-4 h-4 mr-2" />
+                {createDefaultFormMutation.isPending ? "Criando..." : "Lead Score"}
+              </Button>
+              <Button onClick={handleCreateNew} size="sm">
+                <Plus className="w-4 h-4 mr-2" />
+                Novo Formulário
+              </Button>
+            </div>
+          </DialogTitle>
+        </DialogHeader>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="list">Meus Formulários</TabsTrigger>
-              <TabsTrigger value="editor">
-                {editingForm ? "Editar Formulário" : "Novo Formulário"}
-              </TabsTrigger>
-            </TabsList>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="list">Meus Formulários</TabsTrigger>
+            <TabsTrigger value="editor">
+              {editingForm ? "Editar Formulário" : "Novo Formulário"}
+            </TabsTrigger>
+          </TabsList>
 
-            <TabsContent value="list" className="mt-6">
-              <InterviewFormsList
-                forms={forms}
-                onEdit={handleEdit}
+          <TabsContent value="list" className="mt-6">
+            <InterviewFormsList
+              forms={forms}
+              onEdit={handleEdit}
+              workshopId={workshopId}
+              onSelect={onSelectForm}
+            />
+          </TabsContent>
+
+          <TabsContent value="editor" className="mt-6">
+            {editingLeadScore ? (
+              <LeadScoreFormEditor
+                form={editingForm}
                 workshopId={workshopId}
-                onSelect={onSelectForm}
+                onSaveComplete={handleSaveComplete}
+                onCancel={() => setActiveTab("list")}
               />
-            </TabsContent>
-
-            <TabsContent value="editor" className="mt-6">
-              {editingLeadScore ? (
-                <LeadScoreFormEditor
-                  form={editingForm}
-                  workshopId={workshopId}
-                  onSaveComplete={handleSaveComplete}
-                  onCancel={() => setActiveTab("list")}
-                />
-              ) : (
-                <InterviewFormEditor
-                  form={editingForm}
-                  workshopId={workshopId}
-                  onSaveComplete={handleSaveComplete}
-                  onCancel={() => setActiveTab("list")}
-                />
-              )}
-            </TabsContent>
-          </Tabs>
-        </DialogContent>
-      </Dialog>
-
-      <ChecklistManager
-        open={showChecklistManager}
-        onClose={() => setShowChecklistManager(false)}
-        workshopId={workshopId}
-      />
-    </>
+            ) : (
+              <InterviewFormEditor
+                form={editingForm}
+                workshopId={workshopId}
+                onSaveComplete={handleSaveComplete}
+                onCancel={() => setActiveTab("list")}
+              />
+            )}
+          </TabsContent>
+        </Tabs>
+      </DialogContent>
+    </Dialog>
   );
 }
