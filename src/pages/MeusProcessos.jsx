@@ -18,6 +18,7 @@ import AreaGroupedView from "../components/processes/AreaGroupedView";
 import ProcessHierarchyView from "../components/processes/ProcessHierarchyView";
 import ProcessMetricsCards from "../components/processes/ProcessMetricsCards";
 import MetricsDetailsDialog from "../components/processes/MetricsDetailsDialog";
+import ITViewerModal from "../components/processes/ITViewerModal";
 
 export default function MeusProcessos() {
   const navigate = useNavigate();
@@ -33,6 +34,8 @@ export default function MeusProcessos() {
   const [viewMode, setViewMode] = useState("cards"); // cards, areas, hierarchy
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [detailsType, setDetailsType] = useState(null);
+  const [selectedIT, setSelectedIT] = useState(null);
+  const [itViewerOpen, setItViewerOpen] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -163,12 +166,15 @@ export default function MeusProcessos() {
   const handleViewItem = (item) => {
     if (detailsType === "maps" || detailsType === "custom") {
       navigate(createPageUrl('VisualizarProcesso') + `?id=${item.id}`);
+      setDetailsDialogOpen(false);
     } else if (detailsType === "its") {
-      toast.info("Visualização de IT em desenvolvimento");
+      setSelectedIT(item);
+      setItViewerOpen(true);
+      setDetailsDialogOpen(false);
     } else if (detailsType === "implementations" || detailsType === "audits") {
       toast.info("Detalhes em desenvolvimento");
+      setDetailsDialogOpen(false);
     }
-    setDetailsDialogOpen(false);
   };
 
   const duplicateMutation = useMutation({
@@ -467,6 +473,18 @@ export default function MeusProcessos() {
           data={getDetailsData(detailsType)}
           onViewItem={handleViewItem}
         />
+
+        {selectedIT && (
+          <ITViewerModal
+            open={itViewerOpen}
+            onClose={() => {
+              setItViewerOpen(false);
+              setSelectedIT(null);
+            }}
+            it={selectedIT}
+            workshop={workshop}
+          />
+        )}
       </div>
     </div>
   );
