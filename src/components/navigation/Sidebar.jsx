@@ -404,6 +404,14 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           requiredPermission: 'employees.create'
         },
         { 
+          name: '🅲🅴🆂🅿🅴 - Contratação', 
+          href: createPageUrl('CESPECanal'), 
+          icon: Target,
+          description: 'Canal → Entrevista → Sonho → Proposta → Integração',
+          highlight: true,
+          requiredPermission: 'employees.create'
+        },
+        { 
           name: 'CDC - Conexão do Colaborador', 
           href: createPageUrl('CDCList'), 
           icon: Heart,
