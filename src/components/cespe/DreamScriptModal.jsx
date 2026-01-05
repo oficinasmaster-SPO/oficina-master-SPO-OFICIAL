@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,19 +7,55 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Sparkles, Loader2, Save } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import ScriptsList from "./ScriptsList";
 
 export default function DreamScriptModal({ open, onClose, workshop, script, onSave }) {
+  const [viewMode, setViewMode] = useState("list"); // "list", "view", "edit", "create"
   const [editMode, setEditMode] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [selectedScript, setSelectedScript] = useState(script);
   const [formData, setFormData] = useState({
-    company_history: script?.company_history || "",
-    mission: script?.mission || workshop?.mission || "",
-    vision: script?.vision || workshop?.vision || "",
-    values: script?.values || workshop?.values || [],
-    growth_opportunities: script?.growth_opportunities || "",
-    not_fit_profile: script?.not_fit_profile || "",
-    success_stories: script?.success_stories || []
+    company_history: "",
+    mission: workshop?.mission || "",
+    vision: workshop?.vision || "",
+    values: workshop?.values || [],
+    growth_opportunities: "",
+    not_fit_profile: "",
+    success_stories: []
   });
+
+  const { data: allScripts = [] } = useQuery({
+    queryKey: ['culture-scripts', workshop?.id],
+    queryFn: async () => {
+      if (!workshop?.id) return [];
+      const result = await base44.entities.CultureScript.filter({ 
+        workshop_id: workshop.id 
+      });
+      return Array.isArray(result) ? result : [];
+    },
+    enabled: !!workshop?.id && open
+  });
+
+  useEffect(() => {
+    if (script) {
+      setSelectedScript(script);
+      setFormData({
+        company_history: script.company_history || "",
+        mission: script.mission || workshop?.mission || "",
+        vision: script.vision || workshop?.vision || "",
+        values: script.values || workshop?.values || [],
+        growth_opportunities: script.growth_opportunities || "",
+        not_fit_profile: script.not_fit_profile || "",
+        success_stories: script.success_stories || []
+      });
+      setViewMode("view");
+    } else if (allScripts.length === 0) {
+      setViewMode("create");
+    } else {
+      setViewMode("list");
+    }
+  }, [script, workshop, allScripts.length]);
 
   const generateWithAI = async () => {
     setGenerating(true);
@@ -61,16 +97,16 @@ Formato JSON:
 
       setFormData(prev => ({
         ...prev,
-        company_history: result.company_history,
-        growth_opportunities: result.growth_opportunities,
-        not_fit_profile: result.not_fit_profile
+        company_history: result.company_history || "",
+        growth_opportunities: result.growth_opportunities || "",
+        not_fit_profile: result.not_fit_profile || ""
       }));
 
       toast.success("Script gerado com sucesso!");
       setEditMode(true);
     } catch (error) {
-      toast.error("Erro ao gerar script");
-      console.error(error);
+      toast.error(error?.message || "Erro ao gerar script");
+      console.error("Erro ao gerar script:", error);
     } finally {
       setGenerating(false);
     }
@@ -82,7 +118,8 @@ Formato JSON:
       toast.success("Script salvo com sucesso!");
       setEditMode(false);
     } catch (error) {
-      toast.error("Erro ao salvar script");
+      toast.error(error?.message || "Erro ao salvar script");
+      console.error("Erro ao salvar:", error);
     }
   };
 
@@ -97,9 +134,39 @@ Formato JSON:
         </DialogHeader>
 
         <div className="space-y-4">
-          {!editMode && !script ? (
+          {viewMode === "list" ? (
+            <ScriptsList
+              scripts={allScripts}
+              onSelect={(script) => {
+                setSelectedScript(script);
+                setFormData({
+                  company_history: script.company_history || "",
+                  mission: script.mission || workshop?.mission || "",
+                  vision: script.vision || workshop?.vision || "",
+                  values: script.values || workshop?.values || [],
+                  growth_opportunities: script.growth_opportunities || "",
+                  not_fit_profile: script.not_fit_profile || "",
+                  success_stories: script.success_stories || []
+                });
+                setViewMode("view");
+              }}
+              onCreateNew={() => {
+                setSelectedScript(null);
+                setFormData({
+                  company_history: "",
+                  mission: workshop?.mission || "",
+                  vision: workshop?.vision || "",
+                  values: workshop?.values || [],
+                  growth_opportunities: "",
+                  not_fit_profile: "",
+                  success_stories: []
+                });
+                setViewMode("create");
+              }}
+            />
+          ) : viewMode === "create" ? (
             <div className="text-center py-8">
-              <p className="text-gray-600 mb-4">Nenhum script criado ainda.</p>
+              <p className="text-gray-600 mb-4">Crie seu primeiro script de sonho.</p>
               <Button onClick={generateWithAI} disabled={generating}>
                 {generating ? (
                   <>
@@ -165,7 +232,10 @@ Formato JSON:
               </div>
 
               <div className="flex gap-2 justify-end">
-                <Button variant="outline" onClick={() => setEditMode(false)}>
+                <Button variant="outline" onClick={() => {
+                  setEditMode(false);
+                  if (allScripts.length > 0) setViewMode("list");
+                }}>
                   Cancelar
                 </Button>
                 <Button onClick={handleSave}>
@@ -216,23 +286,28 @@ Formato JSON:
                 </CardContent>
               </Card>
 
-              <div className="flex gap-2">
-                <Button onClick={() => setEditMode(true)} variant="outline">
-                  Editar Script
+              <div className="flex gap-2 justify-between">
+                <Button onClick={() => setViewMode("list")} variant="outline">
+                  Ver Todos os Scripts
                 </Button>
-                <Button onClick={generateWithAI} disabled={generating} variant="outline">
-                  {generating ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Regenerando...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      Regenerar com IA
-                    </>
-                  )}
-                </Button>
+                <div className="flex gap-2">
+                  <Button onClick={() => setEditMode(true)} variant="outline">
+                    Editar Script
+                  </Button>
+                  <Button onClick={generateWithAI} disabled={generating} variant="outline">
+                    {generating ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Regenerando...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Regenerar com IA
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             </div>
           )}
