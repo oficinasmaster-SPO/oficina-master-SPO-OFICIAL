@@ -17,6 +17,7 @@ import ShareHistoryDialog from "../components/processes/ShareHistoryDialog";
 import AreaGroupedView from "../components/processes/AreaGroupedView";
 import ProcessHierarchyView from "../components/processes/ProcessHierarchyView";
 import ProcessMetricsCards from "../components/processes/ProcessMetricsCards";
+import MetricsDetailsDialog from "../components/processes/MetricsDetailsDialog";
 
 export default function MeusProcessos() {
   const navigate = useNavigate();
@@ -30,6 +31,8 @@ export default function MeusProcessos() {
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
   const [selectedProcess, setSelectedProcess] = useState(null);
   const [viewMode, setViewMode] = useState("cards"); // cards, areas, hierarchy
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [detailsType, setDetailsType] = useState(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -132,6 +135,42 @@ export default function MeusProcessos() {
   // Processos customizados (criados pela oficina, não templates)
   const customProcessesCount = accessibleDocs.filter(doc => !doc.is_template && workshop && doc.workshop_id === workshop.id).length;
 
+  const getDetailsData = (type) => {
+    switch (type) {
+      case "maps":
+        return accessibleDocs;
+      case "its":
+        return workshopIts;
+      case "frs":
+        // Aqui retornaríamos os FRs se tivessem entidade própria
+        return [];
+      case "implementations":
+        return implementations;
+      case "audits":
+        return audits;
+      case "custom":
+        return accessibleDocs.filter(doc => !doc.is_template && workshop && doc.workshop_id === workshop.id);
+      default:
+        return [];
+    }
+  };
+
+  const handleViewDetails = (type) => {
+    setDetailsType(type);
+    setDetailsDialogOpen(true);
+  };
+
+  const handleViewItem = (item) => {
+    if (detailsType === "maps" || detailsType === "custom") {
+      navigate(createPageUrl('VisualizarProcesso') + `?id=${item.id}`);
+    } else if (detailsType === "its") {
+      toast.info("Visualização de IT em desenvolvimento");
+    } else if (detailsType === "implementations" || detailsType === "audits") {
+      toast.info("Detalhes em desenvolvimento");
+    }
+    setDetailsDialogOpen(false);
+  };
+
   const duplicateMutation = useMutation({
     mutationFn: async (doc) => {
       if (!workshop) throw new Error("Oficina não encontrada");
@@ -210,6 +249,7 @@ export default function MeusProcessos() {
           implementationsCount={implementations.length}
           auditsCount={audits.length}
           customProcessesCount={customProcessesCount}
+          onViewDetails={handleViewDetails}
         />
 
         <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between mb-6">
@@ -415,6 +455,17 @@ export default function MeusProcessos() {
             setSelectedProcess(null);
           }}
           process={selectedProcess}
+        />
+
+        <MetricsDetailsDialog
+          open={detailsDialogOpen}
+          onClose={() => {
+            setDetailsDialogOpen(false);
+            setDetailsType(null);
+          }}
+          type={detailsType}
+          data={getDetailsData(detailsType)}
+          onViewItem={handleViewItem}
         />
       </div>
     </div>
