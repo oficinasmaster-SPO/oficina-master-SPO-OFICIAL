@@ -403,7 +403,7 @@ export default function CESPEEntrevista() {
     return <div className="p-6">Carregando...</div>;
   }
 
-  const progress = ((currentStep + 1) / questions.length) * 100;
+  const progress = questions.length > 0 ? ((currentStep + 1) / questions.length) * 100 : 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-6">
