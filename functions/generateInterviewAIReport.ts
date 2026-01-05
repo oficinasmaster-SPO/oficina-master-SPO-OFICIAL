@@ -44,9 +44,33 @@ Deno.serve(async (req) => {
 DADOS DO CANDIDATO:
 - Nome: ${candidate?.full_name || 'N/A'}
 - Cargo Pretendido: ${candidate?.desired_position || 'N/A'}
+- Cidade/Bairro: ${candidate?.city || ''} ${candidate?.neighborhood || ''}
+- Lead Score Inicial: ${candidate?.initial_lead_score || 'N/A'}
+- Anos de Experiência: ${candidate?.experience_years || 'N/A'}
+- Autoavaliação Técnica: ${candidate?.self_technical_rating || 'N/A'}/10
+- Maior Ponto Forte: ${candidate?.strongest_skill || 'N/A'}
+- Área de Melhoria: ${candidate?.improvement_area || 'N/A'}
+- Motivo da Mudança: ${candidate?.reason_for_change || 'N/A'}
+- Expectativas: ${candidate?.company_expectations || 'N/A'}
+- Melhor Líder: ${candidate?.best_leader_experience || 'N/A'}
+- Disponibilidade: ${candidate?.availability || 'N/A'}
 - Expectativa Salarial: ${candidate?.salary_expectation || 'N/A'}
 - Momento de Vida: ${candidate?.life_moment || 'N/A'}
 - Sonhos: ${candidate?.dreams || 'N/A'}
+
+HISTÓRICO PROFISSIONAL:
+${candidate?.work_history?.map((w, i) => `
+${i + 1}. ${w.company_name} - ${w.position}
+   Líder: ${w.direct_leader || 'N/A'}
+   Duração: ${w.duration_months || 0} meses
+   Motivo saída: ${w.leaving_reason || 'N/A'}
+`).join('\n') || 'Não informado'}
+
+FORMAÇÃO E CURSOS:
+${candidate?.courses?.map((c, i) => `
+${i + 1}. ${c.course_name} - ${c.institution}
+   Instrutor: ${c.instructor || 'N/A'} | ${c.hours}h | ${c.year}
+`).join('\n') || 'Não informado'}
 
 DADOS DA ENTREVISTA:
 - Data: ${interview.interview_date}
