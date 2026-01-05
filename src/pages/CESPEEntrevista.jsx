@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { ArrowLeft, Search } from "lucide-react";
+import { ArrowLeft, Search, ClipboardList } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import InterviewForm from "@/components/cespe/InterviewForm";
 import ScoreCalculator from "@/components/cespe/ScoreCalculator";
 import DreamScriptModal from "@/components/cespe/DreamScriptModal";
+import InterviewFormsManager from "@/components/cespe/InterviewFormsManager";
 
 export default function CESPEEntrevista() {
   const navigate = useNavigate();
@@ -24,6 +25,7 @@ export default function CESPEEntrevista() {
   const [interviewerNotes, setInterviewerNotes] = useState("");
   const [recommendation, setRecommendation] = useState("");
   const [showDreamScript, setShowDreamScript] = useState(false);
+  const [showPPE, setShowPPE] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -140,6 +142,10 @@ export default function CESPEEntrevista() {
             <p className="text-gray-600">Candidato: {candidate.full_name}</p>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowPPE(true)}>
+              <ClipboardList className="w-4 h-4 mr-2" />
+              PPE
+            </Button>
             <Button variant="outline" onClick={() => setShowDreamScript(true)}>
               <Search className="w-4 h-4 mr-2" />
               Script de Sonho
@@ -181,6 +187,12 @@ export default function CESPEEntrevista() {
           workshop={workshop}
           script={cultureScript}
           onSave={(data) => saveCultureScriptMutation.mutate(data)}
+        />
+
+        <InterviewFormsManager
+          open={showPPE}
+          onClose={() => setShowPPE(false)}
+          workshopId={workshop?.id}
         />
       </div>
     </div>

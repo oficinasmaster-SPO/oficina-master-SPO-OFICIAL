@@ -4,13 +4,16 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Save, X, Plus, Trash2 } from "lucide-react";
+import { Save, X, Plus, Trash2, Settings } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
+import FormTypeManager from "./FormTypeManager";
 
 export default function InterviewFormEditor({ form, workshopId, onSaveComplete, onCancel }) {
   const queryClient = useQueryClient();
+  const [showTypeManager, setShowTypeManager] = useState(false);
+  const [customTypes, setCustomTypes] = useState([]);
   const [formData, setFormData] = useState({
     form_name: form?.form_name || "",
     form_type: form?.form_type || "custom",
@@ -19,6 +22,17 @@ export default function InterviewFormEditor({ form, workshopId, onSaveComplete, 
     questions: form?.questions || [],
     is_active: form?.is_active !== undefined ? form.is_active : true
   });
+
+  const defaultTypes = [
+    { key: "pre_entrevista", label: "Pré-Entrevista" },
+    { key: "tecnico", label: "Técnico" },
+    { key: "comportamental", label: "Comportamental" },
+    { key: "cultural", label: "Cultural" },
+    { key: "vendas", label: "Vendas" },
+    { key: "custom", label: "Personalizado" }
+  ];
+
+  const allTypes = [...defaultTypes, ...customTypes];
 
   const addQuestion = () => {
     setFormData({
@@ -99,18 +113,26 @@ export default function InterviewFormEditor({ form, workshopId, onSaveComplete, 
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>Tipo do Formulário</Label>
+              <Label className="flex items-center justify-between">
+                <span>Tipo do Formulário</span>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => setShowTypeManager(true)}
+                  className="h-6 bg-blue-600 hover:bg-blue-700"
+                >
+                  <Settings className="w-3 h-3 mr-1" />
+                  Tipos
+                </Button>
+              </Label>
               <select
                 value={formData.form_type}
                 onChange={(e) => setFormData({...formData, form_type: e.target.value})}
                 className="w-full px-3 py-2 border rounded-md"
               >
-                <option value="pre_entrevista">Pré-Entrevista</option>
-                <option value="tecnico">Técnico</option>
-                <option value="comportamental">Comportamental</option>
-                <option value="cultural">Cultural</option>
-                <option value="vendas">Vendas</option>
-                <option value="custom">Personalizado</option>
+                {allTypes.map(type => (
+                  <option key={type.key} value={type.key}>{type.label}</option>
+                ))}
               </select>
             </div>
 
@@ -234,6 +256,13 @@ export default function InterviewFormEditor({ form, workshopId, onSaveComplete, 
           {saveMutation.isPending ? "Salvando..." : "Salvar Formulário"}
         </Button>
       </div>
+
+      <FormTypeManager
+        open={showTypeManager}
+        onClose={() => setShowTypeManager(false)}
+        customTypes={customTypes}
+        onSave={setCustomTypes}
+      />
     </form>
   );
 }
