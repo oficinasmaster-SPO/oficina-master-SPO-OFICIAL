@@ -38,6 +38,16 @@ export default function ChecklistManager({ workshopId }) {
   const [editingTemplate, setEditingTemplate] = useState(null);
   const [isCreating, setIsCreating] = useState(false);
 
+  const { data: templates = [] } = useQuery({
+    queryKey: ['checklist-templates', workshopId],
+    queryFn: async () => {
+      if (!workshopId) return [];
+      const result = await base44.entities.ChecklistTemplate.filter({ workshop_id: workshopId });
+      return Array.isArray(result) ? result : [];
+    },
+    enabled: !!workshopId
+  });
+
   // Buscar formulário Lead Score para mostrar checklists existentes
   const { data: leadScoreForms = [] } = useQuery({
     queryKey: ['lead-score-forms', workshopId],
@@ -78,16 +88,6 @@ export default function ChecklistManager({ workshopId }) {
 
   // Combinar templates e checklists do formulário
   const allChecklists = [...templates, ...leadScoreChecklists];
-
-  const { data: templates = [] } = useQuery({
-    queryKey: ['checklist-templates', workshopId],
-    queryFn: async () => {
-      if (!workshopId) return [];
-      const result = await base44.entities.ChecklistTemplate.filter({ workshop_id: workshopId });
-      return Array.isArray(result) ? result : [];
-    },
-    enabled: !!workshopId
-  });
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
