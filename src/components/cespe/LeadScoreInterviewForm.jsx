@@ -201,18 +201,37 @@ export default function LeadScoreInterviewForm({
             </div>
           )}
 
-          {/* SEMPRE mostrar checklist se existir, independente de has_checklist */}
+          {/* Checklist Colapsável */}
           {currentCriteria.checklist_items && currentCriteria.checklist_items.length > 0 && (
-            <div className="border-2 border-blue-200 rounded-lg p-4 bg-blue-50">
-              <div className="flex items-center gap-2 mb-3">
-                <CheckSquare className="w-5 h-5 text-blue-600" />
-                <h3 className="font-semibold text-blue-900">Checklist de Avaliação</h3>
-              </div>
-              <ChecklistRenderer
-                items={currentCriteria.checklist_items}
-                selected={checklistSelections[criteriaKey] || []}
-                onChange={handleChecklistChange}
-              />
+            <div className="border-2 border-blue-200 rounded-lg bg-blue-50">
+              <button
+                type="button"
+                onClick={() => setExpandedChecklist(expandedChecklist === criteriaKey ? null : criteriaKey)}
+                className="w-full p-4 flex items-center justify-between hover:bg-blue-100 transition-colors rounded-lg"
+              >
+                <div className="flex items-center gap-2">
+                  <CheckSquare className="w-5 h-5 text-blue-600" />
+                  <h3 className="font-semibold text-blue-900">Checklist de Avaliação</h3>
+                  <Badge variant="outline">
+                    {(checklistSelections[criteriaKey] || []).length}/{currentCriteria.checklist_items.length} itens
+                  </Badge>
+                </div>
+                {expandedChecklist === criteriaKey ? (
+                  <ChevronUp className="w-5 h-5 text-blue-600" />
+                ) : (
+                  <ChevronDown className="w-5 h-5 text-blue-600" />
+                )}
+              </button>
+              
+              {expandedChecklist === criteriaKey && (
+                <div className="p-4 pt-0">
+                  <ChecklistRenderer
+                    items={currentCriteria.checklist_items}
+                    selected={checklistSelections[criteriaKey] || []}
+                    onChange={handleChecklistChange}
+                  />
+                </div>
+              )}
             </div>
           )}
 
