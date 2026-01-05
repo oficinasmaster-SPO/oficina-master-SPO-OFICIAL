@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Copy, ExternalLink, CheckCircle2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import WhatsAppConnectionManager from "./WhatsAppConnectionManager";
+import KeywordManager from "./KeywordManager";
 
 export default function WebhookSetupGuide({ open, onClose, workshopId }) {
   const [copiedUrl, setCopiedUrl] = useState(null);
@@ -192,14 +193,8 @@ export default function WebhookSetupGuide({ open, onClose, workshopId }) {
 
                 <div className="flex gap-3">
                   <div className="bg-blue-100 text-blue-900 w-6 h-6 rounded-full flex items-center justify-center font-bold flex-shrink-0">4</div>
-                  <div>
-                    <p className="font-medium">Palavras-chave capturadas</p>
-                    <p className="text-gray-600">O sistema detecta automaticamente mensagens com:</p>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {['trabalhar', 'vaga', 'emprego', 'contratar', 'currículo', 'oportunidade'].map(kw => (
-                        <span key={kw} className="bg-gray-200 px-2 py-1 rounded text-xs">{kw}</span>
-                      ))}
-                    </div>
+                  <div className="w-full">
+                    <KeywordManager workshopId={workshopId} />
                   </div>
                 </div>
 
