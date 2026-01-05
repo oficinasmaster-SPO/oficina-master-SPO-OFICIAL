@@ -35,6 +35,8 @@ export default function AcademiaTreinamento() {
       // Buscar todos os cursos
       const allCourses = await base44.entities.TrainingCourse.list();
       
+      console.log("📚 Cursos encontrados:", allCourses.length);
+      
       // Filtrar por workshop se necessário
       let availableCourses = allCourses;
       const workshops = await base44.entities.Workshop.filter({ 
@@ -137,8 +139,8 @@ export default function AcademiaTreinamento() {
       setByCategory(categorized);
 
     } catch (error) {
-      console.error(error);
-      toast.error("Erro ao carregar academia");
+      console.error("❌ Erro ao carregar academia:", error);
+      toast.error("Erro ao carregar academia: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -169,6 +171,28 @@ export default function AcademiaTreinamento() {
     return (
       <div className="flex h-screen items-center justify-center bg-black">
         <Loader2 className="w-8 h-8 animate-spin text-white" />
+      </div>
+    );
+  }
+
+  // Se não houver nenhum curso, mostrar tela vazia
+  const hasAnyCourse = featuredCourse || 
+    continueWatching.length > 0 || 
+    topInBrazil.length > 0 || 
+    Object.values(byCategory).some(arr => arr.length > 0);
+
+  if (!hasAnyCourse) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center text-white space-y-4 px-4">
+          <h2 className="text-3xl font-bold">🎓 Academia de Treinamento</h2>
+          <p className="text-gray-400 text-lg">
+            Nenhum curso disponível no momento.
+          </p>
+          <p className="text-gray-500">
+            Os cursos aparecerão aqui assim que forem criados.
+          </p>
+        </div>
       </div>
     );
   }
