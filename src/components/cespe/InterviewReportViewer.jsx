@@ -84,14 +84,40 @@ export default function InterviewReportViewer({ interview, candidate, onClose })
             </div>
           </div>
 
-          <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded mb-6">
-            <div className="flex items-center justify-between">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Lead Score Final</p>
                 <p className="text-4xl font-bold text-blue-600">{interview.final_score || 0}</p>
               </div>
+            </div>
+
+            {interview.seniority_level && (
+              <div className={`border-l-4 p-4 rounded ${
+                interview.seniority_level === 'master' ? 'bg-purple-50 border-purple-600' :
+                interview.seniority_level === 'senior' ? 'bg-green-50 border-green-600' :
+                interview.seniority_level === 'pleno' ? 'bg-yellow-50 border-yellow-600' :
+                'bg-red-50 border-red-600'
+              }`}>
+                <p className="text-sm text-gray-600 mb-1">Nível de Senioridade</p>
+                <p className={`text-3xl font-bold ${
+                  interview.seniority_level === 'master' ? 'text-purple-600' :
+                  interview.seniority_level === 'senior' ? 'text-green-600' :
+                  interview.seniority_level === 'pleno' ? 'text-yellow-600' :
+                  'text-red-600'
+                }`}>
+                  {interview.seniority_level === 'master' ? '🟣 MASTER' :
+                   interview.seniority_level === 'senior' ? '🟢 SÊNIOR' :
+                   interview.seniority_level === 'pleno' ? '🟡 PLENO' :
+                   '🔴 JÚNIOR'}
+                </p>
+              </div>
+            )}
+
+            <div className="bg-gray-50 border-l-4 border-gray-600 p-4 rounded">
+              <p className="text-sm text-gray-600 mb-1">Classificação Final</p>
               <Badge className={`text-2xl px-6 py-2 ${CLASSIFICATION_COLORS[interview.recommendation] || 'bg-gray-400'}`}>
-                Classificação {interview.recommendation || "N/A"}
+                {interview.recommendation || "N/A"}
               </Badge>
             </div>
           </div>
