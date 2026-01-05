@@ -12,6 +12,7 @@ import { toast } from "sonner";
 
 export default function DocumentFormDialog({ open, onClose, document, workshopId, onSuccess }) {
   const [uploading, setUploading] = useState(false);
+  const [autoGenerateId, setAutoGenerateId] = useState(!document); // Auto-gerar apenas para novos documentos
   const [formData, setFormData] = useState({
     document_id: '',
     title: '',
@@ -36,8 +37,66 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
     observations: ''
   });
 
+  // Gerar ID automaticamente
+  useEffect(() => {
+    if (autoGenerateId && formData.category && formData.document_type) {
+      generateDocumentId();
+    }
+  }, [formData.category, formData.document_type, autoGenerateId]);
+
+  const generateDocumentId = async () => {
+    try {
+      const categoryPrefix = {
+        governanca: 'GOV',
+        juridico_regimento: 'JUR',
+        rh_pessoas: 'RH',
+        operacional: 'OP',
+        tecnico: 'TEC',
+        comercial: 'COM',
+        financeiro: 'FIN',
+        treinamento: 'TRE',
+        auditoria_dados: 'AUD'
+      };
+
+      const typePrefix = {
+        regimento: 'REG',
+        map: 'MAP',
+        it: 'IT',
+        politica: 'POL',
+        checklist: 'CHK',
+        contrato: 'CTR',
+        relatorio: 'REL',
+        treinamento: 'TRE',
+        evidencia: 'EVD'
+      };
+
+      const area = categoryPrefix[formData.category];
+      const type = typePrefix[formData.document_type];
+
+      if (!area || !type) return;
+
+      // Buscar documentos existentes com mesmo prefixo
+      const allDocs = await base44.entities.CompanyDocument.filter({ workshop_id: workshopId });
+      const prefix = `${area}-${type}-`;
+      const existingDocs = allDocs.filter(d => d.document_id?.startsWith(prefix));
+      
+      const numbers = existingDocs.map(d => {
+        const match = d.document_id?.match(new RegExp(`${prefix}(\\d+)`));
+        return match ? parseInt(match[1]) : 0;
+      });
+
+      const maxNumber = numbers.length > 0 ? Math.max(...numbers) : 0;
+      const newId = `${prefix}${String(maxNumber + 1).padStart(4, '0')}`;
+      
+      setFormData(prev => ({ ...prev, document_id: newId }));
+    } catch (error) {
+      console.error('Erro ao gerar ID:', error);
+    }
+  };
+
   useEffect(() => {
     if (document) {
+      setAutoGenerateId(false);
       setFormData({
         document_id: document.document_id || '',
         title: document.title || '',
@@ -121,12 +180,36 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
             {/* ID do Documento */}
             <div>
-              <Label>ID do Documento *</Label>
+              <Label className="flex items-center justify-between">
+                <span>ID do Documento *</span>
+                {!document && (
+                  <div className="flex items-center gap-2">
+                    <Checkbox 
+                      id="auto-id"
+                      checked={autoGenerateId}
+                      onCheckedChange={setAutoGenerateId}
+                    />
+                    <Label htmlFor="auto-id" className="text-xs font-normal cursor-pointer text-blue-600">
+                      Gerar automaticamente
+                    </Label>
+                  </div>
+                )}
+              </Label>
               <Input 
-                placeholder="DOC-001, RH-012, OP-045"
+                placeholder="Ex: RH-MAP-0001, OP-IT-0042"
                 value={formData.document_id}
-                onChange={(e) => setFormData({...formData, document_id: e.target.value})}
+                onChange={(e) => {
+                  setAutoGenerateId(false);
+                  setFormData({...formData, document_id: e.target.value});
+                }}
+                disabled={autoGenerateId}
+                className={autoGenerateId ? 'bg-gray-100' : ''}
               />
+              {autoGenerateId && (
+                <p className="text-xs text-blue-600 mt-1">
+                  ℹ️ Formato: [ÁREA]-[TIPO]-[NÚMERO] (ex: RH-MAP-0001)
+                </p>
+              )}
             </div>
 
             {/* Nome Oficial */}
