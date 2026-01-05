@@ -50,7 +50,6 @@ export default function LeadScoreFormEditor({ form, workshopId, onSaveComplete, 
           weight: 1,
           question: "",
           scoring_guide: "",
-          has_checklist: false,
           checklist_items: []
         }
       ]
