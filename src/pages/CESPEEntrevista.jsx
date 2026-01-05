@@ -17,9 +17,8 @@ import InterviewFormsManager from "@/components/cespe/InterviewFormsManager";
 export default function CESPEEntrevista() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  
-  // Extrair candidate_id da URL (primeiro parâmetro)
-  const candidateId = new URLSearchParams(window.location.search).get('candidate_id');
+  const urlParams = new URLSearchParams(window.location.search);
+  const candidateId = urlParams.get('candidate_id');
 
   const [user, setUser] = useState(null);
   const [workshop, setWorkshop] = useState(null);
@@ -400,27 +399,8 @@ export default function CESPEEntrevista() {
     }
   });
 
-  // Loading states
-  if (!candidateId) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-600 font-semibold">Erro: ID do candidato não fornecido</p>
-          <Button onClick={() => navigate(-1)} className="mt-4">Voltar</Button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!candidate || !user || !workshop) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600">Carregando dados da entrevista...</p>
-        </div>
-      </div>
-    );
+  if (!candidate) {
+    return <div className="p-6">Carregando...</div>;
   }
 
   const progress = ((currentStep + 1) / questions.length) * 100;

@@ -2,13 +2,12 @@ import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { createPageUrl } from "@/utils";
-import { Star, Eye, FileText, Edit } from "lucide-react";
+import { Star, Eye, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import CandidateDetailsModal from "./CandidateDetailsModal";
 import InterviewReportDialog from "./InterviewReportDialog";
-import EditCandidateDialog from "./EditCandidateDialog";
 
 const statusColors = {
   novo_lead: "bg-blue-100 text-blue-800",
@@ -30,7 +29,6 @@ export default function CandidateCard({ candidate }) {
   const navigate = useNavigate();
   const [showDetails, setShowDetails] = useState(false);
   const [showReport, setShowReport] = useState(false);
-  const [showEdit, setShowEdit] = useState(false);
 
   const { data: interview } = useQuery({
     queryKey: ['candidate-interview', candidate.id],
@@ -45,12 +43,6 @@ export default function CandidateCard({ candidate }) {
 
   return (
     <>
-      <EditCandidateDialog
-        open={showEdit}
-        onClose={() => setShowEdit(false)}
-        candidate={candidate}
-      />
-      
       <CandidateDetailsModal
         open={showDetails}
         onClose={() => setShowDetails(false)}
@@ -93,14 +85,6 @@ export default function CandidateCard({ candidate }) {
             <span className="text-gray-400 text-sm">Sem score</span>
           )}
           <Button
-            onClick={() => setShowEdit(true)}
-            size="sm"
-            variant="outline"
-            className="border-blue-600 text-blue-600 hover:bg-blue-50"
-          >
-            <Edit className="w-4 h-4" />
-          </Button>
-          <Button
             onClick={() => setShowDetails(true)}
             size="sm"
             variant="outline"
@@ -118,7 +102,7 @@ export default function CandidateCard({ candidate }) {
             </Button>
           )}
           <Button 
-            onClick={() => navigate(`${createPageUrl("CESPEEntrevista")}?candidate_id=${candidate.id}`)}
+            onClick={() => navigate(createPageUrl("CESPEEntrevista") + `?candidate_id=${candidate.id}`)}
             size="sm"
             variant="outline"
           >
