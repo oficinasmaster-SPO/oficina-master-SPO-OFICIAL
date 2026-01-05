@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { createPageUrl } from "@/utils";
-import { Star } from "lucide-react";
+import { Star, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import CandidateDetailsModal from "./CandidateDetailsModal";
 
 const statusColors = {
   novo_lead: "bg-blue-100 text-blue-800",
@@ -23,8 +24,15 @@ const statusLabels = {
 
 export default function CandidateCard({ candidate }) {
   const navigate = useNavigate();
+  const [showDetails, setShowDetails] = useState(false);
 
   return (
+    <>
+      <CandidateDetailsModal
+        open={showDetails}
+        onClose={() => setShowDetails(false)}
+        candidate={candidate}
+      />
     <div className="grid grid-cols-2 gap-4 px-4 py-3 bg-white border-b border-gray-200 hover:bg-gray-50 transition-colors items-center">
       {/* Coluna 1 */}
       <div className="space-y-1">
@@ -52,6 +60,13 @@ export default function CandidateCard({ candidate }) {
           ) : (
             <span className="text-gray-400 text-sm">Sem score</span>
           )}
+          <Button
+            onClick={() => setShowDetails(true)}
+            size="sm"
+            variant="outline"
+          >
+            <Eye className="w-4 h-4" />
+          </Button>
           <Button 
             onClick={() => navigate(createPageUrl("CESPEEntrevista") + `?candidate_id=${candidate.id}`)}
             size="sm"
@@ -60,7 +75,8 @@ export default function CandidateCard({ candidate }) {
             Avaliar
           </Button>
         </div>
-      </div>
-    </div>
-  );
-}
+        </div>
+        </div>
+        </>
+        );
+        }
