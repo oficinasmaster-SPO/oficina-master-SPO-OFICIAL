@@ -45,17 +45,12 @@ export default function Layout({ children, currentPageName }) {
   }, []);
 
   const loadUser = React.useCallback(async () => {
-    // Páginas públicas que não precisam de autenticação
     const publicPages = ['/PrimeiroAcesso', '/ClientRegistration', '/login', '/signup'];
     const isPublicPage = publicPages.some(page => location.pathname.toLowerCase().includes(page.toLowerCase()));
-
-    console.log("🔍 Verificando autenticação - Página atual:", location.pathname);
-    console.log("🔍 É página pública?", isPublicPage);
 
     if (isPublicPage) {
       setIsAuthenticated(false);
       setIsCheckingAuth(false);
-      console.log("✅ Página pública - autenticação ignorada");
       return;
     }
 
@@ -98,86 +93,25 @@ export default function Layout({ children, currentPageName }) {
 
           // VERIFICAR SE USUÁRIO TEM EMPLOYEE CADASTRADO
           try {
-            const employees = await base44.entities.Employee.filter({ user_id: currentUser.id });
 
-            // Se não tem Employee E tem workshop vinculado, precisa completar perfil
-            if ((!employees || employees.length === 0) && currentUser.workshop_id) {
-              console.log("⚠️ Usuário sem Employee - redirecionando para Meu Perfil");
-              if (location.pathname !== '/MeuPerfil') {
-                window.location.href = createPageUrl("MeuPerfil");
-                return;
-              }
-            }
 
-            // Se tem Employee mas dados incompletos no primeiro acesso
-            if (employees && employees.length > 0) {
-              const emp = employees[0];
-              const isFirstAccess = !currentUser.first_login_at || 
-                                  currentUser.first_login_at === currentUser.last_login_at;
-
-              if (isFirstAccess && (!emp.cpf || !emp.telefone)) {
-                console.log("🔄 Primeiro acesso - redirecionando para Meu Perfil");
-                if (location.pathname !== '/MeuPerfil') {
-                  window.location.href = createPageUrl("MeuPerfil");
-                  return;
-                }
-              }
-            }
-          } catch (empError) {
-            console.error("Erro ao verificar Employee:", empError);
-          }
-
-          // Verificar se há workshop_id na URL (admin visualizando cliente)
           const urlParams = new URLSearchParams(window.location.search);
           const adminWorkshopId = urlParams.get('workshop_id');
-
-          console.log("🔍 Workshop_id na URL:", adminWorkshopId);
-          console.log("🔍 É admin?", currentUser.role === 'admin');
-
           let userWorkshop = null;
 
           if (adminWorkshopId && currentUser.role === 'admin') {
-            // MODO ADMIN: Carregar oficina do cliente
-            console.log("🔐 MODO ADMIN: Carregando oficina do cliente...");
             userWorkshop = await base44.entities.Workshop.get(adminWorkshopId);
             setIsAdminView(true);
-            console.log("✅ Workshop do cliente carregado:", userWorkshop?.name);
           } else {
             setIsAdminView(false);
-            // MODO NORMAL: Carregar oficina do próprio usuário
-
-            // 1. Tenta buscar como dono
             const ownedWorkshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
-            userWorkshop = Array.isArray(ownedWorkshops) && ownedWorkshops.length > 0 
-              ? ownedWorkshops[0] 
-              : null;
+            userWorkshop = Array.isArray(ownedWorkshops) && ownedWorkshops.length > 0 ? ownedWorkshops[0] : null;
 
-            if (userWorkshop) {
-              console.log("✅ Workshop encontrado como owner:", userWorkshop?.name);
-            }
-
-            // 2. Se não encontrou como dono e tem workshop_id no User, usar direto
             if (!userWorkshop && currentUser.workshop_id) {
               try {
                 userWorkshop = await base44.entities.Workshop.get(currentUser.workshop_id);
-                console.log("✅ Workshop encontrado pelo workshop_id do User:", userWorkshop?.name);
               } catch (err) {
-                console.error("Erro ao buscar workshop pelo workshop_id do User:", err);
-              }
-            }
-
-            // 3. Se ainda não encontrou, tenta via Employee (fallback)
-            if (!userWorkshop) {
-              try {
-                const employees = await base44.entities.Employee.filter({ user_id: currentUser.id });
-                const myEmployeeRecord = Array.isArray(employees) && employees.length > 0 ? employees[0] : null;
-
-                if (myEmployeeRecord && myEmployeeRecord.workshop_id) {
-                  userWorkshop = await base44.entities.Workshop.get(myEmployeeRecord.workshop_id);
-                  console.log("✅ Workshop encontrado via Employee:", userWorkshop?.name);
-                }
-              } catch (empError) {
-                console.error("Erro ao buscar workshop via Employee:", empError);
+                console.error("Erro ao buscar workshop:", err);
               }
             }
           }
@@ -189,7 +123,6 @@ export default function Layout({ children, currentPageName }) {
         }
       }
     } catch (error) {
-      console.log("User not authenticated:", error);
       setIsAuthenticated(false);
       setUser(null);
     } finally {
@@ -201,33 +134,7 @@ export default function Layout({ children, currentPageName }) {
     loadUser();
   }, [location.pathname]);
 
-  // Verificar status de aprovação no primeiro login
-  useEffect(() => {
-    const checkUserApproval = async () => {
-      if (!user?.email) return;
 
-      try {
-        // Se usuário está pending, mostrar mensagem de aguardando aprovação
-        if (user?.user_status === 'pending') {
-          console.log("⏳ Usuário aguardando aprovação");
-          // O acesso será bloqueado pela lógica abaixo
-          return;
-        }
-
-        // Vincular user_id ao Employee via backend (evita erro 403)
-        try {
-          await base44.functions.invoke('linkUserToEmployee', {});
-          console.log("🔗 Employee vinculado ao User");
-        } catch (linkError) {
-          console.error("⚠️ Erro ao vincular Employee (não crítico):", linkError);
-        }
-      } catch (error) {
-        console.error("Erro ao verificar aprovação:", error);
-      }
-    };
-
-    checkUserApproval();
-  }, [user?.id, user?.email, user?.user_status]);
 
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ['unread-notifications', user?.id],

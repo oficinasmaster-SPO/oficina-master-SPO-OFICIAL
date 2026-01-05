@@ -25,48 +25,58 @@ export function SharedDataProvider({ children, workshopId, userId }) {
     retryOnMount: false,
   });
 
-  // Dados TCMP² / DRE mais recente - fonte principal financeira
   const { data: latestDRE, isLoading: loadingDRE } = useQuery({
     queryKey: ['shared-dre', workshopId],
     queryFn: async () => {
       if (!workshopId) return null;
-      const dres = await base44.entities.DREMonthly.filter(
-        { workshop_id: workshopId }, 
-        '-reference_month', 
-        1
-      );
-      return dres?.[0] || null;
+      try {
+        const dres = await base44.entities.DREMonthly.filter({ workshop_id: workshopId }, '-reference_month', 1);
+        return dres?.[0] || null;
+      } catch (error) {
+        console.error("Erro ao carregar DRE:", error);
+        return null;
+      }
     },
     enabled: !!workshopId,
     staleTime: 5 * 60 * 1000,
+    retry: 1,
+    retryOnMount: false,
   });
 
-  // Diagnóstico OS mais recente (TCMP²)
   const { data: latestOSDiagnostic, isLoading: loadingOS } = useQuery({
     queryKey: ['shared-os-diagnostic', workshopId],
     queryFn: async () => {
       if (!workshopId) return null;
-      const diagnostics = await base44.entities.ServiceOrderDiagnostic.filter(
-        { workshop_id: workshopId }, 
-        '-created_date', 
-        1
-      );
-      return diagnostics?.[0] || null;
+      try {
+        const diagnostics = await base44.entities.ServiceOrderDiagnostic.filter({ workshop_id: workshopId }, '-created_date', 1);
+        return diagnostics?.[0] || null;
+      } catch (error) {
+        console.error("Erro ao carregar OS:", error);
+        return null;
+      }
     },
     enabled: !!workshopId,
     staleTime: 5 * 60 * 1000,
+    retry: 1,
+    retryOnMount: false,
   });
 
-  // Colaboradores da oficina
   const { data: employees = [], isLoading: loadingEmployees } = useQuery({
     queryKey: ['shared-employees', workshopId],
     queryFn: async () => {
       if (!workshopId) return [];
-      const result = await base44.entities.Employee.filter({ workshop_id: workshopId });
-      return Array.isArray(result) ? result : [];
+      try {
+        const result = await base44.entities.Employee.filter({ workshop_id: workshopId });
+        return Array.isArray(result) ? result : [];
+      } catch (error) {
+        console.error("Erro ao carregar employees:", error);
+        return [];
+      }
     },
     enabled: !!workshopId,
     staleTime: 5 * 60 * 1000,
+    retry: 1,
+    retryOnMount: false,
   });
 
   // Metas mensais da oficina

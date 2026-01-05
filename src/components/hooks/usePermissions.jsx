@@ -35,100 +35,59 @@ export function usePermissions() {
       setLoading(true);
       const currentUser = await base44.auth.me();
       setUser(currentUser);
-      console.log("🔐 [usePermissions] Usuário:", currentUser.email, "| Role:", currentUser.role);
-
       let aggregatedPermissions = [];
 
       if (currentUser) {
-        // Admin tem todas as permissões
         if (currentUser.role === 'admin') {
           aggregatedPermissions = systemRoles.flatMap(m => m.roles.map(r => r.id));
-          console.log("👑 [usePermissions] Admin detectado - permissões totais");
         } else {
-          // Buscar Employee vinculado para obter profile_id via backend
-          // Usar backend para evitar problemas de RLS
           let employeeProfileId = null;
           try {
-            console.log("🔍 [usePermissions] Buscando profile_id via backend...");
             const result = await base44.functions.invoke('getUserProfile', {});
-            console.log("📦 [usePermissions] Resultado backend:", result?.data);
-            
             if (result?.data?.success && result.data.profile_id) {
               employeeProfileId = result.data.profile_id;
-              console.log("✅ [usePermissions] Profile ID obtido via backend:", employeeProfileId);
-            } else {
-              console.warn("⚠️ [usePermissions] Nenhum profile_id retornado pelo backend:", result?.data?.message);
             }
           } catch (empError) {
-            console.error("❌ [usePermissions] Erro ao buscar profile_id:", empError?.message || empError);
-            // Não bloquear o fluxo - usuário pode estar em pending approval
+            console.error("Erro ao buscar profile_id:", empError);
           }
 
-          // Carregar perfil do usuário
           const profileId = currentUser.profile_id || employeeProfileId;
-          console.log("🎯 [usePermissions] Profile ID a buscar:", profileId);
           
           if (profileId) {
             try {
               const userProfile = await base44.entities.UserProfile.get(profileId);
 
-              // Verificar se o perfil existe e é válido
               if (!userProfile || !userProfile.id) {
-                console.warn("⚠️ [usePermissions] UserProfile retornado é inválido ou null");
                 setProfile(null);
-                // Limpar profile_id inválido do Employee
-                try {
-                  const employees = await base44.entities.Employee.filter({ user_id: currentUser.id });
-                  if (employees && employees.length > 0 && employees[0].profile_id === profileId) {
-                    await base44.entities.Employee.update(employees[0].id, { profile_id: null });
-                    console.log("🧹 [usePermissions] profile_id inválido removido do Employee");
-                  }
-                } catch (cleanupError) {
-                  console.error("❌ [usePermissions] Erro ao limpar profile_id:", cleanupError);
-                }
               } else {
-                console.log("✅ [usePermissions] Perfil carregado:", userProfile.name || 'sem nome');
-                console.log("📦 [usePermissions] Roles do perfil:", userProfile.roles || []);
-                console.log("🔗 [usePermissions] Custom role IDs:", userProfile.custom_role_ids || []);
                 setProfile(userProfile);
-                
-                // Agregar permissões do perfil (roles antigas)
                 aggregatedPermissions = [...aggregatedPermissions, ...(userProfile.roles || [])];
-                console.log("➕ [usePermissions] Permissões adicionadas do perfil:", userProfile.roles?.length || 0);
                 
-                // Agregar custom_role_ids do perfil
                 if (userProfile.custom_role_ids && userProfile.custom_role_ids.length > 0) {
                   for (const roleId of userProfile.custom_role_ids) {
                     try {
                       const customRole = await base44.entities.CustomRole.get(roleId);
                       if (customRole && customRole.system_roles) {
                         aggregatedPermissions = [...aggregatedPermissions, ...(customRole.system_roles || [])];
-                        console.log("➕ [usePermissions] Permissões da CustomRole:", customRole.name, "->", customRole.system_roles?.length || 0);
                       }
                     } catch (roleError) {
-                      console.warn(`⚠️ [usePermissions] CustomRole ${roleId} não encontrada (ignorando)`, roleError?.message || roleError);
+                      console.warn("CustomRole não encontrada:", roleId);
                     }
                   }
                 }
               }
             } catch (profileError) {
-              // Perfil não encontrado ou erro ao carregar
-              console.error("❌ [usePermissions] Erro ao carregar UserProfile:", profileError?.message || profileError);
+              console.error("Erro ao carregar UserProfile:", profileError);
               setProfile(null);
             }
-          } else {
-            console.warn("⚠️ [usePermissions] Nenhum profile_id encontrado!");
           }
 
-          // Carregar custom role se existir (fallback antigo)
           if (currentUser.custom_role_id) {
             try {
               const role = await base44.entities.CustomRole.get(currentUser.custom_role_id);
               setCustomRole(role);
               aggregatedPermissions = [...aggregatedPermissions, ...(role.system_roles || [])];
-              console.log("➕ [usePermissions] Permissões da CustomRole antiga:", role.system_roles?.length || 0);
             } catch (customRoleError) {
-              console.error("❌ [usePermissions] Erro ao carregar CustomRole:", customRoleError);
               setCustomRole(null);
             }
           }
@@ -137,11 +96,9 @@ export function usePermissions() {
 
       const finalPermissions = [...new Set(aggregatedPermissions)];
       setPermissions(finalPermissions);
-      console.log("🎉 [usePermissions] PERMISSÕES FINAIS:", finalPermissions.length, "permissões");
-      console.log("📜 [usePermissions] Lista:", finalPermissions);
       setLoading(false);
     } catch (error) {
-      console.error("❌ [usePermissions] Erro fatal ao carregar permissões:", error);
+      console.error("Erro ao carregar permissões:", error);
       setUser(null);
       setProfile(null);
       setCustomRole(null);
