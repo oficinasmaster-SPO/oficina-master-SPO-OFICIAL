@@ -119,10 +119,14 @@ Deno.serve(async (req) => {
                      return [];
                  }
 
-                 // In-memory fuzzy search
+                 // In-memory fuzzy search - MAIS PERMISSIVO
                  const matches = items.filter(item => {
-                     // Check workshop_id just in case fallback was used
-                     if (workshop_id && item.workshop_id && item.workshop_id !== workshop_id) return false;
+                     // Permitir templates (sem workshop_id) ou itens da oficina atual
+                     const workshopMatch = !workshop_id || 
+                                          !item.workshop_id || 
+                                          item.workshop_id === workshop_id;
+                     
+                     if (!workshopMatch) return false;
 
                      return entity.fields.some(field => {
                          const val = item[field];
