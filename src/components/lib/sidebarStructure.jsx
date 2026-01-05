@@ -48,6 +48,7 @@ export const sidebarStructure = [
       { name: "Colaboradores", description: "Gestão de equipe" },
       { name: "Convidar Colaborador", description: "Envio de convites" },
       { name: "Aprovar Colaboradores", description: "Aprovar acessos pendentes" },
+      { name: "CESPE - Contratação Inteligente", description: "Canal → Entrevista → Sonho → Proposta → Integração" },
       { name: "CDC", description: "Conexão do colaborador" },
       { name: "COEX", description: "Contrato expectativa" },
       { name: "Perfil do Empresário", description: "Teste de perfil" },
