@@ -61,20 +61,19 @@ export default function CESPEEntrevista() {
     loadData();
   }, []);
 
-  const { data: candidate, isLoading: candidateLoading, error: candidateError } = useQuery({
+  const { data: candidate, isLoading: candidateLoading } = useQuery({
     queryKey: ['candidate', candidateId],
-    queryFn: async () => {
-      if (!candidateId) throw new Error("ID do candidato não fornecido");
-      return await base44.entities.Candidate.get(candidateId);
-    },
+    queryFn: () => base44.entities.Candidate.get(candidateId),
     enabled: !!candidateId,
-    retry: 2
+    staleTime: Infinity,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false
   });
 
   const currentForm = attachedForms[currentFormIndex];
 
   const { data: questions = [] } = useQuery({
-    queryKey: ['interview-questions', workshop?.id, currentForm?.form_id, candidate?.desired_position],
+    queryKey: ['interview-questions', currentForm?.form_id],
     queryFn: async () => {
       if (currentForm?.is_lead_score) {
         // 🔥 AUTOMAÇÃO: Injetar checklists automaticamente baseado no cargo do candidato
@@ -216,7 +215,10 @@ export default function CESPEEntrevista() {
       const all = await base44.entities.InterviewQuestion.filter({ active: true });
       return all.filter(q => !q.workshop_id || q.workshop_id === workshop.id);
     },
-    enabled: !!workshop?.id && !!currentForm && !!candidate
+    enabled: !!currentForm,
+    staleTime: Infinity,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false
   });
 
   const { data: cultureScript } = useQuery({
@@ -229,7 +231,10 @@ export default function CESPEEntrevista() {
       });
       return Array.isArray(scripts) && scripts.length > 0 ? scripts[0] : null;
     },
-    enabled: !!workshop?.id
+    enabled: !!workshop?.id,
+    staleTime: Infinity,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false
   });
 
   const saveInterviewMutation = useMutation({
@@ -411,43 +416,12 @@ export default function CESPEEntrevista() {
     }
   });
 
-  if (!candidateId) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="p-8 text-center">
-          <p className="text-red-600 mb-4">Nenhum candidato selecionado</p>
-          <Button onClick={() => navigate(-1)}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar
-          </Button>
-        </Card>
-      </div>
-    );
+  if (candidateLoading) {
+    return <div className="p-6 text-center">Carregando...</div>;
   }
 
-  if (candidateError) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="p-8 text-center">
-          <p className="text-red-600 mb-4">Erro ao carregar candidato: {candidateError.message}</p>
-          <Button onClick={() => navigate(-1)}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar
-          </Button>
-        </Card>
-      </div>
-    );
-  }
-
-  if (candidateLoading || !candidate) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Carregando candidato...</p>
-        </div>
-      </div>
-    );
+  if (!candidate) {
+    return <div className="p-6 text-center">Candidato não encontrado</div>;
   }
 
   const progress = questions.length > 0 ? ((currentStep + 1) / questions.length) * 100 : 0;

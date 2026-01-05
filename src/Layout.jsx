@@ -71,26 +71,12 @@ export default function Layout({ children, currentPageName }) {
             });
             console.log("✅ Login registrado");
 
-            // Registrar login no log de auditoria
-            try {
-              await base44.functions.invoke('auditLog', {
-                user_id: currentUser.id,
-                action: 'login',
-                details: {
-                  timestamp: new Date().toISOString()
-                }
-              });
-            } catch (auditError) {
-              console.error("⚠️ Erro ao registrar auditoria (não crítico):", auditError);
-            }
+
           } catch (updateError) {
             console.error("⚠️ Erro ao atualizar login (não crítico):", updateError);
           }
           setUser(currentUser);
-
-          console.log("👤 User autenticado:", currentUser.email);
-          console.log("🏢 Workshop_id do User:", currentUser.workshop_id);
-
+          
           const urlParams = new URLSearchParams(window.location.search);
           const adminWorkshopId = urlParams.get('workshop_id');
           let userWorkshop = null;
@@ -153,21 +139,6 @@ export default function Layout({ children, currentPageName }) {
 
   const handleLogout = async () => {
     try {
-      // Registrar logout no log de auditoria
-      if (user?.id) {
-        try {
-          await base44.functions.invoke('auditLog', {
-            user_id: user.id,
-            action: 'logout',
-            details: {
-              timestamp: new Date().toISOString()
-            }
-          });
-        } catch (auditError) {
-          console.error("⚠️ Erro ao registrar auditoria:", auditError);
-        }
-      }
-      
       await base44.auth.logout();
       window.location.href = createPageUrl("Home");
     } catch (error) {
@@ -290,13 +261,9 @@ export default function Layout({ children, currentPageName }) {
                 {isAuthenticated && !isPublicPage ? (
               (() => {
                 try {
-                  // Verificar permissão de acesso à página de forma segura
-                  console.log("🔐 [Layout] Verificando acesso à página:", currentPageName);
                   const hasAccess = !currentPageName || canAccessPage(currentPageName);
-                  console.log("🔐 [Layout] Resultado do canAccessPage:", hasAccess);
 
                   if (!hasAccess) {
-                    console.error("❌ [Layout] ACESSO NEGADO à página:", currentPageName);
                     return (
                       <div className="flex flex-col items-center justify-center h-[60vh] text-center px-4">
                         <div className="bg-red-100 p-4 rounded-full mb-4">
@@ -312,9 +279,7 @@ export default function Layout({ children, currentPageName }) {
                       </div>
                     );
                   }
-                  console.log("✅ [Layout] Acesso PERMITIDO à página:", currentPageName);
                 } catch (error) {
-                  console.error("❌ Erro crítico ao verificar permissões:", error);
                   // Em caso de erro, mostrar página de erro ao invés de tela branca
                   return (
                     <div className="flex flex-col items-center justify-center h-[60vh] text-center px-4">
