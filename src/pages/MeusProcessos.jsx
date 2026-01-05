@@ -16,6 +16,7 @@ import ShareProcessDialog from "../components/processes/ShareProcessDialog";
 import ShareHistoryDialog from "../components/processes/ShareHistoryDialog";
 import AreaGroupedView from "../components/processes/AreaGroupedView";
 import ProcessHierarchyView from "../components/processes/ProcessHierarchyView";
+import ProcessMetricsCards from "../components/processes/ProcessMetricsCards";
 
 export default function MeusProcessos() {
   const navigate = useNavigate();
@@ -80,6 +81,26 @@ export default function MeusProcessos() {
     initialData: []
   });
 
+  const { data: implementations = [] } = useQuery({
+    queryKey: ['process-implementations', workshop?.id],
+    queryFn: async () => {
+      if (!workshop?.id) return [];
+      return await base44.entities.ProcessImplementation.filter({ workshop_id: workshop.id });
+    },
+    enabled: !!workshop?.id,
+    initialData: []
+  });
+
+  const { data: audits = [] } = useQuery({
+    queryKey: ['process-audits', workshop?.id],
+    queryFn: async () => {
+      if (!workshop?.id) return [];
+      return await base44.entities.ProcessAudit.filter({ workshop_id: workshop.id });
+    },
+    enabled: !!workshop?.id,
+    initialData: []
+  });
+
   // Filter documents based on user access and workshop
   const accessibleDocs = documents.filter(doc => {
     // Check if it's a template or belongs to this workshop
@@ -97,6 +118,13 @@ export default function MeusProcessos() {
     const matchesTab = activeTab === "Todos" || doc.category === activeTab;
     return matchesSearch && matchesTab;
   });
+
+  // Calculate metrics
+  const mapsCount = accessibleDocs.filter(doc => doc.document_type === 'MAP').length;
+  const workshopIts = its.filter(it => workshop && it.workshop_id === workshop.id);
+  const itsCount = workshopIts.length;
+  const frsCount = accessibleDocs.filter(doc => doc.document_type === 'FR').length;
+  const customProcessesCount = accessibleDocs.filter(doc => !doc.is_template && workshop && doc.workshop_id === workshop.id).length;
 
   const duplicateMutation = useMutation({
     mutationFn: async (doc) => {
@@ -168,6 +196,15 @@ export default function MeusProcessos() {
             </Button>
           </Link>
         </div>
+
+        <ProcessMetricsCards
+          mapsCount={mapsCount}
+          itsCount={itsCount}
+          frsCount={frsCount}
+          implementationsCount={implementations.length}
+          auditsCount={audits.length}
+          customProcessesCount={customProcessesCount}
+        />
 
         <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between mb-6">
           <div className="relative flex-1">
