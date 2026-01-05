@@ -1,14 +1,8 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
-  const base44 = createClientFromRequest(req);
-  
   try {
-    const user = await base44.auth.me();
-    if (!user) {
-      return Response.json({ error: 'Não autenticado' }, { status: 401 });
-    }
-
+    const base44 = createClientFromRequest(req);
     const body = await req.json();
     const { name, email, workshop_id, employee_id } = body;
     
@@ -89,12 +83,12 @@ Deno.serve(async (req) => {
       </div>
     `;
 
-    // Enviar email via integração Core.SendEmail com service role
+    // Enviar email via integração Core.SendEmail (sem auth, usa service role direto)
     console.log("📤 Tentando enviar email...");
     console.log("📧 Destinatário:", email);
     console.log("🏢 Remetente:", workshop.name || "Oficinas Master");
     
-    const emailResult = await base44.asServiceRole.integrations.Core.SendEmail({
+    const emailResult = await base44.integrations.Core.SendEmail({
       from_name: workshop.name || "Oficinas Master",
       to: email,
       subject: `🎉 Bem-vindo(a) à ${workshop.name} - Acesse sua conta`,
