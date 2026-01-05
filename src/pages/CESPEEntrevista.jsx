@@ -36,6 +36,7 @@ export default function CESPEEntrevista() {
   const [leadScores, setLeadScores] = useState({});
   const [criteriaObservations, setCriteriaObservations] = useState({});
   const [criteriaAudios, setCriteriaAudios] = useState({});
+  const [checklistResponses, setChecklistResponses] = useState({});
   const [interviewerData, setInterviewerData] = useState(null);
   const [showAIReport, setShowAIReport] = useState(false);
   const [savedInterview, setSavedInterview] = useState(null);
@@ -153,13 +154,17 @@ export default function CESPEEntrevista() {
         currentForm.answers = Object.entries(leadScores).map(([key, value]) => {
           const [block, index] = key.split('_');
           const criteria = currentForm.form_data.scoring_criteria[parseInt(index)];
+          const checklistKey = `${key}_checklist`;
+          const checklistData = checklistResponses[checklistKey] || {};
+          
           return {
             question_id: key,
             question_text: criteria?.criteria_name || key,
             answer: `Pontuação: ${value}/${criteria?.max_points || 10}`,
             score: value,
             observation: criteriaObservations[key] || "",
-            audio_url: criteriaAudios[key] || null
+            audio_url: criteriaAudios[key] || null,
+            checklist_responses: checklistData
           };
         });
       } else {
@@ -264,6 +269,7 @@ export default function CESPEEntrevista() {
         setLeadScores({});
         setCriteriaObservations({});
         setCriteriaAudios({});
+        setChecklistResponses({});
         toast.success("Formulário salvo! Responda o próximo formulário.");
       } else {
         toast.success("Entrevista completa salva! Deseja gerar relatório IA?");
@@ -384,6 +390,8 @@ export default function CESPEEntrevista() {
               onObservationChange={(key, value) => setCriteriaObservations({...criteriaObservations, [key]: value})}
               criteriaAudios={criteriaAudios}
               onAudioChange={(key, url) => setCriteriaAudios({...criteriaAudios, [key]: url})}
+              checklistResponses={checklistResponses}
+              onChecklistChange={setChecklistResponses}
               onStepChange={setCurrentStep}
               interviewerNotes={interviewerNotes}
               onNotesChange={setInterviewerNotes}
@@ -461,6 +469,7 @@ export default function CESPEEntrevista() {
               setLeadScores({});
               setCriteriaObservations({});
               setCriteriaAudios({});
+              setChecklistResponses({});
               toast.success(`Formulário "${form.form_name}" anexado`);
             } else {
               toast.info("Formulário já está anexado");

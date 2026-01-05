@@ -1,11 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, Save } from "lucide-react";
+import { ChevronLeft, ChevronRight, Save, List } from "lucide-react";
 import AudioRecorder from "./AudioRecorder";
+import TechnicalChecklist from "./TechnicalChecklist";
 import { base44 } from "@/api/base44Client";
 
 const blockLabels = {
@@ -31,6 +32,8 @@ export default function LeadScoreInterviewForm({
   onObservationChange,
   criteriaAudios,
   onAudioChange,
+  checklistResponses = {},
+  onChecklistChange,
   onStepChange,
   interviewerNotes,
   onNotesChange,
@@ -41,6 +44,28 @@ export default function LeadScoreInterviewForm({
 }) {
   const criteria = form?.scoring_criteria || [];
   const currentCriteria = criteria[currentStep];
+  const [showChecklist, setShowChecklist] = useState(false);
+
+  // Determinar qual checklist mostrar baseado no critério técnico
+  const getChecklistType = () => {
+    if (!currentCriteria || currentCriteria.block !== 'tecnico') return null;
+    
+    const criteriaName = currentCriteria.criteria_name?.toLowerCase() || '';
+    
+    if (criteriaName.includes('conhecimento') || criteriaName.includes('técnico')) {
+      return 'conhecimento_tecnico';
+    }
+    if (criteriaName.includes('experiência') || criteriaName.includes('prática')) {
+      return 'experiencia_pratica';
+    }
+    if (criteriaName.includes('diagnóstico') || criteriaName.includes('capacidade')) {
+      return 'capacidade_diagnostico';
+    }
+    
+    return null;
+  };
+
+  const checklistType = getChecklistType();
   
   if (!currentCriteria) {
     return (
@@ -138,6 +163,8 @@ export default function LeadScoreInterviewForm({
   const currentScore = scores[criteriaKey] || 0;
   const currentObservation = criteriaObservations?.[criteriaKey] || "";
   const currentAudio = criteriaAudios?.[criteriaKey] || null;
+  const currentChecklistKey = `${criteriaKey}_checklist`;
+  const currentChecklistResponses = checklistResponses?.[currentChecklistKey] || {};
 
   return (
     <div className="space-y-6">
@@ -190,6 +217,36 @@ export default function LeadScoreInterviewForm({
               <span>{currentCriteria.max_points}</span>
             </div>
           </div>
+
+          {/* Botão Checklist Técnico */}
+          {checklistType && (
+            <div className="mt-4">
+              <Button
+                type="button"
+                onClick={() => setShowChecklist(!showChecklist)}
+                variant="outline"
+                className="w-full border-blue-600 text-blue-600 hover:bg-blue-50"
+              >
+                <List className="w-4 h-4 mr-2" />
+                {showChecklist ? 'Ocultar Checklist' : 'Abrir Checklist Técnico'}
+              </Button>
+            </div>
+          )}
+
+          {/* Checklist Técnico */}
+          {showChecklist && checklistType && (
+            <div className="mt-4">
+              <TechnicalChecklist
+                checklistType={checklistType}
+                responses={currentChecklistResponses}
+                onChange={(newResponses) => {
+                  const allChecklists = { ...checklistResponses };
+                  allChecklists[currentChecklistKey] = newResponses;
+                  onChecklistChange?.(allChecklists);
+                }}
+              />
+            </div>
+          )}
 
           <div className="space-y-3 mt-6 p-4 bg-gray-50 rounded-lg border">
             <div>
