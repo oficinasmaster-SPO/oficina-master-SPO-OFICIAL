@@ -38,21 +38,46 @@ export default function ChecklistManager({ workshopId }) {
   const [editingTemplate, setEditingTemplate] = useState(null);
   const [isCreating, setIsCreating] = useState(false);
 
-  const migrateMutation = useMutation({
-    mutationFn: async () => {
-      const response = await base44.functions.invoke('migrateLeadScoreChecklists', {
-        workshop_id: workshopId
+  // Buscar formulário Lead Score para mostrar checklists existentes
+  const { data: leadScoreForms = [] } = useQuery({
+    queryKey: ['lead-score-forms', workshopId],
+    queryFn: async () => {
+      if (!workshopId) return [];
+      const result = await base44.entities.InterviewForm.filter({ 
+        workshop_id: workshopId,
+        is_lead_score_form: true 
       });
-      return response.data;
+      return Array.isArray(result) ? result : [];
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['checklist-templates'] });
-      toast.success(data.message || "Checklists importados!");
-    },
-    onError: (error) => {
-      toast.error(error?.message || "Erro ao importar");
-    }
+    enabled: !!workshopId
   });
+
+  // Extrair checklists dos critérios do Lead Score
+  const leadScoreChecklists = React.useMemo(() => {
+    const checklists = [];
+    leadScoreForms.forEach(form => {
+      form.scoring_criteria?.forEach((criteria, index) => {
+        if (criteria.checklist_items && criteria.checklist_items.length > 0) {
+          checklists.push({
+            id: `form_${form.id}_criteria_${index}`,
+            formId: form.id,
+            criteriaIndex: index,
+            template_name: criteria.criteria_name,
+            job_role: 'tecnico',
+            checklist_type: 'conhecimento_tecnico',
+            items: criteria.checklist_items,
+            description: criteria.question || '',
+            is_active: true,
+            isFromForm: true
+          });
+        }
+      });
+    });
+    return checklists;
+  }, [leadScoreForms]);
+
+  // Combinar templates e checklists do formulário
+  const allChecklists = [...templates, ...leadScoreChecklists];
 
   const { data: templates = [] } = useQuery({
     queryKey: ['checklist-templates', workshopId],
@@ -109,6 +134,10 @@ export default function ChecklistManager({ workshopId }) {
   };
 
   const handleEdit = (template) => {
+    if (template.isFromForm) {
+      toast.info("Edite no formulário Lead Score ou crie um template independente");
+      return;
+    }
     setEditingTemplate({ ...template });
     setIsCreating(false);
   };
@@ -224,19 +253,14 @@ export default function ChecklistManager({ workshopId }) {
           <h3 className="text-lg font-semibold">Gerenciar Checklists</h3>
           <p className="text-sm text-gray-600">Crie checklists personalizados por cargo</p>
         </div>
-        <div className="flex gap-2">
-          <Button onClick={() => migrateMutation.mutate()} size="sm" variant="outline" disabled={migrateMutation.isPending}>
-            📥 Importar do Lead Score
-          </Button>
-          <Button onClick={handleCreate} size="sm">
-            <Plus className="w-4 h-4 mr-2" />
-            Novo Checklist
-          </Button>
-        </div>
+        <Button onClick={handleCreate} size="sm">
+          <Plus className="w-4 h-4 mr-2" />
+          Novo Checklist
+        </Button>
       </div>
 
       <div className="grid gap-3 max-h-[60vh] overflow-y-auto">
-        {templates.length === 0 ? (
+        {allChecklists.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
               <CheckSquare className="w-12 h-12 mx-auto text-gray-400 mb-4" />
@@ -248,13 +272,14 @@ export default function ChecklistManager({ workshopId }) {
             </CardContent>
           </Card>
         ) : (
-          templates.map((template) => (
+          allChecklists.map((template) => (
             <Card key={template.id}>
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <CardTitle className="text-base flex items-center gap-2">
                       {template.template_name}
+                      {template.isFromForm && <Badge className="bg-green-100 text-green-800">Do Lead Score</Badge>}
                       {!template.is_active && <Badge variant="outline">Inativo</Badge>}
                     </CardTitle>
                     <div className="flex gap-2 mt-2 flex-wrap">
