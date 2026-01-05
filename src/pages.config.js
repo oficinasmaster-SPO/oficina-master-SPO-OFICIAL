@@ -140,6 +140,9 @@ import TreinamentoVendas from './pages/TreinamentoVendas';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
 import AnalisesRH from './pages/AnalisesRH';
+import AutoavaliacaoMaturidade from './pages/AutoavaliacaoMaturidade';
+import AutoavaliacaoDesempenho from './pages/AutoavaliacaoDesempenho';
+import AutoavaliacaoDISC from './pages/AutoavaliacaoDISC';
 import __Layout from './Layout.jsx';
 
 
@@ -286,6 +289,9 @@ export const PAGES = {
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
     "AnalisesRH": AnalisesRH,
+    "AutoavaliacaoMaturidade": AutoavaliacaoMaturidade,
+    "AutoavaliacaoDesempenho": AutoavaliacaoDesempenho,
+    "AutoavaliacaoDISC": AutoavaliacaoDISC,
 }
 
 export const pagesConfig = {
