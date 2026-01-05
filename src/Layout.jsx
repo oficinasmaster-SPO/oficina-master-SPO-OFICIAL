@@ -91,10 +91,6 @@ export default function Layout({ children, currentPageName }) {
           console.log("👤 User autenticado:", currentUser.email);
           console.log("🏢 Workshop_id do User:", currentUser.workshop_id);
 
-          // VERIFICAR SE USUÁRIO TEM EMPLOYEE CADASTRADO
-          try {
-
-
           const urlParams = new URLSearchParams(window.location.search);
           const adminWorkshopId = urlParams.get('workshop_id');
           let userWorkshop = null;
