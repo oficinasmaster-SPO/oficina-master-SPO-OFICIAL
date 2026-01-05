@@ -118,11 +118,7 @@ export default function CandidateCard({ candidate }) {
             </Button>
           )}
           <Button 
-            onClick={() => {
-              navigate(createPageUrl("CESPEEntrevista"), { 
-                state: { candidateId: candidate.id } 
-              });
-            }}
+            onClick={() => window.location.href = `${createPageUrl("CESPEEntrevista")}?candidate_id=${candidate.id}`}
             size="sm"
             variant="outline"
           >
