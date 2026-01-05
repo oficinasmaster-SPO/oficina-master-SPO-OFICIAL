@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 
 const CHECKLIST_DATA = {
   conhecimento_tecnico: {
@@ -140,12 +142,61 @@ const CHECKLIST_DATA = {
 };
 
 export default function TechnicalChecklist({ 
-  checklistType, 
+  checklistType,
+  checklistId,
+  workshopId,
+  criteriaName,
   responses = {}, 
   onChange,
   readonly = false 
 }) {
-  const checklist = CHECKLIST_DATA[checklistType];
+  // Buscar checklist do banco se fornecido ID
+  const { data: dbChecklist } = useQuery({
+    queryKey: ['technical-checklist', checklistId],
+    queryFn: () => base44.entities.TechnicalChecklist.get(checklistId),
+    enabled: !!checklistId
+  });
+
+  // Buscar checklist por tipo e critério
+  const { data: matchedChecklists = [] } = useQuery({
+    queryKey: ['matched-checklists', checklistType, criteriaName, workshopId],
+    queryFn: async () => {
+      if (!workshopId) return [];
+      const all = await base44.entities.TechnicalChecklist.filter({ 
+        is_active: true,
+        checklist_type: checklistType
+      });
+      
+      // Filtrar por critério associado
+      return all.filter(c => {
+        if (!criteriaName) return true;
+        const associated = c.associated_criteria || [];
+        return associated.some(keyword => 
+          criteriaName.toLowerCase().includes(keyword.toLowerCase())
+        );
+      });
+    },
+    enabled: !checklistId && !!workshopId && !!criteriaName
+  });
+
+  // Usar checklist do banco se disponível, senão usar hardcoded
+  let checklist;
+  if (dbChecklist) {
+    checklist = {
+      title: dbChecklist.checklist_name,
+      question: dbChecklist.question_text,
+      categories: dbChecklist.categories
+    };
+  } else if (matchedChecklists.length > 0) {
+    const matched = matchedChecklists[0];
+    checklist = {
+      title: matched.checklist_name,
+      question: matched.question_text,
+      categories: matched.categories
+    };
+  } else {
+    checklist = CHECKLIST_DATA[checklistType];
+  }
   
   if (!checklist) return null;
 

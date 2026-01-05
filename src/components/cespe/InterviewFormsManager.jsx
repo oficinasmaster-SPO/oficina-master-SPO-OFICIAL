@@ -2,19 +2,21 @@ import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Award } from "lucide-react";
+import { Plus, Award, List } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import InterviewFormsList from "./InterviewFormsList";
 import InterviewFormEditor from "./InterviewFormEditor";
 import LeadScoreFormEditor from "./LeadScoreFormEditor";
+import ChecklistManager from "./ChecklistManager";
 
 export default function InterviewFormsManager({ open, onClose, workshopId, onSelectForm }) {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("list");
   const [editingForm, setEditingForm] = useState(null);
   const [editingLeadScore, setEditingLeadScore] = useState(false);
+  const [showChecklistManager, setShowChecklistManager] = useState(false);
 
   const { data: forms = [] } = useQuery({
     queryKey: ['interview-forms', workshopId],
@@ -76,6 +78,15 @@ export default function InterviewFormsManager({ open, onClose, workshopId, onSel
             <span>Perguntas Poderosas de Entrevista (PPE)</span>
             <div className="flex gap-2">
               <Button 
+                onClick={() => setShowChecklistManager(true)} 
+                size="sm"
+                variant="outline"
+                className="border-blue-600 text-blue-600"
+              >
+                <List className="w-4 h-4 mr-2" />
+                Checklists
+              </Button>
+              <Button 
                 onClick={handleCreateLeadScore} 
                 size="sm"
                 className="bg-green-600 hover:bg-green-700"
@@ -126,8 +137,17 @@ export default function InterviewFormsManager({ open, onClose, workshopId, onSel
               />
             )}
           </TabsContent>
-        </Tabs>
-      </DialogContent>
-    </Dialog>
-  );
-}
+          </Tabs>
+
+          </DialogContent>
+          </Dialog>
+
+          {/* Gerenciador de Checklists - Dialog separado */}
+          <ChecklistManager
+          open={showChecklistManager}
+          onClose={() => setShowChecklistManager(false)}
+          workshopId={workshopId}
+          />
+          </>
+          );
+          }

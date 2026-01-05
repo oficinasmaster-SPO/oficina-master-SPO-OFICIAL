@@ -238,6 +238,8 @@ export default function LeadScoreInterviewForm({
             <div className="mt-4">
               <TechnicalChecklist
                 checklistType={checklistType}
+                criteriaName={currentCriteria.criteria_name}
+                workshopId={form?.workshop_id}
                 responses={currentChecklistResponses}
                 onChange={(newResponses) => {
                   const allChecklists = { ...checklistResponses };
