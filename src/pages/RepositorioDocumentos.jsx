@@ -491,8 +491,8 @@ export default function RepositorioDocumentos() {
                             variant="ghost" 
                             size="icon" 
                             className="h-8 w-8 text-blue-600 hover:bg-blue-50"
-                            onClick={() => handleEdit(doc)}
-                            title="Editar"
+                            onClick={() => setSelectedDocForPreview(doc)}
+                            title="Visualizar"
                           >
                             <Search className="w-4 h-4" />
                           </Button>
@@ -504,6 +504,15 @@ export default function RepositorioDocumentos() {
                             title="Download"
                           >
                             <Download className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-purple-600 hover:bg-purple-50"
+                            onClick={() => handleEdit(doc)}
+                            title="Editar"
+                          >
+                            <FileText className="w-4 h-4" />
                           </Button>
                           <Button 
                             variant="ghost" 
