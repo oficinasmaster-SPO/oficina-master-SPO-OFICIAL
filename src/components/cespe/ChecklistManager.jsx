@@ -73,8 +73,8 @@ export default function ChecklistManager({ workshopId }) {
             formId: form.id,
             criteriaIndex: index,
             template_name: criteria.criteria_name,
-            job_role: 'tecnico',
-            checklist_type: 'conhecimento_tecnico',
+            job_role: criteria.job_role || 'tecnico',
+            checklist_type: criteria.checklist_type || 'conhecimento_tecnico',
             items: criteria.checklist_items,
             description: criteria.question || '',
             is_active: true,
@@ -96,11 +96,13 @@ export default function ChecklistManager({ workshopId }) {
         const form = await base44.entities.InterviewForm.get(editingTemplate.formId);
         const updatedCriteria = [...form.scoring_criteria];
         
-        // Atualizar o critério específico
+        // Atualizar o critério específico com TODOS os campos
         updatedCriteria[editingTemplate.criteriaIndex] = {
           ...updatedCriteria[editingTemplate.criteriaIndex],
           criteria_name: data.template_name,
-          checklist_items: data.items
+          checklist_items: data.items,
+          job_role: data.job_role,
+          checklist_type: data.checklist_type
         };
         
         return await base44.entities.InterviewForm.update(editingTemplate.formId, {
@@ -215,15 +217,11 @@ export default function ChecklistManager({ workshopId }) {
                   value={editingTemplate.job_role}
                   onChange={(e) => setEditingTemplate({...editingTemplate, job_role: e.target.value})}
                   className="w-full px-3 py-2 border rounded-md"
-                  disabled={editingTemplate.isFromForm}
                 >
                   {Object.entries(jobRoleLabels).map(([key, label]) => (
                     <option key={key} value={key}>{label}</option>
                   ))}
                 </select>
-                {editingTemplate.isFromForm && (
-                  <p className="text-xs text-gray-500 mt-1">Campo fixo para checklists do Lead Score</p>
-                )}
               </div>
 
               <div>
@@ -232,15 +230,11 @@ export default function ChecklistManager({ workshopId }) {
                   value={editingTemplate.checklist_type}
                   onChange={(e) => setEditingTemplate({...editingTemplate, checklist_type: e.target.value})}
                   className="w-full px-3 py-2 border rounded-md"
-                  disabled={editingTemplate.isFromForm}
                 >
                   {Object.entries(checklistTypeLabels).map(([key, label]) => (
                     <option key={key} value={key}>{label}</option>
                   ))}
                 </select>
-                {editingTemplate.isFromForm && (
-                  <p className="text-xs text-gray-500 mt-1">Campo fixo para checklists do Lead Score</p>
-                )}
               </div>
             </div>
 
