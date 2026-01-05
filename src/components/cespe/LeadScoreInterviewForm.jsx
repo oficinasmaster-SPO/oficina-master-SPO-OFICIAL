@@ -32,6 +32,8 @@ export default function LeadScoreInterviewForm({
   onObservationChange,
   criteriaAudios,
   onAudioChange,
+  checklistSelections = {},
+  onChecklistChange,
   onStepChange,
   interviewerNotes,
   onNotesChange,
@@ -40,7 +42,6 @@ export default function LeadScoreInterviewForm({
   onSubmit,
   isLoading
 }) {
-  const [checklistSelections, setChecklistSelections] = useState({});
   const [showChecklist, setShowChecklist] = useState({});
 
   const criteria = form?.scoring_criteria || [];
@@ -144,7 +145,10 @@ export default function LeadScoreInterviewForm({
   const currentAudio = criteriaAudios?.[criteriaKey] || null;
 
   const handleChecklistChange = (selectedIndices) => {
-    setChecklistSelections({ ...checklistSelections, [criteriaKey]: selectedIndices });
+    // Atualizar seleções do checklist via prop
+    if (onChecklistChange) {
+      onChecklistChange(criteriaKey, selectedIndices);
+    }
     
     // Calcular pontuação automaticamente baseado no checklist
     if (currentCriteria?.checklist_items) {
@@ -192,26 +196,17 @@ export default function LeadScoreInterviewForm({
           )}
 
           {currentCriteria.has_checklist && currentCriteria.checklist_items?.length > 0 && (
-            <Collapsible 
-              open={showChecklist[criteriaKey] !== false} 
-              onOpenChange={(open) => setShowChecklist({ ...showChecklist, [criteriaKey]: open })}
-              className="border-2 border-blue-200 rounded-lg"
-            >
-              <CollapsibleTrigger asChild>
-                <Button variant="outline" className="w-full">
-                  <CheckSquare className="w-4 h-4 mr-2" />
-                  {showChecklist[criteriaKey] !== false ? <ChevronUp className="w-4 h-4 ml-2" /> : <ChevronDown className="w-4 h-4 ml-2" />}
-                  Checklist de Avaliação
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="p-4">
-                <ChecklistRenderer
-                  items={currentCriteria.checklist_items}
-                  selected={checklistSelections[criteriaKey] || []}
-                  onChange={handleChecklistChange}
-                />
-              </CollapsibleContent>
-            </Collapsible>
+            <div className="border-2 border-blue-200 rounded-lg p-4 bg-blue-50">
+              <div className="flex items-center gap-2 mb-3">
+                <CheckSquare className="w-5 h-5 text-blue-600" />
+                <h3 className="font-semibold text-blue-900">Checklist de Avaliação</h3>
+              </div>
+              <ChecklistRenderer
+                items={currentCriteria.checklist_items}
+                selected={checklistSelections[criteriaKey] || []}
+                onChange={handleChecklistChange}
+              />
+            </div>
           )}
 
           <div>
