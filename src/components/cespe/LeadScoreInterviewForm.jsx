@@ -42,7 +42,8 @@ export default function LeadScoreInterviewForm({
   onSubmit,
   isLoading
 }) {
-  const [showChecklist, setShowChecklist] = useState({});
+  const [expandedChecklist, setExpandedChecklist] = useState(null);
+  const [loadedChecklistTemplate, setLoadedChecklistTemplate] = useState(null);
 
   const criteria = form?.scoring_criteria || [];
   const currentCriteria = criteria[currentStep];

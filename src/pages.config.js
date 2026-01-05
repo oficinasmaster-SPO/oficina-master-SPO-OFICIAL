@@ -150,6 +150,7 @@ import TestUsuarios from './pages/TestUsuarios';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
+import GerenciarChecklists from './pages/GerenciarChecklists';
 import __Layout from './Layout.jsx';
 
 
@@ -306,6 +307,7 @@ export const PAGES = {
     "TreinamentoVendas": TreinamentoVendas,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
+    "GerenciarChecklists": GerenciarChecklists,
 }
 
 export const pagesConfig = {

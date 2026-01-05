@@ -208,6 +208,21 @@ export default function LeadScoreFormEditor({ form, workshopId, onSaveComplete, 
                         />
                       </div>
 
+                      <div>
+                        <Label>Template de Checklist (Opcional)</Label>
+                        <select
+                          value={c.checklist_template_id || ""}
+                          onChange={(e) => updateCriteria(index, 'checklist_template_id', e.target.value)}
+                          className="w-full px-3 py-2 border rounded-md"
+                        >
+                          <option value="">Selecione um template...</option>
+                          <option value="auto">🤖 Detectar Automaticamente pelo Cargo</option>
+                        </select>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Ao selecionar "Detectar Automaticamente", o sistema escolherá o checklist baseado no cargo do candidato
+                        </p>
+                      </div>
+
                       <div className="grid grid-cols-2 gap-3">
                         <div>
                           <Label>Pontuação Máxima</Label>
