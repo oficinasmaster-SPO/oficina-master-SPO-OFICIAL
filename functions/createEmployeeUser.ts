@@ -85,28 +85,92 @@ Deno.serve(async (req) => {
       console.error("⚠️ Erro ao criar convite no banco:", inviteDbError.message);
     }
 
-    // 5. Enviar email de convite
+    // 5. Buscar oficina para enviar email
+    let workshopData;
     try {
-      console.log("📧 Chamando sendEmployeeInvite com payload:", {
-        name: name,
-        email: email,
-        workshop_id: workshop_id,
-        employee_id: employee.id
-      });
+      workshopData = await base44.asServiceRole.entities.Workshop.get(workshop_id);
+    } catch (workshopError) {
+      console.error("⚠️ Erro ao buscar workshop:", workshopError);
+      workshopData = { name: "Oficina" }; // Fallback
+    }
+
+    // 6. Buscar token do convite
+    const invites = await base44.asServiceRole.entities.EmployeeInvite.filter({ 
+      email: email,
+      workshop_id: workshop_id
+    }, '-created_date', 1);
+
+    const invite = invites[0];
+    const origin = new URL(req.url).origin;
+    const inviteLink = invite 
+      ? `${origin}/PrimeiroAcesso?token=${invite.invite_token}`
+      : `${origin}/PrimeiroAcesso`;
+
+    // 7. Enviar email de convite
+    try {
+      console.log("📧 Enviando email para:", email);
       
-      const emailResult = await base44.functions.invoke('sendEmployeeInvite', {
-        name: name,
-        email: email,
-        workshop_id: workshop_id,
-        employee_id: employee.id
+      const emailBody = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
+            <h1 style="color: white; margin: 0;">🎉 Bem-vindo(a) à ${workshopData.name}!</h1>
+          </div>
+          
+          <div style="padding: 30px; background: #f9fafb;">
+            <p style="font-size: 16px; color: #374151;">Olá, <strong>${name}</strong>!</p>
+            
+            <p style="font-size: 16px; color: #374151;">
+              Você foi convidado(a) para fazer parte da equipe <strong>${workshopData.name}</strong> 
+              na plataforma Oficinas Master.
+            </p>
+            
+            <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3b82f6;">
+              <h3 style="margin-top: 0; color: #1f2937;">🔑 Seus Dados de Acesso:</h3>
+              <p style="margin: 5px 0;"><strong>Email:</strong> ${email}</p>
+              <p style="margin: 5px 0;"><strong>Senha Temporária:</strong> Oficina@2025</p>
+              <p style="font-size: 12px; color: #6b7280; margin-top: 10px;">
+                ⚠️ Você deverá trocar esta senha no primeiro acesso
+              </p>
+            </div>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${inviteLink}" 
+                 style="display: inline-block; background: #3b82f6; color: white; padding: 15px 40px; 
+                        text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+                Acessar Plataforma
+              </a>
+            </div>
+            
+            <p style="font-size: 14px; color: #6b7280; text-align: center;">
+              Este link é válido por 7 dias. Se não funcionar, copie e cole no navegador:<br>
+              <code style="background: #e5e7eb; padding: 5px 10px; border-radius: 4px; display: inline-block; margin-top: 10px; font-size: 12px;">
+                ${inviteLink}
+              </code>
+            </p>
+          </div>
+          
+          <div style="background: #1f2937; padding: 20px; text-align: center; color: #9ca3af; font-size: 12px;">
+            <p style="margin: 0;">© 2025 Oficinas Master - Plataforma de Gestão Automotiva</p>
+          </div>
+        </div>
+      `;
+
+      await base44.integrations.Core.SendEmail({
+        from_name: workshopData.name || "Oficinas Master",
+        to: email,
+        subject: `🎉 Bem-vindo(a) à ${workshopData.name} - Acesse sua conta`,
+        body: emailBody
       });
 
-      console.log("✅ Status da resposta:", emailResult.status);
-      console.log("✅ Response body:", JSON.stringify(emailResult.data, null, 2));
+      console.log("✅ Email enviado com sucesso!");
 
-      if (!emailResult.data?.success) {
-        console.error("⚠️ Email NÃO foi enviado:", emailResult.data?.error);
-        throw new Error("Falha ao enviar email: " + (emailResult.data?.error || "Erro desconhecido"));
+      // Atualizar status do convite
+      if (invite) {
+        await base44.asServiceRole.entities.EmployeeInvite.update(invite.id, {
+          status: 'enviado',
+          last_resent_at: new Date().toISOString(),
+          resent_count: (invite.resent_count || 0) + 1
+        });
       }
     } catch (emailError) {
       console.error("❌ Erro ao enviar email:", emailError);
@@ -115,7 +179,7 @@ Deno.serve(async (req) => {
       throw new Error("Erro ao enviar email de convite: " + emailError.message);
     }
 
-    // 6. Retornar sucesso
+    // 8. Retornar sucesso
     return Response.json({ 
       success: true,
       message: 'Colaborador criado com sucesso!',
