@@ -85,7 +85,22 @@ Deno.serve(async (req) => {
       console.error("⚠️ Erro ao criar convite no banco:", inviteDbError.message);
     }
 
-    // 5. Retornar sucesso
+    // 5. Enviar email de convite
+    try {
+      const emailResult = await base44.functions.invoke('sendEmployeeInvite', {
+        name: name,
+        email: email,
+        workshop_id: workshop_id,
+        employee_id: employee.id
+      });
+      
+      console.log("✅ Email enviado:", emailResult.data?.success);
+    } catch (emailError) {
+      console.error("⚠️ Erro ao enviar email:", emailError.message);
+      // Continua mesmo se email falhar
+    }
+
+    // 6. Retornar sucesso
     return Response.json({ 
       success: true,
       message: 'Colaborador criado com sucesso!',

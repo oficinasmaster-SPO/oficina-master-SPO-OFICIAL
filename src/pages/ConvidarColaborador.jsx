@@ -66,6 +66,18 @@ export default function ConvidarColaborador() {
     }
   });
 
+  // Preencher formulário com dados do Employee
+  const fillFormWithEmployee = (employee) => {
+    setFormData({
+      name: employee.full_name || "",
+      email: employee.email || "",
+      position: employee.position || "",
+      area: employee.area || "",
+      job_role: employee.job_role || "outros",
+      profile_id: employee.profile_id || ""
+    });
+  };
+
   // Carregar usuário e oficina
   useEffect(() => {
     const loadUserAndWorkshop = async () => {
