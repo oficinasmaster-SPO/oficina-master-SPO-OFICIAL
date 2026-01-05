@@ -93,24 +93,45 @@ export default function InterviewReportViewer({ interview, candidate, onClose })
             </div>
 
             {interview.seniority_level && (
-              <div className={`border-l-4 p-4 rounded ${
-                interview.seniority_level === 'master' ? 'bg-purple-50 border-purple-600' :
-                interview.seniority_level === 'senior' ? 'bg-green-50 border-green-600' :
-                interview.seniority_level === 'pleno' ? 'bg-yellow-50 border-yellow-600' :
-                'bg-red-50 border-red-600'
+              <div className={`border-l-4 p-6 rounded-lg shadow-md ${
+                interview.seniority_level === 'master' ? 'bg-gradient-to-br from-purple-50 to-purple-100 border-purple-600' :
+                interview.seniority_level === 'senior' ? 'bg-gradient-to-br from-green-50 to-green-100 border-green-600' :
+                interview.seniority_level === 'pleno' ? 'bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-600' :
+                'bg-gradient-to-br from-orange-50 to-orange-100 border-orange-600'
               }`}>
-                <p className="text-sm text-gray-600 mb-1">Nível de Senioridade</p>
-                <p className={`text-3xl font-bold ${
-                  interview.seniority_level === 'master' ? 'text-purple-600' :
-                  interview.seniority_level === 'senior' ? 'text-green-600' :
-                  interview.seniority_level === 'pleno' ? 'text-yellow-600' :
-                  'text-red-600'
-                }`}>
-                  {interview.seniority_level === 'master' ? '🟣 MASTER' :
-                   interview.seniority_level === 'senior' ? '🟢 SÊNIOR' :
-                   interview.seniority_level === 'pleno' ? '🟡 PLENO' :
-                   '🔴 JÚNIOR'}
-                </p>
+                <p className="text-sm text-gray-600 mb-2 font-medium uppercase tracking-wide">Nível de Senioridade</p>
+                <div className="flex items-center gap-3 mb-2">
+                  <span className={`text-5xl ${
+                    interview.seniority_level === 'master' ? 'text-purple-600' :
+                    interview.seniority_level === 'senior' ? 'text-green-600' :
+                    interview.seniority_level === 'pleno' ? 'text-yellow-600' :
+                    'text-orange-600'
+                  }`}>
+                    {interview.seniority_level === 'master' ? '👑' :
+                     interview.seniority_level === 'senior' ? '⭐' :
+                     interview.seniority_level === 'pleno' ? '🔷' :
+                     '🌱'}
+                  </span>
+                  <div>
+                    <p className={`text-3xl font-black ${
+                      interview.seniority_level === 'master' ? 'text-purple-700' :
+                      interview.seniority_level === 'senior' ? 'text-green-700' :
+                      interview.seniority_level === 'pleno' ? 'text-yellow-700' :
+                      'text-orange-700'
+                    }`}>
+                      {interview.seniority_level === 'master' ? 'MASTER' :
+                       interview.seniority_level === 'senior' ? 'SÊNIOR' :
+                       interview.seniority_level === 'pleno' ? 'PLENO' :
+                       'JÚNIOR'}
+                    </p>
+                    <p className="text-xs text-gray-600 font-medium mt-0.5">
+                      {interview.seniority_level === 'master' ? 'Profissional altamente capacitado • Top 1%' :
+                       interview.seniority_level === 'senior' ? 'Profissional experiente • Alto nível' :
+                       interview.seniority_level === 'pleno' ? 'Profissional qualificado • Nível intermediário' :
+                       'Profissional em desenvolvimento • Nível inicial'}
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
 
