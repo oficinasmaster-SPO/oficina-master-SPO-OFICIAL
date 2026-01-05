@@ -47,6 +47,11 @@ export default function LeadScoreInterviewForm({
   const criteria = form?.scoring_criteria || [];
   const currentCriteria = criteria[currentStep];
   
+  // Debug checklist
+  console.log("🔍 Current Criteria:", currentCriteria);
+  console.log("📋 Has Checklist:", currentCriteria?.has_checklist);
+  console.log("📝 Checklist Items:", currentCriteria?.checklist_items);
+  
   if (!currentCriteria) {
     return (
       <div className="space-y-6">
@@ -195,7 +200,8 @@ export default function LeadScoreInterviewForm({
             </div>
           )}
 
-          {currentCriteria.has_checklist && currentCriteria.checklist_items?.length > 0 && (
+          {/* SEMPRE mostrar checklist se existir, independente de has_checklist */}
+          {currentCriteria.checklist_items && currentCriteria.checklist_items.length > 0 && (
             <div className="border-2 border-blue-200 rounded-lg p-4 bg-blue-50">
               <div className="flex items-center gap-2 mb-3">
                 <CheckSquare className="w-5 h-5 text-blue-600" />
@@ -212,7 +218,7 @@ export default function LeadScoreInterviewForm({
           <div>
             <Label className="text-lg">
               Pontuação (0 - {currentCriteria.max_points})
-              {currentCriteria.has_checklist && (
+              {currentCriteria.checklist_items?.length > 0 && (
                 <span className="text-sm text-blue-600 ml-2">✓ Calculada pelo checklist</span>
               )}
             </Label>
@@ -224,7 +230,7 @@ export default function LeadScoreInterviewForm({
                 step="0.5"
                 value={currentScore}
                 onChange={(e) => onScoreChange(criteriaKey, parseFloat(e.target.value))}
-                disabled={currentCriteria.has_checklist}
+                disabled={currentCriteria.checklist_items?.length > 0}
                 className="flex-1 h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer disabled:opacity-50"
               />
               <div className="text-3xl font-bold text-blue-600 min-w-[60px] text-center">
