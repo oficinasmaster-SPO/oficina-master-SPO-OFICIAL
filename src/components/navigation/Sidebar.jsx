@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Badge } from "@/components/ui/badge";
 import { usePermissions } from "@/components/hooks/usePermissions";
+import { base44 } from "@/api/base44Client";
 import { 
   Home, 
   FileText, 
@@ -58,6 +59,120 @@ import {
   UserCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+function UserProfileSection({ user, collapsed }) {
+  const [employee, setEmployee] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user?.id) {
+      loadEmployee();
+    }
+  }, [user?.id]);
+
+  const loadEmployee = async () => {
+    try {
+      const employees = await base44.entities.Employee.filter({ user_id: user.id });
+      if (employees && employees.length > 0) {
+        setEmployee(employees[0]);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar employee:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getInitials = () => {
+    if (employee?.full_name) {
+      return employee.full_name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+    }
+    return user?.full_name?.[0] || user?.email?.[0] || 'U';
+  };
+
+  const jobRoleLabels = {
+    socio: "Sócio",
+    diretor: "Diretor",
+    supervisor_loja: "Supervisor",
+    gerente: "Gerente",
+    lider_tecnico: "Líder Técnico",
+    financeiro: "Financeiro",
+    rh: "RH",
+    tecnico: "Técnico",
+    funilaria_pintura: "Funilaria/Pintura",
+    comercial: "Comercial",
+    consultor_vendas: "Consultor",
+    marketing: "Marketing",
+    estoque: "Estoque",
+    administrativo: "Administrativo",
+    motoboy: "Motoboy",
+    lavador: "Lavador",
+    acelerador: "Acelerador",
+    consultor: "Consultor",
+    outros: "Outros"
+  };
+
+  const areaLabels = {
+    vendas: "Vendas",
+    comercial: "Comercial",
+    marketing: "Marketing",
+    tecnico: "Técnico",
+    administrativo: "Administrativo",
+    financeiro: "Financeiro",
+    gerencia: "Gerência"
+  };
+
+  if (loading) {
+    return (
+      <div className="p-4 border-t border-gray-200">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse flex-shrink-0" />
+          {!collapsed && (
+            <div className="flex-1">
+              <div className="h-4 bg-gray-200 rounded animate-pulse mb-1" />
+              <div className="h-3 bg-gray-200 rounded animate-pulse w-2/3" />
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-4 border-t border-gray-200">
+      <div className="flex items-center gap-3">
+        {employee?.profile_picture_url ? (
+          <img 
+            src={employee.profile_picture_url} 
+            alt={employee.full_name}
+            className="w-10 h-10 rounded-full object-cover flex-shrink-0 border-2 border-blue-200"
+          />
+        ) : (
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-white font-semibold flex-shrink-0 border-2 border-blue-200">
+            {getInitials()}
+          </div>
+        )}
+        {!collapsed && (
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-900 truncate">
+              {employee?.full_name || user?.full_name || user?.email}
+            </p>
+            <p className="text-xs text-gray-600 truncate">
+              {employee ? (
+                <>
+                  {jobRoleLabels[employee.job_role] || employee.position || 'Colaborador'}
+                  {employee.area && ` - ${areaLabels[employee.area] || employee.area}`}
+                </>
+              ) : (
+                user?.role === 'admin' ? 'Administrador' : 'Usuário'
+              )}
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
   const location = useLocation();
@@ -974,28 +1089,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           </div>
         </nav>
 
-        {user && (
-          <div className="p-4 border-t border-gray-200">
-            <div className={cn(
-              "flex items-center gap-3 px-3 py-2 bg-gray-50 rounded-lg",
-              isCollapsed && "justify-center px-0"
-            )}>
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center">
-                <User className="w-5 h-5 text-white" />
-              </div>
-              {!isCollapsed && (
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {user.full_name || user.email}
-                  </p>
-                  <p className="text-xs text-gray-600 capitalize">
-                    {user.role === 'admin' ? 'Administrador' : user.job_role === 'acelerador' ? 'Acelerador' : user.role === 'user' ? 'Consultor' : 'Usuário'}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+        {user && <UserProfileSection user={user} collapsed={isCollapsed} />}
       </aside>
     </>
   );
