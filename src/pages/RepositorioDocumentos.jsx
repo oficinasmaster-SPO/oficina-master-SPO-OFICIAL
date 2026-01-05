@@ -27,6 +27,8 @@ import TagsManager from "@/components/documents/TagsManager";
 import VersionHistory from "@/components/documents/VersionHistory";
 import ShareDocumentDialog from "@/components/documents/ShareDocumentDialog";
 import AccessReport from "@/components/documents/AccessReport";
+import DocumentFilters from "@/components/documents/DocumentFilters";
+import DocumentFormDialog from "@/components/documents/DocumentFormDialog";
 
 export default function RepositorioDocumentos() {
   const queryClient = useQueryClient();
@@ -42,6 +44,15 @@ export default function RepositorioDocumentos() {
   const [uploading, setUploading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAdminView, setIsAdminView] = useState(false);
+  const [showFormDialog, setShowFormDialog] = useState(false);
+  const [editingDocument, setEditingDocument] = useState(null);
+  const [filters, setFilters] = useState({
+    category: '',
+    document_type: '',
+    status: '',
+    legal_impact: '',
+    mandatory_by_law: ''
+  });
   
 
 
@@ -133,12 +144,38 @@ export default function RepositorioDocumentos() {
   });
 
   const filteredDocuments = React.useMemo(() => {
-    if (!searchTerm) return documents;
-    
-    return documents.filter(doc => 
-      doc.title.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [documents, searchTerm]);
+    let filtered = documents;
+
+    // Busca por texto
+    if (searchTerm) {
+      filtered = filtered.filter(doc => 
+        doc.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        doc.document_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        doc.subprocess_area?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Filtros
+    if (filters.category) {
+      filtered = filtered.filter(doc => doc.category === filters.category);
+    }
+    if (filters.document_type) {
+      filtered = filtered.filter(doc => doc.document_type === filters.document_type);
+    }
+    if (filters.status) {
+      filtered = filtered.filter(doc => doc.status === filters.status);
+    }
+    if (filters.legal_impact) {
+      filtered = filtered.filter(doc => doc.legal_impact === filters.legal_impact);
+    }
+    if (filters.mandatory_by_law === 'sim') {
+      filtered = filtered.filter(doc => doc.mandatory_by_law === true);
+    } else if (filters.mandatory_by_law === 'nao') {
+      filtered = filtered.filter(doc => doc.mandatory_by_law === false);
+    }
+
+    return filtered;
+  }, [documents, searchTerm, filters]);
   
   console.log(`📊 Total: ${documents.length} | Exibindo: ${filteredDocuments.length}`);
 
@@ -172,6 +209,30 @@ export default function RepositorioDocumentos() {
     if (confirm("Tem certeza que deseja excluir este documento?")) {
       deleteMutation.mutate(id);
     }
+  };
+
+  const handleFilterChange = (key, value) => {
+    setFilters({ ...filters, [key]: value });
+  };
+
+  const handleClearFilters = () => {
+    setFilters({
+      category: '',
+      document_type: '',
+      status: '',
+      legal_impact: '',
+      mandatory_by_law: ''
+    });
+  };
+
+  const handleEdit = (doc) => {
+    setEditingDocument(doc);
+    setShowFormDialog(true);
+  };
+
+  const handleNewDocument = () => {
+    setEditingDocument(null);
+    setShowFormDialog(true);
   };
 
   const handleDownload = async (doc) => {
@@ -258,7 +319,7 @@ export default function RepositorioDocumentos() {
               )}
             </p>
           </div>
-          <Button onClick={() => setShowUploadModal(true)} className="bg-blue-600 hover:bg-blue-700">
+          <Button onClick={handleNewDocument} className="bg-blue-600 hover:bg-blue-700">
             <Plus className="w-5 h-5 mr-2" />
             Novo Documento
           </Button>
@@ -270,7 +331,7 @@ export default function RepositorioDocumentos() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
             <Input
-              placeholder="Buscar documentos..."
+              placeholder="Buscar por ID, nome, processo..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 bg-white"
@@ -278,172 +339,180 @@ export default function RepositorioDocumentos() {
           </div>
         </div>
 
+        <DocumentFilters 
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          onClear={handleClearFilters}
+        />
+
         <Card className="shadow-md overflow-hidden border-t-4 border-t-blue-500">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader className="bg-slate-50">
                 <TableRow>
-                  <TableHead className="w-[300px]">Documento</TableHead>
-                  <TableHead>Categoria</TableHead>
+                  <TableHead className="w-[80px]">ID</TableHead>
+                  <TableHead className="w-[250px]">Nome do Documento</TableHead>
+                  <TableHead>Área</TableHead>
+                  <TableHead>Processo</TableHead>
                   <TableHead>Tipo</TableHead>
-                  <TableHead>Cópia Controlada</TableHead>
-                  <TableHead>Data Envio</TableHead>
+                  <TableHead>Responsável</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Versão</TableHead>
+                  <TableHead>Revisar Até</TableHead>
+                  <TableHead>Impacto</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredDocuments.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-12 text-gray-500">
+                    <TableCell colSpan={11} className="text-center py-12 text-gray-500">
                       <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
                       <p>Nenhum documento encontrado.</p>
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredDocuments.map((doc) => {
-                    const expiryStatus = getExpiryStatus(doc.expiry_date);
+                    const expiryStatus = getExpiryStatus(doc.next_review_date);
+                    
+                    const categoryLabels = {
+                      governanca: "Governança",
+                      juridico_regimento: "Jurídico",
+                      rh_pessoas: "RH",
+                      operacional: "Operacional",
+                      tecnico: "Técnico",
+                      comercial: "Comercial",
+                      financeiro: "Financeiro",
+                      treinamento: "Treinamento",
+                      auditoria_dados: "Auditoria"
+                    };
+
+                    const statusLabels = {
+                      em_construcao: "Construção",
+                      em_revisao: "Revisão",
+                      aprovado: "Aprovado",
+                      em_uso: "Em Uso",
+                      obsoleto: "Obsoleto",
+                      arquivado: "Arquivado"
+                    };
+
+                    const roleLabels = {
+                      socio: "Sócio",
+                      diretor: "Diretor",
+                      gerente: "Gerente",
+                      financeiro: "Financeiro",
+                      consultor_vendas: "Vendas",
+                      tecnico: "Técnico",
+                      rh: "RH",
+                      administrativo: "Admin",
+                      outros: "Outros"
+                    };
+
                     return (
                     <TableRow key={doc.id} className={`hover:bg-slate-50 ${expiryStatus?.status === 'expired' ? 'bg-red-50' : ''}`}>
+                      <TableCell className="font-mono text-xs text-gray-700">
+                        {doc.document_id || '-'}
+                      </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
-                            <FileText className="w-5 h-5" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <p className="font-medium text-gray-900">{doc.title}</p>
-                              {expiryStatus && (
-                                <Badge className={`${expiryStatus.color} border`}>
-                                  <AlertTriangle className="w-3 h-3 mr-1" />
-                                  {expiryStatus.label}
-                                </Badge>
-                              )}
-                            </div>
-                            {doc.expiry_date && (
-                              <p className="text-xs text-gray-500">
-                                Validade: {format(new Date(doc.expiry_date), "dd/MM/yyyy")}
-                              </p>
-                            )}
-                            <TagsManager 
-                              document={doc}
-                              onUpdate={(tags) => handleUpdateTags(doc.id, tags)}
-                            />
-                          </div>
+                        <div className="flex flex-col gap-1">
+                          <p className="font-medium text-gray-900 text-sm">{doc.title}</p>
+                          {doc.process_owner && (
+                            <p className="text-xs text-gray-500">Owner: {doc.process_owner}</p>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="secondary" className="capitalize">
-                          {doc.category}
+                        <Badge variant="secondary" className="text-xs">
+                          {categoryLabels[doc.category] || doc.category}
                         </Badge>
                       </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={`capitalize flex w-fit items-center gap-1 ${doc.type === 'interno' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-green-50 text-green-700 border-green-200'}`}>
-                          {doc.type === 'interno' ? <Building className="w-3 h-3" /> : <Globe className="w-3 h-3" />}
-                          {doc.type}
-                        </Badge>
+                      <TableCell className="text-sm text-gray-700">
+                        {doc.subprocess_area || '-'}
                       </TableCell>
                       <TableCell>
-                        {doc.is_controlled_copy ? (
-                          <Badge className="bg-orange-100 text-orange-700 border-orange-200 hover:bg-orange-200">
-                            <ShieldCheck className="w-3 h-3 mr-1" /> Sim
-                          </Badge>
+                        <Badge variant="outline" className="text-xs capitalize">
+                          {doc.document_type?.toUpperCase() || '-'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-xs text-gray-700">
+                        {roleLabels[doc.responsible_role] || doc.responsible_role || '-'}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={`text-xs ${
+                          doc.status === 'em_uso' ? 'bg-green-100 text-green-700' :
+                          doc.status === 'aprovado' ? 'bg-blue-100 text-blue-700' :
+                          doc.status === 'em_revisao' ? 'bg-yellow-100 text-yellow-700' :
+                          doc.status === 'obsoleto' ? 'bg-red-100 text-red-700' :
+                          'bg-gray-100 text-gray-700'
+                        }`}>
+                          {statusLabels[doc.status] || doc.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="font-mono text-xs text-gray-700">
+                        {doc.version || 'v1.0'}
+                      </TableCell>
+                      <TableCell>
+                        {doc.next_review_date ? (
+                          <div className="flex flex-col gap-1">
+                            <span className="text-xs text-gray-700">
+                              {format(new Date(doc.next_review_date), "dd/MM/yyyy")}
+                            </span>
+                            {expiryStatus && (
+                              <Badge className={`${expiryStatus.color} border text-xs`}>
+                                {expiryStatus.label}
+                              </Badge>
+                            )}
+                          </div>
                         ) : (
-                          <span className="text-gray-400 text-sm">-</span>
+                          <span className="text-xs text-gray-400">-</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-gray-600 text-sm">
-                        {doc.created_date ? format(new Date(doc.created_date), "dd/MM/yyyy", { locale: ptBR }) : '-'}
+                      <TableCell>
+                        <div className="flex flex-col gap-1">
+                          {doc.legal_impact && (
+                            <Badge className={`text-xs ${
+                              doc.legal_impact === 'alto' ? 'bg-red-100 text-red-700' :
+                              doc.legal_impact === 'medio' ? 'bg-yellow-100 text-yellow-700' :
+                              'bg-blue-100 text-blue-700'
+                            }`}>
+                              {doc.legal_impact}
+                            </Badge>
+                          )}
+                          {doc.mandatory_by_law && (
+                            <Badge className="bg-orange-100 text-orange-700 text-xs">
+                              Lei
+                            </Badge>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
+                        <div className="flex justify-end gap-1">
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
-                            onClick={() => setSelectedDocForPreview(doc)}
-                            title="Visualizar"
+                            className="h-8 w-8 text-blue-600 hover:bg-blue-50"
+                            onClick={() => handleEdit(doc)}
+                            title="Editar"
                           >
                             <Search className="w-4 h-4" />
                           </Button>
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            className="h-8 w-8 text-green-600 hover:bg-green-50"
                             onClick={() => handleDownload(doc)}
-                            title="Baixar"
+                            title="Download"
                           >
                             <Download className="w-4 h-4" />
                           </Button>
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                            className="h-8 w-8 text-red-500 hover:bg-red-50"
                             onClick={() => handleDelete(doc.id)}
+                            title="Excluir"
                           >
                             <Trash2 className="w-4 h-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="h-8 px-2 text-purple-600 hover:bg-purple-50"
-                            onClick={() => setSelectedDocForAnalysis(doc)}
-                            title="Extrair Dados"
-                          >
-                            Dados
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="h-8 px-2 text-orange-600 hover:bg-orange-50"
-                            onClick={() => setSelectedDocForSignature(doc)}
-                            title="Assinar"
-                          >
-                            Assinar
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="h-8 px-2 text-indigo-600 hover:bg-indigo-50"
-                            onClick={() => setSelectedDocForOCR(doc)}
-                            title="OCR"
-                          >
-                            OCR
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="h-8 px-2 text-pink-600 hover:bg-pink-50"
-                            onClick={() => setSelectedDocForCompliance(doc)}
-                            title="Conformidade"
-                          >
-                            Conf
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="h-8 px-2 text-gray-600 hover:bg-gray-50"
-                            onClick={() => setSelectedDocForVersions(doc)}
-                            title="Versões"
-                          >
-                            Ver
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="h-8 px-2 text-teal-600 hover:bg-teal-50"
-                            onClick={() => setSelectedDocForShare(doc)}
-                            title="Compartilhar"
-                          >
-                            Share
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="h-8 px-2 text-amber-600 hover:bg-amber-50"
-                            onClick={() => setSelectedDocForReport(doc)}
-                            title="Relatório"
-                          >
-                            Log
                           </Button>
                         </div>
                       </TableCell>
@@ -502,20 +571,20 @@ export default function RepositorioDocumentos() {
           onClose={() => setSelectedDocForReport(null)}
         />
 
-        <Dialog open={showUploadModal} onOpenChange={setShowUploadModal}>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Upload de Documentos</DialogTitle>
-            </DialogHeader>
-            <MultiFileUpload 
-              workshopId={workshop?.id}
-              onComplete={() => {
-                setShowUploadModal(false);
-                queryClient.invalidateQueries(['company-documents']);
-              }}
-            />
-          </DialogContent>
-        </Dialog>
+        <DocumentFormDialog
+          open={showFormDialog}
+          onClose={() => {
+            setShowFormDialog(false);
+            setEditingDocument(null);
+          }}
+          document={editingDocument}
+          workshopId={workshop?.id}
+          onSuccess={() => {
+            setShowFormDialog(false);
+            setEditingDocument(null);
+            queryClient.invalidateQueries(['company-documents']);
+          }}
+        />
       </div>
     </div>
   );

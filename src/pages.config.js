@@ -5,16 +5,20 @@ import AdminDesafios from './pages/AdminDesafios';
 import AdminMensagens from './pages/AdminMensagens';
 import AdminNotificacoes from './pages/AdminNotificacoes';
 import AdminProdutividade from './pages/AdminProdutividade';
+import AnalisesRH from './pages/AnalisesRH';
 import AprovarColaboradores from './pages/AprovarColaboradores';
 import AssistirAula from './pages/AssistirAula';
 import AssistirCurso from './pages/AssistirCurso';
 import AuditLogs from './pages/AuditLogs';
 import AuditoriaPermissoes from './pages/AuditoriaPermissoes';
 import AutoavaliacaoComercial from './pages/AutoavaliacaoComercial';
+import AutoavaliacaoDISC from './pages/AutoavaliacaoDISC';
+import AutoavaliacaoDesempenho from './pages/AutoavaliacaoDesempenho';
 import AutoavaliacaoEmpresarial from './pages/AutoavaliacaoEmpresarial';
 import AutoavaliacaoFinanceiro from './pages/AutoavaliacaoFinanceiro';
 import AutoavaliacaoMA3 from './pages/AutoavaliacaoMA3';
 import AutoavaliacaoMarketing from './pages/AutoavaliacaoMarketing';
+import AutoavaliacaoMaturidade from './pages/AutoavaliacaoMaturidade';
 import AutoavaliacaoPessoas from './pages/AutoavaliacaoPessoas';
 import AutoavaliacaoVendas from './pages/AutoavaliacaoVendas';
 import Autoavaliacoes from './pages/Autoavaliacoes';
@@ -98,14 +102,14 @@ import MonitoramentoUsuarios from './pages/MonitoramentoUsuarios';
 import Notificacoes from './pages/Notificacoes';
 import Organograma from './pages/Organograma';
 import PainelAcoes from './pages/PainelAcoes';
-import PainelClienteAceleracao from './pages/PainelClienteAceleracao';
 import PainelMetas from './pages/PainelMetas';
+import PainelClienteAceleracao from './pages/PainelClienteAceleracao';
 import PesquisaClima from './pages/PesquisaClima';
 import PlanoAcao from './pages/PlanoAcao';
 import Planos from './pages/Planos';
-import QGPBoard from './pages/QGPBoard';
 import PortalColaborador from './pages/PortalColaborador';
 import PublicFeedback from './pages/PublicFeedback';
+import QGPBoard from './pages/QGPBoard';
 import Questionario from './pages/Questionario';
 import RankingBrasil from './pages/RankingBrasil';
 import Regimento from './pages/Regimento';
@@ -139,10 +143,6 @@ import TestUsuarios from './pages/TestUsuarios';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
-import AnalisesRH from './pages/AnalisesRH';
-import AutoavaliacaoMaturidade from './pages/AutoavaliacaoMaturidade';
-import AutoavaliacaoDesempenho from './pages/AutoavaliacaoDesempenho';
-import AutoavaliacaoDISC from './pages/AutoavaliacaoDISC';
 import __Layout from './Layout.jsx';
 
 
@@ -154,16 +154,20 @@ export const PAGES = {
     "AdminMensagens": AdminMensagens,
     "AdminNotificacoes": AdminNotificacoes,
     "AdminProdutividade": AdminProdutividade,
+    "AnalisesRH": AnalisesRH,
     "AprovarColaboradores": AprovarColaboradores,
     "AssistirAula": AssistirAula,
     "AssistirCurso": AssistirCurso,
     "AuditLogs": AuditLogs,
     "AuditoriaPermissoes": AuditoriaPermissoes,
     "AutoavaliacaoComercial": AutoavaliacaoComercial,
+    "AutoavaliacaoDISC": AutoavaliacaoDISC,
+    "AutoavaliacaoDesempenho": AutoavaliacaoDesempenho,
     "AutoavaliacaoEmpresarial": AutoavaliacaoEmpresarial,
     "AutoavaliacaoFinanceiro": AutoavaliacaoFinanceiro,
     "AutoavaliacaoMA3": AutoavaliacaoMA3,
     "AutoavaliacaoMarketing": AutoavaliacaoMarketing,
+    "AutoavaliacaoMaturidade": AutoavaliacaoMaturidade,
     "AutoavaliacaoPessoas": AutoavaliacaoPessoas,
     "AutoavaliacaoVendas": AutoavaliacaoVendas,
     "Autoavaliacoes": Autoavaliacoes,
@@ -247,14 +251,14 @@ export const PAGES = {
     "Notificacoes": Notificacoes,
     "Organograma": Organograma,
     "PainelAcoes": PainelAcoes,
-    "PainelClienteAceleracao": PainelClienteAceleracao,
     "PainelMetas": PainelMetas,
+    "PainelClienteAceleracao": PainelClienteAceleracao,
     "PesquisaClima": PesquisaClima,
     "PlanoAcao": PlanoAcao,
     "Planos": Planos,
-    "QGPBoard": QGPBoard,
     "PortalColaborador": PortalColaborador,
     "PublicFeedback": PublicFeedback,
+    "QGPBoard": QGPBoard,
     "Questionario": Questionario,
     "RankingBrasil": RankingBrasil,
     "Regimento": Regimento,
@@ -288,10 +292,6 @@ export const PAGES = {
     "TreinamentoVendas": TreinamentoVendas,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
-    "AnalisesRH": AnalisesRH,
-    "AutoavaliacaoMaturidade": AutoavaliacaoMaturidade,
-    "AutoavaliacaoDesempenho": AutoavaliacaoDesempenho,
-    "AutoavaliacaoDISC": AutoavaliacaoDISC,
 }
 
 export const pagesConfig = {
