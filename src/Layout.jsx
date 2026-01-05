@@ -348,10 +348,10 @@ export default function Layout({ children, currentPageName }) {
                     <>
                       <div className="hidden md:block text-right">
                         <p className="text-sm font-medium text-gray-900">
-                          {user.full_name || user.email}
+                          {workshop?.name || 'Oficina'}
                         </p>
                         <p className="text-xs text-gray-600">
-                          {user.role === 'admin' ? 'Administrador' : user.position || 'Usuário'}
+                          {workshop?.segment || workshop?.segment_auto || 'Automotiva'}
                         </p>
                       </div>
                       <Button
