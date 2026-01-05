@@ -62,10 +62,89 @@ export default function CESPEEntrevista() {
   const currentForm = attachedForms[currentFormIndex];
 
   const { data: questions = [] } = useQuery({
-    queryKey: ['interview-questions', workshop?.id, currentForm?.form_id],
+    queryKey: ['interview-questions', workshop?.id, currentForm?.form_id, candidate?.desired_position],
     queryFn: async () => {
       if (currentForm?.is_lead_score) {
-        return currentForm.form_data?.scoring_criteria || [];
+        // 🔥 AUTOMAÇÃO: Injetar checklists automaticamente baseado no cargo do candidato
+        const criteria = currentForm.form_data?.scoring_criteria || [];
+        
+        // Mapear cargo desejado para job_role
+        const jobRoleMap = {
+          'vendedor': 'vendas',
+          'vendas': 'vendas',
+          'consultor de vendas': 'vendas',
+          'telemarketing': 'telemarketing',
+          'comercial': 'telemarketing',
+          'sdr': 'telemarketing',
+          'mecânico': 'tecnico',
+          'técnico': 'tecnico',
+          'eletricista': 'tecnico',
+          'funileiro': 'tecnico',
+          'lanterneiro': 'tecnico',
+          'financeiro': 'financeiro',
+          'administrativo': 'administrativo',
+          'estoque': 'estoque'
+        };
+
+        const desiredPosition = candidate?.desired_position?.toLowerCase() || '';
+        let detectedJobRole = 'tecnico'; // fallback padrão
+        
+        for (const [key, role] of Object.entries(jobRoleMap)) {
+          if (desiredPosition.includes(key)) {
+            detectedJobRole = role;
+            break;
+          }
+        }
+
+        console.log('🎯 Cargo detectado:', desiredPosition, '→', detectedJobRole);
+
+        // Buscar checklists automáticos para o cargo
+        const checklists = await base44.entities.ChecklistTemplate.filter({
+          workshop_id: workshop.id,
+          job_role: detectedJobRole,
+          is_active: true
+        });
+
+        console.log('📋 Checklists encontrados:', checklists.length);
+
+        // Injetar checklists automaticamente nos critérios correspondentes
+        const enrichedCriteria = criteria.map(criterion => {
+          // Mapear tipo de critério para checklist_type
+          const typeMap = {
+            'conhecimento técnico': 'conhecimento_tecnico',
+            'experiência prática': 'experiencia_pratica',
+            'capacidade de diagnóstico': 'capacidade_diagnostico'
+          };
+
+          const criterionNameLower = criterion.criteria_name?.toLowerCase() || '';
+          let matchedChecklistType = null;
+
+          for (const [key, type] of Object.entries(typeMap)) {
+            if (criterionNameLower.includes(key)) {
+              matchedChecklistType = type;
+              break;
+            }
+          }
+
+          if (matchedChecklistType) {
+            const matchedChecklist = checklists.find(c => c.checklist_type === matchedChecklistType);
+            
+            if (matchedChecklist) {
+              console.log('✅ Checklist injetado:', criterion.criteria_name, '→', matchedChecklist.template_name);
+              return {
+                ...criterion,
+                has_checklist: true,
+                checklist_items: matchedChecklist.items,
+                job_role: detectedJobRole,
+                checklist_type: matchedChecklistType
+              };
+            }
+          }
+
+          return criterion;
+        });
+
+        return enrichedCriteria;
       }
       if (currentForm?.form_data) {
         return currentForm.form_data.questions || [];
@@ -74,7 +153,7 @@ export default function CESPEEntrevista() {
       const all = await base44.entities.InterviewQuestion.filter({ active: true });
       return all.filter(q => !q.workshop_id || q.workshop_id === workshop.id);
     },
-    enabled: !!workshop?.id && !!currentForm
+    enabled: !!workshop?.id && !!currentForm && !!candidate
   });
 
   const { data: cultureScript } = useQuery({
