@@ -145,6 +145,11 @@ import TestUsuarios from './pages/TestUsuarios';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
+import CESPECanal from './pages/CESPECanal';
+import CESPEEntrevista from './pages/CESPEEntrevista';
+import CESPESonho from './pages/CESPESonho';
+import CESPEProposta from './pages/CESPEProposta';
+import CESPEIntegracao from './pages/CESPEIntegracao';
 import __Layout from './Layout.jsx';
 
 
@@ -296,6 +301,11 @@ export const PAGES = {
     "TreinamentoVendas": TreinamentoVendas,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
+    "CESPECanal": CESPECanal,
+    "CESPEEntrevista": CESPEEntrevista,
+    "CESPESonho": CESPESonho,
+    "CESPEProposta": CESPEProposta,
+    "CESPEIntegracao": CESPEIntegracao,
 }
 
 export const pagesConfig = {
