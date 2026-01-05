@@ -5,6 +5,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight, Save } from "lucide-react";
+import AudioRecorder from "./AudioRecorder";
+import { base44 } from "@/api/base44Client";
 
 const blockLabels = {
   tecnico: "Bloco Técnico (40%)",
@@ -25,6 +27,10 @@ export default function LeadScoreInterviewForm({
   currentStep,
   scores,
   onScoreChange,
+  criteriaObservations,
+  onObservationChange,
+  criteriaAudios,
+  onAudioChange,
   onStepChange,
   interviewerNotes,
   onNotesChange,
@@ -130,6 +136,8 @@ export default function LeadScoreInterviewForm({
 
   const criteriaKey = `${currentCriteria.block}_${currentStep}`;
   const currentScore = scores[criteriaKey] || 0;
+  const currentObservation = criteriaObservations?.[criteriaKey] || "";
+  const currentAudio = criteriaAudios?.[criteriaKey] || null;
 
   return (
     <div className="space-y-6">
@@ -180,6 +188,32 @@ export default function LeadScoreInterviewForm({
             <div className="flex justify-between text-xs text-gray-500 mt-1">
               <span>0</span>
               <span>{currentCriteria.max_points}</span>
+            </div>
+          </div>
+
+          <div className="space-y-3 mt-6 p-4 bg-gray-50 rounded-lg border">
+            <div>
+              <Label>Observações do Entrevistador</Label>
+              <Textarea
+                value={currentObservation}
+                onChange={(e) => onObservationChange(criteriaKey, e.target.value)}
+                placeholder="Anote impressões, detalhes da conversa, pontos importantes..."
+                rows={3}
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label>Gravar Feedback em Áudio</Label>
+              <div className="mt-2">
+                <AudioRecorder
+                  existingAudioUrl={currentAudio}
+                  onAudioSave={(url) => onAudioChange(criteriaKey, url)}
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Grave observações detalhadas para análise posterior com IA
+              </p>
             </div>
           </div>
 
