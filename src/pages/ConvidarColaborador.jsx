@@ -168,6 +168,15 @@ export default function ConvidarColaborador() {
       }
 
       console.log("🚀 Criando novo colaborador:", data.email);
+      console.log("📤 PAYLOAD ENVIADO:", {
+        name: data.name,
+        email: data.email,
+        position: data.position,
+        area: data.area,
+        job_role: data.job_role,
+        profile_id: data.profile_id,
+        workshop_id: workshop.id
+      });
 
       const response = await base44.functions.invoke('createEmployeeUser', {
         name: data.name,
@@ -179,7 +188,8 @@ export default function ConvidarColaborador() {
         workshop_id: workshop.id
       });
 
-      console.log("📦 Resposta do backend:", response.data);
+      console.log("📦 RESPONSE STATUS:", response.status);
+      console.log("📦 RESPONSE DATA:", response.data);
 
       if (!response.data.success) {
         throw new Error(response.data.error || "Erro ao criar colaborador");
