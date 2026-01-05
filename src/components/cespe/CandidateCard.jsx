@@ -118,15 +118,7 @@ export default function CandidateCard({ candidate }) {
             </Button>
           )}
           <Button 
-            onClick={() => {
-              if (!candidate?.id) {
-                console.error("❌ Candidate ID não encontrado:", candidate);
-                alert("Erro: ID do candidato não encontrado");
-                return;
-              }
-              console.log("✅ Navegando para entrevista com ID:", candidate.id);
-              navigate(createPageUrl("CESPEEntrevista") + `?candidate_id=${candidate.id}`);
-            }}
+            onClick={() => navigate(createPageUrl("CESPEEntrevista") + `?candidate_id=${candidate.id}`)}
             size="sm"
             variant="outline"
           >

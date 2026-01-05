@@ -39,48 +39,25 @@ export default function CESPEEntrevista() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        console.log("🔄 [Entrevista] Carregando user e workshop...");
         const currentUser = await base44.auth.me();
-        console.log("✅ [Entrevista] User carregado:", currentUser.email);
         setUser(currentUser);
         
         const workshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
-        console.log("✅ [Entrevista] Workshops encontrados:", workshops?.length || 0);
         if (workshops && workshops.length > 0) {
           setWorkshop(workshops[0]);
-          console.log("✅ [Entrevista] Workshop definido:", workshops[0].name);
-        } else {
-          console.error("❌ [Entrevista] Nenhum workshop encontrado!");
         }
       } catch (error) {
-        console.error("❌ [Entrevista] Erro ao carregar dados:", error);
+        console.error("Erro ao carregar dados:", error);
       }
     };
     loadData();
   }, []);
 
-  const { data: candidate, isLoading: candidateLoading, error: candidateError } = useQuery({
+  const { data: candidate } = useQuery({
     queryKey: ['candidate', candidateId],
-    queryFn: async () => {
-      console.log("🔄 [Entrevista] Buscando candidato:", candidateId);
-      const result = await base44.entities.Candidate.get(candidateId);
-      console.log("✅ [Entrevista] Candidato carregado:", result?.full_name);
-      return result;
-    },
+    queryFn: () => base44.entities.Candidate.get(candidateId),
     enabled: !!candidateId
   });
-
-  // Debug loading states
-  useEffect(() => {
-    console.log("📊 [Entrevista] Estado:", {
-      candidateId,
-      candidate: candidate?.full_name || "não carregado",
-      user: user?.email || "não carregado",
-      workshop: workshop?.name || "não carregado",
-      candidateLoading,
-      candidateError: candidateError?.message
-    });
-  }, [candidateId, candidate, user, workshop, candidateLoading, candidateError]);
 
   const currentForm = attachedForms[currentFormIndex];
 
