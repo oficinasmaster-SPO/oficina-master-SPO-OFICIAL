@@ -5,12 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Plus, Save, X, CheckSquare } from "lucide-react";
+import { Trash2, Plus, Save, X } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
-import ChecklistEditor from "./ChecklistEditor";
 
 const blockLabels = {
   tecnico: "Técnico (40%)",
@@ -208,21 +207,6 @@ export default function LeadScoreFormEditor({ form, workshopId, onSaveComplete, 
                         />
                       </div>
 
-                      <div>
-                        <Label>Template de Checklist (Opcional)</Label>
-                        <select
-                          value={c.checklist_template_id || ""}
-                          onChange={(e) => updateCriteria(index, 'checklist_template_id', e.target.value)}
-                          className="w-full px-3 py-2 border rounded-md"
-                        >
-                          <option value="">Selecione um template...</option>
-                          <option value="auto">🤖 Detectar Automaticamente pelo Cargo</option>
-                        </select>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Ao selecionar "Detectar Automaticamente", o sistema escolherá o checklist baseado no cargo do candidato
-                        </p>
-                      </div>
-
                       <div className="grid grid-cols-2 gap-3">
                         <div>
                           <Label>Pontuação Máxima</Label>
@@ -268,15 +252,10 @@ export default function LeadScoreFormEditor({ form, workshopId, onSaveComplete, 
                         />
                       </div>
 
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
-                          <CheckSquare className="w-5 h-5 text-blue-600" />
-                          <Label className="text-sm font-semibold text-blue-900">Checklist do Critério (Obrigatório)</Label>
-                        </div>
-                        <ChecklistEditor
-                          items={c.checklist_items || []}
-                          onChange={(items) => updateCriteria(index, "checklist_items", items)}
-                        />
+                      <div className="p-3 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                        <p className="text-sm text-gray-600 text-center">
+                          💡 Para gerenciar o checklist deste critério, use a aba <strong>"Gerenciar Checklists"</strong>
+                        </p>
                       </div>
                     </CardContent>
                   </Card>
