@@ -5,8 +5,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Copy, ExternalLink, CheckCircle2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
+import WhatsAppConnectionManager from "./WhatsAppConnectionManager";
 
-export default function WebhookSetupGuide({ open, onClose }) {
+export default function WebhookSetupGuide({ open, onClose, workshopId }) {
   const [copiedUrl, setCopiedUrl] = useState(null);
 
   const webhookUrls = {
@@ -210,6 +211,11 @@ export default function WebhookSetupGuide({ open, onClose }) {
                   </div>
                 </div>
               </div>
+            </div>
+
+            <div className="mt-6 pt-6 border-t">
+              <h3 className="font-semibold mb-4">🔌 Conectar WhatsApp Agora:</h3>
+              <WhatsAppConnectionManager workshopId={workshopId} />
             </div>
           </TabsContent>
         </Tabs>

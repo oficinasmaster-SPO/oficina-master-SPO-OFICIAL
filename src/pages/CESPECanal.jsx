@@ -178,6 +178,7 @@ export default function CESPECanal() {
         <WebhookSetupGuide
           open={showWebhookGuide}
           onClose={() => setShowWebhookGuide(false)}
+          workshopId={workshop?.id}
         />
       </div>
     </div>
