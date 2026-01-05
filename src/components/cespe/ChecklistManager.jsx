@@ -117,10 +117,12 @@ export default function ChecklistManager({ workshopId }) {
         return await base44.entities.ChecklistTemplate.create({ ...data, workshop_id: workshopId });
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['checklist-templates'] });
-      queryClient.invalidateQueries({ queryKey: ['lead-score-forms'] });
-      toast.success("Checklist salvo!");
+    onSuccess: async () => {
+      // Invalidar e aguardar refetch
+      await queryClient.invalidateQueries({ queryKey: ['checklist-templates'] });
+      await queryClient.invalidateQueries({ queryKey: ['lead-score-forms'] });
+      await queryClient.refetchQueries({ queryKey: ['lead-score-forms'] });
+      toast.success("Checklist atualizado!");
       setEditingTemplate(null);
       setIsCreating(false);
     },
