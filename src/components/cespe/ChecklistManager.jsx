@@ -68,6 +68,12 @@ export default function ChecklistManager({ workshopId }) {
     leadScoreForms.forEach(form => {
       form.scoring_criteria?.forEach((criteria, index) => {
         if (criteria.checklist_items && criteria.checklist_items.length > 0) {
+          console.log('📋 Criteria extraído:', {
+            name: criteria.criteria_name,
+            job_role: criteria.job_role,
+            checklist_type: criteria.checklist_type
+          });
+          
           checklists.push({
             id: `form_${form.id}_criteria_${index}`,
             formId: form.id,
@@ -96,6 +102,13 @@ export default function ChecklistManager({ workshopId }) {
         const form = await base44.entities.InterviewForm.get(editingTemplate.formId);
         const updatedCriteria = [...form.scoring_criteria];
         
+        console.log('💾 Salvando criteria:', {
+          index: editingTemplate.criteriaIndex,
+          nome: data.template_name,
+          job_role: data.job_role,
+          checklist_type: data.checklist_type
+        });
+        
         // Atualizar o critério específico com TODOS os campos
         updatedCriteria[editingTemplate.criteriaIndex] = {
           ...updatedCriteria[editingTemplate.criteriaIndex],
@@ -105,9 +118,12 @@ export default function ChecklistManager({ workshopId }) {
           checklist_type: data.checklist_type
         };
         
-        return await base44.entities.InterviewForm.update(editingTemplate.formId, {
+        const result = await base44.entities.InterviewForm.update(editingTemplate.formId, {
           scoring_criteria: updatedCriteria
         });
+        
+        console.log('✅ Salvo! Criteria atualizado:', updatedCriteria[editingTemplate.criteriaIndex]);
+        return result;
       }
       
       // Senão, salvar como template normal
