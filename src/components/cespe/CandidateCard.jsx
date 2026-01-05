@@ -1,9 +1,8 @@
 import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Mail, Phone, Briefcase, ArrowRight } from "lucide-react";
 import { createPageUrl } from "@/utils";
+import { Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const statusColors = {
@@ -26,48 +25,42 @@ export default function CandidateCard({ candidate }) {
   const navigate = useNavigate();
 
   return (
-    <Card className="hover:shadow-lg transition-shadow">
-      <CardContent className="pt-6">
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <h3 className="font-bold text-lg">{candidate.full_name}</h3>
-            <Badge className={statusColors[candidate.status]}>
-              {statusLabels[candidate.status]}
-            </Badge>
-          </div>
-          {candidate.lead_score && (
-            <div className="text-right">
-              <div className="text-2xl font-bold text-blue-600">{candidate.lead_score}</div>
-              <div className="text-xs text-gray-500">Score</div>
-            </div>
-          )}
+    <div className="grid grid-cols-2 gap-4 px-4 py-3 bg-white border-b border-gray-200 hover:bg-gray-50 transition-colors items-center">
+      {/* Coluna 1 */}
+      <div className="space-y-1">
+        <div className="flex items-center gap-3">
+          <h3 className="font-semibold text-gray-900">{candidate.full_name}</h3>
+          <Badge className={`${statusColors[candidate.status]} text-xs`}>
+            {statusLabels[candidate.status]}
+          </Badge>
         </div>
-        <div className="space-y-2 text-sm text-gray-600 mb-4">
-          <div className="flex items-center gap-2">
-            <Briefcase className="w-4 h-4" />
-            {candidate.desired_position}
-          </div>
-          {candidate.email && (
-            <div className="flex items-center gap-2">
-              <Mail className="w-4 h-4" />
-              {candidate.email}
-            </div>
-          )}
-          {candidate.phone && (
-            <div className="flex items-center gap-2">
-              <Phone className="w-4 h-4" />
-              {candidate.phone}
-            </div>
-          )}
+        <p className="text-sm text-gray-600">{candidate.desired_position}</p>
+      </div>
+
+      {/* Coluna 2 */}
+      <div className="flex items-center justify-between">
+        <div className="space-y-1 text-sm text-gray-600">
+          <p>{candidate.phone}</p>
+          <p>{candidate.email || "Sem email"}</p>
         </div>
-        <Button 
-          className="w-full" 
-          size="sm"
-          onClick={() => navigate(createPageUrl("CESPEEntrevista") + `?candidate_id=${candidate.id}`)}
-        >
-          Ver Detalhes <ArrowRight className="w-4 h-4 ml-2" />
-        </Button>
-      </CardContent>
-    </Card>
+        <div className="flex items-center gap-3">
+          {candidate.lead_score !== null && candidate.lead_score !== undefined ? (
+            <div className="flex items-center gap-1 text-yellow-600 font-semibold">
+              <Star className="w-4 h-4 fill-current" />
+              <span>{candidate.lead_score}</span>
+            </div>
+          ) : (
+            <span className="text-gray-400 text-sm">Sem score</span>
+          )}
+          <Button 
+            onClick={() => navigate(createPageUrl("CESPEEntrevista") + `?candidate_id=${candidate.id}`)}
+            size="sm"
+            variant="outline"
+          >
+            Avaliar
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
