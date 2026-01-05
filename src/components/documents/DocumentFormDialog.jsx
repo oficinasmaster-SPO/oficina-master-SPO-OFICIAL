@@ -6,13 +6,17 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Upload, Save } from "lucide-react";
+import { Loader2, Upload, Save, Plus } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 
 export default function DocumentFormDialog({ open, onClose, document, workshopId, onSuccess }) {
   const [uploading, setUploading] = useState(false);
-  const [autoGenerateId, setAutoGenerateId] = useState(!document); // Auto-gerar apenas para novos documentos
+  const [autoGenerateId, setAutoGenerateId] = useState(!document);
+  const [showAddTypeModal, setShowAddTypeModal] = useState(false);
+  const [newTypeName, setNewTypeName] = useState('');
+  const [customTypes, setCustomTypes] = useState([]);
+  const [loadingTypes, setLoadingTypes] = useState(false);
   const [formData, setFormData] = useState({
     document_id: '',
     title: '',
@@ -91,6 +95,58 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
       setFormData(prev => ({ ...prev, document_id: newId }));
     } catch (error) {
       console.error('Erro ao gerar ID:', error);
+    }
+  };
+
+  // Carregar tipos customizados
+  useEffect(() => {
+    loadCustomTypes();
+  }, [workshopId]);
+
+  const loadCustomTypes = async () => {
+    if (!workshopId) return;
+    try {
+      const workshop = await base44.entities.Workshop.get(workshopId);
+      setCustomTypes(workshop.custom_document_types || []);
+    } catch (error) {
+      console.error('Erro ao carregar tipos:', error);
+    }
+  };
+
+  const handleAddCustomType = async () => {
+    if (!newTypeName.trim()) {
+      toast.error("Digite um nome para o tipo");
+      return;
+    }
+
+    setLoadingTypes(true);
+    try {
+      const workshop = await base44.entities.Workshop.get(workshopId);
+      const currentTypes = workshop.custom_document_types || [];
+      const typeKey = newTypeName.toLowerCase().replace(/\s+/g, '_');
+      
+      if (currentTypes.some(t => t.key === typeKey)) {
+        toast.error("Tipo já existe");
+        setLoadingTypes(false);
+        return;
+      }
+
+      const updatedTypes = [...currentTypes, { key: typeKey, label: newTypeName.trim() }];
+      
+      await base44.entities.Workshop.update(workshopId, {
+        custom_document_types: updatedTypes
+      });
+
+      setCustomTypes(updatedTypes);
+      setFormData({ ...formData, document_type: typeKey });
+      setNewTypeName('');
+      setShowAddTypeModal(false);
+      toast.success("Tipo adicionado!");
+    } catch (error) {
+      console.error('Erro ao adicionar tipo:', error);
+      toast.error("Erro ao adicionar tipo");
+    } finally {
+      setLoadingTypes(false);
     }
   };
 
@@ -261,7 +317,19 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
 
             {/* Tipo de Documento */}
             <div>
-              <Label>Tipo de Documento *</Label>
+              <Label className="flex items-center justify-between mb-2">
+                <span>Tipo de Documento *</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowAddTypeModal(true)}
+                  className="h-6 px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                >
+                  <Plus className="w-3 h-3 mr-1" />
+                  Novo Tipo
+                </Button>
+              </Label>
               <Select value={formData.document_type} onValueChange={(val) => setFormData({...formData, document_type: val})}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione..." />
@@ -276,6 +344,11 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
                   <SelectItem value="relatorio">Relatório</SelectItem>
                   <SelectItem value="treinamento">Treinamento</SelectItem>
                   <SelectItem value="evidencia">Evidência</SelectItem>
+                  {customTypes.map(type => (
+                    <SelectItem key={type.key} value={type.key}>
+                      {type.label} ✨
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -480,6 +553,37 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
           </DialogFooter>
         </form>
       </DialogContent>
+
+      {/* Modal Adicionar Tipo Customizado */}
+      <Dialog open={showAddTypeModal} onOpenChange={setShowAddTypeModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Novo Tipo de Documento</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <Label>Nome do Tipo</Label>
+            <Input
+              placeholder="Ex: Manual Técnico, Diagrama Elétrico..."
+              value={newTypeName}
+              onChange={(e) => setNewTypeName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAddCustomType()}
+              className="mt-2"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setShowAddTypeModal(false);
+              setNewTypeName('');
+            }}>
+              Cancelar
+            </Button>
+            <Button onClick={handleAddCustomType} disabled={loadingTypes}>
+              {loadingTypes && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Adicionar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }
