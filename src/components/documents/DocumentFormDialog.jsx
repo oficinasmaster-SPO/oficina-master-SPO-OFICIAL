@@ -147,6 +147,11 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
       return;
     }
 
+    if (!document && !formData.file_url) {
+      toast.error("É necessário enviar um arquivo");
+      return;
+    }
+
     try {
       if (document?.id) {
         await base44.entities.CompanyDocument.update(document.id, {
@@ -164,8 +169,8 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
       }
       onSuccess();
     } catch (error) {
-      console.error(error);
-      toast.error("Erro ao salvar documento");
+      console.error("Erro ao salvar:", error);
+      toast.error(`Erro ao salvar: ${error?.message || 'Erro desconhecido'}`);
     }
   };
 
