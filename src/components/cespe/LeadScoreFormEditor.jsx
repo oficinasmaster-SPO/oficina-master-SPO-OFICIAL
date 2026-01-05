@@ -5,10 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Plus, Save, X } from "lucide-react";
+import { Trash2, Plus, Save, X, CheckSquare } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
+import ChecklistEditor from "./ChecklistEditor";
 
 const blockLabels = {
   tecnico: "Técnico (40%)",
@@ -47,7 +49,9 @@ export default function LeadScoreFormEditor({ form, workshopId, onSaveComplete, 
           max_points: 5,
           weight: 1,
           question: "",
-          scoring_guide: ""
+          scoring_guide: "",
+          has_checklist: false,
+          checklist_items: []
         }
       ]
     });
@@ -100,7 +104,6 @@ export default function LeadScoreFormEditor({ form, workshopId, onSaveComplete, 
     saveMutation.mutate(formData);
   };
 
-  // Agrupar critérios por bloco
   const groupedCriteria = {
     tecnico: formData.scoring_criteria.filter(c => c.block === 'tecnico'),
     comportamental: formData.scoring_criteria.filter(c => c.block === 'comportamental'),
@@ -143,14 +146,16 @@ export default function LeadScoreFormEditor({ form, workshopId, onSaveComplete, 
 
           <div className="flex items-center justify-between p-3 bg-blue-50 rounded">
             <span className="font-medium">Total de Pontos: {totalPoints}/100</span>
-            <input
-              type="checkbox"
-              id="is_active"
-              checked={formData.is_active}
-              onChange={(e) => setFormData({...formData, is_active: e.target.checked})}
-              className="w-4 h-4"
-            />
-            <Label htmlFor="is_active" className="cursor-pointer ml-2">Ativo</Label>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="is_active"
+                checked={formData.is_active}
+                onChange={(e) => setFormData({...formData, is_active: e.target.checked})}
+                className="w-4 h-4"
+              />
+              <Label htmlFor="is_active" className="cursor-pointer">Ativo</Label>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -248,6 +253,30 @@ export default function LeadScoreFormEditor({ form, workshopId, onSaveComplete, 
                           rows={2}
                         />
                       </div>
+
+                      <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <CheckSquare className="w-5 h-5 text-blue-600" />
+                          <div>
+                            <Label className="text-sm font-semibold text-blue-900">Habilitar Checklist</Label>
+                            <p className="text-xs text-blue-700">Adicione itens para avaliação detalhada</p>
+                          </div>
+                        </div>
+                        <Switch
+                          checked={c.has_checklist || false}
+                          onCheckedChange={(checked) => updateCriteria(index, "has_checklist", checked)}
+                        />
+                      </div>
+
+                      {c.has_checklist && (
+                        <div className="space-y-2">
+                          <Label className="text-sm font-semibold">Itens do Checklist</Label>
+                          <ChecklistEditor
+                            items={c.checklist_items || []}
+                            onChange={(items) => updateCriteria(index, "checklist_items", items)}
+                          />
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 );

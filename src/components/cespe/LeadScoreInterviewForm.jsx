@@ -1,12 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, Save } from "lucide-react";
+import { ChevronLeft, ChevronRight, Save, CheckSquare, ChevronDown, ChevronUp } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import AudioRecorder from "./AudioRecorder";
-import { base44 } from "@/api/base44Client";
+import ChecklistRenderer from "./ChecklistRenderer";
 
 const blockLabels = {
   tecnico: "Bloco Técnico (40%)",
@@ -39,6 +40,9 @@ export default function LeadScoreInterviewForm({
   onSubmit,
   isLoading
 }) {
+  const [checklistSelections, setChecklistSelections] = useState({});
+  const [showChecklist, setShowChecklist] = useState({});
+
   const criteria = form?.scoring_criteria || [];
   const currentCriteria = criteria[currentStep];
   
@@ -139,6 +143,25 @@ export default function LeadScoreInterviewForm({
   const currentObservation = criteriaObservations?.[criteriaKey] || "";
   const currentAudio = criteriaAudios?.[criteriaKey] || null;
 
+  const handleChecklistChange = (selectedIndices) => {
+    setChecklistSelections({ ...checklistSelections, [criteriaKey]: selectedIndices });
+    
+    // Calcular pontuação automaticamente baseado no checklist
+    if (currentCriteria?.checklist_items) {
+      const totalPoints = currentCriteria.checklist_items.reduce((sum, item) => sum + (item.points || 1), 0);
+      const earnedPoints = selectedIndices.reduce((sum, idx) => {
+        const item = currentCriteria.checklist_items[idx];
+        return sum + (item?.points || 1);
+      }, 0);
+      
+      // Normalizar para escala de 0-max_points
+      const normalizedScore = totalPoints > 0 
+        ? (earnedPoints / totalPoints) * currentCriteria.max_points 
+        : 0;
+      onScoreChange(criteriaKey, parseFloat(normalizedScore.toFixed(1)));
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -168,18 +191,46 @@ export default function LeadScoreInterviewForm({
             </div>
           )}
 
+          {currentCriteria.has_checklist && currentCriteria.checklist_items?.length > 0 && (
+            <Collapsible 
+              open={showChecklist[criteriaKey] !== false} 
+              onOpenChange={(open) => setShowChecklist({ ...showChecklist, [criteriaKey]: open })}
+              className="border-2 border-blue-200 rounded-lg"
+            >
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" className="w-full">
+                  <CheckSquare className="w-4 h-4 mr-2" />
+                  {showChecklist[criteriaKey] !== false ? <ChevronUp className="w-4 h-4 ml-2" /> : <ChevronDown className="w-4 h-4 ml-2" />}
+                  Checklist de Avaliação
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="p-4">
+                <ChecklistRenderer
+                  items={currentCriteria.checklist_items}
+                  selected={checklistSelections[criteriaKey] || []}
+                  onChange={handleChecklistChange}
+                />
+              </CollapsibleContent>
+            </Collapsible>
+          )}
+
           <div>
             <Label className="text-lg">
               Pontuação (0 - {currentCriteria.max_points})
+              {currentCriteria.has_checklist && (
+                <span className="text-sm text-blue-600 ml-2">✓ Calculada pelo checklist</span>
+              )}
             </Label>
             <div className="flex items-center gap-4 mt-2">
               <input
                 type="range"
                 min="0"
                 max={currentCriteria.max_points}
+                step="0.5"
                 value={currentScore}
-                onChange={(e) => onScoreChange(criteriaKey, parseInt(e.target.value))}
-                className="flex-1 h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                onChange={(e) => onScoreChange(criteriaKey, parseFloat(e.target.value))}
+                disabled={currentCriteria.has_checklist}
+                className="flex-1 h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer disabled:opacity-50"
               />
               <div className="text-3xl font-bold text-blue-600 min-w-[60px] text-center">
                 {currentScore}
@@ -210,7 +261,6 @@ export default function LeadScoreInterviewForm({
                   existingAudioUrl={currentAudio}
                   onAudioSave={(url) => onAudioChange(criteriaKey, url)}
                   onTranscription={(text) => {
-                    // Adicionar transcrição às observações existentes
                     const currentObs = currentObservation || "";
                     const newObs = currentObs 
                       ? `${currentObs}\n\n[Transcrição do áudio]:\n${text}`
