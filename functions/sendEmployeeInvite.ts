@@ -83,12 +83,12 @@ Deno.serve(async (req) => {
       </div>
     `;
 
-    // Enviar email via integração Core.SendEmail (sem auth, usa service role direto)
-    console.log("📤 Tentando enviar email...");
+    // Enviar email via integração Core.SendEmail com service role
+    console.log("📤 Tentando enviar email via asServiceRole...");
     console.log("📧 Destinatário:", email);
     console.log("🏢 Remetente:", workshop.name || "Oficinas Master");
     
-    const emailResult = await base44.integrations.Core.SendEmail({
+    const emailResult = await base44.asServiceRole.integrations.Core.SendEmail({
       from_name: workshop.name || "Oficinas Master",
       to: email,
       subject: `🎉 Bem-vindo(a) à ${workshop.name} - Acesse sua conta`,
@@ -113,6 +113,7 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error("❌ Erro ao enviar email:", error);
+    console.error("❌ Stack completo:", error.stack);
     return Response.json({ 
       success: false,
       error: error.message 
