@@ -38,8 +38,10 @@ Deno.serve(async (req) => {
     }
 
     // Montar link do convite
-    const appUrl = Deno.env.get("BASE44_APP_URL") || "https://app.base44.com";
-    const inviteLink = `${appUrl}/p/${Deno.env.get("BASE44_APP_ID")}/PrimeiroAcesso?token=${invite.invite_token}`;
+    const origin = new URL(req.url).origin;
+    const inviteLink = `${origin}/PrimeiroAcesso?token=${invite.invite_token}`;
+    
+    console.log("🔗 Link gerado:", inviteLink);
 
     // Email HTML
     const emailBody = `
@@ -88,14 +90,19 @@ Deno.serve(async (req) => {
     `;
 
     // Enviar email via integração Core.SendEmail
-    await base44.integrations.Core.SendEmail({
+    console.log("📤 Tentando enviar email...");
+    console.log("📧 Destinatário:", email);
+    console.log("🏢 Remetente:", workshop.name || "Oficinas Master");
+    
+    const emailResult = await base44.integrations.Core.SendEmail({
       from_name: workshop.name || "Oficinas Master",
       to: email,
       subject: `🎉 Bem-vindo(a) à ${workshop.name} - Acesse sua conta`,
       body: emailBody
     });
 
-    console.log("✅ Email enviado com sucesso para:", email);
+    console.log("✅ Email enviado com sucesso!");
+    console.log("📬 Resultado:", JSON.stringify(emailResult));
 
     // Atualizar status do convite
     await base44.asServiceRole.entities.EmployeeInvite.update(invite.id, {

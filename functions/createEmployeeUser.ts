@@ -87,17 +87,25 @@ Deno.serve(async (req) => {
 
     // 5. Enviar email de convite
     try {
+      console.log("📧 Chamando sendEmployeeInvite...");
       const emailResult = await base44.functions.invoke('sendEmployeeInvite', {
         name: name,
         email: email,
         workshop_id: workshop_id,
         employee_id: employee.id
       });
-      
-      console.log("✅ Email enviado:", emailResult.data?.success);
+
+      console.log("✅ Resultado do email:", JSON.stringify(emailResult.data));
+
+      if (!emailResult.data?.success) {
+        console.error("⚠️ Email NÃO foi enviado:", emailResult.data?.error);
+        throw new Error("Falha ao enviar email: " + (emailResult.data?.error || "Erro desconhecido"));
+      }
     } catch (emailError) {
-      console.error("⚠️ Erro ao enviar email:", emailError.message);
-      // Continua mesmo se email falhar
+      console.error("❌ Erro ao enviar email:", emailError);
+      console.error("❌ Stack:", emailError.stack);
+      // Não continua - email é crítico
+      throw new Error("Erro ao enviar email de convite: " + emailError.message);
     }
 
     // 6. Retornar sucesso
