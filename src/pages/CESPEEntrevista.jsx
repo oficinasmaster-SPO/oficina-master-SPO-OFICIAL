@@ -68,7 +68,7 @@ export default function CESPEEntrevista() {
         // 🔥 AUTOMAÇÃO: Injetar checklists automaticamente baseado no cargo do candidato
         const criteria = currentForm.form_data?.scoring_criteria || [];
         
-        // Mapear cargo desejado para job_role
+        // Mapear cargo desejado para job_role e detectar sub-especializações
         const jobRoleMap = {
           'vendedor': 'vendas',
           'vendas': 'vendas',
@@ -96,16 +96,29 @@ export default function CESPEEntrevista() {
           }
         }
 
-        console.log('🎯 Cargo detectado:', desiredPosition, '→', detectedJobRole);
+        // Detectar sub-especializações (ex: "linha pesada", "funilaria")
+        let specialization = '';
+        if (desiredPosition.includes('linha pesada') || desiredPosition.includes('pesado')) {
+          specialization = 'linha pesada';
+        } else if (desiredPosition.includes('funilaria') || desiredPosition.includes('funileiro') || desiredPosition.includes('lanternagem')) {
+          specialization = 'funilaria';
+        }
+
+        console.log('🎯 Cargo detectado:', desiredPosition, '→', detectedJobRole, specialization ? `(${specialization})` : '');
 
         // Buscar checklists automáticos para o cargo
-        const checklists = await base44.entities.ChecklistTemplate.filter({
+        const allChecklists = await base44.entities.ChecklistTemplate.filter({
           workshop_id: workshop.id,
           job_role: detectedJobRole,
           is_active: true
         });
 
-        console.log('📋 Checklists encontrados:', checklists.length);
+        // Filtrar por especialização (se detectada)
+        const checklists = specialization 
+          ? allChecklists.filter(c => c.template_name?.toLowerCase().includes(specialization))
+          : allChecklists;
+
+        console.log('📋 Checklists encontrados:', checklists.length, specialization ? `(filtrados por: ${specialization})` : '');
 
         // Injetar checklists automaticamente nos critérios correspondentes
         const enrichedCriteria = criteria.map(criterion => {
