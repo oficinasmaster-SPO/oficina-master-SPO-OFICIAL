@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Sparkles, Loader2, Save } from "lucide-react";
+import { Sparkles, Loader2, Save, Plus } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
@@ -135,35 +135,67 @@ Formato JSON:
 
         <div className="space-y-4">
           {viewMode === "list" ? (
-            <ScriptsList
-              scripts={allScripts}
-              onSelect={(script) => {
-                setSelectedScript(script);
-                setFormData({
-                  company_history: script.company_history || "",
-                  mission: script.mission || workshop?.mission || "",
-                  vision: script.vision || workshop?.vision || "",
-                  values: script.values || workshop?.values || [],
-                  growth_opportunities: script.growth_opportunities || "",
-                  not_fit_profile: script.not_fit_profile || "",
-                  success_stories: script.success_stories || []
-                });
-                setViewMode("view");
-              }}
-              onCreateNew={() => {
-                setSelectedScript(null);
-                setFormData({
-                  company_history: "",
-                  mission: workshop?.mission || "",
-                  vision: workshop?.vision || "",
-                  values: workshop?.values || [],
-                  growth_opportunities: "",
-                  not_fit_profile: "",
-                  success_stories: []
-                });
-                setViewMode("create");
-              }}
-            />
+            <>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Scripts Salvos</h3>
+                <div className="flex gap-2">
+                  {onSelectScript && selectedScript && (
+                    <Button
+                      onClick={() => onSelectScript(selectedScript)}
+                      size="sm"
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      Usar este Script
+                    </Button>
+                  )}
+                  <Button onClick={() => {
+                    setSelectedScript(null);
+                    setFormData({
+                      company_history: "",
+                      mission: workshop?.mission || "",
+                      vision: workshop?.vision || "",
+                      values: workshop?.values || [],
+                      growth_opportunities: "",
+                      not_fit_profile: "",
+                      success_stories: []
+                    });
+                    setViewMode("create");
+                  }} size="sm">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Novo Script
+                  </Button>
+                </div>
+              </div>
+              <ScriptsList
+                scripts={allScripts}
+                onSelect={(script) => {
+                  setSelectedScript(script);
+                  setFormData({
+                    company_history: script.company_history || "",
+                    mission: script.mission || workshop?.mission || "",
+                    vision: script.vision || workshop?.vision || "",
+                    values: script.values || workshop?.values || [],
+                    growth_opportunities: script.growth_opportunities || "",
+                    not_fit_profile: script.not_fit_profile || "",
+                    success_stories: script.success_stories || []
+                  });
+                  setViewMode("view");
+                }}
+                onCreateNew={() => {
+                  setSelectedScript(null);
+                  setFormData({
+                    company_history: "",
+                    mission: workshop?.mission || "",
+                    vision: workshop?.vision || "",
+                    values: workshop?.values || [],
+                    growth_opportunities: "",
+                    not_fit_profile: "",
+                    success_stories: []
+                  });
+                  setViewMode("create");
+                }}
+              />
+            </>
           ) : viewMode === "create" ? (
             <div className="text-center py-8">
               <p className="text-gray-600 mb-4">Crie seu primeiro script de sonho.</p>
@@ -291,6 +323,14 @@ Formato JSON:
                   Ver Todos os Scripts
                 </Button>
                 <div className="flex gap-2">
+                  {onSelectScript && (
+                    <Button
+                      onClick={() => onSelectScript(selectedScript)}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      Usar este Script
+                    </Button>
+                  )}
                   <Button onClick={() => setEditMode(true)} variant="outline">
                     Editar Script
                   </Button>
