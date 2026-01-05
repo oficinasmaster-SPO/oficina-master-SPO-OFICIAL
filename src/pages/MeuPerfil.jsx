@@ -95,12 +95,16 @@ export default function MeuPerfil() {
 
   const handleUpdate = async (data) => {
     try {
+      console.log("🔄 Atualizando Employee ID:", employee.id);
+      console.log("📝 Dados para atualizar:", data);
+      
       await base44.entities.Employee.update(employee.id, data);
       await loadMyProfile();
       toast.success("Perfil atualizado!");
     } catch (error) {
-      console.error(error);
-      toast.error("Erro ao atualizar");
+      console.error("❌ Erro ao atualizar Employee:", error);
+      toast.error(`Erro ao atualizar: ${error?.message || 'Erro desconhecido'}`);
+      throw error;
     }
   };
 
