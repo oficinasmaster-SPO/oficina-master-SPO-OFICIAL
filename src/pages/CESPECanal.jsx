@@ -151,11 +151,11 @@ export default function CESPECanal() {
         </Card>
 
         {/* Lista de Candidatos */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="space-y-3">
           {isLoading ? (
             <div>Carregando candidatos...</div>
           ) : filteredCandidates.length === 0 ? (
-            <div className="col-span-full text-center py-12 text-gray-500">
+            <div className="text-center py-12 text-gray-500">
               Nenhum candidato encontrado
             </div>
           ) : (
