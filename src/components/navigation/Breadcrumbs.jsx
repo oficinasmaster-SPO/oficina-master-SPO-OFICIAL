@@ -72,7 +72,7 @@ export default function Breadcrumbs() {
         </Link>
         
         {breadcrumbs.map((crumb, index) => (
-          <React.Fragment key={index}>
+          <React.Fragment key={`breadcrumb-${crumb.label}-${index}`}>
             <ChevronRight className="w-4 h-4 text-gray-400" />
             {crumb.href ? (
               <Link 
