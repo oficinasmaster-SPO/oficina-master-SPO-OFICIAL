@@ -25,6 +25,11 @@ import Autoavaliacoes from './pages/Autoavaliacoes';
 import AvaliarAtendimento from './pages/AvaliarAtendimento';
 import CDCForm from './pages/CDCForm';
 import CDCList from './pages/CDCList';
+import CESPECanal from './pages/CESPECanal';
+import CESPEEntrevista from './pages/CESPEEntrevista';
+import CESPEIntegracao from './pages/CESPEIntegracao';
+import CESPEProposta from './pages/CESPEProposta';
+import CESPESonho from './pages/CESPESonho';
 import COEXForm from './pages/COEXForm';
 import COEXList from './pages/COEXList';
 import Cadastro from './pages/Cadastro';
@@ -102,12 +107,12 @@ import MonitoramentoRH from './pages/MonitoramentoRH';
 import MonitoramentoUsuarios from './pages/MonitoramentoUsuarios';
 import Notificacoes from './pages/Notificacoes';
 import Organograma from './pages/Organograma';
-import Planos from './pages/Planos';
 import PainelAcoes from './pages/PainelAcoes';
 import PainelClienteAceleracao from './pages/PainelClienteAceleracao';
 import PainelMetas from './pages/PainelMetas';
 import PesquisaClima from './pages/PesquisaClima';
 import PlanoAcao from './pages/PlanoAcao';
+import Planos from './pages/Planos';
 import PortalColaborador from './pages/PortalColaborador';
 import PrimeiroAcesso from './pages/PrimeiroAcesso';
 import PublicFeedback from './pages/PublicFeedback';
@@ -145,11 +150,6 @@ import TestUsuarios from './pages/TestUsuarios';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
-import CESPECanal from './pages/CESPECanal';
-import CESPEEntrevista from './pages/CESPEEntrevista';
-import CESPESonho from './pages/CESPESonho';
-import CESPEProposta from './pages/CESPEProposta';
-import CESPEIntegracao from './pages/CESPEIntegracao';
 import __Layout from './Layout.jsx';
 
 
@@ -181,6 +181,11 @@ export const PAGES = {
     "AvaliarAtendimento": AvaliarAtendimento,
     "CDCForm": CDCForm,
     "CDCList": CDCList,
+    "CESPECanal": CESPECanal,
+    "CESPEEntrevista": CESPEEntrevista,
+    "CESPEIntegracao": CESPEIntegracao,
+    "CESPEProposta": CESPEProposta,
+    "CESPESonho": CESPESonho,
     "COEXForm": COEXForm,
     "COEXList": COEXList,
     "Cadastro": Cadastro,
@@ -258,12 +263,12 @@ export const PAGES = {
     "MonitoramentoUsuarios": MonitoramentoUsuarios,
     "Notificacoes": Notificacoes,
     "Organograma": Organograma,
-    "Planos": Planos,
     "PainelAcoes": PainelAcoes,
     "PainelClienteAceleracao": PainelClienteAceleracao,
     "PainelMetas": PainelMetas,
     "PesquisaClima": PesquisaClima,
     "PlanoAcao": PlanoAcao,
+    "Planos": Planos,
     "PortalColaborador": PortalColaborador,
     "PrimeiroAcesso": PrimeiroAcesso,
     "PublicFeedback": PublicFeedback,
@@ -301,11 +306,6 @@ export const PAGES = {
     "TreinamentoVendas": TreinamentoVendas,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
-    "CESPECanal": CESPECanal,
-    "CESPEEntrevista": CESPEEntrevista,
-    "CESPESonho": CESPESonho,
-    "CESPEProposta": CESPEProposta,
-    "CESPEIntegracao": CESPEIntegracao,
 }
 
 export const pagesConfig = {

@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { ArrowLeft, Save, CheckCircle } from "lucide-react";
+import { ArrowLeft, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import InterviewForm from "@/components/cespe/InterviewForm";
 import ScoreCalculator from "@/components/cespe/ScoreCalculator";
+import DreamScriptModal from "@/components/cespe/DreamScriptModal";
 
 export default function CESPEEntrevista() {
   const navigate = useNavigate();
@@ -22,6 +23,7 @@ export default function CESPEEntrevista() {
   const [currentStep, setCurrentStep] = useState(0);
   const [interviewerNotes, setInterviewerNotes] = useState("");
   const [recommendation, setRecommendation] = useState("");
+  const [showDreamScript, setShowDreamScript] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -52,6 +54,19 @@ export default function CESPEEntrevista() {
       if (!workshop?.id) return [];
       const all = await base44.entities.InterviewQuestion.filter({ active: true });
       return all.filter(q => !q.workshop_id || q.workshop_id === workshop.id);
+    },
+    enabled: !!workshop?.id
+  });
+
+  const { data: cultureScript } = useQuery({
+    queryKey: ['culture-script', workshop?.id],
+    queryFn: async () => {
+      if (!workshop?.id) return null;
+      const scripts = await base44.entities.CultureScript.filter({
+        workshop_id: workshop.id,
+        is_active: true
+      });
+      return Array.isArray(scripts) && scripts.length > 0 ? scripts[0] : null;
     },
     enabled: !!workshop?.id
   });
@@ -93,6 +108,23 @@ export default function CESPEEntrevista() {
     }
   });
 
+  const saveCultureScriptMutation = useMutation({
+    mutationFn: async (data) => {
+      if (cultureScript?.id) {
+        return await base44.entities.CultureScript.update(cultureScript.id, data);
+      } else {
+        return await base44.entities.CultureScript.create({
+          ...data,
+          workshop_id: workshop.id,
+          is_active: true
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['culture-script'] });
+    }
+  });
+
   if (!candidate) {
     return <div className="p-6">Carregando...</div>;
   }
@@ -107,10 +139,16 @@ export default function CESPEEntrevista() {
             <h1 className="text-3xl font-bold text-gray-900">🅴 ENTREVISTA</h1>
             <p className="text-gray-600">Candidato: {candidate.full_name}</p>
           </div>
-          <Button variant="outline" onClick={() => navigate(-1)}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowDreamScript(true)}>
+              <Search className="w-4 h-4 mr-2" />
+              Script de Sonho
+            </Button>
+            <Button variant="outline" onClick={() => navigate(-1)}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar
+            </Button>
+          </div>
         </div>
 
         <Card className="p-6">
@@ -136,6 +174,14 @@ export default function CESPEEntrevista() {
             isLoading={saveInterviewMutation.isPending}
           />
         </Card>
+
+        <DreamScriptModal
+          open={showDreamScript}
+          onClose={() => setShowDreamScript(false)}
+          workshop={workshop}
+          script={cultureScript}
+          onSave={(data) => saveCultureScriptMutation.mutate(data)}
+        />
       </div>
     </div>
   );
