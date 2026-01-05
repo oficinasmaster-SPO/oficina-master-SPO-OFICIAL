@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 // Helper functions for formatting results
 function getTitle(type, item) {
@@ -100,25 +100,14 @@ Deno.serve(async (req) => {
 
         const searchPromises = entitiesToSearch.map(async (entity) => {
              try {
-                 // Fetch latest items (limit 200 per entity to maintain performance)
-                 // If workshop_id provided, we could try to filter by it if the entity supports it
-                 // Most entities in this app seem to have workshop_id
-                 
                  let items = [];
-                 if (workshop_id) {
-                     // Try filtering by workshop_id if possible/known field
-                     // Since SDK filter might throw if field doesn't exist, we'll try-catch or assume schema
-                     // For safety in this generic function, we'll fetch list and filter in memory if filter fails, 
-                     // OR rely on the fact most key entities have workshop_id.
-                     // Assuming filter works:
-                     try {
-                        items = await base44.entities[entity.name].filter({ workshop_id }, '-updated_date', 200);
-                     } catch {
-                        // Fallback to listing if filtering by workshop_id fails (e.g. entity doesn't have it)
-                        items = await base44.entities[entity.name].list('-updated_date', 200);
-                     }
-                 } else {
-                     items = await base44.entities[entity.name].list('-updated_date', 200);
+                 
+                 // Simplificar: buscar direto sem filtro complexo
+                 try {
+                     items = await base44.asServiceRole.entities[entity.name].list('-updated_date', 200);
+                 } catch (listError) {
+                     console.error(`Error listing ${entity.name}:`, listError.message);
+                     return [];
                  }
 
                  if (!Array.isArray(items)) return [];
