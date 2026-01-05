@@ -179,7 +179,7 @@ Deno.serve(async (req) => {
       throw new Error("Erro ao enviar email de convite: " + emailError.message);
     }
 
-    // 6. Retornar sucesso
+    // 8. Retornar sucesso
     return Response.json({ 
       success: true,
       message: 'Colaborador criado com sucesso!',
