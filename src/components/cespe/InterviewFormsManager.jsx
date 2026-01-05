@@ -46,6 +46,22 @@ export default function InterviewFormsManager({ open, onClose, workshopId, onSel
     }
   });
 
+  const updateChecklistsMutation = useMutation({
+    mutationFn: async (formId) => {
+      const response = await base44.functions.invoke('updateLeadScoreWithChecklists', {
+        form_id: formId
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['interview-forms'] });
+      toast.success("Formulário atualizado com checklists!");
+    },
+    onError: (error) => {
+      toast.error(error?.message || "Erro ao atualizar");
+    }
+  });
+
   const handleCreateNew = () => {
     setEditingForm(null);
     setEditingLeadScore(false);
@@ -84,6 +100,23 @@ export default function InterviewFormsManager({ open, onClose, workshopId, onSel
                 <Award className="w-4 h-4 mr-2" />
                 {createDefaultFormMutation.isPending ? "Criando..." : "Lead Score"}
               </Button>
+              {forms && forms.length > 0 && (
+                <Button 
+                  onClick={() => {
+                    const leadScoreForm = forms.find(f => f.is_lead_score_form);
+                    if (leadScoreForm) {
+                      updateChecklistsMutation.mutate(leadScoreForm.id);
+                    } else {
+                      toast.error("Nenhum formulário Lead Score encontrado");
+                    }
+                  }}
+                  disabled={updateChecklistsMutation.isPending}
+                  size="sm"
+                  variant="outline"
+                >
+                  🔄 Atualizar Checklists
+                </Button>
+              )}
               <Button onClick={handleCreateNew} size="sm">
                 <Plus className="w-4 h-4 mr-2" />
                 Novo Formulário
