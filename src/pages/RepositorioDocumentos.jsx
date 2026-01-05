@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,7 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Loader2, Upload, FileText, Trash2, Download, Plus, Search, ShieldCheck, Globe, Building, AlertTriangle } from "lucide-react";
+import { Loader2, Upload, FileText, Trash2, Download, Plus, Search, ShieldCheck, Globe, Building, AlertTriangle, Settings, Bell } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -29,8 +31,10 @@ import ShareDocumentDialog from "@/components/documents/ShareDocumentDialog";
 import AccessReport from "@/components/documents/AccessReport";
 import DocumentFilters from "@/components/documents/DocumentFilters";
 import DocumentFormDialog from "@/components/documents/DocumentFormDialog";
+import { useDocumentNotifications, notifyNewDocument } from "../components/documents/DocumentNotificationManager";
 
 export default function RepositorioDocumentos() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedDocForAnalysis, setSelectedDocForAnalysis] = useState(null);
@@ -81,6 +85,8 @@ export default function RepositorioDocumentos() {
     },
     enabled: !!user
   });
+
+  useDocumentNotifications(user, workshop);
 
   // Fetch Documents
   const { data: documents = [], isLoading } = useQuery({
@@ -319,10 +325,19 @@ export default function RepositorioDocumentos() {
               )}
             </p>
           </div>
-          <Button onClick={handleNewDocument} className="bg-blue-600 hover:bg-blue-700">
-            <Plus className="w-5 h-5 mr-2" />
-            Novo Documento
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline"
+              onClick={() => navigate(createPageUrl("ConfiguracoesNotificacao"))}
+            >
+              <Bell className="w-4 h-4 mr-2" />
+              Notificações
+            </Button>
+            <Button onClick={handleNewDocument} className="bg-blue-600 hover:bg-blue-700">
+              <Plus className="w-5 h-5 mr-2" />
+              Novo Documento
+            </Button>
+          </div>
         </div>
 
         <DocumentsDashboard documents={documents} />

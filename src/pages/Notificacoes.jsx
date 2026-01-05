@@ -162,7 +162,10 @@ export default function Notificacoes() {
       'prazo_proximo': <Clock className="w-5 h-5 text-yellow-600" />,
       'atrasada': <AlertTriangle className="w-5 h-5 text-red-600" />,
       'status_alterado': <CheckCircle2 className="w-5 h-5 text-green-600" />,
-      'nova_subtarefa': <Bell className="w-5 h-5 text-blue-600" />
+      'nova_subtarefa': <Bell className="w-5 h-5 text-blue-600" />,
+      'document_expiring': <Clock className="w-5 h-5 text-orange-600" />,
+      'new_document': <CheckCircle2 className="w-5 h-5 text-green-600" />,
+      'high_legal_impact': <AlertTriangle className="w-5 h-5 text-red-600" />
     };
     return icons[type] || <Bell className="w-5 h-5 text-gray-600" />;
   };

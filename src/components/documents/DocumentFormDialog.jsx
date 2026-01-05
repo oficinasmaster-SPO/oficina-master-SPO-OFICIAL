@@ -222,10 +222,15 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
         });
         toast.success("Documento atualizado!");
       } else {
-        await base44.entities.CompanyDocument.create({
+        const created = await base44.entities.CompanyDocument.create({
           ...formData,
           workshop_id: workshopId
         });
+        
+        // Notificar usuários interessados
+        const { notifyNewDocument } = await import("./DocumentNotificationManager");
+        await notifyNewDocument(created, workshopId);
+        
         toast.success("Documento criado!");
       }
       onSuccess();
