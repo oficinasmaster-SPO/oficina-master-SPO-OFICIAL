@@ -131,6 +131,16 @@ export default function ConvidarColaborador() {
         throw new Error("Oficina não encontrada");
       }
 
+      console.log("🚀 Enviando dados para backend:", {
+        name: data.name,
+        email: data.email,
+        position: data.position,
+        area: data.area,
+        job_role: data.job_role,
+        profile_id: data.profile_id,
+        workshop_id: workshop.id
+      });
+
       const response = await base44.functions.invoke('createEmployeeUser', {
         name: data.name,
         email: data.email,
@@ -140,6 +150,8 @@ export default function ConvidarColaborador() {
         profile_id: data.profile_id,
         workshop_id: workshop.id
       });
+
+      console.log("📦 Resposta do backend:", response.data);
 
       if (!response.data.success) {
         throw new Error(response.data.error || "Erro ao criar colaborador");
@@ -163,16 +175,26 @@ export default function ConvidarColaborador() {
       });
     },
     onError: (error) => {
-      console.error("❌ Erro:", error);
-      toast.error(error.message || "Erro ao criar colaborador");
+      console.error("❌ Erro completo:", error);
+      console.error("❌ Mensagem:", error.message);
+      console.error("❌ Response:", error.response?.data);
+      toast.error(error.response?.data?.error || error.message || "Erro ao criar colaborador");
     }
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
     
+    console.log("📝 Dados do formulário:", formData);
+    console.log("🏢 Workshop ID:", workshop?.id);
+    
     if (!formData.name || !formData.email || !formData.position || !formData.area) {
       toast.error("Preencha todos os campos obrigatórios (*)");
+      return;
+    }
+    
+    if (!workshop?.id) {
+      toast.error("❌ Erro: Oficina não identificada");
       return;
     }
     
