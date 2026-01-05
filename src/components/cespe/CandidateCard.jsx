@@ -118,7 +118,12 @@ export default function CandidateCard({ candidate }) {
             </Button>
           )}
           <Button 
-            onClick={() => navigate(createPageUrl("CESPEEntrevista") + `?candidate_id=${candidate.id}`)}
+            onClick={() => {
+              const url = createPageUrl("CESPEEntrevista") + `?candidate_id=${candidate.id}`;
+              console.log("🚀 Navegando para:", url);
+              console.log("🆔 ID do candidato:", candidate.id);
+              navigate(url);
+            }}
             size="sm"
             variant="outline"
           >

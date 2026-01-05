@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { ArrowLeft, Search, ClipboardList } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import InterviewForm from "@/components/cespe/InterviewForm";
 import LeadScoreInterviewForm from "@/components/cespe/LeadScoreInterviewForm";
 import AttachedFormsList from "@/components/cespe/AttachedFormsList";
@@ -17,8 +17,13 @@ import InterviewFormsManager from "@/components/cespe/InterviewFormsManager";
 export default function CESPEEntrevista() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const urlParams = new URLSearchParams(window.location.search);
+  const location = useLocation();
+  const urlParams = new URLSearchParams(location.search);
   const candidateId = urlParams.get('candidate_id');
+  
+  console.log("🔍 URL completa:", window.location.href);
+  console.log("🔍 Search params:", location.search);
+  console.log("🔍 Candidate ID extraído:", candidateId);
 
   const [user, setUser] = useState(null);
   const [workshop, setWorkshop] = useState(null);
