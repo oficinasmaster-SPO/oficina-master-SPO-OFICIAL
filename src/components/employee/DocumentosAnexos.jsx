@@ -3,8 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, FileText, Camera, Download, Trash2 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, FileText, Camera, Download, Trash2, Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 
@@ -27,8 +28,8 @@ export default function DocumentosAnexos({ employee, onUpdate }) {
   });
 
   const handleDocUpload = async () => {
-    if (!docForm.file || !docForm.type || !docForm.name) {
-      toast.error("Preencha todos os campos");
+    if (!docForm.file || !docForm.type) {
+      toast.error("Selecione o tipo e o arquivo");
       return;
     }
 
@@ -39,7 +40,7 @@ export default function DocumentosAnexos({ employee, onUpdate }) {
 
       const newDoc = {
         type: docForm.type,
-        name: docForm.name,
+        name: docForm.name || docForm.file.name,
         url: file_url,
         date: new Date().toISOString()
       };
@@ -47,11 +48,12 @@ export default function DocumentosAnexos({ employee, onUpdate }) {
       const updatedDocs = [...(employee.documents || []), newDoc];
       await onUpdate({ documents: updatedDocs });
 
+      toast.success("Documento adicionado!");
       setShowDocDialog(false);
       setDocForm({ type: "", name: "", file: null });
     } catch (error) {
-      console.error(error);
-      toast.error("Erro ao fazer upload");
+      console.error("Erro ao salvar documento:", error);
+      toast.error(`Erro ao fazer upload: ${error?.message || 'Erro desconhecido'}`);
     } finally {
       setUploadingDoc(false);
     }
@@ -98,6 +100,24 @@ export default function DocumentosAnexos({ employee, onUpdate }) {
     await onUpdate({ medical_certificates: updatedAtestados });
   };
 
+  const getDocTypeLabel = (type) => {
+    const labels = {
+      cnh: "CNH",
+      certificado_tecnico: "Certificado Técnico",
+      curso_nr: "Curso NR",
+      autorizacao_desconto: "Autorização Desconto",
+      declaracao_dependentes: "Declaração Dependentes",
+      comprovante_escolaridade: "Comprovante Escolaridade",
+      carteira_trabalho: "Carteira de Trabalho",
+      comprovante_residencia: "Comprovante Residência",
+      rg: "RG",
+      cpf: "CPF",
+      contrato: "Contrato",
+      outros: "Outros"
+    };
+    return labels[type] || type;
+  };
+
   return (
     <div className="space-y-6">
       <Card className="shadow-lg">
@@ -119,13 +139,13 @@ export default function DocumentosAnexos({ employee, onUpdate }) {
           ) : (
             <div className="space-y-2">
               {employee.documents.map((doc, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors">
                   <div className="flex items-center gap-3">
                     <FileText className="w-5 h-5 text-blue-600" />
                     <div>
                       <p className="font-semibold text-sm">{doc.name}</p>
                       <p className="text-xs text-gray-600">
-                        {doc.type} • {new Date(doc.date).toLocaleDateString('pt-BR')}
+                        {getDocTypeLabel(doc.type)} • {new Date(doc.date).toLocaleDateString('pt-BR')}
                       </p>
                     </div>
                   </div>
@@ -190,41 +210,68 @@ export default function DocumentosAnexos({ employee, onUpdate }) {
       </Card>
 
       <Dialog open={showDocDialog} onOpenChange={setShowDocDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Adicionar Documento</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 py-4">
             <div>
-              <Label>Tipo de Documento</Label>
-              <Input
-                placeholder="Ex: RG, CPF, Contrato..."
-                value={docForm.type}
-                onChange={(e) => setDocForm({...docForm, type: e.target.value})}
-              />
+              <Label>Tipo de Documento *</Label>
+              <Select value={docForm.type} onValueChange={(val) => setDocForm({...docForm, type: val})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o tipo..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cnh">CNH (Carteira de Motorista)</SelectItem>
+                  <SelectItem value="certificado_tecnico">Certificado Técnico</SelectItem>
+                  <SelectItem value="curso_nr">Curso Obrigatório (NR)</SelectItem>
+                  <SelectItem value="autorizacao_desconto">Autorização para Desconto</SelectItem>
+                  <SelectItem value="declaracao_dependentes">Declaração de Dependentes</SelectItem>
+                  <SelectItem value="comprovante_escolaridade">Comprovante de Escolaridade</SelectItem>
+                  <SelectItem value="carteira_trabalho">Carteira de Trabalho</SelectItem>
+                  <SelectItem value="comprovante_residencia">Comprovante de Residência</SelectItem>
+                  <SelectItem value="rg">RG</SelectItem>
+                  <SelectItem value="cpf">CPF</SelectItem>
+                  <SelectItem value="contrato">Contrato de Trabalho</SelectItem>
+                  <SelectItem value="outros">Outros</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
-              <Label>Nome do Arquivo</Label>
+              <Label>Nome do Arquivo (opcional)</Label>
               <Input
-                placeholder="Ex: RG frente e verso"
+                placeholder="Ex: CNH frente e verso, NR-10 atualizada..."
                 value={docForm.name}
                 onChange={(e) => setDocForm({...docForm, name: e.target.value})}
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Se não preencher, será usado o nome do arquivo
+              </p>
             </div>
             <div>
-              <Label>Arquivo</Label>
+              <Label>Arquivo *</Label>
               <Input
                 type="file"
                 onChange={(e) => setDocForm({...docForm, file: e.target.files[0]})}
+                accept=".pdf,.jpg,.jpeg,.png"
               />
-            </div>
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setShowDocDialog(false)}>Cancelar</Button>
-              <Button onClick={handleDocUpload} disabled={uploadingDoc}>
-                {uploadingDoc ? "Enviando..." : "Adicionar"}
-              </Button>
+              {docForm.file && (
+                <p className="text-xs text-green-600 mt-1">✓ {docForm.file.name}</p>
+              )}
             </div>
           </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setShowDocDialog(false);
+              setDocForm({ type: "", name: "", file: null });
+            }}>
+              Cancelar
+            </Button>
+            <Button onClick={handleDocUpload} disabled={uploadingDoc}>
+              {uploadingDoc && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Adicionar Documento
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
