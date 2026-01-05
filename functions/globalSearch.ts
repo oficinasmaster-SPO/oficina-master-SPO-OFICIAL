@@ -7,6 +7,12 @@ function getTitle(type, item) {
     if (type === 'Client') return item.full_name;
     if (type === 'EmployeeFeedback') return item.type ? item.type.replace('_', ' ').toUpperCase() : 'Feedback';
     if (type === 'Goal') return `Meta: ${item.area} (${item.periodo})`;
+    if (type === 'ProcessDocument') return item.process_name;
+    if (type === 'CompanyDocument') return item.title;
+    if (type === 'InstructionDocument') return `IT: ${item.it_code || item.title}`;
+    if (type === 'TrainingCourse') return item.title;
+    if (type === 'Challenge') return item.title;
+    if (type === 'Workshop') return item.name;
     return 'Item';
 }
 
@@ -16,15 +22,27 @@ function getSubtitle(type, item) {
     if (type === 'Client') return item.email || item.phone;
     if (type === 'EmployeeFeedback') return item.content ? item.content.substring(0, 60) + '...' : 'Conteúdo do feedback';
     if (type === 'Goal') return `${item.percentual_atingido || 0}% atingido`;
+    if (type === 'ProcessDocument') return `${item.process_area || ''} - ${item.status || ''}`;
+    if (type === 'CompanyDocument') return `${item.category || ''} - ${item.document_type || ''}`;
+    if (type === 'InstructionDocument') return item.subprocess_area || item.process_area || '';
+    if (type === 'TrainingCourse') return `${item.category || ''} - ${item.difficulty_level || ''}`;
+    if (type === 'Challenge') return `${item.target_type} - ${item.type}`;
+    if (type === 'Workshop') return item.city || item.segment;
     return '';
 }
 
 function getUrl(type, item) {
     if (type === 'Employee') return `DetalhesColaborador?id=${item.id}`;
-    if (type === 'Task') return `Tarefas?search=${item.id}`; // Adaptação para abrir tarefa
+    if (type === 'Task') return `Tarefas?search=${item.id}`;
     if (type === 'Client') return `Clientes?id=${item.id}`;
     if (type === 'EmployeeFeedback') return `Feedbacks?id=${item.id}`;
     if (type === 'Goal') return `GestaoMetas`;
+    if (type === 'ProcessDocument') return `VisualizarProcesso?id=${item.id}`;
+    if (type === 'CompanyDocument') return `RepositorioDocumentos?doc=${item.id}`;
+    if (type === 'InstructionDocument') return `MeusProcessos?view=it&id=${item.id}`;
+    if (type === 'TrainingCourse') return `AssistirCurso?course_id=${item.id}`;
+    if (type === 'Challenge') return `Gamificacao?challenge=${item.id}`;
+    if (type === 'Workshop') return `GestaoOficina`;
     return '#';
 }
 
@@ -34,6 +52,12 @@ function getIcon(type) {
     if (type === 'Client') return 'Briefcase';
     if (type === 'EmployeeFeedback') return 'MessageSquare';
     if (type === 'Goal') return 'Target';
+    if (type === 'ProcessDocument') return 'FileText';
+    if (type === 'CompanyDocument') return 'FileCheck';
+    if (type === 'InstructionDocument') return 'ClipboardList';
+    if (type === 'TrainingCourse') return 'GraduationCap';
+    if (type === 'Challenge') return 'Trophy';
+    if (type === 'Workshop') return 'Building';
     return 'Search';
 }
 
@@ -65,7 +89,13 @@ Deno.serve(async (req) => {
             { name: 'Task', fields: ['title', 'description', 'os_number'] },
             { name: 'Client', fields: ['full_name', 'email', 'phone'] },
             { name: 'EmployeeFeedback', fields: ['content'] },
-            { name: 'Goal', fields: ['area', 'observacoes'] }
+            { name: 'Goal', fields: ['area', 'observacoes'] },
+            { name: 'ProcessDocument', fields: ['process_name', 'process_code', 'process_area', 'keywords', 'objective'] },
+            { name: 'CompanyDocument', fields: ['title', 'document_id', 'category', 'document_type', 'subprocess_area'] },
+            { name: 'InstructionDocument', fields: ['title', 'it_code', 'process_area', 'subprocess_area', 'keywords'] },
+            { name: 'TrainingCourse', fields: ['title', 'description', 'category', 'short_description'] },
+            { name: 'Challenge', fields: ['title', 'description', 'target_area'] },
+            { name: 'Workshop', fields: ['name', 'segment', 'city', 'razao_social'] }
         ];
 
         const searchPromises = entitiesToSearch.map(async (entity) => {
