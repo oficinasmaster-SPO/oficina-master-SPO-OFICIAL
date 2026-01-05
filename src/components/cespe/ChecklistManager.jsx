@@ -91,7 +91,25 @@ export default function ChecklistManager({ workshopId }) {
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
-      if (editingTemplate?.id) {
+      // Se for de um formulário Lead Score, atualizar o formulário
+      if (editingTemplate?.isFromForm) {
+        const form = await base44.entities.InterviewForm.get(editingTemplate.formId);
+        const updatedCriteria = [...form.scoring_criteria];
+        
+        // Atualizar o critério específico
+        updatedCriteria[editingTemplate.criteriaIndex] = {
+          ...updatedCriteria[editingTemplate.criteriaIndex],
+          criteria_name: data.template_name,
+          checklist_items: data.items
+        };
+        
+        return await base44.entities.InterviewForm.update(editingTemplate.formId, {
+          scoring_criteria: updatedCriteria
+        });
+      }
+      
+      // Senão, salvar como template normal
+      if (editingTemplate?.id && !editingTemplate?.isFromForm) {
         return await base44.entities.ChecklistTemplate.update(editingTemplate.id, data);
       } else {
         return await base44.entities.ChecklistTemplate.create({ ...data, workshop_id: workshopId });
@@ -99,6 +117,7 @@ export default function ChecklistManager({ workshopId }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['checklist-templates'] });
+      queryClient.invalidateQueries({ queryKey: ['lead-score-forms'] });
       toast.success("Checklist salvo!");
       setEditingTemplate(null);
       setIsCreating(false);
@@ -134,10 +153,6 @@ export default function ChecklistManager({ workshopId }) {
   };
 
   const handleEdit = (template) => {
-    if (template.isFromForm) {
-      toast.info("Edite no formulário Lead Score ou crie um template independente");
-      return;
-    }
     setEditingTemplate({ ...template });
     setIsCreating(false);
   };
@@ -310,17 +325,19 @@ export default function ChecklistManager({ workshopId }) {
                     >
                       <Edit className="w-4 h-4" />
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        if (confirm("Excluir este checklist?")) {
-                          deleteMutation.mutate(template.id);
-                        }
-                      }}
-                    >
-                      <Trash2 className="w-4 h-4 text-red-600" />
-                    </Button>
+                    {!template.isFromForm && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          if (confirm("Excluir este checklist?")) {
+                            deleteMutation.mutate(template.id);
+                          }
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4 text-red-600" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardHeader>
