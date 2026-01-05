@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Command } from "cmdk";
-import { Search, User, CheckSquare, Briefcase, MessageSquare, Target, Loader2, X } from "lucide-react";
+import { Search, User, CheckSquare, Briefcase, MessageSquare, Target, Loader2, X, FileText, FileCheck, ClipboardList, GraduationCap, Trophy, Building } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -62,6 +62,12 @@ export default function GlobalSearch({ workshopId }) {
     Briefcase: Briefcase,
     MessageSquare: MessageSquare,
     Target: Target,
+    FileText: FileText,
+    FileCheck: FileCheck,
+    ClipboardList: ClipboardList,
+    GraduationCap: GraduationCap,
+    Trophy: Trophy,
+    Building: Building,
     Search: Search
   };
 
@@ -85,7 +91,7 @@ export default function GlobalSearch({ workshopId }) {
             <div className="flex items-center border-b px-3" cmdk-input-wrapper="">
               <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
               <Command.Input 
-                placeholder="Busque por colaboradores, metas, feedbacks..." 
+                placeholder="Busque por processos, documentos, treinamentos, colaboradores..." 
                 className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
                 value={query}
                 onValueChange={setQuery}
@@ -101,7 +107,7 @@ export default function GlobalSearch({ workshopId }) {
               {results.length > 0 && (
                 <div className="space-y-1">
                     {/* Group by Type */}
-                    {['Employee', 'Task', 'Goal', 'EmployeeFeedback', 'Client'].map(type => {
+                    {['ProcessDocument', 'InstructionDocument', 'CompanyDocument', 'TrainingCourse', 'Challenge', 'Employee', 'Task', 'Goal', 'EmployeeFeedback', 'Client', 'Workshop'].map(type => {
                         const typeResults = results.filter(r => r.type === type);
                         if (typeResults.length === 0) return null;
                         
@@ -146,6 +152,12 @@ function translateType(type) {
         case 'Goal': return 'Metas';
         case 'EmployeeFeedback': return 'Feedbacks';
         case 'Client': return 'Clientes';
+        case 'ProcessDocument': return 'Processos (MAPs)';
+        case 'CompanyDocument': return 'Documentos';
+        case 'InstructionDocument': return 'Instruções (ITs)';
+        case 'TrainingCourse': return 'Treinamentos';
+        case 'Challenge': return 'Desafios';
+        case 'Workshop': return 'Oficina';
         default: return type;
     }
 }
