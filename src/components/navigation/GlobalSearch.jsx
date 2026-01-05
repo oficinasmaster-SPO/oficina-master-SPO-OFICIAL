@@ -35,14 +35,17 @@ export default function GlobalSearch({ workshopId }) {
 
     const timer = setTimeout(async () => {
       setLoading(true);
+      console.log("🔍 [GlobalSearch] Iniciando busca:", { query, workshopId });
       try {
         const response = await base44.functions.invoke("globalSearch", {
           query,
           workshop_id: workshopId
         });
+        console.log("📦 [GlobalSearch] Resposta recebida:", response);
+        console.log("📋 [GlobalSearch] Results:", response.data?.results);
         setResults(response.data?.results || []);
       } catch (error) {
-        console.error("Search error:", error);
+        console.error("❌ [GlobalSearch] Erro na busca:", error);
       } finally {
         setLoading(false);
       }
