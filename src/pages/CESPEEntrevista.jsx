@@ -18,12 +18,9 @@ export default function CESPEEntrevista() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const location = useLocation();
-  const urlParams = new URLSearchParams(location.search);
-  const candidateId = urlParams.get('candidate_id');
   
-  console.log("🔍 URL completa:", window.location.href);
-  console.log("🔍 Search params:", location.search);
-  console.log("🔍 Candidate ID extraído:", candidateId);
+  // Pegar candidateId do state (React Router)
+  const candidateId = location.state?.candidateId;
 
   const [user, setUser] = useState(null);
   const [workshop, setWorkshop] = useState(null);
