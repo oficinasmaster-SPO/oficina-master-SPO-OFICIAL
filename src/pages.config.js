@@ -36,6 +36,7 @@ import Clientes from './pages/Clientes';
 import Colaboradores from './pages/Colaboradores';
 import ConfiguracaoAcademia from './pages/ConfiguracaoAcademia';
 import ConfiguracaoPermissoesGranulares from './pages/ConfiguracaoPermissoesGranulares';
+import ConfiguracoesNotificacao from './pages/ConfiguracoesNotificacao';
 import ConsolidadoMensal from './pages/ConsolidadoMensal';
 import ControleAceleracao from './pages/ControleAceleracao';
 import ConvidarColaborador from './pages/ConvidarColaborador';
@@ -101,12 +102,12 @@ import MonitoramentoRH from './pages/MonitoramentoRH';
 import MonitoramentoUsuarios from './pages/MonitoramentoUsuarios';
 import Notificacoes from './pages/Notificacoes';
 import Organograma from './pages/Organograma';
+import Planos from './pages/Planos';
 import PainelAcoes from './pages/PainelAcoes';
-import PainelMetas from './pages/PainelMetas';
 import PainelClienteAceleracao from './pages/PainelClienteAceleracao';
+import PainelMetas from './pages/PainelMetas';
 import PesquisaClima from './pages/PesquisaClima';
 import PlanoAcao from './pages/PlanoAcao';
-import Planos from './pages/Planos';
 import PortalColaborador from './pages/PortalColaborador';
 import PublicFeedback from './pages/PublicFeedback';
 import QGPBoard from './pages/QGPBoard';
@@ -143,7 +144,6 @@ import TestUsuarios from './pages/TestUsuarios';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
-import ConfiguracoesNotificacao from './pages/ConfiguracoesNotificacao';
 import __Layout from './Layout.jsx';
 
 
@@ -186,6 +186,7 @@ export const PAGES = {
     "Colaboradores": Colaboradores,
     "ConfiguracaoAcademia": ConfiguracaoAcademia,
     "ConfiguracaoPermissoesGranulares": ConfiguracaoPermissoesGranulares,
+    "ConfiguracoesNotificacao": ConfiguracoesNotificacao,
     "ConsolidadoMensal": ConsolidadoMensal,
     "ControleAceleracao": ControleAceleracao,
     "ConvidarColaborador": ConvidarColaborador,
@@ -251,12 +252,12 @@ export const PAGES = {
     "MonitoramentoUsuarios": MonitoramentoUsuarios,
     "Notificacoes": Notificacoes,
     "Organograma": Organograma,
+    "Planos": Planos,
     "PainelAcoes": PainelAcoes,
-    "PainelMetas": PainelMetas,
     "PainelClienteAceleracao": PainelClienteAceleracao,
+    "PainelMetas": PainelMetas,
     "PesquisaClima": PesquisaClima,
     "PlanoAcao": PlanoAcao,
-    "Planos": Planos,
     "PortalColaborador": PortalColaborador,
     "PublicFeedback": PublicFeedback,
     "QGPBoard": QGPBoard,
@@ -293,7 +294,6 @@ export const PAGES = {
     "TreinamentoVendas": TreinamentoVendas,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
-    "ConfiguracoesNotificacao": ConfiguracoesNotificacao,
 }
 
 export const pagesConfig = {

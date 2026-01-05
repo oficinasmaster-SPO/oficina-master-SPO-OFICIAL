@@ -119,11 +119,17 @@ export default function MeusProcessos() {
     return matchesSearch && matchesTab;
   });
 
-  // Calculate metrics
-  const mapsCount = accessibleDocs.filter(doc => doc.document_type === 'MAP').length;
-  const workshopIts = its.filter(it => workshop && it.workshop_id === workshop.id);
-  const itsCount = workshopIts.length;
-  const frsCount = accessibleDocs.filter(doc => doc.document_type === 'FR').length;
+  // Calculate metrics - contando todos os documentos acessíveis
+  const mapsCount = accessibleDocs.length; // Total de MAPs disponíveis
+  const workshopIts = its.filter(it => !workshop || it.workshop_id === workshop.id);
+  const itsCount = workshopIts.length; // Total de ITs
+  
+  // Contar FRs vinculados aos ITs da oficina
+  const frsCount = workshopIts.reduce((total, it) => {
+    return total + (it.forms_count || 0);
+  }, 0);
+  
+  // Processos customizados (criados pela oficina, não templates)
   const customProcessesCount = accessibleDocs.filter(doc => !doc.is_template && workshop && doc.workshop_id === workshop.id).length;
 
   const duplicateMutation = useMutation({
