@@ -60,6 +60,11 @@ export default function DocumentosAnexos({ employee, onUpdate }) {
       toast.success("Documento adicionado!");
       setShowDocDialog(false);
       setDocForm({ type: "", name: "", file: null });
+      
+      // Forçar re-render após 500ms para garantir que os dados foram atualizados
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
     } catch (error) {
       console.error("❌ ERRO completo:", error);
       console.error("❌ Stack:", error?.stack);
