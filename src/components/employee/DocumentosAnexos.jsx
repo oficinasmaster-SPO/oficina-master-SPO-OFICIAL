@@ -232,7 +232,6 @@ export default function DocumentosAnexos({ employee, onUpdate }) {
                   <SelectItem value="comprovante_residencia">Comprovante de Residência</SelectItem>
                   <SelectItem value="rg">RG</SelectItem>
                   <SelectItem value="cpf">CPF</SelectItem>
-                  <SelectItem value="contrato">Contrato de Trabalho</SelectItem>
                   <SelectItem value="outros">Outros</SelectItem>
                 </SelectContent>
               </Select>
