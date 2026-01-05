@@ -209,10 +209,18 @@ export default function LeadScoreInterviewForm({
                 <AudioRecorder
                   existingAudioUrl={currentAudio}
                   onAudioSave={(url) => onAudioChange(criteriaKey, url)}
+                  onTranscription={(text) => {
+                    // Adicionar transcrição às observações existentes
+                    const currentObs = currentObservation || "";
+                    const newObs = currentObs 
+                      ? `${currentObs}\n\n[Transcrição do áudio]:\n${text}`
+                      : `[Transcrição do áudio]:\n${text}`;
+                    onObservationChange(criteriaKey, newObs);
+                  }}
                 />
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                Grave observações detalhadas para análise posterior com IA
+                🎙️ Grave observações - serão transcritas automaticamente
               </p>
             </div>
           </div>

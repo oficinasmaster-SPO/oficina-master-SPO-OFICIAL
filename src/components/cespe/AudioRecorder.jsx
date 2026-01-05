@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Mic, Square, Play, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-export default function AudioRecorder({ onAudioSave, existingAudioUrl }) {
+export default function AudioRecorder({ onAudioSave, onTranscription, existingAudioUrl }) {
   const [isRecording, setIsRecording] = useState(false);
   const [audioUrl, setAudioUrl] = useState(existingAudioUrl || null);
   const mediaRecorderRef = useRef(null);
@@ -26,14 +26,30 @@ export default function AudioRecorder({ onAudioSave, existingAudioUrl }) {
         const url = URL.createObjectURL(blob);
         setAudioUrl(url);
         
-        // Upload para o servidor
-        const formData = new FormData();
-        formData.append('file', blob, 'audio.webm');
-        
         try {
+          toast.info("Salvando e transcrevendo áudio...");
+          
+          // Upload para o servidor
           const { data } = await base44.integrations.Core.UploadFile({ file: blob });
           onAudioSave(data.file_url);
-          toast.success("Áudio salvo!");
+          
+          // Transcrever áudio automaticamente
+          if (onTranscription) {
+            try {
+              const transcription = await base44.integrations.Core.InvokeLLM({
+                prompt: "Transcreva este áudio de forma clara e objetiva. Retorne apenas o texto transcrito, sem introduções ou comentários adicionais.",
+                file_urls: [data.file_url]
+              });
+              
+              onTranscription(transcription);
+              toast.success("Áudio transcrito automaticamente!");
+            } catch (transcriptionError) {
+              console.error("Erro na transcrição:", transcriptionError);
+              toast.success("Áudio salvo! (transcrição não disponível)");
+            }
+          } else {
+            toast.success("Áudio salvo!");
+          }
         } catch (error) {
           toast.error("Erro ao salvar áudio");
         }
