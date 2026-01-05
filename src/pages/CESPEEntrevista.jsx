@@ -45,18 +45,30 @@ export default function CESPEEntrevista() {
         const workshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
         if (workshops && workshops.length > 0) {
           setWorkshop(workshops[0]);
+        } else {
+          // Fallback: tentar via Employee
+          const employees = await base44.entities.Employee.filter({ user_id: currentUser.id });
+          if (employees && employees.length > 0 && employees[0].workshop_id) {
+            const ws = await base44.entities.Workshop.get(employees[0].workshop_id);
+            setWorkshop(ws);
+          }
         }
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
+        toast.error("Erro ao carregar dados da oficina");
       }
     };
     loadData();
   }, []);
 
-  const { data: candidate } = useQuery({
+  const { data: candidate, isLoading: candidateLoading, error: candidateError } = useQuery({
     queryKey: ['candidate', candidateId],
-    queryFn: () => base44.entities.Candidate.get(candidateId),
-    enabled: !!candidateId
+    queryFn: async () => {
+      if (!candidateId) throw new Error("ID do candidato não fornecido");
+      return await base44.entities.Candidate.get(candidateId);
+    },
+    enabled: !!candidateId,
+    retry: 2
   });
 
   const currentForm = attachedForms[currentFormIndex];
@@ -399,8 +411,43 @@ export default function CESPEEntrevista() {
     }
   });
 
-  if (!candidate) {
-    return <div className="p-6">Carregando...</div>;
+  if (!candidateId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="p-8 text-center">
+          <p className="text-red-600 mb-4">Nenhum candidato selecionado</p>
+          <Button onClick={() => navigate(-1)}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Voltar
+          </Button>
+        </Card>
+      </div>
+    );
+  }
+
+  if (candidateError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="p-8 text-center">
+          <p className="text-red-600 mb-4">Erro ao carregar candidato: {candidateError.message}</p>
+          <Button onClick={() => navigate(-1)}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Voltar
+          </Button>
+        </Card>
+      </div>
+    );
+  }
+
+  if (candidateLoading || !candidate) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Carregando candidato...</p>
+        </div>
+      </div>
+    );
   }
 
   const progress = questions.length > 0 ? ((currentStep + 1) / questions.length) * 100 : 0;
