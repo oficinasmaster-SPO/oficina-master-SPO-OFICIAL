@@ -5,18 +5,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import QuestionFormsList from "./QuestionFormsList";
-import QuestionFormEditor from "./QuestionFormEditor";
+import InterviewFormsList from "./InterviewFormsList";
+import InterviewFormEditor from "./InterviewFormEditor";
 
-export default function QuestionFormsManager({ open, onClose, workshopId }) {
+export default function InterviewFormsManager({ open, onClose, workshopId }) {
   const [activeTab, setActiveTab] = useState("list");
   const [editingForm, setEditingForm] = useState(null);
 
-  const { data: questionForms = [] } = useQuery({
-    queryKey: ['interview-questions', workshopId],
+  const { data: forms = [] } = useQuery({
+    queryKey: ['interview-forms', workshopId],
     queryFn: async () => {
       if (!workshopId) return [];
-      const result = await base44.entities.InterviewQuestion.filter({
+      const result = await base44.entities.InterviewForm.filter({
         workshop_id: workshopId
       });
       return Array.isArray(result) ? result : [];
@@ -41,36 +41,36 @@ export default function QuestionFormsManager({ open, onClose, workshopId }) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
-            <span>Gerenciar Formulários de Perguntas</span>
+            <span>Perguntas Poderosas de Entrevista (PPE)</span>
             <Button onClick={handleCreateNew} size="sm">
               <Plus className="w-4 h-4 mr-2" />
-              Nova Pergunta
+              Novo Formulário
             </Button>
           </DialogTitle>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="list">Lista de Perguntas</TabsTrigger>
+            <TabsTrigger value="list">Meus Formulários</TabsTrigger>
             <TabsTrigger value="editor">
-              {editingForm ? "Editar Pergunta" : "Nova Pergunta"}
+              {editingForm ? "Editar Formulário" : "Novo Formulário"}
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="list" className="mt-6">
-            <QuestionFormsList
-              questions={questionForms}
+            <InterviewFormsList
+              forms={forms}
               onEdit={handleEdit}
               workshopId={workshopId}
             />
           </TabsContent>
 
           <TabsContent value="editor" className="mt-6">
-            <QuestionFormEditor
-              question={editingForm}
+            <InterviewFormEditor
+              form={editingForm}
               workshopId={workshopId}
               onSaveComplete={handleSaveComplete}
               onCancel={() => setActiveTab("list")}

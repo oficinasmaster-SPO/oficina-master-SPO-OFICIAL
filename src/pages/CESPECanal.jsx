@@ -12,7 +12,7 @@ import CandidateCard from "@/components/cespe/CandidateCard";
 import ChannelStats from "@/components/cespe/ChannelStats";
 import WebhookSetupGuide from "@/components/cespe/WebhookSetupGuide";
 import DreamScriptModal from "@/components/cespe/DreamScriptModal";
-import QuestionFormsManager from "@/components/cespe/QuestionFormsManager";
+import InterviewFormsManager from "@/components/cespe/InterviewFormsManager";
 
 export default function CESPECanal() {
   const queryClient = useQueryClient();
@@ -131,7 +131,7 @@ export default function CESPECanal() {
           <div className="flex gap-2">
             <Button onClick={() => setShowQuestionForms(true)} variant="outline">
               <ClipboardList className="w-4 h-4 mr-2" />
-              Perguntas
+              PPE
             </Button>
             <Button onClick={() => setShowDreamScript(true)} variant="outline">
               <TrendingUp className="w-4 h-4 mr-2" />
@@ -236,7 +236,7 @@ export default function CESPECanal() {
           onSave={(data) => saveCultureScriptMutation.mutate(data)}
         />
 
-        <QuestionFormsManager
+        <InterviewFormsManager
           open={showQuestionForms}
           onClose={() => setShowQuestionForms(false)}
           workshopId={workshop?.id}
