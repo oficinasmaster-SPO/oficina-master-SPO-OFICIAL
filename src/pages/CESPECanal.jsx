@@ -151,13 +151,18 @@ export default function CESPECanal() {
         </Card>
 
         {/* Lista de Candidatos */}
-        <div className="space-y-3">
+        <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
+          {/* Header da Tabela */}
+          <div className="grid grid-cols-2 gap-4 px-4 py-3 bg-gray-100 border-b border-gray-300 font-semibold text-sm text-gray-700">
+            <div>Nome / Cargo</div>
+            <div>Contato / Score</div>
+          </div>
+          
+          {/* Linhas */}
           {isLoading ? (
-            <div>Carregando candidatos...</div>
+            <div className="p-6 text-center text-gray-500">Carregando candidatos...</div>
           ) : filteredCandidates.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              Nenhum candidato encontrado
-            </div>
+            <div className="p-6 text-center text-gray-500">Nenhum candidato encontrado</div>
           ) : (
             filteredCandidates.map(candidate => (
               <CandidateCard key={candidate.id} candidate={candidate} />
