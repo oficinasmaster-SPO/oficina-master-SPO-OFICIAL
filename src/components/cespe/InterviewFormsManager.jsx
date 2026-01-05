@@ -9,12 +9,15 @@ import { toast } from "sonner";
 import InterviewFormsList from "./InterviewFormsList";
 import InterviewFormEditor from "./InterviewFormEditor";
 import LeadScoreFormEditor from "./LeadScoreFormEditor";
+import ChecklistManager from "./ChecklistManager";
 
 export default function InterviewFormsManager({ open, onClose, workshopId, onSelectForm }) {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("list");
   const [editingForm, setEditingForm] = useState(null);
   const [editingLeadScore, setEditingLeadScore] = useState(false);
+  const [editingChecklist, setEditingChecklist] = useState(null);
+  const [isCreatingChecklist, setIsCreatingChecklist] = useState(false);
 
   const { data: forms = [] } = useQuery({
     queryKey: ['interview-forms', workshopId],
@@ -126,11 +129,12 @@ export default function InterviewFormsManager({ open, onClose, workshopId, onSel
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="list">Meus Formulários</TabsTrigger>
             <TabsTrigger value="editor">
               {editingForm ? "Editar Formulário" : "Novo Formulário"}
             </TabsTrigger>
+            <TabsTrigger value="checklists">Gerenciar Checklists</TabsTrigger>
           </TabsList>
 
           <TabsContent value="list" className="mt-6">
@@ -158,6 +162,10 @@ export default function InterviewFormsManager({ open, onClose, workshopId, onSel
                 onCancel={() => setActiveTab("list")}
               />
             )}
+          </TabsContent>
+
+          <TabsContent value="checklists" className="mt-6">
+            <ChecklistManager workshopId={workshopId} />
           </TabsContent>
         </Tabs>
       </DialogContent>
