@@ -192,20 +192,42 @@ export default function CESPEEntrevista() {
 
       await base44.entities.Candidate.update(candidateId, {
         status: 'em_entrevista',
-        lead_score: scores.final_score,
-        technical_score: scores.technical_score,
-        behavioral_score: scores.behavioral_score,
-        cultural_score: scores.cultural_score,
+        lead_score: aggregatedScores.final_score,
+        technical_score: aggregatedScores.technical_score,
+        behavioral_score: aggregatedScores.behavioral_score,
+        cultural_score: aggregatedScores.cultural_score,
         interviewer_recommendation: recommendation,
-        interviewer_notes: interviewerNotes
+        interviewer_notes: interviewerNotes,
+        timeline: [
+          ...(candidate.timeline || []),
+          {
+            timestamp: new Date().toISOString(),
+            action: 'Entrevista realizada',
+            user_id: user.id,
+            details: `Score: ${aggregatedScores.final_score} | Forms: ${updatedForms.length}`
+          }
+        ]
       });
 
       return interview;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['candidate'] });
-      toast.success("Entrevista salva com sucesso!");
-      navigate(-1);
+      queryClient.invalidateQueries({ queryKey: ['candidates'] });
+      
+      // Verificar se há mais formulários a responder
+      const nextIncomplete = attachedForms.findIndex((f, i) => i > currentFormIndex && !f.completed);
+      
+      if (nextIncomplete !== -1) {
+        // Limpar estado e ir para próximo formulário
+        setCurrentFormIndex(nextIncomplete);
+        setCurrentStep(0);
+        setAnswers([]);
+        setLeadScores({});
+        toast.success("Formulário salvo! Responda o próximo formulário.");
+      } else {
+        toast.success("Entrevista completa salva com sucesso!");
+        navigate(-1);
+      }
     }
   });
 
@@ -256,20 +278,31 @@ export default function CESPEEntrevista() {
           </div>
         </div>
 
-        <Card className="p-6">
-          {selectedForm && (
-            <div className="mb-4 p-3 bg-blue-50 rounded-lg flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-blue-900">Formulário Selecionado</p>
-                <p className="text-sm text-blue-700">{selectedForm.form_name}</p>
-              </div>
-              <Button size="sm" variant="outline" onClick={() => setSelectedForm(null)}>
-                Remover
-              </Button>
-            </div>
-          )}
-          {selectedScript && (
-            <div className="mb-4 p-3 bg-green-50 rounded-lg flex items-center justify-between">
+        <AttachedFormsList
+          attachedForms={attachedForms}
+          currentFormId={currentForm?.form_id}
+          onRemove={(formId) => {
+            const newForms = attachedForms.filter(f => f.form_id !== formId);
+            setAttachedForms(newForms);
+            if (currentFormIndex >= newForms.length) {
+              setCurrentFormIndex(Math.max(0, newForms.length - 1));
+            }
+            toast.success("Formulário removido");
+          }}
+          onSelectForm={(form) => {
+            const index = attachedForms.findIndex(f => f.form_id === form.form_id);
+            if (index !== -1) {
+              setCurrentFormIndex(index);
+              setCurrentStep(0);
+              setAnswers(form.answers || []);
+              setLeadScores({});
+            }
+          }}
+        />
+
+        {selectedScript && (
+          <Card className="mt-4 border-2 border-green-200">
+            <div className="p-3 bg-green-50 rounded-lg flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-green-900">Script Selecionado</p>
                 <p className="text-sm text-green-700">Script de cultura registrado</p>
@@ -278,16 +311,23 @@ export default function CESPEEntrevista() {
                 Remover
               </Button>
             </div>
-          )}
-          <div className="mb-6">
-            <div className="flex justify-between mb-2">
-              <span className="text-sm text-gray-600">Progresso</span>
-              <span className="text-sm font-medium">{currentStep + 1} / {questions.length}</span>
-            </div>
-            <Progress value={progress} />
-          </div>
+          </Card>
+        )}
 
-          {selectedForm?.is_lead_score_form ? (
+        <Card className="p-6 mt-4">
+          {currentForm && (
+            <>
+              <div className="mb-6">
+                <div className="flex justify-between mb-2">
+                  <span className="text-sm text-gray-600">
+                    Progresso - {currentForm.form_name}
+                  </span>
+                  <span className="text-sm font-medium">{currentStep + 1} / {questions.length}</span>
+                </div>
+                <Progress value={progress} />
+              </div>
+
+          {currentForm?.is_lead_score ? (
             <LeadScoreInterviewForm
               form={currentForm.form_data}
               currentStep={currentStep}
@@ -315,6 +355,18 @@ export default function CESPEEntrevista() {
               onSubmit={() => saveInterviewMutation.mutate()}
               isLoading={saveInterviewMutation.isPending}
             />
+          )}
+            </>
+          )}
+
+          {!currentForm && (
+            <div className="text-center py-12">
+              <ClipboardList className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600 mb-4">Nenhum formulário anexado</p>
+              <Button onClick={() => setShowPPE(true)}>
+                Anexar Formulário
+              </Button>
+            </div>
           )}
         </Card>
 
