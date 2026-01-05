@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Users, TrendingUp, Filter, Search } from "lucide-react";
+import { Plus, Users, TrendingUp, Filter, Search, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 import CandidateFormDialog from "@/components/cespe/CandidateFormDialog";
 import CandidateCard from "@/components/cespe/CandidateCard";
 import ChannelStats from "@/components/cespe/ChannelStats";
+import WebhookSetupGuide from "@/components/cespe/WebhookSetupGuide";
 
 export default function CESPECanal() {
   const queryClient = useQueryClient();
@@ -19,6 +20,7 @@ export default function CESPECanal() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterChannel, setFilterChannel] = useState("all");
+  const [showWebhookGuide, setShowWebhookGuide] = useState(false);
 
   React.useEffect(() => {
     const loadData = async () => {
@@ -92,10 +94,16 @@ export default function CESPECanal() {
             <h1 className="text-3xl font-bold text-gray-900">🅲 CANAL - Aquisição de Talentos</h1>
             <p className="text-gray-600">Centralize e gerencie leads de candidatos</p>
           </div>
-          <Button onClick={() => setShowForm(true)} className="bg-blue-600 hover:bg-blue-700">
-            <Plus className="w-4 h-4 mr-2" />
-            Novo Lead
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => setShowWebhookGuide(true)} variant="outline">
+              <Smartphone className="w-4 h-4 mr-2" />
+              Captura WhatsApp
+            </Button>
+            <Button onClick={() => setShowForm(true)} className="bg-blue-600 hover:bg-blue-700">
+              <Plus className="w-4 h-4 mr-2" />
+              Novo Lead
+            </Button>
+          </div>
         </div>
 
         {/* Stats */}
@@ -157,7 +165,7 @@ export default function CESPECanal() {
           )}
         </div>
 
-        {/* Dialog */}
+        {/* Dialogs */}
         {showForm && (
           <CandidateFormDialog
             open={showForm}
@@ -166,6 +174,11 @@ export default function CESPECanal() {
             isLoading={createCandidateMutation.isPending}
           />
         )}
+
+        <WebhookSetupGuide
+          open={showWebhookGuide}
+          onClose={() => setShowWebhookGuide(false)}
+        />
       </div>
     </div>
   );
