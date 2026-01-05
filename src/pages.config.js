@@ -109,6 +109,7 @@ import PainelMetas from './pages/PainelMetas';
 import PesquisaClima from './pages/PesquisaClima';
 import PlanoAcao from './pages/PlanoAcao';
 import PortalColaborador from './pages/PortalColaborador';
+import PrimeiroAcesso from './pages/PrimeiroAcesso';
 import PublicFeedback from './pages/PublicFeedback';
 import QGPBoard from './pages/QGPBoard';
 import Questionario from './pages/Questionario';
@@ -144,7 +145,6 @@ import TestUsuarios from './pages/TestUsuarios';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
-import PrimeiroAcesso from './pages/PrimeiroAcesso';
 import __Layout from './Layout.jsx';
 
 
@@ -260,6 +260,7 @@ export const PAGES = {
     "PesquisaClima": PesquisaClima,
     "PlanoAcao": PlanoAcao,
     "PortalColaborador": PortalColaborador,
+    "PrimeiroAcesso": PrimeiroAcesso,
     "PublicFeedback": PublicFeedback,
     "QGPBoard": QGPBoard,
     "Questionario": Questionario,
@@ -295,7 +296,6 @@ export const PAGES = {
     "TreinamentoVendas": TreinamentoVendas,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
-    "PrimeiroAcesso": PrimeiroAcesso,
 }
 
 export const pagesConfig = {

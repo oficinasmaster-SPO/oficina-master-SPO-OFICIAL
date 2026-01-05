@@ -131,15 +131,43 @@ export default function ConvidarColaborador() {
         throw new Error("Oficina não encontrada");
       }
 
-      console.log("🚀 Enviando dados para backend:", {
-        name: data.name,
+      // Verificar se colaborador já existe
+      const existingEmployees = await base44.entities.Employee.filter({
         email: data.email,
-        position: data.position,
-        area: data.area,
-        job_role: data.job_role,
-        profile_id: data.profile_id,
         workshop_id: workshop.id
       });
+
+      if (existingEmployees && existingEmployees.length > 0) {
+        const existing = existingEmployees[0];
+        
+        // Oferecer reenvio de convite
+        const shouldResend = window.confirm(
+          `Colaborador ${data.name} (${data.email}) já está cadastrado.\n\n` +
+          `Deseja reenviar o convite de acesso?`
+        );
+        
+        if (!shouldResend) {
+          throw new Error("Operação cancelada pelo usuário");
+        }
+        
+        // Reenviar convite
+        const resendResponse = await base44.functions.invoke('resendEmployeeInvite', {
+          employee_id: existing.id
+        });
+        
+        if (!resendResponse.data.success) {
+          throw new Error(resendResponse.data.error || "Erro ao reenviar convite");
+        }
+        
+        return {
+          success: true,
+          message: 'Convite reenviado com sucesso!',
+          employee: existing,
+          action: 'resent'
+        };
+      }
+
+      console.log("🚀 Criando novo colaborador:", data.email);
 
       const response = await base44.functions.invoke('createEmployeeUser', {
         name: data.name,
@@ -157,7 +185,7 @@ export default function ConvidarColaborador() {
         throw new Error(response.data.error || "Erro ao criar colaborador");
       }
 
-      return response.data;
+      return { ...response.data, action: 'created' };
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['employees-list'] });
@@ -175,9 +203,10 @@ export default function ConvidarColaborador() {
       });
     },
     onError: (error) => {
-      console.error("❌ Erro completo:", error);
-      console.error("❌ Mensagem:", error.message);
-      console.error("❌ Response:", error.response?.data);
+      console.error("❌ Erro:", error);
+      if (error.message === "Operação cancelada pelo usuário") {
+        return; // Não mostrar erro se usuário cancelou
+      }
       toast.error(error.response?.data?.error || error.message || "Erro ao criar colaborador");
     }
   });
