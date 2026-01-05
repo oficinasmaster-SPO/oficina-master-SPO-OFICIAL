@@ -57,11 +57,37 @@ export default function DocumentosAnexos({ employee, onUpdate }) {
       await onUpdate({ documents: updatedDocs });
       console.log("✅ onUpdate concluído!");
 
+      // Notificar gestores sobre novo documento
+      try {
+        const currentUser = await base44.auth.me();
+        const workshop = await base44.entities.Workshop.get(employee.workshop_id);
+        
+        // Buscar gestores (owner e admins)
+        const managers = await base44.entities.Employee.filter({
+          workshop_id: employee.workshop_id,
+          job_role: { $in: ['socio', 'diretor', 'gerente', 'supervisor_loja'] }
+        });
+
+        // Criar notificações para cada gestor
+        for (const manager of managers) {
+          if (manager.user_id && manager.user_id !== currentUser.id) {
+            await base44.entities.Notification.create({
+              user_id: manager.user_id,
+              type: 'document_uploaded',
+              title: 'Novo Documento Anexado',
+              message: `${employee.full_name} anexou um documento: ${newDoc.name} (${docTypeLabels[newDoc.type] || newDoc.type})`,
+              is_read: false
+            });
+          }
+        }
+      } catch (notifError) {
+        console.error("Erro ao criar notificação:", notifError);
+      }
+
       toast.success("Documento adicionado!");
       setShowDocDialog(false);
       setDocForm({ type: "", name: "", file: null });
       
-      // Forçar re-render após 500ms para garantir que os dados foram atualizados
       setTimeout(() => {
         window.location.reload();
       }, 500);
