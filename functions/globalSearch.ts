@@ -65,21 +65,24 @@ Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
         
-        // Handle CORS if needed or parse body
         let body;
         try {
             body = await req.json();
-        } catch {
-            return Response.json({ results: [] });
+        } catch (e) {
+            console.error("❌ Erro ao parsear body:", e);
+            return Response.json({ results: [], error: "Invalid JSON" });
         }
 
         const { query, workshop_id } = body;
+        console.log("🔍 Busca iniciada:", { query, workshop_id });
 
         if (!query || typeof query !== 'string' || query.length < 2) {
+             console.log("⚠️ Query muito curta");
              return Response.json({ results: [] });
         }
 
         const searchTerm = query.toLowerCase();
+        console.log("🔎 Termo de busca:", searchTerm);
 
         // Entities to search in
         // Note: For large datasets, this in-memory filtering of 'list' results 
@@ -100,17 +103,21 @@ Deno.serve(async (req) => {
 
         const searchPromises = entitiesToSearch.map(async (entity) => {
              try {
+                 console.log(`📋 Buscando em ${entity.name}...`);
                  let items = [];
                  
-                 // Simplificar: buscar direto sem filtro complexo
                  try {
                      items = await base44.asServiceRole.entities[entity.name].list('-updated_date', 200);
+                     console.log(`✅ ${entity.name}: ${items?.length || 0} itens encontrados`);
                  } catch (listError) {
-                     console.error(`Error listing ${entity.name}:`, listError.message);
+                     console.error(`❌ Error listing ${entity.name}:`, listError.message);
                      return [];
                  }
 
-                 if (!Array.isArray(items)) return [];
+                 if (!Array.isArray(items)) {
+                     console.log(`⚠️ ${entity.name} não retornou array`);
+                     return [];
+                 }
 
                  // In-memory fuzzy search
                  const matches = items.filter(item => {
@@ -122,6 +129,8 @@ Deno.serve(async (req) => {
                          return val && String(val).toLowerCase().includes(searchTerm);
                      });
                  });
+                 
+                 console.log(`🎯 ${entity.name}: ${matches.length} matches encontrados`);
 
                  return matches.map(item => ({
                      id: item.id,
@@ -140,12 +149,15 @@ Deno.serve(async (req) => {
 
         const resultsArrays = await Promise.all(searchPromises);
         const flatResults = resultsArrays.flat();
+        
+        console.log(`📊 Total de resultados antes do sort: ${flatResults.length}`);
 
-        // Sort by relevance? Or just simple sort by type
-        // Let's sort alphabetically by title for now
         flatResults.sort((a, b) => a.title.localeCompare(b.title));
+        
+        const finalResults = flatResults.slice(0, 50);
+        console.log(`✨ Retornando ${finalResults.length} resultados`);
 
-        return Response.json({ results: flatResults.slice(0, 50) }); // Return top 50
+        return Response.json({ results: finalResults });
 
     } catch (error) {
         return Response.json({ error: error.message }, { status: 500 });
