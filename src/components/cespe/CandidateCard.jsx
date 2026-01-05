@@ -25,6 +25,18 @@ const statusLabels = {
 export default function CandidateCard({ candidate }) {
   const navigate = useNavigate();
   const [showDetails, setShowDetails] = useState(false);
+  const [showReport, setShowReport] = useState(false);
+
+  const { data: interview } = useQuery({
+    queryKey: ['candidate-interview', candidate.id],
+    queryFn: async () => {
+      const interviews = await base44.entities.CandidateInterview.filter({ 
+        candidate_id: candidate.id 
+      });
+      return interviews && interviews.length > 0 ? interviews[0] : null;
+    },
+    enabled: candidate.status === 'em_entrevista' || candidate.status === 'aprovado'
+  });
 
   return (
     <>
