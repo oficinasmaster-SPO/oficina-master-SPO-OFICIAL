@@ -58,9 +58,9 @@ export default function InterviewReportViewer({ interview, candidate, onClose })
   });
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
-      <Card>
-        <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+    <div className="space-y-6 w-full mx-auto" style={{ maxWidth: '210mm' }}>
+      <Card className="shadow-lg">
+        <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-8">
           <div className="flex justify-between items-center">
             <div>
               <CardTitle className="text-2xl">Relatório de Entrevista</CardTitle>
@@ -72,7 +72,7 @@ export default function InterviewReportViewer({ interview, candidate, onClose })
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="p-6">
+        <CardContent className="p-8">
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div>
               <p className="text-sm text-gray-600">Data da Entrevista</p>
@@ -98,11 +98,11 @@ export default function InterviewReportViewer({ interview, candidate, onClose })
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Análise por Competência</CardTitle>
+      <Card className="shadow-lg">
+        <CardHeader className="p-6">
+          <CardTitle className="text-xl">Análise por Competência</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6">
           <ResponsiveContainer width="100%" height={400}>
             <RadarChart data={radarData}>
               <PolarGrid />
@@ -131,11 +131,11 @@ export default function InterviewReportViewer({ interview, candidate, onClose })
       </Card>
 
       {criteriaData.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Pontuação Detalhada por Critério</CardTitle>
+        <Card className="shadow-lg">
+          <CardHeader className="p-6">
+            <CardTitle className="text-xl">Pontuação Detalhada por Critério</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-6">
             <ResponsiveContainer width="100%" height={400}>
               <BarChart data={criteriaData}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -150,11 +150,11 @@ export default function InterviewReportViewer({ interview, candidate, onClose })
         </Card>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Avaliação Detalhada</CardTitle>
+      <Card className="shadow-lg">
+        <CardHeader className="p-6">
+          <CardTitle className="text-xl">Avaliação Detalhada</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 p-6">
           {interview.forms_used?.map((form, idx) => (
             <div key={idx} className="border-l-4 border-blue-500 pl-4 py-2">
               <h3 className="font-semibold text-lg mb-3">{form.form_name}</h3>
@@ -189,17 +189,17 @@ export default function InterviewReportViewer({ interview, candidate, onClose })
       </Card>
 
       {interview.interviewer_notes && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Observações do Entrevistador</CardTitle>
+        <Card className="shadow-lg">
+          <CardHeader className="p-6">
+            <CardTitle className="text-xl">Observações do Entrevistador</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-6">
             <p className="text-gray-700 whitespace-pre-wrap">{interview.interviewer_notes}</p>
           </CardContent>
         </Card>
       )}
 
-      <div className="flex justify-end gap-2">
+      <div className="flex justify-end gap-2 p-6">
         <Button variant="outline" onClick={onClose}>Fechar</Button>
         <Button onClick={handleDownloadPDF}>
           <FileText className="w-4 h-4 mr-2" />
