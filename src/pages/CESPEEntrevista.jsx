@@ -9,6 +9,7 @@ import { ArrowLeft, Search, ClipboardList } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import InterviewForm from "@/components/cespe/InterviewForm";
 import LeadScoreInterviewForm from "@/components/cespe/LeadScoreInterviewForm";
+import AttachedFormsList from "@/components/cespe/AttachedFormsList";
 import ScoreCalculator from "@/components/cespe/ScoreCalculator";
 import DreamScriptModal from "@/components/cespe/DreamScriptModal";
 import InterviewFormsManager from "@/components/cespe/InterviewFormsManager";
@@ -27,7 +28,8 @@ export default function CESPEEntrevista() {
   const [recommendation, setRecommendation] = useState("");
   const [showDreamScript, setShowDreamScript] = useState(false);
   const [showPPE, setShowPPE] = useState(false);
-  const [selectedForm, setSelectedForm] = useState(null);
+  const [attachedForms, setAttachedForms] = useState([]);
+  const [currentFormIndex, setCurrentFormIndex] = useState(0);
   const [selectedScript, setSelectedScript] = useState(null);
   const [leadScores, setLeadScores] = useState({});
 
@@ -54,20 +56,22 @@ export default function CESPEEntrevista() {
     enabled: !!candidateId
   });
 
+  const currentForm = attachedForms[currentFormIndex];
+
   const { data: questions = [] } = useQuery({
-    queryKey: ['interview-questions', workshop?.id, selectedForm?.id],
+    queryKey: ['interview-questions', workshop?.id, currentForm?.form_id],
     queryFn: async () => {
-      if (selectedForm?.is_lead_score_form) {
-        return selectedForm.scoring_criteria || [];
+      if (currentForm?.is_lead_score) {
+        return currentForm.form_data?.scoring_criteria || [];
       }
-      if (selectedForm?.id) {
-        return selectedForm.questions || [];
+      if (currentForm?.form_data) {
+        return currentForm.form_data.questions || [];
       }
       if (!workshop?.id) return [];
       const all = await base44.entities.InterviewQuestion.filter({ active: true });
       return all.filter(q => !q.workshop_id || q.workshop_id === workshop.id);
     },
-    enabled: !!workshop?.id
+    enabled: !!workshop?.id && !!currentForm
   });
 
   const { data: cultureScript } = useQuery({
@@ -85,10 +89,11 @@ export default function CESPEEntrevista() {
 
   const saveInterviewMutation = useMutation({
     mutationFn: async (data) => {
-      let scores;
-      let finalAnswers;
-
-      if (selectedForm?.is_lead_score_form) {
+      // Marcar formulário atual como completo
+      const updatedForms = [...attachedForms];
+      const currentForm = updatedForms[currentFormIndex];
+      
+      if (currentForm.is_lead_score) {
         // Calcular scores do Lead Score
         const totalScore = Object.values(leadScores).reduce((sum, v) => sum + v, 0);
         const technicalScore = Object.entries(leadScores)
@@ -100,18 +105,21 @@ export default function CESPEEntrevista() {
         const culturalScore = Object.entries(leadScores)
           .filter(([k]) => k.startsWith('cultural_'))
           .reduce((sum, [, v]) => sum + v, 0);
+        const historicoScore = Object.entries(leadScores)
+          .filter(([k]) => k.startsWith('historico_'))
+          .reduce((sum, [, v]) => sum + v, 0);
 
-        scores = {
-          final_score: totalScore,
-          technical_score: technicalScore,
-          behavioral_score: behavioralScore,
-          cultural_score: culturalScore
+        currentForm.scores = {
+          total: totalScore,
+          technical: technicalScore,
+          behavioral: behavioralScore,
+          cultural: culturalScore,
+          historico: historicoScore
         };
 
-        // Converter scores em formato de resposta
-        finalAnswers = Object.entries(leadScores).map(([key, value]) => {
+        currentForm.answers = Object.entries(leadScores).map(([key, value]) => {
           const [block, index] = key.split('_');
-          const criteria = selectedForm.scoring_criteria[parseInt(index)];
+          const criteria = currentForm.form_data.scoring_criteria[parseInt(index)];
           return {
             question_id: key,
             question_text: criteria?.criteria_name || key,
@@ -120,8 +128,43 @@ export default function CESPEEntrevista() {
           };
         });
       } else {
-        scores = ScoreCalculator.calculate(answers);
-        finalAnswers = answers;
+        currentForm.scores = ScoreCalculator.calculate(answers);
+        currentForm.answers = answers;
+      }
+      
+      currentForm.completed = true;
+      updatedForms[currentFormIndex] = currentForm;
+
+      // Calcular scores agregados considerando TODOS os formulários completados
+      const completedForms = updatedForms.filter(f => f.completed);
+      
+      let aggregatedScores = {
+        technical_score: 0,
+        behavioral_score: 0,
+        cultural_score: 0,
+        final_score: 0
+      };
+
+      if (completedForms.length > 0) {
+        // Somar scores técnicos e normalizar para manter peso 40%
+        const techSum = completedForms.reduce((sum, f) => sum + (f.scores?.technical || f.scores?.technical_score || 0), 0);
+        aggregatedScores.technical_score = Math.round((techSum / completedForms.length));
+
+        // Somar scores comportamentais e normalizar para manter peso 30%
+        const behavSum = completedForms.reduce((sum, f) => sum + (f.scores?.behavioral || f.scores?.behavioral_score || 0), 0);
+        aggregatedScores.behavioral_score = Math.round((behavSum / completedForms.length));
+
+        // Somar scores culturais e normalizar para manter peso 15%
+        const cultSum = completedForms.reduce((sum, f) => sum + (f.scores?.cultural || f.scores?.cultural_score || 0), 0);
+        aggregatedScores.cultural_score = Math.round((cultSum / completedForms.length));
+
+        // Score final agregado
+        aggregatedScores.final_score = Math.round(
+          aggregatedScores.technical_score + 
+          aggregatedScores.behavioral_score + 
+          aggregatedScores.cultural_score +
+          (completedForms.reduce((sum, f) => sum + (f.scores?.historico || 0), 0) / completedForms.length)
+        );
       }
       
       const interviewData = {
@@ -129,8 +172,7 @@ export default function CESPEEntrevista() {
         workshop_id: workshop.id,
         interviewer_id: user.id,
         interview_date: new Date().toISOString(),
-        form_used_id: selectedForm?.id || null,
-        form_used_name: selectedForm?.form_name || null,
+        forms_used: updatedForms,
         script_used_id: selectedScript?.id || null,
         script_content: selectedScript ? JSON.stringify({
           mission: selectedScript.mission,
@@ -139,11 +181,11 @@ export default function CESPEEntrevista() {
           growth_opportunities: selectedScript.growth_opportunities,
           not_fit_profile: selectedScript.not_fit_profile
         }) : null,
-        answers: finalAnswers,
-        ...scores,
+        answers: currentForm.answers,
+        ...aggregatedScores,
         recommendation,
         interviewer_notes: interviewerNotes,
-        completed: true
+        completed: updatedForms.every(f => f.completed)
       };
 
       const interview = await base44.entities.CandidateInterview.create(interviewData);
@@ -247,7 +289,7 @@ export default function CESPEEntrevista() {
 
           {selectedForm?.is_lead_score_form ? (
             <LeadScoreInterviewForm
-              form={selectedForm}
+              form={currentForm.form_data}
               currentStep={currentStep}
               scores={leadScores}
               onScoreChange={(key, value) => setLeadScores({...leadScores, [key]: value})}
@@ -294,12 +336,31 @@ export default function CESPEEntrevista() {
           onClose={() => setShowPPE(false)}
           workshopId={workshop?.id}
           onSelectForm={(form) => {
-            setSelectedForm(form);
-            setAnswers([]);
-            setLeadScores({});
-            setCurrentStep(0);
+            // Adicionar formulário à lista de anexados
+            const newAttachedForm = {
+              form_id: form.id,
+              form_name: form.form_name,
+              form_type: form.form_type,
+              is_lead_score: form.is_lead_score_form || false,
+              form_data: form,
+              completed: false,
+              answers: [],
+              scores: {}
+            };
+            
+            // Verificar se já existe
+            if (!attachedForms.find(f => f.form_id === form.id)) {
+              const newForms = [...attachedForms, newAttachedForm];
+              setAttachedForms(newForms);
+              setCurrentFormIndex(newForms.length - 1);
+              setCurrentStep(0);
+              setAnswers([]);
+              setLeadScores({});
+              toast.success(`Formulário "${form.form_name}" anexado`);
+            } else {
+              toast.info("Formulário já está anexado");
+            }
             setShowPPE(false);
-            toast.success(`Formulário "${form.form_name}" selecionado`);
           }}
         />
       </div>
