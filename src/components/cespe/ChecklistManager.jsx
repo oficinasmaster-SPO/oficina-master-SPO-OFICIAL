@@ -38,6 +38,22 @@ export default function ChecklistManager({ workshopId }) {
   const [editingTemplate, setEditingTemplate] = useState(null);
   const [isCreating, setIsCreating] = useState(false);
 
+  const migrateMutation = useMutation({
+    mutationFn: async () => {
+      const response = await base44.functions.invoke('migrateLeadScoreChecklists', {
+        workshop_id: workshopId
+      });
+      return response.data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['checklist-templates'] });
+      toast.success(data.message || "Checklists importados!");
+    },
+    onError: (error) => {
+      toast.error(error?.message || "Erro ao importar");
+    }
+  });
+
   const { data: templates = [] } = useQuery({
     queryKey: ['checklist-templates', workshopId],
     queryFn: async () => {
@@ -208,10 +224,15 @@ export default function ChecklistManager({ workshopId }) {
           <h3 className="text-lg font-semibold">Gerenciar Checklists</h3>
           <p className="text-sm text-gray-600">Crie checklists personalizados por cargo</p>
         </div>
-        <Button onClick={handleCreate} size="sm">
-          <Plus className="w-4 h-4 mr-2" />
-          Novo Checklist
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => migrateMutation.mutate()} size="sm" variant="outline" disabled={migrateMutation.isPending}>
+            📥 Importar do Lead Score
+          </Button>
+          <Button onClick={handleCreate} size="sm">
+            <Plus className="w-4 h-4 mr-2" />
+            Novo Checklist
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-3 max-h-[60vh] overflow-y-auto">
