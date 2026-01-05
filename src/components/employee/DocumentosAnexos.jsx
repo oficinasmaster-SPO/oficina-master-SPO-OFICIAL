@@ -36,7 +36,9 @@ export default function DocumentosAnexos({ employee, onUpdate }) {
     setUploadingDoc(true);
 
     try {
+      console.log("📤 Iniciando upload do arquivo:", docForm.file.name);
       const { file_url } = await base44.integrations.Core.UploadFile({ file: docForm.file });
+      console.log("✅ Upload concluído. URL:", file_url);
 
       const newDoc = {
         type: docForm.type,
@@ -45,15 +47,23 @@ export default function DocumentosAnexos({ employee, onUpdate }) {
         date: new Date().toISOString()
       };
 
+      console.log("📝 Novo documento criado:", newDoc);
+      console.log("📚 Documentos atuais:", employee.documents);
+
       const updatedDocs = [...(employee.documents || []), newDoc];
+      console.log("📚 Array atualizado com novo doc:", updatedDocs);
+
+      console.log("💾 Chamando onUpdate com documents...");
       await onUpdate({ documents: updatedDocs });
+      console.log("✅ onUpdate concluído!");
 
       toast.success("Documento adicionado!");
       setShowDocDialog(false);
       setDocForm({ type: "", name: "", file: null });
     } catch (error) {
-      console.error("Erro ao salvar documento:", error);
-      toast.error(`Erro ao fazer upload: ${error?.message || 'Erro desconhecido'}`);
+      console.error("❌ ERRO completo:", error);
+      console.error("❌ Stack:", error?.stack);
+      toast.error(`Erro: ${error?.message || error?.toString() || 'Erro desconhecido'}`);
     } finally {
       setUploadingDoc(false);
     }
