@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Loader2, UserPlus, CheckCircle2, Users, Copy, Key
+  Loader2, UserPlus, CheckCircle2, Users, Copy, Key, AlertCircle
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -129,6 +129,10 @@ export default function ConvidarColaborador() {
         workshop_id: workshop.id
       });
 
+      if (!response.data.success) {
+        throw new Error(response.data.error || "Erro ao criar colaborador");
+      }
+
       return response.data;
     },
     onSuccess: (data) => {
@@ -148,7 +152,7 @@ export default function ConvidarColaborador() {
     },
     onError: (error) => {
       console.error("❌ Erro:", error);
-      toast.error("Erro: " + error.message);
+      toast.error(error.message || "Erro ao criar colaborador");
     }
   });
 
