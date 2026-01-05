@@ -199,7 +199,7 @@ export default function Layout({ children, currentPageName }) {
 
   useEffect(() => {
     loadUser();
-  }, [loadUser, location.pathname]);
+  }, [location.pathname]);
 
   // Verificar status de aprovação no primeiro login
   useEffect(() => {

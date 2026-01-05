@@ -12,11 +12,17 @@ export function SharedDataProvider({ children, workshopId, userId }) {
     queryKey: ['shared-workshop', workshopId],
     queryFn: async () => {
       if (!workshopId) return null;
-      const workshops = await base44.entities.Workshop.list();
-      return workshops.find(w => w.id === workshopId) || null;
+      try {
+        return await base44.entities.Workshop.get(workshopId);
+      } catch (error) {
+        console.error("Erro ao carregar workshop:", error);
+        return null;
+      }
     },
     enabled: !!workshopId,
-    staleTime: 5 * 60 * 1000, // 5 minutos
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+    retryOnMount: false,
   });
 
   // Dados TCMP² / DRE mais recente - fonte principal financeira

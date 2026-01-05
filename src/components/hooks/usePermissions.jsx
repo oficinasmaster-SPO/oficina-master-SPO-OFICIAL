@@ -15,7 +15,19 @@ export function usePermissions() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadUserPermissions();
+    let mounted = true;
+    
+    const load = async () => {
+      if (mounted) {
+        await loadUserPermissions();
+      }
+    };
+    
+    load();
+    
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const loadUserPermissions = async () => {
