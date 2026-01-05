@@ -1,17 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Command } from "cmdk";
-import { Search, User, CheckSquare, Briefcase, MessageSquare, Target, Loader2, X, FileText, FileCheck, ClipboardList, GraduationCap, Trophy, Building } from "lucide-react";
+import { Search, User, CheckSquare, Briefcase, MessageSquare, Target, Loader2, X, FileText, FileCheck, ClipboardList, GraduationCap, Trophy, Building, Filter } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 export default function GlobalSearch({ workshopId }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [total, setTotal] = useState(0);
+  const [selectedTypes, setSelectedTypes] = useState([]);
   const navigate = useNavigate();
 
   // Toggle with keyboard shortcut
@@ -30,34 +34,61 @@ export default function GlobalSearch({ workshopId }) {
   useEffect(() => {
     if (!query || query.length < 2) {
       setResults([]);
+      setTotal(0);
+      setHasMore(false);
       return;
     }
 
     const timer = setTimeout(async () => {
       setLoading(true);
-      console.log("🔍 [GlobalSearch] Iniciando busca:", { query, workshopId });
+      console.log("🔍 [GlobalSearch] Iniciando busca:", { query, workshopId, selectedTypes });
       try {
         const response = await base44.functions.invoke("globalSearch", {
           query,
-          workshop_id: workshopId
+          workshop_id: workshopId,
+          skip: 0,
+          limit: 20,
+          entity_types: selectedTypes
         });
-        console.log("📦 [GlobalSearch] Resposta recebida:", response);
-        console.log("📋 [GlobalSearch] Results:", response.data?.results);
+        console.log("📦 [GlobalSearch] Resposta:", response.data);
         setResults(response.data?.results || []);
+        setTotal(response.data?.total || 0);
+        setHasMore(response.data?.hasMore || false);
       } catch (error) {
-        console.error("❌ [GlobalSearch] Erro na busca:", error);
+        console.error("❌ [GlobalSearch] Erro:", error);
       } finally {
         setLoading(false);
       }
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [query, workshopId]);
+  }, [query, workshopId, selectedTypes]);
 
   const handleSelect = (url) => {
     setOpen(false);
+    setQuery("");
+    setSelectedTypes([]);
     navigate(createPageUrl(url));
   };
+
+  const toggleTypeFilter = (type) => {
+    setSelectedTypes(prev => 
+      prev.includes(type) 
+        ? prev.filter(t => t !== type)
+        : [...prev, type]
+    );
+  };
+
+  const availableTypes = [
+    { value: 'ProcessDocument', label: 'Processos (MAPs)' },
+    { value: 'InstructionDocument', label: 'Instruções (ITs)' },
+    { value: 'CompanyDocument', label: 'Documentos' },
+    { value: 'TrainingCourse', label: 'Treinamentos' },
+    { value: 'Employee', label: 'Colaboradores' },
+    { value: 'Challenge', label: 'Desafios' },
+    { value: 'Task', label: 'Tarefas' },
+    { value: 'Goal', label: 'Metas' }
+  ];
 
   const icons = {
     User: User,
@@ -89,7 +120,7 @@ export default function GlobalSearch({ workshopId }) {
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="p-0 overflow-hidden max-w-[550px] top-[20%] translate-y-0">
+        <DialogContent className="p-0 overflow-hidden max-w-[650px] top-[15%] translate-y-0">
           <Command className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-group]]:px-2 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5">
             <div className="flex items-center border-b px-3" cmdk-input-wrapper="">
               <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
@@ -100,6 +131,26 @@ export default function GlobalSearch({ workshopId }) {
                 onValueChange={setQuery}
               />
               {loading && <Loader2 className="h-4 w-4 animate-spin opacity-50" />}
+            </div>
+            
+            {/* Filtros por tipo */}
+            <div className="border-b px-3 py-2">
+              <div className="flex items-center gap-2 mb-2">
+                <Filter className="h-3 w-3 text-gray-500" />
+                <span className="text-xs text-gray-600 font-medium">Filtrar por tipo:</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {availableTypes.map(type => (
+                  <Badge
+                    key={type.value}
+                    variant={selectedTypes.includes(type.value) ? "default" : "outline"}
+                    className="cursor-pointer text-xs"
+                    onClick={() => toggleTypeFilter(type.value)}
+                  >
+                    {type.label}
+                  </Badge>
+                ))}
+              </div>
             </div>
             
             <Command.List className="max-h-[300px] overflow-y-auto overflow-x-hidden py-2 px-2">

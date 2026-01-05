@@ -73,16 +73,17 @@ Deno.serve(async (req) => {
             return Response.json({ results: [], error: "Invalid JSON" });
         }
 
-        const { query, workshop_id } = body;
-        console.log("🔍 Busca iniciada:", { query, workshop_id });
+        const { query, workshop_id, skip = 0, limit = 50, entity_types = [] } = body;
+        console.log("🔍 Busca iniciada:", { query, workshop_id, skip, limit, entity_types });
 
         if (!query || typeof query !== 'string' || query.length < 2) {
              console.log("⚠️ Query muito curta");
-             return Response.json({ results: [] });
+             return Response.json({ results: [], total: 0, hasMore: false });
         }
 
         const searchTerm = query.toLowerCase();
-        console.log("🔎 Termo de busca:", searchTerm);
+        const searchTerms = searchTerm.split(' ').filter(t => t.length > 1);
+        console.log("🔎 Termos de busca:", searchTerms);
 
         // Entities to search in
         // Note: For large datasets, this in-memory filtering of 'list' results 
@@ -101,13 +102,15 @@ Deno.serve(async (req) => {
             { name: 'Workshop', fields: ['name', 'segment', 'city', 'razao_social'] }
         ];
 
-        const searchPromises = entitiesToSearch.map(async (entity) => {
+        const searchPromises = entitiesToSearch
+            .filter(entity => entity_types.length === 0 || entity_types.includes(entity.name))
+            .map(async (entity) => {
              try {
                  console.log(`📋 Buscando em ${entity.name}...`);
                  let items = [];
                  
                  try {
-                     items = await base44.asServiceRole.entities[entity.name].list('-updated_date', 200);
+                     items = await base44.asServiceRole.entities[entity.name].list('-updated_date', 500);
                      console.log(`✅ ${entity.name}: ${items?.length || 0} itens encontrados`);
                  } catch (listError) {
                      console.error(`❌ Error listing ${entity.name}:`, listError.message);
@@ -119,19 +122,21 @@ Deno.serve(async (req) => {
                      return [];
                  }
 
-                 // In-memory fuzzy search - MAIS PERMISSIVO
+                 // Busca por múltiplas palavras-chave
                  const matches = items.filter(item => {
-                     // Permitir templates (sem workshop_id) ou itens da oficina atual
                      const workshopMatch = !workshop_id || 
                                           !item.workshop_id || 
                                           item.workshop_id === workshop_id;
                      
                      if (!workshopMatch) return false;
 
-                     return entity.fields.some(field => {
-                         const val = item[field];
-                         return val && String(val).toLowerCase().includes(searchTerm);
-                     });
+                     // Se tiver múltiplos termos, todos devem estar presentes
+                     return searchTerms.every(term => 
+                         entity.fields.some(field => {
+                             const val = item[field];
+                             return val && String(val).toLowerCase().includes(term);
+                         })
+                     );
                  });
                  
                  console.log(`🎯 ${entity.name}: ${matches.length} matches encontrados`);
@@ -154,14 +159,23 @@ Deno.serve(async (req) => {
         const resultsArrays = await Promise.all(searchPromises);
         const flatResults = resultsArrays.flat();
         
-        console.log(`📊 Total de resultados antes do sort: ${flatResults.length}`);
+        console.log(`📊 Total de resultados: ${flatResults.length}`);
 
         flatResults.sort((a, b) => a.title.localeCompare(b.title));
         
-        const finalResults = flatResults.slice(0, 50);
-        console.log(`✨ Retornando ${finalResults.length} resultados`);
+        const total = flatResults.length;
+        const paginatedResults = flatResults.slice(skip, skip + limit);
+        const hasMore = (skip + limit) < total;
+        
+        console.log(`✨ Retornando ${paginatedResults.length} de ${total} resultados (skip: ${skip}, limit: ${limit}, hasMore: ${hasMore})`);
 
-        return Response.json({ results: finalResults });
+        return Response.json({ 
+            results: paginatedResults, 
+            total,
+            hasMore,
+            skip,
+            limit
+        });
 
     } catch (error) {
         return Response.json({ error: error.message }, { status: 500 });
