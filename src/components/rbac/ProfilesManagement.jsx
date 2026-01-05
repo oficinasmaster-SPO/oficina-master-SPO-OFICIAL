@@ -30,9 +30,12 @@ export default function ProfilesManagement() {
     refetchOnWindowFocus: false,
   });
 
-  const { data: users = [] } = useQuery({
-    queryKey: ["users"],
-    queryFn: () => base44.entities.User.list(),
+  const { data: employees = [] } = useQuery({
+    queryKey: ["employees-for-profiles"],
+    queryFn: async () => {
+      const data = await base44.asServiceRole.entities.Employee.list();
+      return data || [];
+    },
   });
 
   const totalSystemRoles = systemRoles.reduce((sum, m) => sum + m.roles.length, 0);
@@ -72,7 +75,7 @@ export default function ProfilesManagement() {
   });
 
   const getUsersCountByProfile = (profileId) => {
-    return users.filter(u => u.profile_id === profileId).length;
+    return employees.filter(e => e.profile_id === profileId).length;
   };
 
   const handleEdit = (profile) => {
@@ -159,8 +162,8 @@ export default function ProfilesManagement() {
           <CardContent className="pt-6">
             <div className="text-center">
               <Users className="w-10 h-10 mx-auto text-purple-600 mb-2" />
-              <p className="text-3xl font-bold">{users.length}</p>
-              <p className="text-sm text-gray-600">Usuários no Sistema</p>
+              <p className="text-3xl font-bold">{employees.length}</p>
+              <p className="text-sm text-gray-600">Colaboradores no Sistema</p>
             </div>
           </CardContent>
         </Card>
@@ -190,7 +193,7 @@ export default function ProfilesManagement() {
         title="Perfis Internos"
         subtitle="Consultores, mentores e aceleradores"
         profiles={internalProfiles}
-        users={users}
+        employees={employees}
         onEdit={handleEdit}
         onDuplicate={handleDuplicate}
         onToggleStatus={handleToggleStatus}
@@ -203,7 +206,7 @@ export default function ProfilesManagement() {
         title="Perfis Externos"
         subtitle="Clientes e colaboradores de oficinas"
         profiles={externalProfiles}
-        users={users}
+        employees={employees}
         onEdit={handleEdit}
         onDuplicate={handleDuplicate}
         onToggleStatus={handleToggleStatus}
@@ -224,7 +227,7 @@ export default function ProfilesManagement() {
   );
 }
 
-function ProfileSection({ title, subtitle, profiles, users, onEdit, onDuplicate, onToggleStatus, onDelete, onViewDetails, getUsersCount }) {
+function ProfileSection({ title, subtitle, profiles, employees, onEdit, onDuplicate, onToggleStatus, onDelete, onViewDetails, getUsersCount }) {
   return (
     <Card>
       <CardHeader>
