@@ -21,7 +21,8 @@ export default function Layout({ children, currentPageName }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isAdminView, setIsAdminView] = useState(false);
-  const { canAccessPage } = usePermissions();
+  // TEMPORARIAMENTE DESABILITADO
+  // const { canAccessPage } = usePermissions();
 
   // Monitora mudanças no estado de colapso da sidebar
   useEffect(() => {
@@ -62,19 +63,7 @@ export default function Layout({ children, currentPageName }) {
         try {
           const currentUser = await base44.auth.me();
           
-          // Apenas atualizar last_login_at (não mexer em user_status aqui)
-          // user_status deve ser gerenciado apenas pelo admin via approveUserAccess
-          try {
-            await base44.auth.updateMe({
-              first_login_at: currentUser.first_login_at || new Date().toISOString(),
-              last_login_at: new Date().toISOString()
-            });
-            console.log("✅ Login registrado");
-
-
-          } catch (updateError) {
-            console.error("⚠️ Erro ao atualizar login (não crítico):", updateError);
-          }
+          // TEMPORARIAMENTE DESABILITADO: atualização de login
           setUser(currentUser);
           
           const urlParams = new URLSearchParams(window.location.search);
@@ -258,102 +247,7 @@ export default function Layout({ children, currentPageName }) {
             <main className="flex-1">
               <div className={`${isAuthenticated && !isPublicPage ? 'px-4 sm:px-6 lg:px-8 py-6' : ''}`}>
                 {isAuthenticated && !isPublicPage && <Breadcrumbs />}
-                {isAuthenticated && !isPublicPage ? (
-              (() => {
-                try {
-                  const hasAccess = !currentPageName || canAccessPage(currentPageName);
-
-                  if (!hasAccess) {
-                    return (
-                      <div className="flex flex-col items-center justify-center h-[60vh] text-center px-4">
-                        <div className="bg-red-100 p-4 rounded-full mb-4">
-                          <LogOut className="w-8 h-8 text-red-600" />
-                        </div>
-                        <h2 className="text-2xl font-bold text-gray-900 mb-2">Acesso Negado</h2>
-                        <p className="text-gray-600 max-w-md mb-4">
-                          Você não tem permissão para acessar esta página.
-                        </p>
-                        <Button onClick={() => window.location.href = createPageUrl("Home")}>
-                          Voltar ao Início
-                        </Button>
-                      </div>
-                    );
-                  }
-                } catch (error) {
-                  // Em caso de erro, mostrar página de erro ao invés de tela branca
-                  return (
-                    <div className="flex flex-col items-center justify-center h-[60vh] text-center px-4">
-                      <div className="bg-yellow-100 p-4 rounded-full mb-4">
-                        <LogOut className="w-8 h-8 text-yellow-600" />
-                      </div>
-                      <h2 className="text-2xl font-bold text-gray-900 mb-2">Erro ao Verificar Permissões</h2>
-                      <p className="text-gray-600 max-w-md mb-4">
-                        Ocorreu um erro ao verificar suas permissões. Por favor, recarregue a página.
-                      </p>
-                      <Button onClick={() => window.location.reload()}>
-                        Recarregar Página
-                      </Button>
-                    </div>
-                  );
-                }
-
-                // Verificar status do usuário
-                if (user && user.user_status === 'pending') {
-                  return (
-                    <div className="flex flex-col items-center justify-center h-[60vh] text-center px-4">
-                      <div className="bg-yellow-100 p-4 rounded-full mb-4">
-                        <LogOut className="w-8 h-8 text-yellow-600" />
-                      </div>
-                      <h2 className="text-2xl font-bold text-gray-900 mb-2">Aguardando Aprovação</h2>
-                      <p className="text-gray-600 max-w-md mb-4">
-                        Seu cadastro foi realizado com sucesso! No momento, seu acesso está 
-                        <strong> aguardando aprovação</strong> de um administrador.
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        Você receberá um email assim que seu acesso for liberado.
-                      </p>
-                      <Button 
-                        onClick={handleLogout}
-                        variant="outline"
-                        className="mt-6"
-                      >
-                        <LogOut className="w-4 h-4 mr-2" />
-                        Sair
-                      </Button>
-                    </div>
-                  );
-                }
-
-                // Verificar workshop
-                if (!workshop) {
-                  return children;
-                }
-
-                if (workshop?.status === 'inativo' && user && user.role !== 'admin') {
-                  return (
-                    <div className="flex flex-col items-center justify-center h-[60vh] text-center px-4">
-                      <div className="bg-red-100 p-4 rounded-full mb-4">
-                        <LogOut className="w-8 h-8 text-red-600" />
-                      </div>
-                      <h2 className="text-2xl font-bold text-gray-900 mb-2">Acesso em Análise</h2>
-                      <p className="text-gray-600 max-w-md">
-                        Sua oficina está com status <strong>Inativo</strong>. 
-                        Entre em contato com o suporte para regularizar seu acesso.
-                      </p>
-                    </div>
-                  );
-                }
-
-                // Renderizar conteúdo com SharedDataProvider
-                return (
-                  <SharedDataProvider workshopId={workshop.id} userId={user?.id}>
-                    {children}
-                  </SharedDataProvider>
-                );
-              })()
-            ) : (
-              children
-            )}
+                {children}
           </div>
         </main>
 
