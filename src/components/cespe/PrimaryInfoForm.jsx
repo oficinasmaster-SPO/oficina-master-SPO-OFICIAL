@@ -16,7 +16,8 @@ import {
   Plus,
   Trash2,
   Save,
-  Loader2
+  Loader2,
+  AlertTriangle
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
@@ -30,6 +31,9 @@ export default function PrimaryInfoForm({ open, onClose, candidate, onUpdate }) 
     email: candidate?.email || "",
     city: candidate?.city || "",
     neighborhood: candidate?.neighborhood || "",
+    street: candidate?.street || "",
+    number: candidate?.number || "",
+    cep: candidate?.cep || "",
     desired_position: candidate?.desired_position || "",
     
     // Histórico profissional
@@ -55,7 +59,9 @@ export default function PrimaryInfoForm({ open, onClose, candidate, onUpdate }) 
     
     // Disponibilidade
     availability: candidate?.availability || "",
+    current_salary: candidate?.current_salary || 0,
     salary_expectation: candidate?.salary_expectation || 0,
+    salary_credibility_percentage: candidate?.salary_credibility_percentage || 100,
     employment_type: candidate?.employment_type || "clt"
   });
 
@@ -90,7 +96,6 @@ export default function PrimaryInfoForm({ open, onClose, candidate, onUpdate }) 
         course_name: "",
         institution: "",
         instructor: "",
-        hours: 0,
         year: new Date().getFullYear()
       }]
     });
@@ -203,6 +208,28 @@ export default function PrimaryInfoForm({ open, onClose, candidate, onUpdate }) 
                 />
               </div>
               <div>
+                <Label>Rua</Label>
+                <Input 
+                  value={formData.street}
+                  onChange={(e) => setFormData({...formData, street: e.target.value})}
+                />
+              </div>
+              <div>
+                <Label>Número</Label>
+                <Input 
+                  value={formData.number}
+                  onChange={(e) => setFormData({...formData, number: e.target.value})}
+                />
+              </div>
+              <div>
+                <Label>CEP</Label>
+                <Input 
+                  value={formData.cep}
+                  onChange={(e) => setFormData({...formData, cep: e.target.value})}
+                  placeholder="00000-000"
+                />
+              </div>
+              <div>
                 <Label>Cargo Pretendido *</Label>
                 <Input 
                   value={formData.desired_position}
@@ -253,12 +280,15 @@ export default function PrimaryInfoForm({ open, onClose, candidate, onUpdate }) 
                       value={work.direct_leader}
                       onChange={(e) => updateWorkHistory(idx, 'direct_leader', e.target.value)}
                     />
-                    <Input
-                      type="number"
-                      placeholder="Meses de permanência"
-                      value={work.duration_months}
-                      onChange={(e) => updateWorkHistory(idx, 'duration_months', parseInt(e.target.value))}
-                    />
+                    <div>
+                      <Label className="text-sm text-gray-600">Tempo de permanência (em meses)</Label>
+                      <Input
+                        type="number"
+                        placeholder="Ex: 24 meses = 2 anos"
+                        value={work.duration_months}
+                        onChange={(e) => updateWorkHistory(idx, 'duration_months', parseInt(e.target.value))}
+                      />
+                    </div>
                   </div>
                   <Textarea
                     placeholder="Motivo da saída"
@@ -342,18 +372,17 @@ export default function PrimaryInfoForm({ open, onClose, candidate, onUpdate }) 
                       value={course.instructor}
                       onChange={(e) => updateCourse(idx, 'instructor', e.target.value)}
                     />
-                    <Input
-                      type="number"
-                      placeholder="Carga horária"
-                      value={course.hours}
-                      onChange={(e) => updateCourse(idx, 'hours', parseInt(e.target.value))}
-                    />
-                    <Input
-                      type="number"
-                      placeholder="Ano"
-                      value={course.year}
-                      onChange={(e) => updateCourse(idx, 'year', parseInt(e.target.value))}
-                    />
+                    <div>
+                      <Label className="text-sm text-gray-600">Ano de realização</Label>
+                      <Input
+                        type="number"
+                        min="1990"
+                        max={new Date().getFullYear()}
+                        placeholder={`Ex: ${new Date().getFullYear()}`}
+                        value={course.year}
+                        onChange={(e) => updateCourse(idx, 'year', parseInt(e.target.value))}
+                      />
+                    </div>
                   </div>
                 </div>
               ))}
@@ -444,34 +473,125 @@ export default function PrimaryInfoForm({ open, onClose, candidate, onUpdate }) 
                 Disponibilidade e Condições
               </CardTitle>
             </CardHeader>
-            <CardContent className="grid md:grid-cols-2 gap-4">
-              <div>
-                <Label>Disponibilidade de início</Label>
-                <Input
-                  value={formData.availability}
-                  onChange={(e) => setFormData({...formData, availability: e.target.value})}
-                  placeholder="Ex: Imediato, 15 dias, 30 dias"
-                />
+            <CardContent className="space-y-6">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Disponibilidade de início</Label>
+                  <Input
+                    value={formData.availability}
+                    onChange={(e) => setFormData({...formData, availability: e.target.value})}
+                    placeholder="Ex: Imediato, 15 dias, 30 dias"
+                  />
+                </div>
+                <div>
+                  <Label>Regime desejado</Label>
+                  <select
+                    value={formData.employment_type}
+                    onChange={(e) => setFormData({...formData, employment_type: e.target.value})}
+                    className="w-full px-3 py-2 border rounded-md"
+                  >
+                    <option value="clt">CLT</option>
+                    <option value="pj">PJ</option>
+                    <option value="experiencia">Experiência</option>
+                  </select>
+                </div>
               </div>
-              <div>
-                <Label>Pretensão salarial (R$)</Label>
-                <Input
-                  type="number"
-                  value={formData.salary_expectation}
-                  onChange={(e) => setFormData({...formData, salary_expectation: parseFloat(e.target.value)})}
-                />
-              </div>
-              <div>
-                <Label>Regime desejado</Label>
-                <select
-                  value={formData.employment_type}
-                  onChange={(e) => setFormData({...formData, employment_type: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-md"
-                >
-                  <option value="clt">CLT</option>
-                  <option value="pj">PJ</option>
-                  <option value="experiencia">Experiência</option>
-                </select>
+
+              {/* Validação Salarial Estratégica */}
+              <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg space-y-4">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="w-5 h-5 text-yellow-600 mt-1 flex-shrink-0" />
+                  <div>
+                    <p className="font-semibold text-yellow-900">Validação Salarial Estratégica</p>
+                    <p className="text-sm text-yellow-700 mt-1">
+                      Use esta seção para identificar veracidade e expectativas realistas
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <Label>Salário atual na empresa (R$)</Label>
+                    <Input
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="Ex: 3500"
+                      value={formData.current_salary || ""}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '');
+                        setFormData({...formData, current_salary: value ? parseFloat(value) : 0});
+                      }}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Pergunte: "Quanto você ganha hoje?"
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label>Pretensão salarial (R$)</Label>
+                    <Input
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="Ex: 4000"
+                      value={formData.salary_expectation || ""}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '');
+                        setFormData({...formData, salary_expectation: value ? parseFloat(value) : 0});
+                      }}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Pergunte: "Quanto você quer ganhar?"
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-white border border-yellow-300 rounded">
+                  <p className="text-sm font-semibold text-yellow-900 mb-2">
+                    🎯 PROVOCAÇÃO ESTRATÉGICA
+                  </p>
+                  <p className="text-sm text-gray-700 mb-3">
+                    Depois que ele disser o salário atual, <strong>provoque</strong>: 
+                    <br />
+                    <em>"Ah, entendi. E no mês ruim, quanto você ganhava? Uns R$ {formData.current_salary ? Math.round(formData.current_salary * 0.3) : '...'} ?"</em>
+                    <br />
+                    <span className="text-yellow-700 font-medium">
+                      (Jogue 20-30% do valor que ele disse)
+                    </span>
+                  </p>
+                  <p className="text-xs text-gray-600 mb-3">
+                    👀 <strong>Observe a reação:</strong> Ele gaguejou? Hesitou? Ficou confuso? 
+                    Isso indica que o salário declarado pode estar inflado.
+                  </p>
+                </div>
+
+                <div>
+                  <Label>Credibilidade do salário declarado</Label>
+                  <select
+                    value={formData.salary_credibility_percentage}
+                    onChange={(e) => setFormData({...formData, salary_credibility_percentage: parseInt(e.target.value)})}
+                    className="w-full px-3 py-2 border rounded-md bg-white"
+                  >
+                    <option value={100}>100% - Acredito totalmente</option>
+                    <option value={90}>90% - Quase certeza</option>
+                    <option value={75}>75% - Provável</option>
+                    <option value={50}>50% - Dúvida razoável</option>
+                    <option value={25}>25% - Pouco provável</option>
+                    <option value={10}>10% - Improvável</option>
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Com base na reação dele, qual sua percepção de veracidade?
+                  </p>
+                </div>
+
+                {formData.salary_credibility_percentage < 75 && (
+                  <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded">
+                    <AlertTriangle className="w-4 h-4 text-red-600 mt-0.5" />
+                    <p className="text-sm text-red-700">
+                      <strong>Atenção:</strong> Credibilidade abaixo de 75%. 
+                      Possível inflação salarial. Recomende validação adicional.
+                    </p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
