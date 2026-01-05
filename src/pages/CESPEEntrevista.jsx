@@ -86,13 +86,32 @@ export default function CESPEEntrevista() {
           'estoque': 'estoque'
         };
 
-        const desiredPosition = candidate?.desired_position?.toLowerCase() || '';
-        let detectedJobRole = 'tecnico'; // fallback padrão
+        const desiredPosition = (candidate?.desired_position || '').toLowerCase().trim();
+        let detectedJobRole = null;
         
+        console.log('🔍 DEBUG - Cargo do candidato (RAW):', candidate?.desired_position);
+        console.log('🔍 DEBUG - Cargo normalizado:', desiredPosition);
+        
+        // Buscar correspondência no mapa
         for (const [key, role] of Object.entries(jobRoleMap)) {
           if (desiredPosition.includes(key)) {
             detectedJobRole = role;
+            console.log('✅ Match encontrado:', key, '→', role);
             break;
+          }
+        }
+
+        // Fallback: se não detectou nada, tentar usar direto o valor do campo
+        if (!detectedJobRole) {
+          console.log('⚠️ Nenhum match encontrado no mapa. Tentando valor direto...');
+          // Verificar se o valor é exatamente um dos job_roles válidos
+          const validRoles = ['vendas', 'telemarketing', 'tecnico', 'financeiro', 'administrativo', 'estoque'];
+          if (validRoles.includes(desiredPosition)) {
+            detectedJobRole = desiredPosition;
+            console.log('✅ Usando valor direto:', detectedJobRole);
+          } else {
+            detectedJobRole = 'tecnico'; // último fallback
+            console.log('❌ Nenhum cargo válido detectado. Usando fallback: tecnico');
           }
         }
 
@@ -104,7 +123,7 @@ export default function CESPEEntrevista() {
           specialization = 'funilaria';
         }
 
-        console.log('🎯 Cargo detectado:', desiredPosition, '→', detectedJobRole, specialization ? `(${specialization})` : '');
+        console.log('🎯 RESULTADO FINAL - Cargo detectado:', detectedJobRole, specialization ? `(${specialization})` : '');
 
         // Buscar checklists automáticos para o cargo
         const allChecklists = await base44.entities.ChecklistTemplate.filter({
