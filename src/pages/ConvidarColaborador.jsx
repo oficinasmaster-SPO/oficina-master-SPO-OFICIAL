@@ -190,8 +190,13 @@ export default function ConvidarColaborador() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['employees-list'] });
       
-      setCreatedUser(data);
-      toast.success("✅ Colaborador criado com sucesso!", { duration: 5000 });
+      if (data.action === 'resent') {
+        toast.success("📧 Convite reenviado com sucesso!", { duration: 5000 });
+        setCreatedUser(null); // Não exibir modal de credenciais
+      } else {
+        setCreatedUser(data);
+        toast.success("✅ Colaborador criado com sucesso!", { duration: 5000 });
+      }
       
       setFormData({ 
         name: "", 
