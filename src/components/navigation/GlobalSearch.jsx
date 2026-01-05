@@ -106,6 +106,12 @@ export default function GlobalSearch({ workshopId }) {
               <Command.Empty className="py-6 text-center text-sm">
                 {query.length < 2 ? "Digite para buscar..." : "Nenhum resultado encontrado."}
               </Command.Empty>
+              
+              {(() => {
+                console.log("🎨 [Render] Renderizando resultados:", results.length);
+                console.log("📋 [Render] Tipos únicos:", [...new Set(results.map(r => r.type))]);
+                return null;
+              })()}
 
               {results.length > 0 && (
                 <div className="space-y-1">
