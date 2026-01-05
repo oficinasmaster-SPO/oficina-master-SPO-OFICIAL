@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import ScriptsList from "./ScriptsList";
 
-export default function DreamScriptModal({ open, onClose, workshop, script, onSave }) {
+export default function DreamScriptModal({ open, onClose, workshop, script, onSave, onSelectScript }) {
   const [viewMode, setViewMode] = useState("list"); // "list", "view", "edit", "create"
   const [editMode, setEditMode] = useState(false);
   const [generating, setGenerating] = useState(false);

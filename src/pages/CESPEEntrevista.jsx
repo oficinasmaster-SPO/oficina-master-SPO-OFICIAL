@@ -26,6 +26,8 @@ export default function CESPEEntrevista() {
   const [recommendation, setRecommendation] = useState("");
   const [showDreamScript, setShowDreamScript] = useState(false);
   const [showPPE, setShowPPE] = useState(false);
+  const [selectedForm, setSelectedForm] = useState(null);
+  const [selectedScript, setSelectedScript] = useState(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -51,8 +53,11 @@ export default function CESPEEntrevista() {
   });
 
   const { data: questions = [] } = useQuery({
-    queryKey: ['interview-questions', workshop?.id],
+    queryKey: ['interview-questions', workshop?.id, selectedForm?.id],
     queryFn: async () => {
+      if (selectedForm?.id) {
+        return selectedForm.questions || [];
+      }
       if (!workshop?.id) return [];
       const all = await base44.entities.InterviewQuestion.filter({ active: true });
       return all.filter(q => !q.workshop_id || q.workshop_id === workshop.id);
@@ -82,6 +87,16 @@ export default function CESPEEntrevista() {
         workshop_id: workshop.id,
         interviewer_id: user.id,
         interview_date: new Date().toISOString(),
+        form_used_id: selectedForm?.id || null,
+        form_used_name: selectedForm?.form_name || null,
+        script_used_id: selectedScript?.id || null,
+        script_content: selectedScript ? JSON.stringify({
+          mission: selectedScript.mission,
+          vision: selectedScript.vision,
+          values: selectedScript.values,
+          growth_opportunities: selectedScript.growth_opportunities,
+          not_fit_profile: selectedScript.not_fit_profile
+        }) : null,
         answers,
         ...scores,
         recommendation,
@@ -158,6 +173,28 @@ export default function CESPEEntrevista() {
         </div>
 
         <Card className="p-6">
+          {selectedForm && (
+            <div className="mb-4 p-3 bg-blue-50 rounded-lg flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-blue-900">Formulário Selecionado</p>
+                <p className="text-sm text-blue-700">{selectedForm.form_name}</p>
+              </div>
+              <Button size="sm" variant="outline" onClick={() => setSelectedForm(null)}>
+                Remover
+              </Button>
+            </div>
+          )}
+          {selectedScript && (
+            <div className="mb-4 p-3 bg-green-50 rounded-lg flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-green-900">Script Selecionado</p>
+                <p className="text-sm text-green-700">Script de cultura registrado</p>
+              </div>
+              <Button size="sm" variant="outline" onClick={() => setSelectedScript(null)}>
+                Remover
+              </Button>
+            </div>
+          )}
           <div className="mb-6">
             <div className="flex justify-between mb-2">
               <span className="text-sm text-gray-600">Progresso</span>
@@ -187,12 +224,24 @@ export default function CESPEEntrevista() {
           workshop={workshop}
           script={cultureScript}
           onSave={(data) => saveCultureScriptMutation.mutate(data)}
+          onSelectScript={(script) => {
+            setSelectedScript(script);
+            setShowDreamScript(false);
+            toast.success("Script selecionado para esta entrevista");
+          }}
         />
 
         <InterviewFormsManager
           open={showPPE}
           onClose={() => setShowPPE(false)}
           workshopId={workshop?.id}
+          onSelectForm={(form) => {
+            setSelectedForm(form);
+            setAnswers([]);
+            setCurrentStep(0);
+            setShowPPE(false);
+            toast.success(`Formulário "${form.form_name}" selecionado`);
+          }}
         />
       </div>
     </div>

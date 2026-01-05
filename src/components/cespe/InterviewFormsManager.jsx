@@ -8,7 +8,7 @@ import { base44 } from "@/api/base44Client";
 import InterviewFormsList from "./InterviewFormsList";
 import InterviewFormEditor from "./InterviewFormEditor";
 
-export default function InterviewFormsManager({ open, onClose, workshopId }) {
+export default function InterviewFormsManager({ open, onClose, workshopId, onSelectForm }) {
   const [activeTab, setActiveTab] = useState("list");
   const [editingForm, setEditingForm] = useState(null);
 
@@ -65,6 +65,7 @@ export default function InterviewFormsManager({ open, onClose, workshopId }) {
               forms={forms}
               onEdit={handleEdit}
               workshopId={workshopId}
+              onSelect={onSelectForm}
             />
           </TabsContent>
 

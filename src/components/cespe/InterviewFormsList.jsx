@@ -2,7 +2,7 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit2, Trash2, Eye, EyeOff, ClipboardList } from "lucide-react";
+import { Edit2, Trash2, Eye, EyeOff, ClipboardList, CheckCircle } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
@@ -25,7 +25,7 @@ const formTypeColors = {
   custom: "bg-gray-100 text-gray-800"
 };
 
-export default function InterviewFormsList({ forms, onEdit, workshopId }) {
+export default function InterviewFormsList({ forms, onEdit, workshopId, onSelect }) {
   const queryClient = useQueryClient();
 
   const toggleActiveMutation = useMutation({
@@ -87,9 +87,21 @@ export default function InterviewFormsList({ forms, onEdit, workshopId }) {
               <p className="text-sm text-gray-600 mb-4">{form.description}</p>
             )}
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-500">
-                {form.questions?.length || 0} perguntas
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-500">
+                  {form.questions?.length || 0} perguntas
+                </span>
+                {onSelect && (
+                  <Button
+                    size="sm"
+                    onClick={() => onSelect(form)}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <CheckCircle className="w-4 h-4 mr-1" />
+                    Usar
+                  </Button>
+                )}
+              </div>
               <div className="flex gap-2">
                 <Button
                   size="sm"
