@@ -75,7 +75,12 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
       };
 
       const area = categoryPrefix[formData.category];
-      const type = typePrefix[formData.document_type];
+      let type = typePrefix[formData.document_type];
+
+      // Se tipo customizado, usar as 3 primeiras letras maiúsculas
+      if (!type && formData.document_type) {
+        type = formData.document_type.substring(0, 3).toUpperCase();
+      }
 
       if (!area || !type) return;
 
