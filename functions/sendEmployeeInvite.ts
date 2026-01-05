@@ -89,12 +89,12 @@ Deno.serve(async (req) => {
       </div>
     `;
 
-    // Enviar email via integração Core.SendEmail
+    // Enviar email via integração Core.SendEmail com service role
     console.log("📤 Tentando enviar email...");
     console.log("📧 Destinatário:", email);
     console.log("🏢 Remetente:", workshop.name || "Oficinas Master");
     
-    const emailResult = await base44.integrations.Core.SendEmail({
+    const emailResult = await base44.asServiceRole.integrations.Core.SendEmail({
       from_name: workshop.name || "Oficinas Master",
       to: email,
       subject: `🎉 Bem-vindo(a) à ${workshop.name} - Acesse sua conta`,
