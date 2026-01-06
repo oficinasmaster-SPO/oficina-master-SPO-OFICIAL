@@ -15,6 +15,7 @@ import DisqualifyButton from "./DisqualifyButton";
 
 const statusColors = {
   novo_lead: "bg-blue-100 text-blue-800",
+  em_analise: "bg-green-100 text-green-800",
   em_entrevista: "bg-yellow-100 text-yellow-800",
   aprovado: "bg-green-100 text-green-800",
   reprovado: "bg-red-100 text-red-800",
@@ -23,6 +24,7 @@ const statusColors = {
 
 const statusLabels = {
   novo_lead: "Novo Lead",
+  em_analise: "Em Análise",
   em_entrevista: "Em Entrevista",
   aprovado: "Aprovado",
   reprovado: "Reprovado",
@@ -135,7 +137,7 @@ export default function CandidateCard({ candidate }) {
           currentInterviewer={candidate.assigned_interviewer_id}
           workshopId={candidate.workshop_id}
         />
-        <DisqualifyButton candidateId={candidate.id} />
+        <DisqualifyButton candidateId={candidate.id} currentStatus={candidate.status} />
         <Button
           onClick={() => setShowEditDialog(true)}
           size="sm"
