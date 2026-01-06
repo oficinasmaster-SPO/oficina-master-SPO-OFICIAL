@@ -30,15 +30,22 @@ export default function DisqualifyButton({ candidateId, currentStatus }) {
 
   const updateStatusMutation = useMutation({
     mutationFn: async (data) => {
+      console.log('🔄 Atualizando candidato:', candidateId, data);
       const result = await base44.entities.Candidate.update(candidateId, data);
+      console.log('✅ Candidato atualizado:', result);
       return result;
     },
-    onSuccess: async (_, variables) => {
-      // Força refresh completo dos dados
+    onSuccess: async (updatedCandidate, variables) => {
+      console.log('🎉 Sucesso na atualização:', updatedCandidate);
+      
+      // Força invalidação e refetch
       queryClient.invalidateQueries({ queryKey: ['candidates'] });
+      
+      // Aguarda refetch
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
       await queryClient.refetchQueries({ 
-        queryKey: ['candidates'],
-        type: 'active'
+        queryKey: ['candidates']
       });
       
       setOpen(false);
@@ -50,15 +57,16 @@ export default function DisqualifyButton({ candidateId, currentStatus }) {
       }
     },
     onError: (error) => {
-      console.error("❌ Erro ao atualizar:", error);
+      console.error("❌ Erro ao atualizar candidato:", error);
       toast.error("Erro: " + (error.message || "Falha ao atualizar status"));
       setOpen(false);
     }
   });
 
-  const handleSetAnalise = async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleSetAnalise = (e) => {
+    console.log('🟢 Voltando candidato para análise');
+    e?.preventDefault();
+    e?.stopPropagation();
     
     updateStatusMutation.mutate({ 
       status: 'em_analise',
@@ -67,9 +75,10 @@ export default function DisqualifyButton({ candidateId, currentStatus }) {
     });
   };
 
-  const handleDisqualify = async (reason, e) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleDisqualify = (reason, e) => {
+    console.log('🔴 Desqualificando candidato com motivo:', reason);
+    e?.preventDefault();
+    e?.stopPropagation();
     
     updateStatusMutation.mutate({
       status: 'reprovado',
