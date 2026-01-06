@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Target, TrendingUp, Users, Send, CheckCircle, AlertCircle } from "lucide-react";
+import { Plus, Target, TrendingUp, Users, Send, CheckCircle, AlertCircle, Phone, UserCheck, FileCheck, Briefcase, Clock } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
@@ -104,27 +104,42 @@ export default function HiringGoalsManager({ open, onClose, workshopId }) {
       const goal = goals.find(g => g.id === goalId);
       if (!goal) return;
 
-      const positionLeads = candidates.filter(c => 
+      const positionCandidates = candidates.filter(c => 
         c.desired_position?.toLowerCase().includes(goal.position.toLowerCase())
-      ).length;
+      );
 
       const positionProposals = proposals.filter(p => 
         p.position?.toLowerCase().includes(goal.position.toLowerCase())
-      ).length;
+      );
 
-      const positionHires = candidates.filter(c => 
-        c.desired_position?.toLowerCase().includes(goal.position.toLowerCase()) &&
-        c.status === 'contratado'
+      // Calcular etapas do funil
+      const funnel_leads = positionCandidates.length;
+      const funnel_contacted = positionCandidates.filter(c => c.status !== 'novo_lead').length;
+      const funnel_interviewed = positionCandidates.filter(c => 
+        c.status === 'em_entrevista' || c.status === 'aprovado' || c.status === 'contratado'
       ).length;
+      const funnel_approved = positionCandidates.filter(c => 
+        c.status === 'aprovado' || c.status === 'contratado'
+      ).length;
+      const funnel_proposal_sent = positionProposals.filter(p => 
+        p.status === 'enviada' || p.status === 'aceita'
+      ).length;
+      const funnel_proposal_accepted = positionProposals.filter(p => p.status === 'aceita').length;
+      const funnel_hired = positionCandidates.filter(c => c.status === 'contratado').length;
 
       return await base44.entities.HiringGoal.update(goalId, {
-        current_leads: positionLeads,
-        current_proposals: positionProposals,
-        current_hires: positionHires
+        funnel_leads,
+        funnel_contacted,
+        funnel_interviewed,
+        funnel_approved,
+        funnel_proposal_sent,
+        funnel_proposal_accepted,
+        funnel_hired
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['hiring-goals'] });
+      toast.success("Funil atualizado!");
     }
   });
 
@@ -260,9 +275,15 @@ export default function HiringGoalsManager({ open, onClose, workshopId }) {
             ) : (
               <div className="grid gap-4">
                 {goals.map(goal => {
-                  const leadsProgress = (goal.current_leads / goal.required_leads) * 100;
-                  const proposalsProgress = (goal.current_proposals / goal.target_hires) * 100;
-                  const hiresProgress = (goal.current_hires / goal.target_hires) * 100;
+                  // Calcular taxas de conversão
+                  const contactRate = goal.funnel_leads > 0 ? (goal.funnel_contacted / goal.funnel_leads * 100).toFixed(0) : 0;
+                  const interviewRate = goal.funnel_contacted > 0 ? (goal.funnel_interviewed / goal.funnel_contacted * 100).toFixed(0) : 0;
+                  const approvalRate = goal.funnel_interviewed > 0 ? (goal.funnel_approved / goal.funnel_interviewed * 100).toFixed(0) : 0;
+                  const proposalRate = goal.funnel_approved > 0 ? (goal.funnel_proposal_sent / goal.funnel_approved * 100).toFixed(0) : 0;
+                  const acceptRate = goal.funnel_proposal_sent > 0 ? (goal.funnel_proposal_accepted / goal.funnel_proposal_sent * 100).toFixed(0) : 0;
+                  const hireRate = goal.funnel_proposal_accepted > 0 ? (goal.funnel_hired / goal.funnel_proposal_accepted * 100).toFixed(0) : 0;
+
+                  const overallProgress = goal.target_hires > 0 ? (goal.funnel_hired / goal.target_hires * 100).toFixed(0) : 0;
 
                   return (
                     <Card key={goal.id} className="p-6">
@@ -273,16 +294,21 @@ export default function HiringGoalsManager({ open, onClose, workshopId }) {
                             <Badge className={priorityColors[goal.priority]}>
                               {goal.priority}
                             </Badge>
+                            <Badge variant="outline" className="text-sm">
+                              {goal.funnel_hired}/{goal.target_hires} contratados
+                            </Badge>
                           </div>
                           {goal.deadline && (
-                            <p className="text-sm text-gray-600">
-                              Prazo: {new Date(goal.deadline).toLocaleDateString('pt-BR')}
-                            </p>
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <Clock className="w-4 h-4" />
+                              <span>Prazo: {new Date(goal.deadline).toLocaleDateString('pt-BR')}</span>
+                            </div>
                           )}
                         </div>
                         <div className="flex gap-2">
-                          <Button size="sm" variant="outline" onClick={() => updateGoalProgressMutation.mutate(goal.id)}>
-                            <TrendingUp className="w-4 h-4" />
+                          <Button size="sm" onClick={() => updateGoalProgressMutation.mutate(goal.id)} className="bg-blue-600 hover:bg-blue-700">
+                            <TrendingUp className="w-4 h-4 mr-1" />
+                            Atualizar Funil
                           </Button>
                           <Button size="sm" variant="outline" onClick={() => handleEdit(goal)}>
                             Editar
@@ -293,70 +319,178 @@ export default function HiringGoalsManager({ open, onClose, workshopId }) {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-3 gap-4 mb-4">
-                        <div className="bg-blue-50 p-4 rounded-lg">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Users className="w-5 h-5 text-blue-600" />
-                            <p className="text-sm font-medium text-gray-700">Leads</p>
-                          </div>
-                          <p className="text-2xl font-bold text-blue-600">
-                            {goal.current_leads}/{goal.required_leads}
-                          </p>
-                          <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                            <div 
-                              className="bg-blue-600 h-2 rounded-full transition-all"
-                              style={{ width: `${Math.min(leadsProgress, 100)}%` }}
-                            />
-                          </div>
+                      {/* Barra de progresso geral */}
+                      <div className="mb-6 bg-gray-100 p-4 rounded-lg">
+                        <div className="flex justify-between items-center mb-2">
+                          <p className="text-sm font-medium text-gray-700">Progresso Geral</p>
+                          <p className="text-2xl font-bold text-blue-600">{overallProgress}%</p>
                         </div>
-
-                        <div className="bg-green-50 p-4 rounded-lg">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Send className="w-5 h-5 text-green-600" />
-                            <p className="text-sm font-medium text-gray-700">Propostas</p>
-                          </div>
-                          <p className="text-2xl font-bold text-green-600">
-                            {goal.current_proposals}/{goal.target_hires}
-                          </p>
-                          <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                            <div 
-                              className="bg-green-600 h-2 rounded-full transition-all"
-                              style={{ width: `${Math.min(proposalsProgress, 100)}%` }}
-                            />
-                          </div>
+                        <div className="w-full bg-gray-300 rounded-full h-3">
+                          <div 
+                            className="bg-gradient-to-r from-blue-500 to-green-500 h-3 rounded-full transition-all"
+                            style={{ width: `${Math.min(overallProgress, 100)}%` }}
+                          />
                         </div>
+                      </div>
 
-                        <div className="bg-purple-50 p-4 rounded-lg">
-                          <div className="flex items-center gap-2 mb-2">
-                            <CheckCircle className="w-5 h-5 text-purple-600" />
-                            <p className="text-sm font-medium text-gray-700">Contratados</p>
+                      {/* Funil de Contratação */}
+                      <div className="bg-gradient-to-br from-slate-50 to-blue-50 p-4 rounded-lg mb-4">
+                        <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                          <Target className="w-5 h-5 text-blue-600" />
+                          Funil de Contratação
+                        </h4>
+                        
+                        <div className="space-y-3">
+                          {/* Etapa 1: Leads */}
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                              <Users className="w-6 h-6 text-blue-600" />
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex justify-between items-center mb-1">
+                                <p className="text-sm font-medium text-gray-700">1. Leads Gerados</p>
+                                <p className="text-lg font-bold text-blue-600">{goal.funnel_leads}</p>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div className="bg-blue-600 h-2 rounded-full" style={{ width: '100%' }} />
+                              </div>
+                            </div>
                           </div>
-                          <p className="text-2xl font-bold text-purple-600">
-                            {goal.current_hires}/{goal.target_hires}
-                          </p>
-                          <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                            <div 
-                              className="bg-purple-600 h-2 rounded-full transition-all"
-                              style={{ width: `${Math.min(hiresProgress, 100)}%` }}
-                            />
+
+                          {/* Etapa 2: Contato */}
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
+                              <Phone className="w-6 h-6 text-indigo-600" />
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex justify-between items-center mb-1">
+                                <p className="text-sm font-medium text-gray-700">2. Contato Realizado</p>
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="outline" className="text-xs">{contactRate}%</Badge>
+                                  <p className="text-lg font-bold text-indigo-600">{goal.funnel_contacted}</p>
+                                </div>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div className="bg-indigo-600 h-2 rounded-full" style={{ width: `${contactRate}%` }} />
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Etapa 3: Entrevista */}
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                              <UserCheck className="w-6 h-6 text-purple-600" />
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex justify-between items-center mb-1">
+                                <p className="text-sm font-medium text-gray-700">3. Entrevista Realizada</p>
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="outline" className="text-xs">{interviewRate}%</Badge>
+                                  <p className="text-lg font-bold text-purple-600">{goal.funnel_interviewed}</p>
+                                </div>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div className="bg-purple-600 h-2 rounded-full" style={{ width: `${interviewRate}%` }} />
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Etapa 4: Aprovado */}
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                              <CheckCircle className="w-6 h-6 text-green-600" />
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex justify-between items-center mb-1">
+                                <p className="text-sm font-medium text-gray-700">4. Aprovado/Qualificado</p>
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="outline" className="text-xs">{approvalRate}%</Badge>
+                                  <p className="text-lg font-bold text-green-600">{goal.funnel_approved}</p>
+                                </div>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div className="bg-green-600 h-2 rounded-full" style={{ width: `${approvalRate}%` }} />
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Etapa 5: Proposta Enviada */}
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                              <Send className="w-6 h-6 text-orange-600" />
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex justify-between items-center mb-1">
+                                <p className="text-sm font-medium text-gray-700">5. Proposta Enviada</p>
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="outline" className="text-xs">{proposalRate}%</Badge>
+                                  <p className="text-lg font-bold text-orange-600">{goal.funnel_proposal_sent}</p>
+                                </div>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div className="bg-orange-600 h-2 rounded-full" style={{ width: `${proposalRate}%` }} />
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Etapa 6: Proposta Aceita */}
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center flex-shrink-0">
+                              <FileCheck className="w-6 h-6 text-teal-600" />
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex justify-between items-center mb-1">
+                                <p className="text-sm font-medium text-gray-700">6. Proposta Aceita</p>
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="outline" className="text-xs">{acceptRate}%</Badge>
+                                  <p className="text-lg font-bold text-teal-600">{goal.funnel_proposal_accepted}</p>
+                                </div>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div className="bg-teal-600 h-2 rounded-full" style={{ width: `${acceptRate}%` }} />
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Etapa 7: Contratação Efetiva */}
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
+                              <Briefcase className="w-6 h-6 text-emerald-600" />
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex justify-between items-center mb-1">
+                                <p className="text-sm font-medium text-gray-700">7. Contratação Efetiva</p>
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="outline" className="text-xs">{hireRate}%</Badge>
+                                  <p className="text-lg font-bold text-emerald-600">{goal.funnel_hired}</p>
+                                </div>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div className="bg-emerald-600 h-2 rounded-full" style={{ width: `${hireRate}%` }} />
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
 
-                      <div className="bg-gray-50 p-3 rounded-lg">
-                        <p className="text-sm text-gray-700">
-                          <strong>Meta diária:</strong> {goal.target_leads_per_day} leads/dia • 
-                          <strong className="ml-2">Taxa conversão:</strong> {goal.conversion_rate}%
-                        </p>
-                        {goal.notes && (
-                          <p className="text-sm text-gray-600 mt-2">{goal.notes}</p>
-                        )}
+                      {/* Gargalos detectados */}
+                      <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
+                        <p className="text-sm font-semibold text-yellow-900 mb-2">⚠️ Análise de Gargalos:</p>
+                        <div className="text-xs text-yellow-800 space-y-1">
+                          {contactRate < 70 && <p>• Taxa de contato baixa ({contactRate}%) - melhorar follow-up</p>}
+                          {interviewRate < 60 && <p>• Taxa de entrevista baixa ({interviewRate}%) - confirmar agendamentos</p>}
+                          {approvalRate < 40 && <p>• Taxa de aprovação baixa ({approvalRate}%) - revisar critérios ou triagem</p>}
+                          {acceptRate < 50 && <p>• Taxa de aceite baixa ({acceptRate}%) - revisar proposta/salário</p>}
+                          {contactRate >= 70 && interviewRate >= 60 && approvalRate >= 40 && acceptRate >= 50 && (
+                            <p className="text-green-700">✅ Funil saudável! Continue assim.</p>
+                          )}
+                        </div>
                       </div>
 
-                      {goal.current_hires >= goal.target_hires && (
+                      {goal.funnel_hired >= goal.target_hires && (
                         <div className="mt-3 flex items-center gap-2 text-green-700 bg-green-100 p-3 rounded-lg">
                           <CheckCircle className="w-5 h-5" />
-                          <p className="font-semibold">Meta atingida!</p>
+                          <p className="font-semibold">🎉 Meta atingida!</p>
                         </div>
                       )}
                     </Card>
