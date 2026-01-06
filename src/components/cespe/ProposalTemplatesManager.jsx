@@ -36,12 +36,16 @@ export default function ProposalTemplatesManager({ open, onClose, workshopId, on
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ['proposal-templates', workshopId],
     queryFn: async () => {
-      const result = await base44.entities.JobProposalTemplate.filter({ 
-        is_active: true
-      });
-      return Array.isArray(result) ? result.filter(t => !workshopId || t.workshop_id === workshopId) : [];
+      const result = await base44.entities.JobProposalTemplate.list();
+      const filtered = Array.isArray(result) ? result.filter(t => 
+        t.is_active !== false && (!workshopId || t.workshop_id === workshopId)
+      ) : [];
+      console.log('🔍 Templates encontrados:', filtered.length, filtered);
+      return filtered;
     },
-    enabled: !!workshopId && open
+    enabled: !!workshopId && open,
+    staleTime: 0,
+    refetchOnMount: true
   });
 
   const deleteTemplateMutation = useMutation({
