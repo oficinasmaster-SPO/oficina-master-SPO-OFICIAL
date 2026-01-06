@@ -499,30 +499,20 @@ export default function DreamScriptModal({ open, onClose, workshop, script, onSa
 
           {/* Audio Recorder Modal */}
           {showAudioRecorder && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <Card className="w-full max-w-md mx-4">
-              <CardContent className="pt-6">
-                <h3 className="text-lg font-bold mb-4">
-                  {showAudioRecorder === 'mission' ? '🎙️ Gravar Missão' :
-                   showAudioRecorder === 'vision' ? '🎙️ Gravar Visão' :
-                   showAudioRecorder === 'values' ? '🎙️ Gravar Valores' :
-                   '🎙️ Gravar Contexto'}
-                </h3>
-                <AudioRecorder
-                  onAudioReady={async (audioUrl) => {
-                    try {
-                      toast.info("Transcrevendo áudio...");
-                      const response = await fetch(audioUrl);
-                      const blob = await response.blob();
-                      const file = new File([blob], "audio.webm", { type: "audio/webm" });
-
-                      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-
-                      const transcription = await base44.integrations.Core.InvokeLLM({
-                        prompt: "Transcreva o áudio em texto, mantendo a fala natural mas corrigindo erros gramaticais.",
-                        file_urls: [file_url]
-                      });
-
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+              <Card className="w-full max-w-md mx-4">
+                <CardContent className="pt-6">
+                  <h3 className="text-lg font-bold mb-4">
+                    {showAudioRecorder === 'mission' ? '🎙️ Gravar Missão' :
+                     showAudioRecorder === 'vision' ? '🎙️ Gravar Visão' :
+                     showAudioRecorder === 'values' ? '🎙️ Gravar Valores' :
+                     '🎙️ Gravar Contexto'}
+                  </h3>
+                  <AudioRecorder
+                    onAudioSave={(audioUrl) => {
+                      // Apenas salva o áudio, transcrição acontece no callback abaixo
+                    }}
+                    onTranscription={(transcription) => {
                       if (showAudioRecorder === 'mission') {
                         setFormData({...formData, mission: transcription});
                       } else if (showAudioRecorder === 'vision') {
@@ -538,24 +528,19 @@ export default function DreamScriptModal({ open, onClose, workshop, script, onSa
                         setFormData({...formData, company_history: newText});
                       }
 
-                      toast.success("Áudio transcrito com sucesso!");
                       setShowAudioRecorder(null);
-                    } catch (error) {
-                      toast.error("Erro ao transcrever áudio");
-                      console.error(error);
-                    }
-                  }}
-                />
-                <Button
-                  variant="outline"
-                  onClick={() => setShowAudioRecorder(null)}
-                  className="w-full mt-4"
-                >
-                  Cancelar
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+                    }}
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowAudioRecorder(null)}
+                    className="w-full mt-4"
+                  >
+                    Cancelar
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
           )}
           </DialogContent>
           </Dialog>
