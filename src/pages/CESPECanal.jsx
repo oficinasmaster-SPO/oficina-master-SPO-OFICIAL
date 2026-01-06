@@ -13,6 +13,7 @@ import ChannelStats from "@/components/cespe/ChannelStats";
 import WebhookSetupGuide from "@/components/cespe/WebhookSetupGuide";
 import DreamScriptModal from "@/components/cespe/DreamScriptModal";
 import InterviewFormsManager from "@/components/cespe/InterviewFormsManager";
+import ProposalTemplatesManager from "@/components/cespe/ProposalTemplatesManager";
 
 export default function CESPECanal() {
   const queryClient = useQueryClient();
@@ -25,6 +26,7 @@ export default function CESPECanal() {
   const [showWebhookGuide, setShowWebhookGuide] = useState(false);
   const [showDreamScript, setShowDreamScript] = useState(false);
   const [showQuestionForms, setShowQuestionForms] = useState(false);
+  const [showProposalTemplates, setShowProposalTemplates] = useState(false);
 
   React.useEffect(() => {
     const loadData = async () => {
@@ -137,6 +139,10 @@ export default function CESPECanal() {
               <TrendingUp className="w-4 h-4 mr-2" />
               Script de Sonho
             </Button>
+            <Button onClick={() => setShowProposalTemplates(true)} variant="outline" className="bg-green-50 hover:bg-green-100 text-green-700 border-green-200">
+              <ClipboardList className="w-4 h-4 mr-2" />
+              Propostas
+            </Button>
             <Button onClick={() => setShowWebhookGuide(true)} variant="outline">
               <Smartphone className="w-4 h-4 mr-2" />
               Captura WhatsApp
@@ -239,6 +245,12 @@ export default function CESPECanal() {
         <InterviewFormsManager
           open={showQuestionForms}
           onClose={() => setShowQuestionForms(false)}
+          workshopId={workshop?.id}
+        />
+
+        <ProposalTemplatesManager
+          open={showProposalTemplates}
+          onClose={() => setShowProposalTemplates(false)}
           workshopId={workshop?.id}
         />
         </div>

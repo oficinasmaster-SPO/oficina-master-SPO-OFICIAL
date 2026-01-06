@@ -4,10 +4,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { ArrowLeft, Send, FileText } from "lucide-react";
+import { ArrowLeft, Send, FileText, ClipboardList } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ProposalForm from "@/components/cespe/ProposalForm";
 import ProposalPreview from "@/components/cespe/ProposalPreview";
+import ProposalTemplatesManager from "@/components/cespe/ProposalTemplatesManager";
 
 export default function CESPEProposta() {
   const navigate = useNavigate();
@@ -18,6 +19,7 @@ export default function CESPEProposta() {
   const [user, setUser] = useState(null);
   const [workshop, setWorkshop] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -66,8 +68,14 @@ export default function CESPEProposta() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['proposal'] });
       toast.success("Proposta salva com sucesso!");
+      setShowTemplates(false);
     }
   });
+
+  const handleSelectTemplate = (template) => {
+    const { id, created_date, updated_date, created_by, workshop_id, template_name, is_active, ...templateData } = template;
+    saveProposalMutation.mutate(templateData);
+  };
 
   const sendProposalMutation = useMutation({
     mutationFn: async () => {
@@ -99,6 +107,12 @@ export default function CESPEProposta() {
             <p className="text-gray-600">Candidato: {candidate.full_name}</p>
           </div>
           <div className="flex gap-2">
+            {!proposal && (
+              <Button variant="outline" onClick={() => setShowTemplates(true)} className="bg-green-50 hover:bg-green-100 text-green-700 border-green-200">
+                <ClipboardList className="w-4 h-4 mr-2" />
+                Usar Template
+              </Button>
+            )}
             <Button variant="outline" onClick={() => setShowPreview(!showPreview)}>
               <FileText className="w-4 h-4 mr-2" />
               {showPreview ? 'Editar' : 'Preview'}
@@ -127,6 +141,13 @@ export default function CESPEProposta() {
             isLoading={saveProposalMutation.isPending}
           />
         )}
+
+        <ProposalTemplatesManager
+          open={showTemplates}
+          onClose={() => setShowTemplates(false)}
+          workshopId={workshop?.id}
+          onSelectTemplate={handleSelectTemplate}
+        />
       </div>
     </div>
   );
