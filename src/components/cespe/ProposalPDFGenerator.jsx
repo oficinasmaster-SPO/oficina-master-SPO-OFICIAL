@@ -12,7 +12,7 @@ export default class ProposalPDFGenerator {
     
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(24);
-    doc.text("🎉 Proposta de Trabalho", 105, 15, { align: "center" });
+    doc.text("PROPOSTA DE TRABALHO", 105, 15, { align: "center" });
     
     doc.setFontSize(16);
     doc.text(workshop?.name || "Nossa Empresa", 105, 25, { align: "center" });
@@ -50,7 +50,7 @@ export default class ProposalPDFGenerator {
     doc.setFontSize(14);
     doc.setFont(undefined, "bold");
     doc.setTextColor(0, 0, 0);
-    doc.text("👤 Dados do Candidato", 20, yPos + 8);
+    doc.text("DADOS DO CANDIDATO", 20, yPos + 8);
     
     doc.setFontSize(11);
     doc.setFont(undefined, "normal");
@@ -71,7 +71,7 @@ export default class ProposalPDFGenerator {
     if (proposal?.function_objective) {
       doc.setFontSize(13);
       doc.setFont(undefined, "bold");
-      doc.text("🎯 Seu Propósito e Missão", 15, yPos);
+      doc.text("SEU PROPOSITO E MISSAO", 15, yPos);
       yPos += 8;
 
       doc.setFontSize(10);
@@ -90,13 +90,13 @@ export default class ProposalPDFGenerator {
 
       doc.setFontSize(13);
       doc.setFont(undefined, "bold");
-      doc.text("💼 Suas Principais Responsabilidades", 15, yPos);
+      doc.text("SUAS PRINCIPAIS RESPONSABILIDADES", 15, yPos);
       yPos += 8;
 
       doc.setFontSize(10);
       doc.setFont(undefined, "normal");
       proposal.main_responsibilities.slice(0, 6).forEach((resp, idx) => {
-        const respText = doc.splitTextToSize(`✓ ${resp}`, 175);
+        const respText = doc.splitTextToSize(`- ${resp}`, 175);
         doc.text(respText, 20, yPos);
         yPos += (respText.length * 5) + 3;
       });
@@ -115,7 +115,7 @@ export default class ProposalPDFGenerator {
     doc.setFontSize(14);
     doc.setFont(undefined, "bold");
     doc.setTextColor(22, 163, 74);
-    doc.text("💰 Remuneração e Benefícios", 20, yPos + 10);
+    doc.text("REMUNERACAO E BENEFICIOS", 20, yPos + 10);
     doc.setTextColor(0, 0, 0);
     
     doc.setFontSize(11);
@@ -141,7 +141,7 @@ export default class ProposalPDFGenerator {
 
       doc.setFontSize(12);
       doc.setFont(undefined, "bold");
-      doc.text("🎁 Pacote de Benefícios Completo", 15, yPos);
+      doc.text("PACOTE DE BENEFICIOS COMPLETO", 15, yPos);
       yPos += 8;
 
       const benefitsData = [["Benefício", "Valor Mensal", "Descrição"]];
@@ -188,7 +188,7 @@ export default class ProposalPDFGenerator {
       doc.setFontSize(13);
       doc.setFont(undefined, "bold");
       doc.setTextColor(180, 83, 9);
-      doc.text("🚀 Seu Futuro Aqui: Plano de Crescimento", 20, yPos + 7);
+      doc.text("SEU FUTURO AQUI: PLANO DE CRESCIMENTO", 20, yPos + 7);
       doc.setTextColor(0, 0, 0);
       yPos += 15;
 
@@ -207,7 +207,7 @@ export default class ProposalPDFGenerator {
         yPos += 6;
         
         proposal.future_positions.slice(0, 4).forEach((pos) => {
-          doc.text(`→ ${pos}`, 20, yPos);
+          doc.text(`> ${pos}`, 20, yPos);
           yPos += 5;
         });
         yPos += 5;
@@ -223,13 +223,13 @@ export default class ProposalPDFGenerator {
 
       doc.setFontSize(13);
       doc.setFont(undefined, "bold");
-      doc.text("📊 Expectativas e Metas de Integração", 15, yPos);
+      doc.text("EXPECTATIVAS E METAS DE INTEGRACAO", 15, yPos);
       yPos += 10;
 
       if (proposal.success_criteria_30d) {
         doc.setFontSize(11);
         doc.setFont(undefined, "bold");
-        doc.text("✓ Primeiros 30 dias:", 15, yPos);
+        doc.text("Primeiros 30 dias:", 15, yPos);
         yPos += 6;
         
         doc.setFontSize(9);
@@ -242,7 +242,7 @@ export default class ProposalPDFGenerator {
       if (proposal.success_criteria_60d && yPos < 250) {
         doc.setFontSize(11);
         doc.setFont(undefined, "bold");
-        doc.text("✓ 60 dias:", 15, yPos);
+        doc.text("60 dias:", 15, yPos);
         yPos += 6;
         
         doc.setFontSize(9);
@@ -263,7 +263,7 @@ export default class ProposalPDFGenerator {
     doc.setFontSize(14);
     doc.setFont(undefined, "bold");
     doc.setTextColor(30, 64, 175);
-    doc.text("🤝 Estamos Ansiosos Para Ter Você no Time!", 105, yPos + 12, { align: "center" });
+    doc.text("ESTAMOS ANSIOSOS PARA TER VOCE NO TIME!", 105, yPos + 12, { align: "center" });
     
     doc.setFontSize(10);
     doc.setFont(undefined, "normal");
@@ -285,7 +285,7 @@ export default class ProposalPDFGenerator {
       doc.setFontSize(11);
       doc.setFont(undefined, "bold");
       doc.setTextColor(0, 0, 0);
-      doc.text("📞 Contato para Dúvidas:", 15, yPos);
+      doc.text("CONTATO PARA DUVIDAS:", 15, yPos);
       yPos += 7;
       
       doc.setFontSize(10);
