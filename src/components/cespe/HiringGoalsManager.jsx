@@ -16,6 +16,8 @@ export default function HiringGoalsManager({ open, onClose, workshopId }) {
   const [filterPosition, setFilterPosition] = useState("all");
   const [filterPriority, setFilterPriority] = useState("all");
   const [filterDeadline, setFilterDeadline] = useState("all");
+  const [customDateStart, setCustomDateStart] = useState("");
+  const [customDateEnd, setCustomDateEnd] = useState("");
   const [formData, setFormData] = useState({
     position: "",
     target_hires: 1,
@@ -173,21 +175,26 @@ export default function HiringGoalsManager({ open, onClose, workshopId }) {
     const matchPriority = filterPriority === "all" || goal.priority === filterPriority;
     
     let matchDeadline = true;
-    if (filterDeadline !== "all" && goal.deadline) {
+    if (goal.deadline) {
       const deadline = new Date(goal.deadline);
       const today = new Date();
       const diffDays = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24));
       
-      if (filterDeadline === "urgent") matchDeadline = diffDays <= 7;
-      else if (filterDeadline === "soon") matchDeadline = diffDays > 7 && diffDays <= 30;
-      else if (filterDeadline === "future") matchDeadline = diffDays > 30;
+      if (filterDeadline === "urgent") {
+        matchDeadline = diffDays <= 7;
+      } else if (filterDeadline === "soon") {
+        matchDeadline = diffDays > 7 && diffDays <= 30;
+      } else if (filterDeadline === "future") {
+        matchDeadline = diffDays > 30;
+      } else if (filterDeadline === "custom" && customDateStart && customDateEnd) {
+        const start = new Date(customDateStart);
+        const end = new Date(customDateEnd);
+        matchDeadline = deadline >= start && deadline <= end;
+      }
     }
     
     return matchPosition && matchPriority && matchDeadline;
   });
-
-  // Lista única de cargos
-  const uniquePositions = [...new Set(goals.map(g => g.position))].sort();
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -313,8 +320,8 @@ export default function HiringGoalsManager({ open, onClose, workshopId }) {
                     className="px-3 py-1.5 border rounded-md text-sm"
                   >
                     <option value="all">Todos os Cargos</option>
-                    {uniquePositions.map(pos => (
-                      <option key={pos} value={pos}>{pos}</option>
+                    {CESPE_CARGOS.map(cargo => (
+                      <option key={cargo} value={cargo}>{cargo}</option>
                     ))}
                   </select>
 
@@ -324,22 +331,49 @@ export default function HiringGoalsManager({ open, onClose, workshopId }) {
                     className="px-3 py-1.5 border rounded-md text-sm"
                   >
                     <option value="all">Todas Prioridades</option>
-                    <option value="baixa">Baixa</option>
-                    <option value="media">Média</option>
-                    <option value="alta">Alta</option>
-                    <option value="urgente">Urgente</option>
+                    {CESPE_PRIORIDADES.map(p => (
+                      <option key={p.value} value={p.value}>{p.label}</option>
+                    ))}
                   </select>
 
                   <select
                     value={filterDeadline}
-                    onChange={(e) => setFilterDeadline(e.target.value)}
+                    onChange={(e) => {
+                      setFilterDeadline(e.target.value);
+                      if (e.target.value !== "custom") {
+                        setCustomDateStart("");
+                        setCustomDateEnd("");
+                      }
+                    }}
                     className="px-3 py-1.5 border rounded-md text-sm"
                   >
                     <option value="all">Todos os Prazos</option>
                     <option value="urgent">Urgente (≤7 dias)</option>
                     <option value="soon">Próximo (8-30 dias)</option>
                     <option value="future">Futuro (>30 dias)</option>
+                    <option value="custom">Personalizado</option>
                   </select>
+
+                  {filterDeadline === "custom" && (
+                    <div className="flex gap-2 items-center">
+                      <Calendar className="w-4 h-4 text-gray-500" />
+                      <Input
+                        type="date"
+                        value={customDateStart}
+                        onChange={(e) => setCustomDateStart(e.target.value)}
+                        className="w-36 text-sm"
+                        placeholder="Data inicial"
+                      />
+                      <span className="text-gray-500">até</span>
+                      <Input
+                        type="date"
+                        value={customDateEnd}
+                        onChange={(e) => setCustomDateEnd(e.target.value)}
+                        className="w-36 text-sm"
+                        placeholder="Data final"
+                      />
+                    </div>
+                  )}
 
                   {(filterPosition !== "all" || filterPriority !== "all" || filterDeadline !== "all") && (
                     <Button 
@@ -349,6 +383,8 @@ export default function HiringGoalsManager({ open, onClose, workshopId }) {
                         setFilterPosition("all");
                         setFilterPriority("all");
                         setFilterDeadline("all");
+                        setCustomDateStart("");
+                        setCustomDateEnd("");
                       }}
                     >
                       Limpar Filtros

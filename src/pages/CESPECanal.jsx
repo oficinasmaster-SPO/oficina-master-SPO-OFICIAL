@@ -15,6 +15,7 @@ import DreamScriptModal from "@/components/cespe/DreamScriptModal";
 import InterviewFormsManager from "@/components/cespe/InterviewFormsManager";
 import ProposalTemplatesManager from "@/components/cespe/ProposalTemplatesManager";
 import HiringGoalsManager from "@/components/cespe/HiringGoalsManager";
+import { CESPE_CARGOS, CESPE_STATUS_CANDIDATO, CESPE_CANAIS_ORIGEM } from "@/components/cespe/constants";
 
 export default function CESPECanal() {
   const queryClient = useQueryClient();
@@ -190,10 +191,9 @@ export default function CESPECanal() {
                 className="px-4 py-2 border rounded-md"
               >
                 <option value="all">Todos os Status</option>
-                <option value="novo_lead">Novo Lead</option>
-                <option value="em_entrevista">Em Entrevista</option>
-                <option value="aprovado">Aprovado</option>
-                <option value="contratado">Contratado</option>
+                {CESPE_STATUS_CANDIDATO.map(s => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
+                ))}
               </select>
               <select
                 value={filterChannel}
@@ -201,10 +201,9 @@ export default function CESPECanal() {
                 className="px-4 py-2 border rounded-md"
               >
                 <option value="all">Todos os Canais</option>
-                <option value="google_ads">Google Ads</option>
-                <option value="facebook_ads">Facebook Ads</option>
-                <option value="indicacao_interna">Indicação Interna</option>
-                <option value="cadastro_manual">Cadastro Manual</option>
+                {CESPE_CANAIS_ORIGEM.map(c => (
+                  <option key={c.value} value={c.value}>{c.label}</option>
+                ))}
               </select>
             </div>
           </CardContent>
