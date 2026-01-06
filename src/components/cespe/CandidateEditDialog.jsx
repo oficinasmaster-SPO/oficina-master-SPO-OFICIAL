@@ -30,6 +30,9 @@ export default function CandidateEditDialog({ open, onClose, candidate, onSave, 
     best_leader: "",
     availability: "",
     salary_expectation: 0,
+    previous_salary: 0,
+    bad_month_salary_claim: "",
+    salary_credibility_percentage: 0,
     desired_regime: "clt"
   });
 
@@ -55,6 +58,9 @@ export default function CandidateEditDialog({ open, onClose, candidate, onSave, 
         best_leader: candidate.best_leader || "",
         availability: candidate.availability || "",
         salary_expectation: candidate.salary_expectation || 0,
+        previous_salary: candidate.previous_salary || 0,
+        bad_month_salary_claim: candidate.bad_month_salary_claim || "",
+        salary_credibility_percentage: candidate.salary_credibility_percentage || 0,
         desired_regime: candidate.desired_regime || "clt"
       });
     }
@@ -418,6 +424,73 @@ export default function CandidateEditDialog({ open, onClose, candidate, onSave, 
                       onChange={(e) => setFormData({ ...formData, salary_expectation: parseFloat(e.target.value) })}
                     />
                   </div>
+                  
+                  {/* Salário Anterior + Técnica de Provocação */}
+                  <div className="border-t pt-4 mt-4">
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-3">
+                      <p className="text-sm text-yellow-800 font-medium">
+                        💡 Técnica de Validação Salarial
+                      </p>
+                      <p className="text-xs text-yellow-700 mt-1">
+                        Pergunte: "Na empresa anterior, você ganhava quanto?"
+                      </p>
+                    </div>
+                    
+                    <div className="mb-3">
+                      <Label>Salário na Empresa Anterior (R$)</Label>
+                      <Input
+                        type="number"
+                        placeholder="Ex: 6000"
+                        value={formData.previous_salary}
+                        onChange={(e) => setFormData({ ...formData, previous_salary: parseFloat(e.target.value) })}
+                      />
+                    </div>
+
+                    {formData.previous_salary > 0 && (
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                        <p className="text-sm text-blue-800 font-semibold mb-1">
+                          🎯 PROVOQUE O CANDIDATO:
+                        </p>
+                        <p className="text-xs text-blue-700">
+                          "Então no <strong>mês ruim</strong>, você ganhava quanto? R$ {(formData.previous_salary * 0.3).toFixed(0)} ~ R$ {(formData.previous_salary * 0.5).toFixed(0)}?"
+                        </p>
+                        <p className="text-xs text-blue-600 mt-2 italic">
+                          (20-30% abaixo do valor declarado)
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="mb-3">
+                      <Label>Resposta sobre "Mês Ruim"</Label>
+                      <Textarea
+                        placeholder="Anote a resposta do candidato quando foi provocado sobre o salário no mês ruim..."
+                        value={formData.bad_month_salary_claim}
+                        onChange={(e) => setFormData({ ...formData, bad_month_salary_claim: e.target.value })}
+                        rows={3}
+                      />
+                    </div>
+
+                    <div>
+                      <Label>Credibilidade da Resposta (%)</Label>
+                      <div className="flex items-center gap-3">
+                        <Input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={formData.salary_credibility_percentage}
+                          onChange={(e) => setFormData({ ...formData, salary_credibility_percentage: parseInt(e.target.value) })}
+                          className="flex-1"
+                        />
+                        <span className="font-bold text-lg w-16 text-right">
+                          {formData.salary_credibility_percentage}%
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Quanto você acredita que a resposta foi verdadeira?
+                      </p>
+                    </div>
+                  </div>
+
                   <div>
                     <Label>Regime Desejado</Label>
                     <select
