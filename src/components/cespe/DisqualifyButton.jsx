@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { XCircle, CheckCircle, Search, HelpCircle, Eye } from "lucide-react";
+import { XCircle, CheckCircle, Search, HelpCircle, Eye, AlertTriangle, PhoneOff, MessageSquareOff } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
@@ -24,7 +24,7 @@ const DISQUALIFICATION_REASONS = [
   { value: "entrevista_sem_resposta", label: "🤐 Entrevistou e não responde" }
 ];
 
-export default function DisqualifyButton({ candidateId, currentStatus, workshopId }) {
+export default function DisqualifyButton({ candidateId, currentStatus, workshopId, disqualificationReason }) {
   const queryClient = useQueryClient();
   const [open, setOpen] = React.useState(false);
 
@@ -114,7 +114,7 @@ export default function DisqualifyButton({ candidateId, currentStatus, workshopI
     });
   };
 
-  // Define ícone e estilo baseado no status
+  // Define ícone e estilo baseado no status e motivo de desqualificação
   const getStatusDisplay = () => {
     switch (currentStatus) {
       case 'novo_lead':
@@ -133,10 +133,34 @@ export default function DisqualifyButton({ candidateId, currentStatus, workshopI
           className: "border-purple-200 text-purple-600 hover:bg-purple-50"
         };
       case 'reprovado':
-        return { 
-          icon: <XCircle className="w-4 h-4" />,
-          className: "border-red-200 text-red-600 hover:bg-red-50"
-        };
+        // Ícone específico baseado no motivo da desqualificação
+        switch (disqualificationReason) {
+          case 'nao_adequado_perfil':
+            return {
+              icon: <XCircle className="w-4 h-4" />,
+              className: "border-red-200 text-red-600 hover:bg-red-50"
+            };
+          case 'falta_maturidade':
+            return {
+              icon: <AlertTriangle className="w-4 h-4" />,
+              className: "border-orange-200 text-orange-600 hover:bg-orange-50"
+            };
+          case 'nao_responde':
+            return {
+              icon: <PhoneOff className="w-4 h-4" />,
+              className: "border-red-200 text-red-600 hover:bg-red-50"
+            };
+          case 'entrevista_sem_resposta':
+            return {
+              icon: <MessageSquareOff className="w-4 h-4" />,
+              className: "border-red-200 text-red-600 hover:bg-red-50"
+            };
+          default:
+            return {
+              icon: <XCircle className="w-4 h-4" />,
+              className: "border-red-200 text-red-600 hover:bg-red-50"
+            };
+        }
       case 'aprovado':
       case 'contratado':
         return { 
