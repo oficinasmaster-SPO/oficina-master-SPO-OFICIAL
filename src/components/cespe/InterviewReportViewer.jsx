@@ -2,9 +2,10 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Download, FileText } from "lucide-react";
+import { Download, FileText, Building2, User, DollarSign, CheckSquare } from "lucide-react";
 import { RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import InterviewPDFGenerator from "./InterviewPDFGenerator";
+import { base44 } from "@/api/base44Client";
 
 const CLASSIFICATION_COLORS = {
   A: "bg-green-600 text-white",
@@ -21,8 +22,29 @@ const BLOCK_LABELS = {
 };
 
 export default function InterviewReportViewer({ interview, candidate, onClose }) {
+  const [interviewer, setInterviewer] = React.useState(null);
+  const [workshop, setWorkshop] = React.useState(null);
+
+  React.useEffect(() => {
+    const loadData = async () => {
+      try {
+        if (interview.interviewer_id) {
+          const userData = await base44.entities.User.get(interview.interviewer_id);
+          setInterviewer(userData);
+        }
+        if (interview.workshop_id) {
+          const workshopData = await base44.entities.Workshop.get(interview.workshop_id);
+          setWorkshop(workshopData);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar dados:", error);
+      }
+    };
+    loadData();
+  }, [interview]);
+
   const handleDownloadPDF = () => {
-    InterviewPDFGenerator.generate(interview, candidate);
+    InterviewPDFGenerator.generate(interview, candidate, interviewer, workshop);
   };
 
   // Preparar dados para gráfico radar
@@ -73,16 +95,106 @@ export default function InterviewReportViewer({ interview, candidate, onClose })
           </div>
         </CardHeader>
         <CardContent className="p-8">
-          <div className="grid grid-cols-2 gap-4 mb-6">
+          {/* Informações do Cabeçalho */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6 bg-gray-50 p-4 rounded-lg">
+            <div className="flex items-center gap-2">
+              <User className="w-5 h-5 text-blue-600" />
+              <div>
+                <p className="text-xs text-gray-600">Candidato</p>
+                <p className="font-semibold text-gray-900">{candidate?.full_name}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Building2 className="w-5 h-5 text-purple-600" />
+              <div>
+                <p className="text-xs text-gray-600">Empresa</p>
+                <p className="font-semibold text-gray-900">{workshop?.name || "Carregando..."}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <User className="w-5 h-5 text-green-600" />
+              <div>
+                <p className="text-xs text-gray-600">Entrevistador</p>
+                <p className="font-semibold text-gray-900">{interviewer?.full_name || "Carregando..."}</p>
+              </div>
+            </div>
             <div>
-              <p className="text-sm text-gray-600">Data da Entrevista</p>
+              <p className="text-xs text-gray-600">Data da Entrevista</p>
               <p className="font-medium">{new Date(interview.interview_date).toLocaleDateString('pt-BR')}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Cargo Pretendido</p>
+              <p className="text-xs text-gray-600">Cargo Pretendido</p>
               <p className="font-medium">{candidate?.desired_position}</p>
             </div>
+            <div>
+              <p className="text-xs text-gray-600">Área</p>
+              <p className="font-medium">{candidate?.desired_position?.includes('Técnico') ? 'Técnica' : 
+                                           candidate?.desired_position?.includes('Vendas') ? 'Comercial' : 
+                                           candidate?.desired_position?.includes('Marketing') ? 'Marketing' : 'Geral'}</p>
+            </div>
           </div>
+
+          {/* Informações Salariais */}
+          {(candidate?.salary_expectation > 0 || candidate?.previous_salary > 0) && (
+            <div className="bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-200 rounded-lg p-6 mb-6">
+              <div className="flex items-center gap-2 mb-4">
+                <DollarSign className="w-6 h-6 text-green-600" />
+                <h3 className="text-lg font-bold text-gray-900">Informações Salariais</h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {candidate?.salary_expectation > 0 && (
+                  <div className="bg-white p-4 rounded-lg border border-green-200">
+                    <p className="text-sm text-gray-600 mb-1">💰 Pretensão Salarial</p>
+                    <p className="text-2xl font-bold text-green-700">
+                      R$ {candidate.salary_expectation.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </p>
+                  </div>
+                )}
+                {candidate?.previous_salary > 0 && (
+                  <div className="bg-white p-4 rounded-lg border border-blue-200">
+                    <p className="text-sm text-gray-600 mb-1">🏢 Salário Anterior</p>
+                    <p className="text-2xl font-bold text-blue-700">
+                      R$ {candidate.previous_salary.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </p>
+                  </div>
+                )}
+                {candidate?.bad_month_salary_claim && (
+                  <div className="bg-white p-4 rounded-lg border border-yellow-200">
+                    <p className="text-sm text-gray-600 mb-1">⚠️ Resposta "Mês Ruim"</p>
+                    <p className="text-sm font-medium text-gray-900 mb-2">{candidate.bad_month_salary_claim}</p>
+                    {candidate.salary_credibility_percentage > 0 && (
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 bg-gray-200 rounded-full h-2">
+                          <div 
+                            className={`h-2 rounded-full ${
+                              candidate.salary_credibility_percentage >= 70 ? 'bg-green-500' :
+                              candidate.salary_credibility_percentage >= 40 ? 'bg-yellow-500' :
+                              'bg-red-500'
+                            }`}
+                            style={{ width: `${candidate.salary_credibility_percentage}%` }}
+                          />
+                        </div>
+                        <span className="text-xs font-bold text-gray-700">{candidate.salary_credibility_percentage}%</span>
+                      </div>
+                    )}
+                    <p className="text-xs text-gray-600 mt-1">Credibilidade da resposta</p>
+                  </div>
+                )}
+              </div>
+              {candidate?.salary_credibility_percentage > 0 && (
+                <div className="mt-4 bg-white p-4 rounded-lg border border-yellow-300">
+                  <p className="text-sm font-semibold text-yellow-800 mb-2">📊 Orientação de Negociação:</p>
+                  <p className="text-sm text-gray-700">
+                    {candidate.salary_credibility_percentage >= 70 
+                      ? "✅ Alta credibilidade. Use o salário anterior como base real para negociação."
+                      : candidate.salary_credibility_percentage >= 40
+                      ? "⚠️ Credibilidade moderada. Valide informações com referências profissionais."
+                      : "❌ Baixa credibilidade. Considere proposta conservadora e valide dados."}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded">
@@ -199,7 +311,10 @@ export default function InterviewReportViewer({ interview, candidate, onClose })
 
       <Card className="shadow-lg">
         <CardHeader className="p-6">
-          <CardTitle className="text-xl">Avaliação Detalhada</CardTitle>
+          <CardTitle className="text-xl flex items-center gap-2">
+            <CheckSquare className="w-5 h-5 text-blue-600" />
+            Avaliação Detalhada + Checklists
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 p-6">
           {interview.forms_used?.map((form, idx) => (
@@ -214,6 +329,49 @@ export default function InterviewReportViewer({ interview, candidate, onClose })
                       {answer.score}/{answer.max_points || 10}
                     </Badge>
                   </div>
+                  
+                  {/* Checklist Completo (Pontuados e Não Pontuados) */}
+                  {answer.checklist_selected && answer.checklist_selected.length > 0 && (
+                    <div className="mt-3 bg-white p-4 rounded border-2 border-green-200">
+                      <div className="flex items-center gap-2 mb-3">
+                        <CheckSquare className="w-4 h-4 text-green-600" />
+                        <p className="text-sm font-bold text-green-800">✅ Checklist - Itens Pontuados:</p>
+                      </div>
+                      <div className="space-y-1">
+                        {answer.checklist_selected.map((item, itemIdx) => (
+                          <div key={itemIdx} className="flex items-start gap-2 text-sm text-gray-700">
+                            <span className="text-green-600 font-bold">✓</span>
+                            <span>{item.text} <span className="text-green-600 font-semibold">(+{item.points} pts)</span></span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-3 pt-3 border-t border-gray-200">
+                        <p className="text-sm font-semibold text-gray-700">
+                          Total Checklist: <span className="text-green-600">{answer.checklist_selected.reduce((sum, item) => sum + item.points, 0)} pontos</span>
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Itens NÃO pontuados do checklist (se existirem) */}
+                  {answer.checklist_items && answer.checklist_items.length > 0 && (
+                    <div className="mt-3 bg-red-50 p-4 rounded border-2 border-red-200">
+                      <div className="flex items-center gap-2 mb-3">
+                        <CheckSquare className="w-4 h-4 text-red-600" />
+                        <p className="text-sm font-bold text-red-800">❌ Checklist - Itens NÃO Pontuados:</p>
+                      </div>
+                      <div className="space-y-1">
+                        {answer.checklist_items
+                          .filter(item => !answer.checklist_selected?.find(sel => sel.text === item.text))
+                          .map((item, itemIdx) => (
+                            <div key={itemIdx} className="flex items-start gap-2 text-sm text-gray-600">
+                              <span className="text-red-500 font-bold">✗</span>
+                              <span>{item.text}</span>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
                   
                   {answer.observation && (
                     <div className="mt-2 bg-white p-3 rounded border border-gray-200">
