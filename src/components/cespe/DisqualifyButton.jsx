@@ -24,7 +24,7 @@ const DISQUALIFICATION_REASONS = [
   { value: "entrevista_sem_resposta", label: "🤐 Entrevistou e não responde" }
 ];
 
-export default function DisqualifyButton({ candidateId, currentStatus }) {
+export default function DisqualifyButton({ candidateId, currentStatus, workshopId }) {
   const queryClient = useQueryClient();
   const [open, setOpen] = React.useState(false);
 
@@ -36,14 +36,14 @@ export default function DisqualifyButton({ candidateId, currentStatus }) {
       return result;
     },
     onMutate: async (newData) => {
-      // Cancela refetches em andamento
-      await queryClient.cancelQueries({ queryKey: ['candidates'] });
+      // Cancela refetches com a queryKey correta
+      await queryClient.cancelQueries({ queryKey: ['candidates', workshopId] });
       
       // Snapshot do valor anterior
-      const previousCandidates = queryClient.getQueryData(['candidates']);
+      const previousCandidates = queryClient.getQueryData(['candidates', workshopId]);
       
-      // Atualização otimista
-      queryClient.setQueryData(['candidates'], (old) => {
+      // Atualização otimista com queryKey correta
+      queryClient.setQueryData(['candidates', workshopId], (old) => {
         if (!old || !Array.isArray(old)) return old;
         return old.map(candidate => 
           candidate.id === candidateId 
@@ -52,15 +52,15 @@ export default function DisqualifyButton({ candidateId, currentStatus }) {
         );
       });
       
-      console.log('🔄 Cache atualizado otimisticamente');
+      console.log('🔄 Cache atualizado otimisticamente para workshop:', workshopId);
       
       return { previousCandidates };
     },
     onSuccess: async (updatedCandidate, variables) => {
       console.log('🎉 Sucesso - atualizando cache com dados reais:', updatedCandidate);
       
-      // Atualiza cache com dados reais do servidor
-      queryClient.setQueryData(['candidates'], (old) => {
+      // Atualiza cache com dados reais do servidor usando queryKey correta
+      queryClient.setQueryData(['candidates', workshopId], (old) => {
         if (!old || !Array.isArray(old)) return old;
         return old.map(candidate => 
           candidate.id === candidateId 
@@ -82,7 +82,7 @@ export default function DisqualifyButton({ candidateId, currentStatus }) {
       
       // Reverte para estado anterior em caso de erro
       if (context?.previousCandidates) {
-        queryClient.setQueryData(['candidates'], context.previousCandidates);
+        queryClient.setQueryData(['candidates', workshopId], context.previousCandidates);
       }
       
       toast.error("Erro: " + (error.message || "Falha ao atualizar status"));

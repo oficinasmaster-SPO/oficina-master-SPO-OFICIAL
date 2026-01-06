@@ -137,7 +137,7 @@ export default function CandidateCard({ candidate }) {
           currentInterviewer={candidate.assigned_interviewer_id}
           workshopId={candidate.workshop_id}
         />
-        <DisqualifyButton candidateId={candidate.id} currentStatus={candidate.status} />
+        <DisqualifyButton candidateId={candidate.id} currentStatus={candidate.status} workshopId={candidate.workshop_id} />
         <Button
           onClick={() => setShowEditDialog(true)}
           size="sm"
