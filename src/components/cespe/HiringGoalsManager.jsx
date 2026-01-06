@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Target, TrendingUp, Users, Send, CheckCircle, AlertCircle, Phone, UserCheck, FileCheck, Briefcase, Clock } from "lucide-react";
+import { Plus, Target, TrendingUp, Users, Send, CheckCircle, AlertCircle, Phone, UserCheck, FileCheck, Briefcase, Clock, Filter } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
@@ -13,6 +13,9 @@ export default function HiringGoalsManager({ open, onClose, workshopId }) {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [editingGoal, setEditingGoal] = useState(null);
+  const [filterPosition, setFilterPosition] = useState("all");
+  const [filterPriority, setFilterPriority] = useState("all");
+  const [filterDeadline, setFilterDeadline] = useState("all");
   const [formData, setFormData] = useState({
     position: "",
     target_hires: 1,
@@ -164,6 +167,28 @@ export default function HiringGoalsManager({ open, onClose, workshopId }) {
     urgente: "bg-red-100 text-red-800"
   };
 
+  // Filtrar metas
+  const filteredGoals = goals.filter(goal => {
+    const matchPosition = filterPosition === "all" || goal.position === filterPosition;
+    const matchPriority = filterPriority === "all" || goal.priority === filterPriority;
+    
+    let matchDeadline = true;
+    if (filterDeadline !== "all" && goal.deadline) {
+      const deadline = new Date(goal.deadline);
+      const today = new Date();
+      const diffDays = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24));
+      
+      if (filterDeadline === "urgent") matchDeadline = diffDays <= 7;
+      else if (filterDeadline === "soon") matchDeadline = diffDays > 7 && diffDays <= 30;
+      else if (filterDeadline === "future") matchDeadline = diffDays > 30;
+    }
+    
+    return matchPosition && matchPriority && matchDeadline;
+  });
+
+  // Lista única de cargos
+  const uniquePositions = [...new Set(goals.map(g => g.position))].sort();
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-7xl max-h-[95vh] overflow-y-auto">
@@ -273,15 +298,79 @@ export default function HiringGoalsManager({ open, onClose, workshopId }) {
               ➕ Nova Meta de Contratação
             </Button>
 
+            {/* Filtros */}
+            {goals.length > 0 && (
+              <Card className="bg-gray-50 p-4">
+                <div className="flex gap-3 flex-wrap items-center">
+                  <div className="flex items-center gap-2">
+                    <Filter className="w-4 h-4 text-gray-600" />
+                    <span className="text-sm font-medium text-gray-700">Filtros:</span>
+                  </div>
+                  
+                  <select
+                    value={filterPosition}
+                    onChange={(e) => setFilterPosition(e.target.value)}
+                    className="px-3 py-1.5 border rounded-md text-sm"
+                  >
+                    <option value="all">Todos os Cargos</option>
+                    {uniquePositions.map(pos => (
+                      <option key={pos} value={pos}>{pos}</option>
+                    ))}
+                  </select>
+
+                  <select
+                    value={filterPriority}
+                    onChange={(e) => setFilterPriority(e.target.value)}
+                    className="px-3 py-1.5 border rounded-md text-sm"
+                  >
+                    <option value="all">Todas Prioridades</option>
+                    <option value="baixa">Baixa</option>
+                    <option value="media">Média</option>
+                    <option value="alta">Alta</option>
+                    <option value="urgente">Urgente</option>
+                  </select>
+
+                  <select
+                    value={filterDeadline}
+                    onChange={(e) => setFilterDeadline(e.target.value)}
+                    className="px-3 py-1.5 border rounded-md text-sm"
+                  >
+                    <option value="all">Todos os Prazos</option>
+                    <option value="urgent">Urgente (≤7 dias)</option>
+                    <option value="soon">Próximo (8-30 dias)</option>
+                    <option value="future">Futuro (>30 dias)</option>
+                  </select>
+
+                  {(filterPosition !== "all" || filterPriority !== "all" || filterDeadline !== "all") && (
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => {
+                        setFilterPosition("all");
+                        setFilterPriority("all");
+                        setFilterDeadline("all");
+                      }}
+                    >
+                      Limpar Filtros
+                    </Button>
+                  )}
+                </div>
+              </Card>
+            )}
+
             {isLoading ? (
               <div className="text-center py-8 text-gray-500">Carregando...</div>
+            ) : filteredGoals.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                {goals.length === 0 ? "Nenhuma meta ativa. Crie sua primeira meta!" : "Nenhuma meta encontrada com os filtros selecionados"}
+              </div>
             ) : goals.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 Nenhuma meta ativa. Crie sua primeira meta!
               </div>
             ) : (
               <div className="grid gap-4">
-                {goals.map(goal => {
+                {filteredGoals.map(goal => {
                   // Calcular taxas de conversão
                   const contactRate = goal.funnel_leads > 0 ? (goal.funnel_contacted / goal.funnel_leads * 100).toFixed(0) : 0;
                   const interviewRate = goal.funnel_contacted > 0 ? (goal.funnel_interviewed / goal.funnel_contacted * 100).toFixed(0) : 0;
