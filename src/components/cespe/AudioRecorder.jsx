@@ -31,14 +31,18 @@ export default function AudioRecorder({ onAudioSave, onTranscription, existingAu
           toast.info("Salvando e transcrevendo áudio...");
           
           // Upload para o servidor
-          const { data } = await base44.integrations.Core.UploadFile({ file: blob });
-          onAudioSave(data.file_url);
+          const file = new File([blob], "audio.webm", { type: "audio/webm" });
+          const { file_url } = await base44.integrations.Core.UploadFile({ file });
+          
+          if (onAudioSave) {
+            onAudioSave(file_url);
+          }
           
           // Transcrever áudio automaticamente usando Whisper
           if (onTranscription) {
             try {
               const { data: result } = await base44.functions.invoke('transcribeAudio', {
-                audio_url: data.file_url
+                audio_url: file_url
               });
               
               if (result?.transcription) {
@@ -55,6 +59,7 @@ export default function AudioRecorder({ onAudioSave, onTranscription, existingAu
             toast.success("Áudio salvo!");
           }
         } catch (error) {
+          console.error("Erro ao processar áudio:", error);
           toast.error("Erro ao salvar áudio");
         }
 

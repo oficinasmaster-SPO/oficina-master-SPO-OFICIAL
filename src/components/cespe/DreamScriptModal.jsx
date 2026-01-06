@@ -509,9 +509,7 @@ export default function DreamScriptModal({ open, onClose, workshop, script, onSa
                      '🎙️ Gravar Contexto'}
                   </h3>
                   <AudioRecorder
-                    onAudioSave={(audioUrl) => {
-                      // Apenas salva o áudio, transcrição acontece no callback abaixo
-                    }}
+                    onAudioSave={() => {}}
                     onTranscription={(transcription) => {
                       if (showAudioRecorder === 'mission') {
                         setFormData({...formData, mission: transcription});
@@ -528,6 +526,7 @@ export default function DreamScriptModal({ open, onClose, workshop, script, onSa
                         setFormData({...formData, company_history: newText});
                       }
 
+                      toast.success("Texto adicionado ao campo!");
                       setShowAudioRecorder(null);
                     }}
                   />
