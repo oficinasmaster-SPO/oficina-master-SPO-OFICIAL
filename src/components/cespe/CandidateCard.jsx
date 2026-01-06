@@ -10,6 +10,8 @@ import { toast } from "sonner";
 import CandidateDetailsModal from "./CandidateDetailsModal";
 import InterviewReportDialog from "./InterviewReportDialog";
 import CandidateEditDialog from "./CandidateEditDialog";
+import AssignInterviewerButton from "./AssignInterviewerButton";
+import DisqualifyButton from "./DisqualifyButton";
 
 const statusColors = {
   novo_lead: "bg-blue-100 text-blue-800",
@@ -83,76 +85,99 @@ export default function CandidateCard({ candidate }) {
         onSave={(data) => updateCandidateMutation.mutate(data)}
         isLoading={updateCandidateMutation.isPending}
       />
-    <div className="grid grid-cols-2 gap-4 px-4 py-3 bg-white border-b border-gray-200 hover:bg-gray-50 transition-colors items-center">
-      {/* Coluna 1 */}
-      <div className="space-y-1">
-        <div className="flex items-center gap-3">
-          <h3 className="font-semibold text-gray-900">{candidate.full_name}</h3>
-          <Badge className={`${statusColors[candidate.status]} text-xs`}>
-            {statusLabels[candidate.status]}
-          </Badge>
+    <div className="flex items-center gap-4 px-4 py-3 bg-white border-b border-gray-200 hover:bg-gray-50 transition-colors">
+      {/* Nome */}
+      <div className="w-[180px]">
+        <div className="flex items-center gap-2 mb-1">
+          <h3 className="font-semibold text-gray-900 text-sm">{candidate.full_name}</h3>
         </div>
-        <p className="text-sm text-gray-600">{candidate.desired_position}</p>
+        <Badge className={`${statusColors[candidate.status]} text-xs`}>
+          {statusLabels[candidate.status]}
+        </Badge>
       </div>
 
-      {/* Coluna 2 */}
-      <div className="flex items-center justify-between">
-        <div className="space-y-1 text-sm text-gray-600">
-          <p>{candidate.phone}</p>
-          <p>{candidate.email || "Sem email"}</p>
-        </div>
-        <div className="flex items-center gap-3">
-          {candidate.lead_score !== null && candidate.lead_score !== undefined ? (
-            <div className="flex items-center gap-1 text-yellow-600 font-semibold">
-              <Star className="w-4 h-4 fill-current" />
-              <span>{candidate.lead_score}</span>
-            </div>
-          ) : (
-            <span className="text-gray-400 text-sm">Sem score</span>
+      {/* Cargo */}
+      <div className="w-[140px]">
+        <p className="text-sm text-gray-700 font-medium">{candidate.desired_position}</p>
+      </div>
+
+      {/* Contato */}
+      <div className="w-[180px]">
+        <p className="text-sm text-gray-600">{candidate.phone}</p>
+        <p className="text-xs text-gray-500">{candidate.email || "-"}</p>
+      </div>
+
+      {/* Score */}
+      <div className="w-[80px]">
+        {candidate.lead_score !== null && candidate.lead_score !== undefined ? (
+          <div className="flex items-center gap-1 text-yellow-600 font-semibold">
+            <Star className="w-4 h-4 fill-current" />
+            <span>{candidate.lead_score}</span>
+          </div>
+        ) : (
+          <span className="text-gray-400 text-sm">-</span>
+        )}
+      </div>
+
+      {/* Entrevistador/Gestor */}
+      <div className="w-[150px]">
+        <p className="text-sm text-gray-700">
+          {candidate.assigned_interviewer_name || (
+            <span className="text-gray-400">Não atribuído</span>
           )}
+        </p>
+      </div>
+
+      {/* Ações */}
+      <div className="flex items-center gap-2 ml-auto">
+        <AssignInterviewerButton 
+          candidateId={candidate.id}
+          currentInterviewer={candidate.assigned_interviewer_id}
+          workshopId={candidate.workshop_id}
+        />
+        <DisqualifyButton candidateId={candidate.id} />
+        <Button
+          onClick={() => setShowEditDialog(true)}
+          size="sm"
+          variant="outline"
+          className="text-gray-600 hover:bg-gray-50"
+        >
+          <Edit className="w-4 h-4" />
+        </Button>
+        <Button
+          onClick={() => setShowDetails(true)}
+          size="sm"
+          variant="outline"
+        >
+          <Eye className="w-4 h-4" />
+        </Button>
+        {interview && (
           <Button
-            onClick={() => setShowEditDialog(true)}
+            onClick={() => setShowReport(true)}
             size="sm"
             variant="outline"
-            className="text-gray-600 hover:bg-gray-50"
+            className="border-green-600 text-green-600 hover:bg-green-50"
           >
-            <Edit className="w-4 h-4" />
+            <FileText className="w-4 h-4" />
           </Button>
-          <Button
-            onClick={() => setShowDetails(true)}
-            size="sm"
-            variant="outline"
-          >
-            <Eye className="w-4 h-4" />
-          </Button>
-          {interview && (
-            <Button
-              onClick={() => setShowReport(true)}
-              size="sm"
-              variant="outline"
-              className="border-green-600 text-green-600 hover:bg-green-50"
-            >
-              <FileText className="w-4 h-4" />
-            </Button>
-          )}
-          <Button 
-            onClick={() => navigate(createPageUrl("CESPEEntrevista") + `?candidate_id=${candidate.id}`)}
-            size="sm"
-            variant="outline"
-          >
-            Avaliar
-          </Button>
-          <Button 
-            onClick={() => navigate(createPageUrl("CESPEProposta") + `?candidate_id=${candidate.id}`)}
-            size="sm"
-            variant="outline"
-            className="bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
-          >
-            Proposta
-          </Button>
-        </div>
-        </div>
-        </div>
+        )}
+        <Button 
+          onClick={() => navigate(createPageUrl("CESPEEntrevista") + `?candidate_id=${candidate.id}`)}
+          size="sm"
+          variant="outline"
+        >
+          Avaliar
+        </Button>
+        <Button 
+          onClick={() => navigate(createPageUrl("CESPEProposta") + `?candidate_id=${candidate.id}`)}
+          size="sm"
+          variant="outline"
+          className="bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+        >
+          Proposta
+        </Button>
+      </div>
+    </div>
         </>
         );
         }

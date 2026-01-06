@@ -224,9 +224,13 @@ export default function CESPECanal() {
         {/* Lista de Candidatos */}
         <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
           {/* Header da Tabela */}
-          <div className="grid grid-cols-2 gap-4 px-4 py-3 bg-gray-100 border-b border-gray-300 font-semibold text-sm text-gray-700">
-            <div>Nome / Cargo</div>
-            <div>Contato / Score</div>
+          <div className="flex items-center gap-4 px-4 py-3 bg-gray-100 border-b border-gray-300 font-semibold text-sm text-gray-700">
+            <div className="w-[180px]">Nome</div>
+            <div className="w-[140px]">Cargo</div>
+            <div className="w-[180px]">Contato</div>
+            <div className="w-[80px]">Score</div>
+            <div className="w-[150px]">Entrevistador</div>
+            <div className="ml-auto">Ações</div>
           </div>
           
           {/* Linhas */}
