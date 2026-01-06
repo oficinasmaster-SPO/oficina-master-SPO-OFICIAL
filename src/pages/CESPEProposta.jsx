@@ -4,11 +4,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { ArrowLeft, Send, FileText, ClipboardList } from "lucide-react";
+import { ArrowLeft, Send, FileText, ClipboardList, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ProposalForm from "@/components/cespe/ProposalForm";
 import ProposalPreview from "@/components/cespe/ProposalPreview";
 import ProposalTemplatesManager from "@/components/cespe/ProposalTemplatesManager";
+import ProposalPDFGenerator from "@/components/cespe/ProposalPDFGenerator";
 
 export default function CESPEProposta() {
   const navigate = useNavigate();
@@ -111,6 +112,16 @@ export default function CESPEProposta() {
               <Button variant="outline" onClick={() => setShowTemplates(true)} className="bg-green-50 hover:bg-green-100 text-green-700 border-green-200">
                 <ClipboardList className="w-4 h-4 mr-2" />
                 Usar Template
+              </Button>
+            )}
+            {proposal && (
+              <Button 
+                variant="outline" 
+                onClick={() => ProposalPDFGenerator.generate(proposal, candidate, workshop)}
+                className="bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Baixar PDF
               </Button>
             )}
             <Button variant="outline" onClick={() => setShowPreview(!showPreview)}>
