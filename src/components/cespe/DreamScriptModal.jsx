@@ -531,7 +531,11 @@ export default function DreamScriptModal({ open, onClose, workshop, script, onSa
                         const vals = transcription.split(/[,\n]/).map(v => v.trim()).filter(v => v);
                         setFormData({...formData, values: vals});
                       } else if (showAudioRecorder === 'context') {
-                        setFormData({...formData, company_history: transcription});
+                        const existingText = formData.company_history || "";
+                        const newText = existingText 
+                          ? `${existingText}\n\n${transcription}` 
+                          : transcription;
+                        setFormData({...formData, company_history: newText});
                       }
 
                       toast.success("Áudio transcrito com sucesso!");
