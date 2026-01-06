@@ -1,3 +1,4 @@
+
 // Constantes padronizadas para todo o sistema CESPE
 
 export const CESPE_CARGOS = [
@@ -26,6 +27,7 @@ export const CESPE_PRIORIDADES = [
 
 export const CESPE_STATUS_CANDIDATO = [
   { value: "novo_lead", label: "Novo Lead" },
+  { value: "em_analise", label: "Em Análise" },
   { value: "em_entrevista", label: "Em Entrevista" },
   { value: "aprovado", label: "Aprovado" },
   { value: "reprovado", label: "Reprovado" },
