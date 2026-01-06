@@ -561,10 +561,8 @@ export default function DreamScriptModal({ open, onClose, workshop, script, onSa
               </div>
             </div>
           )}
-          </div>
-
-
-          </DialogContent>
-          </Dialog>
-          );
-          }
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
