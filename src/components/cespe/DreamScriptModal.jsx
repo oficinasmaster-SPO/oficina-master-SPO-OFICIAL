@@ -4,17 +4,19 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Sparkles, Loader2, Save, Plus } from "lucide-react";
+import { Sparkles, Loader2, Save, Plus, Mic } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import ScriptsList from "./ScriptsList";
+import AudioRecorder from "./AudioRecorder";
 
 export default function DreamScriptModal({ open, onClose, workshop, script, onSave, onSelectScript }) {
   const [viewMode, setViewMode] = useState("list"); // "list", "view", "edit", "create"
   const [editMode, setEditMode] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [selectedScript, setSelectedScript] = useState(script);
+  const [showAudioRecorder, setShowAudioRecorder] = useState(null); // qual campo está gravando
   const [formData, setFormData] = useState({
     company_history: "",
     mission: workshop?.mission || "",
@@ -60,6 +62,15 @@ export default function DreamScriptModal({ open, onClose, workshop, script, onSa
   const generateWithAI = async () => {
     setGenerating(true);
     try {
+      // Buscar metas mensais e anuais
+      let metasInfo = "";
+      if (workshop?.monthly_goals?.projected_revenue) {
+        metasInfo += `Meta de Faturamento Mensal: R$ ${workshop.monthly_goals.projected_revenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
+      }
+      if (workshop?.annual_goals?.projected_revenue) {
+        metasInfo += `Meta de Faturamento Anual: R$ ${workshop.annual_goals.projected_revenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
+      }
+
       const prompt = `
   Você é um especialista em RH e cultura organizacional. Crie um script persuasivo de "venda do sonho" para candidatos em processo seletivo.
 
@@ -70,11 +81,13 @@ export default function DreamScriptModal({ open, onClose, workshop, script, onSa
   Visão: ${formData.vision || "Não informada"}
   Valores: ${formData.values?.length > 0 ? formData.values.join(", ") : "Não informados"}
 
+  ${metasInfo ? `METAS FINANCEIRAS:\n${metasInfo}` : ""}
+
   ${formData.company_history ? `CONTEXTO ADICIONAL:\n${formData.company_history}\n` : ""}
 
   GERE UM SCRIPT COMPLETO E PERSUASIVO COM:
   1. História da Empresa (breve, inspiradora, conectada à missão/visão)
-  2. Oportunidades de Crescimento (específicas, tangíveis, realistas)
+  2. Oportunidades de Crescimento (específicas, tangíveis, realistas - mencione as metas se relevante)
   3. Perfil de Quem NÃO se Adapta (honesto, direto, sem medo de afastar quem não é fit cultural)
 
   Use tom profissional mas humano. Seja inspirador mas autêntico.
@@ -209,7 +222,18 @@ export default function DreamScriptModal({ open, onClose, workshop, script, onSa
               </div>
 
               <div>
-                <Label>Missão da Empresa</Label>
+                <div className="flex items-center justify-between mb-2">
+                  <Label>Missão da Empresa</Label>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowAudioRecorder('mission')}
+                  >
+                    <Mic className="w-4 h-4 mr-1" />
+                    Áudio
+                  </Button>
+                </div>
                 <Textarea
                   value={formData.mission}
                   onChange={(e) => setFormData({...formData, mission: e.target.value})}
@@ -219,7 +243,18 @@ export default function DreamScriptModal({ open, onClose, workshop, script, onSa
               </div>
 
               <div>
-                <Label>Visão da Empresa</Label>
+                <div className="flex items-center justify-between mb-2">
+                  <Label>Visão da Empresa</Label>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowAudioRecorder('vision')}
+                  >
+                    <Mic className="w-4 h-4 mr-1" />
+                    Áudio
+                  </Button>
+                </div>
                 <Textarea
                   value={formData.vision}
                   onChange={(e) => setFormData({...formData, vision: e.target.value})}
@@ -229,7 +264,18 @@ export default function DreamScriptModal({ open, onClose, workshop, script, onSa
               </div>
 
               <div>
-                <Label>Valores (separados por vírgula ou um por linha)</Label>
+                <div className="flex items-center justify-between mb-2">
+                  <Label>Valores (separados por vírgula ou um por linha)</Label>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowAudioRecorder('values')}
+                  >
+                    <Mic className="w-4 h-4 mr-1" />
+                    Áudio
+                  </Button>
+                </div>
                 <Textarea
                   value={Array.isArray(formData.values) ? formData.values.join(', ') : formData.values}
                   onChange={(e) => {
@@ -242,7 +288,18 @@ export default function DreamScriptModal({ open, onClose, workshop, script, onSa
               </div>
 
               <div>
-                <Label>Contexto Adicional (opcional)</Label>
+                <div className="flex items-center justify-between mb-2">
+                  <Label>Contexto Adicional (opcional)</Label>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowAudioRecorder('context')}
+                  >
+                    <Mic className="w-4 h-4 mr-1" />
+                    Áudio
+                  </Button>
+                </div>
                 <Textarea
                   value={formData.company_history || ""}
                   onChange={(e) => setFormData({...formData, company_history: e.target.value})}
@@ -250,6 +307,34 @@ export default function DreamScriptModal({ open, onClose, workshop, script, onSa
                   placeholder="Conte um pouco da história da empresa, diferenciais, conquistas, prêmios, anos de mercado..."
                 />
               </div>
+
+              {/* Metas Financeiras */}
+              {(workshop?.monthly_goals?.projected_revenue || workshop?.annual_goals?.projected_revenue) && (
+                <div className="bg-green-50 border-2 border-green-300 rounded-lg p-4">
+                  <p className="text-sm font-bold text-green-800 mb-3">💰 Metas de Faturamento</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    {workshop?.monthly_goals?.projected_revenue && (
+                      <div className="bg-white p-3 rounded border border-green-200">
+                        <p className="text-xs text-gray-600">Meta Mensal</p>
+                        <p className="text-lg font-bold text-green-700">
+                          R$ {workshop.monthly_goals.projected_revenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </p>
+                      </div>
+                    )}
+                    {workshop?.annual_goals?.projected_revenue && (
+                      <div className="bg-white p-3 rounded border border-green-200">
+                        <p className="text-xs text-gray-600">Meta Anual</p>
+                        <p className="text-lg font-bold text-green-700">
+                          R$ {workshop.annual_goals.projected_revenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-600 mt-2">
+                    ℹ️ Estas metas serão usadas pela IA para criar um script mais persuasivo
+                  </p>
+                </div>
+              )}
 
               <div className="flex gap-2 justify-end pt-4">
                 {allScripts.length > 0 && (
@@ -410,8 +495,65 @@ export default function DreamScriptModal({ open, onClose, workshop, script, onSa
               </div>
             </div>
           )}
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
+          </div>
+
+          {/* Audio Recorder Modal */}
+          {showAudioRecorder && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <Card className="w-full max-w-md mx-4">
+              <CardContent className="pt-6">
+                <h3 className="text-lg font-bold mb-4">
+                  {showAudioRecorder === 'mission' ? '🎙️ Gravar Missão' :
+                   showAudioRecorder === 'vision' ? '🎙️ Gravar Visão' :
+                   showAudioRecorder === 'values' ? '🎙️ Gravar Valores' :
+                   '🎙️ Gravar Contexto'}
+                </h3>
+                <AudioRecorder
+                  onAudioReady={async (audioUrl) => {
+                    try {
+                      toast.info("Transcrevendo áudio...");
+                      const response = await fetch(audioUrl);
+                      const blob = await response.blob();
+                      const file = new File([blob], "audio.webm", { type: "audio/webm" });
+
+                      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+
+                      const transcription = await base44.integrations.Core.InvokeLLM({
+                        prompt: "Transcreva o áudio em texto, mantendo a fala natural mas corrigindo erros gramaticais.",
+                        file_urls: [file_url]
+                      });
+
+                      if (showAudioRecorder === 'mission') {
+                        setFormData({...formData, mission: transcription});
+                      } else if (showAudioRecorder === 'vision') {
+                        setFormData({...formData, vision: transcription});
+                      } else if (showAudioRecorder === 'values') {
+                        const vals = transcription.split(/[,\n]/).map(v => v.trim()).filter(v => v);
+                        setFormData({...formData, values: vals});
+                      } else if (showAudioRecorder === 'context') {
+                        setFormData({...formData, company_history: transcription});
+                      }
+
+                      toast.success("Áudio transcrito com sucesso!");
+                      setShowAudioRecorder(null);
+                    } catch (error) {
+                      toast.error("Erro ao transcrever áudio");
+                      console.error(error);
+                    }
+                  }}
+                />
+                <Button
+                  variant="outline"
+                  onClick={() => setShowAudioRecorder(null)}
+                  className="w-full mt-4"
+                >
+                  Cancelar
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+          )}
+          </DialogContent>
+          </Dialog>
+          );
+          }
