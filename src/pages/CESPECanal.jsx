@@ -25,6 +25,7 @@ export default function CESPECanal() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterChannel, setFilterChannel] = useState("all");
+  const [filterCargo, setFilterCargo] = useState("all");
   const [showWebhookGuide, setShowWebhookGuide] = useState(false);
   const [showDreamScript, setShowDreamScript] = useState(false);
   const [showQuestionForms, setShowQuestionForms] = useState(false);
@@ -119,7 +120,8 @@ export default function CESPECanal() {
                          c.email?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === 'all' || c.status === filterStatus;
     const matchesChannel = filterChannel === 'all' || c.origin_channel === filterChannel;
-    return matchesSearch && matchesStatus && matchesChannel;
+    const matchesCargo = filterCargo === 'all' || c.desired_position === filterCargo;
+    return matchesSearch && matchesStatus && matchesChannel && matchesCargo;
   });
 
   if (!workshop) {
@@ -185,6 +187,16 @@ export default function CESPECanal() {
                   />
                 </div>
               </div>
+              <select
+                value={filterCargo}
+                onChange={(e) => setFilterCargo(e.target.value)}
+                className="px-4 py-2 border rounded-md"
+              >
+                <option value="all">Todos os Cargos</option>
+                {CESPE_CARGOS.map(cargo => (
+                  <option key={cargo} value={cargo}>{cargo}</option>
+                ))}
+              </select>
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
