@@ -27,8 +27,24 @@ const statusLabels = {
 
 export default function CandidateCard({ candidate }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [showDetails, setShowDetails] = useState(false);
   const [showReport, setShowReport] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+
+  const updateCandidateMutation = useMutation({
+    mutationFn: async (data) => {
+      return await base44.entities.Candidate.update(candidate.id, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['candidates'] });
+      setShowEditDialog(false);
+      toast.success("Candidato atualizado com sucesso!");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Erro ao atualizar candidato");
+    }
+  });
 
   const { data: interview } = useQuery({
     queryKey: ['candidate-interview', candidate.id],
