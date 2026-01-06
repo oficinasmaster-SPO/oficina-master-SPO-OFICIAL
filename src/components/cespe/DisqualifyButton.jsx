@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { XCircle, CheckCircle } from "lucide-react";
+import { XCircle, CheckCircle, Search, HelpCircle, Eye } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
@@ -114,16 +114,55 @@ export default function DisqualifyButton({ candidateId, currentStatus, workshopI
     });
   };
 
+  // Define ícone e estilo baseado no status
+  const getStatusDisplay = () => {
+    switch (currentStatus) {
+      case 'novo_lead':
+        return { 
+          icon: <Search className="w-4 h-4" />,
+          className: "border-blue-200 text-blue-600 hover:bg-blue-50"
+        };
+      case 'em_analise':
+        return { 
+          icon: <CheckCircle className="w-4 h-4" />,
+          className: "border-green-200 text-green-600 hover:bg-green-50"
+        };
+      case 'em_entrevista':
+        return { 
+          icon: <Eye className="w-4 h-4" />,
+          className: "border-purple-200 text-purple-600 hover:bg-purple-50"
+        };
+      case 'reprovado':
+        return { 
+          icon: <XCircle className="w-4 h-4" />,
+          className: "border-red-200 text-red-600 hover:bg-red-50"
+        };
+      case 'aprovado':
+      case 'contratado':
+        return { 
+          icon: <CheckCircle className="w-4 h-4 fill-current" />,
+          className: "border-green-200 text-green-600 hover:bg-green-50"
+        };
+      default:
+        return { 
+          icon: <HelpCircle className="w-4 h-4" />,
+          className: "border-gray-200 text-gray-600 hover:bg-gray-50"
+        };
+    }
+  };
+
+  const { icon, className } = getStatusDisplay();
+
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <Button 
           size="sm" 
           variant="outline"
-          className="border-red-200 text-red-600 hover:bg-red-50"
+          className={className}
           disabled={updateStatusMutation.isPending}
         >
-          <XCircle className="w-4 h-4" />
+          {icon}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64">
