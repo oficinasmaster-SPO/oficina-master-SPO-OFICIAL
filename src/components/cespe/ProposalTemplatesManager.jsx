@@ -33,27 +33,38 @@ export default function ProposalTemplatesManager({ open, onClose, workshopId, on
   const [editingTemplate, setEditingTemplate] = useState(null);
   const [showForm, setShowForm] = useState(false);
 
-  const { data: templates = [], isLoading } = useQuery({
-    queryKey: ['proposal-templates', workshopId, open],
+  // Força reload quando o modal abre
+  React.useEffect(() => {
+    if (open && workshopId) {
+      queryClient.invalidateQueries({ queryKey: ['proposal-templates'] });
+    }
+  }, [open, workshopId, queryClient]);
+
+  const { data: templates = [], isLoading, refetch } = useQuery({
+    queryKey: ['proposal-templates', workshopId],
     queryFn: async () => {
       try {
         const result = await base44.entities.JobProposalTemplate.list();
         const allTemplates = Array.isArray(result) ? result : [];
+        
+        // Filtrar apenas ativos sem workshop_id específico OU com workshop_id correspondente
         const filtered = allTemplates.filter(t => 
-          t.workshop_id === workshopId && t.is_active !== false
+          t.is_active !== false && (!t.workshop_id || t.workshop_id === workshopId)
         );
-        console.log('🔍 DEBUG Templates - Total:', allTemplates.length, 'Filtrados:', filtered.length, 'WorkshopId:', workshopId);
+        
+        console.log('🔍 DEBUG Templates:');
+        console.log('  - Total no banco:', allTemplates.length);
+        console.log('  - Workshop ID buscado:', workshopId);
+        console.log('  - Templates filtrados:', filtered.length);
+        console.log('  - Templates completos:', allTemplates);
+        
         return filtered;
       } catch (error) {
         console.error('Erro ao carregar templates:', error);
         return [];
       }
     },
-    enabled: !!workshopId && open,
-    staleTime: 0,
-    cacheTime: 0,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true
+    enabled: !!workshopId && open
   });
 
   const deleteTemplateMutation = useMutation({
