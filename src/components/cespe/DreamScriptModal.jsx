@@ -61,27 +61,31 @@ export default function DreamScriptModal({ open, onClose, workshop, script, onSa
     setGenerating(true);
     try {
       const prompt = `
-Você é um especialista em RH e cultura organizacional. Crie um script persuasivo de "venda do sonho" para candidatos em processo seletivo.
+  Você é um especialista em RH e cultura organizacional. Crie um script persuasivo de "venda do sonho" para candidatos em processo seletivo.
 
-DADOS DA EMPRESA:
-Nome: ${workshop?.name || "Oficina"}
-Segmento: ${workshop?.segment || workshop?.segment_auto || "Automotivo"}
-${formData.mission ? `Missão: ${formData.mission}` : ""}
-${formData.vision ? `Visão: ${formData.vision}` : ""}
-${formData.values?.length > 0 ? `Valores: ${formData.values.join(", ")}` : ""}
+  DADOS DA EMPRESA:
+  Nome: ${workshop?.name || "Oficina"}
+  Segmento: ${workshop?.segment || workshop?.segment_auto || "Automotivo"}
+  Missão: ${formData.mission || "Não informada"}
+  Visão: ${formData.vision || "Não informada"}
+  Valores: ${formData.values?.length > 0 ? formData.values.join(", ") : "Não informados"}
 
-GERE UM SCRIPT COMPLETO COM:
-1. História da Empresa (breve, inspiradora)
-2. Oportunidades de Crescimento (específicas, tangíveis)
-3. Perfil de Quem NÃO se Adapta (honesto, direto)
+  ${formData.company_history ? `CONTEXTO ADICIONAL:\n${formData.company_history}\n` : ""}
 
-Formato JSON:
-{
-  "company_history": "texto inspirador",
-  "growth_opportunities": "texto detalhado",
-  "not_fit_profile": "texto direto"
-}
-`;
+  GERE UM SCRIPT COMPLETO E PERSUASIVO COM:
+  1. História da Empresa (breve, inspiradora, conectada à missão/visão)
+  2. Oportunidades de Crescimento (específicas, tangíveis, realistas)
+  3. Perfil de Quem NÃO se Adapta (honesto, direto, sem medo de afastar quem não é fit cultural)
+
+  Use tom profissional mas humano. Seja inspirador mas autêntico.
+
+  Formato JSON:
+  {
+  "company_history": "texto inspirador com 2-3 parágrafos",
+  "growth_opportunities": "texto detalhado com 3-4 oportunidades reais",
+  "not_fit_profile": "texto direto e honesto"
+  }
+  `;
 
       const result = await base44.integrations.Core.InvokeLLM({
         prompt,
@@ -197,21 +201,76 @@ Formato JSON:
               />
             </>
           ) : viewMode === "create" ? (
-            <div className="text-center py-8">
-              <p className="text-gray-600 mb-4">Crie seu primeiro script de sonho.</p>
-              <Button onClick={generateWithAI} disabled={generating}>
-                {generating ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Gerando com IA...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Gerar Script com IA
-                  </>
+            <div className="space-y-4">
+              <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded mb-4">
+                <p className="text-sm text-blue-900 font-medium">
+                  💡 Preencha as informações abaixo. A IA vai usar esses dados para criar um script persuasivo e alinhado com sua cultura.
+                </p>
+              </div>
+
+              <div>
+                <Label>Missão da Empresa</Label>
+                <Textarea
+                  value={formData.mission}
+                  onChange={(e) => setFormData({...formData, mission: e.target.value})}
+                  rows={2}
+                  placeholder="Qual é o propósito da empresa?"
+                />
+              </div>
+
+              <div>
+                <Label>Visão da Empresa</Label>
+                <Textarea
+                  value={formData.vision}
+                  onChange={(e) => setFormData({...formData, vision: e.target.value})}
+                  rows={2}
+                  placeholder="Onde a empresa quer chegar?"
+                />
+              </div>
+
+              <div>
+                <Label>Valores (separados por vírgula ou um por linha)</Label>
+                <Textarea
+                  value={Array.isArray(formData.values) ? formData.values.join(', ') : formData.values}
+                  onChange={(e) => {
+                    const vals = e.target.value.split(/[,\n]/).map(v => v.trim()).filter(v => v);
+                    setFormData({...formData, values: vals});
+                  }}
+                  rows={3}
+                  placeholder="Ex: Excelência, Compromisso, Transparência"
+                />
+              </div>
+
+              <div>
+                <Label>Contexto Adicional (opcional)</Label>
+                <Textarea
+                  value={formData.company_history || ""}
+                  onChange={(e) => setFormData({...formData, company_history: e.target.value})}
+                  rows={4}
+                  placeholder="Conte um pouco da história da empresa, diferenciais, conquistas, prêmios, anos de mercado..."
+                />
+              </div>
+
+              <div className="flex gap-2 justify-end pt-4">
+                {allScripts.length > 0 && (
+                  <Button variant="outline" onClick={() => setViewMode("list")}>
+                    Cancelar
+                  </Button>
                 )}
-              </Button>
+                <Button onClick={generateWithAI} disabled={generating || !formData.mission}>
+                  {generating ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Gerando Script com IA...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Gerar Script com IA
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           ) : editMode ? (
             <div className="space-y-4">
