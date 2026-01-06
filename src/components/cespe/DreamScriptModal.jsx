@@ -228,12 +228,26 @@ export default function DreamScriptModal({ open, onClose, workshop, script, onSa
                     type="button"
                     size="sm"
                     variant="outline"
-                    onClick={() => setShowAudioRecorder('mission')}
+                    onClick={() => setShowAudioRecorder(showAudioRecorder === 'mission' ? null : 'mission')}
                   >
                     <Mic className="w-4 h-4 mr-1" />
-                    Áudio
+                    {showAudioRecorder === 'mission' ? 'Fechar' : 'Áudio'}
                   </Button>
                 </div>
+
+                {showAudioRecorder === 'mission' && (
+                  <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <AudioRecorder
+                      onAudioSave={() => {}}
+                      onTranscription={(transcription) => {
+                        setFormData({...formData, mission: transcription});
+                        toast.success("Texto adicionado!");
+                        setShowAudioRecorder(null);
+                      }}
+                    />
+                  </div>
+                )}
+
                 <Textarea
                   value={formData.mission}
                   onChange={(e) => setFormData({...formData, mission: e.target.value})}
@@ -249,12 +263,26 @@ export default function DreamScriptModal({ open, onClose, workshop, script, onSa
                     type="button"
                     size="sm"
                     variant="outline"
-                    onClick={() => setShowAudioRecorder('vision')}
+                    onClick={() => setShowAudioRecorder(showAudioRecorder === 'vision' ? null : 'vision')}
                   >
                     <Mic className="w-4 h-4 mr-1" />
-                    Áudio
+                    {showAudioRecorder === 'vision' ? 'Fechar' : 'Áudio'}
                   </Button>
                 </div>
+
+                {showAudioRecorder === 'vision' && (
+                  <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <AudioRecorder
+                      onAudioSave={() => {}}
+                      onTranscription={(transcription) => {
+                        setFormData({...formData, vision: transcription});
+                        toast.success("Texto adicionado!");
+                        setShowAudioRecorder(null);
+                      }}
+                    />
+                  </div>
+                )}
+
                 <Textarea
                   value={formData.vision}
                   onChange={(e) => setFormData({...formData, vision: e.target.value})}
@@ -270,12 +298,27 @@ export default function DreamScriptModal({ open, onClose, workshop, script, onSa
                     type="button"
                     size="sm"
                     variant="outline"
-                    onClick={() => setShowAudioRecorder('values')}
+                    onClick={() => setShowAudioRecorder(showAudioRecorder === 'values' ? null : 'values')}
                   >
                     <Mic className="w-4 h-4 mr-1" />
-                    Áudio
+                    {showAudioRecorder === 'values' ? 'Fechar' : 'Áudio'}
                   </Button>
                 </div>
+
+                {showAudioRecorder === 'values' && (
+                  <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <AudioRecorder
+                      onAudioSave={() => {}}
+                      onTranscription={(transcription) => {
+                        const vals = transcription.split(/[,\n]/).map(v => v.trim()).filter(v => v);
+                        setFormData({...formData, values: vals});
+                        toast.success("Texto adicionado!");
+                        setShowAudioRecorder(null);
+                      }}
+                    />
+                  </div>
+                )}
+
                 <Textarea
                   value={Array.isArray(formData.values) ? formData.values.join(', ') : formData.values}
                   onChange={(e) => {
@@ -294,12 +337,30 @@ export default function DreamScriptModal({ open, onClose, workshop, script, onSa
                     type="button"
                     size="sm"
                     variant="outline"
-                    onClick={() => setShowAudioRecorder('context')}
+                    onClick={() => setShowAudioRecorder(showAudioRecorder === 'context' ? null : 'context')}
                   >
                     <Mic className="w-4 h-4 mr-1" />
-                    Áudio
+                    {showAudioRecorder === 'context' ? 'Fechar' : 'Áudio'}
                   </Button>
                 </div>
+
+                {showAudioRecorder === 'context' && (
+                  <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <AudioRecorder
+                      onAudioSave={() => {}}
+                      onTranscription={(transcription) => {
+                        const existingText = formData.company_history || "";
+                        const newText = existingText 
+                          ? `${existingText}\n\n${transcription}` 
+                          : transcription;
+                        setFormData({...formData, company_history: newText});
+                        toast.success("Texto adicionado!");
+                        setShowAudioRecorder(null);
+                      }}
+                    />
+                  </div>
+                )}
+
                 <Textarea
                   value={formData.company_history || ""}
                   onChange={(e) => setFormData({...formData, company_history: e.target.value})}
@@ -497,50 +558,7 @@ export default function DreamScriptModal({ open, onClose, workshop, script, onSa
           )}
           </div>
 
-          {/* Audio Recorder Modal */}
-          {showAudioRecorder && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-              <Card className="w-full max-w-md mx-4">
-                <CardContent className="pt-6">
-                  <h3 className="text-lg font-bold mb-4">
-                    {showAudioRecorder === 'mission' ? '🎙️ Gravar Missão' :
-                     showAudioRecorder === 'vision' ? '🎙️ Gravar Visão' :
-                     showAudioRecorder === 'values' ? '🎙️ Gravar Valores' :
-                     '🎙️ Gravar Contexto'}
-                  </h3>
-                  <AudioRecorder
-                    onAudioSave={() => {}}
-                    onTranscription={(transcription) => {
-                      if (showAudioRecorder === 'mission') {
-                        setFormData({...formData, mission: transcription});
-                      } else if (showAudioRecorder === 'vision') {
-                        setFormData({...formData, vision: transcription});
-                      } else if (showAudioRecorder === 'values') {
-                        const vals = transcription.split(/[,\n]/).map(v => v.trim()).filter(v => v);
-                        setFormData({...formData, values: vals});
-                      } else if (showAudioRecorder === 'context') {
-                        const existingText = formData.company_history || "";
-                        const newText = existingText 
-                          ? `${existingText}\n\n${transcription}` 
-                          : transcription;
-                        setFormData({...formData, company_history: newText});
-                      }
 
-                      toast.success("Texto adicionado ao campo!");
-                      setShowAudioRecorder(null);
-                    }}
-                  />
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowAudioRecorder(null)}
-                    className="w-full mt-4"
-                  >
-                    Cancelar
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-          )}
           </DialogContent>
           </Dialog>
           );
