@@ -35,17 +35,38 @@ export default function DisqualifyButton({ candidateId, currentStatus }) {
       console.log('✅ Candidato atualizado:', result);
       return result;
     },
+    onMutate: async (newData) => {
+      // Cancela refetches em andamento
+      await queryClient.cancelQueries({ queryKey: ['candidates'] });
+      
+      // Snapshot do valor anterior
+      const previousCandidates = queryClient.getQueryData(['candidates']);
+      
+      // Atualização otimista
+      queryClient.setQueryData(['candidates'], (old) => {
+        if (!old || !Array.isArray(old)) return old;
+        return old.map(candidate => 
+          candidate.id === candidateId 
+            ? { ...candidate, ...newData }
+            : candidate
+        );
+      });
+      
+      console.log('🔄 Cache atualizado otimisticamente');
+      
+      return { previousCandidates };
+    },
     onSuccess: async (updatedCandidate, variables) => {
-      console.log('🎉 Sucesso na atualização:', updatedCandidate);
+      console.log('🎉 Sucesso - atualizando cache com dados reais:', updatedCandidate);
       
-      // Força invalidação e refetch
-      queryClient.invalidateQueries({ queryKey: ['candidates'] });
-      
-      // Aguarda refetch
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      await queryClient.refetchQueries({ 
-        queryKey: ['candidates']
+      // Atualiza cache com dados reais do servidor
+      queryClient.setQueryData(['candidates'], (old) => {
+        if (!old || !Array.isArray(old)) return old;
+        return old.map(candidate => 
+          candidate.id === candidateId 
+            ? updatedCandidate
+            : candidate
+        );
       });
       
       setOpen(false);
@@ -56,8 +77,14 @@ export default function DisqualifyButton({ candidateId, currentStatus }) {
         toast.success("❌ Candidato desqualificado");
       }
     },
-    onError: (error) => {
-      console.error("❌ Erro ao atualizar candidato:", error);
+    onError: (error, _, context) => {
+      console.error("❌ Erro - revertendo cache:", error);
+      
+      // Reverte para estado anterior em caso de erro
+      if (context?.previousCandidates) {
+        queryClient.setQueryData(['candidates'], context.previousCandidates);
+      }
+      
       toast.error("Erro: " + (error.message || "Falha ao atualizar status"));
       setOpen(false);
     }
