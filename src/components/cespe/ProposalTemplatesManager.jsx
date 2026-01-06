@@ -37,10 +37,9 @@ export default function ProposalTemplatesManager({ open, onClose, workshopId, on
     queryKey: ['proposal-templates', workshopId],
     queryFn: async () => {
       const result = await base44.entities.JobProposalTemplate.filter({ 
-        workshop_id: workshopId,
         is_active: true
       });
-      return Array.isArray(result) ? result : [];
+      return Array.isArray(result) ? result.filter(t => !workshopId || t.workshop_id === workshopId) : [];
     },
     enabled: !!workshopId && open
   });
