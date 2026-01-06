@@ -5,11 +5,17 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { XCircle, CheckCircle } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
+
+const BACK_TO_ANALYSIS_OPTIONS = [
+  { value: "nao_avaliado", label: "✅ Não avaliado ainda" },
+  { value: "nao_contactado", label: "✅ Não contactado ainda" }
+];
 
 const DISQUALIFICATION_REASONS = [
   { value: "nao_adequado_perfil", label: "❌ Não adequado ao perfil" },
@@ -80,6 +86,16 @@ export default function DisqualifyButton({ candidateId, currentStatus }) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64">
+        {BACK_TO_ANALYSIS_OPTIONS.map(option => (
+          <DropdownMenuItem
+            key={option.value}
+            onClick={handleSetAnalise}
+            className="cursor-pointer text-green-700 hover:bg-green-50"
+          >
+            {option.label}
+          </DropdownMenuItem>
+        ))}
+        <DropdownMenuSeparator />
         {DISQUALIFICATION_REASONS.map(reason => (
           <DropdownMenuItem
             key={reason.value}
