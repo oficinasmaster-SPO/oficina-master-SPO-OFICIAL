@@ -11,7 +11,7 @@ import InterviewForm from "@/components/cespe/InterviewForm";
 import LeadScoreInterviewForm from "@/components/cespe/LeadScoreInterviewForm";
 import AttachedFormsList from "@/components/cespe/AttachedFormsList";
 import ScoreCalculator from "@/components/cespe/ScoreCalculator";
-import DreamScriptModal from "@/components/cespe/DreamScriptModal";
+import ScriptViewer from "@/components/cespe/ScriptViewer";
 import InterviewFormsManager from "@/components/cespe/InterviewFormsManager";
 
 export default function CESPEEntrevista() {
@@ -551,17 +551,11 @@ export default function CESPEEntrevista() {
           )}
         </Card>
 
-        <DreamScriptModal
+        <ScriptViewer
           open={showDreamScript}
           onClose={() => setShowDreamScript(false)}
-          workshop={workshop}
           script={cultureScript}
-          onSave={(data) => saveCultureScriptMutation.mutate(data)}
-          onSelectScript={(script) => {
-            setSelectedScript(script);
-            setShowDreamScript(false);
-            toast.success("Script selecionado para esta entrevista");
-          }}
+          workshop={workshop}
         />
 
         <InterviewFormsManager

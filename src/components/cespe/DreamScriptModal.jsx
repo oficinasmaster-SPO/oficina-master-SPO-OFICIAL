@@ -112,15 +112,20 @@ export default function DreamScriptModal({ open, onClose, workshop, script, onSa
         }
       });
 
-      setFormData(prev => ({
-        ...prev,
+      const newFormData = {
+        ...formData,
         company_history: result.company_history || "",
         growth_opportunities: result.growth_opportunities || "",
         not_fit_profile: result.not_fit_profile || ""
-      }));
+      };
 
-      toast.success("Script gerado com sucesso!");
-      setEditMode(true);
+      setFormData(newFormData);
+
+      // Salvar automaticamente após gerar
+      await onSave(newFormData);
+
+      toast.success("Script gerado e salvo com sucesso!");
+      setEditMode(false);
     } catch (error) {
       toast.error(error?.message || "Erro ao gerar script");
       console.error("Erro ao gerar script:", error);
