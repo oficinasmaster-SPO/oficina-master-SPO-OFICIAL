@@ -142,6 +142,14 @@ export default function CandidateCard({ candidate }) {
           >
             Avaliar
           </Button>
+          <Button 
+            onClick={() => navigate(createPageUrl("CESPEProposta") + `?candidate_id=${candidate.id}`)}
+            size="sm"
+            variant="outline"
+            className="bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+          >
+            Proposta
+          </Button>
         </div>
         </div>
         </div>

@@ -122,6 +122,7 @@ export default function CESPEProposta() {
           <ProposalForm
             proposal={proposal}
             candidate={candidate}
+            workshop={workshop}
             onSave={(data) => saveProposalMutation.mutate(data)}
             isLoading={saveProposalMutation.isPending}
           />
