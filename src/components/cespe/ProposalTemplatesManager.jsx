@@ -34,18 +34,26 @@ export default function ProposalTemplatesManager({ open, onClose, workshopId, on
   const [showForm, setShowForm] = useState(false);
 
   const { data: templates = [], isLoading } = useQuery({
-    queryKey: ['proposal-templates', workshopId],
+    queryKey: ['proposal-templates', workshopId, open],
     queryFn: async () => {
-      const result = await base44.entities.JobProposalTemplate.list();
-      const filtered = Array.isArray(result) ? result.filter(t => 
-        t.is_active !== false && (!workshopId || t.workshop_id === workshopId)
-      ) : [];
-      console.log('🔍 Templates encontrados:', filtered.length, filtered);
-      return filtered;
+      try {
+        const result = await base44.entities.JobProposalTemplate.list();
+        const allTemplates = Array.isArray(result) ? result : [];
+        const filtered = allTemplates.filter(t => 
+          t.workshop_id === workshopId && t.is_active !== false
+        );
+        console.log('🔍 DEBUG Templates - Total:', allTemplates.length, 'Filtrados:', filtered.length, 'WorkshopId:', workshopId);
+        return filtered;
+      } catch (error) {
+        console.error('Erro ao carregar templates:', error);
+        return [];
+      }
     },
     enabled: !!workshopId && open,
     staleTime: 0,
-    refetchOnMount: true
+    cacheTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true
   });
 
   const deleteTemplateMutation = useMutation({
