@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Target, TrendingUp, Users, Send, CheckCircle, AlertCircle, Phone, UserCheck, FileCheck, Briefcase, Clock, Filter } from "lucide-react";
+import { Plus, Target, TrendingUp, Users, Send, CheckCircle, AlertCircle, Phone, UserCheck, FileCheck, Briefcase, Clock, Filter, Calendar } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
+import { CESPE_CARGOS, CESPE_PRIORIDADES } from "./constants";
 
 export default function HiringGoalsManager({ open, onClose, workshopId }) {
   const queryClient = useQueryClient();
@@ -211,11 +212,16 @@ export default function HiringGoalsManager({ open, onClose, workshopId }) {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-1 block">Cargo</label>
-                <Input
-                  placeholder="Ex: Mecânico, Vendedor, Financeiro..."
+                <select
                   value={formData.position}
                   onChange={(e) => setFormData({...formData, position: e.target.value})}
-                />
+                  className="w-full px-3 py-2 border rounded-md"
+                >
+                  <option value="">Selecione o cargo</option>
+                  {CESPE_CARGOS.map(cargo => (
+                    <option key={cargo} value={cargo}>{cargo}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-1 block">Meta de Contratações</label>
@@ -263,10 +269,9 @@ export default function HiringGoalsManager({ open, onClose, workshopId }) {
                   onChange={(e) => setFormData({...formData, priority: e.target.value})}
                   className="w-full px-3 py-2 border rounded-md"
                 >
-                  <option value="baixa">Baixa</option>
-                  <option value="media">Média</option>
-                  <option value="alta">Alta</option>
-                  <option value="urgente">Urgente</option>
+                  {CESPE_PRIORIDADES.map(p => (
+                    <option key={p.value} value={p.value}>{p.label}</option>
+                  ))}
                 </select>
               </div>
             </div>

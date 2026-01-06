@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CESPE_CARGOS, CESPE_CANAIS_ORIGEM } from "./constants";
 
 export default function CandidateFormDialog({ open, onClose, onSubmit, isLoading }) {
   const [formData, setFormData] = useState({
@@ -53,11 +54,16 @@ export default function CandidateFormDialog({ open, onClose, onSubmit, isLoading
           </div>
           <div>
             <Label>Cargo Pretendido *</Label>
-            <Input
-              value={formData.desired_position}
-              onChange={(e) => setFormData({...formData, desired_position: e.target.value})}
-              required
-            />
+            <Select value={formData.desired_position} onValueChange={(v) => setFormData({...formData, desired_position: v})}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o cargo" />
+              </SelectTrigger>
+              <SelectContent>
+                {CESPE_CARGOS.map(cargo => (
+                  <SelectItem key={cargo} value={cargo}>{cargo}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label>Origem *</Label>
@@ -66,11 +72,9 @@ export default function CandidateFormDialog({ open, onClose, onSubmit, isLoading
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="cadastro_manual">Cadastro Manual</SelectItem>
-                <SelectItem value="indicacao_interna">Indicação Interna</SelectItem>
-                <SelectItem value="indicacao_externa">Indicação Externa</SelectItem>
-                <SelectItem value="google_ads">Google Ads</SelectItem>
-                <SelectItem value="facebook_ads">Facebook Ads</SelectItem>
+                {CESPE_CANAIS_ORIGEM.map(canal => (
+                  <SelectItem key={canal.value} value={canal.value}>{canal.label}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
