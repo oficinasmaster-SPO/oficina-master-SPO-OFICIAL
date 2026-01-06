@@ -20,7 +20,7 @@ const DISQUALIFICATION_REASONS = [
 
 export default function DisqualifyButton({ candidateId, currentStatus }) {
   const queryClient = useQueryClient();
-  const isNewLead = currentStatus === 'novo_lead';
+  const showGreenButton = currentStatus === 'novo_lead' || currentStatus === 'reprovado';
 
   const updateStatusMutation = useMutation({
     mutationFn: async (data) => {
@@ -40,7 +40,11 @@ export default function DisqualifyButton({ candidateId, currentStatus }) {
   });
 
   const handleSetAnalise = () => {
-    updateStatusMutation.mutate({ status: 'em_analise' });
+    updateStatusMutation.mutate({ 
+      status: 'em_analise',
+      disqualification_reason: null,
+      disqualification_date: null
+    });
   };
 
   const handleDisqualify = (reason) => {
@@ -51,7 +55,7 @@ export default function DisqualifyButton({ candidateId, currentStatus }) {
     });
   };
 
-  if (isNewLead) {
+  if (showGreenButton) {
     return (
       <Button 
         size="sm" 
