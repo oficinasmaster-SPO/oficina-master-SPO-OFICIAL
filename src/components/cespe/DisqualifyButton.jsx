@@ -88,7 +88,7 @@ export default function DisqualifyButton({ candidateId, currentStatus }) {
             onClick={() => handleDisqualify(reason.value)}
             className="cursor-pointer"
           >
-            {option.label}
+            {reason.label}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
