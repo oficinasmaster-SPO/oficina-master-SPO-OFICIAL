@@ -30,25 +30,36 @@ export default function DisqualifyButton({ candidateId, currentStatus }) {
 
   const updateStatusMutation = useMutation({
     mutationFn: async (data) => {
-      return await base44.entities.Candidate.update(candidateId, data);
+      const result = await base44.entities.Candidate.update(candidateId, data);
+      return result;
     },
     onSuccess: async (_, variables) => {
-      await queryClient.invalidateQueries({ queryKey: ['candidates'] });
-      await queryClient.refetchQueries({ queryKey: ['candidates'] });
+      // Força refresh completo dos dados
+      queryClient.invalidateQueries({ queryKey: ['candidates'] });
+      await queryClient.refetchQueries({ 
+        queryKey: ['candidates'],
+        type: 'active'
+      });
+      
       setOpen(false);
+      
       if (variables.status === 'em_analise') {
-        toast.success("Candidato em análise");
+        toast.success("✅ Candidato voltou para análise");
       } else {
-        toast.success("Candidato desqualificado");
+        toast.success("❌ Candidato desqualificado");
       }
     },
     onError: (error) => {
-      console.error("Erro ao atualizar:", error);
-      toast.error(error.message || "Erro ao atualizar status");
+      console.error("❌ Erro ao atualizar:", error);
+      toast.error("Erro: " + (error.message || "Falha ao atualizar status"));
+      setOpen(false);
     }
   });
 
-  const handleSetAnalise = () => {
+  const handleSetAnalise = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     updateStatusMutation.mutate({ 
       status: 'em_analise',
       disqualification_reason: null,
@@ -56,7 +67,10 @@ export default function DisqualifyButton({ candidateId, currentStatus }) {
     });
   };
 
-  const handleDisqualify = (reason) => {
+  const handleDisqualify = async (reason, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     updateStatusMutation.mutate({
       status: 'reprovado',
       disqualification_reason: reason,
@@ -80,7 +94,7 @@ export default function DisqualifyButton({ candidateId, currentStatus }) {
         {BACK_TO_ANALYSIS_OPTIONS.map(option => (
           <DropdownMenuItem
             key={option.value}
-            onClick={handleSetAnalise}
+            onSelect={(e) => handleSetAnalise(e)}
             disabled={updateStatusMutation.isPending}
             className="cursor-pointer text-green-700 hover:bg-green-50"
           >
@@ -91,7 +105,7 @@ export default function DisqualifyButton({ candidateId, currentStatus }) {
         {DISQUALIFICATION_REASONS.map(reason => (
           <DropdownMenuItem
             key={reason.value}
-            onClick={() => handleDisqualify(reason.value)}
+            onSelect={(e) => handleDisqualify(reason.value, e)}
             disabled={updateStatusMutation.isPending}
             className="cursor-pointer"
           >
