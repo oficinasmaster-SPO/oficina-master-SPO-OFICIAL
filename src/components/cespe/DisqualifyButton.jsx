@@ -26,7 +26,6 @@ const DISQUALIFICATION_REASONS = [
 
 export default function DisqualifyButton({ candidateId, currentStatus }) {
   const queryClient = useQueryClient();
-  const showGreenButton = currentStatus === 'novo_lead' || currentStatus === 'reprovado';
 
   const updateStatusMutation = useMutation({
     mutationFn: async (data) => {
@@ -61,19 +60,6 @@ export default function DisqualifyButton({ candidateId, currentStatus }) {
     });
   };
 
-  if (showGreenButton) {
-    return (
-      <Button 
-        size="sm" 
-        variant="outline"
-        className="border-green-200 text-green-600 hover:bg-green-50"
-        onClick={handleSetAnalise}
-      >
-        <CheckCircle className="w-4 h-4" />
-      </Button>
-    );
-  }
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -102,7 +88,7 @@ export default function DisqualifyButton({ candidateId, currentStatus }) {
             onClick={() => handleDisqualify(reason.value)}
             className="cursor-pointer"
           >
-            {reason.label}
+            {option.label}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
