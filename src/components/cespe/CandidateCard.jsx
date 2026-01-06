@@ -2,12 +2,14 @@ import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { createPageUrl } from "@/utils";
-import { Star, Eye, FileText } from "lucide-react";
+import { Star, Eye, FileText, Edit } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { toast } from "sonner";
 import CandidateDetailsModal from "./CandidateDetailsModal";
 import InterviewReportDialog from "./InterviewReportDialog";
+import CandidateEditDialog from "./CandidateEditDialog";
 
 const statusColors = {
   novo_lead: "bg-blue-100 text-blue-800",
@@ -73,6 +75,14 @@ export default function CandidateCard({ candidate }) {
           candidate={candidate}
         />
       )}
+
+      <CandidateEditDialog
+        open={showEditDialog}
+        onClose={() => setShowEditDialog(false)}
+        candidate={candidate}
+        onSave={(data) => updateCandidateMutation.mutate(data)}
+        isLoading={updateCandidateMutation.isPending}
+      />
     <div className="grid grid-cols-2 gap-4 px-4 py-3 bg-white border-b border-gray-200 hover:bg-gray-50 transition-colors items-center">
       {/* Coluna 1 */}
       <div className="space-y-1">
@@ -100,6 +110,14 @@ export default function CandidateCard({ candidate }) {
           ) : (
             <span className="text-gray-400 text-sm">Sem score</span>
           )}
+          <Button
+            onClick={() => setShowEditDialog(true)}
+            size="sm"
+            variant="outline"
+            className="text-gray-600 hover:bg-gray-50"
+          >
+            <Edit className="w-4 h-4" />
+          </Button>
           <Button
             onClick={() => setShowDetails(true)}
             size="sm"
