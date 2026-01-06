@@ -36,7 +36,9 @@ export default function CESPECanal() {
         
         const workshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
         if (workshops && workshops.length > 0) {
-          setWorkshop(workshops[0]);
+          const userWorkshop = workshops[0];
+          setWorkshop(userWorkshop);
+          console.log('🏭 Workshop carregado:', userWorkshop.id, userWorkshop.name);
         }
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
