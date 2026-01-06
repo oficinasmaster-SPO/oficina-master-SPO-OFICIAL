@@ -2,6 +2,7 @@ import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Mic, Square, Play, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { base44 } from "@/api/base44Client";
 
 export default function AudioRecorder({ onAudioSave, onTranscription, existingAudioUrl }) {
   const [isRecording, setIsRecording] = useState(false);
@@ -33,16 +34,19 @@ export default function AudioRecorder({ onAudioSave, onTranscription, existingAu
           const { data } = await base44.integrations.Core.UploadFile({ file: blob });
           onAudioSave(data.file_url);
           
-          // Transcrever áudio automaticamente
+          // Transcrever áudio automaticamente usando Whisper
           if (onTranscription) {
             try {
-              const transcription = await base44.integrations.Core.InvokeLLM({
-                prompt: "Transcreva este áudio de forma clara e objetiva. Retorne apenas o texto transcrito, sem introduções ou comentários adicionais.",
-                file_urls: [data.file_url]
+              const { data: result } = await base44.functions.invoke('transcribeAudio', {
+                audio_url: data.file_url
               });
               
-              onTranscription(transcription);
-              toast.success("Áudio transcrito automaticamente!");
+              if (result?.transcription) {
+                onTranscription(result.transcription);
+                toast.success("Áudio transcrito automaticamente!");
+              } else {
+                toast.success("Áudio salvo!");
+              }
             } catch (transcriptionError) {
               console.error("Erro na transcrição:", transcriptionError);
               toast.success("Áudio salvo! (transcrição não disponível)");
