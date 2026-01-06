@@ -13,7 +13,7 @@ import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 
 const BACK_TO_ANALYSIS_OPTIONS = [
-  { value: "nao_avaliado", label: "✅ Não avaliado ainda" },
+  { value: "nao_avaliado", label: "🔍 Não avaliado ainda" },
   { value: "nao_contactado", label: "✅ Não contactado ainda" }
 ];
 
