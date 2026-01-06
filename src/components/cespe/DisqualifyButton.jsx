@@ -26,13 +26,16 @@ const DISQUALIFICATION_REASONS = [
 
 export default function DisqualifyButton({ candidateId, currentStatus }) {
   const queryClient = useQueryClient();
+  const [open, setOpen] = React.useState(false);
 
   const updateStatusMutation = useMutation({
     mutationFn: async (data) => {
       return await base44.entities.Candidate.update(candidateId, data);
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['candidates'] });
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({ queryKey: ['candidates'] });
+      await queryClient.refetchQueries({ queryKey: ['candidates'] });
+      setOpen(false);
       if (variables.status === 'em_analise') {
         toast.success("Candidato em análise");
       } else {
@@ -40,6 +43,7 @@ export default function DisqualifyButton({ candidateId, currentStatus }) {
       }
     },
     onError: (error) => {
+      console.error("Erro ao atualizar:", error);
       toast.error(error.message || "Erro ao atualizar status");
     }
   });
@@ -61,12 +65,13 @@ export default function DisqualifyButton({ candidateId, currentStatus }) {
   };
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <Button 
           size="sm" 
           variant="outline"
           className="border-red-200 text-red-600 hover:bg-red-50"
+          disabled={updateStatusMutation.isPending}
         >
           <XCircle className="w-4 h-4" />
         </Button>
@@ -76,6 +81,7 @@ export default function DisqualifyButton({ candidateId, currentStatus }) {
           <DropdownMenuItem
             key={option.value}
             onClick={handleSetAnalise}
+            disabled={updateStatusMutation.isPending}
             className="cursor-pointer text-green-700 hover:bg-green-50"
           >
             {option.label}
@@ -86,6 +92,7 @@ export default function DisqualifyButton({ candidateId, currentStatus }) {
           <DropdownMenuItem
             key={reason.value}
             onClick={() => handleDisqualify(reason.value)}
+            disabled={updateStatusMutation.isPending}
             className="cursor-pointer"
           >
             {reason.label}
