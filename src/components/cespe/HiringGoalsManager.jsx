@@ -166,16 +166,16 @@ export default function HiringGoalsManager({ open, onClose, workshopId }) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-7xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Target className="w-6 h-6 text-blue-600" />
-            Metas de Contratação
+            🎯 Metas de Contratação - Funil Completo
           </DialogTitle>
         </DialogHeader>
 
         {showForm ? (
-          <div className="space-y-4">
+          <div className="space-y-4 bg-white p-6 rounded-lg border border-gray-200">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-1 block">Cargo</label>
@@ -261,9 +261,16 @@ export default function HiringGoalsManager({ open, onClose, workshopId }) {
           </div>
         ) : (
           <div className="space-y-4">
-            <Button onClick={() => setShowForm(true)} className="w-full">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg mb-4 border border-blue-200">
+              <p className="text-sm text-gray-700 mb-2">
+                💡 <strong>Dica:</strong> O funil de contratação com 7 etapas aparecerá após criar sua primeira meta. 
+                Clique em "Atualizar Funil" depois para calcular as taxas de conversão.
+              </p>
+            </div>
+
+            <Button onClick={() => setShowForm(true)} className="w-full bg-blue-600 hover:bg-blue-700">
               <Plus className="w-4 h-4 mr-2" />
-              Nova Meta de Contratação
+              ➕ Nova Meta de Contratação
             </Button>
 
             {isLoading ? (
