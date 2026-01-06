@@ -10,6 +10,7 @@ import ProposalForm from "@/components/cespe/ProposalForm";
 import ProposalPreview from "@/components/cespe/ProposalPreview";
 import ProposalTemplatesManager from "@/components/cespe/ProposalTemplatesManager";
 import ProposalPDFGenerator from "@/components/cespe/ProposalPDFGenerator";
+import ProposalReportViewer from "@/components/cespe/ProposalReportViewer";
 
 export default function CESPEProposta() {
   const navigate = useNavigate();
@@ -124,9 +125,9 @@ export default function CESPEProposta() {
                 Baixar PDF
               </Button>
             )}
-            <Button variant="outline" onClick={() => setShowPreview(!showPreview)}>
+            <Button variant="outline" onClick={() => setShowPreview(true)}>
               <FileText className="w-4 h-4 mr-2" />
-              {showPreview ? 'Editar' : 'Preview'}
+              Preview
             </Button>
             <Button variant="outline" onClick={() => navigate(-1)}>
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -135,23 +136,21 @@ export default function CESPEProposta() {
           </div>
         </div>
 
-        {showPreview ? (
-          <ProposalPreview
-            proposal={proposal}
-            candidate={candidate}
-            workshop={workshop}
-            onSend={() => sendProposalMutation.mutate()}
-            isLoading={sendProposalMutation.isPending}
-          />
-        ) : (
-          <ProposalForm
-            proposal={proposal}
-            candidate={candidate}
-            workshop={workshop}
-            onSave={(data) => saveProposalMutation.mutate(data)}
-            isLoading={saveProposalMutation.isPending}
-          />
-        )}
+        <ProposalForm
+          proposal={proposal}
+          candidate={candidate}
+          workshop={workshop}
+          onSave={(data) => saveProposalMutation.mutate(data)}
+          isLoading={saveProposalMutation.isPending}
+        />
+
+        <ProposalReportViewer
+          open={showPreview}
+          onClose={() => setShowPreview(false)}
+          proposal={proposal}
+          candidate={candidate}
+          workshop={workshop}
+        />
 
         <ProposalTemplatesManager
           open={showTemplates}
