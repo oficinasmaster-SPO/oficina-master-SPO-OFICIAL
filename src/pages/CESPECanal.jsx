@@ -14,6 +14,7 @@ import WebhookSetupGuide from "@/components/cespe/WebhookSetupGuide";
 import DreamScriptModal from "@/components/cespe/DreamScriptModal";
 import InterviewFormsManager from "@/components/cespe/InterviewFormsManager";
 import ProposalTemplatesManager from "@/components/cespe/ProposalTemplatesManager";
+import HiringGoalsManager from "@/components/cespe/HiringGoalsManager";
 
 export default function CESPECanal() {
   const queryClient = useQueryClient();
@@ -27,6 +28,7 @@ export default function CESPECanal() {
   const [showDreamScript, setShowDreamScript] = useState(false);
   const [showQuestionForms, setShowQuestionForms] = useState(false);
   const [showProposalTemplates, setShowProposalTemplates] = useState(false);
+  const [showHiringGoals, setShowHiringGoals] = useState(false);
 
   React.useEffect(() => {
     const loadData = async () => {
@@ -127,12 +129,16 @@ export default function CESPECanal() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">🅲 CANAL - Aquisição de Talentos</h1>
-            <p className="text-gray-600">Centralize e gerencie leads de candidatos</p>
+        <div className="text-center space-y-4">
+          <div className="flex items-center justify-center gap-3">
+            <div className="bg-black text-white w-12 h-12 rounded flex items-center justify-center text-2xl font-bold">
+              C
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900">CANAL - Aquisição de Talentos</h1>
           </div>
-          <div className="flex gap-2">
+          <p className="text-gray-600 text-lg">Centralize e gerencie leads de candidatos</p>
+
+          <div className="flex gap-2 justify-center flex-wrap">
             <Button onClick={() => setShowQuestionForms(true)} variant="outline">
               <ClipboardList className="w-4 h-4 mr-2" />
               PPE
@@ -144,6 +150,10 @@ export default function CESPECanal() {
             <Button onClick={() => setShowProposalTemplates(true)} variant="outline" className="bg-green-50 hover:bg-green-100 text-green-700 border-green-200">
               <ClipboardList className="w-4 h-4 mr-2" />
               Propostas
+            </Button>
+            <Button onClick={() => setShowHiringGoals(true)} variant="outline" className="bg-orange-50 hover:bg-orange-100 text-orange-700 border-orange-200">
+              <TrendingUp className="w-4 h-4 mr-2" />
+              Metas
             </Button>
             <Button onClick={() => setShowWebhookGuide(true)} variant="outline">
               <Smartphone className="w-4 h-4 mr-2" />
@@ -253,6 +263,12 @@ export default function CESPECanal() {
         <ProposalTemplatesManager
           open={showProposalTemplates}
           onClose={() => setShowProposalTemplates(false)}
+          workshopId={workshop?.id}
+        />
+
+        <HiringGoalsManager
+          open={showHiringGoals}
+          onClose={() => setShowHiringGoals(false)}
           workshopId={workshop?.id}
         />
         </div>
