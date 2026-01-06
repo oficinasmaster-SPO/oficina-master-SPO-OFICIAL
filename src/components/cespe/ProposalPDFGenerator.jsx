@@ -195,7 +195,13 @@ export default class ProposalPDFGenerator {
       if (proposal.career_path) {
         doc.setFontSize(10);
         doc.setFont(undefined, "normal");
-        const careerText = doc.splitTextToSize(proposal.career_path, 180);
+        // Remove emojis e caracteres especiais
+        const cleanCareerPath = proposal.career_path
+          .replace(/[\u{1F300}-\u{1F9FF}]/gu, '') // Remove emojis
+          .replace(/[✓✅→•]/g, '-') // Substitui bullets por traço
+          .replace(/📍/g, '')
+          .replace(/💡/g, '');
+        const careerText = doc.splitTextToSize(cleanCareerPath, 180);
         doc.text(careerText, 15, yPos);
         yPos += (careerText.length * 5) + 10;
       }
@@ -234,7 +240,12 @@ export default class ProposalPDFGenerator {
         
         doc.setFontSize(9);
         doc.setFont(undefined, "normal");
-        const text30d = doc.splitTextToSize(proposal.success_criteria_30d, 180);
+        // Remove emojis e caracteres especiais
+        const clean30d = proposal.success_criteria_30d
+          .replace(/[\u{1F300}-\u{1F9FF}]/gu, '')
+          .replace(/[✓✅→•]/g, '-')
+          .replace(/📍/g, '');
+        const text30d = doc.splitTextToSize(clean30d, 180);
         doc.text(text30d, 15, yPos);
         yPos += (text30d.length * 4) + 8;
       }
@@ -247,7 +258,12 @@ export default class ProposalPDFGenerator {
         
         doc.setFontSize(9);
         doc.setFont(undefined, "normal");
-        const text60d = doc.splitTextToSize(proposal.success_criteria_60d, 180);
+        // Remove emojis e caracteres especiais
+        const clean60d = proposal.success_criteria_60d
+          .replace(/[\u{1F300}-\u{1F9FF}]/gu, '')
+          .replace(/[✓✅→•]/g, '-')
+          .replace(/📍/g, '');
+        const text60d = doc.splitTextToSize(clean60d, 180);
         doc.text(text60d, 15, yPos);
         yPos += (text60d.length * 4) + 8;
       }
@@ -273,12 +289,19 @@ export default class ProposalPDFGenerator {
       170
     );
     doc.text(ctaMsg, 105, yPos + 25, { align: "center" });
-
+    
+    yPos += 35;
+    
+    // Validade da proposta
     doc.setFontSize(9);
     doc.setTextColor(107, 114, 128);
-    doc.text(`Validade da Proposta: ${proposal?.proposal_validity || "15 dias"}`, 105, yPos + 50, { align: "center" });
+    const validityText = doc.splitTextToSize(
+      proposal?.proposal_validity || "Esta proposta tem validade de 15 dias.",
+      170
+    );
+    doc.text(validityText, 105, yPos, { align: "center" });
 
-    yPos += 70;
+    yPos += 20;
 
     // Contato do Responsável
     if (proposal?.responsible_contact?.name || proposal?.responsible_contact?.email) {
