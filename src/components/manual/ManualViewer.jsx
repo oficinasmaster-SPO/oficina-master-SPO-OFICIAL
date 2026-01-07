@@ -8,21 +8,43 @@ import ManualPDFGenerator from "./ManualPDFGenerator";
 export default function ManualViewer({ data, onClose }) {
   const { cultura, processos, instructionDocs, cargos, areas, workshop } = data;
 
-  // Agrupar processos por área - garantindo que todos apareçam
+  // Debug detalhado
+  console.log('=== DEBUG MANUAL VIEWER ===');
+  console.log('Total processos:', processos?.length || 0);
+  console.log('Total ITs:', instructionDocs?.length || 0);
+  console.log('Total áreas:', areas?.length || 0);
+  
+  // Mostrar sample de processos
+  if (processos?.length > 0) {
+    console.log('Sample processos:', processos.slice(0, 3).map(p => ({
+      title: p.title,
+      area_id: p.area_id,
+      is_template: p.is_template,
+      workshop_id: p.workshop_id
+    })));
+  }
+  
+  // Mostrar áreas disponíveis
+  console.log('Áreas disponíveis:', areas?.map(a => ({ id: a.id, name: a.name })));
+
+  // Agrupar processos por área
   const processosPorArea = areas.reduce((acc, area) => {
     const processosArea = processos.filter(p => p.area_id === area.id);
     const itsArea = instructionDocs.filter(it => it.area_id === area.id);
     
-    // Só adiciona se houver conteúdo
     if (processosArea.length > 0 || itsArea.length > 0) {
       acc[area.id] = {
         area,
         processos: processosArea,
         its: itsArea
       };
+      console.log(`Área ${area.name}: ${processosArea.length} MAPs, ${itsArea.length} ITs`);
     }
     return acc;
   }, {});
+  
+  console.log('Total áreas com conteúdo:', Object.keys(processosPorArea).length);
+  console.log('===========================');
 
   const handleDownloadPDF = () => {
     ManualPDFGenerator.generate(data);
