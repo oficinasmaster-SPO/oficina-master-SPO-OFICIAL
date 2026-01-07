@@ -20,13 +20,10 @@ export default function OrgChartViewer({ nodes }) {
     const hasChildren = node.children && node.children.length > 0;
     const childCount = node.children?.length || 0;
     
-    // Se tem mais de 3 filhos, renderiza em grid
-    const useGrid = childCount > 3;
-    
     return (
       <div key={node.id} className="flex flex-col items-center">
         <div
-          className="relative px-6 py-3 rounded-lg shadow-lg text-white font-bold text-center min-w-[180px] max-w-[220px] transition-transform hover:scale-105"
+          className="relative px-6 py-3 rounded-lg shadow-lg text-white font-bold text-center min-w-[180px] max-w-[220px] transition-transform hover:scale-105 border-2 border-white"
           style={{ backgroundColor: node.color || '#EF4444' }}
         >
           <div className="text-base">{node.title}</div>
@@ -39,39 +36,33 @@ export default function OrgChartViewer({ nodes }) {
         </div>
 
         {hasChildren && (
-          <div className="flex flex-col items-center mt-4">
-            <div className="w-0.5 h-6 bg-red-500" />
+          <div className="flex flex-col items-center">
+            {/* Linha vertical descendo do nó pai */}
+            <div className="w-0.5 h-8 bg-gray-400" />
             
-            {useGrid ? (
-              <div className="grid grid-cols-2 gap-x-8 gap-y-6 relative">
-                {node.children.map((child) => (
+            <div className="relative">
+              {/* Linha horizontal conectando todos os filhos */}
+              {childCount > 1 && (
+                <div className="absolute h-0.5 bg-gray-400" style={{
+                  top: 0,
+                  left: `calc(50% - ${(childCount - 1) * 6}rem)`,
+                  right: `calc(50% - ${(childCount - 1) * 6}rem)`,
+                }} />
+              )}
+              
+              <div className="flex gap-6 pt-8">
+                {node.children.map((child, idx) => (
                   <div key={child.id} className="relative flex flex-col items-center">
-                    <div className="w-0.5 h-6 bg-red-500 -mt-6" />
+                    {/* Linha vertical descendo da linha horizontal para o filho */}
+                    <div 
+                      className="absolute w-0.5 h-8 bg-gray-400" 
+                      style={{ top: -32, left: '50%', transform: 'translateX(-50%)' }}
+                    />
                     {renderNode(child)}
                   </div>
                 ))}
               </div>
-            ) : (
-              <div className="flex gap-6 relative">
-                {childCount > 1 && (
-                  <div
-                    className="absolute top-0 h-0.5 bg-red-500"
-                    style={{
-                      left: childCount === 2 ? '25%' : '16.66%',
-                      right: childCount === 2 ? '25%' : '16.66%',
-                    }}
-                  />
-                )}
-                {node.children.map((child) => (
-                  <div key={child.id} className="relative">
-                    {childCount > 1 && (
-                      <div className="absolute left-1/2 -translate-x-1/2 w-0.5 h-6 bg-red-500 -top-6" />
-                    )}
-                    {renderNode(child)}
-                  </div>
-                ))}
-              </div>
-            )}
+            </div>
           </div>
         )}
       </div>
