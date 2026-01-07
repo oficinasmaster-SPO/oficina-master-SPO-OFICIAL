@@ -56,7 +56,8 @@ import {
   Mail,
   Activity,
   Bug,
-  UserCheck
+  UserCheck,
+  Network
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -253,7 +254,14 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           highlight: true,
           requiredPermission: 'workshop.view'
         },
-
+        { 
+          name: 'Organograma', 
+          href: createPageUrl('Organograma'), 
+          icon: Network,
+          description: 'Estrutura organizacional editável',
+          highlight: true,
+          requiredPermission: 'workshop.view'
+        },
       ]
     },
     {
