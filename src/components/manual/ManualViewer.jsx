@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Download, X, Building2, Users, Target, FileText, BookOpen, Shield, ChevronDown, ChevronUp } from "lucide-react";
 import ManualPDFGenerator from "./ManualPDFGenerator";
 import ITViewer from "@/components/processes/ITViewer";
+import ProcessViewer from "./ProcessViewer";
 
 export default function ManualViewer({ data, onClose }) {
   const { cultura, processos, instructionDocs, cargos, areas, workshop } = data;
