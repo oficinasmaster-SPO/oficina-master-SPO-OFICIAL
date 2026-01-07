@@ -41,8 +41,11 @@ Deno.serve(async (req) => {
       userId = users[0].id;
       console.log('✅ User encontrado:', userId);
     }
-    const jobRole = employee.job_role || users[0].job_role || 'outros';
-    let finalProfileId = profile_id || employee.profile_id || users[0].profile_id;
+
+    // Buscar User atualizado para pegar dados corretos
+    const userRecord = await base44.asServiceRole.entities.User.get(userId);
+    const jobRole = employee.job_role || userRecord?.job_role || 'outros';
+    let finalProfileId = profile_id || employee.profile_id || userRecord?.profile_id;
     
     if (!finalProfileId) {
       const allProfiles = await base44.asServiceRole.entities.UserProfile.list();
