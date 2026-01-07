@@ -3,11 +3,12 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Save, Eye, Edit3, Download } from "lucide-react";
+import { Plus, Save, Eye, Edit3, Download, FileText } from "lucide-react";
 import { toast } from "sonner";
 import OrgChartEditor from "@/components/organization/OrgChartEditor";
 import OrgChartViewer from "@/components/organization/OrgChartViewer";
 import TemplateSelector from "@/components/organization/TemplateSelector";
+import { generateOrgChartPDF } from "@/components/organization/OrgChartPDFGenerator";
 
 export default function Organograma() {
   const [workshop, setWorkshop] = useState(null);
@@ -120,10 +121,26 @@ export default function Organograma() {
           </div>
           <div className="flex gap-2">
             {nodes.length > 0 && (
-              <Button onClick={handleResetOrganogram} variant="outline">
-                <Download className="w-4 h-4 mr-2" />
-                Trocar Template
-              </Button>
+              <>
+                <Button 
+                  onClick={() => generateOrgChartPDF(nodes, workshop, false)} 
+                  variant="outline"
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  Visualizar PDF
+                </Button>
+                <Button 
+                  onClick={() => generateOrgChartPDF(nodes, workshop, true)} 
+                  variant="outline"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Baixar PDF
+                </Button>
+                <Button onClick={handleResetOrganogram} variant="outline">
+                  <Download className="w-4 h-4 mr-2" />
+                  Trocar Template
+                </Button>
+              </>
             )}
             {nodes.length === 0 && (
               <Button onClick={() => setShowTemplates(true)} variant="outline">
