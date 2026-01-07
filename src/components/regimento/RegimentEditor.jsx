@@ -5,12 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, Save, Send } from "lucide-react";
-import RegimentSectionEditor from "./RegimentSectionEditor";
+import { ArrowLeft, Save, Send, Plus, Trash2 } from "lucide-react";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 const DEFAULT_TEXTS = {
   objective: "Este regimento tem como finalidade disciplinar a relação de trabalho, garantindo um ambiente seguro, produtivo e alinhado à legislação vigente.",
@@ -19,10 +18,39 @@ const DEFAULT_TEXTS = {
   final_provisions: "Os casos omissos serão avaliados pela direção da empresa. A empresa se reserva o direito de atualizar este regimento, comunicando previamente os colaboradores sobre as alterações."
 };
 
+const SECTION_GROUPS = [
+  { value: "identification", label: "Identificação", icon: "📋" },
+  { value: "legal", label: "Base Legal", icon: "⚖️", sectionIds: ["0"] },
+  { value: "duties", label: "Deveres", icon: "✅", sectionIds: ["1"] },
+  { value: "prohibited", label: "Proibições", icon: "🚫", sectionIds: ["2"] },
+  { value: "schedule", label: "Jornada", icon: "⏰", sectionIds: ["3"] },
+  { value: "absences", label: "Faltas", icon: "📅", sectionIds: ["4"] },
+  { value: "penalties", label: "Penalidades", icon: "⚠️", sectionIds: ["5", "6", "7", "8"] },
+  { value: "resignation", label: "Demissão", icon: "👋", sectionIds: ["9"] },
+  { value: "safety", label: "Segurança", icon: "🦺", sectionIds: ["10"] },
+  { value: "resources", label: "Recursos", icon: "💻", sectionIds: ["11"] },
+  { value: "confidentiality", label: "Sigilo", icon: "🔒", sectionIds: ["12"] },
+  { value: "social", label: "Redes Sociais", icon: "📱", sectionIds: ["13"] },
+  { value: "conduct", label: "Conduta", icon: "🤝", sectionIds: ["14"] },
+  { value: "dress", label: "Vestimenta", icon: "👔", sectionIds: ["15"] },
+  { value: "training", label: "Treinamento", icon: "📚", sectionIds: ["16"] },
+  { value: "benefits", label: "Benefícios", icon: "🎁", sectionIds: ["17"] },
+  { value: "lgpd", label: "LGPD", icon: "🛡️", sectionIds: ["18"] },
+  { value: "contracts", label: "Contratos", icon: "📄", sectionIds: ["19"] },
+  { value: "vehicles", label: "Veículos", icon: "🚗", sectionIds: ["20"] },
+  { value: "parts", label: "Peças/Danos", icon: "🔧", sectionIds: ["21"] },
+  { value: "equipment", label: "Equipamentos", icon: "🏗️", sectionIds: ["22"] },
+  { value: "diagnosis", label: "Diagnóstico", icon: "📋", sectionIds: ["23"] },
+  { value: "rework", label: "Retrabalho", icon: "🔄", sectionIds: ["24"] },
+  { value: "organization", label: "Organização", icon: "🧹", sectionIds: ["25"] },
+  { value: "tools", label: "Ferramentas", icon: "🧰", sectionIds: ["26"] },
+  { value: "exit", label: "Desligamento", icon: "📦", sectionIds: ["27"] },
+  { value: "final", label: "Finais", icon: "📝", sectionIds: ["28"] }
+];
+
 export default function RegimentEditor({ regiment, workshop, onSave, onCancel }) {
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState(() => {
-    // Se está editando regimento existente
     if (regiment) {
       return {
         ...regiment,
@@ -37,7 +65,6 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
       };
     }
     
-    // Se está criando novo
     return {
       workshop_id: workshop?.id,
       version: "1.0",
@@ -112,6 +139,109 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
     publishMutation.mutate(formData);
   };
 
+  const addSubsection = (sectionId) => {
+    const newSections = [...(formData.sections || [])];
+    const sectionIndex = newSections.findIndex(s => s.id === sectionId);
+    
+    if (sectionIndex === -1) return;
+
+    const section = newSections[sectionIndex];
+    const subsections = section.subsections || [];
+    const lastSubNumber = subsections.length > 0 
+      ? parseFloat(subsections[subsections.length - 1].number) 
+      : parseFloat(section.number);
+    
+    const newSubNumber = (Math.floor(lastSubNumber) + (subsections.length + 1) * 0.1).toFixed(1);
+    
+    const newSubsection = {
+      id: `${sectionId}.${subsections.length + 1}`,
+      number: newSubNumber,
+      content: ""
+    };
+
+    newSections[sectionIndex].subsections = [...subsections, newSubsection];
+    setFormData({ ...formData, sections: newSections });
+  };
+
+  const removeSubsection = (sectionId, subIndex) => {
+    const newSections = [...(formData.sections || [])];
+    const sectionIndex = newSections.findIndex(s => s.id === sectionId);
+    
+    if (sectionIndex === -1) return;
+    
+    newSections[sectionIndex].subsections.splice(subIndex, 1);
+    setFormData({ ...formData, sections: newSections });
+  };
+
+  const renderSectionEditor = (sectionIds, title, description) => {
+    const sections = formData.sections?.filter(s => sectionIds.includes(s.id)) || [];
+    
+    if (sections.length === 0) {
+      return (
+        <div className="text-center py-8 text-gray-500">
+          <p>Seção não encontrada no regimento</p>
+          <p className="text-xs mt-2">IDs esperados: {sectionIds.join(", ")}</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        {sections.map(section => (
+          <div key={section.id} className="border rounded-lg p-4">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h4 className="font-semibold text-base">{section.number} {section.title}</h4>
+                {section.content && (
+                  <p className="text-sm text-gray-600 mt-1">{section.content}</p>
+                )}
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => addSubsection(section.id)}
+                className="gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Adicionar Item
+              </Button>
+            </div>
+
+            <div className="space-y-3">
+              {section.subsections?.map((sub, index) => (
+                <div key={sub.id} className="flex gap-2 items-start">
+                  <div className="flex-1">
+                    <Label className="text-xs text-gray-600 font-medium">{sub.number}</Label>
+                    <Textarea
+                      rows={3}
+                      value={sub.content}
+                      onChange={(e) => {
+                        const newSections = [...(formData.sections || [])];
+                        const sectionIndex = newSections.findIndex(s => s.id === section.id);
+                        newSections[sectionIndex].subsections[index].content = e.target.value;
+                        setFormData({ ...formData, sections: newSections });
+                      }}
+                      className="text-sm mt-1"
+                      placeholder="Digite o conteúdo deste item..."
+                    />
+                  </div>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => removeSubsection(section.id, index)}
+                    className="text-red-500 hover:text-red-700 hover:bg-red-50 mt-6"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="max-w-7xl mx-auto space-y-4">
       <Card className="border-2 border-blue-200">
@@ -123,7 +253,7 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
               </Button>
               <div>
                 <CardTitle>{regiment?.id ? 'Editar' : 'Novo'} Regimento Interno</CardTitle>
-                <p className="text-sm text-gray-600 mt-1">Versão {formData.version}</p>
+                <p className="text-sm text-gray-600 mt-1">Versão {formData.version} • {formData.sections?.length || 0} seções</p>
               </div>
             </div>
             <div className="flex gap-2">
@@ -141,24 +271,22 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
       </Card>
 
       <Tabs defaultValue="identification" className="space-y-4">
-        <TabsList className="grid grid-cols-5 lg:grid-cols-10 w-full bg-white border gap-1">
-          <TabsTrigger value="identification">Identificação</TabsTrigger>
-          <TabsTrigger value="legal">Base Legal</TabsTrigger>
-          <TabsTrigger value="duties">Deveres</TabsTrigger>
-          <TabsTrigger value="prohibited">Proibições</TabsTrigger>
-          <TabsTrigger value="penalties">Penalidades</TabsTrigger>
-          <TabsTrigger value="vehicles">Veículos</TabsTrigger>
-          <TabsTrigger value="equipment">Equipamentos</TabsTrigger>
-          <TabsTrigger value="quality">Qualidade</TabsTrigger>
-          <TabsTrigger value="exit">Desligamento</TabsTrigger>
-          <TabsTrigger value="final">Finais</TabsTrigger>
-        </TabsList>
+        <ScrollArea className="w-full whitespace-nowrap">
+          <TabsList className="inline-flex w-auto bg-white border p-1">
+            {SECTION_GROUPS.map(group => (
+              <TabsTrigger key={group.value} value={group.value} className="text-xs px-3">
+                {group.icon} {group.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
 
         <TabsContent value="identification">
           <Card>
             <CardHeader>
-              <CardTitle>1️⃣ Identificação do Documento</CardTitle>
-              <p className="text-xs text-gray-500 mt-1">📌 Dados preenchidos automaticamente do cadastro da oficina</p>
+              <CardTitle>📋 Identificação do Documento</CardTitle>
+              <p className="text-xs text-gray-500 mt-1">Dados preenchidos automaticamente do cadastro da oficina</p>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -218,16 +346,13 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
               </div>
 
               <div>
-                <Label>2️⃣ Objetivo do Regimento</Label>
+                <Label>Objetivo do Regimento</Label>
                 <Textarea
                   rows={4}
                   value={formData.objective || ""}
                   onChange={(e) => setFormData({ ...formData, objective: e.target.value })}
                   className="bg-blue-50"
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  📌 Deixe claro direitos, deveres, penalidades e proteção à empresa e colaboradores
-                </p>
               </div>
             </CardContent>
           </Card>
@@ -239,27 +364,8 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
               <CardTitle>⚖️ Base Legal e Poder Diretivo</CardTitle>
               <p className="text-sm text-gray-600">CLT art. 2º, 158, 482 | CF art. 7º | NRs</p>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {formData.sections?.filter(s => s.id === "0").map(section => (
-                <div key={section.id}>
-                  {section.subsections?.map((sub, index) => (
-                    <div key={sub.id} className="mb-3">
-                      <Label className="text-xs text-gray-600 font-semibold">{sub.number}</Label>
-                      <Textarea
-                        rows={3}
-                        value={sub.content}
-                        onChange={(e) => {
-                          const newSections = [...(formData.sections || [])];
-                          const sectionIndex = newSections.findIndex(s => s.id === "0");
-                          newSections[sectionIndex].subsections[index].content = e.target.value;
-                          setFormData({ ...formData, sections: newSections });
-                        }}
-                        className="text-sm"
-                      />
-                    </div>
-                  ))}
-                </div>
-              ))}
+            <CardContent>
+              {renderSectionEditor(["0"], "Base Legal", "Fundamento jurídico do regimento")}
             </CardContent>
           </Card>
         </TabsContent>
@@ -267,30 +373,11 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
         <TabsContent value="duties">
           <Card>
             <CardHeader>
-              <CardTitle>1️⃣ Deveres do Colaborador</CardTitle>
-              <p className="text-sm text-gray-600">Base legal: CLT – art. 158</p>
+              <CardTitle>✅ Deveres do Colaborador</CardTitle>
+              <p className="text-sm text-gray-600">CLT art. 158</p>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {formData.sections?.filter(s => s.id === "1").map(section => (
-                <div key={section.id}>
-                  {section.subsections?.map((sub, index) => (
-                    <div key={sub.id} className="mb-3">
-                      <Label className="text-xs text-gray-600">{sub.number}</Label>
-                      <Textarea
-                        rows={2}
-                        value={sub.content}
-                        onChange={(e) => {
-                          const newSections = [...(formData.sections || [])];
-                          const sectionIndex = newSections.findIndex(s => s.id === "1");
-                          newSections[sectionIndex].subsections[index].content = e.target.value;
-                          setFormData({ ...formData, sections: newSections });
-                        }}
-                        className="text-sm"
-                      />
-                    </div>
-                  ))}
-                </div>
-              ))}
+            <CardContent>
+              {renderSectionEditor(["1"], "Deveres", "Obrigações do colaborador")}
             </CardContent>
           </Card>
         </TabsContent>
@@ -298,30 +385,35 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
         <TabsContent value="prohibited">
           <Card>
             <CardHeader>
-              <CardTitle>2️⃣ Condutas Expressamente Proibidas</CardTitle>
-              <p className="text-sm text-gray-600">Base legal: CLT – art. 482</p>
+              <CardTitle>🚫 Condutas Expressamente Proibidas</CardTitle>
+              <p className="text-sm text-gray-600">CLT art. 482</p>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {formData.sections?.filter(s => s.id === "2").map(section => (
-                <div key={section.id}>
-                  {section.subsections?.map((sub, index) => (
-                    <div key={sub.id} className="mb-3">
-                      <Label className="text-xs text-gray-600">{sub.number}</Label>
-                      <Textarea
-                        rows={2}
-                        value={sub.content}
-                        onChange={(e) => {
-                          const newSections = [...(formData.sections || [])];
-                          const sectionIndex = newSections.findIndex(s => s.id === "2");
-                          newSections[sectionIndex].subsections[index].content = e.target.value;
-                          setFormData({ ...formData, sections: newSections });
-                        }}
-                        className="text-sm"
-                      />
-                    </div>
-                  ))}
-                </div>
-              ))}
+            <CardContent>
+              {renderSectionEditor(["2"], "Proibições", "Faltas disciplinares")}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="schedule">
+          <Card>
+            <CardHeader>
+              <CardTitle>⏰ Jornada de Trabalho e Ponto</CardTitle>
+              <p className="text-sm text-gray-600">CLT art. 58, 74</p>
+            </CardHeader>
+            <CardContent>
+              {renderSectionEditor(["3"], "Jornada", "Horários e controle")}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="absences">
+          <Card>
+            <CardHeader>
+              <CardTitle>📅 Faltas, Atestados e Afastamentos</CardTitle>
+              <p className="text-sm text-gray-600">CLT art. 473</p>
+            </CardHeader>
+            <CardContent>
+              {renderSectionEditor(["4"], "Faltas", "Ausências e justificativas")}
             </CardContent>
           </Card>
         </TabsContent>
@@ -329,40 +421,152 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
         <TabsContent value="penalties">
           <Card>
             <CardHeader>
-              <CardTitle>5️⃣ Escala de Penalidades</CardTitle>
-              <p className="text-sm text-gray-600">Base legal: CLT – art. 482, 474</p>
+              <CardTitle>⚠️ Escala de Penalidades</CardTitle>
+              <p className="text-sm text-gray-600">CLT art. 482, 474</p>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent>
               <div className="bg-orange-50 border-2 border-orange-200 rounded-lg p-4 mb-4">
-                <h4 className="font-bold text-orange-900 mb-2">⚠️ Princípios Obrigatórios:</h4>
+                <h4 className="font-bold text-orange-900 mb-2">Princípios Jurídicos Obrigatórios:</h4>
                 <ul className="text-sm text-orange-900 space-y-1 list-disc list-inside">
                   <li>Gradualidade (não pular etapas)</li>
-                  <li>Proporcionalidade (punição compatível com a falta)</li>
-                  <li>Imediatidade (punir logo após ciência do fato)</li>
-                  <li>Registro e evidência (documentar tudo)</li>
+                  <li>Proporcionalidade (punição compatível)</li>
+                  <li>Imediatidade (punir logo após ciência)</li>
+                  <li>Registro documental (tudo escrito)</li>
                 </ul>
               </div>
-              {formData.sections?.filter(s => s.id === "5" || s.id === "6" || s.id === "7" || s.id === "8").map(section => (
-                <div key={section.id} className="border-t pt-4">
-                  <h4 className="font-semibold text-sm mb-3">{section.number} {section.title}</h4>
-                  {section.subsections?.map((sub, index) => (
-                    <div key={sub.id} className="mb-3">
-                      <Label className="text-xs text-gray-600">{sub.number}</Label>
-                      <Textarea
-                        rows={2}
-                        value={sub.content}
-                        onChange={(e) => {
-                          const newSections = [...(formData.sections || [])];
-                          const sectionIndex = newSections.findIndex(s => s.id === section.id);
-                          newSections[sectionIndex].subsections[index].content = e.target.value;
-                          setFormData({ ...formData, sections: newSections });
-                        }}
-                        className="text-sm"
-                      />
-                    </div>
-                  ))}
-                </div>
-              ))}
+              {renderSectionEditor(["5", "6", "7", "8"], "Penalidades", "Advertência, suspensão e justa causa")}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="resignation">
+          <Card>
+            <CardHeader>
+              <CardTitle>👋 Pedido de Demissão pelo Colaborador</CardTitle>
+              <p className="text-sm text-gray-600">CLT - Aviso prévio e procedimentos</p>
+            </CardHeader>
+            <CardContent>
+              {renderSectionEditor(["9"], "Pedido de Demissão", "Desligamento voluntário")}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="safety">
+          <Card>
+            <CardHeader>
+              <CardTitle>🦺 Segurança e Saúde no Trabalho</CardTitle>
+              <p className="text-sm text-gray-600">NR-01, NR-06, NR-07, NR-12</p>
+            </CardHeader>
+            <CardContent>
+              {renderSectionEditor(["10"], "Segurança", "EPIs e procedimentos de segurança")}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="resources">
+          <Card>
+            <CardHeader>
+              <CardTitle>💻 Utilização de Recursos e Patrimônio</CardTitle>
+              <p className="text-sm text-gray-600">CLT art. 462 | Código Civil</p>
+            </CardHeader>
+            <CardContent>
+              {renderSectionEditor(["11"], "Recursos", "Equipamentos, internet e instalações")}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="confidentiality">
+          <Card>
+            <CardHeader>
+              <CardTitle>🔒 Sigilo e Confidencialidade</CardTitle>
+              <p className="text-sm text-gray-600">Código Civil | LGPD</p>
+            </CardHeader>
+            <CardContent>
+              {renderSectionEditor(["12"], "Sigilo", "Proteção de informações")}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="social">
+          <Card>
+            <CardHeader>
+              <CardTitle>📱 Celular, Redes Sociais e Imagem</CardTitle>
+              <p className="text-sm text-gray-600">Uso de tecnologia e proteção da imagem corporativa</p>
+            </CardHeader>
+            <CardContent>
+              {renderSectionEditor(["13"], "Redes Sociais", "Celular e publicações")}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="conduct">
+          <Card>
+            <CardHeader>
+              <CardTitle>🤝 Conduta Profissional e Relacionamento</CardTitle>
+              <p className="text-sm text-gray-600">CLT art. 482 | Assédio e discriminação</p>
+            </CardHeader>
+            <CardContent>
+              {renderSectionEditor(["14"], "Conduta", "Respeito e ética profissional")}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="dress">
+          <Card>
+            <CardHeader>
+              <CardTitle>👔 Vestimenta e Apresentação Pessoal</CardTitle>
+              <p className="text-sm text-gray-600">Padrão profissional</p>
+            </CardHeader>
+            <CardContent>
+              {renderSectionEditor(["15"], "Vestimenta", "Dress code e higiene")}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="training">
+          <Card>
+            <CardHeader>
+              <CardTitle>📚 Treinamento e Desenvolvimento</CardTitle>
+              <p className="text-sm text-gray-600">Capacitações obrigatórias</p>
+            </CardHeader>
+            <CardContent>
+              {renderSectionEditor(["16"], "Treinamento", "Participação em capacitações")}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="benefits">
+          <Card>
+            <CardHeader>
+              <CardTitle>🎁 Benefícios e Reconhecimento</CardTitle>
+              <p className="text-sm text-gray-600">Vale-alimentação, PLR, comissões</p>
+            </CardHeader>
+            <CardContent>
+              {renderSectionEditor(["17"], "Benefícios", "Programas de incentivo")}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="lgpd">
+          <Card>
+            <CardHeader>
+              <CardTitle>🛡️ Proteção de Dados (LGPD)</CardTitle>
+              <p className="text-sm text-gray-600">Lei 13.709/2018</p>
+            </CardHeader>
+            <CardContent>
+              {renderSectionEditor(["18"], "LGPD", "Privacidade e dados pessoais")}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="contracts">
+          <Card>
+            <CardHeader>
+              <CardTitle>📄 Alteração de Contratos e Atendimento</CardTitle>
+              <p className="text-sm text-gray-600">Procedimentos comerciais</p>
+            </CardHeader>
+            <CardContent>
+              {renderSectionEditor(["19"], "Contratos", "Modificações e atendimento")}
             </CardContent>
           </Card>
         </TabsContent>
@@ -371,29 +575,22 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
           <Card>
             <CardHeader>
               <CardTitle>🚗 Responsabilidade sobre Veículos de Clientes</CardTitle>
-              <p className="text-sm text-gray-600">Base legal: Código Civil – Responsabilidade por dano</p>
+              <p className="text-sm text-gray-600">Código Civil - Responsabilidade por dano</p>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {formData.sections?.filter(s => s.id === "20").map(section => (
-                <div key={section.id}>
-                  {section.subsections?.map((sub, index) => (
-                    <div key={sub.id} className="mb-3">
-                      <Label className="text-xs text-gray-600">{sub.number}</Label>
-                      <Textarea
-                        rows={3}
-                        value={sub.content}
-                        onChange={(e) => {
-                          const newSections = [...(formData.sections || [])];
-                          const sectionIndex = newSections.findIndex(s => s.id === "20");
-                          newSections[sectionIndex].subsections[index].content = e.target.value;
-                          setFormData({ ...formData, sections: newSections });
-                        }}
-                        className="text-sm"
-                      />
-                    </div>
-                  ))}
-                </div>
-              ))}
+            <CardContent>
+              {renderSectionEditor(["20"], "Veículos", "Custódia, testes e acidentes")}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="parts">
+          <Card>
+            <CardHeader>
+              <CardTitle>🔧 Danos a Peças e Componentes</CardTitle>
+              <p className="text-sm text-gray-600">Prevenção de prejuízos técnicos</p>
+            </CardHeader>
+            <CardContent>
+              {renderSectionEditor(["21"], "Peças", "Procedimentos e responsabilização")}
             </CardContent>
           </Card>
         </TabsContent>
@@ -401,63 +598,59 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
         <TabsContent value="equipment">
           <Card>
             <CardHeader>
-              <CardTitle>🔧 Equipamentos, Peças e Ferramentas</CardTitle>
-              <p className="text-sm text-gray-600">Base legal: NR-12 | CLT art. 462</p>
+              <CardTitle>🏗️ Elevadores e Equipamentos Pesados</CardTitle>
+              <p className="text-sm text-gray-600">NR-12 - Segurança em máquinas</p>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {formData.sections?.filter(s => s.id === "21" || s.id === "22" || s.id === "26").map(section => (
-                <div key={section.id} className="border-t pt-4">
-                  <h4 className="font-semibold text-sm mb-3">{section.number} {section.title}</h4>
-                  {section.subsections?.map((sub, index) => (
-                    <div key={sub.id} className="mb-3">
-                      <Label className="text-xs text-gray-600">{sub.number}</Label>
-                      <Textarea
-                        rows={3}
-                        value={sub.content}
-                        onChange={(e) => {
-                          const newSections = [...(formData.sections || [])];
-                          const sectionIndex = newSections.findIndex(s => s.id === section.id);
-                          newSections[sectionIndex].subsections[index].content = e.target.value;
-                          setFormData({ ...formData, sections: newSections });
-                        }}
-                        className="text-sm"
-                      />
-                    </div>
-                  ))}
-                </div>
-              ))}
+            <CardContent>
+              {renderSectionEditor(["22"], "Equipamentos", "Operação de máquinas de risco")}
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="quality">
+        <TabsContent value="diagnosis">
           <Card>
             <CardHeader>
-              <CardTitle>📋 Diagnóstico, OS e Qualidade Técnica</CardTitle>
-              <p className="text-sm text-gray-600">Procedimentos obrigatórios e retrabalho</p>
+              <CardTitle>📋 Diagnóstico e Ordem de Serviço</CardTitle>
+              <p className="text-sm text-gray-600">Procedimentos obrigatórios</p>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {formData.sections?.filter(s => s.id === "23" || s.id === "24" || s.id === "25").map(section => (
-                <div key={section.id} className="border-t pt-4">
-                  <h4 className="font-semibold text-sm mb-3">{section.number} {section.title}</h4>
-                  {section.subsections?.map((sub, index) => (
-                    <div key={sub.id} className="mb-3">
-                      <Label className="text-xs text-gray-600">{sub.number}</Label>
-                      <Textarea
-                        rows={2}
-                        value={sub.content}
-                        onChange={(e) => {
-                          const newSections = [...(formData.sections || [])];
-                          const sectionIndex = newSections.findIndex(s => s.id === section.id);
-                          newSections[sectionIndex].subsections[index].content = e.target.value;
-                          setFormData({ ...formData, sections: newSections });
-                        }}
-                        className="text-sm"
-                      />
-                    </div>
-                  ))}
-                </div>
-              ))}
+            <CardContent>
+              {renderSectionEditor(["23"], "Diagnóstico", "OS e aprovação do cliente")}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="rework">
+          <Card>
+            <CardHeader>
+              <CardTitle>🔄 Retrabalho e Desempenho Técnico</CardTitle>
+              <p className="text-sm text-gray-600">Qualidade e responsabilização</p>
+            </CardHeader>
+            <CardContent>
+              {renderSectionEditor(["24"], "Retrabalho", "Falhas operacionais")}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="organization">
+          <Card>
+            <CardHeader>
+              <CardTitle>🧹 Organização e Limpeza</CardTitle>
+              <p className="text-sm text-gray-600">NR-01 - Ambiente seguro</p>
+            </CardHeader>
+            <CardContent>
+              {renderSectionEditor(["25"], "Organização", "Manutenção do ambiente")}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="tools">
+          <Card>
+            <CardHeader>
+              <CardTitle>🧰 Ferramentas Pessoais e da Empresa</CardTitle>
+              <p className="text-sm text-gray-600">CLT art. 462 - Patrimônio</p>
+            </CardHeader>
+            <CardContent>
+              {renderSectionEditor(["26"], "Ferramentas", "Responsabilidade e devolução")}
             </CardContent>
           </Card>
         </TabsContent>
@@ -465,30 +658,11 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
         <TabsContent value="exit">
           <Card>
             <CardHeader>
-              <CardTitle>👋 Desligamento e Entrega de Bens</CardTitle>
-              <p className="text-sm text-gray-600">Procedimentos de rescisão e quitação</p>
+              <CardTitle>📦 Desligamento e Entrega de Bens</CardTitle>
+              <p className="text-sm text-gray-600">Procedimentos de rescisão</p>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {formData.sections?.filter(s => s.id === "27").map(section => (
-                <div key={section.id}>
-                  {section.subsections?.map((sub, index) => (
-                    <div key={sub.id} className="mb-3">
-                      <Label className="text-xs text-gray-600">{sub.number}</Label>
-                      <Textarea
-                        rows={2}
-                        value={sub.content}
-                        onChange={(e) => {
-                          const newSections = [...(formData.sections || [])];
-                          const sectionIndex = newSections.findIndex(s => s.id === "27");
-                          newSections[sectionIndex].subsections[index].content = e.target.value;
-                          setFormData({ ...formData, sections: newSections });
-                        }}
-                        className="text-sm"
-                      />
-                    </div>
-                  ))}
-                </div>
-              ))}
+            <CardContent>
+              {renderSectionEditor(["27"], "Desligamento", "Quitação e entrega")}
             </CardContent>
           </Card>
         </TabsContent>
@@ -497,11 +671,11 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
           <Card>
             <CardHeader>
               <CardTitle>📝 Disposições Finais e Assinatura</CardTitle>
-              <p className="text-sm text-gray-600">Declaração de ciência e validade jurídica</p>
+              <p className="text-sm text-gray-600">Validade jurídica do documento</p>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label>Texto Legal Padrão para Advertências</Label>
+                <Label>Texto Legal para Advertências</Label>
                 <Textarea
                   rows={4}
                   value={formData.warning_legal_text || ""}
@@ -509,7 +683,7 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
                   className="bg-red-50"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  ✔️ Fortalece juridicamente todas as advertências
+                  ✔️ Fortalece juridicamente as advertências
                 </p>
               </div>
 
@@ -532,37 +706,16 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
                 />
               </div>
 
-              {formData.sections?.filter(s => s.id === "28").map(section => (
-                <div key={section.id} className="border-t pt-4">
-                  <h4 className="font-semibold text-sm mb-3">{section.number} {section.title}</h4>
-                  {section.subsections?.map((sub, index) => (
-                    <div key={sub.id} className="mb-3">
-                      <Label className="text-xs text-gray-600">{sub.number}</Label>
-                      <Textarea
-                        rows={2}
-                        value={sub.content}
-                        onChange={(e) => {
-                          const newSections = [...(formData.sections || [])];
-                          const sectionIndex = newSections.findIndex(s => s.id === "28");
-                          newSections[sectionIndex].subsections[index].content = e.target.value;
-                          setFormData({ ...formData, sections: newSections });
-                        }}
-                        className="text-sm"
-                      />
-                    </div>
-                  ))}
-                </div>
-              ))}
+              {renderSectionEditor(["28"], "Finais", "Vigência e assinatura")}
 
-              <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4">
+              <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4 mt-6">
                 <h4 className="font-bold text-green-900 mb-2">🧠 Blindagem Jurídica Completa:</h4>
                 <ul className="text-sm text-green-900 space-y-1">
                   <li>✔️ Protege a empresa em processos trabalhistas</li>
-                  <li>✔️ Dá poder legal ao gestor para aplicar penalidades</li>
-                  <li>✔️ Dá clareza ao colaborador sobre deveres e consequências</li>
+                  <li>✔️ Dá poder legal ao gestor</li>
                   <li>✔️ Sustenta advertência, suspensão e justa causa</li>
-                  <li>✔️ Funciona como escudo jurídico em acidentes e danos</li>
-                  <li>✔️ Específico para oficinas mecânicas (veículos, equipamentos, retrabalho)</li>
+                  <li>✔️ Específico para oficinas mecânicas</li>
+                  <li>✔️ Nível corporativo de proteção jurídica</li>
                 </ul>
               </div>
             </CardContent>
