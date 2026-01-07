@@ -3,7 +3,9 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { FileText, Download, Eye, Loader2, AlertCircle } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { FileText, Download, Eye, Loader2, AlertCircle, Building2 } from "lucide-react";
 import ManualViewer from "@/components/manual/ManualViewer";
 
 export default function ManualProcessos() {
@@ -11,6 +13,7 @@ export default function ManualProcessos() {
   const [workshop, setWorkshop] = useState(null);
   const [showViewer, setShowViewer] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [incluirProcessosOficiais, setIncluirProcessosOficiais] = useState(true);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -34,6 +37,25 @@ export default function ManualProcessos() {
     queryFn: async () => {
       if (!workshop?.id) return null;
 
+      // Buscar processos baseado na escolha do usuário
+      const processosFilter = incluirProcessosOficiais 
+        ? { 
+            $or: [
+              { workshop_id: workshop.id },
+              { is_template: true, is_official: true }
+            ]
+          }
+        : { workshop_id: workshop.id };
+
+      const itsFilter = incluirProcessosOficiais
+        ? {
+            $or: [
+              { workshop_id: workshop.id },
+              { map_id: { $exists: true } }
+            ]
+          }
+        : { workshop_id: workshop.id };
+
       const [
         cultura,
         processos,
@@ -42,18 +64,8 @@ export default function ManualProcessos() {
         areas
       ] = await Promise.all([
         base44.entities.MissionVisionValues.filter({ workshop_id: workshop.id }),
-        base44.entities.ProcessDocument.filter({ 
-          $or: [
-            { workshop_id: workshop.id },
-            { is_template: true, is_official: true }
-          ]
-        }),
-        base44.entities.InstructionDocument.filter({ 
-          $or: [
-            { workshop_id: workshop.id },
-            { map_id: { $exists: true } }
-          ]
-        }),
+        base44.entities.ProcessDocument.filter(processosFilter),
+        base44.entities.InstructionDocument.filter(itsFilter),
         base44.entities.JobDescription.filter({ workshop_id: workshop.id }),
         base44.entities.ProcessArea.list()
       ]);
@@ -67,8 +79,8 @@ export default function ManualProcessos() {
         workshop
       };
     },
-    enabled: !!workshop?.id
-  });
+    enabled: !!workshop?.id && open
+  }, [workshop?.id, incluirProcessosOficiais]);
 
   const handleGenerateManual = () => {
     setGenerating(true);
@@ -166,6 +178,28 @@ export default function ManualProcessos() {
               </div>
             </div>
           )}
+
+          {/* Configuração de Inclusão */}
+          <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg w-full">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Building2 className="w-5 h-5 text-blue-600" />
+                <div>
+                  <Label htmlFor="incluir-oficiais" className="text-sm font-semibold text-gray-900 cursor-pointer">
+                    Incluir Processos Oficiais da Oficinas Master
+                  </Label>
+                  <p className="text-xs text-gray-600 mt-0.5">
+                    Adiciona processos padrão da consultoria ao manual
+                  </p>
+                </div>
+              </div>
+              <Switch
+                id="incluir-oficiais"
+                checked={incluirProcessosOficiais}
+                onCheckedChange={setIncluirProcessosOficiais}
+              />
+            </div>
+          </div>
 
           <div className="flex gap-3 pt-4">
             <Button 
