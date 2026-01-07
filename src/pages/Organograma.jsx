@@ -183,7 +183,7 @@ export default function Organograma() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle className="text-2xl font-bold">Organograma Estrutural</CardTitle>
+            <CardTitle className="text-2xl font-bold">Organograma de Áreas</CardTitle>
             <p className="text-sm text-gray-600 mt-1">
               Estrutura de áreas e funções de {workshop.name}
             </p>

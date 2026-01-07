@@ -152,6 +152,7 @@ import TestUsuarios from './pages/TestUsuarios';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import VisualizarProcesso from './pages/VisualizarProcesso';
 import UsuariosAdmin from './pages/UsuariosAdmin';
+import OrganogramaFuncional from './pages/OrganogramaFuncional';
 import __Layout from './Layout.jsx';
 
 
@@ -310,6 +311,7 @@ export const PAGES = {
     "TreinamentoVendas": TreinamentoVendas,
     "VisualizarProcesso": VisualizarProcesso,
     "UsuariosAdmin": UsuariosAdmin,
+    "OrganogramaFuncional": OrganogramaFuncional,
 }
 
 export const pagesConfig = {
