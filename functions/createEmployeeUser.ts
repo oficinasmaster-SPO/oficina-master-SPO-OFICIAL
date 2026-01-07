@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { name, email, position, area, job_role, profile_id, workshop_id } = body;
+    const { name, email, telefone, position, area, job_role, profile_id, workshop_id } = body;
     
     if (!name || !email || !workshop_id) {
       return Response.json({ error: 'Nome, email e oficina obrigatórios' }, { status: 400 });
@@ -34,6 +34,7 @@ Deno.serve(async (req) => {
     const employee = await base44.asServiceRole.entities.Employee.create({
       full_name: name,
       email: email,
+      telefone: telefone || '',
       position: position || 'Colaborador',
       area: area || 'tecnico',
       job_role: job_role || 'outros',
@@ -70,6 +71,7 @@ Deno.serve(async (req) => {
         employee_id: employee.id,
         name: name,
         email: email,
+        telefone: telefone || '',
         position: position || 'Colaborador',
         area: area || 'tecnico',
         job_role: job_role || 'outros',
