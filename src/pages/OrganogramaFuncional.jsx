@@ -93,10 +93,10 @@ export default function OrganogramaFuncional() {
             </div>
             <div className="flex-1">
               <CardTitle className="text-xl font-bold text-purple-900">
-                Organograma Funcional e Operacional
+                Organograma com Pessoas (Funcional/Operacional)
               </CardTitle>
               <CardDescription className="text-purple-700 mt-1">
-                Mostra as pessoas com fotos, nomes e cargos
+                Nome • Foto • Cargo • A quem responde
               </CardDescription>
             </div>
           </div>
@@ -108,20 +108,20 @@ export default function OrganogramaFuncional() {
                 <Target className="w-5 h-5 text-purple-600 mt-0.5 flex-shrink-0" />
                 <div>
                   <h3 className="font-semibold text-purple-900">O que ele responde</h3>
-                  <p className="text-sm text-purple-700">Quem ocupa cada função e para quem responde</p>
+                  <p className="text-sm text-purple-700">👉 Quem faz o quê hoje</p>
                 </div>
               </div>
               
               <div className="flex items-start gap-2">
                 <Users className="w-5 h-5 text-purple-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h3 className="font-semibold text-purple-900">Para que serve</h3>
+                  <h3 className="font-semibold text-purple-900">Para que ele serve</h3>
                   <ul className="text-sm text-purple-700 space-y-1">
-                    <li>• Clareza de hierarquia</li>
-                    <li>• Comunicação eficiente</li>
-                    <li>• Onboarding de novos colaboradores</li>
-                    <li>• Identificação de vagas em aberto</li>
-                    <li>• Cultura organizacional visível</li>
+                    <li>• Execução diária</li>
+                    <li>• Comunicação interna</li>
+                    <li>• Responsabilidade clara</li>
+                    <li>• Cobrança e alinhamento</li>
+                    <li>• Evita "ninguém sabia"</li>
                   </ul>
                 </div>
               </div>
@@ -132,20 +132,19 @@ export default function OrganogramaFuncional() {
                 <TrendingUp className="w-5 h-5 text-purple-600 mt-0.5 flex-shrink-0" />
                 <div>
                   <h3 className="font-semibold text-purple-900">Quando usar</h3>
-                  <p className="text-sm text-purple-700 mb-2">Para situações operacionais:</p>
+                  <p className="text-sm text-purple-700 mb-2">✔ Quando:</p>
                   <ul className="text-sm text-purple-700 space-y-1">
-                    <li>✔ Apresentar a equipe</li>
-                    <li>✔ Esclarecer hierarquias</li>
-                    <li>✔ Facilitar comunicação interna</li>
-                    <li>✔ Identificar responsáveis</li>
-                    <li>✔ Planejamento de sucessão</li>
+                    <li>• O time já existe</li>
+                    <li>• As funções estão claras</li>
+                    <li>• Você precisa cobrar</li>
+                    <li>• Você quer eficiência operacional</li>
                   </ul>
                 </div>
               </div>
 
               <div className="bg-purple-600 text-white p-4 rounded-lg">
                 <p className="text-sm font-medium italic">
-                  💡 "Pessoas são o coração da operação."
+                  💡 "Processo sem dono não funciona."
                 </p>
               </div>
             </div>
