@@ -20,7 +20,19 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     
-    const { token } = await req.json();
+    let token: string | null = null;
+
+    try {
+      const body = await req.json();
+      token = body?.token ?? null;
+    } catch (error) {
+      console.warn('⚠️ Não foi possível ler JSON do corpo:', error);
+    }
+
+    if (!token) {
+      const url = new URL(req.url);
+      token = url.searchParams.get('token');
+    }
 
     console.log("🔍 Validando token:", token);
 
@@ -30,7 +42,7 @@ Deno.serve(async (req) => {
 
     // Buscar convite pelo token usando service role - usando filter é mais eficiente
     const invites = await base44.asServiceRole.entities.EmployeeInvite.filter({ invite_token: token });
-    const invite = invites[0];
+    const invite = Array.isArray(invites) ? invites[0] : null;
 
     if (!invite) {
       return Response.json({ 
