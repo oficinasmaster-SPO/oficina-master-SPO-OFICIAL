@@ -77,6 +77,13 @@ export const sidebarStructure = [
     ],
   },
   {
+    id: "manual",
+    label: "Manual",
+    items: [
+      { name: "Manual de Processos", description: "Manual completo da empresa" },
+    ],
+  },
+  {
     id: "documentos",
     label: "Documentos",
     items: [
