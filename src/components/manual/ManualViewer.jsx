@@ -8,7 +8,7 @@ import ManualPDFGenerator from "./ManualPDFGenerator";
 export default function ManualViewer({ data, onClose }) {
   const { cultura, processos, instructionDocs, cargos, areas, workshop } = data;
 
-  // Agrupar processos por área
+  // Agrupar processos por área - incluindo templates e oficiais
   const processosPorArea = areas.reduce((acc, area) => {
     acc[area.id] = {
       area,
@@ -17,6 +17,13 @@ export default function ManualViewer({ data, onClose }) {
     };
     return acc;
   }, {});
+
+  // Debug: verificar quantos processos por área
+  console.log('Processos por área:', Object.keys(processosPorArea).map(areaId => ({
+    area: processosPorArea[areaId].area.name,
+    processos: processosPorArea[areaId].processos.length,
+    its: processosPorArea[areaId].its.length
+  })));
 
   const handleDownloadPDF = () => {
     ManualPDFGenerator.generate(data);
