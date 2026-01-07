@@ -7,6 +7,16 @@ import { Plus, Trash2, Sparkles, Network } from "lucide-react";
 import AIFieldAssist from "./AIFieldAssist";
 
 export default function ITInterRelacoesTab({ interRelacoes = [], onChange, itData, mapData }) {
+  const { data: areas = [] } = useQuery({
+    queryKey: ['process-areas'],
+    queryFn: async () => {
+      const allAreas = await base44.entities.ProcessArea.list();
+      return allAreas.sort((a, b) => (a.order || 0) - (b.order || 0));
+    }
+  });
+
+  const geraisAreas = areas.filter(a => a.category === 'geral');
+  const tecnicasAreas = areas.filter(a => a.category === 'tecnica');
   const addInterRelation = () => {
     onChange([...interRelacoes, { area: "", interacao: "" }]);
   };
