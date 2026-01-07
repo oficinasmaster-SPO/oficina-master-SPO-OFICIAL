@@ -265,8 +265,8 @@ export default function GerenciarProcessos() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.title || !formData.category) {
-      toast.error("Preencha os campos obrigatórios.");
+    if (!formData.title || !formData.category || !formData.area_id) {
+      toast.error("Preencha todos os campos obrigatórios (Título, Categoria e Área).");
       return;
     }
     // Remove pdf requirement for custom processes if user wants to rely on content_json content
@@ -521,32 +521,59 @@ export default function GerenciarProcessos() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Categoria *</Label>
+                        <Select 
+                          value={formData.category} 
+                          onValueChange={value => setFormData({...formData, category: value})}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {categories.map(cat => (
+                              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Versão do Documento</Label>
+                        <Input 
+                          value={formData.revision} 
+                          onChange={e => setFormData({...formData, revision: e.target.value})}
+                          placeholder="Ex: 1, 2, 3..."
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Incrementar ao atualizar o processo
+                        </p>
+                      </div>
+                    </div>
+
                     <div>
-                      <Label>Categoria *</Label>
+                      <Label>Área do Processo *</Label>
                       <Select 
-                        value={formData.category} 
-                        onValueChange={value => setFormData({...formData, category: value})}
+                        value={formData.area_id} 
+                        onValueChange={value => setFormData({...formData, area_id: value})}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecione..." />
+                          <SelectValue placeholder="Selecione a área..." />
                         </SelectTrigger>
                         <SelectContent>
-                          {categories.map(cat => (
-                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                          <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 border-b">ÁREAS GERAIS</div>
+                          {processAreas.filter(a => a.category === 'geral').map(area => (
+                            <SelectItem key={area.id} value={area.id}>{area.name}</SelectItem>
+                          ))}
+                          <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 border-b mt-2">ÁREAS TÉCNICAS</div>
+                          {processAreas.filter(a => a.category === 'tecnica').map(area => (
+                            <SelectItem key={area.id} value={area.id}>{area.name}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
-                    </div>
-                    <div>
-                      <Label>Versão do Documento</Label>
-                      <Input 
-                        value={formData.revision} 
-                        onChange={e => setFormData({...formData, revision: e.target.value})}
-                        placeholder="Ex: 1, 2, 3..."
-                      />
                       <p className="text-xs text-gray-500 mt-1">
-                        Incrementar ao atualizar o processo
+                        Define a área de aplicação principal deste processo
                       </p>
                     </div>
                   </div>
@@ -928,6 +955,7 @@ export default function GerenciarProcessos() {
                     <TableHead>Código</TableHead>
                     <TableHead>Título</TableHead>
                     <TableHead>Categoria</TableHead>
+                    <TableHead>Área</TableHead>
                     <TableHead>Planos</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
@@ -935,29 +963,40 @@ export default function GerenciarProcessos() {
                 <TableBody>
                   {filteredDocs.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                      <TableCell colSpan={6} className="text-center py-8 text-gray-500">
                         Nenhum processo encontrado.
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredDocs.map((doc) => (
-                      <TableRow key={doc.id}>
-                        <TableCell className="font-mono text-xs">{doc.code || "-"}</TableCell>
-                        <TableCell>
-                          <div className="font-medium">{doc.title}</div>
-                          <div className="text-xs text-gray-500">{doc.description && doc.description.substring(0, 50) + "..."}</div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="secondary">{doc.category}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-wrap gap-1">
-                            {doc.plan_access?.slice(0, 3).map(p => (
-                              <span key={p} className="text-xs bg-gray-100 px-1 rounded">{p}</span>
-                            ))}
-                            {doc.plan_access?.length > 3 && <span className="text-xs text-gray-500">+{doc.plan_access.length - 3}</span>}
-                          </div>
-                        </TableCell>
+                    filteredDocs.map((doc) => {
+                      const areaData = processAreas.find(a => a.id === doc.area_id);
+                      return (
+                        <TableRow key={doc.id}>
+                          <TableCell className="font-mono text-xs">{doc.code || "-"}</TableCell>
+                          <TableCell>
+                            <div className="font-medium">{doc.title}</div>
+                            <div className="text-xs text-gray-500">{doc.description && doc.description.substring(0, 50) + "..."}</div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">{doc.category}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            {areaData ? (
+                              <Badge variant="outline" style={{ borderColor: areaData.color, color: areaData.color }}>
+                                {areaData.name}
+                              </Badge>
+                            ) : (
+                              <span className="text-xs text-gray-400">-</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-wrap gap-1">
+                              {doc.plan_access?.slice(0, 3).map(p => (
+                                <span key={p} className="text-xs bg-gray-100 px-1 rounded">{p}</span>
+                              ))}
+                              {doc.plan_access?.length > 3 && <span className="text-xs text-gray-500">+{doc.plan_access.length - 3}</span>}
+                            </div>
+                          </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button size="icon" variant="ghost" onClick={() => window.open(doc.pdf_url, '_blank')}>
@@ -973,8 +1012,9 @@ export default function GerenciarProcessos() {
                             </Button>
                           </div>
                         </TableCell>
-                      </TableRow>
-                    ))
+                        </TableRow>
+                      );
+                    })
                   )}
                 </TableBody>
               </Table>
