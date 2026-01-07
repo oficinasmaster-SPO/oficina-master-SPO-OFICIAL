@@ -47,16 +47,16 @@ export default function ManualProcessos() {
       if (!workshop?.id) return null;
 
       // Buscar processos baseado na escolha do usuário
-      // Buscar processos (MAPs)
+      // Buscar processos (MAPs) - templates OU da oficina
       const allProcessos = await base44.entities.ProcessDocument.list();
       const processos = incluirProcessosOficiais
-        ? allProcessos.filter(p => p.workshop_id === workshop.id || (p.is_template && p.is_official))
+        ? allProcessos.filter(p => p.is_template || p.workshop_id === workshop.id)
         : allProcessos.filter(p => p.workshop_id === workshop.id);
 
-      // Buscar ITs
+      // Buscar ITs - oficiais OU da oficina
       const allITs = await base44.entities.InstructionDocument.list();
       const instructionDocs = incluirProcessosOficiais
-        ? allITs.filter(it => it.workshop_id === workshop.id || it.is_official)
+        ? allITs.filter(it => it.is_official || it.workshop_id === workshop.id)
         : allITs.filter(it => it.workshop_id === workshop.id);
 
       const [
