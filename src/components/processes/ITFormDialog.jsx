@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Sparkles } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
 import ITFluxoTab from "./ITFluxoTab";
 import ITAtividadesTab from "./ITAtividadesTab";
 import ITRiscosTab from "./ITRiscosTab";
@@ -24,6 +25,7 @@ export default function ITFormDialog({ open, onClose, it, mapId, workshopId, onS
     title: "",
     type: "IT",
     description: "",
+    area_id: "",
     content: {
       objetivo: "",
       campo_aplicacao: "",
@@ -37,6 +39,14 @@ export default function ITFormDialog({ open, onClose, it, mapId, workshopId, onS
       evidencia_execucao: { tipo_evidencia: "", descricao: "", periodo_retencao: "", justificativa_retencao: "" }
     },
     file_url: ""
+  });
+
+  const { data: processAreas = [] } = useQuery({
+    queryKey: ['process-areas'],
+    queryFn: async () => {
+      const allAreas = await base44.entities.ProcessArea.list();
+      return allAreas.sort((a, b) => (a.order || 0) - (b.order || 0));
+    }
   });
 
   React.useEffect(() => {
@@ -59,6 +69,7 @@ export default function ITFormDialog({ open, onClose, it, mapId, workshopId, onS
         title: it.title || "",
         type: it.type || "IT",
         description: it.description || "",
+        area_id: it.area_id || "",
         content: {
           objetivo: it.content?.objetivo || "",
           campo_aplicacao: it.content?.campo_aplicacao || "",
@@ -78,6 +89,7 @@ export default function ITFormDialog({ open, onClose, it, mapId, workshopId, onS
         title: "",
         type: "IT",
         description: "",
+        area_id: "",
         content: {
           objetivo: "",
           campo_aplicacao: "",
@@ -161,6 +173,11 @@ export default function ITFormDialog({ open, onClose, it, mapId, workshopId, onS
       return;
     }
 
+    if (!formData.area_id) {
+      toast.error("Área do Processo é obrigatória");
+      return;
+    }
+
     if (!formData.content.objetivo?.trim()) {
       toast.error("Objetivo é obrigatório");
       return;
@@ -209,24 +226,51 @@ export default function ITFormDialog({ open, onClose, it, mapId, workshopId, onS
           </TabsList>
 
           <TabsContent value="basico" className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Título *</Label>
-                <Input
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="Ex: Abertura de OS"
-                />
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Título *</Label>
+                  <Input
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    placeholder="Ex: Abertura de OS"
+                  />
+                </div>
+                <div>
+                  <Label>Tipo *</Label>
+                  <Select value={formData.type} onValueChange={(v) => setFormData({ ...formData, type: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="IT">IT - Instrução de Trabalho</SelectItem>
+                      <SelectItem value="FR">FR - Formulário/Registro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
+
               <div>
-                <Label>Tipo *</Label>
-                <Select value={formData.type} onValueChange={(v) => setFormData({ ...formData, type: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                <Label>Área do Processo *</Label>
+                <Select 
+                  value={formData.area_id} 
+                  onValueChange={(v) => setFormData({ ...formData, area_id: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a área..." />
+                  </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="IT">IT - Instrução de Trabalho</SelectItem>
-                    <SelectItem value="FR">FR - Formulário/Registro</SelectItem>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 border-b">ÁREAS GERAIS</div>
+                    {processAreas.filter(a => a.category === 'geral').map(area => (
+                      <SelectItem key={area.id} value={area.id}>{area.name}</SelectItem>
+                    ))}
+                    <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 border-b mt-2">ÁREAS TÉCNICAS</div>
+                    {processAreas.filter(a => a.category === 'tecnica').map(area => (
+                      <SelectItem key={area.id} value={area.id}>{area.name}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Define a área de aplicação principal deste processo
+                </p>
               </div>
             </div>
 
