@@ -14,6 +14,7 @@ export default function ManualProcessos() {
   const [showViewer, setShowViewer] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [incluirProcessosOficiais, setIncluirProcessosOficiais] = useState(true);
+  const [isRefetching, setIsRefetching] = useState(false);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -31,6 +32,14 @@ export default function ManualProcessos() {
     };
     loadUser();
   }, []);
+
+  // Refetch quando o toggle mudar
+  useEffect(() => {
+    if (workshop?.id) {
+      setIsRefetching(true);
+      refetch().finally(() => setIsRefetching(false));
+    }
+  }, [incluirProcessosOficiais]);
 
   const { data: manualData, isLoading, refetch } = useQuery({
     queryKey: ['manual-data', workshop?.id, incluirProcessosOficiais],
@@ -132,10 +141,10 @@ export default function ManualProcessos() {
             </p>
           </div>
 
-          {isLoading ? (
+          {(isLoading || isRefetching) ? (
             <div className="flex items-center gap-2 text-gray-600">
               <Loader2 className="w-5 h-5 animate-spin" />
-              <span>Carregando dados...</span>
+              <span>{isRefetching ? 'Atualizando dados...' : 'Carregando dados...'}</span>
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full mt-6">
