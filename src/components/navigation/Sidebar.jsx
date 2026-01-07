@@ -255,10 +255,18 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           requiredPermission: 'workshop.view'
         },
         { 
-          name: 'Organograma', 
+          name: 'Organograma Estrutural', 
           href: createPageUrl('Organograma'), 
           icon: Network,
-          description: 'Estrutura organizacional editável',
+          description: 'Áreas e funções',
+          highlight: true,
+          requiredPermission: 'workshop.view'
+        },
+        { 
+          name: 'Organograma Funcional', 
+          href: createPageUrl('OrganogramaFuncional'), 
+          icon: Users,
+          description: 'Pessoas e equipes',
           highlight: true,
           requiredPermission: 'workshop.view'
         },
