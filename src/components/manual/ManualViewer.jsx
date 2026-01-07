@@ -8,31 +8,21 @@ import ManualPDFGenerator from "./ManualPDFGenerator";
 export default function ManualViewer({ data, onClose }) {
   const { cultura, processos, instructionDocs, cargos, areas, workshop } = data;
 
-  // Debug: verificar dados recebidos
-  console.log('=== MANUAL VIEWER DEBUG ===');
-  console.log('Total de processos recebidos:', processos.length);
-  console.log('Total de ITs recebidos:', instructionDocs.length);
-  console.log('Total de áreas:', areas.length);
-  console.log('Processos:', processos.map(p => ({ id: p.id, title: p.title, area_id: p.area_id, is_template: p.is_template })));
-  console.log('Áreas:', areas.map(a => ({ id: a.id, name: a.name })));
-
-  // Agrupar processos por área - incluindo templates e oficiais
+  // Agrupar processos por área - garantindo que todos apareçam
   const processosPorArea = areas.reduce((acc, area) => {
-    acc[area.id] = {
-      area,
-      processos: processos.filter(p => p.area_id === area.id),
-      its: instructionDocs.filter(it => it.area_id === area.id)
-    };
+    const processosArea = processos.filter(p => p.area_id === area.id);
+    const itsArea = instructionDocs.filter(it => it.area_id === area.id);
+    
+    // Só adiciona se houver conteúdo
+    if (processosArea.length > 0 || itsArea.length > 0) {
+      acc[area.id] = {
+        area,
+        processos: processosArea,
+        its: itsArea
+      };
+    }
     return acc;
   }, {});
-
-  // Debug: verificar quantos processos por área
-  console.log('Processos agrupados por área:', Object.keys(processosPorArea).map(areaId => ({
-    area: processosPorArea[areaId].area.name,
-    processos: processosPorArea[areaId].processos.length,
-    its: processosPorArea[areaId].its.length
-  })));
-  console.log('=========================');
 
   const handleDownloadPDF = () => {
     ManualPDFGenerator.generate(data);
