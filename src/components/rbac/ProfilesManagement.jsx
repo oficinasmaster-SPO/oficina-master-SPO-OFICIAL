@@ -38,6 +38,14 @@ export default function ProfilesManagement() {
     },
   });
 
+  const { data: users = [] } = useQuery({
+    queryKey: ["users-for-profiles"],
+    queryFn: async () => {
+      const data = await base44.asServiceRole.entities.User.list();
+      return data || [];
+    },
+  });
+
   const totalSystemRoles = systemRoles.reduce((sum, m) => sum + m.roles.length, 0);
 
   const toggleStatusMutation = useMutation({
@@ -75,7 +83,9 @@ export default function ProfilesManagement() {
   });
 
   const getUsersCountByProfile = (profileId) => {
-    return employees.filter(e => e.profile_id === profileId).length;
+    const employeesWithProfile = employees.filter(e => e.profile_id === profileId).length;
+    const usersWithProfile = users.filter(u => u.profile_id === profileId).length;
+    return employeesWithProfile + usersWithProfile;
   };
 
   const handleEdit = (profile) => {
