@@ -23,6 +23,7 @@ Deno.serve(async (req) => {
     }
 
     const employee = employees[0];
+    const employeeActiveStatus = employee.tipo_vinculo === 'cliente' ? 'ativo' : 'active';
 
     // Vincular user_id ao Employee se ainda não tiver
     if (!employee.user_id) {
@@ -35,8 +36,10 @@ Deno.serve(async (req) => {
       console.log(`✅ User ${user.id} vinculado ao Employee ${employee.id}`);
     }
 
+    let finalProfileId = employee.profile_id || user.profile_id;
+
     // 🔄 AUTO-VINCULAÇÃO: Buscar perfil baseado em job_role se não tiver profile_id
-    if (!employee.profile_id && employee.job_role) {
+    if (!finalProfileId && employee.job_role) {
       try {
         const allProfiles = await base44.asServiceRole.entities.UserProfile.list();
         const matchingProfile = (allProfiles || []).find(
@@ -48,6 +51,7 @@ Deno.serve(async (req) => {
         );
         
         if (matchingProfile) {
+          finalProfileId = matchingProfile.id;
           await base44.asServiceRole.entities.Employee.update(employee.id, { 
             profile_id: matchingProfile.id 
           });
@@ -58,6 +62,53 @@ Deno.serve(async (req) => {
       } catch (error) {
         console.warn("⚠️ Erro ao buscar perfil:", error);
       }
+    }
+
+    if (!finalProfileId && employee.profile_id) {
+      finalProfileId = employee.profile_id;
+    }
+
+    if (finalProfileId && user.profile_id !== finalProfileId) {
+      await base44.asServiceRole.entities.User.update(user.id, {
+        profile_id: finalProfileId
+      });
+      console.log(`✅ Profile ${finalProfileId} vinculado ao User ${user.id}`);
+    }
+
+    if (finalProfileId && employee.profile_id !== finalProfileId) {
+      await base44.asServiceRole.entities.Employee.update(employee.id, {
+        profile_id: finalProfileId
+      });
+      console.log(`✅ Profile ${finalProfileId} vinculado ao Employee ${employee.id}`);
+    }
+
+    if (finalProfileId) {
+      try {
+        const selectedProfile = await base44.asServiceRole.entities.UserProfile.get(finalProfileId);
+        const profileCustomRoleIds = selectedProfile?.custom_role_ids || [];
+
+        if (profileCustomRoleIds.length > 0) {
+          await base44.asServiceRole.entities.User.update(user.id, {
+            custom_role_ids: profileCustomRoleIds
+          });
+          await base44.asServiceRole.entities.Employee.update(employee.id, {
+            custom_role_ids: profileCustomRoleIds
+          });
+          console.log('✅ Custom roles sincronizadas:', profileCustomRoleIds);
+        }
+      } catch (error) {
+        console.warn("⚠️ Erro ao sincronizar custom roles:", error);
+      }
+    }
+
+    if (finalProfileId && (user.user_status === 'pending' || employee.user_status === 'pending')) {
+      await base44.asServiceRole.entities.User.update(user.id, {
+        user_status: 'active'
+      });
+      await base44.asServiceRole.entities.Employee.update(employee.id, {
+        user_status: employeeActiveStatus
+      });
+      console.log('✅ Usuário aprovado automaticamente após vincular perfil.');
     }
 
     // Atualizar workshop_id no User se o Employee tiver

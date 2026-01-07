@@ -184,7 +184,18 @@ export default function UsuariosAdmin() {
         updateData.custom_role_ids = data.custom_role_ids;
       }
 
-      return await base44.entities.Employee.update(userId, updateData);
+      const updatedEmployee = await base44.entities.Employee.update(userId, updateData);
+
+      if (selectedUser?.user_id) {
+        const normalizedUserStatus = data.user_status === 'ativo' ? 'active' : data.user_status;
+        await base44.entities.User.update(selectedUser.user_id, {
+          profile_id: data.profile_id,
+          custom_role_ids: data.custom_role_ids,
+          user_status: normalizedUserStatus
+        });
+      }
+
+      return updatedEmployee;
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['admin-users']);

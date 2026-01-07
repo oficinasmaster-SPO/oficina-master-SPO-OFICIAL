@@ -56,8 +56,10 @@ Deno.serve(async (req) => {
       if (match) finalProfileId = match.id;
     }
 
+    const employeeActiveStatus = employee.tipo_vinculo === 'cliente' ? 'ativo' : 'active';
+
     await base44.asServiceRole.entities.User.update(userId, {
-      user_status: 'approved',
+      user_status: 'active',
       approved_at: new Date().toISOString(),
       approved_by: admin.id,
       profile_id: finalProfileId || null,
@@ -66,7 +68,7 @@ Deno.serve(async (req) => {
 
     await base44.asServiceRole.entities.Employee.update(employee.id, {
       user_id: userId,
-      user_status: 'approved',
+      user_status: employeeActiveStatus,
       profile_id: finalProfileId || null
     });
 
