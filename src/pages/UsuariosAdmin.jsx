@@ -188,11 +188,17 @@ export default function UsuariosAdmin() {
 
       if (selectedUser?.user_id) {
         const normalizedUserStatus = data.user_status === 'ativo' ? 'active' : data.user_status;
-        await base44.entities.User.update(selectedUser.user_id, {
+        const userUpdateData = {
           profile_id: data.profile_id,
           custom_role_ids: data.custom_role_ids,
           user_status: normalizedUserStatus
-        });
+        };
+
+        if (data.role) {
+          userUpdateData.role = data.role;
+        }
+
+        await base44.entities.User.update(selectedUser.user_id, userUpdateData);
       }
 
       return updatedEmployee;
