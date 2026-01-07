@@ -249,6 +249,26 @@ export default class ManualPDFGenerator {
             checkPageBreak(30);
           }
           
+          // Fluxo com Imagem
+          if (content.fluxo_image_url) {
+            checkPageBreak(80);
+            doc.setFont(undefined, 'bold');
+            doc.text('3. FLUXOGRAMA DO PROCESSO', 20, yPos);
+            yPos += 7;
+            
+            try {
+              doc.addImage(content.fluxo_image_url, 'PNG', 20, yPos, 170, 0);
+              yPos += 100;
+            } catch (error) {
+              doc.setFont(undefined, 'italic');
+              doc.text('(Imagem do fluxograma não pôde ser carregada)', 20, yPos);
+              yPos += 7;
+            }
+            doc.setFont(undefined, 'normal');
+            yPos += 8;
+            checkPageBreak(30);
+          }
+          
           // Atividades
           if (content.atividades && content.atividades.length > 0) {
             checkPageBreak(40);
@@ -392,6 +412,26 @@ export default class ManualPDFGenerator {
             const campoLines = doc.splitTextToSize(content.campo_aplicacao, 170);
             doc.text(campoLines, 20, yPos);
             yPos += campoLines.length * 6 + 8;
+            checkPageBreak(30);
+          }
+          
+          // Fluxo com Imagem
+          if (content.fluxo_image_url) {
+            checkPageBreak(80);
+            doc.setFont(undefined, 'bold');
+            doc.text('3. FLUXOGRAMA', 20, yPos);
+            yPos += 7;
+            
+            try {
+              doc.addImage(content.fluxo_image_url, 'PNG', 20, yPos, 170, 0);
+              yPos += 100;
+            } catch (error) {
+              doc.setFont(undefined, 'italic');
+              doc.text('(Imagem não pôde ser carregada)', 20, yPos);
+              yPos += 7;
+            }
+            doc.setFont(undefined, 'normal');
+            yPos += 8;
             checkPageBreak(30);
           }
           
