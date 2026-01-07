@@ -355,7 +355,7 @@ export default function HiringGoalsManager({ open, onClose, workshopId }) {
                     <option value="all">Todos os Prazos</option>
                     <option value="urgent">Urgente (≤7 dias)</option>
                     <option value="soon">Próximo (8-30 dias)</option>
-                    <option value="future">Futuro (>30 dias)</option>
+                    <option value="future">Futuro (&gt;30 dias)</option>
                     <option value="custom">Personalizado</option>
                   </select>
 
