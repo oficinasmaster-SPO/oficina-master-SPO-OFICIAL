@@ -8,31 +8,39 @@ import ManualPDFGenerator from "./ManualPDFGenerator";
 export default function ManualViewer({ data, onClose }) {
   const { cultura, processos, instructionDocs, cargos, areas, workshop } = data;
 
-  // Debug: verificar todos os campos do primeiro processo
-  if (processos?.length > 0) {
-    console.log('=== CAMPOS DO PRIMEIRO PROCESSO ===');
-    console.log('Processo completo:', processos[0]);
-    console.log('Campos disponíveis:', Object.keys(processos[0]));
-  }
-
   // Agrupar processos por área
-  const processosPorArea = areas.reduce((acc, area) => {
+  const processosPorArea = {};
+  
+  // Processos e ITs com área definida
+  areas.forEach(area => {
     const processosArea = processos.filter(p => p.area_id === area.id);
     const itsArea = instructionDocs.filter(it => it.area_id === area.id);
     
     if (processosArea.length > 0 || itsArea.length > 0) {
-      acc[area.id] = {
+      processosPorArea[area.id] = {
         area,
         processos: processosArea,
         its: itsArea
       };
-      console.log(`Área ${area.name}: ${processosArea.length} MAPs, ${itsArea.length} ITs`);
     }
-    return acc;
-  }, {});
+  });
   
-  console.log('Total áreas com conteúdo:', Object.keys(processosPorArea).length);
-  console.log('===========================');
+  // Processos e ITs sem área definida (null ou undefined)
+  const processosSemArea = processos.filter(p => !p.area_id);
+  const itsSemArea = instructionDocs.filter(it => !it.area_id);
+  
+  if (processosSemArea.length > 0 || itsSemArea.length > 0) {
+    processosPorArea['sem_area'] = {
+      area: { 
+        id: 'sem_area', 
+        name: 'Processos Gerais', 
+        color: '#6B7280',
+        description: 'Processos e procedimentos não vinculados a uma área específica'
+      },
+      processos: processosSemArea,
+      its: itsSemArea
+    };
+  }
 
   const handleDownloadPDF = () => {
     ManualPDFGenerator.generate(data);
