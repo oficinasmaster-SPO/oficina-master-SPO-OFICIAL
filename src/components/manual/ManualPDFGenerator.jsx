@@ -161,9 +161,27 @@ export default class ManualPDFGenerator {
     doc.text("4. Processos por Área", 20, yPos);
     yPos += 12;
 
-    areas.forEach(area => {
-      const areaProcessos = processos.filter(p => p.area_id === area.id);
-      const areaITs = instructionDocs.filter(it => it.area_id === area.id);
+    // Incluir processos sem área como "Processos Gerais"
+    const allAreas = [...areas];
+    const processosSemArea = processos.filter(p => !p.area_id);
+    const itsSemArea = instructionDocs.filter(it => !it.area_id);
+    
+    if (processosSemArea.length > 0 || itsSemArea.length > 0) {
+      allAreas.push({
+        id: 'sem_area',
+        name: 'Processos Gerais',
+        category: 'geral',
+        description: 'Processos não vinculados a uma área específica'
+      });
+    }
+
+    allAreas.forEach(area => {
+      const areaProcessos = area.id === 'sem_area' 
+        ? processosSemArea 
+        : processos.filter(p => p.area_id === area.id);
+      const areaITs = area.id === 'sem_area'
+        ? itsSemArea
+        : instructionDocs.filter(it => it.area_id === area.id);
       
       if (areaProcessos.length === 0 && areaITs.length === 0) return;
 
