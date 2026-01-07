@@ -433,6 +433,61 @@ Quando colaborador com job_role="tecnico" se cadastra:<br/>
               <CardContent className="space-y-6">
                 <div className="grid gap-4">
                   <div className="border rounded-lg p-4 bg-white">
+                    <h4 className="font-bold text-lg mb-2">User (Base44) - Gestão de Perfil</h4>
+                    <div className="space-y-3 text-sm text-gray-700">
+                      <div>
+                        <p className="font-semibold text-gray-900">Atributos padrão (imutáveis):</p>
+                        <ul className="list-disc ml-6 space-y-1">
+                          <li><strong>id</strong>, <strong>created_date</strong>, <strong>updated_date</strong></li>
+                          <li><strong>full_name</strong>, <strong>email</strong>, <strong>role</strong> ("admin" | "user")</li>
+                        </ul>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900">Atributos personalizados:</p>
+                        <p>
+                          Adicione campos no arquivo <code>entities/User.json</code> (ex:{" "}
+                          <code>{`{"bio": {"type": "string"}}`}</code>) e acesse via SDK.
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900">Permissões automáticas:</p>
+                        <ul className="list-disc ml-6 space-y-1">
+                          <li><strong>Admin</strong>: lista/edita/deleta usuários (exceto atributos padrão)</li>
+                          <li><strong>User</strong>: acessa e atualiza apenas o próprio registro</li>
+                        </ul>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900">Acesso ao usuário logado:</p>
+                        <p>
+                          <code>base44.auth.me()</code> retorna o usuário atual. Em páginas públicas, pode retornar{" "}
+                          <code>null</code> ou lançar erro conforme a configuração de proteção.
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900">Ferramentas para o desenvolvedor:</p>
+                        <ul className="list-disc ml-6 space-y-1">
+                          <li><code>read_entities("User")</code> para inspecionar o schema atual</li>
+                          <li>Dashboard Base44 para visualizar e gerenciar usuários</li>
+                        </ul>
+                      </div>
+                      <div className="bg-gray-50 p-3 rounded text-xs font-mono space-y-2">
+                        <div>
+                          <span className="font-semibold">Usuário logado:</span> <br />
+                          <code>{`const user = await base44.auth.me();`}</code>
+                        </div>
+                        <div>
+                          <span className="font-semibold">Atualizar perfil:</span> <br />
+                          <code>{`await base44.auth.updateMe({ bio: "Minha nova biografia." });`}</code>
+                        </div>
+                        <div>
+                          <span className="font-semibold">Listar usuários (admin):</span> <br />
+                          <code>{`const allUsers = await base44.entities.User.list();`}</code>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border rounded-lg p-4 bg-white">
                     <h4 className="font-bold text-lg mb-2">Employee</h4>
                     <div className="bg-gray-50 p-3 rounded text-xs font-mono space-y-1">
                       <div><strong>id:</strong> string (auto)</div>
