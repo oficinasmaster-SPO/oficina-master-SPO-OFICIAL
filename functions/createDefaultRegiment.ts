@@ -192,8 +192,12 @@ Deno.serve(async (req) => {
       workshop_id,
       version: "1.0",
       effective_date: new Date().toISOString().split('T')[0],
+      objective: "Este Regimento Interno tem como finalidade estabelecer normas claras de conduta, direitos, deveres e procedimentos disciplinares, em conformidade com a Consolidação das Leis do Trabalho (CLT), a Constituição Federal e as Normas Regulamentadoras (NRs) do Ministério do Trabalho e Emprego, visando proteger a empresa, os colaboradores e os clientes, além de servir como base jurídica para todas as decisões administrativas e disciplinares.",
       sections: DEFAULT_REGIMENT,
-      status: 'draft'
+      status: 'draft',
+      warning_legal_text: "Esta advertência é aplicada com fundamento no artigo 482 da Consolidação das Leis do Trabalho (CLT), em razão do descumprimento das normas internas da empresa, previamente comunicadas ao colaborador através do Regimento Interno devidamente assinado. O presente ato disciplinar observa os princípios da proporcionalidade, gradualidade, imediatidade e registro documental, garantindo ao colaborador o direito à ampla defesa.",
+      acknowledgment_text: "Declaro que recebi, li, compreendi e estou plenamente ciente de todas as normas, regras, deveres, proibições e consequências descritas neste Regimento Interno. Comprometo-me a cumprir fielmente todas as disposições aqui estabelecidas, sob pena de aplicação das medidas disciplinares previstas na legislação trabalhista vigente.",
+      final_provisions: "Os casos omissos neste Regimento serão resolvidos pela Diretoria da empresa, respeitando sempre os princípios da razoabilidade, proporcionalidade e conformidade com a legislação trabalhista vigente. A empresa se reserva o direito de atualizar, modificar ou complementar este Regimento a qualquer momento, mediante comunicação prévia e formal aos colaboradores, garantindo a ciência de todos. O presente Regimento foi elaborado com base na CLT (Consolidação das Leis do Trabalho), Constituição Federal, Código Civil, NRs (Normas Regulamentadoras) e demais legislações aplicáveis."
     });
 
     return Response.json({ 
