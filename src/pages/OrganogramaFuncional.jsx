@@ -1,14 +1,18 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Info, Users, Target, TrendingUp, Download, FileText } from "lucide-react";
+import { Info, Users, Target, TrendingUp, Download, FileText, Edit3, Eye } from "lucide-react";
+import { toast } from "sonner";
 import FunctionalOrgChart from "@/components/organization/FunctionalOrgChart";
+import FunctionalOrgChartEditor from "@/components/organization/FunctionalOrgChartEditor";
 import { generateFunctionalOrgChartPDF } from "@/components/organization/FunctionalOrgChartPDFGenerator";
 
 export default function OrganogramaFuncional() {
   const [workshop, setWorkshop] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const queryClient = useQueryClient();
 
   React.useEffect(() => {
     const loadWorkshop = async () => {
@@ -41,6 +45,14 @@ export default function OrganogramaFuncional() {
       return await base44.entities.Employee.filter({ workshop_id: workshop.id, status: 'ativo' });
     },
     enabled: !!workshop?.id,
+  });
+
+  const updateNodeMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.OrgChartNode.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orgchart-nodes'] });
+      toast.success("Organograma atualizado");
+    },
   });
 
   if (!workshop) {
@@ -162,28 +174,56 @@ export default function OrganogramaFuncional() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button 
-              onClick={() => generateFunctionalOrgChartPDF(structuralNodes, employees, workshop, false)} 
-              variant="outline"
+            {!isEditing && (
+              <>
+                <Button 
+                  onClick={() => generateFunctionalOrgChartPDF(structuralNodes, employees, workshop, false)} 
+                  variant="outline"
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  Visualizar PDF
+                </Button>
+                <Button 
+                  onClick={() => generateFunctionalOrgChartPDF(structuralNodes, employees, workshop, true)} 
+                  variant="outline"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Baixar PDF
+                </Button>
+              </>
+            )}
+            <Button
+              onClick={() => setIsEditing(!isEditing)}
+              variant={isEditing ? "default" : "outline"}
             >
-              <FileText className="w-4 h-4 mr-2" />
-              Visualizar PDF
-            </Button>
-            <Button 
-              onClick={() => generateFunctionalOrgChartPDF(structuralNodes, employees, workshop, true)} 
-              variant="outline"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Baixar PDF
+              {isEditing ? (
+                <>
+                  <Eye className="w-4 h-4 mr-2" />
+                  Visualizar
+                </>
+              ) : (
+                <>
+                  <Edit3 className="w-4 h-4 mr-2" />
+                  Associar Pessoas
+                </>
+              )}
             </Button>
           </div>
         </CardHeader>
         <CardContent>
-          <FunctionalOrgChart 
-            structuralNodes={structuralNodes} 
-            employees={employees}
-            workshop={workshop}
-          />
+          {isEditing ? (
+            <FunctionalOrgChartEditor
+              nodes={structuralNodes}
+              employees={employees}
+              onUpdateNode={updateNodeMutation.mutate}
+            />
+          ) : (
+            <FunctionalOrgChart 
+              structuralNodes={structuralNodes} 
+              employees={employees}
+              workshop={workshop}
+            />
+          )}
         </CardContent>
       </Card>
     </div>
