@@ -256,7 +256,7 @@ export default class ManualPDFGenerator {
             doc.text('3. FLUXOGRAMA DO PROCESSO', 20, yPos);
             yPos += 7;
             
-            const imgBase64 = await this.loadImageAsBase64(content.fluxo_image_url);
+            const imgBase64 = imageCache[content.fluxo_image_url];
             if (imgBase64) {
               try {
                 const imgProps = doc.getImageProperties(imgBase64);
@@ -436,7 +436,7 @@ export default class ManualPDFGenerator {
             doc.text('3. FLUXOGRAMA', 20, yPos);
             yPos += 7;
             
-            const imgBase64 = await this.loadImageAsBase64(content.fluxo_image_url);
+            const imgBase64 = imageCache[content.fluxo_image_url];
             if (imgBase64) {
               try {
                 const imgProps = doc.getImageProperties(imgBase64);
