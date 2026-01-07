@@ -33,7 +33,7 @@ export default function ManualProcessos() {
   }, []);
 
   const { data: manualData, isLoading, refetch } = useQuery({
-    queryKey: ['manual-data', workshop?.id],
+    queryKey: ['manual-data', workshop?.id, incluirProcessosOficiais],
     queryFn: async () => {
       if (!workshop?.id) return null;
 
@@ -79,8 +79,8 @@ export default function ManualProcessos() {
         workshop
       };
     },
-    enabled: !!workshop?.id && open
-  }, [workshop?.id, incluirProcessosOficiais]);
+    enabled: !!workshop?.id
+  });
 
   const handleGenerateManual = () => {
     setGenerating(true);
