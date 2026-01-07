@@ -29,7 +29,9 @@ Deno.serve(async (req) => {
     }
 
     // Buscar convite pelo token usando service role - usando filter é mais eficiente
+    console.log("📋 Buscando convite no banco...");
     const invites = await base44.asServiceRole.entities.EmployeeInvite.filter({ invite_token: token });
+    console.log("📦 Convites encontrados:", invites?.length || 0);
     const invite = invites[0];
 
     if (!invite) {
@@ -106,10 +108,13 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Erro ao validar token:', error);
+    console.error('❌ Erro ao validar token:', error);
+    console.error('Stack:', error.stack);
+    console.error('Message:', error.message);
     return Response.json({ 
       success: false, 
-      error: 'Erro ao validar convite. Tente novamente.' 
+      error: 'Erro ao validar convite. Tente novamente.',
+      details: error.message
     }, { status: 500 });
   }
 });
