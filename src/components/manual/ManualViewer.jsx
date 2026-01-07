@@ -14,18 +14,27 @@ export default function ManualViewer({ data, onClose }) {
   console.log('Total ITs:', instructionDocs?.length || 0);
   console.log('Total áreas:', areas?.length || 0);
   
-  // Mostrar sample de processos
+  // Mostrar IDs explícitos de processos
   if (processos?.length > 0) {
-    console.log('Sample processos:', processos.slice(0, 3).map(p => ({
-      title: p.title,
-      area_id: p.area_id,
-      is_template: p.is_template,
-      workshop_id: p.workshop_id
-    })));
+    console.log('Sample 5 processos com area_id:');
+    processos.slice(0, 5).forEach((p, i) => {
+      console.log(`  ${i + 1}. "${p.title}" -> area_id: "${p.area_id}" (tipo: ${typeof p.area_id})`);
+    });
   }
   
-  // Mostrar áreas disponíveis
-  console.log('Áreas disponíveis:', areas?.map(a => ({ id: a.id, name: a.name })));
+  // Mostrar IDs explícitos de ITs
+  if (instructionDocs?.length > 0) {
+    console.log('ITs com area_id:');
+    instructionDocs.forEach((it, i) => {
+      console.log(`  ${i + 1}. "${it.title}" -> area_id: "${it.area_id}" (tipo: ${typeof it.area_id})`);
+    });
+  }
+  
+  // Mostrar IDs explícitos das áreas
+  console.log('IDs das áreas disponíveis:');
+  areas?.forEach((a, i) => {
+    console.log(`  ${i + 1}. "${a.name}" -> id: "${a.id}" (tipo: ${typeof a.id})`);
+  });
 
   // Agrupar processos por área
   const processosPorArea = areas.reduce((acc, area) => {
