@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import OrgChartEditor from "@/components/organization/OrgChartEditor";
 import OrgChartViewer from "@/components/organization/OrgChartViewer";
 import TemplateSelector from "@/components/organization/TemplateSelector";
-import { generateOrgChartPDF } from "@/components/organization/OrgChartPDFGenerator";
+import { generateOrgChartPDF } from "@/components/organization/OrgChartPDFGenerator.jsx";
 
 export default function Organograma() {
   const [workshop, setWorkshop] = useState(null);
