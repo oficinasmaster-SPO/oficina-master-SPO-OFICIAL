@@ -51,7 +51,7 @@ export default function ManualProcessos() {
         ? {
             $or: [
               { workshop_id: workshop.id },
-              { map_id: { $exists: true } }
+              { is_official: true }
             ]
           }
         : { workshop_id: workshop.id };
