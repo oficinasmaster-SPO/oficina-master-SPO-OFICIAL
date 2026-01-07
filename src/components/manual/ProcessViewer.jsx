@@ -2,7 +2,7 @@ import React from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 
-export default function ProcessViewer({ processo }) {
+export default function ProcessViewer({ processo, isViewingInManual = false }) {
   const content = processo?.content_json || {};
 
   return (
@@ -46,10 +46,19 @@ export default function ProcessViewer({ processo }) {
       {/* 4. Fluxo do Processo */}
       <section>
         <h4 className="font-bold text-gray-900 border-b pb-2 mb-2 uppercase section-title">4. Fluxo do Processo</h4>
-        {content.fluxo_processo ? (
-          <p className="text-gray-700 whitespace-pre-line section-content">{content.fluxo_processo}</p>
+        {content.fluxo_descricao && (
+          <p className="text-gray-700 whitespace-pre-line section-content mb-3">{content.fluxo_descricao}</p>
+        )}
+        {content.fluxo_image_url ? (
+          <div className="border rounded-lg p-2 bg-gray-50 flex justify-center">
+            <img 
+              src={content.fluxo_image_url} 
+              alt="Fluxograma do Processo" 
+              className="max-w-full h-auto max-h-96 object-contain flowchart-image"
+            />
+          </div>
         ) : (
-          <p className="text-gray-500 italic">Fluxo não definido.</p>
+          !content.fluxo_descricao && <p className="text-gray-500 italic">Fluxo não definido.</p>
         )}
       </section>
 
