@@ -293,14 +293,128 @@ const DEFAULT_REGIMENT = [
   {
     id: "20",
     number: "20.",
-    title: "ASSINATURA, CIÊNCIA E VIGÊNCIA DO REGIMENTO",
-    content: "Declaração de ciência, concordância e compromisso com as normas estabelecidas",
+    title: "RESPONSABILIDADE SOBRE VEÍCULOS DE CLIENTES",
+    content: "Normas específicas para manuseio, teste e circulação de veículos sob custódia da oficina (Código Civil - Responsabilidade por dano)",
     subsections: [
-      { id: "20.1", number: "20.1", content: "DECLARAÇÃO DE CIÊNCIA: Ao assinar este documento, o colaborador declara que: recebeu, leu e compreendeu integralmente todas as normas, regras, deveres, proibições e consequências aqui descritas; compromete-se a cumprir fielmente todas as disposições estabelecidas; está ciente de que o descumprimento pode acarretar medidas disciplinares previstas na CLT, incluindo advertência, suspensão e demissão por justa causa; reconhece que o Regimento foi elaborado com base legal (CLT, Constituição Federal, NRs) e tem validade jurídica plena." },
-      { id: "20.2", number: "20.2", content: "ASSINATURA OBRIGATÓRIA: Este Regimento somente terá validade jurídica após a assinatura formal do colaborador. Regimento não assinado ou sem comprovação de ciência é juridicamente fraco e não pode fundamentar penalidades." },
-      { id: "20.3", number: "20.3", content: "VIGÊNCIA: Este Regimento entra em vigor na data de sua publicação e aprovação pela Diretoria, permanecendo válido por prazo indeterminado ou até que seja substituído por nova versão." },
-      { id: "20.4", number: "20.4", content: "ALTERAÇÕES: A empresa se reserva o direito de atualizar, modificar ou complementar este Regimento a qualquer momento, mediante comunicação prévia e formal aos colaboradores, garantindo nova ciência e assinatura quando aplicável." },
-      { id: "20.5", number: "20.5", content: "DATA E ASSINATURA: Nome completo: [XXXXXXXXXXXXXXXX] / CPF: [XXX.XXX.XXX-XX] / Cargo/Função: [XXXXXXXXXXXXXXXX] / Data: [XX/XX/XXXX] / Assinatura: _______________________________" }
+      { id: "20.1", number: "20.1", content: "RECEBIMENTO DO VEÍCULO: Todo veículo recebido deverá ter: checklist de entrada preenchido; registro fotográfico (mínimo 4 ângulos); anotação de avarias pré-existentes, nível de combustível, km atual e objetos deixados no interior." },
+      { id: "20.2", number: "20.2", content: "É EXPRESSAMENTE PROIBIDO: utilizar o veículo do cliente para fins pessoais ou não relacionados ao serviço; circular com o veículo sem ordem de serviço e sem autorização expressa da gestão; realizar test-drive sem supervisão ou sem acompanhamento técnico; emprestar o veículo a terceiros ou permitir que pessoas não autorizadas o conduzam." },
+      { id: "20.3", number: "20.3", content: "TESTES E CIRCULAÇÃO: Testes de veículos somente serão permitidos quando estritamente necessários à execução do serviço e devidamente autorizados. O colaborador responsável pelo teste deverá estar habilitado e apto a conduzir aquele tipo de veículo." },
+      { id: "20.4", number: "20.4", content: "ACIDENTES, BATIDAS, ARRANHÕES OU DANOS: Qualquer dano causado ao veículo do cliente (batida, arranhão, amassado, dano mecânico ou elétrico) deverá ser comunicado IMEDIATAMENTE à gestão, com registro fotográfico e relato detalhado do ocorrido." },
+      { id: "20.5", number: "20.5", content: "RESPONSABILIZAÇÃO POR DANOS: Se comprovada negligência, imprudência, imperícia ou uso indevido do veículo, o colaborador: responderá disciplinarmente (advertência, suspensão ou justa causa); poderá ser responsabilizado civilmente pelos prejuízos causados à empresa ou ao cliente, conforme Código Civil e Art. 462, §1º da CLT (em caso de dano doloso ou culposo comprovado)." },
+      { id: "20.6", number: "20.6", content: "OMISSÃO DE DANOS: Omitir ou tentar ocultar danos causados a veículos de clientes é considerado FALTA GRAVÍSSIMA, caracterizando improbidade e má-fé, passível de demissão por justa causa imediata." },
+      { id: "20.7", number: "20.7", content: "CUSTÓDIA E SEGURANÇA: A empresa é depositária do veículo durante o período de serviço. O colaborador deve zelar pela segurança, fechamento de portas, vidros e ativação de alarme quando deixar o veículo estacionado." }
+    ]
+  },
+  {
+    id: "21",
+    number: "21.",
+    title: "DANOS A PEÇAS, COMPONENTES E SISTEMAS",
+    content: "Prevenção de prejuízos por erro técnico, negligência ou procedimento inadequado",
+    subsections: [
+      { id: "21.1", number: "21.1", content: "É DEVER DO COLABORADOR: seguir rigorosamente os procedimentos técnicos estabelecidos pela empresa ou pelo fabricante; utilizar ferramentas adequadas para cada tipo de serviço; consultar manuais técnicos, diagramas e especificações sempre que necessário; solicitar orientação técnica ao superior ou à gestão quando houver dúvida sobre procedimento." },
+      { id: "21.2", number: "21.2", content: "É EXPRESSAMENTE PROIBIDO: forçar montagens ou desmontagens sem o devido cuidado técnico; estragar peças, componentes ou sistemas por uso de métodos improvisados ou incorretos; utilizar ferramentas inadequadas (exemplo: chave de fenda no lugar de torquímetro, marreta no lugar de saca-polia); realizar procedimentos para os quais não possui capacitação técnica comprovada." },
+      { id: "21.3", number: "21.3", content: "DANOS POR FALHA TÉCNICA: Caso seja caracterizado dano a peça, componente ou sistema do veículo por negligência, desatenção ou descumprimento de procedimento técnico, o fato será apurado pela gestão e poderá resultar em: advertência (em casos leves ou eventuais); suspensão (em caso de reincidência); demissão por justa causa (se a falha técnica for recorrente, configurando desídia ou incapacidade técnica); responsabilização financeira pelo prejuízo material comprovado, nos termos do Código Civil e CLT." },
+      { id: "21.4", number: "21.4", content: "REGISTRO DE OCORRÊNCIAS: Todo dano causado deverá ser comunicado imediatamente ao superior, com registro fotográfico e descrição técnica do ocorrido, para fins de apuração e definição de responsabilidade." }
+    ]
+  },
+  {
+    id: "22",
+    number: "22.",
+    title: "USO DE ELEVADORES, MACACOS E EQUIPAMENTOS PESADOS",
+    content: "Normas críticas de segurança para operação de máquinas e ferramentas de risco (NR-12)",
+    subsections: [
+      { id: "22.1", number: "22.1", content: "Somente colaboradores treinados, capacitados e expressamente autorizados pela gestão podem operar: elevadores automotivos (2 colunas, 4 colunas, tesoura); macacos hidráulicos e pneumáticos; prensas hidráulicas; compressores de alta pressão; máquinas de solda (MIG, TIG, eletrodo); esmerilhadeiras e politrizes; equipamentos de alinhamento e balanceamento; qualquer máquina ou equipamento classificado como de risco pela NR-12." },
+      { id: "22.2", number: "22.2", content: "PROCEDIMENTOS OBRIGATÓRIOS ANTES DO USO: checagem visual do equipamento (vazamentos, desgastes, funcionamento); verificação de travas de segurança e dispositivos de proteção; certificação de que a área está livre de pessoas ou objetos; uso obrigatório de EPIs específicos (luvas, óculos, protetor auricular, etc.)." },
+      { id: "22.3", number: "22.3", content: "É EXPRESSAMENTE PROIBIDO: operar equipamentos sem treinamento ou autorização; desativar ou remover dispositivos de segurança de máquinas; exceder o limite de carga especificado pelo fabricante; permitir que terceiros operem equipamentos sem autorização; realizar manutenção ou ajuste em máquinas ligadas ou energizadas." },
+      { id: "22.4", number: "22.4", content: "ELEVADORES AUTOMOTIVOS: Antes de elevar qualquer veículo, o colaborador deve: conferir pontos de apoio corretos conforme manual do fabricante; verificar se o veículo está posicionado centralmente; acionar lentamente e observar estabilidade; não permanecer sob veículo elevado sem travas de segurança acionadas." },
+      { id: "22.5", number: "22.5", content: "RESPONSABILIZAÇÃO: Qualquer acidente, dano ou situação de risco causada por operação indevida, negligência ou descumprimento das normas de segurança poderá resultar em: advertência grave ou suspensão (em casos sem vítimas); demissão por justa causa (se houver risco iminente à vida ou reincidência); responsabilização civil e criminal pelos danos causados, conforme legislação vigente." },
+      { id: "22.6", number: "22.6", content: "Todo acidente ou incidente com equipamentos deve ser comunicado imediatamente à gestão, ainda que não tenha havido ferimentos, para registro, investigação e prevenção." }
+    ]
+  },
+  {
+    id: "23",
+    number: "23.",
+    title: "DIAGNÓSTICO, ORDEM DE SERVIÇO E APROVAÇÃO DO CLIENTE",
+    content: "Procedimentos técnicos e comerciais obrigatórios para execução de serviços",
+    subsections: [
+      { id: "23.1", number: "23.1", content: "NENHUM SERVIÇO PODERÁ SER EXECUTADO sem: abertura de ordem de serviço (OS) no sistema; autorização expressa do cliente (verbal registrada ou escrita); aprovação do orçamento quando aplicável." },
+      { id: "23.2", number: "23.2", content: "DIAGNÓSTICO TÉCNICO: Todo diagnóstico deve ser: realizado com ferramentas adequadas (scanner, multímetro, manômetro, etc.); baseado em evidências técnicas e não em suposições; registrado na ordem de serviço com descrição clara do problema identificado; comunicado ao cliente de forma transparente, sem promessas de resultado garantido." },
+      { id: "23.3", number: "23.3", content: "É PROIBIDO: prometer ao cliente resultado técnico absoluto (exemplo: 'vai ficar 100% resolvido'); executar serviços não autorizados ou além do escopo aprovado; realizar orçamentos ou diagnósticos sem conhecimento técnico suficiente; alterar valores ou condições sem autorização da gestão comercial." },
+      { id: "23.4", number: "23.4", content: "ALTERAÇÕES NA OS: Qualquer alteração de escopo, valor ou prazo durante a execução do serviço deverá ser previamente comunicada ao cliente e registrada no sistema, com nova aprovação formal." },
+      { id: "23.5", number: "23.5", content: "ENTREGA DO VEÍCULO: Ao finalizar o serviço, o colaborador deve: conferir se todos os itens da OS foram executados; testar o funcionamento correto do serviço realizado; preencher checklist de saída; solicitar assinatura do cliente no documento de entrega." },
+      { id: "23.6", number: "23.6", content: "O descumprimento destes procedimentos poderá gerar retrabalho, reclamações de clientes, prejuízos financeiros à empresa e medidas disciplinares ao colaborador responsável." }
+    ]
+  },
+  {
+    id: "24",
+    number: "24.",
+    title: "RETRABALHO, FALHA OPERACIONAL E DESEMPENHO TÉCNICO",
+    content: "Avaliação de qualidade técnica e consequências da reincidência de erros",
+    subsections: [
+      { id: "24.1", number: "24.1", content: "CONCEITO DE RETRABALHO: Caracteriza-se como retrabalho a necessidade de refazer, corrigir ou ajustar um serviço já executado em razão de: erro de diagnóstico; instalação incorreta de peças; aperto inadequado de componentes; desatenção ou falta de procedimento técnico; não observância de especificações do fabricante." },
+      { id: "24.2", number: "24.2", content: "REGISTRO E APURAÇÃO: Todo retrabalho será registrado no sistema para: avaliação técnica do colaborador; identificação de necessidade de treinamento; apuração de responsabilidade quando aplicável." },
+      { id: "24.3", number: "24.3", content: "RETRABALHO EVENTUAL: Retrabalhos pontuais, decorrentes de situações atípicas ou de baixa complexidade, serão tratados como oportunidade de aprendizado e não gerarão penalidade imediata." },
+      { id: "24.4", number: "24.4", content: "RETRABALHO RECORRENTE: A reincidência de retrabalho por falha técnica, desatenção ou descumprimento de procedimentos poderá caracterizar: DESÍDIA (negligência habitual no trabalho); INCAPACIDADE TÉCNICA (falta de habilidade para a função)." },
+      { id: "24.5", number: "24.5", content: "Nesses casos, a empresa poderá: aplicar advertência escrita registrando os casos de retrabalho; determinar treinamento técnico obrigatório; aplicar suspensão se houver prejuízo considerável ao cliente ou à empresa; aplicar demissão por justa causa se restar comprovada incapacidade técnica persistente ou desídia caracterizada (Art. 482, 'e' e 'h' da CLT)." },
+      { id: "24.6", number: "24.6", content: "DIREITO DE DEFESA: Antes da aplicação de medidas graves, o colaborador terá direito de apresentar justificativa técnica, podendo demonstrar causas alheias à sua vontade ou responsabilidade." }
+    ]
+  },
+  {
+    id: "25",
+    number: "25.",
+    title: "ORGANIZAÇÃO, LIMPEZA E SEGURANÇA DO AMBIENTE",
+    content: "Manutenção do ambiente de trabalho seguro, limpo e organizado (NR-01 e Código Civil)",
+    subsections: [
+      { id: "25.1", number: "25.1", content: "É OBRIGAÇÃO DE TODO COLABORADOR manter seu posto de trabalho organizado, limpo e seguro durante e ao final do expediente." },
+      { id: "25.2", number: "25.2", content: "ORGANIZAÇÃO DE BANCADAS E FERRAMENTAS: Bancadas devem permanecer organizadas; Ferramentas devem ser guardadas após o uso nos locais apropriados; Peças devem ser identificadas e armazenadas corretamente; Materiais de uso comum (panos, produtos químicos) devem ser repostos aos devidos lugares." },
+      { id: "25.3", number: "25.3", content: "LIMPEZA E HIGIENE: É proibido: deixar óleo, graxa ou produtos químicos derramados no chão (risco de acidente); acumular lixo, sucata ou materiais sem destinação adequada; deixar equipamentos sujos ou em condições inadequadas de uso." },
+      { id: "25.4", number: "25.4", content: "SEGURANÇA DO AMBIENTE: É proibido: deixar equipamentos ligados ou energizados sem supervisão; obstruir saídas de emergência, extintores ou rotas de fuga; armazenar materiais inflamáveis de forma inadequada ou sem sinalização." },
+      { id: "25.5", number: "25.5", content: "RESPONSABILIZAÇÃO: A falta de organização, limpeza ou descumprimento de normas de segurança ambiental poderá resultar em advertência, suspensão ou, em casos graves (risco ocupacional comprovado), demissão por justa causa." },
+      { id: "25.6", number: "25.6", content: "A empresa poderá realizar inspeções periódicas de segurança e limpeza, registrando não conformidades para fins de avaliação e medidas corretivas." }
+    ]
+  },
+  {
+    id: "26",
+    number: "26.",
+    title: "FERRAMENTAS PESSOAIS E DA EMPRESA",
+    content: "Distinção entre propriedade da empresa e ferramentas de uso pessoal do colaborador",
+    subsections: [
+      { id: "26.1", number: "26.1", content: "FERRAMENTAS DA EMPRESA: São de propriedade exclusiva da empresa e destinam-se ao uso profissional nas dependências da oficina. É PROIBIDO: retirar ferramentas da empresa sem autorização expressa e por escrito da gestão; emprestar ferramentas da empresa a terceiros (colegas, amigos, familiares); utilizar ferramentas da empresa para fins pessoais fora do ambiente de trabalho." },
+      { id: "26.2", number: "26.2", content: "RESPONSABILIDADE POR PERDA OU DANO: O colaborador que receber ferramentas sob sua guarda (caixa de ferramentas, kit personalizado) será responsável pela conservação e devolução. Perda, dano intencional ou negligência comprovada poderá resultar em: advertência ou suspensão; desconto proporcional no salário mediante autorização prévia do colaborador (Art. 462 da CLT)." },
+      { id: "26.3", number: "26.3", content: "FERRAMENTAS PESSOAIS: Ferramentas de propriedade pessoal do colaborador (trazidas por iniciativa própria) são de responsabilidade exclusiva do colaborador. A empresa NÃO se responsabiliza por perda, dano, furto ou extravio de ferramentas pessoais." },
+      { id: "26.4", number: "26.4", content: "IDENTIFICAÇÃO: Recomenda-se que o colaborador identifique suas ferramentas pessoais (gravação, etiqueta) para evitar confusão com o patrimônio da empresa." },
+      { id: "26.5", number: "26.5", content: "DEVOLUÇÃO NO DESLIGAMENTO: No ato do desligamento (seja por pedido de demissão, dispensa ou justa causa), o colaborador deverá devolver TODAS as ferramentas, equipamentos, uniformes, EPIs e materiais de propriedade da empresa, sob pena de desconto das verbas rescisórias ou cobrança judicial." }
+    ]
+  },
+  {
+    id: "27",
+    number: "27.",
+    title: "DESLIGAMENTO, PEDIDO DE DEMISSÃO E ENTREGA DE BENS",
+    content: "Procedimentos formais para encerramento do vínculo empregatício e quitação de responsabilidades",
+    subsections: [
+      { id: "27.1", number: "27.1", content: "PEDIDO DE DEMISSÃO: Deverá ser formalizado por escrito, datado e assinado pelo colaborador. Pedidos verbais ou informais não serão aceitos. O colaborador deverá cumprir aviso prévio de 30 dias, salvo dispensa pela empresa." },
+      { id: "27.2", number: "27.2", content: "DEVOLUÇÃO OBRIGATÓRIA NO DESLIGAMENTO: Antes da homologação da rescisão, o colaborador deverá devolver: uniformes (em bom estado de conservação ou com desconto proporcional); EPIs fornecidos pela empresa; ferramentas, caixas de ferramentas ou kits sob sua guarda; chaves de acesso (física ou eletrônica); crachás, cartões de acesso ou outros identificadores; materiais de trabalho (manuais, catálogos, documentos, pen drives)." },
+      { id: "27.3", number: "27.3", content: "QUITAÇÃO DE DÉBITOS: O colaborador deverá quitar eventuais débitos com a empresa antes da rescisão: ferramentas perdidas ou danificadas por negligência; danos causados a veículos ou equipamentos (quando comprovada responsabilidade); adiantamentos salariais não compensados; outros débitos registrados e comprovados." },
+      { id: "27.4", number: "27.4", content: "TERMO DE ENTREGA E QUITAÇÃO: Será emitido um Termo de Entrega de Bens e Quitação, que deverá ser assinado pelo colaborador, confirmando a devolução de todos os itens e a inexistência de débitos pendentes." },
+      { id: "27.5", number: "27.5", content: "ACESSO A SISTEMAS: Todos os acessos a sistemas, e-mails corporativos, softwares e plataformas da empresa serão imediatamente bloqueados após o desligamento, em conformidade com a política de segurança da informação." },
+      { id: "27.6", number: "27.6", content: "VIGÊNCIA DAS OBRIGAÇÕES DE SIGILO: O colaborador permanece obrigado ao sigilo de informações confidenciais e à cláusula de não concorrência pelo prazo de 24 meses após o desligamento, conforme item 12 deste Regimento." },
+      { id: "27.7", number: "27.7", content: "Recusa em devolver bens da empresa poderá ensejar cobrança judicial e registro de ocorrência policial por apropriação indébita." }
+    ]
+  },
+  {
+    id: "28",
+    number: "28.",
+    title: "DISPOSIÇÕES FINAIS, ASSINATURA E VIGÊNCIA",
+    content: "Declaração de ciência, concordância, compromisso e validade jurídica do documento",
+    subsections: [
+      { id: "28.1", number: "28.1", content: "CASOS OMISSOS: Situações não previstas expressamente neste Regimento serão resolvidas pela Diretoria da empresa, respeitando sempre os princípios da razoabilidade, proporcionalidade, boa-fé e conformidade com a legislação trabalhista vigente." },
+      { id: "28.2", number: "28.2", content: "ALTERAÇÕES E ATUALIZAÇÕES: A empresa se reserva o direito de atualizar, modificar, complementar ou substituir este Regimento Interno a qualquer momento, mediante: comunicação prévia e formal a todos os colaboradores; disponibilização do novo texto para leitura; coleta de nova assinatura de ciência quando houver alterações substanciais." },
+      { id: "28.3", number: "28.3", content: "HIERARQUIA NORMATIVA: Este Regimento Interno complementa, mas não substitui, a legislação trabalhista vigente (CLT, Constituição Federal, NRs, convenções coletivas). Em caso de conflito, prevalecerá sempre a norma mais favorável ao trabalhador, conforme princípio da norma mais benéfica." },
+      { id: "28.4", number: "28.4", content: "DECLARAÇÃO FORMAL DE CIÊNCIA E COMPROMISSO: Ao assinar este documento, o colaborador DECLARA expressamente que: recebeu uma cópia física ou digital deste Regimento Interno; leu integralmente todas as seções, normas, regras, deveres, proibições e penalidades aqui estabelecidas; compreendeu plenamente o conteúdo e teve a oportunidade de esclarecer eventuais dúvidas com a gestão ou o setor de Recursos Humanos; está PLENAMENTE CIENTE de que o descumprimento de qualquer norma aqui prevista poderá acarretar medidas disciplinares (advertência verbal, advertência escrita, suspensão disciplinar ou demissão por justa causa), conforme a gravidade da infração e os critérios de proporcionalidade; COMPROMETE-SE a cumprir fielmente todas as disposições deste Regimento, contribuindo para um ambiente de trabalho seguro, ético, produtivo e juridicamente protegido." },
+      { id: "28.5", number: "28.5", content: "VIGÊNCIA: Este Regimento Interno entra em vigor na data de sua publicação e aprovação formal pela Diretoria, permanecendo válido por prazo indeterminado ou até que seja expressamente revogado ou substituído por nova versão." },
+      { id: "28.6", number: "28.6", content: "FUNDAMENTAÇÃO LEGAL: Este Regimento foi elaborado com base na Consolidação das Leis do Trabalho (CLT - Decreto-Lei nº 5.452/1943), Constituição Federal de 1988 (art. 7º), Código Civil (Lei nº 10.406/2002 - responsabilidade civil), Lei Geral de Proteção de Dados (LGPD - Lei nº 13.709/2018), Normas Regulamentadoras (NRs) do Ministério do Trabalho e Emprego, e demais legislações trabalhistas e previdenciárias aplicáveis." },
+      { id: "28.7", number: "28.7", content: "ASSINATURA E DADOS DO COLABORADOR: Nome completo: [XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX] / CPF: [XXX.XXX.XXX-XX] / RG: [XXXXXXXXXXXXXX] / Cargo/Função: [XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX] / Data de Admissão: [XX/XX/XXXX] / Data de Ciência do Regimento: [XX/XX/XXXX] / Local: [XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX] / Assinatura do Colaborador: _______________________________________ / Assinatura do Representante da Empresa: _______________________________________" },
+      { id: "28.8", number: "28.8", content: "RECUSA DE ASSINATURA: Caso o colaborador se recuse a assinar este Regimento, será lavrado um TERMO DE RECUSA na presença de duas testemunhas, com data, horário e registro da recusa, preservando a validade do documento para fins disciplinares futuros." }
     ]
   }
 ];
