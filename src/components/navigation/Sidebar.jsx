@@ -526,6 +526,14 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: Package,
           description: 'Biblioteca de processos padrão',
           requiredPermission: 'processes.view'
+        },
+        { 
+          name: 'Manual de Processos', 
+          href: createPageUrl('ManualProcessos'), 
+          icon: BookOpen,
+          description: 'Manual completo da empresa',
+          highlight: true,
+          requiredPermission: 'processes.view'
         }
       ]
     },
