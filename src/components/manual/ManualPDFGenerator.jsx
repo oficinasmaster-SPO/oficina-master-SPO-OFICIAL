@@ -167,7 +167,8 @@ export default class ManualPDFGenerator {
       
       if (areaProcessos.length === 0 && areaITs.length === 0) return;
 
-      checkPageBreak(30);
+      doc.addPage();
+      yPos = 20;
       doc.setFontSize(14);
       doc.setTextColor(0, 0, 0);
       doc.setFont(undefined, 'bold');
@@ -175,53 +176,294 @@ export default class ManualPDFGenerator {
       yPos += 10;
       doc.setFont(undefined, 'normal');
 
+      // RENDERIZAR MAPs COMPLETOS
       if (areaProcessos.length > 0) {
-        doc.setFontSize(11);
-        doc.text("MAPs:", 25, yPos);
-        yPos += 7;
-
-        const tableData = areaProcessos.map(p => [
-          p.code || '-',
-          p.title,
-          (p.description || '').substring(0, 50) + '...'
-        ]);
-
-        doc.autoTable({
-          startY: yPos,
-          head: [['Código', 'Título', 'Descrição']],
-          body: tableData,
-          theme: 'striped',
-          headStyles: { fillColor: [139, 92, 246] },
-          margin: { left: 25 },
-          styles: { fontSize: 9 }
+        areaProcessos.forEach(processo => {
+          doc.addPage();
+          yPos = 20;
+          
+          // Cabeçalho do MAP
+          doc.setFillColor(59, 130, 246);
+          doc.rect(15, yPos - 5, 180, 15, 'F');
+          doc.setTextColor(255, 255, 255);
+          doc.setFontSize(12);
+          doc.setFont(undefined, 'bold');
+          doc.text('MAP - Mapa de Processo', 20, yPos + 5);
+          doc.setFont(undefined, 'normal');
+          yPos += 20;
+          
+          // Título e Código
+          doc.setTextColor(0, 0, 0);
+          doc.setFontSize(14);
+          doc.setFont(undefined, 'bold');
+          doc.text(processo.title, 20, yPos);
+          yPos += 8;
+          doc.setFontSize(10);
+          doc.setFont(undefined, 'normal');
+          doc.text(`Código: ${processo.code || 'N/A'}`, 20, yPos);
+          yPos += 6;
+          doc.text(`Versão: ${processo.version || '1'}`, 20, yPos);
+          yPos += 10;
+          
+          const content = processo.content_json || {};
+          
+          // Objetivo
+          if (content.objetivo) {
+            doc.setFont(undefined, 'bold');
+            doc.text('1. OBJETIVO', 20, yPos);
+            yPos += 7;
+            doc.setFont(undefined, 'normal');
+            const objLines = doc.splitTextToSize(content.objetivo, 170);
+            doc.text(objLines, 20, yPos);
+            yPos += objLines.length * 6 + 8;
+            checkPageBreak(30);
+          }
+          
+          // Campo de Aplicação
+          if (content.campo_aplicacao) {
+            doc.setFont(undefined, 'bold');
+            doc.text('2. CAMPO DE APLICAÇÃO', 20, yPos);
+            yPos += 7;
+            doc.setFont(undefined, 'normal');
+            const campoLines = doc.splitTextToSize(content.campo_aplicacao, 170);
+            doc.text(campoLines, 20, yPos);
+            yPos += campoLines.length * 6 + 8;
+            checkPageBreak(30);
+          }
+          
+          // Atividades
+          if (content.atividades && content.atividades.length > 0) {
+            checkPageBreak(40);
+            doc.setFont(undefined, 'bold');
+            doc.text('3. ATIVIDADES', 20, yPos);
+            yPos += 7;
+            
+            const atividadesData = content.atividades.map(a => [
+              a.atividade || '',
+              a.responsavel || '',
+              a.frequencia || ''
+            ]);
+            
+            doc.autoTable({
+              startY: yPos,
+              head: [['Atividade', 'Responsável', 'Frequência']],
+              body: atividadesData,
+              theme: 'striped',
+              headStyles: { fillColor: [59, 130, 246], fontSize: 9 },
+              styles: { fontSize: 8, cellPadding: 3 },
+              margin: { left: 20, right: 20 }
+            });
+            
+            yPos = doc.lastAutoTable.finalY + 10;
+          }
+          
+          // Riscos
+          if (content.riscos && content.riscos.length > 0) {
+            checkPageBreak(40);
+            doc.setFont(undefined, 'bold');
+            doc.text('4. MATRIZ DE RISCOS', 20, yPos);
+            yPos += 7;
+            
+            const riscosData = content.riscos
+              .filter(r => r.risco)
+              .map(r => [
+                r.risco || '',
+                r.causa || '',
+                r.impacto || '',
+                r.controle || ''
+              ]);
+            
+            if (riscosData.length > 0) {
+              doc.autoTable({
+                startY: yPos,
+                head: [['Risco', 'Causa', 'Impacto', 'Controle']],
+                body: riscosData,
+                theme: 'striped',
+                headStyles: { fillColor: [220, 38, 38], fontSize: 8 },
+                styles: { fontSize: 7, cellPadding: 2 },
+                margin: { left: 20, right: 20 }
+              });
+              
+              yPos = doc.lastAutoTable.finalY + 10;
+            }
+          }
+          
+          // Indicadores
+          if (content.indicadores && content.indicadores.length > 0) {
+            checkPageBreak(40);
+            doc.setFont(undefined, 'bold');
+            doc.text('5. INDICADORES', 20, yPos);
+            yPos += 7;
+            
+            const indicadoresData = content.indicadores
+              .filter(i => i.nome)
+              .map(i => [
+                i.nome || '',
+                i.formula || '',
+                i.meta || '',
+                i.frequencia || ''
+              ]);
+            
+            if (indicadoresData.length > 0) {
+              doc.autoTable({
+                startY: yPos,
+                head: [['Nome', 'Fórmula', 'Meta', 'Frequência']],
+                body: indicadoresData,
+                theme: 'striped',
+                headStyles: { fillColor: [16, 185, 129], fontSize: 8 },
+                styles: { fontSize: 7, cellPadding: 2 },
+                margin: { left: 20, right: 20 }
+              });
+              
+              yPos = doc.lastAutoTable.finalY + 10;
+            }
+          }
         });
-
-        yPos = doc.lastAutoTable.finalY + 10;
       }
 
+      // RENDERIZAR ITs/FRs COMPLETOS
       if (areaITs.length > 0) {
-        checkPageBreak(30);
-        doc.setFontSize(11);
-        doc.text("ITs e FRs:", 25, yPos);
-        yPos += 7;
-
-        const tableData = areaITs.map(it => [
-          it.type,
-          it.title,
-          (it.description || '').substring(0, 50) + '...'
-        ]);
-
-        doc.autoTable({
-          startY: yPos,
-          head: [['Tipo', 'Título', 'Descrição']],
-          body: tableData,
-          theme: 'striped',
-          headStyles: { fillColor: [139, 92, 246] },
-          margin: { left: 25 },
-          styles: { fontSize: 9 }
+        areaITs.forEach(it => {
+          doc.addPage();
+          yPos = 20;
+          
+          // Cabeçalho IT/FR
+          const headerColor = it.type === 'IT' ? [16, 185, 129] : [249, 115, 22];
+          doc.setFillColor(...headerColor);
+          doc.rect(15, yPos - 5, 180, 15, 'F');
+          doc.setTextColor(255, 255, 255);
+          doc.setFontSize(12);
+          doc.setFont(undefined, 'bold');
+          doc.text(`${it.type} - ${it.type === 'IT' ? 'Instrução de Trabalho' : 'Formulário de Registro'}`, 20, yPos + 5);
+          doc.setFont(undefined, 'normal');
+          yPos += 20;
+          
+          // Título e Metadados
+          doc.setTextColor(0, 0, 0);
+          doc.setFontSize(14);
+          doc.setFont(undefined, 'bold');
+          doc.text(it.title, 20, yPos);
+          yPos += 8;
+          doc.setFontSize(10);
+          doc.setFont(undefined, 'normal');
+          doc.text(`Código: ${it.code || 'N/A'}`, 20, yPos);
+          yPos += 6;
+          doc.text(`Versão: ${it.version || '1'}`, 20, yPos);
+          yPos += 10;
+          
+          const content = it.content || {};
+          
+          // Objetivo
+          if (content.objetivo) {
+            doc.setFont(undefined, 'bold');
+            doc.text('1. OBJETIVO', 20, yPos);
+            yPos += 7;
+            doc.setFont(undefined, 'normal');
+            const objLines = doc.splitTextToSize(content.objetivo, 170);
+            doc.text(objLines, 20, yPos);
+            yPos += objLines.length * 6 + 8;
+            checkPageBreak(30);
+          }
+          
+          // Campo de Aplicação
+          if (content.campo_aplicacao) {
+            doc.setFont(undefined, 'bold');
+            doc.text('2. CAMPO DE APLICAÇÃO', 20, yPos);
+            yPos += 7;
+            doc.setFont(undefined, 'normal');
+            const campoLines = doc.splitTextToSize(content.campo_aplicacao, 170);
+            doc.text(campoLines, 20, yPos);
+            yPos += campoLines.length * 6 + 8;
+            checkPageBreak(30);
+          }
+          
+          // Atividades
+          if (content.atividades && content.atividades.length > 0) {
+            checkPageBreak(40);
+            doc.setFont(undefined, 'bold');
+            doc.text('3. ATIVIDADES', 20, yPos);
+            yPos += 7;
+            
+            const atividadesData = content.atividades.map(a => [
+              a.atividade || '',
+              a.responsavel || '',
+              a.frequencia || ''
+            ]);
+            
+            doc.autoTable({
+              startY: yPos,
+              head: [['Atividade', 'Responsável', 'Frequência']],
+              body: atividadesData,
+              theme: 'striped',
+              headStyles: { fillColor: headerColor, fontSize: 9 },
+              styles: { fontSize: 8, cellPadding: 3 },
+              margin: { left: 20, right: 20 }
+            });
+            
+            yPos = doc.lastAutoTable.finalY + 10;
+          }
+          
+          // Matriz de Riscos
+          if (content.matriz_riscos && content.matriz_riscos.length > 0) {
+            checkPageBreak(40);
+            doc.setFont(undefined, 'bold');
+            doc.text('4. MATRIZ DE RISCOS', 20, yPos);
+            yPos += 7;
+            
+            const riscosData = content.matriz_riscos
+              .filter(r => r.risco)
+              .map(r => [
+                r.risco || '',
+                r.causa || '',
+                r.impacto || '',
+                r.controle || ''
+              ]);
+            
+            if (riscosData.length > 0) {
+              doc.autoTable({
+                startY: yPos,
+                head: [['Risco', 'Causa', 'Impacto', 'Controle']],
+                body: riscosData,
+                theme: 'striped',
+                headStyles: { fillColor: [220, 38, 38], fontSize: 8 },
+                styles: { fontSize: 7, cellPadding: 2 },
+                margin: { left: 20, right: 20 }
+              });
+              
+              yPos = doc.lastAutoTable.finalY + 10;
+            }
+          }
+          
+          // Indicadores
+          if (content.indicadores && content.indicadores.length > 0) {
+            checkPageBreak(40);
+            doc.setFont(undefined, 'bold');
+            doc.text('5. INDICADORES', 20, yPos);
+            yPos += 7;
+            
+            const indicadoresData = content.indicadores
+              .filter(i => i.nome)
+              .map(i => [
+                i.nome || '',
+                i.formula || '',
+                i.meta || ''
+              ]);
+            
+            if (indicadoresData.length > 0) {
+              doc.autoTable({
+                startY: yPos,
+                head: [['Nome', 'Fórmula', 'Meta']],
+                body: indicadoresData,
+                theme: 'striped',
+                headStyles: { fillColor: [16, 185, 129], fontSize: 8 },
+                styles: { fontSize: 7, cellPadding: 2 },
+                margin: { left: 20, right: 20 }
+              });
+              
+              yPos = doc.lastAutoTable.finalY + 10;
+            }
+          }
         });
-
-        yPos = doc.lastAutoTable.finalY + 10;
       }
     });
 
