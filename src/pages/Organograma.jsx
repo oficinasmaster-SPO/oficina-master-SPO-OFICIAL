@@ -1,139 +1,174 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Users, Edit } from "lucide-react";
-import OrgChart from "@/components/organization/OrgChart";
+import { Plus, Save, Eye, Edit3, Download } from "lucide-react";
+import { toast } from "sonner";
+import OrgChartEditor from "@/components/organization/OrgChartEditor";
+import OrgChartViewer from "@/components/organization/OrgChartViewer";
+import TemplateSelector from "@/components/organization/TemplateSelector";
 
 export default function Organograma() {
-  const [user, setUser] = useState(null);
   const [workshop, setWorkshop] = useState(null);
-  const [editMode, setEditMode] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    loadUser();
+  React.useEffect(() => {
+    const loadWorkshop = async () => {
+      try {
+        const user = await base44.auth.me();
+        const workshops = await base44.entities.Workshop.filter({ owner_id: user.id });
+        if (workshops && workshops.length > 0) {
+          setWorkshop(workshops[0]);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar oficina:", error);
+      }
+    };
+    loadWorkshop();
   }, []);
 
-  const loadUser = async () => {
-    try {
-      const currentUser = await base44.auth.me();
-      setUser(currentUser);
+  const { data: nodes = [], isLoading } = useQuery({
+    queryKey: ['orgchart-nodes', workshop?.id],
+    queryFn: async () => {
+      if (!workshop?.id) return [];
+      return await base44.entities.OrgChartNode.filter({ workshop_id: workshop.id });
+    },
+    enabled: !!workshop?.id,
+  });
 
-      const workshops = await base44.entities.Workshop.list();
-      const userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
-      setWorkshop(userWorkshop);
+  const createNodeMutation = useMutation({
+    mutationFn: (nodeData) => base44.entities.OrgChartNode.create(nodeData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orgchart-nodes'] });
+      toast.success("Nó criado com sucesso");
+    },
+  });
+
+  const updateNodeMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.OrgChartNode.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orgchart-nodes'] });
+      toast.success("Organograma atualizado");
+    },
+  });
+
+  const deleteNodeMutation = useMutation({
+    mutationFn: (id) => base44.entities.OrgChartNode.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orgchart-nodes'] });
+      toast.success("Nó removido");
+    },
+  });
+
+  const handleApplyTemplate = async (templateNodes) => {
+    try {
+      for (const node of templateNodes) {
+        await createNodeMutation.mutateAsync({
+          ...node,
+          workshop_id: workshop.id,
+        });
+      }
+      setShowTemplates(false);
+      toast.success("Template aplicado com sucesso!");
     } catch (error) {
-      console.error("Error loading user:", error);
+      toast.error("Erro ao aplicar template");
     }
   };
 
-  const { data: employees = [], isLoading: loadingEmployees } = useQuery({
-    queryKey: ['employees', workshop?.id],
-    queryFn: () => base44.entities.Employee.filter({ workshop_id: workshop.id }),
-    enabled: !!workshop
-  });
-
-  const { data: structures = [], isLoading: loadingStructures } = useQuery({
-    queryKey: ['org-structures', workshop?.id],
-    queryFn: () => base44.entities.OrganizationStructure.filter({ workshop_id: workshop.id }),
-    enabled: !!workshop
-  });
-
-  if (!user || !workshop || loadingEmployees || loadingStructures) {
+  if (!workshop) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      <div className="flex items-center justify-center h-96">
+        <p className="text-gray-500">Carregando dados da oficina...</p>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <p className="text-gray-500">Carregando organograma...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex justify-between items-center">
+    <div className="space-y-6">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Organograma</h1>
-            <p className="text-gray-600">Estrutura hierárquica da sua oficina</p>
+            <CardTitle className="text-2xl font-bold">Organograma</CardTitle>
+            <p className="text-sm text-gray-600 mt-1">
+              Estrutura organizacional de {workshop.name}
+            </p>
           </div>
-          <Button onClick={() => setEditMode(!editMode)} variant="outline">
-            <Edit className="w-4 h-4 mr-2" />
-            {editMode ? "Visualizar" : "Editar Estrutura"}
-          </Button>
-        </div>
-
-        {structures.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <Users className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-              <h3 className="text-lg font-semibold mb-2">Configure seu Organograma</h3>
-              <p className="text-gray-600 mb-4">
-                Defina a estrutura hierárquica dos seus colaboradores
-              </p>
-              <Button onClick={() => setEditMode(true)}>
-                Começar Configuração
+          <div className="flex gap-2">
+            {nodes.length === 0 && (
+              <Button onClick={() => setShowTemplates(true)} variant="outline">
+                <Plus className="w-4 h-4 mr-2" />
+                Usar Template
               </Button>
-            </CardContent>
-          </Card>
-        ) : editMode ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>Editar Relações Hierárquicas</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {employees.map(emp => {
-                  const structure = structures.find(s => s.employee_id === emp.id);
-                  return (
-                    <div key={emp.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-                      <div className="flex-1">
-                        <p className="font-medium">{emp.full_name}</p>
-                        <p className="text-sm text-gray-600">{emp.position}</p>
-                      </div>
-                      <div className="w-64">
-                        <Select 
-                          value={structure?.manager_id || ""}
-                          onValueChange={async (value) => {
-                            if (structure) {
-                              await base44.entities.OrganizationStructure.update(structure.id, {
-                                manager_id: value || null
-                              });
-                            } else {
-                              await base44.entities.OrganizationStructure.create({
-                                workshop_id: workshop.id,
-                                employee_id: emp.id,
-                                manager_id: value || null,
-                                department: emp.area,
-                                hierarchy_level: 2
-                              });
-                            }
-                            window.location.reload();
-                          }}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecionar gestor..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value={null}>Sem gestor (topo)</SelectItem>
-                            {employees.filter(e => e.id !== emp.id).map(e => (
-                              <SelectItem key={e.id} value={e.id}>
-                                {e.full_name} - {e.position}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  );
-                })}
+            )}
+            <Button
+              onClick={() => setIsEditing(!isEditing)}
+              variant={isEditing ? "default" : "outline"}
+            >
+              {isEditing ? (
+                <>
+                  <Eye className="w-4 h-4 mr-2" />
+                  Visualizar
+                </>
+              ) : (
+                <>
+                  <Edit3 className="w-4 h-4 mr-2" />
+                  Editar
+                </>
+              )}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {showTemplates ? (
+            <TemplateSelector
+              onApply={handleApplyTemplate}
+              onCancel={() => setShowTemplates(false)}
+            />
+          ) : nodes.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                <Plus className="w-12 h-12 text-gray-400" />
               </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <OrgChart employees={employees} structures={structures} />
-        )}
-      </div>
+              <h3 className="text-lg font-semibold mb-2">
+                Nenhum organograma criado
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Comece criando sua estrutura organizacional do zero ou use um template
+              </p>
+              <div className="flex gap-3">
+                <Button onClick={() => setShowTemplates(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Usar Template
+                </Button>
+                <Button onClick={() => setIsEditing(true)} variant="outline">
+                  Criar do Zero
+                </Button>
+              </div>
+            </div>
+          ) : isEditing ? (
+            <OrgChartEditor
+              nodes={nodes}
+              workshopId={workshop.id}
+              onCreateNode={createNodeMutation.mutate}
+              onUpdateNode={updateNodeMutation.mutate}
+              onDeleteNode={deleteNodeMutation.mutate}
+            />
+          ) : (
+            <OrgChartViewer nodes={nodes} />
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -14,6 +14,7 @@ export const sidebarStructure = [
     label: "Cadastros (Base de Dados)",
     items: [
       { name: "Gestão da Oficina", description: "Dados gerais" },
+      { name: "Organograma", description: "Estrutura organizacional" },
     ],
   },
   {
