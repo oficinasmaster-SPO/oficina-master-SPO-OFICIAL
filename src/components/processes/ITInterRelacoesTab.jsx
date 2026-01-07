@@ -3,8 +3,11 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, Sparkles, Network } from "lucide-react";
 import AIFieldAssist from "./AIFieldAssist";
+import { base44 } from "@/api/base44Client";
+import { useQuery } from "@tanstack/react-query";
 
 export default function ITInterRelacoesTab({ interRelacoes = [], onChange, itData, mapData }) {
   const { data: areas = [] } = useQuery({
@@ -101,11 +104,24 @@ export default function ITInterRelacoesTab({ interRelacoes = [], onChange, itDat
                   <div className="flex-1 grid grid-cols-2 gap-3">
                     <div>
                       <Label className="text-xs">Área</Label>
-                      <Input
-                        value={rel.area}
-                        onChange={(e) => updateInterRelation(idx, 'area', e.target.value)}
-                        placeholder="Ex: Comercial"
-                      />
+                      <Select 
+                        value={rel.area} 
+                        onValueChange={(v) => updateInterRelation(idx, 'area', v)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecionar área..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 border-b">ÁREAS GERAIS</div>
+                          {geraisAreas.map(a => (
+                            <SelectItem key={a.id} value={a.name}>{a.name}</SelectItem>
+                          ))}
+                          <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 border-b mt-2">ÁREAS TÉCNICAS</div>
+                          {tecnicasAreas.map(a => (
+                            <SelectItem key={a.id} value={a.name}>{a.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div>
                       <Label className="text-xs">Interação</Label>

@@ -445,10 +445,15 @@ export default function GerenciarProcessos() {
     return matchesSearch && matchesCategory;
   });
 
-  const categories = [
-    "Vendas", "Comercial", "Pátio", "Financeiro", "Estoque", 
-    "Compras", "Contratação", "RH", "Marketing", "Qualidade", "Geral", "Ritual"
-  ];
+  const { data: processAreas = [] } = useQuery({
+    queryKey: ['process-areas'],
+    queryFn: async () => {
+      const allAreas = await base44.entities.ProcessArea.list();
+      return allAreas.sort((a, b) => (a.order || 0) - (b.order || 0));
+    }
+  });
+
+  const categories = processAreas.map(a => a.name);
 
   const plans = ["FREE", "START", "BRONZE", "PRATA", "GOLD", "IOM", "MILLIONS"];
 
