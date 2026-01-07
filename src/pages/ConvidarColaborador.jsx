@@ -22,6 +22,7 @@ export default function ConvidarColaborador() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    telefone: "",
     position: "",
     area: "",
     job_role: "outros",
@@ -71,6 +72,7 @@ export default function ConvidarColaborador() {
     setFormData({
       name: employee.full_name || "",
       email: employee.email || "",
+      telefone: employee.telefone || "",
       position: employee.position || "",
       area: employee.area || "",
       job_role: employee.job_role || "outros",
@@ -171,6 +173,7 @@ export default function ConvidarColaborador() {
       console.log("📤 PAYLOAD ENVIADO:", {
         name: data.name,
         email: data.email,
+        telefone: data.telefone,
         position: data.position,
         area: data.area,
         job_role: data.job_role,
@@ -181,6 +184,7 @@ export default function ConvidarColaborador() {
       const response = await base44.functions.invoke('createEmployeeUser', {
         name: data.name,
         email: data.email,
+        telefone: data.telefone,
         position: data.position,
         area: data.area,
         job_role: data.job_role,
@@ -211,6 +215,7 @@ export default function ConvidarColaborador() {
       setFormData({ 
         name: "", 
         email: "", 
+        telefone: "",
         position: "", 
         area: "", 
         job_role: "outros",
@@ -232,7 +237,7 @@ export default function ConvidarColaborador() {
     console.log("📝 Dados do formulário:", formData);
     console.log("🏢 Workshop ID:", workshop?.id);
     
-    if (!formData.name || !formData.email || !formData.position || !formData.area) {
+    if (!formData.name || !formData.email || !formData.telefone || !formData.position || !formData.area) {
       toast.error("Preencha todos os campos obrigatórios (*)");
       return;
     }
@@ -367,6 +372,17 @@ export default function ConvidarColaborador() {
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     placeholder="email@exemplo.com"
+                    className="bg-gray-50 focus:bg-white transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="telefone">Telefone *</Label>
+                  <Input
+                    id="telefone"
+                    value={formData.telefone}
+                    onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                    placeholder="(00) 00000-0000"
                     className="bg-gray-50 focus:bg-white transition-colors"
                   />
                 </div>
