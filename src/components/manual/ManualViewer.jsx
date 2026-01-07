@@ -9,15 +9,14 @@ import ProcessViewer from "./ProcessViewer";
 
 export default function ManualViewer({ data, onClose }) {
   const { cultura, processos, instructionDocs, cargos, areas, workshop } = data;
-  const [expandedProcessos, setExpandedProcessos] = useState({});
-
-  // Expandir todos os processos e ITs por padrão ao abrir
-  React.useEffect(() => {
+  
+  // Inicializar com todos os processos e ITs já expandidos
+  const [expandedProcessos, setExpandedProcessos] = useState(() => {
     const allIds = {};
     processos.forEach(p => allIds[p.id] = true);
     instructionDocs.forEach(it => allIds[it.id] = true);
-    setExpandedProcessos(allIds);
-  }, [processos, instructionDocs]);
+    return allIds;
+  });
 
   const toggleProcesso = (id) => {
     setExpandedProcessos(prev => ({ ...prev, [id]: !prev[id] }));
