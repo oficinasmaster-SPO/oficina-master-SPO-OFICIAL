@@ -56,8 +56,8 @@ export default function ManualViewer({ data, onClose }) {
     };
   }
 
-  const handleDownloadPDF = () => {
-    ManualPDFGenerator.generate(data);
+  const handleDownloadPDF = async () => {
+    await ManualPDFGenerator.generate(data);
   };
 
   return (

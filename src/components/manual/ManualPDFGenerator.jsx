@@ -2,7 +2,7 @@ import jsPDF from "jspdf";
 import "jspdf-autotable";
 
 export default class ManualPDFGenerator {
-  static generate(data) {
+  static async generate(data) {
     const { cultura, processos, instructionDocs, cargos, areas, workshop } = data;
     const doc = new jsPDF();
     let yPos = 20;
@@ -256,12 +256,26 @@ export default class ManualPDFGenerator {
             doc.text('3. FLUXOGRAMA DO PROCESSO', 20, yPos);
             yPos += 7;
             
-            try {
-              doc.addImage(content.fluxo_image_url, 'PNG', 20, yPos, 170, 0);
-              yPos += 100;
-            } catch (error) {
+            const imgBase64 = await this.loadImageAsBase64(content.fluxo_image_url);
+            if (imgBase64) {
+              try {
+                const imgProps = doc.getImageProperties(imgBase64);
+                const pageWidth = 170;
+                const imgHeight = (imgProps.height * pageWidth) / imgProps.width;
+                const maxHeight = 180;
+                const finalHeight = Math.min(imgHeight, maxHeight);
+                
+                checkPageBreak(finalHeight + 10);
+                doc.addImage(imgBase64, 'PNG', 20, yPos, pageWidth, finalHeight);
+                yPos += finalHeight + 5;
+              } catch (error) {
+                doc.setFont(undefined, 'italic');
+                doc.text('(Erro ao renderizar fluxograma)', 20, yPos);
+                yPos += 7;
+              }
+            } else {
               doc.setFont(undefined, 'italic');
-              doc.text('(Imagem do fluxograma não pôde ser carregada)', 20, yPos);
+              doc.text('(Imagem do fluxograma não disponível)', 20, yPos);
               yPos += 7;
             }
             doc.setFont(undefined, 'normal');
@@ -422,12 +436,26 @@ export default class ManualPDFGenerator {
             doc.text('3. FLUXOGRAMA', 20, yPos);
             yPos += 7;
             
-            try {
-              doc.addImage(content.fluxo_image_url, 'PNG', 20, yPos, 170, 0);
-              yPos += 100;
-            } catch (error) {
+            const imgBase64 = await this.loadImageAsBase64(content.fluxo_image_url);
+            if (imgBase64) {
+              try {
+                const imgProps = doc.getImageProperties(imgBase64);
+                const pageWidth = 170;
+                const imgHeight = (imgProps.height * pageWidth) / imgProps.width;
+                const maxHeight = 180;
+                const finalHeight = Math.min(imgHeight, maxHeight);
+                
+                checkPageBreak(finalHeight + 10);
+                doc.addImage(imgBase64, 'PNG', 20, yPos, pageWidth, finalHeight);
+                yPos += finalHeight + 5;
+              } catch (error) {
+                doc.setFont(undefined, 'italic');
+                doc.text('(Erro ao renderizar fluxograma)', 20, yPos);
+                yPos += 7;
+              }
+            } else {
               doc.setFont(undefined, 'italic');
-              doc.text('(Imagem não pôde ser carregada)', 20, yPos);
+              doc.text('(Imagem não disponível)', 20, yPos);
               yPos += 7;
             }
             doc.setFont(undefined, 'normal');
