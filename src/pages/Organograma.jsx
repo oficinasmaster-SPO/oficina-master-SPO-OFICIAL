@@ -78,6 +78,20 @@ export default function Organograma() {
     }
   };
 
+  const handleResetOrganogram = async () => {
+    if (confirm("Deseja realmente resetar o organograma? Todos os dados atuais serão perdidos.")) {
+      try {
+        for (const node of nodes) {
+          await deleteNodeMutation.mutateAsync(node.id);
+        }
+        setShowTemplates(true);
+        toast.success("Organograma resetado!");
+      } catch (error) {
+        toast.error("Erro ao resetar organograma");
+      }
+    }
+  };
+
   if (!workshop) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -105,6 +119,12 @@ export default function Organograma() {
             </p>
           </div>
           <div className="flex gap-2">
+            {nodes.length > 0 && (
+              <Button onClick={handleResetOrganogram} variant="outline">
+                <Download className="w-4 h-4 mr-2" />
+                Trocar Template
+              </Button>
+            )}
             {nodes.length === 0 && (
               <Button onClick={() => setShowTemplates(true)} variant="outline">
                 <Plus className="w-4 h-4 mr-2" />
