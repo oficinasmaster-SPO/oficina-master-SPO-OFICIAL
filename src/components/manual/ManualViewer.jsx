@@ -2,31 +2,16 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Download, X, Building2, Users, Target, FileText, BookOpen, Shield, FileDown } from "lucide-react";
+import { Download, X, Building2, Users, Target, FileText, BookOpen, Shield, ChevronDown, ChevronUp } from "lucide-react";
 import ManualPDFGenerator from "./ManualPDFGenerator";
-import { downloadProcessPDF } from "@/components/processes/ProcessPDFGenerator";
-import { downloadITPDF } from "@/components/processes/ITPDFGenerator";
+import ITViewer from "@/components/processes/ITViewer";
 
 export default function ManualViewer({ data, onClose }) {
   const { cultura, processos, instructionDocs, cargos, areas, workshop } = data;
-  const [downloadingId, setDownloadingId] = useState(null);
+  const [expandedProcessos, setExpandedProcessos] = useState({});
 
-  const handleDownloadProcessPDF = async (processo) => {
-    setDownloadingId(processo.id);
-    try {
-      await downloadProcessPDF(processo, [], workshop);
-    } finally {
-      setDownloadingId(null);
-    }
-  };
-
-  const handleDownloadITPDF = async (it) => {
-    setDownloadingId(it.id);
-    try {
-      await downloadITPDF(it);
-    } finally {
-      setDownloadingId(null);
-    }
+  const toggleProcesso = (id) => {
+    setExpandedProcessos(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
   // Agrupar processos por área
@@ -212,78 +197,76 @@ export default function ManualViewer({ data, onClose }) {
                   </div>
 
                   {areaData.processos.length > 0 && (
-                    <div className="mb-4">
-                      <p className="font-semibold text-gray-900 mb-2">MAPs (Mapas de Processos)</p>
-                      <table className="print-table">
-                        <thead>
-                          <tr>
-                            <th>Código</th>
-                            <th>Título</th>
-                            <th>Descrição</th>
-                            <th className="print:hidden">Download</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {areaData.processos.map(proc => (
-                            <tr key={proc.id}>
-                              <td className="font-mono text-xs">{proc.code}</td>
-                              <td className="font-medium">{proc.title}</td>
-                              <td className="text-sm">{proc.description}</td>
-                              <td className="print:hidden">
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => handleDownloadProcessPDF(proc)}
-                                  disabled={downloadingId === proc.id}
-                                  className="h-7 px-2"
-                                >
-                                  <FileDown className="w-4 h-4" />
-                                </Button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                    <div className="mb-6 space-y-4">
+                      <p className="font-semibold text-gray-900 mb-3">MAPs (Mapas de Processos)</p>
+                      {areaData.processos.map(proc => (
+                        <div key={proc.id} className="border rounded-lg overflow-hidden page-break-inside-avoid">
+                          <div 
+                            className="bg-gray-50 p-4 flex items-center justify-between cursor-pointer hover:bg-gray-100 print:bg-white"
+                            onClick={() => toggleProcesso(proc.id)}
+                          >
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3">
+                                <span className="font-mono text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">{proc.code}</span>
+                                <h4 className="font-bold text-gray-900">{proc.title}</h4>
+                              </div>
+                              {proc.description && (
+                                <p className="text-sm text-gray-600 mt-1">{proc.description}</p>
+                              )}
+                            </div>
+                            <Button variant="ghost" size="sm" className="print:hidden">
+                              {expandedProcessos[proc.id] ? (
+                                <ChevronUp className="w-5 h-5" />
+                              ) : (
+                                <ChevronDown className="w-5 h-5" />
+                              )}
+                            </Button>
+                          </div>
+                          {expandedProcessos[proc.id] && (
+                            <div className="p-6 bg-white border-t">
+                              <ProcessViewer processo={proc} />
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   )}
 
                   {areaData.its.length > 0 && (
-                    <div>
-                      <p className="font-semibold text-gray-900 mb-2">ITs e FRs (Instruções e Formulários)</p>
-                      <table className="print-table">
-                        <thead>
-                          <tr>
-                            <th>Tipo</th>
-                            <th>Título</th>
-                            <th>Descrição</th>
-                            <th className="print:hidden">Download</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {areaData.its.map(it => (
-                            <tr key={it.id}>
-                              <td>
+                    <div className="space-y-4">
+                      <p className="font-semibold text-gray-900 mb-3">ITs e FRs (Instruções e Formulários)</p>
+                      {areaData.its.map(it => (
+                        <div key={it.id} className="border rounded-lg overflow-hidden page-break-inside-avoid">
+                          <div 
+                            className="bg-gray-50 p-4 flex items-center justify-between cursor-pointer hover:bg-gray-100 print:bg-white"
+                            onClick={() => toggleProcesso(it.id)}
+                          >
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3">
                                 <Badge variant={it.type === 'IT' ? 'default' : 'secondary'}>
                                   {it.type}
                                 </Badge>
-                              </td>
-                              <td className="font-medium">{it.title}</td>
-                              <td className="text-sm">{it.description}</td>
-                              <td className="print:hidden">
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => handleDownloadITPDF(it)}
-                                  disabled={downloadingId === it.id}
-                                  className="h-7 px-2"
-                                >
-                                  <FileDown className="w-4 h-4" />
-                                </Button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                                <h4 className="font-bold text-gray-900">{it.title}</h4>
+                              </div>
+                              {it.description && (
+                                <p className="text-sm text-gray-600 mt-1">{it.description}</p>
+                              )}
+                            </div>
+                            <Button variant="ghost" size="sm" className="print:hidden">
+                              {expandedProcessos[it.id] ? (
+                                <ChevronUp className="w-5 h-5" />
+                              ) : (
+                                <ChevronDown className="w-5 h-5" />
+                              )}
+                            </Button>
+                          </div>
+                          {expandedProcessos[it.id] && (
+                            <div className="border-t">
+                              <ITViewer it={it} />
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
