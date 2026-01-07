@@ -47,34 +47,24 @@ export default function ManualProcessos() {
       if (!workshop?.id) return null;
 
       // Buscar processos baseado na escolha do usuário
-      const processosFilter = incluirProcessosOficiais 
-        ? { 
-            $or: [
-              { workshop_id: workshop.id },
-              { is_template: true, is_official: true }
-            ]
-          }
-        : { workshop_id: workshop.id };
+      // Buscar processos (MAPs)
+      const allProcessos = await base44.entities.ProcessDocument.list();
+      const processos = incluirProcessosOficiais
+        ? allProcessos.filter(p => p.workshop_id === workshop.id || (p.is_template && p.is_official))
+        : allProcessos.filter(p => p.workshop_id === workshop.id);
 
-      const itsFilter = incluirProcessosOficiais
-        ? {
-            $or: [
-              { workshop_id: workshop.id },
-              { is_official: true }
-            ]
-          }
-        : { workshop_id: workshop.id };
+      // Buscar ITs
+      const allITs = await base44.entities.InstructionDocument.list();
+      const instructionDocs = incluirProcessosOficiais
+        ? allITs.filter(it => it.workshop_id === workshop.id || it.is_official)
+        : allITs.filter(it => it.workshop_id === workshop.id);
 
       const [
         cultura,
-        processos,
-        instructionDocs,
         cargos,
         areas
       ] = await Promise.all([
         base44.entities.MissionVisionValues.filter({ workshop_id: workshop.id }),
-        base44.entities.ProcessDocument.filter(processosFilter),
-        base44.entities.InstructionDocument.filter(itsFilter),
         base44.entities.JobDescription.filter({ workshop_id: workshop.id }),
         base44.entities.ProcessArea.list()
       ]);
