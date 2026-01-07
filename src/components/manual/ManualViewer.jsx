@@ -8,6 +8,14 @@ import ManualPDFGenerator from "./ManualPDFGenerator";
 export default function ManualViewer({ data, onClose }) {
   const { cultura, processos, instructionDocs, cargos, areas, workshop } = data;
 
+  // Debug: verificar dados recebidos
+  console.log('=== MANUAL VIEWER DEBUG ===');
+  console.log('Total de processos recebidos:', processos.length);
+  console.log('Total de ITs recebidos:', instructionDocs.length);
+  console.log('Total de áreas:', areas.length);
+  console.log('Processos:', processos.map(p => ({ id: p.id, title: p.title, area_id: p.area_id, is_template: p.is_template })));
+  console.log('Áreas:', areas.map(a => ({ id: a.id, name: a.name })));
+
   // Agrupar processos por área - incluindo templates e oficiais
   const processosPorArea = areas.reduce((acc, area) => {
     acc[area.id] = {
@@ -19,11 +27,12 @@ export default function ManualViewer({ data, onClose }) {
   }, {});
 
   // Debug: verificar quantos processos por área
-  console.log('Processos por área:', Object.keys(processosPorArea).map(areaId => ({
+  console.log('Processos agrupados por área:', Object.keys(processosPorArea).map(areaId => ({
     area: processosPorArea[areaId].area.name,
     processos: processosPorArea[areaId].processos.length,
     its: processosPorArea[areaId].its.length
   })));
+  console.log('=========================');
 
   const handleDownloadPDF = () => {
     ManualPDFGenerator.generate(data);
