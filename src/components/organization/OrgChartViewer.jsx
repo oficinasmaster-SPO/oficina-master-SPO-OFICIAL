@@ -40,28 +40,28 @@ export default function OrgChartViewer({ nodes }) {
             {/* Linha vertical descendo do nó pai */}
             <div className="w-0.5 h-8 bg-gray-400" />
             
-            <div className="relative">
-              {/* Linha horizontal conectando todos os filhos */}
+            <div className="flex gap-6 relative">
+              {/* Linha horizontal conectando os filhos */}
               {childCount > 1 && (
-                <div className="absolute h-0.5 bg-gray-400" style={{
-                  top: 0,
-                  left: `calc(50% - ${(childCount - 1) * 6}rem)`,
-                  right: `calc(50% - ${(childCount - 1) * 6}rem)`,
-                }} />
+                <div 
+                  className="absolute h-0.5 bg-gray-400" 
+                  style={{
+                    top: 0,
+                    left: '50%',
+                    right: '50%',
+                    width: `calc(100% - 100px)`,
+                    transform: 'translateX(-50%)',
+                  }}
+                />
               )}
               
-              <div className="flex gap-6 pt-8">
-                {node.children.map((child, idx) => (
-                  <div key={child.id} className="relative flex flex-col items-center">
-                    {/* Linha vertical descendo da linha horizontal para o filho */}
-                    <div 
-                      className="absolute w-0.5 h-8 bg-gray-400" 
-                      style={{ top: -32, left: '50%', transform: 'translateX(-50%)' }}
-                    />
-                    {renderNode(child)}
-                  </div>
-                ))}
-              </div>
+              {node.children.map((child, idx) => (
+                <div key={child.id} className="relative flex flex-col items-center">
+                  {/* Linha vertical descendo da linha horizontal até o filho */}
+                  <div className="w-0.5 h-8 bg-gray-400" />
+                  {renderNode(child)}
+                </div>
+              ))}
             </div>
           </div>
         )}
