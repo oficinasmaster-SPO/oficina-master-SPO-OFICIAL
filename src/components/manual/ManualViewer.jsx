@@ -194,9 +194,10 @@ export default function ManualViewer({ data, onClose }) {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6 space-y-6">
-            {areas.map(area => {
-              const areaData = processosPorArea[area.id];
+            {Object.keys(processosPorArea).map(areaId => {
+              const areaData = processosPorArea[areaId];
               if (!areaData || (areaData.processos.length === 0 && areaData.its.length === 0)) return null;
+              const area = areaData.area;
 
               return (
                 <div key={area.id} className="page-break-inside-avoid">
@@ -278,10 +279,10 @@ export default function ManualViewer({ data, onClose }) {
                     </div>
                   )}
                 </div>
-              );
-            })}
-          </CardContent>
-        </Card>
+                );
+                }).filter(Boolean)}
+                </CardContent>
+                </Card>
 
         {/* 5. FUNÇÕES E DESCRIÇÕES DE CARGO */}
         {cargos.length > 0 && (
