@@ -95,7 +95,28 @@ export default function PermissionChangeManager() {
           break;
       }
       
+      const employee = await base44.entities.Employee.get(request.employee_id);
       await base44.entities.Employee.update(request.employee_id, updates);
+
+      if (employee?.user_id) {
+        const userUpdates = {};
+
+        if (updates.profile_id !== undefined) {
+          userUpdates.profile_id = updates.profile_id;
+        }
+
+        if (updates.custom_role_ids !== undefined) {
+          userUpdates.custom_role_ids = updates.custom_role_ids;
+        }
+
+        if (updates.user_status !== undefined) {
+          userUpdates.user_status = updates.user_status === 'ativo' ? 'active' : updates.user_status;
+        }
+
+        if (Object.keys(userUpdates).length > 0) {
+          await base44.entities.User.update(employee.user_id, userUpdates);
+        }
+      }
     } catch (error) {
       console.error('Erro ao aplicar mudança:', error);
       throw error;

@@ -38,6 +38,8 @@ export default function UserFormDialog({
     } else if (isCreateMode) {
       setSelectedCustomRoles([]);
     }
+
+    setFormData(prev => ({ ...prev, role: selectedUser?.role || "user" }));
   }, [selectedUser, isCreateMode]);
   
   const selectedProfile = profiles?.find(p => p.id === selectedProfileId);
@@ -83,7 +85,7 @@ export default function UserFormDialog({
       profile_id: selectedProfileId,
       custom_role_ids: selectedCustomRoles,
       user_status: formDataObj.get('user_status') || 'ativo',
-      role: isCreateMode ? formData.role : undefined
+      role: formData.role
     };
 
     console.log("📤 Enviando dados do usuário interno:", {
@@ -269,26 +271,24 @@ export default function UserFormDialog({
             <h3 className="text-sm font-semibold text-gray-900 border-b pb-2">Administração</h3>
             
             <div className="grid grid-cols-2 gap-4">
-              {isCreateMode && (
-                <div>
-                  <Label>Nível de Acesso no Sistema *</Label>
-                  <Select 
-                    value={formData.role}
-                    onValueChange={(value) => setFormData({...formData, role: value})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="user">Usuário Padrão</SelectItem>
-                      <SelectItem value="admin">Administrador do Sistema</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Admin = acesso total; Usuário = permissões do perfil
-                  </p>
-                </div>
-              )}
+              <div>
+                <Label>Nível de Acesso no Sistema *</Label>
+                <Select 
+                  value={formData.role}
+                  onValueChange={(value) => setFormData({...formData, role: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="user">Usuário Padrão</SelectItem>
+                    <SelectItem value="admin">Administrador do Sistema</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Admin = acesso total; Usuário = permissões do perfil
+                </p>
+              </div>
 
               {!isCreateMode && (
                 <div>
