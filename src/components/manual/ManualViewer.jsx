@@ -1,12 +1,33 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Download, X, Building2, Users, Target, FileText, BookOpen, Shield } from "lucide-react";
+import { Download, X, Building2, Users, Target, FileText, BookOpen, Shield, FileDown } from "lucide-react";
 import ManualPDFGenerator from "./ManualPDFGenerator";
+import { downloadProcessPDF } from "@/components/processes/ProcessPDFGenerator";
+import { downloadITPDF } from "@/components/processes/ITPDFGenerator";
 
 export default function ManualViewer({ data, onClose }) {
   const { cultura, processos, instructionDocs, cargos, areas, workshop } = data;
+  const [downloadingId, setDownloadingId] = useState(null);
+
+  const handleDownloadProcessPDF = async (processo) => {
+    setDownloadingId(processo.id);
+    try {
+      await downloadProcessPDF(processo, [], workshop);
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
+  const handleDownloadITPDF = async (it) => {
+    setDownloadingId(it.id);
+    try {
+      await downloadITPDF(it);
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   // Agrupar processos por área
   const processosPorArea = {};
@@ -199,6 +220,7 @@ export default function ManualViewer({ data, onClose }) {
                             <th>Código</th>
                             <th>Título</th>
                             <th>Descrição</th>
+                            <th className="print:hidden">Download</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -207,6 +229,17 @@ export default function ManualViewer({ data, onClose }) {
                               <td className="font-mono text-xs">{proc.code}</td>
                               <td className="font-medium">{proc.title}</td>
                               <td className="text-sm">{proc.description}</td>
+                              <td className="print:hidden">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleDownloadProcessPDF(proc)}
+                                  disabled={downloadingId === proc.id}
+                                  className="h-7 px-2"
+                                >
+                                  <FileDown className="w-4 h-4" />
+                                </Button>
+                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -223,6 +256,7 @@ export default function ManualViewer({ data, onClose }) {
                             <th>Tipo</th>
                             <th>Título</th>
                             <th>Descrição</th>
+                            <th className="print:hidden">Download</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -235,6 +269,17 @@ export default function ManualViewer({ data, onClose }) {
                               </td>
                               <td className="font-medium">{it.title}</td>
                               <td className="text-sm">{it.description}</td>
+                              <td className="print:hidden">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleDownloadITPDF(it)}
+                                  disabled={downloadingId === it.id}
+                                  className="h-7 px-2"
+                                >
+                                  <FileDown className="w-4 h-4" />
+                                </Button>
+                              </td>
                             </tr>
                           ))}
                         </tbody>
