@@ -2,8 +2,38 @@ import jsPDF from "jspdf";
 import "jspdf-autotable";
 
 export default class ManualPDFGenerator {
+  static async loadImageAsBase64(url) {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch (error) {
+      console.error('Erro ao carregar imagem:', error);
+      return null;
+    }
+  }
+
   static async generate(data) {
     const { cultura, processos, instructionDocs, cargos, areas, workshop } = data;
+    
+    // Pré-carregar todas as imagens de fluxograma
+    const imageCache = {};
+    const allImageUrls = [
+      ...processos.map(p => p.content_json?.fluxo_image_url).filter(Boolean),
+      ...instructionDocs.map(it => it.content?.fluxo_image_url).filter(Boolean)
+    ];
+    
+    for (const url of allImageUrls) {
+      if (!imageCache[url]) {
+        imageCache[url] = await this.loadImageAsBase64(url);
+      }
+    }
+    
     const doc = new jsPDF();
     let yPos = 20;
 
