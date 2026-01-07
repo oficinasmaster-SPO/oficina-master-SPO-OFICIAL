@@ -8,33 +8,12 @@ import ManualPDFGenerator from "./ManualPDFGenerator";
 export default function ManualViewer({ data, onClose }) {
   const { cultura, processos, instructionDocs, cargos, areas, workshop } = data;
 
-  // Debug detalhado
-  console.log('=== DEBUG MANUAL VIEWER ===');
-  console.log('Total processos:', processos?.length || 0);
-  console.log('Total ITs:', instructionDocs?.length || 0);
-  console.log('Total áreas:', areas?.length || 0);
-  
-  // Mostrar IDs explícitos de processos
+  // Debug: verificar todos os campos do primeiro processo
   if (processos?.length > 0) {
-    console.log('Sample 5 processos com area_id:');
-    processos.slice(0, 5).forEach((p, i) => {
-      console.log(`  ${i + 1}. "${p.title}" -> area_id: "${p.area_id}" (tipo: ${typeof p.area_id})`);
-    });
+    console.log('=== CAMPOS DO PRIMEIRO PROCESSO ===');
+    console.log('Processo completo:', processos[0]);
+    console.log('Campos disponíveis:', Object.keys(processos[0]));
   }
-  
-  // Mostrar IDs explícitos de ITs
-  if (instructionDocs?.length > 0) {
-    console.log('ITs com area_id:');
-    instructionDocs.forEach((it, i) => {
-      console.log(`  ${i + 1}. "${it.title}" -> area_id: "${it.area_id}" (tipo: ${typeof it.area_id})`);
-    });
-  }
-  
-  // Mostrar IDs explícitos das áreas
-  console.log('IDs das áreas disponíveis:');
-  areas?.forEach((a, i) => {
-    console.log(`  ${i + 1}. "${a.name}" -> id: "${a.id}" (tipo: ${typeof a.id})`);
-  });
 
   // Agrupar processos por área
   const processosPorArea = areas.reduce((acc, area) => {
