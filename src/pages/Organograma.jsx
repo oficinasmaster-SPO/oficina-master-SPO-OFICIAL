@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Save, Eye, Edit3, Download, FileText } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Plus, Save, Eye, Edit3, Download, FileText, Info, CheckCircle, Target, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import OrgChartEditor from "@/components/organization/OrgChartEditor";
 import OrgChartViewer from "@/components/organization/OrgChartViewer";
@@ -111,12 +111,81 @@ export default function Organograma() {
 
   return (
     <div className="space-y-6">
+      {/* Card Informativo */}
+      <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+        <CardHeader>
+          <div className="flex items-start gap-3">
+            <div className="p-2 bg-blue-600 rounded-lg">
+              <Info className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1">
+              <CardTitle className="text-xl font-bold text-blue-900">
+                Organograma de Áreas (Estrutural)
+              </CardTitle>
+              <CardDescription className="text-blue-700 mt-1">
+                Mostra as áreas e funções, sem nomes nem fotos
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-3">
+              <div className="flex items-start gap-2">
+                <Target className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h3 className="font-semibold text-blue-900">O que ele responde</h3>
+                  <p className="text-sm text-blue-700">O que precisa existir para a empresa funcionar</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-2">
+                <CheckCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h3 className="font-semibold text-blue-900">Para que serve</h3>
+                  <ul className="text-sm text-blue-700 space-y-1">
+                    <li>• Clareza estrutural</li>
+                    <li>• Desenho da empresa ideal</li>
+                    <li>• Base para processos</li>
+                    <li>• Planejamento de crescimento</li>
+                    <li>• Evita dependência de pessoas específicas</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-start gap-2">
+                <TrendingUp className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h3 className="font-semibold text-blue-900">Quando usar</h3>
+                  <p className="text-sm text-blue-700 mb-2">Quando a empresa está:</p>
+                  <ul className="text-sm text-blue-700 space-y-1">
+                    <li>✔ Crescendo</li>
+                    <li>✔ Estruturando processos</li>
+                    <li>✔ Saindo do "dono faz tudo"</li>
+                    <li>✔ Pensando em escala</li>
+                    <li>✔ Criando playbooks</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="bg-blue-600 text-white p-4 rounded-lg">
+                <p className="text-sm font-medium italic">
+                  💡 "Função vem antes da pessoa."
+                </p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle className="text-2xl font-bold">Organograma</CardTitle>
+            <CardTitle className="text-2xl font-bold">Organograma Estrutural</CardTitle>
             <p className="text-sm text-gray-600 mt-1">
-              Estrutura organizacional de {workshop.name}
+              Estrutura de áreas e funções de {workshop.name}
             </p>
           </div>
           <div className="flex gap-2">

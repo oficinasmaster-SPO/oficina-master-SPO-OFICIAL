@@ -150,8 +150,8 @@ import Tarefas from './pages/Tarefas';
 import TechnicianQGP from './pages/TechnicianQGP';
 import TestUsuarios from './pages/TestUsuarios';
 import TreinamentoVendas from './pages/TreinamentoVendas';
-import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
+import UsuariosAdmin from './pages/UsuariosAdmin';
 import __Layout from './Layout.jsx';
 
 
@@ -308,8 +308,8 @@ export const PAGES = {
     "TechnicianQGP": TechnicianQGP,
     "TestUsuarios": TestUsuarios,
     "TreinamentoVendas": TreinamentoVendas,
-    "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
+    "UsuariosAdmin": UsuariosAdmin,
 }
 
 export const pagesConfig = {
