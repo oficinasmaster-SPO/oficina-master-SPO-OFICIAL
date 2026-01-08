@@ -130,15 +130,28 @@ export default function VisualizarAtaModal({ ata, workshop, onClose }) {
             </CardContent>
           </Card>
 
+          <Card>
+            <CardContent className="pt-6">
+              <h3 className="font-bold text-lg mb-3">5. VISÃO GERAL DO PROJETO DE ACELERAÇÃO</h3>
+              <p className="whitespace-pre-wrap">{ata.visao_geral_projeto || "Não informado"}</p>
+            </CardContent>
+          </Card>
+
           {ata.processos_vinculados?.length > 0 && (
             <Card>
               <CardContent className="pt-6">
-                <h3 className="font-bold text-lg mb-3">PROCESSOS (MAPs) DISCUTIDOS</h3>
-                <div className="space-y-2">
+                <h3 className="font-bold text-lg mb-3">📋 PROCESSOS (MAPs) COMPARTILHADOS</h3>
+                <p className="text-sm text-gray-600 mb-3 italic">
+                  Os processos abaixo foram discutidos e estão disponíveis para consulta no módulo "Processos" da plataforma.
+                </p>
+                <div className="space-y-3">
                   {ata.processos_vinculados.map((processo, i) => (
-                    <div key={i} className="border-l-4 border-blue-600 pl-3 py-2">
-                      <p className="font-medium">{processo.titulo}</p>
-                      <p className="text-sm text-gray-600">{processo.categoria}</p>
+                    <div key={i} className="border-l-4 border-blue-600 pl-4 py-2 bg-blue-50">
+                      <p className="font-medium text-gray-900">• {processo.titulo}</p>
+                      <p className="text-sm text-gray-600">Categoria: {processo.categoria}</p>
+                      <p className="text-xs text-blue-700 mt-1">
+                        📍 Acesse em: Menu → Processos → Buscar "{processo.titulo}"
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -146,12 +159,71 @@ export default function VisualizarAtaModal({ ata, workshop, onClose }) {
             </Card>
           )}
 
-          <Card>
-            <CardContent className="pt-6">
-              <h3 className="font-bold text-lg mb-3">5. VISÃO GERAL DO PROJETO DE ACELERAÇÃO</h3>
-              <p className="whitespace-pre-wrap">{ata.visao_geral_projeto || "Não informado"}</p>
-            </CardContent>
-          </Card>
+          {ata.videoaulas_vinculadas?.length > 0 && (
+            <Card>
+              <CardContent className="pt-6">
+                <h3 className="font-bold text-lg mb-3">🎥 VIDEOAULAS RECOMENDADAS</h3>
+                <p className="text-sm text-gray-600 mb-3 italic">
+                  As videoaulas abaixo foram indicadas e estão disponíveis no módulo "Academia de Treinamento" da plataforma.
+                </p>
+                <div className="space-y-3">
+                  {ata.videoaulas_vinculadas.map((video, i) => (
+                    <div key={i} className="border-l-4 border-purple-600 pl-4 py-2 bg-purple-50">
+                      <p className="font-medium text-gray-900">• {video.titulo}</p>
+                      <p className="text-sm text-gray-600">{video.descricao}</p>
+                      <p className="text-xs text-purple-700 mt-1">
+                        📍 Acesse em: Menu → Academia de Treinamento → {video.descricao} → {video.titulo}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {ata.midias_anexas?.length > 0 && (
+            <Card>
+              <CardContent className="pt-6">
+                <h3 className="font-bold text-lg mb-3">📎 MÍDIAS E ANEXOS</h3>
+                <div className="space-y-3">
+                  {ata.midias_anexas.map((midia, i) => (
+                    <div key={i} className="border rounded-lg p-3 bg-gray-50">
+                      {midia.tipo === 'imagem' && midia.url && (
+                        <div className="space-y-2">
+                          <p className="font-medium text-sm">{midia.titulo || `Imagem ${i + 1}`}</p>
+                          <img 
+                            src={midia.url} 
+                            alt={midia.titulo || 'Imagem anexada'} 
+                            className="max-w-full h-auto rounded border"
+                          />
+                        </div>
+                      )}
+                      {midia.tipo === 'video' && (
+                        <div className="space-y-2">
+                          <p className="font-medium text-sm">🎬 {midia.titulo || `Vídeo ${i + 1}`}</p>
+                          <p className="text-xs text-gray-600 break-all">{midia.url}</p>
+                        </div>
+                      )}
+                      {midia.tipo === 'link' && (
+                        <div className="space-y-1">
+                          <p className="font-medium text-sm">🔗 {midia.titulo || `Link ${i + 1}`}</p>
+                          <a href={midia.url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 break-all hover:underline">
+                            {midia.url}
+                          </a>
+                        </div>
+                      )}
+                      {midia.tipo === 'documento' && (
+                        <div className="space-y-1">
+                          <p className="font-medium text-sm">📄 {midia.titulo || `Documento ${i + 1}`}</p>
+                          <p className="text-xs text-gray-600 break-all">{midia.url}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {workshop && (
             <Card className="print:break-before-page">
