@@ -15,18 +15,17 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'audio_url é obrigatório' }, { status: 400 });
     }
 
-    // Baixar o áudio
+    // Buscar o arquivo de áudio
     const audioResponse = await fetch(audio_url);
     const audioBlob = await audioResponse.blob();
 
-    // Criar FormData para enviar ao Whisper
+    // Transcrever com OpenAI Whisper
     const formData = new FormData();
     formData.append('file', audioBlob, 'audio.webm');
     formData.append('model', 'whisper-1');
     formData.append('language', 'pt');
 
-    // Chamar API do Whisper
-    const whisperResponse = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+    const transcriptionResponse = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`
@@ -34,20 +33,18 @@ Deno.serve(async (req) => {
       body: formData
     });
 
-    if (!whisperResponse.ok) {
-      const error = await whisperResponse.text();
-      console.error('Whisper error:', error);
-      return Response.json({ error: 'Erro ao transcrever áudio' }, { status: 500 });
+    if (!transcriptionResponse.ok) {
+      throw new Error('Erro na API do OpenAI: ' + await transcriptionResponse.text());
     }
 
-    const result = await whisperResponse.json();
-    
-    return Response.json({ 
-      transcription: result.text 
+    const transcription = await transcriptionResponse.json();
+
+    return Response.json({
+      success: true,
+      text: transcription.text
     });
-    
   } catch (error) {
-    console.error('Transcription error:', error);
+    console.error('Erro ao transcrever áudio:', error);
     return Response.json({ 
       error: error.message || 'Erro ao transcrever áudio' 
     }, { status: 500 });
