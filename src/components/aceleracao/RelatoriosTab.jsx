@@ -510,6 +510,7 @@ export default function RelatoriosTab({ user }) {
                           >
                             <Edit className="w-4 h-4 text-gray-600" />
                           </Button>
+                          
                           {a.ata_id && (
                             <Button
                               variant="ghost"
@@ -521,7 +522,7 @@ export default function RelatoriosTab({ user }) {
                                   setShowVisualizarAta(true);
                                 }
                               }}
-                              title="Ver ATA"
+                              title="Ver ATA em PDF"
                             >
                               <FileText className="w-4 h-4 text-green-600" />
                             </Button>

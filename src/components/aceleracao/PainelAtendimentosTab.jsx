@@ -302,7 +302,7 @@ export default function PainelAtendimentosTab({ user }) {
                             <Edit className="w-4 h-4 text-gray-600" />
                           </Button>
 
-                          {atendimento.ata_id ? (
+                          {atendimento.ata_id && (
                             <Button 
                               variant="ghost" 
                               size="sm"
@@ -313,11 +313,13 @@ export default function PainelAtendimentosTab({ user }) {
                                   setShowVisualizarAta(true);
                                 }
                               }}
-                              title="Ver ATA"
+                              title="Ver ATA em PDF"
                             >
                               <FileText className="w-4 h-4 text-green-600" />
                             </Button>
-                          ) : atendimento.status === 'realizado' && (
+                          )}
+                          
+                          {!atendimento.ata_id && atendimento.status === 'realizado' && (
                             <Button
                               variant="ghost"
                               size="sm"
