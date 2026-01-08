@@ -431,10 +431,19 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     const workshop = await base44.entities.Workshop.get(workshop_id);
 
-    // Gerar código único do documento
-    const timestamp = Date.now().toString(36).toUpperCase();
-    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
-    const document_code = `RI-${timestamp}-${random}`;
+    // Buscar último código para gerar sequencial
+    const existingRegiments = await base44.entities.CompanyRegiment.filter({ workshop_id }, '-created_date', 1);
+    let nextNumber = 1;
+
+    if (existingRegiments.length > 0 && existingRegiments[0].document_code) {
+      const lastCode = existingRegiments[0].document_code;
+      const match = lastCode.match(/RI-(\d+)/);
+      if (match) {
+        nextNumber = parseInt(match[1]) + 1;
+      }
+    }
+
+    const document_code = `RI-${String(nextNumber).padStart(4, '0')}`;
 
     const regiment = await base44.entities.CompanyRegiment.create({
       workshop_id,
