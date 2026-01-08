@@ -515,11 +515,15 @@ export default function RelatoriosTab({ user }) {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => {
-                                const ata = atas?.find(at => at.id === a.ata_id);
-                                if (ata) {
-                                  setSelectedAta(ata);
-                                  setShowVisualizarAta(true);
+                              onClick={async () => {
+                                try {
+                                  const ata = await base44.entities.MeetingMinutes.get(a.ata_id);
+                                  if (ata) {
+                                    setSelectedAta(ata);
+                                    setShowVisualizarAta(true);
+                                  }
+                                } catch (error) {
+                                  toast.error("Erro ao carregar ATA");
                                 }
                               }}
                               title="Ver ATA em PDF"

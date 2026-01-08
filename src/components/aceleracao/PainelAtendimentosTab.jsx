@@ -308,10 +308,14 @@ export default function PainelAtendimentosTab({ user }) {
                               variant="ghost" 
                               size="sm"
                               onClick={async () => {
-                                const ata = atas?.find(a => a.id === atendimento.ata_id);
-                                if (ata) {
-                                  setSelectedAta(ata);
-                                  setShowVisualizarAta(true);
+                                try {
+                                  const ata = await base44.entities.MeetingMinutes.get(atendimento.ata_id);
+                                  if (ata) {
+                                    setSelectedAta(ata);
+                                    setShowVisualizarAta(true);
+                                  }
+                                } catch (error) {
+                                  toast.error("Erro ao carregar ATA");
                                 }
                               }}
                               title="Ver ATA em PDF"
