@@ -15,6 +15,10 @@ import { format } from "date-fns";
 import NotificationSchedulerModal from "@/components/aceleracao/NotificationSchedulerModal";
 import TemplateAtendimentoModal from "@/components/aceleracao/TemplateAtendimentoModal";
 import MeetingTimer from "@/components/aceleracao/MeetingTimer";
+import WorkshopSearchSelect from "@/components/aceleracao/WorkshopSearchSelect";
+import ProcessSearchSelect from "@/components/aceleracao/ProcessSearchSelect";
+import AudioTranscriptionField from "@/components/aceleracao/AudioTranscriptionField";
+import TipoAtendimentoManager from "@/components/aceleracao/TipoAtendimentoManager";
 
 export default function RegistrarAtendimento() {
   const navigate = useNavigate();
@@ -48,6 +52,9 @@ export default function RegistrarAtendimento() {
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [timerData, setTimerData] = useState(null);
   const [showMeetingTimer, setShowMeetingTimer] = useState(false);
+  const [customTipos, setCustomTipos] = useState([]);
+  const [showAISummary, setShowAISummary] = useState(false);
+  const [aiSummary, setAISummary] = useState(null);
 
   // Carregar usuário
   const { data: user } = useQuery({
@@ -128,6 +135,17 @@ export default function RegistrarAtendimento() {
     enabled: !!formData.workshop_id
   });
 
+  // Carregar colaboradores internos (aceleradores/consultores)
+  const { data: colaboradoresInternos } = useQuery({
+    queryKey: ['colaboradores-internos'],
+    queryFn: async () => {
+      return await base44.entities.Employee.filter({ 
+        tipo_vinculo: 'interno',
+        status: 'ativo'
+      });
+    }
+  });
+
   // Carregar processos disponíveis
   const { data: processos } = useQuery({
     queryKey: ['processos-disponiveis'],
@@ -136,11 +154,19 @@ export default function RegistrarAtendimento() {
     }
   });
 
-  // Carregar módulos de treinamento
-  const { data: modulos } = useQuery({
-    queryKey: ['modulos-treinamento'],
+  // Carregar cursos de treinamento
+  const { data: cursos } = useQuery({
+    queryKey: ['cursos-treinamento'],
     queryFn: async () => {
-      return await base44.entities.TrainingModule.list();
+      return await base44.entities.TrainingCourse.list();
+    }
+  });
+
+  // Carregar aulas de todos os cursos
+  const { data: todasAulas } = useQuery({
+    queryKey: ['todas-aulas'],
+    queryFn: async () => {
+      return await base44.entities.CourseLesson.list();
     }
   });
 
@@ -290,15 +316,17 @@ export default function RegistrarAtendimento() {
     setFormData({ ...formData, processos_vinculados: newProcessos });
   };
 
-  const addVideoaula = (moduloId) => {
-    const modulo = modulos?.find(m => m.id === moduloId);
-    if (modulo && !formData.videoaulas_vinculadas.find(v => v.id === moduloId)) {
+  const addVideoaula = (aulaId) => {
+    const aula = todasAulas?.find(a => a.id === aulaId);
+    if (aula && !formData.videoaulas_vinculadas.find(v => v.id === aulaId)) {
+      const curso = cursos?.find(c => c.id === aula.course_id);
       setFormData({
         ...formData,
         videoaulas_vinculadas: [...formData.videoaulas_vinculadas, {
-          id: modulo.id,
-          titulo: modulo.title,
-          descricao: modulo.description
+          id: aula.id,
+          titulo: aula.title,
+          descricao: curso?.title || "",
+          video_url: aula.video_url
         }]
       });
     }
@@ -369,21 +397,11 @@ export default function RegistrarAtendimento() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Oficina Cliente *</Label>
-                <Select
+                <WorkshopSearchSelect
+                  workshops={workshops}
                   value={formData.workshop_id}
                   onValueChange={(value) => setFormData({ ...formData, workshop_id: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a oficina" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {workshops?.map((w) => (
-                      <SelectItem key={w.id} value={w.id}>
-                        {w.name} - {w.planoAtual} - {w.city}/{w.state}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                />
               </div>
 
               {user?.role === 'admin' && (
@@ -418,7 +436,13 @@ export default function RegistrarAtendimento() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Tipo de Atendimento *</Label>
+                <div className="flex items-center justify-between mb-2">
+                  <Label>Tipo de Atendimento *</Label>
+                  <TipoAtendimentoManager
+                    customTipos={customTipos}
+                    onSave={setCustomTipos}
+                  />
+                </div>
                 <Select
                   value={formData.tipo_atendimento}
                   onValueChange={(value) => setFormData({ ...formData, tipo_atendimento: value })}
@@ -434,6 +458,11 @@ export default function RegistrarAtendimento() {
                     <SelectItem value="auditoria">Auditoria</SelectItem>
                     <SelectItem value="revisao_metas">Revisão de Metas</SelectItem>
                     <SelectItem value="outros">Outros</SelectItem>
+                    {customTipos.map(tipo => (
+                      <SelectItem key={tipo.value} value={tipo.value}>
+                        {tipo.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -523,39 +552,65 @@ export default function RegistrarAtendimento() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>Participantes</CardTitle>
-              <div className="flex gap-2">
-                <Button type="button" variant="outline" size="sm" onClick={addParticipante}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Adicionar Manual
-                </Button>
-                {colaboradores && colaboradores.length > 0 && (
-                  <Select onValueChange={(value) => {
-                    const colab = colaboradores.find(c => c.id === value);
-                    if (colab) {
-                      setFormData({
-                        ...formData,
-                        participantes: [...formData.participantes, {
-                          nome: colab.full_name,
-                          cargo: colab.position,
-                          email: colab.email
-                        }]
-                      });
-                    }
-                  }}>
-                    <SelectTrigger className="w-64">
-                      <SelectValue placeholder="Adicionar da oficina" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {colaboradores.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>
-                          {c.full_name} - {c.position}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              </div>
+            <CardTitle>Participantes</CardTitle>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={addParticipante}>
+                <Plus className="w-4 h-4 mr-2" />
+                Manual
+              </Button>
+              {colaboradores && colaboradores.length > 0 && (
+                <Select onValueChange={(value) => {
+                  const colab = colaboradores.find(c => c.id === value);
+                  if (colab) {
+                    setFormData({
+                      ...formData,
+                      participantes: [...formData.participantes, {
+                        nome: colab.full_name,
+                        cargo: colab.position,
+                        email: colab.email
+                      }]
+                    });
+                  }
+                }}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Da oficina" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {colaboradores.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.full_name} - {c.position}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {colaboradoresInternos && colaboradoresInternos.length > 0 && (
+                <Select onValueChange={(value) => {
+                  const colab = colaboradoresInternos.find(c => c.id === value);
+                  if (colab) {
+                    setFormData({
+                      ...formData,
+                      participantes: [...formData.participantes, {
+                        nome: colab.full_name,
+                        cargo: colab.position + " (Interno)",
+                        email: colab.email
+                      }]
+                    });
+                  }
+                }}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Interno" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {colaboradoresInternos.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.full_name} - {c.position}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -768,18 +823,11 @@ export default function RegistrarAtendimento() {
                 Processos (MAPs)
               </Label>
               <div className="space-y-2">
-                <Select onValueChange={addProcesso}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Adicionar processo..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {processos?.filter(p => !formData.processos_vinculados.find(pv => pv.id === p.id)).map((processo) => (
-                      <SelectItem key={processo.id} value={processo.id}>
-                        {processo.title} - {processo.category}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <ProcessSearchSelect
+                  processos={processos}
+                  selectedIds={formData.processos_vinculados.map(p => p.id)}
+                  onAdd={addProcesso}
+                />
 
                 {formData.processos_vinculados.length > 0 && (
                   <div className="mt-3 space-y-2">
@@ -819,11 +867,14 @@ export default function RegistrarAtendimento() {
                     <SelectValue placeholder="Adicionar videoaula..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {modulos?.filter(m => !formData.videoaulas_vinculadas.find(v => v.id === m.id)).map((modulo) => (
-                      <SelectItem key={modulo.id} value={modulo.id}>
-                        {modulo.title}
-                      </SelectItem>
-                    ))}
+                    {todasAulas?.filter(a => !formData.videoaulas_vinculadas.find(v => v.id === a.id)).map((aula) => {
+                      const curso = cursos?.find(c => c.id === aula.course_id);
+                      return (
+                        <SelectItem key={aula.id} value={aula.id}>
+                          {curso?.title} - {aula.title}
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
 
@@ -861,24 +912,72 @@ export default function RegistrarAtendimento() {
             <CardTitle>Observações e Próximos Passos</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <Label>Observações do Consultor</Label>
-              <Textarea
-                value={formData.observacoes_consultor}
-                onChange={(e) => setFormData({ ...formData, observacoes_consultor: e.target.value })}
-                rows={4}
-                placeholder="Notas e observações sobre o atendimento..."
-              />
-            </div>
-            <div>
-              <Label>Próximos Passos</Label>
-              <Textarea
-                value={formData.proximos_passos}
-                onChange={(e) => setFormData({ ...formData, proximos_passos: e.target.value })}
-                rows={3}
-                placeholder="O que deve ser feito até o próximo encontro..."
-              />
-            </div>
+            <AudioTranscriptionField
+              label="Observações do Consultor"
+              value={formData.observacoes_consultor}
+              onChange={(text) => setFormData({ ...formData, observacoes_consultor: text })}
+              placeholder="Notas e observações sobre o atendimento..."
+              rows={4}
+            />
+            <AudioTranscriptionField
+              label="Próximos Passos"
+              value={formData.proximos_passos}
+              onChange={(text) => setFormData({ ...formData, proximos_passos: text })}
+              placeholder="O que deve ser feito até o próximo encontro..."
+              rows={3}
+            />
+
+            {formData.id && (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={async () => {
+                  setShowAISummary(true);
+                  try {
+                    const { data } = await base44.functions.invoke('generateAtaSummaryWithContext', {
+                      atendimento_id: formData.id
+                    });
+                    setAISummary(data.analise);
+                    toast.success("Análise com IA gerada!");
+                  } catch (error) {
+                    toast.error("Erro: " + error.message);
+                    setShowAISummary(false);
+                  }
+                }}
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                Gerar Resumo com IA (últimas 10 atas)
+              </Button>
+            )}
+
+            {showAISummary && aiSummary && (
+              <div className="border rounded-lg p-4 bg-blue-50 space-y-3">
+                <h4 className="font-semibold text-blue-900">📊 Análise Inteligente</h4>
+                <div className="space-y-2 text-sm">
+                  <div>
+                    <p className="font-medium">Resumo:</p>
+                    <p className="text-gray-700">{aiSummary.resumo_executivo}</p>
+                  </div>
+                  {aiSummary.problemas_recorrentes?.length > 0 && (
+                    <div>
+                      <p className="font-medium">Problemas Recorrentes:</p>
+                      <ul className="list-disc ml-4 text-gray-700">
+                        {aiSummary.problemas_recorrentes.map((p, i) => <li key={i}>{p}</li>)}
+                      </ul>
+                    </div>
+                  )}
+                  {aiSummary.recomendacoes?.length > 0 && (
+                    <div>
+                      <p className="font-medium">Recomendações:</p>
+                      <ul className="list-disc ml-4 text-gray-700">
+                        {aiSummary.recomendacoes.map((r, i) => <li key={i}>{r}</li>)}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 

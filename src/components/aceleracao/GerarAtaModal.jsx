@@ -7,11 +7,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Trash2, Save, FileText } from "lucide-react";
+import { Plus, Trash2, Save, FileText, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import ProcessSearchSelect from "@/components/aceleracao/ProcessSearchSelect";
+import AudioTranscriptionField from "@/components/aceleracao/AudioTranscriptionField";
 
 export default function GerarAtaModal({ atendimento, workshop, planoAceleracao, onClose, onSaved }) {
   const [loading, setLoading] = useState(false);
+  const [showAISummary, setShowAISummary] = useState(false);
+  const [aiSummary, setAISummary] = useState(null);
   const [formData, setFormData] = useState({
     meeting_date: new Date().toISOString().split('T')[0],
     meeting_time: new Date().toTimeString().slice(0, 5),
@@ -22,8 +26,24 @@ export default function GerarAtaModal({ atendimento, workshop, planoAceleracao, 
     objetivos_atendimento: "",
     objetivos_consultor: "",
     proximos_passos: [],
-    visao_geral_projeto: ""
+    visao_geral_projeto: "",
+    processos_vinculados: []
   });
+
+  // Carregar processos disponíveis
+  const [processos, setProcessos] = React.useState([]);
+  
+  React.useEffect(() => {
+    const loadProcessos = async () => {
+      try {
+        const procs = await base44.entities.ProcessDocument.list();
+        setProcessos(procs);
+      } catch (error) {
+        console.error("Erro ao carregar processos:", error);
+      }
+    };
+    loadProcessos();
+  }, []);
 
   useEffect(() => {
     loadInitialData();
@@ -382,12 +402,58 @@ export default function GerarAtaModal({ atendimento, workshop, planoAceleracao, 
           <Card>
             <CardContent className="pt-6 space-y-4">
               <h3 className="font-semibold text-lg">3. Objetivos do Consultor</h3>
-              <Textarea
-                placeholder="Direcionamento estratégico do acelerador, foco técnico ou gerencial..."
+              <AudioTranscriptionField
+                label=""
                 value={formData.objetivos_consultor}
-                onChange={(e) => setFormData({...formData, objetivos_consultor: e.target.value})}
+                onChange={(text) => setFormData({...formData, objetivos_consultor: text})}
+                placeholder="Direcionamento estratégico do acelerador, foco técnico ou gerencial..."
                 rows={4}
               />
+            </CardContent>
+          </Card>
+
+          {/* Processos Vinculados */}
+          <Card>
+            <CardContent className="pt-6 space-y-4">
+              <h3 className="font-semibold text-lg">MAPs / Processos Discutidos</h3>
+              <ProcessSearchSelect
+                processos={processos}
+                selectedIds={formData.processos_vinculados.map(p => p.id)}
+                onAdd={(processoId) => {
+                  const processo = processos?.find(p => p.id === processoId);
+                  if (processo) {
+                    setFormData({
+                      ...formData,
+                      processos_vinculados: [...formData.processos_vinculados, {
+                        id: processo.id,
+                        titulo: processo.title,
+                        categoria: processo.category
+                      }]
+                    });
+                  }
+                }}
+              />
+              {formData.processos_vinculados.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  {formData.processos_vinculados.map((proc, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-2 bg-blue-50 rounded border">
+                      <span className="text-sm">{proc.titulo}</span>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setFormData({
+                            ...formData,
+                            processos_vinculados: formData.processos_vinculados.filter((_, i) => i !== idx)
+                          });
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4 text-red-500" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -437,6 +503,75 @@ export default function GerarAtaModal({ atendimento, workshop, planoAceleracao, 
                 onChange={(e) => setFormData({...formData, visao_geral_projeto: e.target.value})}
                 rows={4}
               />
+
+              {atendimento?.id && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={async () => {
+                    setShowAISummary(true);
+                    try {
+                      const { data } = await base44.functions.invoke('generateAtaSummaryWithContext', {
+                        atendimento_id: atendimento.id
+                      });
+                      setAISummary(data.analise);
+                      toast.success("Análise gerada!");
+                    } catch (error) {
+                      toast.error("Erro: " + error.message);
+                      setShowAISummary(false);
+                    }
+                  }}
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Gerar Resumo Inteligente (últimas 10 atas)
+                </Button>
+              )}
+
+              {showAISummary && aiSummary && (
+                <div className="border rounded-lg p-4 bg-gradient-to-br from-blue-50 to-purple-50 space-y-3">
+                  <h4 className="font-semibold text-blue-900 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4" />
+                    Análise Inteligente Contextual
+                  </h4>
+                  <div className="space-y-3 text-sm">
+                    <div>
+                      <p className="font-medium text-gray-900">📝 Resumo Executivo:</p>
+                      <p className="text-gray-700 mt-1">{aiSummary.resumo_executivo}</p>
+                    </div>
+                    {aiSummary.problemas_recorrentes?.length > 0 && (
+                      <div>
+                        <p className="font-medium text-red-900">🔴 Problemas Recorrentes:</p>
+                        <ul className="list-disc ml-4 text-gray-700 mt-1">
+                          {aiSummary.problemas_recorrentes.map((p, i) => <li key={i}>{p}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                    {aiSummary.evolucao_cliente && (
+                      <div>
+                        <p className="font-medium text-green-900">📈 Evolução do Cliente:</p>
+                        <p className="text-gray-700 mt-1">{aiSummary.evolucao_cliente}</p>
+                      </div>
+                    )}
+                    {aiSummary.recomendacoes?.length > 0 && (
+                      <div>
+                        <p className="font-medium text-blue-900">💡 Recomendações:</p>
+                        <ul className="list-disc ml-4 text-gray-700 mt-1">
+                          {aiSummary.recomendacoes.map((r, i) => <li key={i}>{r}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                    {aiSummary.pontos_atencao?.length > 0 && (
+                      <div>
+                        <p className="font-medium text-orange-900">⚠️ Pontos de Atenção:</p>
+                        <ul className="list-disc ml-4 text-gray-700 mt-1">
+                          {aiSummary.pontos_atencao.map((p, i) => <li key={i}>{p}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
