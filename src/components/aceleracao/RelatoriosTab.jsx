@@ -15,12 +15,15 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import ReagendarAtendimentoModal from "./ReagendarAtendimentoModal";
+import VisualizarAtaModal from "./VisualizarAtaModal";
 
 export default function RelatoriosTab({ user }) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [showReagendar, setShowReagendar] = useState(false);
+  const [showVisualizarAta, setShowVisualizarAta] = useState(false);
   const [atendimentoReagendar, setAtendimentoReagendar] = useState(null);
+  const [selectedAta, setSelectedAta] = useState(null);
   const [filtros, setFiltros] = useState({
     dataInicio: format(startOfMonth(subMonths(new Date(), 5)), 'yyyy-MM-dd'),
     dataFim: format(endOfMonth(new Date()), 'yyyy-MM-dd'),
@@ -47,6 +50,11 @@ export default function RelatoriosTab({ user }) {
   const { data: planos = [] } = useQuery({
     queryKey: ['planos-relatorios'],
     queryFn: () => base44.entities.MonthlyAccelerationPlan.list('-created_date')
+  });
+
+  const { data: atas } = useQuery({
+    queryKey: ['atas-relatorios'],
+    queryFn: () => base44.entities.MeetingMinutes.list('-created_date')
   });
 
   const { data: cronogramas = [] } = useQuery({
@@ -502,6 +510,22 @@ export default function RelatoriosTab({ user }) {
                           >
                             <Edit className="w-4 h-4 text-gray-600" />
                           </Button>
+                          {a.ata_id && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                const ata = atas?.find(at => at.id === a.ata_id);
+                                if (ata) {
+                                  setSelectedAta(ata);
+                                  setShowVisualizarAta(true);
+                                }
+                              }}
+                              title="Ver ATA"
+                            >
+                              <FileText className="w-4 h-4 text-green-600" />
+                            </Button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -530,6 +554,16 @@ export default function RelatoriosTab({ user }) {
             queryClient.invalidateQueries(['atendimentos-relatorios']);
             setShowReagendar(false);
             setAtendimentoReagendar(null);
+          }}
+        />
+      )}
+
+      {showVisualizarAta && selectedAta && (
+        <VisualizarAtaModal
+          ata={selectedAta}
+          onClose={() => {
+            setShowVisualizarAta(false);
+            setSelectedAta(null);
           }}
         />
       )}

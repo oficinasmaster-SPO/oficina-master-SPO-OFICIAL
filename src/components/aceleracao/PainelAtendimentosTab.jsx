@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Copy, CheckCircle, FileText, Send, AlertTriangle, FilePlus, Play, StopCircle } from "lucide-react";
+import { Edit, Copy, CheckCircle, FileText, Send, AlertTriangle, FilePlus, Play, StopCircle, CalendarClock } from "lucide-react";
 import GerarAtaModal from "./GerarAtaModal";
 import VisualizarAtaModal from "./VisualizarAtaModal";
+import ReagendarAtendimentoModal from "./ReagendarAtendimentoModal";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
@@ -20,6 +21,7 @@ export default function PainelAtendimentosTab({ user }) {
   const queryClient = useQueryClient();
   const [showGerarAta, setShowGerarAta] = useState(false);
   const [showVisualizarAta, setShowVisualizarAta] = useState(false);
+  const [showReagendar, setShowReagendar] = useState(false);
   const [selectedAtendimento, setSelectedAtendimento] = useState(null);
   const [selectedAta, setSelectedAta] = useState(null);
   const [filtros, setFiltros] = useState({
@@ -153,6 +155,18 @@ export default function PainelAtendimentosTab({ user }) {
         />
       )}
 
+      {showReagendar && selectedAtendimento && (
+        <ReagendarAtendimentoModal
+          atendimento={selectedAtendimento}
+          workshop={workshops?.find(w => w.id === selectedAtendimento.workshop_id)}
+          onClose={() => {
+            setShowReagendar(false);
+            setSelectedAtendimento(null);
+          }}
+          onSaved={handleAtaSaved}
+        />
+      )}
+
       {/* Filtros */}
       <Card>
         <CardContent className="pt-6">
@@ -243,26 +257,29 @@ export default function PainelAtendimentosTab({ user }) {
                       </td>
                       <td className="py-3 px-4 text-sm">{atendimento.consultor_nome}</td>
                       <td className="py-3 px-4">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => navigate(createPageUrl('RegistrarAtendimento') + `?atendimento_id=${atendimento.id}`)}
-                            title="Editar Atendimento"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          
-                          {(atendimento.status === 'agendado' || atendimento.status === 'confirmado') && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => iniciarMutation.mutate(atendimento.id)}
-                              title="Iniciar Reunião"
-                              className="text-blue-600 hover:text-blue-700"
-                            >
-                              <Play className="w-4 h-4" />
-                            </Button>
+                        <div className="flex items-center justify-end gap-1">
+                          {(atendimento.status === 'agendado' || atendimento.status === 'confirmado' || atendimento.status === 'reagendado') && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => iniciarMutation.mutate(atendimento.id)}
+                                title="Iniciar"
+                              >
+                                <Play className="w-4 h-4 text-blue-600" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedAtendimento(atendimento);
+                                  setShowReagendar(true);
+                                }}
+                                title="Reagendar"
+                              >
+                                <CalendarClock className="w-4 h-4 text-purple-600" />
+                              </Button>
+                            </>
                           )}
 
                           {atendimento.status === 'participando' && (
@@ -270,12 +287,20 @@ export default function PainelAtendimentosTab({ user }) {
                               variant="ghost"
                               size="sm"
                               onClick={() => finalizarMutation.mutate(atendimento.id)}
-                              title="Finalizar Reunião"
-                              className="text-green-600 hover:text-green-700"
+                              title="Finalizar"
                             >
-                              <StopCircle className="w-4 h-4" />
+                              <StopCircle className="w-4 h-4 text-green-600" />
                             </Button>
                           )}
+
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigate(createPageUrl('RegistrarAtendimento') + `?atendimento_id=${atendimento.id}`)}
+                            title="Editar"
+                          >
+                            <Edit className="w-4 h-4 text-gray-600" />
+                          </Button>
 
                           {atendimento.ata_id ? (
                             <Button 
