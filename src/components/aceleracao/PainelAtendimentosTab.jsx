@@ -10,6 +10,8 @@ import { Edit, Copy, CheckCircle, FileText, Send, AlertTriangle, FilePlus, Play,
 import GerarAtaModal from "./GerarAtaModal";
 import VisualizarAtaModal from "./VisualizarAtaModal";
 import ReagendarAtendimentoModal from "./ReagendarAtendimentoModal";
+import AtaSearchFilters from "./AtaSearchFilters";
+import { useAtaSearch } from "./useAtaSearch";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
@@ -24,13 +26,14 @@ export default function PainelAtendimentosTab({ user }) {
   const [showReagendar, setShowReagendar] = useState(false);
   const [selectedAtendimento, setSelectedAtendimento] = useState(null);
   const [selectedAta, setSelectedAta] = useState(null);
-  const [filtros, setFiltros] = useState({
-    dataInicio: "",
-    dataFim: "",
-    cliente: "",
-    consultor: "",
-    tipo: "",
-    status: ""
+  const [filtrosAtas, setFiltrosAtas] = useState({
+    searchTerm: "",
+    workshop_id: "",
+    consultor_id: "",
+    status: "",
+    tipo_aceleracao: "",
+    dateFrom: "",
+    dateTo: ""
   });
 
   const { data: atendimentos, isLoading } = useQuery({
@@ -53,6 +56,16 @@ export default function PainelAtendimentosTab({ user }) {
     queryKey: ['planos-aceleracao'],
     queryFn: () => base44.entities.MonthlyAccelerationPlan.list('-created_date')
   });
+
+  const { data: consultores } = useQuery({
+    queryKey: ['consultores-list'],
+    queryFn: async () => {
+      const employees = await base44.entities.Employee.list();
+      return employees.filter(e => e.job_role === 'acelerador' || e.position?.toLowerCase().includes('consultor'));
+    }
+  });
+
+  const atasFiltradas = useAtaSearch(atas, filtrosAtas);
 
   // Verificar atendimentos atrasados
   useEffect(() => {
@@ -168,60 +181,7 @@ export default function PainelAtendimentosTab({ user }) {
         />
       )}
 
-      {/* Filtros */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <Input
-              type="date"
-              placeholder="Data Início"
-              value={filtros.dataInicio}
-              onChange={(e) => setFiltros({...filtros, dataInicio: e.target.value})}
-            />
-            <Input
-              type="date"
-              placeholder="Data Fim"
-              value={filtros.dataFim}
-              onChange={(e) => setFiltros({...filtros, dataFim: e.target.value})}
-            />
-            <Select value={filtros.cliente} onValueChange={(v) => setFiltros({...filtros, cliente: v})}>
-              <SelectTrigger>
-                <SelectValue placeholder="Cliente" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={null}>Todos</SelectItem>
-                {workshops?.map(w => (
-                  <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={filtros.tipo} onValueChange={(v) => setFiltros({...filtros, tipo: v})}>
-              <SelectTrigger>
-                <SelectValue placeholder="Tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={null}>Todos</SelectItem>
-                <SelectItem value="diagnostico_inicial">Diagnóstico</SelectItem>
-                <SelectItem value="acompanhamento_mensal">Acompanhamento</SelectItem>
-                <SelectItem value="reuniao_estrategica">Estratégica</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={filtros.status} onValueChange={(v) => setFiltros({...filtros, status: v})}>
-              <SelectTrigger>
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={null}>Todos</SelectItem>
-                <SelectItem value="agendado">Agendado</SelectItem>
-                <SelectItem value="confirmado">Confirmado</SelectItem>
-                <SelectItem value="participando">Participando</SelectItem>
-                <SelectItem value="realizado">Realizado</SelectItem>
-                <SelectItem value="atrasado">Atrasado</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+
 
       {/* Tabela de Atendimentos */}
       <Card>
@@ -239,7 +199,7 @@ export default function PainelAtendimentosTab({ user }) {
                 </tr>
               </thead>
               <tbody>
-                {atendimentosFiltrados.map((atendimento) => {
+                {atendimentosComAtas.map((atendimento) => {
                   const workshop = workshops?.find(w => w.id === atendimento.workshop_id);
                   return (
                     <tr key={atendimento.id} className="border-b hover:bg-gray-50">
