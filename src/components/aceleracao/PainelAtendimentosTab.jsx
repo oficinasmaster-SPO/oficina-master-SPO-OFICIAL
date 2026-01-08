@@ -3,17 +3,14 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Copy, CheckCircle, FileText, Send, AlertTriangle, FilePlus, Play, StopCircle, CalendarClock } from "lucide-react";
+import { Edit, AlertTriangle, FilePlus, Play, StopCircle, CalendarClock, FileText } from "lucide-react";
 import GerarAtaModal from "./GerarAtaModal";
 import VisualizarAtaModal from "./VisualizarAtaModal";
 import ReagendarAtendimentoModal from "./ReagendarAtendimentoModal";
 import AtaSearchFilters from "./AtaSearchFilters";
 import { useAtaSearch } from "./useAtaSearch";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { toast } from "sonner";
@@ -39,7 +36,7 @@ export default function PainelAtendimentosTab({ user }) {
   const { data: atendimentos, isLoading } = useQuery({
     queryKey: ['todos-atendimentos'],
     queryFn: () => base44.entities.ConsultoriaAtendimento.list('-data_agendada'),
-    refetchInterval: 30000 // Atualiza a cada 30s
+    refetchInterval: 30000
   });
 
   const { data: workshops } = useQuery({
@@ -67,7 +64,6 @@ export default function PainelAtendimentosTab({ user }) {
 
   const atasFiltradas = useAtaSearch(atas, filtrosAtas);
 
-  // Verificar atendimentos atrasados
   useEffect(() => {
     if (!atendimentos) return;
     
@@ -76,7 +72,6 @@ export default function PainelAtendimentosTab({ user }) {
     atendimentos.forEach(atendimento => {
       const dataAtendimento = new Date(atendimento.data_agendada);
       
-      // Se passou da data agendada e não está realizado/participando
       if (now > dataAtendimento && 
           !['realizado', 'participando', 'atrasado'].includes(atendimento.status)) {
         marcarAtrasadoMutation.mutate(atendimento.id);
@@ -125,17 +120,11 @@ export default function PainelAtendimentosTab({ user }) {
     return colors[status] || "bg-gray-100 text-gray-800";
   };
 
-  const atendimentosFiltrados = atendimentos?.filter(a => {
-    if (filtros.status && a.status !== filtros.status) return false;
-    if (filtros.cliente && a.workshop_id !== filtros.cliente) return false;
-    if (filtros.tipo && a.tipo_atendimento !== filtros.tipo) return false;
-    return true;
-  }).sort((a, b) => {
-    // Atrasados sempre no topo
+  const atendimentosFiltrados = (atendimentos || []).sort((a, b) => {
     if (a.status === 'atrasado' && b.status !== 'atrasado') return -1;
     if (a.status !== 'atrasado' && b.status === 'atrasado') return 1;
     return new Date(b.data_agendada) - new Date(a.data_agendada);
-  }) || [];
+  });
 
   const handleAtaSaved = () => {
     queryClient.invalidateQueries(['todos-atendimentos']);
@@ -181,8 +170,6 @@ export default function PainelAtendimentosTab({ user }) {
         />
       )}
 
-
-
       {/* Busca e Filtros de ATAs */}
       <AtaSearchFilters
         filters={filtrosAtas}
@@ -216,7 +203,7 @@ export default function PainelAtendimentosTab({ user }) {
                 </tr>
               </thead>
               <tbody>
-                {atendimentosComAtas.map((atendimento) => {
+                {atendimentosFiltrados.map((atendimento) => {
                   const workshop = workshops?.find(w => w.id === atendimento.workshop_id);
                   return (
                     <tr key={atendimento.id} className="border-b hover:bg-gray-50">
