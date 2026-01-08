@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Copy, CheckCircle, FileText, Send, AlertTriangle, FilePlus } from "lucide-react";
+import { Edit, Copy, CheckCircle, FileText, Send, AlertTriangle, FilePlus, Play, StopCircle } from "lucide-react";
 import GerarAtaModal from "./GerarAtaModal";
 import VisualizarAtaModal from "./VisualizarAtaModal";
 import { format } from "date-fns";
@@ -78,10 +78,22 @@ export default function PainelAtendimentosTab({ user }) {
     onSuccess: () => queryClient.invalidateQueries(['todos-atendimentos'])
   });
 
+  const iniciarMutation = useMutation({
+    mutationFn: (id) => base44.entities.ConsultoriaAtendimento.update(id, { 
+      status: 'participando',
+      hora_inicio_real: new Date().toISOString()
+    }),
+    onSuccess: () => {
+      toast.success('Reunião iniciada!');
+      queryClient.invalidateQueries(['todos-atendimentos']);
+    }
+  });
+
   const finalizarMutation = useMutation({
     mutationFn: (id) => base44.entities.ConsultoriaAtendimento.update(id, { 
       status: 'realizado',
-      data_realizada: new Date().toISOString()
+      data_realizada: new Date().toISOString(),
+      hora_fim_real: new Date().toISOString()
     }),
     onSuccess: () => {
       toast.success('Atendimento finalizado!');
@@ -93,6 +105,7 @@ export default function PainelAtendimentosTab({ user }) {
     const colors = {
       agendado: "bg-red-100 text-red-800 border-red-300",
       confirmado: "bg-yellow-100 text-yellow-800 border-yellow-300",
+      participando: "bg-blue-100 text-blue-800 border-blue-300 animate-pulse",
       em_andamento: "bg-orange-100 text-orange-800 border-orange-300 animate-pulse",
       realizado: "bg-green-100 text-green-800 border-green-300",
       atrasado: "bg-red-500 text-white border-red-700 animate-pulse"
@@ -190,7 +203,7 @@ export default function PainelAtendimentosTab({ user }) {
                 <SelectItem value={null}>Todos</SelectItem>
                 <SelectItem value="agendado">Agendado</SelectItem>
                 <SelectItem value="confirmado">Confirmado</SelectItem>
-                <SelectItem value="em_andamento">Em Andamento</SelectItem>
+                <SelectItem value="participando">Participando</SelectItem>
                 <SelectItem value="realizado">Realizado</SelectItem>
                 <SelectItem value="atrasado">Atrasado</SelectItem>
               </SelectContent>
@@ -243,15 +256,31 @@ export default function PainelAtendimentosTab({ user }) {
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
-                          {atendimento.status !== 'realizado' && (
+                          
+                          {(atendimento.status === 'agendado' || atendimento.status === 'confirmado') && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => iniciarMutation.mutate(atendimento.id)}
+                              title="Iniciar Reunião"
+                              className="text-blue-600 hover:text-blue-700"
+                            >
+                              <Play className="w-4 h-4" />
+                            </Button>
+                          )}
+
+                          {atendimento.status === 'participando' && (
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => finalizarMutation.mutate(atendimento.id)}
+                              title="Finalizar Reunião"
+                              className="text-green-600 hover:text-green-700"
                             >
-                              <CheckCircle className="w-4 h-4 text-green-600" />
+                              <StopCircle className="w-4 h-4" />
                             </Button>
                           )}
+
                           {atendimento.ata_id ? (
                             <Button 
                               variant="ghost" 

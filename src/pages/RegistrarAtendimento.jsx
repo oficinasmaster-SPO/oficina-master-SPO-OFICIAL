@@ -19,6 +19,7 @@ import WorkshopSearchSelect from "@/components/aceleracao/WorkshopSearchSelect";
 import ProcessSearchSelect from "@/components/aceleracao/ProcessSearchSelect";
 import AudioTranscriptionField from "@/components/aceleracao/AudioTranscriptionField";
 import TipoAtendimentoManager from "@/components/aceleracao/TipoAtendimentoManager";
+import MediaUploadField from "@/components/aceleracao/MediaUploadField";
 
 export default function RegistrarAtendimento() {
   const navigate = useNavigate();
@@ -162,12 +163,15 @@ export default function RegistrarAtendimento() {
     }
   });
 
-  // Carregar aulas de todos os cursos
+  // Carregar aulas de cursos publicados
   const { data: todasAulas } = useQuery({
-    queryKey: ['todas-aulas'],
+    queryKey: ['todas-aulas-publicadas'],
     queryFn: async () => {
-      return await base44.entities.CourseLesson.list();
-    }
+      const aulas = await base44.entities.CourseLesson.list();
+      const cursosPublicados = cursos?.filter(c => c.status === 'published').map(c => c.id) || [];
+      return aulas.filter(a => cursosPublicados.includes(a.course_id));
+    },
+    enabled: !!cursos
   });
 
   // Mutation para criar ou atualizar atendimento
@@ -750,62 +754,14 @@ export default function RegistrarAtendimento() {
         {/* Mídias e Anexos */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Mídias e Anexos para o Cliente</CardTitle>
-              <Button type="button" variant="outline" size="sm" onClick={addMidia}>
-                <Plus className="w-4 h-4 mr-2" />
-                Adicionar Mídia
-              </Button>
-            </div>
+            <CardTitle>Mídias e Anexos para o Cliente</CardTitle>
+            <p className="text-sm text-gray-600">Upload de arquivos, links e documentos do repositório</p>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {formData.midias_anexas.map((midia, idx) => (
-              <div key={idx} className="flex gap-3 items-start border-b pb-3">
-                <Select
-                  value={midia.tipo}
-                  onValueChange={(value) => {
-                    const newMidias = [...formData.midias_anexas];
-                    newMidias[idx].tipo = value;
-                    setFormData({ ...formData, midias_anexas: newMidias });
-                  }}
-                >
-                  <SelectTrigger className="w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="link">Link</SelectItem>
-                    <SelectItem value="imagem">Imagem</SelectItem>
-                    <SelectItem value="video">Vídeo</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Input
-                  placeholder="URL"
-                  value={midia.url}
-                  onChange={(e) => {
-                    const newMidias = [...formData.midias_anexas];
-                    newMidias[idx].url = e.target.value;
-                    setFormData({ ...formData, midias_anexas: newMidias });
-                  }}
-                />
-                <Input
-                  placeholder="Título"
-                  value={midia.titulo}
-                  onChange={(e) => {
-                    const newMidias = [...formData.midias_anexas];
-                    newMidias[idx].titulo = e.target.value;
-                    setFormData({ ...formData, midias_anexas: newMidias });
-                  }}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removeMidia(idx)}
-                >
-                  <Trash2 className="w-4 h-4 text-red-500" />
-                </Button>
-              </div>
-            ))}
+          <CardContent>
+            <MediaUploadField
+              midias={formData.midias_anexas}
+              onChange={(midias) => setFormData({ ...formData, midias_anexas: midias })}
+            />
           </CardContent>
         </Card>
 
