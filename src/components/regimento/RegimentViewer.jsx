@@ -72,7 +72,12 @@ export default function RegimentViewer({ regiment, workshop, onClose, autoAcknow
                 </Button>
               )}
               <div>
-                <CardTitle>Regimento Interno</CardTitle>
+                <div className="flex items-center gap-2">
+                  {regiment.document_code && (
+                    <Badge className="bg-blue-600 text-white font-mono">{regiment.document_code}</Badge>
+                  )}
+                  <CardTitle>Regimento Interno</CardTitle>
+                </div>
                 <div className="flex items-center gap-2 mt-1">
                   <Badge variant="outline">Versão {regiment.version}</Badge>
                   {regiment.status === 'active' && (
@@ -116,6 +121,12 @@ export default function RegimentViewer({ regiment, workshop, onClose, autoAcknow
               CNPJ: {workshop?.cnpj} | {workshop?.endereco_completo}
             </p>
             <div className="flex items-center justify-center gap-4 mt-3 text-sm">
+              {regiment.document_code && (
+                <>
+                  <span>Código: <strong>{regiment.document_code}</strong></span>
+                  <span>•</span>
+                </>
+              )}
               <span>Versão: <strong>{regiment.version}</strong></span>
               <span>•</span>
               <span>Vigência: <strong>{regiment.effective_date ? format(new Date(regiment.effective_date), 'dd/MM/yyyy') : '-'}</strong></span>
