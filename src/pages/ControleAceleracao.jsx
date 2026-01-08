@@ -6,15 +6,17 @@ import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, BarChart3, Calendar, FileText, Settings, ClipboardList } from "lucide-react";
+import { Loader2, BarChart3, Calendar, FileText, Settings, ClipboardList, Users } from "lucide-react";
 import VisaoGeralTab from "@/components/aceleracao/VisaoGeralTab";
 import PainelAtendimentosTab from "@/components/aceleracao/PainelAtendimentosTab";
 import TemplatesTab from "@/components/aceleracao/TemplatesTab";
 import RelatoriosTab from "@/components/aceleracao/RelatoriosTab";
+import RegistroAtendimentoMassaModal from "@/components/aceleracao/RegistroAtendimentoMassaModal";
 
 export default function ControleAceleracao() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("visao-geral");
+  const [showMassRegistration, setShowMassRegistration] = useState(false);
 
   const { data: user, isLoading: loadingUser } = useQuery({
     queryKey: ['current-user'],
@@ -52,13 +54,29 @@ export default function ControleAceleracao() {
             Gestão completa de clientes, atendimentos e cronogramas
           </p>
         </div>
-        <Button
-          onClick={() => navigate(createPageUrl('RegistrarAtendimento'))}
-          className="bg-blue-600 hover:bg-blue-700"
-        >
-          + Novo Atendimento
-        </Button>
+        <div className="flex gap-3">
+          <Button
+            onClick={() => setShowMassRegistration(true)}
+            variant="outline"
+            className="border-blue-600 text-blue-600 hover:bg-blue-50"
+          >
+            <Users className="w-4 h-4 mr-2" />
+            Registro em Massa
+          </Button>
+          <Button
+            onClick={() => navigate(createPageUrl('RegistrarAtendimento'))}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            + Novo Atendimento
+          </Button>
+        </div>
       </div>
+
+      <RegistroAtendimentoMassaModal
+        open={showMassRegistration}
+        onClose={() => setShowMassRegistration(false)}
+        user={user}
+      />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-5 bg-white shadow-md">
