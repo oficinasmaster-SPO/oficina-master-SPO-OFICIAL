@@ -6,15 +6,34 @@ import { FileText, Printer, Download, Building2, MapPin, Award } from "lucide-re
 import { Badge } from "@/components/ui/badge";
 import { downloadAtaPDF } from "./AtasPDFGenerator";
 import { toast } from "sonner";
+import { base44 } from "@/api/base44Client";
 
 export default function VisualizarAtaModal({ ata, workshop, onClose }) {
+  const [ataAtualizada, setAtaAtualizada] = React.useState(ata);
+
+  React.useEffect(() => {
+    const carregarAtaAtualizada = async () => {
+      try {
+        const dados = await base44.entities.MeetingMinutes.get(ata.id);
+        setAtaAtualizada(dados);
+      } catch (error) {
+        console.error("Erro ao carregar ATA:", error);
+        setAtaAtualizada(ata);
+      }
+    };
+    
+    if (ata?.id) {
+      carregarAtaAtualizada();
+    }
+  }, [ata?.id]);
+
   const handlePrint = () => {
     window.print();
   };
 
   const handleDownload = () => {
     try {
-      downloadAtaPDF(ata, workshop);
+      downloadAtaPDF(ataAtualizada, workshop);
       toast.success("PDF baixado com sucesso!");
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);
@@ -22,7 +41,7 @@ export default function VisualizarAtaModal({ ata, workshop, onClose }) {
     }
   };
 
-  if (!ata) return null;
+  if (!ataAtualizada) return null;
 
   return (
     <Dialog open onOpenChange={onClose}>
@@ -31,7 +50,7 @@ export default function VisualizarAtaModal({ ata, workshop, onClose }) {
           <DialogTitle className="flex items-center justify-between">
             <span className="flex items-center gap-2">
               <FileText className="w-5 h-5" />
-              ATA de Atendimento - {ata.code}
+              ATA de Atendimento - {ataAtualizada.code}
             </span>
             <div className="flex gap-2">
               <Button size="sm" variant="outline" onClick={handleDownload}>
@@ -55,17 +74,17 @@ export default function VisualizarAtaModal({ ata, workshop, onClose }) {
             <h2 className="text-2xl font-bold text-gray-900">GESTÃO DE PROCESSOS</h2>
             <p className="text-lg">IT - Instrução de Trabalho</p>
             <div className="flex items-center justify-between mt-4 text-sm">
-              <span><strong>Código:</strong> {ata.code}</span>
-              <span><strong>Data/Hora:</strong> {new Date(ata.meeting_date).toLocaleDateString('pt-BR')} / {ata.meeting_time}</span>
-              <Badge variant={ata.status === 'finalizada' ? 'success' : 'secondary'}>
-                {ata.status === 'finalizada' ? 'Finalizada' : 'Rascunho'}
+              <span><strong>Código:</strong> {ataAtualizada.code}</span>
+              <span><strong>Data/Hora:</strong> {new Date(ataAtualizada.meeting_date).toLocaleDateString('pt-BR')} / {ataAtualizada.meeting_time}</span>
+              <Badge variant={ataAtualizada.status === 'finalizada' ? 'success' : 'secondary'}>
+                {ataAtualizada.status === 'finalizada' ? 'Finalizada' : 'Rascunho'}
               </Badge>
             </div>
           </div>
 
           <div className="border-t-4 border-red-600 pt-4">
             <p className="text-lg">
-              <strong>Tipo de Aceleração:</strong> <span className="text-red-600 uppercase">{ata.tipo_aceleracao}</span>
+              <strong>Tipo de Aceleração:</strong> <span className="text-red-600 uppercase">{ataAtualizada.tipo_aceleracao}</span>
             </p>
           </div>
 
@@ -75,46 +94,46 @@ export default function VisualizarAtaModal({ ata, workshop, onClose }) {
             <div className="bg-red-600 text-white p-4 font-bold">PLANO</div>
             
             <div className="p-4">
-              {ata.participantes?.map((p, i) => (
+              {ataAtualizada.participantes?.map((p, i) => (
                 <p key={i} className="mb-1">• {p.name} - {p.role}</p>
               ))}
             </div>
             <div className="p-4">
-              <p><strong>{ata.responsavel?.name}</strong></p>
-              <p className="text-sm text-gray-600">{ata.responsavel?.role}</p>
+              <p><strong>{ataAtualizada.responsavel?.name}</strong></p>
+              <p className="text-sm text-gray-600">{ataAtualizada.responsavel?.role}</p>
             </div>
             <div className="p-4">
-              <p>{ata.plano_nome}</p>
+              <p>{ataAtualizada.plano_nome}</p>
             </div>
           </div>
 
           <Card>
             <CardContent className="pt-6">
               <h3 className="font-bold text-lg mb-3">1. PAUTAS</h3>
-              <p className="whitespace-pre-wrap">{ata.pautas || "Não informado"}</p>
+              <p className="whitespace-pre-wrap">{ataAtualizada.pautas || "Não informado"}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardContent className="pt-6">
               <h3 className="font-bold text-lg mb-3">2. OBJETIVOS DO ATENDIMENTO</h3>
-              <p className="whitespace-pre-wrap">{ata.objetivos_atendimento || "Não informado"}</p>
+              <p className="whitespace-pre-wrap">{ataAtualizada.objetivos_atendimento || "Não informado"}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardContent className="pt-6">
               <h3 className="font-bold text-lg mb-3">3. OBJETIVOS DO CONSULTOR</h3>
-              <p className="whitespace-pre-wrap">{ata.objetivos_consultor || "Não informado"}</p>
+              <p className="whitespace-pre-wrap">{ataAtualizada.objetivos_consultor || "Não informado"}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardContent className="pt-6">
               <h3 className="font-bold text-lg mb-3">4. PRÓXIMOS PASSOS</h3>
-              {ata.proximos_passos?.length > 0 ? (
+              {ataAtualizada.proximos_passos?.length > 0 ? (
                 <div className="space-y-2">
-                  {ata.proximos_passos.map((passo, i) => (
+                  {ataAtualizada.proximos_passos.map((passo, i) => (
                     <div key={i} className="border-l-4 border-blue-600 pl-3">
                       <p className="font-medium">{passo.descricao}</p>
                       <p className="text-sm text-gray-600">
@@ -133,11 +152,11 @@ export default function VisualizarAtaModal({ ata, workshop, onClose }) {
           <Card>
             <CardContent className="pt-6">
               <h3 className="font-bold text-lg mb-3">5. VISÃO GERAL DO PROJETO DE ACELERAÇÃO</h3>
-              <p className="whitespace-pre-wrap">{ata.visao_geral_projeto || "Não informado"}</p>
+              <p className="whitespace-pre-wrap">{ataAtualizada.visao_geral_projeto || "Não informado"}</p>
             </CardContent>
           </Card>
 
-          {ata.processos_vinculados?.length > 0 && (
+          {ataAtualizada.processos_vinculados?.length > 0 && (
             <Card>
               <CardContent className="pt-6">
                 <h3 className="font-bold text-lg mb-3">📋 PROCESSOS (MAPs) COMPARTILHADOS</h3>
@@ -145,7 +164,7 @@ export default function VisualizarAtaModal({ ata, workshop, onClose }) {
                   Os processos abaixo foram discutidos e estão disponíveis para consulta no módulo "Processos" da plataforma.
                 </p>
                 <div className="space-y-3">
-                  {ata.processos_vinculados.map((processo, i) => (
+                  {ataAtualizada.processos_vinculados.map((processo, i) => (
                     <div key={i} className="border-l-4 border-blue-600 pl-4 py-2 bg-blue-50">
                       <p className="font-medium text-gray-900">• {processo.titulo}</p>
                       <p className="text-sm text-gray-600">Categoria: {processo.categoria}</p>
@@ -159,7 +178,7 @@ export default function VisualizarAtaModal({ ata, workshop, onClose }) {
             </Card>
           )}
 
-          {ata.videoaulas_vinculadas?.length > 0 && (
+          {ataAtualizada.videoaulas_vinculadas?.length > 0 && (
             <Card>
               <CardContent className="pt-6">
                 <h3 className="font-bold text-lg mb-3">🎥 VIDEOAULAS RECOMENDADAS</h3>
@@ -167,7 +186,7 @@ export default function VisualizarAtaModal({ ata, workshop, onClose }) {
                   As videoaulas abaixo foram indicadas e estão disponíveis no módulo "Academia de Treinamento" da plataforma.
                 </p>
                 <div className="space-y-3">
-                  {ata.videoaulas_vinculadas.map((video, i) => (
+                  {ataAtualizada.videoaulas_vinculadas.map((video, i) => (
                     <div key={i} className="border-l-4 border-purple-600 pl-4 py-2 bg-purple-50">
                       <p className="font-medium text-gray-900">• {video.titulo}</p>
                       <p className="text-sm text-gray-600">{video.descricao}</p>
@@ -181,12 +200,12 @@ export default function VisualizarAtaModal({ ata, workshop, onClose }) {
             </Card>
           )}
 
-          {ata.midias_anexas?.length > 0 && (
+          {ataAtualizada.midias_anexas?.length > 0 && (
             <Card>
               <CardContent className="pt-6">
                 <h3 className="font-bold text-lg mb-3">📎 MÍDIAS E ANEXOS</h3>
                 <div className="space-y-3">
-                  {ata.midias_anexas.map((midia, i) => (
+                  {ataAtualizada.midias_anexas.map((midia, i) => (
                     <div key={i} className="border rounded-lg p-3 bg-gray-50">
                       {midia.tipo === 'imagem' && midia.url && (
                         <div className="space-y-2">
@@ -308,8 +327,8 @@ export default function VisualizarAtaModal({ ata, workshop, onClose }) {
           )}
 
           <div className="text-sm text-gray-500 text-center pt-6 border-t print:hidden">
-            <p>Gerado por: {ata.created_by}</p>
-            <p>Data de criação: {new Date(ata.created_date).toLocaleString('pt-BR')}</p>
+            <p>Gerado por: {ataAtualizada.created_by}</p>
+            <p>Data de criação: {new Date(ataAtualizada.created_date).toLocaleString('pt-BR')}</p>
           </div>
         </div>
 
