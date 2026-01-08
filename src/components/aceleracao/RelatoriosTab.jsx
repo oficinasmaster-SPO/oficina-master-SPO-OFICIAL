@@ -6,17 +6,26 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Download, Loader2, BarChart3, TrendingUp, Users, Calendar as CalendarIcon } from "lucide-react";
+import { FileText, Download, Loader2, BarChart3, TrendingUp, Users, Calendar as CalendarIcon, Play, Edit, CalendarClock } from "lucide-react";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { format, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
+import ReagendarAtendimentoModal from "./ReagendarAtendimentoModal";
 
 export default function RelatoriosTab({ user }) {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const [showReagendar, setShowReagendar] = useState(false);
+  const [atendimentoReagendar, setAtendimentoReagendar] = useState(null);
   const [filtros, setFiltros] = useState({
     dataInicio: format(startOfMonth(subMonths(new Date(), 5)), 'yyyy-MM-dd'),
     dataFim: format(endOfMonth(new Date()), 'yyyy-MM-dd'),
     cliente: "",
+    consultor: "",
     tipo: "",
     status: ""
   });
@@ -45,6 +54,14 @@ export default function RelatoriosTab({ user }) {
     queryFn: () => base44.entities.CronogramaImplementacao.list('-created_date')
   });
 
+  const { data: consultores = [] } = useQuery({
+    queryKey: ['consultores-relatorios'],
+    queryFn: async () => {
+      const employees = await base44.entities.Employee.list();
+      return employees.filter(e => e.tipo_vinculo === 'interno' && e.status === 'ativo');
+    }
+  });
+
   // Filtrar dados
   const dadosFiltrados = useMemo(() => {
     return atendimentos.filter(a => {
@@ -55,6 +72,7 @@ export default function RelatoriosTab({ user }) {
       if (dataInicio && dataAtendimento < dataInicio) return false;
       if (dataFim && dataAtendimento > dataFim) return false;
       if (filtros.cliente && a.workshop_id !== filtros.cliente) return false;
+      if (filtros.consultor && a.consultor_id !== filtros.consultor) return false;
       if (filtros.tipo && a.tipo_atendimento !== filtros.tipo) return false;
       if (filtros.status && a.status !== filtros.status) return false;
 
@@ -84,9 +102,10 @@ export default function RelatoriosTab({ user }) {
     const statusDistribution = [
       { name: 'Agendado', value: dadosFiltrados.filter(a => a.status === 'agendado').length, color: '#EF4444' },
       { name: 'Confirmado', value: dadosFiltrados.filter(a => a.status === 'confirmado').length, color: '#F59E0B' },
-      { name: 'Em Andamento', value: dadosFiltrados.filter(a => a.status === 'em_andamento').length, color: '#FB923C' },
+      { name: 'Participando', value: dadosFiltrados.filter(a => a.status === 'participando').length, color: '#3B82F6' },
       { name: 'Realizado', value: dadosFiltrados.filter(a => a.status === 'realizado').length, color: '#10B981' },
-      { name: 'Atrasado', value: dadosFiltrados.filter(a => a.status === 'atrasado').length, color: '#DC2626' }
+      { name: 'Atrasado', value: dadosFiltrados.filter(a => a.status === 'atrasado').length, color: '#DC2626' },
+      { name: 'Reagendado', value: dadosFiltrados.filter(a => a.status === 'reagendado').length, color: '#8B5CF6' }
     ].filter(item => item.value > 0);
 
     const tipoDistribution = [
@@ -146,6 +165,17 @@ export default function RelatoriosTab({ user }) {
     toast.success('Preparando impressão...');
   };
 
+  const iniciarMutation = useMutation({
+    mutationFn: (id) => base44.entities.ConsultoriaAtendimento.update(id, { 
+      status: 'participando',
+      hora_inicio_real: new Date().toISOString()
+    }),
+    onSuccess: () => {
+      toast.success('Reunião iniciada!');
+      queryClient.invalidateQueries(['atendimentos-relatorios']);
+    }
+  });
+
   return (
     <div className="space-y-6 print:space-y-4">
       {/* Filtros Avançados */}
@@ -166,7 +196,7 @@ export default function RelatoriosTab({ user }) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
             <div>
               <Label>Data Início</Label>
               <Input
@@ -198,6 +228,20 @@ export default function RelatoriosTab({ user }) {
               </Select>
             </div>
             <div>
+              <Label>Consultor</Label>
+              <Select value={filtros.consultor} onValueChange={(v) => setFiltros({...filtros, consultor: v})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={null}>Todos</SelectItem>
+                  {consultores?.map(c => (
+                    <SelectItem key={c.user_id} value={c.user_id}>{c.full_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
               <Label>Tipo</Label>
               <Select value={filtros.tipo} onValueChange={(v) => setFiltros({...filtros, tipo: v})}>
                 <SelectTrigger>
@@ -222,9 +266,10 @@ export default function RelatoriosTab({ user }) {
                   <SelectItem value={null}>Todos</SelectItem>
                   <SelectItem value="agendado">Agendado</SelectItem>
                   <SelectItem value="confirmado">Confirmado</SelectItem>
-                  <SelectItem value="em_andamento">Em Andamento</SelectItem>
+                  <SelectItem value="participando">Participando</SelectItem>
                   <SelectItem value="realizado">Realizado</SelectItem>
                   <SelectItem value="atrasado">Atrasado</SelectItem>
+                  <SelectItem value="reagendado">Reagendado</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -398,6 +443,7 @@ export default function RelatoriosTab({ user }) {
                   <th className="text-left py-3 px-4">Status</th>
                   <th className="text-left py-3 px-4">Consultor</th>
                   <th className="text-right py-3 px-4">Duração</th>
+                  <th className="text-right py-3 px-4 print:hidden">Ações</th>
                 </tr>
               </thead>
               <tbody>
@@ -413,7 +459,9 @@ export default function RelatoriosTab({ user }) {
                       <td className="py-3 px-4">
                         <span className={`px-2 py-1 rounded text-xs ${
                           a.status === 'realizado' ? 'bg-green-100 text-green-700' :
+                          a.status === 'participando' ? 'bg-blue-100 text-blue-700' :
                           a.status === 'atrasado' ? 'bg-red-100 text-red-700' :
+                          a.status === 'reagendado' ? 'bg-purple-100 text-purple-700' :
                           'bg-gray-100 text-gray-700'
                         }`}>
                           {a.status}
@@ -421,6 +469,41 @@ export default function RelatoriosTab({ user }) {
                       </td>
                       <td className="py-3 px-4">{a.consultor_nome || '-'}</td>
                       <td className="py-3 px-4 text-right">{a.duracao_minutos || 0} min</td>
+                      <td className="py-3 px-4 text-right print:hidden">
+                        <div className="flex items-center justify-end gap-1">
+                          {(a.status === 'agendado' || a.status === 'confirmado' || a.status === 'reagendado') && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => iniciarMutation.mutate(a.id)}
+                                title="Iniciar"
+                              >
+                                <Play className="w-4 h-4 text-blue-600" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setAtendimentoReagendar(a);
+                                  setShowReagendar(true);
+                                }}
+                                title="Reagendar"
+                              >
+                                <CalendarClock className="w-4 h-4 text-purple-600" />
+                              </Button>
+                            </>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigate(createPageUrl('RegistrarAtendimento') + `?atendimento_id=${a.id}`)}
+                            title="Editar"
+                          >
+                            <Edit className="w-4 h-4 text-gray-600" />
+                          </Button>
+                        </div>
+                      </td>
                     </tr>
                   );
                 })}
@@ -434,6 +517,22 @@ export default function RelatoriosTab({ user }) {
           </div>
         </CardContent>
       </Card>
+
+      {showReagendar && atendimentoReagendar && (
+        <ReagendarAtendimentoModal
+          atendimento={atendimentoReagendar}
+          workshop={workshops?.find(w => w.id === atendimentoReagendar.workshop_id)}
+          onClose={() => {
+            setShowReagendar(false);
+            setAtendimentoReagendar(null);
+          }}
+          onSaved={() => {
+            queryClient.invalidateQueries(['atendimentos-relatorios']);
+            setShowReagendar(false);
+            setAtendimentoReagendar(null);
+          }}
+        />
+      )}
 
       <style jsx>{`
         @media print {

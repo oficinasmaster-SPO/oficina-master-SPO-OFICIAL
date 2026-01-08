@@ -57,18 +57,14 @@ export default function PainelAtendimentosTab({ user }) {
     if (!atendimentos) return;
     
     const now = new Date();
-    const limiteFinalizacao = new Date();
-    limiteFinalizacao.setHours(17, 0, 0, 0);
 
     atendimentos.forEach(atendimento => {
       const dataAtendimento = new Date(atendimento.data_agendada);
-      const hoje = new Date().toDateString() === dataAtendimento.toDateString();
       
-      if (hoje && now >= limiteFinalizacao && atendimento.status !== 'realizado') {
-        // Marcar como atrasado se ainda não está
-        if (atendimento.status !== 'atrasado') {
-          marcarAtrasadoMutation.mutate(atendimento.id);
-        }
+      // Se passou da data agendada e não está realizado/participando
+      if (now > dataAtendimento && 
+          !['realizado', 'participando', 'atrasado'].includes(atendimento.status)) {
+        marcarAtrasadoMutation.mutate(atendimento.id);
       }
     });
   }, [atendimentos]);
