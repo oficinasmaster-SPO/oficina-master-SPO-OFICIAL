@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar as CalendarIcon, Plus, Trash2, Upload, Sparkles, Loader2, Video, Link as LinkIcon, Image, Film, Send, FileText, MessageSquare, Package, Clock } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, Trash2, Upload, Sparkles, Loader2, Video, Link as LinkIcon, Image, Film, Send, FileText, MessageSquare, Package, Clock, Search, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import NotificationSchedulerModal from "@/components/aceleracao/NotificationSchedulerModal";
@@ -48,6 +48,7 @@ export default function RegistrarAtendimento() {
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [timerData, setTimerData] = useState(null);
   const [showMeetingTimer, setShowMeetingTimer] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Carregar usuário
   const { data: user } = useQuery({
@@ -369,21 +370,52 @@ export default function RegistrarAtendimento() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Oficina Cliente *</Label>
-                <Select
-                  value={formData.workshop_id}
-                  onValueChange={(value) => setFormData({ ...formData, workshop_id: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a oficina" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {workshops?.map((w) => (
-                      <SelectItem key={w.id} value={w.id}>
-                        {w.name} - {w.planoAtual} - {w.city}/{w.state}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <Input
+                        placeholder="Buscar oficina por nome..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-9"
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => {
+                        toast.info("Funcionalidade de pré-cadastro em desenvolvimento");
+                      }}
+                      title="Pré-cadastro de cliente"
+                    >
+                      <UserPlus className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <Select
+                    value={formData.workshop_id}
+                    onValueChange={(value) => setFormData({ ...formData, workshop_id: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a oficina" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {workshops
+                        ?.filter((w) => 
+                          !searchTerm || 
+                          w.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          w.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          w.state?.toLowerCase().includes(searchTerm.toLowerCase())
+                        )
+                        .map((w) => (
+                          <SelectItem key={w.id} value={w.id}>
+                            {w.name} - {w.planoAtual} - {w.city}/{w.state}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               {user?.role === 'admin' && (
