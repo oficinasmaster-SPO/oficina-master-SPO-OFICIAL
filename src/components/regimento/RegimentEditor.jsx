@@ -252,7 +252,12 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
                 <ArrowLeft className="w-5 h-5" />
               </Button>
               <div>
-                <CardTitle>{regiment?.id ? 'Editar' : 'Novo'} Regimento Interno</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  {regiment?.document_code && (
+                    <span className="bg-blue-600 text-white text-xs font-mono px-2 py-1 rounded">{regiment.document_code}</span>
+                  )}
+                  {regiment?.id ? 'Editar' : 'Novo'} Regimento Interno
+                </CardTitle>
                 <p className="text-sm text-gray-600 mt-1">Versão {formData.version} • {formData.sections?.length || 0} seções</p>
               </div>
             </div>

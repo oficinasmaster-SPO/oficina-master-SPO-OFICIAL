@@ -180,6 +180,7 @@ export default function Regimento() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2 mb-1">
+                          <Badge className="bg-blue-600 text-white font-mono">{activeRegiment.document_code || `RI-${activeRegiment.id?.slice(0, 8)}`}</Badge>
                           <h3 className="text-lg font-bold">{activeRegiment.identification?.company_name || workshop?.name}</h3>
                           <Badge className="bg-green-100 text-green-800">Versão {activeRegiment.version}</Badge>
                           <Badge className="bg-green-600 text-white">
@@ -247,6 +248,7 @@ export default function Regimento() {
                           <FileText className="w-5 h-5 text-gray-400" />
                           <div>
                             <div className="flex items-center gap-2">
+                              <Badge className="bg-blue-100 text-blue-800 font-mono">{regiment.document_code || `RI-${regiment.id?.slice(0, 8)}`}</Badge>
                               <span className="font-medium">{regiment.identification?.company_name || 'Rascunho'}</span>
                               <Badge variant="outline">Versão {regiment.version}</Badge>
                               <Badge className="bg-yellow-100 text-yellow-800">Rascunho</Badge>
@@ -291,6 +293,7 @@ export default function Regimento() {
                           <Archive className="w-5 h-5 text-gray-400" />
                           <div>
                             <div className="flex items-center gap-2">
+                              <Badge className="bg-gray-200 text-gray-700 font-mono">{regiment.document_code || `RI-${regiment.id?.slice(0, 8)}`}</Badge>
                               <span className="font-medium">{regiment.identification?.company_name || 'Arquivado'}</span>
                               <Badge variant="outline">Versão {regiment.version}</Badge>
                               <Badge className="bg-gray-100 text-gray-800">Arquivado</Badge>

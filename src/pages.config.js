@@ -109,6 +109,7 @@ import MonitoramentoRH from './pages/MonitoramentoRH';
 import MonitoramentoUsuarios from './pages/MonitoramentoUsuarios';
 import Notificacoes from './pages/Notificacoes';
 import Organograma from './pages/Organograma';
+import OrganogramaFuncional from './pages/OrganogramaFuncional';
 import PainelAcoes from './pages/PainelAcoes';
 import PainelClienteAceleracao from './pages/PainelClienteAceleracao';
 import PainelMetas from './pages/PainelMetas';
@@ -150,9 +151,8 @@ import Tarefas from './pages/Tarefas';
 import TechnicianQGP from './pages/TechnicianQGP';
 import TestUsuarios from './pages/TestUsuarios';
 import TreinamentoVendas from './pages/TreinamentoVendas';
-import VisualizarProcesso from './pages/VisualizarProcesso';
 import UsuariosAdmin from './pages/UsuariosAdmin';
-import OrganogramaFuncional from './pages/OrganogramaFuncional';
+import VisualizarProcesso from './pages/VisualizarProcesso';
 import __Layout from './Layout.jsx';
 
 
@@ -268,6 +268,7 @@ export const PAGES = {
     "MonitoramentoUsuarios": MonitoramentoUsuarios,
     "Notificacoes": Notificacoes,
     "Organograma": Organograma,
+    "OrganogramaFuncional": OrganogramaFuncional,
     "PainelAcoes": PainelAcoes,
     "PainelClienteAceleracao": PainelClienteAceleracao,
     "PainelMetas": PainelMetas,
@@ -309,9 +310,8 @@ export const PAGES = {
     "TechnicianQGP": TechnicianQGP,
     "TestUsuarios": TestUsuarios,
     "TreinamentoVendas": TreinamentoVendas,
-    "VisualizarProcesso": VisualizarProcesso,
     "UsuariosAdmin": UsuariosAdmin,
-    "OrganogramaFuncional": OrganogramaFuncional,
+    "VisualizarProcesso": VisualizarProcesso,
 }
 
 export const pagesConfig = {

@@ -431,8 +431,14 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     const workshop = await base44.entities.Workshop.get(workshop_id);
 
+    // Gerar código único do documento
+    const timestamp = Date.now().toString(36).toUpperCase();
+    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const document_code = `RI-${timestamp}-${random}`;
+
     const regiment = await base44.entities.CompanyRegiment.create({
       workshop_id,
+      document_code,
       version: "1.0",
       effective_date: new Date().toISOString().split('T')[0],
       objective: "Este Regimento Interno tem como finalidade estabelecer normas claras de conduta, direitos, deveres e procedimentos disciplinares, em conformidade com a Consolidação das Leis do Trabalho (CLT), a Constituição Federal e as Normas Regulamentadoras (NRs) do Ministério do Trabalho e Emprego, visando proteger a empresa, os colaboradores e os clientes, além de servir como base jurídica para todas as decisões administrativas e disciplinares.",
