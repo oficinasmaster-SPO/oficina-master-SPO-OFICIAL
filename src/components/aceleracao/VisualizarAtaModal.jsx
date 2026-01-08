@@ -130,6 +130,22 @@ export default function VisualizarAtaModal({ ata, workshop, onClose }) {
             </CardContent>
           </Card>
 
+          {ata.processos_vinculados?.length > 0 && (
+            <Card>
+              <CardContent className="pt-6">
+                <h3 className="font-bold text-lg mb-3">PROCESSOS (MAPs) DISCUTIDOS</h3>
+                <div className="space-y-2">
+                  {ata.processos_vinculados.map((processo, i) => (
+                    <div key={i} className="border-l-4 border-blue-600 pl-3 py-2">
+                      <p className="font-medium">{processo.titulo}</p>
+                      <p className="text-sm text-gray-600">{processo.categoria}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardContent className="pt-6">
               <h3 className="font-bold text-lg mb-3">5. VISÃO GERAL DO PROJETO DE ACELERAÇÃO</h3>
