@@ -226,6 +226,8 @@ export default function GerarAtaModal({ atendimento, workshop, planoAceleracao, 
         objetivos_consultor: formData.objetivos_consultor,
         proximos_passos: (formData.proximos_passos || []).filter(p => p.descricao),
         visao_geral_projeto: formData.visao_geral_projeto,
+        processos_vinculados: formData.processos_vinculados || [],
+        ai_summary: aiSummary || null,
         status
       };
 
