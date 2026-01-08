@@ -385,56 +385,171 @@ export const generateAtaPDF = (ata, workshop) => {
     y += 5;
   }
 
-  // 8. PROCESSOS COMPARTILHADOS
+  // 8. PROCESSOS COMPARTILHADOS (MAPs)
   if (ata.processos_vinculados && ata.processos_vinculados.length > 0) {
-    checkPageBreak(25);
+    checkPageBreak(30);
     doc.setFontSize(13);
     doc.setFont(undefined, 'bold');
-    doc.text('8. PROCESSOS COMPARTILHADOS (MAPs)', margin, y);
+    doc.text('8. PROCESSOS (MAPs) COMPARTILHADOS', margin, y);
     y += 2;
     doc.setLineWidth(0.5);
     doc.line(margin, y, pageWidth - margin, y);
-    y += 10;
+    y += 8;
 
-    doc.setFontSize(10);
-    doc.setFont(undefined, 'normal');
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'italic');
+    doc.setTextColor(100, 100, 100);
+    const instrucao = doc.splitTextToSize(
+      'Os processos abaixo foram discutidos e estão disponíveis para consulta no módulo "Processos" da plataforma.',
+      contentWidth
+    );
+    instrucao.forEach(line => {
+      doc.text(line, margin, y);
+      y += 4;
+    });
+    doc.setTextColor(0, 0, 0);
+    y += 5;
+
     ata.processos_vinculados.forEach(proc => {
-      checkPageBreak(8);
-      doc.text(`• ${proc.titulo} - ${proc.categoria}`, margin, y);
+      checkPageBreak(15);
+      
+      // Box azul para processos
+      doc.setFillColor(239, 246, 255);
+      doc.setDrawColor(37, 99, 235);
+      doc.setLineWidth(0.5);
+      doc.rect(margin, y - 2, contentWidth, 12, 'FD');
+      
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'bold');
+      doc.text(`• ${proc.titulo}`, margin + 2, y + 2);
+      
       y += 6;
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'normal');
+      doc.text(`Categoria: ${proc.categoria}`, margin + 2, y);
+      
+      y += 5;
+      doc.setFontSize(8);
+      doc.setTextColor(37, 99, 235);
+      doc.text(`📍 Acesse em: Menu → Processos → Buscar "${proc.titulo}"`, margin + 2, y);
+      doc.setTextColor(0, 0, 0);
+      
+      y += 7;
     });
     y += 5;
   }
 
-  // 9. VIDEOAULAS E TREINAMENTOS
+  // 9. VIDEOAULAS RECOMENDADAS
   if (ata.videoaulas_vinculadas && ata.videoaulas_vinculadas.length > 0) {
+    checkPageBreak(30);
+    doc.setFontSize(13);
+    doc.setFont(undefined, 'bold');
+    doc.text('9. VIDEOAULAS RECOMENDADAS', margin, y);
+    y += 2;
+    doc.setLineWidth(0.5);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 8;
+
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'italic');
+    doc.setTextColor(100, 100, 100);
+    const instrucaoVideo = doc.splitTextToSize(
+      'As videoaulas abaixo foram indicadas e estão disponíveis no módulo "Academia de Treinamento" da plataforma.',
+      contentWidth
+    );
+    instrucaoVideo.forEach(line => {
+      doc.text(line, margin, y);
+      y += 4;
+    });
+    doc.setTextColor(0, 0, 0);
+    y += 5;
+
+    ata.videoaulas_vinculadas.forEach(video => {
+      checkPageBreak(15);
+      
+      // Box roxo para videoaulas
+      doc.setFillColor(250, 245, 255);
+      doc.setDrawColor(147, 51, 234);
+      doc.setLineWidth(0.5);
+      doc.rect(margin, y - 2, contentWidth, 12, 'FD');
+      
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'bold');
+      doc.text(`• ${video.titulo}`, margin + 2, y + 2);
+      
+      y += 6;
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'normal');
+      doc.text(`Curso: ${video.descricao}`, margin + 2, y);
+      
+      y += 5;
+      doc.setFontSize(8);
+      doc.setTextColor(147, 51, 234);
+      const caminhoVideo = doc.splitTextToSize(
+        `📍 Acesse em: Menu → Academia de Treinamento → ${video.descricao} → ${video.titulo}`,
+        contentWidth - 5
+      );
+      caminhoVideo.forEach(linha => {
+        doc.text(linha, margin + 2, y);
+        y += 4;
+      });
+      doc.setTextColor(0, 0, 0);
+      
+      y += 5;
+    });
+    y += 5;
+  }
+
+  // 10. MÍDIAS E ANEXOS
+  if (ata.midias_anexas && ata.midias_anexas.length > 0) {
     checkPageBreak(25);
     doc.setFontSize(13);
     doc.setFont(undefined, 'bold');
-    doc.text('9. VIDEOAULAS E TREINAMENTOS', margin, y);
+    doc.text('10. MÍDIAS E ANEXOS', margin, y);
     y += 2;
     doc.setLineWidth(0.5);
     doc.line(margin, y, pageWidth - margin, y);
     y += 10;
 
-    doc.setFontSize(10);
-    doc.setFont(undefined, 'normal');
-    ata.videoaulas_vinculadas.forEach(video => {
-      checkPageBreak(8);
-      doc.text(`• ${video.titulo}`, margin, y);
+    ata.midias_anexas.forEach((midia, idx) => {
+      checkPageBreak(15);
+      
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'bold');
+      
+      let icone = '📎';
+      if (midia.tipo === 'imagem') icone = '🖼️';
+      else if (midia.tipo === 'video') icone = '🎬';
+      else if (midia.tipo === 'link') icone = '🔗';
+      else if (midia.tipo === 'documento') icone = '📄';
+      
+      doc.text(`${icone} ${midia.titulo || `${midia.tipo} ${idx + 1}`}`, margin, y);
       y += 6;
+      
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'normal');
+      doc.setTextColor(100, 100, 100);
+      const urlLines = doc.splitTextToSize(midia.url, contentWidth - 5);
+      urlLines.forEach(line => {
+        checkPageBreak(5);
+        doc.text(line, margin + 3, y);
+        y += 5;
+      });
+      doc.setTextColor(0, 0, 0);
+      
+      y += 3;
     });
     y += 5;
   }
 
-  // 10. OBSERVAÇÕES DO CONSULTOR
+  // 11. OBSERVAÇÕES DO CONSULTOR
   if (ata.observacoes_consultor) {
-    addSection('10', 'OBSERVAÇÕES DO CONSULTOR', ata.observacoes_consultor);
+    addSection('11', 'OBSERVAÇÕES DO CONSULTOR', ata.observacoes_consultor);
   }
 
-  // 11. VISÃO GERAL DO PROJETO
+  // 12. VISÃO GERAL DO PROJETO
   if (ata.visao_geral_projeto) {
-    addSection('11', 'VISÃO GERAL DO PROJETO DE ACELERAÇÃO', ata.visao_geral_projeto);
+    addSection('12', 'VISÃO GERAL DO PROJETO DE ACELERAÇÃO', ata.visao_geral_projeto);
   }
 
   // Rodapé
