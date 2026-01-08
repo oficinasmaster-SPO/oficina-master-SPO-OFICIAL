@@ -220,6 +220,18 @@ export default function RegistrarAtendimento() {
 
       console.log("Atendimento salvo:", atendimento);
 
+      // Se tem ATA vinculada, finalizá-la automaticamente
+      if (atendimento.ata_id) {
+        try {
+          await base44.entities.MeetingMinutes.update(atendimento.ata_id, {
+            status: 'finalizada'
+          });
+          console.log("ATA finalizada automaticamente");
+        } catch (error) {
+          console.error('Erro ao finalizar ATA:', error);
+        }
+      }
+
       // Se status é "realizado", enviar notificação
       if (atendimentoData.status === 'realizado') {
         try {
