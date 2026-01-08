@@ -81,9 +81,10 @@ export default function PainelAtendimentosTab({ user }) {
       status: 'participando',
       hora_inicio_real: new Date().toISOString()
     }),
-    onSuccess: () => {
+    onSuccess: (_, id) => {
       toast.success('Reunião iniciada!');
       queryClient.invalidateQueries(['todos-atendimentos']);
+      navigate(createPageUrl('RegistrarAtendimento') + `?atendimento_id=${id}`);
     }
   });
 

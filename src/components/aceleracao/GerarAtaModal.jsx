@@ -238,11 +238,13 @@ export default function GerarAtaModal({ atendimento, workshop, planoAceleracao, 
       if (atendimento?.id) {
         await base44.entities.ConsultoriaAtendimento.update(atendimento.id, {
           ata_id: newAta.id,
-          ata_gerada: true
+          ata_gerada: true,
+          status: 'realizado',
+          data_realizada: new Date().toISOString()
         });
       }
 
-      toast.success("ATA salva com sucesso!");
+      toast.success("ATA salva e atendimento finalizado!");
       if (onSaved) onSaved(newAta);
       onClose();
     } catch (error) {
