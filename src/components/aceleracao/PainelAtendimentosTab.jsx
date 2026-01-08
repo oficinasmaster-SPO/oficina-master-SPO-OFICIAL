@@ -183,6 +183,23 @@ export default function PainelAtendimentosTab({ user }) {
 
 
 
+      {/* Busca e Filtros de ATAs */}
+      <AtaSearchFilters
+        filters={filtrosAtas}
+        onFiltersChange={setFiltrosAtas}
+        workshops={workshops || []}
+        consultores={consultores || []}
+        onClearFilters={() => setFiltrosAtas({
+          searchTerm: "",
+          workshop_id: "",
+          consultor_id: "",
+          status: "",
+          tipo_aceleracao: "",
+          dateFrom: "",
+          dateTo: ""
+        })}
+      />
+
       {/* Tabela de Atendimentos */}
       <Card>
         <CardContent className="pt-6">
