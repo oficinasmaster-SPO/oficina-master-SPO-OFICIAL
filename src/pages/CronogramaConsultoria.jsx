@@ -12,6 +12,8 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import ReactMarkdown from "react-markdown";
 import AtaPrintLayout from "@/components/aceleracao/AtaPrintLayout";
+import AtaSearchFilters from "@/components/aceleracao/AtaSearchFilters";
+import { useAtaSearch } from "@/components/aceleracao/useAtaSearch";
 
 export default function CronogramaConsultoria() {
   const navigate = useNavigate();
@@ -19,6 +21,15 @@ export default function CronogramaConsultoria() {
   const [showAta, setShowAta] = useState(false);
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   const printRef = useRef();
+  const [filters, setFilters] = useState({
+    searchTerm: "",
+    workshop_id: "",
+    consultor_id: "",
+    status: "",
+    tipo_aceleracao: "",
+    dateFrom: "",
+    dateTo: ""
+  });
 
   // Carregar usuário e workshop
   const { data: user } = useQuery({
@@ -33,7 +44,7 @@ export default function CronogramaConsultoria() {
   });
 
   // Carregar atendimentos
-  const { data: atendimentos, isLoading } = useQuery({
+  const { data: allAtendimentos, isLoading } = useQuery({
     queryKey: ['consultoria-atendimentos', user?.workshop_id],
     queryFn: async () => {
       if (user?.role === 'admin') {
@@ -46,6 +57,31 @@ export default function CronogramaConsultoria() {
     },
     enabled: !!user
   });
+
+  // Carregar ATAs
+  const { data: allAtas } = useQuery({
+    queryKey: ['meeting-minutes'],
+    queryFn: async () => {
+      if (user?.role === 'admin') {
+        return await base44.entities.MeetingMinutes.list('-meeting_date');
+      } else if (workshop?.id) {
+        return await base44.entities.MeetingMinutes.filter({ workshop_id: workshop.id }, '-meeting_date');
+      }
+      return [];
+    },
+    enabled: !!user && (user.role === 'admin' || !!workshop?.id)
+  });
+
+  const { data: consultores } = useQuery({
+    queryKey: ['consultores-list'],
+    queryFn: async () => {
+      const employees = await base44.entities.Employee.list();
+      return employees.filter(e => e.job_role === 'acelerador' || e.position?.toLowerCase().includes('consultor'));
+    }
+  });
+
+  const atasFiltradas = useAtaSearch(allAtas, filters);
+  const atendimentos = allAtendimentos;
 
   const getStatusColor = (status) => {
     const colors = {
@@ -236,102 +272,115 @@ export default function CronogramaConsultoria() {
         </CardContent>
       </Card>
 
-      {/* Histórico de Atendimentos */}
+      {/* Busca e Filtros de ATAs */}
+      <AtaSearchFilters
+        filters={filters}
+        onFiltersChange={setFilters}
+        workshops={workshop ? [workshop] : []}
+        consultores={consultores || []}
+        onClearFilters={() => setFilters({
+          searchTerm: "",
+          workshop_id: "",
+          consultor_id: "",
+          status: "",
+          tipo_aceleracao: "",
+          dateFrom: "",
+          dateTo: ""
+        })}
+      />
+
+      {/* Histórico de ATAs */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="w-5 h-5 text-gray-600" />
-            Histórico de Atendimentos
+          <CardTitle className="flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <FileText className="w-5 h-5 text-gray-600" />
+              Atas de Reunião ({atasFiltradas?.length || 0})
+            </span>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {atendimentosRealizados.length === 0 ? (
+          {!atasFiltradas || atasFiltradas.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <FileText className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-              <p>Nenhum atendimento realizado ainda</p>
+              <p>Nenhuma ata encontrada</p>
             </div>
           ) : (
             <div className="space-y-4">
-              {atendimentosRealizados.map((atendimento) => (
+              {atasFiltradas.map((ata) => {
+                const atendimento = allAtendimentos?.find(a => a.ata_id === ata.id);
+                return (
                 <div
-                  key={atendimento.id}
+                  key={ata.id}
                   className="border rounded-lg p-4 hover:shadow-md transition-shadow"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <Badge className="bg-green-100 text-green-800">
-                          Realizado
+                        <Badge className={ata.status === 'finalizada' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
+                          {ata.status === 'finalizada' ? 'Finalizada' : 'Rascunho'}
                         </Badge>
-                        <span className="text-sm text-gray-600">
-                          {getTipoLabel(atendimento.tipo_atendimento)}
+                        <span className="text-sm font-medium text-gray-900">
+                          {ata.code}
                         </span>
-                        {atendimento.ata_ia && (
-                          <Badge variant="outline" className="text-blue-600 border-blue-600">
-                            <FileText className="w-3 h-3 mr-1" />
-                            Ata Disponível
-                          </Badge>
-                        )}
+                        <Badge variant="outline" className="text-red-600 border-red-600">
+                          {ata.tipo_aceleracao?.toUpperCase()}
+                        </Badge>
                       </div>
 
                       <div className="grid grid-cols-2 gap-4 mt-3">
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                           <Calendar className="w-4 h-4" />
-                          {format(new Date(atendimento.data_realizada), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                          {format(new Date(ata.meeting_date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })} - {ata.meeting_time}
                         </div>
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                           <User className="w-4 h-4" />
-                          {atendimento.consultor_nome || 'Consultor'}
+                          {ata.consultor_name || 'Consultor'}
                         </div>
                       </div>
 
-                      {atendimento.avaliacao_cliente?.nota && (
-                        <div className="mt-3 flex items-center gap-2">
-                          <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                          <span className="text-sm font-medium">
-                            Avaliação: {atendimento.avaliacao_cliente.nota}/5
-                          </span>
+                      {ata.pautas && (
+                        <div className="mt-3">
+                          <p className="text-sm text-gray-700 line-clamp-2">
+                            {ata.pautas.substring(0, 150)}...
+                          </p>
                         </div>
                       )}
                     </div>
 
                     <div className="flex flex-col gap-2">
                       <div className="flex gap-2">
-                        {atendimento.ata_ia && (
-                          <>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedAtendimento(atendimento);
-                                setShowAta(true);
-                              }}
-                            >
-                              <Eye className="w-4 h-4 mr-2" />
-                              Ver Ata
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handlePrintAta(atendimento)}
-                              title="Imprimir Ata"
-                            >
-                              <Printer className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDownloadAta(atendimento)}
-                              title="Download Markdown"
-                            >
-                              <Download className="w-4 h-4" />
-                            </Button>
-                          </>
-                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={async () => {
+                            try {
+                              const ataCompleta = await base44.entities.MeetingMinutes.get(ata.id);
+                              setSelectedAtendimento({ ...atendimento, ata_ia: ataCompleta.pautas });
+                              setShowAta(true);
+                            } catch (error) {
+                              toast.error("Erro ao carregar ATA");
+                            }
+                          }}
+                        >
+                          <Eye className="w-4 h-4 mr-2" />
+                          Ver Ata
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedAtendimento(atendimento || {});
+                            handlePrintAta(atendimento || {});
+                          }}
+                          title="Imprimir Ata"
+                        >
+                          <Printer className="w-4 h-4" />
+                        </Button>
                       </div>
 
                       {/* Ações de Envio */}
-                      {atendimento.ata_ia && (
+                      {atendimento?.id && (
                         <div className="flex gap-2 pt-2 border-t">
                           <Button 
                             variant="ghost" 
@@ -372,30 +421,13 @@ export default function CronogramaConsultoria() {
                           >
                             <Send className="w-4 h-4" />
                           </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-                            onClick={async () => {
-                              try {
-                                await base44.functions.invoke('disponibilizarAtaPlataforma', {
-                                  atendimento_id: atendimento.id
-                                });
-                                toast.success("Ata disponibilizada na plataforma!");
-                              } catch (error) {
-                                toast.error("Erro: " + error.message);
-                              }
-                            }}
-                            title="Disponibilizar na Plataforma"
-                          >
-                            <FileText className="w-4 h-4" />
-                          </Button>
                         </div>
                       )}
                     </div>
                   </div>
                 </div>
-              ))}
+              );
+              })}
             </div>
           )}
         </CardContent>
