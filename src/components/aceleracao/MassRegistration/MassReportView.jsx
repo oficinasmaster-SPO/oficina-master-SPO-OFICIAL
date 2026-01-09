@@ -30,12 +30,27 @@ export default function MassReportView({ selectedClients, formData }) {
   // Mutation para salvar ATA alterada
   const updateAtaMutation = useMutation({
     mutationFn: async (ataData) => {
-      // Aqui você atualizaria a ATA no banco
-      // Por enquanto é um mock - será implementado quando criar os atendimentos
+      // Se status for "realizado", atualizar TODAS as ATAs do lote
+      if (ataData.status === "realizado") {
+        // Buscar todas as ATAs deste lote (mesmo data_agendada)
+        const allAtas = await base44.entities.ConsultoriaAtendimento.filter({
+          data_agendada: ataData.data_agendada
+        });
+        
+        // Atualizar todas com status realizado
+        await Promise.all(
+          allAtas.map(ata =>
+            base44.entities.ConsultoriaAtendimento.update(ata.id, {
+              status: "realizado",
+              data_realizada: new Date().toISOString()
+            })
+          )
+        );
+      }
       return ataData;
     },
     onSuccess: () => {
-      toast.success("Ata atualizada!");
+      toast.success("Ata atualizada! Todas do lote foram marcadas como realizado.");
     },
     onError: (error) => {
       toast.error("Erro ao atualizar: " + error.message);
