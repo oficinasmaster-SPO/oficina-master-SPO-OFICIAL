@@ -4,9 +4,11 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Users, Edit2, Eye } from "lucide-react";
 import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AtaPreviewDialog from "./AtaPreviewDialog";
 import ViewClientsDialog from "./ViewClientsDialog";
 import AtaPDFViewer from "./AtaPDFViewer";
+import MassReportHistory from "./MassReportHistory";
 
 export default function MassReportView({ selectedClients, formData }) {
   const [showViewClients, setShowViewClients] = useState(false);
@@ -82,8 +84,15 @@ export default function MassReportView({ selectedClients, formData }) {
 
   return (
     <div className="space-y-4">
-      {/* Tabela de Disparo em Massa */}
-      {selectedClients.length > 0 ? (
+      <Tabs defaultValue="atual" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="atual">Disparo Atual</TabsTrigger>
+          <TabsTrigger value="historico">Histórico de Disparos</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="atual" className="space-y-4">
+          {/* Tabela de Disparo em Massa */}
+          {selectedClients.length > 0 ? (
         <div className="border rounded-lg overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-gray-100 border-b">
