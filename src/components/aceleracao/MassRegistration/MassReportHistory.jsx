@@ -94,30 +94,109 @@ export default function MassReportHistory() {
   }
 
   return (
-    <div className="space-y-2">
-      {historico.map((disparo) => (
-        <div key={disparo.id} className="border rounded-lg p-4 hover:bg-gray-50">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <p className="font-mono text-sm text-blue-600 font-semibold">{disparo.disparo_id}</p>
-              <p className="text-sm font-medium">{disparo.grupo_nome}</p>
-              <div className="grid grid-cols-3 gap-4 mt-2 text-xs text-gray-600">
-                <span>📅 {disparo.data_agendada} - {disparo.hora_agendada}</span>
-                <span>👥 {disparo.total_clientes} cliente(s)</span>
-                <span>👤 {disparo.consultor_nome}</span>
+    <>
+      <div className="space-y-2">
+        {historico.map((disparo) => (
+          <div key={disparo.id} className="border rounded-lg p-4 hover:bg-gray-50">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="font-mono text-sm text-blue-600 font-semibold">{disparo.disparo_id}</p>
+                <p className="text-sm font-medium">{disparo.grupo_nome}</p>
+                <div className="grid grid-cols-3 gap-4 mt-2 text-xs text-gray-600">
+                  <span>📅 {disparo.data_agendada} - {disparo.hora_agendada}</span>
+                  <span>👥 {disparo.total_clientes} cliente(s)</span>
+                  <span>👤 {disparo.consultor_nome}</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Status: <span className={disparo.status === "realizado" ? "text-green-600" : "text-amber-600"}>{disparo.status}</span></p>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  title="Ver clientes"
+                  className="h-8 w-8 p-0"
+                  onClick={() => {
+                    setSelectedGroupClients(disparo.clientes?.map(c => c.workshop_id) || []);
+                    setSelectedGroupName(disparo.grupo_nome);
+                    setShowViewClients(true);
+                  }}
+                >
+                  <Eye className="w-4 h-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  title="Editar"
+                  className="h-8 w-8 p-0"
+                  onClick={() => {
+                    setSelectedAta({
+                      id: disparo.disparo_id,
+                      workshop_name: disparo.grupo_nome,
+                      tipo_atendimento: disparo.tipo_atendimento,
+                      status: disparo.status,
+                      pauta: disparo.pauta,
+                      objetivos: disparo.objetivos,
+                      observacoes: disparo.observacoes,
+                      data_agendada: disparo.data_agendada,
+                      hora_agendada: disparo.hora_agendada
+                    });
+                    setSelectedDisparo(disparo);
+                    setShowAtaPreview(true);
+                  }}
+                >
+                  <Edit2 className="w-4 h-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  title="Finalizar lote"
+                  className="h-8 w-8 p-0"
+                  disabled={finalizarLoteMutation.isPending || disparo.status === "realizado"}
+                  onClick={() => finalizarLoteMutation.mutate(disparo)}
+                >
+                  {finalizarLoteMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <CheckCircle className="w-4 h-4" />
+                  )}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  title="Reenviar notificações"
+                  className="h-8 w-8 p-0"
+                  disabled={reenviareNotificacoesMutation.isPending}
+                  onClick={() => reenviareNotificacoesMutation.mutate(disparo)}
+                >
+                  {reenviareNotificacoesMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Bell className="w-4 h-4" />
+                  )}
+                </Button>
               </div>
             </div>
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" title="Visualizar" className="h-8 w-8 p-0">
-                <Eye className="w-4 h-4" />
-              </Button>
-              <Button size="sm" variant="outline" title="Baixar" className="h-8 w-8 p-0">
-                <Download className="w-4 h-4" />
-              </Button>
-            </div>
           </div>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
+
+      <AtaPreviewDialog
+        open={showAtaPreview}
+        onOpenChange={setShowAtaPreview}
+        ata={selectedAta}
+        onSave={() => {
+          queryClient.invalidateQueries({ queryKey: ["batch-dispatch-history"] });
+          setShowAtaPreview(false);
+        }}
+        isLoading={false}
+      />
+
+      <ViewClientsDialog
+        open={showViewClients}
+        onOpenChange={setShowViewClients}
+        clientIds={selectedGroupClients}
+        groupName={selectedGroupName}
+      />
+    </>
   );
 }
