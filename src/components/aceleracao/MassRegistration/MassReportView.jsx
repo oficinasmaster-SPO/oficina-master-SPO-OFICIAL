@@ -77,7 +77,7 @@ export default function MassReportView({ selectedClients, formData }) {
     tipo: formData.tipo_atendimento,
     status: formData.status,
     clientCount: selectedClients.length,
-    clientIds: selectedClientes
+    clientIds: selectedClients
   };
 
   return (
