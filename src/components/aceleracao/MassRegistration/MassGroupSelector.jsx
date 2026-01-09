@@ -82,9 +82,29 @@ export default function MassGroupSelector({ selectedGroupId, onGroupSelect, sele
     return matchSearch && matchPlans;
   });
 
-  const filteredGroups = savedGroups.filter(g =>
-    g.name.toLowerCase().includes(groupFilters.name?.toLowerCase() || "")
-  );
+  // Mutation para deativar grupo
+  const deactivateGroupMutation = useMutation({
+    mutationFn: async (groupId) => {
+      return await base44.entities.ClientGroup.update(groupId, { is_active: false });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["client-groups-mass"] });
+      toast.success("Grupo removido");
+    },
+    onError: (error) => {
+      toast.error("Erro ao remover: " + error.message);
+    }
+  });
+
+  const filteredGroups = savedGroups.filter(g => {
+    const matchName = g.name.toLowerCase().includes(groupFilters.name?.toLowerCase() || "");
+    const createdDate = new Date(g.created_date);
+    
+    const matchStartDate = !groupFilters.entryDateFrom || createdDate >= new Date(groupFilters.entryDateFrom);
+    const matchEndDate = !groupFilters.entryDateTo || createdDate <= new Date(groupFilters.entryDateTo);
+    
+    return matchName && matchStartDate && matchEndDate;
+  });
 
   return (
     <div className="space-y-6">
@@ -96,20 +116,34 @@ export default function MassGroupSelector({ selectedGroupId, onGroupSelect, sele
           onFilterChange={setGroupFilters}
           onClear={() => setGroupFilters({})}
         />
-        <div className="grid gap-2 max-h-48 overflow-y-auto">
+        <div className="grid gap-2 max-h-60 overflow-y-auto">
           {filteredGroups.length > 0 ? (
             filteredGroups.map(group => (
               <div
                 key={group.id}
-                className="p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition"
-                onClick={() => onGroupSelect(group.id)}
+                className="p-3 border rounded-lg hover:bg-blue-50 transition"
               >
                 <div className="flex items-start justify-between">
-                  <div className="flex-1">
+                  <div className="flex-1 cursor-pointer" onClick={() => onClientsChange(group.client_ids)}>
                     <p className="text-sm font-medium">{group.name}</p>
                     <p className="text-xs text-gray-600 mt-1">{group.description}</p>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Criado: {new Date(group.created_date).toLocaleDateString("pt-BR")}
+                    </p>
                   </div>
-                  <div className="text-xs text-gray-500">{group.client_ids.length} clientes</div>
+                  <div className="flex items-center gap-2">
+                    <div className="text-xs text-gray-500 text-right">{group.client_ids.length} clientes</div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => deactivateGroupMutation.mutate(group.id)}
+                      disabled={deactivateGroupMutation.isPending}
+                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                    >
+                      🗑️
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))
