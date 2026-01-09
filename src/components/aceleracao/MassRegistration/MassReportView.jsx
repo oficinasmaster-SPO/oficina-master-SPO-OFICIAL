@@ -3,8 +3,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { FileText, Users, Edit2, CheckCircle2 } from "lucide-react";
+import { FileText, Users, Edit2 } from "lucide-react";
 import { toast } from "sonner";
 import AtaPreviewDialog from "./AtaPreviewDialog";
 
