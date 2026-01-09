@@ -1,15 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Users, Save, X, Loader2 } from "lucide-react";
+import { Users, Save, Loader2, AlertCircle } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import AtendimentoMassaForm from "./MassRegistrationTabs/AtendimentoMassaForm";
-import ConfigurarDestinatarios from "./MassRegistrationTabs/ConfigurarDestinatarios";
-import RelatoriosTab from "./MassRegistrationTabs/RelatoriosTab";
-import FormulariosTab from "./MassRegistrationTabs/FormulariosTab";
+import MassAtaForm from "./MassRegistration/MassAtaForm";
+import MassGroupSelector from "./MassRegistration/MassGroupSelector";
+import MassReportView from "./MassRegistration/MassReportView";
 
 export default function RegistroAtendimentoMassaModal({ open, onClose, user }) {
   const queryClient = useQueryClient();
@@ -56,7 +55,7 @@ export default function RegistroAtendimentoMassaModal({ open, onClose, user }) {
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
-      if (selectedWorkshops.length === 0) {
+      if (selectedClients.length === 0) {
         throw new Error("Selecione pelo menos um cliente");
       }
       if (!data.data_agendada || !data.hora_agendada) {
@@ -65,7 +64,7 @@ export default function RegistroAtendimentoMassaModal({ open, onClose, user }) {
 
       const dataHora = `${data.data_agendada}T${data.hora_agendada}:00`;
       
-      const atendimentos = selectedWorkshops.map(workshop_id => ({
+      const atendimentos = selectedClients.map(workshop_id => ({
         workshop_id,
         tipo_atendimento: data.tipo_atendimento,
         status: data.status,
@@ -85,6 +84,10 @@ export default function RegistroAtendimentoMassaModal({ open, onClose, user }) {
         )
       );
 
+      // Limpar sessionStorage
+      sessionStorage.removeItem("massReg_form");
+      sessionStorage.removeItem("massReg_clients");
+      
       return results;
     },
     onSuccess: (results) => {
@@ -104,15 +107,11 @@ export default function RegistroAtendimentoMassaModal({ open, onClose, user }) {
       toast.error("Preencha data e horário");
       return;
     }
-    if (selectedWorkshops.length === 0) {
+    if (selectedClients.length === 0) {
       toast.error("Selecione destinatários");
       return;
     }
     createMutation.mutate(formData);
-  };
-
-  const handlePreviewPDF = () => {
-    toast.info("Visualização de PDF - funcionalidade em desenvolvimento");
   };
 
   return (
@@ -128,88 +127,100 @@ export default function RegistroAtendimentoMassaModal({ open, onClose, user }) {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="atendimento">Criar Atendimento</TabsTrigger>
-              <TabsTrigger value="destinatarios">Configurar Destinatários</TabsTrigger>
-              <TabsTrigger value="relatorios">Relatórios</TabsTrigger>
-              <TabsTrigger value="formularios">Formulários</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="ata">1. Configurar Ata</TabsTrigger>
+              <TabsTrigger value="grupos">2. Configurar Grupos</TabsTrigger>
+              <TabsTrigger value="relatorio">3. Relatório</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="atendimento" className="space-y-4 mt-4">
-              <AtendimentoMassaForm 
-                formData={formData} 
-                onFormChange={setFormData}
-                onPreviewPDF={handlePreviewPDF}
+            <TabsContent value="ata" className="space-y-4 mt-4">
+              <MassAtaForm formData={formData} onFormChange={setFormData} />
+            </TabsContent>
+
+            <TabsContent value="grupos" className="space-y-4 mt-4">
+              <MassGroupSelector
+                selectedGroupId={selectedGroupId}
+                onGroupSelect={setSelectedGroupId}
+                selectedClients={selectedClients}
+                onClientsChange={setSelectedClients}
               />
             </TabsContent>
 
-            <TabsContent value="destinatarios" className="space-y-4 mt-4">
-              <ConfigurarDestinatarios 
-                selectedIds={selectedWorkshops}
-                onSelectionChange={setSelectedWorkshops}
-                workshops={workshops || []}
-              />
-            </TabsContent>
-
-            <TabsContent value="relatorios" className="space-y-4 mt-4">
-              <RelatoriosTab />
-            </TabsContent>
-
-            <TabsContent value="formularios" className="space-y-4 mt-4">
-              <FormulariosTab />
+            <TabsContent value="relatorio" className="space-y-4 mt-4">
+              <MassReportView selectedClients={selectedClients} formData={formData} />
             </TabsContent>
           </Tabs>
 
-          {/* Rodapé com ações */}
+          {/* Rodapé */}
           <div className="flex items-center justify-between pt-4 border-t">
-            <p className="text-sm text-gray-600">
-              {activeTab === "atendimento" && (
-                <span className="text-gray-500">Configure os dados do atendimento</span>
-              )}
-              {activeTab === "destinatarios" && (
-                selectedWorkshops.length > 0 ? (
-                  <span className="font-medium text-green-600">
-                    ✓ {selectedWorkshops.length} cliente(s) selecionado(s)
-                  </span>
-                ) : (
-                  <span className="text-gray-500">Selecione clientes para enviar</span>
-                )
-              )}
-              {(activeTab === "relatorios" || activeTab === "formularios") && (
-                <span className="text-gray-500"></span>
-              )}
-            </p>
+            <div className="flex items-center gap-2">
+              {!formData.data_agendada && <AlertCircle className="w-4 h-4 text-amber-500" />}
+              {selectedClients.length === 0 && activeTab === "grupos" && <AlertCircle className="w-4 h-4 text-amber-500" />}
+              <p className="text-sm text-gray-600">
+                {activeTab === "ata" && "Preencha os dados da ata"}
+                {activeTab === "grupos" && `${selectedClients.length} cliente(s) selecionado(s)`}
+                {activeTab === "relatorio" && "Revise antes de enviar"}
+              </p>
+            </div>
             <div className="flex gap-3">
               <Button type="button" variant="outline" onClick={onClose}>
-                Fechar
+                Cancelar
               </Button>
-              {activeTab === "atendimento" && (
+              {activeTab === "ata" && (
                 <Button
                   type="button"
-                  onClick={() => setActiveTab("destinatarios")}
+                  onClick={() => setActiveTab("grupos")}
                   className="bg-blue-600 hover:bg-blue-700"
                 >
                   Próximo
                 </Button>
               )}
-              {activeTab === "destinatarios" && (
-                <Button
-                  type="submit"
-                  disabled={createMutation.isPending || selectedWorkshops.length === 0 || !formData.data_agendada || !formData.hora_agendada}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  {createMutation.isPending ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Criando...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4 mr-2" />
-                      Criar e Enviar
-                    </>
-                  )}
-                </Button>
+              {activeTab === "grupos" && (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setActiveTab("ata")}
+                  >
+                    Voltar
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => setActiveTab("relatorio")}
+                    disabled={selectedClients.length === 0}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    Próximo
+                  </Button>
+                </>
+              )}
+              {activeTab === "relatorio" && (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setActiveTab("grupos")}
+                  >
+                    Voltar
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={createMutation.isPending || selectedClients.length === 0}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    {createMutation.isPending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Criando...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4 mr-2" />
+                        Criar e Enviar
+                      </>
+                    )}
+                  </Button>
+                </>
               )}
             </div>
           </div>
