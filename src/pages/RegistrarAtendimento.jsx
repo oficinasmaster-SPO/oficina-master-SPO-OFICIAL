@@ -461,18 +461,45 @@ export default function RegistrarAtendimento() {
                 </div>
                 <Select
                   value={formData.tipo_atendimento}
-                  onValueChange={(value) => setFormData({ ...formData, tipo_atendimento: value })}
+                  onValueChange={(value) => {
+                    const duracoes = {
+                      diagnostico_inicial: 45,
+                      acompanhamento_mensal: 45,
+                      reuniao_estrategica: 45,
+                      treinamento: 45,
+                      auditoria: 45,
+                      revisao_metas: 45,
+                      imersao_individual: 480,
+                      imersao_presencial: 1800,
+                      pda_grupo: 120,
+                      aceleradores_presenciais: 1200,
+                      imersao_online: 480,
+                      mentoria: 45,
+                      outros: 60
+                    };
+                    setFormData({ 
+                      ...formData, 
+                      tipo_atendimento: value,
+                      duracao_minutos: duracoes[value] || 60
+                    });
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="diagnostico_inicial">Diagnóstico Inicial</SelectItem>
-                    <SelectItem value="acompanhamento_mensal">Acompanhamento Mensal</SelectItem>
-                    <SelectItem value="reuniao_estrategica">Reunião Estratégica</SelectItem>
-                    <SelectItem value="treinamento">Treinamento</SelectItem>
-                    <SelectItem value="auditoria">Auditoria</SelectItem>
-                    <SelectItem value="revisao_metas">Revisão de Metas</SelectItem>
+                    <SelectItem value="diagnostico_inicial">Diagnóstico Inicial (45min)</SelectItem>
+                    <SelectItem value="acompanhamento_mensal">Acompanhamento Mensal (45min)</SelectItem>
+                    <SelectItem value="reuniao_estrategica">Reunião Estratégica (45min)</SelectItem>
+                    <SelectItem value="treinamento">Treinamento (45min)</SelectItem>
+                    <SelectItem value="auditoria">Auditoria (45min)</SelectItem>
+                    <SelectItem value="revisao_metas">Revisão de Metas (45min)</SelectItem>
+                    <SelectItem value="imersao_individual">Imersão Individual (8h)</SelectItem>
+                    <SelectItem value="imersao_presencial">Imersão Presencial (30h)</SelectItem>
+                    <SelectItem value="pda_grupo">PDA em Grupo (2h)</SelectItem>
+                    <SelectItem value="aceleradores_presenciais">Aceleradores Presenciais (20h)</SelectItem>
+                    <SelectItem value="imersao_online">Imersão Online (8h)</SelectItem>
+                    <SelectItem value="mentoria">Mentoria (45min)</SelectItem>
                     <SelectItem value="outros">Outros</SelectItem>
                     {customTipos.map(tipo => (
                       <SelectItem key={tipo.value} value={tipo.value}>
