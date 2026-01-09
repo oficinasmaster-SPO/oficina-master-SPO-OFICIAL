@@ -160,20 +160,51 @@ export default function CompletionModal({ activity, onClose, onComplete }) {
           <div>
             <Label className="text-base font-semibold mb-2 block">
               <Users className="w-4 h-4 inline mr-1" />
-              Participantes presentes
+              Participantes presentes <span className="text-red-500">*</span>
             </Label>
-            <Input
-              placeholder="Ex: João Silva, Maria Santos, Pedro Costa (separar por vírgula)"
-              value={participants}
-              onChange={(e) => setParticipants(e.target.value)}
-            />
-            {participants && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {participants.split(',').map(p => p.trim()).filter(Boolean).map((name, i) => (
-                  <Badge key={i} variant="secondary">{name}</Badge>
-                ))}
-              </div>
-            )}
+            <div className="space-y-3">
+              <Select onValueChange={(value) => {
+                const colaborador = colaboradores.find(c => c.id === value);
+                if (colaborador && !selectedParticipants.find(p => p.id === value)) {
+                  setSelectedParticipants([...selectedParticipants, {
+                    id: colaborador.id,
+                    nome: colaborador.full_name,
+                    cargo: colaborador.position
+                  }]);
+                }
+              }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecionar colaborador..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {colaboradores.filter(c => !selectedParticipants.find(p => p.id === c.id)).map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.full_name} - {c.position}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {selectedParticipants.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {selectedParticipants.map((p, i) => (
+                    <Badge key={i} variant="secondary" className="flex items-center gap-1 pr-1">
+                      <span>{p.nome} ({p.cargo})</span>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedParticipants(selectedParticipants.filter((_, idx) => idx !== i))}
+                        className="ml-1 hover:bg-gray-300 rounded-full p-0.5"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              {selectedParticipants.length === 0 && (
+                <p className="text-sm text-gray-500">Nenhum participante selecionado</p>
+              )}
+            </div>
           </div>
 
           {/* Upload de Evidência */}
