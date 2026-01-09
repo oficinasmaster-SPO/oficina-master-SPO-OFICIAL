@@ -43,6 +43,9 @@ export default function NotificationListener({ user }) {
       'processo_atrasado': '🔴',
       'processo_concluido': '✅',
       'nova_ata': '📋',
+      'meta_batida': '🎯',
+      'meta_nacional_empresa': '🏆',
+      'meta_nacional_colaborador': '⭐',
       'atrasada': '🔴',
       'status_alterado': '✅',
       'nova_subtarefa': '🔔'

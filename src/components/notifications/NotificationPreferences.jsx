@@ -31,6 +31,9 @@ export default function NotificationPreferences({ user }) {
     notificar_conclusoes: true,
     notificar_atas: true,
     notificar_atrasados: true,
+    notificar_metas: true,
+    notificar_metas_nacionais: true,
+    notificar_colaboradores_nacionais: true,
     email_enabled: false
   });
 
@@ -187,6 +190,45 @@ export default function NotificationPreferences({ user }) {
             <Switch
               checked={config.notificar_atas}
               onCheckedChange={() => handleToggle('notificar_atas')}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <Label className="text-base font-medium">Metas Batidas</Label>
+              <p className="text-sm text-gray-500">
+                Alertas quando sua oficina bater metas (faturamento, ticket médio, R70/I30, TCMP2)
+              </p>
+            </div>
+            <Switch
+              checked={config.notificar_metas}
+              onCheckedChange={() => handleToggle('notificar_metas')}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <Label className="text-base font-medium">Conquistas Nacionais - Empresas</Label>
+              <p className="text-sm text-gray-500">
+                Ver quando outras oficinas do Brasil batem suas metas
+              </p>
+            </div>
+            <Switch
+              checked={config.notificar_metas_nacionais}
+              onCheckedChange={() => handleToggle('notificar_metas_nacionais')}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <Label className="text-base font-medium">Conquistas Nacionais - Colaboradores</Label>
+              <p className="text-sm text-gray-500">
+                Ver quando colaboradores (vendedores, técnicos) de outras oficinas batem metas
+              </p>
+            </div>
+            <Switch
+              checked={config.notificar_colaboradores_nacionais}
+              onCheckedChange={() => handleToggle('notificar_colaboradores_nacionais')}
             />
           </div>
 
