@@ -245,7 +245,7 @@ export default function CompletionModal({ activity, onClose, onComplete }) {
           </Button>
           <Button 
             onClick={handleSave} 
-            disabled={saving || uploading || !notes.trim()}
+            disabled={saving || uploading || !notes.trim() || selectedParticipants.length === 0}
             className="bg-green-600 hover:bg-green-700"
           >
             {uploading ? (
