@@ -29,9 +29,16 @@ Deno.serve(async (req) => {
     }
 
     // Montar corpo do email
+    // Buscar ATA associada
+    const atas = await base44.entities.MeetingMinutes.filter({ atendimento_id: atendimento_id });
+    const ata = atas[0];
+
+    // Gerar link da plataforma para ATA
+    const linkAta = ata ? `${Deno.env.get('APP_URL') || 'https://oficinasmaster.com'}/VisualizarAtaModal?ata_id=${ata.id}` : null;
+
     const emailBody = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #1f2937;">Ata de Reunião - ${atendimento.tipo_atendimento}</h2>
+        <h2 style="color: #1f2937;">📋 Ata de Atendimento - ${atendimento.tipo_atendimento}</h2>
         
         <p>Olá <strong>${owner.full_name || 'Parceiro'}</strong>,</p>
         
@@ -56,6 +63,18 @@ Deno.serve(async (req) => {
           <ul>
             ${atendimento.midias_anexas.map(m => `<li><a href="${m.url}">${m.titulo || m.url}</a></li>`).join('')}
           </ul>
+        ` : ''}
+
+        ${linkAta ? `
+          <div style="background: #dbeafe; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3b82f6;">
+            <p style="margin: 0; color: #1e40af;"><strong>🔗 Acesse a ATA Completa:</strong></p>
+            <p style="margin: 10px 0 0 0;">
+              <a href="${linkAta}" style="color: #2563eb; font-weight: bold; text-decoration: none;">Clique aqui para visualizar a ATA</a>
+            </p>
+            <p style="margin: 5px 0 0 0; font-size: 12px; color: #1e40af;">
+              Você pode acessar com suas credenciais de login na plataforma.
+            </p>
+          </div>
         ` : ''}
 
         <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
