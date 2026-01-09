@@ -1,16 +1,19 @@
 import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Users, Edit2, FileDown } from "lucide-react";
+import { Users, Edit2, Eye } from "lucide-react";
 import { toast } from "sonner";
 import AtaPreviewDialog from "./AtaPreviewDialog";
 import ViewClientsDialog from "./ViewClientsDialog";
+import AtaPDFViewer from "./AtaPDFViewer";
 
 export default function MassReportView({ selectedClients, formData }) {
   const [showViewClients, setShowViewClients] = useState(false);
   const [showAtaPreview, setShowAtaPreview] = useState(false);
+  const [showPDFViewer, setShowPDFViewer] = useState(false);
   const [selectedAta, setSelectedAta] = useState(null);
+  const [selectedPdfAta, setSelectedPdfAta] = useState(null);
   const [selectedGroupClients, setSelectedGroupClients] = useState([]);
   const [selectedGroupName, setSelectedGroupName] = useState("");
 
@@ -117,11 +120,24 @@ export default function MassReportView({ selectedClients, formData }) {
                     <Button
                       type="button"
                       size="sm"
-                      variant="outline"
+                      onClick={() => {
+                        setSelectedPdfAta({
+                          id: batchSummary.id,
+                          workshop_name: batchSummary.groupName,
+                          tipo_atendimento: batchSummary.tipo,
+                          status: batchSummary.status,
+                          pauta: formData.pauta,
+                          objetivos: formData.objetivos,
+                          observacoes: formData.observacoes,
+                          data_agendada: batchSummary.data,
+                          hora_agendada: batchSummary.hora
+                        });
+                        setShowPDFViewer(true);
+                      }}
                       title="Visualizar PDF"
-                      className="h-8 w-8 p-0"
+                      className="h-8 w-8 p-0 bg-green-600 hover:bg-green-700 text-white border-0"
                     >
-                      <FileDown className="w-4 h-4" />
+                      <Eye className="w-4 h-4" />
                     </Button>
                     <Button
                       type="button"
@@ -173,6 +189,13 @@ export default function MassReportView({ selectedClients, formData }) {
         onOpenChange={setShowViewClients}
         clientIds={selectedGroupClients}
         groupName={selectedGroupName}
+      />
+
+      <AtaPDFViewer
+        open={showPDFViewer}
+        onOpenChange={setShowPDFViewer}
+        ata={selectedPdfAta}
+        workshop={null}
       />
     </div>
   );
