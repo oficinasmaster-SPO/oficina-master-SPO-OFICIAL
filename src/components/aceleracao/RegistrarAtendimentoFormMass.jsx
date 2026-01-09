@@ -45,6 +45,21 @@ export default function RegistrarAtendimentoFormMass({ formData, onFormChange, o
         <TabsContent value="basico" className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
+              <Label>Consultor *</Label>
+              <div className="px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-sm">
+                {user?.full_name || "Não definido"}
+              </div>
+            </div>
+            <div>
+              <Label>Responsável pelo Lote *</Label>
+              <div className="px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-sm">
+                {user?.full_name || "Não definido"}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
               <Label>Tipo de Atendimento *</Label>
               <Select value={formData.tipo_atendimento} onValueChange={(v) => handleChange("tipo_atendimento", v)}>
                 <SelectTrigger>

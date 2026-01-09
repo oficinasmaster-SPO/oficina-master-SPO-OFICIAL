@@ -159,17 +159,14 @@ export default function RegistroAtendimentoMassaModal({ open, onClose, user }) {
 
             <TabsContent value="ata" className="space-y-4 mt-4">
               {!showFullForm ? (
-                <div className="space-y-4">
-                  <Button
-                    type="button"
-                    onClick={() => setShowFullForm(true)}
-                    className="w-full bg-blue-600 hover:bg-blue-700"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Novo Atendimento
-                  </Button>
-                  <MassAtaForm formData={formData} onFormChange={setFormData} />
-                </div>
+                <Button
+                  type="button"
+                  onClick={() => setShowFullForm(true)}
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Novo Atendimento
+                </Button>
               ) : (
                 <RegistrarAtendimentoFormMass
                   formData={formData}
