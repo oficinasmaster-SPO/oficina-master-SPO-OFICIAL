@@ -38,7 +38,9 @@ Deno.serve(async (req) => {
       const notificarAtas = prefs.length === 0 || prefs[0]?.metadata?.notificar_atas !== false;
 
       if (notificarAtas) {
-        await base44.asServiceRole.entities.Notification.create({
+        const emailEnabled = prefs.length === 0 || prefs[0]?.metadata?.email_enabled !== false;
+
+        const notifCriada = await base44.asServiceRole.entities.Notification.create({
           user_id: colab.user_id,
           workshop_id: workshop_id,
           type: 'nova_ata',
@@ -49,6 +51,29 @@ Deno.serve(async (req) => {
           metadata: { ata_codigo }
         });
         notificacoesCriadas++;
+
+        // Enviar e-mail se habilitado
+        if (emailEnabled) {
+          try {
+            const user = await base44.asServiceRole.entities.User.get(colab.user_id);
+            if (user?.email) {
+              await base44.asServiceRole.integrations.Core.SendEmail({
+                from_name: 'Oficinas Master',
+                to: user.email,
+                subject: '📋 ' + tipoTexto,
+                body: `
+                  <h2>📋 ${tipoTexto}</h2>
+                  <p>${nomeCriador} gerou a <strong>${ata_codigo}</strong>.</p>
+                  <br>
+                  <p>Acesse a plataforma para visualizar o documento completo.</p>
+                `
+              });
+              await base44.asServiceRole.entities.Notification.update(notifCriada.id, { email_sent: true });
+            }
+          } catch (emailError) {
+            console.error('Erro ao enviar e-mail:', emailError);
+          }
+        }
       }
     }
 

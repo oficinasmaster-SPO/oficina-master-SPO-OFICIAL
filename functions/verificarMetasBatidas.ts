@@ -85,7 +85,9 @@ async function criarNotificacaoMeta(base44, workshop, tipoMeta, valorAtual, valo
     const notificarMetas = prefs.length === 0 || prefs[0]?.metadata?.notificar_metas !== false;
 
     if (notificarMetas) {
-      await base44.asServiceRole.entities.Notification.create({
+      const emailEnabled = prefs.length === 0 || prefs[0]?.metadata?.email_enabled !== false;
+
+      const notifCriada = await base44.asServiceRole.entities.Notification.create({
         user_id: colab.user_id,
         workshop_id: workshop.id,
         type: 'meta_batida',
@@ -100,6 +102,32 @@ async function criarNotificacaoMeta(base44, workshop, tipoMeta, valorAtual, valo
           percentual: percentual
         }
       });
+
+      // Enviar e-mail se habilitado
+      if (emailEnabled) {
+        try {
+          const user = await base44.asServiceRole.entities.User.get(colab.user_id);
+          if (user?.email) {
+            await base44.asServiceRole.integrations.Core.SendEmail({
+              from_name: 'Oficinas Master',
+              to: user.email,
+              subject: '🎯 Meta Batida!',
+              body: `
+                <h2>🎯 Parabéns! Meta Batida!</h2>
+                <p>A meta de <strong>${tipoMeta}</strong> foi atingida!</p>
+                <p><strong>Percentual:</strong> ${percentual}%</p>
+                <p><strong>Valor atingido:</strong> R$ ${valorAtual.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                <p><strong>Meta:</strong> R$ ${valorMeta.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                <br>
+                <p>Continue com o excelente trabalho! 🚀</p>
+              `
+            });
+            await base44.asServiceRole.entities.Notification.update(notifCriada.id, { email_sent: true });
+          }
+        } catch (emailError) {
+          console.error('Erro ao enviar e-mail:', emailError);
+        }
+      }
     }
   }
 }

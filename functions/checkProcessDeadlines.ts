@@ -77,7 +77,21 @@ Deno.serve(async (req) => {
         for (const colab of colaboradores) {
           if (!colab.user_id) continue;
 
-          await base44.asServiceRole.entities.Notification.create({
+          // Verificar preferências de e-mail
+          const prefs = await base44.asServiceRole.entities.Notification.filter({
+            user_id: colab.user_id,
+            type: 'config_preferencias'
+          });
+          const emailEnabled = prefs.length === 0 || prefs[0]?.metadata?.email_enabled !== false;
+          const notificarPrazos = prefs.length === 0 || prefs[0]?.metadata?.notificar_prazos !== false;
+          const notificarAtrasados = prefs.length === 0 || prefs[0]?.metadata?.notificar_atrasados !== false;
+
+          const deveNotificar = (tipoNotificacao === 'processo_atrasado' && notificarAtrasados) ||
+                                (tipoNotificacao !== 'processo_atrasado' && notificarPrazos);
+
+          if (!deveNotificar) continue;
+
+          const notifCriada = await base44.asServiceRole.entities.Notification.create({
             user_id: colab.user_id,
             workshop_id: progresso.workshop_id,
             processo_id: progresso.id,
@@ -88,6 +102,31 @@ Deno.serve(async (req) => {
             email_sent: false
           });
           notificacoesCriadas++;
+
+          // Enviar e-mail se habilitado
+          if (emailEnabled) {
+            try {
+              const user = await base44.asServiceRole.entities.User.get(colab.user_id);
+              if (user?.email) {
+                await base44.asServiceRole.integrations.Core.SendEmail({
+                  from_name: 'Oficinas Master',
+                  to: user.email,
+                  subject: titulo,
+                  body: `
+                    <h2>${titulo}</h2>
+                    <p>${mensagem}</p>
+                    <p><strong>Processo:</strong> ${processoNome}</p>
+                    <p><strong>Data prevista:</strong> ${new Date(progresso.data_conclusao_previsto).toLocaleDateString('pt-BR')}</p>
+                    <br>
+                    <p>Acesse a plataforma para mais detalhes.</p>
+                  `
+                });
+                await base44.asServiceRole.entities.Notification.update(notifCriada.id, { email_sent: true });
+              }
+            } catch (emailError) {
+              console.error('Erro ao enviar e-mail:', emailError);
+            }
+          }
         }
       }
     }

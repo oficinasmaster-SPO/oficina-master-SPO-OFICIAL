@@ -34,7 +34,13 @@ Deno.serve(async (req) => {
       const notificarConclusoes = prefs.length === 0 || prefs[0]?.metadata?.notificar_conclusoes !== false;
 
       if (notificarConclusoes) {
-        await base44.asServiceRole.entities.Notification.create({
+        const prefs = await base44.asServiceRole.entities.Notification.filter({
+          user_id: colab.user_id,
+          type: 'config_preferencias'
+        });
+        const emailEnabled = prefs.length === 0 || prefs[0]?.metadata?.email_enabled !== false;
+
+        const notifCriada = await base44.asServiceRole.entities.Notification.create({
           user_id: colab.user_id,
           workshop_id: workshop_id,
           processo_id: progresso_id,
@@ -45,6 +51,29 @@ Deno.serve(async (req) => {
           email_sent: false
         });
         notificacoesCriadas++;
+
+        // Enviar e-mail se habilitado
+        if (emailEnabled) {
+          try {
+            const user = await base44.asServiceRole.entities.User.get(colab.user_id);
+            if (user?.email) {
+              await base44.asServiceRole.integrations.Core.SendEmail({
+                from_name: 'Oficinas Master',
+                to: user.email,
+                subject: '✅ Processo Concluído',
+                body: `
+                  <h2>✅ Processo Concluído</h2>
+                  <p>${nomeConcllusor} concluiu o processo <strong>"${processo_titulo}"</strong>.</p>
+                  <br>
+                  <p>Acesse a plataforma para visualizar os detalhes.</p>
+                `
+              });
+              await base44.asServiceRole.entities.Notification.update(notifCriada.id, { email_sent: true });
+            }
+          } catch (emailError) {
+            console.error('Erro ao enviar e-mail:', emailError);
+          }
+        }
       }
     }
 
