@@ -83,20 +83,79 @@ Deno.serve(async (req) => {
       </div>
     `;
 
-    // Enviar email via integração Core.SendEmail com service role
-    console.log("📤 Tentando enviar email via asServiceRole...");
+    // Enviar email via ActiveCampaign
+    console.log("📤 Enviando email via ActiveCampaign...");
     console.log("📧 Destinatário:", email);
-    console.log("🏢 Remetente:", workshop.name || "Oficinas Master");
     
-    const emailResult = await base44.asServiceRole.integrations.Core.SendEmail({
-      from_name: workshop.name || "Oficinas Master",
-      to: email,
-      subject: `🎉 Bem-vindo(a) à ${workshop.name} - Acesse sua conta`,
-      body: emailBody
+    const AC_API_KEY = Deno.env.get("ACTIVECAMPAIGN_API_KEY");
+    const AC_API_URL = Deno.env.get("ACTIVECAMPAIGN_API_URL");
+    
+    if (!AC_API_KEY || !AC_API_URL) {
+      throw new Error("ActiveCampaign não configurado. Configure ACTIVECAMPAIGN_API_KEY e ACTIVECAMPAIGN_API_URL");
+    }
+
+    // 1. Criar ou atualizar contato
+    const contactData = {
+      contact: {
+        email: email,
+        firstName: name.split(' ')[0],
+        lastName: name.split(' ').slice(1).join(' ') || '',
+        fieldValues: [
+          {
+            field: '1', // Customizar conforme seus campos no AC
+            value: workshop.name
+          }
+        ]
+      }
+    };
+
+    const contactResponse = await fetch(`${AC_API_URL}/api/3/contact/sync`, {
+      method: 'POST',
+      headers: {
+        'Api-Token': AC_API_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(contactData)
     });
 
-    console.log("✅ Email enviado com sucesso!");
-    console.log("📬 Resultado:", JSON.stringify(emailResult));
+    if (!contactResponse.ok) {
+      const errorText = await contactResponse.text();
+      console.error("❌ Erro ao criar contato:", errorText);
+      throw new Error(`Erro ao criar contato no ActiveCampaign: ${contactResponse.status}`);
+    }
+
+    const contactResult = await contactResponse.json();
+    console.log("✅ Contato criado/atualizado:", contactResult.contact.id);
+
+    // 2. Enviar email transacional
+    const emailData = {
+      message: {
+        to: email,
+        subject: `🎉 Bem-vindo(a) à ${workshop.name} - Acesse sua conta`,
+        html: emailBody,
+        from: 'noreply@oficinasmaster.com.br',
+        fromName: workshop.name || 'Oficinas Master'
+      }
+    };
+
+    const emailResponse = await fetch(`${AC_API_URL}/api/3/messages`, {
+      method: 'POST',
+      headers: {
+        'Api-Token': AC_API_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(emailData)
+    });
+
+    if (!emailResponse.ok) {
+      const errorText = await emailResponse.text();
+      console.error("❌ Erro ao enviar email:", errorText);
+      throw new Error(`Erro ao enviar email via ActiveCampaign: ${emailResponse.status}`);
+    }
+
+    const emailResult = await emailResponse.json();
+    console.log("✅ Email enviado com sucesso via ActiveCampaign!");
+    console.log("📬 Message ID:", emailResult.message?.id);
 
     // Atualizar status do convite
     await base44.asServiceRole.entities.EmployeeInvite.update(invite.id, {
