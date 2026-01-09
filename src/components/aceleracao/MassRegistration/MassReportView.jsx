@@ -2,13 +2,12 @@ import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { FileText, Users, Edit2, FileDown } from "lucide-react";
+import { Users, Edit2, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import AtaPreviewDialog from "./AtaPreviewDialog";
 import ViewClientsDialog from "./ViewClientsDialog";
 
 export default function MassReportView({ selectedClients, formData }) {
-  const queryClient = useQueryClient();
   const [showViewClients, setShowViewClients] = useState(false);
   const [showAtaPreview, setShowAtaPreview] = useState(false);
   const [selectedAta, setSelectedAta] = useState(null);
@@ -71,95 +70,92 @@ export default function MassReportView({ selectedClients, formData }) {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Cards de Resumo */}
-      <div className="grid grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Total de Clientes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{selectedClients.length}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Tipo de Atendimento</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm capitalize">{formData.tipo_atendimento?.replace(/_/g, " ")}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Data Agendada</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm">{formData.data_agendada ? new Date(formData.data_agendada).toLocaleDateString("pt-BR") : "-"}</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Ações */}
-      <div className="flex gap-3">
-        <Button
-          onClick={() => setShowClientsDialog(true)}
-          variant="outline"
-          className="gap-2"
-        >
-          <Users className="w-4 h-4" />
-          Ver Clientes ({selectedClients.length})
-        </Button>
-      </div>
-
-      {/* Lista de ATAs por cliente */}
-      <div className="space-y-3">
-        <Label className="text-base font-semibold">ATAs que serão criadas</Label>
-        <div className="grid gap-2 max-h-64 overflow-y-auto">
-          {atasPreview.map((ata) => (
-            <div key={ata.id} className="p-3 border rounded-lg flex items-center justify-between hover:bg-gray-50">
-              <div className="flex-1">
-                <p className="font-medium text-sm">{ata.workshop_name}</p>
-                <p className="text-xs text-gray-600">{ata.data_agendada}</p>
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setSelectedAta(ata);
-                    setShowAtaPreview(true);
-                  }}
-                  className="gap-1"
-                >
-                  <Edit2 className="w-3 h-3" />
-                  Editar
-                </Button>
-              </div>
-            </div>
-          ))}
+    <div className="space-y-4">
+      {/* Tabela de Disparo em Massa */}
+      {selectedClients.length > 0 ? (
+        <div className="border rounded-lg overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-100 border-b">
+              <tr>
+                <th className="px-4 py-3 text-left font-semibold">ID Disparo</th>
+                <th className="px-4 py-3 text-left font-semibold">Grupo</th>
+                <th className="px-4 py-3 text-left font-semibold">Data</th>
+                <th className="px-4 py-3 text-left font-semibold">Hora</th>
+                <th className="px-4 py-3 text-left font-semibold">Tipo</th>
+                <th className="px-4 py-3 text-center font-semibold">Clientes</th>
+                <th className="px-4 py-3 text-center font-semibold">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-b hover:bg-gray-50">
+                <td className="px-4 py-3 font-mono text-xs text-blue-600">{batchSummary.id}</td>
+                <td className="px-4 py-3 font-medium">{batchSummary.groupName}</td>
+                <td className="px-4 py-3">{batchSummary.data}</td>
+                <td className="px-4 py-3">{batchSummary.hora}</td>
+                <td className="px-4 py-3 text-xs">
+                  <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded">
+                    {batchSummary.tipo.replace(/_/g, " ")}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-center font-semibold">{batchSummary.clientCount}</td>
+                <td className="px-4 py-3">
+                  <div className="flex gap-2 justify-center">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setSelectedGroupClients(batchSummary.clientIds);
+                        setSelectedGroupName(batchSummary.groupName);
+                        setShowViewClients(true);
+                      }}
+                      title="Ver clientes"
+                      className="h-8 w-8 p-0"
+                    >
+                      <Users className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      title="Visualizar PDF"
+                      className="h-8 w-8 p-0"
+                    >
+                      <FileDown className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedAta({
+                          id: batchSummary.id,
+                          workshop_name: batchSummary.groupName,
+                          tipo_atendimento: batchSummary.tipo,
+                          status: batchSummary.status,
+                          pauta: formData.pauta,
+                          objetivos: formData.objetivos,
+                          observacoes: formData.observacoes,
+                          data_agendada: batchSummary.data,
+                          hora_agendada: batchSummary.hora
+                        });
+                        setShowAtaPreview(true);
+                      }}
+                      title="Editar"
+                      className="h-8 w-8 p-0"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-      </div>
-
-      {/* Dialog: Clientes */}
-      <Dialog open={showClientsDialog} onOpenChange={setShowClientsDialog}>
-        <DialogContent className="max-w-2xl max-h-96 overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Clientes Selecionados</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-2">
-            {clientsData.map(client => (
-              <div key={client.id} className="p-3 border rounded-lg">
-                <p className="font-medium">{client.name}</p>
-                <p className="text-sm text-gray-600">{client.city} • {client.planoAtual}</p>
-              </div>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
+      ) : (
+        <div className="text-center py-8 text-gray-500">
+          <p>Selecione clientes para visualizar o resumo do disparo</p>
+        </div>
+      )}
 
       <AtaPreviewDialog
         open={showAtaPreview}
@@ -170,6 +166,13 @@ export default function MassReportView({ selectedClients, formData }) {
           updateAtaMutation.mutate(updatedAta);
         }}
         isLoading={updateAtaMutation.isPending}
+      />
+
+      <ViewClientsDialog
+        open={showViewClients}
+        onOpenChange={setShowViewClients}
+        clientIds={selectedGroupClients}
+        groupName={selectedGroupName}
       />
     </div>
   );
