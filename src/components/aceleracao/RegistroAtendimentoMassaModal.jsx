@@ -12,6 +12,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ClientGroupSelector from "./ClientGroupSelector";
 
 export default function RegistroAtendimentoMassaModal({ open, onClose, user }) {
   const queryClient = useQueryClient();
@@ -140,48 +141,64 @@ export default function RegistroAtendimentoMassaModal({ open, onClose, user }) {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <Tabs value={selectionMode} onValueChange={setSelectionMode}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="manual">Seleção Manual</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="manual">Buscar Clientes</TabsTrigger>
               <TabsTrigger value="plan">Por Plano</TabsTrigger>
+              <TabsTrigger value="selecionados">Selecionados ({selectedWorkshops.length})</TabsTrigger>
             </TabsList>
 
             <TabsContent value="manual" className="space-y-4">
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-gray-600">
-                  {selectedWorkshops.length} cliente(s) selecionado(s)
-                </p>
-                <div className="flex gap-2">
-                  <Button type="button" variant="outline" size="sm" onClick={selectAll}>
-                    Selecionar Todos
-                  </Button>
-                  <Button type="button" variant="outline" size="sm" onClick={clearSelection}>
-                    <X className="w-4 h-4 mr-2" />
-                    Limpar
-                  </Button>
-                </div>
-              </div>
+              <ClientGroupSelector 
+                selectedIds={selectedWorkshops}
+                onSelectionChange={setSelectedWorkshops}
+                workshops={workshops || []}
+              />
+            </TabsContent>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-96 overflow-auto border rounded-lg p-4">
-                {workshops?.map((workshop) => (
-                  <div
-                    key={workshop.id}
-                    className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
-                    onClick={() => toggleWorkshop(workshop.id)}
-                  >
-                    <Checkbox
-                      checked={selectedWorkshops.includes(workshop.id)}
-                      onCheckedChange={() => toggleWorkshop(workshop.id)}
-                    />
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">{workshop.name}</p>
-                      <p className="text-xs text-gray-600">{workshop.city} - {workshop.state}</p>
-                    </div>
-                    <Badge variant="outline" className="text-xs">
-                      {workshop.planoAtual}
-                    </Badge>
+            <TabsContent value="selecionados" className="space-y-4">
+              {selectedWorkshops.length > 0 ? (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-gray-700">
+                      {selectedWorkshops.length} cliente(s) selecionado(s)
+                    </p>
+                    <Button type="button" variant="outline" size="sm" onClick={clearSelection}>
+                      <X className="w-4 h-4 mr-2" />
+                      Limpar Seleção
+                    </Button>
                   </div>
-                ))}
-              </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-96 overflow-y-auto border rounded-lg p-3 bg-gray-50">
+                    {selectedWorkshops.map(id => {
+                      const w = workshops?.find(workshop => workshop.id === id);
+                      return w ? (
+                        <div
+                          key={id}
+                          className="flex items-center justify-between gap-2 p-2 bg-white border rounded"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">{w.name}</p>
+                            <p className="text-xs text-gray-600">{w.city}, {w.state}</p>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleWorkshop(id)}
+                            className="h-6 w-6 p-0"
+                          >
+                            <X className="w-4 h-4 text-red-500" />
+                          </Button>
+                        </div>
+                      ) : null;
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <p className="text-sm">Nenhum cliente selecionado</p>
+                  <p className="text-xs">Use a aba "Buscar Clientes" para adicionar clientes</p>
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="plan" className="space-y-4">
