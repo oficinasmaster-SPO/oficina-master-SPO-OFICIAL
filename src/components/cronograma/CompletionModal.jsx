@@ -66,14 +66,32 @@ export default function CompletionModal({ activity, onClose, onComplete }) {
         completion_date: new Date().toISOString(),
         completion_notes: notes,
         effectiveness_rating: rating,
-        participants_list: participants.split(',').map(p => p.trim()).filter(Boolean),
+        participants_list: selectedParticipants,
         evidence_url: evidenceUrl
       };
 
       // Chamar callback para atualização
       await onComplete(activity.id, completionData, activity.source);
+
+      // Gerar ATA de Evidência de Implementação
+      try {
+        const ataResult = await base44.functions.invoke('gerarAtaImplementacao', {
+          workshop_id: activity.workshop_id,
+          modulo_codigo: activity.moduloCodigo,
+          processo_titulo: activity.title,
+          observacoes: notes,
+          avaliacao: rating,
+          participantes: selectedParticipants,
+          evidencia_url: evidenceUrl,
+          data_conclusao: new Date().toISOString()
+        });
+        console.log("ATA gerada:", ataResult);
+      } catch (error) {
+        console.error("Erro ao gerar ATA:", error);
+        // Não bloqueia o fluxo se a ATA falhar
+      }
       
-      toast.success("Atividade concluída com sucesso!");
+      toast.success("Processo concluído e ATA gerada com sucesso!");
       onClose();
     } catch (error) {
       console.error("Erro ao concluir:", error);
