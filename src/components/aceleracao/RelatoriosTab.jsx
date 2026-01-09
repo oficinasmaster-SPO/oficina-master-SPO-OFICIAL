@@ -144,7 +144,7 @@ export default function RelatoriosTab({ user }) {
       const workshop = workshops?.find(w => w.id === a.workshop_id);
       const ataVinculada = atas?.find(ata => ata.id === a.ata_id);
       return [
-        ataVinculada?.code || '-',
+        ataVinculada?.code ? ataVinculada.code.replace('IT.', 'AT.') : '-',
         format(new Date(a.data_agendada), 'dd/MM/yyyy HH:mm'),
         workshop?.name || '-',
         a.tipo_atendimento,
@@ -466,7 +466,7 @@ export default function RelatoriosTab({ user }) {
                       <td className="py-3 px-4">
                         {ataVinculada?.code ? (
                           <span className="font-mono text-xs bg-blue-50 px-2 py-1 rounded border border-blue-200">
-                            {ataVinculada.code}
+                            {ataVinculada.code.replace('IT.', 'AT.')}
                           </span>
                         ) : (
                           <span className="text-gray-400 text-xs">-</span>

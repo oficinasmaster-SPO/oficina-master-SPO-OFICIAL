@@ -212,7 +212,7 @@ export default function PainelAtendimentosTab({ user }) {
                       <td className="py-3 px-4">
                         {ataVinculada?.code ? (
                           <span className="font-mono text-xs bg-blue-50 px-2 py-1 rounded border border-blue-200">
-                            {ataVinculada.code}
+                            {ataVinculada.code.replace('IT.', 'AT.')}
                           </span>
                         ) : (
                           <span className="text-gray-400 text-xs">-</span>
