@@ -69,7 +69,7 @@ export default function RegistroAtendimentoMassaModal({ open, onClose, user }) {
       }
 
       const dataHora = `${data.data_agendada}T${data.hora_agendada}:00`;
-      
+
       const atendimentos = selectedClients.map(workshop_id => ({
         workshop_id,
         tipo_atendimento: data.tipo_atendimento,
@@ -90,10 +90,46 @@ export default function RegistroAtendimentoMassaModal({ open, onClose, user }) {
         )
       );
 
+      // Gerar ID sequencial do disparo
+      const lastId = localStorage.getItem("lastDisparoId") || "0";
+      const nextNumber = parseInt(lastId) + 1;
+      localStorage.setItem("lastDisparoId", nextNumber.toString());
+      const disparoId = `DP${String(nextNumber).padStart(3, "0")}`;
+
+      // Buscar dados dos clientes
+      const clientesData = await Promise.all(
+        selectedClients.map(id => base44.entities.Workshop.get(id).catch(() => null))
+      ).then(data => data.filter(Boolean));
+
+      // Salvar registro do disparo no histórico
+      await base44.entities.BatchDispatch.create({
+        disparo_id: disparoId,
+        workshop_id: user.workshop_id || user.id,
+        consultor_id: user.id,
+        consultor_nome: user.full_name,
+        grupo_nome: `Lote ${new Date().toLocaleDateString("pt-BR")}`,
+        tipo_atendimento: data.tipo_atendimento,
+        data_agendada: data.data_agendada,
+        hora_agendada: data.hora_agendada,
+        duracao_minutos: data.duracao_minutos,
+        status: data.status,
+        total_clientes: selectedClients.length,
+        clientes: clientesData.map(c => ({
+          workshop_id: c.id,
+          nome: c.name,
+          cidade: c.city,
+          plano: c.planoAtual
+        })),
+        pauta: data.pauta,
+        objetivos: data.objetivos,
+        observacoes: data.observacoes,
+        atendimentos_criados: results.map(r => r.id)
+      });
+
       // Limpar sessionStorage
       sessionStorage.removeItem("massReg_form");
       sessionStorage.removeItem("massReg_clients");
-      
+
       return results;
     },
     onSuccess: (results) => {
