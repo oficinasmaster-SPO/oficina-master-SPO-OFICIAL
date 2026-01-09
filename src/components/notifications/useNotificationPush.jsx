@@ -5,15 +5,19 @@ export function useNotificationPush() {
   const [permission, setPermission] = useState('default');
   const [isSupported, setIsSupported] = useState(false);
 
+  const checkPermission = () => {
+    if ('Notification' in window) {
+      const currentPermission = Notification.permission;
+      setPermission(currentPermission);
+      return currentPermission;
+    }
+    return 'default';
+  };
+
   useEffect(() => {
     if ('Notification' in window) {
       setIsSupported(true);
-      setPermission(Notification.permission);
-      
-      // Atualiza o estado quando a permissão muda
-      const checkPermission = () => {
-        setPermission(Notification.permission);
-      };
+      checkPermission();
       
       window.addEventListener('focus', checkPermission);
       const interval = setInterval(checkPermission, 1000);
@@ -83,6 +87,7 @@ export function useNotificationPush() {
     permission,
     isSupported,
     requestPermission,
-    sendNotification
+    sendNotification,
+    refreshPermission: checkPermission
   };
 }

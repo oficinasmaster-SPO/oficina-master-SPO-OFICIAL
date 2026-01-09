@@ -11,13 +11,8 @@ import { toast } from "sonner";
 import { useNotificationPush } from "./useNotificationPush";
 
 export default function NotificationPreferences({ user }) {
-  const { permission, isSupported, requestPermission } = useNotificationPush();
+  const { permission, isSupported, requestPermission, refreshPermission } = useNotificationPush();
   const queryClient = useQueryClient();
-  const [currentPermission, setCurrentPermission] = React.useState(permission);
-
-  React.useEffect(() => {
-    setCurrentPermission(permission);
-  }, [permission]);
 
   const { data: preferencias, isLoading } = useQuery({
     queryKey: ['preferencias-notificacao', user?.id],
@@ -113,47 +108,39 @@ export default function NotificationPreferences({ user }) {
               </div>
               <Badge 
                 className={
-                  currentPermission === 'granted' 
+                  permission === 'granted' 
                     ? 'bg-green-100 text-green-700' 
-                    : currentPermission === 'denied'
+                    : permission === 'denied'
                     ? 'bg-red-100 text-red-700'
                     : 'bg-gray-100 text-gray-700'
                 }
               >
-                {currentPermission === 'granted' ? 'Ativadas' : currentPermission === 'denied' ? 'Bloqueadas' : 'Desativadas'}
+                {permission === 'granted' ? 'Ativadas' : permission === 'denied' ? 'Bloqueadas' : 'Desativadas'}
               </Badge>
             </div>
             <p className="text-sm text-blue-800 mb-3">
               Receba alertas nativos no desktop e celular mesmo com o navegador fechado. Ideal para PWA.
             </p>
             <div className="flex gap-2">
-              {currentPermission !== 'granted' && (
+              {permission !== 'granted' && (
                 <Button
                   onClick={requestPermission}
                   variant="outline"
                   size="sm"
                   className="border-blue-300 text-blue-700 hover:bg-blue-100"
                 >
-                  {currentPermission === 'denied' ? 'Tentar Novamente' : 'Ativar Notificações Push'}
+                  {permission === 'denied' ? 'Tentar Novamente' : 'Ativar Notificações Push'}
                 </Button>
               )}
               <Button
                 onClick={() => {
-                  if ('Notification' in window) {
-                    const newPerm = Notification.permission;
-                    setCurrentPermission(newPerm);
-                    // Força atualização do hook também
-                    window.dispatchEvent(new Event('focus'));
-
-                    setTimeout(() => {
-                      if (newPerm === 'granted') {
-                        toast.success('✅ Notificações Push Ativadas!');
-                      } else if (newPerm === 'denied') {
-                        toast.error('❌ Ainda bloqueadas. Vá nas configurações do navegador.');
-                      } else {
-                        toast.info('ℹ️ Status: ' + newPerm);
-                      }
-                    }, 100);
+                  const newPerm = refreshPermission();
+                  if (newPerm === 'granted') {
+                    toast.success('✅ Notificações Push Ativadas!');
+                  } else if (newPerm === 'denied') {
+                    toast.error('❌ Ainda bloqueadas. Vá nas configurações do navegador.');
+                  } else {
+                    toast.info('ℹ️ Status: ' + newPerm);
                   }
                 }}
                 variant="ghost"
@@ -162,7 +149,7 @@ export default function NotificationPreferences({ user }) {
                 🔄 Atualizar Status
               </Button>
             </div>
-            {currentPermission === 'denied' && (
+            {permission === 'denied' && (
               <p className="text-xs text-red-600 mt-2">
                 Se você já liberou no navegador, clique em "Atualizar Status". Caso contrário, vá em Configurações do navegador → Privacidade → Notificações → Permitir este site.
               </p>
