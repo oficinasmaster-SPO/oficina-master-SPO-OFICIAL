@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Users, Save, Loader2, AlertCircle } from "lucide-react";
+import { Users, Save, Loader2, AlertCircle, Plus } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -9,12 +9,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import MassAtaForm from "./MassRegistration/MassAtaForm";
 import MassGroupSelector from "./MassRegistration/MassGroupSelector";
 import MassReportView from "./MassRegistration/MassReportView";
+import RegistrarAtendimentoFormMass from "./RegistrarAtendimentoFormMass";
 
 export default function RegistroAtendimentoMassaModal({ open, onClose, user }) {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("ata");
   const [selectedClients, setSelectedClients] = useState([]);
   const [selectedGroupId, setSelectedGroupId] = useState(null);
+  const [showFullForm, setShowFullForm] = useState(false);
   const [formData, setFormData] = useState({
     tipo_atendimento: "acompanhamento_mensal",
     data_agendada: "",
@@ -156,7 +158,26 @@ export default function RegistroAtendimentoMassaModal({ open, onClose, user }) {
             </TabsList>
 
             <TabsContent value="ata" className="space-y-4 mt-4">
-              <MassAtaForm formData={formData} onFormChange={setFormData} />
+              {!showFullForm ? (
+                <div className="space-y-4">
+                  <Button
+                    type="button"
+                    onClick={() => setShowFullForm(true)}
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Novo Atendimento
+                  </Button>
+                  <MassAtaForm formData={formData} onFormChange={setFormData} />
+                </div>
+              ) : (
+                <RegistrarAtendimentoFormMass
+                  formData={formData}
+                  onFormChange={setFormData}
+                  onClose={() => setShowFullForm(false)}
+                  user={user}
+                />
+              )}
             </TabsContent>
 
             <TabsContent value="grupos" className="space-y-4 mt-4">
