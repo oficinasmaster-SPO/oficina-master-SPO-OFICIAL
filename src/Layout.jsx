@@ -103,7 +103,7 @@ export default function Layout({ children, currentPageName }) {
 
   useEffect(() => {
     loadUser();
-  }, [location.pathname]);
+  }, [loadUser]);
 
 
 
