@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileText, Download, Loader2, BarChart3, TrendingUp, Users, Calendar as CalendarIcon, Play, Edit, CalendarClock } from "lucide-react";
+import { ATENDIMENTO_STATUS, ATENDIMENTO_STATUS_LABELS } from "@/components/lib/ataConstants";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { format, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -108,12 +109,12 @@ export default function RelatoriosTab({ user }) {
     });
 
     const statusDistribution = [
-      { name: 'Agendado', value: dadosFiltrados.filter(a => a.status === 'agendado').length, color: '#EF4444' },
-      { name: 'Confirmado', value: dadosFiltrados.filter(a => a.status === 'confirmado').length, color: '#F59E0B' },
-      { name: 'Participando', value: dadosFiltrados.filter(a => a.status === 'participando').length, color: '#3B82F6' },
-      { name: 'Realizado', value: dadosFiltrados.filter(a => a.status === 'realizado').length, color: '#10B981' },
-      { name: 'Atrasado', value: dadosFiltrados.filter(a => a.status === 'atrasado').length, color: '#DC2626' },
-      { name: 'Reagendado', value: dadosFiltrados.filter(a => a.status === 'reagendado').length, color: '#8B5CF6' }
+      { name: ATENDIMENTO_STATUS_LABELS[ATENDIMENTO_STATUS.AGENDADO], value: dadosFiltrados.filter(a => a.status === ATENDIMENTO_STATUS.AGENDADO).length, color: '#EF4444' },
+      { name: ATENDIMENTO_STATUS_LABELS[ATENDIMENTO_STATUS.CONFIRMADO], value: dadosFiltrados.filter(a => a.status === ATENDIMENTO_STATUS.CONFIRMADO).length, color: '#F59E0B' },
+      { name: ATENDIMENTO_STATUS_LABELS[ATENDIMENTO_STATUS.PARTICIPANDO], value: dadosFiltrados.filter(a => a.status === ATENDIMENTO_STATUS.PARTICIPANDO).length, color: '#3B82F6' },
+      { name: ATENDIMENTO_STATUS_LABELS[ATENDIMENTO_STATUS.REALIZADO], value: dadosFiltrados.filter(a => a.status === ATENDIMENTO_STATUS.REALIZADO).length, color: '#10B981' },
+      { name: ATENDIMENTO_STATUS_LABELS[ATENDIMENTO_STATUS.ATRASADO], value: dadosFiltrados.filter(a => a.status === ATENDIMENTO_STATUS.ATRASADO).length, color: '#DC2626' },
+      { name: ATENDIMENTO_STATUS_LABELS[ATENDIMENTO_STATUS.REAGENDADO], value: dadosFiltrados.filter(a => a.status === ATENDIMENTO_STATUS.REAGENDADO).length, color: '#8B5CF6' }
     ].filter(item => item.value > 0);
 
     const tipoDistribution = [
@@ -125,7 +126,7 @@ export default function RelatoriosTab({ user }) {
 
     const clientesAtivos = [...new Set(dadosFiltrados.map(a => a.workshop_id))].length;
     const taxaConclusao = dadosFiltrados.length > 0 
-      ? Math.round((dadosFiltrados.filter(a => a.status === 'realizado').length / dadosFiltrados.length) * 100)
+      ? Math.round((dadosFiltrados.filter(a => a.status === ATENDIMENTO_STATUS.REALIZADO).length / dadosFiltrados.length) * 100)
       : 0;
 
     return {
@@ -273,14 +274,14 @@ export default function RelatoriosTab({ user }) {
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={null}>Todos</SelectItem>
-                  <SelectItem value="agendado">Agendado</SelectItem>
-                  <SelectItem value="confirmado">Confirmado</SelectItem>
-                  <SelectItem value="participando">Participando</SelectItem>
-                  <SelectItem value="realizado">Realizado</SelectItem>
-                  <SelectItem value="atrasado">Atrasado</SelectItem>
-                  <SelectItem value="reagendado">Reagendado</SelectItem>
-                </SelectContent>
+                    <SelectItem value={null}>Todos</SelectItem>
+                    <SelectItem value={ATENDIMENTO_STATUS.AGENDADO}>{ATENDIMENTO_STATUS_LABELS[ATENDIMENTO_STATUS.AGENDADO]}</SelectItem>
+                    <SelectItem value={ATENDIMENTO_STATUS.CONFIRMADO}>{ATENDIMENTO_STATUS_LABELS[ATENDIMENTO_STATUS.CONFIRMADO]}</SelectItem>
+                    <SelectItem value={ATENDIMENTO_STATUS.PARTICIPANDO}>{ATENDIMENTO_STATUS_LABELS[ATENDIMENTO_STATUS.PARTICIPANDO]}</SelectItem>
+                    <SelectItem value={ATENDIMENTO_STATUS.REALIZADO}>{ATENDIMENTO_STATUS_LABELS[ATENDIMENTO_STATUS.REALIZADO]}</SelectItem>
+                    <SelectItem value={ATENDIMENTO_STATUS.ATRASADO}>{ATENDIMENTO_STATUS_LABELS[ATENDIMENTO_STATUS.ATRASADO]}</SelectItem>
+                    <SelectItem value={ATENDIMENTO_STATUS.REAGENDADO}>{ATENDIMENTO_STATUS_LABELS[ATENDIMENTO_STATUS.REAGENDADO]}</SelectItem>
+                  </SelectContent>
               </Select>
             </div>
           </div>
@@ -479,20 +480,20 @@ export default function RelatoriosTab({ user }) {
                       <td className="py-3 px-4">{a.tipo_atendimento}</td>
                       <td className="py-3 px-4">
                         <span className={`px-2 py-1 rounded text-xs ${
-                          a.status === 'realizado' ? 'bg-green-100 text-green-700' :
-                          a.status === 'participando' ? 'bg-blue-100 text-blue-700' :
-                          a.status === 'atrasado' ? 'bg-red-100 text-red-700' :
-                          a.status === 'reagendado' ? 'bg-purple-100 text-purple-700' :
+                          a.status === ATENDIMENTO_STATUS.REALIZADO ? 'bg-green-100 text-green-700' :
+                          a.status === ATENDIMENTO_STATUS.PARTICIPANDO ? 'bg-blue-100 text-blue-700' :
+                          a.status === ATENDIMENTO_STATUS.ATRASADO ? 'bg-red-100 text-red-700' :
+                          a.status === ATENDIMENTO_STATUS.REAGENDADO ? 'bg-purple-100 text-purple-700' :
                           'bg-gray-100 text-gray-700'
                         }`}>
-                          {a.status}
+                          {ATENDIMENTO_STATUS_LABELS[a.status] || a.status}
                         </span>
                       </td>
                       <td className="py-3 px-4">{a.consultor_nome || '-'}</td>
                       <td className="py-3 px-4 text-right">{a.duracao_minutos || 0} min</td>
                       <td className="py-3 px-4 text-right print:hidden">
                         <div className="flex items-center justify-end gap-1">
-                          {(a.status === 'agendado' || a.status === 'confirmado' || a.status === 'reagendado') && (
+                          {(a.status === ATENDIMENTO_STATUS.AGENDADO || a.status === ATENDIMENTO_STATUS.CONFIRMADO || a.status === ATENDIMENTO_STATUS.REAGENDADO) && (
                             <>
                               <Button
                                 variant="ghost"
