@@ -93,6 +93,24 @@ export default function RegistroAtendimentoMassaModal({ open, onClose, user }) {
     onSuccess: (results) => {
       queryClient.invalidateQueries(['consultoria-atendimentos']);
       queryClient.invalidateQueries(['todos-atendimentos']);
+      // Limpar dados persistidos
+      sessionStorage.removeItem("massReg_form");
+      sessionStorage.removeItem("massReg_clients");
+      // Resetar estado
+      setFormData({
+        tipo_atendimento: "acompanhamento_mensal",
+        data_agendada: "",
+        hora_agendada: "",
+        duracao_minutos: 60,
+        status: "agendado",
+        google_meet_link: "",
+        pauta: "",
+        objetivos: "",
+        observacoes: ""
+      });
+      setSelectedClients([]);
+      setSelectedGroupId(null);
+      setActiveTab("ata");
       toast.success(`${results.length} atendimentos criados com sucesso!`);
       onClose();
     },
