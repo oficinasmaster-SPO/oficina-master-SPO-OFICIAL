@@ -190,8 +190,22 @@ export default function MassReportHistory() {
         open={showAtaPreview}
         onOpenChange={setShowAtaPreview}
         ata={selectedAta}
-        onSave={() => {
-          queryClient.invalidateQueries({ queryKey: ["batch-dispatch-history"] });
+        onSave={async (updatedAta) => {
+          try {
+            if (selectedDisparo) {
+              await base44.entities.BatchDispatch.update(selectedDisparo.id, {
+                tipo_atendimento: updatedAta.tipo_atendimento,
+                status: updatedAta.status,
+                pauta: updatedAta.pauta,
+                objetivos: updatedAta.objetivos,
+                observacoes: updatedAta.observacoes
+              });
+              queryClient.invalidateQueries({ queryKey: ["batch-dispatch-history"] });
+              toast.success("Alterações salvas com sucesso!");
+            }
+          } catch (error) {
+            toast.error("Erro ao salvar: " + error.message);
+          }
           setShowAtaPreview(false);
         }}
         isLoading={false}
