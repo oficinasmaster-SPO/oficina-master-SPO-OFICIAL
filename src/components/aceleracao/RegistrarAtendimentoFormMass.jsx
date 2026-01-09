@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 
-export default function RegistrarAtendimentoFormMass({ formData, onFormChange, onClose, user }) {
+export default function RegistrarAtendimentoFormMass({ formData, onFormChange, onClose, user, onSaveAndContinue }) {
   const [consultorSelecionado, setConsultorSelecionado] = useState(user?.id || "");
 
   const { data: consultores = [] } = useQuery({
@@ -210,7 +210,17 @@ export default function RegistrarAtendimentoFormMass({ formData, onFormChange, o
         <Button type="button" variant="outline" onClick={onClose} className="flex-1">
           Cancelar
         </Button>
-        <Button type="button" onClick={onClose} className="flex-1 bg-green-600 hover:bg-green-700">
+        <Button 
+          type="button" 
+          onClick={() => {
+            if (!formData.data_agendada || !formData.hora_agendada) {
+              toast.error("Preencha data e horário obrigatórios");
+              return;
+            }
+            onSaveAndContinue();
+          }} 
+          className="flex-1 bg-green-600 hover:bg-green-700"
+        >
           Salvar e Continuar
         </Button>
       </div>
