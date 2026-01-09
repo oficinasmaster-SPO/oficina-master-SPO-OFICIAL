@@ -4,15 +4,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar, Loader2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
+import { STATUS_POS_VENDA, MOTIVOS_CLIENTE, MOTIVOS_EMPRESA, RESPONSABILIDADE_OPTIONS } from "./ReagendamentoFilterOptions";
 
 export default function ReagendarAtendimentoModal({ atendimento, workshop, onClose, onSaved }) {
   const [loading, setLoading] = useState(false);
   const [novaData, setNovaData] = useState("");
   const [novoHorario, setNovoHorario] = useState("");
-  const [motivoReagendamento, setMotivoReagendamento] = useState("");
+  const [statusPosvenda, setStatusPosvenda] = useState("");
+  const [responsabilidade, setResponsabilidade] = useState("");
+  const [motivoSelecionado, setMotivoSelecionado] = useState("");
+  const [descricaoManual, setDescricaoManual] = useState("");
 
   const handleReagendar = async () => {
     if (!novaData || !novoHorario) {
@@ -25,16 +30,26 @@ export default function ReagendarAtendimentoModal({ atendimento, workshop, onClo
       const user = await base44.auth.me();
       const novaDataHora = `${novaData}T${novoHorario}:00`;
 
-      // Atualizar atendimento com novo status e data
-      await base44.entities.ConsultoriaAtendimento.update(atendimento.id, {
+      const updateData = {
         data_agendada: novaDataHora,
         status: 'reagendado',
-        motivo_reagendamento: motivoReagendamento
-      });
+        motivo_reagendamento: descricaoManual,
+        status_posta_venda: statusPosvenda,
+        responsabilidade: responsabilidade
+      };
+
+      // Adicionar motivo específico conforme a responsabilidade
+      if (responsabilidade === 'cliente') {
+        updateData.motivo_cancelamento_cliente = motivoSelecionado;
+      } else if (responsabilidade === 'empresa') {
+        updateData.motivo_cancelamento_empresa = motivoSelecionado;
+      }
+
+      await base44.entities.ConsultoriaAtendimento.update(atendimento.id, updateData);
 
       // Criar ata de reagendamento
       const ataCount = await base44.entities.MeetingMinutes.list();
-      const code = `IT.${String(ataCount.length + 1).padStart(4, '0')}`;
+      const code = `AT.${String(ataCount.length + 1).padStart(4, '0')}`;
 
       await base44.entities.MeetingMinutes.create({
         code,
@@ -47,15 +62,15 @@ export default function ReagendarAtendimentoModal({ atendimento, workshop, onClo
         consultor_id: user.id,
         participantes: [],
         responsavel: { name: workshop.name, role: "Cliente" },
-        pautas: `Reagendamento de atendimento`,
+        pautas: `Reagendamento de atendimento - ${statusPosvenda}`,
         objetivos_atendimento: `Atendimento reagendado de ${new Date(atendimento.data_agendada).toLocaleString('pt-BR')} para ${new Date(novaDataHora).toLocaleString('pt-BR')}`,
-        objetivos_consultor: motivoReagendamento || "Reagendamento conforme necessidade",
+        objetivos_consultor: descricaoManual || "Reagendamento conforme necessidade",
         proximos_passos: [{
           descricao: `Realizar atendimento na nova data: ${new Date(novaDataHora).toLocaleString('pt-BR')}`,
           responsavel: user.full_name,
           prazo: novaData
         }],
-        visao_geral_projeto: `Histórico: Atendimento original agendado para ${new Date(atendimento.data_agendada).toLocaleString('pt-BR')} foi reagendado.`,
+        visao_geral_projeto: `Histórico: Atendimento original agendado para ${new Date(atendimento.data_agendada).toLocaleString('pt-BR')} foi reagendado. Responsabilidade: ${responsabilidade}.`,
         status: 'finalizada'
       });
 
@@ -70,9 +85,12 @@ export default function ReagendarAtendimentoModal({ atendimento, workshop, onClo
     }
   };
 
+  const motivosFiltrados = responsabilidade === 'cliente' ? MOTIVOS_CLIENTE : 
+                           responsabilidade === 'empresa' ? MOTIVOS_EMPRESA : {};
+
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Calendar className="w-5 h-5" />
@@ -80,7 +98,8 @@ export default function ReagendarAtendimentoModal({ atendimento, workshop, onClo
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="space-y-6 py-4">
+          {/* Info Cliente */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
             <p className="text-sm text-blue-900">
               <strong>Cliente:</strong> {workshop?.name}
@@ -90,6 +109,7 @@ export default function ReagendarAtendimentoModal({ atendimento, workshop, onClo
             </p>
           </div>
 
+          {/* Nova Data e Hora */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Nova Data *</Label>
@@ -111,22 +131,76 @@ export default function ReagendarAtendimentoModal({ atendimento, workshop, onClo
             </div>
           </div>
 
+          {/* Status Pós-Venda */}
           <div>
-            <Label>Motivo do Reagendamento</Label>
+            <Label>Status Pós-Venda *</Label>
+            <Select value={statusPosvenda} onValueChange={setStatusPosvenda}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o status" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(STATUS_POS_VENDA).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Responsabilidade */}
+          <div>
+            <Label>Responsabilidade *</Label>
+            <Select value={responsabilidade} onValueChange={setResponsabilidade}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a responsabilidade" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(RESPONSABILIDADE_OPTIONS).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Motivo Específico (dinâmico) */}
+          {responsabilidade && (
+            <div>
+              <Label>
+                Motivo {responsabilidade === 'cliente' ? 'do Cliente' : 'da Empresa'} *
+              </Label>
+              <Select value={motivoSelecionado} onValueChange={setMotivoSelecionado}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o motivo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(motivosFiltrados).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Descrição Manual */}
+          <div>
+            <Label>Descrição Detalhada (opcional)</Label>
             <Textarea
-              value={motivoReagendamento}
-              onChange={(e) => setMotivoReagendamento(e.target.value)}
-              placeholder="Descreva o motivo do reagendamento..."
+              value={descricaoManual}
+              onChange={(e) => setDescricaoManual(e.target.value)}
+              placeholder="Descreva os detalhes adicionais do reagendamento..."
               rows={3}
             />
           </div>
         </div>
 
-        <div className="flex justify-end gap-2">
+        <div className="flex justify-end gap-2 border-t pt-4">
           <Button variant="outline" onClick={onClose} disabled={loading}>
             Cancelar
           </Button>
-          <Button onClick={handleReagendar} disabled={loading} className="bg-blue-600">
+          <Button 
+            onClick={handleReagendar} 
+            disabled={loading || !statusPosvenda || !responsabilidade} 
+            className="bg-blue-600"
+          >
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
