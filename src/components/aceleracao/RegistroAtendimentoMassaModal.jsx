@@ -172,6 +172,11 @@ export default function RegistroAtendimentoMassaModal({ open, onClose, user }) {
                   formData={formData}
                   onFormChange={setFormData}
                   onClose={() => setShowFullForm(false)}
+                  onSaveAndContinue={() => {
+                    setShowFullForm(false);
+                    setActiveTab("grupos");
+                    toast.success("Atendimento configurado! Selecione os clientes.");
+                  }}
                   user={user}
                 />
               )}
