@@ -161,6 +161,12 @@ export default function Layout({ children, currentPageName }) {
       )}
 
       {/* {isAuthenticated && <ActivityTracker user={user} workshop={workshop} />} */}
+      {isAuthenticated && user && (
+        <>
+          <NotificationListener user={user} />
+          <NotificationPermissionBanner />
+        </>
+      )}
 
       <div className={`${isAuthenticated && !isPublicPage ? 'lg:pl-64' : ''} flex flex-col min-h-screen transition-all duration-300`} style={isAuthenticated && !isPublicPage ? { paddingLeft: 'var(--sidebar-width, 16rem)' } : {}}>
         {!isPublicPage && (
