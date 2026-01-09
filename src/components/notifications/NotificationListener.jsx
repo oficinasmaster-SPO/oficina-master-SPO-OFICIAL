@@ -64,8 +64,8 @@ export default function NotificationListener({ user }) {
       }
     });
 
-    // Notificação push nativa do sistema
-    if (permission === 'granted' && document.hidden) {
+    // Notificação push nativa do sistema (sempre dispara se tiver permissão)
+    if (permission === 'granted') {
       sendNotification(`${icon} ${notification.title}`, {
         body: notification.message,
         tag: notification.id,

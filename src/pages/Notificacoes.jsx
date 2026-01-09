@@ -162,8 +162,13 @@ export default function Notificacoes() {
   const testarNotificacoes = async () => {
     try {
       await base44.functions.invoke('testarNotificacoes');
-      toast.success('✅ 3 notificações de teste enviadas!');
-      queryClient.invalidateQueries(['notifications']);
+      toast.success('✅ 3 notificações de teste enviadas! Aguarde alguns segundos...');
+      
+      // Aguarda um pouco e depois invalida queries para mostrar as notificações
+      setTimeout(() => {
+        queryClient.invalidateQueries(['notifications']);
+        queryClient.invalidateQueries(['notifications-listener']);
+      }, 2000);
     } catch (error) {
       toast.error('Erro ao enviar notificações de teste');
     }

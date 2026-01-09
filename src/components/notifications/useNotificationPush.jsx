@@ -9,6 +9,19 @@ export function useNotificationPush() {
     if ('Notification' in window) {
       setIsSupported(true);
       setPermission(Notification.permission);
+      
+      // Atualiza o estado quando a permissão muda
+      const checkPermission = () => {
+        setPermission(Notification.permission);
+      };
+      
+      window.addEventListener('focus', checkPermission);
+      const interval = setInterval(checkPermission, 1000);
+      
+      return () => {
+        window.removeEventListener('focus', checkPermission);
+        clearInterval(interval);
+      };
     }
   }, []);
 
