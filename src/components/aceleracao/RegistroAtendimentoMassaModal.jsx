@@ -82,7 +82,19 @@ export default function RegistroAtendimentoMassaModal({ open, onClose, user }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!formData.data_agendada || !formData.hora_agendada) {
+      toast.error("Preencha data e horário");
+      return;
+    }
+    if (selectedWorkshops.length === 0) {
+      toast.error("Selecione destinatários");
+      return;
+    }
     createMutation.mutate(formData);
+  };
+
+  const handlePreviewPDF = () => {
+    toast.info("Visualização de PDF - funcionalidade em desenvolvimento");
   };
 
   return (
@@ -106,7 +118,11 @@ export default function RegistroAtendimentoMassaModal({ open, onClose, user }) {
             </TabsList>
 
             <TabsContent value="atendimento" className="space-y-4 mt-4">
-              <AtendimentoMassaForm formData={formData} onFormChange={setFormData} />
+              <AtendimentoMassaForm 
+                formData={formData} 
+                onFormChange={setFormData}
+                onPreviewPDF={handlePreviewPDF}
+              />
             </TabsContent>
 
             <TabsContent value="destinatarios" className="space-y-4 mt-4">
@@ -129,35 +145,54 @@ export default function RegistroAtendimentoMassaModal({ open, onClose, user }) {
           {/* Rodapé com ações */}
           <div className="flex items-center justify-between pt-4 border-t">
             <p className="text-sm text-gray-600">
-              {selectedWorkshops.length > 0 ? (
-                <span className="font-medium text-green-600">
-                  ✓ {selectedWorkshops.length} cliente(s) selecionado(s)
-                </span>
-              ) : (
-                <span className="text-gray-500">Configure destinatários para enviar</span>
+              {activeTab === "atendimento" && (
+                <span className="text-gray-500">Configure os dados do atendimento</span>
+              )}
+              {activeTab === "destinatarios" && (
+                selectedWorkshops.length > 0 ? (
+                  <span className="font-medium text-green-600">
+                    ✓ {selectedWorkshops.length} cliente(s) selecionado(s)
+                  </span>
+                ) : (
+                  <span className="text-gray-500">Selecione clientes para enviar</span>
+                )
+              )}
+              {(activeTab === "relatorios" || activeTab === "formularios") && (
+                <span className="text-gray-500"></span>
               )}
             </p>
             <div className="flex gap-3">
               <Button type="button" variant="outline" onClick={onClose}>
-                Cancelar
+                Fechar
               </Button>
-              <Button
-                type="submit"
-                disabled={createMutation.isPending || selectedWorkshops.length === 0}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                {createMutation.isPending ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Criando...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4 mr-2" />
-                    Criar e Enviar
-                  </>
-                )}
-              </Button>
+              {activeTab === "atendimento" && (
+                <Button
+                  type="button"
+                  onClick={() => setActiveTab("destinatarios")}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  Próximo
+                </Button>
+              )}
+              {activeTab === "destinatarios" && (
+                <Button
+                  type="submit"
+                  disabled={createMutation.isPending || selectedWorkshops.length === 0 || !formData.data_agendada || !formData.hora_agendada}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  {createMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Criando...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Criar e Enviar
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
           </div>
         </form>
