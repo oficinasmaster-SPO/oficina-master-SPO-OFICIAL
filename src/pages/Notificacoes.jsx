@@ -10,10 +10,12 @@ import { format, isPast, isToday, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import NotificationPreferences from "@/components/notifications/NotificationPreferences";
+import { useNotificationPush } from "@/components/notifications/useNotificationPush";
 
 export default function Notificacoes() {
   const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
+  const { sendNotification, permission } = useNotificationPush();
 
   useEffect(() => {
     loadUser();
@@ -175,16 +177,52 @@ export default function Notificacoes() {
 
   const testarNotificacoes = async () => {
     try {
+      const loadingToast = toast.loading('Enviando notificações de teste...');
+      
       await base44.functions.invoke('testarNotificacoes');
-      toast.success('✅ 3 notificações de teste enviadas! Aguarde alguns segundos...');
+      
+      toast.dismiss(loadingToast);
+      toast.success('✅ 3 notificações criadas no banco!');
       
       // Aguarda um pouco e depois invalida queries para mostrar as notificações
-      setTimeout(() => {
+      setTimeout(async () => {
         queryClient.invalidateQueries(['notifications']);
         queryClient.invalidateQueries(['notifications-listener']);
+        
+        // Envia notificações push se tiver permissão
+        if (permission === 'granted') {
+          try {
+            sendNotification('🧪 Teste de Notificação 1', {
+              body: 'Esta é uma notificação push de teste do sistema',
+              icon: '/logo192.png'
+            });
+            
+            setTimeout(() => {
+              sendNotification('⚠️ Teste de Notificação 2', {
+                body: 'Segunda notificação push - funcionando perfeitamente!',
+                icon: '/logo192.png'
+              });
+            }, 1000);
+            
+            setTimeout(() => {
+              sendNotification('✅ Teste de Notificação 3', {
+                body: 'Terceira notificação push - sistema completo!',
+                icon: '/logo192.png'
+              });
+            }, 2000);
+            
+            toast.success('🔔 3 notificações push enviadas!');
+          } catch (error) {
+            toast.error('❌ Erro ao enviar notificações push');
+          }
+        } else if (permission === 'denied') {
+          toast.warning('⚠️ Notificações push bloqueadas. Ative nas configurações do navegador.');
+        } else {
+          toast.info('ℹ️ Ative as notificações push em Preferências para recebê-las.');
+        }
       }, 2000);
     } catch (error) {
-      toast.error('Erro ao enviar notificações de teste');
+      toast.error('❌ Erro ao criar notificações de teste');
     }
   };
 
