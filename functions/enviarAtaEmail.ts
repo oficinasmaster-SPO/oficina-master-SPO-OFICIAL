@@ -33,8 +33,8 @@ Deno.serve(async (req) => {
     const atas = await base44.entities.MeetingMinutes.filter({ atendimento_id: atendimento_id });
     const ata = atas[0];
 
-    // Gerar link da plataforma para ATA
-    const linkAta = ata ? `${Deno.env.get('APP_URL') || 'https://oficinasmaster.com'}/VisualizarAtaModal?ata_id=${ata.id}` : null;
+    // Gerar link da plataforma para ATA (página pública, sem autenticação)
+    const linkAta = ata ? `${Deno.env.get('APP_URL') || 'https://oficinasmaster.com'}/VisualizarAtaPublica?ata_id=${ata.id}&workshop_id=${workshop.id}` : null;
 
     const emailBody = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
               <a href="${linkAta}" style="color: #2563eb; font-weight: bold; text-decoration: none;">Clique aqui para visualizar a ATA</a>
             </p>
             <p style="margin: 5px 0 0 0; font-size: 12px; color: #1e40af;">
-              Você pode acessar com suas credenciais de login na plataforma.
+              Acesso direto sem necessidade de login. Clique para visualizar.
             </p>
           </div>
         ` : ''}
