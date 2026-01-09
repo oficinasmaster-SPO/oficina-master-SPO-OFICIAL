@@ -220,8 +220,32 @@ export default function RegistrarAtendimento() {
 
       console.log("Atendimento salvo:", atendimento);
 
-      // Se tem ATA vinculada, finalizá-la automaticamente
-      if (atendimento.ata_id) {
+      // Se status é "realizado" e não tem ATA, gerar automaticamente
+      if (atendimentoData.status === 'realizado' && !atendimento.ata_id) {
+        try {
+          const ataResponse = await base44.asServiceRole.functions.invoke('gerarAtaConsultoria', {
+            atendimento_id: atendimento.id
+          });
+          console.log("ATA gerada automaticamente:", ataResponse);
+          
+          // Atualizar atendimento com ata_id
+          if (ataResponse.data?.ata_id) {
+            await base44.entities.ConsultoriaAtendimento.update(atendimento.id, {
+              ata_id: ataResponse.data.ata_id
+            });
+            
+            // Finalizar ATA
+            await base44.entities.MeetingMinutes.update(ataResponse.data.ata_id, {
+              status: 'finalizada'
+            });
+            console.log("ATA finalizada automaticamente");
+          }
+        } catch (error) {
+          console.error('Erro ao gerar/finalizar ATA:', error);
+        }
+      }
+      // Se já tem ATA vinculada, apenas finalizá-la
+      else if (atendimento.ata_id) {
         try {
           await base44.entities.MeetingMinutes.update(atendimento.ata_id, {
             status: 'finalizada'
