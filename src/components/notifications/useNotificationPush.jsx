@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 
 export function useNotificationPush() {
@@ -7,29 +7,40 @@ export function useNotificationPush() {
   );
   const [isSupported, setIsSupported] = useState(false);
 
-  const checkPermission = () => {
+  const checkPermission = useCallback(() => {
     if ('Notification' in window) {
       const currentPermission = Notification.permission;
-      setPermission(currentPermission);
+      setPermission(prev => {
+        if (prev !== currentPermission) {
+          console.log('🔔 Permission changed:', prev, '→', currentPermission);
+        }
+        return currentPermission;
+      });
       return currentPermission;
     }
     return 'default';
-  };
+  }, []);
 
   useEffect(() => {
     if ('Notification' in window) {
       setIsSupported(true);
-      setPermission(Notification.permission);
+      checkPermission();
       
+      // Evento customizado para forçar atualização
+      const handleRefresh = () => checkPermission();
       window.addEventListener('focus', checkPermission);
-      const interval = setInterval(checkPermission, 2000);
+      window.addEventListener('notification-permission-refresh', handleRefresh);
+      
+      // Verifica a cada 1 segundo para detectar mudanças
+      const interval = setInterval(checkPermission, 1000);
       
       return () => {
         window.removeEventListener('focus', checkPermission);
+        window.removeEventListener('notification-permission-refresh', handleRefresh);
         clearInterval(interval);
       };
     }
-  }, []);
+  }, [checkPermission]);
 
   const requestPermission = async () => {
     if (!isSupported) {

@@ -134,14 +134,19 @@ export default function NotificationPreferences({ user }) {
               )}
               <Button
                 onClick={() => {
-                  const newPerm = refreshPermission();
-                  if (newPerm === 'granted') {
-                    toast.success('✅ Notificações Push Ativadas!');
-                  } else if (newPerm === 'denied') {
-                    toast.error('❌ Ainda bloqueadas. Vá nas configurações do navegador.');
-                  } else {
-                    toast.info('ℹ️ Status: ' + newPerm);
-                  }
+                  // Dispara evento para forçar atualização em todos os componentes
+                  window.dispatchEvent(new Event('notification-permission-refresh'));
+
+                  setTimeout(() => {
+                    const newPerm = refreshPermission();
+                    if (newPerm === 'granted') {
+                      toast.success('✅ Notificações Push Ativadas!');
+                    } else if (newPerm === 'denied') {
+                      toast.error('❌ Ainda bloqueadas. Vá em Configurações do navegador → Site → Notificações → Permitir');
+                    } else {
+                      toast.info('ℹ️ Status: ' + newPerm);
+                    }
+                  }, 100);
                 }}
                 variant="ghost"
                 size="sm"
