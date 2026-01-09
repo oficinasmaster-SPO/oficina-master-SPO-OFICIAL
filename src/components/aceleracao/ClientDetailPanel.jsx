@@ -20,35 +20,49 @@ export default function ClientDetailPanel({ client, processos, onClose, onAvalia
     queryFn: () => base44.entities.CronogramaProgresso.filter({ workshop_id: client.id })
   });
 
-  // Mutation para marcar como concluído
-  const marcarConcluidoMutation = useMutation({
-    mutationFn: async ({ progressoId, moduloCodigo }) => {
-      if (progressoId) {
-        return await base44.entities.CronogramaProgresso.update(progressoId, {
+  const handleOpenCompletionModal = (processo, progresso) => {
+    setActivityToComplete({
+      id: progresso?.id,
+      title: processo.nome || processo.codigo,
+      moduloCodigo: processo.codigo,
+      workshop_id: client.id,
+      source: 'cronograma'
+    });
+  };
+
+  const handleCompleteActivity = async (activityId, completionData, source) => {
+    try {
+      if (activityId) {
+        // Atualizar progresso existente
+        await base44.entities.CronogramaProgresso.update(activityId, {
           situacao: 'concluido',
-          data_conclusao_realizado: new Date().toISOString()
+          data_conclusao_realizado: completionData.completion_date,
+          observacoes: completionData.completion_notes,
+          avaliacao_efetividade: completionData.effectiveness_rating,
+          participantes: completionData.participants_list,
+          evidencia_url: completionData.evidence_url
         });
       } else {
-        return await base44.entities.CronogramaProgresso.create({
-          workshop_id: client.id,
-          modulo_codigo: moduloCodigo,
+        // Criar novo progresso
+        await base44.entities.CronogramaProgresso.create({
+          workshop_id: activityToComplete.workshop_id,
+          modulo_codigo: activityToComplete.moduloCodigo,
           situacao: 'concluido',
-          data_conclusao_realizado: new Date().toISOString()
+          data_conclusao_realizado: completionData.completion_date,
+          observacoes: completionData.completion_notes,
+          avaliacao_efetividade: completionData.effectiveness_rating,
+          participantes: completionData.participants_list,
+          evidencia_url: completionData.evidence_url
         });
       }
-    },
-    onSuccess: () => {
+      
       queryClient.invalidateQueries(['progressos-cliente']);
       queryClient.invalidateQueries(['cronograma-progressos']);
-      toast.success('Processo marcado como concluído!');
+      queryClient.invalidateQueries(['workshops-cronograma']);
+    } catch (error) {
+      console.error("Erro ao concluir processo:", error);
+      throw error;
     }
-  });
-
-  const handleMarcarConcluido = (processo, progresso) => {
-    marcarConcluidoMutation.mutate({
-      progressoId: progresso?.id,
-      moduloCodigo: processo.codigo
-    });
   };
 
   return (
