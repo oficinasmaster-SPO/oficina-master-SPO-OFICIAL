@@ -31,8 +31,12 @@ export default function CronogramaGeral() {
     queryKey: ['workshops-cronograma'],
     queryFn: async () => {
       const all = await base44.entities.Workshop.list();
+      // Se o plano selecionado for "TODOS" ou "FREE", mostra todos ou filtra por FREE
+      if (selectedPlan === 'TODOS') return all;
+      if (selectedPlan === 'FREE') return all.filter(w => w.planoAtual === 'FREE');
       return all.filter(w => w.planoAtual && w.planoAtual !== 'FREE');
-    }
+    },
+    enabled: !!selectedPlan
   });
 
   // Carregar progresso dos cronogramas
