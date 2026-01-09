@@ -134,29 +134,45 @@ export default function RegistroAtendimentoMassaModal({ open, onClose, user }) {
       return results;
     },
     onSuccess: (results) => {
-      queryClient.invalidateQueries(['consultoria-atendimentos']);
-      queryClient.invalidateQueries(['todos-atendimentos']);
-      // Limpar dados persistidos
-      sessionStorage.removeItem("massReg_form");
-      sessionStorage.removeItem("massReg_clients");
-      // Resetar estado
-      setFormData({
-        tipo_atendimento: "acompanhamento_mensal",
-        data_agendada: "",
-        hora_agendada: "",
-        duracao_minutos: 60,
-        status: "agendado",
-        google_meet_link: "",
-        pauta: "",
-        objetivos: "",
-        observacoes: ""
-      });
-      setSelectedClients([]);
-      setSelectedGroupId(null);
-      setActiveTab("ata");
-      toast.success(`${results.length} atendimentos criados com sucesso!`);
-      onClose();
-    },
+        queryClient.invalidateQueries(['consultoria-atendimentos']);
+        queryClient.invalidateQueries(['todos-atendimentos']);
+        queryClient.invalidateQueries(['batch-dispatch-history']);
+
+        // Limpar dados persistidos
+        sessionStorage.removeItem("massReg_form");
+        sessionStorage.removeItem("massReg_clients");
+
+        // Resetar estado se não manter aberto
+        if (!keepOpen) {
+          setFormData({
+            tipo_atendimento: "acompanhamento_mensal",
+            data_agendada: "",
+            hora_agendada: "",
+            duracao_minutos: 60,
+            status: "agendado",
+            google_meet_link: "",
+            pauta: "",
+            objetivos: "",
+            observacoes: ""
+          });
+          setSelectedClients([]);
+          setSelectedGroupId(null);
+          setActiveTab("ata");
+          setShowFullForm(false);
+          onClose();
+        } else {
+          // Manter aberto, apenas resetar clients e form
+          setSelectedClients([]);
+          setSelectedGroupId(null);
+          setActiveTab("ata");
+          setShowFullForm(false);
+          toast.success(`${results.length} atendimentos criados! Modal aberta para novo lote.`);
+        }
+
+        if (!keepOpen) {
+          toast.success(`${results.length} atendimentos criados com sucesso!`);
+        }
+      },
     onError: (error) => {
       toast.error('Erro ao criar atendimentos: ' + error.message);
     }
