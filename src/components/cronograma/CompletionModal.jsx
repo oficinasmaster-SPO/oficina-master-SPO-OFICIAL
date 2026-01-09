@@ -5,17 +5,32 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Star, Upload, X, Loader2, Users } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Star, Upload, X, Loader2, Users, Plus } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 export default function CompletionModal({ activity, onClose, onComplete }) {
   const [notes, setNotes] = useState("");
   const [rating, setRating] = useState(0);
-  const [participants, setParticipants] = useState("");
+  const [selectedParticipants, setSelectedParticipants] = useState([]);
   const [evidenceFile, setEvidenceFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Buscar colaboradores da oficina
+  const { data: colaboradores = [] } = useQuery({
+    queryKey: ['colaboradores-oficina', activity?.workshop_id],
+    queryFn: async () => {
+      if (!activity?.workshop_id) return [];
+      return await base44.entities.Employee.filter({ 
+        workshop_id: activity.workshop_id,
+        status: 'ativo'
+      });
+    },
+    enabled: !!activity?.workshop_id
+  });
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
