@@ -1,11 +1,21 @@
-import React from "react";
-import { useQuery } from "@tanstack/react-query";
+import React, { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Eye, Download } from "lucide-react";
+import { Eye, Download, Edit2, CheckCircle, Bell, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import AtaPreviewDialog from "./AtaPreviewDialog";
+import ViewClientsDialog from "./ViewClientsDialog";
 
 export default function MassReportHistory() {
+  const queryClient = useQueryClient();
+  const [showViewClients, setShowViewClients] = useState(false);
+  const [showAtaPreview, setShowAtaPreview] = useState(false);
+  const [selectedAta, setSelectedAta] = useState(null);
+  const [selectedGroupClients, setSelectedGroupClients] = useState([]);
+  const [selectedGroupName, setSelectedGroupName] = useState("");
+  const [selectedDisparo, setSelectedDisparo] = useState(null);
+
   const { data: historico = [], isLoading } = useQuery({
     queryKey: ["batch-dispatch-history"],
     queryFn: async () => {
@@ -16,6 +26,62 @@ export default function MassReportHistory() {
         toast.error("Erro ao carregar histórico");
         return [];
       }
+    }
+  });
+
+  // Finalizar lote em massa
+  const finalizarLoteMutation = useMutation({
+    mutationFn: async (disparo) => {
+      if (!disparo.atendimentos_criados || disparo.atendimentos_criados.length === 0) {
+        throw new Error("Nenhum atendimento encontrado neste disparo");
+      }
+      
+      await Promise.all(
+        disparo.atendimentos_criados.map(atendimentoId =>
+          base44.entities.ConsultoriaAtendimento.update(atendimentoId, {
+            status: "realizado",
+            data_realizada: new Date().toISOString()
+          })
+        )
+      );
+      
+      return disparo;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["batch-dispatch-history"] });
+      toast.success("Lote finalizado com sucesso!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao finalizar lote: " + error.message);
+    }
+  });
+
+  // Reenviar notificações do lote
+  const reenviareNotificacoesMutation = useMutation({
+    mutationFn: async (disparo) => {
+      if (!disparo.clientes || disparo.clientes.length === 0) {
+        throw new Error("Nenhum cliente encontrado neste disparo");
+      }
+      
+      // Enviar notificações para cada cliente do disparo
+      await Promise.all(
+        disparo.clientes.map(cliente =>
+          base44.entities.Notification.create({
+            workshop_id: cliente.workshop_id,
+            type: "nova_ata",
+            title: "Novo Atendimento Agendado",
+            message: `Atendimento em ${disparo.data_agendada} às ${disparo.hora_agendada} - Tipo: ${disparo.tipo_atendimento.replace(/_/g, " ")}`
+          }).catch(() => null)
+        )
+      );
+      
+      return disparo;
+    },
+    onSuccess: () => {
+      toast.success("Notificações reenviadas para todos os clientes!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao reenviar: " + error.message);
     }
   });
 
