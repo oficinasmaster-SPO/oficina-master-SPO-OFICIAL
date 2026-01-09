@@ -2,13 +2,14 @@ import React, { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Users, Edit2, Eye } from "lucide-react";
+import { Users, Edit2, Eye, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AtaPreviewDialog from "./AtaPreviewDialog";
 import ViewClientsDialog from "./ViewClientsDialog";
 import AtaPDFViewer from "./AtaPDFViewer";
 import MassReportHistory from "./MassReportHistory";
+import DispatchHistoryReport from "./DispatchHistoryReport";
 
 export default function MassReportView({ selectedClients, formData }) {
   const [showViewClients, setShowViewClients] = useState(false);
