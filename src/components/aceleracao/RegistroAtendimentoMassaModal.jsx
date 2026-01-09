@@ -27,22 +27,26 @@ export default function RegistroAtendimentoMassaModal({ open, onClose, user }) {
     observacoes: ""
   });
 
+  // Zerar form ao avançar da aba "ata"
+  useEffect(() => {
+    if (activeTab !== "ata") {
+      sessionStorage.removeItem("massReg_form");
+    }
+  }, [activeTab]);
+
   // Persistência em sessionStorage
   useEffect(() => {
-    if (open) {
+    if (open && activeTab === "ata") {
       const savedForm = sessionStorage.getItem("massReg_form");
-      const savedClients = sessionStorage.getItem("massReg_clients");
       if (savedForm) setFormData(JSON.parse(savedForm));
-      if (savedClients) setSelectedClients(JSON.parse(savedClients));
     }
-  }, [open]);
+  }, [open, activeTab]);
 
   useEffect(() => {
-    if (open) {
+    if (open && activeTab === "ata") {
       sessionStorage.setItem("massReg_form", JSON.stringify(formData));
-      sessionStorage.setItem("massReg_clients", JSON.stringify(selectedClients));
     }
-  }, [formData, selectedClients, open]);
+  }, [formData, open, activeTab]);
 
   const { data: workshops } = useQuery({
     queryKey: ['workshops-for-mass-registration'],
