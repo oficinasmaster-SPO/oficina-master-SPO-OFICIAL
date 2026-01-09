@@ -24,6 +24,7 @@ export default function PainelAtendimentosTab({ user }) {
   const [showReagendar, setShowReagendar] = useState(false);
   const [selectedAtendimento, setSelectedAtendimento] = useState(null);
   const [selectedAta, setSelectedAta] = useState(null);
+  const [processedIds, setProcessedIds] = useState(new Set());
   const [filtrosAtas, setFiltrosAtas] = useState({
     searchTerm: "",
     workshop_id: "",
@@ -69,16 +70,26 @@ export default function PainelAtendimentosTab({ user }) {
     if (!atendimentos) return;
     
     const now = new Date();
+    const newProcessedIds = new Set(processedIds);
+    let hasChanges = false;
 
     atendimentos.forEach(atendimento => {
+      if (processedIds.has(atendimento.id)) return;
+      
       const dataAtendimento = new Date(atendimento.data_agendada);
       
       if (now > dataAtendimento && 
           ![ATENDIMENTO_STATUS.REALIZADO, ATENDIMENTO_STATUS.PARTICIPANDO, ATENDIMENTO_STATUS.ATRASADO].includes(atendimento.status)) {
         marcarAtrasadoMutation.mutate(atendimento.id);
+        newProcessedIds.add(atendimento.id);
+        hasChanges = true;
       }
     });
-  }, [atendimentos]);
+
+    if (hasChanges) {
+      setProcessedIds(newProcessedIds);
+    }
+  }, [atendimentos, processedIds]);
 
   const marcarAtrasadoMutation = useMutation({
     mutationFn: (id) => base44.entities.ConsultoriaAtendimento.update(id, { status: ATENDIMENTO_STATUS.ATRASADO }),
