@@ -2,18 +2,20 @@ import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import GroupFilters from "../MassRegistrationTabs/GroupFilters";
 import { Checkbox } from "@/components/ui/checkbox";
+import SaveGroupDialog from "./SaveGroupDialog";
 
 export default function MassGroupSelector({ selectedGroupId, onGroupSelect, selectedClients, onClientsChange }) {
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [groupFilters, setGroupFilters] = useState({});
   const [selectedPlans, setSelectedPlans] = useState([]);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
 
   // Carregar workshops
   const { data: workshops = [] } = useQuery({
@@ -32,6 +34,46 @@ export default function MassGroupSelector({ selectedGroupId, onGroupSelect, sele
       return Array.isArray(groups) ? groups : [];
     }
   });
+
+  // Mutation para salvar grupo
+  const saveGroupMutation = useMutation({
+    mutationFn: async ({ name, description }) => {
+      const feedback = getGroupFeedback(selectedClients);
+      return await base44.entities.ClientGroup.create({
+        name,
+        description,
+        client_ids: selectedClients,
+        workshop_id: "general",
+        is_active: true,
+        feedback: `${feedback.totalClients} cliente(s) - ${feedback.plansList}`
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["client-groups-mass"] });
+      toast.success("Grupo salvo com sucesso!");
+      setShowSaveDialog(false);
+    },
+    onError: (error) => {
+      toast.error("Erro ao salvar grupo: " + error.message);
+    }
+  });
+
+  const getGroupFeedback = (clientIds) => {
+    const plansInGroup = {};
+    let totalClients = 0;
+    clientIds.forEach(id => {
+      const w = workshops.find(ws => ws.id === id);
+      if (w) {
+        const plan = w.planoAtual || "FREE";
+        plansInGroup[plan] = (plansInGroup[plan] || 0) + 1;
+        totalClients++;
+      }
+    });
+    const plansList = Object.entries(plansInGroup)
+      .map(([plan, count]) => `${plan} (${count})`)
+      .join(", ");
+    return { totalClients, plansList, plansInGroup };
+  };
 
   const filteredWorkshops = workshops.filter(w => {
     const matchSearch = w.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -134,11 +176,29 @@ export default function MassGroupSelector({ selectedGroupId, onGroupSelect, sele
         </div>
 
         {selectedClients.length > 0 && (
-          <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded text-sm">
-            ✓ {selectedClients.length} cliente(s) selecionado(s)
+          <div className="mt-4 space-y-3">
+            <div className="p-3 bg-green-50 border border-green-200 rounded text-sm">
+              ✓ {selectedClients.length} cliente(s) selecionado(s)
+            </div>
+            <Button
+              type="button"
+              onClick={() => setShowSaveDialog(true)}
+              className="w-full bg-emerald-600 hover:bg-emerald-700"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Salvar este Grupo
+            </Button>
           </div>
         )}
       </div>
+
+      <SaveGroupDialog
+        open={showSaveDialog}
+        onOpenChange={setShowSaveDialog}
+        selectedClients={selectedClients}
+        onSave={(groupData) => saveGroupMutation.mutate(groupData)}
+        isLoading={saveGroupMutation.isPending}
+      />
     </div>
   );
 }
