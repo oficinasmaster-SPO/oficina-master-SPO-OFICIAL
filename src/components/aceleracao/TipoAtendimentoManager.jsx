@@ -90,16 +90,29 @@ export default function TipoAtendimentoManager({ customTipos = [], onSave }) {
             <div className="border-t pt-4">
               <Label>Tipos Personalizados</Label>
               <div className="mt-2 space-y-2">
-                <div className="flex gap-2">
+                <div className="space-y-2">
                   <Input
                     placeholder="Nome do novo tipo..."
                     value={novoTipo}
                     onChange={(e) => setNovoTipo(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && addTipo()}
                   />
-                  <Button size="sm" onClick={addTipo}>
-                    <Plus className="w-4 h-4" />
-                  </Button>
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <Input
+                        type="number"
+                        step="0.5"
+                        min="0.25"
+                        placeholder="Duração (horas)"
+                        value={duracaoHoras}
+                        onChange={(e) => setDuracaoHoras(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && addTipo()}
+                      />
+                    </div>
+                    <Button size="sm" onClick={addTipo}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Adicionar
+                    </Button>
+                  </div>
                 </div>
 
                 {tipos.length > 0 && (
