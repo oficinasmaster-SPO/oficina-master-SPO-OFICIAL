@@ -3,8 +3,10 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, Users, Send, Mail, X } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Search, Users, Plus, X, Trash2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
 
 export default function ConfigurarDestinatarios({ 
   selectedIds, 
@@ -13,13 +15,14 @@ export default function ConfigurarDestinatarios({
 }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPlans, setSelectedPlans] = useState([]);
-  const [groupPresets, setGroupPresets] = useState([]);
-  const [sendWhatsApp, setSendWhatsApp] = useState(true);
-  const [sendEmail, setSendEmail] = useState(true);
+  const [savedGroups, setSavedGroups] = useState([]);
+  const [showCreateGroup, setShowCreateGroup] = useState(false);
+  const [groupName, setGroupName] = useState("");
+  const [presetGroups, setPresetGroups] = useState([]);
 
   useEffect(() => {
     const saved = localStorage.getItem("client-groups");
-    if (saved) setGroupPresets(JSON.parse(saved));
+    if (saved) setPresetGroups(JSON.parse(saved));
   }, []);
 
   const filteredWorkshops = useMemo(() => {
@@ -56,31 +59,98 @@ export default function ConfigurarDestinatarios({
     onSelectionChange(group.clientIds);
   };
 
+  const createGroup = () => {
+    if (!groupName.trim()) {
+      toast.error("Nome do grupo obrigatório");
+      return;
+    }
+    if (selectedIds.length === 0) {
+      toast.error("Selecione ao menos um cliente");
+      return;
+    }
+    const newGroup = {
+      id: Date.now(),
+      name: groupName,
+      clientIds: selectedIds,
+      createdAt: new Date().toLocaleDateString("pt-BR")
+    };
+    setSavedGroups([...savedGroups, newGroup]);
+    setGroupName("");
+    setShowCreateGroup(false);
+    toast.success(`Grupo "${newGroup.name}" criado com sucesso!`);
+  };
+
+  const deleteGroup = (id) => {
+    setSavedGroups(savedGroups.filter(g => g.id !== id));
+    toast.success("Grupo deletado");
+  };
+
   return (
     <div className="space-y-6">
-      {/* Opções de envio */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
-        <p className="font-medium text-sm">Enviar para:</p>
-        <div className="flex gap-4">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <Checkbox checked={sendWhatsApp} onCheckedChange={setSendWhatsApp} />
-            <Send className="w-4 h-4" />
-            <span className="text-sm">WhatsApp</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <Checkbox checked={sendEmail} onCheckedChange={setSendEmail} />
-            <Mail className="w-4 h-4" />
-            <span className="text-sm">Email</span>
-          </label>
+      {/* Criar novo grupo */}
+      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="font-medium text-sm">Criar Grupo de Destinatários</p>
+            <p className="text-xs text-gray-600 mt-1">
+              {selectedIds.length} cliente(s) selecionado(s)
+            </p>
+          </div>
+          <Button
+            type="button"
+            onClick={() => setShowCreateGroup(true)}
+            disabled={selectedIds.length === 0}
+            className="bg-green-600 hover:bg-green-700"
+            size="sm"
+          >
+            <Plus className="w-3 h-3 mr-1" />
+            Criar Grupo
+          </Button>
         </div>
       </div>
 
-      {/* Grupos salvos */}
-      {groupPresets.length > 0 && (
+      {/* Grupos criados nesta sessão */}
+      {savedGroups.length > 0 && (
         <div className="space-y-2">
-          <Label className="text-sm font-medium">Grupos Salvos</Label>
+          <Label className="text-sm font-medium">Grupos Criados</Label>
+          <div className="grid gap-2">
+            {savedGroups.map(group => (
+              <div key={group.id} className="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
+                <div className="flex-1">
+                  <p className="text-sm font-medium">{group.name}</p>
+                  <p className="text-xs text-gray-600">{group.clientIds.length} clientes • {group.createdAt}</p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => loadGroup(group)}
+                  >
+                    Carregar
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => deleteGroup(group.id)}
+                    className="text-red-600"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Grupos de configuração anterior */}
+      {presetGroups.length > 0 && (
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Grupos Configurados</Label>
           <div className="flex flex-wrap gap-2">
-            {groupPresets.map(group => (
+            {presetGroups.map(group => (
               <Button
                 key={group.id}
                 type="button"
@@ -155,12 +225,43 @@ export default function ConfigurarDestinatarios({
 
       {/* Resumo */}
       {selectedIds.length > 0 && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-          <p className="text-sm font-medium text-green-900">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+          <p className="text-sm font-medium text-blue-900">
             ✓ {selectedIds.length} cliente(s) selecionado(s)
           </p>
         </div>
       )}
+
+      {/* Dialog para criar grupo */}
+      <Dialog open={showCreateGroup} onOpenChange={setShowCreateGroup}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Criar Novo Grupo</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label>Nome do Grupo</Label>
+              <Input
+                placeholder="Ex: Imersão SP - Janeiro"
+                value={groupName}
+                onChange={(e) => setGroupName(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <p className="text-xs text-gray-600">
+              Este grupo conterá {selectedIds.length} cliente(s)
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreateGroup(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={createGroup} className="bg-green-600 hover:bg-green-700">
+              Criar Grupo
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
