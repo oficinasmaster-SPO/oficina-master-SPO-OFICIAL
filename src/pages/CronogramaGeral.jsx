@@ -393,16 +393,16 @@ export default function CronogramaGeral() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Processos - Plano {selectedPlan}</CardTitle>
+                  <CardTitle>
+                    Processos - {selectedPlan === 'TODOS' ? 'TODOS OS PLANOS' : `Plano ${selectedPlan}`}
+                  </CardTitle>
                   <p className="text-sm text-gray-600 mt-1">
                     {processos.length} itens no cronograma
                   </p>
                 </div>
-                {planData && (
-                  <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                    {workshopsPorPlano.length} clientes
-                  </Badge>
-                )}
+                <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                  {workshopsPorPlano.length} clientes
+                </Badge>
               </div>
             </CardHeader>
             <CardContent>
