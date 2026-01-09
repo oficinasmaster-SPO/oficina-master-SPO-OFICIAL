@@ -36,6 +36,7 @@ export default function MassReportHistory() {
         throw new Error("Nenhum atendimento encontrado neste disparo");
       }
       
+      // Atualizar todos os atendimentos
       await Promise.all(
         disparo.atendimentos_criados.map(atendimentoId =>
           base44.entities.ConsultoriaAtendimento.update(atendimentoId, {
@@ -44,6 +45,11 @@ export default function MassReportHistory() {
           })
         )
       );
+      
+      // Atualizar o próprio BatchDispatch
+      await base44.entities.BatchDispatch.update(disparo.id, {
+        status: "realizado"
+      });
       
       return disparo;
     },
