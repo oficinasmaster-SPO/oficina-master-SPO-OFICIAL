@@ -34,7 +34,7 @@ export default function NotificationPreferences({ user }) {
     notificar_metas: true,
     notificar_metas_nacionais: true,
     notificar_colaboradores_nacionais: true,
-    email_enabled: false
+    email_enabled: true
   });
 
   React.useEffect(() => {

@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
         type: 'config_preferencias'
       });
 
-      const notificarConclusoes = prefs[0]?.metadata?.notificar_conclusoes !== false;
+      const notificarConclusoes = prefs.length === 0 || prefs[0]?.metadata?.notificar_conclusoes !== false;
 
       if (notificarConclusoes) {
         await base44.asServiceRole.entities.Notification.create({

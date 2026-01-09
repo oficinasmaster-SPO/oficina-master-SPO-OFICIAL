@@ -82,7 +82,7 @@ async function criarNotificacaoMeta(base44, workshop, tipoMeta, valorAtual, valo
       type: 'config_preferencias'
     });
 
-    const notificarMetas = prefs[0]?.metadata?.notificar_metas !== false;
+    const notificarMetas = prefs.length === 0 || prefs[0]?.metadata?.notificar_metas !== false;
 
     if (notificarMetas) {
       await base44.asServiceRole.entities.Notification.create({
@@ -123,7 +123,7 @@ async function criarNotificacaoNacional(base44, workshop, tipoMeta, valor) {
         type: 'config_preferencias'
       });
 
-      const notificarNacional = prefs[0]?.metadata?.notificar_metas_nacionais !== false;
+      const notificarNacional = prefs.length === 0 || prefs[0]?.metadata?.notificar_metas_nacionais !== false;
 
       if (notificarNacional) {
         await base44.asServiceRole.entities.Notification.create({
@@ -187,7 +187,7 @@ async function criarNotificacaoMetaColaborador(base44, workshop, colaborador, me
         type: 'config_preferencias'
       });
 
-      const notificarColaboradores = prefs[0]?.metadata?.notificar_colaboradores_nacionais !== false;
+      const notificarColaboradores = prefs.length === 0 || prefs[0]?.metadata?.notificar_colaboradores_nacionais !== false;
 
       if (notificarColaboradores) {
         await base44.asServiceRole.entities.Notification.create({
