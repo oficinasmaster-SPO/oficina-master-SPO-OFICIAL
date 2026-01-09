@@ -77,7 +77,9 @@ export default function CronogramaGeral() {
   }
 
   // Filtrar workshops pelo plano selecionado
-  const workshopsPorPlano = workshops.filter(w => w.planoAtual === selectedPlan);
+  const workshopsPorPlano = selectedPlan === 'TODOS' 
+    ? workshops 
+    : workshops.filter(w => w.planoAtual === selectedPlan);
 
   // Obter dados do plano selecionado
   const planData = planFeatures.find(p => p.plan_id === selectedPlan);
