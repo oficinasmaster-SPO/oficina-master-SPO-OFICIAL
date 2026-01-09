@@ -223,6 +223,15 @@ export default function ClientDetailPanel({ client, processos, onClose, onAvalia
           </Card>
         </div>
       </div>
+
+      {/* Modal de Conclusão */}
+      {activityToComplete && (
+        <CompletionModal
+          activity={activityToComplete}
+          onClose={() => setActivityToComplete(null)}
+          onComplete={handleCompleteActivity}
+        />
+      )}
     </div>
   );
 }
