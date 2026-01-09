@@ -13,6 +13,11 @@ import { useNotificationPush } from "./useNotificationPush";
 export default function NotificationPreferences({ user }) {
   const { permission, isSupported, requestPermission } = useNotificationPush();
   const queryClient = useQueryClient();
+  const [currentPermission, setCurrentPermission] = React.useState(permission);
+
+  React.useEffect(() => {
+    setCurrentPermission(permission);
+  }, [permission]);
 
   const { data: preferencias, isLoading } = useQuery({
     queryKey: ['preferencias-notificacao', user?.id],
@@ -108,32 +113,51 @@ export default function NotificationPreferences({ user }) {
               </div>
               <Badge 
                 className={
-                  permission === 'granted' 
+                  currentPermission === 'granted' 
                     ? 'bg-green-100 text-green-700' 
-                    : permission === 'denied'
+                    : currentPermission === 'denied'
                     ? 'bg-red-100 text-red-700'
                     : 'bg-gray-100 text-gray-700'
                 }
               >
-                {permission === 'granted' ? 'Ativadas' : permission === 'denied' ? 'Bloqueadas' : 'Desativadas'}
+                {currentPermission === 'granted' ? 'Ativadas' : currentPermission === 'denied' ? 'Bloqueadas' : 'Desativadas'}
               </Badge>
             </div>
             <p className="text-sm text-blue-800 mb-3">
               Receba alertas nativos no desktop e celular mesmo com o navegador fechado. Ideal para PWA.
             </p>
-            {permission !== 'granted' && (
+            <div className="flex gap-2">
+              {currentPermission !== 'granted' && (
+                <Button
+                  onClick={requestPermission}
+                  variant="outline"
+                  size="sm"
+                  className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                >
+                  {currentPermission === 'denied' ? 'Tentar Novamente' : 'Ativar Notificações Push'}
+                </Button>
+              )}
               <Button
-                onClick={requestPermission}
-                variant="outline"
+                onClick={() => {
+                  const newPerm = Notification.permission;
+                  setCurrentPermission(newPerm);
+                  if (newPerm === 'granted') {
+                    toast.success('Permissão detectada!');
+                  } else if (newPerm === 'denied') {
+                    toast.error('Ainda bloqueado');
+                  } else {
+                    toast.info('Permissão: ' + newPerm);
+                  }
+                }}
+                variant="ghost"
                 size="sm"
-                className="border-blue-300 text-blue-700 hover:bg-blue-100"
               >
-                {permission === 'denied' ? 'Bloqueado pelo navegador' : 'Ativar Notificações Push'}
+                🔄 Atualizar Status
               </Button>
-            )}
-            {permission === 'denied' && (
+            </div>
+            {currentPermission === 'denied' && (
               <p className="text-xs text-red-600 mt-2">
-                Para ativar, vá nas configurações do navegador e permita notificações para este site.
+                Se você já liberou no navegador, clique em "Atualizar Status". Caso contrário, vá em Configurações do navegador → Privacidade → Notificações → Permitir este site.
               </p>
             )}
           </div>
