@@ -13,8 +13,9 @@ import FormulariosTab from "./MassRegistrationTabs/FormulariosTab";
 
 export default function RegistroAtendimentoMassaModal({ open, onClose, user }) {
   const queryClient = useQueryClient();
-  const [selectedWorkshops, setSelectedWorkshops] = useState([]);
-  const [activeTab, setActiveTab] = useState("atendimento");
+  const [activeTab, setActiveTab] = useState("ata");
+  const [selectedClients, setSelectedClients] = useState([]);
+  const [selectedGroupId, setSelectedGroupId] = useState(null);
   const [formData, setFormData] = useState({
     tipo_atendimento: "acompanhamento_mensal",
     data_agendada: "",
@@ -27,28 +28,22 @@ export default function RegistroAtendimentoMassaModal({ open, onClose, user }) {
     observacoes: ""
   });
 
-  // Salvar dados ao desmontar ou fechar
-  React.useEffect(() => {
-    return () => {
-      if (open) {
-        sessionStorage.setItem("massRegistrationFormData", JSON.stringify(formData));
-        sessionStorage.setItem("massRegistrationSelectedWorkshops", JSON.stringify(selectedWorkshops));
-      }
-    };
-  }, [formData, selectedWorkshops, open]);
-
-  // Restaurar dados ao abrir
-  React.useEffect(() => {
+  // Persistência em sessionStorage
+  useEffect(() => {
     if (open) {
-      const savedFormData = sessionStorage.getItem("massRegistrationFormData");
-      const savedWorkshops = sessionStorage.getItem("massRegistrationSelectedWorkshops");
-      if (savedFormData) setFormData(JSON.parse(savedFormData));
-      if (savedWorkshops) setSelectedWorkshops(JSON.parse(savedWorkshops));
-    } else {
-      sessionStorage.removeItem("massRegistrationFormData");
-      sessionStorage.removeItem("massRegistrationSelectedWorkshops");
+      const savedForm = sessionStorage.getItem("massReg_form");
+      const savedClients = sessionStorage.getItem("massReg_clients");
+      if (savedForm) setFormData(JSON.parse(savedForm));
+      if (savedClients) setSelectedClients(JSON.parse(savedClients));
     }
   }, [open]);
+
+  useEffect(() => {
+    if (open) {
+      sessionStorage.setItem("massReg_form", JSON.stringify(formData));
+      sessionStorage.setItem("massReg_clients", JSON.stringify(selectedClients));
+    }
+  }, [formData, selectedClients, open]);
 
   const { data: workshops } = useQuery({
     queryKey: ['workshops-for-mass-registration'],
