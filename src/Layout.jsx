@@ -45,65 +45,65 @@ export default function Layout({ children, currentPageName }) {
     };
   }, []);
 
-  const loadUser = React.useCallback(async () => {
-    const publicPages = ['/PrimeiroAcesso', '/ClientRegistration', '/login', '/signup'];
-    const isPublicPage = publicPages.some(page => location.pathname.toLowerCase().includes(page.toLowerCase()));
+  useEffect(() => {
+    const loadUser = async () => {
+      const publicPages = ['/PrimeiroAcesso', '/ClientRegistration', '/login', '/signup'];
+      const isPublicPage = publicPages.some(page => location.pathname.toLowerCase().includes(page.toLowerCase()));
 
-    if (isPublicPage) {
-      setIsAuthenticated(false);
-      setIsCheckingAuth(false);
-      return;
-    }
+      if (isPublicPage) {
+        setIsAuthenticated(false);
+        setIsCheckingAuth(false);
+        return;
+      }
 
-    try {
-      const authenticated = await base44.auth.isAuthenticated();
-      setIsAuthenticated(authenticated);
+      try {
+        const authenticated = await base44.auth.isAuthenticated();
+        setIsAuthenticated(authenticated);
 
-      if (authenticated) {
-        try {
-          const currentUser = await base44.auth.me();
-          
-          // TEMPORARIAMENTE DESABILITADO: atualização de login
-          setUser(currentUser);
-          
-          const urlParams = new URLSearchParams(window.location.search);
-          const adminWorkshopId = urlParams.get('workshop_id');
-          let userWorkshop = null;
+        if (authenticated) {
+          try {
+            const currentUser = await base44.auth.me();
+            
+            // TEMPORARIAMENTE DESABILITADO: atualização de login
+            setUser(currentUser);
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const adminWorkshopId = urlParams.get('workshop_id');
+            let userWorkshop = null;
 
-          if (adminWorkshopId && currentUser.role === 'admin') {
-            userWorkshop = await base44.entities.Workshop.get(adminWorkshopId);
-            setIsAdminView(true);
-          } else {
-            setIsAdminView(false);
-            const ownedWorkshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
-            userWorkshop = Array.isArray(ownedWorkshops) && ownedWorkshops.length > 0 ? ownedWorkshops[0] : null;
+            if (adminWorkshopId && currentUser.role === 'admin') {
+              userWorkshop = await base44.entities.Workshop.get(adminWorkshopId);
+              setIsAdminView(true);
+            } else {
+              setIsAdminView(false);
+              const ownedWorkshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
+              userWorkshop = Array.isArray(ownedWorkshops) && ownedWorkshops.length > 0 ? ownedWorkshops[0] : null;
 
-            if (!userWorkshop && currentUser.workshop_id) {
-              try {
-                userWorkshop = await base44.entities.Workshop.get(currentUser.workshop_id);
-              } catch (err) {
-                console.error("Erro ao buscar workshop:", err);
+              if (!userWorkshop && currentUser.workshop_id) {
+                try {
+                  userWorkshop = await base44.entities.Workshop.get(currentUser.workshop_id);
+                } catch (err) {
+                  console.error("Erro ao buscar workshop:", err);
+                }
               }
             }
+
+            setWorkshop(userWorkshop || null);
+          } catch (userError) {
+            console.log("Error fetching user:", userError);
+            setUser(null);
           }
-
-          setWorkshop(userWorkshop || null);
-        } catch (userError) {
-          console.log("Error fetching user:", userError);
-          setUser(null);
         }
+      } catch (error) {
+        setIsAuthenticated(false);
+        setUser(null);
+      } finally {
+        setIsCheckingAuth(false);
       }
-    } catch (error) {
-      setIsAuthenticated(false);
-      setUser(null);
-    } finally {
-      setIsCheckingAuth(false);
-    }
-  }, [location.pathname]);
+    };
 
-  useEffect(() => {
     loadUser();
-  }, [loadUser]);
+  }, [location.pathname]);
 
 
 
