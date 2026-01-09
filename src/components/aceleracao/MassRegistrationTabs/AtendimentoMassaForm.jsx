@@ -4,9 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Calendar, Video } from "lucide-react";
+import { Calendar, Video, FileText } from "lucide-react";
 
-export default function AtendimentoMassaForm({ formData, onFormChange }) {
+export default function AtendimentoMassaForm({ formData, onFormChange, onPreviewPDF }) {
   const handleChange = (field, value) => {
     onFormChange({ ...formData, [field]: value });
   };
@@ -126,6 +126,16 @@ export default function AtendimentoMassaForm({ formData, onFormChange }) {
           rows={2}
         />
       </div>
+
+      <Button 
+        type="button" 
+        variant="outline" 
+        className="w-full mt-4"
+        onClick={onPreviewPDF}
+      >
+        <FileText className="w-4 h-4 mr-2" />
+        Visualizar PDF da Ata
+      </Button>
     </div>
   );
 }
