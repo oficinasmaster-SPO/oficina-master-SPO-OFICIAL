@@ -5,9 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Bell, AlertTriangle, Clock, CheckCircle2, Trash2, Loader2 } from "lucide-react";
+import { Bell, AlertTriangle, Clock, CheckCircle2, Trash2, Loader2, FileText, Users } from "lucide-react";
 import { format, isPast, isToday, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import NotificationPreferences from "@/components/notifications/NotificationPreferences";
 
 export default function Notificacoes() {
   const queryClient = useQueryClient();
@@ -160,6 +161,11 @@ export default function Notificacoes() {
   const getNotificationIcon = (type) => {
     const icons = {
       'prazo_proximo': <Clock className="w-5 h-5 text-yellow-600" />,
+      'prazo_hoje': <Clock className="w-5 h-5 text-orange-600" />,
+      'prazo_semana': <Clock className="w-5 h-5 text-blue-600" />,
+      'processo_atrasado': <AlertTriangle className="w-5 h-5 text-red-600" />,
+      'processo_concluido': <CheckCircle2 className="w-5 h-5 text-green-600" />,
+      'nova_ata': <FileText className="w-5 h-5 text-purple-600" />,
       'atrasada': <AlertTriangle className="w-5 h-5 text-red-600" />,
       'status_alterado': <CheckCircle2 className="w-5 h-5 text-green-600" />,
       'nova_subtarefa': <Bell className="w-5 h-5 text-blue-600" />,
@@ -245,6 +251,7 @@ export default function Notificacoes() {
             <TabsTrigger value="all">Todas</TabsTrigger>
             <TabsTrigger value="unread">Não Lidas</TabsTrigger>
             <TabsTrigger value="tasks">Minhas Tarefas</TabsTrigger>
+            <TabsTrigger value="preferences">Preferências</TabsTrigger>
           </TabsList>
 
           <TabsContent value="all" className="space-y-4">
@@ -427,6 +434,10 @@ export default function Notificacoes() {
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          <TabsContent value="preferences">
+            <NotificationPreferences user={user} />
           </TabsContent>
         </Tabs>
       </div>
