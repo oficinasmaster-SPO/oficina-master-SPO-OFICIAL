@@ -10,6 +10,8 @@ import Sidebar from "@/components/navigation/Sidebar";
 import Breadcrumbs from "@/components/navigation/Breadcrumbs";
 import { SharedDataProvider } from "@/components/shared/SharedDataProvider";
 import GlobalSearch from "@/components/navigation/GlobalSearch";
+import NotificationListener from "@/components/notifications/NotificationListener";
+import NotificationPermissionBanner from "@/components/notifications/NotificationPermissionBanner";
 // import ActivityTracker from "@/components/tracking/ActivityTracker";
 import { usePermissions } from "@/components/hooks/usePermissions";
 

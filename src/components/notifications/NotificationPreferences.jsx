@@ -5,10 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { Bell, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Bell, Loader2, Smartphone } from "lucide-react";
 import { toast } from "sonner";
+import { useNotificationPush } from "./useNotificationPush";
 
 export default function NotificationPreferences({ user }) {
+  const { permission, isSupported, requestPermission } = useNotificationPush();
   const queryClient = useQueryClient();
 
   const { data: preferencias, isLoading } = useQuery({
@@ -90,6 +93,50 @@ export default function NotificationPreferences({ user }) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Notificações Push do Sistema */}
+        {isSupported && (
+          <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Smartphone className="w-5 h-5 text-blue-600" />
+                <h4 className="font-semibold text-blue-900">
+                  Notificações Push do Sistema
+                </h4>
+              </div>
+              <Badge 
+                className={
+                  permission === 'granted' 
+                    ? 'bg-green-100 text-green-700' 
+                    : permission === 'denied'
+                    ? 'bg-red-100 text-red-700'
+                    : 'bg-gray-100 text-gray-700'
+                }
+              >
+                {permission === 'granted' ? 'Ativadas' : permission === 'denied' ? 'Bloqueadas' : 'Desativadas'}
+              </Badge>
+            </div>
+            <p className="text-sm text-blue-800 mb-3">
+              Receba alertas nativos no desktop e celular mesmo com o navegador fechado. Ideal para PWA.
+            </p>
+            {permission !== 'granted' && (
+              <Button
+                onClick={requestPermission}
+                variant="outline"
+                size="sm"
+                className="border-blue-300 text-blue-700 hover:bg-blue-100"
+              >
+                {permission === 'denied' ? 'Bloqueado pelo navegador' : 'Ativar Notificações Push'}
+              </Button>
+            )}
+            {permission === 'denied' && (
+              <p className="text-xs text-red-600 mt-2">
+                Para ativar, vá nas configurações do navegador e permita notificações para este site.
+              </p>
+            )}
+          </div>
+        )}
+        
+        {/* Preferências existentes */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
