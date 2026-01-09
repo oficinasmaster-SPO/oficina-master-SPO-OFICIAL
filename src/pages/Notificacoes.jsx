@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Bell, AlertTriangle, Clock, CheckCircle2, Trash2, Loader2, FileText, Users } from "lucide-react";
 import { format, isPast, isToday, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 import NotificationPreferences from "@/components/notifications/NotificationPreferences";
 
 export default function Notificacoes() {
@@ -158,6 +159,16 @@ export default function Notificacoes() {
     s.due_date && isPast(new Date(s.due_date)) && !isToday(new Date(s.due_date)) && s.status !== "concluido"
   );
 
+  const testarNotificacoes = async () => {
+    try {
+      await base44.functions.invoke('testarNotificacoes');
+      toast.success('✅ 3 notificações de teste enviadas!');
+      queryClient.invalidateQueries(['notifications']);
+    } catch (error) {
+      toast.error('Erro ao enviar notificações de teste');
+    }
+  };
+
   const getNotificationIcon = (type) => {
     const icons = {
       'prazo_proximo': <Clock className="w-5 h-5 text-yellow-600" />,
@@ -195,20 +206,31 @@ export default function Notificacoes() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4">
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <Bell className="w-8 h-8 text-blue-600" />
-            <h1 className="text-4xl font-bold text-gray-900">
-              Notificações e Alertas
-            </h1>
-            {unreadCount > 0 && (
-              <Badge className="bg-red-500 text-white">
-                {unreadCount} nova{unreadCount !== 1 ? 's' : ''}
-              </Badge>
-            )}
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <Bell className="w-8 h-8 text-blue-600" />
+                <h1 className="text-4xl font-bold text-gray-900">
+                  Notificações e Alertas
+                </h1>
+                {unreadCount > 0 && (
+                  <Badge className="bg-red-500 text-white">
+                    {unreadCount} nova{unreadCount !== 1 ? 's' : ''}
+                  </Badge>
+                )}
+              </div>
+              <p className="text-gray-600">
+                Acompanhe prazos, atualizações e tarefas pendentes
+              </p>
+            </div>
+            <Button
+              onClick={testarNotificacoes}
+              variant="outline"
+              className="gap-2"
+            >
+              🧪 Testar Notificações
+            </Button>
           </div>
-          <p className="text-gray-600">
-            Acompanhe prazos, atualizações e tarefas pendentes
-          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
