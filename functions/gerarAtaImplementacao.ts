@@ -160,6 +160,18 @@ Deno.serve(async (req) => {
       ]
     });
 
+    // Notificar usuários sobre nova ATA
+    try {
+      await base44.asServiceRole.functions.invoke('notificarNovaAta', {
+        workshop_id: workshop_id,
+        ata_codigo: codigoAta,
+        ata_tipo: 'evidencia_implementacao',
+        criado_por_id: user.id
+      });
+    } catch (error) {
+      console.error("Erro ao notificar nova ATA:", error);
+    }
+
     return Response.json({ 
       success: true, 
       ata_id: ata.id,

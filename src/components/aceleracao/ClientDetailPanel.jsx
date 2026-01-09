@@ -55,6 +55,19 @@ export default function ClientDetailPanel({ client, processos, onClose, onAvalia
           evidencia_url: completionData.evidence_url
         });
       }
+
+      // Notificar outros usuários sobre a conclusão
+      const user = await base44.auth.me();
+      try {
+        await base44.functions.invoke('notificarConclusaoProcesso', {
+          workshop_id: activityToComplete.workshop_id,
+          processo_titulo: activityToComplete.title,
+          concluido_por_id: user.id,
+          progresso_id: activityId
+        });
+      } catch (error) {
+        console.error("Erro ao notificar conclusão:", error);
+      }
       
       queryClient.invalidateQueries(['progressos-cliente']);
       queryClient.invalidateQueries(['cronograma-progressos']);
