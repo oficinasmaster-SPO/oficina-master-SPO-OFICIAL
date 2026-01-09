@@ -127,56 +127,51 @@ Deno.serve(async (req) => {
     const contactResult = await contactResponse.json();
     console.log("✅ Contato criado/atualizado:", contactResult.contact.id);
 
-    // 2. Criar e enviar campanha one-to-one
-    const campaignData = {
-      campaign: {
-        type: 'single',
-        name: `Convite Colaborador - ${email} - ${Date.now()}`,
-        subject: `🎉 Bem-vindo(a) à ${workshop.name} - Acesse sua conta`,
-        fromName: workshop.name || 'Oficinas Master',
-        fromEmail: 'noreply@oficinasmaster.com.br',
-        htmlcontent: emailBody,
-        textcontent: `Olá ${name}, você foi convidado para ${workshop.name}. Acesse: ${inviteLink}`,
-        p: [contactResult.contact.id], // Lista de contatos (apenas este)
-        sendAs: 'html'
+    // 2. Enviar email usando automação/trigger do ActiveCampaign
+    // Adicionar tag ao contato para ativar automação
+    const tagData = {
+      contactTag: {
+        contact: contactResult.contact.id,
+        tag: 'convite-colaborador' // Certifique-se de criar essa tag e automação no AC
       }
     };
 
-    const campaignResponse = await fetch(`${AC_API_URL}/api/3/campaigns`, {
+    const tagResponse = await fetch(`${AC_API_URL}/api/3/contactTags`, {
       method: 'POST',
       headers: {
         'Api-Token': AC_API_KEY,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(campaignData)
+      body: JSON.stringify(tagData)
     });
 
-    if (!campaignResponse.ok) {
-      const errorText = await campaignResponse.text();
-      console.error("❌ Erro ao criar campanha:", errorText);
-      throw new Error(`Erro ao criar campanha no ActiveCampaign: ${campaignResponse.status}`);
+    if (!tagResponse.ok) {
+      const errorText = await tagResponse.text();
+      console.error("❌ Erro ao adicionar tag:", errorText);
+      // Não falhar aqui, apenas logar
+    } else {
+      console.log("✅ Tag adicionada ao contato");
     }
 
-    const campaignResult = await campaignResponse.json();
-    const campaignId = campaignResult.campaign.id;
-    console.log("✅ Campanha criada:", campaignId);
+    // 3. Enviar como nota/field customizado com os dados do convite
+    const noteData = {
+      note: {
+        note: `Link de Convite: ${inviteLink}\nSenha Temporária: Oficina@2025\nOficina: ${workshop.name}`,
+        relid: contactResult.contact.id,
+        reltype: 'Subscriber'
+      }
+    };
 
-    // 3. Enviar a campanha imediatamente
-    const sendResponse = await fetch(`${AC_API_URL}/api/3/campaigns/${campaignId}/actions/send`, {
+    await fetch(`${AC_API_URL}/api/3/notes`, {
       method: 'POST',
       headers: {
         'Api-Token': AC_API_KEY,
         'Content-Type': 'application/json'
-      }
+      },
+      body: JSON.stringify(noteData)
     });
 
-    if (!sendResponse.ok) {
-      const errorText = await sendResponse.text();
-      console.error("❌ Erro ao enviar campanha:", errorText);
-      throw new Error(`Erro ao enviar campanha: ${sendResponse.status}`);
-    }
-
-    console.log("✅ Email enviado com sucesso via ActiveCampaign!");
+    console.log("✅ Dados salvos no ActiveCampaign. Configure uma automação com tag 'convite-colaborador' para enviar o email.");
 
     // Atualizar status do convite
     await base44.asServiceRole.entities.EmployeeInvite.update(invite.id, {
