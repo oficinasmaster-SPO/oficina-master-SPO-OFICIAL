@@ -17,6 +17,7 @@ export default function RegistroAtendimentoMassaModal({ open, onClose, user }) {
   const [selectedClients, setSelectedClients] = useState([]);
   const [selectedGroupId, setSelectedGroupId] = useState(null);
   const [showFullForm, setShowFullForm] = useState(false);
+  const [keepOpen, setKeepOpen] = useState(false);
   const [formData, setFormData] = useState({
     tipo_atendimento: "acompanhamento_mensal",
     data_agendada: "",
