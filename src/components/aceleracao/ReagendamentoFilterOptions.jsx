@@ -1,3 +1,4 @@
+
 // Constantes para filtros de reagendamento
 export const STATUS_POS_VENDA = {
   cancelada_cliente_reagendada: "Cancelada pelo cliente (reagendada)",
@@ -6,8 +7,6 @@ export const STATUS_POS_VENDA = {
   cancelada_empresa_sem_reagendar: "Cancelada por nós (sem reagendar)",
   no_show_cliente: "No-show do cliente",
   no_show_empresa: "No-show nosso",
-  reagendada_confirmada: "Reagendada (confirmada)",
-  reagendada_pendente_confirmacao: "Reagendada (pendente de confirmação)",
   suspensa_impedimento_cliente: "Suspensa por impedimento do cliente",
   pausada_risco_conflito: "Pausada por risco / conflito"
 };
