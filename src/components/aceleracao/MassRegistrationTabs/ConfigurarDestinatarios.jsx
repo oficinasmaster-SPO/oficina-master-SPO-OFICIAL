@@ -2,9 +2,8 @@ import React, { useState, useMemo, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Search, Users, Plus, X, Trash2 } from "lucide-react";
+import { Search, Users, Plus, X, Trash2, Info } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 
@@ -14,6 +13,7 @@ export default function ConfigurarDestinatarios({
   workshops = [] 
 }) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [groupSearchTerm, setGroupSearchTerm] = useState("");
   const [selectedPlans, setSelectedPlans] = useState([]);
   const [savedGroups, setSavedGroups] = useState([]);
   const [showCreateGroup, setShowCreateGroup] = useState(false);
@@ -59,6 +59,21 @@ export default function ConfigurarDestinatarios({
     onSelectionChange(group.clientIds);
   };
 
+  const getGroupFeedback = (groupIds) => {
+    const plansInGroup = {};
+    let totalClients = 0;
+    groupIds.forEach(id => {
+      const w = workshops.find(ws => ws.id === id);
+      if (w) {
+        const plan = w.planoAtual || "FREE";
+        plansInGroup[plan] = (plansInGroup[plan] || 0) + 1;
+        totalClients++;
+      }
+    });
+    const plansList = Object.entries(plansInGroup).map(([plan, count]) => `${plan} (${count})`).join(", ");
+    return { totalClients, plansList, plansInGroup };
+  };
+
   const createGroup = () => {
     if (!groupName.trim()) {
       toast.error("Nome do grupo obrigatório");
@@ -68,17 +83,23 @@ export default function ConfigurarDestinatarios({
       toast.error("Selecione ao menos um cliente");
       return;
     }
+    const feedback = getGroupFeedback(selectedIds);
     const newGroup = {
       id: Date.now(),
       name: groupName,
       clientIds: selectedIds,
-      createdAt: new Date().toLocaleDateString("pt-BR")
+      createdAt: new Date().toLocaleDateString("pt-BR"),
+      feedback: `${feedback.totalClients} cliente(s) - ${feedback.plansList}`
     };
     setSavedGroups([...savedGroups, newGroup]);
     setGroupName("");
     setShowCreateGroup(false);
     toast.success(`Grupo "${newGroup.name}" criado com sucesso!`);
   };
+
+  const filteredSavedGroups = savedGroups.filter(g => 
+    g.name.toLowerCase().includes(groupSearchTerm.toLowerCase())
+  );
 
   const deleteGroup = (id) => {
     setSavedGroups(savedGroups.filter(g => g.id !== id));
@@ -111,36 +132,57 @@ export default function ConfigurarDestinatarios({
 
       {/* Grupos criados nesta sessão */}
       {savedGroups.length > 0 && (
-        <div className="space-y-2">
-          <Label className="text-sm font-medium">Grupos Criados</Label>
+        <div className="space-y-3">
+          <div>
+            <Label className="text-sm font-medium mb-2 block">Grupos Criados</Label>
+            <div className="relative mb-2">
+              <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+              <Input
+                placeholder="Buscar grupo..."
+                value={groupSearchTerm}
+                onChange={(e) => setGroupSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
           <div className="grid gap-2">
-            {savedGroups.map(group => (
-              <div key={group.id} className="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
-                <div className="flex-1">
-                  <p className="text-sm font-medium">{group.name}</p>
-                  <p className="text-xs text-gray-600">{group.clientIds.length} clientes • {group.createdAt}</p>
+            {filteredSavedGroups.length > 0 ? (
+              filteredSavedGroups.map(group => (
+                <div key={group.id} className="p-3 border rounded-lg bg-gray-50 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{group.name}</p>
+                      <p className="text-xs text-gray-600 mt-1">{group.createdAt}</p>
+                    </div>
+                    <div className="flex gap-2 flex-shrink-0">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => loadGroup(group)}
+                      >
+                        Carregar
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => deleteGroup(group.id)}
+                        className="text-red-600"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="bg-white rounded p-2 text-xs text-gray-700">
+                    <p className="font-medium mb-1">📊 Composição:</p>
+                    <p>{group.feedback}</p>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => loadGroup(group)}
-                  >
-                    Carregar
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => deleteGroup(group.id)}
-                    className="text-red-600"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
-                </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-xs text-gray-500 text-center py-2">Nenhum grupo encontrado</p>
+            )}
           </div>
         </div>
       )}
