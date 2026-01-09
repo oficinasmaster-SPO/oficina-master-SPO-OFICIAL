@@ -7,8 +7,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Video } from "lucide-react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 
 export default function RegistrarAtendimentoFormMass({ formData, onFormChange, onClose, user }) {
+  const [consultorSelecionado, setConsultorSelecionado] = useState(user?.id || "");
+
+  const { data: consultores = [] } = useQuery({
+    queryKey: ['consultores-massa'],
+    queryFn: async () => {
+      try {
+        const employees = await base44.entities.Employee.list();
+        return employees.filter(e => e.job_role === 'acelerador' || e.job_role === 'consultor');
+      } catch {
+        return [];
+      }
+    }
+  });
+
   const handleChange = (field, value) => {
     onFormChange({ ...formData, [field]: value });
   };
@@ -46,9 +62,17 @@ export default function RegistrarAtendimentoFormMass({ formData, onFormChange, o
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Consultor *</Label>
-              <div className="px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-sm">
-                {user?.full_name || "Não definido"}
-              </div>
+              <Select value={consultorSelecionado} onValueChange={setConsultorSelecionado}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={user?.id}>{user?.full_name}</SelectItem>
+                  {consultores.map(c => (
+                    <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label>Responsável pelo Lote *</Label>
