@@ -139,14 +139,21 @@ export default function NotificationPreferences({ user }) {
               )}
               <Button
                 onClick={() => {
-                  const newPerm = Notification.permission;
-                  setCurrentPermission(newPerm);
-                  if (newPerm === 'granted') {
-                    toast.success('Permissão detectada!');
-                  } else if (newPerm === 'denied') {
-                    toast.error('Ainda bloqueado');
-                  } else {
-                    toast.info('Permissão: ' + newPerm);
+                  if ('Notification' in window) {
+                    const newPerm = Notification.permission;
+                    setCurrentPermission(newPerm);
+                    // Força atualização do hook também
+                    window.dispatchEvent(new Event('focus'));
+
+                    setTimeout(() => {
+                      if (newPerm === 'granted') {
+                        toast.success('✅ Notificações Push Ativadas!');
+                      } else if (newPerm === 'denied') {
+                        toast.error('❌ Ainda bloqueadas. Vá nas configurações do navegador.');
+                      } else {
+                        toast.info('ℹ️ Status: ' + newPerm);
+                      }
+                    }, 100);
                   }
                 }}
                 variant="ghost"
