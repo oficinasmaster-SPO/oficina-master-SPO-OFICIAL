@@ -1,15 +1,18 @@
 import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { FileText, Users, Edit2 } from "lucide-react";
+import { FileText, Users, Edit2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import AtaPreviewDialog from "./AtaPreviewDialog";
 
 export default function MassReportView({ selectedClients, formData }) {
+  const queryClient = useQueryClient();
   const [showClientsDialog, setShowClientsDialog] = useState(false);
   const [showAtaPreview, setShowAtaPreview] = useState(false);
+  const [selectedAta, setSelectedAta] = useState(null);
 
   // Carregar dados dos clientes selecionados
   const { data: clientsData = [] } = useQuery({
@@ -22,6 +25,37 @@ export default function MassReportView({ selectedClients, formData }) {
       return data.filter(Boolean);
     },
     enabled: selectedClients.length > 0
+  });
+
+  // Mutation para salvar ATA alterada
+  const updateAtaMutation = useMutation({
+    mutationFn: async (ataData) => {
+      // Aqui você atualizaria a ATA no banco
+      // Por enquanto é um mock - será implementado quando criar os atendimentos
+      return ataData;
+    },
+    onSuccess: () => {
+      toast.success("Ata atualizada!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao atualizar: " + error.message);
+    }
+  });
+
+  // Gerar lista de ATAs que serão criadas
+  const atasPreview = selectedClients.map((clientId, idx) => {
+    const client = clientsData.find(c => c.id === clientId);
+    return {
+      id: clientId,
+      workshop_name: client?.name || `Cliente ${idx + 1}`,
+      tipo_atendimento: formData.tipo_atendimento,
+      status: formData.status,
+      pauta: formData.pauta,
+      objetivos: formData.objetivos,
+      observacoes: formData.observacoes,
+      data_agendada: formData.data_agendada,
+      hora_agendada: formData.hora_agendada
+    };
   });
 
   return (
@@ -66,20 +100,36 @@ export default function MassReportView({ selectedClients, formData }) {
           <Users className="w-4 h-4" />
           Ver Clientes ({selectedClients.length})
         </Button>
-        <Button
-          onClick={() => setShowAtaPreview(true)}
-          className="gap-2 bg-blue-600 hover:bg-blue-700"
-        >
-          <FileText className="w-4 h-4" />
-          Visualizar Ata (PDF)
-        </Button>
-        <Button
-          variant="outline"
-          className="gap-2"
-        >
-          <Edit2 className="w-4 h-4" />
-          Editar Ata
-        </Button>
+      </div>
+
+      {/* Lista de ATAs por cliente */}
+      <div className="space-y-3">
+        <Label className="text-base font-semibold">ATAs que serão criadas</Label>
+        <div className="grid gap-2 max-h-64 overflow-y-auto">
+          {atasPreview.map((ata) => (
+            <div key={ata.id} className="p-3 border rounded-lg flex items-center justify-between hover:bg-gray-50">
+              <div className="flex-1">
+                <p className="font-medium text-sm">{ata.workshop_name}</p>
+                <p className="text-xs text-gray-600">{ata.data_agendada}</p>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setSelectedAta(ata);
+                    setShowAtaPreview(true);
+                  }}
+                  className="gap-1"
+                >
+                  <Edit2 className="w-3 h-3" />
+                  Editar
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Dialog: Clientes */}
@@ -99,35 +149,16 @@ export default function MassReportView({ selectedClients, formData }) {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog: Ata Preview */}
-      <Dialog open={showAtaPreview} onOpenChange={setShowAtaPreview}>
-        <DialogContent className="max-w-3xl max-h-96 overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Visualização da Ata</DialogTitle>
-          </DialogHeader>
-          <div className="p-6 bg-white border rounded">
-            <h2 className="text-xl font-bold mb-4">ATA DE REUNIÃO</h2>
-            <div className="space-y-4 text-sm">
-              <div>
-                <p className="font-semibold">Data: {formData.data_agendada}</p>
-                <p className="font-semibold">Tipo: {formData.tipo_atendimento}</p>
-              </div>
-              <div>
-                <p className="font-semibold mb-1">Pauta:</p>
-                <p className="whitespace-pre-wrap">{formData.pauta || "Não informada"}</p>
-              </div>
-              <div>
-                <p className="font-semibold mb-1">Objetivos:</p>
-                <p className="whitespace-pre-wrap">{formData.objetivos || "Não informados"}</p>
-              </div>
-              <div>
-                <p className="font-semibold mb-1">Observações:</p>
-                <p className="whitespace-pre-wrap">{formData.observacoes || "Nenhuma"}</p>
-              </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <AtaPreviewDialog
+        open={showAtaPreview}
+        onOpenChange={setShowAtaPreview}
+        ata={selectedAta}
+        onSave={(updatedAta) => {
+          setSelectedAta(updatedAta);
+          updateAtaMutation.mutate(updatedAta);
+        }}
+        isLoading={updateAtaMutation.isPending}
+      />
     </div>
   );
 }
