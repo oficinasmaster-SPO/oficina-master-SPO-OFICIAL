@@ -119,7 +119,12 @@ export default function TipoAtendimentoManager({ customTipos = [], onSave }) {
                   <div className="space-y-2">
                     {tipos.map((tipo, idx) => (
                       <div key={idx} className="flex items-center justify-between p-2 bg-blue-50 rounded border">
-                        <span className="text-sm">{tipo.label}</span>
+                        <div>
+                          <span className="text-sm font-medium">{tipo.label}</span>
+                          <span className="text-xs text-gray-600 ml-2">
+                            ({tipo.duracao_minutos ? `${(tipo.duracao_minutos / 60).toFixed(1)}h` : '-'})
+                          </span>
+                        </div>
                         <Button
                           size="sm"
                           variant="ghost"
