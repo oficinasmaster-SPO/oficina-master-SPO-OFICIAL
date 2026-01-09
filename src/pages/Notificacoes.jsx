@@ -192,33 +192,45 @@ export default function Notificacoes() {
         // Envia notificações push se tiver permissão
         if (permission === 'granted') {
           try {
-            sendNotification('🧪 Teste de Notificação 1', {
+            console.log('🔔 Enviando notificações push...');
+            
+            const result1 = sendNotification('🧪 Teste de Notificação 1', {
               body: 'Esta é uma notificação push de teste do sistema',
-              icon: '/logo192.png'
+              icon: '/logo192.png',
+              tag: 'test-1',
+              requireInteraction: false
             });
+            console.log('Notificação 1:', result1);
             
             setTimeout(() => {
-              sendNotification('⚠️ Teste de Notificação 2', {
+              const result2 = sendNotification('⚠️ Teste de Notificação 2', {
                 body: 'Segunda notificação push - funcionando perfeitamente!',
-                icon: '/logo192.png'
+                icon: '/logo192.png',
+                tag: 'test-2',
+                requireInteraction: false
               });
-            }, 1000);
+              console.log('Notificação 2:', result2);
+            }, 1500);
             
             setTimeout(() => {
-              sendNotification('✅ Teste de Notificação 3', {
+              const result3 = sendNotification('✅ Teste de Notificação 3', {
                 body: 'Terceira notificação push - sistema completo!',
-                icon: '/logo192.png'
+                icon: '/logo192.png',
+                tag: 'test-3',
+                requireInteraction: false
               });
-            }, 2000);
+              console.log('Notificação 3:', result3);
+            }, 3000);
             
-            toast.success('🔔 3 notificações push enviadas!');
+            toast.success('🔔 3 notificações push enviadas! Verifique a área de notificações do sistema.');
           } catch (error) {
-            toast.error('❌ Erro ao enviar notificações push');
+            console.error('❌ Erro ao enviar push:', error);
+            toast.error('❌ Erro ao enviar notificações push: ' + error.message);
           }
         } else if (permission === 'denied') {
           toast.warning('⚠️ Notificações push bloqueadas. Ative nas configurações do navegador.');
         } else {
-          toast.info('ℹ️ Ative as notificações push em Preferências para recebê-las.');
+          toast.info('ℹ️ Permissão: ' + permission + '. Clique em "Ativar Notificações Push" primeiro.');
         }
       }, 2000);
     } catch (error) {
