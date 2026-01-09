@@ -1,19 +1,19 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { FileText, Users, Edit2 } from "lucide-react";
+import { FileText, Users, Edit2, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import AtaPreviewDialog from "./AtaPreviewDialog";
+import ViewClientsDialog from "./ViewClientsDialog";
 
 export default function MassReportView({ selectedClients, formData }) {
   const queryClient = useQueryClient();
-  const [showClientsDialog, setShowClientsDialog] = useState(false);
+  const [showViewClients, setShowViewClients] = useState(false);
   const [showAtaPreview, setShowAtaPreview] = useState(false);
   const [selectedAta, setSelectedAta] = useState(null);
+  const [selectedGroupClients, setSelectedGroupClients] = useState([]);
+  const [selectedGroupName, setSelectedGroupName] = useState("");
 
   // Carregar dados dos clientes selecionados
   const { data: clientsData = [] } = useQuery({
@@ -58,21 +58,17 @@ export default function MassReportView({ selectedClients, formData }) {
     }
   });
 
-  // Gerar lista de ATAs que serão criadas
-  const atasPreview = selectedClients.map((clientId, idx) => {
-    const client = clientsData.find(c => c.id === clientId);
-    return {
-      id: clientId,
-      workshop_name: client?.name || `Cliente ${idx + 1}`,
-      tipo_atendimento: formData.tipo_atendimento,
-      status: formData.status,
-      pauta: formData.pauta,
-      objetivos: formData.objetivos,
-      observacoes: formData.observacoes,
-      data_agendada: formData.data_agendada,
-      hora_agendada: formData.hora_agendada
-    };
-  });
+  // Gerar resumo do lote (disparo em massa)
+  const batchSummary = {
+    id: `BATCH-${new Date().getTime().toString().slice(-8)}`,
+    groupName: formData.groupName || `Lote ${new Date().toLocaleDateString("pt-BR")}`,
+    data: formData.data_agendada,
+    hora: formData.hora_agendada,
+    tipo: formData.tipo_atendimento,
+    status: formData.status,
+    clientCount: selectedClients.length,
+    clientIds: selectedClients
+  };
 
   return (
     <div className="space-y-6">
