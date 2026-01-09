@@ -7,8 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { downloadAtaPDF } from "./AtasPDFGenerator";
 import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
+import AtaSendOptionsBar from "./AtaSendOptionsBar";
 
-export default function VisualizarAtaModal({ ata, workshop, onClose }) {
+export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose }) {
   const [ataAtualizada, setAtaAtualizada] = React.useState(ata);
 
   React.useEffect(() => {
@@ -47,18 +48,21 @@ export default function VisualizarAtaModal({ ata, workshop, onClose }) {
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto print:max-w-full">
         <DialogHeader className="print:hidden">
-          <DialogTitle className="flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <FileText className="w-5 h-5" />
-              ATA de Atendimento - {ataAtualizada.code}
-            </span>
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" onClick={handleDownload}>
-                <Download className="w-4 h-4 mr-2" />
-                Download PDF
-              </Button>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                ATA de Atendimento - {ataAtualizada.code}
+              </span>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={handleDownload}>
+                  <Download className="w-4 h-4 mr-2" />
+                  Download PDF
+                </Button>
+              </div>
             </div>
-          </DialogTitle>
+            <AtaSendOptionsBar ata={ataAtualizada} workshop={workshop} atendimento={atendimento} />
+          </div>
         </DialogHeader>
 
         <div className="space-y-6 py-4 print:py-8">
