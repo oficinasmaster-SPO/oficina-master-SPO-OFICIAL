@@ -20,10 +20,16 @@ export default function TipoAtendimentoManager({ customTipos = [], onSave }) {
   const [isOpen, setIsOpen] = useState(false);
   const [tipos, setTipos] = useState(customTipos);
   const [novoTipo, setNovoTipo] = useState("");
+  const [duracaoHoras, setDuracaoHoras] = useState("");
 
   const addTipo = () => {
     if (!novoTipo.trim()) {
       toast.error("Digite um nome para o tipo");
+      return;
+    }
+
+    if (!duracaoHoras || parseFloat(duracaoHoras) <= 0) {
+      toast.error("Digite uma duração válida em horas");
       return;
     }
 
@@ -35,8 +41,10 @@ export default function TipoAtendimentoManager({ customTipos = [], onSave }) {
       return;
     }
 
-    setTipos([...tipos, { value, label: novoTipo.trim() }]);
+    const duracaoMinutos = Math.round(parseFloat(duracaoHoras) * 60);
+    setTipos([...tipos, { value, label: novoTipo.trim(), duracao_minutos: duracaoMinutos }]);
     setNovoTipo("");
+    setDuracaoHoras("");
     toast.success("Tipo adicionado!");
   };
 
