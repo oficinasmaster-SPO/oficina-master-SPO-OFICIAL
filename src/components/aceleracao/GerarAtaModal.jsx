@@ -206,7 +206,7 @@ export default function GerarAtaModal({ atendimento, workshop, planoAceleracao, 
     setLoading(true);
     try {
       const ataCount = await base44.entities.MeetingMinutes.list();
-      const code = `IT.${String(ataCount.length + 1).padStart(4, '0')}`;
+      const code = `AT.${String(ataCount.length + 1).padStart(4, '0')}`;
 
       const ataData = {
         code,

@@ -194,6 +194,7 @@ export default function PainelAtendimentosTab({ user }) {
             <table className="w-full">
               <thead>
                 <tr className="border-b">
+                  <th className="text-left py-3 px-4">ID ATA</th>
                   <th className="text-left py-3 px-4">Data</th>
                   <th className="text-left py-3 px-4">Cliente</th>
                   <th className="text-left py-3 px-4">Tipo</th>
@@ -205,8 +206,18 @@ export default function PainelAtendimentosTab({ user }) {
               <tbody>
                 {atendimentosFiltrados.map((atendimento) => {
                   const workshop = workshops?.find(w => w.id === atendimento.workshop_id);
+                  const ataVinculada = atas?.find(a => a.id === atendimento.ata_id);
                   return (
                     <tr key={atendimento.id} className="border-b hover:bg-gray-50">
+                      <td className="py-3 px-4">
+                        {ataVinculada?.code ? (
+                          <span className="font-mono text-xs bg-blue-50 px-2 py-1 rounded border border-blue-200">
+                            {ataVinculada.code}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 text-xs">-</span>
+                        )}
+                      </td>
                       <td className="py-3 px-4">
                         {format(new Date(atendimento.data_agendada), "dd/MM/yyyy HH:mm")}
                       </td>

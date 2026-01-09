@@ -33,7 +33,7 @@ export const generateAtaPDF = (ata, workshop) => {
   
   y += 8;
   doc.setFontSize(13);
-  doc.text('IT - Instrução de Trabalho', pageWidth / 2, y, { align: 'center' });
+  doc.text('AT - Ata de Atendimento', pageWidth / 2, y, { align: 'center' });
 
   y += 12;
 

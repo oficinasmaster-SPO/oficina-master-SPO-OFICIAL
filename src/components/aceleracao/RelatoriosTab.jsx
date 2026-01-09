@@ -139,10 +139,12 @@ export default function RelatoriosTab({ user }) {
   }, [dadosFiltrados, filtros]);
 
   const exportarCSV = () => {
-    const headers = ['Data', 'Cliente', 'Tipo', 'Status', 'Consultor', 'Duração'];
+    const headers = ['ID ATA', 'Data', 'Cliente', 'Tipo', 'Status', 'Consultor', 'Duração'];
     const rows = dadosFiltrados.map(a => {
       const workshop = workshops?.find(w => w.id === a.workshop_id);
+      const ataVinculada = atas?.find(ata => ata.id === a.ata_id);
       return [
+        ataVinculada?.code || '-',
         format(new Date(a.data_agendada), 'dd/MM/yyyy HH:mm'),
         workshop?.name || '-',
         a.tipo_atendimento,
@@ -445,6 +447,7 @@ export default function RelatoriosTab({ user }) {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-gray-50">
+                  <th className="text-left py-3 px-4">ID ATA</th>
                   <th className="text-left py-3 px-4">Data</th>
                   <th className="text-left py-3 px-4">Cliente</th>
                   <th className="text-left py-3 px-4">Tipo</th>
@@ -457,8 +460,18 @@ export default function RelatoriosTab({ user }) {
               <tbody>
                 {dadosFiltrados.slice(0, 50).map((a) => {
                   const workshop = workshops?.find(w => w.id === a.workshop_id);
+                  const ataVinculada = atas?.find(ata => ata.id === a.ata_id);
                   return (
                     <tr key={a.id} className="border-b hover:bg-gray-50">
+                      <td className="py-3 px-4">
+                        {ataVinculada?.code ? (
+                          <span className="font-mono text-xs bg-blue-50 px-2 py-1 rounded border border-blue-200">
+                            {ataVinculada.code}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 text-xs">-</span>
+                        )}
+                      </td>
                       <td className="py-3 px-4">
                         {format(new Date(a.data_agendada), 'dd/MM/yyyy HH:mm')}
                       </td>
