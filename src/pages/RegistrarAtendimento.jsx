@@ -477,10 +477,14 @@ export default function RegistrarAtendimento() {
                       mentoria: 45,
                       outros: 60
                     };
+
+                    const tipoCustom = customTipos.find(t => t.value === value);
+                    const duracao = tipoCustom?.duracao_minutos || duracoes[value] || 60;
+
                     setFormData({ 
                       ...formData, 
                       tipo_atendimento: value,
-                      duracao_minutos: duracoes[value] || 60
+                      duracao_minutos: duracao
                     });
                   }}
                 >
