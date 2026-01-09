@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
 
     // Gerar código único da ATA
     const atasCount = await base44.asServiceRole.entities.MeetingMinutes.filter({ workshop_id });
-    const codigoAta = `IT.${String(atasCount.length + 1).padStart(4, '0')}`;
+    const codigoAta = `AT.${String(atasCount.length + 1).padStart(4, '0')}`;
 
     // Criar ATA no banco
     const ata = await base44.asServiceRole.entities.MeetingMinutes.create({
