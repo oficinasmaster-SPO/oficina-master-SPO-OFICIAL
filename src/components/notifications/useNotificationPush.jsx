@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
 export function useNotificationPush() {
-  const [permission, setPermission] = useState('default');
+  const [permission, setPermission] = useState(() => 
+    'Notification' in window ? Notification.permission : 'default'
+  );
   const [isSupported, setIsSupported] = useState(false);
 
   const checkPermission = () => {
@@ -17,10 +19,10 @@ export function useNotificationPush() {
   useEffect(() => {
     if ('Notification' in window) {
       setIsSupported(true);
-      checkPermission();
+      setPermission(Notification.permission);
       
       window.addEventListener('focus', checkPermission);
-      const interval = setInterval(checkPermission, 1000);
+      const interval = setInterval(checkPermission, 2000);
       
       return () => {
         window.removeEventListener('focus', checkPermission);

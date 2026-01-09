@@ -74,10 +74,24 @@ export default function Notificacoes() {
 
   const deleteNotificationMutation = useMutation({
     mutationFn: async (notificationId) => {
-      await base44.entities.Notification.delete(notificationId);
+      try {
+        await base44.entities.Notification.delete(notificationId);
+      } catch (error) {
+        if (error.response?.status === 404) {
+          // Notificação já foi deletada, apenas invalida o cache
+          return;
+        }
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['notifications']);
+      toast.success('Notificação removida');
+    },
+    onError: (error) => {
+      if (error.response?.status !== 404) {
+        toast.error('Erro ao remover notificação');
+      }
     }
   });
 
