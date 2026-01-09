@@ -184,11 +184,17 @@ export default function MassReportView({ selectedClients, formData }) {
             </tbody>
           </table>
         </div>
-      ) : (
-        <div className="text-center py-8 text-gray-500">
-          <p>Selecione clientes para visualizar o resumo do disparo</p>
-        </div>
-      )}
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <p>Selecione clientes para visualizar o resumo do disparo</p>
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="historico">
+          <MassReportHistory />
+        </TabsContent>
+      </Tabs>
 
       <AtaPreviewDialog
         open={showAtaPreview}
