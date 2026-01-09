@@ -6,19 +6,65 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Search, Users, Plus, X, Trash2, Info } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
+import GroupFilters from "./GroupFilters";
 
 export default function ConfigurarDestinatarios({ 
   selectedIds, 
   onSelectionChange, 
   workshops = [] 
 }) {
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
-  const [groupSearchTerm, setGroupSearchTerm] = useState("");
+  const [groupFilters, setGroupFilters] = useState({});
   const [selectedPlans, setSelectedPlans] = useState([]);
-  const [savedGroups, setSavedGroups] = useState([]);
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [groupName, setGroupName] = useState("");
   const [presetGroups, setPresetGroups] = useState([]);
+
+  // Obter usuário atual
+  const { data: user } = useQuery({
+    queryKey: ["current-user"],
+    queryFn: () => base44.auth.me()
+  });
+
+  // Carregar grupos salvos do banco de dados
+  const { data: savedGroups = [] } = useQuery({
+    queryKey: ["client-groups"],
+    queryFn: async () => {
+      const groups = await base44.entities.ClientGroup.filter({ is_active: true });
+      return Array.isArray(groups) ? groups : [];
+    },
+    enabled: !!user
+  });
+
+  // Mutation para criar grupo
+  const createGroupMutation = useMutation({
+    mutationFn: async (groupData) => {
+      return await base44.entities.ClientGroup.create(groupData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["client-groups"] });
+      setGroupName("");
+      setShowCreateGroup(false);
+      toast.success("Grupo salvo com sucesso!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao salvar grupo: " + error.message);
+    }
+  });
+
+  // Mutation para desativar grupo (soft delete)
+  const deactivateGroupMutation = useMutation({
+    mutationFn: async (groupId) => {
+      return await base44.entities.ClientGroup.update(groupId, { is_active: false });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["client-groups"] });
+      toast.success("Grupo removido");
+    }
+  });
 
   useEffect(() => {
     const saved = localStorage.getItem("client-groups");
@@ -84,22 +130,21 @@ export default function ConfigurarDestinatarios({
       return;
     }
     const feedback = getGroupFeedback(selectedIds);
-    const newGroup = {
-      id: Date.now(),
+    createGroupMutation.mutate({
       name: groupName,
-      clientIds: selectedIds,
-      createdAt: new Date().toLocaleDateString("pt-BR"),
-      feedback: `${feedback.totalClients} cliente(s) - ${feedback.plansList}`
-    };
-    setSavedGroups([...savedGroups, newGroup]);
-    setGroupName("");
-    setShowCreateGroup(false);
-    toast.success(`Grupo "${newGroup.name}" criado com sucesso!`);
+      client_ids: selectedIds,
+      description: `${feedback.totalClients} cliente(s) - ${feedback.plansList}`,
+      workshop_id: workshops[0]?.id || "general",
+      created_by: user?.email
+    });
   };
 
-  const filteredSavedGroups = savedGroups.filter(g => 
-    g.name.toLowerCase().includes(groupSearchTerm.toLowerCase())
-  );
+  const filteredSavedGroups = useMemo(() => {
+    return savedGroups.filter(g => {
+      const matchName = g.name.toLowerCase().includes(groupFilters.name?.toLowerCase() || "");
+      return matchName;
+    });
+  }, [savedGroups, groupFilters.name]);
 
   const deleteGroup = (id) => {
     setSavedGroups(savedGroups.filter(g => g.id !== id));
@@ -130,21 +175,15 @@ export default function ConfigurarDestinatarios({
         </div>
       </div>
 
-      {/* Grupos criados nesta sessão */}
+      {/* Grupos salvos com filtros */}
       {savedGroups.length > 0 && (
         <div className="space-y-3">
-          <div>
-            <Label className="text-sm font-medium mb-2 block">Grupos Criados</Label>
-            <div className="relative mb-2">
-              <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-              <Input
-                placeholder="Buscar grupo..."
-                value={groupSearchTerm}
-                onChange={(e) => setGroupSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </div>
+          <Label className="text-sm font-medium">Grupos Salvos</Label>
+          <GroupFilters
+            filters={groupFilters}
+            onFilterChange={setGroupFilters}
+            onClear={() => setGroupFilters({})}
+          />
           <div className="grid gap-2">
             {filteredSavedGroups.length > 0 ? (
               filteredSavedGroups.map(group => (
@@ -152,31 +191,22 @@ export default function ConfigurarDestinatarios({
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1">
                       <p className="text-sm font-medium">{group.name}</p>
-                      <p className="text-xs text-gray-600 mt-1">{group.createdAt}</p>
+                      <p className="text-xs text-gray-600 mt-1">
+                        Criado: {new Date(group.created_date).toLocaleDateString("pt-BR")}
+                      </p>
                     </div>
-                    <div className="flex gap-2 flex-shrink-0">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={() => loadGroup(group)}
-                      >
-                        Carregar
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => deleteGroup(group.id)}
-                        className="text-red-600"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onSelectionChange(group.client_ids)}
+                    >
+                      Carregar
+                    </Button>
                   </div>
                   <div className="bg-white rounded p-2 text-xs text-gray-700">
                     <p className="font-medium mb-1">📊 Composição:</p>
-                    <p>{group.feedback}</p>
+                    <p>{group.description}</p>
                   </div>
                 </div>
               ))
