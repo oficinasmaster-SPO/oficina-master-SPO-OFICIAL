@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,9 +8,11 @@ import { X, User, MapPin, Calendar, CheckCircle2, Clock, AlertCircle, FileText, 
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import CompletionModal from "@/components/cronograma/CompletionModal";
 
 export default function ClientDetailPanel({ client, processos, onClose, onAvaliar }) {
   const queryClient = useQueryClient();
+  const [activityToComplete, setActivityToComplete] = useState(null);
 
   // Carregar progressos do cliente
   const { data: progressosCliente = [] } = useQuery({
