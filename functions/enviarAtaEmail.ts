@@ -33,8 +33,9 @@ Deno.serve(async (req) => {
     const atas = await base44.entities.MeetingMinutes.filter({ atendimento_id: atendimento_id });
     const ata = atas[0];
 
-    // Gerar link da plataforma para ATA (página pública, sem autenticação)
-    const linkAta = ata ? `${Deno.env.get('APP_URL') || 'https://oficinasmaster.com'}/VisualizarAtaPublica?ata_id=${ata.id}&workshop_id=${workshop.id}` : null;
+    // Link para acessar o sistema (cliente faz login e visualiza ATA)
+    const appUrl = Deno.env.get('APP_URL') || 'https://oficinasmaster.com';
+    const linkSistema = appUrl;
 
     const emailBody = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -65,17 +66,20 @@ Deno.serve(async (req) => {
           </ul>
         ` : ''}
 
-        ${linkAta ? `
-          <div style="background: #dbeafe; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3b82f6;">
-            <p style="margin: 0; color: #1e40af;"><strong>🔗 Acesse a ATA Completa:</strong></p>
-            <p style="margin: 10px 0 0 0;">
-              <a href="${linkAta}" style="color: #2563eb; font-weight: bold; text-decoration: none;">Clique aqui para visualizar a ATA</a>
-            </p>
-            <p style="margin: 5px 0 0 0; font-size: 12px; color: #1e40af;">
-              Acesso direto sem necessidade de login. Clique para visualizar.
-            </p>
-          </div>
-        ` : ''}
+        <div style="background: #dbeafe; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3b82f6;">
+          <p style="margin: 0; color: #1e40af;"><strong>🔐 Acesse o Sistema:</strong></p>
+          <p style="margin: 10px 0 0 0;">
+            <a href="${linkSistema}" style="color: #2563eb; font-weight: bold; text-decoration: none; font-size: 16px;">Acessar Oficinas Master</a>
+          </p>
+          <p style="margin: 10px 0 0 0; font-size: 13px; color: #1e40af;">
+            <strong>Faça login com suas credenciais:</strong><br>
+            Email: ${owner.email}<br>
+            (Você receberá a senha por email ou contato direto)
+          </p>
+          <p style="margin: 10px 0 0 0; font-size: 12px; color: #1e40af;">
+            Após fazer login, você visualizará a ATA completa no seu painel.
+          </p>
+        </div>
 
         <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
         <p style="color: #6b7280; font-size: 12px;">
