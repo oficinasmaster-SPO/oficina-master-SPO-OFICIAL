@@ -30,9 +30,14 @@ export default function ReagendarAtendimentoModal({ atendimento, workshop, onClo
       const user = await base44.auth.me();
       const novaDataHora = `${novaData}T${novoHorario}:00`;
 
+      // Se for cancelamento sem reagendamento, mantém status "atrasado". Caso contrário, muda para "reagendado"
+      const statusFinal = ['cancelada_cliente_sem_reagendar', 'cancelada_empresa_sem_reagendar'].includes(statusPosvenda)
+        ? 'atrasado'
+        : 'reagendado';
+
       const updateData = {
         data_agendada: novaDataHora,
-        status: 'reagendado',
+        status: statusFinal,
         motivo_reagendamento: descricaoManual,
         status_posta_venda: statusPosvenda,
         responsabilidade: responsabilidade
@@ -62,7 +67,7 @@ export default function ReagendarAtendimentoModal({ atendimento, workshop, onClo
         consultor_id: user.id,
         participantes: [],
         responsavel: { name: workshop.name, role: "Cliente" },
-        pautas: `Reagendamento de atendimento - ${statusPosvenda}`,
+        pautas: `${statusFinal === 'atrasado' ? 'Cancelamento (sem reagendamento)' : 'Reagendamento'} de atendimento - ${statusPosvenda}`,
         objetivos_atendimento: `Atendimento reagendado de ${new Date(atendimento.data_agendada).toLocaleString('pt-BR')} para ${new Date(novaDataHora).toLocaleString('pt-BR')}`,
         objetivos_consultor: descricaoManual || "Reagendamento conforme necessidade",
         proximos_passos: [{
