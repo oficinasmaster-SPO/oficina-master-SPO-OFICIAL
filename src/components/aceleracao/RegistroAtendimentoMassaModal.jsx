@@ -27,6 +27,29 @@ export default function RegistroAtendimentoMassaModal({ open, onClose, user }) {
     observacoes: ""
   });
 
+  // Salvar dados ao desmontar ou fechar
+  React.useEffect(() => {
+    return () => {
+      if (open) {
+        sessionStorage.setItem("massRegistrationFormData", JSON.stringify(formData));
+        sessionStorage.setItem("massRegistrationSelectedWorkshops", JSON.stringify(selectedWorkshops));
+      }
+    };
+  }, [formData, selectedWorkshops, open]);
+
+  // Restaurar dados ao abrir
+  React.useEffect(() => {
+    if (open) {
+      const savedFormData = sessionStorage.getItem("massRegistrationFormData");
+      const savedWorkshops = sessionStorage.getItem("massRegistrationSelectedWorkshops");
+      if (savedFormData) setFormData(JSON.parse(savedFormData));
+      if (savedWorkshops) setSelectedWorkshops(JSON.parse(savedWorkshops));
+    } else {
+      sessionStorage.removeItem("massRegistrationFormData");
+      sessionStorage.removeItem("massRegistrationSelectedWorkshops");
+    }
+  }, [open]);
+
   const { data: workshops } = useQuery({
     queryKey: ['workshops-for-mass-registration'],
     queryFn: async () => {
