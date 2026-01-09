@@ -10,6 +10,7 @@ import VisualizarAtaModal from "./VisualizarAtaModal";
 import ReagendarAtendimentoModal from "./ReagendarAtendimentoModal";
 import AtaSearchFilters from "./AtaSearchFilters";
 import { useAtaSearch } from "./useAtaSearch";
+import { ATENDIMENTO_STATUS, ATENDIMENTO_STATUS_COLORS, ATENDIMENTO_STATUS_LABELS } from "@/components/lib/ataConstants";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -73,20 +74,20 @@ export default function PainelAtendimentosTab({ user }) {
       const dataAtendimento = new Date(atendimento.data_agendada);
       
       if (now > dataAtendimento && 
-          !['realizado', 'participando', 'atrasado'].includes(atendimento.status)) {
+          ![ATENDIMENTO_STATUS.REALIZADO, ATENDIMENTO_STATUS.PARTICIPANDO, ATENDIMENTO_STATUS.ATRASADO].includes(atendimento.status)) {
         marcarAtrasadoMutation.mutate(atendimento.id);
       }
     });
   }, [atendimentos]);
 
   const marcarAtrasadoMutation = useMutation({
-    mutationFn: (id) => base44.entities.ConsultoriaAtendimento.update(id, { status: 'atrasado' }),
+    mutationFn: (id) => base44.entities.ConsultoriaAtendimento.update(id, { status: ATENDIMENTO_STATUS.ATRASADO }),
     onSuccess: () => queryClient.invalidateQueries(['todos-atendimentos'])
   });
 
   const iniciarMutation = useMutation({
     mutationFn: (id) => base44.entities.ConsultoriaAtendimento.update(id, { 
-      status: 'participando',
+      status: ATENDIMENTO_STATUS.PARTICIPANDO,
       hora_inicio_real: new Date().toISOString()
     }),
     onSuccess: (_, id) => {
@@ -98,7 +99,7 @@ export default function PainelAtendimentosTab({ user }) {
 
   const finalizarMutation = useMutation({
     mutationFn: (id) => base44.entities.ConsultoriaAtendimento.update(id, { 
-      status: 'realizado',
+      status: ATENDIMENTO_STATUS.REALIZADO,
       data_realizada: new Date().toISOString(),
       hora_fim_real: new Date().toISOString()
     }),
@@ -108,21 +109,9 @@ export default function PainelAtendimentosTab({ user }) {
     }
   });
 
-  const getStatusColor = (status) => {
-    const colors = {
-      agendado: "bg-red-100 text-red-800 border-red-300",
-      confirmado: "bg-yellow-100 text-yellow-800 border-yellow-300",
-      participando: "bg-blue-100 text-blue-800 border-blue-300 animate-pulse",
-      em_andamento: "bg-orange-100 text-orange-800 border-orange-300 animate-pulse",
-      realizado: "bg-green-100 text-green-800 border-green-300",
-      atrasado: "bg-red-500 text-white border-red-700 animate-pulse"
-    };
-    return colors[status] || "bg-gray-100 text-gray-800";
-  };
-
   const atendimentosFiltrados = (atendimentos || []).sort((a, b) => {
-    if (a.status === 'atrasado' && b.status !== 'atrasado') return -1;
-    if (a.status !== 'atrasado' && b.status === 'atrasado') return 1;
+    if (a.status === ATENDIMENTO_STATUS.ATRASADO && b.status !== ATENDIMENTO_STATUS.ATRASADO) return -1;
+    if (a.status !== ATENDIMENTO_STATUS.ATRASADO && b.status === ATENDIMENTO_STATUS.ATRASADO) return 1;
     return new Date(b.data_agendada) - new Date(a.data_agendada);
   });
 
@@ -226,15 +215,15 @@ export default function PainelAtendimentosTab({ user }) {
                         {atendimento.tipo_atendimento.replace(/_/g, ' ')}
                       </td>
                       <td className="py-3 px-4">
-                        <Badge className={getStatusColor(atendimento.status)}>
-                          {atendimento.status === 'atrasado' && <AlertTriangle className="w-3 h-3 mr-1" />}
-                          {atendimento.status}
+                        <Badge className={ATENDIMENTO_STATUS_COLORS[atendimento.status]}>
+                          {atendimento.status === ATENDIMENTO_STATUS.ATRASADO && <AlertTriangle className="w-3 h-3 mr-1" />}
+                          {ATENDIMENTO_STATUS_LABELS[atendimento.status]}
                         </Badge>
                       </td>
                       <td className="py-3 px-4 text-sm">{atendimento.consultor_nome}</td>
                       <td className="py-3 px-4">
                         <div className="flex items-center justify-end gap-1">
-                          {(atendimento.status === 'agendado' || atendimento.status === 'confirmado' || atendimento.status === 'reagendado') && (
+                          {(atendimento.status === ATENDIMENTO_STATUS.AGENDADO || atendimento.status === ATENDIMENTO_STATUS.CONFIRMADO || atendimento.status === ATENDIMENTO_STATUS.REAGENDADO) && (
                             <>
                               <Button
                                 variant="ghost"
@@ -258,7 +247,7 @@ export default function PainelAtendimentosTab({ user }) {
                             </>
                           )}
 
-                          {atendimento.status === 'participando' && (
+                          {atendimento.status === ATENDIMENTO_STATUS.PARTICIPANDO && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -299,7 +288,7 @@ export default function PainelAtendimentosTab({ user }) {
                             </Button>
                           )}
                           
-                          {!atendimento.ata_id && atendimento.status === 'realizado' && (
+                          {!atendimento.ata_id && atendimento.status === ATENDIMENTO_STATUS.REALIZADO && (
                             <Button
                               variant="ghost"
                               size="sm"
