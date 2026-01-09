@@ -89,29 +89,75 @@ export default function CronogramaGeral() {
   console.log("🔍 DEBUG - All Plan Features:", planFeatures);
   
   // Combinar funcionalidades e módulos do cronograma
-  const processos = [
-    ...(planData?.cronograma_features?.map(featId => ({
-      codigo: featId,
-      nome: featId.replace(/_/g, ' ').toUpperCase(),
-      tipo: 'funcionalidade'
-    })) || []),
-    ...(planData?.cronograma_modules?.map(modId => ({
-      codigo: modId,
-      nome: modId,
-      tipo: 'modulo'
-    })) || [])
-  ];
+  let processos = [];
 
-  // Fallback: Se não há PlanFeature configurado, busca templates do cronograma
-  if (processos.length === 0 && templates.length > 0) {
-    const templateProcessos = templates
-      .filter(t => t.plan_id === selectedPlan || !t.plan_id)
-      .map(t => ({
-        codigo: t.modulo_codigo || t.id,
-        nome: t.nome || t.titulo || 'Processo',
-        tipo: 'template'
-      }));
-    processos.push(...templateProcessos);
+  if (selectedPlan === 'TODOS') {
+    // Quando "TODOS" está selecionado, agregar processos de todos os planos
+    const processosMap = new Map();
+    
+    planFeatures.forEach(pf => {
+      pf.cronograma_features?.forEach(featId => {
+        if (!processosMap.has(featId)) {
+          processosMap.set(featId, {
+            codigo: featId,
+            nome: featId.replace(/_/g, ' ').toUpperCase(),
+            tipo: 'funcionalidade'
+          });
+        }
+      });
+      
+      pf.cronograma_modules?.forEach(modId => {
+        if (!processosMap.has(modId)) {
+          processosMap.set(modId, {
+            codigo: modId,
+            nome: modId,
+            tipo: 'modulo'
+          });
+        }
+      });
+    });
+    
+    processos = Array.from(processosMap.values());
+    
+    // Fallback para templates
+    if (processos.length === 0 && templates.length > 0) {
+      templates.forEach(t => {
+        const codigo = t.modulo_codigo || t.id;
+        if (!processosMap.has(codigo)) {
+          processos.push({
+            codigo,
+            nome: t.nome || t.titulo || 'Processo',
+            tipo: 'template'
+          });
+        }
+      });
+    }
+  } else {
+    // Lógica original para planos específicos
+    processos = [
+      ...(planData?.cronograma_features?.map(featId => ({
+        codigo: featId,
+        nome: featId.replace(/_/g, ' ').toUpperCase(),
+        tipo: 'funcionalidade'
+      })) || []),
+      ...(planData?.cronograma_modules?.map(modId => ({
+        codigo: modId,
+        nome: modId,
+        tipo: 'modulo'
+      })) || [])
+    ];
+
+    // Fallback: Se não há PlanFeature configurado, busca templates do cronograma
+    if (processos.length === 0 && templates.length > 0) {
+      const templateProcessos = templates
+        .filter(t => t.plan_id === selectedPlan || !t.plan_id)
+        .map(t => ({
+          codigo: t.modulo_codigo || t.id,
+          nome: t.nome || t.titulo || 'Processo',
+          tipo: 'template'
+        }));
+      processos.push(...templateProcessos);
+    }
   }
 
   // Calcular contadores por processo
