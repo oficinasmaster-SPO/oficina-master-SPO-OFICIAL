@@ -176,8 +176,7 @@ export default function ClientDetailPanel({ client, processos, onClose, onAvalia
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => handleMarcarConcluido(processo, progresso)}
-                              disabled={marcarConcluidoMutation.isPending}
+                              onClick={() => handleOpenCompletionModal(processo, progresso)}
                             >
                               <CheckCircle2 className="w-4 h-4 mr-1" />
                               Concluir
