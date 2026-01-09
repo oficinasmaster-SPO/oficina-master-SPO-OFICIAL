@@ -60,16 +60,24 @@ export default function MassReportView({ selectedClients, formData }) {
     }
   });
 
+  // Gerar ID sequencial do disparo em massa
+  const getNextDisparoId = () => {
+    const lastId = localStorage.getItem("lastDisparoId") || "0";
+    const nextNumber = parseInt(lastId) + 1;
+    localStorage.setItem("lastDisparoId", nextNumber.toString());
+    return `DP${String(nextNumber).padStart(3, "0")}`;
+  };
+
   // Gerar resumo do lote (disparo em massa)
   const batchSummary = {
-    id: `BATCH-${new Date().getTime().toString().slice(-8)}`,
+    id: getNextDisparoId(),
     groupName: formData.groupName || `Lote ${new Date().toLocaleDateString("pt-BR")}`,
     data: formData.data_agendada,
     hora: formData.hora_agendada,
     tipo: formData.tipo_atendimento,
     status: formData.status,
     clientCount: selectedClients.length,
-    clientIds: selectedClients
+    clientIds: selectedClientes
   };
 
   return (
