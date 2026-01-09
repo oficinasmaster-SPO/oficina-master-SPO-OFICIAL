@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, Loader2 } from "lucide-react";
+import { AlertCircle, Calendar, Loader2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import { STATUS_POS_VENDA, MOTIVOS_CLIENTE, MOTIVOS_EMPRESA, RESPONSABILIDADE_OPTIONS } from "./ReagendamentoFilterOptions";
@@ -165,6 +165,19 @@ export default function ReagendarAtendimentoModal({ atendimento, workshop, onClo
               </SelectContent>
             </Select>
           </div>
+
+          {/* Alerta para responsabilidade do cliente */}
+          {responsabilidade === 'cliente' && (
+            <div className="bg-blue-50 border border-blue-300 rounded-lg p-4 flex gap-3">
+              <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-blue-900">
+                <p className="font-semibold mb-1">📧 E-mail automático será enviado</p>
+                <p>
+                  O cliente receberá notificação automática informando que este atendimento será contabilizado como realizado com sucesso, conforme o contrato comercial, independentemente de agendamento futuro. O registro será mantido como evidência.
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Motivo Específico (dinâmico) */}
           {responsabilidade && (
