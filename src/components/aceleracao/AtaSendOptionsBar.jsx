@@ -99,44 +99,44 @@ export default function AtaSendOptionsBar({ ata, workshop, atendimento }) {
   return (
     <>
       <div className="flex flex-wrap gap-3 print:hidden">
-      <Button
-        onClick={handleEnviarEmail}
-        disabled={loading}
-        variant="outline"
-        className="gap-2"
-      >
-        {loading ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
-        ) : (
-          <Mail className="w-4 h-4" />
-        )}
-        Enviar por Email
-      </Button>
+        <Button
+          onClick={handleEnviarEmail}
+          disabled={loading}
+          variant="outline"
+          className="gap-2"
+        >
+          {loading ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Mail className="w-4 h-4" />
+          )}
+          Enviar por Email
+        </Button>
 
-      <Button
-        onClick={handleEnviarWhatsApp}
-        disabled={loading}
-        variant="outline"
-        className="gap-2 text-green-600 border-green-200 hover:bg-green-50"
-      >
-        {loading ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
-        ) : (
-          <MessageCircle className="w-4 h-4" />
-        )}
-        Enviar WhatsApp
-      </Button>
+        <Button
+          onClick={handleEnviarWhatsApp}
+          disabled={loading}
+          variant="outline"
+          className="gap-2 text-green-600 border-green-200 hover:bg-green-50"
+        >
+          {loading ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <MessageCircle className="w-4 h-4" />
+          )}
+          Enviar WhatsApp
+        </Button>
 
-      <Button
-        onClick={handleCopiarLinkPlataforma}
-        variant="outline"
-        className="gap-2 text-blue-600 border-blue-200 hover:bg-blue-50"
-      >
-        <LinkIcon className="w-4 h-4" />
-        Copiar Link da Plataforma
-      </Button>
+        <Button
+          onClick={handleCopiarLinkPlataforma}
+          variant="outline"
+          className="gap-2 text-blue-600 border-blue-200 hover:bg-blue-50"
+        >
+          <LinkIcon className="w-4 h-4" />
+          Copiar Link da Plataforma
+        </Button>
+      </div>
 
-      {/* Status Dialog */}
       <Dialog open={!!statusDialog} onOpenChange={() => setStatusDialog(null)}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
