@@ -221,12 +221,14 @@ export default function CronogramaGeral() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="START">START</SelectItem>
-                <SelectItem value="BRONZE">BRONZE</SelectItem>
-                <SelectItem value="PRATA">PRATA</SelectItem>
-                <SelectItem value="GOLD">GOLD</SelectItem>
-                <SelectItem value="IOM">IOM</SelectItem>
-                <SelectItem value="MILLIONS">MILLIONS</SelectItem>
+                <SelectItem value="TODOS" className="font-bold">TODOS OS CLIENTES</SelectItem>
+                <SelectItem value="FREE" className="font-bold">FREE</SelectItem>
+                <SelectItem value="START" className="font-bold">START</SelectItem>
+                <SelectItem value="BRONZE" className="font-bold">BRONZE</SelectItem>
+                <SelectItem value="PRATA" className="font-bold">PRATA</SelectItem>
+                <SelectItem value="GOLD" className="font-bold">GOLD</SelectItem>
+                <SelectItem value="IOM" className="font-bold">IOM</SelectItem>
+                <SelectItem value="MILLIONS" className="font-bold">MILLIONS</SelectItem>
               </SelectContent>
             </Select>
             <Button variant="outline" onClick={handleExport}>
