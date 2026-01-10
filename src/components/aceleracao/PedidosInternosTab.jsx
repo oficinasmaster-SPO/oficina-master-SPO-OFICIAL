@@ -17,6 +17,7 @@ export default function PedidosInternosTab({ user }) {
   const [editingPedido, setEditingPedido] = useState(null);
   const [filters, setFilters] = useState({
     search: '',
+    responsavel: 'all',
     status: 'all',
     prioridade: 'all',
     tipo: 'all'
@@ -108,11 +109,12 @@ export default function PedidosInternosTab({ user }) {
     const matchSearch = filters.search === '' || 
       p.titulo?.toLowerCase().includes(filters.search.toLowerCase()) ||
       p.cliente_nome?.toLowerCase().includes(filters.search.toLowerCase());
+    const matchResponsavel = filters.responsavel === 'all' || p.responsavel_nome === filters.responsavel;
     const matchStatus = filters.status === 'all' || p.status === filters.status;
     const matchPrioridade = filters.prioridade === 'all' || p.prioridade === filters.prioridade;
     const matchTipo = filters.tipo === 'all' || p.tipo === filters.tipo;
     
-    return matchSearch && matchStatus && matchPrioridade && matchTipo;
+    return matchSearch && matchResponsavel && matchStatus && matchPrioridade && matchTipo;
   });
 
   const pedidosPorStatus = {
@@ -161,7 +163,11 @@ export default function PedidosInternosTab({ user }) {
             </Button>
           </div>
 
-          <PedidosFilters filters={filters} onFilterChange={setFilters} />
+          <PedidosFilters 
+            filters={filters} 
+            onFilterChange={setFilters}
+            responsaveis={[...new Set(pedidos.map(p => p.responsavel_nome).filter(Boolean))].sort()}
+          />
 
           <div className="grid grid-cols-4 gap-4">
             <Card>
