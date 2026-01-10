@@ -4,16 +4,18 @@ import { base44 } from "@/api/base44Client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Video, CheckCircle, AlertCircle, Loader2, Settings, CreditCard, Wallet, Webhook } from "lucide-react";
+import { Calendar, Video, CheckCircle, AlertCircle, Loader2, Settings, CreditCard, Wallet, Webhook, Sliders } from "lucide-react";
 import IntegrationModal from "@/components/integrations/IntegrationModal";
 import IntegrationStatusWidget from "@/components/dashboard/IntegrationStatusWidget";
 import IntegrationHealthScore from "@/components/dashboard/IntegrationHealthScore";
 import QuickIntegrationsPanel from "@/components/dashboard/QuickIntegrationsPanel";
 import IntegrationMetricsChart from "@/components/dashboard/IntegrationMetricsChart";
+import IntegrationAdvancedSettings from "@/components/integrations/IntegrationAdvancedSettings";
 
 export default function Integracoes() {
   const [user, setUser] = useState(null);
   const [selectedIntegration, setSelectedIntegration] = useState(null);
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
 
   React.useEffect(() => {
     const loadUser = async () => {
@@ -114,6 +116,29 @@ export default function Integracoes() {
     );
   }
 
+  const handleSaveAdvancedSettings = async (settings) => {
+    console.log("Salvando configurações avançadas:", settings);
+    // Implementar salvamento via API
+  };
+
+  if (showAdvancedSettings && selectedIntegration) {
+    return (
+      <div className="space-y-6">
+        <Button
+          variant="outline"
+          onClick={() => setShowAdvancedSettings(false)}
+          className="mb-4"
+        >
+          ← Voltar para Integrações
+        </Button>
+        <IntegrationAdvancedSettings
+          integration={selectedIntegration}
+          onSave={handleSaveAdvancedSettings}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -204,18 +229,34 @@ export default function Integracoes() {
                         </Badge>
                       </td>
                       <td className="px-6 py-4 text-center">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedIntegration(integration);
-                          }}
-                          className="gap-2"
-                        >
-                          <Settings className="w-4 h-4" />
-                          {isConnected ? "Configurar" : "Integrar"}
-                        </Button>
+                        <div className="flex items-center justify-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedIntegration(integration);
+                            }}
+                            className="gap-2"
+                          >
+                            <Settings className="w-4 h-4" />
+                            {isConnected ? "Configurar" : "Integrar"}
+                          </Button>
+                          {isConnected && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedIntegration(integration);
+                                setShowAdvancedSettings(true);
+                              }}
+                              className="gap-2"
+                            >
+                              <Sliders className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
