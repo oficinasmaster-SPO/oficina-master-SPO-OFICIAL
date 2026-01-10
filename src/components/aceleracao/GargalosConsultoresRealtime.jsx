@@ -141,12 +141,20 @@ export default function GargalosConsultoresRealtime() {
 
                   <Progress value={Math.min(consultor.indice_saturacao, 200)} max={200} className="mb-3" />
 
-                  <div className="grid grid-cols-3 gap-3 text-sm">
+                  <div className="grid grid-cols-4 gap-3 text-sm">
                     <div>
-                      <p className="text-xs text-gray-600">Atendimentos</p>
-                      <p className="font-semibold">
-                        {consultor.horas_atendimentos.toFixed(1)}h / {consultor.qtd_atendimentos}
+                      <p className="text-xs text-gray-600">Atendimentos Realizados</p>
+                      <p className="font-semibold text-green-700">
+                        {consultor.horas_atendimentos_realizados.toFixed(1)}h
                       </p>
+                      <p className="text-xs">{consultor.qtd_atendimentos_realizados}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600">Atendimentos Previstos</p>
+                      <p className="font-semibold text-blue-700">
+                        {consultor.horas_atendimentos_previsto.toFixed(1)}h
+                      </p>
+                      <p className="text-xs">{consultor.qtd_atendimentos_previsto}</p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-600">Tarefas Backlog</p>
