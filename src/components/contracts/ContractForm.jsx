@@ -7,19 +7,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Send, Copy, Save } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, Send, Copy, Save, Eye, FileText } from "lucide-react";
 import { toast } from "sonner";
+import ContractPreview from "./ContractPreview";
+import { TRAFEGO_PAGO_TEMPLATE } from "./templates/TrafegoPagoTemplate";
 
 export default function ContractForm({ contract, user, onSuccess }) {
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState("formulario");
+  const [selectedWorkshop, setSelectedWorkshop] = useState(null);
   const [formData, setFormData] = useState({
     workshop_id: "",
     plan_type: "BRONZE",
-    contract_value: 0,
-    monthly_value: 0,
+    contract_value: 5000,
+    monthly_value: 5000,
     contract_duration_months: 12,
     payment_method: "asas",
-    contract_template: "",
+    contract_template: TRAFEGO_PAGO_TEMPLATE,
     custom_clauses: [],
     internal_notes: ""
   });
@@ -37,16 +42,28 @@ export default function ContractForm({ contract, user, onSuccess }) {
       setFormData({
         workshop_id: contract.workshop_id || "",
         plan_type: contract.plan_type || "BRONZE",
-        contract_value: contract.contract_value || 0,
-        monthly_value: contract.monthly_value || 0,
+        contract_value: contract.contract_value || 5000,
+        monthly_value: contract.monthly_value || 5000,
         contract_duration_months: contract.contract_duration_months || 12,
         payment_method: contract.payment_method || "asas",
-        contract_template: contract.contract_template || "",
+        contract_template: contract.contract_template || TRAFEGO_PAGO_TEMPLATE,
         custom_clauses: contract.custom_clauses || [],
         internal_notes: contract.internal_notes || ""
       });
+      
+      if (contract.workshop_id && workshops.length > 0) {
+        const ws = workshops.find(w => w.id === contract.workshop_id);
+        setSelectedWorkshop(ws);
+      }
     }
-  }, [contract]);
+  }, [contract, workshops]);
+
+  useEffect(() => {
+    if (formData.workshop_id && workshops.length > 0) {
+      const ws = workshops.find(w => w.id === formData.workshop_id);
+      setSelectedWorkshop(ws);
+    }
+  }, [formData.workshop_id, workshops]);
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
@@ -111,13 +128,39 @@ export default function ContractForm({ contract, user, onSuccess }) {
     }
   };
 
+  const copyLink = () => {
+    const link = contract?.contract_link || `${window.location.origin}/contrato/${contract?.id}`;
+    navigator.clipboard.writeText(link);
+    toast.success("Link copiado!");
+  };
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{contract ? 'Editar Contrato' : 'Novo Contrato'}</CardTitle>
+        <CardTitle>{contract ? 'Editar Contrato' : 'Novo Contrato - Tráfego Pago'}</CardTitle>
+        <p className="text-sm text-gray-600">
+          Os dados da oficina serão preenchidos automaticamente no contrato
+        </p>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="formulario">
+              <FileText className="w-4 h-4 mr-2" />
+              Dados do Contrato
+            </TabsTrigger>
+            <TabsTrigger value="preview" disabled={!formData.workshop_id}>
+              <Eye className="w-4 h-4 mr-2" />
+              Pré-visualização
+            </TabsTrigger>
+            <TabsTrigger value="template">
+              <FileText className="w-4 h-4 mr-2" />
+              Template
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="formulario">
+            <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Oficina Cliente *</Label>
@@ -209,15 +252,32 @@ export default function ContractForm({ contract, user, onSuccess }) {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label>Template do Contrato</Label>
-            <Textarea
-              value={formData.contract_template}
-              onChange={(e) => setFormData({ ...formData, contract_template: e.target.value })}
-              placeholder="Cole ou escreva o template do contrato aqui..."
-              className="min-h-[200px] font-mono text-sm"
-            />
-          </div>
+          {selectedWorkshop && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h4 className="font-semibold text-blue-900 mb-2">Dados da Oficina Selecionada:</h4>
+              <div className="grid md:grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p className="text-gray-600">Razão Social:</p>
+                  <p className="font-medium">{selectedWorkshop.razao_social || selectedWorkshop.name}</p>
+                </div>
+                <div>
+                  <p className="text-gray-600">CNPJ:</p>
+                  <p className="font-medium">{selectedWorkshop.cnpj || "Não informado"}</p>
+                </div>
+                <div>
+                  <p className="text-gray-600">Cidade/Estado:</p>
+                  <p className="font-medium">{selectedWorkshop.city}/{selectedWorkshop.state}</p>
+                </div>
+                <div>
+                  <p className="text-gray-600">Endereço:</p>
+                  <p className="font-medium">{selectedWorkshop.endereco_completo || "Não informado"}</p>
+                </div>
+              </div>
+              <p className="text-xs text-blue-700 mt-3">
+                ✓ Estes dados serão inseridos automaticamente no contrato
+              </p>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label>Observações Internas</Label>
@@ -229,40 +289,72 @@ export default function ContractForm({ contract, user, onSuccess }) {
             />
           </div>
 
-          <div className="flex gap-3">
-            <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-              {createMutation.isPending || updateMutation.isPending ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <Save className="w-4 h-4 mr-2" />
-              )}
-              {contract ? 'Atualizar' : 'Criar'} Contrato
-            </Button>
+              <div className="flex gap-3">
+                <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+                  {createMutation.isPending || updateMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4 mr-2" />
+                  )}
+                  {contract ? 'Atualizar' : 'Criar'} Contrato
+                </Button>
 
-            {contract && contract.status === 'rascunho' && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleSendContract}
-                className="border-blue-600 text-blue-600"
-              >
-                <Send className="w-4 h-4 mr-2" />
-                Enviar para Cliente
-              </Button>
-            )}
+                {contract && contract.status === 'rascunho' && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleSendContract}
+                    className="border-blue-600 text-blue-600"
+                  >
+                    <Send className="w-4 h-4 mr-2" />
+                    Enviar para Cliente
+                  </Button>
+                )}
 
-            {contract && contract.contract_link && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => copyLink(contract)}
-              >
-                <Copy className="w-4 h-4 mr-2" />
-                Copiar Link
-              </Button>
+                {contract && contract.contract_link && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={copyLink}
+                  >
+                    <Copy className="w-4 h-4 mr-2" />
+                    Copiar Link
+                  </Button>
+                )}
+              </div>
+            </form>
+          </TabsContent>
+
+          <TabsContent value="preview">
+            {selectedWorkshop && (
+              <ContractPreview 
+                contract={{ ...formData, ...contract }} 
+                workshop={selectedWorkshop} 
+              />
             )}
-          </div>
-        </form>
+          </TabsContent>
+
+          <TabsContent value="template">
+            <div className="space-y-4">
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                <p className="text-sm text-yellow-800">
+                  💡 <strong>Dica:</strong> Use variáveis como [RAZÃO SOCIAL DA EMPRESA], [CNPJ], [ENDEREÇO COMPLETO], etc. 
+                  Elas serão substituídas automaticamente pelos dados da oficina.
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Template do Contrato</Label>
+                <Textarea
+                  value={formData.contract_template}
+                  onChange={(e) => setFormData({ ...formData, contract_template: e.target.value })}
+                  placeholder="Cole ou edite o template do contrato..."
+                  className="min-h-[500px] font-mono text-xs"
+                />
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );
