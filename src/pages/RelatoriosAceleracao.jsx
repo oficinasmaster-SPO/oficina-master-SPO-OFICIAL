@@ -4,7 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Download, TrendingUp, Users, ClipboardCheck, Loader2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FileText, Download, TrendingUp, Users, ClipboardCheck, Loader2, BarChart3 } from "lucide-react";
+import RelatoriosTab from "@/components/aceleracao/RelatoriosTab";
 
 export default function RelatoriosAceleracao() {
   const [periodo, setPeriodo] = useState("mes_atual");
@@ -107,7 +109,7 @@ export default function RelatoriosAceleracao() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Relatórios de Aceleração</h1>
@@ -124,6 +126,20 @@ export default function RelatoriosAceleracao() {
           </SelectContent>
         </Select>
       </div>
+
+      <Tabs defaultValue="geral" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2 bg-white shadow-md">
+          <TabsTrigger value="geral">
+            <BarChart3 className="w-4 h-4 mr-2" />
+            Relatórios Gerais
+          </TabsTrigger>
+          <TabsTrigger value="atendimentos">
+            <FileText className="w-4 h-4 mr-2" />
+            Atendimentos (da tela Controle)
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="geral" className="space-y-6">
 
       {/* Cards de Métricas */}
       <div className="grid md:grid-cols-3 gap-6">
@@ -287,6 +303,12 @@ export default function RelatoriosAceleracao() {
           </div>
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="atendimentos">
+          <RelatoriosTab user={user} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
