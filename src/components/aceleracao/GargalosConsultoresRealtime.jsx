@@ -244,6 +244,7 @@ export default function GargalosConsultoresRealtime() {
                               </tbody>
                             </table>
                           </div>
+                          <div className="grid grid-cols-2 gap-4">
                             <div>
                               <p className="text-gray-600">Tarefas Vencidas</p>
                               <p className="font-semibold text-red-600">{consultor.qtd_tarefas_vencidas}</p>
@@ -253,7 +254,7 @@ export default function GargalosConsultoresRealtime() {
                               <p className="font-semibold text-orange-600">{consultor.qtd_tarefas_criticas}</p>
                             </div>
                           </div>
-                        </div>
+                          </div>
                       </DialogContent>
                     </Dialog>
                   </div>
