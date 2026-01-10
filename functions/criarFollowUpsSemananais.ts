@@ -3,10 +3,10 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { atendimento_id, semanas = 4 } = await req.json();
+    const { atendimento_id, contract_id } = await req.json();
 
-    if (!atendimento_id) {
-      return Response.json({ error: 'atendimento_id required' }, { status: 400 });
+    if (!atendimento_id || !contract_id) {
+      return Response.json({ error: 'atendimento_id e contract_id required' }, { status: 400 });
     }
 
     const atendimento = await base44.entities.ConsultoriaAtendimento.get(atendimento_id);
@@ -14,10 +14,32 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Atendimento não encontrado' }, { status: 404 });
     }
 
+    const contrato = await base44.entities.Contract.get(contract_id);
+    if (!contrato) {
+      return Response.json({ error: 'Contrato não encontrado' }, { status: 404 });
+    }
+
+    // Calcular data de fim do contrato
+    const dataInicio = new Date(contrato.start_date);
+    const dataFim = new Date(dataInicio.getFullYear(), dataInicio.getMonth() + contrato.contract_duration_months, dataInicio.getDate());
+    const dataAtual = new Date();
+
+    // Calcular quantas semanas faltam até o fim do contrato
+    const diasRestantes = Math.floor((dataFim - dataAtual) / (1000 * 60 * 60 * 24));
+    const semanasRestantes = Math.ceil(diasRestantes / 7);
+
+    if (semanasRestantes <= 0) {
+      return Response.json({ 
+        success: true, 
+        tarefas_criadas: 0,
+        message: 'Contrato já finalizou. Nenhum follow-up criado.' 
+      });
+    }
+
     const tarefasCriadas = [];
 
-    // Criar tarefa de follow-up para cada semana
-    for (let i = 1; i <= semanas; i++) {
+    // Criar tarefa de follow-up para cada semana restante
+    for (let i = 1; i <= semanasRestantes; i++) {
       try {
         const prazoDate = new Date(Date.now() + (i * 7 * 24 * 60 * 60 * 1000));
         const prazo = prazoDate.toISOString().split('T')[0];
@@ -47,7 +69,9 @@ Deno.serve(async (req) => {
     return Response.json({
       success: true,
       tarefas_criadas: tarefasCriadas.length,
-      message: `${tarefasCriadas.length} follow-up(s) semanal(is) criado(s)`
+      semanas_totais: semanasRestantes,
+      data_fim_contrato: contrato.end_date,
+      message: `${tarefasCriadas.length} follow-up(s) semanal(is) criado(s) até ${contrato.end_date}`
     });
 
   } catch (error) {
