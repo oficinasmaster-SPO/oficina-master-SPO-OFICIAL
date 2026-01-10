@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, Download, TrendingUp, Users, ClipboardCheck, Loader2, BarChart3 } from "lucide-react";
 import RelatoriosTab from "@/components/aceleracao/RelatoriosTab";
 import GargalosConsultores from "@/components/aceleracao/GargalosConsultores";
+import GargalosConsultoresRealtime from "@/components/aceleracao/GargalosConsultoresRealtime";
 
 export default function RelatoriosAceleracao() {
   const [periodo, setPeriodo] = useState("mes_atual");
@@ -152,6 +153,9 @@ export default function RelatoriosAceleracao() {
 
       {/* Análise de Gargalos */}
       <GargalosConsultores consultores={gargalos || []} />
+
+      {/* Saturação Real dos Consultores */}
+      <GargalosConsultoresRealtime />
 
       {/* Cards de Métricas */}
       <div className="grid md:grid-cols-3 gap-6">
