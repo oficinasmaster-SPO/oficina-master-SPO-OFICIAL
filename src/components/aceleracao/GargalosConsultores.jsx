@@ -283,7 +283,7 @@ export default function GargalosConsultores({ consultores }) {
                   <div className="flex items-start gap-3">
                     <AlertTriangle className="w-6 h-6 text-red-600 mt-1" />
                     <div className="flex-1">
-                      <p className="font-semibold text-base text-red-900 mb-1">IS > 1,0 (acima de 100%) = GARGALO 🚨</p>
+                      <p className="font-semibold text-base text-red-900 mb-1">IS {`>`} 1,0 (acima de 100%) = GARGALO 🚨</p>
                       <p className="text-sm text-gray-700 mb-2">
                         <strong>ALERTA CRÍTICO!</strong> Consultor com mais demanda do que capacidade física. 
                         Situação insustentável que levará a atrasos, queda de qualidade e burnout.
@@ -325,7 +325,7 @@ export default function GargalosConsultores({ consultores }) {
                       <li>• Alocar clientes sem consultar o IS</li>
                       <li>• Ignorar alertas de "Atenção" ou "Gargalo"</li>
                       <li>• Concentrar clientes em poucos consultores</li>
-                      <li>• Deixar consultores ociosos (IS &lt; 0,5)</li>
+                      <li>• Deixar consultores ociosos (IS {`<`} 0,5)</li>
                     </ul>
                   </div>
                 </div>
@@ -441,7 +441,7 @@ export default function GargalosConsultores({ consultores }) {
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded bg-red-500" />
-              <span>IS > 1,0: Gargalo</span>
+              <span>IS {`>`} 1,0: Gargalo</span>
             </div>
           </div>
         </div>
