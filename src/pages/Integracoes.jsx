@@ -1,21 +1,15 @@
 import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Video, CheckCircle, AlertCircle, Loader2, RefreshCw, CreditCard, Wallet, Webhook } from "lucide-react";
-import { toast } from "sonner";
-import GoogleCalendarConfig from "@/components/integrations/GoogleCalendarConfig";
-import GoogleMeetConfig from "@/components/integrations/GoogleMeetConfig";
-import EduzzConfig from "@/components/integrations/EduzzConfig";
-import AsasConfig from "@/components/integrations/AsasConfig";
-import WebhookConfig from "@/components/integrations/WebhookConfig";
+import { Calendar, Video, CheckCircle, AlertCircle, Loader2, Settings, CreditCard, Wallet, Webhook } from "lucide-react";
+import IntegrationModal from "@/components/integrations/IntegrationModal";
 
 export default function Integracoes() {
-  const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
+  const [selectedIntegration, setSelectedIntegration] = useState(null);
 
   React.useEffect(() => {
     const loadUser = async () => {
@@ -30,9 +24,8 @@ export default function Integracoes() {
   }, []);
 
   const { data: integrations = [], isLoading } = useQuery({
-    queryKey: ["integrations-status"],
+    queryKey: ["integrations-list"],
     queryFn: async () => {
-      // Verificar status das integrações
       return [
         {
           id: "google_calendar",
@@ -109,21 +102,6 @@ export default function Integracoes() {
     enabled: !!user
   });
 
-  const syncMutation = useMutation({
-    mutationFn: async (integrationId) => {
-      // Simular sincronização
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      return { success: true };
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["integrations-status"] });
-      toast.success("Sincronização concluída!");
-    },
-    onError: (error) => {
-      toast.error("Erro na sincronização: " + error.message);
-    }
-  });
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -137,128 +115,103 @@ export default function Integracoes() {
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Integrações</h1>
         <p className="text-gray-600 mt-2">
-          Conecte serviços externos para automatizar processos e aumentar a produtividade
+          Conecte serviços externos para automatizar processos
         </p>
       </div>
 
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Integrações Ativas</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {integrations.filter(i => i.status === "connected").length}
-                </p>
-              </div>
-              <CheckCircle className="w-8 h-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Disponíveis</p>
-                <p className="text-2xl font-bold text-gray-900">{integrations.length}</p>
-              </div>
-              <RefreshCw className="w-8 h-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Com Problemas</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {integrations.filter(i => i.status === "error").length}
-                </p>
-              </div>
-              <AlertCircle className="w-8 h-8 text-red-600" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Tabela de Integrações */}
+      <Card>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    Integração
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    Descrição
+                  </th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    Ações
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {integrations.map((integration) => {
+                  const Icon = integration.icon;
+                  const isConnected = integration.status === "connected";
+                  const hasError = integration.status === "error";
 
-      {/* Integrations List */}
-      <div className="grid grid-cols-1 gap-6">
-        {integrations.map((integration) => {
-          const Icon = integration.icon;
-          const isConnected = integration.status === "connected";
-          const hasError = integration.status === "error";
-
-          return (
-            <Card key={integration.id}>
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className={`p-3 rounded-lg ${isConnected ? 'bg-green-50' : 'bg-gray-50'}`}>
-                      <Icon className={`w-6 h-6 ${isConnected ? 'text-green-600' : 'text-gray-600'}`} />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <CardTitle>{integration.name}</CardTitle>
-                        <Badge variant={isConnected ? "success" : hasError ? "destructive" : "secondary"}>
-                          {isConnected ? "Conectado" : hasError ? "Erro" : "Desconectado"}
+                  return (
+                    <tr 
+                      key={integration.id} 
+                      className="hover:bg-gray-50 cursor-pointer transition-colors"
+                      onClick={() => setSelectedIntegration(integration)}
+                    >
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-lg ${isConnected ? 'bg-green-50' : 'bg-gray-50'}`}>
+                            <Icon className={`w-5 h-5 ${isConnected ? 'text-green-600' : 'text-gray-600'}`} />
+                          </div>
+                          <span className="font-medium text-gray-900">{integration.name}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-sm text-gray-600">{integration.description}</span>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <Badge 
+                          variant={isConnected ? "default" : hasError ? "destructive" : "secondary"}
+                          className={isConnected ? "bg-green-600" : ""}
+                        >
+                          {isConnected ? (
+                            <>
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              Conectado
+                            </>
+                          ) : hasError ? (
+                            <>
+                              <AlertCircle className="w-3 h-3 mr-1" />
+                              Erro
+                            </>
+                          ) : (
+                            "Desconectado"
+                          )}
                         </Badge>
-                      </div>
-                      <CardDescription className="mt-1">{integration.description}</CardDescription>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {isConnected && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => syncMutation.mutate(integration.id)}
-                        disabled={syncMutation.isPending}
-                      >
-                        {syncMutation.isPending ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <RefreshCw className="w-4 h-4" />
-                        )}
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <p className="text-sm font-semibold text-gray-700 mb-2">Recursos:</p>
-                  <ul className="space-y-1">
-                    {integration.features.map((feature, idx) => (
-                      <li key={idx} className="flex items-center gap-2 text-sm text-gray-600">
-                        <CheckCircle className="w-4 h-4 text-green-600" />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedIntegration(integration);
+                          }}
+                          className="gap-2"
+                        >
+                          <Settings className="w-4 h-4" />
+                          {isConnected ? "Configurar" : "Integrar"}
+                        </Button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
 
-                {/* Config Component */}
-                {integration.id === "google_calendar" && (
-                  <GoogleCalendarConfig user={user} />
-                )}
-                {integration.id === "google_meet" && (
-                  <GoogleMeetConfig user={user} />
-                )}
-                {integration.id === "kiwify" && (
-                  <EduzzConfig user={user} />
-                )}
-                {integration.id === "asas" && (
-                  <AsasConfig user={user} />
-                )}
-                {integration.id === "webhook" && (
-                  <WebhookConfig user={user} />
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+      <IntegrationModal
+        open={!!selectedIntegration}
+        onClose={() => setSelectedIntegration(null)}
+        integration={selectedIntegration}
+        user={user}
+      />
     </div>
   );
 }
