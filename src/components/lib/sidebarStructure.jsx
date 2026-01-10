@@ -136,6 +136,7 @@ export const sidebarStructure = [
     id: "admin",
     label: "Administração",
     items: [
+      { name: "Dashboard Financeiro", description: "Métricas financeiras e pagamentos" },
       { name: "Usuários", description: "Gerenciar usuários" },
       { name: "Monitoramento de Usuários", description: "Relatórios e atividades" },
       { name: "Gestão de Perfis", description: "Perfis e permissões" },
