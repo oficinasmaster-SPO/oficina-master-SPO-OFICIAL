@@ -102,6 +102,34 @@ export default function Integracoes() {
             "Notificações de eventos",
             "Autenticação com Secret"
           ]
+        },
+        {
+          id: "clicksign",
+          name: "ClickSign",
+          description: "Assinatura eletrônica de contratos e documentos",
+          icon: CreditCard,
+          status: "disconnected",
+          lastSync: null,
+          features: [
+            "Envio automático de contratos",
+            "Assinatura eletrônica válida",
+            "Acompanhamento de status",
+            "Webhooks de notificação"
+          ]
+        },
+        {
+          id: "serasa",
+          name: "Serasa Experian",
+          description: "Consulta de crédito e análise de CNPJ/CPF",
+          icon: AlertCircle,
+          status: "disconnected",
+          lastSync: null,
+          features: [
+            "Consulta de score de crédito",
+            "Validação de CNPJ/CPF",
+            "Análise de risco",
+            "Histórico de consultas"
+          ]
         }
       ];
     },

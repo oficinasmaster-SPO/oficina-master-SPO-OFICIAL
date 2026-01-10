@@ -87,6 +87,7 @@ import GerenciarProcessos from './pages/GerenciarProcessos';
 import GerenciarRoles from './pages/GerenciarRoles';
 import GerenciarToursVideos from './pages/GerenciarToursVideos';
 import GerenciarTreinamentos from './pages/GerenciarTreinamentos';
+import GestaoContratos from './pages/GestaoContratos';
 import GestaoDesafios from './pages/GestaoDesafios';
 import GestaoOficina from './pages/GestaoOficina';
 import GestaoRBAC from './pages/GestaoRBAC';
@@ -155,7 +156,6 @@ import TestUsuarios from './pages/TestUsuarios';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
-import GestaoContratos from './pages/GestaoContratos';
 import __Layout from './Layout.jsx';
 
 
@@ -249,6 +249,7 @@ export const PAGES = {
     "GerenciarRoles": GerenciarRoles,
     "GerenciarToursVideos": GerenciarToursVideos,
     "GerenciarTreinamentos": GerenciarTreinamentos,
+    "GestaoContratos": GestaoContratos,
     "GestaoDesafios": GestaoDesafios,
     "GestaoOficina": GestaoOficina,
     "GestaoRBAC": GestaoRBAC,
@@ -317,7 +318,6 @@ export const PAGES = {
     "TreinamentoVendas": TreinamentoVendas,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
-    "GestaoContratos": GestaoContratos,
 }
 
 export const pagesConfig = {
