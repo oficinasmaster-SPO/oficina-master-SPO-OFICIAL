@@ -3,9 +3,9 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { HelpCircle } from "lucide-react";
 import SaturacaoConsultorItem from "./SaturacaoConsultorItem";
 import SaturacaoConsultorModal from "./SaturacaoConsultorModal";
-import SaturacaoLegenda from "./SaturacaoLegenda";
 import SaturacaoLegendaModal from "./SaturacaoLegendaModal";
 
 export default function GargalosConsultoresRealtime() {
@@ -33,7 +33,7 @@ export default function GargalosConsultoresRealtime() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-5 gap-4">
+      <div className="grid grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium">Críticos ({`>`}150%)</CardTitle>
@@ -77,8 +77,6 @@ export default function GargalosConsultoresRealtime() {
             </div>
           </CardContent>
         </Card>
-
-        <SaturacaoLegenda onShowInfo={() => setShowLegenda(true)} />
       </div>
 
       <SaturacaoLegendaModal open={showLegenda} onOpenChange={setShowLegenda} />
@@ -93,9 +91,19 @@ export default function GargalosConsultoresRealtime() {
         <CardHeader>
           <div className="flex justify-between items-center">
             <CardTitle>Saturação Real dos Consultores</CardTitle>
-            <Button size="sm" variant="outline" onClick={() => refetch()}>
-              Atualizar
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                onClick={() => setShowLegenda(true)}
+                className="h-8 w-8 p-0 text-gray-600 hover:text-gray-900"
+              >
+                <HelpCircle className="w-5 h-5" />
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => refetch()}>
+                Atualizar
+              </Button>
+            </div>
           </div>
           <p className="text-xs text-gray-600 mt-2">
             Cálculo inclui: atendimentos + tarefas do backlog + ajuste por tarefas vencidas
