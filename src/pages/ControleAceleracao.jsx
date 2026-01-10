@@ -10,7 +10,6 @@ import { Loader2, BarChart3, Calendar, FileText, Settings, ClipboardList, Users 
 import VisaoGeralTab from "@/components/aceleracao/VisaoGeralTab";
 import PainelAtendimentosTab from "@/components/aceleracao/PainelAtendimentosTab";
 import TemplatesTab from "@/components/aceleracao/TemplatesTab";
-import RelatoriosTab from "@/components/aceleracao/RelatoriosTab";
 import RegistroAtendimentoMassaModal from "@/components/aceleracao/RegistroAtendimentoMassaModal";
 
 export default function ControleAceleracao() {
@@ -79,7 +78,7 @@ export default function ControleAceleracao() {
       />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5 bg-white shadow-md">
+        <TabsList className="grid w-full grid-cols-4 bg-white shadow-md">
           <TabsTrigger value="visao-geral">
             <BarChart3 className="w-4 h-4 mr-2" />
             Visão Geral
@@ -99,10 +98,6 @@ export default function ControleAceleracao() {
             <Settings className="w-4 h-4 mr-2" />
             Templates
           </TabsTrigger>
-          <TabsTrigger value="relatorios">
-            <FileText className="w-4 h-4 mr-2" />
-            Relatórios
-          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="visao-geral">
@@ -115,10 +110,6 @@ export default function ControleAceleracao() {
 
         <TabsContent value="templates">
           <TemplatesTab user={user} />
-        </TabsContent>
-
-        <TabsContent value="relatorios">
-          <RelatoriosTab user={user} />
         </TabsContent>
       </Tabs>
     </div>
