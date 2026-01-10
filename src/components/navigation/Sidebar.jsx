@@ -719,6 +719,15 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           requiredPermission: 'acceleration.manage'
         },
         { 
+          name: 'Contratos', 
+          href: createPageUrl('GestaoContratos'), 
+          icon: Receipt,
+          description: 'Gestão e envio de contratos',
+          highlight: true,
+          aceleradorOnly: true,
+          requiredPermission: 'acceleration.manage'
+        },
+        { 
           name: 'Relatórios de Aceleração', 
           href: createPageUrl('RelatoriosAceleracao'), 
           icon: FileText,
