@@ -14,8 +14,8 @@ export default function GargalosConsultoresRealtime() {
   const [selectedConsultor, setSelectedConsultor] = useState(null);
   const [showLegenda, setShowLegenda] = useState(false);
   const [period, setPeriod] = useState({
-    startDate: format(addDays(new Date(), -30), "yyyy-MM-dd"),
-    endDate: format(new Date(), "yyyy-MM-dd")
+    startDate: format(new Date(), "yyyy-MM-dd"),
+    endDate: format(addDays(new Date(), 30), "yyyy-MM-dd")
   });
 
   const { data: saturacaoData, isLoading, refetch } = useQuery({
