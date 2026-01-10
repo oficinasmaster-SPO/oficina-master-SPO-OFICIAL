@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Clock, CheckCircle, AlertTriangle, FileText } from "lucide-react";
 import PedidoInternoForm from "./PedidoInternoForm";
 import BacklogDashboard from "./BacklogDashboard";
+import PedidosFilters from "./PedidosFilters";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -14,6 +15,12 @@ import { ptBR } from "date-fns/locale";
 export default function PedidosInternosTab({ user }) {
   const [showForm, setShowForm] = useState(false);
   const [editingPedido, setEditingPedido] = useState(null);
+  const [filters, setFilters] = useState({
+    search: '',
+    status: 'all',
+    prioridade: 'all',
+    tipo: 'all'
+  });
   const queryClient = useQueryClient();
 
   const { data: pedidos = [], isLoading } = useQuery({
@@ -97,11 +104,22 @@ export default function PedidosInternosTab({ user }) {
     await updatePedidoMutation.mutateAsync({ id: pedidoId, data: updateData });
   };
 
+  const filteredPedidos = pedidos.filter(p => {
+    const matchSearch = filters.search === '' || 
+      p.titulo?.toLowerCase().includes(filters.search.toLowerCase()) ||
+      p.cliente_nome?.toLowerCase().includes(filters.search.toLowerCase());
+    const matchStatus = filters.status === 'all' || p.status === filters.status;
+    const matchPrioridade = filters.prioridade === 'all' || p.prioridade === filters.prioridade;
+    const matchTipo = filters.tipo === 'all' || p.tipo === filters.tipo;
+    
+    return matchSearch && matchStatus && matchPrioridade && matchTipo;
+  });
+
   const pedidosPorStatus = {
-    pendente: pedidos.filter(p => p.status === 'pendente'),
-    em_analise: pedidos.filter(p => p.status === 'em_analise'),
-    aprovado: pedidos.filter(p => p.status === 'aprovado'),
-    concluido: pedidos.filter(p => p.status === 'concluido')
+    pendente: filteredPedidos.filter(p => p.status === 'pendente'),
+    em_analise: filteredPedidos.filter(p => p.status === 'em_analise'),
+    aprovado: filteredPedidos.filter(p => p.status === 'aprovado'),
+    concluido: filteredPedidos.filter(p => p.status === 'concluido')
   };
 
   if (showForm) {
@@ -142,6 +160,8 @@ export default function PedidosInternosTab({ user }) {
               Novo Pedido
             </Button>
           </div>
+
+          <PedidosFilters filters={filters} onFilterChange={setFilters} />
 
           <div className="grid grid-cols-4 gap-4">
             <Card>
@@ -224,7 +244,7 @@ export default function PedidosInternosTab({ user }) {
                       </tr>
                     </thead>
                     <tbody>
-                      {pedidos.map((pedido) => {
+                      {filteredPedidos.map((pedido) => {
                         const statusBadge = getStatusBadge(pedido.status);
                         const prioridadeBadge = getPrioridadeBadge(pedido.prioridade);
                         const impactoBadge = getImpactoBadge(pedido.impacto_cliente);
