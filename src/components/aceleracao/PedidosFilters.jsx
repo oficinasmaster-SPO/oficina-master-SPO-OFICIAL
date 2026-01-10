@@ -5,7 +5,8 @@ import { X } from "lucide-react";
 
 export default function PedidosFilters({ 
   filters, 
-  onFilterChange 
+  onFilterChange,
+  responsaveis = []
 }) {
   const handleInputChange = (field, value) => {
     onFilterChange({ ...filters, [field]: value });
@@ -14,6 +15,7 @@ export default function PedidosFilters({
   const handleReset = () => {
     onFilterChange({
       search: '',
+      responsavel: 'all',
       status: 'all',
       prioridade: 'all',
       tipo: 'all'
@@ -30,7 +32,7 @@ export default function PedidosFilters({
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
         <div>
           <label className="text-xs font-medium text-gray-700 block mb-1">Buscar</label>
           <Input
@@ -40,6 +42,20 @@ export default function PedidosFilters({
             onChange={(e) => handleInputChange('search', e.target.value)}
             className="h-8 text-sm"
           />
+        </div>
+
+        <div>
+          <label className="text-xs font-medium text-gray-700 block mb-1">Responsável</label>
+          <select
+            value={filters.responsavel || 'all'}
+            onChange={(e) => handleInputChange('responsavel', e.target.value)}
+            className="w-full h-8 text-sm border border-gray-300 rounded px-2"
+          >
+            <option value="all">Todos</option>
+            {responsaveis.map(r => (
+              <option key={r} value={r}>{r}</option>
+            ))}
+          </select>
         </div>
 
         <div>
