@@ -122,9 +122,12 @@ export default function GargalosConsultoresRealtime() {
               return (
                 <div key={consultor.consultor_id} className={`p-4 rounded-lg border ${cor.bg}`}>
                   <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h3 className="font-semibold">{consultor.consultor_nome}</h3>
-                      <p className="text-xs text-gray-600">{consultor.consultor_email}</p>
+                    <div className="flex items-center gap-3">
+                      <div className={`w-4 h-4 rounded-full ${cor.badge}`}></div>
+                      <div>
+                        <h3 className="font-semibold">{consultor.consultor_nome}</h3>
+                        <p className="text-xs text-gray-600">{consultor.consultor_email}</p>
+                      </div>
                     </div>
                     <div className="flex gap-2">
                       <Badge className={`${cor.badge} text-white`}>
