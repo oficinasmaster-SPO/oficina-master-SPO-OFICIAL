@@ -1,15 +1,16 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SaturacaoConsultorItem from "./SaturacaoConsultorItem";
 import SaturacaoConsultorModal from "./SaturacaoConsultorModal";
+import SaturacaoLegenda from "./SaturacaoLegenda";
+import SaturacaoLegendaModal from "./SaturacaoLegendaModal";
 
 export default function GargalosConsultoresRealtime() {
-  const queryClient = useQueryClient();
   const [selectedConsultor, setSelectedConsultor] = useState(null);
+  const [showLegenda, setShowLegenda] = useState(false);
 
   const { data: saturacaoData, isLoading, refetch } = useQuery({
     queryKey: ['saturacao-real-consultores'],
@@ -76,7 +77,10 @@ export default function GargalosConsultoresRealtime() {
             </div>
           </CardContent>
         </Card>
-        </div>
+      </div>
+
+      <SaturacaoLegenda onVisualize={() => setShowLegenda(true)} />
+      <SaturacaoLegendaModal open={showLegenda} onOpenChange={setShowLegenda} />
 
         <SaturacaoConsultorModal 
         consultor={selectedConsultor}
@@ -109,24 +113,7 @@ export default function GargalosConsultoresRealtime() {
         </CardContent>
       </Card>
 
-      <Card className="bg-blue-50 border-blue-200">
-        <CardHeader>
-          <CardTitle className="text-sm flex items-center gap-2">
-            <Info className="w-4 h-4" />
-            Como funciona o cálculo
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm space-y-2">
-          <p><strong>Saturação = (Horas Atendimentos + Horas Tarefas) / 40h × 100</strong></p>
-          <p>+ <strong>Ajuste: +20% por cada tarefa vencida</strong></p>
-          <ul className="list-disc pl-5 space-y-1 mt-2">
-            <li>Crítico: {`>`} 150% (sobrecarga severa)</li>
-            <li>Alto: 100-150% (sobrecarga)</li>
-            <li>Médio: 70-100% (capacidade boa)</li>
-            <li>Baixo: {`<`} 70% (capacidade disponível)</li>
-          </ul>
-        </CardContent>
-      </Card>
+
     </div>
   );
 }
