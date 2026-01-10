@@ -394,11 +394,21 @@ export default function Dashboard() {
         </div>
 
         {/* Painel de Integrações */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <IntegrationStatusWidget />
           <IntegrationHealthScore />
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <QuickIntegrationsPanel />
-          <IntegrationMetricsChart />
+          <Card className="shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-sm font-medium">Uso das Integrações</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <IntegrationMetricsChart />
+            </CardContent>
+          </Card>
         </div>
 
         {/* KPIs Principais */}
