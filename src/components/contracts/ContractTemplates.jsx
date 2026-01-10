@@ -6,25 +6,17 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { FileText, Plus, Trash2, Copy } from "lucide-react";
 import { toast } from "sonner";
+import { TRAFEGO_PAGO_TEMPLATE } from "./templates/TrafegoPagoTemplate";
 
 export default function ContractTemplates({ user }) {
   const [templates, setTemplates] = useState([
     {
-      id: "1",
-      name: "Contrato Padrão - Aceleração 12 meses",
-      plan_type: "BRONZE",
-      content: `CONTRATO DE PRESTAÇÃO DE SERVIÇOS DE CONSULTORIA
-
-CONTRATANTE: {{workshop_name}}
-CNPJ: {{cnpj}}
-
-CONTRATADA: Oficinas Master Ltda.
-
-PLANO: {{plan_type}}
-VALOR: R$ {{contract_value}}
-DURAÇÃO: {{duration}} meses
-
-...`
+      id: "trafego-pago-matrix",
+      name: "Contrato MATRIX - Tráfego Pago e Performance Digital",
+      plan_type: "Todos",
+      description: "Contrato completo com 18 cláusulas para serviços de tráfego pago (Google Ads e Meta Ads)",
+      content: TRAFEGO_PAGO_TEMPLATE,
+      isDefault: true
     }
   ]);
 
@@ -116,10 +108,18 @@ DURAÇÃO: {{duration}} meses
             {templates.map((template) => (
               <div key={template.id} className="border rounded-lg p-4">
                 <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <h4 className="font-semibold text-gray-900">{template.name}</h4>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h4 className="font-semibold text-gray-900">{template.name}</h4>
+                      {template.isDefault && (
+                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">Padrão</span>
+                      )}
+                    </div>
+                    {template.description && (
+                      <p className="text-sm text-gray-600 mb-1">{template.description}</p>
+                    )}
                     {template.plan_type && (
-                      <p className="text-sm text-gray-600">Plano: {template.plan_type}</p>
+                      <p className="text-xs text-gray-500">Plano: {template.plan_type}</p>
                     )}
                   </div>
                   <div className="flex gap-2">
@@ -127,20 +127,24 @@ DURAÇÃO: {{duration}} meses
                       size="sm"
                       variant="outline"
                       onClick={() => copyTemplate(template)}
+                      title="Copiar template"
                     >
                       <Copy className="w-4 h-4" />
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => deleteTemplate(template.id)}
-                    >
-                      <Trash2 className="w-4 h-4 text-red-600" />
-                    </Button>
+                    {!template.isDefault && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => deleteTemplate(template.id)}
+                        title="Excluir template"
+                      >
+                        <Trash2 className="w-4 h-4 text-red-600" />
+                      </Button>
+                    )}
                   </div>
                 </div>
                 <pre className="bg-gray-50 rounded p-3 text-xs overflow-x-auto max-h-40">
-                  {template.content}
+                  {template.content.substring(0, 500)}...
                 </pre>
               </div>
             ))}
