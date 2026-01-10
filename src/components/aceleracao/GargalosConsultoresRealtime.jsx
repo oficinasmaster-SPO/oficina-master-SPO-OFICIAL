@@ -157,46 +157,46 @@ export default function GargalosConsultoresRealtime() {
                         <tr className="hover:bg-gray-50">
                           <td className="border p-2 font-semibold">Atendimentos</td>
                           <td className="border p-2 text-center text-green-700 font-semibold">
-                            {consultor.atendimentos_realizados.horas}h
+                            {consultor.atendimentos_realizados?.horas ?? '0'}h
                           </td>
                           <td className="border p-2 text-center text-blue-700 font-semibold">
-                            {consultor.atendimentos_previstos.horas}h
+                            {consultor.atendimentos_previstos?.horas ?? '0'}h
                           </td>
                           <td className="border p-2 text-center text-red-700 font-semibold">
-                            {consultor.atendimentos_em_atraso.horas}h
+                            {consultor.atendimentos_em_atraso?.horas ?? '0'}h
                           </td>
                           <td className="border p-2 text-center font-bold bg-gray-50">
-                            {consultor.total_atendimentos.horas}h
+                            {consultor.total_atendimentos?.horas ?? '0'}h
                           </td>
                         </tr>
                         <tr className="hover:bg-gray-50">
                           <td className="border p-2 font-semibold">Tarefas</td>
                           <td className="border p-2 text-center text-green-700 font-semibold">
-                            {consultor.tarefas_realizadas.horas}h
+                            {consultor.tarefas_realizadas?.horas ?? '0'}h
                           </td>
                           <td className="border p-2 text-center text-blue-700 font-semibold">
-                            {consultor.tarefas_previstas.horas}h
+                            {consultor.tarefas_previstas?.horas ?? '0'}h
                           </td>
                           <td className="border p-2 text-center text-red-700 font-semibold">
-                            {consultor.tarefas_em_atraso.horas}h
+                            {consultor.tarefas_em_atraso?.horas ?? '0'}h
                           </td>
                           <td className="border p-2 text-center font-bold bg-gray-50">
-                            {consultor.total_tarefas.horas}h
+                            {consultor.total_tarefas?.horas ?? '0'}h
                           </td>
                         </tr>
                         <tr className="bg-blue-50 font-bold">
                           <td className="border p-2">TOTAL</td>
                           <td className="border p-2 text-center text-green-700">
-                            {(consultor.atendimentos_realizados.horas + consultor.tarefas_realizadas.horas).toFixed(1)}h
+                            {((consultor.atendimentos_realizados?.horas ?? 0) + (consultor.tarefas_realizadas?.horas ?? 0)).toFixed(1)}h
                           </td>
                           <td className="border p-2 text-center text-blue-700">
-                            {(consultor.atendimentos_previstos.horas + consultor.tarefas_previstas.horas).toFixed(1)}h
+                            {((consultor.atendimentos_previstos?.horas ?? 0) + (consultor.tarefas_previstas?.horas ?? 0)).toFixed(1)}h
                           </td>
                           <td className="border p-2 text-center text-red-700">
-                            {(consultor.atendimentos_em_atraso.horas + consultor.tarefas_em_atraso.horas).toFixed(1)}h
+                            {((consultor.atendimentos_em_atraso?.horas ?? 0) + (consultor.tarefas_em_atraso?.horas ?? 0)).toFixed(1)}h
                           </td>
                           <td className="border p-2 text-center bg-blue-100">
-                            {consultor.carga_total_prevista.toFixed(1)}h
+                            {(consultor.carga_total_prevista ?? 0).toFixed(1)}h
                           </td>
                         </tr>
                       </tbody>
@@ -228,11 +228,11 @@ export default function GargalosConsultoresRealtime() {
                               </tr>
                               <tr className="border-b">
                                 <td className="p-2 font-semibold text-gray-700">Atendimentos (Realizado)</td>
-                                <td className="p-2 text-right">{consultor.atendimentos_realizados.horas}h ({consultor.atendimentos_realizados.qtd})</td>
+                                <td className="p-2 text-right">{consultor.atendimentos_realizados?.horas ?? '0'}h ({consultor.atendimentos_realizados?.qtd ?? 0})</td>
                               </tr>
                               <tr className="border-b">
                                 <td className="p-2 font-semibold text-gray-700">Tarefas (Realizadas)</td>
-                                <td className="p-2 text-right">{consultor.tarefas_realizadas.horas}h ({consultor.tarefas_realizadas.qtd})</td>
+                                <td className="p-2 text-right">{consultor.tarefas_realizadas?.horas ?? '0'}h ({consultor.tarefas_realizadas?.qtd ?? 0})</td>
                               </tr>
                               <tr className="border-b bg-blue-50">
                                 <td className="p-2 font-semibold text-blue-700">Carga Prevista</td>
