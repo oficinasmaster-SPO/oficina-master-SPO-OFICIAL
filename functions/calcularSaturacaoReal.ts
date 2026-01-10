@@ -94,13 +94,20 @@ Deno.serve(async (req) => {
         consultor_nome: consultor.full_name,
         consultor_email: consultor.email,
         horas_semanais_disponiveis: horasSemanaisDisponiveis,
+        // Atendimentos
+        horas_atendimentos_realizados: parseFloat(horasAtendimentosRealizados.toFixed(2)),
+        horas_atendimentos_previsto: parseFloat(horasAtendimentosPrevisto.toFixed(2)),
         horas_atendimentos: parseFloat(horasAtendimentos.toFixed(2)),
+        qtd_atendimentos: atendimentosConsultor.length,
+        qtd_atendimentos_realizados: atendimentosRealizados.length,
+        qtd_atendimentos_previsto: atendimentosPrevisto.length,
+        // Tarefas
         horas_tarefas_backlog: parseFloat(horasTarefas.toFixed(2)),
         horas_comprometidas: parseFloat(horasComprometidas.toFixed(2)),
-        qtd_atendimentos: atendimentosConsultor.length,
         qtd_tarefas_abertas: tarefasConsultor.length,
         qtd_tarefas_vencidas: tarefasVencidas,
         qtd_tarefas_criticas: tarefasCriticas,
+        // Índices
         indice_saturacao: parseFloat(indiceSaturacao.toFixed(2)),
         status_gargalo: statusGargalo,
         data_calculo: new Date().toISOString()
