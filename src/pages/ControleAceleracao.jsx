@@ -108,8 +108,8 @@ export default function ControleAceleracao() {
           <PainelAtendimentosTab user={user} />
         </TabsContent>
 
-        <TabsContent value="templates">
-          <TemplatesTab user={user} />
+        <TabsContent value="pedidos">
+          <PedidosInternosTab user={user} />
         </TabsContent>
       </Tabs>
     </div>
