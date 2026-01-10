@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -7,9 +7,46 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Loader2 } from "lucide-react";
+import { base44 } from "@/api/base44Client";
+import PeriodFilter from "./PeriodFilter";
+import { format, addDays } from "date-fns";
 
-export default function SaturacaoConsultorModal({ consultor, open, onOpenChange }) {
-  if (!consultor) return null;
+export default function SaturacaoConsultorModal({ consultor, open, onOpenChange, period: initialPeriod }) {
+  const [consultorData, setConsultorData] = useState(consultor);
+  const [isLoading, setIsLoading] = useState(false);
+  const [period, setPeriod] = useState(initialPeriod || {
+    startDate: format(addDays(new Date(), -30), "yyyy-MM-dd"),
+    endDate: format(new Date(), "yyyy-MM-dd")
+  });
+
+  useEffect(() => {
+    if (open && consultor) {
+      loadConsultorData();
+    }
+  }, [period, open, consultor?.consultor_id]);
+
+  const loadConsultorData = async () => {
+    if (!consultor?.consultor_id) return;
+    setIsLoading(true);
+    try {
+      const response = await base44.functions.invoke('calcularSaturacaoReal', {
+        startDate: period.startDate,
+        endDate: period.endDate
+      });
+      const consultores = response.data?.consultores || [];
+      const updated = consultores.find(c => c.consultor_id === consultor.consultor_id);
+      if (updated) {
+        setConsultorData(updated);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar dados:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (!consultorData) return null;
 
   const getStatusColor = (status) => {
     const cores = {
@@ -21,27 +58,39 @@ export default function SaturacaoConsultorModal({ consultor, open, onOpenChange 
     return cores[status] || cores.baixo;
   };
 
-  const cor = getStatusColor(consultor.status_gargalo);
+  const cor = getStatusColor(consultorData.status_gargalo);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex items-center gap-3">
-            <div className={`w-4 h-4 rounded-full ${cor.badge}`}></div>
-            <DialogTitle>{consultor.consultor_nome}</DialogTitle>
-            <Badge className={`${cor.badge} text-white`}>
-              {(consultor.indice_saturacao ?? 0).toFixed(0)}%
-            </Badge>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className={`w-4 h-4 rounded-full ${cor.badge}`}></div>
+              <DialogTitle>{consultorData.consultor_nome}</DialogTitle>
+              <Badge className={`${cor.badge} text-white`}>
+                {(consultorData.indice_saturacao ?? 0).toFixed(0)}%
+              </Badge>
+            </div>
+            {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+          </div>
+          <div className="mt-3">
+            <PeriodFilter onPeriodChange={setPeriod} defaultPeriod="30" />
           </div>
         </DialogHeader>
 
         <div className="space-y-6">
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+            </div>
+          ) : (
+            <>
           {/* Barra de Progress */}
           <div>
             <p className="text-sm font-semibold mb-2">Saturação Total</p>
             <Progress 
-              value={Math.min(consultor.indice_saturacao, 200)} 
+              value={Math.min(consultorData.indice_saturacao, 200)} 
               max={200}
             />
           </div>
@@ -64,46 +113,46 @@ export default function SaturacaoConsultorModal({ consultor, open, onOpenChange 
                   <tr className="hover:bg-gray-50">
                     <td className="border p-2 font-semibold">Atendimentos</td>
                     <td className="border p-2 text-center text-green-700 font-semibold">
-                      {consultor.atendimentos_realizados?.horas ?? '0'}h
+                      {consultorData.atendimentos_realizados?.horas ?? '0'}h
                     </td>
                     <td className="border p-2 text-center text-blue-700 font-semibold">
-                      {consultor.atendimentos_previstos?.horas ?? '0'}h
+                      {consultorData.atendimentos_previstos?.horas ?? '0'}h
                     </td>
                     <td className="border p-2 text-center text-red-700 font-semibold">
-                      {consultor.atendimentos_em_atraso?.horas ?? '0'}h
+                      {consultorData.atendimentos_em_atraso?.horas ?? '0'}h
                     </td>
                     <td className="border p-2 text-center font-bold bg-gray-50">
-                      {consultor.total_atendimentos?.horas ?? '0'}h
+                      {consultorData.total_atendimentos?.horas ?? '0'}h
                     </td>
                   </tr>
                   <tr className="hover:bg-gray-50">
                     <td className="border p-2 font-semibold">Tarefas</td>
                     <td className="border p-2 text-center text-green-700 font-semibold">
-                      {consultor.tarefas_realizadas?.horas ?? '0'}h
+                      {consultorData.tarefas_realizadas?.horas ?? '0'}h
                     </td>
                     <td className="border p-2 text-center text-blue-700 font-semibold">
-                      {consultor.tarefas_previstas?.horas ?? '0'}h
+                      {consultorData.tarefas_previstas?.horas ?? '0'}h
                     </td>
                     <td className="border p-2 text-center text-red-700 font-semibold">
-                      {consultor.tarefas_em_atraso?.horas ?? '0'}h
+                      {consultorData.tarefas_em_atraso?.horas ?? '0'}h
                     </td>
                     <td className="border p-2 text-center font-bold bg-gray-50">
-                      {consultor.total_tarefas?.horas ?? '0'}h
+                      {consultorData.total_tarefas?.horas ?? '0'}h
                     </td>
                   </tr>
                   <tr className="bg-blue-50 font-bold">
                     <td className="border p-2">TOTAL</td>
                     <td className="border p-2 text-center text-green-700">
-                      {((consultor.atendimentos_realizados?.horas ?? 0) + (consultor.tarefas_realizadas?.horas ?? 0)).toFixed(1)}h
+                      {((consultorData.atendimentos_realizados?.horas ?? 0) + (consultorData.tarefas_realizadas?.horas ?? 0)).toFixed(1)}h
                     </td>
                     <td className="border p-2 text-center text-blue-700">
-                      {((consultor.atendimentos_previstos?.horas ?? 0) + (consultor.tarefas_previstas?.horas ?? 0)).toFixed(1)}h
+                      {((consultorData.atendimentos_previstos?.horas ?? 0) + (consultorData.tarefas_previstas?.horas ?? 0)).toFixed(1)}h
                     </td>
                     <td className="border p-2 text-center text-red-700">
-                      {((consultor.atendimentos_em_atraso?.horas ?? 0) + (consultor.tarefas_em_atraso?.horas ?? 0)).toFixed(1)}h
+                      {((consultorData.atendimentos_em_atraso?.horas ?? 0) + (consultorData.tarefas_em_atraso?.horas ?? 0)).toFixed(1)}h
                     </td>
                     <td className="border p-2 text-center bg-blue-100">
-                      {(consultor.carga_total_prevista ?? 0).toFixed(1)}h
+                      {(consultorData.carga_total_prevista ?? 0).toFixed(1)}h
                     </td>
                   </tr>
                 </tbody>
@@ -116,33 +165,35 @@ export default function SaturacaoConsultorModal({ consultor, open, onOpenChange 
             <div className="space-y-3">
               <div>
                 <p className="text-xs text-gray-600">Horas Semanais Disponíveis</p>
-                <p className="font-bold">{consultor.horas_semanais_disponiveis}h</p>
+                <p className="font-bold">{consultorData.horas_semanais_disponiveis}h</p>
               </div>
               <div>
                 <p className="text-xs text-gray-600">Carga Realizada (Total)</p>
-                <p className="font-bold text-green-700">{(consultor.carga_total_realizada ?? 0).toFixed(1)}h</p>
+                <p className="font-bold text-green-700">{(consultorData.carga_total_realizada ?? 0).toFixed(1)}h</p>
               </div>
               <div>
                 <p className="text-xs text-gray-600">Carga Prevista</p>
-                <p className="font-bold text-blue-700">{(consultor.carga_total_prevista ?? 0).toFixed(1)}h</p>
+                <p className="font-bold text-blue-700">{(consultorData.carga_total_prevista ?? 0).toFixed(1)}h</p>
               </div>
             </div>
             <div className="space-y-3">
               <div>
                 <p className="text-xs text-gray-600">Tarefas Vencidas</p>
-                <p className="font-bold text-red-600">{consultor.qtd_tarefas_vencidas}</p>
+                <p className="font-bold text-red-600">{consultorData.qtd_tarefas_vencidas}</p>
               </div>
               <div>
                 <p className="text-xs text-gray-600">Tarefas Críticas</p>
-                <p className="font-bold text-orange-600">{consultor.qtd_tarefas_criticas}</p>
+                <p className="font-bold text-orange-600">{consultorData.qtd_tarefas_criticas}</p>
               </div>
               <div>
                 <p className="text-xs text-gray-600">Saturação Total</p>
-                <p className="font-bold text-lg text-red-700">{(consultor.indice_saturacao ?? 0).toFixed(0)}%</p>
+                <p className="font-bold text-lg text-red-700">{(consultorData.indice_saturacao ?? 0).toFixed(0)}%</p>
               </div>
             </div>
           </div>
-        </div>
+            </>
+          )}
+          </div>
       </DialogContent>
     </Dialog>
   );
