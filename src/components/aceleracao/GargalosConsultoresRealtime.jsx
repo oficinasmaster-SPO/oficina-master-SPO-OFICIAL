@@ -4,21 +4,30 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { HelpCircle } from "lucide-react";
+import { format, addDays } from "date-fns";
 import SaturacaoConsultorItem from "./SaturacaoConsultorItem";
 import SaturacaoConsultorModal from "./SaturacaoConsultorModal";
 import SaturacaoLegendaModal from "./SaturacaoLegendaModal";
+import PeriodFilter from "./PeriodFilter";
 
 export default function GargalosConsultoresRealtime() {
   const [selectedConsultor, setSelectedConsultor] = useState(null);
   const [showLegenda, setShowLegenda] = useState(false);
+  const [period, setPeriod] = useState({
+    startDate: format(addDays(new Date(), -30), "yyyy-MM-dd"),
+    endDate: format(new Date(), "yyyy-MM-dd")
+  });
 
   const { data: saturacaoData, isLoading, refetch } = useQuery({
-    queryKey: ['saturacao-real-consultores'],
+    queryKey: ['saturacao-real-consultores', period],
     queryFn: async () => {
-      const response = await base44.functions.invoke('calcularSaturacaoReal', {});
+      const response = await base44.functions.invoke('calcularSaturacaoReal', {
+        startDate: period.startDate,
+        endDate: period.endDate
+      });
       return response.data;
     },
-    refetchInterval: 5 * 60 * 1000, // Atualiza a cada 5 minutos
+    refetchInterval: 5 * 60 * 1000,
   });
 
   if (isLoading) {
@@ -85,6 +94,7 @@ export default function GargalosConsultoresRealtime() {
         consultor={selectedConsultor}
         open={!!selectedConsultor}
         onOpenChange={(open) => !open && setSelectedConsultor(null)}
+        period={period}
         />
 
       <Card>
@@ -105,9 +115,12 @@ export default function GargalosConsultoresRealtime() {
               </Button>
             </div>
           </div>
-          <p className="text-xs text-gray-600 mt-2">
-            Cálculo inclui: atendimentos + tarefas do backlog + ajuste por tarefas vencidas
-          </p>
+          <div className="flex justify-between items-center mt-3">
+            <p className="text-xs text-gray-600">
+              Cálculo inclui: atendimentos + tarefas do backlog + ajuste por tarefas vencidas
+            </p>
+            <PeriodFilter onPeriodChange={setPeriod} defaultPeriod="30" />
+          </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
