@@ -58,7 +58,7 @@ export default function GargalosConsultoresRealtime() {
       <div className="grid grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Críticos (>150%)</CardTitle>
+            <CardTitle className="text-sm font-medium">Críticos ({`>`}150%)</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
@@ -91,7 +91,7 @@ export default function GargalosConsultoresRealtime() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Saudáveis (<70%)</CardTitle>
+            <CardTitle className="text-sm font-medium">Saudáveis ({`<`}70%)</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
@@ -211,10 +211,10 @@ export default function GargalosConsultoresRealtime() {
           <p><strong>Saturação = (Horas Atendimentos + Horas Tarefas) / 40h × 100</strong></p>
           <p>+ <strong>Ajuste: +20% por cada tarefa vencida</strong></p>
           <ul className="list-disc pl-5 space-y-1 mt-2">
-            <li>Crítico: &gt; 150% (sobrecarga severa)</li>
+            <li>Crítico: {`>`} 150% (sobrecarga severa)</li>
             <li>Alto: 100-150% (sobrecarga)</li>
             <li>Médio: 70-100% (capacidade boa)</li>
-            <li>Baixo: &lt; 70% (capacidade disponível)</li>
+            <li>Baixo: {`<`} 70% (capacidade disponível)</li>
           </ul>
         </CardContent>
       </Card>
