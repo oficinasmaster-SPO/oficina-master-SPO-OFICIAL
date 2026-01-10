@@ -6,7 +6,6 @@ export default function IntegrationMetricsChart() {
   const { data: metricsData = [] } = useQuery({
     queryKey: ["integration-metrics"],
     queryFn: async () => {
-      // Mock data - substituir por dados reais
       return [
         { name: "Calendar", eventos: 45 },
         { name: "Meet", eventos: 28 },
@@ -18,18 +17,15 @@ export default function IntegrationMetricsChart() {
   });
 
   return (
-    <ResponsiveContainer width="100%" height={250}>
+    <ResponsiveContainer width="100%" height={200}>
       <BarChart data={metricsData}>
         <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
         <XAxis 
           dataKey="name" 
-          tick={{ fontSize: 11 }}
+          tick={{ fontSize: 10 }}
         />
-        <YAxis tick={{ fontSize: 11 }} />
-        <Tooltip 
-          contentStyle={{ fontSize: 12 }}
-          formatter={(value) => [`${value} eventos`, "Total"]}
-        />
+        <YAxis tick={{ fontSize: 10 }} />
+        <Tooltip />
         <Bar dataKey="eventos" fill="#3b82f6" radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>

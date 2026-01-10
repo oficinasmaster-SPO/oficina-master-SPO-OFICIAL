@@ -124,13 +124,16 @@ export default function Integracoes() {
       </div>
 
       {/* Painel de Monitoramento */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <IntegrationStatusWidget />
         <IntegrationHealthScore />
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <QuickIntegrationsPanel />
         <Card className="shadow-lg">
           <CardContent className="p-4">
-            <h3 className="text-sm font-medium mb-4">Uso (Últimos 7 dias)</h3>
+            <h3 className="text-sm font-medium text-gray-700 mb-3">Uso das Integrações (Últimos 7 dias)</h3>
             <IntegrationMetricsChart />
           </CardContent>
         </Card>
