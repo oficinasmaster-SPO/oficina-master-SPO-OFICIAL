@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, BarChart3, Calendar, FileText, Settings, ClipboardList, Users } from "lucide-react";
 import VisaoGeralTab from "@/components/aceleracao/VisaoGeralTab";
 import PainelAtendimentosTab from "@/components/aceleracao/PainelAtendimentosTab";
-import TemplatesTab from "@/components/aceleracao/TemplatesTab";
+import PedidosInternosTab from "@/components/aceleracao/PedidosInternosTab";
 import RegistroAtendimentoMassaModal from "@/components/aceleracao/RegistroAtendimentoMassaModal";
 
 export default function ControleAceleracao() {
@@ -94,9 +94,9 @@ export default function ControleAceleracao() {
             <Calendar className="w-4 h-4 mr-2" />
             Cronograma Geral
           </TabsTrigger>
-          <TabsTrigger value="templates">
-            <Settings className="w-4 h-4 mr-2" />
-            Templates
+          <TabsTrigger value="pedidos">
+            <FileText className="w-4 h-4 mr-2" />
+            Pedidos & Backlog
           </TabsTrigger>
         </TabsList>
 
