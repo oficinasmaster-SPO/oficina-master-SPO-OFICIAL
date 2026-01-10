@@ -5,12 +5,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Video, CheckCircle, AlertCircle, Loader2, RefreshCw, CreditCard, Wallet } from "lucide-react";
+import { Calendar, Video, CheckCircle, AlertCircle, Loader2, RefreshCw, CreditCard, Wallet, Webhook } from "lucide-react";
 import { toast } from "sonner";
 import GoogleCalendarConfig from "@/components/integrations/GoogleCalendarConfig";
 import GoogleMeetConfig from "@/components/integrations/GoogleMeetConfig";
 import EduzzConfig from "@/components/integrations/EduzzConfig";
 import AsasConfig from "@/components/integrations/AsasConfig";
+import WebhookConfig from "@/components/integrations/WebhookConfig";
 
 export default function Integracoes() {
   const queryClient = useQueryClient();
@@ -62,8 +63,8 @@ export default function Integracoes() {
           ]
         },
         {
-          id: "wifi",
-          name: "Wi-Fi (Eduzz)",
+          id: "kiwify",
+          name: "Kiwify",
           description: "Plataforma de cursos e gestão de conteúdo",
           icon: CreditCard,
           status: "disconnected",
@@ -87,6 +88,20 @@ export default function Integracoes() {
             "Gestão de cobranças recorrentes",
             "Avisos de renovação",
             "Webhooks de pagamento"
+          ]
+        },
+        {
+          id: "webhook",
+          name: "Webhook Genérico",
+          description: "Integre com qualquer sistema via webhooks personalizados",
+          icon: Webhook,
+          status: "connected",
+          lastSync: null,
+          features: [
+            "Webhooks customizados",
+            "Integração com ERP/Financeiro",
+            "Notificações de eventos",
+            "Autenticação com Secret"
           ]
         }
       ];
@@ -230,11 +245,14 @@ export default function Integracoes() {
                 {integration.id === "google_meet" && (
                   <GoogleMeetConfig user={user} />
                 )}
-                {integration.id === "wifi" && (
+                {integration.id === "kiwify" && (
                   <EduzzConfig user={user} />
                 )}
                 {integration.id === "asas" && (
                   <AsasConfig user={user} />
+                )}
+                {integration.id === "webhook" && (
+                  <WebhookConfig user={user} />
                 )}
               </CardContent>
             </Card>

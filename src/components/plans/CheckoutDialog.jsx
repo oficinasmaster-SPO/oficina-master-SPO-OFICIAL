@@ -6,7 +6,7 @@ import { Loader2, CreditCard, Wallet, Check } from "lucide-react";
 import { toast } from "sonner";
 
 export default function CheckoutDialog({ open, onClose, plan, user, workshop }) {
-  const [selectedGateway, setSelectedGateway] = useState("wifi");
+  const [selectedGateway, setSelectedGateway] = useState("kiwify");
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleCheckout = async () => {
@@ -16,9 +16,9 @@ export default function CheckoutDialog({ open, onClose, plan, user, workshop }) 
       // Simular processamento
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Aqui seria a integração real com Wi-Fi ou Asas
-      const checkoutUrl = selectedGateway === "wifi" 
-        ? `https://wifi.eduzz.com/checkout?product=${plan.id}`
+      // Aqui seria a integração real com Kiwify ou Asas
+      const checkoutUrl = selectedGateway === "kiwify" 
+        ? `https://kiwify.com.br/checkout?product=${plan.id}`
         : `https://asaas.com/checkout?product=${plan.id}`;
       
       // Abrir checkout em nova aba
@@ -62,9 +62,9 @@ export default function CheckoutDialog({ open, onClose, plan, user, workshop }) 
 
           <Tabs value={selectedGateway} onValueChange={setSelectedGateway}>
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="wifi">
+              <TabsTrigger value="kiwify">
                 <CreditCard className="w-4 h-4 mr-2" />
-                Wi-Fi
+                Kiwify
               </TabsTrigger>
               <TabsTrigger value="asas">
                 <Wallet className="w-4 h-4 mr-2" />
@@ -72,9 +72,9 @@ export default function CheckoutDialog({ open, onClose, plan, user, workshop }) 
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="wifi" className="space-y-3">
+            <TabsContent value="kiwify" className="space-y-3">
               <div className="p-4 border rounded-lg">
-                <p className="text-sm font-semibold mb-2">Pagamento via Wi-Fi (Eduzz)</p>
+                <p className="text-sm font-semibold mb-2">Pagamento via Kiwify</p>
                 <ul className="text-xs text-gray-600 space-y-1">
                   <li>• Pix, Cartão de Crédito e Boleto</li>
                   <li>• Parcelamento em até 12x</li>

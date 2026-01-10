@@ -32,7 +32,7 @@ export default function EduzzConfig({ user }) {
     },
     onSuccess: () => {
       setConfig({ ...config, enabled: true });
-      toast.success("Conectado à Wi-Fi (Eduzz)!");
+      toast.success("Conectado à Kiwify!");
       queryClient.invalidateQueries({ queryKey: ["integrations-status"] });
     },
     onError: (error) => {
@@ -84,7 +84,7 @@ export default function EduzzConfig({ user }) {
             <Input
               value={config.publicKey}
               onChange={(e) => setConfig({ ...config, publicKey: e.target.value })}
-              placeholder="Cole a Public Key da Wi-Fi/Eduzz..."
+              placeholder="Cole a Public Key da Kiwify..."
               className="h-9 mt-1"
             />
           </div>
@@ -94,7 +94,7 @@ export default function EduzzConfig({ user }) {
             <Input
               value={config.apiKey}
               onChange={(e) => setConfig({ ...config, apiKey: e.target.value })}
-              placeholder="Cole a API Key da Wi-Fi/Eduzz..."
+              placeholder="Cole a API Key da Kiwify..."
               type="password"
               className="h-9 mt-1"
             />
@@ -123,7 +123,7 @@ export default function EduzzConfig({ user }) {
             ) : (
               <>
                 <CreditCard className="w-4 h-4 mr-2" />
-                Conectar Wi-Fi
+                Conectar Kiwify
               </>
             )}
           </Button>
