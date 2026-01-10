@@ -224,7 +224,7 @@ export default function GargalosConsultoresRealtime() {
                               </tr>
                               <tr className="border-b bg-green-50">
                                 <td className="p-2 font-semibold text-green-700">Carga Realizada (Total)</td>
-                                <td className="p-2 text-right font-bold text-green-700">{consultor.carga_total_realizada.toFixed(1)}h</td>
+                                <td className="p-2 text-right font-bold text-green-700">{(consultor.carga_total_realizada ?? 0).toFixed(1)}h</td>
                               </tr>
                               <tr className="border-b">
                                 <td className="p-2 font-semibold text-gray-700">Atendimentos (Realizado)</td>
@@ -240,7 +240,7 @@ export default function GargalosConsultoresRealtime() {
                               </tr>
                               <tr>
                                 <td className="p-2 font-semibold text-red-700">Saturação Total</td>
-                                <td className="p-2 text-right font-bold text-lg text-red-700">{consultor.indice_saturacao.toFixed(0)}%</td>
+                                <td className="p-2 text-right font-bold text-lg text-red-700">{(consultor.indice_saturacao ?? 0).toFixed(0)}%</td>
                               </tr>
                             </tbody>
                           </table>
