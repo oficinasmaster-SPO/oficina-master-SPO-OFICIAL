@@ -17,6 +17,10 @@ import UsageTimeCard from "../components/dashboard/UsageTimeCard";
 import TechnicianRanking from "../components/dashboard/TechnicianRanking";
 import SalesRanking from "../components/dashboard/SalesRanking";
 import ManagerRanking from "../components/dashboard/ManagerRanking";
+import IntegrationStatusWidget from "../components/dashboard/IntegrationStatusWidget";
+import IntegrationMetricsChart from "../components/dashboard/IntegrationMetricsChart";
+import QuickIntegrationsPanel from "../components/dashboard/QuickIntegrationsPanel";
+import IntegrationHealthScore from "../components/dashboard/IntegrationHealthScore";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -387,6 +391,14 @@ export default function Dashboard() {
               </p>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Painel de Integrações */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <IntegrationStatusWidget />
+          <IntegrationHealthScore />
+          <QuickIntegrationsPanel />
+          <IntegrationMetricsChart />
         </div>
 
         {/* KPIs Principais */}
