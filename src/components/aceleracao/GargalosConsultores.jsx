@@ -11,8 +11,10 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import PeriodFilter from "./PeriodFilter";
+import { addDays, format } from "date-fns";
 
-export default function GargalosConsultores({ consultores }) {
+export default function GargalosConsultores({ consultores, onPeriodChange }) {
   const [showHelp, setShowHelp] = useState(false);
 
   // Dados de exemplo para demonstração (remover quando tiver dados reais)
@@ -336,26 +338,29 @@ export default function GargalosConsultores({ consultores }) {
       </Dialog>
 
     <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <CardTitle className="flex items-center gap-2">
-              Análise de Gargalos - Consultores
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowHelp(true)}
-                className="h-6 w-6 p-0 hover:bg-blue-50"
-              >
-                <HelpCircle className="w-4 h-4 text-blue-600" />
-              </Button>
-            </CardTitle>
-            <p className="text-sm text-gray-600 mt-1">
-              Índice de Saturação (IS) = Carga Ativa ÷ Capacidade Semanal
-            </p>
-          </div>
+    <CardHeader>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex-1">
+          <CardTitle className="flex items-center gap-2">
+            Análise de Gargalos - Consultores
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowHelp(true)}
+              className="h-6 w-6 p-0 hover:bg-blue-50"
+            >
+              <HelpCircle className="w-4 h-4 text-blue-600" />
+            </Button>
+          </CardTitle>
+          <p className="text-sm text-gray-600 mt-1">
+            Índice de Saturação (IS) = Carga Ativa ÷ Capacidade Semanal
+          </p>
         </div>
-      </CardHeader>
+        {onPeriodChange && (
+          <PeriodFilter onPeriodChange={onPeriodChange} defaultPeriod="30" />
+        )}
+      </div>
+    </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
           <table className="w-full">
