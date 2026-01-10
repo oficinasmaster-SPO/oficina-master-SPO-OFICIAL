@@ -131,7 +131,7 @@ export default function GargalosConsultoresRealtime() {
                     </div>
                     <div className="flex gap-2">
                       <Badge className={`${cor.badge} text-white`}>
-                        {consultor.indice_saturacao.toFixed(0)}%
+                        {(consultor.indice_saturacao ?? 0).toFixed(0)}%
                       </Badge>
                       {consultor.status_gargalo === 'critico' && (
                         <AlertTriangle className="w-5 h-5 text-red-600" />
@@ -236,7 +236,7 @@ export default function GargalosConsultoresRealtime() {
                               </tr>
                               <tr className="border-b bg-blue-50">
                                 <td className="p-2 font-semibold text-blue-700">Carga Prevista</td>
-                                <td className="p-2 text-right font-bold text-blue-700">{consultor.carga_total_prevista.toFixed(1)}h</td>
+                                <td className="p-2 text-right font-bold text-blue-700">{(consultor.carga_total_prevista ?? 0).toFixed(1)}h</td>
                               </tr>
                               <tr>
                                 <td className="p-2 font-semibold text-red-700">Saturação Total</td>
