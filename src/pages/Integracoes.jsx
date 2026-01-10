@@ -6,10 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Video, CheckCircle, AlertCircle, Loader2, Settings, CreditCard, Wallet, Webhook } from "lucide-react";
 import IntegrationModal from "@/components/integrations/IntegrationModal";
-import IntegrationStatusWidget from "@/components/dashboard/IntegrationStatusWidget";
-import IntegrationHealthScore from "@/components/dashboard/IntegrationHealthScore";
-import QuickIntegrationsPanel from "@/components/dashboard/QuickIntegrationsPanel";
-import IntegrationMetricsChart from "@/components/dashboard/IntegrationMetricsChart";
 
 export default function Integracoes() {
   const [user, setUser] = useState(null);
@@ -121,22 +117,6 @@ export default function Integracoes() {
         <p className="text-gray-600 mt-2">
           Conecte serviços externos para automatizar processos
         </p>
-      </div>
-
-      {/* Painel de Monitoramento */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <IntegrationStatusWidget />
-        <IntegrationHealthScore />
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <QuickIntegrationsPanel />
-        <Card className="shadow-lg">
-          <CardContent className="p-4">
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Uso das Integrações (Últimos 7 dias)</h3>
-            <IntegrationMetricsChart />
-          </CardContent>
-        </Card>
       </div>
 
       {/* Tabela de Integrações */}
