@@ -12,7 +12,7 @@ import GraficoAtendimentos from "./GraficoAtendimentos";
 import StatusClientesCard from "./StatusClientesCard";
 import ClientesDetalhesModal from "./ClientesDetalhesModal";
 import ReunioesDetalhesModal from "./ReunioesDetalhesModal";
-import GargalosConsultores from "./GargalosConsultores";
+import GargalosConsultoresRealtime from "./GargalosConsultoresRealtime";
 
 export default function VisaoGeralTab({ user }) {
   const [modalClientes, setModalClientes] = useState({ isOpen: false, tipo: null, clientes: [] });
@@ -270,8 +270,8 @@ export default function VisaoGeralTab({ user }) {
         <AgendaVisual atendimentos={atendimentos || []} />
       </div>
 
-      {/* Análise de Gargalos */}
-      <GargalosConsultores consultores={gargalos || []} />
+      {/* Análise de Gargalos com Backlog */}
+      <GargalosConsultoresRealtime />
     </div>
   );
 }
