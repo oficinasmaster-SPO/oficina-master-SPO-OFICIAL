@@ -34,11 +34,20 @@ Deno.serve(async (req) => {
 
       // 1. Horas em atendimentos este mês
       const atendimentosConsultor = atendimentos.filter(a => a.consultor_id === consultor.id);
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
 
-      // Separar em realizado e previsto
+      // Separar em realizados, previstos e em atraso
       const atendimentosRealizados = atendimentosConsultor.filter(a => a.status === 'realizado');
+
       const atendimentosPrevisto = atendimentosConsultor.filter(a => 
-        ['agendado', 'confirmado', 'participando', 'atrasado'].includes(a.status)
+        ['agendado', 'confirmado', 'participando'].includes(a.status) &&
+        new Date(a.data_agendada) >= hoje
+      );
+
+      const atendimentosEmAtraso = atendimentosConsultor.filter(a => 
+        (a.status === 'atrasado' || 
+         (['agendado', 'confirmado', 'participando'].includes(a.status) && new Date(a.data_agendada) < hoje))
       );
 
       const horasAtendimentosRealizados = atendimentosRealizados.reduce((total, a) => {
@@ -49,13 +58,37 @@ Deno.serve(async (req) => {
         return total + (a.duracao_minutos || 60) / 60;
       }, 0);
 
-      const horasAtendimentos = horasAtendimentosRealizados + horasAtendimentosPrevisto;
+      const horasAtendimentosEmAtraso = atendimentosEmAtraso.reduce((total, a) => {
+        return total + (a.duracao_minutos || 60) / 60;
+      }, 0);
+
+      const horasAtendimentos = horasAtendimentosRealizados + horasAtendimentosPrevisto + horasAtendimentosEmAtraso;
 
       // 2. Horas necessárias para tarefas abertas
       const tarefasConsultor = tarefasAbertas.filter(t => t.consultor_id === consultor.id);
-      const horasTarefas = tarefasConsultor.reduce((total, t) => {
+
+      // Separar tarefas em realizadas, previstas e em atraso
+      const tarefasRealizadas = tarefasConsultor.filter(t => t.status === 'concluida');
+      const tarefasPrevistas = tarefasConsultor.filter(t => 
+        t.status !== 'concluida' && new Date(t.prazo) >= hoje
+      );
+      const tarefasEmAtraso = tarefasConsultor.filter(t => 
+        t.status !== 'concluida' && new Date(t.prazo) < hoje
+      );
+
+      const horasTarefasRealizadas = tarefasRealizadas.reduce((total, t) => {
+        return total + (t.tempo_real_horas || t.tempo_estimado_horas || 0);
+      }, 0);
+
+      const horasTarefasPrevistas = tarefasPrevistas.reduce((total, t) => {
         return total + (t.tempo_estimado_horas || 0);
       }, 0);
+
+      const horasTarefasEmAtraso = tarefasEmAtraso.reduce((total, t) => {
+        return total + (t.tempo_estimado_horas || 0);
+      }, 0);
+
+      const horasTarefas = horasTarefasRealizadas + horasTarefasPrevistas + horasTarefasEmAtraso;
 
       // 3. Total de horas comprometidas
       const horasComprometidas = horasAtendimentos + horasTarefas;
@@ -95,18 +128,42 @@ Deno.serve(async (req) => {
         consultor_email: consultor.email,
         horas_semanais_disponiveis: horasSemanaisDisponiveis,
         // Atendimentos
-        horas_atendimentos_realizados: parseFloat(horasAtendimentosRealizados.toFixed(2)),
-        horas_atendimentos_previsto: parseFloat(horasAtendimentosPrevisto.toFixed(2)),
-        horas_atendimentos: parseFloat(horasAtendimentos.toFixed(2)),
-        qtd_atendimentos: atendimentosConsultor.length,
-        qtd_atendimentos_realizados: atendimentosRealizados.length,
-        qtd_atendimentos_previsto: atendimentosPrevisto.length,
+        atendimentos_realizados: {
+          horas: parseFloat(horasAtendimentosRealizados.toFixed(2)),
+          qtd: atendimentosRealizados.length
+        },
+        atendimentos_previstos: {
+          horas: parseFloat(horasAtendimentosPrevisto.toFixed(2)),
+          qtd: atendimentosPrevisto.length
+        },
+        atendimentos_em_atraso: {
+          horas: parseFloat(horasAtendimentosEmAtraso.toFixed(2)),
+          qtd: atendimentosEmAtraso.length
+        },
+        total_atendimentos: {
+          horas: parseFloat(horasAtendimentos.toFixed(2)),
+          qtd: atendimentosConsultor.length
+        },
         // Tarefas
-        horas_tarefas_backlog: parseFloat(horasTarefas.toFixed(2)),
-        horas_comprometidas: parseFloat(horasComprometidas.toFixed(2)),
-        qtd_tarefas_abertas: tarefasConsultor.length,
-        qtd_tarefas_vencidas: tarefasVencidas,
-        qtd_tarefas_criticas: tarefasCriticas,
+        tarefas_realizadas: {
+          horas: parseFloat(horasTarefasRealizadas.toFixed(2)),
+          qtd: tarefasRealizadas.length
+        },
+        tarefas_previstas: {
+          horas: parseFloat(horasTarefasPrevistas.toFixed(2)),
+          qtd: tarefasPrevistas.length
+        },
+        tarefas_em_atraso: {
+          horas: parseFloat(horasTarefasEmAtraso.toFixed(2)),
+          qtd: tarefasEmAtraso.length
+        },
+        total_tarefas: {
+          horas: parseFloat(horasTarefas.toFixed(2)),
+          qtd: tarefasConsultor.length
+        },
+        // Totalizador
+        carga_total_realizada: parseFloat((horasAtendimentosRealizados + horasTarefasRealizadas).toFixed(2)),
+        carga_total_prevista: parseFloat(horasComprometidas.toFixed(2)),
         // Índices
         indice_saturacao: parseFloat(indiceSaturacao.toFixed(2)),
         status_gargalo: statusGargalo,
