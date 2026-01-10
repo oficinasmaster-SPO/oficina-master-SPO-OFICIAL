@@ -860,6 +860,15 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           description: 'Verificar status do plano Base44',
           adminOnly: true,
           requiredPermission: 'admin.system_config'
+        },
+        { 
+          name: 'Integrações', 
+          href: createPageUrl('Integracoes'), 
+          icon: Network,
+          description: 'Google Calendar & Meet',
+          highlight: true,
+          adminOnly: true,
+          requiredPermission: 'admin.system_config'
         }
       ]
     }
