@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,13 +6,21 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, AlertCircle, TrendingUp, Clock } from "lucide-react";
 import TarefaBacklogForm from "./TarefaBacklogForm";
+import BacklogFilters from "./BacklogFilters";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export default function BacklogDashboard({ user }) {
   const [showForm, setShowForm] = useState(false);
   const [editingTarefa, setEditingTarefa] = useState(null);
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [filters, setFilters] = useState({
+    search: '',
+    consultor: 'all',
+    cliente: 'all',
+    status: 'all',
+    prioridade: 'all',
+    origem: 'all'
+  });
   const queryClient = useQueryClient();
 
   const { data: tarefas = [], isLoading } = useQuery({
@@ -91,9 +99,26 @@ export default function BacklogDashboard({ user }) {
     }
   });
 
-  const filteredTarefas = filterStatus === 'all' 
-    ? backlogTotal 
-    : tarefas.filter(t => t.status === filterStatus);
+  const consultoresUnicos = useMemo(() => {
+    return [...new Set(tarefas.map(t => t.consultor_nome).filter(Boolean))].sort();
+  }, [tarefas]);
+
+  const clientesUnicos = useMemo(() => {
+    return [...new Set(tarefas.map(t => t.cliente_nome).filter(Boolean))].sort();
+  }, [tarefas]);
+
+  const filteredTarefas = backlogTotal.filter(t => {
+    const matchSearch = filters.search === '' || 
+      t.titulo?.toLowerCase().includes(filters.search.toLowerCase()) ||
+      t.cliente_nome?.toLowerCase().includes(filters.search.toLowerCase());
+    const matchConsultor = filters.consultor === 'all' || t.consultor_nome === filters.consultor;
+    const matchCliente = filters.cliente === 'all' || t.cliente_nome === filters.cliente;
+    const matchStatus = filters.status === 'all' || t.status === filters.status;
+    const matchPrioridade = filters.prioridade === 'all' || t.prioridade === filters.prioridade;
+    const matchOrigem = filters.origem === 'all' || t.origem === filters.origem;
+    
+    return matchSearch && matchConsultor && matchCliente && matchStatus && matchPrioridade && matchOrigem;
+  });
 
   const getPrioridadeBadge = (prioridade) => {
     const badges = {
@@ -245,41 +270,16 @@ export default function BacklogDashboard({ user }) {
         </Card>
       </div>
 
+      <BacklogFilters 
+        filters={filters} 
+        onFilterChange={setFilters}
+        consultores={consultoresUnicos}
+        clientes={clientesUnicos}
+      />
+
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>Lista de Tarefas</CardTitle>
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant={filterStatus === 'all' ? 'default' : 'outline'}
-                onClick={() => setFilterStatus('all')}
-              >
-                Todas
-              </Button>
-              <Button
-                size="sm"
-                variant={filterStatus === 'aberta' ? 'default' : 'outline'}
-                onClick={() => setFilterStatus('aberta')}
-              >
-                Abertas
-              </Button>
-              <Button
-                size="sm"
-                variant={filterStatus === 'em_execucao' ? 'default' : 'outline'}
-                onClick={() => setFilterStatus('em_execucao')}
-              >
-                Em Execução
-              </Button>
-              <Button
-                size="sm"
-                variant={filterStatus === 'bloqueada' ? 'default' : 'outline'}
-                onClick={() => setFilterStatus('bloqueada')}
-              >
-                Bloqueadas
-              </Button>
-            </div>
-          </div>
+          <CardTitle>Lista de Tarefas ({filteredTarefas.length})</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
