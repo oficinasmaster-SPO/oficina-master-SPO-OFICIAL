@@ -121,9 +121,6 @@ export default function VisaoGeralTab({ user }) {
 
   return (
     <div className="space-y-6">
-      {/* Análise de Gargalos */}
-      <GargalosConsultores consultores={gargalos || []} />
-
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={handleClientesClick}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -272,6 +269,9 @@ export default function VisaoGeralTab({ user }) {
         {/* Agenda Visual */}
         <AgendaVisual atendimentos={atendimentos || []} />
       </div>
+
+      {/* Análise de Gargalos */}
+      <GargalosConsultores consultores={gargalos || []} />
     </div>
   );
 }
