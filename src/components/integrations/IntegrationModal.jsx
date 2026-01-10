@@ -5,6 +5,8 @@ import GoogleMeetConfig from "./GoogleMeetConfig";
 import EduzzConfig from "./EduzzConfig";
 import AsasConfig from "./AsasConfig";
 import WebhookConfig from "./WebhookConfig";
+import ClickSignConfig from "./ClickSignConfig";
+import SerasaConfig from "./SerasaConfig";
 
 export default function IntegrationModal({ open, onClose, integration, user }) {
   if (!integration) return null;
@@ -23,6 +25,10 @@ export default function IntegrationModal({ open, onClose, integration, user }) {
         return <AsasConfig user={user} />;
       case "webhook":
         return <WebhookConfig user={user} />;
+      case "clicksign":
+        return <ClickSignConfig user={user} />;
+      case "serasa":
+        return <SerasaConfig user={user} />;
       default:
         return null;
     }
