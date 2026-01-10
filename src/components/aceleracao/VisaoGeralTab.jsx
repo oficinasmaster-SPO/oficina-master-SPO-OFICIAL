@@ -12,6 +12,7 @@ import GraficoAtendimentos from "./GraficoAtendimentos";
 import StatusClientesCard from "./StatusClientesCard";
 import ClientesDetalhesModal from "./ClientesDetalhesModal";
 import ReunioesDetalhesModal from "./ReunioesDetalhesModal";
+import GargalosConsultores from "./GargalosConsultores";
 
 export default function VisaoGeralTab({ user }) {
   const [modalClientes, setModalClientes] = useState({ isOpen: false, tipo: null, clientes: [] });
@@ -44,6 +45,14 @@ export default function VisaoGeralTab({ user }) {
       return plans;
     },
     enabled: !!user?.id
+  });
+
+  const { data: gargalos } = useQuery({
+    queryKey: ['gargalos-consultores'],
+    queryFn: async () => {
+      const response = await base44.functions.invoke('calcularGargalosConsultores');
+      return response.data;
+    }
   });
 
   // Filtrar atendimentos do mês atual
@@ -112,6 +121,9 @@ export default function VisaoGeralTab({ user }) {
 
   return (
     <div className="space-y-6">
+      {/* Análise de Gargalos */}
+      <GargalosConsultores consultores={gargalos || []} />
+
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={handleClientesClick}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
