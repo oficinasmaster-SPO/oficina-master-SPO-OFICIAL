@@ -91,91 +91,245 @@ export default function GargalosConsultores({ consultores }) {
   return (
     <>
       <Dialog open={showHelp} onOpenChange={setShowHelp}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <HelpCircle className="w-5 h-5 text-blue-600" />
-              Como Funciona a Análise de Gargalos
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <HelpCircle className="w-6 h-6 text-blue-600" />
+              Análise de Gargalos - Guia Completo
             </DialogTitle>
+            <DialogDescription className="text-base">
+              Entenda como identificar e resolver gargalos de capacidade na sua equipe de aceleração
+            </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-2">📊 O que é um Gargalo?</h3>
-              <p className="text-sm text-gray-600">
-                Gargalo NÃO é opinião. É uma métrica objetiva que indica quando a <strong>capacidade</strong> do consultor 
-                é menor que a <strong>demanda</strong> de trabalho.
+          <div className="space-y-6">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border-l-4 border-blue-600">
+              <h3 className="font-semibold text-lg text-gray-900 mb-3 flex items-center gap-2">
+                📊 O que é um Gargalo?
+              </h3>
+              <p className="text-base text-gray-700 mb-3">
+                Gargalo <strong>NÃO é opinião</strong>. É uma métrica objetiva, matemática e mensurável que indica quando a 
+                <strong className="text-blue-700"> capacidade real</strong> do consultor é <strong className="text-red-700">menor</strong> que a 
+                <strong className="text-orange-700"> demanda de trabalho</strong>.
+              </p>
+              <p className="text-sm text-gray-600 bg-white p-3 rounded">
+                <strong>💡 Exemplo prático:</strong> Se um consultor tem 28h de capacidade semanal mas possui 32h de atendimentos 
+                agendados, ele está em gargalo. Não há tempo físico para cumprir todas as demandas com qualidade.
               </p>
             </div>
 
-            <div className="border-t pt-4">
-              <h3 className="font-semibold text-gray-900 mb-3">🔢 Métricas Calculadas</h3>
-              <div className="space-y-3">
-                <div className="bg-blue-50 p-3 rounded-lg">
-                  <p className="font-semibold text-sm text-blue-900">1️⃣ Capacidade Semanal</p>
-                  <p className="text-sm text-gray-700 mt-1">
-                    <code className="bg-white px-2 py-1 rounded">Capacidade = Horas Disponíveis × Produtividade Média</code>
+            <div className="border-t pt-6">
+              <h3 className="font-semibold text-lg text-gray-900 mb-4">🔢 Como Calculamos as Métricas</h3>
+              <div className="space-y-4">
+                <div className="bg-blue-50 p-5 rounded-lg border border-blue-200">
+                  <p className="font-semibold text-base text-blue-900 mb-2">1️⃣ Capacidade Semanal</p>
+                  <p className="text-sm text-gray-700 mb-3">
+                    <code className="bg-white px-3 py-1.5 rounded font-mono text-sm">
+                      Capacidade = Horas Disponíveis × Produtividade Média
+                    </code>
                   </p>
-                  <p className="text-xs text-gray-600 mt-1">
-                    Exemplo: 40h semanais × 70% produtividade = <strong>28h de capacidade real</strong>
-                  </p>
-                </div>
-
-                <div className="bg-purple-50 p-3 rounded-lg">
-                  <p className="font-semibold text-sm text-purple-900">2️⃣ Carga Ativa</p>
-                  <p className="text-sm text-gray-700 mt-1">
-                    <code className="bg-white px-2 py-1 rounded">Carga Ativa = Σ (Tempo estimado das tarefas abertas)</code>
-                  </p>
-                  <p className="text-xs text-gray-600 mt-1">
-                    Soma das horas de todos os atendimentos agendados e confirmados
-                  </p>
-                </div>
-
-                <div className="bg-orange-50 p-3 rounded-lg">
-                  <p className="font-semibold text-sm text-orange-900">3️⃣ Índice de Saturação (IS)</p>
-                  <p className="text-sm text-gray-700 mt-1">
-                    <code className="bg-white px-2 py-1 rounded">IS = Carga Ativa ÷ Capacidade Semanal</code>
-                  </p>
-                  <p className="text-xs text-gray-600 mt-1">
-                    Este índice determina se o consultor está no limite ou sobrecarregado
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="border-t pt-4">
-              <h3 className="font-semibold text-gray-900 mb-3">🚦 Interpretação do IS</h3>
-              <div className="space-y-2">
-                <div className="flex items-center gap-3">
-                  <div className="w-3 h-3 rounded bg-green-500" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">IS ≤ 0,8 = Saudável ✅</p>
-                    <p className="text-xs text-gray-600">Consultor com capacidade disponível</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-3 h-3 rounded bg-yellow-500" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">IS 0,8 - 1,0 = Atenção ⚠️</p>
-                    <p className="text-xs text-gray-600">Consultor próximo do limite, evite novas demandas</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-3 h-3 rounded bg-red-500" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">IS > 1,0 = Gargalo 🚨</p>
-                    <p className="text-xs text-gray-600">
-                      Consultor sobrecarregado! Capacidade menor que demanda
+                  <div className="bg-white p-4 rounded-lg space-y-2">
+                    <p className="text-sm text-gray-700">
+                      <strong>Exemplo prático:</strong>
+                    </p>
+                    <ul className="text-sm text-gray-600 space-y-1 ml-4 list-disc">
+                      <li><strong>Jornada semanal:</strong> 40 horas (8h/dia × 5 dias)</li>
+                      <li><strong>Produtividade média:</strong> 70% (explicado abaixo)</li>
+                      <li><strong>Capacidade real:</strong> 40h × 70% = <strong className="text-blue-700">28h úteis</strong></li>
+                    </ul>
+                    <p className="text-xs text-gray-500 mt-2 italic">
+                      ⚠️ As 12h restantes (30%) são consumidas por tarefas administrativas, pausas, 
+                      imprevistos e outras atividades não-produtivas inerentes ao trabalho.
                     </p>
                   </div>
                 </div>
+
+                <div className="bg-purple-50 p-5 rounded-lg border border-purple-200">
+                  <p className="font-semibold text-base text-purple-900 mb-2">2️⃣ Carga Ativa (Workload)</p>
+                  <p className="text-sm text-gray-700 mb-3">
+                    <code className="bg-white px-3 py-1.5 rounded font-mono text-sm">
+                      Carga Ativa = Σ (Tempo estimado de cada atendimento aberto)
+                    </code>
+                  </p>
+                  <div className="bg-white p-4 rounded-lg space-y-2">
+                    <p className="text-sm text-gray-700">
+                      <strong>O que entra no cálculo:</strong>
+                    </p>
+                    <ul className="text-sm text-gray-600 space-y-1 ml-4 list-disc">
+                      <li>Atendimentos com status <strong>agendado</strong></li>
+                      <li>Atendimentos com status <strong>confirmado</strong></li>
+                      <li>Reuniões não finalizadas (em progresso)</li>
+                    </ul>
+                    <p className="text-xs text-gray-500 mt-2 italic">
+                      ℹ️ Cada atendimento tem uma duração estimada (ex: 1h, 2h). Somamos todas essas horas 
+                      para saber quanto trabalho está "pendente" para o consultor.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-orange-50 p-5 rounded-lg border border-orange-200">
+                  <p className="font-semibold text-base text-orange-900 mb-2">3️⃣ Índice de Saturação (IS)</p>
+                  <p className="text-sm text-gray-700 mb-3">
+                    <code className="bg-white px-3 py-1.5 rounded font-mono text-sm">
+                      IS = Carga Ativa ÷ Capacidade Semanal
+                    </code>
+                  </p>
+                  <div className="bg-white p-4 rounded-lg space-y-3">
+                    <p className="text-sm text-gray-700">
+                      <strong>O que o IS significa?</strong>
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      O IS é um <strong>indicador percentual</strong> que mostra quanto da capacidade do consultor 
+                      está comprometida com trabalho. É a métrica central para identificar gargalos.
+                    </p>
+                    <div className="grid grid-cols-3 gap-3 mt-3">
+                      <div className="bg-green-50 p-3 rounded border border-green-200">
+                        <p className="font-semibold text-sm text-green-800">IS = 0,6 (60%)</p>
+                        <p className="text-xs text-gray-600 mt-1">Consultor tem folga para novos clientes</p>
+                      </div>
+                      <div className="bg-yellow-50 p-3 rounded border border-yellow-200">
+                        <p className="font-semibold text-sm text-yellow-800">IS = 0,9 (90%)</p>
+                        <p className="text-xs text-gray-600 mt-1">Consultor próximo do limite</p>
+                      </div>
+                      <div className="bg-red-50 p-3 rounded border border-red-200">
+                        <p className="font-semibold text-sm text-red-800">IS = 1,2 (120%)</p>
+                        <p className="text-xs text-gray-600 mt-1">GARGALO! Capacidade insuficiente</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="border-t pt-4 bg-yellow-50 p-3 rounded-lg">
-              <p className="text-sm text-gray-700">
-                <strong>💡 Dica:</strong> Use este indicador para balancear a distribuição de clientes 
-                entre consultores e evitar sobrecarga.
-              </p>
+            <div className="border-t pt-6">
+              <h3 className="font-semibold text-lg text-gray-900 mb-3">⚙️ Por que 70% de Produtividade e não 100%?</h3>
+              <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-5 rounded-lg border-l-4 border-yellow-500">
+                <p className="text-base text-gray-700 mb-3">
+                  <strong>Ninguém</strong> consegue trabalhar 100% do tempo de forma produtiva. Estudos de gestão de tempo 
+                  mostram que um profissional típico tem aproximadamente <strong>70% de produtividade efetiva</strong>.
+                </p>
+                <p className="text-sm font-semibold text-gray-800 mb-2">Os outros 30% são consumidos por:</p>
+                <div className="grid md:grid-cols-2 gap-3">
+                  <div className="bg-white p-3 rounded">
+                    <p className="text-sm font-medium text-gray-700">📧 Tarefas Administrativas</p>
+                    <p className="text-xs text-gray-600">E-mails, relatórios, documentação, preenchimento de sistemas</p>
+                  </div>
+                  <div className="bg-white p-3 rounded">
+                    <p className="text-sm font-medium text-gray-700">☕ Pausas Necessárias</p>
+                    <p className="text-xs text-gray-600">Café, banheiro, almoço estendido, descanso mental</p>
+                  </div>
+                  <div className="bg-white p-3 rounded">
+                    <p className="text-sm font-medium text-gray-700">🚨 Imprevistos</p>
+                    <p className="text-xs text-gray-600">Ligações urgentes, problemas técnicos, demandas inesperadas</p>
+                  </div>
+                  <div className="bg-white p-3 rounded">
+                    <p className="text-sm font-medium text-gray-700">💬 Reuniões Internas</p>
+                    <p className="text-xs text-gray-600">Alinhamentos, feedbacks, planejamento, treinamentos</p>
+                  </div>
+                </div>
+                <div className="mt-4 bg-blue-600 text-white p-3 rounded">
+                  <p className="text-sm">
+                    <strong>📊 Benchmark da indústria:</strong> Consultorias de alto desempenho trabalham com 
+                    60-75% de taxa de utilização. Usar 100% levaria ao burnout e queda de qualidade.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t pt-6">
+              <h3 className="font-semibold text-lg text-gray-900 mb-4">🚦 Como Interpretar o Índice de Saturação (IS)</h3>
+              <div className="space-y-3">
+                <div className="bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="w-6 h-6 text-green-600 mt-1" />
+                    <div className="flex-1">
+                      <p className="font-semibold text-base text-green-900 mb-1">IS ≤ 0,8 (até 80%) = Saudável ✅</p>
+                      <p className="text-sm text-gray-700 mb-2">
+                        Consultor operando dentro da capacidade ideal, com margem de segurança.
+                      </p>
+                      <div className="bg-white p-3 rounded text-sm space-y-1">
+                        <p className="text-gray-700"><strong>O que fazer:</strong></p>
+                        <ul className="ml-4 list-disc text-gray-600 space-y-1">
+                          <li>Pode receber novos clientes sem problemas</li>
+                          <li>Tem tempo para planejamento e melhoria contínua</li>
+                          <li>Capacidade para lidar com imprevistos</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-500">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="w-6 h-6 text-yellow-600 mt-1" />
+                    <div className="flex-1">
+                      <p className="font-semibold text-base text-yellow-900 mb-1">IS 0,8 - 1,0 (80% a 100%) = Atenção ⚠️</p>
+                      <p className="text-sm text-gray-700 mb-2">
+                        Consultor está no limite da capacidade. Zona de risco para sobrecarga.
+                      </p>
+                      <div className="bg-white p-3 rounded text-sm space-y-1">
+                        <p className="text-gray-700"><strong>O que fazer:</strong></p>
+                        <ul className="ml-4 list-disc text-gray-600 space-y-1">
+                          <li><strong>NÃO</strong> alocar novos clientes neste momento</li>
+                          <li>Monitorar de perto: qualquer imprevisto causará atraso</li>
+                          <li>Avaliar se algum cliente pode ser redistribuído</li>
+                          <li>Planejar com antecedência as próximas semanas</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-red-50 p-4 rounded-lg border-l-4 border-red-500">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="w-6 h-6 text-red-600 mt-1" />
+                    <div className="flex-1">
+                      <p className="font-semibold text-base text-red-900 mb-1">IS > 1,0 (acima de 100%) = GARGALO 🚨</p>
+                      <p className="text-sm text-gray-700 mb-2">
+                        <strong>ALERTA CRÍTICO!</strong> Consultor com mais demanda do que capacidade física. 
+                        Situação insustentável que levará a atrasos, queda de qualidade e burnout.
+                      </p>
+                      <div className="bg-white p-3 rounded text-sm space-y-1">
+                        <p className="text-red-700 font-semibold">⚠️ AÇÃO IMEDIATA NECESSÁRIA:</p>
+                        <ul className="ml-4 list-disc text-gray-600 space-y-1">
+                          <li><strong>Redistribuir clientes</strong> para outros consultores</li>
+                          <li><strong>Reagendar</strong> atendimentos não urgentes</li>
+                          <li><strong>Bloquear</strong> novas demandas até normalizar</li>
+                          <li>Analisar se há tarefas que podem ser delegadas</li>
+                          <li>Avaliar possibilidade de contratação urgente</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t pt-6">
+              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-lg">
+                <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                  💡 Melhores Práticas de Gestão
+                </h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="font-medium mb-2">✅ Faça regularmente:</p>
+                    <ul className="text-sm space-y-1 opacity-90">
+                      <li>• Revisar semanalmente este indicador</li>
+                      <li>• Planejar alocações com 2+ semanas de antecedência</li>
+                      <li>• Manter IS dos consultores entre 0,6 e 0,8</li>
+                      <li>• Distribuir carga uniformemente</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <p className="font-medium mb-2">❌ Evite:</p>
+                    <ul className="text-sm space-y-1 opacity-90">
+                      <li>• Alocar clientes sem consultar o IS</li>
+                      <li>• Ignorar alertas de "Atenção" ou "Gargalo"</li>
+                      <li>• Concentrar clientes em poucos consultores</li>
+                      <li>• Deixar consultores ociosos (IS &lt; 0,5)</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </DialogContent>
