@@ -148,6 +148,7 @@ export const sidebarStructure = [
       { name: "Clientes", description: "Painel admin" },
       { name: "Tours e Vídeos", description: "Ajuda" },
       { name: "Processos Admin", description: "Gestão MAPs" },
+      { name: "Integrações", description: "Google Calendar & Meet" },
     ],
   },
 ];

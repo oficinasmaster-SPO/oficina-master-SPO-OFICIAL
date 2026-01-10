@@ -79,6 +79,7 @@ import Feedbacks from './pages/Feedbacks';
 import Gamificacao from './pages/Gamificacao';
 import GerenciarAula from './pages/GerenciarAula';
 import GerenciarChecklists from './pages/GerenciarChecklists';
+import GerenciarGruposClientes from './pages/GerenciarGruposClientes';
 import GerenciarModulo from './pages/GerenciarModulo';
 import GerenciarModulosCurso from './pages/GerenciarModulosCurso';
 import GerenciarPlanos from './pages/GerenciarPlanos';
@@ -153,7 +154,7 @@ import TestUsuarios from './pages/TestUsuarios';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
-import GerenciarGruposClientes from './pages/GerenciarGruposClientes';
+import Integracoes from './pages/Integracoes';
 import __Layout from './Layout.jsx';
 
 
@@ -239,6 +240,7 @@ export const PAGES = {
     "Gamificacao": Gamificacao,
     "GerenciarAula": GerenciarAula,
     "GerenciarChecklists": GerenciarChecklists,
+    "GerenciarGruposClientes": GerenciarGruposClientes,
     "GerenciarModulo": GerenciarModulo,
     "GerenciarModulosCurso": GerenciarModulosCurso,
     "GerenciarPlanos": GerenciarPlanos,
@@ -313,7 +315,7 @@ export const PAGES = {
     "TreinamentoVendas": TreinamentoVendas,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
-    "GerenciarGruposClientes": GerenciarGruposClientes,
+    "Integracoes": Integracoes,
 }
 
 export const pagesConfig = {
