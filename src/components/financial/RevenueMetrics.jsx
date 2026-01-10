@@ -21,7 +21,7 @@ export default function RevenueMetrics({ metrics }) {
       bgColor: "bg-blue-50"
     },
     {
-      title: "Pagamentos em Atraso",
+      title: "Recebimentos em Atraso",
       value: `R$ ${metrics.totalOverdue?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}`,
       icon: AlertCircle,
       color: "text-red-600",
