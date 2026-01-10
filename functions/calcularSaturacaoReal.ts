@@ -34,9 +34,22 @@ Deno.serve(async (req) => {
 
       // 1. Horas em atendimentos este mês
       const atendimentosConsultor = atendimentos.filter(a => a.consultor_id === consultor.id);
-      const horasAtendimentos = atendimentosConsultor.reduce((total, a) => {
+
+      // Separar em realizado e previsto
+      const atendimentosRealizados = atendimentosConsultor.filter(a => a.status === 'realizado');
+      const atendimentosPrevisto = atendimentosConsultor.filter(a => 
+        ['agendado', 'confirmado', 'participando', 'atrasado'].includes(a.status)
+      );
+
+      const horasAtendimentosRealizados = atendimentosRealizados.reduce((total, a) => {
         return total + (a.duracao_real_minutos || a.duracao_minutos || 60) / 60;
       }, 0);
+
+      const horasAtendimentosPrevisto = atendimentosPrevisto.reduce((total, a) => {
+        return total + (a.duracao_minutos || 60) / 60;
+      }, 0);
+
+      const horasAtendimentos = horasAtendimentosRealizados + horasAtendimentosPrevisto;
 
       // 2. Horas necessárias para tarefas abertas
       const tarefasConsultor = tarefasAbertas.filter(t => t.consultor_id === consultor.id);
