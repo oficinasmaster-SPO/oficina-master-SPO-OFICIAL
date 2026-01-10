@@ -202,63 +202,63 @@ export default function GargalosConsultoresRealtime() {
                       </tbody>
                     </table>
                   </div>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button size="sm" variant="ghost" className="h-auto p-0 text-blue-600 hover:text-blue-800">
-                          <Info className="w-4 h-4 mr-1" />
-                          Detalhes
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-md">
-                        <DialogHeader>
-                          <DialogTitle>{consultor.consultor_nome}</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4">
-                          <div className="overflow-x-auto">
-                            <table className="w-full text-sm border-collapse">
-                              <tbody>
-                                <tr className="border-b">
-                                  <td className="p-2 font-semibold text-gray-700">Horas Semanais Disponíveis</td>
-                                  <td className="p-2 text-right font-bold">{consultor.horas_semanais_disponiveis}h</td>
-                                </tr>
-                                <tr className="border-b bg-green-50">
-                                  <td className="p-2 font-semibold text-green-700">Carga Realizada (Total)</td>
-                                  <td className="p-2 text-right font-bold text-green-700">{consultor.carga_total_realizada.toFixed(1)}h</td>
-                                </tr>
-                                <tr className="border-b">
-                                  <td className="p-2 font-semibold text-gray-700">Atendimentos (Realizado)</td>
-                                  <td className="p-2 text-right">{consultor.atendimentos_realizados.horas}h ({consultor.atendimentos_realizados.qtd})</td>
-                                </tr>
-                                <tr className="border-b">
-                                  <td className="p-2 font-semibold text-gray-700">Tarefas (Realizadas)</td>
-                                  <td className="p-2 text-right">{consultor.tarefas_realizadas.horas}h ({consultor.tarefas_realizadas.qtd})</td>
-                                </tr>
-                                <tr className="border-b bg-blue-50">
-                                  <td className="p-2 font-semibold text-blue-700">Carga Prevista</td>
-                                  <td className="p-2 text-right font-bold text-blue-700">{consultor.carga_total_prevista.toFixed(1)}h</td>
-                                </tr>
-                                <tr>
-                                  <td className="p-2 font-semibold text-red-700">Saturação Total</td>
-                                  <td className="p-2 text-right font-bold text-lg text-red-700">{consultor.indice_saturacao.toFixed(0)}%</td>
-                                </tr>
-                              </tbody>
-                            </table>
+
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button size="sm" variant="ghost" className="h-auto p-0 text-blue-600 hover:text-blue-800">
+                        <Info className="w-4 h-4 mr-1" />
+                        Detalhes
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>{consultor.consultor_nome}</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm border-collapse">
+                            <tbody>
+                              <tr className="border-b">
+                                <td className="p-2 font-semibold text-gray-700">Horas Semanais Disponíveis</td>
+                                <td className="p-2 text-right font-bold">{consultor.horas_semanais_disponiveis}h</td>
+                              </tr>
+                              <tr className="border-b bg-green-50">
+                                <td className="p-2 font-semibold text-green-700">Carga Realizada (Total)</td>
+                                <td className="p-2 text-right font-bold text-green-700">{consultor.carga_total_realizada.toFixed(1)}h</td>
+                              </tr>
+                              <tr className="border-b">
+                                <td className="p-2 font-semibold text-gray-700">Atendimentos (Realizado)</td>
+                                <td className="p-2 text-right">{consultor.atendimentos_realizados.horas}h ({consultor.atendimentos_realizados.qtd})</td>
+                              </tr>
+                              <tr className="border-b">
+                                <td className="p-2 font-semibold text-gray-700">Tarefas (Realizadas)</td>
+                                <td className="p-2 text-right">{consultor.tarefas_realizadas.horas}h ({consultor.tarefas_realizadas.qtd})</td>
+                              </tr>
+                              <tr className="border-b bg-blue-50">
+                                <td className="p-2 font-semibold text-blue-700">Carga Prevista</td>
+                                <td className="p-2 text-right font-bold text-blue-700">{consultor.carga_total_prevista.toFixed(1)}h</td>
+                              </tr>
+                              <tr>
+                                <td className="p-2 font-semibold text-red-700">Saturação Total</td>
+                                <td className="p-2 text-right font-bold text-lg text-red-700">{consultor.indice_saturacao.toFixed(0)}%</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-gray-600">Tarefas Vencidas</p>
+                            <p className="font-semibold text-red-600">{consultor.qtd_tarefas_vencidas}</p>
                           </div>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <p className="text-gray-600">Tarefas Vencidas</p>
-                              <p className="font-semibold text-red-600">{consultor.qtd_tarefas_vencidas}</p>
-                            </div>
-                            <div>
-                              <p className="text-gray-600">Tarefas Críticas</p>
-                              <p className="font-semibold text-orange-600">{consultor.qtd_tarefas_criticas}</p>
-                            </div>
+                          <div>
+                            <p className="text-gray-600">Tarefas Críticas</p>
+                            <p className="font-semibold text-orange-600">{consultor.qtd_tarefas_criticas}</p>
                           </div>
-                          </div>
-                      </DialogContent>
-                    </Dialog>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                   </div>
-                </div>
               );
             })}
           </div>
