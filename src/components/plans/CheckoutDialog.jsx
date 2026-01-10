@@ -2,11 +2,11 @@ import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, CreditCard, GraduationCap, Check } from "lucide-react";
+import { Loader2, CreditCard, Wallet, Check } from "lucide-react";
 import { toast } from "sonner";
 
 export default function CheckoutDialog({ open, onClose, plan, user, workshop }) {
-  const [selectedGateway, setSelectedGateway] = useState("eduzz");
+  const [selectedGateway, setSelectedGateway] = useState("wifi");
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleCheckout = async () => {
@@ -16,10 +16,10 @@ export default function CheckoutDialog({ open, onClose, plan, user, workshop }) 
       // Simular processamento
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Aqui seria a integração real com Eduzz ou Hotmart
-      const checkoutUrl = selectedGateway === "eduzz" 
-        ? `https://eduzz.com/checkout?product=${plan.id}`
-        : `https://hotmart.com/checkout?product=${plan.id}`;
+      // Aqui seria a integração real com Wi-Fi ou Asas
+      const checkoutUrl = selectedGateway === "wifi" 
+        ? `https://wifi.eduzz.com/checkout?product=${plan.id}`
+        : `https://asaas.com/checkout?product=${plan.id}`;
       
       // Abrir checkout em nova aba
       window.open(checkoutUrl, '_blank');
@@ -62,19 +62,19 @@ export default function CheckoutDialog({ open, onClose, plan, user, workshop }) 
 
           <Tabs value={selectedGateway} onValueChange={setSelectedGateway}>
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="eduzz">
+              <TabsTrigger value="wifi">
                 <CreditCard className="w-4 h-4 mr-2" />
-                Eduzz
+                Wi-Fi
               </TabsTrigger>
-              <TabsTrigger value="hotmart">
-                <GraduationCap className="w-4 h-4 mr-2" />
-                Hotmart
+              <TabsTrigger value="asas">
+                <Wallet className="w-4 h-4 mr-2" />
+                Asas
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="eduzz" className="space-y-3">
+            <TabsContent value="wifi" className="space-y-3">
               <div className="p-4 border rounded-lg">
-                <p className="text-sm font-semibold mb-2">Pagamento via Eduzz</p>
+                <p className="text-sm font-semibold mb-2">Pagamento via Wi-Fi (Eduzz)</p>
                 <ul className="text-xs text-gray-600 space-y-1">
                   <li>• Pix, Cartão de Crédito e Boleto</li>
                   <li>• Parcelamento em até 12x</li>
@@ -84,14 +84,14 @@ export default function CheckoutDialog({ open, onClose, plan, user, workshop }) 
               </div>
             </TabsContent>
 
-            <TabsContent value="hotmart" className="space-y-3">
+            <TabsContent value="asas" className="space-y-3">
               <div className="p-4 border rounded-lg">
-                <p className="text-sm font-semibold mb-2">Pagamento via Hotmart</p>
+                <p className="text-sm font-semibold mb-2">Pagamento via Asas</p>
                 <ul className="text-xs text-gray-600 space-y-1">
                   <li>• Pix, Cartão de Crédito e Boleto</li>
                   <li>• Parcelamento em até 12x</li>
-                  <li>• Garantia de 7 dias</li>
-                  <li>• Suporte 24/7</li>
+                  <li>• Cobrança recorrente automática</li>
+                  <li>• Split de pagamento</li>
                 </ul>
               </div>
             </TabsContent>

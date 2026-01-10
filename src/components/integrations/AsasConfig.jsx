@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, GraduationCap, CheckCircle } from "lucide-react";
+import { Loader2, Wallet, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 
-export default function HotmartConfig({ user }) {
+export default function AsasConfig({ user }) {
   const queryClient = useQueryClient();
   const [config, setConfig] = useState({
     enabled: false,
@@ -30,7 +30,7 @@ export default function HotmartConfig({ user }) {
     },
     onSuccess: () => {
       setConfig({ ...config, enabled: true });
-      toast.success("Conectado ao Hotmart!");
+      toast.success("Conectado à Asas!");
       queryClient.invalidateQueries({ queryKey: ["integrations-status"] });
     },
     onError: (error) => {
@@ -65,7 +65,7 @@ export default function HotmartConfig({ user }) {
         <div>
           <p className="font-semibold text-sm">Status da Integração</p>
           <p className="text-xs text-gray-600">
-            {config.enabled ? "Conectado e processando assinaturas" : "Aguardando conexão"}
+            {config.enabled ? "Conectado e processando pagamentos" : "Aguardando conexão"}
           </p>
         </div>
         {config.enabled && (
@@ -82,7 +82,7 @@ export default function HotmartConfig({ user }) {
             <Input
               value={config.clientId}
               onChange={(e) => setConfig({ ...config, clientId: e.target.value })}
-              placeholder="Cole o Client ID do Hotmart..."
+              placeholder="Cole o Client ID da Asas..."
               className="h-9 mt-1"
             />
           </div>
@@ -92,7 +92,7 @@ export default function HotmartConfig({ user }) {
             <Input
               value={config.clientSecret}
               onChange={(e) => setConfig({ ...config, clientSecret: e.target.value })}
-              placeholder="Cole o Client Secret do Hotmart..."
+              placeholder="Cole o Client Secret da Asas..."
               type="password"
               className="h-9 mt-1"
             />
@@ -120,8 +120,8 @@ export default function HotmartConfig({ user }) {
               </>
             ) : (
               <>
-                <GraduationCap className="w-4 h-4 mr-2" />
-                Conectar Hotmart
+                <Wallet className="w-4 h-4 mr-2" />
+                Conectar Asas
               </>
             )}
           </Button>
@@ -130,13 +130,13 @@ export default function HotmartConfig({ user }) {
 
       {config.enabled && (
         <div className="space-y-4">
-          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+          <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
             <div className="flex items-start gap-3">
-              <GraduationCap className="w-5 h-5 text-purple-600 mt-0.5" />
+              <Wallet className="w-5 h-5 text-indigo-600 mt-0.5" />
               <div>
-                <p className="text-sm font-semibold text-purple-900">Gestão de Assinaturas</p>
-                <p className="text-xs text-purple-700 mt-1">
-                  Assinaturas ativas liberam acesso. Cancelamentos ou falhas geram avisos 
+                <p className="text-sm font-semibold text-indigo-900">Gestão de Pagamentos</p>
+                <p className="text-xs text-indigo-700 mt-1">
+                  Pagamentos aprovados liberam acesso. Cancelamentos ou falhas geram avisos 
                   e bloqueios automáticos após período configurado.
                 </p>
               </div>
@@ -146,7 +146,7 @@ export default function HotmartConfig({ user }) {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <Label className="text-xs">Processar Assinaturas Automaticamente</Label>
+                <Label className="text-xs">Processar Pagamentos Automaticamente</Label>
                 <p className="text-xs text-gray-500">Libera recursos ao confirmar pagamento</p>
               </div>
               <Switch

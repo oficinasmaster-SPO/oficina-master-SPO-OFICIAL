@@ -5,12 +5,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Video, CheckCircle, AlertCircle, Loader2, RefreshCw, CreditCard, GraduationCap } from "lucide-react";
+import { Calendar, Video, CheckCircle, AlertCircle, Loader2, RefreshCw, CreditCard, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import GoogleCalendarConfig from "@/components/integrations/GoogleCalendarConfig";
 import GoogleMeetConfig from "@/components/integrations/GoogleMeetConfig";
 import EduzzConfig from "@/components/integrations/EduzzConfig";
-import HotmartConfig from "@/components/integrations/HotmartConfig";
+import AsasConfig from "@/components/integrations/AsasConfig";
 
 export default function Integracoes() {
   const queryClient = useQueryClient();
@@ -62,29 +62,29 @@ export default function Integracoes() {
           ]
         },
         {
-          id: "eduzz",
-          name: "Eduzz",
-          description: "Processamento de pagamentos e gestão de assinaturas",
+          id: "wifi",
+          name: "Wi-Fi (Eduzz)",
+          description: "Plataforma de cursos e gestão de conteúdo",
           icon: CreditCard,
           status: "disconnected",
           lastSync: null,
           features: [
-            "Checkout integrado",
-            "Gestão de assinaturas recorrentes",
+            "Gestão de cursos e conteúdos",
+            "Controle de assinaturas",
             "Avisos automáticos de cobrança",
             "Bloqueio por inadimplência"
           ]
         },
         {
-          id: "hotmart",
-          name: "Hotmart",
-          description: "Plataforma de cursos e gestão de pagamentos",
-          icon: GraduationCap,
+          id: "asas",
+          name: "Asas",
+          description: "Plataforma de gestão de pagamentos",
+          icon: Wallet,
           status: "disconnected",
           lastSync: null,
           features: [
-            "Processamento de vendas",
-            "Controle de acesso a recursos",
+            "Processamento de pagamentos",
+            "Gestão de cobranças recorrentes",
             "Avisos de renovação",
             "Webhooks de pagamento"
           ]
@@ -230,11 +230,11 @@ export default function Integracoes() {
                 {integration.id === "google_meet" && (
                   <GoogleMeetConfig user={user} />
                 )}
-                {integration.id === "eduzz" && (
+                {integration.id === "wifi" && (
                   <EduzzConfig user={user} />
                 )}
-                {integration.id === "hotmart" && (
-                  <HotmartConfig user={user} />
+                {integration.id === "asas" && (
+                  <AsasConfig user={user} />
                 )}
               </CardContent>
             </Card>
