@@ -5,7 +5,40 @@ import { AlertTriangle, TrendingUp, CheckCircle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
 export default function GargalosConsultores({ consultores }) {
-  if (!consultores || consultores.length === 0) {
+  // Dados de exemplo para demonstração (remover quando tiver dados reais)
+  const dadosExemplo = [
+    {
+      id: '1',
+      nome: 'João Silva',
+      capacidade_semanal: 28.0,
+      carga_ativa: 22.4,
+      produtividade_media: 0.70,
+      indice_saturacao: 0.8,
+      atendimentos_ativos: 8
+    },
+    {
+      id: '2',
+      nome: 'Maria Santos',
+      capacidade_semanal: 28.0,
+      carga_ativa: 25.2,
+      produtividade_media: 0.70,
+      indice_saturacao: 0.9,
+      atendimentos_ativos: 9
+    },
+    {
+      id: '3',
+      nome: 'Pedro Costa',
+      capacidade_semanal: 28.0,
+      carga_ativa: 30.8,
+      produtividade_media: 0.70,
+      indice_saturacao: 1.1,
+      atendimentos_ativos: 11
+    }
+  ];
+
+  const dadosParaExibir = consultores?.length > 0 ? consultores : dadosExemplo;
+
+  if (!dadosParaExibir || dadosParaExibir.length === 0) {
     return (
       <Card>
         <CardHeader>
@@ -43,7 +76,7 @@ export default function GargalosConsultores({ consultores }) {
     };
   };
 
-  const consultoresOrdenados = [...consultores].sort((a, b) => b.indice_saturacao - a.indice_saturacao);
+  const consultoresOrdenados = [...dadosParaExibir].sort((a, b) => b.indice_saturacao - a.indice_saturacao);
 
   return (
     <Card>
