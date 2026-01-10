@@ -22,9 +22,16 @@ export default function GoogleMeetConfig({ user }) {
 
   const connectMutation = useMutation({
     mutationFn: async () => {
-      // Implementar OAuth com Google Meet API
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      return { success: true };
+      // Solicitar autorização OAuth via app connector para Google Meet
+      try {
+        await base44.asServiceRole.connectors.requestAuthorization('googlecalendar', [
+          'https://www.googleapis.com/auth/meetings.space.created',
+          'https://www.googleapis.com/auth/calendar.events'
+        ]);
+        return { success: true };
+      } catch (error) {
+        throw new Error('Falha na autorização OAuth. Tente novamente.');
+      }
     },
     onSuccess: () => {
       setConfig({ ...config, enabled: true });

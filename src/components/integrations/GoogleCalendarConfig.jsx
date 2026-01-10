@@ -31,10 +31,16 @@ export default function GoogleCalendarConfig({ user }) {
 
   const connectMutation = useMutation({
     mutationFn: async () => {
-      // Aqui você implementará a conexão OAuth com Google
-      // Por enquanto, simula a conexão
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      return { success: true, calendarId: "primary" };
+      // Solicitar autorização OAuth via app connector
+      try {
+        await base44.asServiceRole.connectors.requestAuthorization('googlecalendar', [
+          'https://www.googleapis.com/auth/calendar.readonly',
+          'https://www.googleapis.com/auth/calendar.events'
+        ]);
+        return { success: true, calendarId: "primary" };
+      } catch (error) {
+        throw new Error('Falha na autorização OAuth. Tente novamente.');
+      }
     },
     onSuccess: (data) => {
       setConfig({ ...config, enabled: true, defaultCalendar: data.calendarId });
