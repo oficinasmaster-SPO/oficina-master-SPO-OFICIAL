@@ -232,14 +232,16 @@ export default function TarefaBacklogForm({ tarefa, user, workshops, onCancel, o
             </div>
 
             <div>
-              <Label>Tempo Estimado (horas)</Label>
+              <Label>Tempo Estimado (horas) *</Label>
               <Input
                 type="number"
                 step="0.5"
                 value={formData.tempo_estimado_horas}
                 onChange={(e) => setFormData({...formData, tempo_estimado_horas: parseFloat(e.target.value) || 0})}
                 placeholder="0"
+                required
               />
+              <p className="text-xs text-gray-600 mt-1">Obrigatório para calcular saturação real</p>
             </div>
           </div>
 
