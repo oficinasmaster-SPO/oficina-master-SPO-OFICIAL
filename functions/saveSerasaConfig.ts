@@ -1,0 +1,44 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+
+Deno.serve(async (req) => {
+  try {
+    const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
+
+    if (!user || user.role !== 'admin') {
+      return Response.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+
+    const { apiKey, apiSecret } = await req.json();
+
+    if (!apiKey || !apiSecret) {
+      return Response.json({ error: 'Credenciais são obrigatórias' }, { status: 400 });
+    }
+
+    // Salvar configurações
+    await base44.asServiceRole.entities.SystemSetting.create({
+      key: 'serasa_api_key',
+      value: apiKey,
+      encrypted: true,
+      updated_by: user.email
+    });
+
+    await base44.asServiceRole.entities.SystemSetting.create({
+      key: 'serasa_api_secret',
+      value: apiSecret,
+      encrypted: true,
+      updated_by: user.email
+    });
+
+    return Response.json({ 
+      success: true,
+      message: 'Configuração salva com sucesso'
+    });
+
+  } catch (error) {
+    console.error('Error saving Serasa config:', error);
+    return Response.json({ 
+      error: error.message || 'Erro ao salvar configuração'
+    }, { status: 500 });
+  }
+});

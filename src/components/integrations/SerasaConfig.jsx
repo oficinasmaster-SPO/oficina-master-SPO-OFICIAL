@@ -3,173 +3,207 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { CheckCircle, AlertCircle, ExternalLink, Shield } from "lucide-react";
+import { CheckCircle, AlertCircle, Loader2, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
+import { base44 } from "@/api/base44Client";
+import { useQuery } from "@tanstack/react-query";
 
-export default function SerasaConfig({ onConnect, onDisconnect, isConnected }) {
-  const [clientId, setClientId] = useState("");
-  const [clientSecret, setClientSecret] = useState("");
-  const [autoCheck, setAutoCheck] = useState(false);
-  const [isTesting, setIsTesting] = useState(false);
+export default function SerasaConfig({ user }) {
+  const [apiKey, setApiKey] = useState("");
+  const [apiSecret, setApiSecret] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [connected, setConnected] = useState(false);
 
-  const handleConnect = async () => {
-    if (!clientId || !clientSecret) {
-      toast.error("Informe Client ID e Client Secret");
+  const { data: consultasLog = [] } = useQuery({
+    queryKey: ["serasa-consultas"],
+    queryFn: async () => {
+      try {
+        const response = await base44.functions.invoke("getSerasaConsultasLog");
+        return response.data?.consultas || [];
+      } catch {
+        return [];
+      }
+    },
+    enabled: connected,
+    refetchInterval: 30000
+  });
+
+  const handleSaveConfig = async () => {
+    if (!apiKey.trim() || !apiSecret.trim()) {
+      toast.error("Por favor, insira a API Key e Secret do Serasa");
       return;
     }
 
+    setLoading(true);
     try {
-      // Simular conexão - substituir por chamada real à API
-      toast.success("Serasa Experian conectado com sucesso!");
-      if (onConnect) onConnect({ clientId, clientSecret, autoCheck });
+      await base44.functions.invoke("saveSerasaConfig", {
+        apiKey: apiKey.trim(),
+        apiSecret: apiSecret.trim()
+      });
+      
+      setConnected(true);
+      toast.success("Configuração salva com sucesso!");
     } catch (error) {
-      toast.error("Erro ao conectar com Serasa");
+      toast.error("Erro ao salvar configuração: " + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleTest = async () => {
-    setIsTesting(true);
+  const handleTestConnection = async () => {
+    if (!apiKey.trim() || !apiSecret.trim()) {
+      toast.error("Configure as credenciais primeiro");
+      return;
+    }
+
+    setTesting(true);
     try {
-      // Simular teste de conexão
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      toast.success("Conexão testada com sucesso!");
+      const response = await base44.functions.invoke("testSerasaConnection", {
+        apiKey: apiKey.trim(),
+        apiSecret: apiSecret.trim()
+      });
+      
+      if (response.data.success) {
+        setConnected(true);
+        toast.success("Conexão testada com sucesso!");
+      } else {
+        toast.error("Falha no teste de conexão");
+      }
     } catch (error) {
-      toast.error("Erro ao testar conexão");
+      toast.error("Erro ao testar conexão: " + error.message);
     } finally {
-      setIsTesting(false);
+      setTesting(false);
     }
   };
 
   return (
     <div className="space-y-6">
+      {/* Status da Conexão */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            {isConnected ? (
-              <CheckCircle className="w-5 h-5 text-green-600" />
+            {connected ? (
+              <>
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span>Conectado ao Serasa Experian</span>
+              </>
             ) : (
-              <AlertCircle className="w-5 h-5 text-gray-400" />
+              <>
+                <AlertCircle className="w-5 h-5 text-yellow-600" />
+                <span>Serasa não configurado</span>
+              </>
             )}
-            Configuração Serasa Experian
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="flex items-start gap-3">
-              <Shield className="w-5 h-5 text-blue-600 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-blue-900">
-                  Consulta de Crédito Empresarial
-                </p>
-                <p className="text-xs text-blue-700 mt-1">
-                  Valide CNPJs e CPFs antes de fechar contratos. Acesse o portal
-                  Serasa Experian para obter suas credenciais de API.
-                </p>
-                <a
-                  href="https://empresas.serasaexperian.com.br"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-blue-600 hover:underline mt-2 inline-flex items-center gap-1"
-                >
-                  Portal Serasa <ExternalLink className="w-3 h-3" />
-                </a>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="clientId">Client ID *</Label>
+          <div>
+            <Label htmlFor="apiKey">API Key do Serasa</Label>
             <Input
-              id="clientId"
-              type="text"
-              placeholder="seu_client_id"
-              value={clientId}
-              onChange={(e) => setClientId(e.target.value)}
-              disabled={isConnected}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="clientSecret">Client Secret *</Label>
-            <Input
-              id="clientSecret"
+              id="apiKey"
               type="password"
-              placeholder="seu_client_secret"
-              value={clientSecret}
-              onChange={(e) => setClientSecret(e.target.value)}
-              disabled={isConnected}
+              placeholder="Digite sua API Key..."
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              className="mt-1"
             />
           </div>
 
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-            <div>
-              <Label htmlFor="autoCheck">Consulta Automática</Label>
-              <p className="text-xs text-gray-500">
-                Verificar crédito automaticamente ao criar contratos
-              </p>
-            </div>
-            <Switch
-              id="autoCheck"
-              checked={autoCheck}
-              onCheckedChange={setAutoCheck}
-              disabled={isConnected}
+          <div>
+            <Label htmlFor="apiSecret">API Secret do Serasa</Label>
+            <Input
+              id="apiSecret"
+              type="password"
+              placeholder="Digite seu API Secret..."
+              value={apiSecret}
+              onChange={(e) => setApiSecret(e.target.value)}
+              className="mt-1"
             />
-          </div>
-
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-            <p className="text-xs text-yellow-800">
-              <strong>⚠️ Atenção:</strong> Cada consulta ao Serasa tem um custo.
-              Configure a consulta automática apenas se necessário.
+            <p className="text-xs text-gray-500 mt-1">
+              Obtenha suas credenciais em: <a href="https://www.serasaexperian.com.br" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Portal Serasa Experian</a>
             </p>
           </div>
 
-          <div className="flex gap-3">
-            {!isConnected ? (
-              <>
-                <Button onClick={handleConnect} className="flex-1">
-                  Conectar Serasa
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={handleTest}
-                  disabled={!clientId || !clientSecret || isTesting}
-                >
-                  {isTesting ? "Testando..." : "Testar"}
-                </Button>
-              </>
-            ) : (
-              <Button
-                variant="destructive"
-                onClick={onDisconnect}
-                className="flex-1"
-              >
-                Desconectar
-              </Button>
-            )}
+          <div className="flex gap-2">
+            <Button onClick={handleSaveConfig} disabled={loading || !apiKey.trim() || !apiSecret.trim()}>
+              {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+              Salvar Configuração
+            </Button>
+            <Button variant="outline" onClick={handleTestConnection} disabled={testing || !apiKey.trim() || !apiSecret.trim()}>
+              {testing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+              Testar Conexão
+            </Button>
           </div>
         </CardContent>
       </Card>
 
-      {isConnected && (
+      {/* Recursos Disponíveis */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Recursos Disponíveis</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              <span className="text-sm">Consulta de score de crédito (PF e PJ)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              <span className="text-sm">Validação automática de CNPJ/CPF</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              <span className="text-sm">Análise de risco de crédito</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              <span className="text-sm">Log completo de consultas realizadas</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Log de Consultas */}
+      {connected && (
         <Card>
           <CardHeader>
-            <CardTitle>Status da Integração</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5" />
+              Log de Consultas Recentes
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                <span className="text-sm font-medium text-green-900">
-                  Conexão Ativa
-                </span>
-                <CheckCircle className="w-5 h-5 text-green-600" />
+            {consultasLog.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-4">
+                Nenhuma consulta realizada ainda
+              </p>
+            ) : (
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {consultasLog.slice(0, 10).map((consulta, idx) => (
+                  <div key={idx} className="border-b pb-2 text-sm">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="font-medium">{consulta.documento}</p>
+                        <p className="text-xs text-gray-600">{consulta.tipo_consulta}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className={`font-semibold ${
+                          consulta.score >= 700 ? 'text-green-600' : 
+                          consulta.score >= 400 ? 'text-yellow-600' : 
+                          'text-red-600'
+                        }`}>
+                          Score: {consulta.score || 'N/A'}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {new Date(consulta.data).toLocaleDateString('pt-BR')}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="text-sm text-gray-600">
-                <p><strong>Última consulta:</strong> Nenhuma ainda</p>
-                <p><strong>Consultas hoje:</strong> 0</p>
-                <p><strong>Créditos disponíveis:</strong> Verificar no portal</p>
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       )}
