@@ -1,13 +1,15 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Check, X, Star, TrendingUp, TrendingDown, Crown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import CheckoutDialog from "./CheckoutDialog";
 
-export default function PlanCard({ plan, currentPlan, actionType, onSelect, workshopLimits }) {
+export default function PlanCard({ plan, currentPlan, actionType, onSelect, workshopLimits, user, workshop }) {
   const isCurrentPlan = plan.nome === currentPlan;
   const isHighlighted = plan.destacado || isCurrentPlan;
+  const [showCheckout, setShowCheckout] = useState(false);
 
   const getActionButton = () => {
     if (actionType === "current") {
@@ -23,10 +25,10 @@ export default function PlanCard({ plan, currentPlan, actionType, onSelect, work
       return (
         <Button 
           className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-          onClick={onSelect}
+          onClick={() => setShowCheckout(true)}
         >
           <TrendingUp className="w-4 h-4 mr-2" />
-          Fazer Upgrade
+          Comprar Upgrade
         </Button>
       );
     }
@@ -47,9 +49,9 @@ export default function PlanCard({ plan, currentPlan, actionType, onSelect, work
     return (
       <Button 
         className="w-full bg-blue-600 hover:bg-blue-700"
-        onClick={onSelect}
+        onClick={() => setShowCheckout(true)}
       >
-        Selecionar Plano
+        Comprar Plano
       </Button>
     );
   };
@@ -217,6 +219,19 @@ export default function PlanCard({ plan, currentPlan, actionType, onSelect, work
         <div className="pt-4">
           {getActionButton()}
         </div>
+
+        <CheckoutDialog 
+          open={showCheckout}
+          onClose={() => setShowCheckout(false)}
+          plan={{
+            id: plan.id,
+            name: plan.nome,
+            price: plan.preco,
+            features: plan.beneficios || []
+          }}
+          user={user}
+          workshop={workshop}
+        />
       </CardContent>
     </Card>
   );

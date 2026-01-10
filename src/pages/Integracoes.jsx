@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Video, CheckCircle, AlertCircle, Loader2, RefreshCw } from "lucide-react";
+import { Calendar, Video, CheckCircle, AlertCircle, Loader2, RefreshCw, CreditCard, GraduationCap } from "lucide-react";
 import { toast } from "sonner";
 import GoogleCalendarConfig from "@/components/integrations/GoogleCalendarConfig";
 import GoogleMeetConfig from "@/components/integrations/GoogleMeetConfig";
@@ -38,7 +38,7 @@ export default function Integracoes() {
           name: "Google Calendar",
           description: "Sincronize agendas dos consultores e mentores",
           icon: Calendar,
-          status: "disconnected", // connected | disconnected | error
+          status: "disconnected",
           lastSync: null,
           features: [
             "Sincronização bidirecional de eventos",
@@ -59,6 +59,34 @@ export default function Integracoes() {
             "Transcrição automática de reuniões",
             "Extração de pontos principais",
             "Geração de ATAs inteligentes"
+          ]
+        },
+        {
+          id: "eduzz",
+          name: "Eduzz",
+          description: "Processamento de pagamentos e gestão de assinaturas",
+          icon: CreditCard,
+          status: "disconnected",
+          lastSync: null,
+          features: [
+            "Checkout integrado",
+            "Gestão de assinaturas recorrentes",
+            "Avisos automáticos de cobrança",
+            "Bloqueio por inadimplência"
+          ]
+        },
+        {
+          id: "hotmart",
+          name: "Hotmart",
+          description: "Plataforma de cursos e gestão de pagamentos",
+          icon: GraduationCap,
+          status: "disconnected",
+          lastSync: null,
+          features: [
+            "Processamento de vendas",
+            "Controle de acesso a recursos",
+            "Avisos de renovação",
+            "Webhooks de pagamento"
           ]
         }
       ];
@@ -201,6 +229,12 @@ export default function Integracoes() {
                 )}
                 {integration.id === "google_meet" && (
                   <GoogleMeetConfig user={user} />
+                )}
+                {integration.id === "eduzz" && (
+                  <EduzzConfig user={user} />
+                )}
+                {integration.id === "hotmart" && (
+                  <HotmartConfig user={user} />
                 )}
               </CardContent>
             </Card>
