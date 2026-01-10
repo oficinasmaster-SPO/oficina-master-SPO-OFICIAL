@@ -180,15 +180,19 @@ export default function GargalosConsultoresRealtime() {
                               <p className="font-semibold">{consultor.horas_semanais_disponiveis}h</p>
                             </div>
                             <div>
-                              <p className="text-gray-600">Saturação</p>
+                              <p className="text-gray-600">Saturação Total</p>
                               <p className="font-semibold text-lg">{consultor.indice_saturacao.toFixed(0)}%</p>
                             </div>
                             <div>
-                              <p className="text-gray-600">Horas Atendimentos</p>
-                              <p className="font-semibold">{consultor.horas_atendimentos.toFixed(1)}h</p>
+                              <p className="text-gray-600">Atendimentos Realizados</p>
+                              <p className="font-semibold text-green-700">{consultor.horas_atendimentos_realizados.toFixed(1)}h</p>
                             </div>
                             <div>
-                              <p className="text-gray-600">Horas Tarefas</p>
+                              <p className="text-gray-600">Atendimentos Previstos</p>
+                              <p className="font-semibold text-blue-700">{consultor.horas_atendimentos_previsto.toFixed(1)}h</p>
+                            </div>
+                            <div>
+                              <p className="text-gray-600">Horas Tarefas Backlog</p>
                               <p className="font-semibold">{consultor.horas_tarefas_backlog.toFixed(1)}h</p>
                             </div>
                             <div>
