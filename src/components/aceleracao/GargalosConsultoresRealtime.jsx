@@ -33,7 +33,7 @@ export default function GargalosConsultoresRealtime() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-5 gap-4">
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium">Críticos ({`>`}150%)</CardTitle>
@@ -77,9 +77,10 @@ export default function GargalosConsultoresRealtime() {
             </div>
           </CardContent>
         </Card>
+
+        <SaturacaoLegenda onShowInfo={() => setShowLegenda(true)} />
       </div>
 
-      <SaturacaoLegenda onVisualize={() => setShowLegenda(true)} />
       <SaturacaoLegendaModal open={showLegenda} onOpenChange={setShowLegenda} />
 
         <SaturacaoConsultorModal 
