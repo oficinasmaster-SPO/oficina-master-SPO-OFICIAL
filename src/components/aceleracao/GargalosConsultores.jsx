@@ -1,10 +1,20 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, TrendingUp, CheckCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { AlertTriangle, TrendingUp, CheckCircle, HelpCircle, X } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 export default function GargalosConsultores({ consultores }) {
+  const [showHelp, setShowHelp] = useState(false);
+
   // Dados de exemplo para demonstração (remover quando tiver dados reais)
   const dadosExemplo = [
     {
@@ -79,12 +89,118 @@ export default function GargalosConsultores({ consultores }) {
   const consultoresOrdenados = [...dadosParaExibir].sort((a, b) => b.indice_saturacao - a.indice_saturacao);
 
   return (
+    <>
+      <Dialog open={showHelp} onOpenChange={setShowHelp}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <HelpCircle className="w-5 h-5 text-blue-600" />
+              Como Funciona a Análise de Gargalos
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-2">📊 O que é um Gargalo?</h3>
+              <p className="text-sm text-gray-600">
+                Gargalo NÃO é opinião. É uma métrica objetiva que indica quando a <strong>capacidade</strong> do consultor 
+                é menor que a <strong>demanda</strong> de trabalho.
+              </p>
+            </div>
+
+            <div className="border-t pt-4">
+              <h3 className="font-semibold text-gray-900 mb-3">🔢 Métricas Calculadas</h3>
+              <div className="space-y-3">
+                <div className="bg-blue-50 p-3 rounded-lg">
+                  <p className="font-semibold text-sm text-blue-900">1️⃣ Capacidade Semanal</p>
+                  <p className="text-sm text-gray-700 mt-1">
+                    <code className="bg-white px-2 py-1 rounded">Capacidade = Horas Disponíveis × Produtividade Média</code>
+                  </p>
+                  <p className="text-xs text-gray-600 mt-1">
+                    Exemplo: 40h semanais × 70% produtividade = <strong>28h de capacidade real</strong>
+                  </p>
+                </div>
+
+                <div className="bg-purple-50 p-3 rounded-lg">
+                  <p className="font-semibold text-sm text-purple-900">2️⃣ Carga Ativa</p>
+                  <p className="text-sm text-gray-700 mt-1">
+                    <code className="bg-white px-2 py-1 rounded">Carga Ativa = Σ (Tempo estimado das tarefas abertas)</code>
+                  </p>
+                  <p className="text-xs text-gray-600 mt-1">
+                    Soma das horas de todos os atendimentos agendados e confirmados
+                  </p>
+                </div>
+
+                <div className="bg-orange-50 p-3 rounded-lg">
+                  <p className="font-semibold text-sm text-orange-900">3️⃣ Índice de Saturação (IS)</p>
+                  <p className="text-sm text-gray-700 mt-1">
+                    <code className="bg-white px-2 py-1 rounded">IS = Carga Ativa ÷ Capacidade Semanal</code>
+                  </p>
+                  <p className="text-xs text-gray-600 mt-1">
+                    Este índice determina se o consultor está no limite ou sobrecarregado
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t pt-4">
+              <h3 className="font-semibold text-gray-900 mb-3">🚦 Interpretação do IS</h3>
+              <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 rounded bg-green-500" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">IS ≤ 0,8 = Saudável ✅</p>
+                    <p className="text-xs text-gray-600">Consultor com capacidade disponível</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 rounded bg-yellow-500" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">IS 0,8 - 1,0 = Atenção ⚠️</p>
+                    <p className="text-xs text-gray-600">Consultor próximo do limite, evite novas demandas</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 rounded bg-red-500" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">IS > 1,0 = Gargalo 🚨</p>
+                    <p className="text-xs text-gray-600">
+                      Consultor sobrecarregado! Capacidade menor que demanda
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t pt-4 bg-yellow-50 p-3 rounded-lg">
+              <p className="text-sm text-gray-700">
+                <strong>💡 Dica:</strong> Use este indicador para balancear a distribuição de clientes 
+                entre consultores e evitar sobrecarga.
+              </p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
     <Card>
       <CardHeader>
-        <CardTitle>Análise de Gargalos - Consultores</CardTitle>
-        <p className="text-sm text-gray-600 mt-1">
-          Índice de Saturação (IS) = Carga Ativa ÷ Capacidade Semanal
-        </p>
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <CardTitle className="flex items-center gap-2">
+              Análise de Gargalos - Consultores
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowHelp(true)}
+                className="h-6 w-6 p-0 hover:bg-blue-50"
+              >
+                <HelpCircle className="w-4 h-4 text-blue-600" />
+              </Button>
+            </CardTitle>
+            <p className="text-sm text-gray-600 mt-1">
+              Índice de Saturação (IS) = Carga Ativa ÷ Capacidade Semanal
+            </p>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
@@ -177,5 +293,6 @@ export default function GargalosConsultores({ consultores }) {
         </div>
       </CardContent>
     </Card>
+    </>
   );
 }
