@@ -152,7 +152,12 @@ export default function RelatoriosAceleracao() {
         <TabsContent value="geral" className="space-y-6">
 
       {/* Análise de Gargalos */}
-      <GargalosConsultores consultores={gargalos || []} />
+      <GargalosConsultores 
+        consultores={gargalos || []} 
+        onPeriodChange={(period) => {
+          // Passando o período para refetch dos gargalos se necessário
+        }}
+      />
 
       {/* Saturação Real dos Consultores */}
       <GargalosConsultoresRealtime />
