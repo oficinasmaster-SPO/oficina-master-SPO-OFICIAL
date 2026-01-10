@@ -3,7 +3,8 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Loader2, FileText, List, Plus } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Loader2, FileText, List, Plus, CheckCircle, Clock, CreditCard, Send, XCircle } from "lucide-react";
 import ContractList from "@/components/contracts/ContractList";
 import ContractForm from "@/components/contracts/ContractForm";
 import ContractTemplates from "@/components/contracts/ContractTemplates";
@@ -26,6 +27,30 @@ export default function GestaoContratos() {
     },
     enabled: !!user
   });
+
+  const stats = React.useMemo(() => {
+    if (!contracts || contracts.length === 0) {
+      return {
+        ativos: 0,
+        inativos: 0,
+        enviados: 0,
+        aguardandoAssinatura: 0,
+        aguardandoPagamento: 0
+      };
+    }
+
+    return {
+      ativos: contracts.filter(c => c.status === 'efetivado').length,
+      inativos: contracts.filter(c => c.status === 'cancelado').length,
+      enviados: contracts.filter(c => c.status === 'enviado').length,
+      aguardandoAssinatura: contracts.filter(c => 
+        ['enviado', 'dados_preenchidos'].includes(c.status) && !c.client_signed
+      ).length,
+      aguardandoPagamento: contracts.filter(c => 
+        c.status === 'assinado' && !c.payment_confirmed
+      ).length
+    };
+  }, [contracts]);
 
   if (loadingUser) {
     return (
@@ -71,6 +96,68 @@ export default function GestaoContratos() {
           <Plus className="w-4 h-4 mr-2" />
           Novo Contrato
         </Button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-green-600">Contratos Ativos</p>
+                <p className="text-3xl font-bold text-green-900 mt-2">{stats.ativos}</p>
+              </div>
+              <CheckCircle className="w-12 h-12 text-green-600 opacity-20" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-blue-600">Enviados</p>
+                <p className="text-3xl font-bold text-blue-900 mt-2">{stats.enviados}</p>
+              </div>
+              <Send className="w-12 h-12 text-blue-600 opacity-20" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-yellow-600">Aguardando Assinatura</p>
+                <p className="text-3xl font-bold text-yellow-900 mt-2">{stats.aguardandoAssinatura}</p>
+              </div>
+              <Clock className="w-12 h-12 text-yellow-600 opacity-20" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-orange-600">Aguardando Pagamento</p>
+                <p className="text-3xl font-bold text-orange-900 mt-2">{stats.aguardandoPagamento}</p>
+              </div>
+              <CreditCard className="w-12 h-12 text-orange-600 opacity-20" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-red-600">Inativos</p>
+                <p className="text-3xl font-bold text-red-900 mt-2">{stats.inativos}</p>
+              </div>
+              <XCircle className="w-12 h-12 text-red-600 opacity-20" />
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
