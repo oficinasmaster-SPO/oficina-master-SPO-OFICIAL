@@ -1,21 +1,15 @@
-import React, { useEffect } from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, TrendingUp, Clock, AlertCircle, Info } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import SaturacaoConsultorItem from "./SaturacaoConsultorItem";
+import SaturacaoConsultorModal from "./SaturacaoConsultorModal";
 
 export default function GargalosConsultoresRealtime() {
   const queryClient = useQueryClient();
+  const [selectedConsultor, setSelectedConsultor] = useState(null);
 
   const { data: saturacaoData, isLoading, refetch } = useQuery({
     queryKey: ['saturacao-real-consultores'],
@@ -25,23 +19,6 @@ export default function GargalosConsultoresRealtime() {
     },
     refetchInterval: 5 * 60 * 1000, // Atualiza a cada 5 minutos
   });
-
-  const getStatusColor = (status) => {
-    const cores = {
-      critico: { bg: 'bg-red-100', text: 'text-red-800', badge: 'bg-red-600' },
-      alto: { bg: 'bg-orange-100', text: 'text-orange-800', badge: 'bg-orange-600' },
-      medio: { bg: 'bg-yellow-100', text: 'text-yellow-800', badge: 'bg-yellow-600' },
-      baixo: { bg: 'bg-green-100', text: 'text-green-800', badge: 'bg-green-600' }
-    };
-    return cores[status] || cores.baixo;
-  };
-
-  const getProgressColor = (indice) => {
-    if (indice > 150) return 'bg-red-600';
-    if (indice > 100) return 'bg-orange-600';
-    if (indice > 70) return 'bg-yellow-600';
-    return 'bg-green-600';
-  };
 
   if (isLoading) {
     return <div className="text-center py-8">Calculando saturação...</div>;
@@ -99,7 +76,13 @@ export default function GargalosConsultoresRealtime() {
             </div>
           </CardContent>
         </Card>
-      </div>
+        </div>
+
+        <SaturacaoConsultorModal 
+        consultor={selectedConsultor}
+        open={!!selectedConsultor}
+        onOpenChange={(open) => !open && setSelectedConsultor(null)}
+        />
 
       <Card>
         <CardHeader>
