@@ -9,6 +9,8 @@ import { Calendar, Video, CheckCircle, AlertCircle, Loader2, RefreshCw } from "l
 import { toast } from "sonner";
 import GoogleCalendarConfig from "@/components/integrations/GoogleCalendarConfig";
 import GoogleMeetConfig from "@/components/integrations/GoogleMeetConfig";
+import EduzzConfig from "@/components/integrations/EduzzConfig";
+import HotmartConfig from "@/components/integrations/HotmartConfig";
 
 export default function Integracoes() {
   const queryClient = useQueryClient();
