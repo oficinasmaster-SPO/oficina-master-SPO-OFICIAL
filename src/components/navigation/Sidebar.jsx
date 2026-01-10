@@ -743,6 +743,15 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       icon: Shield,
       items: [
         { 
+          name: 'Dashboard Financeiro', 
+          href: createPageUrl('DashboardFinanceiro'), 
+          icon: DollarSign,
+          description: 'Métricas financeiras e pagamentos',
+          highlight: true,
+          adminOnly: true,
+          requiredPermission: 'admin.system_config'
+        },
+        { 
           name: 'Usuários e Empresas', 
           href: createPageUrl('GestaoUsuariosEmpresas'), 
           icon: Users,

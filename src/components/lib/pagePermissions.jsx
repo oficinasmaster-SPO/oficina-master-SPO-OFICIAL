@@ -155,6 +155,7 @@ export const pagePermissions = {
   RankingBrasil: "dashboard.view",
   
   // Admin
+  DashboardFinanceiro: "admin.system_config",
   UsuariosAdmin: "admin.users",
   GestaoRBAC: "admin.profiles",
   GestaoPerfis: "admin.profiles",
