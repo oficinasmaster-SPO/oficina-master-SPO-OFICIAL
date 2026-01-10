@@ -141,27 +141,67 @@ export default function GargalosConsultoresRealtime() {
 
                   <Progress value={Math.min(consultor.indice_saturacao, 200)} max={200} className="mb-3" />
 
-                  <div className="grid grid-cols-4 gap-3 text-sm">
-                    <div>
-                      <p className="text-xs text-gray-600">Atendimentos Realizados</p>
-                      <p className="font-semibold text-green-700">
-                        {consultor.horas_atendimentos_realizados.toFixed(1)}h
-                      </p>
-                      <p className="text-xs">{consultor.qtd_atendimentos_realizados}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-600">Atendimentos Previstos</p>
-                      <p className="font-semibold text-blue-700">
-                        {consultor.horas_atendimentos_previsto.toFixed(1)}h
-                      </p>
-                      <p className="text-xs">{consultor.qtd_atendimentos_previsto}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-600">Tarefas Backlog</p>
-                      <p className="font-semibold">
-                        {consultor.horas_tarefas_backlog.toFixed(1)}h / {consultor.qtd_tarefas_abertas}
-                      </p>
-                    </div>
+                  {/* Tabela de Carga */}
+                  <div className="overflow-x-auto text-xs mb-3">
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="bg-gray-100">
+                          <th className="border p-2 text-left font-semibold">Tipo</th>
+                          <th className="border p-2 text-center">Realizadas</th>
+                          <th className="border p-2 text-center">Previstas</th>
+                          <th className="border p-2 text-center">Em Atraso</th>
+                          <th className="border p-2 text-center font-bold">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr className="hover:bg-gray-50">
+                          <td className="border p-2 font-semibold">Atendimentos</td>
+                          <td className="border p-2 text-center text-green-700 font-semibold">
+                            {consultor.atendimentos_realizados.horas}h
+                          </td>
+                          <td className="border p-2 text-center text-blue-700 font-semibold">
+                            {consultor.atendimentos_previstos.horas}h
+                          </td>
+                          <td className="border p-2 text-center text-red-700 font-semibold">
+                            {consultor.atendimentos_em_atraso.horas}h
+                          </td>
+                          <td className="border p-2 text-center font-bold bg-gray-50">
+                            {consultor.total_atendimentos.horas}h
+                          </td>
+                        </tr>
+                        <tr className="hover:bg-gray-50">
+                          <td className="border p-2 font-semibold">Tarefas</td>
+                          <td className="border p-2 text-center text-green-700 font-semibold">
+                            {consultor.tarefas_realizadas.horas}h
+                          </td>
+                          <td className="border p-2 text-center text-blue-700 font-semibold">
+                            {consultor.tarefas_previstas.horas}h
+                          </td>
+                          <td className="border p-2 text-center text-red-700 font-semibold">
+                            {consultor.tarefas_em_atraso.horas}h
+                          </td>
+                          <td className="border p-2 text-center font-bold bg-gray-50">
+                            {consultor.total_tarefas.horas}h
+                          </td>
+                        </tr>
+                        <tr className="bg-blue-50 font-bold">
+                          <td className="border p-2">TOTAL</td>
+                          <td className="border p-2 text-center text-green-700">
+                            {(consultor.atendimentos_realizados.horas + consultor.tarefas_realizadas.horas).toFixed(1)}h
+                          </td>
+                          <td className="border p-2 text-center text-blue-700">
+                            {(consultor.atendimentos_previstos.horas + consultor.tarefas_previstas.horas).toFixed(1)}h
+                          </td>
+                          <td className="border p-2 text-center text-red-700">
+                            {(consultor.atendimentos_em_atraso.horas + consultor.tarefas_em_atraso.horas).toFixed(1)}h
+                          </td>
+                          <td className="border p-2 text-center bg-blue-100">
+                            {consultor.carga_total_prevista.toFixed(1)}h
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
                     <Dialog>
                       <DialogTrigger asChild>
                         <Button size="sm" variant="ghost" className="h-auto p-0 text-blue-600 hover:text-blue-800">
@@ -174,27 +214,36 @@ export default function GargalosConsultoresRealtime() {
                           <DialogTitle>{consultor.consultor_nome}</DialogTitle>
                         </DialogHeader>
                         <div className="space-y-4">
-                          <div className="grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                              <p className="text-gray-600">Horas Semanais</p>
-                              <p className="font-semibold">{consultor.horas_semanais_disponiveis}h</p>
-                            </div>
-                            <div>
-                              <p className="text-gray-600">Saturação Total</p>
-                              <p className="font-semibold text-lg">{consultor.indice_saturacao.toFixed(0)}%</p>
-                            </div>
-                            <div>
-                              <p className="text-gray-600">Atendimentos Realizados</p>
-                              <p className="font-semibold text-green-700">{consultor.horas_atendimentos_realizados.toFixed(1)}h</p>
-                            </div>
-                            <div>
-                              <p className="text-gray-600">Atendimentos Previstos</p>
-                              <p className="font-semibold text-blue-700">{consultor.horas_atendimentos_previsto.toFixed(1)}h</p>
-                            </div>
-                            <div>
-                              <p className="text-gray-600">Horas Tarefas Backlog</p>
-                              <p className="font-semibold">{consultor.horas_tarefas_backlog.toFixed(1)}h</p>
-                            </div>
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-sm border-collapse">
+                              <tbody>
+                                <tr className="border-b">
+                                  <td className="p-2 font-semibold text-gray-700">Horas Semanais Disponíveis</td>
+                                  <td className="p-2 text-right font-bold">{consultor.horas_semanais_disponiveis}h</td>
+                                </tr>
+                                <tr className="border-b bg-green-50">
+                                  <td className="p-2 font-semibold text-green-700">Carga Realizada (Total)</td>
+                                  <td className="p-2 text-right font-bold text-green-700">{consultor.carga_total_realizada.toFixed(1)}h</td>
+                                </tr>
+                                <tr className="border-b">
+                                  <td className="p-2 font-semibold text-gray-700">Atendimentos (Realizado)</td>
+                                  <td className="p-2 text-right">{consultor.atendimentos_realizados.horas}h ({consultor.atendimentos_realizados.qtd})</td>
+                                </tr>
+                                <tr className="border-b">
+                                  <td className="p-2 font-semibold text-gray-700">Tarefas (Realizadas)</td>
+                                  <td className="p-2 text-right">{consultor.tarefas_realizadas.horas}h ({consultor.tarefas_realizadas.qtd})</td>
+                                </tr>
+                                <tr className="border-b bg-blue-50">
+                                  <td className="p-2 font-semibold text-blue-700">Carga Prevista</td>
+                                  <td className="p-2 text-right font-bold text-blue-700">{consultor.carga_total_prevista.toFixed(1)}h</td>
+                                </tr>
+                                <tr>
+                                  <td className="p-2 font-semibold text-red-700">Saturação Total</td>
+                                  <td className="p-2 text-right font-bold text-lg text-red-700">{consultor.indice_saturacao.toFixed(0)}%</td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
                             <div>
                               <p className="text-gray-600">Tarefas Vencidas</p>
                               <p className="font-semibold text-red-600">{consultor.qtd_tarefas_vencidas}</p>
