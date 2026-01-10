@@ -129,6 +129,7 @@ export const sidebarStructure = [
       { name: "CheckPoint", description: "Progresso" },
       { name: "Controle", description: "Painel gestão" },
       { name: "Relatórios", description: "Diagnósticos" },
+      { name: "Contratos", description: "Gestão de contratos" },
     ],
   },
   {
