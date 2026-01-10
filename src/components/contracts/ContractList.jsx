@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Eye, Edit, CheckCircle, XCircle, DollarSign, FileText, User } from "lucide-react";
+import { Search, Eye, Edit, CheckCircle, XCircle, DollarSign, FileText, User, PenTool, CreditCard, FileCheck } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import ContractDetailsModal from "./ContractDetailsModal";
@@ -141,43 +141,43 @@ export default function ContractList({ contracts, isLoading, onEdit }) {
                           <div className="flex items-center justify-center gap-2">
                             {/* Status do Contrato */}
                             <div 
-                              className={`w-7 h-7 rounded-md flex items-center justify-center ${
+                              className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors ${
                                 contract.status === 'efetivado' ? 'bg-green-500' : 
                                 contract.status === 'cancelado' ? 'bg-red-500' : 
+                                contract.status === 'enviado' ? 'bg-blue-500' :
                                 'bg-gray-300'
                               }`} 
                               title={`Status: ${statusInfo.label}`}
                             >
-                              {contract.status === 'efetivado' && (
-                                <CheckCircle className="w-4 h-4 text-white" />
-                              )}
-                              {contract.status === 'cancelado' && (
-                                <XCircle className="w-4 h-4 text-white" />
-                              )}
+                              <FileCheck className={`w-4 h-4 ${
+                                contract.status === 'efetivado' || contract.status === 'cancelado' || contract.status === 'enviado' 
+                                ? 'text-white' 
+                                : 'text-gray-500'
+                              }`} />
                             </div>
 
                             {/* Pagamento */}
                             <div 
-                              className={`w-7 h-7 rounded-md flex items-center justify-center ${
-                                contract.payment_confirmed ? 'bg-green-500' : 'bg-gray-300'
+                              className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors ${
+                                contract.payment_confirmed ? 'bg-green-500' : 'bg-red-100'
                               }`} 
                               title={contract.payment_confirmed ? 'Pagamento Confirmado' : 'Aguardando Pagamento'}
                             >
-                              {contract.payment_confirmed && (
-                                <CheckCircle className="w-4 h-4 text-white" />
-                              )}
+                              <DollarSign className={`w-4 h-4 ${
+                                contract.payment_confirmed ? 'text-white' : 'text-red-500'
+                              }`} />
                             </div>
 
                             {/* Assinatura */}
                             <div 
-                              className={`w-7 h-7 rounded-md flex items-center justify-center ${
-                                contract.client_signed ? 'bg-green-500' : 'bg-gray-300'
+                              className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors ${
+                                contract.client_signed ? 'bg-green-500' : 'bg-red-100'
                               }`} 
                               title={contract.client_signed ? 'Assinado' : 'Aguardando Assinatura'}
                             >
-                              {contract.client_signed && (
-                                <CheckCircle className="w-4 h-4 text-white" />
-                              )}
+                              <PenTool className={`w-4 h-4 ${
+                                contract.client_signed ? 'text-white' : 'text-red-500'
+                              }`} />
                             </div>
                           </div>
                         </td>
