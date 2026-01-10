@@ -55,6 +55,7 @@ import CronogramaImplementacao from './pages/CronogramaImplementacao';
 import CulturaOrganizacional from './pages/CulturaOrganizacional';
 import DRETCMP2 from './pages/DRETCMP2';
 import Dashboard from './pages/Dashboard';
+import DashboardFinanceiro from './pages/DashboardFinanceiro';
 import DashboardOverview from './pages/DashboardOverview';
 import DescricoesCargo from './pages/DescricoesCargo';
 import DesdobramentoMeta from './pages/DesdobramentoMeta';
@@ -156,7 +157,6 @@ import TestUsuarios from './pages/TestUsuarios';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
-import DashboardFinanceiro from './pages/DashboardFinanceiro';
 import __Layout from './Layout.jsx';
 
 
@@ -218,6 +218,7 @@ export const PAGES = {
     "CulturaOrganizacional": CulturaOrganizacional,
     "DRETCMP2": DRETCMP2,
     "Dashboard": Dashboard,
+    "DashboardFinanceiro": DashboardFinanceiro,
     "DashboardOverview": DashboardOverview,
     "DescricoesCargo": DescricoesCargo,
     "DesdobramentoMeta": DesdobramentoMeta,
@@ -319,7 +320,6 @@ export const PAGES = {
     "TreinamentoVendas": TreinamentoVendas,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
-    "DashboardFinanceiro": DashboardFinanceiro,
 }
 
 export const pagesConfig = {

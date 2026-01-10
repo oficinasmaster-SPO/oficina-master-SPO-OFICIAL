@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, Download, TrendingUp, Users, ClipboardCheck, Loader2, BarChart3 } from "lucide-react";
 import RelatoriosTab from "@/components/aceleracao/RelatoriosTab";
+import GargalosConsultores from "@/components/aceleracao/GargalosConsultores";
 
 export default function RelatoriosAceleracao() {
   const [periodo, setPeriodo] = useState("mes_atual");
@@ -76,6 +77,14 @@ export default function RelatoriosAceleracao() {
     }
   });
 
+  const { data: gargalos } = useQuery({
+    queryKey: ['gargalos-consultores'],
+    queryFn: async () => {
+      const response = await base44.functions.invoke('calcularGargalosConsultores');
+      return response.data;
+    }
+  });
+
   const gerarRelatorio = async (tipo) => {
     setGerandoRelatorio(tipo);
     try {
@@ -140,6 +149,9 @@ export default function RelatoriosAceleracao() {
         </TabsList>
 
         <TabsContent value="geral" className="space-y-6">
+
+      {/* Análise de Gargalos */}
+      <GargalosConsultores consultores={gargalos || []} />
 
       {/* Cards de Métricas */}
       <div className="grid md:grid-cols-3 gap-6">
