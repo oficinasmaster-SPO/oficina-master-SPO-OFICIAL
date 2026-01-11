@@ -131,27 +131,70 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
     }
   };
 
-  const enviarLembreteWhatsApp = (atendimento, telefone) => {
-    const workshop = atendimento.workshop;
-    const dataFormatada = format(new Date(atendimento.data_agendada), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
-    const mensagem = `🔔 *Lembrete de Reunião*\n\nOlá! Temos uma reunião agendada:\n\n📅 *Data:* ${dataFormatada}\n⏱️ *Duração:* ${atendimento.duracao_minutos} minutos\n🎯 *Tipo:* ${atendimento.tipo_atendimento.replace(/_/g, ' ')}\n🏢 *Empresa:* ${workshop?.name || 'Sua oficina'}\n\n${atendimento.google_meet_link ? `🔗 *Link do Google Meet:*\n${atendimento.google_meet_link}\n\n` : ''}Nos vemos em breve! 👋`;
-    const numero = telefone.replace(/\D/g, '');
-    window.open(`https://wa.me/55${numero}?text=${encodeURIComponent(mensagem)}`, '_blank');
-    toast.success('WhatsApp aberto com mensagem de lembrete');
+  const enviarLembreteWhatsApp = async (atendimento, telefone) => {
+    try {
+      const workshop = atendimento.workshop;
+      const dataFormatada = format(new Date(atendimento.data_agendada), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
+      const mensagem = `🔔 *Lembrete de Reunião - Oficinas Master*\n\nOlá! Temos uma reunião agendada:\n\n📅 *Data:* ${dataFormatada}\n⏱️ *Duração:* ${atendimento.duracao_minutos} minutos\n🎯 *Tipo:* ${atendimento.tipo_atendimento.replace(/_/g, ' ')}\n🏢 *Empresa:* ${workshop?.name || 'Sua oficina'}\n\n${atendimento.google_meet_link ? `🔗 *Link do Google Meet:*\n${atendimento.google_meet_link}\n\n` : ''}Nos vemos em breve! 👋\n\n_Oficinas Master - Aceleração Empresarial_`;
+      
+      const numeroLimpo = telefone.replace(/\D/g, '');
+      const whatsappUrl = `https://wa.me/55${numeroLimpo}?text=${encodeURIComponent(mensagem)}`;
+      
+      console.log('Abrindo WhatsApp:', whatsappUrl);
+      window.open(whatsappUrl, '_blank');
+      toast.success('WhatsApp aberto com lembrete!');
+    } catch (error) {
+      console.error('Erro ao abrir WhatsApp:', error);
+      toast.error('Erro ao abrir WhatsApp');
+    }
   };
 
-  const enviarLembreteEmail = (atendimento, email) => {
-    const workshop = atendimento.workshop;
-    const dataFormatada = format(new Date(atendimento.data_agendada), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
-    const assunto = `Lembrete: Reunião agendada - ${dataFormatada}`;
-    const corpo = `Olá!\n\nTemos uma reunião agendada:\n\nData: ${dataFormatada}\nDuração: ${atendimento.duracao_minutos} minutos\nTipo: ${atendimento.tipo_atendimento.replace(/_/g, ' ')}\nEmpresa: ${workshop?.name || 'Sua oficina'}\n\n${atendimento.google_meet_link ? `Link do Google Meet:\n${atendimento.google_meet_link}\n\n` : ''}Nos vemos em breve!`;
-    window.open(`mailto:${email}?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`, '_self');
-    toast.success('Cliente de e-mail aberto');
+  const enviarLembreteEmail = async (atendimento, email) => {
+    try {
+      const workshop = atendimento.workshop;
+      const dataFormatada = format(new Date(atendimento.data_agendada), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
+      
+      // Enviar via integração da plataforma
+      await base44.integrations.Core.SendEmail({
+        to: email,
+        subject: `Lembrete: Reunião agendada - ${dataFormatada}`,
+        body: `
+          <h2>Lembrete de Reunião</h2>
+          <p>Olá!</p>
+          <p>Temos uma reunião agendada:</p>
+          <ul>
+            <li><strong>Data:</strong> ${dataFormatada}</li>
+            <li><strong>Duração:</strong> ${atendimento.duracao_minutos} minutos</li>
+            <li><strong>Tipo:</strong> ${atendimento.tipo_atendimento.replace(/_/g, ' ')}</li>
+            <li><strong>Empresa:</strong> ${workshop?.name || 'Sua oficina'}</li>
+          </ul>
+          ${atendimento.google_meet_link ? `
+            <p><strong>Link do Google Meet:</strong></p>
+            <p><a href="${atendimento.google_meet_link}" target="_blank">${atendimento.google_meet_link}</a></p>
+          ` : ''}
+          <p>Nos vemos em breve!</p>
+          <br>
+          <p><em>Oficinas Master - Aceleração Empresarial</em></p>
+        `
+      });
+      
+      toast.success('E-mail enviado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao enviar e-mail:', error);
+      toast.error('Erro ao enviar e-mail: ' + error.message);
+    }
   };
 
   const fazerLigacao = (telefone) => {
-    window.open(`tel:${telefone}`, '_self');
-    toast.info('Discando...');
+    try {
+      const telUrl = `tel:${telefone}`;
+      console.log('Iniciando ligação:', telUrl);
+      window.location.href = telUrl;
+      toast.info('Discando...');
+    } catch (error) {
+      console.error('Erro ao fazer ligação:', error);
+      toast.error('Erro ao iniciar ligação');
+    }
   };
 
   const navigateDate = (direction) => {
