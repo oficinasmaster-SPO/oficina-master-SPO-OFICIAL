@@ -766,6 +766,17 @@ export default function RegistrarAtendimento() {
           </CardContent>
         </Card>
 
+        {/* Captura Inteligente */}
+        {formData.workshop_id && (
+          <ClientIntelligenceCapturePanel
+            workshopId={formData.workshop_id}
+            ataId={formData.id}
+            onSuccess={() => {
+              toast.success('Inteligência capturada na ATA!');
+            }}
+          />
+        )}
+
         {/* Pauta */}
         <Card>
           <CardHeader>
