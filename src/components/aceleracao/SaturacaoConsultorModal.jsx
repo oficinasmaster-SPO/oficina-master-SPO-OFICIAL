@@ -16,9 +16,16 @@ export default function SaturacaoConsultorModal({ consultor, open, onOpenChange,
   const [consultorData, setConsultorData] = useState(consultor);
   const [isLoading, setIsLoading] = useState(false);
   const [period, setPeriod] = useState(initialPeriod || {
-    startDate: format(addDays(new Date(), -30), "yyyy-MM-dd"),
-    endDate: format(new Date(), "yyyy-MM-dd")
+    startDate: format(new Date(), "yyyy-MM-dd"),
+    endDate: format(addDays(new Date(), 30), "yyyy-MM-dd")
   });
+
+  // Sincronizar com o período inicial quando mudar
+  useEffect(() => {
+    if (initialPeriod) {
+      setPeriod(initialPeriod);
+    }
+  }, [initialPeriod?.startDate, initialPeriod?.endDate]);
 
   useEffect(() => {
     if (open && consultor) {
@@ -75,7 +82,10 @@ export default function SaturacaoConsultorModal({ consultor, open, onOpenChange,
             {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
           </div>
           <div className="mt-3">
-            <PeriodFilter onPeriodChange={setPeriod} defaultPeriod="30" />
+            <PeriodFilter 
+              onPeriodChange={setPeriod} 
+              defaultPeriod={initialPeriod?.startDate && initialPeriod?.endDate ? null : "30"}
+            />
           </div>
         </DialogHeader>
 
