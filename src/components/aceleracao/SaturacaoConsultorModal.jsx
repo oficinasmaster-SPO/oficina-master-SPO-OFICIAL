@@ -193,11 +193,11 @@ export default function SaturacaoConsultorModal({ consultor, open, onOpenChange,
             <div className="space-y-3">
               <div>
                 <p className="text-xs text-gray-600">Tarefas Vencidas</p>
-                <p className="font-bold text-red-600">{consultorData.qtd_tarefas_vencidas}</p>
+                <p className="font-bold text-red-600">{consultorData.qtd_tarefas_vencidas ?? 0}</p>
               </div>
               <div>
                 <p className="text-xs text-gray-600">Tarefas Críticas</p>
-                <p className="font-bold text-orange-600">{consultorData.qtd_tarefas_criticas}</p>
+                <p className="font-bold text-orange-600">{consultorData.qtd_tarefas_criticas ?? 0}</p>
               </div>
               <div>
                 <p className="text-xs text-gray-600">Saturação Total</p>
