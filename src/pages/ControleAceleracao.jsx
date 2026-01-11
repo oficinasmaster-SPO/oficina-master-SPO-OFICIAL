@@ -101,7 +101,7 @@ export default function ControleAceleracao() {
         </TabsList>
 
         <TabsContent value="visao-geral">
-          <VisaoGeralTab user={user} />
+          <VisaoGeralTab user={user} filtros={filtros} />
         </TabsContent>
 
         <TabsContent value="atendimentos">

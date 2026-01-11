@@ -14,7 +14,10 @@ import ClientesDetalhesModal from "./ClientesDetalhesModal";
 import ReunioesDetalhesModal from "./ReunioesDetalhesModal";
 import GargalosConsultoresRealtime from "./GargalosConsultoresRealtime";
 
-export default function VisaoGeralTab({ user }) {
+export default function VisaoGeralTab({ user, filtros = {} }) {
+  const consultorFiltrado = filtros.consultorId && filtros.consultorId !== "todos" ? filtros.consultorId : null;
+  const dataInicio = filtros.dataInicio ? new Date(filtros.dataInicio) : null;
+  const dataFim = filtros.dataFim ? new Date(filtros.dataFim) : null;
   const [modalClientes, setModalClientes] = useState({ isOpen: false, tipo: null, clientes: [] });
   const [modalReunioes, setModalReunioes] = useState({ isOpen: false, tipo: null, reunioes: [] });
   const { data: workshops } = useQuery({
@@ -26,11 +29,26 @@ export default function VisaoGeralTab({ user }) {
   });
 
   const { data: atendimentos } = useQuery({
-    queryKey: ['atendimentos-acelerador', user?.id],
+    queryKey: ['atendimentos-acelerador', user?.id, consultorFiltrado, dataInicio, dataFim],
     queryFn: async () => {
-      const all = await base44.entities.ConsultoriaAtendimento.filter({
-        consultor_id: user.id
-      });
+      let query = {};
+      
+      if (consultorFiltrado) {
+        query.consultor_id = consultorFiltrado;
+      } else {
+        query.consultor_id = user.id;
+      }
+      
+      const all = await base44.entities.ConsultoriaAtendimento.filter(query);
+      
+      // Filtrar por período
+      if (dataInicio && dataFim) {
+        return all.filter(a => {
+          const dataAtendimento = new Date(a.data_agendada);
+          return dataAtendimento >= dataInicio && dataAtendimento <= dataFim;
+        });
+      }
+      
       return all;
     },
     enabled: !!user?.id
