@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useLocation } from "react-router-dom";
 import { Loader2, Trophy, Award, Target, Sparkles, Plus, Wrench, RefreshCw, Filter, Star } from "lucide-react";
 import { toast } from "sonner";
 
@@ -31,10 +32,11 @@ export default function Gamificacao() {
   const [selectedChallengeToFinalize, setSelectedChallengeToFinalize] = useState(null);
   const [selectedChallengeToEdit, setSelectedChallengeToEdit] = useState(null);
   const [selectedChallengeToUpdate, setSelectedChallengeToUpdate] = useState(null);
+  const location = useLocation();
 
   useEffect(() => {
     loadUser();
-  }, []);
+  }, [location.search]);
 
   const loadUser = async () => {
     try {
@@ -42,7 +44,7 @@ export default function Gamificacao() {
       setUser(currentUser);
 
       // Verificar se há workshop_id na URL (admin visualizando)
-      const urlParams = new URLSearchParams(window.location.search);
+      const urlParams = new URLSearchParams(location.search);
       const adminWorkshopId = urlParams.get('workshop_id');
 
       let userWorkshop = null;

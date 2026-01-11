@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import AdminViewBanner from "../components/shared/AdminViewBanner";
 
 export default function DashboardOverview() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [user, setUser] = useState(null);
   const [workshop, setWorkshop] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -26,15 +27,14 @@ export default function DashboardOverview() {
         const currentUser = await base44.auth.me();
         setUser(currentUser);
         
-        // Verificar se há workshop_id na URL (admin visualizando)
-        const urlParams = new URLSearchParams(window.location.search);
-        const adminWorkshopId = urlParams.get('workshop_id');
-        
+        const urlParams = new URLSearchParams(location.search);
+        const workshopId = urlParams.get('workshop_id');
+        const assistanceMode = urlParams.get('assistance_mode') === 'true';
+
         let userWorkshop = null;
         
-        if (adminWorkshopId && currentUser.role === 'admin') {
-          // Admin visualizando oficina específica
-          userWorkshop = await base44.entities.Workshop.get(adminWorkshopId);
+        if (assistanceMode && workshopId) {
+          userWorkshop = await base44.entities.Workshop.get(workshopId);
           setIsAdminView(true);
         } else {
           // Fluxo normal
@@ -68,7 +68,7 @@ export default function DashboardOverview() {
       }
     };
     init();
-  }, []);
+  }, [location.search]);
 
   // 1. Fetch Entrepreneur Diagnostic (Latest)
   const { data: entrepreneurDiag } = useQuery({

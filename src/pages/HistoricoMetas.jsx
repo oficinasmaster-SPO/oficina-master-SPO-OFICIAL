@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { useLocation } from "react-router-dom";
 import { Plus, Download, Target, TrendingUp, Award, AlertCircle, Building2, User, X, Activity, BarChart3, Calendar, DollarSign, CheckCircle2 } from "lucide-react";
 import { formatCurrency, formatNumber } from "../components/utils/formatters";
 import ManualGoalRegistration from "../components/goals/ManualGoalRegistration";
@@ -23,10 +24,11 @@ export default function HistoricoMetas() {
   const [expandedCards, setExpandedCards] = useState({});
   const queryClient = useQueryClient();
   const [isAdminView, setIsAdminView] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     loadUser();
-  }, []);
+  }, [location.search]);
 
   const loadUser = async () => {
     try {
@@ -34,7 +36,7 @@ export default function HistoricoMetas() {
       setUser(currentUser);
 
       // Verificar se há workshop_id na URL (admin visualizando)
-      const urlParams = new URLSearchParams(window.location.search);
+      const urlParams = new URLSearchParams(location.search);
       const adminWorkshopId = urlParams.get('workshop_id');
 
       let userWorkshop = null;

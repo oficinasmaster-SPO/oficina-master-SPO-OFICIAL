@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { useLocation } from "react-router-dom";
 import { UserPlus, Loader2, Sparkles, Heart, FilePenLine, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -36,28 +37,38 @@ export default function Colaboradores() {
   // const [showSettings, setShowSettings] = useState(false);
 
   // Fetch user first to get workshop context
+  const location = useLocation();
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me()
   });
 
   const { data: workshop } = useQuery({
-    queryKey: ['userWorkshop', user?.id],
+    queryKey: ['userWorkshop', user?.id, location.search],
     queryFn: async () => {
         if (!user) return null;
         
-        // Verificar se há workshop_id na URL (admin visualizando)
-        const urlParams = new URLSearchParams(window.location.search);
+        const urlParams = new URLSearchParams(location.search);
         const adminWorkshopId = urlParams.get('workshop_id');
+        const assistanceMode = urlParams.get('assistance_mode') === 'true';
         
-        if (adminWorkshopId && user.role === 'admin') {
-          // Admin visualizando oficina específica
+        if (assistanceMode && adminWorkshopId) {
           return await base44.entities.Workshop.get(adminWorkshopId);
         }
         
         // Fluxo normal - buscar oficina do usuário
         const ws = await base44.entities.Workshop.filter({ owner_id: user.id });
-        return ws[0];
+        if (ws && ws.length > 0) {
+            return ws[0];
+        }
+
+        // Fallback for employees
+        const employees = await base44.entities.Employee.filter({ user_id: user.id });
+        if (employees && employees.length > 0) {
+            return await base44.entities.Workshop.get(employees[0].workshop_id);
+        }
+        
+        return null;
     },
     enabled: !!user
   });
