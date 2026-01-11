@@ -1225,6 +1225,14 @@ export default function RegistrarAtendimento() {
           onOpenChange={(open) => setConflitosModal({ ...conflitosModal, open })}
           conflitos={conflitosModal.conflitos}
           dataHorario={conflitosModal.dataHorario}
+          consultorId={formData.consultor_id || user?.id}
+          onSelectHorario={({ data, hora }) => {
+            setFormData({
+              ...formData,
+              data_agendada: data,
+              hora_agendada: hora
+            });
+          }}
         />
       </form>
     </div>
