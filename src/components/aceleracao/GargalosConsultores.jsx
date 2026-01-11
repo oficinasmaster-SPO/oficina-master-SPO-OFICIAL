@@ -43,51 +43,7 @@ export default function GargalosConsultores({ consultores: initialConsultores })
     refetch();
   }, [period, refetch]);
 
-  // Dados de exemplo para demonstração (remover quando tiver dados reais)
-  const dadosExemplo = [
-    {
-      id: '1',
-      nome: 'João Silva',
-      capacidade_semanal: 28.0,
-      carga_ativa: 22.4,
-      produtividade_media: 0.70,
-      indice_saturacao: 0.8,
-      atendimentos_ativos: 8
-    },
-    {
-      id: '2',
-      nome: 'Maria Santos',
-      capacidade_semanal: 28.0,
-      carga_ativa: 25.2,
-      produtividade_media: 0.70,
-      indice_saturacao: 0.9,
-      atendimentos_ativos: 9
-    },
-    {
-      id: '3',
-      nome: 'Pedro Costa',
-      capacidade_semanal: 28.0,
-      carga_ativa: 30.8,
-      produtividade_media: 0.70,
-      indice_saturacao: 1.1,
-      atendimentos_ativos: 11
-    }
-  ];
-
-  const dadosParaExibir = consultores?.length > 0 ? consultores : dadosExemplo;
-
-  if (!dadosParaExibir || dadosParaExibir.length === 0) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Análise de Gargalos - Consultores</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-center text-gray-500 py-8">Sem dados disponíveis</p>
-        </CardContent>
-      </Card>
-    );
-  }
+  const dadosParaExibir = gargalosData || [];
 
   const getStatusIS = (is) => {
     if (is <= 0.8) {
