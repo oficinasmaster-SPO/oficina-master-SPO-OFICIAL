@@ -463,10 +463,10 @@ export default function RegistrarAtendimento() {
         <h1 className="text-3xl font-bold text-gray-900">
           {formData.id ? 'Editar Atendimento' : 'Registrar Atendimento de Consultoria'}
         </h1>
-        <p className="text-gray-600 mt-2">
-          {formData.id ? 'Atualize as informações do atendimento' : 'Agende e registre informações do atendimento ao cliente'}
-        </p>
-      </div>
+          <p className="text-gray-600 mt-2">
+            {formData.id ? 'Atualize as informações do atendimento' : 'Agende e registre informações do atendimento ao cliente'}
+          </p>
+        </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Dados Básicos */}
