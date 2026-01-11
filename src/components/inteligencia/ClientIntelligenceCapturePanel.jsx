@@ -19,6 +19,8 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
   const [selectedSubcategory, setSelectedSubcategory] = useState("");
   const [capturedItems, setCapturedItems] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [detailFormOpen, setDetailFormOpen] = useState(false);
+  const [lastIntelligenceId, setLastIntelligenceId] = useState(null);
 
   const handleAddItem = async () => {
     if (!selectedArea || !selectedType || !selectedSubcategory) {
