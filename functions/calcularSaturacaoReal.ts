@@ -9,23 +9,28 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+    const { startDate, endDate } = await req.json();
 
     // Buscar todos os consultores (users admin)
     const consultores = await base44.asServiceRole.entities.User.list();
     const admins = consultores.filter(u => u.role === 'admin');
 
-    // Buscar todos os atendimentos deste mês
-    const agora = new Date();
-    const primeiroDia = new Date(agora.getFullYear(), agora.getMonth(), 1).toISOString();
-    const ultimoDia = new Date(agora.getFullYear(), agora.getMonth() + 1, 0).toISOString();
+    // Converter datas para filtro
+    const dataInicio = new Date(startDate);
+    const dataFim = new Date(endDate);
+    dataFim.setHours(23, 59, 59, 999);
 
+    // Buscar atendimentos no período especificado
     const atendimentos = await base44.asServiceRole.entities.ConsultoriaAtendimento.filter({
-      status: { $in: ['agendado', 'confirmado', 'realizado', 'participando', 'atrasado'] }
+      status: { $in: ['agendado', 'confirmado', 'realizado', 'participando', 'atrasado'] },
+      data_agendada: { $gte: startDate, $lte: endDate }
     });
 
-    // Buscar todas as tarefas abertas
-    const tarefas = await base44.asServiceRole.entities.TarefaBacklog.list();
-    const tarefasAbertas = tarefas.filter(t => t.status !== 'concluida');
+    // Buscar tarefas do backlog no período
+    const tarefas = await base44.asServiceRole.entities.TarefaBacklog.filter({
+      status: { $ne: 'concluida' },
+      prazo: { $gte: startDate, $lte: endDate }
+    });
 
     // Calcular para cada consultor
     const resultados = admins.map(consultor => {
@@ -42,7 +47,8 @@ Deno.serve(async (req) => {
 
       const atendimentosPrevisto = atendimentosConsultor.filter(a => 
         ['agendado', 'confirmado', 'participando'].includes(a.status) &&
-        new Date(a.data_agendada) >= hoje
+        new Date(a.data_agendada) >= dataInicio &&
+        new Date(a.data_agendada) <= dataFim
       );
 
       const atendimentosEmAtraso = atendimentosConsultor.filter(a => 
@@ -65,12 +71,14 @@ Deno.serve(async (req) => {
       const horasAtendimentos = horasAtendimentosRealizados + horasAtendimentosPrevisto + horasAtendimentosEmAtraso;
 
       // 2. Horas necessárias para tarefas abertas
-      const tarefasConsultor = tarefasAbertas.filter(t => t.consultor_id === consultor.id);
+      const tarefasConsultor = tarefas.filter(t => t.consultor_id === consultor.id);
 
       // Separar tarefas em realizadas, previstas e em atraso
       const tarefasRealizadas = tarefasConsultor.filter(t => t.status === 'concluida');
       const tarefasPrevistas = tarefasConsultor.filter(t => 
-        t.status !== 'concluida' && new Date(t.prazo) >= hoje
+        t.status !== 'concluida' && 
+        new Date(t.prazo) >= dataInicio &&
+        new Date(t.prazo) <= dataFim
       );
       const tarefasEmAtraso = tarefasConsultor.filter(t => 
         t.status !== 'concluida' && new Date(t.prazo) < hoje

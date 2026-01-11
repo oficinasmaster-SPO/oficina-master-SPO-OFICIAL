@@ -13,16 +13,26 @@ export default function PeriodFilter({ onPeriodChange, defaultPeriod = "30" }) {
   const handlePeriodChange = (value) => {
     setPeriod(value);
     const today = new Date();
+    let startDate = today;
     let endDate;
 
-    if (value === "30") endDate = addDays(today, 30);
-    else if (value === "60") endDate = addDays(today, 60);
-    else if (value === "90") endDate = addDays(today, 90);
-    else if (value === "120") endDate = addDays(today, 120);
+    if (value === "atual") {
+      // Período atual = mês atual
+      startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+      endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    } else if (value === "30") {
+      endDate = addDays(today, 30);
+    } else if (value === "60") {
+      endDate = addDays(today, 60);
+    } else if (value === "90") {
+      endDate = addDays(today, 90);
+    } else if (value === "120") {
+      endDate = addDays(today, 120);
+    }
 
     if (value !== "custom") {
       onPeriodChange({
-        startDate: format(today, "yyyy-MM-dd"),
+        startDate: format(startDate, "yyyy-MM-dd"),
         endDate: format(endDate, "yyyy-MM-dd")
       });
       setCustomStart(null);
@@ -47,6 +57,7 @@ export default function PeriodFilter({ onPeriodChange, defaultPeriod = "30" }) {
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
+          <SelectItem value="atual">Período Atual (mês)</SelectItem>
           <SelectItem value="30">Próximos 30 dias</SelectItem>
           <SelectItem value="60">Próximos 60 dias</SelectItem>
           <SelectItem value="90">Próximos 90 dias</SelectItem>
