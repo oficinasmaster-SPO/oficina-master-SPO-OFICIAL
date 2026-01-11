@@ -88,13 +88,16 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
     return colors[status] || 'bg-gray-100 text-gray-700';
   };
 
-  const handleDayClick = (day) => {
+  const handleDayClick = async (day) => {
     const atendimentosDia = getAtendimentosForDay(day);
     if (atendimentosDia.length > 0) {
-      // Enriquecer atendimentos com dados da oficina
+      // Recarregar workshops frescos do banco antes de enriquecer
+      const workshopsFrescos = await base44.entities.Workshop.list();
+      
+      // Enriquecer atendimentos com dados atualizados da oficina
       const atendimentosComWorkshop = atendimentosDia.map(a => ({
         ...a,
-        workshop: workshops.find(w => w.id === a.workshop_id)
+        workshop: workshopsFrescos.find(w => w.id === a.workshop_id)
       }));
       
       setDetailsModal({
