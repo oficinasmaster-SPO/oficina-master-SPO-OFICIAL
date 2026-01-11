@@ -208,7 +208,7 @@ export default function ClientIntelligenceViewer({ open, onOpenChange, item, wor
 
           <div className="flex-1 overflow-y-auto">
             <TabsContent value="current" className="p-6 space-y-6">
-              {renderIntelligenceDetails(item)}
+              {renderIntelligenceDetails(displayData)}
             </TabsContent>
 
             <TabsContent value="history" className="p-6">
