@@ -69,13 +69,8 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
 
   return (
     <div className="space-y-3">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center gap-2">
-          📊 Capturar Inteligência
-        </CardTitle>
-      </CardHeader>
-
-      <CardContent className="space-y-3">
+      {/* Área */}
+      <div>
         {/* Área */}
         <div>
           <label className="text-xs font-semibold text-gray-700 mb-1 block">Área Principal</label>
