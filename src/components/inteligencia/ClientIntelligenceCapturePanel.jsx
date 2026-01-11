@@ -161,5 +161,13 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
         </div>
       )}
     </div>
+
+    <ClientIntelligenceDetailForm
+      open={detailFormOpen}
+      onOpenChange={setDetailFormOpen}
+      intelligenceId={lastIntelligenceId}
+      onSuccess={onSuccess}
+    />
+    </>
   );
 }
