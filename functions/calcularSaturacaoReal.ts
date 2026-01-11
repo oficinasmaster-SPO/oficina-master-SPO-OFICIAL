@@ -20,7 +20,14 @@ Deno.serve(async (req) => {
     const dataFim = new Date(endDate);
     dataFim.setHours(23, 59, 59, 999);
 
-    // Buscar atendimentos no período especificado
+    // Para "próximos X dias", buscar apenas atendimentos FUTUROS
+    // Para "período atual" (mês), buscar todos os atendimentos do mês
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    
+    // Se startDate for hoje ou futuro, é filtro de "próximos dias"
+    const isFutureFilter = new Date(startDate) >= hoje;
+    
     const atendimentos = await base44.asServiceRole.entities.ConsultoriaAtendimento.filter({
       status: { $in: ['agendado', 'confirmado', 'realizado', 'participando', 'atrasado'] },
       data_agendada: { $gte: startDate, $lte: endDate }
@@ -28,22 +35,13 @@ Deno.serve(async (req) => {
 
     console.log('=== FILTRO APLICADO ===');
     console.log('Período:', startDate, 'até', endDate);
+    console.log('É filtro futuro?', isFutureFilter);
     console.log('Total atendimentos encontrados:', atendimentos.length);
-    console.log('Atendimentos por status:', {
-      realizado: atendimentos.filter(a => a.status === 'realizado').length,
-      agendado: atendimentos.filter(a => a.status === 'agendado').length,
-      confirmado: atendimentos.filter(a => a.status === 'confirmado').length,
-      atrasado: atendimentos.filter(a => a.status === 'atrasado').length
-    });
 
     // Buscar TODAS as tarefas não concluídas (sem filtro de período)
     const todasTarefas = await base44.asServiceRole.entities.TarefaBacklog.filter({
       status: { $ne: 'concluida' }
     });
-
-    // Calcular para cada consultor
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
 
     const resultados = admins.map(consultor => {
       // Horas semanais disponíveis (padrão: 40h/semana)
@@ -52,9 +50,10 @@ Deno.serve(async (req) => {
       // 1. Horas em atendimentos no período
       const atendimentosConsultor = atendimentos.filter(a => a.consultor_id === consultor.id);
 
-      // Separar em realizados, previstos e em atraso (DENTRO DO PERÍODO)
-      const atendimentosRealizados = atendimentosConsultor.filter(a => 
-        a.status === 'realizado'
+      // Se é filtro futuro, IGNORAR atendimentos "realizados" (pois já passaram)
+      // Só considerar agendados/confirmados para o futuro
+      const atendimentosRealizados = isFutureFilter ? [] : atendimentosConsultor.filter(a => 
+        a.status === 'realizado' && new Date(a.data_agendada) < hoje
       );
 
       const atendimentosPrevisto = atendimentosConsultor.filter(a => 
@@ -69,6 +68,7 @@ Deno.serve(async (req) => {
 
       if (atendimentosConsultor.length > 0) {
         console.log(`\n=== Consultor: ${consultor.full_name} ===`);
+        console.log('Filtro futuro?', isFutureFilter);
         console.log('Total atendimentos:', atendimentosConsultor.length);
         console.log('Realizados:', atendimentosRealizados.length, atendimentosRealizados.map(a => ({ data: a.data_agendada, status: a.status })));
         console.log('Previstos:', atendimentosPrevisto.length, atendimentosPrevisto.map(a => ({ data: a.data_agendada, status: a.status })));
