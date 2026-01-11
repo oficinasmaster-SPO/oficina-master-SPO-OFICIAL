@@ -691,6 +691,58 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       ]
     },
     {
+      id: 'inteligencia',
+      label: 'Inteligência do Cliente',
+      icon: Brain,
+      items: [
+        { 
+          name: 'Dores Ativas', 
+          href: createPageUrl('IntelligenciaCliente'), 
+          icon: AlertCircle,
+          description: 'Problemas identificados',
+          highlight: true,
+          requiredPermission: 'workshop.view'
+        },
+        { 
+          name: 'Dúvidas Frequentes', 
+          href: createPageUrl('IntelligenciaCliente'), 
+          icon: HelpTour,
+          description: 'Falta de clareza',
+          requiredPermission: 'workshop.view'
+        },
+        { 
+          name: 'Desejos Estratégicos', 
+          href: createPageUrl('IntelligenciaCliente'), 
+          icon: Sparkles,
+          description: 'Objetivos declarados',
+          requiredPermission: 'workshop.view'
+        },
+        { 
+          name: 'Riscos Mapeados', 
+          href: createPageUrl('IntelligenciaCliente'), 
+          icon: AlertCircle,
+          description: 'Potenciais problemas',
+          requiredPermission: 'workshop.view'
+        },
+        { 
+          name: 'Evoluções Conquistadas', 
+          href: createPageUrl('IntelligenciaCliente'), 
+          icon: TrendingUp,
+          description: 'Melhorias obtidas',
+          highlight: true,
+          requiredPermission: 'workshop.view'
+        },
+        { 
+          name: 'Relatórios de Inteligência', 
+          href: createPageUrl('RelatoriosInteligencia'), 
+          icon: BarChart3,
+          description: 'Análises e indicadores',
+          highlight: true,
+          requiredPermission: 'workshop.view'
+        }
+      ]
+    },
+    {
       id: 'aceleracao',
       label: 'Aceleração',
       icon: Briefcase,
