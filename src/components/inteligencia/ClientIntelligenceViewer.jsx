@@ -278,6 +278,16 @@ export default function ClientIntelligenceViewer({ open, onOpenChange, item, wor
             </TabsContent>
           </div>
         </Tabs>
+
+        <ClientIntelligenceEvolutionForm
+          open={evolutionFormOpen}
+          onOpenChange={setEvolutionFormOpen}
+          intelligenceId={item?.id}
+          onSuccess={() => {
+            setEvolutionFormOpen(false);
+            loadData();
+          }}
+        />
       </DialogContent>
     </Dialog>
   );
