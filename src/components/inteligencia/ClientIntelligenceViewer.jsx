@@ -2,10 +2,12 @@ import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
-import { AlertCircle, Calendar, User, TrendingDown, Repeat2, FileText, Zap, Clock } from "lucide-react";
+import { AlertCircle, Calendar, User, TrendingDown, Repeat2, FileText, Zap, Clock, CheckCircle2 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import ClientIntelligenceEvolutionForm from "./ClientIntelligenceEvolutionForm";
 
 export default function ClientIntelligenceViewer({ open, onOpenChange, item, workshopId }) {
   const [fullData, setFullData] = useState(null);
