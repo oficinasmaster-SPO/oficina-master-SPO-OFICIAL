@@ -7,10 +7,21 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Maximize2, Clock, MapPin, User, Filter, Video, Users, ExternalLink } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Maximize2, Clock, MapPin, User, Filter, Video, Users, ExternalLink, Phone, MessageCircle } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, startOfWeek, endOfWeek, addMonths, subMonths, addDays, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+
+const gerarIdAmigavel = (tipo, id, indice) => {
+  const prefixos = {
+    workshop: 'OF',
+    colaborador: 'CL',
+    atendimento: 'AT'
+  };
+  const prefixo = prefixos[tipo] || 'ID';
+  const numero = String(indice).padStart(3, '0');
+  return `${prefixo}${numero}`;
+};
 
 export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
   const navigate = useNavigate();
@@ -323,9 +334,13 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
           </DialogHeader>
 
           <div className="space-y-3 mt-4">
-            {detailsModal.atendimentos.map((atendimento) => {
+            {detailsModal.atendimentos.map((atendimento, idx) => {
               const workshop = atendimento.workshop;
               const podeIniciar = ['agendado', 'confirmado', 'reagendado'].includes(atendimento.status);
+              const workshopIdAmigavel = gerarIdAmigavel('workshop', workshop?.id, idx + 1);
+              const telefoneOficina = workshop?.phone || workshop?.telefone;
+              const participantePrincipal = atendimento.participantes?.[0];
+              const telefoneContato = participantePrincipal?.telefone || participantePrincipal?.phone || telefoneOficina;
               
               return (
                 <div
@@ -333,9 +348,12 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
                   className={`p-4 rounded-lg border-2 ${getStatusColor(atendimento.status)} hover:shadow-md transition-shadow`}
                 >
                   <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                       <Clock className="w-4 h-4" />
                       <span className="font-semibold">{format(new Date(atendimento.data_agendada), 'HH:mm')}</span>
+                      <span className="text-xs text-gray-500 font-mono bg-gray-100 px-2 py-1 rounded">
+                        {workshopIdAmigavel}
+                      </span>
                     </div>
                     <Badge className={getStatusColor(atendimento.status)}>
                       {atendimento.status}
@@ -352,9 +370,51 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
                       <div className="flex items-center gap-2 ml-6 text-gray-600">
                         <Users className="w-3 h-3" />
                         <span className="text-xs">
-                          Proprietário: {workshop.owner_id}
+                          Proprietário: {gerarIdAmigavel('colaborador', workshop.owner_id, 1)}
                           {workshop.partner_ids?.length > 0 && ` + ${workshop.partner_ids.length} sócio(s)`}
                         </span>
+                      </div>
+                    )}
+
+                    {telefoneOficina && (
+                      <div className="flex items-center gap-2 ml-6">
+                        <Phone className="w-3 h-3 text-gray-500" />
+                        <span className="text-xs text-gray-600">{telefoneOficina}</span>
+                        <div className="flex gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const numero = telefoneOficina.replace(/\D/g, '');
+                              window.open(`https://wa.me/55${numero}`, '_blank');
+                            }}
+                          >
+                            <MessageCircle className="w-3 h-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(`tel:${telefoneOficina}`, '_self');
+                            }}
+                          >
+                            <Phone className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {participantePrincipal && (
+                      <div className="flex items-center gap-2 ml-6 text-gray-600">
+                        <User className="w-3 h-3" />
+                        <span className="text-xs">{participantePrincipal.nome}</span>
+                        {participantePrincipal.cargo && (
+                          <span className="text-xs">({participantePrincipal.cargo})</span>
+                        )}
                       </div>
                     )}
 
