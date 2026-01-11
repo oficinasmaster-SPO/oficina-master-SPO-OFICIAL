@@ -214,9 +214,47 @@ export default function AtaPrintLayout({ atendimento, workshop }) {
         </tbody>
       </table>
 
+      {/* Seção 0: INTELIGÊNCIA DO CLIENTE (se houver) */}
+      {atendimento.inteligencias_capturadas && atendimento.inteligencias_capturadas.length > 0 && (
+        <div style={styles.section}>
+          <h3 style={styles.h3}>0. INTELIGÊNCIAS CAPTURADAS DO CLIENTE</h3>
+          <div>
+            {atendimento.inteligencias_capturadas.map((intel, idx) => (
+              <div key={idx} style={{ 
+                borderLeft: '4px solid #dc2626', 
+                backgroundColor: '#fef2f2', 
+                padding: '12px', 
+                marginBottom: '12px',
+                fontSize: '10pt'
+              }}>
+                <p style={{ fontWeight: 'bold', margin: '0 0 6px 0', color: '#dc2626' }}>
+                  {intel.area}
+                </p>
+                <table style={{ width: '100%', fontSize: '9pt', borderCollapse: 'collapse' }}>
+                  <tbody>
+                    <tr>
+                      <td style={{ padding: '2px 0', fontWeight: 'bold', width: '30%' }}>Classificação:</td>
+                      <td style={{ padding: '2px 0' }}>{intel.type}</td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: '2px 0', fontWeight: 'bold' }}>Problema:</td>
+                      <td style={{ padding: '2px 0' }}>{intel.subcategory}</td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: '2px 0', fontWeight: 'bold' }}>Gravidade:</td>
+                      <td style={{ padding: '2px 0' }}>{intel.gravity || 'Média'}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Seção 1: PAUTAS */}
       <div style={styles.section}>
-        <h3 style={styles.h3}>1. PAUTAS</h3>
+        <h3 style={styles.h3}>{atendimento.inteligencias_capturadas?.length > 0 ? '1' : '1'}. PAUTAS</h3>
         {atendimento.pauta && atendimento.pauta.length > 0 ? (
           <div>
             {atendimento.pauta.map((item, idx) => (
