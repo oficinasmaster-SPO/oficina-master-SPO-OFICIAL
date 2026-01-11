@@ -8,6 +8,7 @@ import { downloadAtaPDF } from "./AtasPDFGenerator";
 import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
 import AtaSendOptionsBar from "./AtaSendOptionsBar";
+import QuickCaptureWidget from "@/components/inteligencia/QuickCaptureWidget";
 
 export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose }) {
   const [ataAtualizada, setAtaAtualizada] = React.useState(ata);
