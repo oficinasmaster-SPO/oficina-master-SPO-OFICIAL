@@ -13,6 +13,7 @@ export default function MapaChecklists() {
   const [user, setUser] = useState(null);
   const [workshop, setWorkshop] = useState(null);
   const [selectedType, setSelectedType] = useState("dor");
+  const [selectedArea, setSelectedArea] = useState("");
   const [managerOpen, setManagerOpen] = useState(false);
   const [editingChecklist, setEditingChecklist] = useState(null);
 

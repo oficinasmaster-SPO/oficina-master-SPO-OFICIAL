@@ -109,6 +109,7 @@ import Integracoes from './pages/Integracoes';
 import IntelligenciaCliente from './pages/IntelligenciaCliente';
 import LogsAuditoriaRBAC from './pages/LogsAuditoriaRBAC';
 import ManualProcessos from './pages/ManualProcessos';
+import MapaChecklists from './pages/MapaChecklists';
 import MeuPerfil from './pages/MeuPerfil';
 import MeuPlano from './pages/MeuPlano';
 import MeusProcessos from './pages/MeusProcessos';
@@ -164,7 +165,6 @@ import TestUsuarios from './pages/TestUsuarios';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
-import MapaChecklists from './pages/MapaChecklists';
 import __Layout from './Layout.jsx';
 
 
@@ -280,6 +280,7 @@ export const PAGES = {
     "IntelligenciaCliente": IntelligenciaCliente,
     "LogsAuditoriaRBAC": LogsAuditoriaRBAC,
     "ManualProcessos": ManualProcessos,
+    "MapaChecklists": MapaChecklists,
     "MeuPerfil": MeuPerfil,
     "MeuPlano": MeuPlano,
     "MeusProcessos": MeusProcessos,
@@ -335,7 +336,6 @@ export const PAGES = {
     "TreinamentoVendas": TreinamentoVendas,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
-    "MapaChecklists": MapaChecklists,
 }
 
 export const pagesConfig = {
