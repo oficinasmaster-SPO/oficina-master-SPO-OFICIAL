@@ -31,6 +31,7 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [detailsModal, setDetailsModal] = useState({ open: false, date: null, atendimentos: [] });
   const [consultorFiltro, setConsultorFiltro] = useState('todos');
+  const [workshopsFrescos, setWorkshopsFrescos] = useState(workshops);
 
   const getDateRange = () => {
     if (viewMode === 'day') {
@@ -91,20 +92,38 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
   const handleDayClick = async (day) => {
     const atendimentosDia = getAtendimentosForDay(day);
     if (atendimentosDia.length > 0) {
-      // Recarregar workshops frescos do banco antes de enriquecer
-      const workshopsFrescos = await base44.entities.Workshop.list();
-      
-      // Enriquecer atendimentos com dados atualizados da oficina
-      const atendimentosComWorkshop = atendimentosDia.map(a => ({
-        ...a,
-        workshop: workshopsFrescos.find(w => w.id === a.workshop_id)
-      }));
-      
-      setDetailsModal({
-        open: true,
-        date: day,
-        atendimentos: atendimentosComWorkshop
-      });
+      try {
+        // Recarregar workshops frescos do banco antes de enriquecer
+        const workshopsAtualizados = await base44.entities.Workshop.list();
+        setWorkshopsFrescos(workshopsAtualizados);
+        
+        console.log('Workshops recarregados:', workshopsAtualizados);
+        
+        // Enriquecer atendimentos com dados atualizados da oficina
+        const atendimentosComWorkshop = atendimentosDia.map(a => {
+          const workshopEncontrado = workshopsAtualizados.find(w => w.id === a.workshop_id);
+          console.log('Workshop encontrado para atendimento:', {
+            atendimento_id: a.id,
+            workshop_id: a.workshop_id,
+            workshop: workshopEncontrado,
+            telefone: workshopEncontrado?.telefone,
+            email: workshopEncontrado?.email
+          });
+          return {
+            ...a,
+            workshop: workshopEncontrado
+          };
+        });
+        
+        setDetailsModal({
+          open: true,
+          date: day,
+          atendimentos: atendimentosComWorkshop
+        });
+      } catch (error) {
+        console.error('Erro ao recarregar workshops:', error);
+        toast.error('Erro ao carregar dados atualizados');
+      }
     }
   };
 
