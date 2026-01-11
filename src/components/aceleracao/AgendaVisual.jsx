@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Maximize2, Clock, MapPin, User, Filter, Video, Users, ExternalLink, Phone, MessageCircle } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Maximize2, Clock, MapPin, User, Filter, Video, Users, ExternalLink, Phone, MessageCircle, Mail } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, startOfWeek, endOfWeek, addMonths, subMonths, addDays, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -107,7 +107,6 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
 
   const iniciarAtendimento = async (atendimento) => {
     try {
-      // Atualizar status para "participando"
       await base44.entities.ConsultoriaAtendimento.update(atendimento.id, {
         status: 'participando',
         hora_inicio_real: new Date().toISOString()
@@ -115,12 +114,10 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
 
       toast.success('Atendimento iniciado!');
 
-      // Abrir Google Meet em nova aba
       if (atendimento.google_meet_link) {
         window.open(atendimento.google_meet_link, '_blank');
       }
 
-      // Navegar para registro do atendimento
       const params = new URLSearchParams({ 
         atendimento_id: atendimento.id,
         fromAgenda: 'true',
@@ -132,6 +129,29 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
     } catch (error) {
       toast.error('Erro ao iniciar atendimento: ' + error.message);
     }
+  };
+
+  const enviarLembreteWhatsApp = (atendimento, telefone) => {
+    const workshop = atendimento.workshop;
+    const dataFormatada = format(new Date(atendimento.data_agendada), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
+    const mensagem = `🔔 *Lembrete de Reunião*\n\nOlá! Temos uma reunião agendada:\n\n📅 *Data:* ${dataFormatada}\n⏱️ *Duração:* ${atendimento.duracao_minutos} minutos\n🎯 *Tipo:* ${atendimento.tipo_atendimento.replace(/_/g, ' ')}\n🏢 *Empresa:* ${workshop?.name || 'Sua oficina'}\n\n${atendimento.google_meet_link ? `🔗 *Link do Google Meet:*\n${atendimento.google_meet_link}\n\n` : ''}Nos vemos em breve! 👋`;
+    const numero = telefone.replace(/\D/g, '');
+    window.open(`https://wa.me/55${numero}?text=${encodeURIComponent(mensagem)}`, '_blank');
+    toast.success('WhatsApp aberto com mensagem de lembrete');
+  };
+
+  const enviarLembreteEmail = (atendimento, email) => {
+    const workshop = atendimento.workshop;
+    const dataFormatada = format(new Date(atendimento.data_agendada), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
+    const assunto = `Lembrete: Reunião agendada - ${dataFormatada}`;
+    const corpo = `Olá!\n\nTemos uma reunião agendada:\n\nData: ${dataFormatada}\nDuração: ${atendimento.duracao_minutos} minutos\nTipo: ${atendimento.tipo_atendimento.replace(/_/g, ' ')}\nEmpresa: ${workshop?.name || 'Sua oficina'}\n\n${atendimento.google_meet_link ? `Link do Google Meet:\n${atendimento.google_meet_link}\n\n` : ''}Nos vemos em breve!`;
+    window.open(`mailto:${email}?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`, '_self');
+    toast.success('Cliente de e-mail aberto');
+  };
+
+  const fazerLigacao = (telefone) => {
+    window.open(`tel:${telefone}`, '_self');
+    toast.info('Discando...');
   };
 
   const navigateDate = (direction) => {
@@ -377,33 +397,52 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
                     )}
 
                     {telefoneOficina && (
-                      <div className="flex items-center gap-2 ml-6">
-                        <Phone className="w-3 h-3 text-gray-500" />
-                        <span className="text-xs text-gray-600">{telefoneOficina}</span>
-                        <div className="flex gap-1">
+                      <div className="ml-6 space-y-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Phone className="w-4 h-4 text-gray-500" />
+                            <span className="text-sm font-medium text-gray-700">{telefoneOficina}</span>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
                           <Button
                             size="sm"
-                            variant="ghost"
-                            className="h-6 px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
+                            variant="outline"
+                            className="flex-1 text-green-600 border-green-300 hover:bg-green-50"
                             onClick={(e) => {
                               e.stopPropagation();
-                              const numero = telefoneOficina.replace(/\D/g, '');
-                              window.open(`https://wa.me/55${numero}`, '_blank');
+                              enviarLembreteWhatsApp(atendimento, telefoneOficina);
                             }}
                           >
-                            <MessageCircle className="w-3 h-3" />
+                            <MessageCircle className="w-3 h-3 mr-1" />
+                            WhatsApp
                           </Button>
                           <Button
                             size="sm"
-                            variant="ghost"
-                            className="h-6 px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            variant="outline"
+                            className="flex-1 text-blue-600 border-blue-300 hover:bg-blue-50"
                             onClick={(e) => {
                               e.stopPropagation();
-                              window.open(`tel:${telefoneOficina}`, '_self');
+                              fazerLigacao(telefoneOficina);
                             }}
                           >
-                            <Phone className="w-3 h-3" />
+                            <Phone className="w-3 h-3 mr-1" />
+                            Ligar
                           </Button>
+                          {participantePrincipal?.email && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="flex-1 text-purple-600 border-purple-300 hover:bg-purple-50"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                enviarLembreteEmail(atendimento, participantePrincipal.email);
+                              }}
+                            >
+                              <Mail className="w-3 h-3 mr-1" />
+                              E-mail
+                            </Button>
+                          )}
                         </div>
                       </div>
                     )}
