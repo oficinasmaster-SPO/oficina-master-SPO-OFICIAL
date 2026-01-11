@@ -93,30 +93,49 @@ export default function ClientIntelligenceChecklistManager({
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {/* Título */}
-          <div>
-            <label className="text-sm font-semibold text-gray-700 mb-1 block">
-              Nome do Checklist
-            </label>
-            <Input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Ex: Validação de Causa-Raiz"
-            />
-          </div>
+           {/* Área Principal */}
+           <div>
+             <label className="text-sm font-semibold text-gray-700 mb-1 block">
+               Área Principal *
+             </label>
+             <Select value={selectedArea} onValueChange={setSelectedArea}>
+               <SelectTrigger>
+                 <SelectValue placeholder="Selecione uma área" />
+               </SelectTrigger>
+               <SelectContent>
+                 {Object.entries(INTELLIGENCE_AREAS).map(([key, val]) => (
+                   <SelectItem key={key} value={key}>
+                     {val.label}
+                   </SelectItem>
+                 ))}
+               </SelectContent>
+             </Select>
+           </div>
 
-          {/* Descrição */}
-          <div>
-            <label className="text-sm font-semibold text-gray-700 mb-1 block">
-              Descrição (opcional)
-            </label>
-            <Textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Descreva o propósito deste checklist"
-              className="h-20"
-            />
-          </div>
+           {/* Título */}
+           <div>
+             <label className="text-sm font-semibold text-gray-700 mb-1 block">
+               Nome do Checklist
+             </label>
+             <Input
+               value={title}
+               onChange={(e) => setTitle(e.target.value)}
+               placeholder="Ex: Validação de Causa-Raiz"
+             />
+           </div>
+
+           {/* Descrição */}
+           <div>
+             <label className="text-sm font-semibold text-gray-700 mb-1 block">
+               Descrição (opcional)
+             </label>
+             <Textarea
+               value={description}
+               onChange={(e) => setDescription(e.target.value)}
+               placeholder="Descreva o propósito deste checklist"
+               className="h-20"
+             />
+           </div>
 
           {/* Items */}
           <div>
