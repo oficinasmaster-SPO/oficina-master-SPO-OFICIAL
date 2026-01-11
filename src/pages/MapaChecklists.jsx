@@ -78,6 +78,38 @@ export default function MapaChecklists() {
         </p>
       </div>
 
+      <div className="mb-6">
+        <label className="text-sm font-semibold text-gray-700 mb-2 block">
+          Filtrar por Área (opcional)
+        </label>
+        <div className="flex gap-2">
+          <Select value={selectedArea} onValueChange={setSelectedArea}>
+            <SelectTrigger className="max-w-xs">
+              <SelectValue placeholder="Todas as áreas" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={null}>Todas as áreas</SelectItem>
+              {Object.entries(INTELLIGENCE_AREAS).map(([key, val]) => (
+                <SelectItem key={key} value={key}>
+                  {val.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {selectedArea && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSelectedArea("")}
+              className="gap-1"
+            >
+              <X className="w-4 h-4" />
+              Limpar
+            </Button>
+          )}
+        </div>
+      </div>
+
       <Tabs value={selectedType} onValueChange={setSelectedType} className="w-full">
         <TabsList className="grid w-full grid-cols-5 lg:w-auto">
           {Object.entries(INTELLIGENCE_TYPES).map(([key, config]) => (
