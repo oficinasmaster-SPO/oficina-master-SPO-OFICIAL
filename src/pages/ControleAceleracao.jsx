@@ -94,12 +94,6 @@ export default function ControleAceleracao() {
         user={user}
       />
 
-      <FiltrosControleAceleracao
-        consultores={consultores || []}
-        filtros={filtros}
-        onFiltrosChange={setFiltros}
-      />
-
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-4 bg-white shadow-md">
           <TabsTrigger value="visao-geral">
@@ -124,6 +118,11 @@ export default function ControleAceleracao() {
         </TabsList>
 
         <TabsContent value="visao-geral">
+          <FiltrosControleAceleracao
+            consultores={consultores || []}
+            filtros={filtros}
+            onFiltrosChange={setFiltros}
+          />
           <VisaoGeralTab user={user} filtros={filtros} />
         </TabsContent>
 
