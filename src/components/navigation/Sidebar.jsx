@@ -181,7 +181,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
   const { profile, hasPermission, canAccessPage } = usePermissions();
   const { queryString } = useAssistanceMode();
   
-  const [expandedGroups, setExpandedGroups] = React.useState(['dashboard', 'patio', 'treinamentos']);
+  const [expandedGroups, setExpandedGroups] = React.useState(['dashboard', 'patio', 'treinamentos', 'inteligencia']);
   const [isCollapsed, setIsCollapsed] = React.useState(() => {
     try {
       const saved = localStorage.getItem('sidebar-collapsed');
