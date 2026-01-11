@@ -338,13 +338,28 @@ export default function GargalosConsultores({ consultores: initialConsultores })
             Índice de Saturação (IS) = Carga Ativa ÷ Capacidade Semanal
           </p>
         </div>
-        {onPeriodChange && (
-          <PeriodFilter onPeriodChange={onPeriodChange} defaultPeriod="30" />
-        )}
+        <div className="flex items-center gap-2">
+          <PeriodFilter onPeriodChange={setPeriod} defaultPeriod="30" />
+          <Button 
+            size="sm" 
+            variant="outline" 
+            onClick={() => refetch()}
+            disabled={isLoading}
+          >
+            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Atualizar'}
+          </Button>
+        </div>
       </div>
     </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
+    <CardContent>
+      {isLoading ? (
+        <div className="flex justify-center py-8">
+          <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+        </div>
+      ) : !dadosParaExibir || dadosParaExibir.length === 0 ? (
+        <p className="text-center text-gray-500 py-8">Sem dados disponíveis</p>
+      ) : (
+      <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b-2 border-gray-200">
               <tr>
