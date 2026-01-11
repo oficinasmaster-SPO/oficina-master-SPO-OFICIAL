@@ -137,10 +137,10 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
           <Plus className="w-4 h-4 mr-2" />
           Adicionar Inteligência
         </Button>
-      )}
+        )}
 
-      {/* Itens Capturados */}
-      {capturedItems.length > 0 && (
+        {/* Itens Capturados */}
+        {capturedItems.length > 0 && (
         <div className="border-t pt-4 mt-4">
           <p className="text-sm font-semibold text-gray-700 mb-3">Capturados:</p>
           <div className="space-y-2 max-h-64 overflow-y-auto">
