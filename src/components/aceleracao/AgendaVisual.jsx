@@ -5,7 +5,7 @@ import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Maximize2, Clock, MapPin, User, Filter, Video, Users, ExternalLink, Phone, MessageCircle, Mail } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, startOfWeek, endOfWeek, addMonths, subMonths, addDays, startOfDay, endOfDay } from "date-fns";
@@ -413,9 +413,9 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
               <CalendarIcon className="w-5 h-5 text-blue-600" />
               {detailsModal.date && format(detailsModal.date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
             </DialogTitle>
-            <p className="text-sm text-gray-600 mt-1">
-              {detailsModal.atendimentos.length} atendimento{detailsModal.atendimentos.length !== 1 ? 's' : ''}
-            </p>
+            <DialogDescription>
+              {detailsModal.atendimentos.length} atendimento{detailsModal.atendimentos.length !== 1 ? 's' : ''} agendado{detailsModal.atendimentos.length !== 1 ? 's' : ''} para este dia
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-3 mt-4">
