@@ -345,5 +345,6 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
         </div>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
