@@ -46,8 +46,13 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
   if (!ataAtualizada) return null;
 
   return (
-    <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto print:max-w-full">
+    <>
+      <ClientIntelligenceCapturePanel
+        workshopId={workshop?.id}
+        ataId={ata?.id}
+      />
+      <Dialog open onOpenChange={onClose}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto print:max-w-full">
         <DialogHeader className="print:hidden">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
