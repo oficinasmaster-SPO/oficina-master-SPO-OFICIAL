@@ -163,6 +163,7 @@ import DoresAtivas from './pages/DoresAtivas';
 import DuvidasCliente from './pages/DuvidasCliente';
 import DesesosCliente from './pages/DesesosCliente';
 import RiscosCliente from './pages/RiscosCliente';
+import EvolucoesCliente from './pages/EvolucoesCliente';
 import __Layout from './Layout.jsx';
 
 
@@ -332,6 +333,7 @@ export const PAGES = {
     "DuvidasCliente": DuvidasCliente,
     "DesesosCliente": DesesosCliente,
     "RiscosCliente": RiscosCliente,
+    "EvolucoesCliente": EvolucoesCliente,
 }
 
 export const pagesConfig = {
