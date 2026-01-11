@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { base44 } from "@/api/base44Client";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, TrendingUp, CheckCircle, HelpCircle, X } from "lucide-react";
+import { AlertTriangle, TrendingUp, CheckCircle, HelpCircle, X, Loader2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import {
   Dialog,
@@ -14,8 +16,32 @@ import {
 import PeriodFilter from "./PeriodFilter";
 import { addDays, format } from "date-fns";
 
-export default function GargalosConsultores({ consultores, onPeriodChange }) {
+export default function GargalosConsultores({ consultores: initialConsultores }) {
   const [showHelp, setShowHelp] = useState(false);
+  const [period, setPeriod] = useState({
+    startDate: format(new Date(), "yyyy-MM-dd"),
+    endDate: format(addDays(new Date(), 30), "yyyy-MM-dd")
+  });
+
+  const { data: gargalosData, isLoading, refetch } = useQuery({
+    queryKey: ['gargalos-consultores', period],
+    queryFn: async () => {
+      try {
+        const response = await base44.functions.invoke('calcularGargalosConsultores', {
+          startDate: period.startDate,
+          endDate: period.endDate
+        });
+        return response.data?.consultores || [];
+      } catch {
+        return initialConsultores || [];
+      }
+    },
+    initialData: initialConsultores || []
+  });
+
+  useEffect(() => {
+    refetch();
+  }, [period, refetch]);
 
   // Dados de exemplo para demonstração (remover quando tiver dados reais)
   const dadosExemplo = [
