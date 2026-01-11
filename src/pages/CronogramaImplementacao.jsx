@@ -82,13 +82,30 @@ export default function CronogramaImplementacao() {
         }
       });
 
-      return await base44.entities.CronogramaImplementacao.update(id, {
+      const updated = await base44.entities.CronogramaImplementacao.update(id, {
         ...data,
         historico_alteracoes: historicoAtualizado
       });
+
+      // Sincronizar com CronogramaProgresso
+      try {
+        await base44.functions.invoke('syncCronogramaProgress', {
+          workshop_id: workshop.id,
+          item_id: item.item_id,
+          item_nome: item.item_nome,
+          status: data.status,
+          data_termino_real: data.data_termino_real,
+          progresso_percentual: data.progresso_percentual
+        });
+      } catch (syncError) {
+        console.error('Erro ao sincronizar com CronogramaProgresso:', syncError);
+      }
+
+      return updated;
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['cronograma-implementacao']);
+      queryClient.invalidateQueries(['cronograma-progressos']);
       toast.success('Item atualizado com sucesso!');
       setEditingItem(null);
     }
