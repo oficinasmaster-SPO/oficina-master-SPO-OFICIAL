@@ -8,6 +8,7 @@ import { AlertCircle, Calendar, User, TrendingDown, Repeat2, FileText, Zap, Cloc
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import ClientIntelligenceEvolutionForm from "./ClientIntelligenceEvolutionForm";
+import ClientIntelligenceChecklistSection from "./ClientIntelligenceChecklistSection";
 
 export default function ClientIntelligenceViewer({ open, onOpenChange, item, workshopId }) {
   const [fullData, setFullData] = useState(null);
