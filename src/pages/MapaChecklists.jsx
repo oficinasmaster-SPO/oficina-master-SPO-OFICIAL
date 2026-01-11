@@ -37,13 +37,17 @@ export default function MapaChecklists() {
   }, []);
 
   const { data: checklists = [] } = useQuery({
-    queryKey: ["checklists", workshop?.id, selectedType],
+    queryKey: ["checklists", workshop?.id, selectedType, selectedArea],
     queryFn: async () => {
       if (!workshop?.id) return [];
-      const result = await base44.entities.ClientIntelligenceChecklist.filter({
+      const query = {
         workshop_id: workshop.id,
         type: selectedType,
-      });
+      };
+      if (selectedArea) {
+        query.area = selectedArea;
+      }
+      const result = await base44.entities.ClientIntelligenceChecklist.filter(query);
       return Array.isArray(result) ? result : [];
     },
     enabled: !!workshop?.id,
