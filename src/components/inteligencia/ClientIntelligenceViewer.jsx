@@ -8,19 +8,23 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export default function ClientIntelligenceViewer({ open, onOpenChange, item, workshopId }) {
-  const [intelligence, setIntelligence] = useState(null);
+  const [fullData, setFullData] = useState(null);
   const [history, setHistory] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (open && item) {
+    if (open && item?.id) {
       loadData();
     }
-  }, [open, item]);
+  }, [open, item?.id]);
 
   const loadData = async () => {
     setIsLoading(true);
     try {
+      // Carregar dados completos da inteligência
+      const completeData = await base44.entities.ClientIntelligence.get(item.id);
+      setFullData(completeData);
+
       // Buscar histórico de inteligências similares
       if (workshopId && item) {
         const historyData = await base44.entities.ClientIntelligence.filter({
@@ -32,13 +36,15 @@ export default function ClientIntelligenceViewer({ open, onOpenChange, item, wor
         setHistory(historyData || []);
       }
     } catch (error) {
-      console.error("Erro ao carregar histórico:", error);
+      console.error("Erro ao carregar dados:", error);
+      setFullData(item);
     } finally {
       setIsLoading(false);
     }
   };
 
   if (!item) return null;
+  const displayData = fullData || item;
 
   const gravityColors = {
     baixa: "bg-green-100 text-green-900 border-green-300",
