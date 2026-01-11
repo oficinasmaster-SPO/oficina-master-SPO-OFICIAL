@@ -1,3 +1,4 @@
+
 // Estrutura completa da sidebar para gestão de permissões
 export const sidebarStructure = [
   {
@@ -125,13 +126,8 @@ export const sidebarStructure = [
     id: "inteligencia",
     label: "Inteligência do Cliente",
     items: [
-      { name: "Dores Ativas", description: "Problemas identificados" },
-      { name: "Dúvidas Frequentes", description: "Falta de clareza" },
-      { name: "Desejos Estratégicos", description: "Objetivos declarados" },
-      { name: "Riscos Mapeados", description: "Potenciais problemas" },
-      { name: "Evoluções Conquistadas", description: "Melhorias obtidas" },
+      { name: "Mapa de Checklists", description: "Visualizar e gerenciar checklists" },
       { name: "Relatórios de Inteligência", description: "Análises e indicadores" },
-      { name: "Mapa de Checklists", description: "Gerenciar checklists por tipo" },
     ],
   },
   {
