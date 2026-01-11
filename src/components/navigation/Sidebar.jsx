@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Badge } from "@/components/ui/badge";
 import { usePermissions } from "@/components/hooks/usePermissions";
+import { useAssistanceMode } from "@/components/hooks/useAssistanceMode";
 import { base44 } from "@/api/base44Client";
 import { 
   Home, 
@@ -178,6 +179,7 @@ function UserProfileSection({ user, collapsed }) {
 export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
   const location = useLocation();
   const { profile, hasPermission, canAccessPage } = usePermissions();
+  const { queryString } = useAssistanceMode();
   
   const [expandedGroups, setExpandedGroups] = React.useState(['dashboard', 'patio', 'treinamentos']);
   const [isCollapsed, setIsCollapsed] = React.useState(() => {
@@ -948,7 +950,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
             </button>
           ) : (
             <div className="flex items-center justify-between gap-3">
-              <Link to={createPageUrl('Home')} className="flex items-center gap-3 flex-1">
+              <Link to={createPageUrl('Home') + queryString} className="flex items-center gap-3 flex-1">
                 <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center">
                   <FileText className="w-6 h-6 text-white" />
                 </div>
@@ -972,7 +974,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           {!isCollapsed && (
             <div className="space-y-1 mb-6">
               <Link
-                to={createPageUrl('Home')}
+                to={createPageUrl('Home') + queryString}
                 onClick={onClose}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all",
@@ -985,7 +987,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                 <span>Início</span>
               </Link>
               <Link
-                to={createPageUrl('MeuPerfil')}
+                to={createPageUrl('MeuPerfil') + queryString}
                 onClick={onClose}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all",
@@ -1003,7 +1005,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           {isCollapsed && (
             <div className="flex flex-col items-center gap-4 py-2">
               <Link
-                to={createPageUrl('Home')}
+                to={createPageUrl('Home') + queryString}
                 onClick={onClose}
                 className={cn(
                   "p-3 rounded-lg transition-all",
@@ -1016,7 +1018,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                 <Home className="w-5 h-5" />
               </Link>
               <Link
-                to={createPageUrl('MeuPerfil')}
+                to={createPageUrl('MeuPerfil') + queryString}
                 onClick={onClose}
                 className={cn(
                   "p-3 rounded-lg transition-all",
@@ -1070,7 +1072,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                             return (
                               <Link
                                 key={item.name}
-                                to={item.href}
+                                to={item.href + queryString}
                                 onClick={onClose}
                                 className={cn(
                                   "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group relative select-none",
@@ -1128,7 +1130,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           {/* Item fixo: Escolha seu Plano */}
           <div className="mt-6 border-t border-gray-200 pt-4">
             <Link
-              to={createPageUrl('CadastroPlanos')}
+              to={createPageUrl('CadastroPlanos') + queryString}
               onClick={onClose}
               className={cn(
                 "flex items-center gap-3 px-3 py-3 rounded-lg transition-all",
