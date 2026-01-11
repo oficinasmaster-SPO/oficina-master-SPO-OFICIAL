@@ -95,6 +95,7 @@ export default function CronogramaImplementacao() {
           item_nome: item.item_nome,
           status: data.status,
           data_termino_real: data.data_termino_real,
+          data_termino_previsto: data.data_termino_previsto,
           progresso_percentual: data.progresso_percentual
         });
       } catch (syncError) {
@@ -104,8 +105,9 @@ export default function CronogramaImplementacao() {
       return updated;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['cronograma-implementacao']);
-      queryClient.invalidateQueries(['cronograma-progressos']);
+      queryClient.invalidateQueries({ queryKey: ['cronograma-implementacao'] });
+      queryClient.invalidateQueries({ queryKey: ['cronograma-progressos'] });
+      queryClient.invalidateQueries({ queryKey: ['cronograma-implementacao', workshop?.id] });
       toast.success('Item atualizado com sucesso!');
       setEditingItem(null);
     }
