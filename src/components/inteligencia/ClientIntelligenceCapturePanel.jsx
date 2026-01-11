@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, ChevronRight } from "lucide-react";
+import { Plus, ChevronRight, AlertCircle } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import { INTELLIGENCE_AREAS, INTELLIGENCE_TYPES, SUBCATEGORIES } from "@/components/lib/clientIntelligenceConstants";
