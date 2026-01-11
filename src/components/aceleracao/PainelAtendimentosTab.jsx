@@ -9,6 +9,7 @@ import GerarAtaModal from "./GerarAtaModal";
 import VisualizarAtaModal from "./VisualizarAtaModal";
 import ReagendarAtendimentoModal from "./ReagendarAtendimentoModal";
 import FiltrosAtendimentos from "./FiltrosAtendimentos";
+import DashboardAtendimentos from "./DashboardAtendimentos";
 import { ATENDIMENTO_STATUS, ATENDIMENTO_STATUS_COLORS, ATENDIMENTO_STATUS_LABELS } from "@/components/lib/ataConstants";
 import { format, subDays } from "date-fns";
 import { useNavigate } from "react-router-dom";
@@ -230,6 +231,9 @@ export default function PainelAtendimentosTab({ user }) {
           dateTo: format(new Date(), "yyyy-MM-dd")
         })}
       />
+
+      {/* Dashboard de Estatísticas */}
+      <DashboardAtendimentos atendimentos={atendimentosFiltrados} />
 
       {/* Tabela de Atendimentos */}
       <Card>
