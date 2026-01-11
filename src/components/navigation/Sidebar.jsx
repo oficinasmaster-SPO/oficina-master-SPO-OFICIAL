@@ -708,7 +708,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
         { 
           name: 'Dúvidas Frequentes', 
           href: createPageUrl('IntelligenciaCliente'), 
-          icon: HelpTour,
+          icon: HelpCircle,
           description: 'Falta de clareza',
           requiredPermission: 'workshop.view'
         },
