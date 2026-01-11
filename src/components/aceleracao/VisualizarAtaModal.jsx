@@ -341,10 +341,10 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
         </div>
 
         <div className="flex justify-end pt-4 border-t print:hidden">
-          <Button onClick={onClose}>Fechar</Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-    </>
-  );
-}
+           <Button onClick={onClose}>Fechar</Button>
+         </div>
+        </DialogContent>
+        </Dialog>
+        </>
+        );
+        }
