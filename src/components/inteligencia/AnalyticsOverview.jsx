@@ -1,6 +1,6 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, TrendingUp, AlertTriangle, CheckCircle } from "lucide-react";
+import { AlertCircle, TrendingUp, AlertTriangle, CheckCircle, HelpCircle, Star } from "lucide-react";
 
 export default function AnalyticsOverview({ analytics }) {
   if (!analytics) return null;
