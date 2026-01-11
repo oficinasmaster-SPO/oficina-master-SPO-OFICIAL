@@ -120,7 +120,7 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
             <SelectContent>
               {Object.entries(INTELLIGENCE_TYPES).map(([key, val]) => (
                 <SelectItem key={key} value={key}>
-                  {val.icon} {val.label}
+                  {val.label}
                 </SelectItem>
               ))}
             </SelectContent>
