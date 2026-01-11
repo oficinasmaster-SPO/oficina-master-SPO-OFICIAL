@@ -56,6 +56,13 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
                 ATA de Atendimento - {ataAtualizada.code}
               </span>
               <div className="flex gap-2">
+                <QuickCaptureWidget
+                  workshopId={workshop?.id}
+                  ataId={ata?.id}
+                  onSuccess={() => {
+                    toast.success("Inteligência capturada!");
+                  }}
+                />
                 <Button size="sm" variant="outline" onClick={handleDownload}>
                   <Download className="w-4 h-4 mr-2" />
                   Download PDF
