@@ -14,7 +14,7 @@ import NotificationListener from "@/components/notifications/NotificationListene
 import NotificationPermissionBanner from "@/components/notifications/NotificationPermissionBanner";
 // import ActivityTracker from "@/components/tracking/ActivityTracker";
 import { usePermissions } from "@/components/hooks/usePermissions";
-import AssistanceModeBanner from "@/components/shared/AssistanceModeBanner";
+import AssistanceModeBanner from "@/components/shared/AssistanceModeBanner.jsx";
 
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
