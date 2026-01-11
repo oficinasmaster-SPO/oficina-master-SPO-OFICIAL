@@ -37,6 +37,14 @@ Deno.serve(async (req) => {
     console.log('Período:', startDate, 'até', endDate);
     console.log('É filtro futuro?', isFutureFilter);
     console.log('Total atendimentos encontrados:', atendimentos.length);
+    console.log('Atendimentos detalhados:', atendimentos.map(a => ({
+      id: a.id,
+      data: a.data_agendada,
+      status: a.status,
+      consultor: a.consultor_id,
+      workshop: a.workshop_id,
+      duracao: a.duracao_minutos
+    })));
 
     // Buscar TODAS as tarefas não concluídas (sem filtro de período)
     const todasTarefas = await base44.asServiceRole.entities.TarefaBacklog.filter({
@@ -80,13 +88,15 @@ Deno.serve(async (req) => {
       }, 0);
 
       const horasAtendimentosPrevisto = atendimentosPrevisto.reduce((total, a) => {
-        console.log('Atendimento PREVISTO:', {
+        const info = {
           id: a.id,
           data: a.data_agendada,
           status: a.status,
           duracao: a.duracao_minutos || 60,
-          oficina: a.workshop_id
-        });
+          workshop_id: a.workshop_id,
+          tipo: a.tipo_atendimento
+        };
+        console.log('Atendimento PREVISTO:', info);
         return total + (a.duracao_minutos || 60) / 60;
       }, 0);
 
@@ -170,6 +180,20 @@ Deno.serve(async (req) => {
         consultor_nome: consultor.full_name,
         consultor_email: consultor.email,
         horas_semanais_disponiveis: horasSemanaisDisponiveis,
+        // DEBUG: atendimentos detalhados
+        debug_atendimentos_previstos: atendimentosPrevisto.map(a => ({
+          id: a.id,
+          data: a.data_agendada,
+          status: a.status,
+          duracao_min: a.duracao_minutos || 60,
+          workshop_id: a.workshop_id
+        })),
+        debug_tarefas_previstas: tarefasPrevistas.map(t => ({
+          id: t.id,
+          titulo: t.titulo,
+          prazo: t.prazo,
+          tempo_h: t.tempo_estimado_horas || 0
+        })),
         // Atendimentos
         atendimentos_realizados: {
           horas: parseFloat(horasAtendimentosRealizados.toFixed(2)),
