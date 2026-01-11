@@ -9,9 +9,11 @@ import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import ConflitosHorarioModal from "./ConflitosHorarioModal";
 
 export default function RegistrarAtendimentoFormMass({ formData, onFormChange, onClose, user, onSaveAndContinue }) {
   const [consultorSelecionado, setConsultorSelecionado] = useState(user?.id || "");
+  const [conflitosModal, setConflitosModal] = useState({ open: false, conflitos: [], dataHorario: null });
 
   const { data: consultores = [] } = useQuery({
     queryKey: ['consultores-massa'],
@@ -27,6 +29,36 @@ export default function RegistrarAtendimentoFormMass({ formData, onFormChange, o
 
   const handleChange = (field, value) => {
     onFormChange({ ...formData, [field]: value });
+  };
+
+  const verificarConflitos = async () => {
+    if (!formData.data_agendada || !formData.hora_agendada || !consultorSelecionado) {
+      toast.error("Preencha data, horário e consultor para verificar conflitos");
+      return false;
+    }
+
+    try {
+      const dataHoraCompleta = `${formData.data_agendada}T${formData.hora_agendada}:00`;
+      const response = await base44.functions.invoke('verificarConflitoHorario', {
+        consultor_id: consultorSelecionado,
+        data_agendada: dataHoraCompleta
+      });
+
+      if (response.data.conflito) {
+        setConflitosModal({
+          open: true,
+          conflitos: response.data.atendimentos,
+          dataHorario: dataHoraCompleta
+        });
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Erro ao verificar conflitos:', error);
+      toast.error("Erro ao verificar conflitos de horário");
+      return false;
+    }
   };
 
   const generateMeetLink = () => {
@@ -212,18 +244,28 @@ export default function RegistrarAtendimentoFormMass({ formData, onFormChange, o
         </Button>
         <Button 
           type="button" 
-          onClick={() => {
+          onClick={async () => {
             if (!formData.data_agendada || !formData.hora_agendada) {
               toast.error("Preencha data e horário obrigatórios");
               return;
             }
-            onSaveAndContinue();
+            const semConflito = await verificarConflitos();
+            if (semConflito) {
+              onSaveAndContinue();
+            }
           }} 
           className="flex-1 bg-green-600 hover:bg-green-700"
         >
           Salvar e Continuar
         </Button>
       </div>
+
+      <ConflitosHorarioModal
+        open={conflitosModal.open}
+        onOpenChange={(open) => setConflitosModal({ ...conflitosModal, open })}
+        conflitos={conflitosModal.conflitos}
+        dataHorario={conflitosModal.dataHorario}
+      />
     </div>
   );
 }
