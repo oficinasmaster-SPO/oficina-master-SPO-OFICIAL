@@ -80,6 +80,7 @@ export default function ClientIntelligenceChecklistManager({
   const resetForm = () => {
     setTitle("");
     setDescription("");
+    setSelectedArea(defaultArea || "");
     setItems([]);
     setNewItemLabel("");
   };
