@@ -161,6 +161,7 @@ import IntelligenciaCliente from './pages/IntelligenciaCliente';
 import RelatoriosInteligencia from './pages/RelatoriosInteligencia';
 import DoresAtivas from './pages/DoresAtivas';
 import DuvidasCliente from './pages/DuvidasCliente';
+import DesesosCliente from './pages/DesesosCliente';
 import __Layout from './Layout.jsx';
 
 
@@ -328,6 +329,7 @@ export const PAGES = {
     "RelatoriosInteligencia": RelatoriosInteligencia,
     "DoresAtivas": DoresAtivas,
     "DuvidasCliente": DuvidasCliente,
+    "DesesosCliente": DesesosCliente,
 }
 
 export const pagesConfig = {
