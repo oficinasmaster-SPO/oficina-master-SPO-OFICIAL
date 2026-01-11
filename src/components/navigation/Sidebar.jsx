@@ -698,40 +698,18 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       icon: Brain,
       items: [
         { 
-          name: 'Dores Ativas', 
+          name: 'Inteligência', 
           href: createPageUrl('IntelligenciaCliente'), 
-          icon: AlertCircle,
-          description: 'Problemas identificados',
+          icon: Brain,
+          description: 'Dores, Dúvidas, Desejos, Riscos e Evoluções',
           highlight: true,
           requiredPermission: 'workshop.view'
         },
         { 
-          name: 'Dúvidas Frequentes', 
-          href: createPageUrl('IntelligenciaCliente'), 
-          icon: HelpCircle,
-          description: 'Falta de clareza',
-          requiredPermission: 'workshop.view'
-        },
-        { 
-          name: 'Desejos Estratégicos', 
-          href: createPageUrl('IntelligenciaCliente'), 
-          icon: Sparkles,
-          description: 'Objetivos declarados',
-          requiredPermission: 'workshop.view'
-        },
-        { 
-          name: 'Riscos Mapeados', 
-          href: createPageUrl('IntelligenciaCliente'), 
-          icon: AlertCircle,
-          description: 'Potenciais problemas',
-          requiredPermission: 'workshop.view'
-        },
-        { 
-          name: 'Evoluções Conquistadas', 
-          href: createPageUrl('IntelligenciaCliente'), 
-          icon: TrendingUp,
-          description: 'Melhorias obtidas',
-          highlight: true,
+          name: 'Mapa de Checklists', 
+          href: createPageUrl('MapaChecklists'), 
+          icon: ClipboardList,
+          description: 'Gerenciar checklists por tipo',
           requiredPermission: 'workshop.view'
         },
         { 
