@@ -767,15 +767,28 @@ export default function RegistrarAtendimento() {
         </Card>
 
         {/* Captura Inteligente */}
-        {formData.workshop_id && (
-          <ClientIntelligenceCapturePanel
-            workshopId={formData.workshop_id}
-            ataId={formData.id}
-            onSuccess={() => {
-              toast.success('Inteligência capturada na ATA!');
-            }}
-          />
-        )}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              📊 Capturar Inteligência do Cliente
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {formData.workshop_id ? (
+              <ClientIntelligenceCapturePanel
+                workshopId={formData.workshop_id}
+                ataId={formData.id}
+                onSuccess={() => {
+                  toast.success('Inteligência capturada!');
+                }}
+              />
+            ) : (
+              <p className="text-sm text-gray-500 text-center py-4">
+                Selecione uma oficina para capturar inteligência
+              </p>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Pauta */}
         <Card>
