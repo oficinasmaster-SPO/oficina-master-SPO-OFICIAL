@@ -809,7 +809,7 @@ export default function RegistrarAtendimento() {
         </Card>
 
         {/* Pauta */}
-        <Card>
+        <Card ref={pautaRef}>
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Pauta da Reunião</CardTitle>
