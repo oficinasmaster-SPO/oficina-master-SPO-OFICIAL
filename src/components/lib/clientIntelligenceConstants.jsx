@@ -66,7 +66,7 @@ export const INTELLIGENCE_AREAS = {
 
 export const INTELLIGENCE_TYPES = {
   dor: {
-    label: "🔴 Dor",
+    label: "🔴 Dor (problema ativo)",
     icon: "AlertCircle",
     color: "text-red-600",
     bgColor: "bg-red-50",
@@ -74,7 +74,7 @@ export const INTELLIGENCE_TYPES = {
     description: "Problema ativo",
   },
   duvida: {
-    label: "🟡 Dúvida",
+    label: "🟡 Dúvida (falta de clareza)",
     icon: "HelpCircle",
     color: "text-yellow-600",
     bgColor: "bg-yellow-50",
@@ -82,7 +82,7 @@ export const INTELLIGENCE_TYPES = {
     description: "Falta de clareza",
   },
   desejo: {
-    label: "🔵 Desejo",
+    label: "🔵 Desejo (objetivo declarado)",
     icon: "Star",
     color: "text-blue-600",
     bgColor: "bg-blue-50",
@@ -90,7 +90,7 @@ export const INTELLIGENCE_TYPES = {
     description: "Objetivo declarado",
   },
   risco: {
-    label: "⚠️ Risco",
+    label: "⚠️ Risco (potencial problema futuro)",
     icon: "AlertTriangle",
     color: "text-orange-600",
     bgColor: "bg-orange-50",
@@ -98,7 +98,7 @@ export const INTELLIGENCE_TYPES = {
     description: "Potencial problema futuro",
   },
   evolucao: {
-    label: "✅ Evolução",
+    label: "✅ Evolução (algo que melhorou)",
     icon: "CheckCircle",
     color: "text-green-600",
     bgColor: "bg-green-50",
