@@ -1,11 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Maximize2, Clock, MapPin, User } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Maximize2, Clock, MapPin, User, Filter } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, startOfWeek, endOfWeek, addMonths, subMonths, addDays, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -16,6 +17,7 @@ export default function AgendaVisual({ atendimentos = [] }) {
   const [selectedDate, setSelectedDate] = useState(null);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [detailsModal, setDetailsModal] = useState({ open: false, date: null, atendimentos: [] });
+  const [consultorFiltro, setConsultorFiltro] = useState('todos');
 
   const getDateRange = () => {
     if (viewMode === 'day') {
@@ -38,8 +40,25 @@ export default function AgendaVisual({ atendimentos = [] }) {
 
   const dateRange = getDateRange();
 
+  // Extrair lista de consultores únicos
+  const consultores = useMemo(() => {
+    const consultoresMap = new Map();
+    atendimentos.forEach(a => {
+      if (a.consultor_id && a.consultor_nome) {
+        consultoresMap.set(a.consultor_id, a.consultor_nome);
+      }
+    });
+    return Array.from(consultoresMap.entries()).map(([id, nome]) => ({ id, nome }));
+  }, [atendimentos]);
+
+  // Filtrar atendimentos por consultor
+  const atendimentosFiltrados = useMemo(() => {
+    if (consultorFiltro === 'todos') return atendimentos;
+    return atendimentos.filter(a => a.consultor_id === consultorFiltro);
+  }, [atendimentos, consultorFiltro]);
+
   const getAtendimentosForDay = (day) => {
-    return atendimentos.filter(a => 
+    return atendimentosFiltrados.filter(a => 
       isSameDay(new Date(a.data_agendada), day)
     );
   };
@@ -100,6 +119,24 @@ export default function AgendaVisual({ atendimentos = [] }) {
           </CardTitle>
           
           <div className="flex items-center gap-3 flex-wrap">
+            {/* Filtro de Consultor */}
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4 text-gray-600" />
+              <Select value={consultorFiltro} onValueChange={setConsultorFiltro}>
+                <SelectTrigger className="w-[180px] h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos os consultores</SelectItem>
+                  {consultores.map(c => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Modo de Visualização */}
             <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
               <Button
