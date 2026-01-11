@@ -291,7 +291,7 @@ export default function CulturaOrganizacional({ workshop }) {
         </CardHeader>
         <CardContent className="space-y-3">
           <Button
-            onClick={() => navigate(createPageUrl("Colaboradores"))}
+            onClick={() => navigate(getColaboradoresUrl())}
             variant="outline"
             className="w-full justify-start"
           >
