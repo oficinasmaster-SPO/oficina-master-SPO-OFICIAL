@@ -57,7 +57,7 @@ export const useClientIntelligenceAnalytics = (allItems = []) => {
       totalItems: allItems.length,
     };
 
-    const percentualAcoesDef = matureScore.totalItems > 0 
+    const percentualAcoesDef = maturidadeScore.totalItems > 0 
       ? (maturidadeScore.acoesDef / maturidadeScore.totalItems * 100).toFixed(1)
       : 0;
 
