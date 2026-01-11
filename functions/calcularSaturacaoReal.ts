@@ -26,6 +26,16 @@ Deno.serve(async (req) => {
       data_agendada: { $gte: startDate, $lte: endDate }
     });
 
+    console.log('=== FILTRO APLICADO ===');
+    console.log('Período:', startDate, 'até', endDate);
+    console.log('Total atendimentos encontrados:', atendimentos.length);
+    console.log('Atendimentos por status:', {
+      realizado: atendimentos.filter(a => a.status === 'realizado').length,
+      agendado: atendimentos.filter(a => a.status === 'agendado').length,
+      confirmado: atendimentos.filter(a => a.status === 'confirmado').length,
+      atrasado: atendimentos.filter(a => a.status === 'atrasado').length
+    });
+
     // Buscar TODAS as tarefas não concluídas (sem filtro de período)
     const todasTarefas = await base44.asServiceRole.entities.TarefaBacklog.filter({
       status: { $ne: 'concluida' }
@@ -56,6 +66,14 @@ Deno.serve(async (req) => {
         (a.status === 'atrasado' || 
          (['agendado', 'confirmado', 'participando'].includes(a.status) && new Date(a.data_agendada) < hoje))
       );
+
+      if (atendimentosConsultor.length > 0) {
+        console.log(`\n=== Consultor: ${consultor.full_name} ===`);
+        console.log('Total atendimentos:', atendimentosConsultor.length);
+        console.log('Realizados:', atendimentosRealizados.length, atendimentosRealizados.map(a => ({ data: a.data_agendada, status: a.status })));
+        console.log('Previstos:', atendimentosPrevisto.length, atendimentosPrevisto.map(a => ({ data: a.data_agendada, status: a.status })));
+        console.log('Em atraso:', atendimentosEmAtraso.length, atendimentosEmAtraso.map(a => ({ data: a.data_agendada, status: a.status })));
+      }
 
       const horasAtendimentosRealizados = atendimentosRealizados.reduce((total, a) => {
         return total + (a.duracao_real_minutos || a.duracao_minutos || 60) / 60;
