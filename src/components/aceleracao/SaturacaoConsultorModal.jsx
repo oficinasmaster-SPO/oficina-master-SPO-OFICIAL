@@ -47,6 +47,12 @@ export default function SaturacaoConsultorModal({ consultor, open, onOpenChange,
       const consultores = response.data?.consultores || [];
       const updated = consultores.find(c => c.consultor_id === consultor.consultor_id);
       console.log('Modal: Dados atualizados do consultor:', updated);
+      if (updated?.debug_atendimentos_previstos) {
+        console.log('DEBUG - Atendimentos previstos:', updated.debug_atendimentos_previstos);
+      }
+      if (updated?.debug_tarefas_previstas) {
+        console.log('DEBUG - Tarefas previstas:', updated.debug_tarefas_previstas);
+      }
       if (updated) {
         setConsultorData(updated);
       }
