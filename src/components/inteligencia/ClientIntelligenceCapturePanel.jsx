@@ -166,13 +166,31 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
             {capturedItems.map((item, idx) => (
               <div
                 key={idx}
-                className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-start gap-2"
+                className="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-300 rounded-lg p-3 space-y-2"
               >
-                <ChevronRight className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                <div className="flex-1">
-                  <p className="font-semibold text-blue-900">{item.area}</p>
-                  <p className="text-sm text-blue-700">{item.type}</p>
-                  <p className="text-sm text-blue-600">{item.subcategory}</p>
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-blue-700 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="font-bold text-blue-900">{item.area}</p>
+                  </div>
+                </div>
+                <div className="ml-6 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-gray-600">Tipo:</span>
+                    <span className={`text-xs font-medium ${item.typeColor ? `text-${item.typeColor}` : 'text-blue-700'}`}>
+                      {item.typeIcon} {item.type}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-xs font-semibold text-gray-600">Problema:</span>
+                    <p className="text-xs text-blue-800 font-medium">{item.subcategory}</p>
+                  </div>
+                  <div className="flex items-center gap-2 pt-1">
+                    <span className="text-xs font-semibold text-gray-600">Gravidade:</span>
+                    <span className="inline-block px-2 py-0.5 bg-yellow-200 text-yellow-900 text-xs font-bold rounded">
+                      {item.gravityLabel}
+                    </span>
+                  </div>
                 </div>
               </div>
             ))}
