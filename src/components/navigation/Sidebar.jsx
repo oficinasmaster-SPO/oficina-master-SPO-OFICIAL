@@ -58,7 +58,9 @@ import {
   Activity,
   Bug,
   UserCheck,
-  Network
+  Network,
+  AlertCircle,
+  HelpCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
