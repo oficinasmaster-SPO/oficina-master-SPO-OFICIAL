@@ -125,6 +125,17 @@ export default function ClientIntelligenceViewer({ open, onOpenChange, item, wor
         </div>
       )}
 
+      {/* Checklist */}
+      {intel.area && intel.type && (
+        <ClientIntelligenceChecklistSection
+          intelligenceId={intel.id}
+          area={intel.area}
+          type={intel.type}
+          workshopId={intel.workshop_id}
+          onChecklistUpdated={() => {}}
+        />
+      )}
+
       {/* Possíveis Causas */}
       {intel.tags && intel.tags.length > 0 && (
         <div>
