@@ -18,21 +18,47 @@ export default function GargalosConsultoresRealtime() {
     endDate: format(addDays(new Date(), 30), "yyyy-MM-dd")
   });
 
-  const { data: saturacaoData, isLoading, refetch } = useQuery({
+  const handlePeriodChange = (newPeriod) => {
+    console.log('Mudando período para:', newPeriod);
+    setPeriod(newPeriod);
+  };
+
+  const { data: saturacaoData, isLoading, error, refetch } = useQuery({
     queryKey: ['saturacao-real-consultores', period.startDate, period.endDate],
     queryFn: async () => {
+      console.log('Buscando saturação para:', period);
       const response = await base44.functions.invoke('calcularSaturacaoReal', {
         startDate: period.startDate,
         endDate: period.endDate
       });
+      console.log('Resposta da saturação:', response.data);
       return response.data;
     },
-    refetchInterval: 5 * 60 * 1000,
+    refetchInterval: false,
+    retry: false,
     enabled: !!period.startDate && !!period.endDate,
   });
 
+  if (error) {
+    console.error('Erro ao calcular saturação:', error);
+  }
+
   if (isLoading) {
-    return <div className="text-center py-8">Calculando saturação...</div>;
+    return (
+      <div className="text-center py-8">
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <p className="mt-2 text-gray-600">Calculando saturação para {period.startDate} até {period.endDate}...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-red-600">Erro ao calcular saturação: {error.message}</p>
+        <Button onClick={() => refetch()} className="mt-4">Tentar novamente</Button>
+      </div>
+    );
   }
 
   if (!saturacaoData?.consultores) {
@@ -120,7 +146,7 @@ export default function GargalosConsultoresRealtime() {
             <p className="text-xs text-gray-600">
               Cálculo inclui: atendimentos + tarefas do backlog + ajuste por tarefas vencidas
             </p>
-            <PeriodFilter onPeriodChange={setPeriod} defaultPeriod="30" />
+            <PeriodFilter onPeriodChange={handlePeriodChange} defaultPeriod="30" />
           </div>
         </CardHeader>
         <CardContent>
