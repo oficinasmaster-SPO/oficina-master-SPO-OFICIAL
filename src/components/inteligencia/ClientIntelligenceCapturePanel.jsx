@@ -29,19 +29,20 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
     setIsLoading(true);
     try {
       const areaLabel = INTELLIGENCE_AREAS[selectedArea]?.label || selectedArea;
-      const typeLabel = INTELLIGENCE_TYPES[selectedType]?.label || selectedType;
+       const typeLabel = INTELLIGENCE_TYPES[selectedType]?.label || selectedType;
+       const subLabel = SUBCATEGORIES[selectedArea]?.find(s => s === selectedSubcategory) || selectedSubcategory;
 
-      await base44.entities.ClientIntelligence.create({
-        workshop_id: workshopId,
-        attendance_id: ataId,
-        area: selectedArea,
-        type: selectedType,
-        subcategory: selectedSubcategory,
-        title: `${areaLabel} - ${typeLabel}`,
-        description: `${subcategoryName} (capturado na ATA)`,
-        status: "ativo",
-        gravity: "media",
-      });
+       await base44.entities.ClientIntelligence.create({
+         workshop_id: workshopId,
+         attendance_id: ataId,
+         area: selectedArea,
+         type: selectedType,
+         subcategory: selectedSubcategory,
+         title: `${areaLabel} - ${typeLabel}`,
+         description: `${subLabel} (capturado na ATA)`,
+         status: "ativo",
+         gravity: "media",
+       });
 
       const newItem = {
         area: areaLabel,
