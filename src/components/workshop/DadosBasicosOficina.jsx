@@ -21,6 +21,8 @@ export default function DadosBasicosOficina({ workshop, onUpdate }) {
     name: "",
     razao_social: "",
     cnpj: "",
+    telefone: "",
+    email: "",
     cep: "",
     city: "",
     state: "",
@@ -48,6 +50,8 @@ export default function DadosBasicosOficina({ workshop, onUpdate }) {
         name: workshop.name || "",
         razao_social: workshop.razao_social || "",
         cnpj: workshop.cnpj || "",
+        telefone: workshop.telefone || "",
+        email: workshop.email || "",
         cep: workshop.cep || "",
         city: workshop.city || "",
         state: workshop.state || "",
@@ -230,6 +234,25 @@ export default function DadosBasicosOficina({ workshop, onUpdate }) {
                 onChange={(e) => setFormData({...formData, cnpj: e.target.value})}
                 disabled={!editing}
                 placeholder="00.000.000/0000-00"
+              />
+            </div>
+            <div>
+              <Label>Telefone Principal</Label>
+              <Input
+                value={formData.telefone || ''}
+                onChange={(e) => setFormData({...formData, telefone: e.target.value})}
+                disabled={!editing}
+                placeholder="(00) 00000-0000"
+              />
+            </div>
+            <div>
+              <Label>E-mail Principal</Label>
+              <Input
+                type="email"
+                value={formData.email || ''}
+                onChange={(e) => setFormData({...formData, email: e.target.value})}
+                disabled={!editing}
+                placeholder="contato@oficina.com.br"
               />
             </div>
             <div>
