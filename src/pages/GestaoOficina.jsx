@@ -437,38 +437,47 @@ export default function GestaoOficina() {
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Button
-                  onClick={() => navigate(createPageUrl("PainelClienteAceleracao"))}
-                  variant="outline"
-                  className="h-24 text-left justify-start bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200 hover:border-purple-300"
-                >
-                  <Target className="w-6 h-6 mr-3 text-purple-600" />
-                  <div>
-                    <p className="font-semibold text-purple-900">Meu Plano de Aceleração</p>
-                    <p className="text-xs text-gray-600">Progresso, tarefas e cronograma</p>
-                  </div>
-                </Button>
-                <Button
-                  onClick={() => navigate(createPageUrl("CronogramaConsultoria"))}
-                  variant="outline"
-                  className="h-24 text-left justify-start bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200 hover:border-blue-300"
-                >
-                  <CalendarIcon className="w-6 h-6 mr-3 text-blue-600" />
-                  <div>
-                    <p className="font-semibold text-blue-900">Cronograma de Atendimentos</p>
-                    <p className="text-xs text-gray-600">Reuniões e atas de consultoria</p>
-                  </div>
-                </Button>
-                <Button
-                  onClick={() => navigate(createPageUrl("CronogramaImplementacao"))}
-                  variant="outline"
-                  className="h-24 text-left justify-start bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 hover:border-green-300"
-                >
-                  <Target className="w-6 h-6 mr-3 text-green-600" />
-                  <div>
-                    <p className="font-semibold text-green-900">Cronograma de Implementação</p>
-                    <p className="text-xs text-gray-600">Acompanhe o progresso das ferramentas</p>
-                  </div>
-                </Button>
+                    onClick={() => {
+                      const params = isAdminViewing ? `?workshop_id=${workshop.id}&assistance_mode=true` : '';
+                      navigate(createPageUrl("PainelClienteAceleracao") + params);
+                    }}
+                    variant="outline"
+                    className="h-24 text-left justify-start bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200 hover:border-purple-300"
+                  >
+                    <Target className="w-6 h-6 mr-3 text-purple-600" />
+                    <div>
+                      <p className="font-semibold text-purple-900">Meu Plano de Aceleração</p>
+                      <p className="text-xs text-gray-600">Progresso, tarefas e cronograma</p>
+                    </div>
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      const params = isAdminViewing ? `?workshop_id=${workshop.id}&assistance_mode=true` : '';
+                      navigate(createPageUrl("CronogramaConsultoria") + params);
+                    }}
+                    variant="outline"
+                    className="h-24 text-left justify-start bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200 hover:border-blue-300"
+                  >
+                    <CalendarIcon className="w-6 h-6 mr-3 text-blue-600" />
+                    <div>
+                      <p className="font-semibold text-blue-900">Cronograma de Atendimentos</p>
+                      <p className="text-xs text-gray-600">Reuniões e atas de consultoria</p>
+                    </div>
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      const params = isAdminViewing ? `?workshop_id=${workshop.id}&assistance_mode=true` : '';
+                      navigate(createPageUrl("CronogramaImplementacao") + params);
+                    }}
+                    variant="outline"
+                    className="h-24 text-left justify-start bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 hover:border-green-300"
+                  >
+                    <Target className="w-6 h-6 mr-3 text-green-600" />
+                    <div>
+                      <p className="font-semibold text-green-900">Cronograma de Implementação</p>
+                      <p className="text-xs text-gray-600">Acompanhe o progresso das ferramentas</p>
+                    </div>
+                  </Button>
               </div>
             </div>
           </TabsContent>
