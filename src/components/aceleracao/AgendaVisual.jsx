@@ -358,9 +358,22 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
               const workshop = atendimento.workshop;
               const podeIniciar = ['agendado', 'confirmado', 'reagendado'].includes(atendimento.status);
               const workshopIdAmigavel = gerarIdAmigavel('workshop', workshop?.id, idx + 1);
-              const telefoneOficina = workshop?.phone || workshop?.telefone;
+              
+              // Buscar telefone da oficina (vários campos possíveis)
+              const telefoneOficina = workshop?.telefone || workshop?.phone || workshop?.owner_phone;
+              
+              // Buscar participante principal
               const participantePrincipal = atendimento.participantes?.[0];
-              const telefoneContato = participantePrincipal?.telefone || participantePrincipal?.phone || telefoneOficina;
+              const emailContato = participantePrincipal?.email || workshop?.email;
+              
+              console.log('Debug Atendimento:', {
+                workshop_id: workshop?.id,
+                workshop_name: workshop?.name,
+                telefoneOficina,
+                emailContato,
+                participantes: atendimento.participantes,
+                workshop_completo: workshop
+              });
               
               return (
                 <div
@@ -396,56 +409,78 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
                       </div>
                     )}
 
-                    {telefoneOficina && (
-                      <div className="ml-6 space-y-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Phone className="w-4 h-4 text-gray-500" />
-                            <span className="text-sm font-medium text-gray-700">{telefoneOficina}</span>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="flex-1 text-green-600 border-green-300 hover:bg-green-50"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              enviarLembreteWhatsApp(atendimento, telefoneOficina);
-                            }}
-                          >
-                            <MessageCircle className="w-3 h-3 mr-1" />
-                            WhatsApp
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="flex-1 text-blue-600 border-blue-300 hover:bg-blue-50"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              fazerLigacao(telefoneOficina);
-                            }}
-                          >
-                            <Phone className="w-3 h-3 mr-1" />
-                            Ligar
-                          </Button>
-                          {participantePrincipal?.email && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="flex-1 text-purple-600 border-purple-300 hover:bg-purple-50"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                enviarLembreteEmail(atendimento, participantePrincipal.email);
-                              }}
-                            >
-                              <Mail className="w-3 h-3 mr-1" />
-                              E-mail
-                            </Button>
-                          )}
+                    {/* Seção de Contato - Sempre visível */}
+                    <div className="ml-6 space-y-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Phone className="w-4 h-4 text-gray-500" />
+                          <span className="text-sm font-medium text-gray-700">
+                            {telefoneOficina || 'Sem telefone cadastrado'}
+                          </span>
                         </div>
                       </div>
-                    )}
+                      
+                      {emailContato && (
+                        <div className="flex items-center gap-2 text-xs text-gray-600 mb-2">
+                          <Mail className="w-3 h-3" />
+                          <span>{emailContato}</span>
+                        </div>
+                      )}
+
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1 text-green-600 border-green-300 hover:bg-green-50"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!telefoneOficina) {
+                              toast.error('Telefone não cadastrado');
+                              return;
+                            }
+                            enviarLembreteWhatsApp(atendimento, telefoneOficina);
+                          }}
+                          disabled={!telefoneOficina}
+                        >
+                          <MessageCircle className="w-3 h-3 mr-1" />
+                          WhatsApp
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1 text-blue-600 border-blue-300 hover:bg-blue-50"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!telefoneOficina) {
+                              toast.error('Telefone não cadastrado');
+                              return;
+                            }
+                            fazerLigacao(telefoneOficina);
+                          }}
+                          disabled={!telefoneOficina}
+                        >
+                          <Phone className="w-3 h-3 mr-1" />
+                          Ligar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1 text-purple-600 border-purple-300 hover:bg-purple-50"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!emailContato) {
+                              toast.error('E-mail não cadastrado');
+                              return;
+                            }
+                            enviarLembreteEmail(atendimento, emailContato);
+                          }}
+                          disabled={!emailContato}
+                        >
+                          <Mail className="w-3 h-3 mr-1" />
+                          E-mail
+                        </Button>
+                      </div>
+                    </div>
 
                     {participantePrincipal && (
                       <div className="flex items-center gap-2 ml-6 text-gray-600">
