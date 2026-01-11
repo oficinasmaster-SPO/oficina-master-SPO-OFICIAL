@@ -65,22 +65,19 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
           };
 
           setCapturedItems([...capturedItems, newItem]);
-          setPendingIntelligence(newItem);
-          setSelectedArea("");
-          setSelectedType("");
-          setSelectedSubcategory("");
-          setLastIntelligenceId(result.id);
+              setPendingIntelligence(newItem);
+              setSelectedArea("");
+              setSelectedType("");
+              setSelectedSubcategory("");
+              setLastIntelligenceId(result.id);
 
-          // Mostrar modal com opção de adicionar à pauta
-          if (onIntelligenceAdded) {
-            const addToPauta = confirm(`Adicionar "${newItem.title}" à pauta desta reunião?`);
-            if (addToPauta) {
-              onIntelligenceAdded(newItem);
-            }
-          }
+              // Adicionar automaticamente à pauta
+              if (onIntelligenceAdded) {
+                onIntelligenceAdded(newItem);
+              }
 
-          setDetailFormOpen(true);
-          toast.success("Inteligência capturada! Aprofunde os detalhes...");
+              setDetailFormOpen(true);
+              toast.success("Inteligência capturada! Aprofunde os detalhes...");
     } catch (error) {
       toast.error("Erro ao capturar inteligência");
       console.error(error);
