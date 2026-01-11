@@ -71,6 +71,23 @@ export default function RegistroAtendimentoMassaModal({ open, onClose, user }) {
 
       const dataHora = `${data.data_agendada}T${data.hora_agendada}:00`;
 
+      // Validar conflitos ANTES de criar em massa
+      try {
+        const responseConflito = await base44.functions.invoke('verificarConflitoHorario', {
+          consultor_id: user.id,
+          data_agendada: dataHora
+        });
+
+        if (responseConflito.data.conflito) {
+          throw new Error(`Já existe${responseConflito.data.quantidade > 1 ? 'm' : ''} ${responseConflito.data.quantidade} atendimento${responseConflito.data.quantidade > 1 ? 's' : ''} agendado${responseConflito.data.quantidade > 1 ? 's' : ''} para este horário. Escolha outro horário.`);
+        }
+      } catch (error) {
+        if (error.message.includes("atendimento")) {
+          throw error;
+        }
+        console.warn("Erro ao verificar conflitos, prosseguindo:", error);
+      }
+
       const atendimentos = selectedClients.map(workshop_id => ({
         workshop_id,
         tipo_atendimento: data.tipo_atendimento,

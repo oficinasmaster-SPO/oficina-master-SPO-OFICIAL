@@ -244,19 +244,16 @@ export default function RegistrarAtendimentoFormMass({ formData, onFormChange, o
         </Button>
         <Button 
           type="button" 
-          onClick={async () => {
+          onClick={() => {
             if (!formData.data_agendada || !formData.hora_agendada) {
               toast.error("Preencha data e horário obrigatórios");
               return;
             }
-            const semConflito = await verificarConflitos();
-            if (semConflito) {
-              onSaveAndContinue();
-            }
+            onSaveAndContinue();
           }} 
           className="flex-1 bg-green-600 hover:bg-green-700"
         >
-          Salvar e Continuar
+          Próxima Etapa
         </Button>
       </div>
 
