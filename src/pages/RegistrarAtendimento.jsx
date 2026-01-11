@@ -25,6 +25,8 @@ import ConflitosHorarioModal from "@/components/aceleracao/ConflitosHorarioModal
 export default function RegistrarAtendimento() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const urlParams = new URLSearchParams(window.location.search);
+  const fromAgenda = urlParams.get('fromAgenda') === 'true';
   
   const [formData, setFormData] = useState({
     workshop_id: "",
@@ -275,7 +277,11 @@ export default function RegistrarAtendimento() {
       queryClient.invalidateQueries(['consultoria-atendimentos']);
       queryClient.invalidateQueries(['meeting-minutes']);
       toast.success('Atendimento salvo com sucesso!');
-      navigate(createPageUrl('ControleAceleracao'));
+      if (fromAgenda) {
+        navigate(-1); // Volta para a página anterior (agenda)
+      } else {
+        navigate(createPageUrl('ControleAceleracao'));
+      }
     },
     onError: (error) => {
       console.error("Erro ao salvar:", error);
@@ -1171,7 +1177,13 @@ export default function RegistrarAtendimento() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => navigate(createPageUrl('CronogramaConsultoria'))}
+            onClick={() => {
+              if (fromAgenda) {
+                navigate(-1); // Volta para a agenda
+              } else {
+                navigate(createPageUrl('ControleAceleracao'));
+              }
+            }}
           >
             Cancelar
           </Button>

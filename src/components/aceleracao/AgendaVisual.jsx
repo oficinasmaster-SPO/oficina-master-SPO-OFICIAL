@@ -240,7 +240,10 @@ export default function AgendaVisual({ atendimentos = [] }) {
                       className={`text-xs p-2 rounded border ${getStatusColor(atendimento.status)} hover:opacity-80 transition-opacity`}
                       onClick={(e) => {
                         e.stopPropagation();
-                        const params = new URLSearchParams({ atendimento_id: atendimento.id });
+                        const params = new URLSearchParams({ 
+                          atendimento_id: atendimento.id,
+                          fromAgenda: 'true'
+                        });
                         navigate(createPageUrl('RegistrarAtendimento') + '?' + params.toString());
                       }}
                     >
@@ -284,7 +287,10 @@ export default function AgendaVisual({ atendimentos = [] }) {
                 key={atendimento.id}
                 className={`p-4 rounded-lg border-2 ${getStatusColor(atendimento.status)} cursor-pointer hover:shadow-md transition-shadow`}
                 onClick={() => {
-                  const params = new URLSearchParams({ atendimento_id: atendimento.id });
+                  const params = new URLSearchParams({ 
+                    atendimento_id: atendimento.id,
+                    fromAgenda: 'true'
+                  });
                   navigate(createPageUrl('RegistrarAtendimento') + '?' + params.toString());
                 }}
               >
