@@ -781,6 +781,18 @@ export default function RegistrarAtendimento() {
                 onSuccess={() => {
                   toast.success('Inteligência capturada!');
                 }}
+                onIntelligenceAdded={(intelligence) => {
+                  const novaPauta = {
+                    titulo: intelligence.title,
+                    descricao: `${intelligence.subcategory} (capturado via inteligência)`,
+                    tempo_estimado: 15
+                  };
+                  setFormData({
+                    ...formData,
+                    pauta: [...formData.pauta, novaPauta]
+                  });
+                  toast.success('Adicionado à pauta da reunião!');
+                }}
               />
             ) : (
               <p className="text-sm text-gray-500 text-center py-4">
