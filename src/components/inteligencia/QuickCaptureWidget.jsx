@@ -89,16 +89,14 @@ export default function QuickCaptureWidget({ workshopId, ataId, onSuccess }) {
 
   if (!isOpen) {
     return (
-      <div className="print:hidden">
-        <Button
-          onClick={() => setIsOpen(true)}
-          className="gap-2 bg-blue-600 hover:bg-blue-700"
-          size="sm"
-        >
-          <Lightbulb className="w-4 h-4" />
-          Capturar Inteligência
-        </Button>
-      </div>
+      <Button
+        onClick={() => setIsOpen(true)}
+        className="gap-2 bg-blue-600 hover:bg-blue-700"
+        size="sm"
+      >
+        <Lightbulb className="w-4 h-4" />
+        Capturar
+      </Button>
     );
   }
 
