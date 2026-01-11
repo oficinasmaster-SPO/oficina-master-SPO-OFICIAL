@@ -68,7 +68,7 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
   const subcategoryOptions = selectedArea ? (SUBCATEGORIES[selectedArea] || []) : [];
 
   return (
-    <Card className="fixed right-4 top-24 w-80 shadow-2xl print:hidden bg-white border-2 border-blue-500 z-50">
+    <div className="space-y-3">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center gap-2">
           📊 Capturar Inteligência
