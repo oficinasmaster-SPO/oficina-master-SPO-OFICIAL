@@ -34,7 +34,7 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
       const typeLabel = INTELLIGENCE_TYPES[selectedType]?.label || selectedType;
       const subLabel = SUBCATEGORIES[selectedArea]?.find(s => s === selectedSubcategory) || selectedSubcategory;
 
-      await base44.entities.ClientIntelligence.create({
+      const result = await base44.entities.ClientIntelligence.create({
         workshop_id: workshopId,
         attendance_id: ataId,
         area: selectedArea,
@@ -56,8 +56,9 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
       setSelectedArea("");
       setSelectedType("");
       setSelectedSubcategory("");
-      toast.success("Inteligência capturada!");
-      onSuccess?.();
+      setLastIntelligenceId(result.id);
+      setDetailFormOpen(true);
+      toast.success("Inteligência capturada! Aprofunde os detalhes...");
     } catch (error) {
       toast.error("Erro ao capturar inteligência");
       console.error(error);
