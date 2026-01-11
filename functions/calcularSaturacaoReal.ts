@@ -58,18 +58,28 @@ Deno.serve(async (req) => {
       // 1. Horas em atendimentos no período
       const atendimentosConsultor = atendimentos.filter(a => a.consultor_id === consultor.id);
 
+      // REMOVER DUPLICATAS: Se há múltiplos atendimentos no mesmo horário, considerar apenas 1
+      const atendimentosUnicos = atendimentosConsultor.reduce((acc, atendimento) => {
+        const chave = `${atendimento.data_agendada}_${atendimento.consultor_id}`;
+        if (!acc.has(chave)) {
+          acc.set(chave, atendimento);
+        }
+        return acc;
+      }, new Map());
+      const atendimentosSemDuplicatas = Array.from(atendimentosUnicos.values());
+
       // Se é filtro futuro, IGNORAR atendimentos "realizados" (pois já passaram)
       // Só considerar agendados/confirmados para o futuro
-      const atendimentosRealizados = isFutureFilter ? [] : atendimentosConsultor.filter(a => 
+      const atendimentosRealizados = isFutureFilter ? [] : atendimentosSemDuplicatas.filter(a => 
         a.status === 'realizado' && new Date(a.data_agendada) < hoje
       );
 
-      const atendimentosPrevisto = atendimentosConsultor.filter(a => 
+      const atendimentosPrevisto = atendimentosSemDuplicatas.filter(a => 
         ['agendado', 'confirmado', 'participando'].includes(a.status) &&
         new Date(a.data_agendada) >= hoje
       );
 
-      const atendimentosEmAtraso = atendimentosConsultor.filter(a => 
+      const atendimentosEmAtraso = atendimentosSemDuplicatas.filter(a => 
         (a.status === 'atrasado' || 
          (['agendado', 'confirmado', 'participando'].includes(a.status) && new Date(a.data_agendada) < hoje))
       );
@@ -77,7 +87,8 @@ Deno.serve(async (req) => {
       if (atendimentosConsultor.length > 0) {
         console.log(`\n=== Consultor: ${consultor.full_name} ===`);
         console.log('Filtro futuro?', isFutureFilter);
-        console.log('Total atendimentos:', atendimentosConsultor.length);
+        console.log('Total atendimentos (com duplicatas):', atendimentosConsultor.length);
+        console.log('Total atendimentos (sem duplicatas):', atendimentosSemDuplicatas.length);
         console.log('Realizados:', atendimentosRealizados.length, atendimentosRealizados.map(a => ({ data: a.data_agendada, status: a.status })));
         console.log('Previstos:', atendimentosPrevisto.length, atendimentosPrevisto.map(a => ({ data: a.data_agendada, status: a.status })));
         console.log('Em atraso:', atendimentosEmAtraso.length, atendimentosEmAtraso.map(a => ({ data: a.data_agendada, status: a.status })));
