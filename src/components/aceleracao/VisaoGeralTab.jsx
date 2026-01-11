@@ -267,7 +267,10 @@ export default function VisaoGeralTab({ user }) {
         <GraficoAtendimentos atendimentos={atendimentosMes} />
 
         {/* Agenda Visual */}
-        <AgendaVisual atendimentos={atendimentos || []} />
+        <AgendaVisual 
+          atendimentos={atendimentos || []} 
+          workshops={workshops || []}
+        />
       </div>
 
       {/* Análise de Gargalos com Backlog */}

@@ -27,6 +27,7 @@ export default function RegistrarAtendimento() {
   const queryClient = useQueryClient();
   const urlParams = new URLSearchParams(window.location.search);
   const fromAgenda = urlParams.get('fromAgenda') === 'true';
+  const wasFullscreen = urlParams.get('fullscreen') === 'true';
   
   const [formData, setFormData] = useState({
     workshop_id: "",
@@ -276,6 +277,7 @@ export default function RegistrarAtendimento() {
     onSuccess: (atendimento) => {
       queryClient.invalidateQueries(['consultoria-atendimentos']);
       queryClient.invalidateQueries(['meeting-minutes']);
+      queryClient.invalidateQueries(['todos-atendimentos']);
       toast.success('Atendimento salvo com sucesso!');
       if (fromAgenda) {
         navigate(-1); // Volta para a página anterior (agenda)

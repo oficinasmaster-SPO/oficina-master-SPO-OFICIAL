@@ -10,7 +10,7 @@ import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Maximize2, Clock, 
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, startOfWeek, endOfWeek, addMonths, subMonths, addDays, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-export default function AgendaVisual({ atendimentos = [] }) {
+export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
   const navigate = useNavigate();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [viewMode, setViewMode] = useState('month'); // 'day', 'week', 'month'
@@ -78,10 +78,16 @@ export default function AgendaVisual({ atendimentos = [] }) {
   const handleDayClick = (day) => {
     const atendimentosDia = getAtendimentosForDay(day);
     if (atendimentosDia.length > 0) {
+      // Enriquecer atendimentos com dados da oficina
+      const atendimentosComWorkshop = atendimentosDia.map(a => ({
+        ...a,
+        workshop: workshops.find(w => w.id === a.workshop_id)
+      }));
+      
       setDetailsModal({
         open: true,
         date: day,
-        atendimentos: atendimentosDia
+        atendimentos: atendimentosComWorkshop
       });
     }
   };
@@ -234,28 +240,32 @@ export default function AgendaVisual({ atendimentos = [] }) {
                     : format(day, 'd')}
                 </div>
                 <div className="space-y-1">
-                  {atendimentosDia.slice(0, maxVisible).map((atendimento) => (
-                    <div
-                      key={atendimento.id}
-                      className={`text-xs p-2 rounded border ${getStatusColor(atendimento.status)} hover:opacity-80 transition-opacity`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const params = new URLSearchParams({ 
-                          atendimento_id: atendimento.id,
-                          fromAgenda: 'true'
-                        });
-                        navigate(createPageUrl('RegistrarAtendimento') + '?' + params.toString());
-                      }}
-                    >
-                      <div className="font-semibold">{format(new Date(atendimento.data_agendada), 'HH:mm')}</div>
-                      {viewMode !== 'month' && (
-                        <>
-                          <div className="text-[10px] mt-1 truncate">{atendimento.workshop?.name || 'Cliente'}</div>
-                          <div className="text-[10px] text-gray-600">{atendimento.tipo_atendimento}</div>
-                        </>
-                      )}
-                    </div>
-                  ))}
+                  {atendimentosDia.slice(0, maxVisible).map((atendimento) => {
+                    const workshop = workshops.find(w => w.id === atendimento.workshop_id);
+                    return (
+                      <div
+                        key={atendimento.id}
+                        className={`text-xs p-2 rounded border ${getStatusColor(atendimento.status)} hover:opacity-80 transition-opacity`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const params = new URLSearchParams({ 
+                            atendimento_id: atendimento.id,
+                            fromAgenda: 'true',
+                            fullscreen: isFullScreen ? 'true' : 'false'
+                          });
+                          navigate(createPageUrl('RegistrarAtendimento') + '?' + params.toString());
+                        }}
+                      >
+                        <div className="font-semibold">{format(new Date(atendimento.data_agendada), 'HH:mm')}</div>
+                        {viewMode !== 'month' && (
+                          <>
+                            <div className="text-[10px] mt-1 truncate">{workshop?.name || 'Cliente não identificado'}</div>
+                            <div className="text-[10px] text-gray-600">{atendimento.tipo_atendimento}</div>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
                   {atendimentosDia.length > maxVisible && (
                     <div className="text-xs text-gray-500 text-center font-medium cursor-pointer hover:text-blue-600">
                       +{atendimentosDia.length - maxVisible} mais
@@ -289,7 +299,8 @@ export default function AgendaVisual({ atendimentos = [] }) {
                 onClick={() => {
                   const params = new URLSearchParams({ 
                     atendimento_id: atendimento.id,
-                    fromAgenda: 'true'
+                    fromAgenda: 'true',
+                    fullscreen: isFullScreen ? 'true' : 'false'
                   });
                   navigate(createPageUrl('RegistrarAtendimento') + '?' + params.toString());
                 }}
