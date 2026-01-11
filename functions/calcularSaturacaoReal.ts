@@ -26,10 +26,9 @@ Deno.serve(async (req) => {
       data_agendada: { $gte: startDate, $lte: endDate }
     });
 
-    // Buscar tarefas do backlog no período
-    const tarefas = await base44.asServiceRole.entities.TarefaBacklog.filter({
-      status: { $ne: 'concluida' },
-      prazo: { $gte: startDate, $lte: endDate }
+    // Buscar TODAS as tarefas não concluídas (sem filtro de período)
+    const todasTarefas = await base44.asServiceRole.entities.TarefaBacklog.filter({
+      status: { $ne: 'concluida' }
     });
 
     // Calcular para cada consultor
@@ -73,7 +72,10 @@ Deno.serve(async (req) => {
       const horasAtendimentos = horasAtendimentosRealizados + horasAtendimentosPrevisto + horasAtendimentosEmAtraso;
 
       // 2. Horas necessárias para tarefas abertas
-      const tarefasConsultor = tarefas.filter(t => t.consultor_id === consultor.id);
+      const todasTarefasConsultor = todasTarefas.filter(t => t.consultor_id === consultor.id);
+      const tarefasConsultor = todasTarefasConsultor.filter(t =>
+        new Date(t.prazo) >= dataInicio && new Date(t.prazo) <= dataFim
+      );
 
       // Separar tarefas em realizadas, previstas e em atraso (DENTRO DO PERÍODO)
       const tarefasRealizadas = tarefasConsultor.filter(t => t.status === 'concluida');
@@ -102,13 +104,13 @@ Deno.serve(async (req) => {
       // 3. Total de horas comprometidas
       const horasComprometidas = horasAtendimentos + horasTarefas;
 
-      // 4. Tarefas vencidas (aumentam prioridade/urgência) - DENTRO DO PERÍODO
-      const tarefasVencidas = tarefasConsultor.filter(t => 
+      // 4. Tarefas vencidas (TODAS as não concluídas com prazo passado, sem limite de período)
+      const tarefasVencidas = todasTarefasConsultor.filter(t => 
         new Date(t.prazo) < hoje && t.status !== 'concluida'
       ).length;
 
-      // 5. Tarefas críticas - DENTRO DO PERÍODO
-      const tarefasCriticas = tarefasConsultor.filter(t => 
+      // 5. Tarefas críticas (TODAS as abertas com prioridade crítica, sem limite de período)
+      const tarefasCriticas = todasTarefasConsultor.filter(t => 
         t.prioridade === 'critica' && t.status !== 'concluida'
       ).length;
 
