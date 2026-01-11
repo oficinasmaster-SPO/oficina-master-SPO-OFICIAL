@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
-import { Bell, LogOut, Menu, X, LogIn, AlertCircle } from "lucide-react";
+import { Bell, LogOut, Menu, X, LogIn, AlertCircle, LogOutIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
@@ -14,6 +14,7 @@ import NotificationListener from "@/components/notifications/NotificationListene
 import NotificationPermissionBanner from "@/components/notifications/NotificationPermissionBanner";
 // import ActivityTracker from "@/components/tracking/ActivityTracker";
 import { usePermissions } from "@/components/hooks/usePermissions";
+import AssistanceModeBanner from "@/components/shared/AssistanceModeBanner";
 
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
@@ -169,7 +170,8 @@ export default function Layout({ children, currentPageName }) {
       )}
 
       <div className={`${isAuthenticated && !isPublicPage ? 'lg:pl-64' : ''} flex flex-col min-h-screen transition-all duration-300`} style={isAuthenticated && !isPublicPage ? { paddingLeft: 'var(--sidebar-width, 16rem)' } : {}}>
-        {!isPublicPage && (
+              {isAuthenticated && user && <AssistanceModeBanner user={user} />}
+              {!isPublicPage && (
           <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30 print:hidden">
           <div className="px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
