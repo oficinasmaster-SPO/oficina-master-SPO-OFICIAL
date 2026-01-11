@@ -20,6 +20,7 @@ import ProcessSearchSelect from "@/components/aceleracao/ProcessSearchSelect";
 import AudioTranscriptionField from "@/components/aceleracao/AudioTranscriptionField";
 import TipoAtendimentoManager from "@/components/aceleracao/TipoAtendimentoManager";
 import MediaUploadField from "@/components/aceleracao/MediaUploadField";
+import ConflitosHorarioModal from "@/components/aceleracao/ConflitosHorarioModal";
 
 export default function RegistrarAtendimento() {
   const navigate = useNavigate();
@@ -56,6 +57,7 @@ export default function RegistrarAtendimento() {
   const [customTipos, setCustomTipos] = useState([]);
   const [showAISummary, setShowAISummary] = useState(false);
   const [aiSummary, setAISummary] = useState(null);
+  const [conflitosModal, setConflitosModal] = useState({ open: false, conflitos: [], dataHorario: null });
 
   // Carregar usuário
   const { data: user } = useQuery({
@@ -307,6 +309,31 @@ export default function RegistrarAtendimento() {
 
     if (!formData.data_agendada || !formData.hora_agendada) {
       toast.error("Preencha data e horário do atendimento");
+      return;
+    }
+
+    // Verificar conflitos de horário
+    try {
+      const dataHoraCompleta = `${formData.data_agendada}T${formData.hora_agendada}:00`;
+      const consultorId = formData.consultor_id || user.id;
+
+      const response = await base44.functions.invoke('verificarConflitoHorario', {
+        consultor_id: consultorId,
+        data_agendada: dataHoraCompleta,
+        atendimento_id_editando: formData.id // Ignora o próprio atendimento se estiver editando
+      });
+
+      if (response.data.conflito) {
+        setConflitosModal({
+          open: true,
+          conflitos: response.data.atendimentos,
+          dataHorario: dataHoraCompleta
+        });
+        return;
+      }
+    } catch (error) {
+      console.error('Erro ao verificar conflitos:', error);
+      toast.error("Erro ao verificar conflitos de horário");
       return;
     }
 
@@ -1192,6 +1219,13 @@ export default function RegistrarAtendimento() {
             }}
           />
         )}
+
+        <ConflitosHorarioModal
+          open={conflitosModal.open}
+          onOpenChange={(open) => setConflitosModal({ ...conflitosModal, open })}
+          conflitos={conflitosModal.conflitos}
+          dataHorario={conflitosModal.dataHorario}
+        />
       </form>
     </div>
   );
