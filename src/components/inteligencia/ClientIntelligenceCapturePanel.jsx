@@ -125,10 +125,10 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
             </SelectContent>
           </Select>
         </div>
-      )}
+        )}
 
-      {/* Botão Adicionar */}
-      {selectedSubcategory && (
+        {/* Botão Adicionar */}
+        {selectedSubcategory && (
         <Button
           onClick={handleAddItem}
           disabled={isLoading}
