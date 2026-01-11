@@ -90,8 +90,8 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
 
       {/* Tipo */}
       {selectedArea && (
-          <div>
-            <label className="text-xs font-semibold text-gray-700 mb-1 block">Classificação</label>
+        <div>
+          <label className="text-xs font-semibold text-gray-700 mb-1 block">Classificação</label>
             <Select value={selectedType} onValueChange={setSelectedType}>
               <SelectTrigger className="h-8 text-sm">
                 <SelectValue placeholder="Selecione..." />
