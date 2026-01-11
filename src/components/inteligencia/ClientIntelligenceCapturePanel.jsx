@@ -181,11 +181,11 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
                 </div>
                 <div className="ml-6 space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold text-gray-600">Tipo:</span>
-                    <span className={`text-xs font-medium ${item.typeColor ? `text-${item.typeColor}` : 'text-blue-700'}`}>
-                      {item.typeIcon} {item.type}
-                    </span>
-                  </div>
+                     <span className="text-xs font-semibold text-gray-600">Tipo:</span>
+                     <span className={`text-xs font-medium ${item.typeColor ? `text-${item.typeColor}` : 'text-blue-700'}`}>
+                       {item.type}
+                     </span>
+                   </div>
                   <div>
                     <span className="text-xs font-semibold text-gray-600">Problema:</span>
                     <p className="text-xs text-blue-800 font-medium">{item.subcategory}</p>
