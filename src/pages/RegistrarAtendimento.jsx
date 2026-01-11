@@ -784,8 +784,8 @@ export default function RegistrarAtendimento() {
                 }}
                 onIntelligenceAdded={(intelligence) => {
                   const novaPauta = {
-                    titulo: intelligence.title,
-                    descricao: `${intelligence.subcategory} (capturado via inteligência)`,
+                    titulo: `${intelligence.area} - ${intelligence.type}`,
+                    descricao: intelligence.subcategory,
                     tempo_estimado: 15
                   };
                   setFormData({
@@ -793,6 +793,11 @@ export default function RegistrarAtendimento() {
                     pauta: [...formData.pauta, novaPauta]
                   });
                   toast.success('Adicionado à pauta da reunião!');
+
+                  // Scroll para pauta
+                  setTimeout(() => {
+                    pautaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }, 300);
                 }}
               />
             ) : (
