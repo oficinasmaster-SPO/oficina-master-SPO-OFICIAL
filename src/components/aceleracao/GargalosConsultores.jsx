@@ -447,6 +447,7 @@ export default function GargalosConsultores({ consultores: initialConsultores })
             </div>
           </div>
         </div>
+      )}
       </CardContent>
     </Card>
     </>
