@@ -29,20 +29,24 @@ export default function SaturacaoConsultorModal({ consultor, open, onOpenChange,
 
   useEffect(() => {
     if (open && consultor) {
+      console.log('Modal: Carregando dados para período:', period);
       loadConsultorData();
     }
-  }, [period, open, consultor?.consultor_id]);
+  }, [period.startDate, period.endDate, open, consultor?.consultor_id]);
 
   const loadConsultorData = async () => {
     if (!consultor?.consultor_id) return;
     setIsLoading(true);
     try {
+      console.log('Modal: Invocando função com período:', period);
       const response = await base44.functions.invoke('calcularSaturacaoReal', {
         startDate: period.startDate,
         endDate: period.endDate
       });
+      console.log('Modal: Resposta recebida:', response.data);
       const consultores = response.data?.consultores || [];
       const updated = consultores.find(c => c.consultor_id === consultor.consultor_id);
+      console.log('Modal: Dados atualizados do consultor:', updated);
       if (updated) {
         setConsultorData(updated);
       }

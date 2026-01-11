@@ -33,22 +33,24 @@ Deno.serve(async (req) => {
     });
 
     // Calcular para cada consultor
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
     const resultados = admins.map(consultor => {
       // Horas semanais disponíveis (padrão: 40h/semana)
       const horasSemanaisDisponiveis = 40;
 
-      // 1. Horas em atendimentos este mês
+      // 1. Horas em atendimentos no período
       const atendimentosConsultor = atendimentos.filter(a => a.consultor_id === consultor.id);
-      const hoje = new Date();
-      hoje.setHours(0, 0, 0, 0);
 
-      // Separar em realizados, previstos e em atraso
-      const atendimentosRealizados = atendimentosConsultor.filter(a => a.status === 'realizado');
+      // Separar em realizados, previstos e em atraso (DENTRO DO PERÍODO)
+      const atendimentosRealizados = atendimentosConsultor.filter(a => 
+        a.status === 'realizado'
+      );
 
       const atendimentosPrevisto = atendimentosConsultor.filter(a => 
         ['agendado', 'confirmado', 'participando'].includes(a.status) &&
-        new Date(a.data_agendada) >= dataInicio &&
-        new Date(a.data_agendada) <= dataFim
+        new Date(a.data_agendada) >= hoje
       );
 
       const atendimentosEmAtraso = atendimentosConsultor.filter(a => 
@@ -73,12 +75,11 @@ Deno.serve(async (req) => {
       // 2. Horas necessárias para tarefas abertas
       const tarefasConsultor = tarefas.filter(t => t.consultor_id === consultor.id);
 
-      // Separar tarefas em realizadas, previstas e em atraso
+      // Separar tarefas em realizadas, previstas e em atraso (DENTRO DO PERÍODO)
       const tarefasRealizadas = tarefasConsultor.filter(t => t.status === 'concluida');
       const tarefasPrevistas = tarefasConsultor.filter(t => 
         t.status !== 'concluida' && 
-        new Date(t.prazo) >= dataInicio &&
-        new Date(t.prazo) <= dataFim
+        new Date(t.prazo) >= hoje
       );
       const tarefasEmAtraso = tarefasConsultor.filter(t => 
         t.status !== 'concluida' && new Date(t.prazo) < hoje
@@ -101,15 +102,15 @@ Deno.serve(async (req) => {
       // 3. Total de horas comprometidas
       const horasComprometidas = horasAtendimentos + horasTarefas;
 
-      // 4. Tarefas vencidas (aumentam prioridade/urgência)
-      const hoje = new Date();
-      hoje.setHours(0, 0, 0, 0);
+      // 4. Tarefas vencidas (aumentam prioridade/urgência) - DENTRO DO PERÍODO
       const tarefasVencidas = tarefasConsultor.filter(t => 
         new Date(t.prazo) < hoje && t.status !== 'concluida'
       ).length;
 
-      // 5. Tarefas críticas
-      const tarefasCriticas = tarefasConsultor.filter(t => t.prioridade === 'critica').length;
+      // 5. Tarefas críticas - DENTRO DO PERÍODO
+      const tarefasCriticas = tarefasConsultor.filter(t => 
+        t.prioridade === 'critica' && t.status !== 'concluida'
+      ).length;
 
       // 6. Índice de Saturação Real (%)
       // Fórmula: (horasComprometidas / horasSemanaisDisponiveis) * 100
@@ -172,10 +173,14 @@ Deno.serve(async (req) => {
         // Totalizador
         carga_total_realizada: parseFloat((horasAtendimentosRealizados + horasTarefasRealizadas).toFixed(2)),
         carga_total_prevista: parseFloat(horasComprometidas.toFixed(2)),
+        // Métricas adicionais
+        qtd_tarefas_vencidas: tarefasVencidas,
+        qtd_tarefas_criticas: tarefasCriticas,
         // Índices
         indice_saturacao: parseFloat(indiceSaturacao.toFixed(2)),
         status_gargalo: statusGargalo,
-        data_calculo: new Date().toISOString()
+        data_calculo: new Date().toISOString(),
+        periodo_filtro: { startDate, endDate }
       };
     });
 
