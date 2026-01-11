@@ -59,6 +59,7 @@ import DashboardFinanceiro from './pages/DashboardFinanceiro';
 import DashboardOverview from './pages/DashboardOverview';
 import DescricoesCargo from './pages/DescricoesCargo';
 import DesdobramentoMeta from './pages/DesdobramentoMeta';
+import DesesosCliente from './pages/DesesosCliente';
 import DetalhesColaborador from './pages/DetalhesColaborador';
 import DiagnosticoCarga from './pages/DiagnosticoCarga';
 import DiagnosticoComercial from './pages/DiagnosticoComercial';
@@ -74,8 +75,11 @@ import DiagnosticoProducao from './pages/DiagnosticoProducao';
 import DicasOperacao from './pages/DicasOperacao';
 import DocumentacaoCompleta from './pages/DocumentacaoCompleta';
 import DocumentacaoRBAC from './pages/DocumentacaoRBAC';
+import DoresAtivas from './pages/DoresAtivas';
+import DuvidasCliente from './pages/DuvidasCliente';
 import EditarDescricaoCargo from './pages/EditarDescricaoCargo';
 import EvidenceUpload from './pages/EvidenceUpload';
+import EvolucoesCliente from './pages/EvolucoesCliente';
 import Feedbacks from './pages/Feedbacks';
 import Gamificacao from './pages/Gamificacao';
 import GerenciarAula from './pages/GerenciarAula';
@@ -102,6 +106,7 @@ import HistoricoMetas from './pages/HistoricoMetas';
 import Home from './pages/Home';
 import IAAnalytics from './pages/IAAnalytics';
 import Integracoes from './pages/Integracoes';
+import IntelligenciaCliente from './pages/IntelligenciaCliente';
 import LogsAuditoriaRBAC from './pages/LogsAuditoriaRBAC';
 import ManualProcessos from './pages/ManualProcessos';
 import MeuPerfil from './pages/MeuPerfil';
@@ -132,6 +137,7 @@ import RegistroDiario from './pages/RegistroDiario';
 import RelatorioUsuario from './pages/RelatorioUsuario';
 import RelatoriosAceleracao from './pages/RelatoriosAceleracao';
 import RelatoriosAvancados from './pages/RelatoriosAvancados';
+import RelatoriosInteligencia from './pages/RelatoriosInteligencia';
 import RepositorioDocumentos from './pages/RepositorioDocumentos';
 import ResponderDISC from './pages/ResponderDISC';
 import ResponderMaturidade from './pages/ResponderMaturidade';
@@ -147,6 +153,7 @@ import ResultadoEndividamento from './pages/ResultadoEndividamento';
 import ResultadoMaturidade from './pages/ResultadoMaturidade';
 import ResultadoOS from './pages/ResultadoOS';
 import ResultadoProducao from './pages/ResultadoProducao';
+import RiscosCliente from './pages/RiscosCliente';
 import Rituais from './pages/Rituais';
 import RituaisAculturamento from './pages/RituaisAculturamento';
 import SelecionarDiagnostico from './pages/SelecionarDiagnostico';
@@ -157,13 +164,6 @@ import TestUsuarios from './pages/TestUsuarios';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
-import IntelligenciaCliente from './pages/IntelligenciaCliente';
-import RelatoriosInteligencia from './pages/RelatoriosInteligencia';
-import DoresAtivas from './pages/DoresAtivas';
-import DuvidasCliente from './pages/DuvidasCliente';
-import DesesosCliente from './pages/DesesosCliente';
-import RiscosCliente from './pages/RiscosCliente';
-import EvolucoesCliente from './pages/EvolucoesCliente';
 import __Layout from './Layout.jsx';
 
 
@@ -229,6 +229,7 @@ export const PAGES = {
     "DashboardOverview": DashboardOverview,
     "DescricoesCargo": DescricoesCargo,
     "DesdobramentoMeta": DesdobramentoMeta,
+    "DesesosCliente": DesesosCliente,
     "DetalhesColaborador": DetalhesColaborador,
     "DiagnosticoCarga": DiagnosticoCarga,
     "DiagnosticoComercial": DiagnosticoComercial,
@@ -244,8 +245,11 @@ export const PAGES = {
     "DicasOperacao": DicasOperacao,
     "DocumentacaoCompleta": DocumentacaoCompleta,
     "DocumentacaoRBAC": DocumentacaoRBAC,
+    "DoresAtivas": DoresAtivas,
+    "DuvidasCliente": DuvidasCliente,
     "EditarDescricaoCargo": EditarDescricaoCargo,
     "EvidenceUpload": EvidenceUpload,
+    "EvolucoesCliente": EvolucoesCliente,
     "Feedbacks": Feedbacks,
     "Gamificacao": Gamificacao,
     "GerenciarAula": GerenciarAula,
@@ -272,6 +276,7 @@ export const PAGES = {
     "Home": Home,
     "IAAnalytics": IAAnalytics,
     "Integracoes": Integracoes,
+    "IntelligenciaCliente": IntelligenciaCliente,
     "LogsAuditoriaRBAC": LogsAuditoriaRBAC,
     "ManualProcessos": ManualProcessos,
     "MeuPerfil": MeuPerfil,
@@ -302,6 +307,7 @@ export const PAGES = {
     "RelatorioUsuario": RelatorioUsuario,
     "RelatoriosAceleracao": RelatoriosAceleracao,
     "RelatoriosAvancados": RelatoriosAvancados,
+    "RelatoriosInteligencia": RelatoriosInteligencia,
     "RepositorioDocumentos": RepositorioDocumentos,
     "ResponderDISC": ResponderDISC,
     "ResponderMaturidade": ResponderMaturidade,
@@ -317,6 +323,7 @@ export const PAGES = {
     "ResultadoMaturidade": ResultadoMaturidade,
     "ResultadoOS": ResultadoOS,
     "ResultadoProducao": ResultadoProducao,
+    "RiscosCliente": RiscosCliente,
     "Rituais": Rituais,
     "RituaisAculturamento": RituaisAculturamento,
     "SelecionarDiagnostico": SelecionarDiagnostico,
@@ -327,13 +334,6 @@ export const PAGES = {
     "TreinamentoVendas": TreinamentoVendas,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
-    "IntelligenciaCliente": IntelligenciaCliente,
-    "RelatoriosInteligencia": RelatoriosInteligencia,
-    "DoresAtivas": DoresAtivas,
-    "DuvidasCliente": DuvidasCliente,
-    "DesesosCliente": DesesosCliente,
-    "RiscosCliente": RiscosCliente,
-    "EvolucoesCliente": EvolucoesCliente,
 }
 
 export const pagesConfig = {
