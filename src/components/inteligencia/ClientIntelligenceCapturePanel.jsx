@@ -210,10 +210,11 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
         onSuccess={onSuccess}
       />
 
-      <ClientIntelligenceCaptureViewer
+      <ClientIntelligenceViewer
         open={viewerOpen}
         onOpenChange={setViewerOpen}
         item={selectedItem}
+        workshopId={workshopId}
       />
       </>
       );
