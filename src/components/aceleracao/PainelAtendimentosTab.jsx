@@ -8,10 +8,9 @@ import { Edit, AlertTriangle, FilePlus, Play, StopCircle, CalendarClock, FileTex
 import GerarAtaModal from "./GerarAtaModal";
 import VisualizarAtaModal from "./VisualizarAtaModal";
 import ReagendarAtendimentoModal from "./ReagendarAtendimentoModal";
-import AtaSearchFilters from "./AtaSearchFilters";
-import { useAtaSearch } from "./useAtaSearch";
+import FiltrosAtendimentos from "./FiltrosAtendimentos";
 import { ATENDIMENTO_STATUS, ATENDIMENTO_STATUS_COLORS, ATENDIMENTO_STATUS_LABELS } from "@/components/lib/ataConstants";
-import { format } from "date-fns";
+import { format, subDays } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { toast } from "sonner";
@@ -30,9 +29,10 @@ export default function PainelAtendimentosTab({ user }) {
     workshop_id: "",
     consultor_id: "",
     status: "",
-    tipo_aceleracao: "",
-    dateFrom: "",
-    dateTo: ""
+    tipo_atendimento: "",
+    preset: "30d",
+    dateFrom: format(subDays(new Date(), 30), "yyyy-MM-dd"),
+    dateTo: format(new Date(), "yyyy-MM-dd")
   });
 
   const { data: atendimentos, isLoading } = useQuery({
@@ -63,8 +63,6 @@ export default function PainelAtendimentosTab({ user }) {
       return employees.filter(e => e.job_role === 'acelerador' || e.position?.toLowerCase().includes('consultor'));
     }
   });
-
-  const atasFiltradas = useAtaSearch(atas, filtrosAtas);
 
   useEffect(() => {
     if (!atendimentos) return;
@@ -119,7 +117,7 @@ export default function PainelAtendimentosTab({ user }) {
       if (filtrosAtas.workshop_id && atendimento.workshop_id !== filtrosAtas.workshop_id) return false;
       if (filtrosAtas.consultor_id && atendimento.consultor_id !== filtrosAtas.consultor_id) return false;
       if (filtrosAtas.status && atendimento.status !== filtrosAtas.status) return false;
-      if (filtrosAtas.tipo_aceleracao && atendimento.tipo_atendimento !== filtrosAtas.tipo_aceleracao) return false;
+      if (filtrosAtas.tipo_atendimento && atendimento.tipo_atendimento !== filtrosAtas.tipo_atendimento) return false;
       
       // Filtro de data
       if (filtrosAtas.dateFrom) {
@@ -214,20 +212,22 @@ export default function PainelAtendimentosTab({ user }) {
         />
       )}
 
-      {/* Busca e Filtros de ATAs */}
-      <AtaSearchFilters
+      {/* Filtros de Atendimentos */}
+      <FiltrosAtendimentos
         filters={filtrosAtas}
         onFiltersChange={setFiltrosAtas}
         workshops={workshops || []}
         consultores={consultores || []}
+        isLoading={isLoading}
         onClearFilters={() => setFiltrosAtas({
           searchTerm: "",
           workshop_id: "",
           consultor_id: "",
           status: "",
-          tipo_aceleracao: "",
-          dateFrom: "",
-          dateTo: ""
+          tipo_atendimento: "",
+          preset: "30d",
+          dateFrom: format(subDays(new Date(), 30), "yyyy-MM-dd"),
+          dateTo: format(new Date(), "yyyy-MM-dd")
         })}
       />
 
