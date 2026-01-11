@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -13,21 +14,33 @@ export default function OrganogramaFuncional() {
   const [workshop, setWorkshop] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const queryClient = useQueryClient();
+  const location = useLocation();
 
   React.useEffect(() => {
     const loadWorkshop = async () => {
       try {
         const user = await base44.auth.me();
-        const workshops = await base44.entities.Workshop.filter({ owner_id: user.id });
-        if (workshops && workshops.length > 0) {
-          setWorkshop(workshops[0]);
+        const params = new URLSearchParams(location.search);
+        const workshopId = params.get('workshop_id');
+        const assistanceMode = params.get('assistance_mode') === 'true';
+
+        let workshopToLoad = null;
+        if (assistanceMode && workshopId) {
+          workshopToLoad = await base44.entities.Workshop.get(workshopId);
+        } else {
+          const workshops = await base44.entities.Workshop.filter({ owner_id: user.id });
+          if (workshops && workshops.length > 0) {
+            workshopToLoad = workshops[0];
+          }
         }
+        setWorkshop(workshopToLoad);
       } catch (error) {
         console.error("Erro ao carregar oficina:", error);
+        toast.error("Não foi possível carregar os dados da oficina.");
       }
     };
     loadWorkshop();
-  }, []);
+  }, [location.search]);
 
   const { data: structuralNodes = [], isLoading: loadingNodes } = useQuery({
     queryKey: ['orgchart-nodes', workshop?.id],

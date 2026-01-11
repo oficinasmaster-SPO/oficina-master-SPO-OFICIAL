@@ -9,7 +9,7 @@ import { AlertCircle, CheckCircle2, Clock, Timer, Play, Pause, Square, RotateCcw
 import { format, differenceInMinutes, addMinutes, isWithinInterval, parse, set } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { createPageUrl } from "@/utils";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
   Select,
   SelectContent,
@@ -25,6 +25,7 @@ export default function QGPBoard() {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const queryClient = useQueryClient();
+  const location = useLocation();
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
@@ -72,10 +73,24 @@ export default function QGPBoard() {
 
   // Workshop data for lunch settings
   const { data: workshop } = useQuery({
-    queryKey: ['workshop-qgp'],
+    queryKey: ['workshop-qgp', location.search],
     queryFn: async () => {
-      const ws = await base44.entities.Workshop.list();
-      return ws[0]; // Assuming single workshop for now
+      const params = new URLSearchParams(location.search);
+      const workshopId = params.get('workshop_id');
+      const assistanceMode = params.get('assistance_mode') === 'true';
+
+      if (assistanceMode && workshopId) {
+        return await base44.entities.Workshop.get(workshopId);
+      }
+      
+      // Fallback to user's own workshop if not in assistance mode
+      try {
+        const user = await base44.auth.me();
+        const workshops = await base44.entities.Workshop.filter({ owner_id: user.id });
+        return workshops[0] || null;
+      } catch (e) {
+        return null;
+      }
     }
   });
 
