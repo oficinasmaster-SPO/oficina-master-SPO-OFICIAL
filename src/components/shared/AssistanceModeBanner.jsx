@@ -47,12 +47,8 @@ export default function AssistanceModeBanner({ user }) {
   });
 
   const handleExitAssistance = () => {
-    // Remove parâmetros de assistência da URL e recarrega
-    const url = new URL(window.location);
-    url.searchParams.delete('assistance_mode');
-    url.searchParams.delete('workshop_id');
-    url.searchParams.delete('assisted_by');
-    window.location.href = url.toString();
+    // Volta para a página anterior (de onde entrou no modo assistência)
+    window.history.back();
   };
 
   if (!assistanceData) return null;
