@@ -122,6 +122,18 @@ export const sidebarStructure = [
     ],
   },
   {
+    id: "inteligencia",
+    label: "Inteligência do Cliente",
+    items: [
+      { name: "Dores Ativas", description: "Problemas identificados" },
+      { name: "Dúvidas Frequentes", description: "Falta de clareza" },
+      { name: "Desejos Estratégicos", description: "Objetivos declarados" },
+      { name: "Riscos Mapeados", description: "Potenciais problemas" },
+      { name: "Evoluções Conquistadas", description: "Melhorias obtidas" },
+      { name: "Relatórios de Inteligência", description: "Análises e indicadores" },
+    ],
+  },
+  {
     id: "aceleracao",
     label: "Aceleração",
     items: [
