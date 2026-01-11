@@ -163,18 +163,18 @@ Gere atividades detalhadas com responsável, frequência e observações em JSON
 
       // Inter-relações
       'interrelacoes_gerar': `${context}
-Liste 2-4 áreas que interagem com esta IT em formato JSON.
-IMPORTANTE: Retorne apenas o JSON array puro, sem markdown.
-Formato: [{"area": "nome da área", "interacao": "como interagem"}]`,
+      Liste 2-4 áreas que interagem com esta IT em formato JSON.
+      IMPORTANTE: Retorne apenas o JSON array puro, sem markdown.
+      Formato: [{"area": "nome da área", "interacao": "como interagem"}]`,
 
       'interrelacoes_areas': `${context}
-Mapeie todas as áreas envolvidas na execução desta IT em JSON puro.`,
+      Mapeie todas as áreas envolvidas na execução desta IT em JSON puro.`,
 
-      // Riscos
-      'riscos_gerar': `${context}
-Gere 3-5 riscos operacionais em formato JSON.
-IMPORTANTE: Retorne apenas o JSON array puro, sem markdown.
-Formato: [{"risco": "descrição", "categoria": "tipo", "causa": "origem", "impacto": "consequência", "controle": "medida preventiva"}]`,
+      // Riscos (detalhado)
+      'riscos_detalhados': `${context}
+      Gere 3-5 riscos operacionais em formato JSON.
+      IMPORTANTE: Retorne apenas o JSON array puro, sem markdown.
+      Formato: [{"risco": "descrição", "categoria": "tipo", "causa": "origem", "impacto": "consequência", "controle": "medida preventiva"}]`,
 
       'riscos_criticos': `${context}
 Identifique os riscos mais críticos desta IT em JSON puro.`,
