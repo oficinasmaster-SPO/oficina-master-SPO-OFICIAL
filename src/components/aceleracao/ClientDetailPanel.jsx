@@ -4,15 +4,32 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { X, User, MapPin, Calendar, CheckCircle2, Clock, AlertCircle, FileText, Star } from "lucide-react";
+import { X, User, MapPin, Calendar, CheckCircle2, Clock, AlertCircle, FileText, Star, LogIn } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { createPageUrl } from "@/utils";
 import CompletionModal from "@/components/cronograma/CompletionModal";
 
 export default function ClientDetailPanel({ client, processos, onClose, onAvaliar }) {
   const queryClient = useQueryClient();
   const [activityToComplete, setActivityToComplete] = useState(null);
+
+  // Carregar usuário atual
+  const { data: user } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: () => base44.auth.me()
+  });
+
+  const handleAccessClientArea = async () => {
+    if (!user) {
+      toast.error('Erro ao identificar usuário');
+      return;
+    }
+
+    const assistanceUrl = `${createPageUrl('Dashboard')}?workshop_id=${client.id}&assisted_by=${user.id}&assistance_mode=true`;
+    window.location.href = assistanceUrl;
+  };
 
   // Carregar progressos do cliente
   const { data: progressosCliente = [] } = useQuery({
@@ -220,6 +237,13 @@ export default function ClientDetailPanel({ client, processos, onClose, onAvalia
               <CardTitle className="text-lg">Ações Rápidas</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
+              <Button 
+                onClick={handleAccessClientArea}
+                className="w-full justify-start bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <LogIn className="w-4 h-4 mr-2" />
+                Acessar Área do Cliente
+              </Button>
               <Button variant="outline" className="w-full justify-start">
                 <Calendar className="w-4 h-4 mr-2" />
                 Agendar Reunião
