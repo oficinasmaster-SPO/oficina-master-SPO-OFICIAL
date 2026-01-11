@@ -3,20 +3,23 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { base44 } from "@/api/base44Client";
 import { Plus, X, GripVertical, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { INTELLIGENCE_AREAS } from "@/components/lib/clientIntelligenceConstants";
 
 export default function ClientIntelligenceChecklistManager({
   open,
   onOpenChange,
-  area,
+  area: defaultArea,
   type,
   workshopId,
   onChecklistCreated
 }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [selectedArea, setSelectedArea] = useState(defaultArea || "");
   const [items, setItems] = useState([]);
   const [newItemLabel, setNewItemLabel] = useState("");
   const [isLoading, setIsLoading] = useState(false);
