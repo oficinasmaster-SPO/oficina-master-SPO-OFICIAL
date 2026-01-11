@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { INTELLIGENCE_AREAS, INTELLIGENCE_TYPES, SUBCATEGORIES } from "@/components/lib/clientIntelligenceConstants";
 import ClientIntelligenceDetailForm from "./ClientIntelligenceDetailForm";
 
-export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSuccess }) {
+export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSuccess, onIntelligenceAdded }) {
   const [selectedArea, setSelectedArea] = useState("");
   const [selectedType, setSelectedType] = useState("");
   const [selectedSubcategory, setSelectedSubcategory] = useState("");
@@ -21,6 +21,7 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
   const [isLoading, setIsLoading] = useState(false);
   const [detailFormOpen, setDetailFormOpen] = useState(false);
   const [lastIntelligenceId, setLastIntelligenceId] = useState(null);
+  const [pendingIntelligence, setPendingIntelligence] = useState(null);
 
   const handleAddItem = async () => {
     if (!selectedArea || !selectedType || !selectedSubcategory) {
