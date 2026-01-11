@@ -1254,7 +1254,8 @@ export default function RegistrarAtendimento() {
             });
           }}
         />
-      </form>
+        </form>
+      </div>
       </div>
     </>
   );
