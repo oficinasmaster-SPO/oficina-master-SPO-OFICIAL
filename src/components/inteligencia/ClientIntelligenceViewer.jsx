@@ -232,12 +232,23 @@ export default function ClientIntelligenceViewer({ open, onOpenChange, item, wor
         </DialogHeader>
 
         <Tabs defaultValue="current" className="flex-1 overflow-hidden flex flex-col">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="current">Captura Atual</TabsTrigger>
-            <TabsTrigger value="history">
-              Histórico ({historySimilar.length})
-            </TabsTrigger>
-          </TabsList>
+          <div className="flex items-center justify-between border-b">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="current">Captura Atual</TabsTrigger>
+              <TabsTrigger value="history">
+                Histórico ({historySimilar.length})
+              </TabsTrigger>
+            </TabsList>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setEvolutionFormOpen(true)}
+              className="mr-4"
+            >
+              <CheckCircle2 className="w-4 h-4 mr-2" />
+              Registrar Evolução
+            </Button>
+          </div>
 
           <div className="flex-1 overflow-y-auto">
             <TabsContent value="current" className="p-6 space-y-6">
