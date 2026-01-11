@@ -167,9 +167,13 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
           <p className="text-sm font-semibold text-gray-700 mb-3">Capturados:</p>
           <div className="space-y-2 max-h-64 overflow-y-auto">
             {capturedItems.map((item, idx) => (
-              <div
+              <button
                 key={idx}
-                className="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-300 rounded-lg p-3 space-y-2"
+                onClick={() => {
+                  setSelectedItem(item);
+                  setViewerOpen(true);
+                }}
+                className="w-full text-left bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-300 hover:border-blue-500 rounded-lg p-3 space-y-2 transition-all cursor-pointer hover:shadow-md"
               >
                 <div className="flex items-start gap-2">
                   <AlertCircle className="w-4 h-4 text-blue-700 mt-0.5 flex-shrink-0" />
@@ -195,7 +199,7 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
                     </span>
                   </div>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </div>
