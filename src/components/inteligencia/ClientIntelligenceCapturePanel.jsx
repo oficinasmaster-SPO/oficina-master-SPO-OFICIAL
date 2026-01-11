@@ -23,6 +23,8 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
   const [detailFormOpen, setDetailFormOpen] = useState(false);
   const [lastIntelligenceId, setLastIntelligenceId] = useState(null);
   const [pendingIntelligence, setPendingIntelligence] = useState(null);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
 
   const handleAddItem = async () => {
     if (!selectedArea || !selectedType || !selectedSubcategory) {
