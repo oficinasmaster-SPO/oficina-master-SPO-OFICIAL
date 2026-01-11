@@ -1,10 +1,8 @@
-import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, TrendingUp, CheckCircle, HelpCircle, X, Loader2 } from "lucide-react";
+import { AlertTriangle, TrendingUp, CheckCircle, HelpCircle, X } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import {
   Dialog,
@@ -16,34 +14,54 @@ import {
 import PeriodFilter from "./PeriodFilter";
 import { addDays, format } from "date-fns";
 
-export default function GargalosConsultores({ consultores: initialConsultores }) {
+export default function GargalosConsultores({ consultores, onPeriodChange }) {
   const [showHelp, setShowHelp] = useState(false);
-  const [period, setPeriod] = useState({
-    startDate: format(new Date(), "yyyy-MM-dd"),
-    endDate: format(addDays(new Date(), 30), "yyyy-MM-dd")
-  });
 
-  const { data: gargalosData, isLoading, refetch } = useQuery({
-    queryKey: ['gargalos-consultores', period],
-    queryFn: async () => {
-      try {
-        const response = await base44.functions.invoke('calcularGargalosConsultores', {
-          startDate: period.startDate,
-          endDate: period.endDate
-        });
-        return response.data?.consultores || [];
-      } catch {
-        return initialConsultores || [];
-      }
+  // Dados de exemplo para demonstração (remover quando tiver dados reais)
+  const dadosExemplo = [
+    {
+      id: '1',
+      nome: 'João Silva',
+      capacidade_semanal: 28.0,
+      carga_ativa: 22.4,
+      produtividade_media: 0.70,
+      indice_saturacao: 0.8,
+      atendimentos_ativos: 8
     },
-    initialData: initialConsultores || []
-  });
+    {
+      id: '2',
+      nome: 'Maria Santos',
+      capacidade_semanal: 28.0,
+      carga_ativa: 25.2,
+      produtividade_media: 0.70,
+      indice_saturacao: 0.9,
+      atendimentos_ativos: 9
+    },
+    {
+      id: '3',
+      nome: 'Pedro Costa',
+      capacidade_semanal: 28.0,
+      carga_ativa: 30.8,
+      produtividade_media: 0.70,
+      indice_saturacao: 1.1,
+      atendimentos_ativos: 11
+    }
+  ];
 
-  useEffect(() => {
-    refetch();
-  }, [period, refetch]);
+  const dadosParaExibir = consultores?.length > 0 ? consultores : dadosExemplo;
 
-  const dadosParaExibir = gargalosData || [];
+  if (!dadosParaExibir || dadosParaExibir.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Análise de Gargalos - Consultores</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-center text-gray-500 py-8">Sem dados disponíveis</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const getStatusIS = (is) => {
     if (is <= 0.8) {
@@ -338,118 +356,100 @@ export default function GargalosConsultores({ consultores: initialConsultores })
             Índice de Saturação (IS) = Carga Ativa ÷ Capacidade Semanal
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <PeriodFilter onPeriodChange={setPeriod} defaultPeriod="30" />
-          <Button 
-            size="sm" 
-            variant="outline" 
-            onClick={() => refetch()}
-            disabled={isLoading}
-          >
-            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Atualizar'}
-          </Button>
-        </div>
+        {onPeriodChange && (
+          <PeriodFilter onPeriodChange={onPeriodChange} defaultPeriod="30" />
+        )}
       </div>
     </CardHeader>
-    <CardContent>
-      {isLoading ? (
-        <div className="flex justify-center py-8">
-          <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      <CardContent>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b-2 border-gray-200">
+              <tr>
+                <th className="text-left p-3 text-xs font-semibold text-gray-700">Consultor</th>
+                <th className="text-center p-3 text-xs font-semibold text-gray-700">Capacidade (h/sem)</th>
+                <th className="text-center p-3 text-xs font-semibold text-gray-700">Carga Ativa (h)</th>
+                <th className="text-center p-3 text-xs font-semibold text-gray-700">Produtividade</th>
+                <th className="text-center p-3 text-xs font-semibold text-gray-700">IS</th>
+                <th className="text-center p-3 text-xs font-semibold text-gray-700">Status</th>
+                <th className="text-left p-3 text-xs font-semibold text-gray-700">Saturação</th>
+              </tr>
+            </thead>
+            <tbody>
+              {consultoresOrdenados.map((consultor) => {
+                const status = getStatusIS(consultor.indice_saturacao);
+                const StatusIcon = status.icon;
+                const saturacaoPercentual = Math.min(consultor.indice_saturacao * 100, 100);
+
+                return (
+                  <tr key={consultor.id} className="border-b hover:bg-gray-50">
+                    <td className="p-3 font-medium text-gray-900">{consultor.nome}</td>
+                    <td className="p-3 text-center">
+                      <span className="font-semibold text-gray-700">
+                        {consultor.capacidade_semanal?.toFixed(1) || 0}h
+                      </span>
+                    </td>
+                    <td className="p-3 text-center">
+                      <span className="font-semibold text-blue-600">
+                        {consultor.carga_ativa?.toFixed(1) || 0}h
+                      </span>
+                    </td>
+                    <td className="p-3 text-center">
+                      <span className="text-sm text-gray-600">
+                        {(consultor.produtividade_media * 100).toFixed(0)}%
+                      </span>
+                    </td>
+                    <td className="p-3 text-center">
+                      <span className={`font-bold text-lg ${
+                        consultor.indice_saturacao > 1.0 ? 'text-red-600' :
+                        consultor.indice_saturacao > 0.8 ? 'text-yellow-600' :
+                        'text-green-600'
+                      }`}>
+                        {consultor.indice_saturacao?.toFixed(2) || 0}
+                      </span>
+                    </td>
+                    <td className="p-3 text-center">
+                      <Badge className={status.color}>
+                        <StatusIcon className="w-3 h-3 mr-1" />
+                        {status.label}
+                      </Badge>
+                    </td>
+                    <td className="p-3">
+                      <div className="flex items-center gap-2">
+                        <Progress 
+                          value={saturacaoPercentual} 
+                          className="h-2 flex-1"
+                          indicatorClassName={status.barColor}
+                        />
+                        <span className="text-xs text-gray-600 min-w-[3rem] text-right">
+                          {saturacaoPercentual.toFixed(0)}%
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
-      ) : !dadosParaExibir || dadosParaExibir.length === 0 ? (
-        <p className="text-center text-gray-500 py-8">Sem dados disponíveis</p>
-      ) : (
-        <>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b-2 border-gray-200">
-                <tr>
-                  <th className="text-left p-3 text-xs font-semibold text-gray-700">Consultor</th>
-                  <th className="text-center p-3 text-xs font-semibold text-gray-700">Capacidade (h/sem)</th>
-                  <th className="text-center p-3 text-xs font-semibold text-gray-700">Carga Ativa (h)</th>
-                  <th className="text-center p-3 text-xs font-semibold text-gray-700">Produtividade</th>
-                  <th className="text-center p-3 text-xs font-semibold text-gray-700">IS</th>
-                  <th className="text-center p-3 text-xs font-semibold text-gray-700">Status</th>
-                  <th className="text-left p-3 text-xs font-semibold text-gray-700">Saturação</th>
-                </tr>
-              </thead>
-              <tbody>
-                {consultoresOrdenados.map((consultor) => {
-                  const status = getStatusIS(consultor.indice_saturacao);
-                  const StatusIcon = status.icon;
-                  const saturacaoPercentual = Math.min(consultor.indice_saturacao * 100, 100);
 
-                  return (
-                    <tr key={consultor.id} className="border-b hover:bg-gray-50">
-                      <td className="p-3 font-medium text-gray-900">{consultor.nome}</td>
-                      <td className="p-3 text-center">
-                        <span className="font-semibold text-gray-700">
-                          {consultor.capacidade_semanal?.toFixed(1) || 0}h
-                        </span>
-                      </td>
-                      <td className="p-3 text-center">
-                        <span className="font-semibold text-blue-600">
-                          {consultor.carga_ativa?.toFixed(1) || 0}h
-                        </span>
-                      </td>
-                      <td className="p-3 text-center">
-                        <span className="text-sm text-gray-600">
-                          {(consultor.produtividade_media * 100).toFixed(0)}%
-                        </span>
-                      </td>
-                      <td className="p-3 text-center">
-                        <span className={`font-bold text-lg ${
-                          consultor.indice_saturacao > 1.0 ? 'text-red-600' :
-                          consultor.indice_saturacao > 0.8 ? 'text-yellow-600' :
-                          'text-green-600'
-                        }`}>
-                          {consultor.indice_saturacao?.toFixed(2) || 0}
-                        </span>
-                      </td>
-                      <td className="p-3 text-center">
-                        <Badge className={status.color}>
-                          <StatusIcon className="w-3 h-3 mr-1" />
-                          {status.label}
-                        </Badge>
-                      </td>
-                      <td className="p-3">
-                        <div className="flex items-center gap-2">
-                          <Progress 
-                            value={saturacaoPercentual} 
-                            className="h-2 flex-1"
-                            indicatorClassName={status.barColor}
-                          />
-                          <span className="text-xs text-gray-600 min-w-[3rem] text-right">
-                            {saturacaoPercentual.toFixed(0)}%
-                          </span>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-            <p className="text-sm font-semibold text-gray-700 mb-2">Legenda:</p>
-            <div className="grid grid-cols-3 gap-4 text-xs">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded bg-green-500" />
-                <span>IS ≤ 0,8: Saudável</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded bg-yellow-500" />
-                <span>IS 0,8 - 1,0: Atenção</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded bg-red-500" />
-                <span>IS {`>`} 1,0: Gargalo</span>
-              </div>
+        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+          <p className="text-sm font-semibold text-gray-700 mb-2">Legenda:</p>
+          <div className="grid grid-cols-3 gap-4 text-xs">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded bg-green-500" />
+              <span>IS ≤ 0,8: Saudável</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded bg-yellow-500" />
+              <span>IS 0,8 - 1,0: Atenção</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded bg-red-500" />
+              <span>IS {`>`} 1,0: Gargalo</span>
             </div>
           </div>
-        </>
-      )}
+        </div>
       </CardContent>
     </Card>
     </>
