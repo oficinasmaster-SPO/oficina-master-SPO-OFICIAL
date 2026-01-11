@@ -131,6 +131,7 @@ export const sidebarStructure = [
       { name: "Riscos Mapeados", description: "Potenciais problemas" },
       { name: "Evoluções Conquistadas", description: "Melhorias obtidas" },
       { name: "Relatórios de Inteligência", description: "Análises e indicadores" },
+      { name: "Mapa de Checklists", description: "Gerenciar checklists por tipo" },
     ],
   },
   {
