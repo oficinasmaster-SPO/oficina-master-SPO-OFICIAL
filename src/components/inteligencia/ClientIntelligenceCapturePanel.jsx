@@ -71,8 +71,8 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
     <div className="space-y-3">
       {/* Área */}
       <div>
-        {/* Área */}
-        <div>
+      {/* Área */}
+      <div>
           <label className="text-xs font-semibold text-gray-700 mb-1 block">Área Principal</label>
           <Select value={selectedArea} onValueChange={setSelectedArea}>
             <SelectTrigger className="h-8 text-sm">
