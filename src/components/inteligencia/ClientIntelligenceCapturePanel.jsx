@@ -11,6 +11,7 @@ import { Plus, ChevronRight } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import { INTELLIGENCE_AREAS, INTELLIGENCE_TYPES, SUBCATEGORIES } from "@/components/lib/clientIntelligenceConstants";
+import ClientIntelligenceDetailForm from "./ClientIntelligenceDetailForm";
 
 export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSuccess }) {
   const [selectedArea, setSelectedArea] = useState("");
