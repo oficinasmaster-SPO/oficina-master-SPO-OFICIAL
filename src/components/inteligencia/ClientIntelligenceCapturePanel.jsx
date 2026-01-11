@@ -92,24 +92,24 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
       {selectedArea && (
         <div>
           <label className="text-xs font-semibold text-gray-700 mb-1 block">Classificação</label>
-            <Select value={selectedType} onValueChange={setSelectedType}>
-              <SelectTrigger className="h-8 text-sm">
-                <SelectValue placeholder="Selecione..." />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(INTELLIGENCE_TYPES).map(([key, val]) => (
-                  <SelectItem key={key} value={key}>
-                    {val.icon} {val.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
+          <Select value={selectedType} onValueChange={setSelectedType}>
+            <SelectTrigger className="h-8 text-sm">
+              <SelectValue placeholder="Selecione..." />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(INTELLIGENCE_TYPES).map(([key, val]) => (
+                <SelectItem key={key} value={key}>
+                  {val.icon} {val.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
-        {/* Subcategoria */}
-        {selectedType && (
-          <div>
+      {/* Subcategoria */}
+      {selectedType && (
+        <div>
             <label className="text-xs font-semibold text-gray-700 mb-1 block">Problema Específico</label>
             <Select value={selectedSubcategory} onValueChange={setSelectedSubcategory}>
               <SelectTrigger className="h-8 text-sm">
