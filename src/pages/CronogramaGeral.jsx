@@ -42,7 +42,22 @@ export default function CronogramaGeral() {
   // Carregar progresso dos cronogramas
   const { data: progressos = [] } = useQuery({
     queryKey: ['cronograma-progressos'],
-    queryFn: () => base44.entities.CronogramaProgresso.list()
+    queryFn: () => base44.entities.CronogramaProgresso.list(),
+    refetchInterval: 5000 // Refetch a cada 5 segundos para capturar atualizações
+  });
+
+  // Carregar implementações para sincronizar com progressos
+  const { data: implementacoes = [] } = useQuery({
+    queryKey: ['cronograma-implementacoes-all'],
+    queryFn: async () => {
+      try {
+        return await base44.entities.CronogramaImplementacao.list();
+      } catch (error) {
+        console.error('Erro ao carregar implementações:', error);
+        return [];
+      }
+    },
+    refetchInterval: 5000
   });
 
   // Carregar templates de cronograma
@@ -163,12 +178,30 @@ export default function CronogramaGeral() {
   // Calcular contadores por processo
   const getContagemPorProcesso = (codigoProcesso) => {
     const clientesComProcesso = workshopsPorPlano.map(workshop => {
+      // Primeiro verificar CronogramaProgresso
       const progresso = progressos.find(p => 
         p.workshop_id === workshop.id && p.modulo_codigo === codigoProcesso
       );
 
+      // Depois verificar CronogramaImplementacao como fonte de verdade
+      const implementacao = implementacoes.find(i => 
+        i.workshop_id === workshop.id && (i.item_id === codigoProcesso || i.item_nome === codigoProcesso)
+      );
+
       let status = 'a_fazer';
-      if (progresso) {
+
+      // CronogramaImplementacao é fonte de verdade se existir
+      if (implementacao) {
+        if (implementacao.status === 'concluido') {
+          status = 'concluido';
+        } else if (implementacao.status === 'em_andamento') {
+          const diasRestantes = new Date(implementacao.data_termino_previsto) - new Date();
+          status = diasRestantes < 0 ? 'atrasado' : 'em_andamento';
+        } else {
+          status = 'a_fazer';
+        }
+      } else if (progresso) {
+        // Fallback para CronogramaProgresso
         if (progresso.situacao === 'concluido') {
           status = 'concluido';
         } else if (progresso.situacao === 'atrasado') {
@@ -178,7 +211,7 @@ export default function CronogramaGeral() {
         }
       }
 
-      return { workshop, status, progresso };
+      return { workshop, status, progresso, implementacao };
     });
 
     return {
@@ -192,9 +225,23 @@ export default function CronogramaGeral() {
   // Preparar lista de clientes com seus status
   const clientesComStatus = workshopsPorPlano.map(workshop => {
     const progressosWorkshop = progressos.filter(p => p.workshop_id === workshop.id);
+    const implementacoesWorkshop = implementacoes.filter(i => i.workshop_id === workshop.id);
+    
     const totalProcessos = processos.length;
-    const concluidos = progressosWorkshop.filter(p => p.situacao === 'concluido').length;
-    const atrasados = progressosWorkshop.filter(p => p.situacao === 'atrasado').length;
+    
+    // Priorizar dados de CronogramaImplementacao
+    const concluidos = implementacoesWorkshop.filter(i => i.status === 'concluido').length 
+      || progressosWorkshop.filter(p => p.situacao === 'concluido').length;
+    
+    const atrasados = implementacoesWorkshop.filter(i => {
+      if (i.status === 'concluido' || i.status === 'a_fazer') return false;
+      return new Date(i.data_termino_previsto) < new Date();
+    }).length 
+      || progressosWorkshop.filter(p => p.situacao === 'atrasado').length;
+    
+    const emAndamento = implementacoesWorkshop.filter(i => i.status === 'em_andamento').length
+      || progressosWorkshop.filter(p => p.situacao === 'em_andamento').length;
+
     const percentual = totalProcessos > 0 ? Math.round((concluidos / totalProcessos) * 100) : 0;
 
     let statusGeral = 'a_fazer';
@@ -202,7 +249,7 @@ export default function CronogramaGeral() {
       statusGeral = 'concluido';
     } else if (atrasados > 0) {
       statusGeral = 'atrasado';
-    } else if (concluidos > 0) {
+    } else if (concluidos > 0 || emAndamento > 0) {
       statusGeral = 'ativo';
     }
 
@@ -211,7 +258,9 @@ export default function CronogramaGeral() {
       percentualConclusao: percentual,
       statusGeral,
       atrasados,
-      progressos: progressosWorkshop
+      emAndamento,
+      progressos: progressosWorkshop,
+      implementacoes: implementacoesWorkshop
     };
   });
 
