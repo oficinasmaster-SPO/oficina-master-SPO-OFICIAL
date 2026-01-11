@@ -80,6 +80,13 @@ Deno.serve(async (req) => {
       }, 0);
 
       const horasAtendimentosPrevisto = atendimentosPrevisto.reduce((total, a) => {
+        console.log('Atendimento PREVISTO:', {
+          id: a.id,
+          data: a.data_agendada,
+          status: a.status,
+          duracao: a.duracao_minutos || 60,
+          oficina: a.workshop_id
+        });
         return total + (a.duracao_minutos || 60) / 60;
       }, 0);
 
@@ -110,6 +117,13 @@ Deno.serve(async (req) => {
       }, 0);
 
       const horasTarefasPrevistas = tarefasPrevistas.reduce((total, t) => {
+        console.log('Tarefa PREVISTA:', {
+          id: t.id,
+          titulo: t.titulo,
+          prazo: t.prazo,
+          status: t.status,
+          tempo_estimado: t.tempo_estimado_horas || 0
+        });
         return total + (t.tempo_estimado_horas || 0);
       }, 0);
 
