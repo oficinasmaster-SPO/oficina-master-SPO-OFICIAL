@@ -148,11 +148,25 @@ export default function PainelAtendimentosTab({ user }) {
       return true;
     })
     .sort((a, b) => {
-      // Prioridade 1: Status ATRASADO
-      if (a.status === ATENDIMENTO_STATUS.ATRASADO && b.status !== ATENDIMENTO_STATUS.ATRASADO) return -1;
-      if (a.status !== ATENDIMENTO_STATUS.ATRASADO && b.status === ATENDIMENTO_STATUS.ATRASADO) return 1;
+      // Definir ordem de prioridade dos status
+      const ordemStatus = {
+        [ATENDIMENTO_STATUS.ATRASADO]: 1,
+        [ATENDIMENTO_STATUS.CONFIRMADO]: 2,
+        [ATENDIMENTO_STATUS.AGENDADO]: 3,
+        [ATENDIMENTO_STATUS.REAGENDADO]: 3,
+        [ATENDIMENTO_STATUS.PARTICIPANDO]: 4,
+        [ATENDIMENTO_STATUS.REALIZADO]: 5
+      };
       
-      // Prioridade 2: Data (ordem crescente - mais antigos primeiro)
+      const prioridadeA = ordemStatus[a.status] || 99;
+      const prioridadeB = ordemStatus[b.status] || 99;
+      
+      // Se status diferente, ordenar por prioridade
+      if (prioridadeA !== prioridadeB) {
+        return prioridadeA - prioridadeB;
+      }
+      
+      // Mesmo status: ordenar por data (mais antigos primeiro)
       return new Date(a.data_agendada) - new Date(b.data_agendada);
     });
 
@@ -264,7 +278,10 @@ export default function PainelAtendimentosTab({ user }) {
                       <td className="py-3 px-4 text-sm">{atendimento.consultor_nome}</td>
                       <td className="py-3 px-4">
                         <div className="flex items-center justify-end gap-1">
-                          {(atendimento.status === ATENDIMENTO_STATUS.AGENDADO || atendimento.status === ATENDIMENTO_STATUS.CONFIRMADO || atendimento.status === ATENDIMENTO_STATUS.REAGENDADO) && (
+                          {(atendimento.status === ATENDIMENTO_STATUS.AGENDADO || 
+                            atendimento.status === ATENDIMENTO_STATUS.CONFIRMADO || 
+                            atendimento.status === ATENDIMENTO_STATUS.REAGENDADO || 
+                            atendimento.status === ATENDIMENTO_STATUS.ATRASADO) && (
                             <>
                               <Button
                                 variant="ghost"
