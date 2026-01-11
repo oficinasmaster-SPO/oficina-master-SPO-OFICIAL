@@ -113,11 +113,48 @@ export default function PainelAtendimentosTab({ user }) {
     }
   });
 
-  const atendimentosFiltrados = (atendimentos || []).sort((a, b) => {
-    if (a.status === ATENDIMENTO_STATUS.ATRASADO && b.status !== ATENDIMENTO_STATUS.ATRASADO) return -1;
-    if (a.status !== ATENDIMENTO_STATUS.ATRASADO && b.status === ATENDIMENTO_STATUS.ATRASADO) return 1;
-    return new Date(b.data_agendada) - new Date(a.data_agendada);
-  });
+  const atendimentosFiltrados = (atendimentos || [])
+    .filter(atendimento => {
+      // Aplicar filtros
+      if (filtrosAtas.workshop_id && atendimento.workshop_id !== filtrosAtas.workshop_id) return false;
+      if (filtrosAtas.consultor_id && atendimento.consultor_id !== filtrosAtas.consultor_id) return false;
+      if (filtrosAtas.status && atendimento.status !== filtrosAtas.status) return false;
+      if (filtrosAtas.tipo_aceleracao && atendimento.tipo_atendimento !== filtrosAtas.tipo_aceleracao) return false;
+      
+      // Filtro de data
+      if (filtrosAtas.dateFrom) {
+        const dataAtendimento = new Date(atendimento.data_agendada);
+        const dataInicio = new Date(filtrosAtas.dateFrom);
+        if (dataAtendimento < dataInicio) return false;
+      }
+      if (filtrosAtas.dateTo) {
+        const dataAtendimento = new Date(atendimento.data_agendada);
+        const dataFim = new Date(filtrosAtas.dateTo);
+        dataFim.setHours(23, 59, 59, 999);
+        if (dataAtendimento > dataFim) return false;
+      }
+      
+      // Filtro de busca textual
+      if (filtrosAtas.searchTerm) {
+        const searchLower = filtrosAtas.searchTerm.toLowerCase();
+        const workshop = workshops?.find(w => w.id === atendimento.workshop_id);
+        const matchesSearch = 
+          workshop?.name?.toLowerCase().includes(searchLower) ||
+          atendimento.tipo_atendimento?.toLowerCase().includes(searchLower) ||
+          atendimento.consultor_nome?.toLowerCase().includes(searchLower);
+        if (!matchesSearch) return false;
+      }
+      
+      return true;
+    })
+    .sort((a, b) => {
+      // Prioridade 1: Status ATRASADO
+      if (a.status === ATENDIMENTO_STATUS.ATRASADO && b.status !== ATENDIMENTO_STATUS.ATRASADO) return -1;
+      if (a.status !== ATENDIMENTO_STATUS.ATRASADO && b.status === ATENDIMENTO_STATUS.ATRASADO) return 1;
+      
+      // Prioridade 2: Data (ordem crescente - mais antigos primeiro)
+      return new Date(a.data_agendada) - new Date(b.data_agendada);
+    });
 
   const handleAtaSaved = () => {
     queryClient.invalidateQueries(['todos-atendimentos']);
