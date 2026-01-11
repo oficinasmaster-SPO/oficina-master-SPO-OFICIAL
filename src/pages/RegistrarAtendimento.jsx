@@ -21,6 +21,7 @@ import AudioTranscriptionField from "@/components/aceleracao/AudioTranscriptionF
 import TipoAtendimentoManager from "@/components/aceleracao/TipoAtendimentoManager";
 import MediaUploadField from "@/components/aceleracao/MediaUploadField";
 import ConflitosHorarioModal from "@/components/aceleracao/ConflitosHorarioModal";
+import ClientIntelligenceCapturePanel from "@/components/inteligencia/ClientIntelligenceCapturePanel";
 
 export default function RegistrarAtendimento() {
   const navigate = useNavigate();
