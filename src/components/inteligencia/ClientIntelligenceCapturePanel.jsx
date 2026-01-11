@@ -54,6 +54,7 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
       const gravityLabel = { baixa: "Baixa", media: "Média", alta: "Alta", critica: "Crítica" }["media"];
 
       const newItem = {
+            id: result.id,
             area: areaLabel,
             type: typeLabel,
             subcategory: selectedSubcategory,
