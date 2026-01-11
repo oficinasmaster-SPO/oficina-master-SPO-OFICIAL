@@ -212,6 +212,12 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
         intelligenceId={lastIntelligenceId}
         onSuccess={onSuccess}
       />
+
+      <ClientIntelligenceCaptureViewer
+        open={viewerOpen}
+        onOpenChange={setViewerOpen}
+        item={selectedItem}
+      />
       </>
       );
       }
