@@ -201,7 +201,7 @@ export default function ClientIntelligenceViewer({ open, onOpenChange, item, wor
         <Tabs defaultValue="current" className="flex-1 overflow-hidden flex flex-col">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="current">Captura Atual</TabsTrigger>
-            <TabsTrigger value="history" disabled={historySimilar.length === 0}>
+            <TabsTrigger value="history">
               Histórico ({historySimilar.length})
             </TabsTrigger>
           </TabsList>
