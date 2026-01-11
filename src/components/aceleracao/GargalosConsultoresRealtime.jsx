@@ -19,7 +19,7 @@ export default function GargalosConsultoresRealtime() {
   });
 
   const { data: saturacaoData, isLoading, refetch } = useQuery({
-    queryKey: ['saturacao-real-consultores', period],
+    queryKey: ['saturacao-real-consultores', period.startDate, period.endDate],
     queryFn: async () => {
       const response = await base44.functions.invoke('calcularSaturacaoReal', {
         startDate: period.startDate,
@@ -28,6 +28,7 @@ export default function GargalosConsultoresRealtime() {
       return response.data;
     },
     refetchInterval: 5 * 60 * 1000,
+    enabled: !!period.startDate && !!period.endDate,
   });
 
   if (isLoading) {
