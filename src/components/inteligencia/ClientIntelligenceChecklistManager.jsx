@@ -43,8 +43,8 @@ export default function ClientIntelligenceChecklistManager({
   };
 
   const handleSaveChecklist = async () => {
-    if (!title.trim() || items.length === 0) {
-      toast.error("Preencha o título e adicione pelo menos um item");
+    if (!title.trim() || !selectedArea || items.length === 0) {
+      toast.error("Preencha o título, selecione uma área e adicione pelo menos um item");
       return;
     }
 
@@ -52,7 +52,7 @@ export default function ClientIntelligenceChecklistManager({
     try {
       await base44.entities.ClientIntelligenceChecklist.create({
         workshop_id: workshopId,
-        area,
+        area: selectedArea,
         type,
         title,
         description,
