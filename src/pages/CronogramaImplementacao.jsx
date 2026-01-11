@@ -35,8 +35,16 @@ export default function CronogramaImplementacao() {
   });
 
   const { data: workshop } = useQuery({
-    queryKey: ['workshop', user?.workshop_id],
+    queryKey: ['workshop', user?.id],
     queryFn: async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const adminWorkshopId = urlParams.get('workshop_id');
+      const assistanceMode = urlParams.get('assistance_mode') === 'true';
+      
+      if (assistanceMode && adminWorkshopId) {
+        return await base44.entities.Workshop.get(adminWorkshopId);
+      }
+      
       if (user?.workshop_id) {
         return await base44.entities.Workshop.get(user.workshop_id);
       }

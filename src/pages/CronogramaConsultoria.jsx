@@ -38,8 +38,18 @@ export default function CronogramaConsultoria() {
   });
 
   const { data: workshop } = useQuery({
-    queryKey: ['workshop', user?.workshop_id],
-    queryFn: () => base44.entities.Workshop.get(user.workshop_id),
+    queryKey: ['workshop', user?.id],
+    queryFn: async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const adminWorkshopId = urlParams.get('workshop_id');
+      const assistanceMode = urlParams.get('assistance_mode') === 'true';
+      
+      if (assistanceMode && adminWorkshopId) {
+        return await base44.entities.Workshop.get(adminWorkshopId);
+      }
+      
+      return await base44.entities.Workshop.get(user.workshop_id);
+    },
     enabled: !!user?.workshop_id
   });
 
