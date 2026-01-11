@@ -157,6 +157,7 @@ import TestUsuarios from './pages/TestUsuarios';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
+import IntelligenciaCliente from './pages/IntelligenciaCliente';
 import __Layout from './Layout.jsx';
 
 
@@ -320,6 +321,7 @@ export const PAGES = {
     "TreinamentoVendas": TreinamentoVendas,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
+    "IntelligenciaCliente": IntelligenciaCliente,
 }
 
 export const pagesConfig = {
