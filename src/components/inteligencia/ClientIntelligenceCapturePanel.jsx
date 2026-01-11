@@ -129,38 +129,36 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
       {/* Botão Adicionar */}
       {selectedSubcategory && (
         <Button
-            onClick={handleAddItem}
-            disabled={isLoading}
-            className="w-full bg-blue-600 hover:bg-blue-700 h-8 text-sm"
-            size="sm"
-          >
-            <Plus className="w-3 h-3 mr-1" />
-            Adicionar
-          </Button>
+          onClick={handleAddItem}
+          disabled={isLoading}
+          className="w-full bg-blue-600 hover:bg-blue-700"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Adicionar Inteligência
+        </Button>
         )}
 
         {/* Itens Capturados */}
         {capturedItems.length > 0 && (
-          <div className="border-t pt-3 mt-3">
-            <p className="text-xs font-semibold text-gray-700 mb-2">Capturados nesta ATA:</p>
-            <div className="space-y-1 max-h-48 overflow-y-auto">
-              {capturedItems.map((item, idx) => (
-                <div
-                  key={idx}
-                  className="text-xs bg-blue-50 border border-blue-200 rounded p-2 flex items-start gap-1"
-                >
-                  <ChevronRight className="w-3 h-3 text-blue-600 mt-0.5 flex-shrink-0" />
-                  <div className="flex-1">
-                    <p className="font-semibold text-blue-900">{item.area}</p>
-                    <p className="text-blue-700">{item.type}</p>
-                    <p className="text-blue-600">{item.subcategory}</p>
-                  </div>
+        <div className="border-t pt-4 mt-4">
+          <p className="text-sm font-semibold text-gray-700 mb-3">Capturados:</p>
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {capturedItems.map((item, idx) => (
+              <div
+                key={idx}
+                className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-start gap-2"
+              >
+                <ChevronRight className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="font-semibold text-blue-900">{item.area}</p>
+                  <p className="text-sm text-blue-700">{item.type}</p>
+                  <p className="text-sm text-blue-600">{item.subcategory}</p>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
+        </div>
         )}
-      </CardContent>
-    </Card>
-  );
-}
+        </div>
+        );
+        }
