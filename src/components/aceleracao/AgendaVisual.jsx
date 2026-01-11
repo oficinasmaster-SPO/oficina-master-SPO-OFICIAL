@@ -93,25 +93,33 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
     const atendimentosDia = getAtendimentosForDay(day);
     if (atendimentosDia.length > 0) {
       try {
-        // Recarregar workshops frescos do banco antes de enriquecer
-        const workshopsAtualizados = await base44.entities.Workshop.list();
+        // Recarregar workshops e colaboradores frescos do banco
+        const [workshopsAtualizados, todosColaboradores] = await Promise.all([
+          base44.entities.Workshop.list(),
+          base44.entities.Employee.list()
+        ]);
         setWorkshopsFrescos(workshopsAtualizados);
         
-        console.log('Workshops recarregados:', workshopsAtualizados);
-        
-        // Enriquecer atendimentos com dados atualizados da oficina
+        // Enriquecer atendimentos com dados atualizados da oficina e sócio
         const atendimentosComWorkshop = atendimentosDia.map(a => {
           const workshopEncontrado = workshopsAtualizados.find(w => w.id === a.workshop_id);
-          console.log('Workshop encontrado para atendimento:', {
-            atendimento_id: a.id,
-            workshop_id: a.workshop_id,
+          const socio = workshopEncontrado?.owner_id 
+            ? todosColaboradores.find(c => c.user_id === workshopEncontrado.owner_id)
+            : null;
+          
+          console.log('Dados completos:', {
             workshop: workshopEncontrado,
-            telefone: workshopEncontrado?.telefone,
-            email: workshopEncontrado?.email
+            workshop_telefone: workshopEncontrado?.telefone,
+            workshop_email: workshopEncontrado?.email,
+            socio: socio,
+            socio_telefone: socio?.telefone,
+            socio_email: socio?.email
           });
+          
           return {
             ...a,
-            workshop: workshopEncontrado
+            workshop: workshopEncontrado,
+            socio: socio
           };
         });
         
@@ -121,7 +129,7 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
           atendimentos: atendimentosComWorkshop
         });
       } catch (error) {
-        console.error('Erro ao recarregar workshops:', error);
+        console.error('Erro ao recarregar dados:', error);
         toast.error('Erro ao carregar dados atualizados');
       }
     }
@@ -423,22 +431,14 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
               const workshop = atendimento.workshop;
               const podeIniciar = ['agendado', 'confirmado', 'reagendado'].includes(atendimento.status);
               const workshopIdAmigavel = gerarIdAmigavel('workshop', workshop?.id, idx + 1);
+              const socio = atendimento.socio;
               
-              // Buscar telefone da oficina (vários campos possíveis)
-              const telefoneOficina = workshop?.telefone || workshop?.phone || workshop?.owner_phone;
+              // Buscar telefone: prioriza oficina, depois sócio
+              const telefoneOficina = workshop?.telefone || socio?.telefone;
               
-              // Buscar participante principal
+              // Buscar e-mail: prioriza participante, depois oficina, depois sócio
               const participantePrincipal = atendimento.participantes?.[0];
-              const emailContato = participantePrincipal?.email || workshop?.email;
-              
-              console.log('Debug Atendimento:', {
-                workshop_id: workshop?.id,
-                workshop_name: workshop?.name,
-                telefoneOficina,
-                emailContato,
-                participantes: atendimento.participantes,
-                workshop_completo: workshop
-              });
+              const emailContato = participantePrincipal?.email || workshop?.email || socio?.email;
               
               return (
                 <div
