@@ -1,14 +1,16 @@
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Maximize2, Clock, MapPin, User, Filter } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Maximize2, Clock, MapPin, User, Filter, Video, Users, ExternalLink } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, startOfWeek, endOfWeek, addMonths, subMonths, addDays, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 
 export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
   const navigate = useNavigate();
@@ -89,6 +91,35 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
         date: day,
         atendimentos: atendimentosComWorkshop
       });
+    }
+  };
+
+  const iniciarAtendimento = async (atendimento) => {
+    try {
+      // Atualizar status para "participando"
+      await base44.entities.ConsultoriaAtendimento.update(atendimento.id, {
+        status: 'participando',
+        hora_inicio_real: new Date().toISOString()
+      });
+
+      toast.success('Atendimento iniciado!');
+
+      // Abrir Google Meet em nova aba
+      if (atendimento.google_meet_link) {
+        window.open(atendimento.google_meet_link, '_blank');
+      }
+
+      // Navegar para registro do atendimento
+      const params = new URLSearchParams({ 
+        atendimento_id: atendimento.id,
+        fromAgenda: 'true',
+        fullscreen: isFullScreen ? 'true' : 'false'
+      });
+      navigate(createPageUrl('RegistrarAtendimento') + '?' + params.toString());
+      
+      setDetailsModal({ ...detailsModal, open: false });
+    } catch (error) {
+      toast.error('Erro ao iniciar atendimento: ' + error.message);
     }
   };
 
@@ -292,44 +323,104 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
           </DialogHeader>
 
           <div className="space-y-3 mt-4">
-            {detailsModal.atendimentos.map((atendimento) => (
-              <div
-                key={atendimento.id}
-                className={`p-4 rounded-lg border-2 ${getStatusColor(atendimento.status)} cursor-pointer hover:shadow-md transition-shadow`}
-                onClick={() => {
-                  const params = new URLSearchParams({ 
-                    atendimento_id: atendimento.id,
-                    fromAgenda: 'true',
-                    fullscreen: isFullScreen ? 'true' : 'false'
-                  });
-                  navigate(createPageUrl('RegistrarAtendimento') + '?' + params.toString());
-                }}
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4" />
-                    <span className="font-semibold">{format(new Date(atendimento.data_agendada), 'HH:mm')}</span>
+            {detailsModal.atendimentos.map((atendimento) => {
+              const workshop = atendimento.workshop;
+              const podeIniciar = ['agendado', 'confirmado', 'reagendado'].includes(atendimento.status);
+              
+              return (
+                <div
+                  key={atendimento.id}
+                  className={`p-4 rounded-lg border-2 ${getStatusColor(atendimento.status)} hover:shadow-md transition-shadow`}
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
+                      <span className="font-semibold">{format(new Date(atendimento.data_agendada), 'HH:mm')}</span>
+                    </div>
+                    <Badge className={getStatusColor(atendimento.status)}>
+                      {atendimento.status}
+                    </Badge>
                   </div>
-                  <Badge className={getStatusColor(atendimento.status)}>
-                    {atendimento.status}
-                  </Badge>
+                  
+                  <div className="space-y-2 text-sm mb-3">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-gray-500" />
+                      <span className="font-medium">{workshop?.name || 'Cliente não identificado'}</span>
+                    </div>
+
+                    {workshop?.owner_id && (
+                      <div className="flex items-center gap-2 ml-6 text-gray-600">
+                        <Users className="w-3 h-3" />
+                        <span className="text-xs">
+                          Proprietário: {workshop.owner_id}
+                          {workshop.partner_ids?.length > 0 && ` + ${workshop.partner_ids.length} sócio(s)`}
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4 text-gray-500" />
+                      <span className="text-gray-600">{atendimento.tipo_atendimento.replace(/_/g, ' ')}</span>
+                    </div>
+
+                    {atendimento.duracao_minutos && (
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <Clock className="w-4 h-4 text-gray-500" />
+                        <span>Duração: {atendimento.duracao_minutos} min</span>
+                      </div>
+                    )}
+
+                    {atendimento.google_meet_link && (
+                      <div className="flex items-center gap-2 mt-2 p-2 bg-blue-50 rounded border border-blue-200">
+                        <Video className="w-4 h-4 text-blue-600" />
+                        <a 
+                          href={atendimento.google_meet_link} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-xs text-blue-600 hover:underline flex items-center gap-1"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          Link do Meet
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2 pt-2 border-t">
+                    {podeIniciar && atendimento.google_meet_link && (
+                      <Button
+                        size="sm"
+                        className="flex-1 bg-green-600 hover:bg-green-700"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          iniciarAtendimento(atendimento);
+                        }}
+                      >
+                        <Video className="w-4 h-4 mr-2" />
+                        Iniciar Atendimento
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const params = new URLSearchParams({ 
+                          atendimento_id: atendimento.id,
+                          fromAgenda: 'true',
+                          fullscreen: isFullScreen ? 'true' : 'false'
+                        });
+                        navigate(createPageUrl('RegistrarAtendimento') + '?' + params.toString());
+                      }}
+                    >
+                      Ver Detalhes
+                    </Button>
+                  </div>
                 </div>
-                
-                <div className="space-y-1 text-sm">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-gray-500" />
-                    <span className="font-medium">{atendimento.workshop?.name || 'Cliente não identificado'}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <User className="w-4 h-4 text-gray-500" />
-                    <span className="text-gray-600">{atendimento.tipo_atendimento}</span>
-                  </div>
-                  {atendimento.duracao_minutos && (
-                    <div className="text-gray-600">Duração: {atendimento.duracao_minutos} min</div>
-                  )}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </DialogContent>
       </Dialog>
