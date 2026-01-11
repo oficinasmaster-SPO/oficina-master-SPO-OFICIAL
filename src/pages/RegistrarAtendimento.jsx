@@ -62,6 +62,7 @@ export default function RegistrarAtendimento() {
   const [showAISummary, setShowAISummary] = useState(false);
   const [aiSummary, setAISummary] = useState(null);
   const [conflitosModal, setConflitosModal] = useState({ open: false, conflitos: [], dataHorario: null });
+  const pautaRef = React.useRef(null);
 
   // Carregar usuário
   const { data: user } = useQuery({
