@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
+import { format, subDays } from "date-fns";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,15 +12,31 @@ import VisaoGeralTab from "@/components/aceleracao/VisaoGeralTab";
 import PainelAtendimentosTab from "@/components/aceleracao/PainelAtendimentosTab";
 import PedidosInternosTab from "@/components/aceleracao/PedidosInternosTab";
 import RegistroAtendimentoMassaModal from "@/components/aceleracao/RegistroAtendimentoMassaModal";
+import FiltrosControleAceleracao from "@/components/aceleracao/FiltrosControleAceleracao";
 
 export default function ControleAceleracao() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("visao-geral");
   const [showMassRegistration, setShowMassRegistration] = useState(false);
+  const [filtros, setFiltros] = useState({
+    consultorId: "todos",
+    preset: "30d",
+    dataInicio: format(subDays(new Date(), 30), "yyyy-MM-dd"),
+    dataFim: format(new Date(), "yyyy-MM-dd")
+  });
 
   const { data: user, isLoading: loadingUser } = useQuery({
     queryKey: ['current-user'],
     queryFn: () => base44.auth.me()
+  });
+
+  const { data: consultores } = useQuery({
+    queryKey: ['consultores-list'],
+    queryFn: async () => {
+      const employees = await base44.entities.Employee.list();
+      return employees.filter(e => e.job_role === 'acelerador' || e.position?.toLowerCase().includes('consultor'));
+    },
+    enabled: user?.role === 'admin'
   });
 
   // Verificar permissão
@@ -75,6 +92,12 @@ export default function ControleAceleracao() {
         open={showMassRegistration}
         onClose={() => setShowMassRegistration(false)}
         user={user}
+      />
+
+      <FiltrosControleAceleracao
+        consultores={consultores || []}
+        filtros={filtros}
+        onFiltrosChange={setFiltros}
       />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
