@@ -123,15 +123,12 @@ export default function MapaChecklists() {
         {Object.entries(INTELLIGENCE_TYPES).map(([typeKey, typeConfig]) => (
           <TabsContent key={typeKey} value={typeKey} className="space-y-6">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">{typeConfig.icon}</span>
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    {typeConfig.label}
-                  </h2>
-                  <p className="text-sm text-gray-600">{typeConfig.description}</p>
-                </div>
-              </div>
+               <div>
+                   <h2 className="text-2xl font-bold text-gray-900">
+                     {typeConfig.label}
+                   </h2>
+                   <p className="text-sm text-gray-600">{typeConfig.description}</p>
+               </div>
               <Button
                 onClick={() => {
                   setEditingChecklist(null);
