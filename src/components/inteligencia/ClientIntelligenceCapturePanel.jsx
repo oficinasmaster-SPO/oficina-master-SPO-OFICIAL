@@ -70,7 +70,8 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
   const subcategoryOptions = selectedArea ? (SUBCATEGORIES[selectedArea] || []) : [];
 
   return (
-    <div className="space-y-3">
+    <>
+      <div className="space-y-3">
       {/* Área */}
       <div>
         <label className="text-xs font-semibold text-gray-700 mb-1 block">Área Principal</label>
