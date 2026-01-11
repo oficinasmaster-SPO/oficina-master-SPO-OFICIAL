@@ -47,11 +47,18 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
         gravity: "media",
       });
 
+      const typeObj = INTELLIGENCE_TYPES[selectedType];
+      const gravityLabel = { baixa: "Baixa", media: "Média", alta: "Alta", critica: "Crítica" }["media"];
+
       const newItem = {
             area: areaLabel,
             type: typeLabel,
             subcategory: selectedSubcategory,
             title: `${areaLabel} - ${typeLabel}`,
+            gravity: "media",
+            gravityLabel,
+            typeIcon: typeObj?.icon,
+            typeColor: typeObj?.color,
           };
 
           setCapturedItems([...capturedItems, newItem]);
