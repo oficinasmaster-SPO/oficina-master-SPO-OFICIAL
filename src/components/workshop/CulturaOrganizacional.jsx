@@ -89,6 +89,22 @@ export default function CulturaOrganizacional({ workshop }) {
     );
   }
 
+  // Get workshop_id and assistance_mode from URL to pass along navigation
+  const getColaboradoresUrl = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const workshopId = urlParams.get('workshop_id');
+    const assistanceMode = urlParams.get('assistance_mode');
+    
+    let url = createPageUrl("Colaboradores");
+    if (workshopId) {
+      url += `?workshop_id=${workshopId}`;
+      if (assistanceMode) {
+        url += `&assistance_mode=${assistanceMode}`;
+      }
+    }
+    return url;
+  };
+
   return (
     <div className="space-y-6">
       <Card className="shadow-lg border-2 border-purple-200">
