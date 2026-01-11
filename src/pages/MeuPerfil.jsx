@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
@@ -23,16 +24,25 @@ import EmployeeGoals from "../components/employee/EmployeeGoals";
 import PermissoesColaborador from "../components/employee/PermissoesColaborador";
 
 export default function MeuPerfil() {
+  const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [employee, setEmployee] = useState(null);
   const [user, setUser] = useState(null);
+  const [assistanceMode, setAssistanceMode] = useState(false);
 
   useEffect(() => {
     loadMyProfile();
-  }, []);
+  }, [location.search]);
 
   const loadMyProfile = async () => {
     try {
+      // Verificar modo assistência
+      const params = new URLSearchParams(window.location.search);
+      const isAssisting = params.get('assistance_mode') === 'true';
+      const workshopId = params.get('workshop_id');
+      
+      setAssistanceMode(isAssisting && !!workshopId);
+      
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
@@ -42,13 +52,22 @@ export default function MeuPerfil() {
         return;
       }
 
-      // Buscar Employee vinculado ao usuário
-      const employees = await base44.entities.Employee.filter({ user_id: currentUser.id });
+      // Se em modo assistência, buscar employee do cliente (workshop assistido)
+      let employees = [];
+      if (isAssisting && workshopId) {
+        employees = await base44.entities.Employee.filter({ 
+          workshop_id: workshopId,
+          tipo_vinculo: 'cliente'
+        });
+      } else {
+        // Caso contrário, buscar employee do usuário logado
+        employees = await base44.entities.Employee.filter({ user_id: currentUser.id });
+      }
       
       if (employees && employees.length > 0) {
         setEmployee(employees[0]);
-      } else {
-        // Criar Employee automaticamente se não existir
+      } else if (!isAssisting) {
+        // Só criar automaticamente se NÃO estiver em modo assistência
         try {
           // Buscar oficina do usuário
           let userWorkshop = null;
@@ -84,6 +103,8 @@ export default function MeuPerfil() {
           console.error("Erro ao criar Employee:", createError);
           toast.error("Erro ao criar perfil");
         }
+      } else {
+        toast.error("Nenhum colaborador encontrado nesta oficina");
       }
     } catch (error) {
       console.error(error);
