@@ -110,25 +110,25 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
       {/* Subcategoria */}
       {selectedType && (
         <div>
-            <label className="text-xs font-semibold text-gray-700 mb-1 block">Problema Específico</label>
-            <Select value={selectedSubcategory} onValueChange={setSelectedSubcategory}>
-              <SelectTrigger className="h-8 text-sm">
-                <SelectValue placeholder="Selecione..." />
-              </SelectTrigger>
-              <SelectContent>
-                {subcategoryOptions.map((sub) => (
-                  <SelectItem key={sub} value={sub}>
-                    {sub}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
+          <label className="text-xs font-semibold text-gray-700 mb-1 block">Problema Específico</label>
+          <Select value={selectedSubcategory} onValueChange={setSelectedSubcategory}>
+            <SelectTrigger className="h-8 text-sm">
+              <SelectValue placeholder="Selecione..." />
+            </SelectTrigger>
+            <SelectContent>
+              {subcategoryOptions.map((sub) => (
+                <SelectItem key={sub} value={sub}>
+                  {sub}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
-        {/* Botão Adicionar */}
-        {selectedSubcategory && (
-          <Button
+      {/* Botão Adicionar */}
+      {selectedSubcategory && (
+        <Button
             onClick={handleAddItem}
             disabled={isLoading}
             className="w-full bg-blue-600 hover:bg-blue-700 h-8 text-sm"
