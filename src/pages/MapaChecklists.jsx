@@ -114,7 +114,8 @@ export default function MapaChecklists() {
         <TabsList className="grid w-full grid-cols-5 lg:w-auto">
           {Object.entries(INTELLIGENCE_TYPES).map(([key, config]) => (
             <TabsTrigger key={key} value={key} className="text-xs sm:text-sm">
-              {config.icon} <span className="hidden sm:inline ml-1">{config.label}</span>
+              <span className="hidden sm:inline">{config.label}</span>
+              <span className="sm:hidden">{config.label.split('(')[0].trim()}</span>
             </TabsTrigger>
           ))}
         </TabsList>
