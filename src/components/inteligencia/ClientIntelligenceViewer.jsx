@@ -13,6 +13,7 @@ export default function ClientIntelligenceViewer({ open, onOpenChange, item, wor
   const [fullData, setFullData] = useState(null);
   const [history, setHistory] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [evolutionFormOpen, setEvolutionFormOpen] = useState(false);
 
   useEffect(() => {
     if (open && item?.id) {
