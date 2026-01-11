@@ -186,6 +186,36 @@ export default function ClientIntelligenceViewer({ open, onOpenChange, item, wor
           </Badge>
         </p>
       </div>
+
+      {/* Evoluções Registradas */}
+      {intel.metadata?.evolution && (
+        <div className="border-l-4 border-green-400 pl-4">
+          <div className="flex items-center gap-2 mb-3">
+            <CheckCircle2 className="w-4 h-4 text-green-600" />
+            <h4 className="font-semibold text-gray-900">Evolução Registrada</h4>
+          </div>
+          <div className="space-y-3 text-sm">
+            {intel.metadata.evolution.impactBefore && (
+              <div>
+                <span className="font-semibold text-gray-700">Impacto Antes:</span>
+                <p className="text-gray-600">{intel.metadata.evolution.impactBefore}</p>
+              </div>
+            )}
+            {intel.metadata.evolution.impactAfter && (
+              <div>
+                <span className="font-semibold text-green-700">Impacto Depois:</span>
+                <p className="text-green-600">{intel.metadata.evolution.impactAfter}</p>
+              </div>
+            )}
+            {intel.metadata.evolution.learnings && (
+              <div>
+                <span className="font-semibold text-gray-700">Lições Aprendidas:</span>
+                <p className="text-gray-600">{intel.metadata.evolution.learnings}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 
