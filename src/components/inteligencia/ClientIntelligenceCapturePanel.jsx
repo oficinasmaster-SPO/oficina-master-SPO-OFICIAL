@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -8,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { X, Plus, ChevronRight } from "lucide-react";
+import { Plus, ChevronRight } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import { INTELLIGENCE_AREAS, INTELLIGENCE_TYPES, SUBCATEGORIES } from "@/components/lib/clientIntelligenceConstants";
@@ -29,20 +28,20 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
     setIsLoading(true);
     try {
       const areaLabel = INTELLIGENCE_AREAS[selectedArea]?.label || selectedArea;
-       const typeLabel = INTELLIGENCE_TYPES[selectedType]?.label || selectedType;
-       const subLabel = SUBCATEGORIES[selectedArea]?.find(s => s === selectedSubcategory) || selectedSubcategory;
+      const typeLabel = INTELLIGENCE_TYPES[selectedType]?.label || selectedType;
+      const subLabel = SUBCATEGORIES[selectedArea]?.find(s => s === selectedSubcategory) || selectedSubcategory;
 
-       await base44.entities.ClientIntelligence.create({
-         workshop_id: workshopId,
-         attendance_id: ataId,
-         area: selectedArea,
-         type: selectedType,
-         subcategory: selectedSubcategory,
-         title: `${areaLabel} - ${typeLabel}`,
-         description: `${subLabel} (capturado na ATA)`,
-         status: "ativo",
-         gravity: "media",
-       });
+      await base44.entities.ClientIntelligence.create({
+        workshop_id: workshopId,
+        attendance_id: ataId,
+        area: selectedArea,
+        type: selectedType,
+        subcategory: selectedSubcategory,
+        title: `${areaLabel} - ${typeLabel}`,
+        description: `${subLabel} (capturado na ATA)`,
+        status: "ativo",
+        gravity: "media",
+      });
 
       const newItem = {
         area: areaLabel,
@@ -64,28 +63,25 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
     }
   };
 
-  const subcategoryName = selectedArea && selectedType ? SUBCATEGORIES[selectedArea]?.[0] || "" : "";
   const subcategoryOptions = selectedArea ? (SUBCATEGORIES[selectedArea] || []) : [];
 
   return (
     <div className="space-y-3">
       {/* Área */}
       <div>
-      {/* Área */}
-      <div>
-          <label className="text-xs font-semibold text-gray-700 mb-1 block">Área Principal</label>
-          <Select value={selectedArea} onValueChange={setSelectedArea}>
-            <SelectTrigger className="h-8 text-sm">
-              <SelectValue placeholder="Selecione..." />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(INTELLIGENCE_AREAS).map(([key, val]) => (
-                <SelectItem key={key} value={key}>
-                  {val.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <label className="text-xs font-semibold text-gray-700 mb-1 block">Área Principal</label>
+        <Select value={selectedArea} onValueChange={setSelectedArea}>
+          <SelectTrigger className="h-8 text-sm">
+            <SelectValue placeholder="Selecione..." />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(INTELLIGENCE_AREAS).map(([key, val]) => (
+              <SelectItem key={key} value={key}>
+                {val.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Tipo */}
@@ -136,10 +132,10 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
           <Plus className="w-4 h-4 mr-2" />
           Adicionar Inteligência
         </Button>
-        )}
+      )}
 
-        {/* Itens Capturados */}
-        {capturedItems.length > 0 && (
+      {/* Itens Capturados */}
+      {capturedItems.length > 0 && (
         <div className="border-t pt-4 mt-4">
           <p className="text-sm font-semibold text-gray-700 mb-3">Capturados:</p>
           <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -158,7 +154,7 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
             ))}
           </div>
         </div>
-        )}
-        </div>
-        );
-        }
+      )}
+    </div>
+  );
+}
