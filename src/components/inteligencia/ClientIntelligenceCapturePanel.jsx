@@ -12,7 +12,7 @@ import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import { INTELLIGENCE_AREAS, INTELLIGENCE_TYPES, SUBCATEGORIES } from "@/components/lib/clientIntelligenceConstants";
 import ClientIntelligenceDetailForm from "./ClientIntelligenceDetailForm";
-import ClientIntelligenceCaptureViewer from "./ClientIntelligenceCaptureViewer";
+import ClientIntelligenceViewer from "./ClientIntelligenceViewer";
 
 export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSuccess, onIntelligenceAdded }) {
   const [selectedArea, setSelectedArea] = useState("");
