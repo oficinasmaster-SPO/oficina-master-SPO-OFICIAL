@@ -27,6 +27,10 @@ Deno.serve(async (req) => {
                 const workshops = await base44.entities.Workshop.filter({ owner_id: user.id });
                 const workshop = workshops?.[0];
 
+                if (!workshop && user.workshop_id) {
+                    const workshop = await base44.entities.Workshop.get(user.workshop_id);
+                }
+
                 if (workshop) {
                     // Buscar dados complementares
                     const [diagnostics, monthlyGoals, dreRecords, employees, feedbacks] = await Promise.all([
