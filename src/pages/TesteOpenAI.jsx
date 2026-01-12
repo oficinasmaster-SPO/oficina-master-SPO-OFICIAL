@@ -56,7 +56,8 @@ export default function TesteOpenAI() {
         try {
             const result = await base44.functions.invoke('chatWithAI', {
                 message: message,
-                context: "Você é um consultor de oficinas mecânicas. Responda de forma prática e direta."
+                context: "Você é um consultor de oficinas mecânicas. Responda de forma prática e direta.",
+                includeWorkshopData: includeData
             });
 
             setResponse(result.data.response);
