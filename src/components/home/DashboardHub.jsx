@@ -454,10 +454,13 @@ export default function DashboardHub({ user, workshop }) {
             <div className="flex flex-col md:flex-row items-center justify-between gap-6">
               <div className="flex items-center gap-6">
                 <div className={cn(
-                  "w-24 h-24 rounded-full flex items-center justify-center text-4xl font-bold text-white shadow-lg",
-                  phaseColors[userWorkshop?.maturity_level] || "bg-gray-500"
+                  "w-24 h-24 rounded-full bg-gradient-to-br flex items-center justify-center shadow-lg",
+                  `bg-gradient-to-br ${phaseColors[userWorkshop?.maturity_level] || "from-gray-400 to-gray-500"}`
                 )}>
-                  {userWorkshop?.maturity_level || 1}
+                  {userWorkshop?.maturity_level === 1 && <TrendingUp className="w-12 h-12 text-white" />}
+                  {userWorkshop?.maturity_level === 2 && <Users className="w-12 h-12 text-white" />}
+                  {userWorkshop?.maturity_level === 3 && <BarChart3 className="w-12 h-12 text-white" />}
+                  {userWorkshop?.maturity_level === 4 && <Rocket className="w-12 h-12 text-white" />}
                 </div>
                 <div>
                   <h3 className="text-2xl font-bold text-gray-900">
