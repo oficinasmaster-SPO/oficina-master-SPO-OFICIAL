@@ -1,0 +1,117 @@
+import React, { useState } from "react";
+import { base44 } from "@/api/base44Client";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2, Send, Sparkles } from "lucide-react";
+import { toast } from "sonner";
+
+export default function TesteOpenAI() {
+    const [message, setMessage] = useState("");
+    const [response, setResponse] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [usage, setUsage] = useState(null);
+
+    const handleSend = async () => {
+        if (!message.trim()) {
+            toast.error("Digite uma mensagem");
+            return;
+        }
+
+        setLoading(true);
+        setResponse("");
+
+        try {
+            const result = await base44.functions.invoke('chatWithAI', {
+                message: message,
+                context: "Você é um consultor de oficinas mecânicas. Responda de forma prática e direta."
+            });
+
+            setResponse(result.data.response);
+            setUsage(result.data.usage);
+            toast.success("Resposta gerada!");
+        } catch (error) {
+            console.error(error);
+            toast.error("Erro ao chamar IA: " + error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="max-w-4xl mx-auto p-6">
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 text-blue-600" />
+                        Teste OpenAI - Chave Secundária
+                    </CardTitle>
+                    <p className="text-sm text-gray-600">
+                        Esta página usa a função <code className="bg-gray-100 px-2 py-1 rounded">chatWithAI</code> que utiliza a OPENAI_API_KEY_SECONDARY
+                    </p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium mb-2">
+                            Sua Pergunta:
+                        </label>
+                        <Textarea
+                            value={message}
+                            onChange={(e) => setMessage(e.target.value)}
+                            placeholder="Ex: Como aumentar o faturamento da minha oficina?"
+                            rows={4}
+                            className="w-full"
+                        />
+                    </div>
+
+                    <Button
+                        onClick={handleSend}
+                        disabled={loading || !message.trim()}
+                        className="w-full"
+                    >
+                        {loading ? (
+                            <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Processando...
+                            </>
+                        ) : (
+                            <>
+                                <Send className="w-4 h-4 mr-2" />
+                                Enviar para IA
+                            </>
+                        )}
+                    </Button>
+
+                    {response && (
+                        <div className="mt-6">
+                            <label className="block text-sm font-medium mb-2">
+                                Resposta da IA:
+                            </label>
+                            <div className="bg-gray-50 border rounded-lg p-4">
+                                <p className="whitespace-pre-wrap">{response}</p>
+                            </div>
+
+                            {usage && (
+                                <div className="mt-2 text-xs text-gray-500">
+                                    Tokens: {usage.total_tokens} (prompt: {usage.prompt_tokens}, resposta: {usage.completion_tokens})
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <h3 className="font-semibold text-sm mb-2">💡 Como usar em outras páginas:</h3>
+                        <pre className="text-xs bg-white p-3 rounded border overflow-x-auto">
+{`const result = await base44.functions.invoke('chatWithAI', {
+    message: "Sua pergunta aqui",
+    context: "Contexto personalizado (opcional)"
+});
+
+console.log(result.data.response);`}
+                        </pre>
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
+    );
+}
