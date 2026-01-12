@@ -921,6 +921,15 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           highlight: true,
           adminOnly: true,
           requiredPermission: 'admin.system_config'
+        },
+        { 
+          name: 'Teste OpenAI', 
+          href: createPageUrl('TesteOpenAI'), 
+          icon: Sparkles,
+          description: 'Testar chave secundária',
+          highlight: true,
+          adminOnly: true,
+          requiredPermission: 'admin.system_config'
         }
       ]
     }
