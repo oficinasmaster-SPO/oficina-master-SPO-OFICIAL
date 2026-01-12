@@ -12,6 +12,7 @@ export default function TesteOpenAI() {
     const [displayedResponse, setDisplayedResponse] = useState("");
     const [loading, setLoading] = useState(false);
     const [isTyping, setIsTyping] = useState(false);
+    const [includeData, setIncludeData] = useState(true);
     const [usage, setUsage] = useState(null);
     const typingIntervalRef = useRef(null);
 
