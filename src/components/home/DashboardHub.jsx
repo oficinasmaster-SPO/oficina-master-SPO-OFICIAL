@@ -800,7 +800,7 @@ export default function DashboardHub({ user, workshop }) {
                 </div>
                 <h3 className="text-sm font-medium text-gray-500">PAVE Agendamento</h3>
                 <div className="mt-1">
-                  <span className="text-2xl font-bold text-gray-900">5</span>
+                  <span className="text-2xl font-bold text-gray-900">{dashboardMetrics?.paveAgendamento?.hoje || 0}</span>
                   <p className="text-xs text-gray-500">Clientes agendados</p>
                 </div>
               </CardContent>
