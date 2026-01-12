@@ -41,7 +41,6 @@ Deno.serve(async (req) => {
                     const [
                         diagnostics, 
                         entrepreneurDiag, 
-                        monthlyGoals, 
                         dreRecords, 
                         employees, 
                         feedbacks,
@@ -50,7 +49,6 @@ Deno.serve(async (req) => {
                     ] = await Promise.all([
                         base44.entities.Diagnostic.filter({ workshop_id: workshop.id }).catch(() => []),
                         base44.entities.EntrepreneurDiagnostic.filter({ workshop_id: workshop.id }).catch(() => []),
-                        base44.entities.MonthlyGoalHistory.filter({ workshop_id: workshop.id }).catch(() => []),
                         base44.entities.DREMonthly.filter({ workshop_id: workshop.id }).catch(() => []),
                         base44.entities.Employee.filter({ workshop_id: workshop.id }).catch(() => []),
                         base44.entities.EmployeeFeedback.filter({ workshop_id: workshop.id }).catch(() => []),
