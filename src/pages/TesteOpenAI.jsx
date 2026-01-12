@@ -113,13 +113,22 @@ export default function TesteOpenAI() {
                         )}
                     </Button>
 
-                    {response && (
+                    {(displayedResponse || isTyping) && (
                         <div className="mt-6">
-                            <label className="block text-sm font-medium mb-2">
+                            <label className="block text-sm font-medium mb-2 flex items-center gap-2">
                                 Resposta da IA:
+                                {isTyping && (
+                                    <span className="flex items-center gap-1 text-xs text-gray-500">
+                                        <Loader2 className="w-3 h-3 animate-spin" />
+                                        digitando...
+                                    </span>
+                                )}
                             </label>
                             <div className="bg-gray-50 border rounded-lg p-4">
-                                <p className="whitespace-pre-wrap">{response}</p>
+                                <p className="whitespace-pre-wrap">
+                                    {displayedResponse}
+                                    {isTyping && <span className="inline-block w-0.5 h-4 bg-blue-600 ml-1 animate-pulse" />}
+                                </p>
                             </div>
 
                             {usage && (
