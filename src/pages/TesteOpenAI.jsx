@@ -97,6 +97,19 @@ export default function TesteOpenAI() {
                         />
                     </div>
 
+                    <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <input
+                            type="checkbox"
+                            id="includeData"
+                            checked={includeData}
+                            onChange={(e) => setIncludeData(e.target.checked)}
+                            className="w-4 h-4"
+                        />
+                        <label htmlFor="includeData" className="text-sm cursor-pointer">
+                            📊 Incluir dados da oficina (metas, DRE, diagnósticos, equipe)
+                        </label>
+                    </div>
+
                     <Button
                         onClick={handleSend}
                         disabled={loading || !message.trim()}
