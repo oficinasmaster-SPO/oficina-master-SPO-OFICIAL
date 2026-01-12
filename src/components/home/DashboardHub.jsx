@@ -635,11 +635,15 @@ export default function DashboardHub({ user, workshop }) {
                 </div>
                 <h3 className="text-sm font-medium text-gray-500">Metas Globais</h3>
                 <div className="mt-1 flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-gray-900">68%</span>
-                  <span className="text-xs text-green-600 font-medium">+12%</span>
+                  <span className="text-2xl font-bold text-gray-900">
+                    {dashboardMetrics?.metas?.percentual || 0}%
+                  </span>
+                  <span className={`text-xs font-medium ${dashboardMetrics?.metas?.tendencia >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {dashboardMetrics?.metas?.tendencia >= 0 ? '+' : ''}{dashboardMetrics?.metas?.tendencia || 0}%
+                  </span>
                 </div>
                 <div className="w-full bg-gray-100 rounded-full h-1.5 mt-3">
-                  <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: "68%" }}></div>
+                  <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${dashboardMetrics?.metas?.percentual || 0}%` }}></div>
                 </div>
               </CardContent>
             </Card>
