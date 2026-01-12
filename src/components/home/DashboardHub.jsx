@@ -713,11 +713,13 @@ export default function DashboardHub({ user, workshop }) {
                   <div className="p-2 bg-indigo-100 rounded-lg">
                     <Timer className="w-5 h-5 text-indigo-600" />
                   </div>
-                  <Badge className="bg-green-100 text-green-700 hover:bg-green-100">Ao Vivo</Badge>
+                  <Badge className={`${dashboardMetrics?.tcmp2?.tendencia === 'crescente' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'} hover:bg-inherit`}>
+                    {dashboardMetrics?.tcmp2?.tendencia || 'estável'}
+                  </Badge>
                 </div>
                 <h3 className="text-sm font-medium text-gray-500">TCMP2 (Valor Hora)</h3>
                 <div className="mt-1">
-                  <span className="text-2xl font-bold text-gray-900">R$ 185,00</span>
+                  <span className="text-2xl font-bold text-gray-900">R$ {dashboardMetrics?.tcmp2?.valor || 0},00</span>
                   <p className="text-xs text-gray-500">Média atual da oficina</p>
                 </div>
               </CardContent>
