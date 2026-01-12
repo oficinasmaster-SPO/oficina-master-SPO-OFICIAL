@@ -72,18 +72,67 @@ Deno.serve(async (req) => {
                         return acc;
                     }, {});
 
+                    const roleNames = {
+                        socio: 'Sócio',
+                        diretor: 'Diretor',
+                        supervisor_loja: 'Supervisor',
+                        gerente: 'Gerente',
+                        lider_tecnico: 'Líder Técnico',
+                        tecnico: 'Técnico',
+                        funilaria_pintura: 'Funilaria/Pintura',
+                        comercial: 'Comercial',
+                        consultor_vendas: 'Consultor de Vendas',
+                        financeiro: 'Financeiro',
+                        marketing: 'Marketing',
+                        estoque: 'Estoque',
+                        administrativo: 'Administrativo',
+                        motoboy: 'Motoboy',
+                        lavador: 'Lavador',
+                        acelerador: 'Acelerador',
+                        outros: 'Outros'
+                    };
+
+                    // Verificar diagnósticos realizados vs pendentes
+                    const allDiagnosticTypes = [
+                        { name: 'Diagnóstico de Fase Empresarial', entity: diagnostics, label: 'Fase' },
+                        { name: 'Diagnóstico do Empresário', entity: entrepreneurDiag, label: 'Perfil Empresário' },
+                        { name: 'Diagnóstico de Maturidade', entity: await base44.entities.CollaboratorMaturityDiagnostic.filter({ workshop_id: workshop.id }).catch(() => []), label: 'Maturidade Colaborador' },
+                        { name: 'Diagnóstico DISC', entity: await base44.entities.DISCDiagnostic.filter({ workshop_id: workshop.id }).catch(() => []), label: 'DISC' },
+                        { name: 'Diagnóstico de Produtividade', entity: await base44.entities.ProductivityDiagnostic.filter({ workshop_id: workshop.id }).catch(() => []), label: 'Produtividade' },
+                        { name: 'Diagnóstico de Desempenho', entity: await base44.entities.PerformanceMatrixDiagnostic.filter({ workshop_id: workshop.id }).catch(() => []), label: 'Desempenho' },
+                        { name: 'Análise de OS', entity: await base44.entities.ServiceOrderDiagnostic.filter({ workshop_id: workshop.id }).catch(() => []), label: 'Ordem de Serviço' }
+                    ];
+
+                    const diagnosticsSummary = allDiagnosticTypes.map(d => ({
+                        name: d.label,
+                        done: d.entity.length > 0,
+                        count: d.entity.length
+                    }));
+
+                    const pendingDiagnostics = diagnosticsSummary.filter(d => !d.done).map(d => d.name);
+                    const completedDiagnostics = diagnosticsSummary.filter(d => d.done);
+
                     // Montar contexto rico
                     workshopContext = `
 
-=== APRESENTAÇÃO INICIAL ===
-Olá! Sou seu consultor de gestão. Deixe-me apresentar um resumo da ${workshop.name}:
+=== IDENTIFICAÇÃO DO USUÁRIO ===
+👤 Nome: ${user.full_name}
+📧 Email: ${user.email}
+🏢 Cargo: ${user.role === 'admin' ? 'Administrador' : 'Sócio-Administrador'}
 
+=== APRESENTAÇÃO DA OFICINA ===
+🏭 Oficina: ${workshop.name}
 📍 Localização: ${workshop.city}, ${workshop.state}
 🔧 Segmento: ${workshop.segment || workshop.segment_auto || 'Não definido'}
-👥 Equipe: ${employees.length} colaboradores
-${Object.keys(roleCount).length > 0 ? `   • ${Object.entries(roleCount).map(([role, count]) => `${count} ${role}`).join('\n   • ')}` : ''}
 💰 Faturamento Mensal: ${workshop.monthly_revenue || 'Não informado'}
 📅 Anos de Operação: ${workshop.years_in_business || 'Não informado'}
+
+=== EQUIPE COMPLETA ===
+👥 Total de Colaboradores: ${employees.length}
+${Object.keys(roleCount).length > 0 ? Object.entries(roleCount).map(([role, count]) => 
+    `   • ${count} ${roleNames[role] || role}`
+).join('\n') : '   (Nenhum colaborador cadastrado)'}
+💬 Feedbacks Registrados: ${feedbacks.length}
 
 === METAS ATUAIS ===
 ${workshop.monthly_goals ? `
