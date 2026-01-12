@@ -51,7 +51,7 @@ export default function TesteOpenAI() {
 
         setLoading(true);
         setResponse("");
-        setDisplayedResponse("");
+        setDisplayedResponse("🤔 Analisando seus dados...");
 
         try {
             const result = await base44.functions.invoke('chatWithAI', {
@@ -60,12 +60,16 @@ export default function TesteOpenAI() {
                 includeWorkshopData: includeData
             });
 
+            // Aguarda 1 segundo simulando "pensamento"
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
             setResponse(result.data.response);
             setUsage(result.data.usage);
             toast.success("Resposta gerada!");
         } catch (error) {
             console.error(error);
             toast.error("Erro ao chamar IA: " + error.message);
+            setDisplayedResponse("Erro ao processar sua pergunta.");
         } finally {
             setLoading(false);
         }
