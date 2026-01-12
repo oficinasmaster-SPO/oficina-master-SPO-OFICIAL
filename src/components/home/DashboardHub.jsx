@@ -761,7 +761,7 @@ export default function DashboardHub({ user, workshop }) {
                 </div>
                 <h3 className="text-sm font-medium text-gray-500">GPS Aplicados</h3>
                 <div className="mt-1">
-                  <span className="text-2xl font-bold text-gray-900">12</span>
+                  <span className="text-2xl font-bold text-gray-900">{dashboardMetrics?.gpsAplicados?.aplicados || 0}</span>
                   <p className="text-xs text-gray-500">Guias de Processo Simplificado</p>
                 </div>
               </CardContent>
