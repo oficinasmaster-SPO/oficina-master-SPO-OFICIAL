@@ -157,7 +157,7 @@ Deno.serve(async (req) => {
         </div>
       `;
 
-      await base44.integrations.Core.SendEmail({
+      await base44.asServiceRole.integrations.Core.SendEmail({
         from_name: workshopData.name || "Oficinas Master",
         to: email,
         subject: `🎉 Bem-vindo(a) à ${workshopData.name} - Acesse sua conta`,
