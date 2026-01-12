@@ -225,6 +225,9 @@ export default function DashboardHub({ user, workshop }) {
     retry: 1
   });
 
+  // Buscar métricas reais do histórico de produção
+  const { data: dashboardMetrics } = useDashboardMetrics(workshop?.id, user?.id);
+
   // Guard against null user
   if (!user?.id) {
     return (
