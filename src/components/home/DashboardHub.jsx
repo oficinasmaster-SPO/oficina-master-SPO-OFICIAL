@@ -738,13 +738,13 @@ export default function DashboardHub({ user, workshop }) {
                 <h3 className="text-sm font-medium text-gray-500">R70 / I30</h3>
                 <div className="mt-2 flex items-center gap-2">
                   <div className="flex-1 bg-gray-100 rounded h-2 overflow-hidden flex">
-                    <div className="bg-green-500 h-full" style={{width: '65%'}} title="Renda 65%"></div>
-                    <div className="bg-orange-500 h-full" style={{width: '35%'}} title="Investimento 35%"></div>
+                    <div className="bg-green-500 h-full" style={{width: `${dashboardMetrics?.r70i30?.r70 || 70}%`}} title={`Renda ${dashboardMetrics?.r70i30?.r70 || 70}%`}></div>
+                    <div className="bg-orange-500 h-full" style={{width: `${dashboardMetrics?.r70i30?.i30 || 30}%`}} title={`Investimento ${dashboardMetrics?.r70i30?.i30 || 30}%`}></div>
                   </div>
                 </div>
                 <div className="flex justify-between text-xs mt-1">
-                  <span className="text-green-600 font-bold">R: 65%</span>
-                  <span className="text-orange-600 font-bold">I: 35%</span>
+                  <span className="text-green-600 font-bold">R: {dashboardMetrics?.r70i30?.r70 || 70}%</span>
+                  <span className="text-orange-600 font-bold">I: {dashboardMetrics?.r70i30?.i30 || 30}%</span>
                 </div>
               </CardContent>
             </Card>
