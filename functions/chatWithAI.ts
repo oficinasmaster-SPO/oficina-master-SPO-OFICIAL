@@ -37,47 +37,144 @@ Deno.serve(async (req) => {
                         base44.entities.EmployeeFeedback.filter({ workshop_id: workshop.id }).catch(() => [])
                     ]);
 
+                    // Buscar dados complementares com mais detalhes
+                    const [
+                        diagnostics, 
+                        entrepreneurDiag, 
+                        monthlyGoals, 
+                        dreRecords, 
+                        employees, 
+                        feedbacks,
+                        goalHistory,
+                        debtAnalysis
+                    ] = await Promise.all([
+                        base44.entities.Diagnostic.filter({ workshop_id: workshop.id }).catch(() => []),
+                        base44.entities.EntrepreneurDiagnostic.filter({ workshop_id: workshop.id }).catch(() => []),
+                        base44.entities.MonthlyGoalHistory.filter({ workshop_id: workshop.id }).catch(() => []),
+                        base44.entities.DREMonthly.filter({ workshop_id: workshop.id }).catch(() => []),
+                        base44.entities.Employee.filter({ workshop_id: workshop.id }).catch(() => []),
+                        base44.entities.EmployeeFeedback.filter({ workshop_id: workshop.id }).catch(() => []),
+                        base44.entities.GoalHistory.filter({ workshop_id: workshop.id }).catch(() => []),
+                        base44.entities.DebtAnalysis.filter({ workshop_id: workshop.id }).catch(() => [])
+                    ]);
+
+                    // Calcular R70/I30
+                    const lastDRE = dreRecords[0];
+                    const r70 = lastDRE?.r70_percentual || 70;
+                    const i30 = lastDRE?.i30_percentual || 30;
+
+                    // Contar funções dos colaboradores
+                    const roleCount = employees.reduce((acc, emp) => {
+                        const role = emp.job_role || 'outros';
+                        acc[role] = (acc[role] || 0) + 1;
+                        return acc;
+                    }, {});
+
                     // Montar contexto rico
-                    workshopContext = `\n\n=== DADOS DA OFICINA ===
-Nome: ${workshop.name}
-Segmento: ${workshop.segment || workshop.segment_auto || 'Não definido'}
-Cidade/Estado: ${workshop.city}, ${workshop.state}
-Faturamento Mensal: ${workshop.monthly_revenue || 'Não informado'}
-Funcionários: ${workshop.employees_count || employees.length || 0}
-Anos de Operação: ${workshop.years_in_business || 'Não informado'}
+                    workshopContext = `
+
+=== APRESENTAÇÃO INICIAL ===
+Olá! Sou seu consultor de gestão. Deixe-me apresentar um resumo da ${workshop.name}:
+
+📍 Localização: ${workshop.city}, ${workshop.state}
+🔧 Segmento: ${workshop.segment || workshop.segment_auto || 'Não definido'}
+👥 Equipe: ${employees.length} colaboradores
+${Object.keys(roleCount).length > 0 ? `   • ${Object.entries(roleCount).map(([role, count]) => `${count} ${role}`).join('\n   • ')}` : ''}
+💰 Faturamento Mensal: ${workshop.monthly_revenue || 'Não informado'}
+📅 Anos de Operação: ${workshop.years_in_business || 'Não informado'}
 
 === METAS ATUAIS ===
 ${workshop.monthly_goals ? `
-Faturamento Projetado: R$ ${workshop.monthly_goals.projected_revenue?.toFixed(2) || 0}
-Faturamento Realizado: R$ ${workshop.monthly_goals.actual_revenue_achieved?.toFixed(2) || 0}
-Meta de Lucro: ${workshop.monthly_goals.profit_percentage || 0}%
-Ticket Médio Meta: R$ ${workshop.monthly_goals.average_ticket?.toFixed(2) || 0}
-` : 'Não definidas'}
+💵 Faturamento Projetado: R$ ${workshop.monthly_goals.projected_revenue?.toFixed(2) || 0}
+✅ Faturamento Realizado: R$ ${workshop.monthly_goals.actual_revenue_achieved?.toFixed(2) || 0}
+📊 Meta de Lucro: ${workshop.monthly_goals.profit_percentage || 0}%
+🎯 Ticket Médio Meta: R$ ${workshop.monthly_goals.average_ticket?.toFixed(2) || 0}
+` : '⚠️ IMPORTANTE: Metas mensais não definidas. Seria interessante configurá-las para eu poder te ajudar melhor!'}
 
-=== MELHOR MÊS HISTÓRICO ===
+=== DRE & INDICADORES TÉCNICOS ===
+${lastDRE ? `
+📆 Mês de Referência: ${lastDRE.mes_referencia}
+💎 TCMP² (Valor Hora Ideal): R$ ${lastDRE.tcmp2?.toFixed(2) || 0}
+⚙️ Valor Hora Praticado: R$ ${lastDRE.valor_hora_ideal?.toFixed(2) || 0}
+📈 R70 (Receita): ${r70.toFixed(1)}% | I30 (Investimento): ${i30.toFixed(1)}%
+💹 Margem Bruta: ${lastDRE.margem_bruta_percentual?.toFixed(1) || 0}%
+${lastDRE.kit_master ? `🎁 Kit Master: R$ ${lastDRE.kit_master.toFixed(2)}` : ''}
+${lastDRE.pave ? `📦 PAVE: R$ ${lastDRE.pave.toFixed(2)}` : ''}
+` : '⚠️ IMPORTANTE: Dados de DRE/TCMP² não registrados. Isso é fundamental para análises precisas!'}
+
+=== MELHOR DESEMPENHO HISTÓRICO ===
 ${workshop.best_month_history ? `
-Data: ${workshop.best_month_history.date || 'N/A'}
-Faturamento: R$ ${workshop.best_month_history.revenue_total?.toFixed(2) || 0}
-Clientes: ${workshop.best_month_history.customer_volume || 0}
-Ticket Médio: R$ ${workshop.best_month_history.average_ticket?.toFixed(2) || 0}
-` : 'Não registrado'}
+🏆 Melhor Mês: ${workshop.best_month_history.date || 'N/A'}
+💰 Faturamento: R$ ${workshop.best_month_history.revenue_total?.toFixed(2) || 0}
+👥 Clientes Atendidos: ${workshop.best_month_history.customer_volume || 0}
+🎯 Ticket Médio: R$ ${workshop.best_month_history.average_ticket?.toFixed(2) || 0}
+` : '⚠️ Seria importante registrar o seu melhor mês histórico para dimensionamento de metas!'}
 
-=== DRE & TCMP² (Último Registro) ===
-${dreRecords.length > 0 ? `
-Mês: ${dreRecords[0].mes_referencia}
-TCMP²: R$ ${dreRecords[0].tcmp2?.toFixed(2) || 0}
-Valor Hora Ideal: R$ ${dreRecords[0].valor_hora_ideal?.toFixed(2) || 0}
-Margem Bruta: ${dreRecords[0].margem_bruta_percentual?.toFixed(1) || 0}%
-` : 'Sem registros'}
+=== DIAGNÓSTICOS & MATURIDADE ===
+${diagnostics.length > 0 ? `
+📊 Total de Diagnósticos Realizados: ${diagnostics.length}
+🎯 Fase Atual da Empresa: ${diagnostics[0]?.phase || 'Não definida'}
+📅 Último Diagnóstico: ${new Date(diagnostics[0].created_date).toLocaleDateString('pt-BR')}
+` : '⚠️ Nenhum diagnóstico de fase empresarial realizado ainda. Isso ajudaria muito nas recomendações!'}
 
-=== DIAGNÓSTICOS ===
-Total de Diagnósticos: ${diagnostics.length}
-Fase Atual: ${diagnostics[0]?.phase || 'Não definida'}
-${diagnostics.length > 0 ? `Último diagnóstico em: ${new Date(diagnostics[0].created_date).toLocaleDateString('pt-BR')}` : ''}
+${entrepreneurDiagnostic.length > 0 ? `
+👔 Perfil do Empresário: ${entrepreneurDiagnostic[0].dominant_profile || 'Não definido'}
+📅 Avaliado em: ${new Date(entrepreneurDiagnostic[0].created_date).toLocaleDateString('pt-BR')}
+` : '⚠️ Diagnóstico do empresário não realizado. Conhecer seu perfil ajudaria nas orientações!'}
 
-=== EQUIPE ===
-Total de Colaboradores: ${employees.length}
-Feedbacks Registrados: ${feedbacks.length}
+=== GESTÃO DE ENDIVIDAMENTO ===
+${debtAnalysis.length > 0 ? `
+📊 Curva de Endividamento: ${debtAnalysis[0].debt_level || 'Analisada'}
+💳 Análise realizada em: ${new Date(debtAnalysis[0].created_date).toLocaleDateString('pt-BR')}
+` : '⚠️ Análise de endividamento não realizada.'}
+
+=== EQUIPE & FEEDBACK ===
+👥 Total de Colaboradores: ${employees.length}
+💬 Feedbacks Registrados: ${feedbacks.length}
+${feedbacks.length === 0 ? '⚠️ Nenhum feedback de colaborador registrado ainda.' : ''}
+
+=== HISTÓRICO DE METAS ===
+${goalHistory.length > 0 ? `
+📈 Registros de Meta: ${goalHistory.length}
+` : '⚠️ Histórico de metas vazio.'}
+
+---
+
+💡 IMPORTANTE: Antes de responder sua pergunta, vou analisar esses dados...
+`;
+                }
+            } catch (error) {
+                console.error('Erro ao buscar dados do workshop:', error);
+            }
+        }
+
+        const systemPrompt = `Você é um consultor sênior especializado em gestão de oficinas automotivas. 
+
+INSTRUÇÕES CRÍTICAS:
+1. SEMPRE inicie sua resposta com uma apresentação personalizada baseada nos dados fornecidos
+2. Mencione os pontos fortes identificados e as lacunas importantes
+3. Simule estar "pensando" antes de dar a resposta (use "🤔 Analisando...") 
+4. Seja prático, direto e acionável
+5. Use emojis para tornar a leitura mais agradável
+6. Se faltar dados importantes, mencione isso gentilmente
+
+${context || ''}`;
+
+        const response = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            messages: [
+                {
+                    role: "system",
+                    content: systemPrompt + workshopContext
+                },
+                {
+                    role: "user",
+                    content: message
+                }
+            ],
+            temperature: 0.7,
+            max_tokens: 3000
+        });
 
 === OBSERVAÇÕES ===
 ${workshop.observacoes_gerais || 'Nenhuma observação registrada'}
