@@ -161,33 +161,32 @@ ${workshop.best_month_history ? `
 🎯 Ticket Médio: R$ ${workshop.best_month_history.average_ticket?.toFixed(2) || 0}
 ` : '⚠️ Seria importante registrar o seu melhor mês histórico para dimensionamento de metas!'}
 
-=== DIAGNÓSTICOS & MATURIDADE ===
-${diagnostics.length > 0 ? `
-📊 Total de Diagnósticos Realizados: ${diagnostics.length}
-🎯 Fase Atual da Empresa: ${diagnostics[0]?.phase || 'Não definida'}
-📅 Último Diagnóstico: ${new Date(diagnostics[0].created_date).toLocaleDateString('pt-BR')}
-` : '⚠️ Nenhum diagnóstico de fase empresarial realizado ainda. Isso ajudaria muito nas recomendações!'}
+=== DIAGNÓSTICOS REALIZADOS ===
+✅ Diagnósticos Completos:
+${completedDiagnostics.length > 0 ? completedDiagnostics.map(d => `   • ${d.name} (${d.count} registro${d.count > 1 ? 's' : ''})`).join('\n') : '   Nenhum diagnóstico realizado ainda'}
 
-${entrepreneurDiagnostic.length > 0 ? `
-👔 Perfil do Empresário: ${entrepreneurDiagnostic[0].dominant_profile || 'Não definido'}
-📅 Avaliado em: ${new Date(entrepreneurDiagnostic[0].created_date).toLocaleDateString('pt-BR')}
-` : '⚠️ Diagnóstico do empresário não realizado. Conhecer seu perfil ajudaria nas orientações!'}
+${diagnostics.length > 0 ? `
+🎯 Fase Atual da Empresa: Fase ${diagnostics[0]?.phase || 'Não definida'}
+📅 Último Diagnóstico: ${new Date(diagnostics[0].created_date).toLocaleDateString('pt-BR')}
+` : ''}
+
+${entrepreneurDiag.length > 0 ? `
+👔 Perfil do Empresário: ${entrepreneurDiag[0].dominant_profile || 'Não definido'}
+` : ''}
+
+⚠️ DIAGNÓSTICOS PENDENTES (importantes para análises completas):
+${pendingDiagnostics.length > 0 ? pendingDiagnostics.map(d => `   • ${d}`).join('\n') : '   Todos os diagnósticos principais foram realizados!'}
 
 === GESTÃO DE ENDIVIDAMENTO ===
 ${debtAnalysis.length > 0 ? `
 📊 Curva de Endividamento: ${debtAnalysis[0].debt_level || 'Analisada'}
 💳 Análise realizada em: ${new Date(debtAnalysis[0].created_date).toLocaleDateString('pt-BR')}
-` : '⚠️ Análise de endividamento não realizada.'}
-
-=== EQUIPE & FEEDBACK ===
-👥 Total de Colaboradores: ${employees.length}
-💬 Feedbacks Registrados: ${feedbacks.length}
-${feedbacks.length === 0 ? '⚠️ Nenhum feedback de colaborador registrado ainda.' : ''}
+` : '⚠️ Análise de endividamento não realizada - seria importante para planejamento financeiro!'}
 
 === HISTÓRICO DE METAS ===
 ${goalHistory.length > 0 ? `
 📈 Registros de Meta: ${goalHistory.length}
-` : '⚠️ Histórico de metas vazio.'}
+` : '⚠️ Histórico de metas vazio - comece a registrar suas metas!'}
 
 ---
 
