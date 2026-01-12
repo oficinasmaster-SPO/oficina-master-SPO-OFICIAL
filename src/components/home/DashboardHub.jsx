@@ -661,14 +661,20 @@ export default function DashboardHub({ user, workshop }) {
                 </div>
                 <h3 className="text-sm font-medium text-gray-500">Ranking</h3>
                 <div className="mt-2 space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="flex items-center gap-2"><span className="font-bold text-yellow-600">1º</span> João S.</span>
-                    <span className="font-bold">R$ 15k</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="flex items-center gap-2"><span className="font-bold text-gray-400">2º</span> Maria O.</span>
-                    <span className="font-bold">R$ 12k</span>
-                  </div>
+                  {dashboardMetrics?.ranking?.slice(0, 2).map((emp, idx) => (
+                    <div key={emp.employee_id} className="flex items-center justify-between text-sm">
+                      <span className="flex items-center gap-2">
+                        <span className={`font-bold ${idx === 0 ? 'text-yellow-600' : 'text-gray-400'}`}>
+                          {emp.posicao}º
+                        </span>
+                        Colaborador #{emp.employee_id.slice(-4)}
+                      </span>
+                      <span className="font-bold">R$ {(emp.valor / 1000).toFixed(1)}k</span>
+                    </div>
+                  ))}
+                  {(!dashboardMetrics?.ranking || dashboardMetrics.ranking.length === 0) && (
+                    <p className="text-xs text-gray-500">Sem dados de ranking</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
