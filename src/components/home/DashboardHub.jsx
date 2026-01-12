@@ -779,7 +779,9 @@ export default function DashboardHub({ user, workshop }) {
                 </div>
                 <h3 className="text-sm font-medium text-gray-500">Kit Master</h3>
                 <div className="mt-1">
-                  <span className="text-2xl font-bold text-gray-900">8/15</span>
+                  <span className="text-2xl font-bold text-gray-900">
+                    {dashboardMetrics?.kitMaster?.convertidos || 0}/{dashboardMetrics?.kitMaster?.meta || 15}
+                  </span>
                   <p className="text-xs text-gray-500">Convertidos este mês</p>
                 </div>
               </CardContent>
