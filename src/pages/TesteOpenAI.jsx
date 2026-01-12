@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,8 +9,38 @@ import { toast } from "sonner";
 export default function TesteOpenAI() {
     const [message, setMessage] = useState("");
     const [response, setResponse] = useState("");
+    const [displayedResponse, setDisplayedResponse] = useState("");
     const [loading, setLoading] = useState(false);
+    const [isTyping, setIsTyping] = useState(false);
     const [usage, setUsage] = useState(null);
+    const typingIntervalRef = useRef(null);
+
+    useEffect(() => {
+        if (!response || response === displayedResponse) {
+            setIsTyping(false);
+            return;
+        }
+
+        setIsTyping(true);
+        setDisplayedResponse("");
+        let currentIndex = 0;
+
+        typingIntervalRef.current = setInterval(() => {
+            if (currentIndex < response.length) {
+                setDisplayedResponse(response.slice(0, currentIndex + 1));
+                currentIndex++;
+            } else {
+                clearInterval(typingIntervalRef.current);
+                setIsTyping(false);
+            }
+        }, 20);
+
+        return () => {
+            if (typingIntervalRef.current) {
+                clearInterval(typingIntervalRef.current);
+            }
+        };
+    }, [response]);
 
     const handleSend = async () => {
         if (!message.trim()) {
@@ -20,6 +50,7 @@ export default function TesteOpenAI() {
 
         setLoading(true);
         setResponse("");
+        setDisplayedResponse("");
 
         try {
             const result = await base44.functions.invoke('chatWithAI', {
