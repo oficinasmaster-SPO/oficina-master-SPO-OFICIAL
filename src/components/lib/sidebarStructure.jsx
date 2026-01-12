@@ -1,4 +1,3 @@
-
 // Estrutura completa da sidebar para gestão de permissões
 export const sidebarStructure = [
   {
@@ -161,6 +160,7 @@ export const sidebarStructure = [
       { name: "Tours e Vídeos", description: "Ajuda" },
       { name: "Processos Admin", description: "Gestão MAPs" },
       { name: "Integrações", description: "Google Calendar & Meet" },
+      { name: "Teste OpenAI", description: "Testar chave secundária" },
     ],
   },
 ];
