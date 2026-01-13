@@ -95,10 +95,33 @@ export function useSyncData() {
     }
   };
 
+  const updateDREFromMonthlyGoals = async (workshop_id, month) => {
+    try {
+      setIsSyncing(true);
+      setSyncError(null);
+      
+      const result = await base44.functions.invoke('updateDREFromMonthlyGoals', {
+        workshop_id,
+        month
+      });
+
+      toast.success('DRE atualizado com receitas do mês');
+      return { success: true, ...result.data };
+    } catch (error) {
+      const errorMsg = error.response?.data?.error || error.message;
+      setSyncError({ type: 'error', message: errorMsg });
+      toast.error(`Erro ao atualizar DRE: ${errorMsg}`);
+      return { success: false, error: errorMsg };
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   return {
     syncMonthlyData,
     syncDRETOMetas,
     resolveDiscrepancy,
+    updateDREFromMonthlyGoals,
     isSyncing,
     syncError,
     clearError: () => setSyncError(null)

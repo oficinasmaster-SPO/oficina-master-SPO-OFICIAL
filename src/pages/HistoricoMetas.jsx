@@ -14,6 +14,7 @@ import ManualGoalRegistration from "../components/goals/ManualGoalRegistration";
 import { toast } from "sonner";
 import AdminViewBanner from "../components/shared/AdminViewBanner";
 import { useSyncData } from "../components/hooks/useSyncData";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function HistoricoMetas() {
   const [workshop, setWorkshop] = useState(null);
@@ -26,7 +27,7 @@ export default function HistoricoMetas() {
   const queryClient = useQueryClient();
   const [isAdminView, setIsAdminView] = useState(false);
   const location = useLocation();
-  const { syncMonthlyData } = useSyncData();
+  const { syncMonthlyData, updateDREFromMonthlyGoals } = useSyncData();
 
   useEffect(() => {
     loadUser();
@@ -733,9 +734,13 @@ export default function HistoricoMetas() {
           onSave={async () => {
             // Sincronizar após salvar registro
             if (workshop) {
+              // 1. Atualizar DRE com valores consolidados dos registros diários
+              await updateDREFromMonthlyGoals(workshop.id, filterMonth);
+              // 2. Sincronizar dados mensais
               await syncMonthlyData(workshop.id, filterMonth);
             }
             queryClient.invalidateQueries(['goal-history']);
+            queryClient.invalidateQueries(['dre-list']);
             queryClient.invalidateQueries(['employees']);
             refetchEmployees();
           }}

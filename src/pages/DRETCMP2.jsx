@@ -23,6 +23,11 @@ import AdminViewBanner from "../components/shared/AdminViewBanner";
 import { useSyncData } from "../components/hooks/useSyncData";
 import DiscrepancyAlert from "../components/sync/DiscrepancyAlert";
 
+const getCurrentMonth = () => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+};
+
 export default function DRETCMP2() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -33,7 +38,7 @@ export default function DRETCMP2() {
   const [formData, setFormData] = useState(getEmptyDRE());
   const [isAdminView, setIsAdminView] = useState(false);
   const [syncAlert, setSyncAlert] = useState(null);
-  const { syncDRETOMetas, resolveDiscrepancy, isSyncing } = useSyncData();
+  const { syncDRETOMetas, resolveDiscrepancy, updateDREFromMonthlyGoals, isSyncing } = useSyncData();
 
   function getCurrentMonth() {
     const now = new Date();
@@ -117,21 +122,26 @@ export default function DRETCMP2() {
 
   const currentDRE = dreList.find(d => d.month === selectedMonth);
 
-  // Sincronizar dados do DRE com metas ao carregar
+  // Sincronizar dados: consolidar registros diários → DRE → metas
   useEffect(() => {
-    if (workshop && currentDRE && viewMode === 'month') {
+    if (workshop && viewMode === 'month') {
       const syncData = async () => {
-        const result = await syncDRETOMetas(currentDRE.id, workshop.id, selectedMonth);
-        if (result.requiresConfirmation) {
-          setSyncAlert({
-            discrepancies: result.discrepancies,
-            dre_id: currentDRE.id
-          });
+        // 1. Primeira vez: consolidar dados diários para o DRE
+        await updateDREFromMonthlyGoals(workshop.id, selectedMonth);
+        // 2. Depois: sincronizar DRE com metas se existir DRE
+        if (currentDRE) {
+          const result = await syncDRETOMetas(currentDRE.id, workshop.id, selectedMonth);
+          if (result.requiresConfirmation) {
+            setSyncAlert({
+              discrepancies: result.discrepancies,
+              dre_id: currentDRE.id
+            });
+          }
         }
       };
       syncData();
     }
-  }, [workshop?.id, currentDRE?.id, selectedMonth, viewMode]);
+  }, [workshop?.id, selectedMonth, viewMode]);
 
   // Calculate Average DRE
   const averageData = useMemo(() => {
