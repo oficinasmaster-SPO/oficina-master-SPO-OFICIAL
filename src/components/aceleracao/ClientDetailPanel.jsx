@@ -327,7 +327,7 @@ export default function ClientDetailPanel({ client, isOpen, onClose, atendimento
             )}
           </TabsContent>
         </Tabs>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }
