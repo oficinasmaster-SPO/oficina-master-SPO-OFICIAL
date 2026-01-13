@@ -13,25 +13,31 @@ export function useWorkshopContext() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
+    
     const loadWorkshop = async () => {
       try {
         setIsLoading(true);
         
         // PRIORIDADE 1: Modo Admin
         if (isAdminMode && adminWorkshopId) {
+          console.log('🔄 Carregando workshop ADMIN:', adminWorkshopId);
           const ws = await base44.entities.Workshop.get(adminWorkshopId);
-          console.log('🎯 useWorkshopContext: Modo ADMIN ativo', {
-            workshopId: ws.id,
-            name: ws.name,
-            city: ws.city
-          });
-          setWorkshop(ws);
+          
+          if (!cancelled) {
+            console.log('✅ Workshop ADMIN carregado:', {
+              workshopId: ws.id,
+              name: ws.name,
+              city: ws.city
+            });
+            setWorkshop(ws);
+          }
           return;
         }
 
         // PRIORIDADE 2: Workshop do usuário logado
         const user = await base44.auth.me();
-        if (user) {
+        if (user && !cancelled) {
           let userWorkshop = null;
           
           // Tenta pegar workshop por owner_id
@@ -43,7 +49,7 @@ export function useWorkshopContext() {
             userWorkshop = await base44.entities.Workshop.get(user.workshop_id);
           }
 
-          console.log('🎯 useWorkshopContext: Modo NORMAL', {
+          console.log('✅ Workshop NORMAL carregado:', {
             workshopId: userWorkshop?.id,
             name: userWorkshop?.name
           });
@@ -52,13 +58,21 @@ export function useWorkshopContext() {
         }
       } catch (error) {
         console.error('❌ Erro ao carregar workshop context:', error);
-        setWorkshop(null);
+        if (!cancelled) {
+          setWorkshop(null);
+        }
       } finally {
-        setIsLoading(false);
+        if (!cancelled) {
+          setIsLoading(false);
+        }
       }
     };
 
     loadWorkshop();
+    
+    return () => {
+      cancelled = true;
+    };
   }, [isAdminMode, adminWorkshopId]);
 
   return {
