@@ -108,11 +108,14 @@ Deno.serve(async (req) => {
       ? `${origin}/PrimeiroAcesso?token=${invite.invite_token}`
       : `${origin}/PrimeiroAcesso`;
 
-    // 7. Enviar email de convite
-    try {
-      console.log("📧 Enviando email para:", email);
-      
-      const emailBody = `
+    // 7. Enviar email de convite (somente se email for domínio interno)
+    const isInternalEmail = email && (email.includes('@oficinasmaster.com') || email.includes('@base44'));
+    
+    if (isInternalEmail) {
+      try {
+        console.log("📧 Enviando email para:", email);
+        
+        const emailBody = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
             <h1 style="color: white; margin: 0;">🎉 Bem-vindo(a) à ${workshopData.name}!</h1>
@@ -157,28 +160,29 @@ Deno.serve(async (req) => {
         </div>
       `;
 
-      await base44.integrations.Core.SendEmail({
-        from_name: workshopData.name || "Oficinas Master",
-        to: email,
-        subject: `🎉 Bem-vindo(a) à ${workshopData.name} - Acesse sua conta`,
-        body: emailBody
-      });
-
-      console.log("✅ Email enviado com sucesso!");
-
-      // Atualizar status do convite
-      if (invite) {
-        await base44.asServiceRole.entities.EmployeeInvite.update(invite.id, {
-          status: 'enviado',
-          last_resent_at: new Date().toISOString(),
-          resent_count: (invite.resent_count || 0) + 1
+        await base44.integrations.Core.SendEmail({
+          from_name: workshopData.name || "Oficinas Master",
+          to: email,
+          subject: `🎉 Bem-vindo(a) à ${workshopData.name} - Acesse sua conta`,
+          body: emailBody
         });
+
+        console.log("✅ Email enviado com sucesso!");
+
+        // Atualizar status do convite
+        if (invite) {
+          await base44.asServiceRole.entities.EmployeeInvite.update(invite.id, {
+            status: 'enviado',
+            last_resent_at: new Date().toISOString(),
+            resent_count: (invite.resent_count || 0) + 1
+          });
+        }
+      } catch (emailError) {
+        console.error("❌ Erro ao enviar email:", emailError);
+        console.warn("⚠️ Criando colaborador mesmo com erro de email");
       }
-    } catch (emailError) {
-      console.error("❌ Erro ao enviar email:", emailError);
-      console.error("❌ Stack:", emailError.stack);
-      // Não continua - email é crítico
-      throw new Error("Erro ao enviar email de convite: " + emailError.message);
+    } else {
+      console.log("ℹ️ Email externo - pulando envio de email");
     }
 
     // 8. Retornar sucesso
