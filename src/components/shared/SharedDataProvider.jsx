@@ -8,7 +8,7 @@ export function SharedDataProvider({ children, workshopId, userId }) {
   const queryClient = useQueryClient();
 
   // Dados da Oficina - fonte principal
-  const { data: workshop, isLoading: loadingWorkshop, refetch } = useQuery({
+  const { data: workshop, isLoading: loadingWorkshop } = useQuery({
     queryKey: ['shared-workshop', workshopId],
     queryFn: async () => {
       if (!workshopId) return null;
@@ -32,13 +32,6 @@ export function SharedDataProvider({ children, workshopId, userId }) {
     refetchOnMount: 'always',
     retry: 1,
   });
-
-  // Recarrega quando o workshopId muda
-  React.useEffect(() => {
-    if (workshopId) {
-      refetch();
-    }
-  }, [workshopId, refetch]);
 
   const { data: latestDRE, isLoading: loadingDRE } = useQuery({
     queryKey: ['shared-dre', workshopId],
