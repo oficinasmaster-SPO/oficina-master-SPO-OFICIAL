@@ -17,15 +17,16 @@ import { usePermissions } from "@/components/hooks/usePermissions";
 import AssistanceModeBanner from "@/components/shared/AssistanceModeBanner.jsx";
 import AdminModeBanner from "@/components/shared/AdminModeBanner.jsx";
 import { useAdminMode } from "@/components/hooks/useAdminMode";
+import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
   const [user, setUser] = useState(null);
-  const [workshop, setWorkshop] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  const { isAdminMode, adminWorkshopId, getAdminUrl } = useAdminMode();
+  const { isAdminMode, getAdminUrl } = useAdminMode();
+  const { workshop, workshopId } = useWorkshopContext();
   // TEMPORARIAMENTE DESABILITADO
   // const { canAccessPage } = usePermissions();
 
@@ -69,49 +70,6 @@ export default function Layout({ children, currentPageName }) {
           try {
             const currentUser = await base44.auth.me();
             setUser(currentUser);
-
-            let userWorkshop = null;
-
-            // MODO ADMIN: Verifica sessionStorage primeiro, depois URL
-            const storedWorkshopId = sessionStorage.getItem('admin_workshop_id');
-            const urlParams = new URLSearchParams(window.location.search);
-            const urlWorkshopId = urlParams.get('workshop_id');
-            const targetWorkshopId = urlWorkshopId || storedWorkshopId;
-
-            if (targetWorkshopId && (currentUser.role === 'admin' || currentUser.job_role === 'acelerador')) {
-              // Modo Admin/Acelerador: carregar workshop específico COMPLETO
-              try {
-                userWorkshop = await base44.entities.Workshop.get(targetWorkshopId);
-                console.log('✅ Workshop ADMIN carregado:', {
-                  id: userWorkshop.id,
-                  name: userWorkshop.name,
-                  city: userWorkshop.city
-                });
-              } catch (error) {
-                console.error('❌ Erro ao carregar workshop admin:', error);
-                sessionStorage.removeItem('admin_workshop_id');
-              }
-            } else {
-              // Modo Normal: carregar workshop do usuário
-              sessionStorage.removeItem('admin_workshop_id');
-              const ownedWorkshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
-              userWorkshop = Array.isArray(ownedWorkshops) && ownedWorkshops.length > 0 ? ownedWorkshops[0] : null;
-
-              if (!userWorkshop && currentUser.workshop_id) {
-                try {
-                  userWorkshop = await base44.entities.Workshop.get(currentUser.workshop_id);
-                } catch (err) {
-                  console.error("Erro ao buscar workshop:", err);
-                }
-              }
-
-              console.log('✅ Workshop NORMAL carregado:', {
-                id: userWorkshop?.id,
-                name: userWorkshop?.name
-              });
-            }
-
-            setWorkshop(userWorkshop || null);
           } catch (userError) {
             console.log("Error fetching user:", userError);
             setUser(null);
@@ -126,7 +84,7 @@ export default function Layout({ children, currentPageName }) {
     };
 
     loadUser();
-  }, [location.pathname, location.search]);
+  }, [location.pathname]);
 
 
 
@@ -278,8 +236,8 @@ export default function Layout({ children, currentPageName }) {
             <main className="flex-1">
               <div className={`${isAuthenticated && !isPublicPage ? 'px-4 sm:px-6 lg:px-8 py-6' : ''}`}>
                 {isAuthenticated && !isPublicPage && <Breadcrumbs />}
-                {isAuthenticated && workshop ? (
-                  <SharedDataProvider workshopId={workshop.id} userId={user?.id}>
+                {isAuthenticated && workshopId ? (
+                  <SharedDataProvider workshopId={workshopId} userId={user?.id}>
                     {children}
                   </SharedDataProvider>
                 ) : children}
