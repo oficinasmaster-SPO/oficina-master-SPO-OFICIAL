@@ -15,6 +15,8 @@ import NotificationPermissionBanner from "@/components/notifications/Notificatio
 // import ActivityTracker from "@/components/tracking/ActivityTracker";
 import { usePermissions } from "@/components/hooks/usePermissions";
 import AssistanceModeBanner from "@/components/shared/AssistanceModeBanner.jsx";
+import AdminModeBanner from "@/components/shared/AdminModeBanner.jsx";
+import { useAdminMode } from "@/components/hooks/useAdminMode";
 
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
@@ -23,7 +25,7 @@ export default function Layout({ children, currentPageName }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  const [isAdminView, setIsAdminView] = useState(false);
+  const { isAdminMode, adminWorkshopId, getAdminUrl } = useAdminMode();
   // TEMPORARIAMENTE DESABILITADO
   // const { canAccessPage } = usePermissions();
 
@@ -66,19 +68,21 @@ export default function Layout({ children, currentPageName }) {
         if (authenticated) {
           try {
             const currentUser = await base44.auth.me();
-            
-            // TEMPORARIAMENTE DESABILITADO: atualização de login
             setUser(currentUser);
-            
-            const urlParams = new URLSearchParams(window.location.search);
-            const adminWorkshopId = urlParams.get('workshop_id');
+
             let userWorkshop = null;
 
-            if (adminWorkshopId && currentUser.role === 'admin') {
-              userWorkshop = await base44.entities.Workshop.get(adminWorkshopId);
-              setIsAdminView(true);
+            // MODO ADMIN: Verifica sessionStorage primeiro, depois URL
+            const storedWorkshopId = sessionStorage.getItem('admin_workshop_id');
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlWorkshopId = urlParams.get('workshop_id');
+            const targetWorkshopId = urlWorkshopId || storedWorkshopId;
+
+            if (targetWorkshopId && currentUser.role === 'admin') {
+              // Modo Admin: carregar workshop específico
+              userWorkshop = await base44.entities.Workshop.get(targetWorkshopId);
             } else {
-              setIsAdminView(false);
+              // Modo Normal: carregar workshop do usuário
               const ownedWorkshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
               userWorkshop = Array.isArray(ownedWorkshops) && ownedWorkshops.length > 0 ? ownedWorkshops[0] : null;
 
@@ -171,6 +175,7 @@ export default function Layout({ children, currentPageName }) {
 
       <div className={`${isAuthenticated && !isPublicPage ? 'lg:pl-64' : ''} flex flex-col min-h-screen transition-all duration-300`} style={isAuthenticated && !isPublicPage ? { paddingLeft: 'var(--sidebar-width, 16rem)' } : {}}>
               {isAuthenticated && user && <AssistanceModeBanner user={user} />}
+              {isAuthenticated && isAdminMode && workshop && <AdminModeBanner workshop={workshop} />}
               {!isPublicPage && (
           <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30 print:hidden">
           <div className="px-4 sm:px-6 lg:px-8">
