@@ -1773,14 +1773,25 @@ export default function ManualGoalRegistration({ open, onClose, workshop, onSave
               Cancelar
             </Button>
             <Button 
-              onClick={handleSave} 
+              onClick={handleSaveAndAnalyze} 
               className="flex-1 bg-blue-600 hover:bg-blue-700"
               disabled={entityType === "employee" && !selectedEmployee}
             >
               <Save className="w-4 h-4 mr-2" />
-              Salvar e Analisar
+              Salvar e Distribuir
             </Button>
           </div>
+          </div>
+
+          {/* Revenue Distribution Modal */}
+          <RevenueDistributionModal
+          open={showDistribution}
+          onClose={() => setShowDistribution(false)}
+          revenue={formData.revenue_parts + formData.revenue_services}
+          employees={employees}
+          onConfirm={handleDistributionConfirm}
+          isLoading={isSaving}
+          />
         </div>
       </DialogContent>
     </Dialog>
