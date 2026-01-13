@@ -1182,70 +1182,150 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                 {/* Comercial */}
                 <div className="bg-purple-50 p-4 rounded-lg border-2 border-purple-200">
                   <h4 className="font-semibold text-purple-900 mb-3">🎯 Comercial</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-xs text-gray-600 mb-1">PAVE - Comercial (qtd)</p>
-                      <p className="text-lg font-bold text-purple-600">
-                        {formatInteger((formData.best_month_history.pave_commercial || 0) * (1 + growthPercentage / 100))}
-                      </p>
-                      <p className="text-xs text-gray-500">Base: {formatInteger(formData.best_month_history.pave_commercial || 0)}</p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="border-l-4 border-purple-500 pl-3">
+                      <p className="text-xs text-gray-600 mb-2">PAVE - Comercial (qtd)</p>
+                      <div className="flex gap-4">
+                        <div className="flex-1">
+                          <p className="text-xs text-blue-600 mb-1">PROJETADO</p>
+                          <p className="text-lg font-bold text-blue-600">
+                            {formatInteger((formData.best_month_history.pave_commercial || 0) * (1 + growthPercentage / 100))}
+                          </p>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-green-600 mb-1">REALIZADO</p>
+                          <p className="text-lg font-bold text-green-600">
+                            {formatInteger(formData.monthly_goals?.pave_commercial || 0)}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-600 mb-1">Kit Master (qtd)</p>
-                      <p className="text-lg font-bold text-purple-600">
-                        {formatInteger((formData.best_month_history.kit_master || 0) * (1 + growthPercentage / 100))}
-                      </p>
-                      <p className="text-xs text-gray-500">Base: {formatInteger(formData.best_month_history.kit_master || 0)}</p>
+                    <div className="border-l-4 border-purple-500 pl-3">
+                      <p className="text-xs text-gray-600 mb-2">Kit Master (qtd)</p>
+                      <div className="flex gap-4">
+                        <div className="flex-1">
+                          <p className="text-xs text-blue-600 mb-1">PROJETADO</p>
+                          <p className="text-lg font-bold text-blue-600">
+                            {formatInteger((formData.best_month_history.kit_master || 0) * (1 + growthPercentage / 100))}
+                          </p>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-green-600 mb-1">REALIZADO</p>
+                          <p className="text-lg font-bold text-green-600">
+                            {formatInteger(formData.monthly_goals?.kit_master || 0)}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
                   {/* Clientes Base */}
-                  <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4 bg-blue-50 p-3 rounded-lg">
-                    <div>
-                      <p className="text-xs text-blue-700 mb-1">Clientes Agendados Base (QTD)</p>
-                      <p className="text-lg font-bold text-blue-600">
-                        {formatInteger((formData.best_month_history.clients_scheduled_base || 0) * (1 + growthPercentage / 100))}
-                      </p>
-                      <p className="text-xs text-gray-500">Base: {formatInteger(formData.best_month_history.clients_scheduled_base || 0)}</p>
+                  <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 bg-blue-50 p-3 rounded-lg">
+                    <div className="border-l-4 border-blue-500 pl-3">
+                      <p className="text-xs text-blue-700 mb-2">Clientes Agendados Base (QTD)</p>
+                      <div className="flex gap-3">
+                        <div className="flex-1">
+                          <p className="text-xs text-blue-600 mb-1">PROJ.</p>
+                          <p className="text-lg font-bold text-blue-600">
+                            {formatInteger((formData.best_month_history.clients_scheduled_base || 0) * (1 + growthPercentage / 100))}
+                          </p>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-green-600 mb-1">REAL.</p>
+                          <p className="text-lg font-bold text-green-600">
+                            {formatInteger(formData.monthly_goals?.clients_scheduled_base || 0)}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs text-blue-700 mb-1">Clientes Entregues Base (QTD)</p>
-                      <p className="text-lg font-bold text-blue-600">
-                        {formatInteger((formData.best_month_history.clients_delivered_base || 0) * (1 + growthPercentage / 100))}
-                      </p>
-                      <p className="text-xs text-gray-500">Base: {formatInteger(formData.best_month_history.clients_delivered_base || 0)}</p>
+                    <div className="border-l-4 border-blue-500 pl-3">
+                      <p className="text-xs text-blue-700 mb-2">Clientes Entregues Base (QTD)</p>
+                      <div className="flex gap-3">
+                        <div className="flex-1">
+                          <p className="text-xs text-blue-600 mb-1">PROJ.</p>
+                          <p className="text-lg font-bold text-blue-600">
+                            {formatInteger((formData.best_month_history.clients_delivered_base || 0) * (1 + growthPercentage / 100))}
+                          </p>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-green-600 mb-1">REAL.</p>
+                          <p className="text-lg font-bold text-green-600">
+                            {formatInteger(formData.monthly_goals?.clients_delivered_base || 0)}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs text-blue-700 mb-1">Vendas Clientes Base (R$)</p>
-                      <p className="text-lg font-bold text-blue-600">
-                        R$ {formatCurrency((formData.best_month_history.sales_base || 0) * (1 + growthPercentage / 100))}
-                      </p>
-                      <p className="text-xs text-gray-500">Base: {formatCurrency(formData.best_month_history.sales_base || 0)}</p>
+                    <div className="border-l-4 border-blue-500 pl-3">
+                      <p className="text-xs text-blue-700 mb-2">Vendas Clientes Base (R$)</p>
+                      <div className="flex gap-3">
+                        <div className="flex-1">
+                          <p className="text-xs text-blue-600 mb-1">PROJ.</p>
+                          <p className="text-lg font-bold text-blue-600">
+                            R$ {formatCurrency((formData.best_month_history.sales_base || 0) * (1 + growthPercentage / 100))}
+                          </p>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-green-600 mb-1">REAL.</p>
+                          <p className="text-lg font-bold text-green-600">
+                            R$ {formatCurrency(formData.monthly_goals?.sales_base || 0)}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
                   {/* Clientes Marketing */}
-                  <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4 bg-pink-50 p-3 rounded-lg">
-                    <div>
-                      <p className="text-xs text-pink-700 mb-1">Clientes Agendados Marketing (qtd)</p>
-                      <p className="text-lg font-bold text-pink-600">
-                        {formatInteger((formData.best_month_history.clients_scheduled_mkt || 0) * (1 + growthPercentage / 100))}
-                      </p>
-                      <p className="text-xs text-gray-500">Base: {formatInteger(formData.best_month_history.clients_scheduled_mkt || 0)}</p>
+                  <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 bg-pink-50 p-3 rounded-lg">
+                    <div className="border-l-4 border-pink-500 pl-3">
+                      <p className="text-xs text-pink-700 mb-2">Clientes Agendados Marketing (qtd)</p>
+                      <div className="flex gap-3">
+                        <div className="flex-1">
+                          <p className="text-xs text-blue-600 mb-1">PROJ.</p>
+                          <p className="text-lg font-bold text-blue-600">
+                            {formatInteger((formData.best_month_history.clients_scheduled_mkt || 0) * (1 + growthPercentage / 100))}
+                          </p>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-green-600 mb-1">REAL.</p>
+                          <p className="text-lg font-bold text-green-600">
+                            {formatInteger(formData.monthly_goals?.clients_scheduled_mkt || 0)}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs text-pink-700 mb-1">Clientes Entregues Marketing (qtd)</p>
-                      <p className="text-lg font-bold text-pink-600">
-                        {formatInteger((formData.best_month_history.clients_delivered_mkt || 0) * (1 + growthPercentage / 100))}
-                      </p>
-                      <p className="text-xs text-gray-500">Base: {formatInteger(formData.best_month_history.clients_delivered_mkt || 0)}</p>
+                    <div className="border-l-4 border-pink-500 pl-3">
+                      <p className="text-xs text-pink-700 mb-2">Clientes Entregues Marketing (qtd)</p>
+                      <div className="flex gap-3">
+                        <div className="flex-1">
+                          <p className="text-xs text-blue-600 mb-1">PROJ.</p>
+                          <p className="text-lg font-bold text-blue-600">
+                            {formatInteger((formData.best_month_history.clients_delivered_mkt || 0) * (1 + growthPercentage / 100))}
+                          </p>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-green-600 mb-1">REAL.</p>
+                          <p className="text-lg font-bold text-green-600">
+                            {formatInteger(formData.monthly_goals?.clients_delivered_mkt || 0)}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs text-pink-700 mb-1">Vendas Lead Marketing (R$)</p>
-                      <p className="text-lg font-bold text-pink-600">
-                        R$ {formatCurrency((formData.best_month_history.sales_marketing || 0) * (1 + growthPercentage / 100))}
-                      </p>
-                      <p className="text-xs text-gray-500">Base: {formatCurrency(formData.best_month_history.sales_marketing || 0)}</p>
+                    <div className="border-l-4 border-pink-500 pl-3">
+                      <p className="text-xs text-pink-700 mb-2">Vendas Lead Marketing (R$)</p>
+                      <div className="flex gap-3">
+                        <div className="flex-1">
+                          <p className="text-xs text-blue-600 mb-1">PROJ.</p>
+                          <p className="text-lg font-bold text-blue-600">
+                            R$ {formatCurrency((formData.best_month_history.sales_marketing || 0) * (1 + growthPercentage / 100))}
+                          </p>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-green-600 mb-1">REAL.</p>
+                          <p className="text-lg font-bold text-green-600">
+                            R$ {formatCurrency(formData.monthly_goals?.sales_marketing || 0)}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -1283,57 +1363,127 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                 <div className="bg-pink-50 p-4 rounded-lg border-2 border-pink-200">
                   <h4 className="font-semibold text-pink-900 mb-3">📣 Marketing</h4>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div>
-                      <p className="text-xs text-gray-600 mb-1">Leads Gerados (qtd)</p>
-                      <p className="text-lg font-bold text-pink-600">
-                        {Math.round((formData.best_month_history.marketing?.leads_generated || 0) * (1 + growthPercentage / 100))}
-                      </p>
-                      <p className="text-xs text-gray-500">Base: {formData.best_month_history.marketing?.leads_generated || 0}</p>
+                    <div className="border-l-4 border-pink-500 pl-3">
+                      <p className="text-xs text-gray-600 mb-2">Leads Gerados (qtd)</p>
+                      <div className="flex gap-3">
+                        <div className="flex-1">
+                          <p className="text-xs text-blue-600 mb-1">PROJ.</p>
+                          <p className="text-lg font-bold text-blue-600">
+                            {Math.round((formData.best_month_history.marketing?.leads_generated || 0) * (1 + growthPercentage / 100))}
+                          </p>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-green-600 mb-1">REAL.</p>
+                          <p className="text-lg font-bold text-green-600">
+                            {Math.round(formData.monthly_goals?.marketing?.leads_generated || 0)}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-600 mb-1">Leads Agendados (qtd)</p>
-                      <p className="text-lg font-bold text-pink-600">
-                        {Math.round((formData.best_month_history.marketing?.leads_scheduled || 0) * (1 + growthPercentage / 100))}
-                      </p>
-                      <p className="text-xs text-gray-500">Base: {formData.best_month_history.marketing?.leads_scheduled || 0}</p>
+                    <div className="border-l-4 border-pink-500 pl-3">
+                      <p className="text-xs text-gray-600 mb-2">Leads Agendados (qtd)</p>
+                      <div className="flex gap-3">
+                        <div className="flex-1">
+                          <p className="text-xs text-blue-600 mb-1">PROJ.</p>
+                          <p className="text-lg font-bold text-blue-600">
+                            {Math.round((formData.best_month_history.marketing?.leads_scheduled || 0) * (1 + growthPercentage / 100))}
+                          </p>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-green-600 mb-1">REAL.</p>
+                          <p className="text-lg font-bold text-green-600">
+                            {Math.round(formData.monthly_goals?.marketing?.leads_scheduled || 0)}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-600 mb-1">Comparecimentos (qtd)</p>
-                      <p className="text-lg font-bold text-pink-600">
-                        {Math.round((formData.best_month_history.marketing?.leads_showed_up || 0) * (1 + growthPercentage / 100))}
-                      </p>
-                      <p className="text-xs text-gray-500">Base: {formData.best_month_history.marketing?.leads_showed_up || 0}</p>
+                    <div className="border-l-4 border-pink-500 pl-3">
+                      <p className="text-xs text-gray-600 mb-2">Comparecimentos (qtd)</p>
+                      <div className="flex gap-3">
+                        <div className="flex-1">
+                          <p className="text-xs text-blue-600 mb-1">PROJ.</p>
+                          <p className="text-lg font-bold text-blue-600">
+                            {Math.round((formData.best_month_history.marketing?.leads_showed_up || 0) * (1 + growthPercentage / 100))}
+                          </p>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-green-600 mb-1">REAL.</p>
+                          <p className="text-lg font-bold text-green-600">
+                            {Math.round(formData.monthly_goals?.marketing?.leads_showed_up || 0)}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-600 mb-1">Leads Vendidos (qtd)</p>
-                      <p className="text-lg font-bold text-pink-600">
-                        {Math.round((formData.best_month_history.marketing?.leads_sold || 0) * (1 + growthPercentage / 100))}
-                      </p>
-                      <p className="text-xs text-gray-500">Base: {formData.best_month_history.marketing?.leads_sold || 0}</p>
+                    <div className="border-l-4 border-pink-500 pl-3">
+                      <p className="text-xs text-gray-600 mb-2">Leads Vendidos (qtd)</p>
+                      <div className="flex gap-3">
+                        <div className="flex-1">
+                          <p className="text-xs text-blue-600 mb-1">PROJ.</p>
+                          <p className="text-lg font-bold text-blue-600">
+                            {Math.round((formData.best_month_history.marketing?.leads_sold || 0) * (1 + growthPercentage / 100))}
+                          </p>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-green-600 mb-1">REAL.</p>
+                          <p className="text-lg font-bold text-green-600">
+                            {Math.round(formData.monthly_goals?.marketing?.leads_sold || 0)}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
-                    <div>
-                      <p className="text-xs text-gray-600 mb-1">Valor Investido (R$)</p>
-                      <p className="text-lg font-bold text-pink-600">
-                        R$ {formatCurrency((formData.best_month_history.marketing?.invested_value || 0) * (1 + growthPercentage / 100))}
-                      </p>
-                      <p className="text-xs text-gray-500">Base: {formatCurrency(formData.best_month_history.marketing?.invested_value || 0)}</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                    <div className="border-l-4 border-pink-500 pl-3">
+                      <p className="text-xs text-gray-600 mb-2">Valor Investido (R$)</p>
+                      <div className="flex gap-3">
+                        <div className="flex-1">
+                          <p className="text-xs text-blue-600 mb-1">PROJ.</p>
+                          <p className="text-lg font-bold text-blue-600">
+                            R$ {formatCurrency((formData.best_month_history.marketing?.invested_value || 0) * (1 + growthPercentage / 100))}
+                          </p>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-green-600 mb-1">REAL.</p>
+                          <p className="text-lg font-bold text-green-600">
+                            R$ {formatCurrency(formData.monthly_goals?.marketing?.invested_value || 0)}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-600 mb-1">Valor Faturado Tráfego (R$)</p>
-                      <p className="text-lg font-bold text-pink-600">
-                        R$ {formatCurrency((formData.best_month_history.marketing?.revenue_from_traffic || 0) * (1 + growthPercentage / 100))}
-                      </p>
-                      <p className="text-xs text-gray-500">Base: {formatCurrency(formData.best_month_history.marketing?.revenue_from_traffic || 0)}</p>
+                    <div className="border-l-4 border-pink-500 pl-3">
+                      <p className="text-xs text-gray-600 mb-2">Valor Faturado Tráfego (R$)</p>
+                      <div className="flex gap-3">
+                        <div className="flex-1">
+                          <p className="text-xs text-blue-600 mb-1">PROJ.</p>
+                          <p className="text-lg font-bold text-blue-600">
+                            R$ {formatCurrency((formData.best_month_history.marketing?.revenue_from_traffic || 0) * (1 + growthPercentage / 100))}
+                          </p>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-green-600 mb-1">REAL.</p>
+                          <p className="text-lg font-bold text-green-600">
+                            R$ {formatCurrency(formData.monthly_goals?.marketing?.revenue_from_traffic || 0)}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-600 mb-1">Custo por Venda (R$)</p>
-                      <p className="text-lg font-bold text-pink-600">
-                        R$ {formatCurrency((formData.best_month_history.marketing?.cost_per_sale || 0) * (1 + growthPercentage / 100))}
-                      </p>
-                      <p className="text-xs text-gray-500">Base: {formatCurrency(formData.best_month_history.marketing?.cost_per_sale || 0)}</p>
+                    <div className="border-l-4 border-pink-500 pl-3">
+                      <p className="text-xs text-gray-600 mb-2">Custo por Venda (R$)</p>
+                      <div className="flex gap-3">
+                        <div className="flex-1">
+                          <p className="text-xs text-blue-600 mb-1">PROJ.</p>
+                          <p className="text-lg font-bold text-blue-600">
+                            R$ {formatCurrency((formData.best_month_history.marketing?.cost_per_sale || 0) * (1 + growthPercentage / 100))}
+                          </p>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-green-600 mb-1">REAL.</p>
+                          <p className="text-lg font-bold text-green-600">
+                            R$ {formatCurrency(formData.monthly_goals?.marketing?.cost_per_sale || 0)}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
