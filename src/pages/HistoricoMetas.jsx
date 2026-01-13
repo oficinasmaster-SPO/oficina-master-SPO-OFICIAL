@@ -13,6 +13,7 @@ import { formatCurrency, formatNumber } from "../components/utils/formatters";
 import ManualGoalRegistration from "../components/goals/ManualGoalRegistration";
 import { toast } from "sonner";
 import AdminViewBanner from "../components/shared/AdminViewBanner";
+import { useSyncData } from "../components/hooks/useSyncData";
 
 export default function HistoricoMetas() {
   const [workshop, setWorkshop] = useState(null);
@@ -25,6 +26,7 @@ export default function HistoricoMetas() {
   const queryClient = useQueryClient();
   const [isAdminView, setIsAdminView] = useState(false);
   const location = useLocation();
+  const { syncMonthlyData } = useSyncData();
 
   useEffect(() => {
     loadUser();
@@ -724,11 +726,15 @@ export default function HistoricoMetas() {
         </div>
 
         {/* Modal de Registro */}
-        <ManualGoalRegistration
+         <ManualGoalRegistration
           open={showModal}
           onClose={() => setShowModal(false)}
           workshop={workshop}
-          onSave={() => {
+          onSave={async () => {
+            // Sincronizar após salvar registro
+            if (workshop) {
+              await syncMonthlyData(workshop.id, filterMonth);
+            }
             queryClient.invalidateQueries(['goal-history']);
             queryClient.invalidateQueries(['employees']);
             refetchEmployees();
