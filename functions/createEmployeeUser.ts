@@ -184,9 +184,6 @@ Deno.serve(async (req) => {
         console.error("❌ Erro ao enviar email:", emailError);
         console.warn("⚠️ Criando colaborador mesmo com erro de email");
       }
-    } else {
-      console.log("ℹ️ Email externo - pulando envio de email");
-    }
 
     // 8. Retornar sucesso
     return Response.json({ 
