@@ -8,7 +8,7 @@ export function SharedDataProvider({ children, workshopId, userId }) {
   const queryClient = useQueryClient();
 
   // Dados da Oficina - fonte principal
-  const { data: workshop, isLoading: loadingWorkshop } = useQuery({
+  const { data: workshop, isLoading: loadingWorkshop, refetch } = useQuery({
     queryKey: ['shared-workshop', workshopId],
     queryFn: async () => {
       if (!workshopId) return null;
@@ -17,7 +17,8 @@ export function SharedDataProvider({ children, workshopId, userId }) {
         console.log('📊 SharedDataProvider carregou workshop:', {
           id: ws.id,
           name: ws.name,
-          city: ws.city
+          city: ws.city,
+          state: ws.state
         });
         return ws;
       } catch (error) {
@@ -26,10 +27,18 @@ export function SharedDataProvider({ children, workshopId, userId }) {
       }
     },
     enabled: !!workshopId,
-    staleTime: 0, // Sempre recarregar
-    cacheTime: 0, // Não cachear
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: 'always',
     retry: 1,
   });
+
+  // Recarrega quando o workshopId muda
+  React.useEffect(() => {
+    if (workshopId) {
+      refetch();
+    }
+  }, [workshopId, refetch]);
 
   const { data: latestDRE, isLoading: loadingDRE } = useQuery({
     queryKey: ['shared-dre', workshopId],
