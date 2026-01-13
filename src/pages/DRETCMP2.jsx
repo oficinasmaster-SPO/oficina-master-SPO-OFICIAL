@@ -20,6 +20,8 @@ import { formatCurrency, formatNumber } from "../components/utils/formatters";
 import { toast } from "sonner";
 import { useMemo } from "react";
 import AdminViewBanner from "../components/shared/AdminViewBanner";
+import { useSyncData } from "../components/hooks/useSyncData";
+import DiscrepancyAlert from "../components/sync/DiscrepancyAlert";
 
 export default function DRETCMP2() {
   const navigate = useNavigate();
@@ -27,9 +29,11 @@ export default function DRETCMP2() {
   const [user, setUser] = useState(null);
   const [workshop, setWorkshop] = useState(null);
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
-  const [viewMode, setViewMode] = useState("month"); // 'month' or 'average'
+  const [viewMode, setViewMode] = useState("month");
   const [formData, setFormData] = useState(getEmptyDRE());
   const [isAdminView, setIsAdminView] = useState(false);
+  const [syncAlert, setSyncAlert] = useState(null);
+  const { syncDRETOMetas, resolveDiscrepancy, isSyncing } = useSyncData();
 
   function getCurrentMonth() {
     const now = new Date();
@@ -112,6 +116,22 @@ export default function DRETCMP2() {
   });
 
   const currentDRE = dreList.find(d => d.month === selectedMonth);
+
+  // Sincronizar dados do DRE com metas ao carregar
+  useEffect(() => {
+    if (workshop && currentDRE && viewMode === 'month') {
+      const syncData = async () => {
+        const result = await syncDRETOMetas(currentDRE.id, workshop.id, selectedMonth);
+        if (result.requiresConfirmation) {
+          setSyncAlert({
+            discrepancies: result.discrepancies,
+            dre_id: currentDRE.id
+          });
+        }
+      };
+      syncData();
+    }
+  }, [workshop?.id, currentDRE?.id, selectedMonth, viewMode]);
 
   // Calculate Average DRE
   const averageData = useMemo(() => {
@@ -299,12 +319,37 @@ export default function DRETCMP2() {
     );
   }
 
+  const handleResolveDiscrepancy = async (use_source) => {
+    if (!syncAlert) return;
+    
+    const result = await resolveDiscrepancy(
+      workshop.id,
+      selectedMonth,
+      use_source,
+      syncAlert.dre_id
+    );
+
+    if (result.success) {
+      setSyncAlert(null);
+      queryClient.invalidateQueries(['dre-list']);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-green-50 py-8 px-4">
       <div className="max-w-7xl mx-auto">
         
         {isAdminView && workshop && (
           <AdminViewBanner workshopName={workshop.name} />
+        )}
+
+        {syncAlert && (
+          <DiscrepancyAlert
+            discrepancies={syncAlert.discrepancies}
+            onResolve={handleResolveDiscrepancy}
+            onDismiss={() => setSyncAlert(null)}
+            isLoading={isSyncing}
+          />
         )}
         
         {/* Header */}
