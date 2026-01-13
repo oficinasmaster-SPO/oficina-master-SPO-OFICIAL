@@ -1,4 +1,4 @@
-import React, { createContext, useContext } from "react";
+import React, { createContext, useContext, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 
@@ -8,7 +8,7 @@ export function SharedDataProvider({ children, workshopId, userId }) {
   const queryClient = useQueryClient();
 
   // FORÇA INVALIDAR tudo quando workshopId muda
-  React.useEffect(() => {
+  useEffect(() => {
     if (workshopId) {
       console.log('🔥 SharedDataProvider: workshopId mudou para:', workshopId);
       queryClient.invalidateQueries();
