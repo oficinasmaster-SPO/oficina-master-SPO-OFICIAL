@@ -15,14 +15,29 @@ export default function ClientIntelligenceChecklistManager({
   area: defaultArea,
   type,
   workshopId,
-  onChecklistCreated
+  onChecklistCreated,
+  initialData
 }) {
+  const [checklistId, setChecklistId] = useState(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [selectedArea, setSelectedArea] = useState(defaultArea || "");
   const [items, setItems] = useState([]);
   const [newItemLabel, setNewItemLabel] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // Carregar dados quando initialData mudar
+  useEffect(() => {
+    if (initialData) {
+      setChecklistId(initialData.id);
+      setTitle(initialData.title || "");
+      setDescription(initialData.description || "");
+      setSelectedArea(initialData.area || defaultArea || "");
+      setItems(initialData.items || []);
+    } else {
+      resetForm();
+    }
+  }, [initialData, defaultArea]);
 
   const handleAddItem = () => {
     if (!newItemLabel.trim()) return;
@@ -50,7 +65,7 @@ export default function ClientIntelligenceChecklistManager({
 
     setIsLoading(true);
     try {
-      await base44.entities.ClientIntelligenceChecklist.create({
+      const checklistData = {
         workshop_id: workshopId,
         area: selectedArea,
         type,
@@ -63,14 +78,23 @@ export default function ClientIntelligenceChecklistManager({
         })),
         is_default: false,
         status: "ativo"
-      });
+      };
 
-      toast.success("Checklist criado com sucesso");
+      if (checklistId) {
+        // Atualizar checklist existente
+        await base44.entities.ClientIntelligenceChecklist.update(checklistId, checklistData);
+        toast.success("Checklist atualizado com sucesso");
+      } else {
+        // Criar novo checklist
+        await base44.entities.ClientIntelligenceChecklist.create(checklistData);
+        toast.success("Checklist criado com sucesso");
+      }
+
       resetForm();
       onOpenChange(false);
       onChecklistCreated?.();
     } catch (error) {
-      toast.error("Erro ao criar checklist");
+      toast.error(checklistId ? "Erro ao atualizar checklist" : "Erro ao criar checklist");
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -78,6 +102,7 @@ export default function ClientIntelligenceChecklistManager({
   };
 
   const resetForm = () => {
+    setChecklistId(null);
     setTitle("");
     setDescription("");
     setSelectedArea(defaultArea || "");
@@ -89,7 +114,7 @@ export default function ClientIntelligenceChecklistManager({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Criar/Editar Checklist</DialogTitle>
+          <DialogTitle>{checklistId ? "Editar Checklist" : "Criar Checklist"}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
@@ -201,7 +226,7 @@ export default function ClientIntelligenceChecklistManager({
                 Salvando...
               </>
             ) : (
-              "Salvar Checklist"
+              "              checklistId ? "Atualizar Checklist" : "Salvar Checklist""
             )}
           </Button>
         </DialogFooter>
