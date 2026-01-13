@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Send, Sparkles } from "lucide-react";
+import { Loader2, Send, Sparkles, Paperclip, X } from "lucide-react";
 import { toast } from "sonner";
 
 export default function TesteOpenAI() {
@@ -14,7 +14,10 @@ export default function TesteOpenAI() {
     const [isTyping, setIsTyping] = useState(false);
     const [includeData, setIncludeData] = useState(true);
     const [usage, setUsage] = useState(null);
+    const [attachedFiles, setAttachedFiles] = useState([]);
+    const [uploadingFiles, setUploadingFiles] = useState(false);
     const typingIntervalRef = useRef(null);
+    const fileInputRef = useRef(null);
 
     useEffect(() => {
         if (!response || response === displayedResponse) {
@@ -43,6 +46,35 @@ export default function TesteOpenAI() {
         };
     }, [response]);
 
+    const handleFileSelect = async (e) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+
+        setUploadingFiles(true);
+        try {
+            const uploadedUrls = [];
+            for (const file of files) {
+                const { file_url } = await base44.integrations.Core.UploadFile({ file });
+                uploadedUrls.push({
+                    name: file.name,
+                    url: file_url,
+                    type: file.type
+                });
+            }
+            setAttachedFiles([...attachedFiles, ...uploadedUrls]);
+            toast.success(`${files.length} arquivo(s) anexado(s)`);
+        } catch (error) {
+            toast.error("Erro ao fazer upload: " + error.message);
+        } finally {
+            setUploadingFiles(false);
+            if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+    };
+
+    const handleRemoveFile = (index) => {
+        setAttachedFiles(attachedFiles.filter((_, i) => i !== index));
+    };
+
     const handleSend = async () => {
         if (!message.trim()) {
             toast.error("Digite uma mensagem");
@@ -57,10 +89,10 @@ export default function TesteOpenAI() {
             const result = await base44.functions.invoke('chatWithAI', {
                 message: message,
                 context: "Você é um consultor de oficinas mecânicas. Responda de forma prática e direta.",
-                includeWorkshopData: includeData
+                includeWorkshopData: includeData,
+                file_urls: attachedFiles.length > 0 ? attachedFiles.map(f => f.url) : undefined
             });
 
-            // Aguarda 1 segundo simulando "pensamento"
             await new Promise(resolve => setTimeout(resolve, 1000));
 
             setResponse(result.data.response);
@@ -101,17 +133,72 @@ export default function TesteOpenAI() {
                         />
                     </div>
 
-                    <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                        <input
-                            type="checkbox"
-                            id="includeData"
-                            checked={includeData}
-                            onChange={(e) => setIncludeData(e.target.checked)}
-                            className="w-4 h-4"
-                        />
-                        <label htmlFor="includeData" className="text-sm cursor-pointer">
-                            📊 Incluir dados da oficina (metas, DRE, diagnósticos, equipe)
-                        </label>
+                    <div className="space-y-3">
+                        <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <input
+                                type="checkbox"
+                                id="includeData"
+                                checked={includeData}
+                                onChange={(e) => setIncludeData(e.target.checked)}
+                                className="w-4 h-4"
+                            />
+                            <label htmlFor="includeData" className="text-sm cursor-pointer">
+                                📊 Incluir dados da oficina (metas, DRE, diagnósticos, equipe)
+                            </label>
+                        </div>
+
+                        <div>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                multiple
+                                onChange={handleFileSelect}
+                                className="hidden"
+                                accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.png,.jpg,.jpeg"
+                            />
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={uploadingFiles}
+                                className="w-full"
+                            >
+                                {uploadingFiles ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                        Enviando...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Paperclip className="w-4 h-4 mr-2" />
+                                        Anexar Documentos (PDF, Excel, Word, Imagens)
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+
+                        {attachedFiles.length > 0 && (
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Arquivos Anexados:</label>
+                                {attachedFiles.map((file, index) => (
+                                    <div
+                                        key={index}
+                                        className="flex items-center justify-between p-2 bg-gray-50 border rounded-lg"
+                                    >
+                                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                                            <Paperclip className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                                            <span className="text-sm truncate">{file.name}</span>
+                                        </div>
+                                        <button
+                                            onClick={() => handleRemoveFile(index)}
+                                            className="p-1 hover:bg-red-100 rounded transition-colors"
+                                        >
+                                            <X className="w-4 h-4 text-red-600" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     <Button
