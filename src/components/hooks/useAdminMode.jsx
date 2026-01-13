@@ -5,7 +5,6 @@ export function useAdminMode() {
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [adminWorkshopId, setAdminWorkshopId] = useState(null);
   const location = useLocation();
-  const navigate = useNavigate();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -14,17 +13,21 @@ export function useAdminMode() {
     if (workshopId) {
       setIsAdminMode(true);
       setAdminWorkshopId(workshopId);
-      // Armazena no sessionStorage para persistir entre navegações
       sessionStorage.setItem('admin_workshop_id', workshopId);
+      console.log('🔧 Modo Admin ativado para workshop:', workshopId);
     } else {
       // Tenta recuperar do sessionStorage
       const storedWorkshopId = sessionStorage.getItem('admin_workshop_id');
       if (storedWorkshopId) {
         setIsAdminMode(true);
         setAdminWorkshopId(storedWorkshopId);
+        console.log('🔧 Modo Admin recuperado do storage:', storedWorkshopId);
+      } else {
+        setIsAdminMode(false);
+        setAdminWorkshopId(null);
       }
     }
-  }, [location]);
+  }, [location.pathname, location.search]);
 
   const exitAdminMode = () => {
     sessionStorage.removeItem('admin_workshop_id');

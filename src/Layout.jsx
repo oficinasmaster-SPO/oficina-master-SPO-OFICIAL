@@ -78,11 +78,17 @@ export default function Layout({ children, currentPageName }) {
             const urlWorkshopId = urlParams.get('workshop_id');
             const targetWorkshopId = urlWorkshopId || storedWorkshopId;
 
-            if (targetWorkshopId && currentUser.role === 'admin') {
-              // Modo Admin: carregar workshop específico
-              userWorkshop = await base44.entities.Workshop.get(targetWorkshopId);
+            if (targetWorkshopId && (currentUser.role === 'admin' || currentUser.job_role === 'acelerador')) {
+              // Modo Admin/Acelerador: carregar workshop específico COMPLETO
+              try {
+                userWorkshop = await base44.entities.Workshop.get(targetWorkshopId);
+                console.log('✅ Workshop carregado no modo admin:', userWorkshop);
+              } catch (error) {
+                console.error('❌ Erro ao carregar workshop admin:', error);
+              }
             } else {
               // Modo Normal: carregar workshop do usuário
+              sessionStorage.removeItem('admin_workshop_id');
               const ownedWorkshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
               userWorkshop = Array.isArray(ownedWorkshops) && ownedWorkshops.length > 0 ? ownedWorkshops[0] : null;
 
