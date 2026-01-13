@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -96,7 +97,7 @@ export default function SharedDataField({
     <div className={`space-y-1 ${className}`}>
       {label && (
         <div className="flex items-center justify-between">
-          <label className="text-sm font-medium text-gray-700">{label}</label>
+          <Label className="text-sm font-medium text-gray-700">{label}</Label>
           <div className="flex items-center gap-1">
             {showSourceBadge && hasSourceValue && !isOverridden && (
               <TooltipProvider>
