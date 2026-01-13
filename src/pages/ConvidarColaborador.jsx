@@ -190,7 +190,8 @@ export default function ConvidarColaborador() {
         area: data.area,
         job_role: data.job_role,
         profile_id: data.profile_id,
-        workshop_id: workshop.id
+        workshop_id: workshop.id,
+        role: data.role
       });
 
       console.log("📦 RESPONSE STATUS:", response.status);
