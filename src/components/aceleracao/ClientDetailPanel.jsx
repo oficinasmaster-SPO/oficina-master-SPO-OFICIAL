@@ -24,12 +24,12 @@ export default function ClientDetailPanel({ client, isOpen, onClose, atendimento
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent side="right" className="w-full sm:max-w-5xl overflow-auto">
-        <DialogHeader>
-          <div className="flex items-start justify-between">
+        <SheetHeader>
+          <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-3">
               <Building2 className="w-6 h-6 text-blue-600" />
               <div>
-                <DialogTitle className="text-2xl">{client.name}</DialogTitle>
+                <SheetTitle className="text-2xl">{client.name}</SheetTitle>
                 <p className="text-sm text-gray-600 flex items-center gap-2 mt-1">
                   <MapPin className="w-4 h-4" />
                   {client.city} - {client.state}
@@ -46,7 +46,7 @@ export default function ClientDetailPanel({ client, isOpen, onClose, atendimento
               </Button>
             </div>
           </div>
-        </DialogHeader>
+        </SheetHeader>
 
         <Tabs defaultValue="geral" className="mt-6">
           <TabsList className="grid w-full grid-cols-4">
