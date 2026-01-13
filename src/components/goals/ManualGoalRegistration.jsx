@@ -166,9 +166,19 @@ export default function ManualGoalRegistration({ open, onClose, workshop, onSave
     }
   };
 
-  const handleSave = async () => {
+  const handleSaveAndAnalyze = async () => {
+    const revenue_total = formData.revenue_parts + formData.revenue_services;
+    if (revenue_total <= 0) {
+      toast.error("Preencha os valores de faturamento");
+      return;
+    }
+    // Abre modal de distribuição
+    setShowDistribution(true);
+  };
+
+  const handleDistributionConfirm = async (distribution) => {
     try {
-      // Calcular valores automáticos
+      setIsSaving(true);
       const revenue_total = formData.revenue_parts + formData.revenue_services;
       const average_ticket = formData.customer_volume > 0 
         ? revenue_total / formData.customer_volume 
@@ -210,13 +220,45 @@ export default function ManualGoalRegistration({ open, onClose, workshop, onSave
           ...formData.marketing_data,
           cost_per_sale: marketing_cost_per_sale
         },
+        revenue_distribution: distribution,
         rework_count: formData.rework_count,
         notes: formData.notes
       };
 
       await base44.entities.MonthlyGoalHistory.create(recordData);
 
-      // Atualizar campos REALIZADOS nas metas mensais
+      // Atualizar colaboradores com distribuição
+      const allEmployees = [
+        ...distribution.vendors,
+        ...distribution.marketing,
+        ...distribution.technicians
+      ];
+
+      for (const emp of allEmployees) {
+        const employee = employees.find(e => e.id === emp.id);
+        if (employee) {
+          const currentMonth = formData.month;
+          const dailyEntry = {
+            date: formData.reference_date,
+            revenue: emp.value,
+            source: "distribution"
+          };
+
+          const updatedHistory = [...(employee.daily_production_history || []), dailyEntry];
+          const monthEntries = updatedHistory.filter(e => e.date.startsWith(currentMonth));
+          const monthlyTotal = monthEntries.reduce((sum, e) => sum + (e.revenue || 0), 0);
+
+          await base44.entities.Employee.update(emp.id, {
+            daily_production_history: updatedHistory,
+            monthly_goals: {
+              ...employee.monthly_goals,
+              actual_revenue_achieved: monthlyTotal
+            }
+          });
+        }
+      }
+
+      // Atualizar Workshop
       if (entityType === "workshop") {
         await base44.entities.Workshop.update(workshop.id, {
           monthly_goals: {
@@ -228,40 +270,17 @@ export default function ManualGoalRegistration({ open, onClose, workshop, onSave
             average_ticket: average_ticket
           }
         });
-      } else if (selectedEmployee) {
-        // Sincronizar com daily_production_history do colaborador
-        const dailyProductionEntry = {
-          date: formData.reference_date,
-          parts_revenue: formData.revenue_parts,
-          services_revenue: formData.revenue_services,
-          total_revenue: revenue_total,
-          notes: formData.notes || ""
-        };
-
-        // Adicionar ao histórico diário
-        const updatedDailyHistory = [...(selectedEmployee.daily_production_history || []), dailyProductionEntry];
-        updatedDailyHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-        // Recalcular realizado do mês atual
-        const currentMonth = new Date().toISOString().substring(0, 7);
-        const monthEntries = updatedDailyHistory.filter(entry => entry.date.startsWith(currentMonth));
-        const monthlyTotal = monthEntries.reduce((sum, entry) => sum + entry.total_revenue, 0);
-
-        await base44.entities.Employee.update(selectedEmployee.id, {
-          daily_production_history: updatedDailyHistory,
-          monthly_goals: {
-            ...selectedEmployee.monthly_goals,
-            actual_revenue_achieved: monthlyTotal
-          }
-        });
       }
 
-      toast.success("Registro salvo e sincronizado com o histórico diário!");
+      toast.success("Faturamento distribuído e sincronizado!");
+      setShowDistribution(false);
       if (onSave) onSave();
       onClose();
     } catch (error) {
-      console.error("Error saving record:", error);
-      toast.error("Erro ao salvar registro");
+      console.error("Error saving distribution:", error);
+      toast.error("Erro ao distribuir faturamento");
+    } finally {
+      setIsSaving(false);
     }
   };
 
