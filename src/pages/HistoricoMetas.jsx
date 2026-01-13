@@ -14,7 +14,6 @@ import ManualGoalRegistration from "../components/goals/ManualGoalRegistration";
 import { toast } from "sonner";
 import AdminViewBanner from "../components/shared/AdminViewBanner";
 import { useSyncData } from "../components/hooks/useSyncData";
-import { useQueryClient } from "@tanstack/react-query";
 
 export default function HistoricoMetas() {
   const [workshop, setWorkshop] = useState(null);
