@@ -428,14 +428,29 @@ export default function DRETCMP2() {
             </div>
 
             {viewMode === 'month' && (
-              <Button 
-                onClick={() => saveMutation.mutate(formData)}
-                disabled={saveMutation.isPending}
-                className="bg-green-600 hover:bg-green-700 print:hidden"
-              >
-                {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-                Salvar DRE
-              </Button>
+              <>
+                <Button 
+                  onClick={async () => {
+                    await updateDREFromMonthlyGoals(workshop.id, selectedMonth);
+                    queryClient.invalidateQueries(['dre-list', workshop?.id]);
+                    toast.success("Receitas sincronizadas com sucesso!");
+                  }}
+                  disabled={isSyncing}
+                  variant="outline"
+                  className="print:hidden"
+                >
+                  {isSyncing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <TrendingUp className="w-4 h-4 mr-2" />}
+                  Sincronizar Receitas
+                </Button>
+                <Button 
+                  onClick={() => saveMutation.mutate(formData)}
+                  disabled={saveMutation.isPending}
+                  className="bg-green-600 hover:bg-green-700 print:hidden"
+                >
+                  {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                  Salvar DRE
+                </Button>
+              </>
             )}
           </div>
         </div>
