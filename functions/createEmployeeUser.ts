@@ -10,10 +10,15 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { name, email, telefone, position, area, job_role, profile_id, workshop_id } = body;
+    const { name, email, telefone, position, area, job_role, profile_id, workshop_id, role = "user" } = body;
     
     if (!name || !email || !workshop_id) {
       return Response.json({ error: 'Nome, email e oficina obrigatórios' }, { status: 400 });
+    }
+    
+    // Validar role
+    if (!['user', 'admin'].includes(role)) {
+      return Response.json({ error: 'Role deve ser "user" ou "admin"' }, { status: 400 });
     }
 
     console.log("👤 Criando colaborador:", email);
