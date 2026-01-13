@@ -16,7 +16,9 @@ export default function ClientDetailPanel({ client, isOpen, onClose, atendimento
     .sort((a, b) => new Date(b.data_realizada || b.data_agendada) - new Date(a.data_realizada || a.data_agendada)) : [];
 
   const handleAcessarOficina = () => {
-    if (client) window.open(`/?workshop_id=${client.id}`, '_blank');
+    if (client) {
+      window.location.href = `/?workshop_id=${client.id}`;
+    }
   };
 
   return (
