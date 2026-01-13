@@ -1,9 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Building2, User, Calendar, TrendingUp, TrendingDown, Minus, MessageCircleOff } from "lucide-react";
+import { Building2, User, Calendar, TrendingUp, TrendingDown, Minus, MessageCircleOff, Eye, MapPin, DollarSign, Users, Phone, Mail, Briefcase, Clock, Target, ExternalLink } from "lucide-react";
+import ClientDetailPanel from "./ClientDetailPanel";
 
 export default function ClientesDetalhesModal({ isOpen, onClose, clientes, tipo, atendimentos = [] }) {
   const getStatusIcon = (status) => {
