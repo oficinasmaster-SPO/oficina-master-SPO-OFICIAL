@@ -268,9 +268,13 @@ export default function Layout({ children, currentPageName }) {
             <main className="flex-1">
               <div className={`${isAuthenticated && !isPublicPage ? 'px-4 sm:px-6 lg:px-8 py-6' : ''}`}>
                 {isAuthenticated && !isPublicPage && <Breadcrumbs />}
-                {children}
-          </div>
-        </main>
+                {isAuthenticated && workshop ? (
+                  <SharedDataProvider workshopId={workshop.id} userId={user?.id}>
+                    {children}
+                  </SharedDataProvider>
+                ) : children}
+            </div>
+            </main>
 
         <footer className="bg-white border-t border-gray-200 mt-auto print:hidden">
           <div className="px-4 sm:px-6 lg:px-8 py-6">
