@@ -77,7 +77,8 @@ export default function ConvidarColaborador() {
       position: employee.position || "",
       area: employee.area || "",
       job_role: employee.job_role || "outros",
-      profile_id: employee.profile_id || ""
+      profile_id: employee.profile_id || "",
+      role: "user"
     });
   };
 
