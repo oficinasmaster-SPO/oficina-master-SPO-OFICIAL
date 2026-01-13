@@ -736,26 +736,15 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                   </div>
                 </div>
 
-                {/* Valor Faturado Total */}
-                <div className="mt-4 border-l-4 border-purple-500 pl-3">
-                  <Label className="mb-2">Valor Faturado Total (Auto - Soma das Vendas)</Label>
-                  <div className="flex gap-4">
-                    <div className="flex-1">
-                      <p className="text-xs text-blue-600 mb-1">PROJETADO</p>
-                      <Input
-                        value={formatCurrency((formData.best_month_history.sales_base || 0) + (formData.best_month_history.sales_marketing || 0))}
-                        disabled
-                        className="bg-blue-100 font-bold text-blue-700" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-xs text-green-600 mb-1">REALIZADO</p>
-                      <Input
-                        value={formatCurrency((formData.monthly_goals?.sales_base || 0) + (formData.monthly_goals?.sales_marketing || 0))}
-                        disabled
-                        className="bg-green-100 font-bold text-green-700" />
-                    </div>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-2">Vendas Base + Vendas Marketing</p>
+                {/* Valor Faturado Total - SÓ REALIZADO */}
+                <div className="mt-4">
+                  <Label>Valor Faturado Total - REALIZADO (Auto - Soma das Vendas)</Label>
+                  <Input
+                    value={formatCurrency((formData.monthly_goals?.sales_base || 0) + (formData.monthly_goals?.sales_marketing || 0))}
+                    disabled
+                    className="bg-green-100 font-bold text-green-700" />
+
+                  <p className="text-xs text-gray-500 mt-1">Vendas Base Realizado + Vendas Marketing Realizado</p>
                 </div>
               </div>
 
