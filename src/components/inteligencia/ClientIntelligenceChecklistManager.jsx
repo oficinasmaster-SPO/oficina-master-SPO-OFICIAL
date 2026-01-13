@@ -226,7 +226,7 @@ export default function ClientIntelligenceChecklistManager({
                 Salvando...
               </>
             ) : (
-              "              checklistId ? "Atualizar Checklist" : "Salvar Checklist""
+              checklistId ? "Atualizar Checklist" : "Salvar Checklist"
             )}
           </Button>
         </DialogFooter>
