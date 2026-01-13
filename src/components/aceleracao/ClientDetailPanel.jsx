@@ -22,29 +22,31 @@ export default function ClientDetailPanel({ client, isOpen, onClose, atendimento
   return (
     <Sheet open={isOpen && !!client} onOpenChange={onClose}>
       <SheetContent side="right" className="w-full sm:max-w-5xl overflow-auto">
-        <SheetHeader>
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <Building2 className="w-6 h-6 text-blue-600" />
-              <div>
-                <SheetTitle className="text-2xl">{client.name}</SheetTitle>
-                <p className="text-sm text-gray-600 flex items-center gap-2 mt-1">
-                  <MapPin className="w-4 h-4" />
-                  {client.city} - {client.state}
-                </p>
+        {client && (
+          <>
+            <SheetHeader>
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <Building2 className="w-6 h-6 text-blue-600" />
+                  <div>
+                    <SheetTitle className="text-2xl">{client.name}</SheetTitle>
+                    <p className="text-sm text-gray-600 flex items-center gap-2 mt-1">
+                      <MapPin className="w-4 h-4" />
+                      {client.city} - {client.state}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-blue-600 text-white text-sm px-3 py-1">
+                    {client.planoAtual || 'FREE'}
+                  </Badge>
+                  <Button size="sm" onClick={handleAcessarOficina}>
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Acessar Oficina
+                  </Button>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge className="bg-blue-600 text-white text-sm px-3 py-1">
-                {client.planoAtual || 'FREE'}
-              </Badge>
-              <Button size="sm" onClick={handleAcessarOficina}>
-                <ExternalLink className="w-4 h-4 mr-2" />
-                Acessar Oficina
-              </Button>
-            </div>
-          </div>
-        </SheetHeader>
+            </SheetHeader>
 
         <Tabs defaultValue="geral" className="mt-6">
           <TabsList className="grid w-full grid-cols-4">
