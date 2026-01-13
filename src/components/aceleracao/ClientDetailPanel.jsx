@@ -12,17 +12,15 @@ import {
 } from "lucide-react";
 
 export default function ClientDetailPanel({ client, isOpen, onClose, atendimentos = [] }) {
-  if (!client) return null;
-
-  const atendimentosCliente = atendimentos.filter(a => a.workshop_id === client.id)
-    .sort((a, b) => new Date(b.data_realizada || b.data_agendada) - new Date(a.data_realizada || a.data_agendada));
+  const atendimentosCliente = client ? atendimentos.filter(a => a.workshop_id === client.id)
+    .sort((a, b) => new Date(b.data_realizada || b.data_agendada) - new Date(a.data_realizada || a.data_agendada)) : [];
 
   const handleAcessarOficina = () => {
-    window.open(`/?workshop_id=${client.id}`, '_blank');
+    if (client) window.open(`/?workshop_id=${client.id}`, '_blank');
   };
 
   return (
-    <Sheet open={isOpen} onOpenChange={onClose}>
+    <Sheet open={isOpen && !!client} onOpenChange={onClose}>
       <SheetContent side="right" className="w-full sm:max-w-5xl overflow-auto">
         <SheetHeader>
           <div className="flex items-start justify-between mb-4">
