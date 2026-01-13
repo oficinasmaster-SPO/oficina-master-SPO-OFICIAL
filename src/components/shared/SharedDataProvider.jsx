@@ -13,16 +13,22 @@ export function SharedDataProvider({ children, workshopId, userId }) {
     queryFn: async () => {
       if (!workshopId) return null;
       try {
-        return await base44.entities.Workshop.get(workshopId);
+        const ws = await base44.entities.Workshop.get(workshopId);
+        console.log('📊 SharedDataProvider carregou workshop:', {
+          id: ws.id,
+          name: ws.name,
+          city: ws.city
+        });
+        return ws;
       } catch (error) {
         console.error("Erro ao carregar workshop:", error);
         return null;
       }
     },
     enabled: !!workshopId,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0, // Sempre recarregar
+    cacheTime: 0, // Não cachear
     retry: 1,
-    retryOnMount: false,
   });
 
   const { data: latestDRE, isLoading: loadingDRE } = useQuery({

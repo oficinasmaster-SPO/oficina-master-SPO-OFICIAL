@@ -82,9 +82,14 @@ export default function Layout({ children, currentPageName }) {
               // Modo Admin/Acelerador: carregar workshop específico COMPLETO
               try {
                 userWorkshop = await base44.entities.Workshop.get(targetWorkshopId);
-                console.log('✅ Workshop carregado no modo admin:', userWorkshop);
+                console.log('✅ Workshop ADMIN carregado:', {
+                  id: userWorkshop.id,
+                  name: userWorkshop.name,
+                  city: userWorkshop.city
+                });
               } catch (error) {
                 console.error('❌ Erro ao carregar workshop admin:', error);
+                sessionStorage.removeItem('admin_workshop_id');
               }
             } else {
               // Modo Normal: carregar workshop do usuário
@@ -99,6 +104,11 @@ export default function Layout({ children, currentPageName }) {
                   console.error("Erro ao buscar workshop:", err);
                 }
               }
+
+              console.log('✅ Workshop NORMAL carregado:', {
+                id: userWorkshop?.id,
+                name: userWorkshop?.name
+              });
             }
 
             setWorkshop(userWorkshop || null);
@@ -116,7 +126,7 @@ export default function Layout({ children, currentPageName }) {
     };
 
     loadUser();
-  }, [location.pathname]);
+  }, [location.pathname, location.search]);
 
 
 
