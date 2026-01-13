@@ -260,10 +260,6 @@ export default function Home() {
         <DynamicHelpSystem pageName="Home" autoStartTour={showOnboarding} />
         
         <div className="px-4 sm:px-6 lg:px-8 py-8">
-          {isAdminMode && workshop && (
-            <AdminViewBanner workshopName={workshop?.name} />
-          )}
-          
           <QuickTipsBar tips={dashboardTips} pageName="home-dashboard" />
 
           {showOnboarding && (
