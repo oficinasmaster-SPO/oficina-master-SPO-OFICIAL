@@ -554,14 +554,32 @@ export default function DRETCMP2() {
           </TabsList>
 
           {/* Receitas */}
-          <TabsContent value="receitas">
+           <TabsContent value="receitas">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="w-5 h-5 text-green-600" />
-                  Receitas do Mês
-                </CardTitle>
-                <CardDescription>Informe o faturamento do mês</CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <DollarSign className="w-5 h-5 text-green-600" />
+                      Receitas do Mês
+                    </CardTitle>
+                    <CardDescription>Informe o faturamento do mês</CardDescription>
+                  </div>
+                  <Button
+                    onClick={async () => {
+                      await updateDREFromMonthlyGoals(workshop.id, selectedMonth);
+                      queryClient.invalidateQueries(['dre-list', workshop?.id]);
+                      toast.success("Dados consolidados com sucesso!");
+                    }}
+                    disabled={isSyncing}
+                    variant="outline"
+                    size="sm"
+                    className="print:hidden"
+                  >
+                    {isSyncing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <TrendingUp className="w-4 h-4 mr-2" />}
+                    Sincronizar Receitas
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
