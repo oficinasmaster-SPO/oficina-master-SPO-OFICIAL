@@ -640,18 +640,13 @@ export default function CronogramaGeral() {
         </div>
       </div>
 
-      {/* Painel Lateral de Detalhes */}
-      {showPanel && selectedClient && (
-        <ClientDetailPanel
-          client={selectedClient}
-          processos={processos}
-          onClose={() => setShowPanel(false)}
-          onAvaliar={(client, process) => {
-            setAvaliacaoModal({ show: true, client, process });
-            setShowPanel(false);
-          }}
-        />
-      )}
+      {/* Modal de Detalhes do Cliente */}
+      <ClientDetailPanel
+        client={selectedClient}
+        isOpen={showPanel}
+        onClose={() => setShowPanel(false)}
+        atendimentos={[]}
+      />
 
       {/* Modal de Avaliação */}
       {avaliacaoModal.show && (
