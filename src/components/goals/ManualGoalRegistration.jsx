@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Save, Building2, User, Target, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
+import RevenueDistributionModal from "./RevenueDistributionModal";
 
 export default function ManualGoalRegistration({ open, onClose, workshop, onSave }) {
   const [entityType, setEntityType] = useState("workshop");
