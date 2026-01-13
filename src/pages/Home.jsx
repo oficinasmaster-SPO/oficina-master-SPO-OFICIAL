@@ -13,18 +13,17 @@ import DashboardHub from "../components/home/DashboardHub";
 import DynamicHelpSystem from "@/components/help/DynamicHelpSystem";
 import QuickTipsBar from "@/components/help/QuickTipsBar";
 import AdminViewBanner from "../components/shared/AdminViewBanner";
+import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 
 export default function Home() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const [workshop, setWorkshop] = useState(null); // New state for workshop
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true); // Granular loading state
-  const [isLoadingWorkshop, setIsLoadingWorkshop] = useState(false); // Granular loading state
-  const [isLoadingProgress, setIsLoadingProgress] = useState(false); // Granular loading state
+  const { workshop, isLoading: isLoadingWorkshop, isAdminMode } = useWorkshopContext();
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [isLoadingProgress, setIsLoadingProgress] = useState(false);
   const [userProgress, setUserProgress] = useState(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isAdminView, setIsAdminView] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -55,67 +54,10 @@ export default function Home() {
           return;
         }
 
-        setIsLoadingWorkshop(true);
-        try {
-          // Verificar se há workshop_id na URL (admin visualizando)
-          const urlParams = new URLSearchParams(window.location.search);
-          const adminWorkshopId = urlParams.get('workshop_id');
-          
-          let userWorkshop = null;
-          
-          if (adminWorkshopId && currentUser.role === 'admin') {
-            // Admin visualizando oficina específica
-            userWorkshop = await base44.entities.Workshop.get(adminWorkshopId);
-            setIsAdminView(true);
-          } else {
-            // Fluxo normal
-            // 1. Tenta buscar como dono
-            const ownedWorkshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
-            userWorkshop = Array.isArray(ownedWorkshops) && ownedWorkshops.length > 0 
-              ? ownedWorkshops[0] 
-              : null;
-
-            // 2. Se não encontrou como dono e tem workshop_id no User, usar direto
-            if (!userWorkshop && currentUser.workshop_id) {
-                try {
-                  userWorkshop = await base44.entities.Workshop.get(currentUser.workshop_id);
-                } catch (err) {
-                  console.error("Erro ao buscar workshop pelo workshop_id do User:", err);
-                }
-            }
-
-            // 3. Se ainda não encontrou, tenta via Employee (fallback)
-            if (!userWorkshop) {
-                const employees = await base44.entities.Employee.filter({ user_id: currentUser.id });
-                const myEmployeeRecord = Array.isArray(employees) && employees.length > 0 ? employees[0] : null;
-                
-                if (myEmployeeRecord && myEmployeeRecord.workshop_id) {
-                    userWorkshop = await base44.entities.Workshop.get(myEmployeeRecord.workshop_id);
-                }
-            }
-            setIsAdminView(false);
-          }
-
-          setWorkshop(userWorkshop);
-          
-          // Se não encontrou oficina vinculada (nem dono, nem colaborador), redireciona para cadastro
-          if (!userWorkshop) {
-            navigate(createPageUrl("Cadastro"));
-            return;
-          }
-        } catch (workshopError) {
-          console.error("Error fetching workshops:", workshopError);
-          toast.error("Erro ao buscar oficina: " + (workshopError.message || "Erro desconhecido"));
-          setWorkshop(null);
-        } finally {
-          setIsLoadingWorkshop(false);
-        }
-
         try {
           await loadUserProgress(currentUser, workshop);
         } catch (progressError) {
           console.error("Error loading progress:", progressError);
-          // Non-critical error, maybe no toast needed or just warning
         }
         } catch (error) {
         console.error("Auth Check Error:", error);
@@ -303,7 +245,7 @@ export default function Home() {
     "A gamificação aumenta o engajamento da equipe em até 40%"
   ];
 
-  if (isCheckingAuth || isLoadingWorkshop || isLoadingProgress) {
+  if (isCheckingAuth || isLoadingProgress) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-12 h-12 animate-spin text-blue-600" />
@@ -318,7 +260,7 @@ export default function Home() {
         <DynamicHelpSystem pageName="Home" autoStartTour={showOnboarding} />
         
         <div className="px-4 sm:px-6 lg:px-8 py-8">
-          {isAdminView && workshop && (
+          {isAdminMode && workshop && (
             <AdminViewBanner workshopName={workshop?.name} />
           )}
           

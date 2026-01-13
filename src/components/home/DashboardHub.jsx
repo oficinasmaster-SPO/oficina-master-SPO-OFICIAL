@@ -42,8 +42,17 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 
-export default function DashboardHub({ user, workshop }) {
+export default function DashboardHub({ user, workshop: propWorkshop }) {
+  const { workshop: contextWorkshop } = useWorkshopContext();
+  const workshop = contextWorkshop || propWorkshop;
+  
+  console.log('🏠 DashboardHub renderizando com workshop:', {
+    id: workshop?.id,
+    name: workshop?.name,
+    city: workshop?.city
+  });
   const [isNoticeDialogOpen, setIsNoticeDialogOpen] = React.useState(false);
   const [isTipsDialogOpen, setIsTipsDialogOpen] = React.useState(false);
   const [newNotice, setNewNotice] = React.useState({ title: "", content: "", priority: "media" });
