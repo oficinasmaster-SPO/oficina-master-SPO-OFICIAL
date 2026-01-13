@@ -83,7 +83,24 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
       average_ticket: 0,
       customer_volume: 0,
       buy_target: 0,
-      product_cost_applied: 0
+      product_cost_applied: 0,
+      sales_base: 0,
+      sales_marketing: 0,
+      pave_commercial: 0,
+      kit_master: 0,
+      clients_scheduled_base: 0,
+      clients_delivered_base: 0,
+      clients_scheduled_mkt: 0,
+      clients_delivered_mkt: 0,
+      marketing: {
+        leads_generated: 0,
+        leads_scheduled: 0,
+        leads_showed_up: 0,
+        leads_sold: 0,
+        invested_value: 0,
+        revenue_from_traffic: 0,
+        cost_per_sale: 0
+      }
     }
   });
 
@@ -145,7 +162,24 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
           average_ticket: 0,
           customer_volume: 0,
           buy_target: 0,
-          product_cost_applied: 0
+          product_cost_applied: 0,
+          sales_base: 0,
+          sales_marketing: 0,
+          pave_commercial: 0,
+          kit_master: 0,
+          clients_scheduled_base: 0,
+          clients_delivered_base: 0,
+          clients_scheduled_mkt: 0,
+          clients_delivered_mkt: 0,
+          marketing: {
+            leads_generated: 0,
+            leads_scheduled: 0,
+            leads_showed_up: 0,
+            leads_sold: 0,
+            invested_value: 0,
+            revenue_from_traffic: 0,
+            cost_per_sale: 0
+          }
         }
       });
       setGrowthPercentageInput(workshop.monthly_goals?.growth_percentage || 10);
