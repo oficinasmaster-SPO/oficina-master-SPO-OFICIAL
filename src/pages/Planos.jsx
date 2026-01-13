@@ -159,19 +159,45 @@ export default function Planos() {
           </p>
         </div>
 
-        {/* Planos Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-          {plans.map((plan) => (
-            <PlanCard
-              key={plan.id}
-              plan={plan}
-              currentPlan={currentPlan}
-              actionType={getActionType(plan.nome)}
-              onSelect={() => handleSelectPlan(plan.nome)}
-              workshopLimits={workshop?.limitesUtilizados}
-            />
-          ))}
+        {/* View Toggle */}
+        <div className="flex justify-center gap-3 mb-8">
+          <Button
+            variant={viewMode === "cards" ? "default" : "outline"}
+            onClick={() => setViewMode("cards")}
+            className="flex items-center gap-2"
+          >
+            <Grid3X3 className="w-4 h-4" />
+            Visualizar Cards
+          </Button>
+          <Button
+            variant={viewMode === "table" ? "default" : "outline"}
+            onClick={() => setViewMode("table")}
+            className="flex items-center gap-2"
+          >
+            <Table2 className="w-4 h-4" />
+            Comparar Planos
+          </Button>
         </div>
+
+        {/* Planos Grid */}
+        {viewMode === "cards" ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+            {plans.map((plan) => (
+              <PlanCard
+                key={plan.id}
+                plan={plan}
+                currentPlan={currentPlan}
+                actionType={getActionType(plan.nome)}
+                onSelect={() => handleSelectPlan(plan.nome)}
+                workshopLimits={workshop?.limitesUtilizados}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="mb-12">
+            <PlansComparison plans={plans} />
+          </div>
+        )}
 
         {/* Features Highlight */}
         <div className="bg-white rounded-2xl shadow-lg p-8 border-2 border-blue-200">
