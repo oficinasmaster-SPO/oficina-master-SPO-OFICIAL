@@ -45,8 +45,10 @@ export function SharedDataProvider({ children, workshopId, userId }) {
     queryKey: ['shared-dre', workshopId],
     queryFn: async () => {
       if (!workshopId) return null;
+      console.log('📊 Carregando DRE para:', workshopId);
       try {
         const dres = await base44.entities.DREMonthly.filter({ workshop_id: workshopId }, '-reference_month', 1);
+        console.log('📊 DRE encontrado:', dres?.[0] ? 'sim' : 'não');
         return dres?.[0] || null;
       } catch (error) {
         console.error("Erro ao carregar DRE:", error);
@@ -54,17 +56,19 @@ export function SharedDataProvider({ children, workshopId, userId }) {
       }
     },
     enabled: !!workshopId,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
+    gcTime: 0,
     retry: 1,
-    retryOnMount: false,
   });
 
   const { data: latestOSDiagnostic, isLoading: loadingOS } = useQuery({
     queryKey: ['shared-os-diagnostic', workshopId],
     queryFn: async () => {
       if (!workshopId) return null;
+      console.log('📊 Carregando OS Diagnostic para:', workshopId);
       try {
         const diagnostics = await base44.entities.ServiceOrderDiagnostic.filter({ workshop_id: workshopId }, '-created_date', 1);
+        console.log('📊 OS encontrada:', diagnostics?.[0] ? 'sim' : 'não');
         return diagnostics?.[0] || null;
       } catch (error) {
         console.error("Erro ao carregar OS:", error);
@@ -72,17 +76,19 @@ export function SharedDataProvider({ children, workshopId, userId }) {
       }
     },
     enabled: !!workshopId,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
+    gcTime: 0,
     retry: 1,
-    retryOnMount: false,
   });
 
   const { data: employees = [], isLoading: loadingEmployees } = useQuery({
     queryKey: ['shared-employees', workshopId],
     queryFn: async () => {
       if (!workshopId) return [];
+      console.log('📊 Carregando colaboradores para:', workshopId);
       try {
         const result = await base44.entities.Employee.filter({ workshop_id: workshopId });
+        console.log('📊 Colaboradores encontrados:', result?.length || 0);
         return Array.isArray(result) ? result : [];
       } catch (error) {
         console.error("Erro ao carregar employees:", error);
@@ -90,9 +96,9 @@ export function SharedDataProvider({ children, workshopId, userId }) {
       }
     },
     enabled: !!workshopId,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
+    gcTime: 0,
     retry: 1,
-    retryOnMount: false,
   });
 
   // Metas mensais da oficina
@@ -100,15 +106,19 @@ export function SharedDataProvider({ children, workshopId, userId }) {
     queryKey: ['shared-goals', workshopId],
     queryFn: async () => {
       if (!workshopId) return null;
+      console.log('📊 Carregando metas para:', workshopId);
       const goals = await base44.entities.Goal.filter(
         { workshop_id: workshopId },
         '-created_date',
         1
       );
-      return goals?.[0] || workshop?.monthly_goals || null;
+      const result = goals?.[0] || workshop?.monthly_goals || null;
+      console.log('📊 Metas encontradas:', result ? 'sim' : 'não');
+      return result;
     },
     enabled: !!workshopId,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
+    gcTime: 0,
   });
 
   // Histórico de metas
@@ -123,7 +133,8 @@ export function SharedDataProvider({ children, workshopId, userId }) {
       return Array.isArray(history) ? history : [];
     },
     enabled: !!workshopId,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
+    gcTime: 0,
   });
 
   // Função para invalidar e atualizar dados
