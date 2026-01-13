@@ -2,9 +2,11 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
-import { Loader2, Award, TrendingUp, AlertCircle } from "lucide-react";
+import { Loader2, Award, TrendingUp, AlertCircle, Grid3X3, Table2 } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import PlanCard from "../components/plans/PlanCard";
+import PlansComparison from "../components/plans/PlansComparison";
 import { usePermissions } from "@/components/hooks/usePermissions";
 
 export default function Planos() {
