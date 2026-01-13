@@ -208,6 +208,7 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
         open={detailFormOpen}
         onOpenChange={setDetailFormOpen}
         intelligenceId={lastIntelligenceId}
+        intelligenceItem={pendingIntelligence}
         onSuccess={onSuccess}
       />
 
