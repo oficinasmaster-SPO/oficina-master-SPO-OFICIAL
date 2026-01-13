@@ -8,6 +8,8 @@ import { Building2, User, Calendar, TrendingUp, TrendingDown, Minus, MessageCirc
 import ClientDetailPanel from "./ClientDetailPanel";
 
 export default function ClientesDetalhesModal({ isOpen, onClose, clientes, tipo, atendimentos = [] }) {
+  const [selectedClient, setSelectedClient] = useState(null);
+
   const getStatusIcon = (status) => {
     const icons = {
       crescente: <TrendingUp className="w-4 h-4 text-green-600" />,
