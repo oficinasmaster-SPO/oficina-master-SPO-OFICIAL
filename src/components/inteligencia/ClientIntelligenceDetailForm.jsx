@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
-import { X } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 const COMMON_CAUSES = [
   "Falta de comunicação",
@@ -20,7 +21,7 @@ const COMMON_CAUSES = [
   "Priorização incorreta",
 ];
 
-export default function ClientIntelligenceDetailForm({ open, onOpenChange, intelligenceId, onSuccess }) {
+export default function ClientIntelligenceDetailForm({ open, onOpenChange, intelligenceId, intelligenceItem, onSuccess }) {
   const [description, setDescription] = useState("");
   const [impact, setImpact] = useState("");
   const [frequency, setFrequency] = useState("");
@@ -29,6 +30,25 @@ export default function ClientIntelligenceDetailForm({ open, onOpenChange, intel
   const [responsibles, setResponsibles] = useState("");
   const [deadline, setDeadline] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // Buscar checklist baseado na área e tipo da inteligência
+  const { data: checklist, isLoading: loadingChecklist } = useQuery({
+    queryKey: ['checklist-for-intelligence', intelligenceItem?.area, intelligenceItem?.type],
+    queryFn: async () => {
+      if (!intelligenceItem?.area || !intelligenceItem?.type) return null;
+      
+      const checklists = await base44.entities.ClientIntelligenceChecklist.filter({
+        area: intelligenceItem.area,
+        type: intelligenceItem.type,
+        status: "ativo"
+      });
+      
+      // Priorizar checklist padrão
+      const defaultChecklist = checklists.find(c => c.is_default);
+      return defaultChecklist || checklists[0] || null;
+    },
+    enabled: !!intelligenceItem?.area && !!intelligenceItem?.type && open,
+  });
 
   const handleToggleCause = (cause) => {
     setCausesSelected(prev =>
@@ -117,22 +137,41 @@ export default function ClientIntelligenceDetailForm({ open, onOpenChange, intel
             </Select>
           </div>
 
-          {/* Causas */}
+          {/* Causas - Checklist Dinâmico */}
           <div>
             <label className="text-sm font-semibold text-gray-700 mb-2 block">
-              Possíveis Causas
+              Possíveis Causas {checklist && `- ${checklist.title}`}
             </label>
-            <div className="space-y-2 bg-gray-50 p-3 rounded-lg">
-              {COMMON_CAUSES.map((cause) => (
-                <div key={cause} className="flex items-center gap-2">
-                  <Checkbox
-                    checked={causesSelected.includes(cause)}
-                    onCheckedChange={() => handleToggleCause(cause)}
-                  />
-                  <label className="text-sm text-gray-700 cursor-pointer">{cause}</label>
-                </div>
-              ))}
-            </div>
+            {loadingChecklist ? (
+              <div className="flex items-center justify-center py-8 bg-gray-50 rounded-lg">
+                <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                <span className="ml-2 text-sm text-gray-500">Carregando checklist...</span>
+              </div>
+            ) : checklist && checklist.items?.length > 0 ? (
+              <div className="grid grid-cols-2 gap-3 bg-gray-50 p-3 rounded-lg">
+                {checklist.items.map((item) => (
+                  <div key={item.id} className="flex items-center gap-2">
+                    <Checkbox
+                      checked={causesSelected.includes(item.label)}
+                      onCheckedChange={() => handleToggleCause(item.label)}
+                    />
+                    <label className="text-sm text-gray-700 cursor-pointer">{item.label}</label>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-2 bg-gray-50 p-3 rounded-lg">
+                {COMMON_CAUSES.map((cause) => (
+                  <div key={cause} className="flex items-center gap-2">
+                    <Checkbox
+                      checked={causesSelected.includes(cause)}
+                      onCheckedChange={() => handleToggleCause(cause)}
+                    />
+                    <label className="text-sm text-gray-700 cursor-pointer">{cause}</label>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Soluções Tentadas */}
