@@ -26,7 +26,8 @@ export default function ConvidarColaborador() {
     position: "",
     area: "",
     job_role: "outros",
-    profile_id: ""
+    profile_id: "",
+    role: "user"
   });
 
   const jobRoles = [
