@@ -266,8 +266,8 @@ export default function MapaChecklists() {
         workshopId={workshop?.id}
         type={selectedType}
         area={selectedArea}
-        editingChecklist={editingChecklist}
-        onSuccess={() => {
+        initialData={editingChecklist}
+        onChecklistCreated={() => {
           setManagerOpen(false);
           setEditingChecklist(null);
         }}
