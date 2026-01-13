@@ -16,6 +16,7 @@ export default function Planos() {
   const [plans, setPlans] = useState([]);
   const [currentPlan, setCurrentPlan] = useState(null);
   const [workshop, setWorkshop] = useState(null);
+  const [viewMode, setViewMode] = useState("cards"); // "cards" or "table"
 
   useEffect(() => {
     loadData();
