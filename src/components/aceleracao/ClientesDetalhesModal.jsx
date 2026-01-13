@@ -41,68 +41,88 @@ export default function ClientesDetalhesModal({ isOpen, onClose, clientes, tipo,
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[80vh] overflow-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            {tipo && getStatusIcon(tipo)}
-            {getTitulo()}
-          </DialogTitle>
-        </DialogHeader>
-        
-        <div className="space-y-3">
-          {clientes && clientes.length === 0 ? (
-            <p className="text-center text-gray-500 py-8">Nenhum cliente encontrado</p>
-          ) : (
-            clientes?.map((cliente) => {
-              const ultimoAtendimento = getUltimoAtendimento(cliente.id);
-              
-              return (
-                <div key={cliente.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <Building2 className="w-5 h-5 text-blue-600" />
-                      <div>
-                        <h3 className="font-semibold text-gray-900">{cliente.name}</h3>
-                        <p className="text-sm text-gray-600">{cliente.city} - {cliente.state}</p>
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {tipo && getStatusIcon(tipo)}
+              {getTitulo()}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-3">
+            {clientes && clientes.length === 0 ? (
+              <p className="text-center text-gray-500 py-8">Nenhum cliente encontrado</p>
+            ) : (
+              clientes?.map((cliente) => {
+                const ultimoAtendimento = getUltimoAtendimento(cliente.id);
+                
+                return (
+                  <div key={cliente.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-3 flex-1">
+                        <Building2 className="w-5 h-5 text-blue-600" />
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-gray-900">{cliente.name}</h3>
+                          <p className="text-sm text-gray-600">{cliente.city} - {cliente.state}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                          {cliente.planoAtual || 'FREE'}
+                        </Badge>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setSelectedClient(cliente)}
+                          className="ml-2"
+                        >
+                          <Eye className="w-4 h-4 mr-1" />
+                          Ver Detalhes
+                        </Button>
                       </div>
                     </div>
-                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                      {cliente.planoAtual || 'FREE'}
-                    </Badge>
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <User className="w-4 h-4" />
-                      <span>Fase {cliente.maturity_level || 1}</span>
-                    </div>
-                    {ultimoAtendimento ? (
+                    <div className="grid grid-cols-2 gap-3 text-sm">
                       <div className="flex items-center gap-2 text-gray-600">
-                        <Calendar className="w-4 h-4" />
-                        <span>
-                          Último contato: {format(new Date(ultimoAtendimento.data_realizada), "dd/MM/yyyy", { locale: ptBR })}
-                        </span>
+                        <User className="w-4 h-4" />
+                        <span>Fase {cliente.maturity_level || 1}</span>
                       </div>
-                    ) : (
-                      <div className="flex items-center gap-2 text-gray-400">
-                        <Calendar className="w-4 h-4" />
-                        <span>Sem atendimentos</span>
+                      {ultimoAtendimento ? (
+                        <div className="flex items-center gap-2 text-gray-600">
+                          <Calendar className="w-4 h-4" />
+                          <span>
+                            Último contato: {format(new Date(ultimoAtendimento.data_realizada), "dd/MM/yyyy", { locale: ptBR })}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 text-gray-400">
+                          <Calendar className="w-4 h-4" />
+                          <span>Sem atendimentos</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {cliente.segment && (
+                      <div className="mt-2">
+                        <Badge variant="outline" className="text-xs">{cliente.segment}</Badge>
                       </div>
                     )}
                   </div>
+                );
+              })
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
-                  {cliente.segment && (
-                    <div className="mt-2">
-                      <Badge variant="outline" className="text-xs">{cliente.segment}</Badge>
-                    </div>
-                  )}
-                </div>
-              );
-            })
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
+      <ClientDetailPanel
+        client={selectedClient}
+        isOpen={!!selectedClient}
+        onClose={() => setSelectedClient(null)}
+        atendimentos={atendimentos}
+      />
+    </>
   );
 }
