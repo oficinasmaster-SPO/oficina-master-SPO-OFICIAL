@@ -113,10 +113,8 @@ Deno.serve(async (req) => {
       ? `${origin}/PrimeiroAcesso?token=${invite.invite_token}`
       : `${origin}/PrimeiroAcesso`;
 
-    // 7. Enviar email de convite (somente se email for domínio interno)
-    const isInternalEmail = email && (email.includes('@oficinasmaster.com') || email.includes('@base44'));
-    
-    if (isInternalEmail) {
+    // 7. Enviar email de convite
+    try {
       try {
         console.log("📧 Enviando email para:", email);
         
