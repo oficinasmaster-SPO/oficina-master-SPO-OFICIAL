@@ -1,5 +1,5 @@
 import React from "react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -20,16 +20,16 @@ export default function ClientDetailPanel({ client, isOpen, onClose, atendimento
   };
 
   return (
-    <Sheet open={isOpen && !!client} onOpenChange={onClose}>
-      <SheetContent side="right" className="w-full sm:max-w-5xl overflow-auto">
+    <Dialog open={isOpen && !!client} onOpenChange={onClose}>
+      <DialogContent className="max-w-7xl h-[90vh] overflow-auto">
         {client && (
           <>
-            <SheetHeader>
+            <DialogHeader>
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <Building2 className="w-6 h-6 text-blue-600" />
                   <div>
-                    <SheetTitle className="text-2xl">{client.name}</SheetTitle>
+                    <DialogTitle className="text-2xl">{client.name}</DialogTitle>
                     <p className="text-sm text-gray-600 flex items-center gap-2 mt-1">
                       <MapPin className="w-4 h-4" />
                       {client.city} - {client.state}
@@ -46,7 +46,7 @@ export default function ClientDetailPanel({ client, isOpen, onClose, atendimento
                   </Button>
                 </div>
               </div>
-            </SheetHeader>
+            </DialogHeader>
 
         <Tabs defaultValue="geral" className="mt-6">
           <TabsList className="grid w-full grid-cols-4">
@@ -329,7 +329,7 @@ export default function ClientDetailPanel({ client, isOpen, onClose, atendimento
         </Tabs>
           </>
         )}
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }
