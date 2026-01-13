@@ -420,20 +420,33 @@ export default function ConvidarColaborador() {
                 </div>
 
                 <div>
-                  <Label htmlFor="job_role">Função do Sistema *</Label>
-                  <Select value={formData.job_role} onValueChange={(value) => setFormData({ ...formData, job_role: value })}>
-                    <SelectTrigger className="bg-gray-50 focus:bg-white transition-colors">
-                      <SelectValue placeholder="Selecione a função" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {jobRoles.map((role) => (
-                        <SelectItem key={role.value} value={role.value}>
-                          {role.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                   <Label htmlFor="job_role">Função do Sistema *</Label>
+                   <Select value={formData.job_role} onValueChange={(value) => setFormData({ ...formData, job_role: value })}>
+                     <SelectTrigger className="bg-gray-50 focus:bg-white transition-colors">
+                       <SelectValue placeholder="Selecione a função" />
+                     </SelectTrigger>
+                     <SelectContent>
+                       {jobRoles.map((role) => (
+                         <SelectItem key={role.value} value={role.value}>
+                           {role.label}
+                         </SelectItem>
+                       ))}
+                     </SelectContent>
+                   </Select>
+                 </div>
+
+                <div>
+                   <Label htmlFor="role">Nível de Acesso *</Label>
+                   <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value })}>
+                     <SelectTrigger className="bg-gray-50 focus:bg-white transition-colors">
+                       <SelectValue placeholder="Selecione o nível" />
+                     </SelectTrigger>
+                     <SelectContent>
+                       <SelectItem value="user">Usuário (Colaborador)</SelectItem>
+                       <SelectItem value="admin">Admin (Gestor)</SelectItem>
+                     </SelectContent>
+                   </Select>
+                 </div>
 
                 <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-4">
                   <Label htmlFor="profile_id" className="text-blue-900 font-bold flex items-center gap-2">
