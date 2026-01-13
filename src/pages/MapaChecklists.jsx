@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Edit2, Trash2, AlertCircle, CheckCircle, X } from "lucide-react";
+import { Plus, Eye, Trash2, AlertCircle, X } from "lucide-react";
 import { toast } from "sonner";
 import ClientIntelligenceChecklistManager from "@/components/inteligencia/ClientIntelligenceChecklistManager";
 import { INTELLIGENCE_TYPES, INTELLIGENCE_AREAS } from "@/components/lib/clientIntelligenceConstants";
@@ -171,87 +171,89 @@ export default function MapaChecklists() {
                 </p>
               </div>
             ) : (
-              <div className="grid gap-4">
-                {checklists.map((checklist) => (
-                  <div
-                    key={checklist.id}
-                    className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-bold text-gray-900">
-                          {checklist.title}
-                        </h3>
-                        <p className="text-sm text-gray-600 mt-1">
-                          {checklist.description}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2 ml-4">
-                        <Badge
-                          variant={
-                            checklist.status === "ativo" ? "default" : "secondary"
-                          }
-                        >
-                          {checklist.status === "ativo" ? "Ativo" : "Inativo"}
-                        </Badge>
-                        {checklist.is_default && (
-                          <Badge className="bg-purple-100 text-purple-800 border-purple-300">
-                            Padrão
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="mb-4">
-                      <p className="text-sm font-semibold text-gray-700 mb-3">
-                        Itens ({checklist.items?.length || 0}):
-                      </p>
-                      <div className="space-y-2">
-                        {checklist.items?.map((item, idx) => (
-                          <div
-                            key={item.id || idx}
-                            className="flex items-start gap-3 bg-gray-50 p-3 rounded"
-                          >
-                            <CheckCircle className="w-4 h-4 text-blue-500 mt-1 flex-shrink-0" />
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-gray-900">
-                                {item.label}
-                              </p>
-                              {item.category && (
-                                <p className="text-xs text-gray-500 mt-1">
-                                  Categoria: {item.category}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 justify-end border-t pt-4">
-                      <Button
-                        variant="outline"
-                        size="sm"
+              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="text-left p-4 text-sm font-semibold text-gray-700">Título</th>
+                      <th className="text-left p-4 text-sm font-semibold text-gray-700">Área</th>
+                      <th className="text-center p-4 text-sm font-semibold text-gray-700">Itens</th>
+                      <th className="text-center p-4 text-sm font-semibold text-gray-700">Status</th>
+                      <th className="text-center p-4 text-sm font-semibold text-gray-700">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {checklists.map((checklist) => (
+                      <tr
+                        key={checklist.id}
                         onClick={() => {
                           setEditingChecklist(checklist);
                           setManagerOpen(true);
                         }}
+                        className="border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition-colors"
                       >
-                        <Edit2 className="w-4 h-4 mr-2" />
-                        Editar
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        onClick={() => handleDelete(checklist.id)}
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Deletar
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                        <td className="p-4">
+                          <div>
+                            <p className="font-semibold text-gray-900">{checklist.title}</p>
+                            <p className="text-sm text-gray-600 line-clamp-1">{checklist.description}</p>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <Badge variant="outline" className="text-xs">
+                            {INTELLIGENCE_AREAS[checklist.area]?.label || checklist.area}
+                          </Badge>
+                        </td>
+                        <td className="p-4 text-center">
+                          <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-700 text-sm font-semibold">
+                            {checklist.items?.length || 0}
+                          </span>
+                        </td>
+                        <td className="p-4 text-center">
+                          <div className="flex items-center justify-center gap-2">
+                            <Badge
+                              variant={checklist.status === "ativo" ? "default" : "secondary"}
+                              className="text-xs"
+                            >
+                              {checklist.status === "ativo" ? "Ativo" : "Inativo"}
+                            </Badge>
+                            {checklist.is_default && (
+                              <Badge className="bg-purple-100 text-purple-800 border-purple-300 text-xs">
+                                Padrão
+                              </Badge>
+                            )}
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <div className="flex items-center justify-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingChecklist(checklist);
+                                setManagerOpen(true);
+                              }}
+                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(checklist.id);
+                              }}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </TabsContent>
