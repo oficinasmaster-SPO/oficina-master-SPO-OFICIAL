@@ -1782,8 +1782,8 @@ export default function ManualGoalRegistration({ open, onClose, workshop, onSave
             </Button>
           </div>
           </div>
+          </DialogContent>
 
-          {/* Revenue Distribution Modal */}
           <RevenueDistributionModal
           open={showDistribution}
           onClose={() => setShowDistribution(false)}
@@ -1792,8 +1792,6 @@ export default function ManualGoalRegistration({ open, onClose, workshop, onSave
           onConfirm={handleDistributionConfirm}
           isLoading={isSaving}
           />
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
+          </Dialog>
+          );
+          }
