@@ -1,274 +1,333 @@
-import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import React from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { X, User, MapPin, Calendar, CheckCircle2, Clock, AlertCircle, FileText, Star, LogIn } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { toast } from "sonner";
-import { createPageUrl } from "@/utils";
-import CompletionModal from "@/components/cronograma/CompletionModal";
+import { 
+  Building2, MapPin, DollarSign, Users, Phone, Mail, 
+  Briefcase, Clock, Target, ExternalLink, Calendar,
+  TrendingUp, Award, Package, FileText, Heart
+} from "lucide-react";
 
-export default function ClientDetailPanel({ client, processos, onClose, onAvaliar }) {
-  const queryClient = useQueryClient();
-  const [activityToComplete, setActivityToComplete] = useState(null);
+export default function ClientDetailPanel({ client, isOpen, onClose, atendimentos = [] }) {
+  if (!client) return null;
 
-  // Carregar usuário atual
-  const { data: user } = useQuery({
-    queryKey: ['current-user'],
-    queryFn: () => base44.auth.me()
-  });
+  const atendimentosCliente = atendimentos.filter(a => a.workshop_id === client.id)
+    .sort((a, b) => new Date(b.data_realizada || b.data_agendada) - new Date(a.data_realizada || a.data_agendada));
 
-  const handleAccessClientArea = async () => {
-    if (!user) {
-      toast.error('Erro ao identificar usuário');
-      return;
-    }
-
-    const assistanceUrl = `${createPageUrl('Dashboard')}?workshop_id=${client.id}&assisted_by=${user.id}&assistance_mode=true`;
-    window.location.href = assistanceUrl;
-  };
-
-  // Carregar progressos do cliente
-  const { data: progressosCliente = [] } = useQuery({
-    queryKey: ['progressos-cliente', client.id],
-    queryFn: () => base44.entities.CronogramaProgresso.filter({ workshop_id: client.id })
-  });
-
-  const handleOpenCompletionModal = (processo, progresso) => {
-    setActivityToComplete({
-      id: progresso?.id,
-      title: processo.nome || processo.codigo,
-      moduloCodigo: processo.codigo,
-      workshop_id: client.id,
-      source: 'cronograma'
-    });
-  };
-
-  const handleCompleteActivity = async (activityId, completionData, source) => {
-    try {
-      if (activityId) {
-        // Atualizar progresso existente
-        await base44.entities.CronogramaProgresso.update(activityId, {
-          situacao: 'concluido',
-          data_conclusao_realizado: completionData.completion_date,
-          observacoes: completionData.completion_notes,
-          avaliacao_efetividade: completionData.effectiveness_rating,
-          participantes: completionData.participants_list,
-          evidencia_url: completionData.evidence_url
-        });
-      } else {
-        // Criar novo progresso
-        await base44.entities.CronogramaProgresso.create({
-          workshop_id: activityToComplete.workshop_id,
-          modulo_codigo: activityToComplete.moduloCodigo,
-          situacao: 'concluido',
-          data_conclusao_realizado: completionData.completion_date,
-          observacoes: completionData.completion_notes,
-          avaliacao_efetividade: completionData.effectiveness_rating,
-          participantes: completionData.participants_list,
-          evidencia_url: completionData.evidence_url
-        });
-      }
-
-      // Notificar outros usuários sobre a conclusão
-      const user = await base44.auth.me();
-      try {
-        await base44.functions.invoke('notificarConclusaoProcesso', {
-          workshop_id: activityToComplete.workshop_id,
-          processo_titulo: activityToComplete.title,
-          concluido_por_id: user.id,
-          progresso_id: activityId
-        });
-      } catch (error) {
-        console.error("Erro ao notificar conclusão:", error);
-      }
-      
-      queryClient.invalidateQueries(['progressos-cliente']);
-      queryClient.invalidateQueries(['cronograma-progressos']);
-      queryClient.invalidateQueries(['workshops-cronograma']);
-    } catch (error) {
-      console.error("Erro ao concluir processo:", error);
-      throw error;
-    }
+  const handleAcessarOficina = () => {
+    window.open(`/?workshop_id=${client.id}`, '_blank');
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-end">
-      <div className="bg-white w-full max-w-2xl h-full overflow-y-auto shadow-2xl">
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between z-10">
-          <h2 className="text-2xl font-bold text-gray-900">Detalhes do Cliente</h2>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="w-5 h-5" />
-          </Button>
-        </div>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-auto">
+        <DialogHeader>
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-3">
+              <Building2 className="w-6 h-6 text-blue-600" />
+              <div>
+                <DialogTitle className="text-2xl">{client.name}</DialogTitle>
+                <p className="text-sm text-gray-600 flex items-center gap-2 mt-1">
+                  <MapPin className="w-4 h-4" />
+                  {client.city} - {client.state}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge className="bg-blue-600 text-white text-sm px-3 py-1">
+                {client.planoAtual || 'FREE'}
+              </Badge>
+              <Button size="sm" onClick={handleAcessarOficina}>
+                <ExternalLink className="w-4 h-4 mr-2" />
+                Acessar Oficina
+              </Button>
+            </div>
+          </div>
+        </DialogHeader>
 
-        <div className="p-6 space-y-6">
-          {/* Informações do Cliente */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Informações Gerais</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center gap-2 text-gray-700">
-                <User className="w-4 h-4" />
-                <span className="font-medium">{client.name}</span>
-              </div>
-              <div className="flex items-center gap-2 text-gray-600 text-sm">
-                <MapPin className="w-4 h-4" />
-                <span>{client.city}/{client.state}</span>
-              </div>
-              <div className="flex items-center gap-2 text-gray-600 text-sm">
-                <FileText className="w-4 h-4" />
-                <span>CNPJ: {client.cnpj || 'Não informado'}</span>
-              </div>
-              <div className="mt-4">
-                <Badge className="bg-blue-100 text-blue-700">
-                  Plano {client.planoAtual}
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
+        <Tabs defaultValue="geral" className="mt-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="geral">Dados Gerais</TabsTrigger>
+            <TabsTrigger value="operacional">Operacional</TabsTrigger>
+            <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
+            <TabsTrigger value="historico">Histórico</TabsTrigger>
+          </TabsList>
 
-          {/* Progresso Geral */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Progresso do Plano</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-3">
-                <div className="flex-1 bg-gray-200 rounded-full h-3">
-                  <div 
-                    className="bg-blue-600 h-3 rounded-full transition-all"
-                    style={{ width: `${client.percentualConclusao || 0}%` }}
-                  />
+          <TabsContent value="geral" className="space-y-6 mt-6">
+            <div className="grid grid-cols-2 gap-6">
+              {/* Informações Básicas */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-lg flex items-center gap-2">
+                  <Building2 className="w-5 h-5 text-blue-600" />
+                  Informações Básicas
+                </h3>
+                <div className="space-y-3 text-sm">
+                  {client.razao_social && (
+                    <div>
+                      <span className="text-gray-600">Razão Social:</span>
+                      <p className="font-medium">{client.razao_social}</p>
+                    </div>
+                  )}
+                  {client.cnpj && (
+                    <div>
+                      <span className="text-gray-600">CNPJ:</span>
+                      <p className="font-medium">{client.cnpj}</p>
+                    </div>
+                  )}
+                  {client.endereco_completo && (
+                    <div>
+                      <span className="text-gray-600">Endereço:</span>
+                      <p className="font-medium">{client.endereco_completo}</p>
+                    </div>
+                  )}
                 </div>
-                <span className="text-lg font-bold text-gray-900">
-                  {client.percentualConclusao || 0}%
-                </span>
               </div>
-            </CardContent>
-          </Card>
 
-          {/* Cronograma de Processos */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Cronograma de Processos</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {processos.map((processo) => {
-                  const progresso = progressosCliente.find(p => p.modulo_codigo === processo.codigo);
-                  const status = progresso?.situacao || 'nao_iniciado';
-                  const isConcluido = status === 'concluido';
-                  const isAtrasado = status === 'atrasado';
-
-                  return (
-                    <div 
-                      key={processo.codigo}
-                      className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h4 className="font-medium text-gray-900">
-                              {processo.nome || processo.codigo}
-                            </h4>
-                            {isConcluido && (
-                              <Badge className="bg-green-100 text-green-700">
-                                <CheckCircle2 className="w-3 h-3 mr-1" />
-                                Concluído
-                              </Badge>
-                            )}
-                            {isAtrasado && (
-                              <Badge className="bg-red-100 text-red-700">
-                                <AlertCircle className="w-3 h-3 mr-1" />
-                                Atrasado
-                              </Badge>
-                            )}
-                            {!isConcluido && !isAtrasado && (
-                              <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                                <Clock className="w-3 h-3 mr-1" />
-                                A Fazer
-                              </Badge>
-                            )}
-                          </div>
-                          {progresso?.data_conclusao_realizado && (
-                            <p className="text-xs text-gray-600">
-                              Concluído em: {format(new Date(progresso.data_conclusao_realizado), "dd/MM/yyyy", { locale: ptBR })}
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex gap-2">
-                          {!isConcluido && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleOpenCompletionModal(processo, progresso)}
-                            >
-                              <CheckCircle2 className="w-4 h-4 mr-1" />
-                              Concluir
-                            </Button>
-                          )}
-                          {isConcluido && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => onAvaliar(client, processo)}
-                            >
-                              <Star className="w-4 h-4 mr-1" />
-                              Avaliar
-                            </Button>
-                          )}
-                        </div>
+              {/* Segmentação */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-lg flex items-center gap-2">
+                  <Briefcase className="w-5 h-5 text-purple-600" />
+                  Segmentação
+                </h3>
+                <div className="space-y-3 text-sm">
+                  {client.segment && (
+                    <div>
+                      <span className="text-gray-600">Segmento:</span>
+                      <p className="font-medium">{client.segment}</p>
+                    </div>
+                  )}
+                  {client.vehicle_types && client.vehicle_types.length > 0 && (
+                    <div>
+                      <span className="text-gray-600">Veículos:</span>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {client.vehicle_types.map(v => (
+                          <Badge key={v} variant="outline" className="text-xs">{v}</Badge>
+                        ))}
                       </div>
                     </div>
-                  );
-                })}
+                  )}
+                  {client.services_offered && client.services_offered.length > 0 && (
+                    <div>
+                      <span className="text-gray-600">Serviços:</span>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {client.services_offered.slice(0, 5).map(s => (
+                          <Badge key={s} variant="outline" className="text-xs">{s}</Badge>
+                        ))}
+                        {client.services_offered.length > 5 && (
+                          <Badge variant="outline" className="text-xs">+{client.services_offered.length - 5}</Badge>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Ações Rápidas */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Ações Rápidas</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <Button 
-                onClick={handleAccessClientArea}
-                className="w-full justify-start bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                <LogIn className="w-4 h-4 mr-2" />
-                Acessar Área do Cliente
-              </Button>
-              <Button variant="outline" className="w-full justify-start">
-                <Calendar className="w-4 h-4 mr-2" />
-                Agendar Reunião
-              </Button>
-              <Button variant="outline" className="w-full justify-start">
-                <FileText className="w-4 h-4 mr-2" />
-                Gerar Relatório Completo
-              </Button>
-              <Button variant="outline" className="w-full justify-start">
-                <User className="w-4 h-4 mr-2" />
-                Ver Perfil Completo
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+            {/* Maturidade e Fase */}
+            <div className="grid grid-cols-3 gap-4">
+              <div className="border rounded-lg p-4 bg-gradient-to-br from-blue-50 to-blue-100">
+                <Award className="w-6 h-6 text-blue-600 mb-2" />
+                <p className="text-sm text-gray-600">Nível de Maturidade</p>
+                <p className="text-2xl font-bold text-blue-600">Fase {client.maturity_level || 1}</p>
+              </div>
+              <div className="border rounded-lg p-4 bg-gradient-to-br from-green-50 to-green-100">
+                <Users className="w-6 h-6 text-green-600 mb-2" />
+                <p className="text-sm text-gray-600">Colaboradores</p>
+                <p className="text-2xl font-bold text-green-600">{client.employees_count || 0}</p>
+              </div>
+              <div className="border rounded-lg p-4 bg-gradient-to-br from-purple-50 to-purple-100">
+                <Clock className="w-6 h-6 text-purple-600 mb-2" />
+                <p className="text-sm text-gray-600">Anos de Operação</p>
+                <p className="text-2xl font-bold text-purple-600">{client.years_in_business || 0}</p>
+              </div>
+            </div>
+          </TabsContent>
 
-      {/* Modal de Conclusão */}
-      {activityToComplete && (
-        <CompletionModal
-          activity={activityToComplete}
-          onClose={() => setActivityToComplete(null)}
-          onComplete={handleCompleteActivity}
-        />
-      )}
-    </div>
+          <TabsContent value="operacional" className="space-y-6 mt-6">
+            <div className="grid grid-cols-2 gap-6">
+              {/* Horários */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-lg flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-orange-600" />
+                  Horário de Funcionamento
+                </h3>
+                {client.horario_funcionamento ? (
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Abertura:</span>
+                      <span className="font-medium">{client.horario_funcionamento.abertura || 'Não definido'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Fechamento:</span>
+                      <span className="font-medium">{client.horario_funcionamento.fechamento || 'Não definido'}</span>
+                    </div>
+                    {client.horario_funcionamento.almoco_inicio && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Almoço:</span>
+                        <span className="font-medium">
+                          {client.horario_funcionamento.almoco_inicio} - {client.horario_funcionamento.almoco_fim}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500">Horários não configurados</p>
+                )}
+              </div>
+
+              {/* Equipamentos */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-lg flex items-center gap-2">
+                  <Package className="w-5 h-5 text-indigo-600" />
+                  Equipamentos
+                </h3>
+                {client.equipment_list && client.equipment_list.length > 0 ? (
+                  <div className="space-y-2 text-sm max-h-48 overflow-y-auto">
+                    {client.equipment_list.map((eq, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                        <span className="font-medium">{eq.name}</span>
+                        <Badge variant="outline" className="text-xs">{eq.quantity}x</Badge>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500">Nenhum equipamento cadastrado</p>
+                )}
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="financeiro" className="space-y-6 mt-6">
+            <div className="grid grid-cols-2 gap-6">
+              {/* Faturamento */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-lg flex items-center gap-2">
+                  <DollarSign className="w-5 h-5 text-green-600" />
+                  Faturamento
+                </h3>
+                <div className="space-y-3 text-sm">
+                  <div>
+                    <span className="text-gray-600">Faixa Mensal:</span>
+                    <p className="font-medium text-lg text-green-600">
+                      {client.monthly_revenue || 'Não informado'}
+                    </p>
+                  </div>
+                  {client.tax_regime && (
+                    <div>
+                      <span className="text-gray-600">Regime Tributário:</span>
+                      <p className="font-medium">{client.tax_regime}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Metas */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-lg flex items-center gap-2">
+                  <Target className="w-5 h-5 text-blue-600" />
+                  Metas Mensais
+                </h3>
+                {client.monthly_goals ? (
+                  <div className="space-y-3 text-sm">
+                    <div>
+                      <span className="text-gray-600">Projeção:</span>
+                      <p className="font-medium text-lg">
+                        R$ {client.monthly_goals.projected_revenue?.toFixed(2) || '0,00'}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Realizado:</span>
+                      <p className="font-medium text-lg text-green-600">
+                        R$ {client.monthly_goals.actual_revenue_achieved?.toFixed(2) || '0,00'}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500">Metas não configuradas</p>
+                )}
+              </div>
+            </div>
+
+            {/* Melhor Mês Histórico */}
+            {client.best_month_history && (
+              <div className="border-t pt-6">
+                <h3 className="font-semibold text-lg flex items-center gap-2 mb-4">
+                  <TrendingUp className="w-5 h-5 text-green-600" />
+                  Melhor Mês Histórico
+                </h3>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <p className="text-sm text-gray-600">Faturamento Total</p>
+                    <p className="text-xl font-bold text-green-600">
+                      R$ {client.best_month_history.revenue_total?.toFixed(2) || '0,00'}
+                    </p>
+                  </div>
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <p className="text-sm text-gray-600">Clientes Atendidos</p>
+                    <p className="text-xl font-bold text-blue-600">
+                      {client.best_month_history.customer_volume || 0}
+                    </p>
+                  </div>
+                  <div className="bg-purple-50 p-4 rounded-lg">
+                    <p className="text-sm text-gray-600">Ticket Médio</p>
+                    <p className="text-xl font-bold text-purple-600">
+                      R$ {client.best_month_history.average_ticket?.toFixed(2) || '0,00'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="historico" className="space-y-6 mt-6">
+            <h3 className="font-semibold text-lg flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-blue-600" />
+              Histórico de Atendimentos ({atendimentosCliente.length})
+            </h3>
+            
+            {atendimentosCliente.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">
+                <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                <p>Nenhum atendimento registrado</p>
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {atendimentosCliente.map((atendimento) => (
+                  <div key={atendimento.id} className="border rounded-lg p-4 hover:bg-gray-50">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <h4 className="font-semibold text-gray-900">{atendimento.tipo_atendimento}</h4>
+                        <p className="text-sm text-gray-600">
+                          {format(
+                            new Date(atendimento.data_realizada || atendimento.data_agendada), 
+                            "dd/MM/yyyy 'às' HH:mm", 
+                            { locale: ptBR }
+                          )}
+                        </p>
+                      </div>
+                      <Badge 
+                        className={
+                          atendimento.status === 'realizado' ? 'bg-green-100 text-green-700' :
+                          atendimento.status === 'cancelado' ? 'bg-red-100 text-red-700' :
+                          'bg-blue-100 text-blue-700'
+                        }
+                      >
+                        {atendimento.status}
+                      </Badge>
+                    </div>
+                    {atendimento.objetivo && (
+                      <p className="text-sm text-gray-600 mt-2">{atendimento.objetivo}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </DialogContent>
+    </Dialog>
   );
 }
