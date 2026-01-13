@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSyncData } from "@/components/hooks/useSyncData";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,7 @@ import AdminViewBanner from "../components/shared/AdminViewBanner";
 
 export default function RegistroDiario() {
   const queryClient = useQueryClient();
+  const { updateDREFromMonthlyGoals } = useSyncData();
   const [date, setDate] = useState(new Date());
   const [currentUser, setCurrentUser] = useState(null);
   const [employee, setEmployee] = useState(null);
@@ -248,9 +250,20 @@ export default function RegistroDiario() {
         return base44.entities.DailyProductivityLog.create(data);
       }
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries(['daily-log']);
       toast.success("Registro salvo com sucesso!");
+      
+      // Sincronizar DRE com dados consolidados se for oficina geral
+      if (workshop && !employee) {
+        try {
+          const month = format(date, 'yyyy-MM');
+          await updateDREFromMonthlyGoals(workshop.id, month);
+          toast.success("DRE atualizado com o novo registro!");
+        } catch (error) {
+          console.error("Erro ao sincronizar DRE:", error);
+        }
+      }
     },
     onError: () => {
       toast.error("Erro ao salvar registro");
