@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Save, Target, TrendingUp, Calendar, Building2, User, Users, FileText, Download, Edit, RefreshCw, Loader2 } from "lucide-react";
+import { Save, Target, TrendingUp, Calendar, Building2, User, Users, FileText, Download, Edit } from "lucide-react";
 import { formatCurrency, formatNumber, formatInteger } from "../utils/formatters";
 import { toast } from "sonner";
 
@@ -21,7 +21,6 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
   const [growthPercentageInput, setGrowthPercentageInput] = useState(10);
   const [activeTab, setActiveTab] = useState("melhor_mes");
   const [loadingTCMP2, setLoadingTCMP2] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
   const [formData, setFormData] = useState({
     serves_fleet_insurance: false,
     best_month_history: {
@@ -186,27 +185,6 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
       setGrowthPercentageInput(workshop.monthly_goals?.growth_percentage || 10);
     }
   }, [workshop]);
-
-  const handleSync = async () => {
-    if (!workshop) return;
-    setIsSyncing(true);
-    try {
-        const currentMonth = new Date().toISOString().substring(0, 7);
-        await base44.functions.invoke('consolidateDailyRecords', {
-            workshop_id: workshop.id,
-            month: currentMonth
-        });
-        toast.success("Dados consolidados com sucesso! A página será atualizada.");
-        if (onUpdate) {
-            await onUpdate({});
-        }
-    } catch (error) {
-        console.error("Erro ao sincronizar dados:", error);
-        toast.error("Falha ao sincronizar dados diários.");
-    } finally {
-        setIsSyncing(false);
-    }
-  };
 
   const handleSave = async () => {
     try {
@@ -408,23 +386,17 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
           <Target className="w-6 h-6 text-blue-600" />
           <h2 className="text-xl font-bold text-gray-900">Metas e Objetivos</h2>
         </div>
-        <div className="flex gap-2">
-            <Button onClick={handleSync} variant="outline" disabled={isSyncing}>
-                {isSyncing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
-                Sincronizar
-            </Button>
-            {!editing ?
-            <Button onClick={() => setEditing(true)}>Editar</Button> :
+        {!editing ?
+        <Button onClick={() => setEditing(true)}>Editar</Button> :
 
-            <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setEditing(false)}>Cancelar</Button>
-                <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
-                  <Save className="w-4 h-4 mr-2" />
-                  Salvar
-                </Button>
-              </div>
-            }
-        </div>
+        <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setEditing(false)}>Cancelar</Button>
+            <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
+              <Save className="w-4 h-4 mr-2" />
+              Salvar
+            </Button>
+          </div>
+        }
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
