@@ -41,6 +41,8 @@ export default function MapaChecklists() {
     queryKey: ["checklists", workshop?.id, selectedType, selectedArea],
     queryFn: async () => {
       if (!workshop?.id) return [];
+      
+      // Buscar checklists da oficina atual
       const query = {
         workshop_id: workshop.id,
         type: selectedType,
@@ -48,8 +50,25 @@ export default function MapaChecklists() {
       if (selectedArea) {
         query.area = selectedArea;
       }
-      const result = await base44.entities.ClientIntelligenceChecklist.filter(query);
-      return Array.isArray(result) ? result : [];
+      const workshopChecklists = await base44.entities.ClientIntelligenceChecklist.filter(query);
+      
+      // Buscar checklists padrões do sistema
+      const defaultQuery = {
+        is_default: true,
+        type: selectedType,
+      };
+      if (selectedArea) {
+        defaultQuery.area = selectedArea;
+      }
+      const defaultChecklists = await base44.entities.ClientIntelligenceChecklist.filter(defaultQuery);
+      
+      // Combinar e ordenar (oficina primeiro, depois padrões)
+      const combined = [
+        ...(Array.isArray(workshopChecklists) ? workshopChecklists : []),
+        ...(Array.isArray(defaultChecklists) ? defaultChecklists : [])
+      ];
+      
+      return combined;
     },
     enabled: !!workshop?.id,
   });
