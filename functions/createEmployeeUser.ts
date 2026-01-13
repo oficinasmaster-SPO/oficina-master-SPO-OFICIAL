@@ -113,8 +113,10 @@ Deno.serve(async (req) => {
       ? `${origin}/PrimeiroAcesso?token=${invite.invite_token}`
       : `${origin}/PrimeiroAcesso`;
 
-    // 7. Enviar email de convite
-    try {
+    // 7. Enviar email de convite (somente se email for domínio interno)
+    const isInternalEmail = email && (email.includes('@oficinasmaster.com') || email.includes('@base44'));
+    
+    if (isInternalEmail) {
       try {
         console.log("📧 Enviando email para:", email);
         
@@ -184,6 +186,9 @@ Deno.serve(async (req) => {
         console.error("❌ Erro ao enviar email:", emailError);
         console.warn("⚠️ Criando colaborador mesmo com erro de email");
       }
+    } else {
+      console.log("ℹ️ Email externo - pulando envio de email");
+    }
 
     // 8. Retornar sucesso
     return Response.json({ 
