@@ -57,8 +57,8 @@ Deno.serve(async (req) => {
     const temporaryPassword = "Oficina@2025";
     
     try {
-      await base44.users.inviteUser(email, "user");
-      console.log("✅ Usuário convidado:", email);
+      await base44.users.inviteUser(email, role);
+      console.log(`✅ Usuário convidado como ${role}:`, email);
     } catch (inviteError) {
       console.error("⚠️ Erro ao convidar usuário:", inviteError.message);
       // Continua mesmo se falhar o convite
