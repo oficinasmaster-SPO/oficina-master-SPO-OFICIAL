@@ -646,6 +646,7 @@ export default function CronogramaGeral() {
         isOpen={showPanel}
         onClose={() => setShowPanel(false)}
         atendimentos={[]}
+        processos={processos}
       />
 
       {/* Modal de Avaliação */}

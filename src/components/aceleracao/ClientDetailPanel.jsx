@@ -11,7 +11,7 @@ import {
   TrendingUp, Award, Package, FileText, Heart
 } from "lucide-react";
 
-export default function ClientDetailPanel({ client, isOpen, onClose, atendimentos = [] }) {
+export default function ClientDetailPanel({ client, isOpen, onClose, atendimentos = [], processos = [] }) {
   const atendimentosCliente = client ? atendimentos.filter(a => a.workshop_id === client.id)
     .sort((a, b) => new Date(b.data_realizada || b.data_agendada) - new Date(a.data_realizada || a.data_agendada)) : [];
 
@@ -49,10 +49,11 @@ export default function ClientDetailPanel({ client, isOpen, onClose, atendimento
             </DialogHeader>
 
         <Tabs defaultValue="geral" className="mt-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="geral">Dados Gerais</TabsTrigger>
             <TabsTrigger value="operacional">Operacional</TabsTrigger>
             <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
+            <TabsTrigger value="processos">Processos</TabsTrigger>
             <TabsTrigger value="historico">Histórico</TabsTrigger>
           </TabsList>
 
@@ -278,6 +279,90 @@ export default function ClientDetailPanel({ client, isOpen, onClose, atendimento
                     </p>
                   </div>
                 </div>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="processos" className="space-y-6 mt-6">
+            <h3 className="font-semibold text-lg flex items-center gap-2">
+              <FileText className="w-5 h-5 text-blue-600" />
+              Processos do Cronograma ({processos.length})
+            </h3>
+            
+            {processos.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">
+                <FileText className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                <p>Nenhum processo cadastrado para este plano</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {processos.map((processo) => {
+                  const progresso = client?.progressos?.find(p => p.modulo_codigo === processo.codigo);
+                  const implementacao = client?.implementacoes?.find(i => 
+                    i.item_id === processo.codigo || i.item_nome === processo.codigo
+                  );
+                  
+                  let status = 'a_fazer';
+                  let statusLabel = 'A Fazer';
+                  let statusColor = 'bg-gray-100 text-gray-700';
+                  
+                  if (implementacao) {
+                    if (implementacao.status === 'concluido') {
+                      status = 'concluido';
+                      statusLabel = 'Concluído';
+                      statusColor = 'bg-green-100 text-green-700';
+                    } else if (implementacao.status === 'em_andamento') {
+                      const diasRestantes = new Date(implementacao.data_termino_previsto) - new Date();
+                      if (diasRestantes < 0) {
+                        status = 'atrasado';
+                        statusLabel = 'Atrasado';
+                        statusColor = 'bg-red-100 text-red-700';
+                      } else {
+                        status = 'em_andamento';
+                        statusLabel = 'Em Andamento';
+                        statusColor = 'bg-blue-100 text-blue-700';
+                      }
+                    }
+                  } else if (progresso) {
+                    if (progresso.situacao === 'concluido') {
+                      status = 'concluido';
+                      statusLabel = 'Concluído';
+                      statusColor = 'bg-green-100 text-green-700';
+                    } else if (progresso.situacao === 'atrasado') {
+                      status = 'atrasado';
+                      statusLabel = 'Atrasado';
+                      statusColor = 'bg-red-100 text-red-700';
+                    } else if (progresso.situacao === 'em_andamento') {
+                      status = 'em_andamento';
+                      statusLabel = 'Em Andamento';
+                      statusColor = 'bg-blue-100 text-blue-700';
+                    }
+                  }
+                  
+                  return (
+                    <div key={processo.codigo} className="border rounded-lg p-4 hover:bg-gray-50">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-900">{processo.nome || processo.codigo}</h4>
+                          {progresso?.percentual_conclusao > 0 && (
+                            <div className="flex items-center gap-2 mt-2">
+                              <div className="flex-1 bg-gray-200 rounded-full h-2">
+                                <div 
+                                  className="bg-blue-600 h-2 rounded-full"
+                                  style={{ width: `${progresso.percentual_conclusao}%` }}
+                                />
+                              </div>
+                              <span className="text-xs font-medium">{progresso.percentual_conclusao}%</span>
+                            </div>
+                          )}
+                        </div>
+                        <Badge className={statusColor}>
+                          {statusLabel}
+                        </Badge>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </TabsContent>
