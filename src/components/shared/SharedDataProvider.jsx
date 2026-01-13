@@ -7,6 +7,14 @@ const SharedDataContext = createContext(null);
 export function SharedDataProvider({ children, workshopId, userId }) {
   const queryClient = useQueryClient();
 
+  // FORÇA INVALIDAR tudo quando workshopId muda
+  React.useEffect(() => {
+    if (workshopId) {
+      console.log('🔥 SharedDataProvider: workshopId mudou para:', workshopId);
+      queryClient.invalidateQueries();
+    }
+  }, [workshopId, queryClient]);
+
   // Dados da Oficina - fonte principal
   const { data: workshop, isLoading: loadingWorkshop } = useQuery({
     queryKey: ['shared-workshop', workshopId],
