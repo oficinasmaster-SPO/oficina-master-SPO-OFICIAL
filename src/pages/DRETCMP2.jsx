@@ -126,18 +126,23 @@ export default function DRETCMP2() {
   useEffect(() => {
     if (workshop && viewMode === 'month') {
       const syncData = async () => {
-        // 1. Primeira vez: consolidar dados diários para o DRE
+        // 1. Consolidar dados diários para o DRE
         await updateDREFromMonthlyGoals(workshop.id, selectedMonth);
-        // 2. Depois: sincronizar DRE com metas se existir DRE
-        if (currentDRE) {
-          const result = await syncDRETOMetas(currentDRE.id, workshop.id, selectedMonth);
-          if (result.requiresConfirmation) {
-            setSyncAlert({
-              discrepancies: result.discrepancies,
-              dre_id: currentDRE.id
+        // 2. Recarregar lista de DREs para mostrar valores atualizados
+        await queryClient.invalidateQueries(['dre-list', workshop?.id]);
+        // 3. Sincronizar DRE com metas se existir
+        setTimeout(() => {
+          if (currentDRE) {
+            syncDRETOMetas(currentDRE.id, workshop.id, selectedMonth).then(result => {
+              if (result.requiresConfirmation) {
+                setSyncAlert({
+                  discrepancies: result.discrepancies,
+                  dre_id: currentDRE.id
+                });
+              }
             });
           }
-        }
+        }, 500);
       };
       syncData();
     }
