@@ -15,7 +15,8 @@ export default function RevenueDistributionModal({
   revenue, 
   employees, 
   onConfirm, 
-  isLoading 
+  isLoading,
+  onOpenEmployeeRegistration
 }) {
   const [distribution, setDistribution] = useState({
     vendors: [],
@@ -272,6 +273,14 @@ export default function RevenueDistributionModal({
                             className="w-32 text-right"
                           />
                           <Button
+                            onClick={() => onOpenEmployeeRegistration && onOpenEmployeeRegistration(vendor.id)}
+                            variant="outline"
+                            size="sm"
+                            className="text-blue-600 hover:text-blue-700"
+                          >
+                            📝
+                          </Button>
+                          <Button
                             onClick={() => removeVendor(vendor.id)}
                             variant="ghost"
                             size="sm"
@@ -336,6 +345,14 @@ export default function RevenueDistributionModal({
                             className="w-32 text-right"
                           />
                           <Button
+                            onClick={() => onOpenEmployeeRegistration && onOpenEmployeeRegistration(mkt.id)}
+                            variant="outline"
+                            size="sm"
+                            className="text-blue-600 hover:text-blue-700"
+                          >
+                            📝
+                          </Button>
+                          <Button
                             onClick={() => removeMarketing(mkt.id)}
                             variant="ghost"
                             size="sm"
@@ -399,6 +416,14 @@ export default function RevenueDistributionModal({
                             placeholder="0.00"
                             className="w-32 text-right"
                           />
+                          <Button
+                            onClick={() => onOpenEmployeeRegistration && onOpenEmployeeRegistration(tech.id)}
+                            variant="outline"
+                            size="sm"
+                            className="text-blue-600 hover:text-blue-700"
+                          >
+                            📝
+                          </Button>
                           <Button
                             onClick={() => removeTechnician(tech.id)}
                             variant="ghost"

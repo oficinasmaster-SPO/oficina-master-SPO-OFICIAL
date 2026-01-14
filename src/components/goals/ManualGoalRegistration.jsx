@@ -1928,6 +1928,14 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
           employees={employees}
           onConfirm={handleDistributionConfirm}
           isLoading={isSaving}
+          onOpenEmployeeRegistration={(employeeId) => {
+            const emp = employees.find(e => e.id === employeeId);
+            if (emp) {
+              setShowDistribution(false);
+              setEntityType("employee");
+              setSelectedEmployee(emp);
+            }
+          }}
           />
           </Dialog>
           );
