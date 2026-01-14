@@ -54,6 +54,7 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
     kit_master: 0,
     sales_base: 0,
     sales_marketing: 0,
+    sales_referral: 0,
     clients_delivered: 0,
     clients_scheduled_base: 0,
     clients_delivered_base: 0,
@@ -129,6 +130,7 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
       kit_master: editingRecord.kit_master || 0,
       sales_base: editingRecord.sales_base || 0,
       sales_marketing: editingRecord.sales_marketing || 0,
+      sales_referral: editingRecord.sales_referral || 0,
       clients_delivered: editingRecord.clients_delivered || 0,
       gps_vendas: editingRecord.gps_vendas || 0,
       clients_scheduled_base: editingRecord.clients_scheduled_base || 0,
@@ -278,10 +280,11 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
         customer_volume: formData.customer_volume,
         r70_i30: formData.r70_i30,
         tcmp2: tcmp2Value,
-        pave_commercial: formData.pave_commercial,
-        kit_master: formData.kit_master,
+        pave_commercial: formData.clients_scheduled_base + formData.clients_scheduled_mkt + formData.clients_scheduled_referral,
+        kit_master: formData.clients_delivered_base + formData.clients_delivered_mkt + formData.clients_delivered_referral,
         sales_base: formData.sales_base,
         sales_marketing: formData.sales_marketing,
+        sales_referral: formData.sales_referral,
         clients_delivered: formData.clients_delivered,
         gps_vendas: formData.gps_vendas,
         clients_scheduled_base: formData.clients_scheduled_base,
@@ -770,11 +773,11 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
               <div className="border-l-4 border-emerald-500 pl-3 py-2 bg-white">
                 <Label className="text-sm font-semibold text-gray-700 mb-2 block">Valor Faturado Total (Auto)</Label>
                 <Input
-                  value={(formData.sales_base + formData.sales_marketing).toFixed(2)}
+                  value={(formData.sales_base + formData.sales_marketing + formData.sales_referral).toFixed(2)}
                   disabled
                   className="h-9 bg-emerald-100 font-bold text-emerald-700"
                 />
-                <p className="text-xs text-gray-500 mt-1">Vendas Base + Vendas Marketing</p>
+                <p className="text-xs text-gray-500 mt-1">Vendas Base + Vendas Mkt + Vendas Indicação</p>
               </div>
             </CardContent>
           </Card>
@@ -1003,11 +1006,11 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
           <div className="border-l-4 border-emerald-500 pl-3 py-2 bg-emerald-50/30">
             <Label className="text-sm font-semibold text-gray-700 mb-2 block">Valor Faturado Total (Auto)</Label>
             <Input
-              value={(formData.sales_base + formData.sales_marketing).toFixed(2)}
+              value={(formData.sales_base + formData.sales_marketing + formData.sales_referral).toFixed(2)}
               disabled
               className="bg-emerald-100 font-bold text-emerald-700"
             />
-            <p className="text-xs text-gray-500 mt-1">Vendas Base + Vendas Marketing</p>
+            <p className="text-xs text-gray-500 mt-1">Vendas Base + Vendas Mkt + Vendas Indicação</p>
           </div>
 
           {/* Marketing Section for Comercial - PREVISTO x REALIZADO */}
