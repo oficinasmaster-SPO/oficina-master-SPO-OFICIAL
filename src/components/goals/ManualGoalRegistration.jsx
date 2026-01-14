@@ -268,6 +268,10 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
     setShowDistribution(true);
   };
 
+  const handleResetDistribution = () => {
+    // Força reset da distribuição quando necessário
+  };
+
   const handleDistributionConfirm = async (distribution) => {
     try {
       setIsSaving(true);

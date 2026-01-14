@@ -16,7 +16,8 @@ export default function RevenueDistributionModal({
   employees, 
   onConfirm, 
   isLoading,
-  onOpenEmployeeRegistration
+  onOpenEmployeeRegistration,
+  shouldPreserveState = true
 }) {
   const [distribution, setDistribution] = useState({
     vendors: [],
@@ -29,9 +30,8 @@ export default function RevenueDistributionModal({
   const [selectedTechnicians, setSelectedTechnicians] = useState([]);
 
   useEffect(() => {
-    if (open) {
-      resetDistribution();
-    }
+    // Só reseta na primeira abertura ou quando explicitamente solicitado
+    // Não reseta ao reabrir para preservar seleções
   }, [open]);
 
   const resetDistribution = () => {
