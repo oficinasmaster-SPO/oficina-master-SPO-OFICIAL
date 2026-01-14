@@ -101,16 +101,19 @@ Deno.serve(async (req) => {
 
     // Sincronização bidirecional (importar do Calendar)
     let importedCount = 0;
+    let updatedCount = 0;
     if (config.sync_bidirectional) {
       try {
-        const now = new Date();
+        // Importar eventos dos últimos 7 dias e próximos 90 dias
+        const pastDate = new Date();
+        pastDate.setDate(pastDate.getDate() - 7);
         const futureDate = new Date();
-        futureDate.setDate(futureDate.getDate() + 30);
+        futureDate.setDate(futureDate.getDate() + 90);
 
         const calendarResponse = await fetch(
           `https://www.googleapis.com/calendar/v3/calendars/primary/events?` +
-          `timeMin=${now.toISOString()}&timeMax=${futureDate.toISOString()}&` +
-          `singleEvents=true&orderBy=startTime`,
+          `timeMin=${pastDate.toISOString()}&timeMax=${futureDate.toISOString()}&` +
+          `maxResults=500&singleEvents=true&orderBy=startTime`,
           {
             headers: {
               'Authorization': `Bearer ${accessToken}`,
@@ -122,35 +125,70 @@ Deno.serve(async (req) => {
           const calendarData = await calendarResponse.json();
           const calendarEvents = calendarData.items || [];
 
-          // Buscar eventos já importados
-          const existingEventIds = atendimentos
-            .filter(a => a.google_event_id)
-            .map(a => a.google_event_id);
+          // Buscar todos atendimentos com google_event_id
+          const allAtendimentos = await base44.asServiceRole.entities.ConsultoriaAtendimento.list();
+          const atendimentosMap = new Map(
+            allAtendimentos
+              .filter(a => a.google_event_id)
+              .map(a => [a.google_event_id, a])
+          );
 
           for (const event of calendarEvents) {
-            if (existingEventIds.includes(event.id)) continue;
             if (!event.start?.dateTime) continue;
+            if (event.status === 'cancelled') continue;
 
-            // Criar atendimento a partir do evento
             const startDate = new Date(event.start.dateTime);
             const endDate = new Date(event.end?.dateTime || startDate);
             const duracao = Math.round((endDate - startDate) / 60000);
 
-            await base44.asServiceRole.entities.ConsultoriaAtendimento.create({
-              workshop_id: 'IMPORTADO_CALENDAR',
-              consultor_id: user.id,
-              consultor_nome: user.full_name,
-              tipo_atendimento: 'importado_calendar',
-              data_agendada: startDate.toISOString(),
-              duracao_minutos: duracao,
-              status: 'agendado',
-              google_event_id: event.id,
-              google_calendar_link: event.htmlLink,
-              google_meet_link: event.hangoutLink || '',
-              observacoes_consultor: `Importado do Google Calendar: ${event.summary || 'Sem título'}`,
-            });
+            const existingAtendimento = atendimentosMap.get(event.id);
 
-            importedCount++;
+            if (existingAtendimento) {
+              // Atualizar evento existente se houver mudanças
+              const needsUpdate = 
+                new Date(existingAtendimento.data_agendada).getTime() !== startDate.getTime() ||
+                existingAtendimento.duracao_minutos !== duracao;
+
+              if (needsUpdate) {
+                await base44.asServiceRole.entities.ConsultoriaAtendimento.update(
+                  existingAtendimento.id,
+                  {
+                    data_agendada: startDate.toISOString(),
+                    duracao_minutos: duracao,
+                    google_calendar_link: event.htmlLink,
+                    google_meet_link: event.hangoutLink || existingAtendimento.google_meet_link,
+                  }
+                );
+                updatedCount++;
+              }
+            } else {
+              // Criar novo atendimento
+              const attendees = (event.attendees || [])
+                .filter(a => a.email)
+                .map(a => ({
+                  nome: a.displayName || a.email.split('@')[0],
+                  email: a.email,
+                  cargo: ''
+                }));
+
+              await base44.asServiceRole.entities.ConsultoriaAtendimento.create({
+                workshop_id: 'IMPORTADO_CALENDAR',
+                consultor_id: user.id,
+                consultor_nome: user.full_name,
+                tipo_atendimento: 'importado_calendar',
+                data_agendada: startDate.toISOString(),
+                duracao_minutos: duracao,
+                status: 'agendado',
+                google_event_id: event.id,
+                google_calendar_link: event.htmlLink,
+                google_meet_link: event.hangoutLink || '',
+                participantes: attendees,
+                objetivos: event.description ? [event.description] : [],
+                observacoes_consultor: `📅 Importado: ${event.summary || 'Sem título'}`,
+              });
+
+              importedCount++;
+            }
           }
         }
       } catch (error) {
@@ -162,7 +200,8 @@ Deno.serve(async (req) => {
       success: true,
       synced_count: syncedCount,
       imported_count: importedCount,
-      message: `${syncedCount} eventos sincronizados, ${importedCount} importados`
+      updated_count: updatedCount,
+      message: `${syncedCount} enviados, ${importedCount} importados, ${updatedCount} atualizados`
     });
 
   } catch (error) {
