@@ -264,12 +264,7 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
   };
 
   const handleSaveAndAnalyze = async () => {
-    const revenue_total = formData.revenue_parts + formData.revenue_services;
-    if (revenue_total <= 0) {
-      toast.error("Preencha os valores de faturamento");
-      return;
-    }
-    // Abre modal de distribuição
+    // Abre modal de distribuição (permite editar mesmo com valores zerados)
     setShowDistribution(true);
   };
 
