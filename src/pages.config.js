@@ -162,11 +162,11 @@ import SolicitarPermissoes from './pages/SolicitarPermissoes';
 import Tarefas from './pages/Tarefas';
 import TechnicianQGP from './pages/TechnicianQGP';
 import TestUsuarios from './pages/TestUsuarios';
+import TesteClickSign from './pages/TesteClickSign';
 import TesteOpenAI from './pages/TesteOpenAI';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
-import TesteClickSign from './pages/TesteClickSign';
 import __Layout from './Layout.jsx';
 
 
@@ -335,11 +335,11 @@ export const PAGES = {
     "Tarefas": Tarefas,
     "TechnicianQGP": TechnicianQGP,
     "TestUsuarios": TestUsuarios,
+    "TesteClickSign": TesteClickSign,
     "TesteOpenAI": TesteOpenAI,
     "TreinamentoVendas": TreinamentoVendas,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
-    "TesteClickSign": TesteClickSign,
 }
 
 export const pagesConfig = {

@@ -19,6 +19,7 @@ export default function HistoricoMetas() {
   const [workshop, setWorkshop] = useState(null);
   const [user, setUser] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(null);
   const [filterType, setFilterType] = useState("workshop");
   const [filterEmployee, setFilterEmployee] = useState(null);
   const [filterMonth, setFilterMonth] = useState(new Date().toISOString().substring(0, 7));
@@ -711,25 +712,45 @@ export default function HistoricoMetas() {
 
                         {/* Observações */}
                         {record.notes && (
-                          <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                            <p className="text-xs font-semibold text-yellow-900 mb-1">📝 Observações</p>
-                            <p className="text-sm text-gray-700">{record.notes}</p>
-                          </div>
+                         <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                           <p className="text-xs font-semibold text-yellow-900 mb-1">📝 Observações</p>
+                           <p className="text-sm text-gray-700">{record.notes}</p>
+                         </div>
                         )}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })
-          )}
-        </div>
+
+                        {/* Botão Editar */}
+                        <div className="flex justify-end pt-3 border-t border-gray-200">
+                         <Button
+                           size="sm"
+                           onClick={() => {
+                             setEditingRecord(record);
+                             setShowModal(true);
+                             toggleCardExpansion(record.id);
+                           }}
+                           className="bg-blue-600 hover:bg-blue-700"
+                         >
+                           <Activity className="w-4 h-4 mr-2" />
+                           Editar Registro
+                         </Button>
+                        </div>
+                        </div>
+                        )}
+                        </CardContent>
+                        </Card>
+                        );
+                        })
+                        )}
+                        </div>
 
         {/* Modal de Registro */}
          <ManualGoalRegistration
           open={showModal}
-          onClose={() => setShowModal(false)}
+          onClose={() => {
+            setShowModal(false);
+            setEditingRecord(null);
+          }}
           workshop={workshop}
+          editingRecord={editingRecord}
           onSave={async () => {
             // Sincronizar após salvar registro
             if (workshop) {
@@ -742,6 +763,7 @@ export default function HistoricoMetas() {
             queryClient.invalidateQueries(['dre-list']);
             queryClient.invalidateQueries(['employees']);
             refetchEmployees();
+            setEditingRecord(null);
           }}
         />
       </div>
