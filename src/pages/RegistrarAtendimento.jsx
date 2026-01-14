@@ -22,6 +22,8 @@ import TipoAtendimentoManager from "@/components/aceleracao/TipoAtendimentoManag
 import MediaUploadField from "@/components/aceleracao/MediaUploadField";
 import ConflitosHorarioModal from "@/components/aceleracao/ConflitosHorarioModal";
 import ClientIntelligenceCapturePanel from "@/components/inteligencia/ClientIntelligenceCapturePanel";
+import GoogleMeetIntegration from "@/components/aceleracao/GoogleMeetIntegration";
+import { useGoogleMeet } from "@/components/hooks/useGoogleMeet";
 
 export default function RegistrarAtendimento() {
   const navigate = useNavigate();
@@ -63,6 +65,7 @@ export default function RegistrarAtendimento() {
   const [aiSummary, setAISummary] = useState(null);
   const [conflitosModal, setConflitosModal] = useState({ open: false, conflitos: [], dataHorario: null });
   const pautaRef = React.useRef(null);
+  const { createMeeting, isCreating } = useGoogleMeet();
 
   // Carregar usuário
   const { data: user } = useQuery({
@@ -624,19 +627,77 @@ export default function RegistrarAtendimento() {
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Label>Google Meet</Label>
+              
+              {/* Criação automática com OAuth */}
+              {formData.data_agendada && formData.hora_agendada && !formData.google_meet_link && (
+                <Button
+                  type="button"
+                  variant="default"
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                  disabled={isCreating}
+                  onClick={async () => {
+                    const startDateTime = new Date(`${formData.data_agendada}T${formData.hora_agendada}:00`);
+                    const endDateTime = new Date(startDateTime.getTime() + formData.duracao_minutos * 60000);
+                    
+                    const attendeesEmails = formData.participantes
+                      .map(p => p.email)
+                      .filter(e => e && e.includes('@'));
+
+                    const meetData = await createMeeting({
+                      summary: `${formData.tipo_atendimento?.replace(/_/g, ' ')} - Oficinas Master`,
+                      description: formData.objetivos.join('\n'),
+                      startDateTime: startDateTime.toISOString(),
+                      endDateTime: endDateTime.toISOString(),
+                      attendees: attendeesEmails
+                    });
+
+                    if (meetData) {
+                      setFormData({
+                        ...formData,
+                        google_meet_link: meetData.meetLink,
+                        google_event_id: meetData.eventId,
+                        google_calendar_link: meetData.htmlLink
+                      });
+                    }
+                  }}
+                >
+                  {isCreating ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Criando reunião...
+                    </>
+                  ) : (
+                    <>
+                      <Video className="w-4 h-4 mr-2" />
+                      Criar Reunião Automática (Google Calendar + Meet)
+                    </>
+                  )}
+                </Button>
+              )}
+
+              {/* Link manual ou existente */}
               <div className="flex gap-2">
                 <Input
-                  placeholder="Link do Google Meet"
+                  placeholder="Ou cole o link manualmente"
                   value={formData.google_meet_link}
                   onChange={(e) => setFormData({ ...formData, google_meet_link: e.target.value })}
                 />
-                <Button type="button" variant="outline" onClick={gerarLinkGoogleMeet}>
-                  <Video className="w-4 h-4 mr-2" />
-                  Gerar
-                </Button>
+                {!formData.google_meet_link && (
+                  <Button type="button" variant="outline" onClick={gerarLinkGoogleMeet}>
+                    <LinkIcon className="w-4 h-4 mr-2" />
+                    Gerar
+                  </Button>
+                )}
               </div>
+
+              {formData.google_event_id && (
+                <p className="text-xs text-green-600 flex items-center gap-1">
+                  <CalendarIcon className="w-3 h-3" />
+                  Evento criado no Google Calendar
+                </p>
+              )}
             </div>
 
             {formData.status === 'participando' && (
