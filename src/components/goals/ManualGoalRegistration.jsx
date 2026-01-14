@@ -32,6 +32,7 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
     projected_sales_base: 0,
     projected_sales_marketing: 0,
     projected_clients_delivered: 0,
+    projected_gps_vendas: 0,
     projected_marketing: {
       leads_generated: 0,
       leads_scheduled: 0,
@@ -43,6 +44,7 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
     },
     // REALIZADO (preenchimento manual)
     achieved_total: 0,
+    gps_vendas: 0,
     revenue_parts: 0,
     revenue_services: 0,
     customer_volume: 0,
@@ -107,6 +109,7 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
       projected_sales_base: editingRecord.projected_sales_base || 0,
       projected_sales_marketing: editingRecord.projected_sales_marketing || 0,
       projected_clients_delivered: editingRecord.projected_clients_delivered || 0,
+      projected_gps_vendas: editingRecord.projected_gps_vendas || 0,
       projected_marketing: editingRecord.projected_marketing || {
         leads_generated: 0,
         leads_scheduled: 0,
@@ -127,6 +130,7 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
       sales_base: editingRecord.sales_base || 0,
       sales_marketing: editingRecord.sales_marketing || 0,
       clients_delivered: editingRecord.clients_delivered || 0,
+      gps_vendas: editingRecord.gps_vendas || 0,
       clients_scheduled_base: editingRecord.clients_scheduled_base || 0,
       clients_delivered_base: editingRecord.clients_delivered_base || 0,
       clients_scheduled_mkt: editingRecord.clients_scheduled_mkt || 0,
@@ -201,6 +205,7 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
         projected_sales_base: (bestMonth.sales_base || 0) * factor,
         projected_sales_marketing: (bestMonth.sales_marketing || 0) * factor,
         projected_clients_delivered: Math.round((bestMonth.clients_delivered || 0) * factor),
+        projected_gps_vendas: Math.round((bestMonth.gps_vendas || 0) * factor),
         projected_marketing: {
           leads_generated: Math.round((bestMonth.marketing?.leads_generated || 0) * factor),
           leads_scheduled: Math.round((bestMonth.marketing?.leads_scheduled || 0) * factor),
@@ -228,7 +233,8 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
         projected_kit_master: (bestMonth.kit_master || 0) * factor,
         projected_sales_base: (bestMonth.sales_base || 0) * factor,
         projected_sales_marketing: (bestMonth.sales_marketing || 0) * factor,
-        projected_clients_delivered: Math.round((bestMonth.clients_delivered || 0) * factor)
+        projected_clients_delivered: Math.round((bestMonth.clients_delivered || 0) * factor),
+        projected_gps_vendas: Math.round((bestMonth.gps_vendas || 0) * factor)
       }));
     }
   };
@@ -277,6 +283,7 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
         sales_base: formData.sales_base,
         sales_marketing: formData.sales_marketing,
         clients_delivered: formData.clients_delivered,
+        gps_vendas: formData.gps_vendas,
         clients_scheduled_base: formData.clients_scheduled_base,
         clients_delivered_base: formData.clients_delivered_base,
         clients_scheduled_mkt: formData.clients_scheduled_mkt,
@@ -727,6 +734,31 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
                   type="number"
                   value={formData.sales_base}
                   onChange={(e) => setFormData({...formData, sales_base: parseFloat(e.target.value) || 0})}
+                  className="font-semibold"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* GPS de Vendas */}
+          <div className="border-l-4 border-cyan-500 pl-3 py-2 bg-cyan-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">GPS de Vendas (qtd)</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs text-blue-600">PREVISTO</Label>
+                <Input
+                  type="number"
+                  value={formData.projected_gps_vendas}
+                  disabled
+                  className="bg-blue-100 font-bold text-blue-700"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-green-600">REALIZADO</Label>
+                <Input
+                  type="number"
+                  value={formData.gps_vendas}
+                  onChange={(e) => setFormData({...formData, gps_vendas: parseInt(e.target.value) || 0})}
                   className="font-semibold"
                 />
               </div>

@@ -11,9 +11,7 @@ export function useDashboardMetrics(workshopId, userId) {
       try {
         // Buscar logs de produção do mês atual
         const today = new Date();
-        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-        const formattedStart = startOfMonth.toISOString().split("T")[0];
-        const formattedEnd = today.toISOString().split("T")[0];
+        const currentMonth = new Date().toISOString().substring(0, 7);
 
         const logs = await base44.entities.DailyProductivityLog.filter({
           workshop_id: workshopId,
@@ -22,18 +20,30 @@ export function useDashboardMetrics(workshopId, userId) {
         const filteredLogs = Array.isArray(logs)
           ? logs.filter((log) => {
               const logDate = new Date(log.date);
+              const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
               return logDate >= startOfMonth && logDate <= today;
             })
           : [];
+
+        // Buscar histórico de metas mensais para GPS e Kit Master
+        const monthlyHistory = await base44.entities.MonthlyGoalHistory.filter({
+          workshop_id: workshopId,
+          month: currentMonth
+        });
+
+        const monthlyHistoryArray = Array.isArray(monthlyHistory) ? monthlyHistory : [];
+
+        // Buscar oficina para pegar meta
+        const workshopData = await base44.entities.Workshop.get(workshopId);
 
         // Calcular métricas
         return {
           metas: calculateMetasGlobais(filteredLogs),
           tcmp2: calculateTCMP2(filteredLogs),
           r70i30: calculateR70I30(filteredLogs),
-          gpsAplicados: calculateGPS(filteredLogs),
-          kitMaster: calculateKitMaster(filteredLogs),
-          paveAgendamento: calculatePAVE(filteredLogs),
+          gpsAplicados: calculateGPS(monthlyHistoryArray, workshopData),
+          kitMaster: calculateKitMaster(monthlyHistoryArray, workshopData),
+          paveAgendamento: calculatePAVE(monthlyHistoryArray, workshopData),
           ranking: calculateRanking(filteredLogs),
         };
       } catch (error) {
@@ -124,66 +134,46 @@ function calculateR70I30(logs) {
   return { r70, i30 };
 }
 
-function calculateGPS(logs) {
-  if (!logs.length) return { total: 0, aplicados: 0 };
+function calculateGPS(monthlyHistory, workshopData) {
+  if (!monthlyHistory || monthlyHistory.length === 0) return { meta: 0, aplicados: 0 };
 
-  const gpsLogs = logs.filter((log) =>
-    log.entries?.some((e) => e.metric_code === "GPS_APLICADO")
+  // Meta vem do best_month_history
+  const meta = workshopData?.best_month_history?.gps_vendas || 0;
+
+  // Realizado vem da soma dos registros mensais
+  const aplicados = monthlyHistory.reduce((sum, record) => 
+    sum + (record.gps_vendas || 0), 0
   );
 
-  if (!gpsLogs.length) return { total: 0, aplicados: 0 };
-
-  const valores = gpsLogs
-    .flatMap((log) => log.entries.filter((e) => e.metric_code === "GPS_APLICADO"))
-    .map((e) => parseInt(e.value) || 0);
-
-  const aplicados = Math.round(
-    valores.reduce((a, b) => a + b, 0) / valores.length
-  );
-
-  return { total: 30, aplicados };
+  return { meta, aplicados };
 }
 
-function calculateKitMaster(logs) {
-  if (!logs.length) return { convertidos: 0, meta: 15 };
+function calculateKitMaster(monthlyHistory, workshopData) {
+  if (!monthlyHistory || monthlyHistory.length === 0) return { meta: 0, convertidos: 0 };
 
-  const kitLogs = logs.filter((log) =>
-    log.entries?.some((e) => e.metric_code === "KIT_MASTER")
+  // Meta vem do best_month_history
+  const meta = Math.round(workshopData?.best_month_history?.kit_master || 0);
+
+  // Realizado vem da soma dos registros mensais
+  const convertidos = monthlyHistory.reduce((sum, record) => 
+    sum + (record.kit_master || 0), 0
   );
 
-  if (!kitLogs.length) return { convertidos: 0, meta: 15 };
-
-  const valores = kitLogs
-    .flatMap((log) => log.entries.filter((e) => e.metric_code === "KIT_MASTER"))
-    .map((e) => parseInt(e.value) || 0);
-
-  const convertidos = valores.reduce((a, b) => a + b, 0);
-
-  return { convertidos, meta: 15 };
+  return { meta, convertidos };
 }
 
-function calculatePAVE(logs) {
-  if (!logs.length) return { agendados: 0, hoje: 0 };
+function calculatePAVE(monthlyHistory, workshopData) {
+  if (!monthlyHistory || monthlyHistory.length === 0) return { meta: 0, agendados: 0 };
 
-  const paveLogsHoje = logs.filter((log) => {
-    const logDate = new Date(log.date);
-    const hoje = new Date();
-    return (
-      logDate.toDateString() === hoje.toDateString() &&
-      log.entries?.some((e) => e.metric_code === "PAVE_AGENDAMENTO")
-    );
-  });
+  // Meta vem do best_month_history
+  const meta = Math.round(workshopData?.best_month_history?.pave_commercial || 0);
 
-  const valores = paveLogsHoje
-    .flatMap((log) =>
-      log.entries.filter((e) => e.metric_code === "PAVE_AGENDAMENTO")
-    )
-    .map((e) => parseInt(e.value) || 0);
+  // Realizado vem da soma dos registros mensais
+  const agendados = monthlyHistory.reduce((sum, record) => 
+    sum + (record.pave_commercial || 0), 0
+  );
 
-  const hoje = valores.reduce((a, b) => a + b, 0);
-  const agendados = Math.round(valores.reduce((a, b) => a + b, 0) / Math.max(valores.length, 1));
-
-  return { agendados, hoje };
+  return { meta, agendados };
 }
 
 function calculateRanking(logs) {

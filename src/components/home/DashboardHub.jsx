@@ -748,11 +748,14 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
                   <div className="p-2 bg-cyan-100 rounded-lg">
                     <Map className="w-5 h-5 text-cyan-600" />
                   </div>
+                  <Badge variant="outline" className="text-cyan-600 border-cyan-200">Meta: {dashboardMetrics?.gpsAplicados?.meta || 0}</Badge>
                 </div>
-                <h3 className="text-sm font-medium text-gray-500">GPS Aplicados</h3>
+                <h3 className="text-sm font-medium text-gray-500">GPS de Vendas</h3>
                 <div className="mt-1">
-                  <span className="text-2xl font-bold text-gray-900">{dashboardMetrics?.gpsAplicados?.aplicados || 0}</span>
-                  <p className="text-xs text-gray-500">Guias de Processo Simplificado</p>
+                  <span className="text-2xl font-bold text-gray-900">
+                    {dashboardMetrics?.gpsAplicados?.aplicados || 0}/{dashboardMetrics?.gpsAplicados?.meta || 0}
+                  </span>
+                  <p className="text-xs text-gray-500">Aplicados este mês</p>
                 </div>
               </CardContent>
             </Card>
@@ -766,11 +769,12 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
                   <div className="p-2 bg-emerald-100 rounded-lg">
                     <Package className="w-5 h-5 text-emerald-600" />
                   </div>
+                  <Badge variant="outline" className="text-emerald-600 border-emerald-200">Meta: {dashboardMetrics?.kitMaster?.meta || 0}</Badge>
                 </div>
                 <h3 className="text-sm font-medium text-gray-500">Kit Master</h3>
                 <div className="mt-1">
                   <span className="text-2xl font-bold text-gray-900">
-                    {dashboardMetrics?.kitMaster?.convertidos || 0}/{dashboardMetrics?.kitMaster?.meta || 15}
+                    {dashboardMetrics?.kitMaster?.convertidos || 0}/{dashboardMetrics?.kitMaster?.meta || 0}
                   </span>
                   <p className="text-xs text-gray-500">Convertidos este mês</p>
                 </div>
@@ -786,12 +790,14 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
                   <div className="p-2 bg-pink-100 rounded-lg">
                     <Calendar className="w-5 h-5 text-pink-600" />
                   </div>
-                  <Badge variant="outline" className="text-pink-600 border-pink-200">Hoje</Badge>
+                  <Badge variant="outline" className="text-pink-600 border-pink-200">Meta: {dashboardMetrics?.paveAgendamento?.meta || 0}</Badge>
                 </div>
-                <h3 className="text-sm font-medium text-gray-500">PAVE Agendamento</h3>
+                <h3 className="text-sm font-medium text-gray-500">PAVE Comercial</h3>
                 <div className="mt-1">
-                  <span className="text-2xl font-bold text-gray-900">{dashboardMetrics?.paveAgendamento?.hoje || 0}</span>
-                  <p className="text-xs text-gray-500">Clientes agendados</p>
+                  <span className="text-2xl font-bold text-gray-900">
+                    {dashboardMetrics?.paveAgendamento?.agendados || 0}/{dashboardMetrics?.paveAgendamento?.meta || 0}
+                  </span>
+                  <p className="text-xs text-gray-500">Agendados este mês</p>
                 </div>
               </CardContent>
             </Card>
