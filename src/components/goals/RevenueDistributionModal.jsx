@@ -173,9 +173,17 @@ export default function RevenueDistributionModal({
   const totalDistributed = totalVendors + totalMarketing + totalTechnicians;
 
   const isValid = () => {
-    if (distribution.vendors.length === 0 && distribution.marketing.length === 0 && distribution.technicians.length === 0) {
+    const hasCollaborators = distribution.vendors.length > 0 || distribution.marketing.length > 0 || distribution.technicians.length > 0;
+    
+    if (!hasCollaborators) {
       return false;
     }
+    
+    // Permite valores zerados (atendimentos sem conversão)
+    if (revenue === 0 && totalDistributed === 0) {
+      return true;
+    }
+    
     return Math.abs(totalDistributed - revenue) < 0.01;
   };
 
@@ -223,7 +231,15 @@ export default function RevenueDistributionModal({
           </Card>
 
           {/* Aviso */}
-          {!isValid() && (
+          {revenue === 0 && (
+            <div className="p-4 bg-blue-50 border border-blue-300 rounded-lg flex gap-3">
+              <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-blue-800">
+                <strong>Registro sem faturamento:</strong> Selecione os colaboradores envolvidos. Valores podem ficar zerados para registrar atendimentos/agendamentos sem conversão.
+              </div>
+            </div>
+          )}
+          {!isValid() && revenue > 0 && (
             <div className="p-4 bg-orange-50 border border-orange-300 rounded-lg flex gap-3">
               <AlertCircle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
               <div className="text-sm text-orange-800">
