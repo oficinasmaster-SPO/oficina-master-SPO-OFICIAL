@@ -77,10 +77,10 @@ export default function GraficosProducao() {
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-          <p className="font-semibold text-gray-700 mb-2">{label}</p>
+        <div className="bg-slate-800/95 backdrop-blur-sm p-3 border border-blue-500/30 rounded-lg shadow-lg shadow-blue-500/20">
+          <p className="font-semibold text-blue-300 mb-2">{label}</p>
           {payload.map((entry, index) => (
-            <p key={index} style={{ color: entry.color }} className="text-sm">
+            <p key={index} style={{ color: entry.color }} className="text-sm font-medium">
               {entry.name}: {typeof entry.value === 'number' ? entry.value.toLocaleString("pt-BR") : entry.value}
             </p>
           ))}
@@ -102,103 +102,118 @@ export default function GraficosProducao() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
-            <Button variant="outline" onClick={() => navigate(-1)}>
+            <Button 
+              variant="outline" 
+              onClick={() => navigate(-1)}
+              className="border-blue-500/30 bg-slate-800/50 hover:bg-slate-700/50 text-blue-300 hover:text-blue-200"
+            >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Voltar
             </Button>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-                <TrendingUp className="w-8 h-8 text-blue-600" />
+              <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 flex items-center gap-2">
+                <TrendingUp className="w-8 h-8 text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
                 Gráficos de Evolução
               </h1>
-              <p className="text-gray-600 mt-1">Análise visual do desempenho da oficina</p>
+              <p className="text-blue-300/70 mt-1">Análise visual do desempenho da oficina</p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             <div>
-              <Label className="text-xs text-gray-600">Filtrar Mês</Label>
+              <Label className="text-xs text-blue-300/70 mb-1 block">Filtrar Mês</Label>
               <Input
                 type="month"
                 value={filterMonth}
                 onChange={(e) => setFilterMonth(e.target.value)}
-                className="w-40"
+                className="w-40 bg-slate-800/50 border-blue-500/30 text-blue-200 focus:border-blue-400"
               />
             </div>
           </div>
         </div>
 
         {isLoading ? (
-          <Card>
+          <Card className="bg-slate-800/50 border-blue-500/30">
             <CardContent className="p-12 text-center">
-              <p className="text-gray-500">Carregando dados...</p>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
+              <p className="text-blue-300/70">Carregando dados...</p>
             </CardContent>
           </Card>
         ) : chartData.length === 0 ? (
-          <Card>
+          <Card className="bg-slate-800/50 border-blue-500/30">
             <CardContent className="p-12 text-center">
-              <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">Nenhum registro encontrado para este período</p>
+              <Calendar className="w-16 h-16 text-blue-400/50 mx-auto mb-4" />
+              <p className="text-blue-300/70">Nenhum registro encontrado para este período</p>
             </CardContent>
           </Card>
         ) : (
           <Tabs defaultValue="faturamento" className="w-full">
-            <TabsList className="grid grid-cols-5 w-full">
-              <TabsTrigger value="faturamento">Faturamento</TabsTrigger>
-              <TabsTrigger value="comercial">Comercial</TabsTrigger>
-              <TabsTrigger value="vendas">Vendas</TabsTrigger>
-              <TabsTrigger value="agendamentos">Agendamentos</TabsTrigger>
-              <TabsTrigger value="marketing">Marketing</TabsTrigger>
+            <TabsList className="grid grid-cols-5 w-full bg-slate-800/50 border border-blue-500/30">
+              <TabsTrigger value="faturamento" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white text-blue-300/70">Faturamento</TabsTrigger>
+              <TabsTrigger value="comercial" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white text-blue-300/70">Comercial</TabsTrigger>
+              <TabsTrigger value="vendas" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white text-blue-300/70">Vendas</TabsTrigger>
+              <TabsTrigger value="agendamentos" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white text-blue-300/70">Agendamentos</TabsTrigger>
+              <TabsTrigger value="marketing" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white text-blue-300/70">Marketing</TabsTrigger>
             </TabsList>
 
             {/* ABA FATURAMENTO */}
             <TabsContent value="faturamento" className="space-y-6">
-              <Card>
+              <Card className="bg-slate-800/50 border-blue-500/30 backdrop-blur-sm">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <DollarSign className="w-5 h-5 text-green-600" />
+                  <CardTitle className="flex items-center gap-2 text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400">
+                    <DollarSign className="w-5 h-5 text-green-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
                     Evolução do Faturamento
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={400}>
                     <LineChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis />
+                      <defs>
+                        <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor="#10b981" stopOpacity={0.1}/>
+                        </linearGradient>
+                        <linearGradient id="colorPecas" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#1e40af" opacity={0.1} />
+                      <XAxis dataKey="date" stroke="#60a5fa" style={{ fontSize: '12px' }} />
+                      <YAxis stroke="#60a5fa" style={{ fontSize: '12px' }} />
                       <Tooltip content={<CustomTooltip />} />
-                      <Legend />
-                      <Line type="monotone" dataKey="faturamento_total" stroke="#10b981" strokeWidth={3} name="Fat. Total" />
-                      <Line type="monotone" dataKey="faturamento_pecas" stroke="#3b82f6" strokeWidth={2} name="Fat. Peças" />
-                      <Line type="monotone" dataKey="faturamento_servicos" stroke="#8b5cf6" strokeWidth={2} name="Fat. Serviços" />
-                      <Line type="monotone" dataKey="projected_revenue" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" name="Previsto" />
+                      <Legend wrapperStyle={{ color: '#60a5fa' }} />
+                      <Line type="monotone" dataKey="faturamento_total" stroke="#10b981" strokeWidth={3} name="Fat. Total" dot={{ fill: '#10b981', r: 4 }} activeDot={{ r: 6, fill: '#10b981', stroke: '#fff', strokeWidth: 2 }} />
+                      <Line type="monotone" dataKey="faturamento_pecas" stroke="#3b82f6" strokeWidth={2} name="Fat. Peças" dot={{ fill: '#3b82f6', r: 3 }} />
+                      <Line type="monotone" dataKey="faturamento_servicos" stroke="#a855f7" strokeWidth={2} name="Fat. Serviços" dot={{ fill: '#a855f7', r: 3 }} />
+                      <Line type="monotone" dataKey="projected_revenue" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" name="Previsto" dot={{ fill: '#f59e0b', r: 3 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-slate-800/50 border-blue-500/30 backdrop-blur-sm">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="w-5 h-5 text-blue-600" />
+                  <CardTitle className="flex items-center gap-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">
+                    <Users className="w-5 h-5 text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
                     Evolução de Clientes
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={350}>
                     <LineChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#1e40af" opacity={0.1} />
+                      <XAxis dataKey="date" stroke="#60a5fa" style={{ fontSize: '12px' }} />
+                      <YAxis stroke="#60a5fa" style={{ fontSize: '12px' }} />
                       <Tooltip content={<CustomTooltip />} />
-                      <Legend />
-                      <Line type="monotone" dataKey="clientes" stroke="#10b981" strokeWidth={3} name="Clientes Realizado" />
-                      <Line type="monotone" dataKey="projected_clientes" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" name="Clientes Previsto" />
+                      <Legend wrapperStyle={{ color: '#60a5fa' }} />
+                      <Line type="monotone" dataKey="clientes" stroke="#10b981" strokeWidth={3} name="Clientes Realizado" dot={{ fill: '#10b981', r: 4 }} activeDot={{ r: 6, fill: '#10b981', stroke: '#fff', strokeWidth: 2 }} />
+                      <Line type="monotone" dataKey="projected_clientes" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" name="Clientes Previsto" dot={{ fill: '#f59e0b', r: 3 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -207,45 +222,45 @@ export default function GraficosProducao() {
 
             {/* ABA COMERCIAL */}
             <TabsContent value="comercial" className="space-y-6">
-              <Card>
+              <Card className="bg-slate-800/50 border-purple-500/30 backdrop-blur-sm">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Target className="w-5 h-5 text-indigo-600" />
+                  <CardTitle className="flex items-center gap-2 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
+                    <Target className="w-5 h-5 text-purple-400 drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]" />
                     PAVE Comercial
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={350}>
                     <LineChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#1e40af" opacity={0.1} />
+                      <XAxis dataKey="date" stroke="#60a5fa" style={{ fontSize: '12px' }} />
+                      <YAxis stroke="#60a5fa" style={{ fontSize: '12px' }} />
                       <Tooltip content={<CustomTooltip />} />
-                      <Legend />
-                      <Line type="monotone" dataKey="pave_realizado" stroke="#10b981" strokeWidth={3} name="PAVE Realizado" />
-                      <Line type="monotone" dataKey="pave_previsto" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" name="PAVE Previsto" />
+                      <Legend wrapperStyle={{ color: '#60a5fa' }} />
+                      <Line type="monotone" dataKey="pave_realizado" stroke="#a855f7" strokeWidth={3} name="PAVE Realizado" dot={{ fill: '#a855f7', r: 4 }} activeDot={{ r: 6, fill: '#a855f7', stroke: '#fff', strokeWidth: 2 }} />
+                      <Line type="monotone" dataKey="pave_previsto" stroke="#ec4899" strokeWidth={2} strokeDasharray="5 5" name="PAVE Previsto" dot={{ fill: '#ec4899', r: 3 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-slate-800/50 border-yellow-500/30 backdrop-blur-sm">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <ShoppingCart className="w-5 h-5 text-yellow-600" />
+                  <CardTitle className="flex items-center gap-2 text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400">
+                    <ShoppingCart className="w-5 h-5 text-yellow-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]" />
                     Kit Master
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={350}>
                     <LineChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#1e40af" opacity={0.1} />
+                      <XAxis dataKey="date" stroke="#60a5fa" style={{ fontSize: '12px' }} />
+                      <YAxis stroke="#60a5fa" style={{ fontSize: '12px' }} />
                       <Tooltip content={<CustomTooltip />} />
-                      <Legend />
-                      <Line type="monotone" dataKey="kit_master_realizado" stroke="#10b981" strokeWidth={3} name="Kit Master Realizado" />
-                      <Line type="monotone" dataKey="kit_master_previsto" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" name="Kit Master Previsto" />
+                      <Legend wrapperStyle={{ color: '#60a5fa' }} />
+                      <Line type="monotone" dataKey="kit_master_realizado" stroke="#fbbf24" strokeWidth={3} name="Kit Master Realizado" dot={{ fill: '#fbbf24', r: 4 }} activeDot={{ r: 6, fill: '#fbbf24', stroke: '#fff', strokeWidth: 2 }} />
+                      <Line type="monotone" dataKey="kit_master_previsto" stroke="#f97316" strokeWidth={2} strokeDasharray="5 5" name="Kit Master Previsto" dot={{ fill: '#f97316', r: 3 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -254,44 +269,44 @@ export default function GraficosProducao() {
 
             {/* ABA VENDAS */}
             <TabsContent value="vendas" className="space-y-6">
-              <Card>
+              <Card className="bg-slate-800/50 border-cyan-500/30 backdrop-blur-sm">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Target className="w-5 h-5 text-cyan-600" />
+                  <CardTitle className="flex items-center gap-2 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">
+                    <Target className="w-5 h-5 text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]" />
                     GPS de Vendas
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={350}>
                     <LineChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#1e40af" opacity={0.1} />
+                      <XAxis dataKey="date" stroke="#60a5fa" style={{ fontSize: '12px' }} />
+                      <YAxis stroke="#60a5fa" style={{ fontSize: '12px' }} />
                       <Tooltip content={<CustomTooltip />} />
-                      <Legend />
-                      <Line type="monotone" dataKey="gps_realizado" stroke="#10b981" strokeWidth={3} name="GPS Realizado" />
-                      <Line type="monotone" dataKey="gps_previsto" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" name="GPS Previsto" />
+                      <Legend wrapperStyle={{ color: '#60a5fa' }} />
+                      <Line type="monotone" dataKey="gps_realizado" stroke="#22d3ee" strokeWidth={3} name="GPS Realizado" dot={{ fill: '#22d3ee', r: 4 }} activeDot={{ r: 6, fill: '#22d3ee', stroke: '#fff', strokeWidth: 2 }} />
+                      <Line type="monotone" dataKey="gps_previsto" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" name="GPS Previsto" dot={{ fill: '#f59e0b', r: 3 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-slate-800/50 border-pink-500/30 backdrop-blur-sm">
                 <CardHeader>
-                  <CardTitle>Vendas Base x Marketing</CardTitle>
+                  <CardTitle className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400">Vendas Base x Marketing</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={350}>
                     <LineChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#1e40af" opacity={0.1} />
+                      <XAxis dataKey="date" stroke="#60a5fa" style={{ fontSize: '12px' }} />
+                      <YAxis stroke="#60a5fa" style={{ fontSize: '12px' }} />
                       <Tooltip content={<CustomTooltip />} />
-                      <Legend />
-                      <Line type="monotone" dataKey="vendas_base" stroke="#10b981" strokeWidth={2} name="Vendas Base R$" />
-                      <Line type="monotone" dataKey="projected_sales_base" stroke="#3b82f6" strokeWidth={2} strokeDasharray="5 5" name="Previsto Base" />
-                      <Line type="monotone" dataKey="vendas_mkt" stroke="#a855f7" strokeWidth={2} name="Vendas Marketing R$" />
-                      <Line type="monotone" dataKey="projected_sales_mkt" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" name="Previsto Mkt" />
+                      <Legend wrapperStyle={{ color: '#60a5fa' }} />
+                      <Line type="monotone" dataKey="vendas_base" stroke="#10b981" strokeWidth={2} name="Vendas Base R$" dot={{ fill: '#10b981', r: 3 }} />
+                      <Line type="monotone" dataKey="projected_sales_base" stroke="#3b82f6" strokeWidth={2} strokeDasharray="5 5" name="Previsto Base" dot={{ fill: '#3b82f6', r: 3 }} />
+                      <Line type="monotone" dataKey="vendas_mkt" stroke="#ec4899" strokeWidth={2} name="Vendas Marketing R$" dot={{ fill: '#ec4899', r: 3 }} />
+                      <Line type="monotone" dataKey="projected_sales_mkt" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" name="Previsto Mkt" dot={{ fill: '#f59e0b', r: 3 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -300,41 +315,41 @@ export default function GraficosProducao() {
 
             {/* ABA AGENDAMENTOS */}
             <TabsContent value="agendamentos" className="space-y-6">
-              <Card>
+              <Card className="bg-slate-800/50 border-blue-500/30 backdrop-blur-sm">
                 <CardHeader>
-                  <CardTitle>Agendamentos por Origem</CardTitle>
+                  <CardTitle className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">Agendamentos por Origem</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={350}>
                     <LineChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#1e40af" opacity={0.1} />
+                      <XAxis dataKey="date" stroke="#60a5fa" style={{ fontSize: '12px' }} />
+                      <YAxis stroke="#60a5fa" style={{ fontSize: '12px' }} />
                       <Tooltip content={<CustomTooltip />} />
-                      <Legend />
-                      <Line type="monotone" dataKey="agendados_base" stroke="#3b82f6" strokeWidth={2} name="Agendados Base" />
-                      <Line type="monotone" dataKey="agendados_mkt" stroke="#ec4899" strokeWidth={2} name="Agendados Marketing" />
-                      <Line type="monotone" dataKey="agendados_referral" stroke="#f97316" strokeWidth={2} name="Agendados Indicação" />
+                      <Legend wrapperStyle={{ color: '#60a5fa' }} />
+                      <Line type="monotone" dataKey="agendados_base" stroke="#3b82f6" strokeWidth={2} name="Agendados Base" dot={{ fill: '#3b82f6', r: 3 }} />
+                      <Line type="monotone" dataKey="agendados_mkt" stroke="#ec4899" strokeWidth={2} name="Agendados Marketing" dot={{ fill: '#ec4899', r: 3 }} />
+                      <Line type="monotone" dataKey="agendados_referral" stroke="#f97316" strokeWidth={2} name="Agendados Indicação" dot={{ fill: '#f97316', r: 3 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-slate-800/50 border-green-500/30 backdrop-blur-sm">
                 <CardHeader>
-                  <CardTitle>Entregas por Origem</CardTitle>
+                  <CardTitle className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400">Entregas por Origem</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={350}>
                     <LineChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#1e40af" opacity={0.1} />
+                      <XAxis dataKey="date" stroke="#60a5fa" style={{ fontSize: '12px' }} />
+                      <YAxis stroke="#60a5fa" style={{ fontSize: '12px' }} />
                       <Tooltip content={<CustomTooltip />} />
-                      <Legend />
-                      <Line type="monotone" dataKey="entregues_base" stroke="#10b981" strokeWidth={2} name="Entregues Base" />
-                      <Line type="monotone" dataKey="entregues_mkt" stroke="#8b5cf6" strokeWidth={2} name="Entregues Marketing" />
-                      <Line type="monotone" dataKey="entregues_referral" stroke="#f59e0b" strokeWidth={2} name="Entregues Indicação" />
+                      <Legend wrapperStyle={{ color: '#60a5fa' }} />
+                      <Line type="monotone" dataKey="entregues_base" stroke="#10b981" strokeWidth={2} name="Entregues Base" dot={{ fill: '#10b981', r: 3 }} />
+                      <Line type="monotone" dataKey="entregues_mkt" stroke="#a855f7" strokeWidth={2} name="Entregues Marketing" dot={{ fill: '#a855f7', r: 3 }} />
+                      <Line type="monotone" dataKey="entregues_referral" stroke="#fbbf24" strokeWidth={2} name="Entregues Indicação" dot={{ fill: '#fbbf24', r: 3 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -343,60 +358,60 @@ export default function GraficosProducao() {
 
             {/* ABA MARKETING */}
             <TabsContent value="marketing" className="space-y-6">
-              <Card>
+              <Card className="bg-slate-800/50 border-pink-500/30 backdrop-blur-sm">
                 <CardHeader>
-                  <CardTitle>Funil de Leads</CardTitle>
+                  <CardTitle className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-fuchsia-400">Funil de Leads</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={350}>
                     <LineChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#1e40af" opacity={0.1} />
+                      <XAxis dataKey="date" stroke="#60a5fa" style={{ fontSize: '12px' }} />
+                      <YAxis stroke="#60a5fa" style={{ fontSize: '12px' }} />
                       <Tooltip content={<CustomTooltip />} />
-                      <Legend />
-                      <Line type="monotone" dataKey="leads_gerados" stroke="#3b82f6" strokeWidth={2} name="Leads Gerados" />
-                      <Line type="monotone" dataKey="leads_agendados" stroke="#8b5cf6" strokeWidth={2} name="Leads Agendados" />
-                      <Line type="monotone" dataKey="leads_comparecidos" stroke="#f59e0b" strokeWidth={2} name="Comparecidos" />
-                      <Line type="monotone" dataKey="leads_vendidos" stroke="#10b981" strokeWidth={2} name="Leads Vendidos" />
+                      <Legend wrapperStyle={{ color: '#60a5fa' }} />
+                      <Line type="monotone" dataKey="leads_gerados" stroke="#3b82f6" strokeWidth={2} name="Leads Gerados" dot={{ fill: '#3b82f6', r: 3 }} />
+                      <Line type="monotone" dataKey="leads_agendados" stroke="#a855f7" strokeWidth={2} name="Leads Agendados" dot={{ fill: '#a855f7', r: 3 }} />
+                      <Line type="monotone" dataKey="leads_comparecidos" stroke="#ec4899" strokeWidth={2} name="Comparecidos" dot={{ fill: '#ec4899', r: 3 }} />
+                      <Line type="monotone" dataKey="leads_vendidos" stroke="#10b981" strokeWidth={2} name="Leads Vendidos" dot={{ fill: '#10b981', r: 3 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-slate-800/50 border-red-500/30 backdrop-blur-sm">
                 <CardHeader>
-                  <CardTitle>Investimento vs Faturamento</CardTitle>
+                  <CardTitle className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-rose-400">Investimento vs Faturamento</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={350}>
                     <LineChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#1e40af" opacity={0.1} />
+                      <XAxis dataKey="date" stroke="#60a5fa" style={{ fontSize: '12px' }} />
+                      <YAxis stroke="#60a5fa" style={{ fontSize: '12px' }} />
                       <Tooltip content={<CustomTooltip />} />
-                      <Legend />
-                      <Line type="monotone" dataKey="investido_trafego" stroke="#ef4444" strokeWidth={2} name="Investido Tráfego R$" />
-                      <Line type="monotone" dataKey="faturado_lead" stroke="#10b981" strokeWidth={2} name="Faturado Lead R$" />
+                      <Legend wrapperStyle={{ color: '#60a5fa' }} />
+                      <Line type="monotone" dataKey="investido_trafego" stroke="#ef4444" strokeWidth={2} name="Investido Tráfego R$" dot={{ fill: '#ef4444', r: 3 }} />
+                      <Line type="monotone" dataKey="faturado_lead" stroke="#10b981" strokeWidth={2} name="Faturado Lead R$" dot={{ fill: '#10b981', r: 3 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-slate-800/50 border-orange-500/30 backdrop-blur-sm">
                 <CardHeader>
-                  <CardTitle>Custo por Venda</CardTitle>
+                  <CardTitle className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-400">Custo por Venda</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={350}>
                     <LineChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#1e40af" opacity={0.1} />
+                      <XAxis dataKey="date" stroke="#60a5fa" style={{ fontSize: '12px' }} />
+                      <YAxis stroke="#60a5fa" style={{ fontSize: '12px' }} />
                       <Tooltip content={<CustomTooltip />} />
-                      <Legend />
-                      <Line type="monotone" dataKey="custo_venda_realizado" stroke="#10b981" strokeWidth={2} name="Custo Realizado" />
-                      <Line type="monotone" dataKey="custo_venda_previsto" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" name="Custo Previsto" />
+                      <Legend wrapperStyle={{ color: '#60a5fa' }} />
+                      <Line type="monotone" dataKey="custo_venda_realizado" stroke="#10b981" strokeWidth={2} name="Custo Realizado" dot={{ fill: '#10b981', r: 3 }} />
+                      <Line type="monotone" dataKey="custo_venda_previsto" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" name="Custo Previsto" dot={{ fill: '#f59e0b', r: 3 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </CardContent>
