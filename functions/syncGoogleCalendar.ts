@@ -24,18 +24,23 @@ Deno.serve(async (req) => {
     // Obter token do Google Calendar
     const accessToken = await base44.asServiceRole.connectors.getAccessToken('googlecalendar');
 
-    // Buscar atendimentos dos últimos 30 dias sem google_event_id
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    // Buscar TODOS os atendimentos do Controle da Aceleração (últimos 90 dias + próximos eventos)
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
 
     const atendimentos = await base44.asServiceRole.entities.ConsultoriaAtendimento.filter({
-      data_agendada: { $gte: thirtyDaysAgo.toISOString() }
+      data_agendada: { $gte: ninetyDaysAgo.toISOString() }
     });
 
-    const toSync = atendimentos.filter(a => !a.google_event_id);
+    // Filtrar apenas atendimentos que ainda não tem google_event_id E não são importados
+    const toSync = atendimentos.filter(a => 
+      !a.google_event_id && 
+      a.workshop_id !== 'IMPORTADO_CALENDAR' &&
+      a.tipo_atendimento !== 'importado_calendar'
+    );
     let syncedCount = 0;
 
-    // Criar eventos no Google Calendar
+    // Criar eventos no Google Calendar para TODOS os atendimentos do Controle
     for (const atendimento of toSync) {
       try {
         const startDateTime = new Date(atendimento.data_agendada);
@@ -46,9 +51,23 @@ Deno.serve(async (req) => {
           .filter(e => e && e.includes('@'))
           .map(email => ({ email }));
 
+        // Buscar nome da oficina se tiver workshop_id
+        let workshopName = '';
+        if (atendimento.workshop_id && atendimento.workshop_id !== 'IMPORTADO_CALENDAR') {
+          try {
+            const workshop = await base44.asServiceRole.entities.Workshop.get(atendimento.workshop_id);
+            workshopName = workshop?.name || '';
+          } catch {}
+        }
+
+        const tipoAtendimento = atendimento.tipo_atendimento?.replace(/_/g, ' ') || 'Atendimento';
+        const titulo = workshopName 
+          ? `${tipoAtendimento} - ${workshopName}`
+          : `${tipoAtendimento} - Oficinas Master`;
+
         const event = {
-          summary: `${atendimento.tipo_atendimento?.replace(/_/g, ' ')} - Oficinas Master`,
-          description: atendimento.objetivos?.join('\n') || '',
+          summary: titulo,
+          description: atendimento.objetivos?.join('\n') || atendimento.observacoes_consultor || '',
           start: {
             dateTime: startDateTime.toISOString(),
             timeZone: 'America/Sao_Paulo',
