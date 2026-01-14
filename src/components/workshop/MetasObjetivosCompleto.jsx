@@ -89,6 +89,7 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
       sales_marketing: 0,
       pave_commercial: 0,
       kit_master: 0,
+      gps_vendas: 0,
       clients_scheduled_base: 0,
       clients_delivered_base: 0,
       clients_scheduled_mkt: 0,
@@ -1268,6 +1269,23 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
                           <p className="text-xs text-green-600 mb-1">REALIZADO</p>
                           <p className="text-lg font-bold text-green-600">
                             {formatInteger(formData.monthly_goals?.kit_master || 0)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="border-l-4 border-cyan-500 pl-3">
+                      <p className="text-xs text-gray-600 mb-2">GPS de Vendas (qtd)</p>
+                      <div className="flex gap-4">
+                        <div className="flex-1">
+                          <p className="text-xs text-blue-600 mb-1">PROJETADO</p>
+                          <p className="text-lg font-bold text-blue-600">
+                            {formatInteger((formData.best_month_history.gps_vendas || 0) * (1 + growthPercentage / 100))}
+                          </p>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-green-600 mb-1">REALIZADO</p>
+                          <p className="text-lg font-bold text-green-600">
+                            {formatInteger(formData.monthly_goals?.gps_vendas || 0)}
                           </p>
                         </div>
                       </div>

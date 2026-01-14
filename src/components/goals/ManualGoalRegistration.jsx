@@ -336,16 +336,56 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
         }
       }
 
-      // Atualizar Workshop
+      // Atualizar Workshop - sincronizar valores mensais realizados
       if (entityType === "workshop") {
+        // Buscar todos os registros do mês atual para consolidar
+        const currentMonthRecords = await base44.entities.MonthlyGoalHistory.filter({
+          workshop_id: workshop.id,
+          month: formData.month,
+          entity_type: "workshop"
+        });
+        
+        const allRecords = Array.isArray(currentMonthRecords) ? currentMonthRecords : [];
+        
+        // Consolidar valores do mês
+        const monthlyConsolidated = {
+          actual_revenue_achieved: allRecords.reduce((sum, r) => sum + (r.revenue_total || 0), 0),
+          revenue_parts: allRecords.reduce((sum, r) => sum + (r.revenue_parts || 0), 0),
+          revenue_services: allRecords.reduce((sum, r) => sum + (r.revenue_services || 0), 0),
+          customer_volume: allRecords.reduce((sum, r) => sum + (r.customer_volume || 0), 0),
+          pave_commercial: allRecords.reduce((sum, r) => sum + (r.pave_commercial || 0), 0),
+          kit_master: allRecords.reduce((sum, r) => sum + (r.kit_master || 0), 0),
+          gps_vendas: allRecords.reduce((sum, r) => sum + (r.gps_vendas || 0), 0),
+          sales_base: allRecords.reduce((sum, r) => sum + (r.sales_base || 0), 0),
+          sales_marketing: allRecords.reduce((sum, r) => sum + (r.sales_marketing || 0), 0),
+          marketing: {
+            leads_generated: allRecords.reduce((sum, r) => sum + (r.marketing_data?.leads_generated || 0), 0),
+            leads_scheduled: allRecords.reduce((sum, r) => sum + (r.marketing_data?.leads_scheduled || 0), 0),
+            leads_showed_up: allRecords.reduce((sum, r) => sum + (r.marketing_data?.leads_showed_up || 0), 0),
+            leads_sold: allRecords.reduce((sum, r) => sum + (r.marketing_data?.leads_sold || 0), 0),
+            invested_value: allRecords.reduce((sum, r) => sum + (r.marketing_data?.invested_value || 0), 0),
+            revenue_from_traffic: allRecords.reduce((sum, r) => sum + (r.marketing_data?.revenue_from_traffic || 0), 0),
+            cost_per_sale: 0
+          }
+        };
+        
+        // Calcular custo por venda
+        if (monthlyConsolidated.marketing.leads_sold > 0) {
+          monthlyConsolidated.marketing.cost_per_sale = 
+            monthlyConsolidated.marketing.invested_value / monthlyConsolidated.marketing.leads_sold;
+        }
+        
+        // Calcular ticket médio
+        if (monthlyConsolidated.customer_volume > 0) {
+          monthlyConsolidated.average_ticket = 
+            monthlyConsolidated.actual_revenue_achieved / monthlyConsolidated.customer_volume;
+        }
+
         await base44.entities.Workshop.update(workshop.id, {
           monthly_goals: {
             ...workshop.monthly_goals,
-            actual_revenue_achieved: formData.achieved_total,
-            revenue_parts: formData.revenue_parts,
-            revenue_services: formData.revenue_services,
-            customer_volume: formData.customer_volume,
-            average_ticket: average_ticket
+            ...monthlyConsolidated,
+            month: formData.month
           }
         });
       }
