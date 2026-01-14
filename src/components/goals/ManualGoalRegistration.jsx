@@ -85,6 +85,18 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
     }
   }, [open, entityType, selectedEmployee, editingRecord]);
 
+  // Calcular PAVE Comercial automaticamente (soma dos agendamentos)
+  useEffect(() => {
+    const paveAutomatico = 
+      (formData.clients_scheduled_base || 0) + 
+      (formData.clients_scheduled_mkt || 0) + 
+      (formData.clients_scheduled_referral || 0);
+    
+    if (paveAutomatico !== formData.pave_commercial) {
+      setFormData(prev => ({...prev, pave_commercial: paveAutomatico}));
+    }
+  }, [formData.clients_scheduled_base, formData.clients_scheduled_mkt, formData.clients_scheduled_referral]);
+
   const loadEditingData = async () => {
     if (!editingRecord) return;
     
