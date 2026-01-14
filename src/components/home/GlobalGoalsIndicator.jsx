@@ -71,26 +71,25 @@ export default function GlobalGoalsIndicator({ workshop, className = "" }) {
     );
   }
 
-  // Dados projetados (meta do mês) - calculado de best_month_history + growth_percentage
+  // Dados de configuração
   const bestMonthHistory = workshopData?.best_month_history || {};
   const monthlyGoals = workshopData?.monthly_goals || {};
   const growthPercentage = monthlyGoals.growth_percentage || 10;
   
-  // Calcular projetado baseado no melhor mês + crescimento
+  // PROJETADO - calculado baseado no melhor mês + crescimento
   const bestMonthRevenue = bestMonthHistory.revenue_total || 0;
   const projectedRevenue = bestMonthRevenue > 0 
     ? bestMonthRevenue * (1 + growthPercentage / 100)
-    : monthlyGoals.projected_revenue || 0;
-  
+    : 0;
   const projectedParts = (bestMonthHistory.revenue_parts || 0) * (1 + growthPercentage / 100);
   const projectedServices = (bestMonthHistory.revenue_services || 0) * (1 + growthPercentage / 100);
   const projectedCustomers = Math.round((bestMonthHistory.customer_volume || 0) * (1 + growthPercentage / 100));
 
-  // Dados realizados - vem do workshop.monthly_goals.actual_revenue_achieved (atualizado via registros manuais)
+  // REALIZADO - vem de workshop.monthly_goals (atualizado pelos registros manuais no PainelMetas)
   const totalAchieved = monthlyGoals.actual_revenue_achieved || 0;
-  const totalCustomers = monthlyGoals.customer_volume || 0;
   const totalParts = monthlyGoals.revenue_parts || 0;
   const totalServices = monthlyGoals.revenue_services || 0;
+  const totalCustomers = monthlyGoals.customer_volume || 0;
 
   // Cálculos de progresso
   const revenueProgress = projectedRevenue > 0 
