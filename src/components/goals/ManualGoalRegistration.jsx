@@ -1425,6 +1425,17 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
                 </p>
               </div>
 
+              {/* Valor Faturado Total */}
+              <div className="border-l-4 border-emerald-500 pl-3 py-2 bg-emerald-100">
+                <Label className="text-sm font-semibold text-gray-700 mb-2 block">Valor Faturado Total (Auto)</Label>
+                <Input
+                  value={(formData.sales_base + formData.sales_marketing).toFixed(2)}
+                  disabled
+                  className="h-9 bg-emerald-100 font-bold text-emerald-700"
+                />
+                <p className="text-xs text-gray-500 mt-1">Vendas Base + Vendas Marketing</p>
+              </div>
+
               <div className="grid grid-cols-3 gap-3">
                 {/* Clientes Base */}
                 <div className="border-l-4 border-blue-500 pl-3 py-2 bg-blue-50/50">
