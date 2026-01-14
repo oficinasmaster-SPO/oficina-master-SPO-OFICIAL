@@ -1515,12 +1515,34 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
           {/* Clientes Agendados Indicação */}
           <div className="border-l-4 border-orange-400 pl-3 py-2 bg-orange-50/30">
             <Label className="text-sm font-semibold text-gray-700 mb-2 block">Clientes Agendados Indicação (qtd)</Label>
+            <Input
+              type="number"
+              value={formData.clients_scheduled_referral}
+              onChange={(e) => setFormData({...formData, clients_scheduled_referral: parseInt(e.target.value) || 0})}
+              className="font-semibold"
+            />
+          </div>
+
+          {/* Clientes Entregues Indicação */}
+          <div className="border-l-4 border-orange-600 pl-3 py-2 bg-orange-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Clientes Entregues Indicação (qtd)</Label>
+            <Input
+              type="number"
+              value={formData.clients_delivered_referral}
+              onChange={(e) => setFormData({...formData, clients_delivered_referral: parseInt(e.target.value) || 0})}
+              className="font-semibold"
+            />
+          </div>
+
+          {/* GPS de Vendas */}
+          <div className="border-l-4 border-cyan-500 pl-3 py-2 bg-cyan-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">GPS de Vendas (qtd)</Label>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs text-blue-600">PREVISTO</Label>
                 <Input
                   type="number"
-                  value={formData.projected_clients_delivered}
+                  value={formData.projected_gps_vendas}
                   disabled
                   className="bg-blue-100 font-bold text-blue-700"
                 />
@@ -1529,12 +1551,23 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
                 <Label className="text-xs text-green-600">REALIZADO</Label>
                 <Input
                   type="number"
-                  value={formData.clients_delivered}
-                  onChange={(e) => setFormData({...formData, clients_delivered: parseInt(e.target.value) || 0})}
+                  value={formData.gps_vendas}
+                  onChange={(e) => setFormData({...formData, gps_vendas: parseInt(e.target.value) || 0})}
                   className="font-semibold"
                 />
               </div>
             </div>
+          </div>
+
+          {/* Valor Faturado Total */}
+          <div className="border-l-4 border-emerald-500 pl-3 py-2 bg-emerald-50/30">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Valor Faturado Total (Auto)</Label>
+            <Input
+              value={(formData.sales_base + formData.sales_marketing).toFixed(2)}
+              disabled
+              className="bg-emerald-100 font-bold text-emerald-700"
+            />
+            <p className="text-xs text-gray-500 mt-1">Vendas Base + Vendas Marketing</p>
           </div>
 
           {/* Marketing - PREVISTO x REALIZADO */}
