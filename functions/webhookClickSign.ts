@@ -8,6 +8,18 @@ Deno.serve(async (req) => {
     
     console.log('ClickSign Webhook received:', payload);
 
+    // Salvar log do webhook para auditoria
+    try {
+      await base44.asServiceRole.entities.SystemSetting.create({
+        key: `clicksign_webhook_log_${Date.now()}`,
+        value: payload,
+        encrypted: false,
+        updated_by: 'Sistema'
+      });
+    } catch (logError) {
+      console.error('Error saving webhook log:', logError);
+    }
+
     const { event, document } = payload;
 
     if (!document || !document.key) {
