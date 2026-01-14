@@ -7,6 +7,7 @@ import { useDashboardMetrics } from "../hooks/useDashboardMetrics";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import GlobalGoalsIndicator from "./GlobalGoalsIndicator";
 import { 
   TrendingUp, 
   Users, 
@@ -630,37 +631,14 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
         </Card>
       )}
 
+      {/* Indicador de Metas Globais */}
+      <GlobalGoalsIndicator workshop={workshop} className="mb-6" />
+
       {/* Dashboards e Acesso Rápido Controlado */}
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-gray-900 mb-4">Visão Geral & Acesso Rápido</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          {/* 1. Metas (Situação) */}
-          {canView('home_metas') && (
-            <Card className="border-l-4 border-blue-500 hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Target className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <Badge variant="outline" className="text-blue-600 border-blue-200">Mensal</Badge>
-                </div>
-                <h3 className="text-sm font-medium text-gray-500">Metas Globais</h3>
-                <div className="mt-1 flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-gray-900">
-                    {dashboardMetrics?.metas?.percentual || 0}%
-                  </span>
-                  <span className={`text-xs font-medium ${dashboardMetrics?.metas?.tendencia >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {dashboardMetrics?.metas?.tendencia >= 0 ? '+' : ''}{dashboardMetrics?.metas?.tendencia || 0}%
-                  </span>
-                </div>
-                <div className="w-full bg-gray-100 rounded-full h-1.5 mt-3">
-                  <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${dashboardMetrics?.metas?.percentual || 0}%` }}></div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
           {/* 2. Ranking Colaboradores */}
           {canView('home_ranking') && (
             <Card className="border-l-4 border-yellow-500 hover:shadow-md transition-shadow">
