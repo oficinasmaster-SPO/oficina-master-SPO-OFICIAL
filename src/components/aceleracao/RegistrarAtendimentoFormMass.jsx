@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import ConflitosHorarioModal from "./ConflitosHorarioModal";
+import GoogleMeetIntegration from "./GoogleMeetIntegration";
 
 export default function RegistrarAtendimentoFormMass({ formData, onFormChange, onClose, user, onSaveAndContinue }) {
   const [consultorSelecionado, setConsultorSelecionado] = useState(user?.id || "");
@@ -179,20 +180,15 @@ export default function RegistrarAtendimentoFormMass({ formData, onFormChange, o
         </TabsContent>
 
         <TabsContent value="reuniao" className="space-y-4">
-          <div>
-            <Label>Google Meet</Label>
-            <div className="flex gap-2">
-              <Input
-                placeholder="Link do Google Meet"
-                value={formData.google_meet_link}
-                onChange={(e) => handleChange("google_meet_link", e.target.value)}
-              />
-              <Button type="button" variant="outline" onClick={generateMeetLink}>
-                <Video className="w-4 h-4 mr-2" />
-                Gerar
-              </Button>
-            </div>
-          </div>
+          <GoogleMeetIntegration
+            atendimento={null}
+            onMeetCreated={(meetData) => {
+              handleChange("google_meet_link", meetData.google_meet_link);
+              if (meetData.google_event_id) handleChange("google_event_id", meetData.google_event_id);
+              if (meetData.google_calendar_link) handleChange("google_calendar_link", meetData.google_calendar_link);
+            }}
+            manualMode={true}
+          />
 
           <div>
             <Label>Pauta da Reunião</Label>

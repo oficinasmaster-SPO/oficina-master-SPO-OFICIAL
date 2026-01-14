@@ -11,6 +11,7 @@ import IntegrationHealthScore from "@/components/dashboard/IntegrationHealthScor
 import QuickIntegrationsPanel from "@/components/dashboard/QuickIntegrationsPanel";
 import IntegrationMetricsChart from "@/components/dashboard/IntegrationMetricsChart";
 import IntegrationAdvancedSettings from "@/components/integrations/IntegrationAdvancedSettings";
+import GoogleMeetConfig from "@/components/integrations/GoogleMeetConfig";
 
 export default function Integracoes() {
   const [user, setUser] = useState(null);
@@ -175,6 +176,9 @@ export default function Integracoes() {
           Conecte serviços externos para automatizar processos
         </p>
       </div>
+
+      {/* Google Meet Config Card */}
+      <GoogleMeetConfig />
 
       {/* Painel de Monitoramento */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
