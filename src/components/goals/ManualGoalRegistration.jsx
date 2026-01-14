@@ -766,6 +766,31 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
             <CardContent className="space-y-4">
               {commonFields}
               
+              {/* GPS de Vendas */}
+              <div className="border-l-4 border-cyan-500 pl-3 py-2 bg-white">
+                <Label className="text-sm font-semibold text-gray-700 mb-2 block">GPS de Vendas (qtd)</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-blue-600">PREVISTO</Label>
+                    <Input
+                      type="number"
+                      value={formData.projected_gps_vendas}
+                      disabled
+                      className="h-9 bg-blue-100 font-bold text-blue-700"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-green-600">REALIZADO</Label>
+                    <Input
+                      type="number"
+                      value={formData.gps_vendas}
+                      onChange={(e) => setFormData({...formData, gps_vendas: parseInt(e.target.value) || 0})}
+                      className="h-9 font-semibold"
+                    />
+                  </div>
+                </div>
+              </div>
+              
               {/* Valor Faturado Total */}
               <div className="border-l-4 border-emerald-500 pl-3 py-2 bg-white">
                 <Label className="text-sm font-semibold text-gray-700 mb-2 block">Valor Faturado Total (Auto)</Label>
@@ -1485,6 +1510,31 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
             </CardHeader>
             <CardContent className="space-y-4">
               {commonFields}
+              
+              {/* GPS de Vendas */}
+              <div className="border-l-4 border-cyan-500 pl-3 py-2 bg-white">
+                <Label className="text-sm font-semibold text-gray-700 mb-2 block">GPS de Vendas (qtd)</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-blue-600">PREVISTO</Label>
+                    <Input
+                      type="number"
+                      value={formData.projected_gps_vendas}
+                      disabled
+                      className="h-9 bg-blue-100 font-bold text-blue-700"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-green-600">REALIZADO</Label>
+                    <Input
+                      type="number"
+                      value={formData.gps_vendas}
+                      onChange={(e) => setFormData({...formData, gps_vendas: parseInt(e.target.value) || 0})}
+                      className="h-9 font-semibold"
+                    />
+                  </div>
+                </div>
+              </div>
               
               {/* Valor Faturado Total */}
               <div className="border-l-4 border-emerald-500 pl-3 py-2 bg-white">
