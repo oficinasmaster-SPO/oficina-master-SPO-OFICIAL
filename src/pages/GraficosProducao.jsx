@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
@@ -11,13 +11,29 @@ import { Input } from "@/components/ui/input";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { ArrowLeft, TrendingUp, DollarSign, Users, Target, ShoppingCart, Calendar } from "lucide-react";
 import { formatCurrency } from "@/components/utils/formatters";
-import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 
 export default function GraficosProducao() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { workshop, isLoading: workshopLoading } = useWorkshopContext();
+  const [workshop, setWorkshop] = useState(null);
+  const [user, setUser] = useState(null);
   const [filterMonth, setFilterMonth] = useState(new Date().toISOString().substring(0, 7));
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
+
+        const workshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
+        if (workshops.length > 0) {
+          setWorkshop(workshops[0]);
+        }
+      } catch (error) {
+        console.error("Error loading workshop:", error);
+      }
+    };
+    loadData();
+  }, []);
 
   const { data: records = [], isLoading } = useQuery({
     queryKey: ['goal-history-graficos', workshop?.id, filterMonth],
@@ -90,12 +106,12 @@ export default function GraficosProducao() {
     return null;
   };
 
-  if (workshopLoading || !workshop) {
+  if (!workshop) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-500">Carregando oficina...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
+          <p className="text-blue-300">Carregando oficina...</p>
         </div>
       </div>
     );
