@@ -12,6 +12,7 @@ import QuickIntegrationsPanel from "@/components/dashboard/QuickIntegrationsPane
 import IntegrationMetricsChart from "@/components/dashboard/IntegrationMetricsChart";
 import IntegrationAdvancedSettings from "@/components/integrations/IntegrationAdvancedSettings";
 import GoogleMeetConfig from "@/components/integrations/GoogleMeetConfig";
+import GoogleCalendarConfig from "@/components/integrations/GoogleCalendarConfig";
 
 export default function Integracoes() {
   const [user, setUser] = useState(null);
@@ -177,8 +178,11 @@ export default function Integracoes() {
         </p>
       </div>
 
-      {/* Google Meet Config Card */}
-      <GoogleMeetConfig />
+      {/* Google Calendar & Meet Config */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <GoogleCalendarConfig />
+        <GoogleMeetConfig />
+      </div>
 
       {/* Painel de Monitoramento */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

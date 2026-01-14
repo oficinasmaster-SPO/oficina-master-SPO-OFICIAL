@@ -1,230 +1,223 @@
 import React, { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Calendar, CheckCircle } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Calendar, CheckCircle, AlertCircle, RefreshCw, Settings, Loader2 } from "lucide-react";
+import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-export default function GoogleCalendarConfig({ user }) {
+export default function GoogleCalendarConfig() {
+  const [testing, setTesting] = useState(false);
   const queryClient = useQueryClient();
-  const [config, setConfig] = useState({
-    enabled: false,
-    accessToken: "",
-    refreshToken: "",
-    syncInterval: "15", // minutos
-    defaultCalendar: "",
-    consultorFilters: [],
-    bidirectionalSync: true,
-    autoUpdateStatus: true
-  });
 
-  const { data: consultores = [] } = useQuery({
-    queryKey: ["consultores-list"],
+  const { data: config, isLoading } = useQuery({
+    queryKey: ['google-calendar-config'],
     queryFn: async () => {
-      const users = await base44.entities.User.list();
-      return users.filter(u => u.role === "admin");
-    },
-    enabled: !!user
-  });
-
-  const connectMutation = useMutation({
-    mutationFn: async () => {
-      if (!config.accessToken) {
-        throw new Error('Preencha o Access Token');
+      try {
+        const settings = await base44.entities.SystemSetting.filter({ key: 'google_calendar_sync' });
+        return settings[0]?.value || {
+          enabled: false,
+          sync_bidirectional: true,
+          auto_create_meet: true,
+          calendar_id: 'primary'
+        };
+      } catch {
+        return {
+          enabled: false,
+          sync_bidirectional: true,
+          auto_create_meet: true,
+          calendar_id: 'primary'
+        };
       }
-      // Validar token com Google API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      return { success: true, calendarId: "primary" };
-    },
-    onSuccess: (data) => {
-      setConfig({ ...config, enabled: true, defaultCalendar: data.calendarId || "primary" });
-      toast.success("Conectado ao Google Calendar!");
-      queryClient.invalidateQueries({ queryKey: ["integrations-status"] });
-    },
-    onError: (error) => {
-      toast.error("Erro ao conectar: " + error.message);
     }
   });
 
-  const saveMutation = useMutation({
-    mutationFn: async (configData) => {
-      // Salvar configurações no banco
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      return { success: true };
+  const updateConfigMutation = useMutation({
+    mutationFn: async (newConfig) => {
+      const settings = await base44.entities.SystemSetting.filter({ key: 'google_calendar_sync' });
+      if (settings.length > 0) {
+        return await base44.entities.SystemSetting.update(settings[0].id, {
+          value: newConfig
+        });
+      } else {
+        return await base44.entities.SystemSetting.create({
+          key: 'google_calendar_sync',
+          value: newConfig
+        });
+      }
     },
     onSuccess: () => {
-      toast.success("Configurações salvas!");
+      queryClient.invalidateQueries(['google-calendar-config']);
+      toast.success('Configurações salvas!');
     },
     onError: (error) => {
-      toast.error("Erro ao salvar: " + error.message);
+      toast.error('Erro ao salvar: ' + error.message);
     }
   });
 
-  const handleConnect = () => {
-    connectMutation.mutate();
+  const syncNowMutation = useMutation({
+    mutationFn: async () => {
+      return await base44.functions.invoke('syncGoogleCalendar', {
+        force: true
+      });
+    },
+    onSuccess: (response) => {
+      toast.success(`Sincronizado! ${response.data.synced_count} eventos`);
+    },
+    onError: (error) => {
+      toast.error('Erro na sincronização: ' + error.message);
+    }
+  });
+
+  const testConnection = async () => {
+    setTesting(true);
+    try {
+      const response = await base44.functions.invoke('testGoogleCalendarConnection');
+      if (response.data.success) {
+        toast.success('Conexão OK! Calendar: ' + response.data.calendar_name);
+      } else {
+        toast.error('Falha na conexão');
+      }
+    } catch (error) {
+      toast.error('Erro: ' + error.message);
+    } finally {
+      setTesting(false);
+    }
   };
 
-  const handleSave = () => {
-    saveMutation.mutate(config);
-  };
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <Loader2 className="w-6 h-6 animate-spin mx-auto" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <div className="space-y-4 border-t pt-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="font-semibold text-sm">Status da Integração</p>
-          <p className="text-xs text-gray-600">
-            {config.enabled ? "Conectado e sincronizando" : "Aguardando conexão"}
-          </p>
+    <Card className="shadow-lg">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-blue-50">
+              <Calendar className="w-6 h-6 text-blue-600" />
+            </div>
+            <div>
+              <CardTitle>Google Calendar</CardTitle>
+              <p className="text-sm text-gray-600 mt-1">Sincronize atendimentos automaticamente</p>
+            </div>
+          </div>
+          <Badge variant={config?.enabled ? "default" : "secondary"} className={config?.enabled ? "bg-green-600" : ""}>
+            {config?.enabled ? (
+              <>
+                <CheckCircle className="w-3 h-3 mr-1" />
+                Ativo
+              </>
+            ) : (
+              "Inativo"
+            )}
+          </Badge>
         </div>
-        {config.enabled && (
-          <Button variant="outline" onClick={() => setConfig({ ...config, enabled: false })}>
-            Desconectar
-          </Button>
-        )}
-      </div>
-
-      {!config.enabled && (
-        <div className="space-y-3 bg-gray-50 p-4 rounded-lg">
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Ativar/Desativar */}
+        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
           <div>
-            <Label className="text-xs">Access Token</Label>
-            <Input
-              value={config.accessToken}
-              onChange={(e) => setConfig({ ...config, accessToken: e.target.value })}
-              placeholder="Cole o Access Token aqui..."
-              className="h-9 mt-1"
-            />
+            <Label className="text-base font-semibold">Ativar Sincronização</Label>
+            <p className="text-sm text-gray-600">Sincronizar atendimentos com Google Calendar</p>
           </div>
+          <Switch
+            checked={config?.enabled || false}
+            onCheckedChange={(checked) => {
+              updateConfigMutation.mutate({ ...config, enabled: checked });
+            }}
+          />
+        </div>
 
+        {/* Sincronização Bidirecional */}
+        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
           <div>
-            <Label className="text-xs">Refresh Token (opcional)</Label>
-            <Input
-              value={config.refreshToken}
-              onChange={(e) => setConfig({ ...config, refreshToken: e.target.value })}
-              placeholder="Cole o Refresh Token aqui..."
-              className="h-9 mt-1"
-            />
+            <Label className="text-base font-semibold">Sincronização Bidirecional</Label>
+            <p className="text-sm text-gray-600">Importar eventos do Calendar para a plataforma</p>
           </div>
+          <Switch
+            checked={config?.sync_bidirectional || false}
+            onCheckedChange={(checked) => {
+              updateConfigMutation.mutate({ ...config, sync_bidirectional: checked });
+            }}
+            disabled={!config?.enabled}
+          />
+        </div>
 
+        {/* Auto-criar Google Meet */}
+        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+          <div>
+            <Label className="text-base font-semibold">Criar Google Meet Automaticamente</Label>
+            <p className="text-sm text-gray-600">Gerar links ao criar atendimentos</p>
+          </div>
+          <Switch
+            checked={config?.auto_create_meet || false}
+            onCheckedChange={(checked) => {
+              updateConfigMutation.mutate({ ...config, auto_create_meet: checked });
+            }}
+            disabled={!config?.enabled}
+          />
+        </div>
+
+        {/* Ações */}
+        <div className="flex gap-3 pt-4 border-t">
           <Button
-            onClick={handleConnect}
-            disabled={connectMutation.isPending || !config.accessToken}
-            className="w-full bg-blue-600 hover:bg-blue-700"
+            variant="outline"
+            className="flex-1"
+            onClick={testConnection}
+            disabled={testing}
           >
-            {connectMutation.isPending ? (
+            {testing ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Conectando...
+                Testando...
               </>
             ) : (
               <>
-                <Calendar className="w-4 h-4 mr-2" />
-                Conectar Google Calendar
+                <Settings className="w-4 h-4 mr-2" />
+                Testar Conexão
+              </>
+            )}
+          </Button>
+          <Button
+            className="flex-1 bg-blue-600 hover:bg-blue-700"
+            onClick={() => syncNowMutation.mutate()}
+            disabled={!config?.enabled || syncNowMutation.isPending}
+          >
+            {syncNowMutation.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Sincronizando...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Sincronizar Agora
               </>
             )}
           </Button>
         </div>
-      )}
 
-      {config.enabled && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label className="text-xs">Intervalo de Sincronização</Label>
-              <Select
-                value={config.syncInterval}
-                onValueChange={(v) => setConfig({ ...config, syncInterval: v })}
-              >
-                <SelectTrigger className="h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="5">5 minutos</SelectItem>
-                  <SelectItem value="15">15 minutos</SelectItem>
-                  <SelectItem value="30">30 minutos</SelectItem>
-                  <SelectItem value="60">1 hora</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label className="text-xs">Calendário Padrão</Label>
-              <Input
-                value={config.defaultCalendar}
-                onChange={(e) => setConfig({ ...config, defaultCalendar: e.target.value })}
-                placeholder="primary"
-                className="h-9"
-              />
-            </div>
-          </div>
-
-          <div>
-            <Label className="text-xs mb-2 block">Filtrar Agendas</Label>
-            <Select
-              value={config.consultorFilters[0] || ""}
-              onValueChange={(v) => setConfig({ ...config, consultorFilters: [v] })}
-            >
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder="Selecione consultores..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os consultores</SelectItem>
-                {consultores.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.full_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label className="text-xs">Sincronização Bidirecional</Label>
-                <p className="text-xs text-gray-500">Atualiza eventos em ambas as direções</p>
-              </div>
-              <Switch
-                checked={config.bidirectionalSync}
-                onCheckedChange={(v) => setConfig({ ...config, bidirectionalSync: v })}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <Label className="text-xs">Atualização Automática de Status</Label>
-                <p className="text-xs text-gray-500">Marca como realizado quando evento termina</p>
-              </div>
-              <Switch
-                checked={config.autoUpdateStatus}
-                onCheckedChange={(v) => setConfig({ ...config, autoUpdateStatus: v })}
-              />
-            </div>
-          </div>
-
-          <Button
-            onClick={handleSave}
-            disabled={saveMutation.isPending}
-            className="w-full bg-green-600 hover:bg-green-700"
-          >
-            {saveMutation.isPending ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Salvando...
-              </>
-            ) : (
-              <>
-                <CheckCircle className="w-4 h-4 mr-2" />
-                Salvar Configurações
-              </>
-            )}
-          </Button>
+        {/* Info */}
+        <div className="bg-blue-50 p-4 rounded-lg text-sm text-blue-700">
+          <p className="font-semibold mb-2">Como funciona:</p>
+          <ul className="space-y-1 text-xs">
+            <li>• Atendimentos criados aqui → eventos no Google Calendar</li>
+            <li>• Atualizar/deletar atendimento → sincroniza automaticamente</li>
+            <li>• Sincronização bidirecional importa eventos do Calendar</li>
+            <li>• Google Meet é criado automaticamente com convidados</li>
+          </ul>
         </div>
-      )}
-    </div>
+      </CardContent>
+    </Card>
   );
 }
