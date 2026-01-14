@@ -812,17 +812,6 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
                   </div>
                 </div>
               </div>
-              
-              {/* Valor Faturado Total */}
-              <div className="border-l-4 border-emerald-500 pl-3 py-2 bg-white">
-                <Label className="text-sm font-semibold text-gray-700 mb-2 block">Valor Faturado Total (Auto)</Label>
-                <Input
-                  value={(formData.sales_base + formData.sales_marketing).toFixed(2)}
-                  disabled
-                  className="h-9 bg-emerald-100 font-bold text-emerald-700"
-                />
-                <p className="text-xs text-gray-500 mt-1">Vendas Base + Vendas Marketing</p>
-              </div>
             </CardContent>
           </Card>
         </>
