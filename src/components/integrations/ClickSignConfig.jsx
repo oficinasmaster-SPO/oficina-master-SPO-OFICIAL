@@ -1,195 +1,168 @@
-import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useState, useEffect } from "react";
+import { base44 } from "@/api/base44Client";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { CheckCircle, AlertCircle, Copy, Loader2 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CheckCircle2, AlertCircle, Loader2, Key, FileText } from "lucide-react";
 import { toast } from "sonner";
-import { base44 } from "@/api/base44Client";
 
-export default function ClickSignConfig({ user }) {
+export default function ClickSignConfig() {
   const [apiKey, setApiKey] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [testing, setTesting] = useState(false);
-  const [connected, setConnected] = useState(false);
-  const [webhookUrl, setWebhookUrl] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState(null);
 
-  React.useEffect(() => {
-    loadConfig();
-  }, []);
+  const handleTestConnection = async () => {
+    if (!apiKey.trim()) {
+      toast.error("Por favor, insira a chave API");
+      return;
+    }
 
-  const loadConfig = async () => {
+    setIsTesting(true);
+    setConnectionStatus(null);
+
     try {
-      // Carregar configuração existente
-      const webhookBase = `${window.location.origin}/api/webhooks/clicksign`;
-      setWebhookUrl(webhookBase);
+      const response = await base44.functions.invoke('testClickSignConnection', { apiKey });
+      
+      if (response.data.success) {
+        setConnectionStatus({ type: 'success', message: response.data.message });
+        toast.success("Conexão com ClickSign estabelecida!");
+      } else {
+        setConnectionStatus({ type: 'error', message: response.data.error });
+        toast.error("Falha na conexão com ClickSign");
+      }
     } catch (error) {
-      console.error("Erro ao carregar configuração:", error);
+      console.error("Error testing connection:", error);
+      setConnectionStatus({ 
+        type: 'error', 
+        message: error.response?.data?.error || "Erro ao testar conexão"
+      });
+      toast.error("Erro ao testar conexão");
+    } finally {
+      setIsTesting(false);
     }
   };
 
   const handleSaveConfig = async () => {
     if (!apiKey.trim()) {
-      toast.error("Por favor, insira a API Key do ClickSign");
+      toast.error("Por favor, insira a chave API");
       return;
     }
 
-    setLoading(true);
-    try {
-      await base44.functions.invoke("saveClickSignConfig", {
-        apiKey: apiKey.trim()
-      });
-      
-      setConnected(true);
-      toast.success("Configuração salva com sucesso!");
-    } catch (error) {
-      toast.error("Erro ao salvar configuração: " + error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    setIsLoading(true);
 
-  const handleTestConnection = async () => {
-    if (!apiKey.trim()) {
-      toast.error("Configure a API Key primeiro");
-      return;
-    }
-
-    setTesting(true);
     try {
-      const response = await base44.functions.invoke("testClickSignConnection", {
-        apiKey: apiKey.trim()
-      });
+      const response = await base44.functions.invoke('saveClickSignConfig', { apiKey });
       
       if (response.data.success) {
-        setConnected(true);
-        toast.success("Conexão testada com sucesso!");
+        toast.success("Configuração salva com sucesso!");
+        setConnectionStatus({ type: 'success', message: 'Configuração salva e ativa' });
       } else {
-        toast.error("Falha no teste de conexão");
+        toast.error("Erro ao salvar configuração");
       }
     } catch (error) {
-      toast.error("Erro ao testar conexão: " + error.message);
+      console.error("Error saving config:", error);
+      toast.error("Erro ao salvar configuração");
     } finally {
-      setTesting(false);
+      setIsLoading(false);
     }
-  };
-
-  const copyWebhookUrl = () => {
-    navigator.clipboard.writeText(webhookUrl);
-    toast.success("URL do webhook copiada!");
   };
 
   return (
-    <div className="space-y-6">
-      {/* Status da Conexão */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            {connected ? (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <FileText className="w-5 h-5 text-blue-600" />
+          Configuração ClickSign
+        </CardTitle>
+        <CardDescription>
+          Configure a integração com ClickSign para assinatura eletrônica de documentos
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="apiKey" className="flex items-center gap-2">
+            <Key className="w-4 h-4" />
+            Chave API do ClickSign
+          </Label>
+          <Input
+            id="apiKey"
+            type="text"
+            value={apiKey}
+            onChange={(e) => setApiKey(e.target.value)}
+            placeholder="Insira sua chave API do ClickSign"
+            className="font-mono"
+          />
+          <p className="text-xs text-gray-500">
+            Obtenha sua chave em{" "}
+            <a 
+              href="https://app.clicksign.com/integracoes" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
+              app.clicksign.com/integracoes
+            </a>
+          </p>
+        </div>
+
+        {connectionStatus && (
+          <Alert variant={connectionStatus.type === 'success' ? 'default' : 'destructive'}>
+            {connectionStatus.type === 'success' ? (
+              <CheckCircle2 className="h-4 w-4" />
+            ) : (
+              <AlertCircle className="h-4 w-4" />
+            )}
+            <AlertDescription>{connectionStatus.message}</AlertDescription>
+          </Alert>
+        )}
+
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            onClick={handleTestConnection}
+            disabled={isTesting || !apiKey.trim()}
+            className="flex-1"
+          >
+            {isTesting ? (
               <>
-                <CheckCircle className="w-5 h-5 text-green-600" />
-                <span>Conectado ao ClickSign</span>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Testando...
               </>
             ) : (
-              <>
-                <AlertCircle className="w-5 h-5 text-yellow-600" />
-                <span>ClickSign não configurado</span>
-              </>
+              'Testar Conexão'
             )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="apiKey">API Key do ClickSign</Label>
-            <Input
-              id="apiKey"
-              type="password"
-              placeholder="Digite sua API Key..."
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              className="mt-1"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Obtenha sua API Key em: <a href="https://app.clicksign.com/configuracoes/integracoes" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">ClickSign → Configurações → Integrações</a>
-            </p>
-          </div>
+          </Button>
 
-          <div className="flex gap-2">
-            <Button onClick={handleSaveConfig} disabled={loading || !apiKey.trim()}>
-              {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-              Salvar Configuração
-            </Button>
-            <Button variant="outline" onClick={handleTestConnection} disabled={testing || !apiKey.trim()}>
-              {testing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-              Testar Conexão
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+          <Button
+            onClick={handleSaveConfig}
+            disabled={isLoading || !apiKey.trim()}
+            className="flex-1 bg-blue-600 hover:bg-blue-700"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Salvando...
+              </>
+            ) : (
+              'Salvar Configuração'
+            )}
+          </Button>
+        </div>
 
-      {/* Webhook Configuration */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Configuração de Webhooks</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label>URL do Webhook</Label>
-            <div className="flex gap-2 mt-1">
-              <Input
-                value={webhookUrl}
-                readOnly
-                className="font-mono text-sm"
-              />
-              <Button variant="outline" size="icon" onClick={copyWebhookUrl}>
-                <Copy className="w-4 h-4" />
-              </Button>
-            </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Configure esta URL no painel do ClickSign para receber notificações automáticas sobre assinaturas
-            </p>
-          </div>
-
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <h4 className="font-medium text-blue-900 mb-2">Como configurar webhooks no ClickSign:</h4>
-            <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
-              <li>Acesse o painel do ClickSign</li>
-              <li>Vá em Configurações → Webhooks</li>
-              <li>Adicione a URL acima</li>
-              <li>Selecione os eventos: document.sign, document.cancel, document.complete</li>
-              <li>Salve a configuração</li>
-            </ol>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Recursos Disponíveis */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recursos Disponíveis</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-green-600" />
-              <span className="text-sm">Envio automático de contratos para assinatura</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-green-600" />
-              <span className="text-sm">Atualização automática de status via webhook</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-green-600" />
-              <span className="text-sm">Consulta de documentos assinados</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-green-600" />
-              <span className="text-sm">Download automático de PDFs assinados</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+        <div className="pt-4 border-t">
+          <h4 className="text-sm font-semibold mb-2">Recursos disponíveis:</h4>
+          <ul className="text-sm text-gray-600 space-y-1">
+            <li>• Envio de documentos para assinatura</li>
+            <li>• Múltiplos signatários</li>
+            <li>• Autenticações avançadas (biometria, documentoscopia)</li>
+            <li>• Webhooks para notificações de status</li>
+            <li>• Assinatura posicionada nos documentos</li>
+          </ul>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

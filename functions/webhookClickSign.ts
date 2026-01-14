@@ -2,100 +2,84 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const webhookData = await req.json();
     
-    const payload = await req.json();
-    
-    console.log('ClickSign Webhook received:', payload);
+    console.log('ClickSign Webhook received:', webhookData);
 
-    // Salvar log do webhook para auditoria
-    try {
-      await base44.asServiceRole.entities.SystemSetting.create({
-        key: `clicksign_webhook_log_${Date.now()}`,
-        value: payload,
-        encrypted: false,
-        updated_by: 'Sistema'
-      });
-    } catch (logError) {
-      console.error('Error saving webhook log:', logError);
+    const { event, envelope } = webhookData;
+
+    if (!event || !envelope) {
+      return Response.json({ 
+        error: 'Dados do webhook incompletos' 
+      }, { status: 400 });
     }
 
-    const { event, document } = payload;
-
-    if (!document || !document.key) {
-      return Response.json({ error: 'Invalid payload' }, { status: 400 });
-    }
-
-    // Buscar contrato pelo clicksign_contract_id
-    const contracts = await base44.asServiceRole.entities.Contract.filter({
-      clicksign_contract_id: document.key
-    });
-
-    if (!contracts || contracts.length === 0) {
-      console.log('Contract not found for document key:', document.key);
-      return Response.json({ success: true, message: 'Contract not found' });
-    }
-
-    const contract = contracts[0];
-    const timeline = contract.timeline || [];
-
-    let updateData = { timeline };
-
-    // Processar eventos
+    // Processar evento baseado no tipo
     switch (event.name) {
-      case 'sign':
-        updateData.client_signed = true;
-        updateData.signed_at = new Date().toISOString();
-        updateData.status = 'assinado';
-        updateData.completion_percentage = Math.max(contract.completion_percentage || 0, 66);
-        
-        timeline.push({
-          date: new Date().toISOString(),
-          action: 'Contrato assinado',
-          description: `Assinado por ${event.data?.signer?.email || 'cliente'}`,
-          user: 'Sistema'
-        });
+      case 'envelope.signed':
+        // Envelope totalmente assinado
+        await handleEnvelopeSigned(envelope);
         break;
-
-      case 'complete':
-        updateData.status = 'assinado';
-        updateData.completion_percentage = 66;
-        
-        timeline.push({
-          date: new Date().toISOString(),
-          action: 'Assinaturas completas',
-          description: 'Todas as assinaturas foram coletadas',
-          user: 'Sistema'
-        });
+      
+      case 'envelope.closed':
+        // Envelope fechado/concluído
+        await handleEnvelopeClosed(envelope);
         break;
-
-      case 'cancel':
-        updateData.status = 'cancelado';
-        
-        timeline.push({
-          date: new Date().toISOString(),
-          action: 'Contrato cancelado',
-          description: 'Processo de assinatura cancelado',
-          user: 'Sistema'
-        });
+      
+      case 'signer.signed':
+        // Um signatário assinou
+        await handleSignerSigned(webhookData);
         break;
-
+      
+      case 'signer.refused':
+        // Um signatário recusou
+        await handleSignerRefused(webhookData);
+        break;
+      
+      case 'envelope.expired':
+        // Envelope expirou
+        await handleEnvelopeExpired(envelope);
+        break;
+      
       default:
-        console.log('Unhandled event:', event.name);
+        console.log('Evento não mapeado:', event.name);
     }
-
-    // Atualizar contrato
-    await base44.asServiceRole.entities.Contract.update(contract.id, updateData);
 
     return Response.json({ 
       success: true,
-      message: 'Webhook processed successfully'
+      message: 'Webhook processado com sucesso'
     });
 
   } catch (error) {
-    console.error('Error processing ClickSign webhook:', error);
+    console.error('Error processing webhook:', error);
     return Response.json({ 
-      error: error.message || 'Erro ao processar webhook'
+      success: false,
+      error: error.message 
     }, { status: 500 });
   }
 });
+
+async function handleEnvelopeSigned(envelope) {
+  console.log('Envelope assinado por todos:', envelope.key);
+  // Implementar lógica: notificar usuários, atualizar status, etc.
+}
+
+async function handleEnvelopeClosed(envelope) {
+  console.log('Envelope fechado:', envelope.key);
+  // Implementar lógica: finalizar processo, arquivar documento
+}
+
+async function handleSignerSigned(data) {
+  console.log('Signatário assinou:', data.signer?.email);
+  // Implementar lógica: notificar próximo signatário se sequencial
+}
+
+async function handleSignerRefused(data) {
+  console.log('Signatário recusou:', data.signer?.email);
+  // Implementar lógica: notificar responsáveis, cancelar processo
+}
+
+async function handleEnvelopeExpired(envelope) {
+  console.log('Envelope expirou:', envelope.key);
+  // Implementar lógica: notificar sobre expiração
+}
