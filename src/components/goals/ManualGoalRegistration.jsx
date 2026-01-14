@@ -97,6 +97,18 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
     }
   }, [formData.clients_scheduled_base, formData.clients_scheduled_mkt, formData.clients_scheduled_referral]);
 
+  // Calcular Kit Master automaticamente (soma dos entregues)
+  useEffect(() => {
+    const kitMasterAutomatico = 
+      (formData.clients_delivered_base || 0) + 
+      (formData.clients_delivered_mkt || 0) + 
+      (formData.clients_delivered_referral || 0);
+    
+    if (kitMasterAutomatico !== formData.kit_master) {
+      setFormData(prev => ({...prev, kit_master: kitMasterAutomatico}));
+    }
+  }, [formData.clients_delivered_base, formData.clients_delivered_mkt, formData.clients_delivered_referral]);
+
   const loadEditingData = async () => {
     if (!editingRecord) return;
     
@@ -835,9 +847,11 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
             </p>
           </div>
 
-          {/* Kit Master */}
-          <div className="border-l-4 border-yellow-500 pl-3 py-2 bg-yellow-50/30">
-            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Kit Master (qtd)</Label>
+          {/* Kit Master (AUTOMÁTICO) */}
+          <div className="border-l-4 border-yellow-500 pl-3 py-2 bg-yellow-100">
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">
+              Kit Master ✨ (Soma Automática)
+            </Label>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs text-blue-600">PREVISTO</Label>
@@ -849,15 +863,19 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
                 />
               </div>
               <div>
-                <Label className="text-xs text-green-600">REALIZADO</Label>
+                <Label className="text-xs text-green-600">REALIZADO (Auto)</Label>
                 <Input
                   type="number"
                   value={formData.kit_master}
-                  onChange={(e) => setFormData({...formData, kit_master: parseFloat(e.target.value) || 0})}
-                  className="font-semibold"
+                  disabled
+                  className="bg-green-100 font-bold text-green-700"
+                  title="Soma automática: Entregues Base + Mkt + Indicação"
                 />
               </div>
             </div>
+            <p className="text-xs text-yellow-700 mt-1 font-medium">
+              ✓ {formData.clients_delivered_base || 0} (Base) + {formData.clients_delivered_mkt || 0} (Mkt) + {formData.clients_delivered_referral || 0} (Indicação)
+            </p>
           </div>
 
           {/* Clientes Base */}
