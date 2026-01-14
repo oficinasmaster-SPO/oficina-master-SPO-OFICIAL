@@ -98,6 +98,7 @@ import GestaoOficina from './pages/GestaoOficina';
 import GestaoRBAC from './pages/GestaoRBAC';
 import GestaoRoles from './pages/GestaoRoles';
 import GestaoUsuariosEmpresas from './pages/GestaoUsuariosEmpresas';
+import GraficosProducao from './pages/GraficosProducao';
 import Historico from './pages/Historico';
 import HistoricoDISC from './pages/HistoricoDISC';
 import HistoricoDesempenho from './pages/HistoricoDesempenho';
@@ -167,7 +168,6 @@ import TesteOpenAI from './pages/TesteOpenAI';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
-import GraficosProducao from './pages/GraficosProducao';
 import __Layout from './Layout.jsx';
 
 
@@ -272,6 +272,7 @@ export const PAGES = {
     "GestaoRBAC": GestaoRBAC,
     "GestaoRoles": GestaoRoles,
     "GestaoUsuariosEmpresas": GestaoUsuariosEmpresas,
+    "GraficosProducao": GraficosProducao,
     "Historico": Historico,
     "HistoricoDISC": HistoricoDISC,
     "HistoricoDesempenho": HistoricoDesempenho,
@@ -341,7 +342,6 @@ export const PAGES = {
     "TreinamentoVendas": TreinamentoVendas,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
-    "GraficosProducao": GraficosProducao,
 }
 
 export const pagesConfig = {

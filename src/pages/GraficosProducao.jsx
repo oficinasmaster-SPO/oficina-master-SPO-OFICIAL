@@ -16,7 +16,7 @@ import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 export default function GraficosProducao() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { workshop } = useWorkshopContext();
+  const { workshop, isLoading: workshopLoading } = useWorkshopContext();
   const [filterMonth, setFilterMonth] = useState(new Date().toISOString().substring(0, 7));
 
   const { data: records = [], isLoading } = useQuery({
@@ -90,10 +90,13 @@ export default function GraficosProducao() {
     return null;
   };
 
-  if (!workshop) {
+  if (workshopLoading || !workshop) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500">Carregando...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-500">Carregando oficina...</p>
+        </div>
       </div>
     );
   }
