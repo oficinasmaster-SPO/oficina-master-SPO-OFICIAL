@@ -11,8 +11,8 @@ import { useLocation } from "react-router-dom";
 import { Plus, Download, Target, TrendingUp, Award, AlertCircle, Building2, User, X, Activity, BarChart3, Calendar, DollarSign, CheckCircle2 } from "lucide-react";
 import { formatCurrency, formatNumber } from "../components/utils/formatters";
 import ManualGoalRegistration from "../components/goals/ManualGoalRegistration";
-import HistoricoGraficos from "../components/historico/HistoricoGraficos";
 import { toast } from "sonner";
+import { createPageUrl } from "@/utils";
 import AdminViewBanner from "../components/shared/AdminViewBanner";
 import { useSyncData } from "../components/hooks/useSyncData";
 
@@ -25,7 +25,6 @@ export default function HistoricoMetas() {
   const [filterEmployee, setFilterEmployee] = useState(null);
   const [filterMonth, setFilterMonth] = useState(new Date().toISOString().substring(0, 7));
   const [expandedCards, setExpandedCards] = useState({});
-  const [showGraficosModal, setShowGraficosModal] = useState(false);
   const queryClient = useQueryClient();
   const [isAdminView, setIsAdminView] = useState(false);
   const location = useLocation();
@@ -140,7 +139,7 @@ export default function HistoricoMetas() {
             </p>
           </div>
           <div className="flex gap-3">
-            <Button variant="outline" onClick={() => setShowGraficosModal(true)}>
+            <Button variant="outline" onClick={() => window.location.href = createPageUrl("GraficosProducao")}>
               <BarChart3 className="w-4 h-4 mr-2" />
               Gráficos
             </Button>
@@ -771,13 +770,6 @@ export default function HistoricoMetas() {
             refetchEmployees();
             setEditingRecord(null);
           }}
-        />
-
-        {/* Modal de Gráficos */}
-        <HistoricoGraficos
-          isOpen={showGraficosModal}
-          onClose={() => setShowGraficosModal(false)}
-          records={goalHistory}
         />
       </div>
     </div>
