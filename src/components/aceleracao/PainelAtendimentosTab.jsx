@@ -15,6 +15,7 @@ import { format, subDays } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { toast } from "sonner";
+import GoogleCalendarAgenda from "./GoogleCalendarAgenda";
 
 export default function PainelAtendimentosTab({ user }) {
   const navigate = useNavigate();
@@ -234,6 +235,9 @@ export default function PainelAtendimentosTab({ user }) {
 
       {/* Dashboard de Estatísticas */}
       <DashboardAtendimentos atendimentos={atendimentosFiltrados} />
+
+      {/* Agenda Google Calendar */}
+      <GoogleCalendarAgenda />
 
       {/* Tabela de Atendimentos */}
       <Card>
