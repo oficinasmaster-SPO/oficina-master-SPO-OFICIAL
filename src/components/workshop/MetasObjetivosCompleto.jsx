@@ -190,13 +190,41 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
 
   const handleSave = async () => {
     try {
-      await onUpdate(formData);
+      // Garantir que todos os campos do best_month_history sejam salvos corretamente
+      const dataToSave = {
+        serves_fleet_insurance: formData.serves_fleet_insurance,
+        best_month_history: {
+          ...formData.best_month_history,
+          // Garantir que os campos comerciais estão sendo salvos
+          clients_scheduled_base: formData.best_month_history.clients_scheduled_base || 0,
+          clients_delivered_base: formData.best_month_history.clients_delivered_base || 0,
+          sales_base: formData.best_month_history.sales_base || 0,
+          clients_scheduled_mkt: formData.best_month_history.clients_scheduled_mkt || 0,
+          clients_delivered_mkt: formData.best_month_history.clients_delivered_mkt || 0,
+          sales_marketing: formData.best_month_history.sales_marketing || 0,
+          clients_scheduled_referral: formData.best_month_history.clients_scheduled_referral || 0,
+          clients_delivered_referral: formData.best_month_history.clients_delivered_referral || 0,
+          // Garantir que os campos de marketing estão corretos
+          marketing: {
+            leads_generated: formData.best_month_history.marketing?.leads_generated || 0,
+            leads_scheduled: formData.best_month_history.marketing?.leads_scheduled || 0,
+            leads_showed_up: formData.best_month_history.marketing?.leads_showed_up || 0,
+            leads_sold: formData.best_month_history.marketing?.leads_sold || 0,
+            cost_per_sale: formData.best_month_history.marketing?.cost_per_sale || 0,
+            invested_value: formData.best_month_history.marketing?.invested_value || 0,
+            revenue_from_traffic: formData.best_month_history.marketing?.revenue_from_traffic || 0
+          }
+        },
+        monthly_goals: formData.monthly_goals
+      };
+      
+      console.log("Salvando dados:", dataToSave);
+      await onUpdate(dataToSave);
       toast.success("Metas salvas com sucesso!");
+      setEditing(false);
     } catch (error) {
       console.error("Erro ao salvar:", error);
-      toast.error("Erro ao salvar metas");
-    } finally {
-      setEditing(false);
+      toast.error("Erro ao salvar metas: " + error.message);
     }
   };
 
