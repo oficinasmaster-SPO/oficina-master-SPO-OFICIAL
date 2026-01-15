@@ -89,6 +89,11 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
 
   const handleSaveBestMonth = async () => {
     try {
+      if (!localBestMonth?.date) {
+        console.error("Data é obrigatória");
+        return;
+      }
+
       // Salvar com os tickets médios calculados automaticamente
       const dataToSave = {
         ...localBestMonth,
@@ -97,17 +102,22 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
         average_ticket_services: calculatedAverageTicketServices
       };
       
+      console.log("Salvando melhor mês:", dataToSave);
+      
       const success = await updateBestMonth(dataToSave);
+      console.log("Resultado:", success);
+      
       if (success) {
         if (onUpdate) {
           await onUpdate({ best_month_history: dataToSave });
         }
         setEditingBestMonth(false);
       } else {
-        console.error("Falha ao salvar melhor mês");
+        console.error("Falha ao salvar melhor mês - updateBestMonth retornou false");
       }
     } catch (error) {
       console.error("Erro ao salvar melhor mês:", error);
+      alert("Erro ao salvar: " + error.message);
     }
   };
 
