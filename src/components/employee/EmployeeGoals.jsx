@@ -559,6 +559,30 @@ export default function EmployeeGoals({ employee, onUpdate }) {
               ))}
             </div>
           )}
+
+          {/* Botões de Ação no Rodapé */}
+          {editing && goals.length > 0 && (
+            <div className="flex justify-end gap-3 pt-4 border-t mt-4">
+              <Button 
+                variant="outline" 
+                onClick={() => { 
+                  setEditing(false); 
+                  loadGoals(); 
+                }}
+                size="lg"
+              >
+                Cancelar
+              </Button>
+              <Button 
+                onClick={handleSave} 
+                className="bg-green-600 hover:bg-green-700"
+                size="lg"
+              >
+                <Save className="w-5 h-5 mr-2" />
+                Salvar Todas as Metas
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
