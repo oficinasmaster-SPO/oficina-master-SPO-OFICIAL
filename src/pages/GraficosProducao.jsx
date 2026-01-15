@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { ArrowLeft, TrendingUp, DollarSign, Users, Target, ShoppingCart, Calendar } from "lucide-react";
 import { formatCurrency } from "@/components/utils/formatters";
+import StatusMetaBadge from "@/components/historico/StatusMetaBadge";
+import FeedbackMetaModal from "@/components/historico/FeedbackMetaModal";
 
 // Função para calcular dias úteis do mês
 const calcularDiasUteis = (mesAno) => {
@@ -35,6 +37,7 @@ export default function GraficosProducao() {
   const [workshop, setWorkshop] = useState(null);
   const [user, setUser] = useState(null);
   const [filterMonth, setFilterMonth] = useState(new Date().toISOString().substring(0, 7));
+  const [feedbackModal, setFeedbackModal] = useState({ open: false, status: "", metricName: "", realizado: 0, meta: 0 });
 
   useEffect(() => {
     const loadData = async () => {
@@ -102,6 +105,81 @@ export default function GraficosProducao() {
     investido_trafego: ((bestMonth.marketing?.invested_value || 0) * factor) / diasUteis,
     faturado_lead: ((bestMonth.marketing?.revenue_from_traffic || 0) * factor) / diasUteis,
     custo_venda: ((bestMonth.marketing?.cost_per_sale || 0) * factor) / diasUteis,
+  };
+
+  // Calcular dias decorridos do mês até hoje
+  const hoje = new Date();
+  const [anoFiltro, mesFiltro] = filterMonth.split('-').map(Number);
+  const mesAtual = hoje.getMonth() + 1;
+  const anoAtual = hoje.getFullYear();
+  
+  let diasDecorridos = 0;
+  if (anoFiltro === anoAtual && mesFiltro === mesAtual) {
+    // Se é o mês atual, contar apenas dias úteis até hoje
+    for (let dia = 1; dia <= hoje.getDate(); dia++) {
+      const data = new Date(anoAtual, mesAtual - 1, dia);
+      const diaSemana = data.getDay();
+      if (diaSemana >= 1 && diaSemana <= 5) {
+        diasDecorridos++;
+      }
+    }
+  } else {
+    // Se é mês passado, usar todos os dias úteis do mês
+    diasDecorridos = diasUteis;
+  }
+
+  // Calcular meta acumulada até o dia
+  const metaAcumulada = {
+    faturamento_total: metaDiaria.faturamento_total * diasDecorridos,
+    clientes: metaDiaria.clientes * diasDecorridos,
+    pave: metaDiaria.pave * diasDecorridos,
+    kit_master: metaDiaria.kit_master * diasDecorridos,
+    gps: metaDiaria.gps * diasDecorridos,
+    sales_base: metaDiaria.sales_base * diasDecorridos,
+    sales_mkt: metaDiaria.sales_mkt * diasDecorridos,
+    agendados_base: metaDiaria.agendados_base * diasDecorridos,
+    entregues_base: metaDiaria.entregues_base * diasDecorridos,
+    agendados_mkt: metaDiaria.agendados_mkt * diasDecorridos,
+    entregues_mkt: metaDiaria.entregues_mkt * diasDecorridos,
+    agendados_referral: metaDiaria.agendados_referral * diasDecorridos,
+    entregues_referral: metaDiaria.entregues_referral * diasDecorridos,
+    leads_gerados: metaDiaria.leads_gerados * diasDecorridos,
+    leads_agendados: metaDiaria.leads_agendados * diasDecorridos,
+    leads_comparecidos: metaDiaria.leads_comparecidos * diasDecorridos,
+    leads_vendidos: metaDiaria.leads_vendidos * diasDecorridos,
+    investido_trafego: metaDiaria.investido_trafego * diasDecorridos,
+    faturado_lead: metaDiaria.faturado_lead * diasDecorridos,
+  };
+
+  // Calcular realizado acumulado
+  const realizadoAcumulado = {
+    faturamento_total: records.reduce((sum, r) => sum + ((r.revenue_parts || 0) + (r.revenue_services || 0)), 0),
+    clientes: records.reduce((sum, r) => sum + (r.customer_volume || 0), 0),
+    pave: records.reduce((sum, r) => sum + (r.pave_commercial || 0), 0),
+    kit_master: records.reduce((sum, r) => sum + (r.kit_master || 0), 0),
+    gps: records.reduce((sum, r) => sum + (r.gps_vendas || 0), 0),
+    sales_base: records.reduce((sum, r) => sum + (r.sales_base || 0), 0),
+    sales_mkt: records.reduce((sum, r) => sum + (r.sales_marketing || 0), 0),
+    agendados_base: records.reduce((sum, r) => sum + (r.clients_scheduled_base || 0), 0),
+    entregues_base: records.reduce((sum, r) => sum + (r.clients_delivered_base || 0), 0),
+    agendados_mkt: records.reduce((sum, r) => sum + (r.clients_scheduled_mkt || 0), 0),
+    entregues_mkt: records.reduce((sum, r) => sum + (r.clients_delivered_mkt || 0), 0),
+    agendados_referral: records.reduce((sum, r) => sum + (r.clients_scheduled_referral || 0), 0),
+    entregues_referral: records.reduce((sum, r) => sum + (r.clients_delivered_referral || 0), 0),
+    leads_gerados: records.reduce((sum, r) => sum + (r.marketing_data?.leads_generated || 0), 0),
+    leads_agendados: records.reduce((sum, r) => sum + (r.marketing_data?.leads_scheduled || 0), 0),
+    leads_comparecidos: records.reduce((sum, r) => sum + (r.marketing_data?.leads_showed_up || 0), 0),
+    leads_vendidos: records.reduce((sum, r) => sum + (r.marketing_data?.leads_sold || 0), 0),
+    investido_trafego: records.reduce((sum, r) => sum + (r.marketing_data?.invested_value || 0), 0),
+    faturado_lead: records.reduce((sum, r) => sum + (r.marketing_data?.revenue_from_traffic || 0), 0),
+  };
+
+  // Função para determinar status
+  const getStatus = (realizado, meta) => {
+    const irm = meta > 0 ? realizado / meta : 0;
+    if (irm > 1.05) return "acima";
+    if (irm >= 0.95) return "na_media";
+    return "abaixo";
   };
 
   const chartData = records.map((record) => ({
@@ -248,10 +326,23 @@ export default function GraficosProducao() {
             <TabsContent value="faturamento" className="space-y-6">
               <Card className="bg-slate-800/50 border-blue-500/30 backdrop-blur-sm">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400">
-                    <DollarSign className="w-5 h-5 text-green-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
-                    Evolução do Faturamento
-                  </CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2 text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400">
+                      <DollarSign className="w-5 h-5 text-green-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
+                      Evolução do Faturamento
+                    </CardTitle>
+                    <StatusMetaBadge
+                      realizadoAcumulado={realizadoAcumulado.faturamento_total}
+                      metaAcumulada={metaAcumulada.faturamento_total}
+                      onClick={() => setFeedbackModal({
+                        open: true,
+                        status: getStatus(realizadoAcumulado.faturamento_total, metaAcumulada.faturamento_total),
+                        metricName: "Faturamento Total",
+                        realizado: realizadoAcumulado.faturamento_total,
+                        meta: metaAcumulada.faturamento_total
+                      })}
+                    />
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={400}>
@@ -282,10 +373,23 @@ export default function GraficosProducao() {
 
               <Card className="bg-slate-800/50 border-blue-500/30 backdrop-blur-sm">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">
-                    <Users className="w-5 h-5 text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
-                    Evolução de Clientes
-                  </CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">
+                      <Users className="w-5 h-5 text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+                      Evolução de Clientes
+                    </CardTitle>
+                    <StatusMetaBadge
+                      realizadoAcumulado={realizadoAcumulado.clientes}
+                      metaAcumulada={metaAcumulada.clientes}
+                      onClick={() => setFeedbackModal({
+                        open: true,
+                        status: getStatus(realizadoAcumulado.clientes, metaAcumulada.clientes),
+                        metricName: "Clientes",
+                        realizado: realizadoAcumulado.clientes,
+                        meta: metaAcumulada.clientes
+                      })}
+                    />
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={350}>
@@ -307,10 +411,23 @@ export default function GraficosProducao() {
             <TabsContent value="comercial" className="space-y-6">
               <Card className="bg-slate-800/50 border-purple-500/30 backdrop-blur-sm">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
-                    <Target className="w-5 h-5 text-purple-400 drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]" />
-                    PAVE Comercial
-                  </CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
+                      <Target className="w-5 h-5 text-purple-400 drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]" />
+                      PAVE Comercial
+                    </CardTitle>
+                    <StatusMetaBadge
+                      realizadoAcumulado={realizadoAcumulado.pave}
+                      metaAcumulada={metaAcumulada.pave}
+                      onClick={() => setFeedbackModal({
+                        open: true,
+                        status: getStatus(realizadoAcumulado.pave, metaAcumulada.pave),
+                        metricName: "PAVE Comercial",
+                        realizado: realizadoAcumulado.pave,
+                        meta: metaAcumulada.pave
+                      })}
+                    />
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={350}>
@@ -329,10 +446,23 @@ export default function GraficosProducao() {
 
               <Card className="bg-slate-800/50 border-yellow-500/30 backdrop-blur-sm">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400">
-                    <ShoppingCart className="w-5 h-5 text-yellow-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]" />
-                    Kit Master
-                  </CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2 text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400">
+                      <ShoppingCart className="w-5 h-5 text-yellow-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]" />
+                      Kit Master
+                    </CardTitle>
+                    <StatusMetaBadge
+                      realizadoAcumulado={realizadoAcumulado.kit_master}
+                      metaAcumulada={metaAcumulada.kit_master}
+                      onClick={() => setFeedbackModal({
+                        open: true,
+                        status: getStatus(realizadoAcumulado.kit_master, metaAcumulada.kit_master),
+                        metricName: "Kit Master",
+                        realizado: realizadoAcumulado.kit_master,
+                        meta: metaAcumulada.kit_master
+                      })}
+                    />
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={350}>
@@ -354,10 +484,23 @@ export default function GraficosProducao() {
             <TabsContent value="vendas" className="space-y-6">
               <Card className="bg-slate-800/50 border-cyan-500/30 backdrop-blur-sm">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">
-                    <Target className="w-5 h-5 text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]" />
-                    GPS de Vendas
-                  </CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">
+                      <Target className="w-5 h-5 text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]" />
+                      GPS de Vendas
+                    </CardTitle>
+                    <StatusMetaBadge
+                      realizadoAcumulado={realizadoAcumulado.gps}
+                      metaAcumulada={metaAcumulada.gps}
+                      onClick={() => setFeedbackModal({
+                        open: true,
+                        status: getStatus(realizadoAcumulado.gps, metaAcumulada.gps),
+                        metricName: "GPS de Vendas",
+                        realizado: realizadoAcumulado.gps,
+                        meta: metaAcumulada.gps
+                      })}
+                    />
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={350}>
@@ -376,7 +519,22 @@ export default function GraficosProducao() {
 
               <Card className="bg-slate-800/50 border-pink-500/30 backdrop-blur-sm">
                 <CardHeader>
-                  <CardTitle className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400">Vendas Base x Marketing</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400">Vendas Base x Marketing</CardTitle>
+                    <div className="flex gap-2">
+                      <StatusMetaBadge
+                        realizadoAcumulado={realizadoAcumulado.sales_base}
+                        metaAcumulada={metaAcumulada.sales_base}
+                        onClick={() => setFeedbackModal({
+                          open: true,
+                          status: getStatus(realizadoAcumulado.sales_base, metaAcumulada.sales_base),
+                          metricName: "Vendas Base",
+                          realizado: realizadoAcumulado.sales_base,
+                          meta: metaAcumulada.sales_base
+                        })}
+                      />
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={350}>
@@ -400,7 +558,23 @@ export default function GraficosProducao() {
             <TabsContent value="agendamentos" className="space-y-6">
               <Card className="bg-slate-800/50 border-blue-500/30 backdrop-blur-sm">
                 <CardHeader>
-                  <CardTitle className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">Agendamentos por Origem</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">Agendamentos por Origem</CardTitle>
+                    <StatusMetaBadge
+                      realizadoAcumulado={realizadoAcumulado.agendados_base + realizadoAcumulado.agendados_mkt + realizadoAcumulado.agendados_referral}
+                      metaAcumulada={metaAcumulada.agendados_base + metaAcumulada.agendados_mkt + metaAcumulada.agendados_referral}
+                      onClick={() => setFeedbackModal({
+                        open: true,
+                        status: getStatus(
+                          realizadoAcumulado.agendados_base + realizadoAcumulado.agendados_mkt + realizadoAcumulado.agendados_referral,
+                          metaAcumulada.agendados_base + metaAcumulada.agendados_mkt + metaAcumulada.agendados_referral
+                        ),
+                        metricName: "Agendamentos Totais",
+                        realizado: realizadoAcumulado.agendados_base + realizadoAcumulado.agendados_mkt + realizadoAcumulado.agendados_referral,
+                        meta: metaAcumulada.agendados_base + metaAcumulada.agendados_mkt + metaAcumulada.agendados_referral
+                      })}
+                    />
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={350}>
@@ -423,7 +597,23 @@ export default function GraficosProducao() {
 
               <Card className="bg-slate-800/50 border-green-500/30 backdrop-blur-sm">
                 <CardHeader>
-                  <CardTitle className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400">Entregas por Origem</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400">Entregas por Origem</CardTitle>
+                    <StatusMetaBadge
+                      realizadoAcumulado={realizadoAcumulado.entregues_base + realizadoAcumulado.entregues_mkt + realizadoAcumulado.entregues_referral}
+                      metaAcumulada={metaAcumulada.entregues_base + metaAcumulada.entregues_mkt + metaAcumulada.entregues_referral}
+                      onClick={() => setFeedbackModal({
+                        open: true,
+                        status: getStatus(
+                          realizadoAcumulado.entregues_base + realizadoAcumulado.entregues_mkt + realizadoAcumulado.entregues_referral,
+                          metaAcumulada.entregues_base + metaAcumulada.entregues_mkt + metaAcumulada.entregues_referral
+                        ),
+                        metricName: "Entregas Totais",
+                        realizado: realizadoAcumulado.entregues_base + realizadoAcumulado.entregues_mkt + realizadoAcumulado.entregues_referral,
+                        meta: metaAcumulada.entregues_base + metaAcumulada.entregues_mkt + metaAcumulada.entregues_referral
+                      })}
+                    />
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={350}>
@@ -449,7 +639,20 @@ export default function GraficosProducao() {
             <TabsContent value="marketing" className="space-y-6">
               <Card className="bg-slate-800/50 border-pink-500/30 backdrop-blur-sm">
                 <CardHeader>
-                  <CardTitle className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-fuchsia-400">Funil de Leads</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-fuchsia-400">Funil de Leads</CardTitle>
+                    <StatusMetaBadge
+                      realizadoAcumulado={realizadoAcumulado.leads_vendidos}
+                      metaAcumulada={metaAcumulada.leads_vendidos}
+                      onClick={() => setFeedbackModal({
+                        open: true,
+                        status: getStatus(realizadoAcumulado.leads_vendidos, metaAcumulada.leads_vendidos),
+                        metricName: "Leads Vendidos",
+                        realizado: realizadoAcumulado.leads_vendidos,
+                        meta: metaAcumulada.leads_vendidos
+                      })}
+                    />
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={350}>
@@ -474,7 +677,20 @@ export default function GraficosProducao() {
 
               <Card className="bg-slate-800/50 border-red-500/30 backdrop-blur-sm">
                 <CardHeader>
-                  <CardTitle className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-rose-400">Investimento vs Faturamento</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-rose-400">Investimento vs Faturamento</CardTitle>
+                    <StatusMetaBadge
+                      realizadoAcumulado={realizadoAcumulado.faturado_lead}
+                      metaAcumulada={metaAcumulada.faturado_lead}
+                      onClick={() => setFeedbackModal({
+                        open: true,
+                        status: getStatus(realizadoAcumulado.faturado_lead, metaAcumulada.faturado_lead),
+                        metricName: "Faturamento Lead Tráfego",
+                        realizado: realizadoAcumulado.faturado_lead,
+                        meta: metaAcumulada.faturado_lead
+                      })}
+                    />
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={350}>
@@ -514,6 +730,15 @@ export default function GraficosProducao() {
             </TabsContent>
           </Tabs>
         )}
+        
+        <FeedbackMetaModal
+          open={feedbackModal.open}
+          onClose={() => setFeedbackModal({ ...feedbackModal, open: false })}
+          status={feedbackModal.status}
+          metricName={feedbackModal.metricName}
+          realizadoAcumulado={feedbackModal.realizado}
+          metaAcumulada={feedbackModal.meta}
+        />
       </div>
     </div>
   );
