@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { useEmployeeMetrics } from "@/components/hooks/useEmployeeMetrics";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,12 +16,14 @@ export default function EmployeeGoals({ employee, onUpdate }) {
   const [goals, setGoals] = useState([]);
   const [user, setUser] = useState(null);
   const [growthPercentageInput, setGrowthPercentageInput] = useState(10);
+  const { bestMonthData, monthlyGoalsData, updateMonthlyGoals } = useEmployeeMetrics(employee);
 
   useEffect(() => {
     loadUser();
     loadGoals();
-    setGrowthPercentageInput(employee.monthly_goals?.growth_percentage || 10);
-  }, [employee]);
+    // Sincronizar com os dados do hook
+    setGrowthPercentageInput(monthlyGoalsData?.growth_percentage || 10);
+  }, [employee, monthlyGoalsData]);
 
   const loadUser = async () => {
     try {
@@ -165,7 +168,7 @@ export default function EmployeeGoals({ employee, onUpdate }) {
 
       // Também atualizar o objeto monthly_goals no Employee (retrocompatibilidade)
       const totalGoalValue = goalsWithProgress.reduce((sum, g) => sum + g.goal_value, 0);
-      const bestMonthRevenue = employee.best_month_history?.revenue_total || 0;
+      const bestMonthRevenue = bestMonthData?.revenue_total || 0;
       const currentGrowthPercentage = growthPercentageInput || 10;
       const projectedGoal = bestMonthRevenue > 0 
         ? bestMonthRevenue * (1 + currentGrowthPercentage / 100)
@@ -177,13 +180,14 @@ export default function EmployeeGoals({ employee, onUpdate }) {
         goals_by_service: goalsWithProgress,
         individual_goal: projectedGoal,
         daily_projected_goal: dailyProjectedGoal,
-        actual_revenue_achieved: employee.monthly_goals?.actual_revenue_achieved || 0,
+        actual_revenue_achieved: monthlyGoalsData?.actual_revenue_achieved || 0,
         growth_percentage: currentGrowthPercentage,
         achievement_percentage: goalsWithProgress.length > 0
           ? goalsWithProgress.reduce((sum, g) => sum + (g.progress || 0), 0) / goalsWithProgress.length
           : 0
       };
 
+      await updateMonthlyGoals(monthlyGoals);
       await onUpdate({ monthly_goals: monthlyGoals });
       
       toast.success("Metas salvas com sucesso na base de dados!");
@@ -230,8 +234,8 @@ export default function EmployeeGoals({ employee, onUpdate }) {
 
   const canEdit = user && (user.role === 'admin' || user.email === employee.created_by);
 
-  // Dados do melhor mês e projeções
-  const bestMonthRevenue = employee.best_month_history?.revenue_total || 0;
+  // Dados do melhor mês e projeções (agora sincronizados via hook)
+  const bestMonthRevenue = bestMonthData?.revenue_total || 0;
   const growthPercentage = growthPercentageInput || 10;
   
   // Se há melhor mês, usa ele + crescimento. Se não, usa 10% mínimo sobre melhor mês ou totalGoalValue
@@ -244,21 +248,22 @@ export default function EmployeeGoals({ employee, onUpdate }) {
   const achievementPercentage = projectedGoal > 0 ? (actualRevenueAchieved / projectedGoal) * 100 : 0;
 
   const handleSaveGrowth = async () => {
-    const bestMonthRevenue = employee.best_month_history?.revenue_total || 0;
+    const bestMonthRevenue = bestMonthData?.revenue_total || 0;
     const newProjectedGoal = bestMonthRevenue > 0 
       ? bestMonthRevenue * (1 + growthPercentageInput / 100)
       : bestMonthRevenue * 1.1;
     const newDailyProjectedGoal = newProjectedGoal / 22;
 
-    await onUpdate({
-      monthly_goals: {
-        ...employee.monthly_goals,
-        growth_percentage: growthPercentageInput,
-        individual_goal: newProjectedGoal,
-        daily_projected_goal: newDailyProjectedGoal,
-        month: new Date().toISOString().substring(0, 7)
-      }
-    });
+    const newGoalsData = {
+      ...monthlyGoalsData,
+      growth_percentage: growthPercentageInput,
+      individual_goal: newProjectedGoal,
+      daily_projected_goal: newDailyProjectedGoal,
+      month: new Date().toISOString().substring(0, 7)
+    };
+
+    await updateMonthlyGoals(newGoalsData);
+    await onUpdate({ monthly_goals: newGoalsData });
     toast.success("Crescimento geral atualizado! Metas recalculadas automaticamente.");
     setEditingGrowth(false);
   };
