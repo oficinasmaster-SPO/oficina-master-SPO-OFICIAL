@@ -13,7 +13,7 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
   const [editing, setEditing] = useState(false);
   const [editingBestMonth, setEditingBestMonth] = useState(false);
   const [metrics, setMetrics] = useState([]);
-  const { bestMonthData, updateBestMonth } = useEmployeeMetrics(employee);
+  const { bestMonthData, monthlyGoalsData, monthlyHistoryData, updateBestMonth } = useEmployeeMetrics(employee);
   const [localBestMonth, setLocalBestMonth] = useState(null);
   
   const [formData, setFormData] = useState({
