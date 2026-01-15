@@ -221,66 +221,35 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
 
                       {/* Detalhes Expandidos */}
                       {isExpanded && (
-                        <div className="mt-4 pt-4 border-t border-gray-200 space-y-3">
-                          {/* Detalhamento de Faturamento */}
-                          <div className="grid grid-cols-3 gap-4">
-                            <div className="bg-blue-50 p-3 rounded-lg">
-                              <p className="text-xs text-blue-700 mb-1">Faturamento Peças</p>
-                              <p className="text-lg font-bold text-blue-600">
-                                R$ {entry.parts_revenue.toFixed(2)}
-                              </p>
-                            </div>
-                            <div className="bg-green-50 p-3 rounded-lg">
-                              <p className="text-xs text-green-700 mb-1">Faturamento Serviços</p>
-                              <p className="text-lg font-bold text-green-600">
-                                R$ {entry.services_revenue.toFixed(2)}
-                              </p>
-                            </div>
-                            <div className="bg-purple-50 p-3 rounded-lg">
-                              <p className="text-xs text-purple-700 mb-1">Total do Dia</p>
-                              <p className="text-lg font-bold text-purple-600">
-                                R$ {entry.total_revenue.toFixed(2)}
-                              </p>
-                            </div>
-                          </div>
+                      <div className="mt-4 pt-4 border-t border-gray-200 space-y-3">
+                       <div className="grid grid-cols-3 gap-4">
+                         <div className="bg-blue-50 p-3 rounded-lg">
+                           <p className="text-xs text-blue-700 mb-1">Faturamento Peças</p>
+                           <p className="text-lg font-bold text-blue-600">
+                             R$ {entry.parts_revenue.toFixed(2)}
+                           </p>
+                         </div>
+                         <div className="bg-green-50 p-3 rounded-lg">
+                           <p className="text-xs text-green-700 mb-1">Faturamento Serviços</p>
+                           <p className="text-lg font-bold text-green-600">
+                             R$ {entry.services_revenue.toFixed(2)}
+                           </p>
+                         </div>
+                         <div className="bg-purple-50 p-3 rounded-lg">
+                           <p className="text-xs text-purple-700 mb-1">Total do Dia</p>
+                           <p className="text-lg font-bold text-purple-600">
+                             R$ {entry.total_revenue.toFixed(2)}
+                           </p>
+                         </div>
+                       </div>
 
-                          {/* Meta vs Realizado */}
-                          <div className="bg-white border-2 border-gray-200 p-3 rounded-lg">
-                            <div className="flex items-center justify-between mb-2">
-                              <p className="text-sm font-semibold text-gray-700">Meta Diária vs Realizado</p>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <p className="text-xs text-gray-600 mb-1">Meta Diária (Previsto)</p>
-                                <p className="text-lg font-bold text-purple-600">
-                                  R$ {dailyProjectedGoal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-xs text-gray-600 mb-1">Atingimento</p>
-                                <p className={`text-lg font-bold ${
-                                  metaDayAchieved ? 'text-green-600' : 'text-orange-600'
-                                }`}>
-                                  {dailyAchievementPercentage.toFixed(1)}%
-                                </p>
-                                <p className="text-xs text-gray-500 mt-1">
-                                  {metaDayAchieved 
-                                    ? '✅ Meta do dia batida!' 
-                                    : `Faltaram R$ ${(dailyProjectedGoal - entry.total_revenue).toFixed(2)}`
-                                  }
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Notas/Observações */}
-                          {entry.notes && (
-                            <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
-                              <p className="text-xs text-yellow-800 font-semibold mb-1">📝 Observações:</p>
-                              <p className="text-sm text-gray-700">{entry.notes}</p>
-                            </div>
-                          )}
-                        </div>
+                       {entry.notes && (
+                         <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
+                           <p className="text-xs text-yellow-800 font-semibold mb-1">📝 Observações:</p>
+                           <p className="text-sm text-gray-700">{entry.notes}</p>
+                         </div>
+                       )}
+                      </div>
                       )}
                     </CardContent>
                   </Card>
