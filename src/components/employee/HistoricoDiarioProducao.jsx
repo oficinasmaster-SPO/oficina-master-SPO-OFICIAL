@@ -141,20 +141,12 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
 
                           </div>
 
-                          {/* Previsto e Realizado - Lado a Lado */}
-                          <div className="flex gap-3 items-stretch">
-                            <div className="text-right bg-purple-50 px-3 py-2 rounded-lg border border-purple-200 shadow-sm min-w-[120px]">
-                              <p className="text-xs text-purple-600 font-semibold mb-1">Previsto</p>
-                              <p className="text-lg font-bold text-purple-600">
-                                R$ {dailyProjectedGoal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                              </p>
-                            </div>
-                            <div className="text-right bg-white px-3 py-2 rounded-lg border border-green-200 shadow-sm min-w-[120px]">
-                              <p className="text-xs text-gray-500 font-semibold mb-1">Realizado</p>
-                              <p className={`text-lg font-bold ${metaDayAchieved ? 'text-green-600' : 'text-orange-600'}`}>
-                                R$ {entry.total_revenue.toFixed(2)}
-                              </p>
-                            </div>
+                          {/* Realizado */}
+                          <div className="text-right bg-white px-3 py-2 rounded-lg border border-gray-200 shadow-sm">
+                            <p className="text-xs text-gray-500 font-semibold mb-1">Faturamento Total</p>
+                            <p className="text-lg font-bold text-blue-600">
+                              R$ {entry.total_revenue.toFixed(2)}
+                            </p>
                           </div>
 
                           {/* Botão Expandir */}
