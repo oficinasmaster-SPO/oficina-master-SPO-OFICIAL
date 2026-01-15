@@ -404,7 +404,7 @@ export default function GlobalGoalsIndicator({ workshop, className = "" }) {
           <p className="text-sm text-gray-600">
             {monthlyHistory.length} registro(s) no mês
           </p>
-          <Link to={createPageUrl("PainelMetas")}>
+          <Link to={createPageUrl("GraficosProducao")}>
             <Button variant="link" size="sm" className="text-blue-600">
               Ver detalhes →
             </Button>
