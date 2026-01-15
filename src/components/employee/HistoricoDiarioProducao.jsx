@@ -113,9 +113,7 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
                 const isExpanded = expandedRecords[index];
 
                 return (
-                  <Card key={`${entry.date}-${index}`} className={`hover:shadow-md transition-all ${
-                    metaDayAchieved ? 'border-l-4 border-green-500 bg-green-50/30' : 'border-l-4 border-orange-400 bg-orange-50/30'
-                  }`}>
+                  <Card key={`${entry.date}-${index}`} className="hover:shadow-md transition-all border-l-4 border-gray-300">
                     <CardContent className="p-4">
                       {/* Visão Compacta - Sempre Visível */}
                       <div className="flex items-center justify-between">
