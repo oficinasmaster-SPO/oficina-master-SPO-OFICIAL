@@ -78,6 +78,8 @@ export default function HistoricoMetas() {
       
       if (filterType === "employee" && filterEmployee) {
         query.employee_id = filterEmployee;
+      } else if (filterType === "workshop") {
+        query.entity_type = "workshop";
       }
 
       if (filterMonth) {
