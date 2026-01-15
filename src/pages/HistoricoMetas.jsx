@@ -69,6 +69,10 @@ export default function HistoricoMetas() {
     queryFn: async () => {
       if (!workshop) return [];
       
+      // Força reload do workshop para pegar dados atualizados do melhor mês
+      const updatedWorkshop = await base44.entities.Workshop.get(workshop.id);
+      setWorkshop(updatedWorkshop);
+      
       let query = { workshop_id: workshop.id };
       
       if (filterType === "employee" && filterEmployee) {
@@ -84,20 +88,28 @@ export default function HistoricoMetas() {
       const result = await base44.entities.MonthlyGoalHistory.filter(query);
       return result.sort((a, b) => new Date(b.reference_date) - new Date(a.reference_date));
     },
-    enabled: !!workshop
+    enabled: !!workshop,
+    refetchOnWindowFocus: true,
+    staleTime: 0
   });
 
   const { data: employees = [], refetch: refetchEmployees } = useQuery({
     queryKey: ['employees', workshop?.id, filterEmployee],
     queryFn: async () => {
       if (!workshop) return [];
-      return await base44.entities.Employee.filter({ 
+      const allEmployees = await base44.entities.Employee.filter({ 
         workshop_id: workshop.id,
         status: "ativo"
       });
+      // Força reload individual para pegar melhor mês atualizado
+      const employeesWithUpdatedData = await Promise.all(
+        allEmployees.map(emp => base44.entities.Employee.get(emp.id))
+      );
+      return employeesWithUpdatedData;
     },
     enabled: !!workshop,
-    refetchOnWindowFocus: false
+    refetchOnWindowFocus: true,
+    staleTime: 0
   });
 
   const handleExport = () => {

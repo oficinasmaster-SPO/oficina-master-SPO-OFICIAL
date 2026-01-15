@@ -76,6 +76,12 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
   useEffect(() => {
     if (open) {
       loadEmployees();
+      // Força reload do workshop para pegar melhor mês atualizado
+      if (workshop?.id) {
+        base44.entities.Workshop.get(workshop.id).then(updatedWorkshop => {
+          setWorkshop(updatedWorkshop);
+        });
+      }
       if (editingRecord) {
         loadEditingData();
       } else {
