@@ -210,20 +210,10 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
     }
   };
 
-  const loadProjectedGoals = async () => {
+  const loadProjectedGoals = () => {
     if (entityType === "workshop") {
-      // Força reload do workshop para pegar melhor mês atualizado
-      let currentWorkshop = workshop;
-      if (workshop?.id) {
-        try {
-          currentWorkshop = await base44.entities.Workshop.get(workshop.id);
-        } catch (error) {
-          console.error("Error reloading workshop:", error);
-        }
-      }
-      
-      const bestMonth = currentWorkshop?.best_month_history || {};
-      const growthPercentage = currentWorkshop?.monthly_goals?.growth_percentage || 10;
+      const bestMonth = workshop?.best_month_history || {};
+      const growthPercentage = workshop?.monthly_goals?.growth_percentage || 10;
       const factor = 1 + growthPercentage / 100;
       
       setFormData(prev => ({
@@ -251,18 +241,8 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
         }
       }));
     } else if (selectedEmployee) {
-      // Força reload do colaborador para pegar melhor mês atualizado
-      let currentEmployee = selectedEmployee;
-      if (selectedEmployee?.id) {
-        try {
-          currentEmployee = await base44.entities.Employee.get(selectedEmployee.id);
-        } catch (error) {
-          console.error("Error reloading employee:", error);
-        }
-      }
-      
-      const bestMonth = currentEmployee.best_month_history || {};
-      const growthPercentage = currentEmployee.monthly_goals?.growth_percentage || 10;
+      const bestMonth = selectedEmployee.best_month_history || {};
+      const growthPercentage = selectedEmployee.monthly_goals?.growth_percentage || 10;
       const factor = 1 + growthPercentage / 100;
       
       setFormData(prev => ({

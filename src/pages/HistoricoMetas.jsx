@@ -760,14 +760,15 @@ export default function HistoricoMetas() {
                         </div>
 
         {/* Modal de Registro */}
-         <ManualGoalRegistration
-          open={showModal}
-          onClose={() => {
-            setShowModal(false);
-            setEditingRecord(null);
-          }}
-          workshop={workshop}
-          editingRecord={editingRecord}
+        <ManualGoalRegistration
+         open={showModal}
+         onClose={() => {
+           setShowModal(false);
+           setEditingRecord(null);
+         }}
+         workshop={workshop}
+         editingRecord={editingRecord}
+         key={`${workshop?.id}-${showModal}`}
           onSave={async () => {
             // Sincronizar após salvar registro
             if (workshop) {
