@@ -10,9 +10,10 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { ArrowLeft, TrendingUp, DollarSign, Users, Target, ShoppingCart, Calendar } from "lucide-react";
-import { formatCurrency } from "@/components/utils/formatters";
+import { formatCurrency, formatNumber } from "@/components/utils/formatters";
 import StatusMetaBadge from "@/components/historico/StatusMetaBadge";
 import FeedbackMetaModal from "@/components/historico/FeedbackMetaModal";
+import GapFunnelIndicator from "@/components/graficos/GapFunnelIndicator";
 
 // Função para calcular dias úteis do mês
 const calcularDiasUteis = (mesAno) => {
@@ -38,6 +39,7 @@ export default function GraficosProducao() {
   const [user, setUser] = useState(null);
   const [filterMonth, setFilterMonth] = useState(new Date().toISOString().substring(0, 7));
   const [feedbackModal, setFeedbackModal] = useState({ open: false, status: "", metricName: "", realizado: 0, meta: 0 });
+  const [highlightedLine, setHighlightedLine] = useState(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -324,87 +326,173 @@ export default function GraficosProducao() {
 
             {/* ABA FATURAMENTO */}
             <TabsContent value="faturamento" className="space-y-6">
-              <Card className="bg-slate-800/50 border-blue-500/30 backdrop-blur-sm">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2 text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400">
-                      <DollarSign className="w-5 h-5 text-green-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
-                      Evolução do Faturamento
-                    </CardTitle>
-                    <StatusMetaBadge
-                      realizadoAcumulado={realizadoAcumulado.faturamento_total}
-                      metaAcumulada={metaAcumulada.faturamento_total}
-                      onClick={() => setFeedbackModal({
-                        open: true,
-                        status: getStatus(realizadoAcumulado.faturamento_total, metaAcumulada.faturamento_total),
-                        metricName: "Faturamento Total",
-                        realizado: realizadoAcumulado.faturamento_total,
-                        meta: metaAcumulada.faturamento_total
-                      })}
-                    />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={400}>
-                    <LineChart data={chartData}>
-                      <defs>
-                        <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#10b981" stopOpacity={0.1}/>
-                        </linearGradient>
-                        <linearGradient id="colorPecas" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#1e40af" opacity={0.1} />
-                      <XAxis dataKey="date" stroke="#60a5fa" style={{ fontSize: '12px' }} />
-                      <YAxis stroke="#60a5fa" style={{ fontSize: '12px' }} />
-                      <Tooltip content={<CustomTooltip />} />
-                      <Legend wrapperStyle={{ color: '#60a5fa' }} />
-                      <Line type="monotone" dataKey="faturamento_total" stroke="#10b981" strokeWidth={3} name="Fat. Total" dot={{ fill: '#10b981', r: 4 }} activeDot={{ r: 6, fill: '#10b981', stroke: '#fff', strokeWidth: 2 }} />
-                      <Line type="monotone" dataKey="faturamento_pecas" stroke="#3b82f6" strokeWidth={2} name="Fat. Peças" dot={{ fill: '#3b82f6', r: 3 }} />
-                      <Line type="monotone" dataKey="faturamento_servicos" stroke="#a855f7" strokeWidth={2} name="Fat. Serviços" dot={{ fill: '#a855f7', r: 3 }} />
-                      <Line type="monotone" dataKey="meta_diaria_faturamento" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" name="Meta Diária" dot={{ fill: '#f59e0b', r: 3 }} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <Card className="bg-slate-800/50 border-blue-500/30 backdrop-blur-sm lg:col-span-2">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-2 text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400">
+                        <DollarSign className="w-5 h-5 text-green-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
+                        Evolução do Faturamento
+                      </CardTitle>
+                      <StatusMetaBadge
+                        realizadoAcumulado={realizadoAcumulado.faturamento_total}
+                        metaAcumulada={metaAcumulada.faturamento_total}
+                        onClick={() => setFeedbackModal({
+                          open: true,
+                          status: getStatus(realizadoAcumulado.faturamento_total, metaAcumulada.faturamento_total),
+                          metricName: "Faturamento Total",
+                          realizado: realizadoAcumulado.faturamento_total,
+                          meta: metaAcumulada.faturamento_total
+                        })}
+                      />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={400}>
+                      <LineChart data={chartData}>
+                        <defs>
+                          <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
+                            <stop offset="95%" stopColor="#10b981" stopOpacity={0.1}/>
+                          </linearGradient>
+                          <linearGradient id="colorPecas" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#1e40af" opacity={0.1} />
+                        <XAxis dataKey="date" stroke="#60a5fa" style={{ fontSize: '12px' }} />
+                        <YAxis stroke="#60a5fa" style={{ fontSize: '12px' }} />
+                        <Tooltip content={<CustomTooltip />} />
+                        <Legend 
+                          wrapperStyle={{ color: '#60a5fa' }}
+                          onClick={(e) => {
+                            const dataKey = e.dataKey;
+                            setHighlightedLine(highlightedLine === dataKey ? null : dataKey);
+                          }}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="faturamento_total" 
+                          stroke="#10b981" 
+                          strokeWidth={3} 
+                          name="Fat. Total" 
+                          dot={{ fill: '#10b981', r: 4 }} 
+                          activeDot={{ r: 6, fill: '#10b981', stroke: '#fff', strokeWidth: 2 }}
+                          strokeOpacity={highlightedLine && highlightedLine !== "faturamento_total" ? 0.2 : 1}
+                          onClick={() => setHighlightedLine(highlightedLine === "faturamento_total" ? null : "faturamento_total")}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="faturamento_pecas" 
+                          stroke="#3b82f6" 
+                          strokeWidth={2} 
+                          name="Fat. Peças" 
+                          dot={{ fill: '#3b82f6', r: 3 }}
+                          strokeOpacity={highlightedLine && highlightedLine !== "faturamento_pecas" ? 0.2 : 1}
+                          onClick={() => setHighlightedLine(highlightedLine === "faturamento_pecas" ? null : "faturamento_pecas")}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="faturamento_servicos" 
+                          stroke="#a855f7" 
+                          strokeWidth={2} 
+                          name="Fat. Serviços" 
+                          dot={{ fill: '#a855f7', r: 3 }}
+                          strokeOpacity={highlightedLine && highlightedLine !== "faturamento_servicos" ? 0.2 : 1}
+                          onClick={() => setHighlightedLine(highlightedLine === "faturamento_servicos" ? null : "faturamento_servicos")}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="meta_diaria_faturamento" 
+                          stroke="#f59e0b" 
+                          strokeWidth={2} 
+                          strokeDasharray="5 5" 
+                          name="Meta Diária" 
+                          dot={{ fill: '#f59e0b', r: 3 }}
+                          strokeOpacity={highlightedLine && highlightedLine !== "meta_diaria_faturamento" ? 0.2 : 1}
+                          onClick={() => setHighlightedLine(highlightedLine === "meta_diaria_faturamento" ? null : "meta_diaria_faturamento")}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
 
-              <Card className="bg-slate-800/50 border-blue-500/30 backdrop-blur-sm">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">
-                      <Users className="w-5 h-5 text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
-                      Evolução de Clientes
-                    </CardTitle>
-                    <StatusMetaBadge
-                      realizadoAcumulado={realizadoAcumulado.clientes}
-                      metaAcumulada={metaAcumulada.clientes}
-                      onClick={() => setFeedbackModal({
-                        open: true,
-                        status: getStatus(realizadoAcumulado.clientes, metaAcumulada.clientes),
-                        metricName: "Clientes",
-                        realizado: realizadoAcumulado.clientes,
-                        meta: metaAcumulada.clientes
-                      })}
-                    />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={350}>
-                    <LineChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#1e40af" opacity={0.1} />
-                      <XAxis dataKey="date" stroke="#60a5fa" style={{ fontSize: '12px' }} />
-                      <YAxis stroke="#60a5fa" style={{ fontSize: '12px' }} />
-                      <Tooltip content={<CustomTooltip />} />
-                      <Legend wrapperStyle={{ color: '#60a5fa' }} />
-                      <Line type="monotone" dataKey="clientes" stroke="#10b981" strokeWidth={3} name="Clientes Realizado" dot={{ fill: '#10b981', r: 4 }} activeDot={{ r: 6, fill: '#10b981', stroke: '#fff', strokeWidth: 2 }} />
-                      <Line type="monotone" dataKey="meta_diaria_clientes" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" name="Meta Diária" dot={{ fill: '#f59e0b', r: 3 }} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
+                <GapFunnelIndicator
+                  metricName="Faturamento"
+                  realizado={realizadoAcumulado.faturamento_total}
+                  meta={metaAcumulada.faturamento_total}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <Card className="bg-slate-800/50 border-blue-500/30 backdrop-blur-sm lg:col-span-2">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">
+                        <Users className="w-5 h-5 text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+                        Evolução de Clientes
+                      </CardTitle>
+                      <StatusMetaBadge
+                        realizadoAcumulado={realizadoAcumulado.clientes}
+                        metaAcumulada={metaAcumulada.clientes}
+                        onClick={() => setFeedbackModal({
+                          open: true,
+                          status: getStatus(realizadoAcumulado.clientes, metaAcumulada.clientes),
+                          metricName: "Clientes",
+                          realizado: realizadoAcumulado.clientes,
+                          meta: metaAcumulada.clientes
+                        })}
+                      />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={350}>
+                      <LineChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#1e40af" opacity={0.1} />
+                        <XAxis dataKey="date" stroke="#60a5fa" style={{ fontSize: '12px' }} />
+                        <YAxis stroke="#60a5fa" style={{ fontSize: '12px' }} />
+                        <Tooltip content={<CustomTooltip />} />
+                        <Legend 
+                          wrapperStyle={{ color: '#60a5fa' }}
+                          onClick={(e) => {
+                            const dataKey = e.dataKey;
+                            setHighlightedLine(highlightedLine === dataKey ? null : dataKey);
+                          }}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="clientes" 
+                          stroke="#10b981" 
+                          strokeWidth={3} 
+                          name="Clientes Realizado" 
+                          dot={{ fill: '#10b981', r: 4 }} 
+                          activeDot={{ r: 6, fill: '#10b981', stroke: '#fff', strokeWidth: 2 }}
+                          strokeOpacity={highlightedLine && highlightedLine !== "clientes" ? 0.2 : 1}
+                          onClick={() => setHighlightedLine(highlightedLine === "clientes" ? null : "clientes")}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="meta_diaria_clientes" 
+                          stroke="#f59e0b" 
+                          strokeWidth={2} 
+                          strokeDasharray="5 5" 
+                          name="Meta Diária" 
+                          dot={{ fill: '#f59e0b', r: 3 }}
+                          strokeOpacity={highlightedLine && highlightedLine !== "meta_diaria_clientes" ? 0.2 : 1}
+                          onClick={() => setHighlightedLine(highlightedLine === "meta_diaria_clientes" ? null : "meta_diaria_clientes")}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                <GapFunnelIndicator
+                  metricName="Clientes"
+                  realizado={realizadoAcumulado.clientes}
+                  meta={metaAcumulada.clientes}
+                />
+              </div>
             </TabsContent>
 
             {/* ABA COMERCIAL */}
@@ -637,43 +725,163 @@ export default function GraficosProducao() {
 
             {/* ABA MARKETING */}
             <TabsContent value="marketing" className="space-y-6">
-              <Card className="bg-slate-800/50 border-pink-500/30 backdrop-blur-sm">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-fuchsia-400">Funil de Leads</CardTitle>
-                    <StatusMetaBadge
-                      realizadoAcumulado={realizadoAcumulado.leads_vendidos}
-                      metaAcumulada={metaAcumulada.leads_vendidos}
-                      onClick={() => setFeedbackModal({
-                        open: true,
-                        status: getStatus(realizadoAcumulado.leads_vendidos, metaAcumulada.leads_vendidos),
-                        metricName: "Leads Vendidos",
-                        realizado: realizadoAcumulado.leads_vendidos,
-                        meta: metaAcumulada.leads_vendidos
-                      })}
-                    />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={350}>
-                    <LineChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#1e40af" opacity={0.1} />
-                      <XAxis dataKey="date" stroke="#60a5fa" style={{ fontSize: '12px' }} />
-                      <YAxis stroke="#60a5fa" style={{ fontSize: '12px' }} />
-                      <Tooltip content={<CustomTooltip />} />
-                      <Legend wrapperStyle={{ color: '#60a5fa' }} />
-                      <Line type="monotone" dataKey="leads_gerados" stroke="#3b82f6" strokeWidth={2} name="Leads Gerados" dot={{ fill: '#3b82f6', r: 3 }} />
-                      <Line type="monotone" dataKey="meta_diaria_leads_gerados" stroke="#60a5fa" strokeWidth={2} strokeDasharray="5 5" name="Meta Diária Gerados" dot={{ fill: '#60a5fa', r: 2 }} />
-                      <Line type="monotone" dataKey="leads_agendados" stroke="#a855f7" strokeWidth={2} name="Leads Agendados" dot={{ fill: '#a855f7', r: 3 }} />
-                      <Line type="monotone" dataKey="meta_diaria_leads_agendados" stroke="#c084fc" strokeWidth={2} strokeDasharray="5 5" name="Meta Diária Agendados" dot={{ fill: '#c084fc', r: 2 }} />
-                      <Line type="monotone" dataKey="leads_comparecidos" stroke="#ec4899" strokeWidth={2} name="Comparecidos" dot={{ fill: '#ec4899', r: 3 }} />
-                      <Line type="monotone" dataKey="meta_diaria_leads_comparecidos" stroke="#f9a8d4" strokeWidth={2} strokeDasharray="5 5" name="Meta Diária Comparec." dot={{ fill: '#f9a8d4', r: 2 }} />
-                      <Line type="monotone" dataKey="leads_vendidos" stroke="#10b981" strokeWidth={2} name="Leads Vendidos" dot={{ fill: '#10b981', r: 3 }} />
-                      <Line type="monotone" dataKey="meta_diaria_leads_vendidos" stroke="#34d399" strokeWidth={2} strokeDasharray="5 5" name="Meta Diária Vendidos" dot={{ fill: '#34d399', r: 2 }} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <Card className="bg-slate-800/50 border-pink-500/30 backdrop-blur-sm lg:col-span-2">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-fuchsia-400">Funil de Leads</CardTitle>
+                      <StatusMetaBadge
+                        realizadoAcumulado={realizadoAcumulado.leads_vendidos}
+                        metaAcumulada={metaAcumulada.leads_vendidos}
+                        onClick={() => setFeedbackModal({
+                          open: true,
+                          status: getStatus(realizadoAcumulado.leads_vendidos, metaAcumulada.leads_vendidos),
+                          metricName: "Leads Vendidos",
+                          realizado: realizadoAcumulado.leads_vendidos,
+                          meta: metaAcumulada.leads_vendidos
+                        })}
+                      />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={350}>
+                      <LineChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#1e40af" opacity={0.1} />
+                        <XAxis dataKey="date" stroke="#60a5fa" style={{ fontSize: '12px' }} />
+                        <YAxis stroke="#60a5fa" style={{ fontSize: '12px' }} />
+                        <Tooltip content={<CustomTooltip />} />
+                        <Legend 
+                          wrapperStyle={{ color: '#60a5fa' }}
+                          onClick={(e) => {
+                            const dataKey = e.dataKey;
+                            setHighlightedLine(highlightedLine === dataKey ? null : dataKey);
+                          }}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="leads_gerados" 
+                          stroke="#3b82f6" 
+                          strokeWidth={2} 
+                          name="Leads Gerados" 
+                          dot={{ fill: '#3b82f6', r: 3 }}
+                          strokeOpacity={highlightedLine && highlightedLine !== "leads_gerados" ? 0.2 : 1}
+                          onClick={() => setHighlightedLine(highlightedLine === "leads_gerados" ? null : "leads_gerados")}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="meta_diaria_leads_gerados" 
+                          stroke="#60a5fa" 
+                          strokeWidth={2} 
+                          strokeDasharray="5 5" 
+                          name="Meta Diária Gerados" 
+                          dot={{ fill: '#60a5fa', r: 2 }}
+                          strokeOpacity={highlightedLine && highlightedLine !== "meta_diaria_leads_gerados" ? 0.2 : 1}
+                          onClick={() => setHighlightedLine(highlightedLine === "meta_diaria_leads_gerados" ? null : "meta_diaria_leads_gerados")}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="leads_agendados" 
+                          stroke="#a855f7" 
+                          strokeWidth={2} 
+                          name="Leads Agendados" 
+                          dot={{ fill: '#a855f7', r: 3 }}
+                          strokeOpacity={highlightedLine && highlightedLine !== "leads_agendados" ? 0.2 : 1}
+                          onClick={() => setHighlightedLine(highlightedLine === "leads_agendados" ? null : "leads_agendados")}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="meta_diaria_leads_agendados" 
+                          stroke="#c084fc" 
+                          strokeWidth={2} 
+                          strokeDasharray="5 5" 
+                          name="Meta Diária Agendados" 
+                          dot={{ fill: '#c084fc', r: 2 }}
+                          strokeOpacity={highlightedLine && highlightedLine !== "meta_diaria_leads_agendados" ? 0.2 : 1}
+                          onClick={() => setHighlightedLine(highlightedLine === "meta_diaria_leads_agendados" ? null : "meta_diaria_leads_agendados")}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="leads_comparecidos" 
+                          stroke="#ec4899" 
+                          strokeWidth={2} 
+                          name="Comparecidos" 
+                          dot={{ fill: '#ec4899', r: 3 }}
+                          strokeOpacity={highlightedLine && highlightedLine !== "leads_comparecidos" ? 0.2 : 1}
+                          onClick={() => setHighlightedLine(highlightedLine === "leads_comparecidos" ? null : "leads_comparecidos")}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="meta_diaria_leads_comparecidos" 
+                          stroke="#f9a8d4" 
+                          strokeWidth={2} 
+                          strokeDasharray="5 5" 
+                          name="Meta Diária Comparec." 
+                          dot={{ fill: '#f9a8d4', r: 2 }}
+                          strokeOpacity={highlightedLine && highlightedLine !== "meta_diaria_leads_comparecidos" ? 0.2 : 1}
+                          onClick={() => setHighlightedLine(highlightedLine === "meta_diaria_leads_comparecidos" ? null : "meta_diaria_leads_comparecidos")}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="leads_vendidos" 
+                          stroke="#10b981" 
+                          strokeWidth={2} 
+                          name="Leads Vendidos" 
+                          dot={{ fill: '#10b981', r: 3 }}
+                          strokeOpacity={highlightedLine && highlightedLine !== "leads_vendidos" ? 0.2 : 1}
+                          onClick={() => setHighlightedLine(highlightedLine === "leads_vendidos" ? null : "leads_vendidos")}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="meta_diaria_leads_vendidos" 
+                          stroke="#34d399" 
+                          strokeWidth={2} 
+                          strokeDasharray="5 5" 
+                          name="Meta Diária Vendidos" 
+                          dot={{ fill: '#34d399', r: 2 }}
+                          strokeOpacity={highlightedLine && highlightedLine !== "meta_diaria_leads_vendidos" ? 0.2 : 1}
+                          onClick={() => setHighlightedLine(highlightedLine === "meta_diaria_leads_vendidos" ? null : "meta_diaria_leads_vendidos")}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                <GapFunnelIndicator
+                  metricName="Marketing"
+                  realizado={realizadoAcumulado.leads_vendidos}
+                  meta={metaAcumulada.leads_vendidos}
+                  funnelSteps={[
+                    {
+                      label: "Leads Gerados",
+                      realizado: realizadoAcumulado.leads_gerados,
+                      meta: metaAcumulada.leads_gerados,
+                      previous: 0,
+                      previousMeta: 0
+                    },
+                    {
+                      label: "Leads Agendados",
+                      realizado: realizadoAcumulado.leads_agendados,
+                      meta: metaAcumulada.leads_agendados,
+                      previous: realizadoAcumulado.leads_gerados,
+                      previousMeta: metaAcumulada.leads_gerados
+                    },
+                    {
+                      label: "Compareceram",
+                      realizado: realizadoAcumulado.leads_comparecidos,
+                      meta: metaAcumulada.leads_comparecidos,
+                      previous: realizadoAcumulado.leads_agendados,
+                      previousMeta: metaAcumulada.leads_agendados
+                    },
+                    {
+                      label: "Vendidos",
+                      realizado: realizadoAcumulado.leads_vendidos,
+                      meta: metaAcumulada.leads_vendidos,
+                      previous: realizadoAcumulado.leads_comparecidos,
+                      previousMeta: metaAcumulada.leads_comparecidos
+                    }
+                  ]}
+                />
+              </div>
 
               <Card className="bg-slate-800/50 border-red-500/30 backdrop-blur-sm">
                 <CardHeader>
