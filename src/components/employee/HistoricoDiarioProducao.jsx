@@ -110,10 +110,6 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
           ) : (
             <div className="space-y-3">
               {dailyHistory.map((entry, index) => {
-                const dailyAchievementPercentage = dailyProjectedGoal > 0 
-                  ? (entry.total_revenue / dailyProjectedGoal) * 100 
-                  : 0;
-                const metaDayAchieved = dailyAchievementPercentage >= 100;
                 const isExpanded = expandedRecords[index];
 
                 return (
