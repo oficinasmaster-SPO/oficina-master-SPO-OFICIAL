@@ -7,13 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Save, Plus, Trash2, Target, DollarSign, Percent, Award, Edit } from "lucide-react";
-import ResumoPrincipal from "./ResumoPrincipal";
 
 export default function RemuneracaoProducao({ employee, onUpdate }) {
   const [editing, setEditing] = useState(false);
   const [editingBestMonth, setEditingBestMonth] = useState(false);
   const [metrics, setMetrics] = useState([]);
-  const { bestMonthData, monthlyGoalsData, monthlyHistoryData, updateBestMonth } = useEmployeeMetrics(employee);
+  const { bestMonthData, updateBestMonth } = useEmployeeMetrics(employee);
   const [localBestMonth, setLocalBestMonth] = useState(null);
   
   const [formData, setFormData] = useState({
@@ -171,14 +170,6 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
 
   return (
     <div className="space-y-6">
-      {/* Resumo Principal - Valores Sempre Visíveis */}
-      <ResumoPrincipal 
-        employee={employee} 
-        monthlyGoalsData={monthlyGoalsData}
-        bestMonthData={bestMonthData}
-        monthlyHistoryData={monthlyHistoryData}
-      />
-
       {/* Melhor Mês Histórico - Card Editável */}
       <Card className="shadow-xl border-2 border-yellow-400 bg-gradient-to-r from-yellow-50 to-amber-50">
         <CardHeader>
