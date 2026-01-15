@@ -17,6 +17,8 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
   const [editingIndex, setEditingIndex] = useState(null);
   const [editingGoal, setEditingGoal] = useState(false);
   const [expandedRecords, setExpandedRecords] = useState({});
+  const [dailyHistoryFromDB, setDailyHistoryFromDB] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [goalFormData, setGoalFormData] = useState({
     individual_goal: 0,
     growth_percentage: 10
@@ -49,12 +51,60 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
     observacoes: ""
   });
 
-  const dailyHistory = employee.daily_production_history || [];
+  const dailyHistory = dailyHistoryFromDB.length > 0 ? dailyHistoryFromDB : (employee.daily_production_history || []);
   
   // Cálculo de metas
   const monthlyProjectedGoal = employee.monthly_goals?.individual_goal || 0;
   const dailyProjectedGoal = employee.monthly_goals?.daily_projected_goal || (monthlyProjectedGoal / 22);
   const actualRevenueAchieved = employee.monthly_goals?.actual_revenue_achieved || 0;
+
+  // Carregar histórico da base de dados
+  React.useEffect(() => {
+    loadDailyHistory();
+  }, [employee.id]);
+
+  const loadDailyHistory = async () => {
+    try {
+      setLoading(true);
+      const currentMonth = new Date().toISOString().substring(0, 7);
+      const records = await base44.entities.MonthlyGoalHistory.filter({
+        workshop_id: employee.workshop_id,
+        employee_id: employee.id,
+        month: currentMonth
+      });
+
+      if (records && records.length > 0) {
+        // Converter registros do banco para formato do histórico diário
+        const formattedHistory = records.map(record => ({
+          date: record.reference_date,
+          parts_revenue: record.revenue_parts || 0,
+          services_revenue: record.revenue_services || 0,
+          total_revenue: record.revenue_total || 0,
+          notes: record.notes || "",
+          area_data: {
+            clientes_agendados_base: record.clients_scheduled_base || 0,
+            clientes_entregues_base: record.clients_delivered_base || 0,
+            clientes_agendados_marketing: record.clients_scheduled_mkt || 0,
+            clientes_entregues_marketing: record.clients_delivered_mkt || 0,
+            vendas_leads_marketing: record.sales_marketing || 0,
+            leads_gerados: record.marketing_data?.leads_generated || 0,
+            leads_agendados: record.marketing_data?.leads_scheduled || 0,
+            leads_compareceram: record.marketing_data?.leads_showed_up || 0,
+            leads_vendidos: record.marketing_data?.leads_sold || 0,
+            valor_investido_trafego: record.marketing_data?.invested_value || 0,
+            valor_faturado_leads: record.marketing_data?.revenue_from_traffic || 0,
+            custo_por_venda: record.marketing_data?.cost_per_sale || 0
+          }
+        }));
+        
+        setDailyHistoryFromDB(formattedHistory.sort((a, b) => new Date(b.date) - new Date(a.date)));
+      }
+    } catch (error) {
+      console.error("Erro ao carregar histórico:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Inicializar dados da meta quando o employee mudar
   React.useEffect(() => {
@@ -177,6 +227,7 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
     }
 
     toast.success(editingIndex !== null ? "Registro atualizado e metas alimentadas!" : "Registro adicionado e metas alimentadas!");
+    await loadDailyHistory();
     resetForm();
   };
 
@@ -255,6 +306,7 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
     }
 
     toast.success("Registro excluído e metas atualizadas!");
+    await loadDailyHistory();
   };
 
   const resetForm = () => {
@@ -666,7 +718,12 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
           )}
 
           {/* Lista de Registros */}
-          {dailyHistory.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-gray-500">Carregando histórico...</p>
+            </div>
+          ) : dailyHistory.length === 0 ? (
             <div className="text-center py-12">
               <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-500">Nenhum registro diário encontrado</p>
