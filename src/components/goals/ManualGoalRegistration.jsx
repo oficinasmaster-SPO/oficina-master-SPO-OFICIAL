@@ -2029,54 +2029,15 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Seleção de Entidade */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Entidade</Label>
-              <Select value={entityType} onValueChange={setEntityType}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="workshop">
-                    <div className="flex items-center gap-2">
-                      <Building2 className="w-4 h-4" />
-                      Oficina (Geral)
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="employee">
-                    <div className="flex items-center gap-2">
-                      <User className="w-4 h-4" />
-                      Colaborador
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {entityType === "employee" && (
+          {/* Entidade fixa: Oficina */}
+          <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+            <div className="flex items-center gap-2">
+              <Building2 className="w-5 h-5 text-blue-600" />
               <div>
-                <Label>Selecionar Colaborador</Label>
-                <Select 
-                  value={selectedEmployee?.id} 
-                  onValueChange={(id) => {
-                    const emp = employees.find(e => e.id === id);
-                    setSelectedEmployee(emp);
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Escolha um colaborador..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {employees.map(emp => (
-                      <SelectItem key={emp.id} value={emp.id}>
-                        {emp.full_name} - {emp.position}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <p className="text-sm font-semibold text-gray-900">{workshop?.name || 'Oficina'}</p>
+                <p className="text-xs text-gray-600">Registro para a oficina (distribuição feita em "Salvar e Distribuir")</p>
               </div>
-            )}
+            </div>
           </div>
 
           {/* Data e Período */}
