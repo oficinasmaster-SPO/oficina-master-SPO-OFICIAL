@@ -25,7 +25,7 @@ export default function HistoricoMetas() {
   const [filterEmployee, setFilterEmployee] = useState(null);
   const [filterMonth, setFilterMonth] = useState(new Date().toISOString().substring(0, 7));
   const [expandedCards, setExpandedCards] = useState({});
-  const [showAllRecords, setShowAllRecords] = useState(true);
+  const [showAllRecords, setShowAllRecords] = useState(true); // Sempre mostrar todos por padrão
   const queryClient = useQueryClient();
   const [isAdminView, setIsAdminView] = useState(false);
   const location = useLocation();
@@ -78,9 +78,8 @@ export default function HistoricoMetas() {
       
       if (filterType === "employee" && filterEmployee) {
         query.employee_id = filterEmployee;
-      } else if (filterType === "workshop") {
-        query.entity_type = "workshop";
       }
+      // Se filtro é "workshop", busca TODOS os registros da oficina (não filtra por entity_type)
 
       if (filterMonth) {
         query.month = filterMonth;

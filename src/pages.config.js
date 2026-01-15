@@ -103,7 +103,6 @@ import Historico from './pages/Historico';
 import HistoricoDISC from './pages/HistoricoDISC';
 import HistoricoDesempenho from './pages/HistoricoDesempenho';
 import HistoricoMaturidade from './pages/HistoricoMaturidade';
-import HistoricoMetas from './pages/HistoricoMetas';
 import Home from './pages/Home';
 import IAAnalytics from './pages/IAAnalytics';
 import Integracoes from './pages/Integracoes';
@@ -168,6 +167,7 @@ import TesteOpenAI from './pages/TesteOpenAI';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
+import HistoricoMetas from './pages/HistoricoMetas';
 import __Layout from './Layout.jsx';
 
 
@@ -277,7 +277,6 @@ export const PAGES = {
     "HistoricoDISC": HistoricoDISC,
     "HistoricoDesempenho": HistoricoDesempenho,
     "HistoricoMaturidade": HistoricoMaturidade,
-    "HistoricoMetas": HistoricoMetas,
     "Home": Home,
     "IAAnalytics": IAAnalytics,
     "Integracoes": Integracoes,
@@ -342,6 +341,7 @@ export const PAGES = {
     "TreinamentoVendas": TreinamentoVendas,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
+    "HistoricoMetas": HistoricoMetas,
 }
 
 export const pagesConfig = {
