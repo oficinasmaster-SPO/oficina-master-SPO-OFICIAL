@@ -88,18 +88,26 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
   };
 
   const handleSaveBestMonth = async () => {
-    // Salvar com os tickets médios calculados automaticamente
-    const dataToSave = {
-      ...localBestMonth,
-      average_ticket: calculatedAverageTicket,
-      average_ticket_parts: calculatedAverageTicketParts,
-      average_ticket_services: calculatedAverageTicketServices
-    };
-    
-    const success = await updateBestMonth(dataToSave);
-    if (success) {
-      await onUpdate({ best_month_history: dataToSave });
-      setEditingBestMonth(false);
+    try {
+      // Salvar com os tickets médios calculados automaticamente
+      const dataToSave = {
+        ...localBestMonth,
+        average_ticket: calculatedAverageTicket,
+        average_ticket_parts: calculatedAverageTicketParts,
+        average_ticket_services: calculatedAverageTicketServices
+      };
+      
+      const success = await updateBestMonth(dataToSave);
+      if (success) {
+        if (onUpdate) {
+          await onUpdate({ best_month_history: dataToSave });
+        }
+        setEditingBestMonth(false);
+      } else {
+        console.error("Falha ao salvar melhor mês");
+      }
+    } catch (error) {
+      console.error("Erro ao salvar melhor mês:", error);
     }
   };
 
