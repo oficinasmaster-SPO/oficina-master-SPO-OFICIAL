@@ -112,11 +112,15 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
     const currentGoal = employee.monthly_goals?.individual_goal || 0;
     const growthPct = employee.monthly_goals?.growth_percentage || 10;
     
+    // Sempre atualizar, mesmo que setEditingGoal seja false
     setGoalFormData({
       individual_goal: currentGoal > 0 ? currentGoal : bestMonthRevenue * 1.1,
       growth_percentage: growthPct
     });
-  }, [employee]);
+    
+    // Se employee mudou e temos best_month_history, sair do modo edição
+    setEditingGoal(false);
+  }, [employee.id, employee.best_month_history?.revenue_total, employee.monthly_goals?.individual_goal]);
 
   const handleSubmit = async () => {
     // Calcula faturamento baseado na área/função do colaborador
