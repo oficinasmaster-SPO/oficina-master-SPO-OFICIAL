@@ -30,7 +30,8 @@ export default function DadosPessoais({ employee, onUpdate }) {
     endereco: employee.endereco || {},
     profile_picture_url: employee.profile_picture_url || "",
     digital_signature_url: employee.digital_signature_url || "",
-    shift_settings: employee.shift_settings || { lunch_start: "", lunch_end: "", work_start: "", work_end: "" }
+    shift_settings: employee.shift_settings || { lunch_start: "", lunch_end: "", work_start: "", work_end: "" },
+    best_month_history: employee.best_month_history || { date: "", revenue_total: 0 }
   });
 
   const handleSave = async () => {
@@ -345,6 +346,33 @@ export default function DadosPessoais({ employee, onUpdate }) {
                 onChange={(e) => setFormData({...formData, shift_settings: {...formData.shift_settings, work_end: e.target.value}})}
                 disabled={!editing}
               />
+            </div>
+          </div>
+        </div>
+
+        <div className="pt-4 border-t">
+          <h3 className="font-semibold text-gray-900 mb-3">Melhor Mês Histórico (Referência para Metas)</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div>
+              <Label>Mês de Referência</Label>
+              <Input
+                type="month"
+                value={formData.best_month_history?.date || ""}
+                onChange={(e) => setFormData({...formData, best_month_history: {...formData.best_month_history, date: e.target.value}})}
+                disabled={!editing}
+              />
+              <p className="text-xs text-gray-500 mt-1">Selecione o mês do melhor desempenho</p>
+            </div>
+            <div>
+              <Label>Faturamento Total (R$)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={formData.best_month_history?.revenue_total || 0}
+                onChange={(e) => setFormData({...formData, best_month_history: {...formData.best_month_history, revenue_total: parseFloat(e.target.value) || 0}})}
+                disabled={!editing}
+              />
+              <p className="text-xs text-gray-500 mt-1">Faturamento total do melhor mês</p>
             </div>
           </div>
         </div>
