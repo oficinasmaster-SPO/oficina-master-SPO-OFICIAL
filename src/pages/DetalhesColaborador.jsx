@@ -21,6 +21,7 @@ import ContratoTrabalho from "../components/employee/ContratoTrabalho";
 import AI_PDI_Generator from "../components/rh/AI_PDI_Generator";
 import EmployeeGoals from "../components/employee/EmployeeGoals";
 import PermissoesColaborador from "../components/employee/PermissoesColaborador";
+import PainelProducao from "../components/employee/PainelProducao";
 
 export default function DetalhesColaborador() {
   const navigate = useNavigate();
@@ -218,7 +219,10 @@ export default function DetalhesColaborador() {
           </TabsContent>
 
           <TabsContent value="remuneracao">
-            <RemuneracaoProducao employee={employee} onUpdate={handleUpdate} />
+            <PainelProducao employee={employee} />
+            <div className="mt-6">
+              <RemuneracaoProducao employee={employee} onUpdate={handleUpdate} />
+            </div>
             <div className="mt-6">
               <HistoricoDiarioProducao employee={employee} onUpdate={handleUpdate} />
             </div>
