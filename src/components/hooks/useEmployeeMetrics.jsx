@@ -84,12 +84,14 @@ export const useEmployeeMetrics = (employee) => {
         best_month_history: data
       });
       setBestMonthData(data);
+      // Recarregar para garantir sincronismo com o banco
+      await loadMetrics();
       return true;
     } catch (error) {
       console.error("Erro ao atualizar melhor mês:", error);
       return false;
     }
-  }, [employee.id]);
+  }, [employee.id, loadMetrics]);
 
   // Atualizar metas mensais (sincroniza com Employee)
   const updateMonthlyGoals = useCallback(async (data) => {
