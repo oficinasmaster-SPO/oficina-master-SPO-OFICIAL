@@ -18,6 +18,8 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
   const [tcmp2Value, setTcmp2Value] = useState(0);
   const [showDistribution, setShowDistribution] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [checkingExisting, setCheckingExisting] = useState(false);
+  const [loadedFromExisting, setLoadedFromExisting] = useState(false);
   const [formData, setFormData] = useState({
     reference_date: new Date().toISOString().split('T')[0],
     month: new Date().toISOString().substring(0, 7),
