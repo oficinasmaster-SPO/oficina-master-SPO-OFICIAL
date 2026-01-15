@@ -12,6 +12,24 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { ArrowLeft, TrendingUp, DollarSign, Users, Target, ShoppingCart, Calendar } from "lucide-react";
 import { formatCurrency } from "@/components/utils/formatters";
 
+// Função para calcular dias úteis do mês
+const calcularDiasUteis = (mesAno) => {
+  const [ano, mes] = mesAno.split('-').map(Number);
+  const primeiroDia = new Date(ano, mes - 1, 1);
+  const ultimoDia = new Date(ano, mes, 0);
+  let diasUteis = 0;
+
+  for (let dia = primeiroDia.getDate(); dia <= ultimoDia.getDate(); dia++) {
+    const data = new Date(ano, mes - 1, dia);
+    const diaSemana = data.getDay();
+    // Contar apenas segunda a sexta (1-5), excluindo sábado (6) e domingo (0)
+    if (diaSemana >= 1 && diaSemana <= 5) {
+      diasUteis++;
+    }
+  }
+  return diasUteis;
+};
+
 export default function GraficosProducao() {
   const navigate = useNavigate();
   const [workshop, setWorkshop] = useState(null);
@@ -56,45 +74,87 @@ export default function GraficosProducao() {
     staleTime: 0
   });
 
+  // Calcular dias úteis do mês filtrado e metas diárias
+  const diasUteis = calcularDiasUteis(filterMonth);
+  const bestMonth = workshop?.best_month_history || {};
+  const growthPercentage = workshop?.monthly_goals?.growth_percentage || 10;
+  const factor = 1 + growthPercentage / 100;
+
+  // Calcular metas DIÁRIAS dividindo pelo número de dias úteis
+  const metaDiaria = {
+    faturamento_total: ((bestMonth.revenue_total || 0) * factor) / diasUteis,
+    clientes: Math.round(((bestMonth.customer_volume || 0) * factor) / diasUteis),
+    pave: ((bestMonth.pave_commercial || 0) * factor) / diasUteis,
+    kit_master: ((bestMonth.kit_master || 0) * factor) / diasUteis,
+    gps: ((bestMonth.gps_vendas || 0) * factor) / diasUteis,
+    sales_base: ((bestMonth.sales_base || 0) * factor) / diasUteis,
+    sales_mkt: ((bestMonth.sales_marketing || 0) * factor) / diasUteis,
+    agendados_base: Math.round(((bestMonth.clients_scheduled_base || 0) * factor) / diasUteis),
+    entregues_base: Math.round(((bestMonth.clients_delivered_base || 0) * factor) / diasUteis),
+    agendados_mkt: Math.round(((bestMonth.clients_scheduled_mkt || 0) * factor) / diasUteis),
+    entregues_mkt: Math.round(((bestMonth.clients_delivered_mkt || 0) * factor) / diasUteis),
+    agendados_referral: Math.round(((bestMonth.clients_scheduled_referral || 0) * factor) / diasUteis),
+    entregues_referral: Math.round(((bestMonth.clients_delivered_referral || 0) * factor) / diasUteis),
+    leads_gerados: Math.round(((bestMonth.marketing?.leads_generated || 0) * factor) / diasUteis),
+    leads_agendados: Math.round(((bestMonth.marketing?.leads_scheduled || 0) * factor) / diasUteis),
+    leads_comparecidos: Math.round(((bestMonth.marketing?.leads_showed_up || 0) * factor) / diasUteis),
+    leads_vendidos: Math.round(((bestMonth.marketing?.leads_sold || 0) * factor) / diasUteis),
+    investido_trafego: ((bestMonth.marketing?.invested_value || 0) * factor) / diasUteis,
+    faturado_lead: ((bestMonth.marketing?.revenue_from_traffic || 0) * factor) / diasUteis,
+    custo_venda: ((bestMonth.marketing?.cost_per_sale || 0) * factor) / diasUteis,
+  };
+
   const chartData = records.map((record) => ({
     date: new Date(record.reference_date).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
     // Faturamento
     faturamento_total: (record.revenue_parts || 0) + (record.revenue_services || 0),
     faturamento_pecas: record.revenue_parts || 0,
     faturamento_servicos: record.revenue_services || 0,
-    projected_revenue: record.projected_total || 0,
+    meta_diaria_faturamento: metaDiaria.faturamento_total,
     // Clientes
     clientes: record.customer_volume || 0,
-    projected_clientes: record.projected_customer_volume || 0,
+    meta_diaria_clientes: metaDiaria.clientes,
     // PAVE
     pave_realizado: record.pave_commercial || 0,
-    pave_previsto: record.projected_pave_commercial || 0,
+    meta_diaria_pave: metaDiaria.pave,
     // Kit Master
     kit_master_realizado: record.kit_master || 0,
-    kit_master_previsto: record.projected_kit_master || 0,
+    meta_diaria_kit_master: metaDiaria.kit_master,
     // GPS
     gps_realizado: record.gps_vendas || 0,
-    gps_previsto: record.projected_gps_vendas || 0,
+    meta_diaria_gps: metaDiaria.gps,
     // Agendamentos e Entregas
     agendados_base: record.clients_scheduled_base || 0,
+    meta_diaria_agendados_base: metaDiaria.agendados_base,
     entregues_base: record.clients_delivered_base || 0,
+    meta_diaria_entregues_base: metaDiaria.entregues_base,
     vendas_base: record.sales_base || 0,
-    projected_sales_base: record.projected_sales_base || 0,
+    meta_diaria_vendas_base: metaDiaria.sales_base,
     agendados_mkt: record.clients_scheduled_mkt || 0,
+    meta_diaria_agendados_mkt: metaDiaria.agendados_mkt,
     entregues_mkt: record.clients_delivered_mkt || 0,
+    meta_diaria_entregues_mkt: metaDiaria.entregues_mkt,
     vendas_mkt: record.sales_marketing || 0,
-    projected_sales_mkt: record.projected_sales_marketing || 0,
+    meta_diaria_vendas_mkt: metaDiaria.sales_mkt,
     agendados_referral: record.clients_scheduled_referral || 0,
+    meta_diaria_agendados_referral: metaDiaria.agendados_referral,
     entregues_referral: record.clients_delivered_referral || 0,
+    meta_diaria_entregues_referral: metaDiaria.entregues_referral,
     // Marketing
     leads_gerados: record.marketing_data?.leads_generated || 0,
+    meta_diaria_leads_gerados: metaDiaria.leads_gerados,
     leads_agendados: record.marketing_data?.leads_scheduled || 0,
+    meta_diaria_leads_agendados: metaDiaria.leads_agendados,
     leads_comparecidos: record.marketing_data?.leads_showed_up || 0,
+    meta_diaria_leads_comparecidos: metaDiaria.leads_comparecidos,
     leads_vendidos: record.marketing_data?.leads_sold || 0,
+    meta_diaria_leads_vendidos: metaDiaria.leads_vendidos,
     investido_trafego: record.marketing_data?.invested_value || 0,
+    meta_diaria_investido_trafego: metaDiaria.investido_trafego,
     faturado_lead: record.marketing_data?.revenue_from_traffic || 0,
+    meta_diaria_faturado_lead: metaDiaria.faturado_lead,
     custo_venda_realizado: record.marketing_data?.cost_per_sale || 0,
-    custo_venda_previsto: record.marketing_data?.projected_cost_per_sale || 0,
+    meta_diaria_custo_venda: metaDiaria.custo_venda,
   }));
 
   const CustomTooltip = ({ active, payload, label }) => {
@@ -214,7 +274,7 @@ export default function GraficosProducao() {
                       <Line type="monotone" dataKey="faturamento_total" stroke="#10b981" strokeWidth={3} name="Fat. Total" dot={{ fill: '#10b981', r: 4 }} activeDot={{ r: 6, fill: '#10b981', stroke: '#fff', strokeWidth: 2 }} />
                       <Line type="monotone" dataKey="faturamento_pecas" stroke="#3b82f6" strokeWidth={2} name="Fat. Peças" dot={{ fill: '#3b82f6', r: 3 }} />
                       <Line type="monotone" dataKey="faturamento_servicos" stroke="#a855f7" strokeWidth={2} name="Fat. Serviços" dot={{ fill: '#a855f7', r: 3 }} />
-                      <Line type="monotone" dataKey="projected_revenue" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" name="Previsto" dot={{ fill: '#f59e0b', r: 3 }} />
+                      <Line type="monotone" dataKey="meta_diaria_faturamento" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" name="Meta Diária" dot={{ fill: '#f59e0b', r: 3 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -236,7 +296,7 @@ export default function GraficosProducao() {
                       <Tooltip content={<CustomTooltip />} />
                       <Legend wrapperStyle={{ color: '#60a5fa' }} />
                       <Line type="monotone" dataKey="clientes" stroke="#10b981" strokeWidth={3} name="Clientes Realizado" dot={{ fill: '#10b981', r: 4 }} activeDot={{ r: 6, fill: '#10b981', stroke: '#fff', strokeWidth: 2 }} />
-                      <Line type="monotone" dataKey="projected_clientes" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" name="Clientes Previsto" dot={{ fill: '#f59e0b', r: 3 }} />
+                      <Line type="monotone" dataKey="meta_diaria_clientes" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" name="Meta Diária" dot={{ fill: '#f59e0b', r: 3 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -261,7 +321,7 @@ export default function GraficosProducao() {
                       <Tooltip content={<CustomTooltip />} />
                       <Legend wrapperStyle={{ color: '#60a5fa' }} />
                       <Line type="monotone" dataKey="pave_realizado" stroke="#a855f7" strokeWidth={3} name="PAVE Realizado" dot={{ fill: '#a855f7', r: 4 }} activeDot={{ r: 6, fill: '#a855f7', stroke: '#fff', strokeWidth: 2 }} />
-                      <Line type="monotone" dataKey="pave_previsto" stroke="#ec4899" strokeWidth={2} strokeDasharray="5 5" name="PAVE Previsto" dot={{ fill: '#ec4899', r: 3 }} />
+                      <Line type="monotone" dataKey="meta_diaria_pave" stroke="#ec4899" strokeWidth={2} strokeDasharray="5 5" name="Meta Diária" dot={{ fill: '#ec4899', r: 3 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -283,7 +343,7 @@ export default function GraficosProducao() {
                       <Tooltip content={<CustomTooltip />} />
                       <Legend wrapperStyle={{ color: '#60a5fa' }} />
                       <Line type="monotone" dataKey="kit_master_realizado" stroke="#fbbf24" strokeWidth={3} name="Kit Master Realizado" dot={{ fill: '#fbbf24', r: 4 }} activeDot={{ r: 6, fill: '#fbbf24', stroke: '#fff', strokeWidth: 2 }} />
-                      <Line type="monotone" dataKey="kit_master_previsto" stroke="#f97316" strokeWidth={2} strokeDasharray="5 5" name="Kit Master Previsto" dot={{ fill: '#f97316', r: 3 }} />
+                      <Line type="monotone" dataKey="meta_diaria_kit_master" stroke="#f97316" strokeWidth={2} strokeDasharray="5 5" name="Meta Diária" dot={{ fill: '#f97316', r: 3 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -308,7 +368,7 @@ export default function GraficosProducao() {
                       <Tooltip content={<CustomTooltip />} />
                       <Legend wrapperStyle={{ color: '#60a5fa' }} />
                       <Line type="monotone" dataKey="gps_realizado" stroke="#22d3ee" strokeWidth={3} name="GPS Realizado" dot={{ fill: '#22d3ee', r: 4 }} activeDot={{ r: 6, fill: '#22d3ee', stroke: '#fff', strokeWidth: 2 }} />
-                      <Line type="monotone" dataKey="gps_previsto" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" name="GPS Previsto" dot={{ fill: '#f59e0b', r: 3 }} />
+                      <Line type="monotone" dataKey="meta_diaria_gps" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" name="Meta Diária" dot={{ fill: '#f59e0b', r: 3 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -327,9 +387,9 @@ export default function GraficosProducao() {
                       <Tooltip content={<CustomTooltip />} />
                       <Legend wrapperStyle={{ color: '#60a5fa' }} />
                       <Line type="monotone" dataKey="vendas_base" stroke="#10b981" strokeWidth={2} name="Vendas Base R$" dot={{ fill: '#10b981', r: 3 }} />
-                      <Line type="monotone" dataKey="projected_sales_base" stroke="#3b82f6" strokeWidth={2} strokeDasharray="5 5" name="Previsto Base" dot={{ fill: '#3b82f6', r: 3 }} />
+                      <Line type="monotone" dataKey="meta_diaria_vendas_base" stroke="#3b82f6" strokeWidth={2} strokeDasharray="5 5" name="Meta Diária Base" dot={{ fill: '#3b82f6', r: 3 }} />
                       <Line type="monotone" dataKey="vendas_mkt" stroke="#ec4899" strokeWidth={2} name="Vendas Marketing R$" dot={{ fill: '#ec4899', r: 3 }} />
-                      <Line type="monotone" dataKey="projected_sales_mkt" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" name="Previsto Mkt" dot={{ fill: '#f59e0b', r: 3 }} />
+                      <Line type="monotone" dataKey="meta_diaria_vendas_mkt" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" name="Meta Diária Mkt" dot={{ fill: '#f59e0b', r: 3 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -351,8 +411,11 @@ export default function GraficosProducao() {
                       <Tooltip content={<CustomTooltip />} />
                       <Legend wrapperStyle={{ color: '#60a5fa' }} />
                       <Line type="monotone" dataKey="agendados_base" stroke="#3b82f6" strokeWidth={2} name="Agendados Base" dot={{ fill: '#3b82f6', r: 3 }} />
+                      <Line type="monotone" dataKey="meta_diaria_agendados_base" stroke="#60a5fa" strokeWidth={2} strokeDasharray="5 5" name="Meta Diária Base" dot={{ fill: '#60a5fa', r: 2 }} />
                       <Line type="monotone" dataKey="agendados_mkt" stroke="#ec4899" strokeWidth={2} name="Agendados Marketing" dot={{ fill: '#ec4899', r: 3 }} />
+                      <Line type="monotone" dataKey="meta_diaria_agendados_mkt" stroke="#f9a8d4" strokeWidth={2} strokeDasharray="5 5" name="Meta Diária Mkt" dot={{ fill: '#f9a8d4', r: 2 }} />
                       <Line type="monotone" dataKey="agendados_referral" stroke="#f97316" strokeWidth={2} name="Agendados Indicação" dot={{ fill: '#f97316', r: 3 }} />
+                      <Line type="monotone" dataKey="meta_diaria_agendados_referral" stroke="#fb923c" strokeWidth={2} strokeDasharray="5 5" name="Meta Diária Indic." dot={{ fill: '#fb923c', r: 2 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -371,8 +434,11 @@ export default function GraficosProducao() {
                       <Tooltip content={<CustomTooltip />} />
                       <Legend wrapperStyle={{ color: '#60a5fa' }} />
                       <Line type="monotone" dataKey="entregues_base" stroke="#10b981" strokeWidth={2} name="Entregues Base" dot={{ fill: '#10b981', r: 3 }} />
+                      <Line type="monotone" dataKey="meta_diaria_entregues_base" stroke="#34d399" strokeWidth={2} strokeDasharray="5 5" name="Meta Diária Base" dot={{ fill: '#34d399', r: 2 }} />
                       <Line type="monotone" dataKey="entregues_mkt" stroke="#a855f7" strokeWidth={2} name="Entregues Marketing" dot={{ fill: '#a855f7', r: 3 }} />
+                      <Line type="monotone" dataKey="meta_diaria_entregues_mkt" stroke="#c084fc" strokeWidth={2} strokeDasharray="5 5" name="Meta Diária Mkt" dot={{ fill: '#c084fc', r: 2 }} />
                       <Line type="monotone" dataKey="entregues_referral" stroke="#fbbf24" strokeWidth={2} name="Entregues Indicação" dot={{ fill: '#fbbf24', r: 3 }} />
+                      <Line type="monotone" dataKey="meta_diaria_entregues_referral" stroke="#fcd34d" strokeWidth={2} strokeDasharray="5 5" name="Meta Diária Indic." dot={{ fill: '#fcd34d', r: 2 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -394,9 +460,13 @@ export default function GraficosProducao() {
                       <Tooltip content={<CustomTooltip />} />
                       <Legend wrapperStyle={{ color: '#60a5fa' }} />
                       <Line type="monotone" dataKey="leads_gerados" stroke="#3b82f6" strokeWidth={2} name="Leads Gerados" dot={{ fill: '#3b82f6', r: 3 }} />
+                      <Line type="monotone" dataKey="meta_diaria_leads_gerados" stroke="#60a5fa" strokeWidth={2} strokeDasharray="5 5" name="Meta Diária Gerados" dot={{ fill: '#60a5fa', r: 2 }} />
                       <Line type="monotone" dataKey="leads_agendados" stroke="#a855f7" strokeWidth={2} name="Leads Agendados" dot={{ fill: '#a855f7', r: 3 }} />
+                      <Line type="monotone" dataKey="meta_diaria_leads_agendados" stroke="#c084fc" strokeWidth={2} strokeDasharray="5 5" name="Meta Diária Agendados" dot={{ fill: '#c084fc', r: 2 }} />
                       <Line type="monotone" dataKey="leads_comparecidos" stroke="#ec4899" strokeWidth={2} name="Comparecidos" dot={{ fill: '#ec4899', r: 3 }} />
+                      <Line type="monotone" dataKey="meta_diaria_leads_comparecidos" stroke="#f9a8d4" strokeWidth={2} strokeDasharray="5 5" name="Meta Diária Comparec." dot={{ fill: '#f9a8d4', r: 2 }} />
                       <Line type="monotone" dataKey="leads_vendidos" stroke="#10b981" strokeWidth={2} name="Leads Vendidos" dot={{ fill: '#10b981', r: 3 }} />
+                      <Line type="monotone" dataKey="meta_diaria_leads_vendidos" stroke="#34d399" strokeWidth={2} strokeDasharray="5 5" name="Meta Diária Vendidos" dot={{ fill: '#34d399', r: 2 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -415,7 +485,9 @@ export default function GraficosProducao() {
                       <Tooltip content={<CustomTooltip />} />
                       <Legend wrapperStyle={{ color: '#60a5fa' }} />
                       <Line type="monotone" dataKey="investido_trafego" stroke="#ef4444" strokeWidth={2} name="Investido Tráfego R$" dot={{ fill: '#ef4444', r: 3 }} />
+                      <Line type="monotone" dataKey="meta_diaria_investido_trafego" stroke="#f87171" strokeWidth={2} strokeDasharray="5 5" name="Meta Diária Invest." dot={{ fill: '#f87171', r: 2 }} />
                       <Line type="monotone" dataKey="faturado_lead" stroke="#10b981" strokeWidth={2} name="Faturado Lead R$" dot={{ fill: '#10b981', r: 3 }} />
+                      <Line type="monotone" dataKey="meta_diaria_faturado_lead" stroke="#34d399" strokeWidth={2} strokeDasharray="5 5" name="Meta Diária Fatur." dot={{ fill: '#34d399', r: 2 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -434,7 +506,7 @@ export default function GraficosProducao() {
                       <Tooltip content={<CustomTooltip />} />
                       <Legend wrapperStyle={{ color: '#60a5fa' }} />
                       <Line type="monotone" dataKey="custo_venda_realizado" stroke="#10b981" strokeWidth={2} name="Custo Realizado" dot={{ fill: '#10b981', r: 3 }} />
-                      <Line type="monotone" dataKey="custo_venda_previsto" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" name="Custo Previsto" dot={{ fill: '#f59e0b', r: 3 }} />
+                      <Line type="monotone" dataKey="meta_diaria_custo_venda" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" name="Meta Diária" dot={{ fill: '#f59e0b', r: 3 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </CardContent>
