@@ -75,19 +75,21 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
 
   useEffect(() => {
     if (open) {
-      loadEmployees();
-      // Força reload do workshop para pegar melhor mês atualizado
-      if (workshop?.id) {
-        base44.entities.Workshop.get(workshop.id).then(updatedWorkshop => {
+      const initialize = async () => {
+        await loadEmployees();
+        // Força reload do workshop para pegar melhor mês atualizado
+        if (workshop?.id) {
+          const updatedWorkshop = await base44.entities.Workshop.get(workshop.id);
           setWorkshop(updatedWorkshop);
-        });
-      }
-      if (editingRecord) {
-        loadEditingData();
-      } else {
-        loadProjectedGoals();
-      }
-      loadTCMP2();
+        }
+        if (editingRecord) {
+          loadEditingData();
+        } else {
+          loadProjectedGoals();
+        }
+        loadTCMP2();
+      };
+      initialize();
     }
   }, [open, entityType, selectedEmployee, editingRecord]);
 
@@ -210,7 +212,11 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
         workshop_id: workshop.id,
         status: "ativo"
       });
-      setEmployees(result);
+      // Força reload individual para pegar melhor mês atualizado
+      const employeesWithUpdatedData = await Promise.all(
+        result.map(emp => base44.entities.Employee.get(emp.id))
+      );
+      setEmployees(employeesWithUpdatedData);
     } catch (error) {
       console.error("Error loading employees:", error);
     }

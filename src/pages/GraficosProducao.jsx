@@ -39,6 +39,11 @@ export default function GraficosProducao() {
     queryKey: ['goal-history-graficos', workshop?.id, filterMonth],
     queryFn: async () => {
       if (!workshop) return [];
+      
+      // Força reload do workshop para pegar melhor mês atualizado
+      const updatedWorkshop = await base44.entities.Workshop.get(workshop.id);
+      setWorkshop(updatedWorkshop);
+      
       const query = { 
         workshop_id: workshop.id,
         month: filterMonth
@@ -46,7 +51,9 @@ export default function GraficosProducao() {
       const result = await base44.entities.MonthlyGoalHistory.filter(query);
       return result.sort((a, b) => new Date(a.reference_date) - new Date(b.reference_date));
     },
-    enabled: !!workshop
+    enabled: !!workshop,
+    refetchOnWindowFocus: true,
+    staleTime: 0
   });
 
   const chartData = records.map((record) => ({
