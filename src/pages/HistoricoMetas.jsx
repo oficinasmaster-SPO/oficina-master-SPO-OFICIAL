@@ -605,38 +605,25 @@ export default function HistoricoMetas() {
                           </div>
                         </div>
 
-                        {/* Botões de Ação - Sempre visíveis */}
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => toggleCardExpansion(record.id)}
-                            className="text-gray-600 hover:text-gray-900"
-                          >
-                            {isExpanded ? (
-                              <>
-                                <X className="w-4 h-4 mr-1" />
-                                Fechar
-                              </>
-                            ) : (
-                              <>
-                                <Eye className="w-4 h-4 mr-1" />
-                                Ver Detalhes
-                              </>
-                            )}
-                          </Button>
-                          <Button
-                            size="sm"
-                            onClick={() => {
-                              setEditingRecord(record);
-                              setShowModal(true);
-                            }}
-                            className="bg-blue-600 hover:bg-blue-700"
-                          >
-                            <Activity className="w-4 h-4 mr-1" />
-                            Editar
-                          </Button>
-                        </div>
+                        {/* Botão Expandir - Sempre visível para permitir edição de dados de marketing */}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => toggleCardExpansion(record.id)}
+                          className="text-gray-600 hover:text-gray-900"
+                        >
+                          {isExpanded ? (
+                            <>
+                              <X className="w-4 h-4 mr-1" />
+                              Fechar
+                            </>
+                          ) : (
+                            <>
+                              <Target className="w-4 h-4 mr-1" />
+                              Detalhes
+                            </>
+                          )}
+                        </Button>
                       </div>
                     </div>
 
