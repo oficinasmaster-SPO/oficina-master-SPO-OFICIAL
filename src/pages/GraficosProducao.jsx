@@ -14,6 +14,7 @@ import { formatCurrency, formatNumber } from "@/components/utils/formatters";
 import StatusMetaBadge from "@/components/historico/StatusMetaBadge";
 import FeedbackMetaModal from "@/components/historico/FeedbackMetaModal";
 import GapFunnelIndicator from "@/components/graficos/GapFunnelIndicator";
+import TicketMedioAlert from "@/components/graficos/TicketMedioAlert";
 
 // Função para calcular dias úteis do mês
 const calcularDiasUteis = (mesAno) => {
@@ -487,11 +488,21 @@ export default function GraficosProducao() {
                   </CardContent>
                 </Card>
 
-                <GapFunnelIndicator
-                  metricName="Clientes"
-                  realizado={realizadoAcumulado.clientes}
-                  meta={metaAcumulada.clientes}
-                />
+                <div className="space-y-4">
+                  <GapFunnelIndicator
+                    metricName="Clientes"
+                    realizado={realizadoAcumulado.clientes}
+                    meta={metaAcumulada.clientes}
+                  />
+                  
+                  <TicketMedioAlert
+                    faturamentoRealizado={realizadoAcumulado.faturamento_total}
+                    clientesRealizados={realizadoAcumulado.clientes}
+                    faturamentoMeta={metaAcumulada.faturamento_total}
+                    clientesMeta={metaAcumulada.clientes}
+                    ticketMedioIdeal={bestMonth.average_ticket || 0}
+                  />
+                </div>
               </div>
             </TabsContent>
 
