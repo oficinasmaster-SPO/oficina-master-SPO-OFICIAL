@@ -20,6 +20,7 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
   const [isSaving, setIsSaving] = useState(false);
   const [checkingExisting, setCheckingExisting] = useState(false);
   const [loadedFromExisting, setLoadedFromExisting] = useState(false);
+  const [existingRecordId, setExistingRecordId] = useState(null);
   const [formData, setFormData] = useState({
     reference_date: new Date().toISOString().split('T')[0],
     month: new Date().toISOString().substring(0, 7),
@@ -88,9 +89,12 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
   }, [open, entityType, selectedEmployee, editingRecord]);
 
   const checkExistingRecord = async (date) => {
-    if (!date || !workshop || editingRecord) return;
+    if (!date || !workshop) return;
     
     setCheckingExisting(true);
+    setLoadedFromExisting(false);
+    setExistingRecordId(null);
+    
     try {
       const filters = {
         workshop_id: workshop.id,
@@ -106,17 +110,11 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
       
       if (existing && existing.length > 0) {
         const record = existing[0];
+        
         toast.warning(
-          "⚠️ Já existe registro para esta data! Carregando dados...",
+          "⚠️ Já existe registro para esta data! Carregando dados existentes...",
           { duration: 3000 }
         );
-        
-        setTimeout(() => {
-          toast.info(
-            "📝 Ao clicar em Salvar, você atualizará o registro existente!",
-            { duration: 5000 }
-          );
-        }, 500);
         
         setFormData({
           reference_date: record.reference_date?.split('T')[0] || date,
@@ -132,7 +130,15 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
           projected_sales_marketing: record.projected_sales_marketing || 0,
           projected_clients_delivered: record.projected_clients_delivered || 0,
           projected_gps_vendas: record.projected_gps_vendas || 0,
-          projected_marketing: record.projected_marketing || formData.projected_marketing,
+          projected_marketing: record.projected_marketing || {
+            leads_generated: 0,
+            leads_scheduled: 0,
+            leads_showed_up: 0,
+            leads_sold: 0,
+            cost_per_sale: 0,
+            invested_value: 0,
+            revenue_from_traffic: 0
+          },
           achieved_total: record.achieved_total || 0,
           revenue_parts: record.revenue_parts || 0,
           revenue_services: record.revenue_services || 0,
@@ -151,16 +157,34 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
           clients_delivered_mkt: record.clients_delivered_mkt || 0,
           clients_scheduled_referral: record.clients_scheduled_referral || 0,
           clients_delivered_referral: record.clients_delivered_referral || 0,
-          marketing_data: record.marketing_data || formData.marketing_data,
+          marketing_data: record.marketing_data || {
+            leads_generated: 0,
+            leads_scheduled: 0,
+            leads_showed_up: 0,
+            leads_sold: 0,
+            invested_value: 0,
+            revenue_from_traffic: 0
+          },
           rework_count: record.rework_count || 0,
           notes: record.notes || ""
         });
         
-        editingRecord = record;
+        setExistingRecordId(record.id);
         setLoadedFromExisting(true);
+        
+        setTimeout(() => {
+          toast.info(
+            "💡 Ao salvar, você ATUALIZARÁ este registro no banco de dados!",
+            { duration: 6000 }
+          );
+        }, 500);
+      } else {
+        setLoadedFromExisting(false);
+        setExistingRecordId(null);
       }
     } catch (error) {
       console.error("Error checking existing record:", error);
+      toast.error("Erro ao verificar registros existentes");
     } finally {
       setCheckingExisting(false);
     }
@@ -455,7 +479,6 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
         });
       }
 
-      toast.success(editingRecord ? "Registro atualizado!" : "Registro salvo com sucesso!");
       if (onSave) onSave();
       onClose();
     } catch (error) {
@@ -520,8 +543,9 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
         notes: formData.notes
       };
 
-      if (editingRecord) {
-        await base44.entities.MonthlyGoalHistory.update(editingRecord.id, recordData);
+      if (editingRecord || existingRecordId) {
+        const idToUpdate = editingRecord?.id || existingRecordId;
+        await base44.entities.MonthlyGoalHistory.update(idToUpdate, recordData);
       } else {
         await base44.entities.MonthlyGoalHistory.create(recordData);
       }
