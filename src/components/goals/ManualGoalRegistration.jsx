@@ -100,6 +100,8 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
     setExistingRecordId(null);
     
     try {
+      console.log("🔍 Checking existing record for:", { date, entityType, selectedEmployee: selectedEmployee?.full_name });
+      
       const filters = {
         workshop_id: workshop.id,
         reference_date: date,
@@ -110,7 +112,9 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
         filters.employee_id = selectedEmployee.id;
       }
       
+      console.log("🔍 Filters:", filters);
       const existing = await base44.entities.MonthlyGoalHistory.filter(filters);
+      console.log("📊 Found records:", existing?.length || 0, existing);
       
       if (existing && existing.length > 0) {
         const record = existing[0];
