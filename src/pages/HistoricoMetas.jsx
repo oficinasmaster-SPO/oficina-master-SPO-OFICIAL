@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useLocation } from "react-router-dom";
-import { Plus, Download, Target, TrendingUp, Award, AlertCircle, Building2, User, X, Activity, BarChart3, Calendar, DollarSign, CheckCircle2 } from "lucide-react";
+import { Plus, Download, Target, TrendingUp, Award, AlertCircle, Building2, User, X, Activity, BarChart3, Calendar, DollarSign, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { formatCurrency, formatNumber } from "../components/utils/formatters";
 import ManualGoalRegistration from "../components/goals/ManualGoalRegistration";
 import { toast } from "sonner";
@@ -25,6 +25,7 @@ export default function HistoricoMetas() {
   const [filterEmployee, setFilterEmployee] = useState(null);
   const [filterMonth, setFilterMonth] = useState(new Date().toISOString().substring(0, 7));
   const [expandedCards, setExpandedCards] = useState({});
+  const [showAllRecords, setShowAllRecords] = useState(true);
   const queryClient = useQueryClient();
   const [isAdminView, setIsAdminView] = useState(false);
   const location = useLocation();
@@ -224,6 +225,32 @@ export default function HistoricoMetas() {
                 onChange={(e) => setFilterMonth(e.target.value)}
                 className="max-w-xs"
               />
+              </div>
+
+              <div className="mt-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowAllRecords(!showAllRecords)}
+                  className="w-full"
+                >
+                  {showAllRecords ? (
+                    <>
+                      <EyeOff className="w-4 h-4 mr-2" />
+                      Ocultar registros sem faturamento
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="w-4 h-4 mr-2" />
+                      Mostrar todos os registros (incluindo sem faturamento)
+                    </>
+                  )}
+                </Button>
+                <p className="text-xs text-gray-500 mt-1">
+                  {showAllRecords 
+                    ? "Mostrando todos os registros, inclusive dias sem faturamento (para editar dados de marketing, agendamentos, etc.)" 
+                    : "Mostrando apenas dias com faturamento registrado"}
+                </p>
               </div>
               </CardContent>
               </Card>
@@ -480,7 +507,9 @@ export default function HistoricoMetas() {
               </CardContent>
             </Card>
           ) : (
-            goalHistory.map((record) => {
+            goalHistory
+              .filter(record => showAllRecords || (record.revenue_total > 0 || record.achieved_total > 0))
+              .map((record) => {
               const achievementPercentage = record.projected_total > 0 
                 ? (record.achieved_total / record.projected_total) * 100 
                 : 0;
@@ -488,9 +517,11 @@ export default function HistoricoMetas() {
               const employee = employees.find(e => e.id === record.employee_id);
               const isExpanded = expandedCards[record.id];
               const metaAchieved = achievementPercentage >= 100;
+              const hasFaturamento = (record.revenue_total > 0 || record.achieved_total > 0);
 
               return (
                 <Card key={record.id} className={`hover:shadow-lg transition-all ${
+                  !hasFaturamento ? 'border-l-4 border-gray-400 bg-gray-50/30' :
                   metaAchieved ? 'border-l-4 border-green-500 bg-green-50/30' : 'border-l-4 border-orange-400 bg-orange-50/30'
                 }`}>
                   <CardContent className="p-4">
@@ -527,15 +558,21 @@ export default function HistoricoMetas() {
 
                           {/* Indicador de Meta */}
                           <div className="flex items-center gap-2 mt-2">
-                            <div className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                              metaAchieved 
-                                ? 'bg-green-500 text-white' 
-                                : achievementPercentage >= 70 
-                                  ? 'bg-yellow-500 text-white'
-                                  : 'bg-red-500 text-white'
-                            }`}>
-                              {metaAchieved ? '✓ Meta Atingida' : `${achievementPercentage.toFixed(0)}% da meta`}
-                            </div>
+                            {!hasFaturamento ? (
+                              <div className="px-3 py-1 rounded-full text-xs font-semibold bg-gray-400 text-white">
+                                Sem Faturamento
+                              </div>
+                            ) : (
+                              <div className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                metaAchieved 
+                                  ? 'bg-green-500 text-white' 
+                                  : achievementPercentage >= 70 
+                                    ? 'bg-yellow-500 text-white'
+                                    : 'bg-red-500 text-white'
+                              }`}>
+                                {metaAchieved ? '✓ Meta Atingida' : `${achievementPercentage.toFixed(0)}% da meta`}
+                              </div>
+                            )}
                           </div>
                         </div>
 
