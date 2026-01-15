@@ -171,6 +171,14 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
 
   return (
     <div className="space-y-6">
+      {/* Resumo Principal - Valores Sempre Visíveis */}
+      <ResumoPrincipal 
+        employee={employee} 
+        monthlyGoalsData={monthlyGoalsData}
+        bestMonthData={bestMonthData}
+        monthlyHistoryData={monthlyHistoryData}
+      />
+
       {/* Melhor Mês Histórico - Card Editável */}
       <Card className="shadow-xl border-2 border-yellow-400 bg-gradient-to-r from-yellow-50 to-amber-50">
         <CardHeader>
