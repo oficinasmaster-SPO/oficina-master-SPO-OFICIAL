@@ -2,56 +2,20 @@ import React, { useState } from "react";
 import { useEmployeeMetrics } from "@/components/hooks/useEmployeeMetrics";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Plus, Calendar, DollarSign, Edit, Trash2, Save, X, Target, TrendingUp, Eye } from "lucide-react";
+import { Calendar, DollarSign, Edit, Trash2, Target, TrendingUp, Eye, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
-import RegistroComercial from "./RegistroComercial";
-import RegistroMarketing from "./RegistroMarketing";
-import RegistroTecnico from "./RegistroTecnico";
-import RegistroGenerico from "./RegistroGenerico";
+import ManualGoalRegistration from "@/components/goals/ManualGoalRegistration";
 
 export default function HistoricoDiarioProducao({ employee, onUpdate }) {
-  const [isAdding, setIsAdding] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
   const [editingGoal, setEditingGoal] = useState(false);
   const [expandedRecords, setExpandedRecords] = useState({});
   const [dailyHistoryFromDB, setDailyHistoryFromDB] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showManualRegistration, setShowManualRegistration] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(null);
   const { bestMonthData, monthlyGoalsData, updateMonthlyGoals } = useEmployeeMetrics(employee);
-  const [goalFormData, setGoalFormData] = useState({
-    individual_goal: 0,
-    growth_percentage: 10
-  });
-  const [formData, setFormData] = useState({
-    date: new Date().toISOString().split('T')[0],
-    parts_revenue: 0,
-    services_revenue: 0,
-    notes: "",
-    // Comercial
-    clientes_agendados_base: 0,
-    clientes_agendados_marketing: 0,
-    clientes_entregues_marketing: 0,
-    vendas_leads_marketing: 0,
-    // Marketing
-    leads_gerados: 0,
-    leads_agendados: 0,
-    leads_compareceram: 0,
-    leads_vendidos: 0,
-    valor_investido_trafego: 0,
-    valor_faturado_leads: 0,
-    // Técnico
-    faturamento_pecas: 0,
-    faturamento_servicos: 0,
-    qgp_aplicados: 0,
-    clientes_atendidos: 0,
-    // Genérico
-    atividades_concluidas: 0,
-    horas_trabalhadas: 0,
-    observacoes: ""
-  });
 
   const dailyHistory = dailyHistoryFromDB.length > 0 ? dailyHistoryFromDB : (employee.daily_production_history || []);
   
@@ -108,241 +72,30 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
     }
   };
 
-  // Inicializar dados da meta quando o employee mudar (sincronizado via hook)
+  // Sincronizar meta quando o employee mudar
   React.useEffect(() => {
-    const bestMonthRevenue = bestMonthData?.revenue_total || 0;
-    const currentGoal = monthlyGoalsData?.individual_goal || 0;
-    const growthPct = monthlyGoalsData?.growth_percentage || 10;
-    
-    // Sempre atualizar, mesmo que setEditingGoal seja false
-    setGoalFormData({
-      individual_goal: currentGoal > 0 ? currentGoal : bestMonthRevenue * 1.1,
-      growth_percentage: growthPct
-    });
-    
-    // Se employee mudou e temos best_month_history, sair do modo edição
     setEditingGoal(false);
-  }, [employee.id, bestMonthData?.revenue_total, monthlyGoalsData?.individual_goal]);
+  }, [employee.id]);
 
-  const handleSubmit = async () => {
-    // Calcula faturamento baseado na área/função do colaborador
-    let totalRevenue = 0;
-    
-    if (employee.area === 'tecnico') {
-      totalRevenue = parseFloat(formData.faturamento_pecas || 0) + parseFloat(formData.faturamento_servicos || 0);
-    } else if (employee.area === 'comercial' || employee.area === 'marketing') {
-      totalRevenue = parseFloat(formData.vendas_leads_marketing || 0) + parseFloat(formData.valor_faturado_leads || 0);
-    } else {
-      totalRevenue = parseFloat(formData.parts_revenue || 0) + parseFloat(formData.services_revenue || 0);
-    }
-    
-    const newEntry = {
-      date: formData.date,
-      parts_revenue: parseFloat(formData.parts_revenue) || 0,
-      services_revenue: parseFloat(formData.services_revenue) || 0,
-      total_revenue: totalRevenue,
-      notes: formData.notes,
-      // Dados específicos por área
-      area_data: {
-        // Comercial
-        clientes_agendados_base: parseFloat(formData.clientes_agendados_base) || 0,
-        clientes_agendados_marketing: parseFloat(formData.clientes_agendados_marketing) || 0,
-        clientes_entregues_marketing: parseFloat(formData.clientes_entregues_marketing) || 0,
-        vendas_leads_marketing: parseFloat(formData.vendas_leads_marketing) || 0,
-        // Marketing
-        leads_gerados: parseFloat(formData.leads_gerados) || 0,
-        leads_agendados: parseFloat(formData.leads_agendados) || 0,
-        leads_compareceram: parseFloat(formData.leads_compareceram) || 0,
-        leads_vendidos: parseFloat(formData.leads_vendidos) || 0,
-        valor_investido_trafego: parseFloat(formData.valor_investido_trafego) || 0,
-        valor_faturado_leads: parseFloat(formData.valor_faturado_leads) || 0,
-        custo_por_venda: formData.leads_vendidos > 0 ? (parseFloat(formData.valor_investido_trafego) || 0) / parseFloat(formData.leads_vendidos) : 0,
-        // Técnico
-        faturamento_pecas: parseFloat(formData.faturamento_pecas) || 0,
-        faturamento_servicos: parseFloat(formData.faturamento_servicos) || 0,
-        qgp_aplicados: parseFloat(formData.qgp_aplicados) || 0,
-        clientes_atendidos: parseFloat(formData.clientes_atendidos) || 0,
-        // Genérico
-        atividades_concluidas: parseFloat(formData.atividades_concluidas) || 0,
-        horas_trabalhadas: parseFloat(formData.horas_trabalhadas) || 0,
-        observacoes: formData.observacoes || ""
-      }
-    };
-
-    let updatedHistory;
-    if (editingIndex !== null) {
-      updatedHistory = [...dailyHistory];
-      updatedHistory[editingIndex] = newEntry;
-    } else {
-      updatedHistory = [...dailyHistory, newEntry];
-    }
-
-    // Ordenar por data (mais recente primeiro)
-    updatedHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-    // Calcular o realizado do mês atual
-    const currentMonth = new Date().toISOString().substring(0, 7);
-    const monthEntries = updatedHistory.filter(entry => entry.date.startsWith(currentMonth));
-    
-    const monthlyTotal = monthEntries.reduce((sum, entry) => sum + entry.total_revenue, 0);
-    const monthlyParts = monthEntries.reduce((sum, entry) => sum + entry.parts_revenue, 0);
-    const monthlyServices = monthEntries.reduce((sum, entry) => sum + entry.services_revenue, 0);
-    const clientCount = monthEntries.length; // Aproximação: 1 cliente por dia registrado
-
-    // Atualizar colaborador
-    const updatedGoals = {
-      ...monthlyGoalsData,
-      actual_revenue_achieved: monthlyTotal
-    };
-    await updateMonthlyGoals(updatedGoals);
-    await onUpdate({
-      daily_production_history: updatedHistory,
-      monthly_goals: updatedGoals
-    });
-
-    // Atualizar ou criar registro no MonthlyGoalHistory
-    try {
-      const existingRecords = await base44.entities.MonthlyGoalHistory.filter({
-        workshop_id: employee.workshop_id,
-        employee_id: employee.id,
-        month: currentMonth
-      });
-
-      const historyData = {
-        workshop_id: employee.workshop_id,
-        entity_type: "employee",
-        entity_id: employee.id,
-        employee_id: employee.id,
-        employee_role: employee.area || "geral",
-        reference_date: new Date().toISOString().split('T')[0],
-        month: currentMonth,
-        projected_total: employee.monthly_goals?.individual_goal || 0,
-        achieved_total: monthlyTotal,
-        revenue_total: monthlyTotal,
-        revenue_parts: monthlyParts,
-        revenue_services: monthlyServices,
-        customer_volume: clientCount,
-        average_ticket: clientCount > 0 ? monthlyTotal / clientCount : 0
-      };
-
-      if (existingRecords && existingRecords.length > 0) {
-        await base44.entities.MonthlyGoalHistory.update(existingRecords[0].id, historyData);
-      } else {
-        await base44.entities.MonthlyGoalHistory.create(historyData);
-      }
-    } catch (error) {
-      console.error("Erro ao atualizar histórico de metas:", error);
-    }
-
-    toast.success(editingIndex !== null ? "Registro atualizado e metas alimentadas!" : "Registro adicionado e metas alimentadas!");
+  const handleRegistrationSave = async () => {
+    // Recarregar histórico após salvar via ManualGoalRegistration
     await loadDailyHistory();
-    resetForm();
+    setShowManualRegistration(false);
+    setEditingRecord(null);
+    toast.success("Registro salvo com sucesso!");
   };
 
-  const handleEdit = (index) => {
-    const entry = dailyHistory[index];
-    setFormData({
-      date: entry.date,
-      parts_revenue: entry.parts_revenue || 0,
-      services_revenue: entry.services_revenue || 0,
-      notes: entry.notes || "",
-      // Carregar dados específicos da área se existirem
-      clientes_agendados_base: entry.area_data?.clientes_agendados_base || 0,
-      clientes_agendados_marketing: entry.area_data?.clientes_agendados_marketing || 0,
-      clientes_entregues_marketing: entry.area_data?.clientes_entregues_marketing || 0,
-      vendas_leads_marketing: entry.area_data?.vendas_leads_marketing || 0,
-      leads_gerados: entry.area_data?.leads_gerados || 0,
-      leads_agendados: entry.area_data?.leads_agendados || 0,
-      leads_compareceram: entry.area_data?.leads_compareceram || 0,
-      leads_vendidos: entry.area_data?.leads_vendidos || 0,
-      valor_investido_trafego: entry.area_data?.valor_investido_trafego || 0,
-      valor_faturado_leads: entry.area_data?.valor_faturado_leads || 0,
-      faturamento_pecas: entry.area_data?.faturamento_pecas || 0,
-      faturamento_servicos: entry.area_data?.faturamento_servicos || 0,
-      qgp_aplicados: entry.area_data?.qgp_aplicados || 0,
-      clientes_atendidos: entry.area_data?.clientes_atendidos || 0,
-      atividades_concluidas: entry.area_data?.atividades_concluidas || 0,
-      horas_trabalhadas: entry.area_data?.horas_trabalhadas || 0,
-      observacoes: entry.area_data?.observacoes || ""
-    });
-    setEditingIndex(index);
-    setIsAdding(true);
-  };
-
-  const handleDelete = async (index) => {
+  const handleDelete = async (recordId) => {
     if (!confirm("Deseja realmente excluir este registro?")) return;
 
-    const updatedHistory = dailyHistory.filter((_, i) => i !== index);
-    
-    // Recalcular o realizado do mês atual
-    const currentMonth = new Date().toISOString().substring(0, 7);
-    const monthEntries = updatedHistory.filter(entry => entry.date.startsWith(currentMonth));
-    
-    const monthlyTotal = monthEntries.reduce((sum, entry) => sum + entry.total_revenue, 0);
-    const monthlyParts = monthEntries.reduce((sum, entry) => sum + entry.parts_revenue, 0);
-    const monthlyServices = monthEntries.reduce((sum, entry) => sum + entry.services_revenue, 0);
-    const clientCount = monthEntries.length;
-
-    await onUpdate({
-      daily_production_history: updatedHistory,
-      monthly_goals: {
-        ...employee.monthly_goals,
-        actual_revenue_achieved: monthlyTotal
-      }
-    });
-
-    // Atualizar histórico de metas
     try {
-      const existingRecords = await base44.entities.MonthlyGoalHistory.filter({
-        workshop_id: employee.workshop_id,
-        employee_id: employee.id,
-        month: currentMonth
-      });
-
-      if (existingRecords && existingRecords.length > 0) {
-        await base44.entities.MonthlyGoalHistory.update(existingRecords[0].id, {
-          achieved_total: monthlyTotal,
-          revenue_total: monthlyTotal,
-          revenue_parts: monthlyParts,
-          revenue_services: monthlyServices,
-          customer_volume: clientCount,
-          average_ticket: clientCount > 0 ? monthlyTotal / clientCount : 0
-        });
-      }
+      await base44.entities.MonthlyGoalHistory.delete(recordId);
+      toast.success("Registro excluído com sucesso!");
+      await loadDailyHistory();
     } catch (error) {
-      console.error("Erro ao atualizar histórico de metas:", error);
+      console.error("Erro ao deletar registro:", error);
+      toast.error("Erro ao deletar registro");
     }
-
-    toast.success("Registro excluído e metas atualizadas!");
-    await loadDailyHistory();
-  };
-
-  const resetForm = () => {
-    setFormData({
-      date: new Date().toISOString().split('T')[0],
-      parts_revenue: 0,
-      services_revenue: 0,
-      notes: "",
-      clientes_agendados_base: 0,
-      clientes_agendados_marketing: 0,
-      clientes_entregues_marketing: 0,
-      vendas_leads_marketing: 0,
-      leads_gerados: 0,
-      leads_agendados: 0,
-      leads_compareceram: 0,
-      leads_vendidos: 0,
-      valor_investido_trafego: 0,
-      valor_faturado_leads: 0,
-      faturamento_pecas: 0,
-      faturamento_servicos: 0,
-      qgp_aplicados: 0,
-      clientes_atendidos: 0,
-      atividades_concluidas: 0,
-      horas_trabalhadas: 0,
-      observacoes: ""
-    });
-    setIsAdding(false);
-    setEditingIndex(null);
   };
 
   const getTotalRevenue = () => {
@@ -363,41 +116,7 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
     }));
   };
 
-  const handleSaveGoal = async () => {
-    try {
-      const currentMonth = new Date().toISOString().slice(0, 7);
-      const dailyGoalCalculated = goalFormData.individual_goal / 22;
 
-      const updatedGoals = {
-        ...monthlyGoalsData,
-        month: currentMonth,
-        individual_goal: parseFloat(goalFormData.individual_goal) || 0,
-        daily_projected_goal: dailyGoalCalculated,
-        growth_percentage: parseFloat(goalFormData.growth_percentage) || 10,
-        actual_revenue_achieved: actualRevenueAchieved
-      };
-
-      await updateMonthlyGoals(updatedGoals);
-      await onUpdate({ monthly_goals: updatedGoals });
-
-      toast.success("Meta mensal atualizada com sucesso!");
-      setEditingGoal(false);
-    } catch (error) {
-      console.error("Erro ao salvar meta:", error);
-      toast.error("Erro ao salvar meta");
-    }
-  };
-
-  const calculateGoalFromGrowth = () => {
-    const bestMonthRevenue = bestMonthData?.revenue_total || 0;
-    const growthPct = parseFloat(goalFormData.growth_percentage) || 10;
-    const calculatedGoal = bestMonthRevenue * (1 + growthPct / 100);
-    
-    setGoalFormData({
-      ...goalFormData,
-      individual_goal: calculatedGoal
-    });
-  };
 
   return (
     <div className="space-y-6">
@@ -635,112 +354,18 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
       {/* Formulário de Registro */}
       <Card className="shadow-lg">
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Histórico Diário da Produção</CardTitle>
-            {!isAdding && (
-              <Button onClick={() => setIsAdding(true)} className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="w-4 h-4 mr-2" />
-                Novo Registro
-              </Button>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isAdding && (
-            <div className="space-y-4 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg mb-6 border-2 border-purple-200">
-              {/* Exibir Meta Diária */}
-              <div className="bg-white p-4 rounded-lg border-2 border-purple-300 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-semibold text-purple-900 mb-1">🎯 Meta Diária (Previsto)</p>
-                    <p className="text-3xl font-bold text-purple-600">
-                      R$ {dailyProjectedGoal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Meta Mensal: R$ {monthlyProjectedGoal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} ÷ 22 dias úteis
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs text-gray-600 mb-1">Total a registrar hoje:</p>
-                    <p className="text-2xl font-bold text-blue-600">
-                      R$ {(parseFloat(formData.parts_revenue || 0) + parseFloat(formData.services_revenue || 0)).toFixed(2)}
-                    </p>
-                    {dailyProjectedGoal > 0 && (
-                      <p className={`text-sm font-semibold mt-1 ${
-                        (parseFloat(formData.parts_revenue || 0) + parseFloat(formData.services_revenue || 0)) >= dailyProjectedGoal 
-                          ? 'text-green-600' 
-                          : 'text-orange-600'
-                      }`}>
-                        {((parseFloat(formData.parts_revenue || 0) + parseFloat(formData.services_revenue || 0)) / dailyProjectedGoal * 100).toFixed(1)}% da meta
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <Label>Data</Label>
-                  <Input
-                    type="date"
-                    value={formData.date}
-                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                    className="w-full md:w-64"
-                  />
-                </div>
-
-                {/* Formulário específico por área */}
-                {(employee.area === 'comercial' || employee.job_role === 'comercial' || employee.job_role === 'consultor_vendas') && (
-                  <RegistroComercial 
-                    formData={formData}
-                    onChange={(data) => setFormData({ ...formData, ...data })}
-                  />
-                )}
-
-                {(employee.area === 'marketing' || employee.job_role === 'marketing') && (
-                  <RegistroMarketing
-                    formData={formData}
-                    onChange={(data) => setFormData({ ...formData, ...data })}
-                  />
-                )}
-
-                {(employee.area === 'tecnico' || employee.job_role === 'tecnico' || employee.job_role === 'lider_tecnico') && (
-                  <RegistroTecnico
-                    formData={formData}
-                    onChange={(data) => setFormData({ ...formData, ...data })}
-                  />
-                )}
-
-                {!['comercial', 'marketing', 'tecnico'].includes(employee.area) && 
-                 !['comercial', 'consultor_vendas', 'marketing', 'tecnico', 'lider_tecnico'].includes(employee.job_role) && (
-                  <RegistroGenerico
-                    formData={formData}
-                    onChange={(data) => setFormData({ ...formData, ...data })}
-                    jobRole={employee.job_role}
-                  />
-                )}
-              </div>
-              <div>
-                <Label>Observações (Opcional)</Label>
-                <Textarea
-                  value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  placeholder="Observações sobre o dia..."
-                  rows={3}
-                />
-              </div>
-              <div className="flex gap-2 justify-end">
-                <Button variant="outline" onClick={resetForm}>
-                  <X className="w-4 h-4 mr-2" />
-                  Cancelar
-                </Button>
-                <Button onClick={handleSubmit} className="bg-green-600 hover:bg-green-700">
-                  <Save className="w-4 h-4 mr-2" />
-                  {editingIndex !== null ? "Atualizar" : "Salvar"}
-                </Button>
-              </div>
-            </div>
-          )}
+           <div className="flex items-center justify-between">
+             <CardTitle>Histórico Diário da Produção</CardTitle>
+             <Button onClick={() => {
+               setShowManualRegistration(true);
+               setEditingRecord(null);
+             }} className="bg-blue-600 hover:bg-blue-700">
+               <Plus className="w-4 h-4 mr-2" />
+               Novo Registro
+             </Button>
+           </div>
+         </CardHeader>
+         <CardContent>
 
           {/* Lista de Registros */}
           {loading ? (
@@ -763,7 +388,7 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
                 const isExpanded = expandedRecords[index];
 
                 return (
-                  <Card key={index} className={`hover:shadow-md transition-all ${
+                  <Card key={dailyHistoryFromDB.findIndex(r => r.id === entry.id)} className={`hover:shadow-md transition-all ${
                     metaDayAchieved ? 'border-l-4 border-green-500 bg-green-50/30' : 'border-l-4 border-orange-400 bg-orange-50/30'
                   }`}>
                     <CardContent className="p-4">
@@ -824,7 +449,7 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => toggleRecordExpansion(index)}
+                            onClick={() => toggleRecordExpansion(dailyHistoryFromDB.findIndex(r => r.id === entry.id))}
                             className="text-gray-600 hover:text-gray-900"
                           >
                             {isExpanded ? (
@@ -845,7 +470,10 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
                             <Button
                               size="icon"
                               variant="ghost"
-                              onClick={() => handleEdit(index)}
+                              onClick={() => {
+                                setEditingRecord(entry);
+                                setShowManualRegistration(true);
+                              }}
                               className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 h-8 w-8"
                             >
                               <Edit className="w-4 h-4" />
@@ -853,7 +481,7 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
                             <Button
                               size="icon"
                               variant="ghost"
-                              onClick={() => handleDelete(index)}
+                              onClick={() => handleDelete(entry.id)}
                               className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -931,8 +559,20 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
               })}
             </div>
           )}
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
+          </CardContent>
+          </Card>
+
+          {/* Modal Unificado */}
+          <ManualGoalRegistration
+          open={showManualRegistration}
+          onClose={() => {
+          setShowManualRegistration(false);
+          setEditingRecord(null);
+          }}
+          workshop={{ id: employee.workshop_id }}
+          editingRecord={editingRecord}
+          onSave={handleRegistrationSave}
+          />
+          </div>
+          );
+          }
