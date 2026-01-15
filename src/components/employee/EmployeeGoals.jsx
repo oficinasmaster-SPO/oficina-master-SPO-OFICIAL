@@ -31,21 +31,39 @@ export default function EmployeeGoals({ employee, onUpdate }) {
     }
   };
 
-  const loadGoals = () => {
-    const employeeGoals = employee.monthly_goals || {
-      month: new Date().toISOString().substring(0, 7),
-      goals_by_service: [],
-      individual_goal: 0,
-      daily_projected_goal: 0,
-      actual_revenue_achieved: 0,
-      growth_percentage: 10
-    };
-    
-    const formattedGoals = Array.isArray(employeeGoals.goals_by_service) 
-      ? employeeGoals.goals_by_service 
-      : [];
-    
-    setGoals(formattedGoals);
+  const loadGoals = async () => {
+    try {
+      // Buscar metas da nova entidade EmployeeGoal
+      const currentMonth = new Date().toISOString().substring(0, 7);
+      const employeeGoalsFromDB = await base44.entities.EmployeeGoal.filter({
+        employee_id: employee.id,
+        period: currentMonth
+      });
+      
+      // Se não houver na nova entidade, migrar do objeto antigo
+      if (employeeGoalsFromDB.length === 0 && employee.monthly_goals?.goals_by_service?.length > 0) {
+        const legacyGoals = employee.monthly_goals.goals_by_service.map(g => ({
+          id: g.id,
+          service_type: g.service_type,
+          goal_value: g.goal_value || 0,
+          current_value: g.current_value || 0,
+          deadline: g.deadline || new Date().toISOString().substring(0, 10)
+        }));
+        setGoals(legacyGoals);
+      } else {
+        const formattedGoals = employeeGoalsFromDB.map(g => ({
+          id: g.id,
+          service_type: g.goal_type,
+          goal_value: g.goal_value || 0,
+          current_value: g.current_value || 0,
+          deadline: g.deadline || new Date().toISOString().substring(0, 10)
+        }));
+        setGoals(formattedGoals);
+      }
+    } catch (error) {
+      console.error("Error loading goals:", error);
+      setGoals([]);
+    }
   };
 
   const addGoal = () => {
@@ -106,6 +124,8 @@ export default function EmployeeGoals({ employee, onUpdate }) {
 
   const handleSave = async () => {
     try {
+      const currentMonth = new Date().toISOString().substring(0, 7);
+      
       // Calcular progresso de cada meta antes de salvar
       const goalsWithProgress = goals.map(goal => {
         const { currentValue, progress } = calculateProgress(goal);
@@ -116,20 +136,44 @@ export default function EmployeeGoals({ employee, onUpdate }) {
         };
       });
 
+      // Salvar ou atualizar cada meta na entidade EmployeeGoal
+      const savePromises = goalsWithProgress.map(async (goal) => {
+        const goalData = {
+          workshop_id: employee.workshop_id,
+          employee_id: employee.id,
+          area: employee.area || "geral",
+          goal_type: goal.service_type,
+          period: currentMonth,
+          goal_value: goal.goal_value || 0,
+          current_value: goal.current_value || 0,
+          daily_goal: (goal.goal_value || 0) / 22,
+          achievement_percentage: goal.progress || 0,
+          status: goal.progress >= 100 ? "atingida" : goal.progress >= 70 ? "ativa" : "em_alerta",
+          deadline: goal.deadline
+        };
+
+        if (goal.id && goal.id.length > 15) {
+          // ID do banco - atualizar
+          await base44.entities.EmployeeGoal.update(goal.id, goalData);
+        } else {
+          // Novo registro - criar
+          await base44.entities.EmployeeGoal.create(goalData);
+        }
+      });
+
+      await Promise.all(savePromises);
+
+      // Também atualizar o objeto monthly_goals no Employee (retrocompatibilidade)
       const totalGoalValue = goalsWithProgress.reduce((sum, g) => sum + g.goal_value, 0);
-      
-      // Calcular meta projetada baseada no melhor mês + crescimento
       const bestMonthRevenue = employee.best_month_history?.revenue_total || 0;
       const currentGrowthPercentage = growthPercentageInput || 10;
       const projectedGoal = bestMonthRevenue > 0 
         ? bestMonthRevenue * (1 + currentGrowthPercentage / 100)
         : totalGoalValue || (bestMonthRevenue * 1.1);
-
-      // Calcular meta diária (assumindo 22 dias úteis)
       const dailyProjectedGoal = projectedGoal / 22;
 
       const monthlyGoals = {
-        month: new Date().toISOString().substring(0, 7),
+        month: currentMonth,
         goals_by_service: goalsWithProgress,
         individual_goal: projectedGoal,
         daily_projected_goal: dailyProjectedGoal,
@@ -141,8 +185,10 @@ export default function EmployeeGoals({ employee, onUpdate }) {
       };
 
       await onUpdate({ monthly_goals: monthlyGoals });
-      toast.success("Metas atualizadas com sucesso!");
+      
+      toast.success("Metas salvas com sucesso na base de dados!");
       setEditing(false);
+      await loadGoals();
     } catch (error) {
       console.error("Error saving goals:", error);
       toast.error("Erro ao salvar metas");
