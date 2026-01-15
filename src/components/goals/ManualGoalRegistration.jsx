@@ -268,6 +268,123 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
     setShowDistribution(true);
   };
 
+  const handleSaveDirect = async () => {
+    try {
+      setIsSaving(true);
+      const revenue_total = formData.revenue_parts + formData.revenue_services;
+      const average_ticket = formData.customer_volume > 0 
+        ? revenue_total / formData.customer_volume 
+        : 0;
+      
+      const marketing_cost_per_sale = formData.marketing_data.leads_sold > 0
+        ? formData.marketing_data.invested_value / formData.marketing_data.leads_sold
+        : 0;
+
+      const recordData = {
+        workshop_id: workshop.id,
+        entity_type: entityType,
+        entity_id: entityType === "workshop" ? workshop.id : selectedEmployee?.id,
+        employee_id: entityType === "employee" ? selectedEmployee?.id : null,
+        employee_role: entityType === "employee" ? selectedEmployee?.job_role : "geral",
+        reference_date: formData.reference_date,
+        month: formData.month,
+        projected_total: formData.projected_total,
+        achieved_total: formData.achieved_total,
+        revenue_total: revenue_total,
+        revenue_parts: formData.revenue_parts,
+        revenue_services: formData.revenue_services,
+        average_ticket: average_ticket,
+        customer_volume: formData.customer_volume,
+        r70_i30: formData.r70_i30,
+        tcmp2: tcmp2Value,
+        pave_commercial: formData.pave_commercial,
+        kit_master: formData.kit_master,
+        sales_base: formData.sales_base,
+        sales_marketing: formData.sales_marketing,
+        clients_delivered: formData.clients_delivered,
+        gps_vendas: formData.gps_vendas,
+        clients_scheduled_base: formData.clients_scheduled_base,
+        clients_delivered_base: formData.clients_delivered_base,
+        clients_scheduled_mkt: formData.clients_scheduled_mkt,
+        clients_delivered_mkt: formData.clients_delivered_mkt,
+        clients_scheduled_referral: formData.clients_scheduled_referral,
+        clients_delivered_referral: formData.clients_delivered_referral,
+        marketing_data: {
+          ...formData.marketing_data,
+          cost_per_sale: marketing_cost_per_sale
+        },
+        revenue_distribution: null,
+        rework_count: formData.rework_count,
+        notes: formData.notes
+      };
+
+      if (editingRecord) {
+        await base44.entities.MonthlyGoalHistory.update(editingRecord.id, recordData);
+      } else {
+        await base44.entities.MonthlyGoalHistory.create(recordData);
+      }
+
+      // Atualizar Workshop - sincronizar valores mensais realizados
+      if (entityType === "workshop") {
+        const currentMonthRecords = await base44.entities.MonthlyGoalHistory.filter({
+          workshop_id: workshop.id,
+          month: formData.month,
+          entity_type: "workshop"
+        });
+        
+        const allRecords = Array.isArray(currentMonthRecords) ? currentMonthRecords : [];
+        
+        const monthlyConsolidated = {
+          actual_revenue_achieved: allRecords.reduce((sum, r) => sum + (r.revenue_total || 0), 0),
+          revenue_parts: allRecords.reduce((sum, r) => sum + (r.revenue_parts || 0), 0),
+          revenue_services: allRecords.reduce((sum, r) => sum + (r.revenue_services || 0), 0),
+          customer_volume: allRecords.reduce((sum, r) => sum + (r.customer_volume || 0), 0),
+          pave_commercial: allRecords.reduce((sum, r) => sum + (r.pave_commercial || 0), 0),
+          kit_master: allRecords.reduce((sum, r) => sum + (r.kit_master || 0), 0),
+          gps_vendas: allRecords.reduce((sum, r) => sum + (r.gps_vendas || 0), 0),
+          sales_base: allRecords.reduce((sum, r) => sum + (r.sales_base || 0), 0),
+          sales_marketing: allRecords.reduce((sum, r) => sum + (r.sales_marketing || 0), 0),
+          marketing: {
+            leads_generated: allRecords.reduce((sum, r) => sum + (r.marketing_data?.leads_generated || 0), 0),
+            leads_scheduled: allRecords.reduce((sum, r) => sum + (r.marketing_data?.leads_scheduled || 0), 0),
+            leads_showed_up: allRecords.reduce((sum, r) => sum + (r.marketing_data?.leads_showed_up || 0), 0),
+            leads_sold: allRecords.reduce((sum, r) => sum + (r.marketing_data?.leads_sold || 0), 0),
+            invested_value: allRecords.reduce((sum, r) => sum + (r.marketing_data?.invested_value || 0), 0),
+            revenue_from_traffic: allRecords.reduce((sum, r) => sum + (r.marketing_data?.revenue_from_traffic || 0), 0),
+            cost_per_sale: 0
+          }
+        };
+        
+        if (monthlyConsolidated.marketing.leads_sold > 0) {
+          monthlyConsolidated.marketing.cost_per_sale = 
+            monthlyConsolidated.marketing.invested_value / monthlyConsolidated.marketing.leads_sold;
+        }
+        
+        if (monthlyConsolidated.customer_volume > 0) {
+          monthlyConsolidated.average_ticket = 
+            monthlyConsolidated.actual_revenue_achieved / monthlyConsolidated.customer_volume;
+        }
+
+        await base44.entities.Workshop.update(workshop.id, {
+          monthly_goals: {
+            ...workshop.monthly_goals,
+            ...monthlyConsolidated,
+            month: formData.month
+          }
+        });
+      }
+
+      toast.success(editingRecord ? "Registro atualizado!" : "Registro salvo com sucesso!");
+      if (onSave) onSave();
+      onClose();
+    } catch (error) {
+      console.error("Error saving record:", error);
+      toast.error("Erro ao salvar registro");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleResetDistribution = () => {
     // Força reset da distribuição quando necessário
   };
@@ -1914,9 +2031,18 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
               Cancelar
             </Button>
             <Button 
+              onClick={handleSaveDirect} 
+              variant="outline"
+              className="flex-1"
+              disabled={(entityType === "employee" && !selectedEmployee) || isSaving}
+            >
+              <Save className="w-4 h-4 mr-2" />
+              Salvar Direto
+            </Button>
+            <Button 
               onClick={handleSaveAndAnalyze} 
               className="flex-1 bg-blue-600 hover:bg-blue-700"
-              disabled={entityType === "employee" && !selectedEmployee}
+              disabled={(entityType === "employee" && !selectedEmployee) || isSaving}
             >
               <Save className="w-4 h-4 mr-2" />
               Salvar e Distribuir
