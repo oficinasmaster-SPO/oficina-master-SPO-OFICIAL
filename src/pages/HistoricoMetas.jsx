@@ -65,7 +65,7 @@ export default function HistoricoMetas() {
     }
   };
 
-  const { data: goalHistory = [], isLoading } = useQuery({
+  const { data: goalHistory = [], isLoading, refetch: refetchGoals, isFetching } = useQuery({
     queryKey: ['goal-history', workshop?.id, filterType, filterEmployee, filterMonth],
     queryFn: async () => {
       if (!workshop) return [];
@@ -91,7 +91,9 @@ export default function HistoricoMetas() {
     },
     enabled: !!workshop,
     refetchOnWindowFocus: true,
-    staleTime: 0
+    refetchOnMount: 'always',
+    staleTime: 0,
+    cacheTime: 0
   });
 
   const { data: employees = [], refetch: refetchEmployees } = useQuery({
@@ -152,6 +154,17 @@ export default function HistoricoMetas() {
             </p>
           </div>
           <div className="flex gap-3">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                queryClient.invalidateQueries(['goal-history']);
+                refetchGoals();
+              }}
+              disabled={isFetching}
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
+              {isFetching ? 'Atualizando...' : 'Atualizar'}
+            </Button>
             <Button variant="outline" onClick={() => window.location.href = createPageUrl("GraficosProducao")}>
               <BarChart3 className="w-4 h-4 mr-2" />
               Gráficos
