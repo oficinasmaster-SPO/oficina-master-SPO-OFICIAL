@@ -87,6 +87,85 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
     }
   }, [open, entityType, selectedEmployee, editingRecord]);
 
+  const checkExistingRecord = async (date) => {
+    if (!date || !workshop || editingRecord) return;
+    
+    setCheckingExisting(true);
+    try {
+      const filters = {
+        workshop_id: workshop.id,
+        reference_date: date,
+        entity_type: entityType
+      };
+      
+      if (entityType === "employee" && selectedEmployee) {
+        filters.employee_id = selectedEmployee.id;
+      }
+      
+      const existing = await base44.entities.MonthlyGoalHistory.filter(filters);
+      
+      if (existing && existing.length > 0) {
+        const record = existing[0];
+        toast.warning(
+          "⚠️ Já existe registro para esta data! Carregando dados...",
+          { duration: 3000 }
+        );
+        
+        setTimeout(() => {
+          toast.info(
+            "📝 Ao clicar em Salvar, você atualizará o registro existente!",
+            { duration: 5000 }
+          );
+        }, 500);
+        
+        setFormData({
+          reference_date: record.reference_date?.split('T')[0] || date,
+          month: record.month || date.substring(0, 7),
+          projected_total: record.projected_total || 0,
+          projected_revenue_parts: record.projected_revenue_parts || 0,
+          projected_revenue_services: record.projected_revenue_services || 0,
+          projected_customer_volume: record.projected_customer_volume || 0,
+          projected_average_ticket: record.projected_average_ticket || 0,
+          projected_pave_commercial: record.projected_pave_commercial || 0,
+          projected_kit_master: record.projected_kit_master || 0,
+          projected_sales_base: record.projected_sales_base || 0,
+          projected_sales_marketing: record.projected_sales_marketing || 0,
+          projected_clients_delivered: record.projected_clients_delivered || 0,
+          projected_gps_vendas: record.projected_gps_vendas || 0,
+          projected_marketing: record.projected_marketing || formData.projected_marketing,
+          achieved_total: record.achieved_total || 0,
+          revenue_parts: record.revenue_parts || 0,
+          revenue_services: record.revenue_services || 0,
+          customer_volume: record.customer_volume || 0,
+          r70_i30: record.r70_i30 || { r70: 70, i30: 30 },
+          tcmp2: record.tcmp2 || 0,
+          pave_commercial: record.pave_commercial || 0,
+          kit_master: record.kit_master || 0,
+          sales_base: record.sales_base || 0,
+          sales_marketing: record.sales_marketing || 0,
+          clients_delivered: record.clients_delivered || 0,
+          gps_vendas: record.gps_vendas || 0,
+          clients_scheduled_base: record.clients_scheduled_base || 0,
+          clients_delivered_base: record.clients_delivered_base || 0,
+          clients_scheduled_mkt: record.clients_scheduled_mkt || 0,
+          clients_delivered_mkt: record.clients_delivered_mkt || 0,
+          clients_scheduled_referral: record.clients_scheduled_referral || 0,
+          clients_delivered_referral: record.clients_delivered_referral || 0,
+          marketing_data: record.marketing_data || formData.marketing_data,
+          rework_count: record.rework_count || 0,
+          notes: record.notes || ""
+        });
+        
+        editingRecord = record;
+        setLoadedFromExisting(true);
+      }
+    } catch (error) {
+      console.error("Error checking existing record:", error);
+    } finally {
+      setCheckingExisting(false);
+    }
+  };
+
   // Calcular PAVE Comercial automaticamente (soma dos agendamentos)
   useEffect(() => {
     const paveAutomatico = 
@@ -1957,8 +2036,24 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
               <Input
                 type="date"
                 value={formData.reference_date}
-                onChange={(e) => setFormData({...formData, reference_date: e.target.value})}
+                onChange={(e) => {
+                  const newDate = e.target.value;
+                  setFormData({...formData, reference_date: newDate, month: newDate.substring(0, 7)});
+                  setLoadedFromExisting(false);
+                  checkExistingRecord(newDate);
+                }}
+                disabled={checkingExisting}
               />
+              {checkingExisting && (
+                <p className="text-xs text-blue-600 mt-1">
+                  🔍 Verificando registros existentes...
+                </p>
+              )}
+              {loadedFromExisting && (
+                <p className="text-xs text-orange-600 font-semibold mt-1 bg-orange-50 p-2 rounded">
+                  ⚠️ Registro existente carregado! Ao salvar você atualizará este registro.
+                </p>
+              )}
             </div>
             <div>
               <Label>Mês/Ano Referência</Label>
