@@ -907,16 +907,15 @@ export default function GraficosProducao() {
                   }
                 ]}
               />
-              </div>
               </TabsContent>
 
               {/* ABA MARKETING */}
               <TabsContent value="marketing" className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <Card className="bg-slate-800/50 border-pink-500/30 backdrop-blur-sm lg:col-span-2">
-               <CardHeader>
-                 <div className="flex items-center justify-between">
-                   <CardTitle className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-fuchsia-400">Funil de Leads</CardTitle>
+               <Card className="bg-slate-800/50 border-pink-500/30 backdrop-blur-sm lg:col-span-2">
+                 <CardHeader>
+                   <div className="flex items-center justify-between">
+                     <CardTitle className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-fuchsia-400">Funil de Leads</CardTitle>
                       <StatusMetaBadge
                         realizadoAcumulado={realizadoAcumulado.leads_vendidos}
                         metaAcumulada={metaAcumulada.leads_vendidos}
@@ -1122,7 +1121,6 @@ export default function GraficosProducao() {
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
-              </div>
             </TabsContent>
           </Tabs>
         )}
