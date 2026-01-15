@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useEmployeeMetrics } from "@/components/hooks/useEmployeeMetrics";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,7 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
   const [expandedRecords, setExpandedRecords] = useState({});
   const [dailyHistoryFromDB, setDailyHistoryFromDB] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { bestMonthData, monthlyGoalsData, updateMonthlyGoals } = useEmployeeMetrics(employee);
   const [goalFormData, setGoalFormData] = useState({
     individual_goal: 0,
     growth_percentage: 10
@@ -53,10 +55,10 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
 
   const dailyHistory = dailyHistoryFromDB.length > 0 ? dailyHistoryFromDB : (employee.daily_production_history || []);
   
-  // Cálculo de metas
-  const monthlyProjectedGoal = employee.monthly_goals?.individual_goal || 0;
-  const dailyProjectedGoal = employee.monthly_goals?.daily_projected_goal || (monthlyProjectedGoal / 22);
-  const actualRevenueAchieved = employee.monthly_goals?.actual_revenue_achieved || 0;
+  // Cálculo de metas sincronizado via hook
+  const monthlyProjectedGoal = monthlyGoalsData?.individual_goal || 0;
+  const dailyProjectedGoal = monthlyGoalsData?.daily_projected_goal || (monthlyProjectedGoal / 22);
+  const actualRevenueAchieved = monthlyGoalsData?.actual_revenue_achieved || 0;
 
   // Carregar histórico da base de dados
   React.useEffect(() => {
@@ -106,11 +108,11 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
     }
   };
 
-  // Inicializar dados da meta quando o employee mudar
+  // Inicializar dados da meta quando o employee mudar (sincronizado via hook)
   React.useEffect(() => {
-    const bestMonthRevenue = employee.best_month_history?.revenue_total || 0;
-    const currentGoal = employee.monthly_goals?.individual_goal || 0;
-    const growthPct = employee.monthly_goals?.growth_percentage || 10;
+    const bestMonthRevenue = bestMonthData?.revenue_total || 0;
+    const currentGoal = monthlyGoalsData?.individual_goal || 0;
+    const growthPct = monthlyGoalsData?.growth_percentage || 10;
     
     // Sempre atualizar, mesmo que setEditingGoal seja false
     setGoalFormData({
@@ -120,7 +122,7 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
     
     // Se employee mudou e temos best_month_history, sair do modo edição
     setEditingGoal(false);
-  }, [employee.id, employee.best_month_history?.revenue_total, employee.monthly_goals?.individual_goal]);
+  }, [employee.id, bestMonthData?.revenue_total, monthlyGoalsData?.individual_goal]);
 
   const handleSubmit = async () => {
     // Calcula faturamento baseado na área/função do colaborador
@@ -188,12 +190,14 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
     const clientCount = monthEntries.length; // Aproximação: 1 cliente por dia registrado
 
     // Atualizar colaborador
+    const updatedGoals = {
+      ...monthlyGoalsData,
+      actual_revenue_achieved: monthlyTotal
+    };
+    await updateMonthlyGoals(updatedGoals);
     await onUpdate({
       daily_production_history: updatedHistory,
-      monthly_goals: {
-        ...employee.monthly_goals,
-        actual_revenue_achieved: monthlyTotal
-      }
+      monthly_goals: updatedGoals
     });
 
     // Atualizar ou criar registro no MonthlyGoalHistory
@@ -364,16 +368,17 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
       const currentMonth = new Date().toISOString().slice(0, 7);
       const dailyGoalCalculated = goalFormData.individual_goal / 22;
 
-      await onUpdate({
-        monthly_goals: {
-          ...employee.monthly_goals,
-          month: currentMonth,
-          individual_goal: parseFloat(goalFormData.individual_goal) || 0,
-          daily_projected_goal: dailyGoalCalculated,
-          growth_percentage: parseFloat(goalFormData.growth_percentage) || 10,
-          actual_revenue_achieved: actualRevenueAchieved
-        }
-      });
+      const updatedGoals = {
+        ...monthlyGoalsData,
+        month: currentMonth,
+        individual_goal: parseFloat(goalFormData.individual_goal) || 0,
+        daily_projected_goal: dailyGoalCalculated,
+        growth_percentage: parseFloat(goalFormData.growth_percentage) || 10,
+        actual_revenue_achieved: actualRevenueAchieved
+      };
+
+      await updateMonthlyGoals(updatedGoals);
+      await onUpdate({ monthly_goals: updatedGoals });
 
       toast.success("Meta mensal atualizada com sucesso!");
       setEditingGoal(false);
@@ -384,7 +389,7 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
   };
 
   const calculateGoalFromGrowth = () => {
-    const bestMonthRevenue = employee.best_month_history?.revenue_total || 0;
+    const bestMonthRevenue = bestMonthData?.revenue_total || 0;
     const growthPct = parseFloat(goalFormData.growth_percentage) || 10;
     const calculatedGoal = bestMonthRevenue * (1 + growthPct / 100);
     
@@ -432,21 +437,21 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
                   <div>
                     <p className="text-gray-600">Faturamento do Melhor Mês:</p>
                     <p className="text-xl font-bold text-blue-600">
-                      {employee.best_month_history?.revenue_total ? 
-                        `R$ ${(employee.best_month_history.revenue_total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` 
+                      {bestMonthData?.revenue_total ? 
+                        `R$ ${(bestMonthData.revenue_total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` 
                         : '⚠️ Não definido'}
                     </p>
                   </div>
                   <div>
                     <p className="text-gray-600">Data:</p>
                     <p className="font-semibold text-gray-900">
-                      {employee.best_month_history?.date 
-                        ? new Date(employee.best_month_history.date + '-01').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+                      {bestMonthData?.date 
+                        ? new Date(bestMonthData.date + '-01').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
                         : '⚠️ Não registrado'}
                     </p>
                   </div>
                 </div>
-                {!employee.best_month_history?.revenue_total && (
+                {!bestMonthData?.revenue_total && (
                   <p className="text-xs text-red-600 mt-2">⚠️ Configure o melhor mês na aba de Dados Pessoais</p>
                 )}
               </div>
@@ -466,10 +471,10 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
                       Calcular
                     </Button>
                   </div>
-                  {employee.best_month_history?.revenue_total ? (
-                    <p className="text-xs text-gray-500 mt-1">
-                      Ex: 10% = {((employee.best_month_history.revenue_total * 1.1).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }))}
-                    </p>
+                  {bestMonthData?.revenue_total ? (
+                   <p className="text-xs text-gray-500 mt-1">
+                     Ex: 10% = {((bestMonthData.revenue_total * 1.1).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }))}
+                   </p>
                   ) : (
                     <p className="text-xs text-red-500 mt-1">
                       ⚠️ Configure o melhor mês em Dados Pessoais para usar este cálculo
