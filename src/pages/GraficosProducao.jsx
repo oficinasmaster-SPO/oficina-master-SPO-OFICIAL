@@ -1068,9 +1068,13 @@ export default function GraficosProducao() {
                     }
                   ]}
                 />
-              </div>
+                </div>
+                </TabsContent>
 
-              <Card className="bg-slate-800/50 border-red-500/30 backdrop-blur-sm">
+                {/* ABA MARKETING */}
+                <TabsContent value="marketing" className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <Card className="bg-slate-800/50 border-pink-500/30 backdrop-blur-sm lg:col-span-2">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-rose-400">Investimento vs Faturamento</CardTitle>
