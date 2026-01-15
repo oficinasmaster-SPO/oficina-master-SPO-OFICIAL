@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { useEmployeeMetrics } from "@/components/hooks/useEmployeeMetrics";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +12,6 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
   const [editing, setEditing] = useState(false);
   const [editingBestMonth, setEditingBestMonth] = useState(false);
   const [metrics, setMetrics] = useState([]);
-  const { bestMonthData, updateBestMonth } = useEmployeeMetrics(employee);
   const [localBestMonth, setLocalBestMonth] = useState(null);
   
   const [formData, setFormData] = useState({
@@ -27,26 +26,26 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
     production_services_sales: employee.production_services_sales || 0
   });
 
-  // Sincronizar bestMonthData do hook com o estado local
+  // Sincronizar best_month_history do employee com o estado local
   useEffect(() => {
-    if (bestMonthData) {
+    if (employee?.best_month_history) {
       setLocalBestMonth({
-        date: bestMonthData.date || '',
-        revenue_total: bestMonthData.revenue_total || 0,
-        revenue_parts: bestMonthData.revenue_parts || 0,
-        revenue_services: bestMonthData.revenue_services || 0,
-        profit_percentage: bestMonthData.profit_percentage || 0,
-        rentability_percentage: bestMonthData.rentability_percentage || 0,
-        customer_volume: bestMonthData.customer_volume || 0,
-        average_ticket: bestMonthData.average_ticket || 0,
-        average_ticket_parts: bestMonthData.average_ticket_parts || 0,
-        average_ticket_services: bestMonthData.average_ticket_services || 0
+        date: employee.best_month_history.date || '',
+        revenue_total: employee.best_month_history.revenue_total || 0,
+        revenue_parts: employee.best_month_history.revenue_parts || 0,
+        revenue_services: employee.best_month_history.revenue_services || 0,
+        profit_percentage: employee.best_month_history.profit_percentage || 0,
+        rentability_percentage: employee.best_month_history.rentability_percentage || 0,
+        customer_volume: employee.best_month_history.customer_volume || 0,
+        average_ticket: employee.best_month_history.average_ticket || 0,
+        average_ticket_parts: employee.best_month_history.average_ticket_parts || 0,
+        average_ticket_services: employee.best_month_history.average_ticket_services || 0
       });
     }
-  }, [bestMonthData]);
+  }, [employee?.best_month_history]);
 
   // Calcular ticket médio automaticamente
-  const currentBest = localBestMonth || bestMonthData;
+  const currentBest = localBestMonth || employee?.best_month_history;
   const calculatedAverageTicket = currentBest?.customer_volume > 0 
     ? currentBest.revenue_total / currentBest.customer_volume 
     : 0;
@@ -102,19 +101,10 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
         average_ticket_services: calculatedAverageTicketServices
       };
       
-      console.log("Salvando melhor mês:", dataToSave);
-      
-      const success = await updateBestMonth(dataToSave);
-      console.log("Resultado:", success);
-      
-      if (success) {
-        if (onUpdate) {
-          await onUpdate({ best_month_history: dataToSave });
-        }
-        setEditingBestMonth(false);
-      } else {
-        console.error("Falha ao salvar melhor mês - updateBestMonth retornou false");
+      if (onUpdate) {
+        await onUpdate({ best_month_history: dataToSave });
       }
+      setEditingBestMonth(false);
     } catch (error) {
       console.error("Erro ao salvar melhor mês:", error);
       alert("Erro ao salvar: " + error.message);
