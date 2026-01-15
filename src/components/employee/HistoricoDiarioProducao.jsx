@@ -2,7 +2,9 @@ import React, { useState } from "react";
 import { useEmployeeMetrics } from "@/components/hooks/useEmployeeMetrics";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, DollarSign, Edit, Trash2, Target, TrendingUp, Eye, Plus, X } from "lucide-react";
+import { Calendar, DollarSign, Edit, Trash2, Target, TrendingUp, Eye, Plus, X, Save } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
 import ManualGoalRegistration from "@/components/goals/ManualGoalRegistration";
@@ -15,6 +17,7 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
   const [loading, setLoading] = useState(true);
   const [showManualRegistration, setShowManualRegistration] = useState(false);
   const [editingRecord, setEditingRecord] = useState(null);
+  const [goalFormData, setGoalFormData] = useState({ growth_percentage: 10, individual_goal: 0 });
   const { bestMonthData, monthlyGoalsData, updateMonthlyGoals } = useEmployeeMetrics(employee);
 
   const dailyHistory = dailyHistoryFromDB.length > 0 ? dailyHistoryFromDB : (employee.daily_production_history || []);
@@ -114,6 +117,32 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
       ...prev,
       [index]: !prev[index]
     }));
+  };
+
+  const calculateGoalFromGrowth = () => {
+    if (bestMonthData?.revenue_total) {
+      const newGoal = bestMonthData.revenue_total * (1 + goalFormData.growth_percentage / 100);
+      setGoalFormData({ ...goalFormData, individual_goal: newGoal });
+    }
+  };
+
+  const handleSaveGoal = async () => {
+    try {
+      const newGoalsData = {
+        ...monthlyGoalsData,
+        growth_percentage: parseFloat(goalFormData.growth_percentage) || 10,
+        individual_goal: parseFloat(goalFormData.individual_goal) || 0,
+        daily_projected_goal: (parseFloat(goalFormData.individual_goal) || 0) / 22
+      };
+      
+      const success = await updateMonthlyGoals(newGoalsData);
+      if (success) {
+        setGoalFormData(newGoalsData);
+        setEditingGoal(false);
+      }
+    } catch (error) {
+      console.error("Erro ao salvar meta:", error);
+    }
   };
 
 
@@ -388,7 +417,7 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
                 const isExpanded = expandedRecords[index];
 
                 return (
-                  <Card key={dailyHistoryFromDB.findIndex(r => r.id === entry.id)} className={`hover:shadow-md transition-all ${
+                  <Card key={`${entry.date}-${index}`} className={`hover:shadow-md transition-all ${
                     metaDayAchieved ? 'border-l-4 border-green-500 bg-green-50/30' : 'border-l-4 border-orange-400 bg-orange-50/30'
                   }`}>
                     <CardContent className="p-4">
@@ -449,7 +478,7 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => toggleRecordExpansion(dailyHistoryFromDB.findIndex(r => r.id === entry.id))}
+                            onClick={() => toggleRecordExpansion(index)}
                             className="text-gray-600 hover:text-gray-900"
                           >
                             {isExpanded ? (
