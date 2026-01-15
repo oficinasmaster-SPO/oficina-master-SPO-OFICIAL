@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useLocation } from "react-router-dom";
-import { Plus, Download, Target, TrendingUp, Award, AlertCircle, Building2, User, X, Activity, BarChart3, Calendar, DollarSign, CheckCircle2, Eye, EyeOff, RefreshCw } from "lucide-react";
+import { Plus, Download, Target, TrendingUp, Award, AlertCircle, Building2, User, X, Activity, BarChart3, Calendar, DollarSign, CheckCircle2, Eye, EyeOff, RefreshCw, Trash2 } from "lucide-react";
 import { formatCurrency, formatNumber } from "../components/utils/formatters";
 import ManualGoalRegistration from "../components/goals/ManualGoalRegistration";
 import { toast } from "sonner";
@@ -593,8 +593,11 @@ export default function HistoricoMetas() {
                           <div className="text-center bg-blue-50 px-4 py-2 rounded-lg shadow-sm min-w-[120px]">
                             <p className="text-xs text-blue-700 mb-1">Previsto</p>
                             <p className="text-xl font-bold text-blue-600">
-                              R$ {formatCurrency(record.projected_total)}
+                              R$ {formatCurrency(record.projected_total || 0)}
                             </p>
+                            {(!record.projected_total || record.projected_total === 0) && (
+                              <p className="text-xs text-orange-500 mt-1">Meta não definida</p>
+                            )}
                           </div>
                           <div className="text-center bg-white px-4 py-2 rounded-lg shadow-sm min-w-[120px]">
                             <p className="text-xs text-purple-700 mb-1">Realizado</p>
@@ -784,8 +787,29 @@ export default function HistoricoMetas() {
                          </div>
                         )}
 
-                        {/* Botão Editar */}
-                        <div className="flex justify-end pt-3 border-t border-gray-200">
+                        {/* Botões de Ação */}
+                        <div className="flex justify-end gap-2 pt-3 border-t border-gray-200">
+                         <Button
+                           size="sm"
+                           variant="outline"
+                           onClick={async () => {
+                             if (window.confirm('Tem certeza que deseja excluir este registro permanentemente? Esta ação não pode ser desfeita.')) {
+                               try {
+                                 await base44.entities.MonthlyGoalHistory.delete(record.id);
+                                 toast.success('Registro excluído com sucesso!');
+                                 queryClient.invalidateQueries(['goal-history']);
+                                 refetchGoals();
+                               } catch (error) {
+                                 console.error('Erro ao excluir:', error);
+                                 toast.error('Erro ao excluir o registro');
+                               }
+                             }
+                           }}
+                           className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                         >
+                           <Trash2 className="w-4 h-4 mr-2" />
+                           Excluir
+                         </Button>
                          <Button
                            size="sm"
                            onClick={() => {
