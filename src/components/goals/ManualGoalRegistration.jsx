@@ -2139,18 +2139,9 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
               Cancelar
             </Button>
             <Button 
-              onClick={handleSaveDirect} 
-              variant="outline"
-              className="flex-1"
-              disabled={(entityType === "employee" && !selectedEmployee) || isSaving}
-            >
-              <Save className="w-4 h-4 mr-2" />
-              Salvar Direto
-            </Button>
-            <Button 
               onClick={handleSaveAndAnalyze} 
               className="flex-1 bg-blue-600 hover:bg-blue-700"
-              disabled={(entityType === "employee" && !selectedEmployee) || isSaving}
+              disabled={isSaving}
             >
               <Save className="w-4 h-4 mr-2" />
               Salvar e Distribuir
