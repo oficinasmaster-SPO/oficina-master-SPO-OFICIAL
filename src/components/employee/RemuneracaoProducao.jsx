@@ -23,7 +23,8 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
     commission_rules: Array.isArray(employee.commission_rules) ? employee.commission_rules : [],
     production_parts: employee.production_parts || 0,
     production_parts_sales: employee.production_parts_sales || 0,
-    production_services: employee.production_services || 0
+    production_services: employee.production_services || 0,
+    production_services_sales: employee.production_services_sales || 0
   });
 
   // Sincronizar bestMonthData do hook com o estado local
@@ -145,7 +146,7 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
   const totalCost = formData.salary + formData.commission + formData.bonus + 
     (Array.isArray(formData.benefits) ? formData.benefits.reduce((sum, b) => sum + (b.valor || 0), 0) : 0);
   
-  const totalProduction = formData.production_parts + formData.production_parts_sales + formData.production_services;
+  const totalProduction = formData.production_parts + formData.production_parts_sales + formData.production_services + formData.production_services_sales;
   // Formula: Custo (Salário) / Faturamento Total (Produção) * 100
   const productionPercentage = totalProduction > 0 ? ((totalCost / totalProduction) * 100).toFixed(1) : 0;
 
@@ -299,7 +300,7 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
           <CardTitle>PRODUÇÃO PREVISTA</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <Label>Produção de Peças (R$)</Label>
               <Input
@@ -324,6 +325,15 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
                 type="number"
                 value={formData.production_services}
                 onChange={(e) => setFormData({...formData, production_services: parseFloat(e.target.value) || 0})}
+                disabled={!editing}
+              />
+            </div>
+            <div>
+              <Label>Produção Vendas de Serviços (R$)</Label>
+              <Input
+                type="number"
+                value={formData.production_services_sales}
+                onChange={(e) => setFormData({...formData, production_services_sales: parseFloat(e.target.value) || 0})}
                 disabled={!editing}
               />
             </div>
