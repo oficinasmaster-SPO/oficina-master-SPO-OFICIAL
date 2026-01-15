@@ -644,44 +644,138 @@ export default function GraficosProducao() {
 
             {/* ABA AGENDAMENTOS */}
             <TabsContent value="agendamentos" className="space-y-6">
-              <Card className="bg-slate-800/50 border-blue-500/30 backdrop-blur-sm">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">Agendamentos por Origem</CardTitle>
-                    <StatusMetaBadge
-                      realizadoAcumulado={realizadoAcumulado.agendados_base + realizadoAcumulado.agendados_mkt + realizadoAcumulado.agendados_referral}
-                      metaAcumulada={metaAcumulada.agendados_base + metaAcumulada.agendados_mkt + metaAcumulada.agendados_referral}
-                      onClick={() => setFeedbackModal({
-                        open: true,
-                        status: getStatus(
-                          realizadoAcumulado.agendados_base + realizadoAcumulado.agendados_mkt + realizadoAcumulado.agendados_referral,
-                          metaAcumulada.agendados_base + metaAcumulada.agendados_mkt + metaAcumulada.agendados_referral
-                        ),
-                        metricName: "Agendamentos Totais",
-                        realizado: realizadoAcumulado.agendados_base + realizadoAcumulado.agendados_mkt + realizadoAcumulado.agendados_referral,
-                        meta: metaAcumulada.agendados_base + metaAcumulada.agendados_mkt + metaAcumulada.agendados_referral
-                      })}
-                    />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={350}>
-                    <LineChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#1e40af" opacity={0.1} />
-                      <XAxis dataKey="date" stroke="#60a5fa" style={{ fontSize: '12px' }} />
-                      <YAxis stroke="#60a5fa" style={{ fontSize: '12px' }} />
-                      <Tooltip content={<CustomTooltip />} />
-                      <Legend wrapperStyle={{ color: '#60a5fa' }} />
-                      <Line type="monotone" dataKey="agendados_base" stroke="#3b82f6" strokeWidth={2} name="Agendados Base" dot={{ fill: '#3b82f6', r: 3 }} />
-                      <Line type="monotone" dataKey="meta_diaria_agendados_base" stroke="#60a5fa" strokeWidth={2} strokeDasharray="5 5" name="Meta Diária Base" dot={{ fill: '#60a5fa', r: 2 }} />
-                      <Line type="monotone" dataKey="agendados_mkt" stroke="#ec4899" strokeWidth={2} name="Agendados Marketing" dot={{ fill: '#ec4899', r: 3 }} />
-                      <Line type="monotone" dataKey="meta_diaria_agendados_mkt" stroke="#f9a8d4" strokeWidth={2} strokeDasharray="5 5" name="Meta Diária Mkt" dot={{ fill: '#f9a8d4', r: 2 }} />
-                      <Line type="monotone" dataKey="agendados_referral" stroke="#f97316" strokeWidth={2} name="Agendados Indicação" dot={{ fill: '#f97316', r: 3 }} />
-                      <Line type="monotone" dataKey="meta_diaria_agendados_referral" stroke="#fb923c" strokeWidth={2} strokeDasharray="5 5" name="Meta Diária Indic." dot={{ fill: '#fb923c', r: 2 }} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <Card className="bg-slate-800/50 border-blue-500/30 backdrop-blur-sm lg:col-span-2">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">Agendamentos por Origem</CardTitle>
+                      <StatusMetaBadge
+                        realizadoAcumulado={realizadoAcumulado.agendados_base + realizadoAcumulado.agendados_mkt + realizadoAcumulado.agendados_referral}
+                        metaAcumulada={metaAcumulada.agendados_base + metaAcumulada.agendados_mkt + metaAcumulada.agendados_referral}
+                        onClick={() => setFeedbackModal({
+                          open: true,
+                          status: getStatus(
+                            realizadoAcumulado.agendados_base + realizadoAcumulado.agendados_mkt + realizadoAcumulado.agendados_referral,
+                            metaAcumulada.agendados_base + metaAcumulada.agendados_mkt + metaAcumulada.agendados_referral
+                          ),
+                          metricName: "Agendamentos Totais",
+                          realizado: realizadoAcumulado.agendados_base + realizadoAcumulado.agendados_mkt + realizadoAcumulado.agendados_referral,
+                          meta: metaAcumulada.agendados_base + metaAcumulada.agendados_mkt + metaAcumulada.agendados_referral
+                        })}
+                      />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={350}>
+                      <LineChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#1e40af" opacity={0.1} />
+                        <XAxis dataKey="date" stroke="#60a5fa" style={{ fontSize: '12px' }} />
+                        <YAxis stroke="#60a5fa" style={{ fontSize: '12px' }} />
+                        <Tooltip content={<CustomTooltip />} />
+                        <Legend 
+                          wrapperStyle={{ color: '#60a5fa' }}
+                          onClick={(e) => {
+                            const dataKey = e.dataKey;
+                            setHighlightedLine(highlightedLine === dataKey ? null : dataKey);
+                          }}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="agendados_base" 
+                          stroke="#3b82f6" 
+                          strokeWidth={2} 
+                          name="Agendados Base" 
+                          dot={{ fill: '#3b82f6', r: 3 }}
+                          strokeOpacity={highlightedLine && highlightedLine !== "agendados_base" ? 0.2 : 1}
+                          onClick={() => setHighlightedLine(highlightedLine === "agendados_base" ? null : "agendados_base")}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="meta_diaria_agendados_base" 
+                          stroke="#60a5fa" 
+                          strokeWidth={2} 
+                          strokeDasharray="5 5" 
+                          name="Meta Diária Base" 
+                          dot={{ fill: '#60a5fa', r: 2 }}
+                          strokeOpacity={highlightedLine && highlightedLine !== "meta_diaria_agendados_base" ? 0.2 : 1}
+                          onClick={() => setHighlightedLine(highlightedLine === "meta_diaria_agendados_base" ? null : "meta_diaria_agendados_base")}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="agendados_mkt" 
+                          stroke="#ec4899" 
+                          strokeWidth={2} 
+                          name="Agendados Marketing" 
+                          dot={{ fill: '#ec4899', r: 3 }}
+                          strokeOpacity={highlightedLine && highlightedLine !== "agendados_mkt" ? 0.2 : 1}
+                          onClick={() => setHighlightedLine(highlightedLine === "agendados_mkt" ? null : "agendados_mkt")}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="meta_diaria_agendados_mkt" 
+                          stroke="#f9a8d4" 
+                          strokeWidth={2} 
+                          strokeDasharray="5 5" 
+                          name="Meta Diária Mkt" 
+                          dot={{ fill: '#f9a8d4', r: 2 }}
+                          strokeOpacity={highlightedLine && highlightedLine !== "meta_diaria_agendados_mkt" ? 0.2 : 1}
+                          onClick={() => setHighlightedLine(highlightedLine === "meta_diaria_agendados_mkt" ? null : "meta_diaria_agendados_mkt")}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="agendados_referral" 
+                          stroke="#f97316" 
+                          strokeWidth={2} 
+                          name="Agendados Indicação" 
+                          dot={{ fill: '#f97316', r: 3 }}
+                          strokeOpacity={highlightedLine && highlightedLine !== "agendados_referral" ? 0.2 : 1}
+                          onClick={() => setHighlightedLine(highlightedLine === "agendados_referral" ? null : "agendados_referral")}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="meta_diaria_agendados_referral" 
+                          stroke="#fb923c" 
+                          strokeWidth={2} 
+                          strokeDasharray="5 5" 
+                          name="Meta Diária Indic." 
+                          dot={{ fill: '#fb923c', r: 2 }}
+                          strokeOpacity={highlightedLine && highlightedLine !== "meta_diaria_agendados_referral" ? 0.2 : 1}
+                          onClick={() => setHighlightedLine(highlightedLine === "meta_diaria_agendados_referral" ? null : "meta_diaria_agendados_referral")}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                <GapFunnelIndicator
+                  metricName="Agendamentos (SDR → Closer)"
+                  realizado={realizadoAcumulado.entregues_base + realizadoAcumulado.entregues_mkt + realizadoAcumulado.entregues_referral}
+                  meta={metaAcumulada.entregues_base + metaAcumulada.entregues_mkt + metaAcumulada.entregues_referral}
+                  funnelSteps={[
+                    {
+                      label: "Agendados (SDR)",
+                      realizado: realizadoAcumulado.agendados_base + realizadoAcumulado.agendados_mkt + realizadoAcumulado.agendados_referral,
+                      meta: metaAcumulada.agendados_base + metaAcumulada.agendados_mkt + metaAcumulada.agendados_referral,
+                      previous: 0,
+                      previousMeta: 0
+                    },
+                    {
+                      label: "Entregues/Compareceram",
+                      realizado: realizadoAcumulado.entregues_base + realizadoAcumulado.entregues_mkt + realizadoAcumulado.entregues_referral,
+                      meta: metaAcumulada.entregues_base + metaAcumulada.entregues_mkt + metaAcumulada.entregues_referral,
+                      previous: realizadoAcumulado.agendados_base + realizadoAcumulado.agendados_mkt + realizadoAcumulado.agendados_referral,
+                      previousMeta: metaAcumulada.agendados_base + metaAcumulada.agendados_mkt + metaAcumulada.agendados_referral
+                    },
+                    {
+                      label: "Vendidos (Closer)",
+                      realizado: realizadoAcumulado.sales_base + realizadoAcumulado.sales_mkt,
+                      meta: metaAcumulada.sales_base + metaAcumulada.sales_mkt,
+                      previous: realizadoAcumulado.entregues_base + realizadoAcumulado.entregues_mkt + realizadoAcumulado.entregues_referral,
+                      previousMeta: metaAcumulada.entregues_base + metaAcumulada.entregues_mkt + metaAcumulada.entregues_referral
+                    }
+                  ]}
+                />
+              </div>
 
               <Card className="bg-slate-800/50 border-green-500/30 backdrop-blur-sm">
                 <CardHeader>
@@ -710,17 +804,110 @@ export default function GraficosProducao() {
                       <XAxis dataKey="date" stroke="#60a5fa" style={{ fontSize: '12px' }} />
                       <YAxis stroke="#60a5fa" style={{ fontSize: '12px' }} />
                       <Tooltip content={<CustomTooltip />} />
-                      <Legend wrapperStyle={{ color: '#60a5fa' }} />
-                      <Line type="monotone" dataKey="entregues_base" stroke="#10b981" strokeWidth={2} name="Entregues Base" dot={{ fill: '#10b981', r: 3 }} />
-                      <Line type="monotone" dataKey="meta_diaria_entregues_base" stroke="#34d399" strokeWidth={2} strokeDasharray="5 5" name="Meta Diária Base" dot={{ fill: '#34d399', r: 2 }} />
-                      <Line type="monotone" dataKey="entregues_mkt" stroke="#a855f7" strokeWidth={2} name="Entregues Marketing" dot={{ fill: '#a855f7', r: 3 }} />
-                      <Line type="monotone" dataKey="meta_diaria_entregues_mkt" stroke="#c084fc" strokeWidth={2} strokeDasharray="5 5" name="Meta Diária Mkt" dot={{ fill: '#c084fc', r: 2 }} />
-                      <Line type="monotone" dataKey="entregues_referral" stroke="#fbbf24" strokeWidth={2} name="Entregues Indicação" dot={{ fill: '#fbbf24', r: 3 }} />
-                      <Line type="monotone" dataKey="meta_diaria_entregues_referral" stroke="#fcd34d" strokeWidth={2} strokeDasharray="5 5" name="Meta Diária Indic." dot={{ fill: '#fcd34d', r: 2 }} />
+                      <Legend 
+                        wrapperStyle={{ color: '#60a5fa' }}
+                        onClick={(e) => {
+                          const dataKey = e.dataKey;
+                          setHighlightedLine(highlightedLine === dataKey ? null : dataKey);
+                        }}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="entregues_base" 
+                        stroke="#10b981" 
+                        strokeWidth={2} 
+                        name="Entregues Base" 
+                        dot={{ fill: '#10b981', r: 3 }}
+                        strokeOpacity={highlightedLine && highlightedLine !== "entregues_base" ? 0.2 : 1}
+                        onClick={() => setHighlightedLine(highlightedLine === "entregues_base" ? null : "entregues_base")}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="meta_diaria_entregues_base" 
+                        stroke="#34d399" 
+                        strokeWidth={2} 
+                        strokeDasharray="5 5" 
+                        name="Meta Diária Base" 
+                        dot={{ fill: '#34d399', r: 2 }}
+                        strokeOpacity={highlightedLine && highlightedLine !== "meta_diaria_entregues_base" ? 0.2 : 1}
+                        onClick={() => setHighlightedLine(highlightedLine === "meta_diaria_entregues_base" ? null : "meta_diaria_entregues_base")}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="entregues_mkt" 
+                        stroke="#a855f7" 
+                        strokeWidth={2} 
+                        name="Entregues Marketing" 
+                        dot={{ fill: '#a855f7', r: 3 }}
+                        strokeOpacity={highlightedLine && highlightedLine !== "entregues_mkt" ? 0.2 : 1}
+                        onClick={() => setHighlightedLine(highlightedLine === "entregues_mkt" ? null : "entregues_mkt")}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="meta_diaria_entregues_mkt" 
+                        stroke="#c084fc" 
+                        strokeWidth={2} 
+                        strokeDasharray="5 5" 
+                        name="Meta Diária Mkt" 
+                        dot={{ fill: '#c084fc', r: 2 }}
+                        strokeOpacity={highlightedLine && highlightedLine !== "meta_diaria_entregues_mkt" ? 0.2 : 1}
+                        onClick={() => setHighlightedLine(highlightedLine === "meta_diaria_entregues_mkt" ? null : "meta_diaria_entregues_mkt")}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="entregues_referral" 
+                        stroke="#fbbf24" 
+                        strokeWidth={2} 
+                        name="Entregues Indicação" 
+                        dot={{ fill: '#fbbf24', r: 3 }}
+                        strokeOpacity={highlightedLine && highlightedLine !== "entregues_referral" ? 0.2 : 1}
+                        onClick={() => setHighlightedLine(highlightedLine === "entregues_referral" ? null : "entregues_referral")}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="meta_diaria_entregues_referral" 
+                        stroke="#fcd34d" 
+                        strokeWidth={2} 
+                        strokeDasharray="5 5" 
+                        name="Meta Diária Indic." 
+                        dot={{ fill: '#fcd34d', r: 2 }}
+                        strokeOpacity={highlightedLine && highlightedLine !== "meta_diaria_entregues_referral" ? 0.2 : 1}
+                        onClick={() => setHighlightedLine(highlightedLine === "meta_diaria_entregues_referral" ? null : "meta_diaria_entregues_referral")}
+                      />
                     </LineChart>
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
+
+              <GapFunnelIndicator
+                metricName="Agendamentos (SDR → Closer)"
+                realizado={realizadoAcumulado.entregues_base + realizadoAcumulado.entregues_mkt + realizadoAcumulado.entregues_referral}
+                meta={metaAcumulada.entregues_base + metaAcumulada.entregues_mkt + metaAcumulada.entregues_referral}
+                funnelSteps={[
+                  {
+                    label: "Agendados (SDR)",
+                    realizado: realizadoAcumulado.agendados_base + realizadoAcumulado.agendados_mkt + realizadoAcumulado.agendados_referral,
+                    meta: metaAcumulada.agendados_base + metaAcumulada.agendados_mkt + metaAcumulada.agendados_referral,
+                    previous: 0,
+                    previousMeta: 0
+                  },
+                  {
+                    label: "Entregues/Compareceram",
+                    realizado: realizadoAcumulado.entregues_base + realizadoAcumulado.entregues_mkt + realizadoAcumulado.entregues_referral,
+                    meta: metaAcumulada.entregues_base + metaAcumulada.entregues_mkt + metaAcumulada.entregues_referral,
+                    previous: realizadoAcumulado.agendados_base + realizadoAcumulado.agendados_mkt + realizadoAcumulado.agendados_referral,
+                    previousMeta: metaAcumulada.agendados_base + metaAcumulada.agendados_mkt + metaAcumulada.agendados_referral
+                  },
+                  {
+                    label: "Vendidos (Closer)",
+                    realizado: realizadoAcumulado.sales_base + realizadoAcumulado.sales_mkt,
+                    meta: metaAcumulada.sales_base + metaAcumulada.sales_mkt,
+                    previous: realizadoAcumulado.entregues_base + realizadoAcumulado.entregues_mkt + realizadoAcumulado.entregues_referral,
+                    previousMeta: metaAcumulada.entregues_base + metaAcumulada.entregues_mkt + metaAcumulada.entregues_referral
+                  }
+                ]}
+              />
+              </div>
             </TabsContent>
 
             {/* ABA MARKETING */}
