@@ -356,22 +356,27 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
   };
 
   const handleSaveGoal = async () => {
-    const currentMonth = new Date().toISOString().slice(0, 7);
-    const dailyGoalCalculated = goalFormData.individual_goal / 22;
+    try {
+      const currentMonth = new Date().toISOString().slice(0, 7);
+      const dailyGoalCalculated = goalFormData.individual_goal / 22;
 
-    await onUpdate({
-      monthly_goals: {
-        ...employee.monthly_goals,
-        month: currentMonth,
-        individual_goal: parseFloat(goalFormData.individual_goal) || 0,
-        daily_projected_goal: dailyGoalCalculated,
-        growth_percentage: parseFloat(goalFormData.growth_percentage) || 10,
-        actual_revenue_achieved: actualRevenueAchieved
-      }
-    });
+      await onUpdate({
+        monthly_goals: {
+          ...employee.monthly_goals,
+          month: currentMonth,
+          individual_goal: parseFloat(goalFormData.individual_goal) || 0,
+          daily_projected_goal: dailyGoalCalculated,
+          growth_percentage: parseFloat(goalFormData.growth_percentage) || 10,
+          actual_revenue_achieved: actualRevenueAchieved
+        }
+      });
 
-    toast.success("Meta mensal atualizada com sucesso!");
-    setEditingGoal(false);
+      toast.success("Meta mensal atualizada com sucesso!");
+      setEditingGoal(false);
+    } catch (error) {
+      console.error("Erro ao salvar meta:", error);
+      toast.error("Erro ao salvar meta");
+    }
   };
 
   const calculateGoalFromGrowth = () => {
@@ -423,7 +428,9 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
                   <div>
                     <p className="text-gray-600">Faturamento do Melhor Mês:</p>
                     <p className="text-xl font-bold text-blue-600">
-                      R$ {((employee.best_month_history?.revenue_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }))}
+                      {employee.best_month_history?.revenue_total ? 
+                        `R$ ${(employee.best_month_history.revenue_total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` 
+                        : '⚠️ Não definido'}
                     </p>
                   </div>
                   <div>
@@ -431,10 +438,13 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
                     <p className="font-semibold text-gray-900">
                       {employee.best_month_history?.date 
                         ? new Date(employee.best_month_history.date + '-01').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
-                        : 'Não registrado'}
+                        : '⚠️ Não registrado'}
                     </p>
                   </div>
                 </div>
+                {!employee.best_month_history?.revenue_total && (
+                  <p className="text-xs text-red-600 mt-2">⚠️ Configure o melhor mês na aba de Dados Pessoais</p>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -452,9 +462,15 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
                       Calcular
                     </Button>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Ex: 10% = {((employee.best_month_history?.revenue_total || 0) * 1.1).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                  </p>
+                  {employee.best_month_history?.revenue_total ? (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Ex: 10% = {((employee.best_month_history.revenue_total * 1.1).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }))}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-red-500 mt-1">
+                      ⚠️ Configure o melhor mês em Dados Pessoais para usar este cálculo
+                    </p>
+                  )}
                 </div>
 
                 <div>
