@@ -1122,6 +1122,7 @@ export default function GraficosProducao() {
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
+              </div>
             </TabsContent>
           </Tabs>
         )}
