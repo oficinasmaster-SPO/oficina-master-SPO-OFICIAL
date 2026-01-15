@@ -18,9 +18,18 @@ import {
   AlertCircle,
   Loader2
 } from "lucide-react";
+import StatusMetaBadge from "@/components/historico/StatusMetaBadge";
+import FeedbackMetaModal from "@/components/historico/FeedbackMetaModal";
 
 export default function GlobalGoalsIndicator({ workshop, className = "" }) {
   const currentMonth = new Date().toISOString().substring(0, 7);
+  const [feedbackModal, setFeedbackModal] = React.useState({ 
+    open: false, 
+    status: "", 
+    metricName: "", 
+    realizado: 0, 
+    meta: 0 
+  });
 
   // Buscar dados de metas do workshop
   const { data: workshopData, isLoading: loadingWorkshop } = useQuery({
@@ -107,6 +116,55 @@ export default function GlobalGoalsIndicator({ workshop, className = "" }) {
     : 0;
 
   const hasProjection = projectedRevenue > 0;
+
+  // Calcular dias úteis do mês até hoje para meta acumulada
+  const calcularDiasUteis = (mesAno) => {
+    const [ano, mes] = mesAno.split('-').map(Number);
+    const primeiroDia = new Date(ano, mes - 1, 1);
+    const ultimoDia = new Date(ano, mes, 0);
+    let diasUteis = 0;
+
+    for (let dia = primeiroDia.getDate(); dia <= ultimoDia.getDate(); dia++) {
+      const data = new Date(ano, mes - 1, dia);
+      const diaSemana = data.getDay();
+      if (diaSemana >= 1 && diaSemana <= 5) {
+        diasUteis++;
+      }
+    }
+    return diasUteis;
+  };
+
+  const hoje = new Date();
+  const diasUteisMes = calcularDiasUteis(currentMonth);
+  
+  let diasUteisDecorridos = 0;
+  const [anoFiltro, mesFiltro] = currentMonth.split('-').map(Number);
+  const mesAtual = hoje.getMonth() + 1;
+  const anoAtual = hoje.getFullYear();
+  
+  if (anoFiltro === anoAtual && mesFiltro === mesAtual) {
+    for (let dia = 1; dia <= hoje.getDate(); dia++) {
+      const data = new Date(anoAtual, mesAtual - 1, dia);
+      const diaSemana = data.getDay();
+      if (diaSemana >= 1 && diaSemana <= 5) {
+        diasUteisDecorridos++;
+      }
+    }
+  } else {
+    diasUteisDecorridos = diasUteisMes;
+  }
+
+  // Meta acumulada até o dia atual
+  const metaAcumuladaRevenue = diasUteisMes > 0 ? (projectedRevenue / diasUteisMes) * diasUteisDecorridos : 0;
+  const metaAcumuladaCustomers = diasUteisMes > 0 ? Math.round((projectedCustomers / diasUteisMes) * diasUteisDecorridos) : 0;
+
+  // Função para determinar status baseado em IRM
+  const getStatus = (realizado, meta) => {
+    const irm = meta > 0 ? realizado / meta : 0;
+    if (irm > 1.05) return "acima";
+    if (irm >= 0.95) return "na_media";
+    return "abaixo";
+  };
 
   if (!hasProjection) {
     return (
@@ -195,12 +253,17 @@ export default function GlobalGoalsIndicator({ workshop, className = "" }) {
               <DollarSign className="w-5 h-5 text-blue-600" />
               <span className="text-sm font-medium text-gray-700">Faturamento Total</span>
             </div>
-            <div className="flex items-center gap-2">
-              <RevenueIcon className={`w-5 h-5 ${revenueStatus.color}`} />
-              <span className={`text-sm font-semibold ${revenueStatus.color}`}>
-                {revenueStatus.text}
-              </span>
-            </div>
+            <StatusMetaBadge
+              realizadoAcumulado={totalAchieved}
+              metaAcumulada={metaAcumuladaRevenue}
+              onClick={() => setFeedbackModal({
+                open: true,
+                status: getStatus(totalAchieved, metaAcumuladaRevenue),
+                metricName: "Faturamento Total",
+                realizado: totalAchieved,
+                meta: metaAcumuladaRevenue
+              })}
+            />
           </div>
 
           <div className="flex items-end justify-between mb-2">
@@ -280,9 +343,24 @@ export default function GlobalGoalsIndicator({ workshop, className = "" }) {
 
           {/* Clientes */}
           <div className="bg-orange-50 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Users className="w-4 h-4 text-orange-600" />
-              <span className="text-sm font-medium text-gray-700">Clientes</span>
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-orange-600" />
+                <span className="text-sm font-medium text-gray-700">Clientes</span>
+              </div>
+              <div onClick={() => setFeedbackModal({
+                open: true,
+                status: getStatus(totalCustomers, metaAcumuladaCustomers),
+                metricName: "Clientes",
+                realizado: totalCustomers,
+                meta: metaAcumuladaCustomers
+              })}>
+                <StatusMetaBadge
+                  realizadoAcumulado={totalCustomers}
+                  metaAcumulada={metaAcumuladaCustomers}
+                  onClick={() => {}}
+                />
+              </div>
             </div>
             <p className="text-xl font-bold text-gray-900">
               {formatNumber(totalCustomers)}
@@ -333,6 +411,15 @@ export default function GlobalGoalsIndicator({ workshop, className = "" }) {
           </Link>
         </div>
       </CardContent>
+
+      <FeedbackMetaModal
+        open={feedbackModal.open}
+        onClose={() => setFeedbackModal({ ...feedbackModal, open: false })}
+        status={feedbackModal.status}
+        metricName={feedbackModal.metricName}
+        realizadoAcumulado={feedbackModal.realizado}
+        metaAcumulada={feedbackModal.meta}
+      />
     </Card>
   );
 }
