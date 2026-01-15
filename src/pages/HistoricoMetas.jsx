@@ -555,7 +555,7 @@ export default function HistoricoMetas() {
                           </div>
                         </div>
 
-                        {/* Botão Expandir */}
+                        {/* Botão Expandir - Sempre visível para permitir edição de dados de marketing */}
                         <Button
                           size="sm"
                           variant="ghost"
