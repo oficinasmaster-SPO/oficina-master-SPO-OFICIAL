@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useLocation } from "react-router-dom";
-import { Plus, Download, Target, TrendingUp, Award, AlertCircle, Building2, User, X, Activity, BarChart3, Calendar, DollarSign, CheckCircle2, Eye, EyeOff } from "lucide-react";
+import { Plus, Download, Target, TrendingUp, Award, AlertCircle, Building2, User, X, Activity, BarChart3, Calendar, DollarSign, CheckCircle2, Eye, EyeOff, RefreshCw } from "lucide-react";
 import { formatCurrency, formatNumber } from "../components/utils/formatters";
 import ManualGoalRegistration from "../components/goals/ManualGoalRegistration";
 import { toast } from "sonner";
