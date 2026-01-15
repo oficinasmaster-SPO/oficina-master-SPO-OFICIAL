@@ -154,6 +154,7 @@ export default function EmployeeGoals({ employee, onUpdate }) {
       production_parts: "Produção de Peças (R$)",
       production_parts_sales: "Vendas de Peças (R$)",
       production_services: "Produção de Serviços (R$)",
+      sales_services: "Vendas de Serviços (R$)",
       total_production: "Produção Total (R$)",
       customer_volume: "Volume de Clientes (Qtd)",
       custom: "Meta Personalizada"
@@ -460,6 +461,7 @@ export default function EmployeeGoals({ employee, onUpdate }) {
                                 <SelectItem value="production_parts">Produção de Peças</SelectItem>
                                 <SelectItem value="production_parts_sales">Vendas de Peças</SelectItem>
                                 <SelectItem value="production_services">Produção de Serviços</SelectItem>
+                                <SelectItem value="sales_services">Vendas de Serviços</SelectItem>
                                 <SelectItem value="total_production">Produção Total</SelectItem>
                                 <SelectItem value="customer_volume">Volume de Clientes</SelectItem>
                                 <SelectItem value="custom">Meta Personalizada</SelectItem>
