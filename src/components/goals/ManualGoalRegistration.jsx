@@ -81,8 +81,12 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
       loadEmployees();
       if (editingRecord) {
         loadEditingData();
+        setLoadedFromExisting(true);
+        setExistingRecordId(editingRecord.id);
       } else {
         loadProjectedGoals();
+        setLoadedFromExisting(false);
+        setExistingRecordId(null);
       }
       loadTCMP2();
     }
