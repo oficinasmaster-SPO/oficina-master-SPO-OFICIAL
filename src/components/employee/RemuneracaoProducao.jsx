@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { useEmployeeMetrics } from "@/components/hooks/useEmployeeMetrics";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +12,9 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
   const [editing, setEditing] = useState(false);
   const [editingBestMonth, setEditingBestMonth] = useState(false);
   const [metrics, setMetrics] = useState([]);
+  const { bestMonthData, updateBestMonth } = useEmployeeMetrics(employee);
+  const [localBestMonth, setLocalBestMonth] = useState(null);
+  
   const [formData, setFormData] = useState({
     salary: employee.salary || 0,
     commission: employee.commission || 0,
@@ -21,31 +25,37 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
     production_parts_sales: employee.production_parts_sales || 0,
     production_services: employee.production_services || 0
   });
-  
-  const [bestMonthData, setBestMonthData] = useState({
-    date: employee.best_month_history?.date || '',
-    revenue_total: employee.best_month_history?.revenue_total || 0,
-    revenue_parts: employee.best_month_history?.revenue_parts || 0,
-    revenue_services: employee.best_month_history?.revenue_services || 0,
-    profit_percentage: employee.best_month_history?.profit_percentage || 0,
-    rentability_percentage: employee.best_month_history?.rentability_percentage || 0,
-    customer_volume: employee.best_month_history?.customer_volume || 0,
-    average_ticket: employee.best_month_history?.average_ticket || 0,
-    average_ticket_parts: employee.best_month_history?.average_ticket_parts || 0,
-    average_ticket_services: employee.best_month_history?.average_ticket_services || 0
-  });
+
+  // Sincronizar bestMonthData do hook com o estado local
+  useEffect(() => {
+    if (bestMonthData) {
+      setLocalBestMonth({
+        date: bestMonthData.date || '',
+        revenue_total: bestMonthData.revenue_total || 0,
+        revenue_parts: bestMonthData.revenue_parts || 0,
+        revenue_services: bestMonthData.revenue_services || 0,
+        profit_percentage: bestMonthData.profit_percentage || 0,
+        rentability_percentage: bestMonthData.rentability_percentage || 0,
+        customer_volume: bestMonthData.customer_volume || 0,
+        average_ticket: bestMonthData.average_ticket || 0,
+        average_ticket_parts: bestMonthData.average_ticket_parts || 0,
+        average_ticket_services: bestMonthData.average_ticket_services || 0
+      });
+    }
+  }, [bestMonthData]);
 
   // Calcular ticket médio automaticamente
-  const calculatedAverageTicket = bestMonthData.customer_volume > 0 
-    ? bestMonthData.revenue_total / bestMonthData.customer_volume 
+  const currentBest = localBestMonth || bestMonthData;
+  const calculatedAverageTicket = currentBest?.customer_volume > 0 
+    ? currentBest.revenue_total / currentBest.customer_volume 
     : 0;
   
-  const calculatedAverageTicketParts = bestMonthData.customer_volume > 0 
-    ? bestMonthData.revenue_parts / bestMonthData.customer_volume 
+  const calculatedAverageTicketParts = currentBest?.customer_volume > 0 
+    ? currentBest.revenue_parts / currentBest.customer_volume 
     : 0;
   
-  const calculatedAverageTicketServices = bestMonthData.customer_volume > 0 
-    ? bestMonthData.revenue_services / bestMonthData.customer_volume 
+  const calculatedAverageTicketServices = currentBest?.customer_volume > 0 
+    ? currentBest.revenue_services / currentBest.customer_volume 
     : 0;
 
   useEffect(() => {
@@ -79,16 +89,17 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
   const handleSaveBestMonth = async () => {
     // Salvar com os tickets médios calculados automaticamente
     const dataToSave = {
-      ...bestMonthData,
+      ...localBestMonth,
       average_ticket: calculatedAverageTicket,
       average_ticket_parts: calculatedAverageTicketParts,
       average_ticket_services: calculatedAverageTicketServices
     };
     
-    await onUpdate({
-      best_month_history: dataToSave
-    });
-    setEditingBestMonth(false);
+    const success = await updateBestMonth(dataToSave);
+    if (success) {
+      await onUpdate({ best_month_history: dataToSave });
+      setEditingBestMonth(false);
+    }
   };
 
   const addBenefit = () => {
@@ -170,8 +181,8 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
               <Label className="text-xs text-gray-600 mb-1 block">Data (Mês/Ano)</Label>
               <Input
                 type="month"
-                value={bestMonthData.date ? bestMonthData.date.substring(0, 7) : ''}
-                onChange={(e) => setBestMonthData({...bestMonthData, date: e.target.value + '-01'})}
+                value={localBestMonth?.date ? localBestMonth.date.substring(0, 7) : ''}
+                onChange={(e) => setLocalBestMonth({...localBestMonth, date: e.target.value + '-01'})}
                 disabled={!editingBestMonth}
                 className="h-9"
               />
@@ -180,8 +191,8 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
               <Label className="text-xs text-gray-600 mb-1 block">Faturamento Total (R$)</Label>
               <Input
                 type="number"
-                value={bestMonthData.revenue_total}
-                onChange={(e) => setBestMonthData({...bestMonthData, revenue_total: parseFloat(e.target.value) || 0})}
+                value={localBestMonth?.revenue_total || 0}
+                onChange={(e) => setLocalBestMonth({...localBestMonth, revenue_total: parseFloat(e.target.value) || 0})}
                 disabled={!editingBestMonth}
                 className="h-9"
               />
@@ -190,8 +201,8 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
               <Label className="text-xs text-gray-600 mb-1 block">Volume de Clientes</Label>
               <Input
                 type="number"
-                value={bestMonthData.customer_volume}
-                onChange={(e) => setBestMonthData({...bestMonthData, customer_volume: parseInt(e.target.value) || 0})}
+                value={localBestMonth?.customer_volume || 0}
+                onChange={(e) => setLocalBestMonth({...localBestMonth, customer_volume: parseInt(e.target.value) || 0})}
                 disabled={!editingBestMonth}
                 className="h-9"
               />
@@ -213,8 +224,8 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
               <Label className="text-xs text-gray-600 mb-1 block">Faturamento Peças (R$)</Label>
               <Input
                 type="number"
-                value={bestMonthData.revenue_parts}
-                onChange={(e) => setBestMonthData({...bestMonthData, revenue_parts: parseFloat(e.target.value) || 0})}
+                value={localBestMonth?.revenue_parts || 0}
+                onChange={(e) => setLocalBestMonth({...localBestMonth, revenue_parts: parseFloat(e.target.value) || 0})}
                 disabled={!editingBestMonth}
                 className="h-9"
               />
@@ -223,8 +234,8 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
               <Label className="text-xs text-gray-600 mb-1 block">Faturamento Serviços (R$)</Label>
               <Input
                 type="number"
-                value={bestMonthData.revenue_services}
-                onChange={(e) => setBestMonthData({...bestMonthData, revenue_services: parseFloat(e.target.value) || 0})}
+                value={localBestMonth?.revenue_services || 0}
+                onChange={(e) => setLocalBestMonth({...localBestMonth, revenue_services: parseFloat(e.target.value) || 0})}
                 disabled={!editingBestMonth}
                 className="h-9"
               />
@@ -234,8 +245,8 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
               <Input
                 type="number"
                 step="0.1"
-                value={bestMonthData.profit_percentage}
-                onChange={(e) => setBestMonthData({...bestMonthData, profit_percentage: parseFloat(e.target.value) || 0})}
+                value={localBestMonth?.profit_percentage || 0}
+                onChange={(e) => setLocalBestMonth({...localBestMonth, profit_percentage: parseFloat(e.target.value) || 0})}
                 disabled={!editingBestMonth}
                 className="h-9"
               />
@@ -245,8 +256,8 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
               <Input
                 type="number"
                 step="0.1"
-                value={bestMonthData.rentability_percentage}
-                onChange={(e) => setBestMonthData({...bestMonthData, rentability_percentage: parseFloat(e.target.value) || 0})}
+                value={localBestMonth?.rentability_percentage || 0}
+                onChange={(e) => setLocalBestMonth({...localBestMonth, rentability_percentage: parseFloat(e.target.value) || 0})}
                 disabled={!editingBestMonth}
                 className="h-9"
               />
