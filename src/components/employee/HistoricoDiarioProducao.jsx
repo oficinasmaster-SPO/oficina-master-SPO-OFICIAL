@@ -1,33 +1,20 @@
 import React, { useState } from "react";
-import { useEmployeeMetrics } from "@/components/hooks/useEmployeeMetrics";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, DollarSign, Edit, Trash2, Target, TrendingUp, Eye, Plus, X, Save } from "lucide-react";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import { Calendar, Eye, Plus, X, Trash2, Edit } from "lucide-react";
 import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
 import ManualGoalRegistration from "@/components/goals/ManualGoalRegistration";
 
 export default function HistoricoDiarioProducao({ employee, onUpdate }) {
-  const [editingIndex, setEditingIndex] = useState(null);
-  const [editingGoal, setEditingGoal] = useState(false);
   const [expandedRecords, setExpandedRecords] = useState({});
   const [dailyHistoryFromDB, setDailyHistoryFromDB] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showManualRegistration, setShowManualRegistration] = useState(false);
   const [editingRecord, setEditingRecord] = useState(null);
-  const [goalFormData, setGoalFormData] = useState({ growth_percentage: 10, individual_goal: 0 });
-  const { bestMonthData, monthlyGoalsData, updateMonthlyGoals } = useEmployeeMetrics(employee);
 
   const dailyHistory = dailyHistoryFromDB.length > 0 ? dailyHistoryFromDB : (employee.daily_production_history || []);
-  
-  // Cálculo de metas sincronizado via hook
-  const monthlyProjectedGoal = monthlyGoalsData?.individual_goal || 0;
-  const dailyProjectedGoal = monthlyGoalsData?.daily_projected_goal || (monthlyProjectedGoal / 22);
-  const actualRevenueAchieved = monthlyGoalsData?.actual_revenue_achieved || 0;
 
-  // Carregar histórico da base de dados
   React.useEffect(() => {
     loadDailyHistory();
   }, [employee.id]);
@@ -43,27 +30,13 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
       });
 
       if (records && records.length > 0) {
-        // Converter registros do banco para formato do histórico diário
         const formattedHistory = records.map(record => ({
+          id: record.id,
           date: record.reference_date,
           parts_revenue: record.revenue_parts || 0,
           services_revenue: record.revenue_services || 0,
           total_revenue: record.revenue_total || 0,
-          notes: record.notes || "",
-          area_data: {
-            clientes_agendados_base: record.clients_scheduled_base || 0,
-            clientes_entregues_base: record.clients_delivered_base || 0,
-            clientes_agendados_marketing: record.clients_scheduled_mkt || 0,
-            clientes_entregues_marketing: record.clients_delivered_mkt || 0,
-            vendas_leads_marketing: record.sales_marketing || 0,
-            leads_gerados: record.marketing_data?.leads_generated || 0,
-            leads_agendados: record.marketing_data?.leads_scheduled || 0,
-            leads_compareceram: record.marketing_data?.leads_showed_up || 0,
-            leads_vendidos: record.marketing_data?.leads_sold || 0,
-            valor_investido_trafego: record.marketing_data?.invested_value || 0,
-            valor_faturado_leads: record.marketing_data?.revenue_from_traffic || 0,
-            custo_por_venda: record.marketing_data?.cost_per_sale || 0
-          }
+          notes: record.notes || ""
         }));
         
         setDailyHistoryFromDB(formattedHistory.sort((a, b) => new Date(b.date) - new Date(a.date)));
@@ -75,13 +48,7 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
     }
   };
 
-  // Sincronizar meta quando o employee mudar
-  React.useEffect(() => {
-    setEditingGoal(false);
-  }, [employee.id]);
-
   const handleRegistrationSave = async () => {
-    // Recarregar histórico após salvar via ManualGoalRegistration
     await loadDailyHistory();
     setShowManualRegistration(false);
     setEditingRecord(null);
@@ -101,48 +68,11 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
     }
   };
 
-  const getTotalRevenue = () => {
-    return dailyHistory.reduce((sum, entry) => sum + entry.total_revenue, 0);
-  };
-
-  const getMonthlyRevenue = () => {
-    const currentMonth = new Date().toISOString().substring(0, 7);
-    return dailyHistory
-      .filter(entry => entry.date.startsWith(currentMonth))
-      .reduce((sum, entry) => sum + entry.total_revenue, 0);
-  };
-
   const toggleRecordExpansion = (index) => {
     setExpandedRecords(prev => ({
       ...prev,
       [index]: !prev[index]
     }));
-  };
-
-  const calculateGoalFromGrowth = () => {
-    if (bestMonthData?.revenue_total) {
-      const newGoal = bestMonthData.revenue_total * (1 + goalFormData.growth_percentage / 100);
-      setGoalFormData({ ...goalFormData, individual_goal: newGoal });
-    }
-  };
-
-  const handleSaveGoal = async () => {
-    try {
-      const newGoalsData = {
-        ...monthlyGoalsData,
-        growth_percentage: parseFloat(goalFormData.growth_percentage) || 10,
-        individual_goal: parseFloat(goalFormData.individual_goal) || 0,
-        daily_projected_goal: (parseFloat(goalFormData.individual_goal) || 0) / 22
-      };
-      
-      const success = await updateMonthlyGoals(newGoalsData);
-      if (success) {
-        setGoalFormData(newGoalsData);
-        setEditingGoal(false);
-      }
-    } catch (error) {
-      console.error("Erro ao salvar meta:", error);
-    }
   };
 
 
