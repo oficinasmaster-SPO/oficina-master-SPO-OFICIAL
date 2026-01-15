@@ -138,18 +138,7 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
                               })}
                             </p>
 
-                            {/* Indicador de Meta */}
-                            <div className="flex items-center gap-2">
-                              <div className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                                metaDayAchieved 
-                                  ? 'bg-green-500 text-white' 
-                                  : dailyAchievementPercentage >= 70 
-                                    ? 'bg-yellow-500 text-white'
-                                    : 'bg-red-500 text-white'
-                              }`}>
-                                {metaDayAchieved ? '✓ Meta Atingida' : `${dailyAchievementPercentage.toFixed(0)}% da meta`}
-                              </div>
-                            </div>
+
                           </div>
 
                           {/* Previsto e Realizado - Lado a Lado */}
