@@ -100,27 +100,48 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
     setExistingRecordId(null);
     
     try {
-      console.log("🔍 Checking existing record for:", { date, entityType, selectedEmployee: selectedEmployee?.full_name });
-      
-      const filters = {
+      // BUSCAR TODOS OS REGISTROS DESTA DATA (workshop OU employee)
+      const allRecords = await base44.entities.MonthlyGoalHistory.filter({
         workshop_id: workshop.id,
-        reference_date: date,
-        entity_type: entityType
-      };
+        reference_date: date
+      });
       
-      if (entityType === "employee" && selectedEmployee) {
-        filters.employee_id = selectedEmployee.id;
-      }
+      console.log("📊 Todos os registros do dia", date, ":", allRecords);
       
-      console.log("🔍 Filters:", filters);
-      const existing = await base44.entities.MonthlyGoalHistory.filter(filters);
-      console.log("📊 Found records:", existing?.length || 0, existing);
-      
-      if (existing && existing.length > 0) {
-        const record = existing[0];
+      if (allRecords && allRecords.length > 0) {
+        // Priorizar registro do tipo atual (workshop ou employee)
+        let record = allRecords.find(r => 
+          r.entity_type === entityType && 
+          (entityType === "workshop" || r.employee_id === selectedEmployee?.id)
+        );
+        
+        // Se não encontrou do tipo atual, pegar o primeiro disponível
+        if (!record) {
+          record = allRecords[0];
+          
+          // Ajustar o tipo de entidade e colaborador se necessário
+          if (record.entity_type === "employee" && record.employee_id) {
+            const emp = employees.find(e => e.id === record.employee_id);
+            if (emp) {
+              setEntityType("employee");
+              setSelectedEmployee(emp);
+              toast.info(
+                `📋 Encontrado registro de ${emp.full_name} para esta data!`,
+                { duration: 3000 }
+              );
+            }
+          } else if (record.entity_type === "workshop") {
+            setEntityType("workshop");
+            setSelectedEmployee(null);
+            toast.info(
+              "📋 Encontrado registro da oficina para esta data!",
+              { duration: 3000 }
+            );
+          }
+        }
         
         toast.warning(
-          "⚠️ Já existe registro para esta data! Carregando dados existentes...",
+          "⚠️ Já existe registro para esta data! Carregando dados...",
           { duration: 3000 }
         );
         
@@ -186,9 +207,6 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
             { duration: 6000 }
           );
         }, 500);
-      } else {
-        setLoadedFromExisting(false);
-        setExistingRecordId(null);
       }
     } catch (error) {
       console.error("Error checking existing record:", error);
