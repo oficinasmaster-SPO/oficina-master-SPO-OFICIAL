@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEmployeeMetrics } from "@/components/hooks/useEmployeeMetrics";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -404,11 +404,9 @@ export default function HistoricoMetas() {
           );
 
           // Puxar meta projetada corretamente: Melhor Mês + % Crescimento
-          // Usar dados sincronizados do colaborador via hook (se disponível) ou employee object
-          const { bestMonthData, monthlyGoalsData } = useEmployeeMetrics(selectedEmployee);
-          const bestMonthRevenue = bestMonthData?.revenue_total || selectedEmployee.best_month_history?.revenue_total || 0;
-          const growthPercentage = monthlyGoalsData?.growth_percentage || selectedEmployee.monthly_goals?.growth_percentage || 10;
-          const monthlyGoal = monthlyGoalsData?.individual_goal || selectedEmployee.monthly_goals?.individual_goal || 
+          const bestMonthRevenue = selectedEmployee.best_month_history?.revenue_total || 0;
+          const growthPercentage = selectedEmployee.monthly_goals?.growth_percentage || 10;
+          const monthlyGoal = selectedEmployee.monthly_goals?.individual_goal || 
             (bestMonthRevenue > 0 ? bestMonthRevenue * (1 + growthPercentage / 100) : 0);
           const dailyGoalCalculated = monthlyGoal > 0 ? monthlyGoal / 22 : 0;
           const dailyGoal = selectedEmployee.monthly_goals?.daily_projected_goal || dailyGoalCalculated;
