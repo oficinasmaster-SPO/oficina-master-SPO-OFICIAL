@@ -83,10 +83,17 @@ export default function FeedbackIAModal({ open, onClose, workshop, record, allRe
         .map(a => a.venda_id))];
       const qtdClientesPassantes = vendasFiltradas.filter(v => !vendasComFunil.includes(v.id)).length;
 
-      // 5. Analisar diferença entre realizado e faturamento
+      // 5. Calcular percentuais
+      const percentualMarketing = faturamentoTotal > 0 ? (creditoMarketing / faturamentoTotal) * 100 : 0;
+      const percentualComercial = faturamentoTotal > 0 ? (creditoComercial / faturamentoTotal) * 100 : 0;
+      const percentualVendas = faturamentoTotal > 0 ? (creditoVendas / faturamentoTotal) * 100 : 0;
+      const percentualTecnico = faturamentoTotal > 0 ? (creditoTecnico / faturamentoTotal) * 100 : 0;
+      const percentualPassantes = faturamentoTotal > 0 ? (faturamentoPassantes / faturamentoTotal) * 100 : 0;
+
+      // 6. Analisar diferença entre realizado e faturamento
       const diferencaRealizadoFaturamento = realizadoMes - faturamentoTotal;
 
-      // 6. Gerar análise com IA
+      // 7. Gerar análise com IA
       const prompt = `Analise os dados de produção e gere um feedback executivo conciso:
 
 CONTEXTO:
