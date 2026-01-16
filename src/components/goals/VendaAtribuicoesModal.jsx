@@ -42,8 +42,8 @@ export default function VendaAtribuicoesModal({
           pessoa_nome: a.pessoa_nome,
           equipe: a.equipe,
           papel: a.papel,
-          percentual_credito: 100,
-          valor_credito: valorTotal
+          percentual_credito: (a.percentual_credito || 1) * 100, // Converter decimal para percentual
+          valor_credito: a.valor_credito || 0
         }));
         setAtribuicoes(atribuicoesCarregadas);
       } else {
