@@ -78,9 +78,10 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
     if (!confirm("Deseja realmente excluir este registro?")) return;
 
     try {
+      // 1. Deletar o registro
       await base44.entities.MonthlyGoalHistory.delete(recordId);
       
-      // Recalcular o realizado do mês após deletar
+      // 2. Buscar registros restantes do mês
       const currentMonth = new Date().toISOString().substring(0, 7);
       const remainingRecords = await base44.entities.MonthlyGoalHistory.filter({
         workshop_id: employee.workshop_id,
@@ -88,20 +89,36 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
         month: currentMonth
       });
 
-      // Somar o realizado dos registros que sobraram
-      const totalRealized = remainingRecords.reduce((sum, r) => sum + (r.revenue_total || 0), 0);
+      // 3. Recalcular total (será 0 se não sobrar nenhum registro)
+      const totalRealized = Array.isArray(remainingRecords) && remainingRecords.length > 0
+        ? remainingRecords.reduce((sum, r) => sum + (r.revenue_total || 0), 0)
+        : 0;
 
-      // Atualizar o employee com o novo valor realizado
+      console.log("🔄 Sincronizando valores após exclusão:");
+      console.log("   Registros restantes:", remainingRecords?.length || 0);
+      console.log("   Total realizado recalculado:", totalRealized);
+
+      // 4. Atualizar employee forçando o valor (mesmo que seja 0)
       await base44.entities.Employee.update(employee.id, {
         monthly_goals: {
           ...(employee.monthly_goals || {}),
-          actual_revenue_achieved: totalRealized
+          actual_revenue_achieved: totalRealized,
+          month: currentMonth
         }
       });
 
-      toast.success("Registro excluído e valores recalculados!");
+      toast.success(totalRealized === 0 
+        ? "Registro excluído! Valores zerados ✓" 
+        : "Registro excluído e valores recalculados!");
+      
+      // 5. Recarregar histórico e forçar atualização do componente pai
       await loadDailyHistory();
-      if (onUpdate) onUpdate();
+      if (onUpdate) await onUpdate();
+      
+      // 6. Forçar reload da página após 500ms para garantir sincronização
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
     } catch (error) {
       console.error("Erro ao deletar registro:", error);
       toast.error("Erro ao deletar registro");
