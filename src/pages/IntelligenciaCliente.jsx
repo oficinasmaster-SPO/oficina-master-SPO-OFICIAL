@@ -88,21 +88,83 @@ export default function IntelligenciaCliente() {
     enabled: !!workshop?.id,
   });
 
-  // Fetch consolidated monthly data for credits
-  const { data: consolidadoMesAtual = null } = useQuery({
-    queryKey: ["consolidado", workshop?.id],
+  // Fetch and consolidate credits data
+  const { data: creditosConsolidados = null } = useQuery({
+    queryKey: ["creditos-consolidados", workshop?.id],
     queryFn: async () => {
       const currentDate = new Date();
       const monthStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
       
-      const records = await base44.entities.ConsolidadoMensal.filter({
-        workshop_id: workshop?.id,
-        month: monthStr
-      });
-      
-      if (!records || records.length === 0) return null;
-      
-      return records[0];
+      try {
+        // Buscar vendas do mês atual
+        const vendas = await base44.entities.VendasServicos.filter({
+          workshop_id: workshop?.id,
+          month: monthStr
+        });
+        
+        if (!vendas || vendas.length === 0) return null;
+        
+        // Buscar todas as atribuições
+        const atribuicoes = await base44.entities.AtribuicoesVenda.filter({
+          workshop_id: workshop?.id
+        });
+        
+        // Filtrar atribuições para vendas do mês
+        const vendasIds = vendas.map(v => v.id);
+        const atribuicoesMes = atribuicoes.filter(a => vendasIds.includes(a.venda_id));
+        
+        if (atribuicoesMes.length === 0) return null;
+        
+        // Calcular totais de faturamento
+        const faturamentoTotal = vendas.reduce((sum, v) => sum + (v.valor_total || 0), 0);
+        
+        // Consolidar créditos por equipe
+        const creditoMarketing = atribuicoesMes
+          .filter(a => a.equipe === "marketing")
+          .reduce((sum, a) => sum + (a.valor_credito_atribuido || 0), 0);
+        
+        const creditoComercial = atribuicoesMes
+          .filter(a => a.equipe === "sdr_telemarketing" || a.equipe === "comercial_vendas")
+          .reduce((sum, a) => sum + (a.valor_credito_atribuido || 0), 0);
+        
+        const creditoVendas = atribuicoesMes
+          .filter(a => a.equipe === "vendas")
+          .reduce((sum, a) => sum + (a.valor_credito_atribuido || 0), 0);
+        
+        const creditoTecnico = atribuicoesMes
+          .filter(a => a.equipe === "tecnico")
+          .reduce((sum, a) => sum + (a.valor_credito_atribuido || 0), 0);
+        
+        // Consolidar pessoas por equipe
+        const pessoasMarketing = [...new Set(atribuicoesMes.filter(a => a.equipe === "marketing").map(a => a.pessoa_id))].length;
+        const pessoasComercial = [...new Set(atribuicoesMes.filter(a => a.equipe === "sdr_telemarketing" || a.equipe === "comercial_vendas").map(a => a.pessoa_id))].length;
+        const pessoasVendas = [...new Set(atribuicoesMes.filter(a => a.equipe === "vendas").map(a => a.pessoa_id))].length;
+        const pessoasTecnico = [...new Set(atribuicoesMes.filter(a => a.equipe === "tecnico").map(a => a.pessoa_id))].length;
+        
+        // Calcular percentuais
+        const percentualMarketing = faturamentoTotal > 0 ? (creditoMarketing / faturamentoTotal) * 100 : 0;
+        const percentualComercial = faturamentoTotal > 0 ? (creditoComercial / faturamentoTotal) * 100 : 0;
+        const percentualVendas = faturamentoTotal > 0 ? (creditoVendas / faturamentoTotal) * 100 : 0;
+        const percentualTecnico = faturamentoTotal > 0 ? (creditoTecnico / faturamentoTotal) * 100 : 0;
+        
+        return {
+          creditoMarketing,
+          creditoComercial,
+          creditoVendas,
+          creditoTecnico,
+          pessoasMarketing,
+          pessoasComercial,
+          pessoasVendas,
+          pessoasTecnico,
+          percentualMarketing,
+          percentualComercial,
+          percentualVendas,
+          percentualTecnico
+        };
+      } catch (error) {
+        console.error("Erro ao consolidar créditos:", error);
+        return null;
+      }
     },
     enabled: !!workshop?.id,
   });
