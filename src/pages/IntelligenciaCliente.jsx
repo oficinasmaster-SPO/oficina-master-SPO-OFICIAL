@@ -208,6 +208,13 @@ export default function IntelligenciaCliente() {
           </div>
         </div>
 
+        {/* Seção de Créditos */}
+        {consolidadoMesAtual && (
+          <div className="mb-6">
+            <CreditosPerformanceEquipe data={consolidadoMesAtual} />
+          </div>
+        )}
+
         {/* Tabs */}
         <Tabs defaultValue="dores" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 bg-white shadow-md">
