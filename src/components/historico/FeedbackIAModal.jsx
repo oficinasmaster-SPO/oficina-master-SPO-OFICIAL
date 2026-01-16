@@ -31,7 +31,7 @@ export default function FeedbackIAModal({ open, onClose, workshop, record, allRe
 
       // 1. Calcular totais do mês até agora (dos registros consolidados)
       const realizadoMes = monthRecords.reduce((sum, r) => sum + (r.achieved_total || 0), 0);
-      const faturamentoTotal = monthRecords.reduce((sum, r) => sum + (r.revenue_total || 0), 0);
+      const faturamentoTotalConsolidado = monthRecords.reduce((sum, r) => sum + (r.revenue_total || 0), 0);
       const faturamentoPecas = monthRecords.reduce((sum, r) => sum + (r.revenue_parts || 0), 0);
       const faturamentoServicos = monthRecords.reduce((sum, r) => sum + (r.revenue_services || 0), 0);
       
@@ -89,13 +89,16 @@ export default function FeedbackIAModal({ open, onClose, workshop, record, allRe
       const qtdClientesComercial = vendasOrigemComercial.length;
       const qtdClientesPassantes = vendasOrigemPassantes.length;
 
+      // FATURAMENTO TOTAL das vendas (não do consolidado)
+      const faturamentoTotalVendas = faturamentoMarketing + faturamentoComercial + faturamentoPassantes;
+
       // 4. Calcular percentuais da ORIGEM (soma = 100%)
-      const percentualMarketing = faturamentoTotal > 0 ? (faturamentoMarketing / faturamentoTotal) * 100 : 0;
-      const percentualComercial = faturamentoTotal > 0 ? (faturamentoComercial / faturamentoTotal) * 100 : 0;
-      const percentualPassantes = faturamentoTotal > 0 ? (faturamentoPassantes / faturamentoTotal) * 100 : 0;
+      const percentualMarketing = faturamentoTotalVendas > 0 ? (faturamentoMarketing / faturamentoTotalVendas) * 100 : 0;
+      const percentualComercial = faturamentoTotalVendas > 0 ? (faturamentoComercial / faturamentoTotalVendas) * 100 : 0;
+      const percentualPassantes = faturamentoTotalVendas > 0 ? (faturamentoPassantes / faturamentoTotalVendas) * 100 : 0;
 
       // 5. Analisar diferença entre realizado e faturamento
-      const diferencaRealizadoFaturamento = realizadoMes - faturamentoTotal;
+      const diferencaRealizadoFaturamento = realizadoMes - faturamentoTotalVendas;
 
       // 6. Gerar análise com IA
       const prompt = `Analise os dados de produção e gere um feedback executivo conciso:
@@ -141,7 +144,7 @@ Gere um feedback em tópicos:
           diasRegistrados: monthRecords.length
         },
         distribuicao: {
-          faturamentoTotal,
+          faturamentoTotal: faturamentoTotalVendas,
           faturamentoMarketing,
           faturamentoComercial,
           faturamentoPassantes,
