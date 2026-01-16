@@ -133,11 +133,15 @@ Gere um feedback em tópicos:
           faturamentoTotal,
           creditoMarketing,
           creditoComercial,
+          creditoVendas,
+          creditoTecnico,
           faturamentoPassantes,
           qtdClientesPassantes,
-          percentualMarketing: faturamentoTotal > 0 ? (creditoMarketing / faturamentoTotal) * 100 : 0,
-          percentualComercial: faturamentoTotal > 0 ? (creditoComercial / faturamentoTotal) * 100 : 0,
-          percentualPassantes: faturamentoTotal > 0 ? (faturamentoPassantes / faturamentoTotal) * 100 : 0
+          percentualMarketing,
+          percentualComercial,
+          percentualVendas,
+          percentualTecnico,
+          percentualPassantes
         },
         valores: {
           diferencaRealizadoFaturamento,
