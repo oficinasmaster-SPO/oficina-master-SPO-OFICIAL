@@ -272,17 +272,15 @@ Gere um feedback em tópicos:
               </CardContent>
             </Card>
 
-            {/* Distribuição por Origem (CRÉDITOS) */}
+            {/* Distribuição por Origem */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Activity className="w-5 h-5 text-blue-600" />
-                  Créditos de Performance por Equipe
+                  Distribuição do Faturamento por Origem
                 </CardTitle>
                 <p className="text-sm text-gray-600 mt-2">
-                  ⚠️ Os valores abaixo são CRÉDITOS atribuídos para medir performance individual de cada equipe/pessoa. 
-                  Uma mesma venda pode gerar crédito para várias equipes (marketing gerou, SDR agendou, vendedor fechou), 
-                  por isso a soma dos créditos pode ser maior que o faturamento real.
+                  Percentual dos R$ {formatCurrency(feedback.distribuicao.faturamentoTotal)} faturados que veio de cada canal/equipe:
                 </p>
               </CardHeader>
               <CardContent>
@@ -292,16 +290,16 @@ Gere um feedback em tópicos:
                       <div className="w-3 h-3 bg-pink-500 rounded-full"></div>
                       <div>
                         <p className="font-semibold text-gray-900">Marketing</p>
-                        <p className="text-sm text-gray-600">Crédito de performance (gerou leads)</p>
+                        <p className="text-sm text-gray-600">Vendas originadas de leads de marketing</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-xl font-bold text-pink-600">
+                      <Badge className="bg-pink-100 text-pink-800 text-lg px-3 py-1">
+                        {feedback.distribuicao.percentualMarketing.toFixed(1)}%
+                      </Badge>
+                      <p className="text-sm text-gray-600 mt-1">
                         R$ {formatCurrency(feedback.distribuicao.creditoMarketing)}
                       </p>
-                      <Badge className="bg-pink-100 text-pink-800">
-                        {feedback.distribuicao.percentualMarketing.toFixed(1)}% do faturamento
-                      </Badge>
                     </div>
                   </div>
 
@@ -310,16 +308,16 @@ Gere um feedback em tópicos:
                       <div className="w-3 h-3 bg-indigo-500 rounded-full"></div>
                       <div>
                         <p className="font-semibold text-gray-900">Comercial / SDR</p>
-                        <p className="text-sm text-gray-600">Crédito de performance (agendou)</p>
+                        <p className="text-sm text-gray-600">Vendas agendadas pela equipe comercial</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-xl font-bold text-indigo-600">
+                      <Badge className="bg-indigo-100 text-indigo-800 text-lg px-3 py-1">
+                        {feedback.distribuicao.percentualComercial.toFixed(1)}%
+                      </Badge>
+                      <p className="text-sm text-gray-600 mt-1">
                         R$ {formatCurrency(feedback.distribuicao.creditoComercial)}
                       </p>
-                      <Badge className="bg-indigo-100 text-indigo-800">
-                        {feedback.distribuicao.percentualComercial.toFixed(1)}% do faturamento
-                      </Badge>
                     </div>
                   </div>
 
@@ -328,16 +326,16 @@ Gere um feedback em tópicos:
                       <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
                       <div>
                         <p className="font-semibold text-gray-900">Vendas</p>
-                        <p className="text-sm text-gray-600">Crédito de performance (vendeu)</p>
+                        <p className="text-sm text-gray-600">Vendas fechadas pelo vendedor</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-xl font-bold text-blue-600">
+                      <Badge className="bg-blue-100 text-blue-800 text-lg px-3 py-1">
+                        {feedback.distribuicao.percentualVendas.toFixed(1)}%
+                      </Badge>
+                      <p className="text-sm text-gray-600 mt-1">
                         R$ {formatCurrency(feedback.distribuicao.creditoVendas)}
                       </p>
-                      <Badge className="bg-blue-100 text-blue-800">
-                        {feedback.distribuicao.percentualVendas.toFixed(1)}% do faturamento
-                      </Badge>
                     </div>
                   </div>
 
@@ -346,16 +344,16 @@ Gere um feedback em tópicos:
                       <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
                       <div>
                         <p className="font-semibold text-gray-900">Técnico</p>
-                        <p className="text-sm text-gray-600">Crédito de performance (executou)</p>
+                        <p className="text-sm text-gray-600">Serviços executados pela equipe</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-xl font-bold text-purple-600">
+                      <Badge className="bg-purple-100 text-purple-800 text-lg px-3 py-1">
+                        {feedback.distribuicao.percentualTecnico.toFixed(1)}%
+                      </Badge>
+                      <p className="text-sm text-gray-600 mt-1">
                         R$ {formatCurrency(feedback.distribuicao.creditoTecnico)}
                       </p>
-                      <Badge className="bg-purple-100 text-purple-800">
-                        {feedback.distribuicao.percentualTecnico.toFixed(1)}% do faturamento
-                      </Badge>
                     </div>
                   </div>
 
@@ -364,16 +362,16 @@ Gere um feedback em tópicos:
                       <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
                       <div>
                         <p className="font-semibold text-gray-900">Clientes Passantes (Porta)</p>
-                        <p className="text-sm text-gray-600">Comercial agendou menos Vendas fechou ({feedback.distribuicao.qtdClientesPassantes} vendas sem funil)</p>
+                        <p className="text-sm text-gray-600">{feedback.distribuicao.qtdClientesPassantes} vendas sem marketing ou comercial</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-xl font-bold text-orange-600">
+                      <Badge className="bg-orange-100 text-orange-800 text-lg px-3 py-1">
+                        {feedback.distribuicao.percentualPassantes.toFixed(1)}%
+                      </Badge>
+                      <p className="text-sm text-gray-600 mt-1">
                         R$ {formatCurrency(feedback.distribuicao.faturamentoPassantes)}
                       </p>
-                      <Badge className="bg-orange-100 text-orange-800">
-                        {feedback.distribuicao.percentualPassantes.toFixed(1)}% do faturamento
-                      </Badge>
                     </div>
                   </div>
                 </div>
@@ -381,11 +379,9 @@ Gere um feedback em tópicos:
                 <div className="mt-4 p-4 bg-blue-50 rounded-lg border-2 border-blue-300">
                   <p className="text-xs text-blue-700 mb-2 font-semibold">💡 Como interpretar:</p>
                   <p className="text-xs text-gray-700">
-                    • <strong>Marketing:</strong> Valor das vendas que vieram de leads gerados<br/>
-                    • <strong>Comercial/SDR:</strong> Valor das vendas que foram agendadas<br/>
-                    • <strong>Vendas:</strong> Valor das vendas efetivamente fechadas pelo vendedor<br/>
-                    • <strong>Técnico:</strong> Valor dos serviços executados pela equipe técnica<br/>
-                    • <strong>Passantes:</strong> Diferença entre o que comercial agendou e vendas fechou (clientes que entraram direto pela porta)
+                    Estes percentuais somam 100% e representam a origem real do faturamento da oficina. 
+                    Uma venda pode aparecer em mais de um canal (ex: Marketing gerou o lead + Comercial agendou + Vendedor fechou), 
+                    por isso usamos o valor faturado para calcular a contribuição de cada equipe no resultado final.
                   </p>
                 </div>
               </CardContent>
