@@ -93,10 +93,14 @@ export default function VendaAtribuicoesModal({
       novasAtribuicoes[index].pessoa_nome = emp ? emp.full_name : (equipe ? equipe.nome : valor);
     }
 
-    // Sempre fixar crédito em 100% (valor total)
+    // Atualizar valor e percentual dinamicamente
+    if (campo === "valor_credito") {
+      const percentual = valorTotal > 0 ? (valor / valorTotal) * 100 : 0;
+      novasAtribuicoes[index].percentual_credito = percentual;
+    }
+    
     if (campo === "percentual_credito") {
-      novasAtribuicoes[index].percentual_credito = 100;
-      novasAtribuicoes[index].valor_credito = valorTotal;
+      novasAtribuicoes[index].valor_credito = (valor / 100) * valorTotal;
     }
 
     setAtribuicoes(novasAtribuicoes);
@@ -112,8 +116,8 @@ export default function VendaAtribuicoesModal({
 
     const atribuicoesFinais = atribuicoes.map(a => ({
       ...a,
-      percentual_credito: 1.0,
-      valor_credito: valorTotal
+      percentual_credito: a.percentual_credito / 100,
+      valor_credito: a.valor_credito
     }));
 
     onConfirm(atribuicoesFinais);
@@ -212,11 +216,24 @@ export default function VendaAtribuicoesModal({
                         </Select>
                       </div>
 
-                      {/* Crédito (sempre 100%) */}
-                      <div className="flex-shrink-0 bg-green-100 px-4 py-2 rounded-lg">
-                        <p className="text-xs text-green-700 mb-0.5">Crédito</p>
-                        <p className="font-bold text-green-900">R$ {valorTotal.toFixed(2)}</p>
-                        <p className="text-xs text-green-600">(100%)</p>
+                      {/* Crédito (editável) */}
+                      <div className="flex-shrink-0 bg-green-100 px-3 py-2 rounded-lg">
+                        <Label className="text-xs text-green-700 mb-1 block">Crédito R$</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={atrib.valor_credito}
+                          onChange={(e) => {
+                            const novoValor = parseFloat(e.target.value) || 0;
+                            const novoPercentual = valorTotal > 0 ? (novoValor / valorTotal) * 100 : 0;
+                            atualizarAtribuicao(index, "valor_credito", novoValor);
+                            atualizarAtribuicao(index, "percentual_credito", novoPercentual);
+                          }}
+                          className="h-8 w-28 font-semibold text-sm"
+                        />
+                        <p className="text-xs text-green-600 mt-1">
+                          {((atrib.valor_credito / valorTotal) * 100).toFixed(1)}%
+                        </p>
                       </div>
 
                       {/* Deletar */}
