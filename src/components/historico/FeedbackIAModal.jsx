@@ -277,12 +277,11 @@ Gere um feedback em tópicos:
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Activity className="w-5 h-5 text-blue-600" />
-                  Créditos de Performance por Equipe
+                  Distribuição do Faturamento por Equipe
                 </CardTitle>
                 <p className="text-sm text-gray-600 mt-2">
-                  ⚠️ Os valores abaixo são CRÉDITOS atribuídos para medir performance individual de cada equipe/pessoa. 
-                  Uma mesma venda pode gerar crédito para várias equipes (marketing gerou, SDR agendou, vendedor fechou), 
-                  por isso a soma dos créditos pode ser maior que o faturamento real.
+                  📊 Dos <strong>R$ {formatCurrency(feedback.distribuicao.faturamentoTotal)}</strong> faturados (100%), 
+                  veja quanto cada equipe representou na geração de receita.
                 </p>
               </CardHeader>
               <CardContent>
