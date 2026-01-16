@@ -49,29 +49,50 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
   };
 
   const handleRegistrationSave = async () => {
-    await loadDailyHistory();
-    
-    // Recalcular o realizado total após salvar
-    const currentMonth = new Date().toISOString().substring(0, 7);
-    const allRecords = await base44.entities.MonthlyGoalHistory.filter({
-      workshop_id: employee.workshop_id,
-      employee_id: employee.id,
-      month: currentMonth
-    });
-    
-    const totalRealized = allRecords.reduce((sum, r) => sum + (r.revenue_total || 0), 0);
-    
-    await base44.entities.Employee.update(employee.id, {
-      monthly_goals: {
-        ...(employee.monthly_goals || {}),
-        actual_revenue_achieved: totalRealized
-      }
-    });
-    
-    setShowManualRegistration(false);
-    setEditingRecord(null);
-    toast.success("Registro salvo com sucesso!");
-    if (onUpdate) onUpdate();
+    try {
+      // 1. Recarregar histórico
+      await loadDailyHistory();
+      
+      // 2. Recalcular o realizado total após salvar
+      const currentMonth = new Date().toISOString().substring(0, 7);
+      const allRecords = await base44.entities.MonthlyGoalHistory.filter({
+        workshop_id: employee.workshop_id,
+        employee_id: employee.id,
+        month: currentMonth
+      });
+      
+      const totalRealized = Array.isArray(allRecords) && allRecords.length > 0
+        ? allRecords.reduce((sum, r) => sum + (r.revenue_total || 0), 0)
+        : 0;
+      
+      console.log("💾 Salvando valores atualizados:");
+      console.log("   Registros no mês:", allRecords?.length || 0);
+      console.log("   Total realizado:", totalRealized);
+      
+      // 3. Atualizar employee
+      await base44.entities.Employee.update(employee.id, {
+        monthly_goals: {
+          ...(employee.monthly_goals || {}),
+          actual_revenue_achieved: totalRealized,
+          month: currentMonth
+        }
+      });
+      
+      setShowManualRegistration(false);
+      setEditingRecord(null);
+      toast.success("Registro salvo e sincronizado!");
+      
+      // 4. Forçar atualização do componente pai
+      if (onUpdate) await onUpdate();
+      
+      // 5. Reload para garantir sincronização total
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+    } catch (error) {
+      console.error("Erro ao salvar:", error);
+      toast.error("Erro ao salvar registro");
+    }
   };
 
   const handleDelete = async (recordId) => {
