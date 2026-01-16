@@ -57,31 +57,46 @@ export default function FeedbackIAModal({ open, onClose, workshop, record, allRe
       const vendasIds = vendasFiltradas.map(v => v.id);
       const atribuicoesFiltradas = atribuicoesTodas.filter(a => vendasIds.includes(a.venda_id));
 
-      // 3. Calcular distribuição por equipe (créditos de performance)
-      const creditoMarketing = atribuicoesFiltradas
+      // 3. Calcular distribuição por equipe (percentual do faturamento real)
+      // Marketing: vendas que vieram de leads de marketing
+      const vendasMarketing = [...new Set(atribuicoesFiltradas
         .filter(a => a.equipe === "marketing")
-        .reduce((sum, a) => sum + (a.valor_credito || 0), 0);
+        .map(a => a.venda_id))];
+      const creditoMarketing = vendasFiltradas
+        .filter(v => vendasMarketing.includes(v.id))
+        .reduce((sum, v) => sum + (v.valor_total || 0), 0);
 
-      const creditoComercial = atribuicoesFiltradas
+      // Comercial: vendas que foram agendadas por SDR/Comercial
+      const vendasComercial = [...new Set(atribuicoesFiltradas
         .filter(a => (a.equipe === "sdr_telemarketing" || a.equipe === "comercial_vendas") && a.papel === "agendou")
-        .reduce((sum, a) => sum + (a.valor_credito || 0), 0);
+        .map(a => a.venda_id))];
+      const creditoComercial = vendasFiltradas
+        .filter(v => vendasComercial.includes(v.id))
+        .reduce((sum, v) => sum + (v.valor_total || 0), 0);
 
-      const creditoVendas = atribuicoesFiltradas
+      // Vendas: vendas fechadas por vendedor
+      const vendasVendas = [...new Set(atribuicoesFiltradas
         .filter(a => a.equipe === "comercial_vendas" && a.papel === "vendeu")
-        .reduce((sum, a) => sum + (a.valor_credito || 0), 0);
+        .map(a => a.venda_id))];
+      const creditoVendas = vendasFiltradas
+        .filter(v => vendasVendas.includes(v.id))
+        .reduce((sum, v) => sum + (v.valor_total || 0), 0);
 
-      const creditoTecnico = atribuicoesFiltradas
+      // Técnico: serviços executados por técnicos
+      const vendasTecnico = [...new Set(atribuicoesFiltradas
         .filter(a => a.equipe === "tecnico" && a.papel === "executou")
-        .reduce((sum, a) => sum + (a.valor_credito || 0), 0);
+        .map(a => a.venda_id))];
+      const creditoTecnico = vendasFiltradas
+        .filter(v => vendasTecnico.includes(v.id))
+        .reduce((sum, v) => sum + (v.valor_total || 0), 0);
 
-      // 4. Calcular passantes (o que comercial agendou menos o que vendas fechou)
-      const faturamentoPassantes = Math.max(0, creditoComercial - creditoVendas);
-      
-      // Contar vendas sem atribuição de comercial/marketing
+      // 4. Passantes: vendas sem marketing E sem comercial
       const vendasComFunil = [...new Set(atribuicoesFiltradas
         .filter(a => a.equipe === "marketing" || a.equipe === "sdr_telemarketing" || a.equipe === "comercial_vendas")
         .map(a => a.venda_id))];
-      const qtdClientesPassantes = vendasFiltradas.filter(v => !vendasComFunil.includes(v.id)).length;
+      const vendasPassantes = vendasFiltradas.filter(v => !vendasComFunil.includes(v.id));
+      const faturamentoPassantes = vendasPassantes.reduce((sum, v) => sum + (v.valor_total || 0), 0);
+      const qtdClientesPassantes = vendasPassantes.length;
 
       // 5. Calcular percentuais
       const percentualMarketing = faturamentoTotal > 0 ? (creditoMarketing / faturamentoTotal) * 100 : 0;
