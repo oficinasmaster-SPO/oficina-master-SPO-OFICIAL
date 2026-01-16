@@ -304,7 +304,7 @@ export default function HistoricoMetas() {
           );
 
           const monthlyActualRevenue = currentMonthRecords.reduce(
-            (sum, record) => sum + (record.revenue_total || 0), 
+            (sum, record) => sum + (record.achieved_total || 0), 
             0
           );
 
@@ -424,7 +424,7 @@ export default function HistoricoMetas() {
           
           // Somar o realizado de todos os registros do mês
           const monthlyActualRevenue = currentMonthRecords.reduce(
-            (sum, record) => sum + (record.revenue_total || 0), 
+            (sum, record) => sum + (record.achieved_total || 0), 
             0
           );
 
