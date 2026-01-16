@@ -378,13 +378,15 @@ Gere um feedback em tópicos:
                 </div>
 
                 <div className="mt-4 p-4 bg-blue-50 rounded-lg border-2 border-blue-300">
-                  <p className="text-xs text-blue-700 mb-2 font-semibold">💡 Como interpretar:</p>
-                  <p className="text-xs text-gray-700">
-                    • <strong>Marketing:</strong> Valor das vendas que vieram de leads gerados<br/>
-                    • <strong>Comercial/SDR:</strong> Valor das vendas que foram agendadas<br/>
-                    • <strong>Vendas:</strong> Valor das vendas efetivamente fechadas pelo vendedor<br/>
-                    • <strong>Técnico:</strong> Valor dos serviços executados pela equipe técnica<br/>
-                    • <strong>Passantes:</strong> Diferença entre o que comercial agendou e vendas fechou (clientes que entraram direto pela porta)
+                  <p className="text-xs text-blue-700 mb-2 font-semibold">💡 Como interpretar os percentuais:</p>
+                  <p className="text-xs text-gray-700 leading-relaxed">
+                    Cada percentual mostra quanto aquela equipe representou do faturamento total da oficina:<br/>
+                    • <strong>Marketing:</strong> % das vendas que vieram de leads gerados pelo time de marketing<br/>
+                    • <strong>Comercial/SDR:</strong> % das vendas que foram agendadas por SDR ou comercial<br/>
+                    • <strong>Vendas:</strong> % das vendas fechadas diretamente por vendedores<br/>
+                    • <strong>Técnico:</strong> % dos serviços executados pela equipe técnica<br/>
+                    • <strong>Passantes:</strong> % de clientes que chegaram direto (sem marketing nem comercial)<br/><br/>
+                    ⚠️ <strong>Importante:</strong> Os percentuais podem somar mais de 100% pois uma mesma venda pode ter participação de várias equipes (ex: marketing gerou, SDR agendou, vendedor fechou).
                   </p>
                 </div>
               </CardContent>
