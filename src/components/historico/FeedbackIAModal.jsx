@@ -98,7 +98,7 @@ export default function FeedbackIAModal({ open, onClose, workshop, record, allRe
       const percentualPassantes = faturamentoTotalVendas > 0 ? (faturamentoPassantes / faturamentoTotalVendas) * 100 : 0;
 
       // 5. Analisar diferença entre realizado e faturamento
-      const diferencaRealizadoFaturamento = realizadoMes - faturamentoTotalVendas;
+      const diferencaRealizadoFaturamento = realizadoMes - faturamentoTotalConsolidado;
 
       // 6. Gerar análise com IA
       const prompt = `Analise os dados de produção e gere um feedback executivo conciso:
@@ -114,8 +114,12 @@ DESEMPENHO:
 - Atingimento: ${percentualMeta.toFixed(1)}%
 - Falta para meta: R$ ${formatCurrency(faltaParaMeta)}
 
+FATURAMENTO CONSOLIDADO:
+- Peças: R$ ${formatCurrency(faturamentoPecas)}
+- Serviços: R$ ${formatCurrency(faturamentoServicos)}
+- Total: R$ ${formatCurrency(faturamentoTotalConsolidado)}
+
 DISTRIBUIÇÃO POR ORIGEM:
-- Faturamento Total Operacional: R$ ${formatCurrency(faturamentoTotal)}
 - Marketing (leads): R$ ${formatCurrency(faturamentoMarketing)} (${percentualMarketing.toFixed(1)}%) - ${qtdClientesMarketing} clientes
 - Comercial (prospecção): R$ ${formatCurrency(faturamentoComercial)} (${percentualComercial.toFixed(1)}%) - ${qtdClientesComercial} clientes  
 - Passantes (porta): R$ ${formatCurrency(faturamentoPassantes)} (${percentualPassantes.toFixed(1)}%) - ${qtdClientesPassantes} clientes
@@ -144,7 +148,9 @@ Gere um feedback em tópicos:
           diasRegistrados: monthRecords.length
         },
         distribuicao: {
-          faturamentoTotal: faturamentoTotalVendas,
+          faturamentoTotal: faturamentoTotalConsolidado,
+          faturamentoPecas,
+          faturamentoServicos,
           faturamentoMarketing,
           faturamentoComercial,
           faturamentoPassantes,
@@ -248,14 +254,28 @@ Gere um feedback em tópicos:
               </CardHeader>
               <CardContent>
                 <div className="text-center p-4">
-                  <p className="text-sm text-gray-700 mb-2">Valor ÚNICO faturado no mês (não duplicado):</p>
+                  <p className="text-sm text-gray-700 mb-2">Faturamento Total (Peças + Serviços):</p>
                   <p className="text-4xl font-bold text-green-700">
                     R$ {formatCurrency(feedback.distribuicao.faturamentoTotal)}
                   </p>
+                  <div className="mt-4 grid grid-cols-2 gap-4">
+                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-xs text-gray-600 mb-1">Peças</p>
+                      <p className="text-2xl font-bold text-blue-700">
+                        R$ {formatCurrency(feedback.distribuicao.faturamentoPecas)}
+                      </p>
+                    </div>
+                    <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
+                      <p className="text-xs text-gray-600 mb-1">Serviços</p>
+                      <p className="text-2xl font-bold text-indigo-700">
+                        R$ {formatCurrency(feedback.distribuicao.faturamentoServicos)}
+                      </p>
+                    </div>
+                  </div>
                   <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
                     <p className="text-xs text-amber-900">
-                      <strong>⚠️ Importante:</strong> Estes valores representam a <strong>produção operacional da equipe</strong> 
-                      (vendas e serviços realizados), <strong>não</strong> são valores de recebimentos financeiros ou compras.
+                      <strong>⚠️ Fonte:</strong> Valores consolidados da tabela <strong>MonthlyGoalHistory</strong> 
+                      (registros diários somados de peças e serviços).
                     </p>
                   </div>
                 </div>
