@@ -26,29 +26,38 @@ export default function FeedbackIAModal({ open, onClose, workshop, record, allRe
       const recordDate = new Date(record.reference_date);
       const monthRecords = allRecords.filter(r => {
         const rDate = new Date(r.reference_date);
-        return rDate <= recordDate && r.month === record.month;
+        return rDate <= recordDate && r.month === record.month && r.entity_type === "workshop";
       });
 
-      // 1. Calcular totais do mês até agora
+      // 1. Calcular totais do mês até agora (dos registros consolidados)
       const realizadoMes = monthRecords.reduce((sum, r) => sum + (r.achieved_total || 0), 0);
+      const faturamentoTotal = monthRecords.reduce((sum, r) => sum + (r.revenue_total || 0), 0);
+      const faturamentoPecas = monthRecords.reduce((sum, r) => sum + (r.revenue_parts || 0), 0);
+      const faturamentoServicos = monthRecords.reduce((sum, r) => sum + (r.revenue_services || 0), 0);
+      
       const metaMensal = workshop.monthly_goals?.projected_revenue || 0;
       const percentualMeta = metaMensal > 0 ? (realizadoMes / metaMensal) * 100 : 0;
       const faltaParaMeta = Math.max(0, metaMensal - realizadoMes);
 
-      // 2. Buscar atribuições de vendas do mês
-      const vendasMes = await base44.entities.VendasServicos.filter({
+      // 2. Buscar apenas vendas até a data do registro
+      const vendasAteData = await base44.entities.VendasServicos.filter({
         workshop_id: workshop.id,
         month: record.month
       });
+      
+      const vendasFiltradas = vendasAteData.filter(v => {
+        const vDate = new Date(v.data);
+        return vDate <= recordDate;
+      });
 
-      const atribuicoesMes = await base44.entities.AtribuicoesVenda.filter({
+      const atribuicoesTodas = await base44.entities.AtribuicoesVenda.filter({
         workshop_id: workshop.id
       });
 
-      const vendasIds = vendasMes.map(v => v.id);
-      const atribuicoesFiltradas = atribuicoesMes.filter(a => vendasIds.includes(a.venda_id));
+      const vendasIds = vendasFiltradas.map(v => v.id);
+      const atribuicoesFiltradas = atribuicoesTodas.filter(a => vendasIds.includes(a.venda_id));
 
-      // 3. Calcular distribuição por origem
+      // 3. Calcular distribuição por origem (créditos de performance)
       const creditoMarketing = atribuicoesFiltradas
         .filter(a => a.equipe === "marketing")
         .reduce((sum, a) => sum + (a.valor_credito || 0), 0);
@@ -57,11 +66,9 @@ export default function FeedbackIAModal({ open, onClose, workshop, record, allRe
         .filter(a => a.equipe === "comercial_vendas" || a.equipe === "sdr_telemarketing")
         .reduce((sum, a) => sum + (a.valor_credito || 0), 0);
 
-      const faturamentoTotal = vendasMes.reduce((sum, v) => sum + (v.valor_total || 0), 0);
-
       // 4. Identificar clientes "passantes" (vendas sem marketing e SDR)
       const vendasComAtribuicoes = [...new Set(atribuicoesFiltradas.map(a => a.venda_id))];
-      const vendasSemFunil = vendasMes.filter(v => !vendasComAtribuicoes.includes(v.id));
+      const vendasSemFunil = vendasFiltradas.filter(v => !vendasComAtribuicoes.includes(v.id));
       const faturamentoPassantes = vendasSemFunil.reduce((sum, v) => sum + (v.valor_total || 0), 0);
       const qtdClientesPassantes = vendasSemFunil.length;
 
