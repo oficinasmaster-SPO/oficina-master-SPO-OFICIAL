@@ -83,6 +83,16 @@ export default function FeedbackIAModal({ open, onClose, workshop, record, allRe
         !vendasComMarketing.includes(v.id) && !vendasComComercial.includes(v.id)
       );
       const faturamentoPassantes = vendasOrigemPassantes.reduce((sum, v) => sum + (v.valor_total || 0), 0);
+
+      // DEBUG: Log detalhado das vendas
+      console.log('=== DEBUG ORIGEM DAS VENDAS ===');
+      console.log('Total de vendas filtradas:', vendasFiltradas.length);
+      console.log('Vendas Marketing:', vendasOrigemMarketing.map(v => ({ id: v.id, valor: v.valor_total, data: v.data })));
+      console.log('Vendas Comercial:', vendasOrigemComercial.map(v => ({ id: v.id, valor: v.valor_total, data: v.data })));
+      console.log('Vendas Passantes:', vendasOrigemPassantes.map(v => ({ id: v.id, valor: v.valor_total, data: v.data })));
+      console.log('Soma Marketing:', faturamentoMarketing);
+      console.log('Soma Comercial:', faturamentoComercial);
+      console.log('Soma Passantes:', faturamentoPassantes);
       
       // Contadores
       const qtdClientesMarketing = vendasOrigemMarketing.length;
@@ -269,9 +279,15 @@ Gere um feedback em tópicos:
                   <Activity className="w-5 h-5 text-blue-600" />
                   Origem das Vendas (100% do Faturamento)
                 </CardTitle>
-                <p className="text-sm text-green-700 mt-2 bg-green-50 p-2 rounded border border-green-200">
-                  ✅ Os valores abaixo representam a <strong>ORIGEM</strong> de cada venda e somam exatamente 100% do faturamento real.
-                </p>
+                <div className="text-sm mt-2 space-y-2">
+                  <p className="bg-green-50 p-2 rounded border border-green-200 text-green-700">
+                    ✅ Os valores abaixo representam a <strong>ORIGEM</strong> de cada venda e somam exatamente 100% do faturamento real.
+                  </p>
+                  <p className="bg-blue-50 p-2 rounded border border-blue-200 text-blue-700 text-xs">
+                    📊 <strong>Fonte dos dados:</strong> Tabela <code>VendasServicos</code> + <code>AtribuicoesVenda</code><br/>
+                    Total de vendas analisadas: {feedback.distribuicao.qtdClientesMarketing + feedback.distribuicao.qtdClientesComercial + feedback.distribuicao.qtdClientesPassantes}
+                  </p>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
