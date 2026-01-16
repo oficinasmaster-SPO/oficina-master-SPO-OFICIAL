@@ -204,13 +204,39 @@ Gere um feedback em tópicos:
               </Card>
             </div>
 
-            {/* Distribuição por Origem */}
+            {/* Faturamento Real */}
+            <Card className="border-2 border-green-500 bg-green-50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-green-900">
+                  <DollarSign className="w-5 h-5" />
+                  Faturamento Real da Oficina
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center p-4">
+                  <p className="text-sm text-gray-700 mb-2">Valor ÚNICO faturado no mês (não duplicado):</p>
+                  <p className="text-4xl font-bold text-green-700">
+                    R$ {formatCurrency(feedback.distribuicao.faturamentoTotal)}
+                  </p>
+                  <p className="text-xs text-gray-600 mt-2">
+                    Este é o faturamento real consolidado de todas as vendas/serviços
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Distribuição por Origem (CRÉDITOS) */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Activity className="w-5 h-5 text-blue-600" />
-                  Distribuição por Origem
+                  Créditos de Performance por Equipe
                 </CardTitle>
+                <p className="text-sm text-gray-600 mt-2">
+                  ⚠️ Os valores abaixo são CRÉDITOS atribuídos para medir performance individual de cada equipe/pessoa. 
+                  Uma mesma venda pode gerar crédito para várias equipes (marketing gerou, SDR agendou, vendedor fechou), 
+                  por isso a soma dos créditos pode ser maior que o faturamento real.
+                </p>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -219,7 +245,7 @@ Gere um feedback em tópicos:
                       <div className="w-3 h-3 bg-pink-500 rounded-full"></div>
                       <div>
                         <p className="font-semibold text-gray-900">Marketing</p>
-                        <p className="text-sm text-gray-600">Crédito gerado pelo time de marketing</p>
+                        <p className="text-sm text-gray-600">Crédito de performance (gerou leads)</p>
                       </div>
                     </div>
                     <div className="text-right">
@@ -227,7 +253,7 @@ Gere um feedback em tópicos:
                         R$ {formatCurrency(feedback.distribuicao.creditoMarketing)}
                       </p>
                       <Badge className="bg-pink-100 text-pink-800">
-                        {feedback.distribuicao.percentualMarketing.toFixed(1)}%
+                        {feedback.distribuicao.percentualMarketing.toFixed(1)}% do faturamento
                       </Badge>
                     </div>
                   </div>
@@ -237,7 +263,7 @@ Gere um feedback em tópicos:
                       <div className="w-3 h-3 bg-indigo-500 rounded-full"></div>
                       <div>
                         <p className="font-semibold text-gray-900">Comercial / SDR</p>
-                        <p className="text-sm text-gray-600">Crédito gerado por vendas e telemarketing</p>
+                        <p className="text-sm text-gray-600">Crédito de performance (agendou/vendeu)</p>
                       </div>
                     </div>
                     <div className="text-right">
@@ -245,34 +271,37 @@ Gere um feedback em tópicos:
                         R$ {formatCurrency(feedback.distribuicao.creditoComercial)}
                       </p>
                       <Badge className="bg-indigo-100 text-indigo-800">
-                        {feedback.distribuicao.percentualComercial.toFixed(1)}%
+                        {feedback.distribuicao.percentualComercial.toFixed(1)}% do faturamento
                       </Badge>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+                  <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200">
                     <div className="flex items-center gap-3">
-                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                      <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
                       <div>
                         <p className="font-semibold text-gray-900">Clientes Passantes (Porta)</p>
-                        <p className="text-sm text-gray-600">Clientes que chegaram sem marketing/SDR ({feedback.distribuicao.qtdClientesPassantes} clientes)</p>
+                        <p className="text-sm text-gray-600">Faturamento real de clientes sem funil ({feedback.distribuicao.qtdClientesPassantes} clientes)</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-xl font-bold text-green-600">
+                      <p className="text-xl font-bold text-orange-600">
                         R$ {formatCurrency(feedback.distribuicao.faturamentoPassantes)}
                       </p>
-                      <Badge className="bg-green-100 text-green-800">
-                        {feedback.distribuicao.percentualPassantes.toFixed(1)}%
+                      <Badge className="bg-orange-100 text-orange-800">
+                        {feedback.distribuicao.percentualPassantes.toFixed(1)}% do faturamento
                       </Badge>
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                  <p className="text-sm font-semibold text-gray-900 mb-1">Faturamento Total Operacional</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    R$ {formatCurrency(feedback.distribuicao.faturamentoTotal)}
+                <div className="mt-4 p-4 bg-blue-50 rounded-lg border-2 border-blue-300">
+                  <p className="text-xs text-blue-700 mb-2 font-semibold">💡 Como interpretar:</p>
+                  <p className="text-xs text-gray-700">
+                    • Os <strong>créditos</strong> medem a performance de cada equipe<br/>
+                    • Uma venda de R$ 10.000 pode gerar crédito para marketing (gerou), SDR (agendou) e vendedor (fechou)<br/>
+                    • Por isso a soma dos créditos pode ser maior que o faturamento real<br/>
+                    • Os percentuais mostram quanto cada equipe contribuiu em relação ao faturamento total
                   </p>
                 </div>
               </CardContent>
