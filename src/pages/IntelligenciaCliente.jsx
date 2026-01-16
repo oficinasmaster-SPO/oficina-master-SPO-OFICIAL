@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle, HelpCircle, Star, AlertTriangle, CheckCircle, BarChart3, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
+import CreditosPerformanceEquipe from "@/components/inteligencia/CreditosPerformanceEquipe";
 
 export default function IntelligenciaCliente() {
   const navigate = useNavigate();
