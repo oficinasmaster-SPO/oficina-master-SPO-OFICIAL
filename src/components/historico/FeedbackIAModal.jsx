@@ -318,7 +318,7 @@ Gere um feedback em tópicos:
                       <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
                       <div>
                         <p className="font-semibold text-gray-900">Marketing</p>
-                        <p className="text-xs text-gray-600">{feedback.distribuicao.qtdClientesMarketing} vendas</p>
+                        <p className="text-xs text-gray-600">{feedback.distribuicao.pessoasMarketing} pessoa(s)</p>
                       </div>
                     </div>
                     <div className="text-right">
@@ -336,7 +336,7 @@ Gere um feedback em tópicos:
                       <div className="w-3 h-3 bg-indigo-500 rounded-full"></div>
                       <div>
                         <p className="font-semibold text-gray-900">Comercial/SDR</p>
-                        <p className="text-xs text-gray-600">{feedback.distribuicao.qtdClientesComercial} vendas</p>
+                        <p className="text-xs text-gray-600">{feedback.distribuicao.pessoasComercial} pessoa(s)</p>
                       </div>
                     </div>
                     <div className="text-right">
@@ -354,7 +354,7 @@ Gere um feedback em tópicos:
                       <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
                       <div>
                         <p className="font-semibold text-gray-900">Vendas</p>
-                        <p className="text-xs text-gray-600">{feedback.distribuicao.qtdClientesVendas} vendas</p>
+                        <p className="text-xs text-gray-600">{feedback.distribuicao.pessoasVendas} pessoa(s)</p>
                       </div>
                     </div>
                     <div className="text-right">
@@ -372,7 +372,7 @@ Gere um feedback em tópicos:
                       <div className="w-3 h-3 bg-teal-500 rounded-full"></div>
                       <div>
                         <p className="font-semibold text-gray-900">Técnico</p>
-                        <p className="text-xs text-gray-600">{feedback.distribuicao.qtdClientesTecnico} vendas</p>
+                        <p className="text-xs text-gray-600">{feedback.distribuicao.pessoasTecnico} pessoa(s)</p>
                       </div>
                     </div>
                     <div className="text-right">
