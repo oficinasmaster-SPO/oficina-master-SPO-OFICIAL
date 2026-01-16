@@ -225,9 +225,12 @@ Gere um feedback em tópicos:
                   <p className="text-4xl font-bold text-green-700">
                     R$ {formatCurrency(feedback.distribuicao.faturamentoTotal)}
                   </p>
-                  <p className="text-xs text-gray-600 mt-2">
-                    Este é o faturamento real consolidado de todas as vendas/serviços
-                  </p>
+                  <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                    <p className="text-xs text-amber-900">
+                      <strong>⚠️ Importante:</strong> Estes valores representam a <strong>produção operacional da equipe</strong> 
+                      (vendas e serviços realizados), <strong>não</strong> são valores de recebimentos financeiros ou compras.
+                    </p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
