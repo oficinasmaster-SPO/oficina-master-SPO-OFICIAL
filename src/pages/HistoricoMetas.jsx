@@ -115,21 +115,6 @@ export default function HistoricoMetas() {
     staleTime: 0
   });
 
-  // NOVO: Buscar faturamento REAL de VendasServicos
-  const { data: vendasMes = [] } = useQuery({
-    queryKey: ['vendas-mes', workshop?.id, filterMonth],
-    queryFn: async () => {
-      if (!workshop) return [];
-      const vendas = await base44.entities.VendasServicos.filter({
-        workshop_id: workshop.id,
-        month: filterMonth
-      });
-      return vendas || [];
-    },
-    enabled: !!workshop,
-    staleTime: 0
-  });
-
   const handleExport = () => {
     toast.info("Exportação em desenvolvimento...");
   };
@@ -318,9 +303,10 @@ export default function HistoricoMetas() {
             record => record.entity_type === "workshop" && record.month === currentMonth
           );
 
-          // PUXAR FATURAMENTO REAL (sem duplicação) de VendasServicos
-          const vendasDoMes = vendasMes.filter(v => v.month === currentMonth);
-          const monthlyActualRevenue = vendasDoMes.reduce((sum, v) => sum + (v.valor_total || 0), 0);
+          const monthlyActualRevenue = currentMonthRecords.reduce(
+            (sum, record) => sum + (record.revenue_total || 0), 
+            0
+          );
 
           // Puxar meta projetada corretamente: Melhor Mês + % Crescimento
           // Usar dados sincronizados do workshop se disponível
@@ -436,14 +422,11 @@ export default function HistoricoMetas() {
             record => record.employee_id === filterEmployee && record.month === currentMonth
           );
           
-          // PUXAR FATURAMENTO REAL de VendasServicos (sem duplicação)
-          const vendasDoColaborador = vendasMes.filter(v => {
-            // Buscar se esse colaborador participou desta venda
-            return v.month === currentMonth;
-          });
-          
-          // Somar APENAS vendas onde o colaborador tem atribuição
-          const monthlyActualRevenue = 0; // será calculado via atribuições
+          // Somar o realizado de todos os registros do mês
+          const monthlyActualRevenue = currentMonthRecords.reduce(
+            (sum, record) => sum + (record.revenue_total || 0), 
+            0
+          );
 
           // Puxar meta projetada corretamente: Melhor Mês + % Crescimento
           const bestMonthRevenue = selectedEmployee.best_month_history?.revenue_total || 0;
