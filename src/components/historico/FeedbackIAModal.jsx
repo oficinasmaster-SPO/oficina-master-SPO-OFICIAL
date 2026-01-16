@@ -291,16 +291,16 @@ Gere um feedback em tópicos:
                       <div className="w-3 h-3 bg-pink-500 rounded-full"></div>
                       <div>
                         <p className="font-semibold text-gray-900">Marketing</p>
-                        <p className="text-sm text-gray-600">Crédito de performance (gerou leads)</p>
+                        <p className="text-sm text-gray-600">Vendas originadas de leads de marketing</p>
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="text-xl font-bold text-pink-600">
+                        {feedback.distribuicao.percentualMarketing.toFixed(1)}%
+                      </p>
+                      <p className="text-sm text-gray-600">
                         R$ {formatCurrency(feedback.distribuicao.creditoMarketing)}
                       </p>
-                      <Badge className="bg-pink-100 text-pink-800">
-                        {feedback.distribuicao.percentualMarketing.toFixed(1)}% do faturamento
-                      </Badge>
                     </div>
                   </div>
 
@@ -309,16 +309,16 @@ Gere um feedback em tópicos:
                       <div className="w-3 h-3 bg-indigo-500 rounded-full"></div>
                       <div>
                         <p className="font-semibold text-gray-900">Comercial / SDR</p>
-                        <p className="text-sm text-gray-600">Crédito de performance (agendou)</p>
+                        <p className="text-sm text-gray-600">Vendas agendadas por SDR/Comercial</p>
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="text-xl font-bold text-indigo-600">
+                        {feedback.distribuicao.percentualComercial.toFixed(1)}%
+                      </p>
+                      <p className="text-sm text-gray-600">
                         R$ {formatCurrency(feedback.distribuicao.creditoComercial)}
                       </p>
-                      <Badge className="bg-indigo-100 text-indigo-800">
-                        {feedback.distribuicao.percentualComercial.toFixed(1)}% do faturamento
-                      </Badge>
                     </div>
                   </div>
 
@@ -327,16 +327,16 @@ Gere um feedback em tópicos:
                       <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
                       <div>
                         <p className="font-semibold text-gray-900">Vendas</p>
-                        <p className="text-sm text-gray-600">Crédito de performance (vendeu)</p>
+                        <p className="text-sm text-gray-600">Vendas fechadas por vendedor</p>
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="text-xl font-bold text-blue-600">
+                        {feedback.distribuicao.percentualVendas.toFixed(1)}%
+                      </p>
+                      <p className="text-sm text-gray-600">
                         R$ {formatCurrency(feedback.distribuicao.creditoVendas)}
                       </p>
-                      <Badge className="bg-blue-100 text-blue-800">
-                        {feedback.distribuicao.percentualVendas.toFixed(1)}% do faturamento
-                      </Badge>
                     </div>
                   </div>
 
@@ -345,16 +345,16 @@ Gere um feedback em tópicos:
                       <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
                       <div>
                         <p className="font-semibold text-gray-900">Técnico</p>
-                        <p className="text-sm text-gray-600">Crédito de performance (executou)</p>
+                        <p className="text-sm text-gray-600">Serviços executados pela equipe</p>
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="text-xl font-bold text-purple-600">
+                        {feedback.distribuicao.percentualTecnico.toFixed(1)}%
+                      </p>
+                      <p className="text-sm text-gray-600">
                         R$ {formatCurrency(feedback.distribuicao.creditoTecnico)}
                       </p>
-                      <Badge className="bg-purple-100 text-purple-800">
-                        {feedback.distribuicao.percentualTecnico.toFixed(1)}% do faturamento
-                      </Badge>
                     </div>
                   </div>
 
@@ -363,16 +363,16 @@ Gere um feedback em tópicos:
                       <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
                       <div>
                         <p className="font-semibold text-gray-900">Clientes Passantes (Porta)</p>
-                        <p className="text-sm text-gray-600">Comercial agendou menos Vendas fechou ({feedback.distribuicao.qtdClientesPassantes} vendas sem funil)</p>
+                        <p className="text-sm text-gray-600">{feedback.distribuicao.qtdClientesPassantes} vendas sem funil de marketing/comercial</p>
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="text-xl font-bold text-orange-600">
+                        {feedback.distribuicao.percentualPassantes.toFixed(1)}%
+                      </p>
+                      <p className="text-sm text-gray-600">
                         R$ {formatCurrency(feedback.distribuicao.faturamentoPassantes)}
                       </p>
-                      <Badge className="bg-orange-100 text-orange-800">
-                        {feedback.distribuicao.percentualPassantes.toFixed(1)}% do faturamento
-                      </Badge>
                     </div>
                   </div>
                 </div>
