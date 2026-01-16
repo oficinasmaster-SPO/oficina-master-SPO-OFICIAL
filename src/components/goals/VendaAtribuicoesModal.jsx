@@ -28,16 +28,30 @@ export default function VendaAtribuicoesModal({
   valorPecas,
   valorServicos,
   employees, 
-  onConfirm 
+  onConfirm,
+  existingAtribuicoes = []
 }) {
   const [atribuicoes, setAtribuicoes] = useState([]);
 
   useEffect(() => {
     if (open) {
-      // Resetar atribuições sempre que abrir
-      setAtribuicoes([]);
+      // Se há atribuições existentes, carregá-las
+      if (existingAtribuicoes && existingAtribuicoes.length > 0) {
+        const atribuicoesCarregadas = existingAtribuicoes.map(a => ({
+          pessoa_id: a.pessoa_id,
+          pessoa_nome: a.pessoa_nome,
+          equipe: a.equipe,
+          papel: a.papel,
+          percentual_credito: 100,
+          valor_credito: valorTotal
+        }));
+        setAtribuicoes(atribuicoesCarregadas);
+      } else {
+        // Resetar atribuições se não houver existentes
+        setAtribuicoes([]);
+      }
     }
-  }, [open]);
+  }, [open, existingAtribuicoes, valorTotal]);
 
   const adicionarAtribuicao = (papelPadrao = null) => {
     const papel = papelPadrao || PAPEIS_DISPONIVEIS[0];

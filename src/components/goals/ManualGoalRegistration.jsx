@@ -23,6 +23,7 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
   const [checkingExisting, setCheckingExisting] = useState(false);
   const [loadedFromExisting, setLoadedFromExisting] = useState(false);
   const [existingRecordId, setExistingRecordId] = useState(null);
+  const [existingAtribuicoes, setExistingAtribuicoes] = useState([]);
   const [formData, setFormData] = useState({
     reference_date: new Date().toISOString().split('T')[0],
     month: new Date().toISOString().substring(0, 7),
@@ -398,7 +399,37 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
 
   const handleSaveAndAnalyze = async () => {
     // Abre modal de atribuições (novo modelo Fato vs Atribuição)
+    // Carregar atribuições existentes se estiver editando
+    if (editingRecord?.id || existingRecordId) {
+      await loadExistingAtribuicoes();
+    }
     setShowAtribuicoes(true);
+  };
+
+  const loadExistingAtribuicoes = async () => {
+    try {
+      const recordId = editingRecord?.id || existingRecordId;
+      if (!recordId) return;
+
+      // Buscar vendas associadas a este registro
+      const todasVendas = await base44.entities.VendasServicos.filter({
+        workshop_id: workshop.id,
+        data: formData.reference_date
+      });
+
+      if (todasVendas && todasVendas.length > 0) {
+        // Buscar atribuições da primeira venda deste dia
+        const venda = todasVendas[0];
+        const atribuicoesExistentes = await base44.entities.AtribuicoesVenda.filter({
+          venda_id: venda.id
+        });
+
+        // Armazenar para passar ao modal
+        setExistingAtribuicoes(atribuicoesExistentes || []);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar atribuições existentes:", error);
+    }
   };
 
   const handleAtribuicoesConfirm = async (atribuicoes) => {
@@ -2290,6 +2321,7 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
             valorServicos={formData.revenue_services}
             employees={employees}
             onConfirm={handleAtribuicoesConfirm}
+            existingAtribuicoes={existingAtribuicoes}
           />
           </Dialog>
           );
