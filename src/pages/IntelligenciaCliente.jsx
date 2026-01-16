@@ -88,6 +88,25 @@ export default function IntelligenciaCliente() {
     enabled: !!workshop?.id,
   });
 
+  // Fetch consolidated monthly data for credits
+  const { data: consolidadoMesAtual = null } = useQuery({
+    queryKey: ["consolidado", workshop?.id],
+    queryFn: async () => {
+      const currentDate = new Date();
+      const monthStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+      
+      const records = await base44.entities.ConsolidadoMensal.filter({
+        workshop_id: workshop?.id,
+        month: monthStr
+      });
+      
+      if (!records || records.length === 0) return null;
+      
+      return records[0];
+    },
+    enabled: !!workshop?.id,
+  });
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
