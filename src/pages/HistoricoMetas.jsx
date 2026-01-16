@@ -156,6 +156,34 @@ export default function HistoricoMetas() {
           <div className="flex gap-3">
             <Button 
               variant="outline" 
+              onClick={async () => {
+                try {
+                  toast.info("Sincronizando dados...");
+                  const response = await base44.functions.invoke('syncEmployeeRealized', {
+                    workshop_id: workshop.id,
+                    month: filterMonth
+                  });
+                  
+                  if (response.data.success) {
+                    toast.success(`✅ ${response.data.employees_synced} colaboradores sincronizados!`);
+                    queryClient.invalidateQueries(['goal-history']);
+                    queryClient.invalidateQueries(['shared-workshop']);
+                    queryClient.invalidateQueries(['shared-employees']);
+                    refetchGoals();
+                    refetchEmployees();
+                  }
+                } catch (error) {
+                  console.error("Erro na sincronização:", error);
+                  toast.error("Erro ao sincronizar dados");
+                }
+              }}
+              className="bg-purple-600 hover:bg-purple-700 text-white"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Sincronizar Tudo
+            </Button>
+            <Button 
+              variant="outline" 
               onClick={() => {
                 queryClient.invalidateQueries(['goal-history']);
                 refetchGoals();
