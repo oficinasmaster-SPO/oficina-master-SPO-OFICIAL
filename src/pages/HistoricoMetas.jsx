@@ -276,7 +276,7 @@ export default function HistoricoMetas() {
           );
 
           const monthlyActualRevenue = currentMonthRecords.reduce(
-            (sum, record) => sum + (record.achieved_total || 0), 
+            (sum, record) => sum + (record.revenue_total || 0), 
             0
           );
 
@@ -287,10 +287,7 @@ export default function HistoricoMetas() {
           const monthlyGoal = bestMonthRevenue > 0 
             ? bestMonthRevenue * (1 + growthPercentage / 100)
             : workshop.monthly_goals?.individual_goal || 0;
-          const actualRevenue = Math.max(
-            monthlyActualRevenue,
-            workshop.monthly_goals?.actual_revenue_achieved || 0
-          );
+          const actualRevenue = monthlyActualRevenue;
           
           const achievementPercentage = monthlyGoal > 0 ? (actualRevenue / monthlyGoal) * 100 : 0;
           const missingToGoal = Math.max(0, monthlyGoal - actualRevenue);
@@ -399,7 +396,7 @@ export default function HistoricoMetas() {
           
           // Somar o realizado de todos os registros do mês
           const monthlyActualRevenue = currentMonthRecords.reduce(
-            (sum, record) => sum + (record.achieved_total || 0), 
+            (sum, record) => sum + (record.revenue_total || 0), 
             0
           );
 
@@ -411,11 +408,8 @@ export default function HistoricoMetas() {
           const dailyGoalCalculated = monthlyGoal > 0 ? monthlyGoal / 22 : 0;
           const dailyGoal = selectedEmployee.monthly_goals?.daily_projected_goal || dailyGoalCalculated;
           
-          // Usar o valor calculado dos registros ou o do employee (o que for maior)
-          const actualRevenue = Math.max(
-            monthlyActualRevenue,
-            selectedEmployee.monthly_goals?.actual_revenue_achieved || 0
-          );
+          // Usar APENAS o valor calculado dos registros
+          const actualRevenue = monthlyActualRevenue;
           
           const achievementPercentage = monthlyGoal > 0 ? (actualRevenue / monthlyGoal) * 100 : 0;
           const missingToGoal = Math.max(0, monthlyGoal - actualRevenue);

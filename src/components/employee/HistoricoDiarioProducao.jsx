@@ -49,50 +49,11 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
   };
 
   const handleRegistrationSave = async () => {
-    try {
-      // 1. Recarregar histórico
-      await loadDailyHistory();
-      
-      // 2. Recalcular o realizado total após salvar
-      const currentMonth = new Date().toISOString().substring(0, 7);
-      const allRecords = await base44.entities.MonthlyGoalHistory.filter({
-        workshop_id: employee.workshop_id,
-        employee_id: employee.id,
-        month: currentMonth
-      });
-      
-      const totalRealized = Array.isArray(allRecords) && allRecords.length > 0
-        ? allRecords.reduce((sum, r) => sum + (r.revenue_total || 0), 0)
-        : 0;
-      
-      console.log("💾 Salvando valores atualizados:");
-      console.log("   Registros no mês:", allRecords?.length || 0);
-      console.log("   Total realizado:", totalRealized);
-      
-      // 3. Atualizar employee
-      await base44.entities.Employee.update(employee.id, {
-        monthly_goals: {
-          ...(employee.monthly_goals || {}),
-          actual_revenue_achieved: totalRealized,
-          month: currentMonth
-        }
-      });
-      
-      setShowManualRegistration(false);
-      setEditingRecord(null);
-      toast.success("Registro salvo e sincronizado!");
-      
-      // 4. Forçar atualização do componente pai
-      if (onUpdate) await onUpdate();
-      
-      // 5. Reload para garantir sincronização total
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
-    } catch (error) {
-      console.error("Erro ao salvar:", error);
-      toast.error("Erro ao salvar registro");
-    }
+    setShowManualRegistration(false);
+    setEditingRecord(null);
+    toast.success("Registro salvo!");
+    await loadDailyHistory();
+    if (onUpdate) onUpdate();
   };
 
   const handleDelete = async (recordId) => {
@@ -101,45 +62,11 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
     try {
       // 1. Deletar o registro
       await base44.entities.MonthlyGoalHistory.delete(recordId);
+      toast.success("Registro excluído!");
       
-      // 2. Buscar registros restantes do mês
-      const currentMonth = new Date().toISOString().substring(0, 7);
-      const remainingRecords = await base44.entities.MonthlyGoalHistory.filter({
-        workshop_id: employee.workshop_id,
-        employee_id: employee.id,
-        month: currentMonth
-      });
-
-      // 3. Recalcular total (será 0 se não sobrar nenhum registro)
-      const totalRealized = Array.isArray(remainingRecords) && remainingRecords.length > 0
-        ? remainingRecords.reduce((sum, r) => sum + (r.revenue_total || 0), 0)
-        : 0;
-
-      console.log("🔄 Sincronizando valores após exclusão:");
-      console.log("   Registros restantes:", remainingRecords?.length || 0);
-      console.log("   Total realizado recalculado:", totalRealized);
-
-      // 4. Atualizar employee forçando o valor (mesmo que seja 0)
-      await base44.entities.Employee.update(employee.id, {
-        monthly_goals: {
-          ...(employee.monthly_goals || {}),
-          actual_revenue_achieved: totalRealized,
-          month: currentMonth
-        }
-      });
-
-      toast.success(totalRealized === 0 
-        ? "Registro excluído! Valores zerados ✓" 
-        : "Registro excluído e valores recalculados!");
-      
-      // 5. Recarregar histórico e forçar atualização do componente pai
+      // 2. Recarregar e recalcular
       await loadDailyHistory();
       if (onUpdate) await onUpdate();
-      
-      // 6. Forçar reload da página após 500ms para garantir sincronização
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
     } catch (error) {
       console.error("Erro ao deletar registro:", error);
       toast.error("Erro ao deletar registro");
