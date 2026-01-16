@@ -49,101 +49,37 @@ export default function FeedbackIAModal({ open, onClose, workshop, record, allRe
         return vDate <= recordDate;
       });
 
-      const atribuicoesTodas = await base44.entities.AtribuicoesVenda.filter({
-        workshop_id: workshop.id
-      });
-
-      const vendasIds = vendasFiltradas.map(v => v.id);
-      const atribuicoesFiltradas = atribuicoesTodas.filter(a => vendasIds.includes(a.venda_id));
-
-      // 3. Calcular ORIGEM das vendas (soma 100% do faturamento)
-      
-      // Identificar vendas por origem
-      const vendasComMarketing = [...new Set(atribuicoesFiltradas
-        .filter(a => a.equipe === "marketing")
-        .map(a => a.venda_id))];
-      
-      const vendasComComercial = [...new Set(atribuicoesFiltradas
-        .filter(a => (a.equipe === "sdr_telemarketing" || a.equipe === "comercial_vendas") && a.papel === "agendou")
-        .map(a => a.venda_id))];
-
-      // Garantir vendas ÚNICAS para contagem
-      const vendasUnicas = Array.from(new Map(vendasFiltradas.map(v => [v.id, v])).values());
-      
-      // Consolidar CRÉDITOS por EQUIPE
-      const creditoMarketing = atribuicoesFiltradas
-        .filter(a => a.equipe === "marketing")
-        .reduce((sum, a) => sum + (a.valor_credito_atribuido || 0), 0);
-      
-      const creditoComercial = atribuicoesFiltradas
-        .filter(a => (a.equipe === "sdr_telemarketing" || a.equipe === "comercial_vendas"))
-        .reduce((sum, a) => sum + (a.valor_credito_atribuido || 0), 0);
-      
-      const creditoVendas = atribuicoesFiltradas
-        .filter(a => a.equipe === "vendas")
-        .reduce((sum, a) => sum + (a.valor_credito_atribuido || 0), 0);
-      
-      const creditoTecnico = atribuicoesFiltradas
-        .filter(a => a.equipe === "tecnico")
-        .reduce((sum, a) => sum + (a.valor_credito_atribuido || 0), 0);
-      
-      // Consolidar PESSOAS por EQUIPE (elimina duplicatas)
-      const pessoasMarketing = [...new Set(atribuicoesFiltradas.filter(a => a.equipe === "marketing").map(a => a.pessoa_id))].length;
-      const pessoasComercial = [...new Set(atribuicoesFiltradas.filter(a => a.equipe === "sdr_telemarketing" || a.equipe === "comercial_vendas").map(a => a.pessoa_id))].length;
-      const pessoasVendas = [...new Set(atribuicoesFiltradas.filter(a => a.equipe === "vendas").map(a => a.pessoa_id))].length;
-      const pessoasTecnico = [...new Set(atribuicoesFiltradas.filter(a => a.equipe === "tecnico").map(a => a.pessoa_id))].length;
-      
-      // Passantes = vendas sem nenhuma atribuição
-      const vendasComAtribuicao = [...new Set(atribuicoesFiltradas.map(a => a.venda_id))];
-      const vendasOrigemPassantes = vendasUnicas.filter(v => !vendasComAtribuicao.includes(v.id));
-      const faturamentoPassantes = vendasOrigemPassantes.reduce((sum, v) => sum + (v.valor_total || 0), 0);
-      const qtdClientesPassantes = vendasOrigemPassantes.length;
-
-      // 4. Calcular percentuais em relação ao faturamento consolidado
-      const percentualMarketing = faturamentoTotalConsolidado > 0 ? (creditoMarketing / faturamentoTotalConsolidado) * 100 : 0;
-      const percentualComercial = faturamentoTotalConsolidado > 0 ? (creditoComercial / faturamentoTotalConsolidado) * 100 : 0;
-      const percentualVendas = faturamentoTotalConsolidado > 0 ? (creditoVendas / faturamentoTotalConsolidado) * 100 : 0;
-      const percentualTecnico = faturamentoTotalConsolidado > 0 ? (creditoTecnico / faturamentoTotalConsolidado) * 100 : 0;
-      const percentualPassantes = faturamentoTotalConsolidado > 0 ? (faturamentoPassantes / faturamentoTotalConsolidado) * 100 : 0;
-
-      // 5. Analisar diferença entre realizado e faturamento
+      // Analisar diferença entre realizado e faturamento
       const diferencaRealizadoFaturamento = realizadoMes - faturamentoTotalConsolidado;
 
-      // 6. Gerar análise com IA
+      // Gerar análise com IA
       const prompt = `Analise os dados de produção e gere um feedback executivo conciso:
 
-CONTEXTO:
-- Workshop: ${workshop.name}
-- Período: ${new Date(record.reference_date).toLocaleDateString('pt-BR')} (mês ${record.month})
-- Dias registrados: ${monthRecords.length}
+      CONTEXTO:
+      - Workshop: ${workshop.name}
+      - Período: ${new Date(record.reference_date).toLocaleDateString('pt-BR')} (mês ${record.month})
+      - Dias registrados: ${monthRecords.length}
 
-DESEMPENHO:
-- Meta Mensal: R$ ${formatCurrency(metaMensal)}
-- Realizado até agora: R$ ${formatCurrency(realizadoMes)}
-- Atingimento: ${percentualMeta.toFixed(1)}%
-- Falta para meta: R$ ${formatCurrency(faltaParaMeta)}
+      DESEMPENHO:
+      - Meta Mensal: R$ ${formatCurrency(metaMensal)}
+      - Realizado até agora: R$ ${formatCurrency(realizadoMes)}
+      - Atingimento: ${percentualMeta.toFixed(1)}%
+      - Falta para meta: R$ ${formatCurrency(faltaParaMeta)}
 
-FATURAMENTO CONSOLIDADO:
-- Peças: R$ ${formatCurrency(faturamentoPecas)}
-- Serviços: R$ ${formatCurrency(faturamentoServicos)}
-- Total: R$ ${formatCurrency(faturamentoTotalConsolidado)}
+      FATURAMENTO CONSOLIDADO:
+      - Peças: R$ ${formatCurrency(faturamentoPecas)}
+      - Serviços: R$ ${formatCurrency(faturamentoServicos)}
+      - Total: R$ ${formatCurrency(faturamentoTotalConsolidado)}
 
-CRÉDITOS CONSOLIDADOS POR EQUIPE:
-- Marketing: R$ ${formatCurrency(creditoMarketing)} (${percentualMarketing.toFixed(1)}% do faturamento) - ${pessoasMarketing} pessoa(s)
-- Comercial/SDR: R$ ${formatCurrency(creditoComercial)} (${percentualComercial.toFixed(1)}%) - ${pessoasComercial} pessoa(s)
-- Vendas: R$ ${formatCurrency(creditoVendas)} (${percentualVendas.toFixed(1)}%) - ${pessoasVendas} pessoa(s)
-- Técnico: R$ ${formatCurrency(creditoTecnico)} (${percentualTecnico.toFixed(1)}%) - ${pessoasTecnico} pessoa(s)
-- Passantes: R$ ${formatCurrency(faturamentoPassantes)} (${percentualPassantes.toFixed(1)}%) - ${qtdClientesPassantes} vendas
+      ANÁLISE DE VALORES:
+      - Diferença entre Realizado e Faturamento Operacional: R$ ${formatCurrency(Math.abs(diferencaRealizadoFaturamento))}
+      - ${diferencaRealizadoFaturamento > 0 ? 'O valor realizado é MAIOR que o faturamento, indicando receitas extras (recebimentos, outras entradas)' : 'O valor realizado está alinhado com o faturamento operacional'}
 
-ANÁLISE DE VALORES:
-- Diferença entre Realizado e Faturamento Operacional: R$ ${formatCurrency(Math.abs(diferencaRealizadoFaturamento))}
-- ${diferencaRealizadoFaturamento > 0 ? 'O valor realizado é MAIOR que o faturamento, indicando receitas extras (recebimentos, outras entradas)' : 'O valor realizado está alinhado com o faturamento operacional'}
-
-Gere um feedback em tópicos:
-1. Análise do Atingimento da Meta (é bom? está no caminho?)
-2. Performance por Canal (qual origem está trazendo mais resultado?)
-3. Oportunidades de Melhoria (insights práticos)
-4. Alerta sobre valores excedentes (se houver diferença entre realizado e faturamento)`;
+      Gere um feedback em tópicos:
+      1. Análise do Atingimento da Meta (é bom? está no caminho?)
+      2. Performance por Canal (qual origem está trazendo mais resultado?)
+      3. Oportunidades de Melhoria (insights práticos)
+      4. Alerta sobre valores excedentes (se houver diferença entre realizado e faturamento)`;
 
       const response = await base44.integrations.Core.InvokeLLM({
         prompt: prompt,
