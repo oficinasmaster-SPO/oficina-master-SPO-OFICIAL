@@ -68,18 +68,21 @@ export default function FeedbackIAModal({ open, onClose, workshop, record, allRe
         .filter(a => (a.equipe === "sdr_telemarketing" || a.equipe === "comercial_vendas") && a.papel === "agendou")
         .map(a => a.venda_id))];
 
+      // Garantir vendas ÚNICAS (sem duplicatas)
+      const vendasUnicas = Array.from(new Map(vendasFiltradas.map(v => [v.id, v])).values());
+      
       // ORIGEM Marketing: vendas que TÊM marketing
-      const vendasOrigemMarketing = vendasFiltradas.filter(v => vendasComMarketing.includes(v.id));
+      const vendasOrigemMarketing = vendasUnicas.filter(v => vendasComMarketing.includes(v.id));
       const faturamentoMarketing = vendasOrigemMarketing.reduce((sum, v) => sum + (v.valor_total || 0), 0);
       
       // ORIGEM Comercial: vendas que NÃO têm marketing MAS têm comercial
-      const vendasOrigemComercial = vendasFiltradas.filter(v => 
+      const vendasOrigemComercial = vendasUnicas.filter(v => 
         !vendasComMarketing.includes(v.id) && vendasComComercial.includes(v.id)
       );
       const faturamentoComercial = vendasOrigemComercial.reduce((sum, v) => sum + (v.valor_total || 0), 0);
       
       // ORIGEM Passantes: vendas que NÃO têm marketing E NÃO têm comercial
-      const vendasOrigemPassantes = vendasFiltradas.filter(v => 
+      const vendasOrigemPassantes = vendasUnicas.filter(v => 
         !vendasComMarketing.includes(v.id) && !vendasComComercial.includes(v.id)
       );
       const faturamentoPassantes = vendasOrigemPassantes.reduce((sum, v) => sum + (v.valor_total || 0), 0);
