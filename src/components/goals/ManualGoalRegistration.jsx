@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Save, Building2, User, Target, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import RevenueDistributionModal from "./RevenueDistributionModal";
+import VendaAtribuicoesModal from "./VendaAtribuicoesModal";
 
 export default function ManualGoalRegistration({ open, onClose, workshop, editingRecord, onSave }) {
   const [entityType, setEntityType] = useState("workshop");
@@ -17,6 +18,7 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
   const [employees, setEmployees] = useState([]);
   const [tcmp2Value, setTcmp2Value] = useState(0);
   const [showDistribution, setShowDistribution] = useState(false);
+  const [showAtribuicoes, setShowAtribuicoes] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [checkingExisting, setCheckingExisting] = useState(false);
   const [loadedFromExisting, setLoadedFromExisting] = useState(false);
@@ -395,8 +397,121 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
   };
 
   const handleSaveAndAnalyze = async () => {
-    // Abre modal de distribuição (permite editar mesmo com valores zerados)
-    setShowDistribution(true);
+    // Abre modal de atribuições (novo modelo Fato vs Atribuição)
+    setShowAtribuicoes(true);
+  };
+
+  const handleAtribuicoesConfirm = async (atribuicoes) => {
+    try {
+      setIsSaving(true);
+      const revenue_total = formData.revenue_parts + formData.revenue_services;
+
+      // 1. Criar registro de venda (FATO)
+      const venda = await base44.entities.VendasServicos.create({
+        workshop_id: workshop.id,
+        data: formData.reference_date,
+        month: formData.month,
+        valor_total: revenue_total,
+        valor_pecas: formData.revenue_parts,
+        valor_servicos: formData.revenue_services,
+        categoria: "misto",
+        origem: "base_clientes",
+        observacao: formData.notes || ""
+      });
+
+      // 2. Criar atribuições (PARTICIPAÇÃO)
+      for (const atrib of atribuicoes) {
+        await base44.entities.AtribuicoesVenda.create({
+          venda_id: venda.id,
+          workshop_id: workshop.id,
+          pessoa_id: atrib.pessoa_id,
+          pessoa_nome: atrib.pessoa_nome,
+          equipe: atrib.equipe,
+          papel: atrib.papel,
+          percentual_credito: atrib.percentual_credito,
+          valor_credito: atrib.valor_credito
+        });
+      }
+
+      // 3. Atualizar MonthlyGoalHistory (compatibilidade com dashboards antigos)
+      const marketing_cost_per_sale = formData.marketing_data.leads_sold > 0
+        ? formData.marketing_data.invested_value / formData.marketing_data.leads_sold
+        : 0;
+
+      const recordData = {
+        workshop_id: workshop.id,
+        entity_type: entityType,
+        entity_id: entityType === "workshop" ? workshop.id : selectedEmployee?.id,
+        employee_id: entityType === "employee" ? selectedEmployee?.id : null,
+        employee_role: entityType === "employee" ? selectedEmployee?.job_role : "geral",
+        reference_date: formData.reference_date,
+        month: formData.month,
+        projected_total: formData.projected_total,
+        achieved_total: formData.achieved_total,
+        revenue_total: revenue_total,
+        revenue_parts: formData.revenue_parts,
+        revenue_services: formData.revenue_services,
+        average_ticket: formData.customer_volume > 0 ? revenue_total / formData.customer_volume : 0,
+        customer_volume: formData.customer_volume,
+        r70_i30: formData.r70_i30,
+        tcmp2: tcmp2Value,
+        pave_commercial: formData.pave_commercial,
+        kit_master: formData.kit_master,
+        sales_base: formData.sales_base,
+        sales_marketing: formData.sales_marketing,
+        clients_delivered: formData.clients_delivered,
+        gps_vendas: formData.gps_vendas,
+        clients_scheduled_base: formData.clients_scheduled_base,
+        clients_delivered_base: formData.clients_delivered_base,
+        clients_scheduled_mkt: formData.clients_scheduled_mkt,
+        clients_delivered_mkt: formData.clients_delivered_mkt,
+        clients_scheduled_referral: formData.clients_scheduled_referral,
+        clients_delivered_referral: formData.clients_delivered_referral,
+        marketing_data: {
+          ...formData.marketing_data,
+          cost_per_sale: marketing_cost_per_sale
+        },
+        revenue_distribution: null,
+        rework_count: formData.rework_count,
+        notes: formData.notes
+      };
+
+      if (editingRecord || existingRecordId) {
+        const idToUpdate = editingRecord?.id || existingRecordId;
+        await base44.entities.MonthlyGoalHistory.update(idToUpdate, recordData);
+      } else {
+        await base44.entities.MonthlyGoalHistory.create(recordData);
+      }
+
+      // 4. Sincronizar valores mensais - SOMAR TODAS AS VENDAS DO MÊS
+      const todasVendasMes = await base44.entities.VendasServicos.filter({
+        workshop_id: workshop.id,
+        month: formData.month
+      });
+
+      const faturamentoRealMes = todasVendasMes.reduce((sum, v) => sum + (v.valor_total || 0), 0);
+
+      // Atualizar Workshop com o valor REAL (sem duplicação)
+      if (entityType === "workshop") {
+        await base44.entities.Workshop.update(workshop.id, {
+          monthly_goals: {
+            ...workshop.monthly_goals,
+            actual_revenue_achieved: faturamentoRealMes,
+            month: formData.month
+          }
+        });
+      }
+
+      toast.success("Venda registrada e atribuições salvas!");
+      setShowAtribuicoes(false);
+      if (onSave) onSave();
+      onClose();
+    } catch (error) {
+      console.error("Error saving:", error);
+      toast.error("Erro ao salvar venda e atribuições");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleSaveDirect = async () => {
@@ -2165,6 +2280,16 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
               setSelectedEmployee(emp);
             }
           }}
+          />
+
+          <VendaAtribuicoesModal
+            open={showAtribuicoes}
+            onClose={() => setShowAtribuicoes(false)}
+            valorTotal={formData.revenue_parts + formData.revenue_services}
+            valorPecas={formData.revenue_parts}
+            valorServicos={formData.revenue_services}
+            employees={employees}
+            onConfirm={handleAtribuicoesConfirm}
           />
           </Dialog>
           );
