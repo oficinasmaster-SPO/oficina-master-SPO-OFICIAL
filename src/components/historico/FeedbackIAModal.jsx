@@ -68,7 +68,10 @@ export default function FeedbackIAModal({ open, onClose, workshop, record, allRe
         .filter(a => (a.equipe === "sdr_telemarketing" || a.equipe === "comercial_vendas") && a.papel === "agendou")
         .map(a => a.venda_id))];
 
-      // Calcular CRÉDITOS atribuídos (não valor total da venda)
+      // Garantir vendas ÚNICAS para contagem
+      const vendasUnicas = Array.from(new Map(vendasFiltradas.map(v => [v.id, v])).values());
+      
+      // Consolidar CRÉDITOS por EQUIPE
       const creditoMarketing = atribuicoesFiltradas
         .filter(a => a.equipe === "marketing")
         .reduce((sum, a) => sum + (a.valor_credito_atribuido || 0), 0);
@@ -85,14 +88,11 @@ export default function FeedbackIAModal({ open, onClose, workshop, record, allRe
         .filter(a => a.equipe === "tecnico")
         .reduce((sum, a) => sum + (a.valor_credito_atribuido || 0), 0);
       
-      // Garantir vendas ÚNICAS para contagem
-      const vendasUnicas = Array.from(new Map(vendasFiltradas.map(v => [v.id, v])).values());
-      
-      // Contadores por origem
-      const qtdClientesMarketing = [...new Set(atribuicoesFiltradas.filter(a => a.equipe === "marketing").map(a => a.venda_id))].length;
-      const qtdClientesComercial = [...new Set(atribuicoesFiltradas.filter(a => a.equipe === "sdr_telemarketing" || a.equipe === "comercial_vendas").map(a => a.venda_id))].length;
-      const qtdClientesVendas = [...new Set(atribuicoesFiltradas.filter(a => a.equipe === "vendas").map(a => a.venda_id))].length;
-      const qtdClientesTecnico = [...new Set(atribuicoesFiltradas.filter(a => a.equipe === "tecnico").map(a => a.venda_id))].length;
+      // Consolidar PESSOAS por EQUIPE (elimina duplicatas)
+      const pessoasMarketing = [...new Set(atribuicoesFiltradas.filter(a => a.equipe === "marketing").map(a => a.pessoa_id))].length;
+      const pessoasComercial = [...new Set(atribuicoesFiltradas.filter(a => a.equipe === "sdr_telemarketing" || a.equipe === "comercial_vendas").map(a => a.pessoa_id))].length;
+      const pessoasVendas = [...new Set(atribuicoesFiltradas.filter(a => a.equipe === "vendas").map(a => a.pessoa_id))].length;
+      const pessoasTecnico = [...new Set(atribuicoesFiltradas.filter(a => a.equipe === "tecnico").map(a => a.pessoa_id))].length;
       
       // Passantes = vendas sem nenhuma atribuição
       const vendasComAtribuicao = [...new Set(atribuicoesFiltradas.map(a => a.venda_id))];
