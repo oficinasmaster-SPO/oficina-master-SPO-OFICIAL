@@ -39,67 +39,49 @@ export default function FeedbackIAModal({ open, onClose, workshop, record, allRe
       const percentualMeta = metaMensal > 0 ? (realizadoMes / metaMensal) * 100 : 0;
       const faltaParaMeta = Math.max(0, metaMensal - realizadoMes);
 
-      // 2. Buscar apenas vendas até a data do registro
-      const vendasAteData = await base44.entities.VendasServicos.filter({
-        workshop_id: workshop.id,
-        month: record.month
-      });
-      
-      const vendasFiltradas = vendasAteData.filter(v => {
-        const vDate = new Date(v.data);
-        return vDate <= recordDate;
-      });
-
+      // 2. Buscar APENAS AtribuicoesVenda (fonte única de dados)
       const atribuicoesTodas = await base44.entities.AtribuicoesVenda.filter({
         workshop_id: workshop.id
       });
 
-      const vendasIds = vendasFiltradas.map(v => v.id);
-      const atribuicoesFiltradas = atribuicoesTodas.filter(a => vendasIds.includes(a.venda_id));
-
-      // 3. Calcular ORIGEM das vendas (soma 100% do faturamento)
+      // 3. Calcular ORIGEM das vendas pela tabela AtribuicoesVenda
       
-      // Identificar vendas por origem
-      const vendasComMarketing = [...new Set(atribuicoesFiltradas
-        .filter(a => a.equipe === "marketing")
-        .map(a => a.venda_id))];
+      // Marketing: soma dos valor_credito onde equipe = "marketing"
+      const atribuicoesMarketing = atribuicoesTodas.filter(a => a.equipe === "marketing");
+      const faturamentoMarketing = atribuicoesMarketing.reduce((sum, a) => sum + (a.valor_credito || 0), 0);
+      const qtdClientesMarketing = [...new Set(atribuicoesMarketing.map(a => a.venda_id))].length;
       
-      const vendasComComercial = [...new Set(atribuicoesFiltradas
-        .filter(a => (a.equipe === "sdr_telemarketing" || a.equipe === "comercial_vendas") && a.papel === "agendou")
-        .map(a => a.venda_id))];
-
-      // ORIGEM Marketing: vendas que TÊM marketing
-      const vendasOrigemMarketing = vendasFiltradas.filter(v => vendasComMarketing.includes(v.id));
-      const faturamentoMarketing = vendasOrigemMarketing.reduce((sum, v) => sum + (v.valor_total || 0), 0);
-      
-      // ORIGEM Comercial: vendas que NÃO têm marketing MAS têm comercial
-      const vendasOrigemComercial = vendasFiltradas.filter(v => 
-        !vendasComMarketing.includes(v.id) && vendasComComercial.includes(v.id)
+      // Comercial: soma dos valor_credito onde equipe = "sdr_telemarketing" ou "comercial_vendas" E papel = "agendou"
+      const atribuicoesComercial = atribuicoesTodas.filter(a => 
+        (a.equipe === "sdr_telemarketing" || a.equipe === "comercial_vendas") && a.papel === "agendou"
       );
-      const faturamentoComercial = vendasOrigemComercial.reduce((sum, v) => sum + (v.valor_total || 0), 0);
+      const faturamentoComercial = atribuicoesComercial.reduce((sum, a) => sum + (a.valor_credito || 0), 0);
+      const qtdClientesComercial = [...new Set(atribuicoesComercial.map(a => a.venda_id))].length;
       
-      // ORIGEM Passantes: vendas que NÃO têm marketing E NÃO têm comercial
-      const vendasOrigemPassantes = vendasFiltradas.filter(v => 
-        !vendasComMarketing.includes(v.id) && !vendasComComercial.includes(v.id)
+      // Passantes: vendas que NÃO têm marketing E NÃO têm comercial
+      const vendasComMarketing = new Set(atribuicoesMarketing.map(a => a.venda_id));
+      const vendasComComercial = new Set(atribuicoesComercial.map(a => a.venda_id));
+      
+      const todasVendasIds = [...new Set(atribuicoesTodas.map(a => a.venda_id))];
+      const vendasPassantesIds = todasVendasIds.filter(id => 
+        !vendasComMarketing.has(id) && !vendasComComercial.has(id)
       );
-      const faturamentoPassantes = vendasOrigemPassantes.reduce((sum, v) => sum + (v.valor_total || 0), 0);
+      
+      const atribuicoesPassantes = atribuicoesTodas.filter(a => vendasPassantesIds.includes(a.venda_id));
+      const faturamentoPassantes = atribuicoesPassantes.reduce((sum, a) => sum + (a.valor_credito || 0), 0);
+      const qtdClientesPassantes = vendasPassantesIds.length;
 
-      // DEBUG: Log detalhado das vendas
-      console.log('=== DEBUG ORIGEM DAS VENDAS ===');
-      console.log('Total de vendas filtradas:', vendasFiltradas.length);
-      console.log('Vendas Marketing:', vendasOrigemMarketing.map(v => ({ id: v.id, valor: v.valor_total, data: v.data })));
-      console.log('Vendas Comercial:', vendasOrigemComercial.map(v => ({ id: v.id, valor: v.valor_total, data: v.data })));
-      console.log('Vendas Passantes:', vendasOrigemPassantes.map(v => ({ id: v.id, valor: v.valor_total, data: v.data })));
+      // DEBUG: Log detalhado das atribuições
+      console.log('=== DEBUG ORIGEM DAS VENDAS (AtribuicoesVenda) ===');
+      console.log('Total de atribuições:', atribuicoesTodas.length);
+      console.log('Atribuições Marketing:', atribuicoesMarketing.map(a => ({ venda_id: a.venda_id, valor_credito: a.valor_credito, pessoa: a.pessoa_nome })));
+      console.log('Atribuições Comercial:', atribuicoesComercial.map(a => ({ venda_id: a.venda_id, valor_credito: a.valor_credito, pessoa: a.pessoa_nome })));
+      console.log('Atribuições Passantes:', atribuicoesPassantes.map(a => ({ venda_id: a.venda_id, valor_credito: a.valor_credito, pessoa: a.pessoa_nome })));
       console.log('Soma Marketing:', faturamentoMarketing);
       console.log('Soma Comercial:', faturamentoComercial);
       console.log('Soma Passantes:', faturamentoPassantes);
-      
-      // Contadores
-      const qtdClientesMarketing = vendasOrigemMarketing.length;
-      const qtdClientesComercial = vendasOrigemComercial.length;
-      const qtdClientesPassantes = vendasOrigemPassantes.length;
 
-      // FATURAMENTO TOTAL das vendas (não do consolidado)
+      // FATURAMENTO TOTAL das atribuições
       const faturamentoTotalVendas = faturamentoMarketing + faturamentoComercial + faturamentoPassantes;
 
       // 4. Calcular percentuais da ORIGEM (soma = 100%)
