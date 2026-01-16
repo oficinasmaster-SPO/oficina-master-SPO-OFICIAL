@@ -118,48 +118,45 @@ export default function IntelligenciaCliente() {
         // Calcular totais de faturamento
         const faturamentoTotal = vendas.reduce((sum, v) => sum + (v.valor_total || 0), 0);
         
-        // Consolidar créditos por equipe
-        const creditoMarketing = atribuicoesMes
-          .filter(a => a.equipe === "marketing")
-          .reduce((sum, a) => sum + (a.valor_credito_atribuido || 0), 0);
+        // Consolidar créditos e pessoas por EQUIPE
+        const equipesMap = {
+          marketing: { credito: 0, pessoas: new Set() },
+          sdr_telemarketing: { credito: 0, pessoas: new Set() },
+          comercial_vendas: { credito: 0, pessoas: new Set() },
+          vendas: { credito: 0, pessoas: new Set() },
+          tecnico: { credito: 0, pessoas: new Set() }
+        };
         
-        const creditoComercial = atribuicoesMes
-          .filter(a => a.equipe === "sdr_telemarketing" || a.equipe === "comercial_vendas")
-          .reduce((sum, a) => sum + (a.valor_credito_atribuido || 0), 0);
-        
-        const creditoVendas = atribuicoesMes
-          .filter(a => a.equipe === "vendas")
-          .reduce((sum, a) => sum + (a.valor_credito_atribuido || 0), 0);
-        
-        const creditoTecnico = atribuicoesMes
-          .filter(a => a.equipe === "tecnico")
-          .reduce((sum, a) => sum + (a.valor_credito_atribuido || 0), 0);
-        
-        // Consolidar pessoas por equipe
-        const pessoasMarketing = [...new Set(atribuicoesMes.filter(a => a.equipe === "marketing").map(a => a.pessoa_id))].length;
-        const pessoasComercial = [...new Set(atribuicoesMes.filter(a => a.equipe === "sdr_telemarketing" || a.equipe === "comercial_vendas").map(a => a.pessoa_id))].length;
-        const pessoasVendas = [...new Set(atribuicoesMes.filter(a => a.equipe === "vendas").map(a => a.pessoa_id))].length;
-        const pessoasTecnico = [...new Set(atribuicoesMes.filter(a => a.equipe === "tecnico").map(a => a.pessoa_id))].length;
-        
-        // Calcular percentuais
-        const percentualMarketing = faturamentoTotal > 0 ? (creditoMarketing / faturamentoTotal) * 100 : 0;
-        const percentualComercial = faturamentoTotal > 0 ? (creditoComercial / faturamentoTotal) * 100 : 0;
-        const percentualVendas = faturamentoTotal > 0 ? (creditoVendas / faturamentoTotal) * 100 : 0;
-        const percentualTecnico = faturamentoTotal > 0 ? (creditoTecnico / faturamentoTotal) * 100 : 0;
+        atribuicoesMes.forEach(attr => {
+          if (equipesMap[attr.equipe]) {
+            equipesMap[attr.equipe].credito += (attr.valor_credito_atribuido || 0);
+            equipesMap[attr.equipe].pessoas.add(attr.pessoa_id);
+          }
+        });
         
         return {
-          creditoMarketing,
-          creditoComercial,
-          creditoVendas,
-          creditoTecnico,
-          pessoasMarketing,
-          pessoasComercial,
-          pessoasVendas,
-          pessoasTecnico,
-          percentualMarketing,
-          percentualComercial,
-          percentualVendas,
-          percentualTecnico
+          marketing: {
+            credito: equipesMap.marketing.credito,
+            pessoas: equipesMap.marketing.pessoas.size,
+            percentual: faturamentoTotal > 0 ? (equipesMap.marketing.credito / faturamentoTotal) * 100 : 0
+          },
+          comercial: {
+            credito: equipesMap.sdr_telemarketing.credito + equipesMap.comercial_vendas.credito,
+            pessoas: new Set([...equipesMap.sdr_telemarketing.pessoas, ...equipesMap.comercial_vendas.pessoas]).size,
+            percentual: faturamentoTotal > 0 
+              ? ((equipesMap.sdr_telemarketing.credito + equipesMap.comercial_vendas.credito) / faturamentoTotal) * 100 
+              : 0
+          },
+          vendas: {
+            credito: equipesMap.vendas.credito,
+            pessoas: equipesMap.vendas.pessoas.size,
+            percentual: faturamentoTotal > 0 ? (equipesMap.vendas.credito / faturamentoTotal) * 100 : 0
+          },
+          tecnico: {
+            credito: equipesMap.tecnico.credito,
+            pessoas: equipesMap.tecnico.pessoas.size,
+            percentual: faturamentoTotal > 0 ? (equipesMap.tecnico.credito / faturamentoTotal) * 100 : 0
+          }
         };
       } catch (error) {
         console.error("Erro ao consolidar créditos:", error);
