@@ -60,8 +60,29 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
 
     try {
       await base44.entities.MonthlyGoalHistory.delete(recordId);
-      toast.success("Registro excluído com sucesso!");
+      
+      // Recalcular o realizado do mês após deletar
+      const currentMonth = new Date().toISOString().substring(0, 7);
+      const remainingRecords = await base44.entities.MonthlyGoalHistory.filter({
+        workshop_id: employee.workshop_id,
+        employee_id: employee.id,
+        month: currentMonth
+      });
+
+      // Somar o realizado dos registros que sobraram
+      const totalRealized = remainingRecords.reduce((sum, r) => sum + (r.revenue_total || 0), 0);
+
+      // Atualizar o employee com o novo valor realizado
+      await base44.entities.Employee.update(employee.id, {
+        monthly_goals: {
+          ...(employee.monthly_goals || {}),
+          actual_revenue_achieved: totalRealized
+        }
+      });
+
+      toast.success("Registro excluído e valores recalculados!");
       await loadDailyHistory();
+      if (onUpdate) onUpdate();
     } catch (error) {
       console.error("Erro ao deletar registro:", error);
       toast.error("Erro ao deletar registro");
