@@ -68,37 +68,44 @@ export default function FeedbackIAModal({ open, onClose, workshop, record, allRe
         .filter(a => (a.equipe === "sdr_telemarketing" || a.equipe === "comercial_vendas") && a.papel === "agendou")
         .map(a => a.venda_id))];
 
-      // Garantir vendas ÚNICAS (sem duplicatas)
+      // Calcular CRÉDITOS atribuídos (não valor total da venda)
+      const creditoMarketing = atribuicoesFiltradas
+        .filter(a => a.equipe === "marketing")
+        .reduce((sum, a) => sum + (a.valor_credito_atribuido || 0), 0);
+      
+      const creditoComercial = atribuicoesFiltradas
+        .filter(a => (a.equipe === "sdr_telemarketing" || a.equipe === "comercial_vendas"))
+        .reduce((sum, a) => sum + (a.valor_credito_atribuido || 0), 0);
+      
+      const creditoVendas = atribuicoesFiltradas
+        .filter(a => a.equipe === "vendas")
+        .reduce((sum, a) => sum + (a.valor_credito_atribuido || 0), 0);
+      
+      const creditoTecnico = atribuicoesFiltradas
+        .filter(a => a.equipe === "tecnico")
+        .reduce((sum, a) => sum + (a.valor_credito_atribuido || 0), 0);
+      
+      // Garantir vendas ÚNICAS para contagem
       const vendasUnicas = Array.from(new Map(vendasFiltradas.map(v => [v.id, v])).values());
       
-      // ORIGEM Marketing: vendas que TÊM marketing
-      const vendasOrigemMarketing = vendasUnicas.filter(v => vendasComMarketing.includes(v.id));
-      const faturamentoMarketing = vendasOrigemMarketing.reduce((sum, v) => sum + (v.valor_total || 0), 0);
+      // Contadores por origem
+      const qtdClientesMarketing = [...new Set(atribuicoesFiltradas.filter(a => a.equipe === "marketing").map(a => a.venda_id))].length;
+      const qtdClientesComercial = [...new Set(atribuicoesFiltradas.filter(a => a.equipe === "sdr_telemarketing" || a.equipe === "comercial_vendas").map(a => a.venda_id))].length;
+      const qtdClientesVendas = [...new Set(atribuicoesFiltradas.filter(a => a.equipe === "vendas").map(a => a.venda_id))].length;
+      const qtdClientesTecnico = [...new Set(atribuicoesFiltradas.filter(a => a.equipe === "tecnico").map(a => a.venda_id))].length;
       
-      // ORIGEM Comercial: vendas que NÃO têm marketing MAS têm comercial
-      const vendasOrigemComercial = vendasUnicas.filter(v => 
-        !vendasComMarketing.includes(v.id) && vendasComComercial.includes(v.id)
-      );
-      const faturamentoComercial = vendasOrigemComercial.reduce((sum, v) => sum + (v.valor_total || 0), 0);
-      
-      // ORIGEM Passantes: vendas que NÃO têm marketing E NÃO têm comercial
-      const vendasOrigemPassantes = vendasUnicas.filter(v => 
-        !vendasComMarketing.includes(v.id) && !vendasComComercial.includes(v.id)
-      );
+      // Passantes = vendas sem nenhuma atribuição
+      const vendasComAtribuicao = [...new Set(atribuicoesFiltradas.map(a => a.venda_id))];
+      const vendasOrigemPassantes = vendasUnicas.filter(v => !vendasComAtribuicao.includes(v.id));
       const faturamentoPassantes = vendasOrigemPassantes.reduce((sum, v) => sum + (v.valor_total || 0), 0);
-      
-      // Contadores
-      const qtdClientesMarketing = vendasOrigemMarketing.length;
-      const qtdClientesComercial = vendasOrigemComercial.length;
       const qtdClientesPassantes = vendasOrigemPassantes.length;
 
-      // FATURAMENTO TOTAL das vendas (não do consolidado)
-      const faturamentoTotalVendas = faturamentoMarketing + faturamentoComercial + faturamentoPassantes;
-
-      // 4. Calcular percentuais da ORIGEM (soma = 100%)
-      const percentualMarketing = faturamentoTotalVendas > 0 ? (faturamentoMarketing / faturamentoTotalVendas) * 100 : 0;
-      const percentualComercial = faturamentoTotalVendas > 0 ? (faturamentoComercial / faturamentoTotalVendas) * 100 : 0;
-      const percentualPassantes = faturamentoTotalVendas > 0 ? (faturamentoPassantes / faturamentoTotalVendas) * 100 : 0;
+      // 4. Calcular percentuais em relação ao faturamento consolidado
+      const percentualMarketing = faturamentoTotalConsolidado > 0 ? (creditoMarketing / faturamentoTotalConsolidado) * 100 : 0;
+      const percentualComercial = faturamentoTotalConsolidado > 0 ? (creditoComercial / faturamentoTotalConsolidado) * 100 : 0;
+      const percentualVendas = faturamentoTotalConsolidado > 0 ? (creditoVendas / faturamentoTotalConsolidado) * 100 : 0;
+      const percentualTecnico = faturamentoTotalConsolidado > 0 ? (creditoTecnico / faturamentoTotalConsolidado) * 100 : 0;
+      const percentualPassantes = faturamentoTotalConsolidado > 0 ? (faturamentoPassantes / faturamentoTotalConsolidado) * 100 : 0;
 
       // 5. Analisar diferença entre realizado e faturamento
       const diferencaRealizadoFaturamento = realizadoMes - faturamentoTotalConsolidado;
@@ -122,10 +129,12 @@ FATURAMENTO CONSOLIDADO:
 - Serviços: R$ ${formatCurrency(faturamentoServicos)}
 - Total: R$ ${formatCurrency(faturamentoTotalConsolidado)}
 
-DISTRIBUIÇÃO POR ORIGEM:
-- Marketing (leads): R$ ${formatCurrency(faturamentoMarketing)} (${percentualMarketing.toFixed(1)}%) - ${qtdClientesMarketing} clientes
-- Comercial (prospecção): R$ ${formatCurrency(faturamentoComercial)} (${percentualComercial.toFixed(1)}%) - ${qtdClientesComercial} clientes  
-- Passantes (porta): R$ ${formatCurrency(faturamentoPassantes)} (${percentualPassantes.toFixed(1)}%) - ${qtdClientesPassantes} clientes
+CRÉDITOS POR EQUIPE:
+- Marketing: R$ ${formatCurrency(creditoMarketing)} (${percentualMarketing.toFixed(1)}% do faturamento) - ${qtdClientesMarketing} vendas
+- Comercial/SDR: R$ ${formatCurrency(creditoComercial)} (${percentualComercial.toFixed(1)}%) - ${qtdClientesComercial} vendas
+- Vendas: R$ ${formatCurrency(creditoVendas)} (${percentualVendas.toFixed(1)}%) - ${qtdClientesVendas} vendas
+- Técnico: R$ ${formatCurrency(creditoTecnico)} (${percentualTecnico.toFixed(1)}%) - ${qtdClientesTecnico} vendas
+- Passantes: R$ ${formatCurrency(faturamentoPassantes)} (${percentualPassantes.toFixed(1)}%) - ${qtdClientesPassantes} vendas
 
 ANÁLISE DE VALORES:
 - Diferença entre Realizado e Faturamento Operacional: R$ ${formatCurrency(Math.abs(diferencaRealizadoFaturamento))}
@@ -154,14 +163,20 @@ Gere um feedback em tópicos:
           faturamentoTotal: faturamentoTotalConsolidado,
           faturamentoPecas,
           faturamentoServicos,
-          faturamentoMarketing,
-          faturamentoComercial,
+          creditoMarketing,
+          creditoComercial,
+          creditoVendas,
+          creditoTecnico,
           faturamentoPassantes,
           qtdClientesMarketing,
           qtdClientesComercial,
+          qtdClientesVendas,
+          qtdClientesTecnico,
           qtdClientesPassantes,
           percentualMarketing,
           percentualComercial,
+          percentualVendas,
+          percentualTecnico,
           percentualPassantes
         },
         valores: {
@@ -285,89 +300,115 @@ Gere um feedback em tópicos:
               </CardContent>
             </Card>
 
-            {/* Distribuição por Origem */}
+            {/* Créditos por Equipe */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Activity className="w-5 h-5 text-blue-600" />
-                  Origem das Vendas (100% do Faturamento)
+                  Créditos de Performance por Equipe
                 </CardTitle>
-                <p className="text-sm text-green-700 mt-2 bg-green-50 p-2 rounded border border-green-200">
-                  ✅ Os valores abaixo representam a <strong>ORIGEM</strong> de cada venda e somam exatamente 100% do faturamento real.
+                <p className="text-sm text-amber-700 mt-2 bg-amber-50 p-2 rounded border border-amber-200">
+                  ⚠️ Os valores abaixo são <strong>créditos atribuídos</strong> para cada equipe. Uma mesma venda pode gerar crédito para múltiplas equipes, por isso a soma pode ultrapassar 100%.
                 </p>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-purple-50 rounded-lg border-2 border-purple-300">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-300">
                     <div className="flex items-center gap-3">
-                      <div className="w-4 h-4 bg-purple-500 rounded-full"></div>
+                      <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
                       <div>
-                        <p className="font-semibold text-gray-900 text-lg">Marketing</p>
-                        <p className="text-sm text-gray-600">Leads pagos/orgânicos</p>
-                        <p className="text-xs text-gray-500 mt-1">{feedback.distribuicao.qtdClientesMarketing} clientes</p>
+                        <p className="font-semibold text-gray-900">Marketing</p>
+                        <p className="text-xs text-gray-600">{feedback.distribuicao.qtdClientesMarketing} vendas</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-2xl font-bold text-purple-700">
-                        R$ {formatCurrency(feedback.distribuicao.faturamentoMarketing)}
+                      <p className="text-lg font-bold text-purple-700">
+                        R$ {formatCurrency(feedback.distribuicao.creditoMarketing)}
                       </p>
-                      <Badge className="bg-purple-600 text-white mt-1">
+                      <Badge className="bg-purple-600 text-white text-xs">
                         {feedback.distribuicao.percentualMarketing.toFixed(1)}%
                       </Badge>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border-2 border-blue-300">
+                  <div className="flex items-center justify-between p-3 bg-indigo-50 rounded-lg border border-indigo-300">
                     <div className="flex items-center gap-3">
-                      <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
+                      <div className="w-3 h-3 bg-indigo-500 rounded-full"></div>
                       <div>
-                        <p className="font-semibold text-gray-900 text-lg">Comercial</p>
-                        <p className="text-sm text-gray-600">Prospecção ativa/agendamento</p>
-                        <p className="text-xs text-gray-500 mt-1">{feedback.distribuicao.qtdClientesComercial} clientes</p>
+                        <p className="font-semibold text-gray-900">Comercial/SDR</p>
+                        <p className="text-xs text-gray-600">{feedback.distribuicao.qtdClientesComercial} vendas</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-2xl font-bold text-blue-700">
-                        R$ {formatCurrency(feedback.distribuicao.faturamentoComercial)}
+                      <p className="text-lg font-bold text-indigo-700">
+                        R$ {formatCurrency(feedback.distribuicao.creditoComercial)}
                       </p>
-                      <Badge className="bg-blue-600 text-white mt-1">
+                      <Badge className="bg-indigo-600 text-white text-xs">
                         {feedback.distribuicao.percentualComercial.toFixed(1)}%
                       </Badge>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border-2 border-gray-400">
+                  <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-300">
                     <div className="flex items-center gap-3">
-                      <div className="w-4 h-4 bg-gray-500 rounded-full"></div>
+                      <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
                       <div>
-                        <p className="font-semibold text-gray-900 text-lg">Passantes (Porta)</p>
-                        <p className="text-sm text-gray-600">Sem marketing e sem comercial</p>
-                        <p className="text-xs text-gray-500 mt-1">{feedback.distribuicao.qtdClientesPassantes} clientes</p>
+                        <p className="font-semibold text-gray-900">Vendas</p>
+                        <p className="text-xs text-gray-600">{feedback.distribuicao.qtdClientesVendas} vendas</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-2xl font-bold text-gray-700">
+                      <p className="text-lg font-bold text-blue-700">
+                        R$ {formatCurrency(feedback.distribuicao.creditoVendas)}
+                      </p>
+                      <Badge className="bg-blue-600 text-white text-xs">
+                        {feedback.distribuicao.percentualVendas.toFixed(1)}%
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 bg-teal-50 rounded-lg border border-teal-300">
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 bg-teal-500 rounded-full"></div>
+                      <div>
+                        <p className="font-semibold text-gray-900">Técnico</p>
+                        <p className="text-xs text-gray-600">{feedback.distribuicao.qtdClientesTecnico} vendas</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-teal-700">
+                        R$ {formatCurrency(feedback.distribuicao.creditoTecnico)}
+                      </p>
+                      <Badge className="bg-teal-600 text-white text-xs">
+                        {feedback.distribuicao.percentualTecnico.toFixed(1)}%
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-400">
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 bg-gray-500 rounded-full"></div>
+                      <div>
+                        <p className="font-semibold text-gray-900">Passantes (sem funil)</p>
+                        <p className="text-xs text-gray-600">{feedback.distribuicao.qtdClientesPassantes} vendas</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-gray-700">
                         R$ {formatCurrency(feedback.distribuicao.faturamentoPassantes)}
                       </p>
-                      <Badge className="bg-gray-600 text-white mt-1">
+                      <Badge className="bg-gray-600 text-white text-xs">
                         {feedback.distribuicao.percentualPassantes.toFixed(1)}%
                       </Badge>
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-6 p-4 bg-blue-50 rounded-lg border-2 border-blue-300">
-                  <p className="text-xs text-blue-700 mb-2 font-semibold">💡 Como interpretar:</p>
-                  <p className="text-xs text-gray-700 space-y-1">
-                    • <strong>Marketing:</strong> Faturamento de vendas originadas de leads (marketing digital, orgânico, etc)<br/>
-                    • <strong>Comercial:</strong> Faturamento de vendas sem marketing, mas agendadas pela equipe comercial/SDR<br/>
-                    • <strong>Passantes:</strong> Faturamento de clientes que entraram direto pela porta (sem marketing e sem comercial)
+                <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <p className="text-xs text-blue-700 mb-1 font-semibold">💡 Como interpretar:</p>
+                  <p className="text-xs text-gray-700">
+                    Os valores representam o <strong>crédito atribuído</strong> para cada equipe baseado no papel que desempenharam na venda. Uma mesma venda gera crédito para marketing (gerou lead), comercial (agendou), vendas (fechou) e técnico (executou).
                   </p>
-                  <div className="mt-3 pt-3 border-t border-blue-200">
-                    <p className="text-sm font-bold text-blue-900">
-                      Soma total: {(feedback.distribuicao.percentualMarketing + feedback.distribuicao.percentualComercial + feedback.distribuicao.percentualPassantes).toFixed(1)}% do faturamento
-                    </p>
-                  </div>
                 </div>
               </CardContent>
             </Card>
