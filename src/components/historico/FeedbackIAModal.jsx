@@ -97,22 +97,7 @@ export default function FeedbackIAModal({ open, onClose, workshop, record, allRe
         distribuicao: {
           faturamentoTotal: faturamentoTotalConsolidado,
           faturamentoPecas,
-          faturamentoServicos,
-          creditoMarketing,
-          creditoComercial,
-          creditoVendas,
-          creditoTecnico,
-          faturamentoPassantes,
-          pessoasMarketing,
-          pessoasComercial,
-          pessoasVendas,
-          pessoasTecnico,
-          qtdClientesPassantes,
-          percentualMarketing,
-          percentualComercial,
-          percentualVendas,
-          percentualTecnico,
-          percentualPassantes
+          faturamentoServicos
         },
         valores: {
           diferencaRealizadoFaturamento,
