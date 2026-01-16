@@ -129,11 +129,11 @@ FATURAMENTO CONSOLIDADO:
 - Serviços: R$ ${formatCurrency(faturamentoServicos)}
 - Total: R$ ${formatCurrency(faturamentoTotalConsolidado)}
 
-CRÉDITOS POR EQUIPE:
-- Marketing: R$ ${formatCurrency(creditoMarketing)} (${percentualMarketing.toFixed(1)}% do faturamento) - ${qtdClientesMarketing} vendas
-- Comercial/SDR: R$ ${formatCurrency(creditoComercial)} (${percentualComercial.toFixed(1)}%) - ${qtdClientesComercial} vendas
-- Vendas: R$ ${formatCurrency(creditoVendas)} (${percentualVendas.toFixed(1)}%) - ${qtdClientesVendas} vendas
-- Técnico: R$ ${formatCurrency(creditoTecnico)} (${percentualTecnico.toFixed(1)}%) - ${qtdClientesTecnico} vendas
+CRÉDITOS CONSOLIDADOS POR EQUIPE:
+- Marketing: R$ ${formatCurrency(creditoMarketing)} (${percentualMarketing.toFixed(1)}% do faturamento) - ${pessoasMarketing} pessoa(s)
+- Comercial/SDR: R$ ${formatCurrency(creditoComercial)} (${percentualComercial.toFixed(1)}%) - ${pessoasComercial} pessoa(s)
+- Vendas: R$ ${formatCurrency(creditoVendas)} (${percentualVendas.toFixed(1)}%) - ${pessoasVendas} pessoa(s)
+- Técnico: R$ ${formatCurrency(creditoTecnico)} (${percentualTecnico.toFixed(1)}%) - ${pessoasTecnico} pessoa(s)
 - Passantes: R$ ${formatCurrency(faturamentoPassantes)} (${percentualPassantes.toFixed(1)}%) - ${qtdClientesPassantes} vendas
 
 ANÁLISE DE VALORES:
