@@ -2,10 +2,9 @@ import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, TrendingUp, TrendingDown, Target, Users, DollarSign, Activity, Sparkles } from "lucide-react";
+import { Loader2, TrendingUp, Target, DollarSign, Sparkles } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { formatCurrency, formatNumber } from "../utils/formatters";
-import { Badge } from "@/components/ui/badge";
+import { formatCurrency } from "../utils/formatters";
 import { toast } from "sonner";
 
 export default function FeedbackIAModal({ open, onClose, workshop, record, allRecords }) {
