@@ -266,7 +266,7 @@ Gere um feedback em tópicos:
                     ✅ Os valores abaixo representam a <strong>ORIGEM</strong> de cada venda e somam exatamente 100% do faturamento real.
                   </p>
                   <p className="bg-blue-50 p-2 rounded border border-blue-200 text-blue-700 text-xs">
-                    📊 <strong>Fonte dos dados:</strong> Tabela <code>VendasServicos</code> + <code>AtribuicoesVenda</code><br/>
+                    📊 <strong>Fonte dos dados:</strong> Tabela <code>AtribuicoesVenda</code> (campo <code>valor_credito</code>)<br/>
                     Total de vendas analisadas: {feedback.distribuicao.qtdClientesMarketing + feedback.distribuicao.qtdClientesComercial + feedback.distribuicao.qtdClientesPassantes}
                   </p>
                 </div>
