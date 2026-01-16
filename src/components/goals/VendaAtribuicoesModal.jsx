@@ -9,11 +9,11 @@ import { Plus, Trash2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 const PAPEIS_DISPONIVEIS = [
-  { value: "gerou_lead", label: "🎯 Gerou Lead (Marketing)", equipe: "marketing" },
-  { value: "agendou", label: "📞 Agendou Cliente (SDR/Telemarketing)", equipe: "sdr_telemarketing" },
-  { value: "vendeu", label: "💰 Vendeu / Fechou (Consultor/Vendedor)", equipe: "comercial_vendas" },
-  { value: "atendeu", label: "🤝 Atendeu Cliente (Balconista)", equipe: "atendimento" },
-  { value: "executou", label: "🔧 Executou Serviço (Técnico)", equipe: "tecnico" }
+  { value: "gerou_lead", label: "🎯 Gerou Lead", equipe: "marketing" },
+  { value: "agendou", label: "📞 Agendou Cliente", equipe: "sdr_telemarketing" },
+  { value: "vendeu", label: "💰 Vendeu / Fechou", equipe: "comercial_vendas" },
+  { value: "atendeu", label: "🤝 Atendeu Cliente", equipe: "atendimento" },
+  { value: "executou", label: "🔧 Executou Serviço", equipe: "tecnico" }
 ];
 
 const EQUIPES_PADRAO = [
@@ -129,12 +129,12 @@ export default function VendaAtribuicoesModal({
         <DialogHeader>
           <DialogTitle>Registrar Participantes do Funil de Vendas</DialogTitle>
           <p className="text-sm text-gray-600 mt-2">
-            Marque TODOS que participaram da venda. Cada um recebe 100% de crédito para medir sua performance.
+            Marque QUEM participou desta venda específica. Ajuste o crédito de cada um conforme sua contribuição.
           </p>
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-2">
             <p className="text-xs font-semibold text-blue-900 mb-1">💡 Como funciona:</p>
             <p className="text-xs text-blue-700">
-              O faturamento real = R$ {valorTotal.toFixed(2)} (não duplica). Mas cada participante recebe crédito total para performance individual.
+              Faturamento real = R$ {valorTotal.toFixed(2)}. Cada papel é independente - ajuste o valor conforme a participação real de cada um nesta venda.
             </p>
           </div>
         </DialogHeader>
@@ -163,7 +163,7 @@ export default function VendaAtribuicoesModal({
           {/* Botões Rápidos - Etapas do Funil */}
           <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200">
             <CardContent className="p-4">
-              <p className="text-sm font-semibold text-gray-900 mb-3">🚀 Adicionar Etapas do Funil:</p>
+              <p className="text-sm font-semibold text-gray-900 mb-3">🚀 Adicionar Participantes:</p>
               <div className="flex flex-wrap gap-2">
                 {PAPEIS_DISPONIVEIS.map(papel => (
                   <Button
