@@ -280,8 +280,12 @@ export default function VendaAtribuicoesModal({
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs text-green-700">Cada participante:</p>
-                    <p className="text-lg font-bold text-green-900">100% = R$ {valorTotal.toFixed(2)}</p>
+                    <p className="text-xs text-green-700">Crédito médio:</p>
+                    <p className="text-lg font-bold text-green-900">
+                      {atribuicoes.length > 0 
+                        ? ((atribuicoes.reduce((sum, a) => sum + a.valor_credito, 0) / atribuicoes.length / valorTotal) * 100).toFixed(1)
+                        : 0}% = R$ {(atribuicoes.reduce((sum, a) => sum + a.valor_credito, 0) / (atribuicoes.length || 1)).toFixed(2)}
+                    </p>
                   </div>
                 </div>
               </CardContent>
