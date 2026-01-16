@@ -57,20 +57,31 @@ export default function FeedbackIAModal({ open, onClose, workshop, record, allRe
       const vendasIds = vendasFiltradas.map(v => v.id);
       const atribuicoesFiltradas = atribuicoesTodas.filter(a => vendasIds.includes(a.venda_id));
 
-      // 3. Calcular distribuição por origem (créditos de performance)
+      // 3. Calcular distribuição por equipe (créditos de performance)
       const creditoMarketing = atribuicoesFiltradas
         .filter(a => a.equipe === "marketing")
         .reduce((sum, a) => sum + (a.valor_credito || 0), 0);
 
       const creditoComercial = atribuicoesFiltradas
-        .filter(a => a.equipe === "comercial_vendas" || a.equipe === "sdr_telemarketing")
+        .filter(a => (a.equipe === "sdr_telemarketing" || a.equipe === "comercial_vendas") && a.papel === "agendou")
         .reduce((sum, a) => sum + (a.valor_credito || 0), 0);
 
-      // 4. Identificar clientes "passantes" (vendas sem marketing e SDR)
-      const vendasComAtribuicoes = [...new Set(atribuicoesFiltradas.map(a => a.venda_id))];
-      const vendasSemFunil = vendasFiltradas.filter(v => !vendasComAtribuicoes.includes(v.id));
-      const faturamentoPassantes = vendasSemFunil.reduce((sum, v) => sum + (v.valor_total || 0), 0);
-      const qtdClientesPassantes = vendasSemFunil.length;
+      const creditoVendas = atribuicoesFiltradas
+        .filter(a => a.equipe === "comercial_vendas" && a.papel === "vendeu")
+        .reduce((sum, a) => sum + (a.valor_credito || 0), 0);
+
+      const creditoTecnico = atribuicoesFiltradas
+        .filter(a => a.equipe === "tecnico" && a.papel === "executou")
+        .reduce((sum, a) => sum + (a.valor_credito || 0), 0);
+
+      // 4. Calcular passantes (o que comercial agendou menos o que vendas fechou)
+      const faturamentoPassantes = Math.max(0, creditoComercial - creditoVendas);
+      
+      // Contar vendas sem atribuição de comercial/marketing
+      const vendasComFunil = [...new Set(atribuicoesFiltradas
+        .filter(a => a.equipe === "marketing" || a.equipe === "sdr_telemarketing" || a.equipe === "comercial_vendas")
+        .map(a => a.venda_id))];
+      const qtdClientesPassantes = vendasFiltradas.filter(v => !vendasComFunil.includes(v.id)).length;
 
       // 5. Analisar diferença entre realizado e faturamento
       const diferencaRealizadoFaturamento = realizadoMes - faturamentoTotal;
@@ -273,7 +284,7 @@ Gere um feedback em tópicos:
                       <div className="w-3 h-3 bg-indigo-500 rounded-full"></div>
                       <div>
                         <p className="font-semibold text-gray-900">Comercial / SDR</p>
-                        <p className="text-sm text-gray-600">Crédito de performance (agendou/vendeu)</p>
+                        <p className="text-sm text-gray-600">Crédito de performance (agendou)</p>
                       </div>
                     </div>
                     <div className="text-right">
@@ -286,12 +297,48 @@ Gere um feedback em tópicos:
                     </div>
                   </div>
 
+                  <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                      <div>
+                        <p className="font-semibold text-gray-900">Vendas</p>
+                        <p className="text-sm text-gray-600">Crédito de performance (vendeu)</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xl font-bold text-blue-600">
+                        R$ {formatCurrency(feedback.distribuicao.creditoVendas)}
+                      </p>
+                      <Badge className="bg-blue-100 text-blue-800">
+                        {feedback.distribuicao.percentualVendas.toFixed(1)}% do faturamento
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-200">
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                      <div>
+                        <p className="font-semibold text-gray-900">Técnico</p>
+                        <p className="text-sm text-gray-600">Crédito de performance (executou)</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xl font-bold text-purple-600">
+                        R$ {formatCurrency(feedback.distribuicao.creditoTecnico)}
+                      </p>
+                      <Badge className="bg-purple-100 text-purple-800">
+                        {feedback.distribuicao.percentualTecnico.toFixed(1)}% do faturamento
+                      </Badge>
+                    </div>
+                  </div>
+
                   <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200">
                     <div className="flex items-center gap-3">
                       <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
                       <div>
                         <p className="font-semibold text-gray-900">Clientes Passantes (Porta)</p>
-                        <p className="text-sm text-gray-600">Faturamento real de clientes sem funil ({feedback.distribuicao.qtdClientesPassantes} clientes)</p>
+                        <p className="text-sm text-gray-600">Comercial agendou menos Vendas fechou ({feedback.distribuicao.qtdClientesPassantes} vendas sem funil)</p>
                       </div>
                     </div>
                     <div className="text-right">
@@ -308,10 +355,11 @@ Gere um feedback em tópicos:
                 <div className="mt-4 p-4 bg-blue-50 rounded-lg border-2 border-blue-300">
                   <p className="text-xs text-blue-700 mb-2 font-semibold">💡 Como interpretar:</p>
                   <p className="text-xs text-gray-700">
-                    • Os <strong>créditos</strong> medem a performance de cada equipe<br/>
-                    • Uma venda de R$ 10.000 pode gerar crédito para marketing (gerou), SDR (agendou) e vendedor (fechou)<br/>
-                    • Por isso a soma dos créditos pode ser maior que o faturamento real<br/>
-                    • Os percentuais mostram quanto cada equipe contribuiu em relação ao faturamento total
+                    • <strong>Marketing:</strong> Valor das vendas que vieram de leads gerados<br/>
+                    • <strong>Comercial/SDR:</strong> Valor das vendas que foram agendadas<br/>
+                    • <strong>Vendas:</strong> Valor das vendas efetivamente fechadas pelo vendedor<br/>
+                    • <strong>Técnico:</strong> Valor dos serviços executados pela equipe técnica<br/>
+                    • <strong>Passantes:</strong> Diferença entre o que comercial agendou e vendas fechou (clientes que entraram direto pela porta)
                   </p>
                 </div>
               </CardContent>
