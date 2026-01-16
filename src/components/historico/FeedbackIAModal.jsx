@@ -124,8 +124,8 @@ DESEMPENHO:
 - Atingimento: ${percentualMeta.toFixed(1)}%
 - Falta para meta: R$ ${formatCurrency(faltaParaMeta)}
 
-DISTRIBUIÇÃO POR ORIGEM:
-- Faturamento Total Operacional: R$ ${formatCurrency(faturamentoTotal)}
+ORIGEM DAS VENDAS (soma = 100%):
+- Faturamento Total Vendas: R$ ${formatCurrency(faturamentoTotalVendas)}
 - Marketing (leads): R$ ${formatCurrency(faturamentoMarketing)} (${percentualMarketing.toFixed(1)}%) - ${qtdClientesMarketing} clientes
 - Comercial (prospecção): R$ ${formatCurrency(faturamentoComercial)} (${percentualComercial.toFixed(1)}%) - ${qtdClientesComercial} clientes  
 - Passantes (porta): R$ ${formatCurrency(faturamentoPassantes)} (${percentualPassantes.toFixed(1)}%) - ${qtdClientesPassantes} clientes
