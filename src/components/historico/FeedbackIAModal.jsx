@@ -57,58 +57,47 @@ export default function FeedbackIAModal({ open, onClose, workshop, record, allRe
       const vendasIds = vendasFiltradas.map(v => v.id);
       const atribuicoesFiltradas = atribuicoesTodas.filter(a => vendasIds.includes(a.venda_id));
 
-      // 3. Calcular distribuição por equipe (percentual do faturamento real)
-      // Marketing: vendas que vieram de leads de marketing
-      const vendasMarketing = [...new Set(atribuicoesFiltradas
+      // 3. Calcular ORIGEM das vendas (soma 100% do faturamento)
+      
+      // Identificar vendas por origem
+      const vendasComMarketing = [...new Set(atribuicoesFiltradas
         .filter(a => a.equipe === "marketing")
         .map(a => a.venda_id))];
-      const creditoMarketing = vendasFiltradas
-        .filter(v => vendasMarketing.includes(v.id))
-        .reduce((sum, v) => sum + (v.valor_total || 0), 0);
-
-      // Comercial: vendas que foram agendadas por SDR/Comercial
-      const vendasComercial = [...new Set(atribuicoesFiltradas
+      
+      const vendasComComercial = [...new Set(atribuicoesFiltradas
         .filter(a => (a.equipe === "sdr_telemarketing" || a.equipe === "comercial_vendas") && a.papel === "agendou")
         .map(a => a.venda_id))];
-      const creditoComercial = vendasFiltradas
-        .filter(v => vendasComercial.includes(v.id))
-        .reduce((sum, v) => sum + (v.valor_total || 0), 0);
 
-      // Vendas: vendas fechadas por vendedor
-      const vendasVendas = [...new Set(atribuicoesFiltradas
-        .filter(a => a.equipe === "comercial_vendas" && a.papel === "vendeu")
-        .map(a => a.venda_id))];
-      const creditoVendas = vendasFiltradas
-        .filter(v => vendasVendas.includes(v.id))
-        .reduce((sum, v) => sum + (v.valor_total || 0), 0);
+      // ORIGEM Marketing: vendas que TÊM marketing
+      const vendasOrigemMarketing = vendasFiltradas.filter(v => vendasComMarketing.includes(v.id));
+      const faturamentoMarketing = vendasOrigemMarketing.reduce((sum, v) => sum + (v.valor_total || 0), 0);
+      
+      // ORIGEM Comercial: vendas que NÃO têm marketing MAS têm comercial
+      const vendasOrigemComercial = vendasFiltradas.filter(v => 
+        !vendasComMarketing.includes(v.id) && vendasComComercial.includes(v.id)
+      );
+      const faturamentoComercial = vendasOrigemComercial.reduce((sum, v) => sum + (v.valor_total || 0), 0);
+      
+      // ORIGEM Passantes: vendas que NÃO têm marketing E NÃO têm comercial
+      const vendasOrigemPassantes = vendasFiltradas.filter(v => 
+        !vendasComMarketing.includes(v.id) && !vendasComComercial.includes(v.id)
+      );
+      const faturamentoPassantes = vendasOrigemPassantes.reduce((sum, v) => sum + (v.valor_total || 0), 0);
+      
+      // Contadores
+      const qtdClientesMarketing = vendasOrigemMarketing.length;
+      const qtdClientesComercial = vendasOrigemComercial.length;
+      const qtdClientesPassantes = vendasOrigemPassantes.length;
 
-      // Técnico: serviços executados por técnicos
-      const vendasTecnico = [...new Set(atribuicoesFiltradas
-        .filter(a => a.equipe === "tecnico" && a.papel === "executou")
-        .map(a => a.venda_id))];
-      const creditoTecnico = vendasFiltradas
-        .filter(v => vendasTecnico.includes(v.id))
-        .reduce((sum, v) => sum + (v.valor_total || 0), 0);
-
-      // 4. Passantes: vendas sem marketing E sem comercial
-      const vendasComFunil = [...new Set(atribuicoesFiltradas
-        .filter(a => a.equipe === "marketing" || a.equipe === "sdr_telemarketing" || a.equipe === "comercial_vendas")
-        .map(a => a.venda_id))];
-      const vendasPassantes = vendasFiltradas.filter(v => !vendasComFunil.includes(v.id));
-      const faturamentoPassantes = vendasPassantes.reduce((sum, v) => sum + (v.valor_total || 0), 0);
-      const qtdClientesPassantes = vendasPassantes.length;
-
-      // 5. Calcular percentuais
-      const percentualMarketing = faturamentoTotal > 0 ? (creditoMarketing / faturamentoTotal) * 100 : 0;
-      const percentualComercial = faturamentoTotal > 0 ? (creditoComercial / faturamentoTotal) * 100 : 0;
-      const percentualVendas = faturamentoTotal > 0 ? (creditoVendas / faturamentoTotal) * 100 : 0;
-      const percentualTecnico = faturamentoTotal > 0 ? (creditoTecnico / faturamentoTotal) * 100 : 0;
+      // 4. Calcular percentuais da ORIGEM (soma = 100%)
+      const percentualMarketing = faturamentoTotal > 0 ? (faturamentoMarketing / faturamentoTotal) * 100 : 0;
+      const percentualComercial = faturamentoTotal > 0 ? (faturamentoComercial / faturamentoTotal) * 100 : 0;
       const percentualPassantes = faturamentoTotal > 0 ? (faturamentoPassantes / faturamentoTotal) * 100 : 0;
 
-      // 6. Analisar diferença entre realizado e faturamento
+      // 5. Analisar diferença entre realizado e faturamento
       const diferencaRealizadoFaturamento = realizadoMes - faturamentoTotal;
 
-      // 7. Gerar análise com IA
+      // 6. Gerar análise com IA
       const prompt = `Analise os dados de produção e gere um feedback executivo conciso:
 
 CONTEXTO:
