@@ -113,9 +113,9 @@ DESEMPENHO:
 
 DISTRIBUIÇÃO POR ORIGEM:
 - Faturamento Total Operacional: R$ ${formatCurrency(faturamentoTotal)}
-- Crédito Marketing: R$ ${formatCurrency(creditoMarketing)} (${faturamentoTotal > 0 ? ((creditoMarketing/faturamentoTotal)*100).toFixed(1) : 0}%)
-- Crédito Comercial/SDR: R$ ${formatCurrency(creditoComercial)} (${faturamentoTotal > 0 ? ((creditoComercial/faturamentoTotal)*100).toFixed(1) : 0}%)
-- Clientes Passantes (porta): ${qtdClientesPassantes} clientes = R$ ${formatCurrency(faturamentoPassantes)} (${faturamentoTotal > 0 ? ((faturamentoPassantes/faturamentoTotal)*100).toFixed(1) : 0}%)
+- Marketing (leads): R$ ${formatCurrency(faturamentoMarketing)} (${percentualMarketing.toFixed(1)}%) - ${qtdClientesMarketing} clientes
+- Comercial (prospecção): R$ ${formatCurrency(faturamentoComercial)} (${percentualComercial.toFixed(1)}%) - ${qtdClientesComercial} clientes  
+- Passantes (porta): R$ ${formatCurrency(faturamentoPassantes)} (${percentualPassantes.toFixed(1)}%) - ${qtdClientesPassantes} clientes
 
 ANÁLISE DE VALORES:
 - Diferença entre Realizado e Faturamento Operacional: R$ ${formatCurrency(Math.abs(diferencaRealizadoFaturamento))}
