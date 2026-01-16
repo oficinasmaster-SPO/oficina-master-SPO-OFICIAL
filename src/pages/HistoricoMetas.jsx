@@ -9,13 +9,14 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useLocation } from "react-router-dom";
-import { Plus, Download, Target, TrendingUp, Award, AlertCircle, Building2, User, X, Activity, BarChart3, Calendar, DollarSign, CheckCircle2, Eye, EyeOff, RefreshCw, Trash2 } from "lucide-react";
+import { Plus, Download, Target, TrendingUp, Award, AlertCircle, Building2, User, X, Activity, BarChart3, Calendar, DollarSign, CheckCircle2, Eye, EyeOff, RefreshCw, Trash2, Sparkles } from "lucide-react";
 import { formatCurrency, formatNumber } from "../components/utils/formatters";
 import ManualGoalRegistration from "../components/goals/ManualGoalRegistration";
 import { toast } from "sonner";
 import { createPageUrl } from "@/utils";
 import AdminViewBanner from "../components/shared/AdminViewBanner";
 import { useSyncData } from "../components/hooks/useSyncData";
+import FeedbackIAModal from "../components/historico/FeedbackIAModal";
 
 export default function HistoricoMetas() {
   const [workshop, setWorkshop] = useState(null);
@@ -31,6 +32,7 @@ export default function HistoricoMetas() {
   const [isAdminView, setIsAdminView] = useState(false);
   const location = useLocation();
   const { syncMonthlyData, updateDREFromMonthlyGoals } = useSyncData();
+  const [feedbackModal, setFeedbackModal] = useState({ open: false, record: null });
 
   useEffect(() => {
     loadUser();
@@ -631,25 +633,36 @@ export default function HistoricoMetas() {
                           </div>
                         </div>
 
-                        {/* Botão Expandir - Sempre visível para permitir edição de dados de marketing */}
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => toggleCardExpansion(record.id)}
-                          className="text-gray-600 hover:text-gray-900"
-                        >
-                          {isExpanded ? (
-                            <>
-                              <X className="w-4 h-4 mr-1" />
-                              Fechar
-                            </>
-                          ) : (
-                            <>
-                              <Target className="w-4 h-4 mr-1" />
-                              Detalhes
-                            </>
-                          )}
-                        </Button>
+                        {/* Botões Expandir e Feedback */}
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setFeedbackModal({ open: true, record: record })}
+                            className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 border-purple-300"
+                          >
+                            <Sparkles className="w-4 h-4 mr-1" />
+                            Feedback
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => toggleCardExpansion(record.id)}
+                            className="text-gray-600 hover:text-gray-900"
+                          >
+                            {isExpanded ? (
+                              <>
+                                <X className="w-4 h-4 mr-1" />
+                                Fechar
+                              </>
+                            ) : (
+                              <>
+                                <Target className="w-4 h-4 mr-1" />
+                                Detalhes
+                              </>
+                            )}
+                          </Button>
+                        </div>
                       </div>
                     </div>
 
@@ -855,6 +868,15 @@ export default function HistoricoMetas() {
                         })
                         )}
                         </div>
+
+        {/* Modal de Feedback IA */}
+        <FeedbackIAModal
+          open={feedbackModal.open}
+          onClose={() => setFeedbackModal({ open: false, record: null })}
+          workshop={workshop}
+          record={feedbackModal.record}
+          allRecords={goalHistory}
+        />
 
         {/* Modal de Registro */}
         <ManualGoalRegistration
