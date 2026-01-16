@@ -271,9 +271,9 @@ export default function IntelligenciaCliente() {
         </div>
 
         {/* Seção de Créditos */}
-        {consolidadoMesAtual && (
+        {creditosConsolidados && (
           <div className="mb-6">
-            <CreditosPerformanceEquipe data={consolidadoMesAtual} />
+            <CreditosPerformanceEquipe data={creditosConsolidados} />
           </div>
         )}
 
