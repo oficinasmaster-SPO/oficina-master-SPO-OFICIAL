@@ -134,6 +134,41 @@ export default function HistoricoMetas() {
     );
   }
 
+  const handleSyncSuccess = () => {
+    queryClient.invalidateQueries(['goal-history']);
+    queryClient.invalidateQueries(['shared-workshop']);
+    queryClient.invalidateQueries(['shared-employees']);
+    refetchGoals();
+    refetchEmployees();
+  };
+
+  const handleToggleCard = (recordId) => {
+    setExpandedCards(prev => ({
+      ...prev,
+      [recordId]: !prev[recordId]
+    }));
+  };
+
+  const handleEdit = (record) => {
+    setEditingRecord(record);
+    setShowModal(true);
+    setExpandedCards(prev => ({ ...prev, [record.id]: false }));
+  };
+
+  const handleDelete = async (recordId) => {
+    if (window.confirm('Tem certeza que deseja excluir este registro permanentemente? Esta ação não pode ser desfeita.')) {
+      try {
+        await base44.entities.MonthlyGoalHistory.delete(recordId);
+        toast.success('Registro excluído com sucesso!');
+        queryClient.invalidateQueries(['goal-history']);
+        refetchGoals();
+      } catch (error) {
+        console.error('Erro ao excluir:', error);
+        toast.error('Erro ao excluir o registro');
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-6">
       <div className="max-w-7xl mx-auto">
@@ -141,267 +176,35 @@ export default function HistoricoMetas() {
         {isAdminView && workshop && (
           <AdminViewBanner workshopName={workshop.name} />
         )}
-        
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-              <Target className="w-8 h-8 text-blue-600" />
-              Histórico da Produção Diária
-            </h1>
-            <p className="text-gray-600 mt-2">
-              Acompanhe os resultados e desempenho da oficina e colaboradores
-            </p>
-          </div>
-          <div className="flex gap-3">
-            <Button 
-              variant="outline" 
-              onClick={async () => {
-                try {
-                  toast.info("Sincronizando dados...");
-                  const response = await base44.functions.invoke('syncEmployeeRealized', {
-                    workshop_id: workshop.id,
-                    month: filterMonth
-                  });
-                  
-                  if (response.data.success) {
-                    toast.success(`✅ ${response.data.employees_synced} colaboradores sincronizados!`);
-                    queryClient.invalidateQueries(['goal-history']);
-                    queryClient.invalidateQueries(['shared-workshop']);
-                    queryClient.invalidateQueries(['shared-employees']);
-                    refetchGoals();
-                    refetchEmployees();
-                  }
-                } catch (error) {
-                  console.error("Erro na sincronização:", error);
-                  toast.error("Erro ao sincronizar dados");
-                }
-              }}
-              className="bg-purple-600 hover:bg-purple-700 text-white"
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Sincronizar Tudo
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                queryClient.invalidateQueries(['goal-history']);
-                refetchGoals();
-              }}
-              disabled={isFetching}
-            >
-              <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
-              {isFetching ? 'Atualizando...' : 'Atualizar'}
-            </Button>
-            <Button variant="outline" onClick={() => window.location.href = createPageUrl("GraficosProducao")}>
-              <BarChart3 className="w-4 h-4 mr-2" />
-              Gráficos
-            </Button>
-            <Button variant="outline" onClick={handleExport}>
-              <Download className="w-4 h-4 mr-2" />
-              Exportar
-            </Button>
-            <Button onClick={() => setShowModal(true)} className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Novo Registro Manual
-            </Button>
-          </div>
-        </div>
 
-        {/* Filtros */}
-        <Card className="mb-6 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-lg">Filtros</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label>Filtrar por</Label>
-                <Select value={filterType} onValueChange={setFilterType}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="workshop">
-                      <div className="flex items-center gap-2">
-                        <Building2 className="w-4 h-4" />
-                        Oficina (Geral)
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="employee">
-                      <div className="flex items-center gap-2">
-                        <User className="w-4 h-4" />
-                        Colaborador
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+        <HistoricoHeader
+          onNewRecord={() => setShowModal(true)}
+          onRefresh={() => {
+            queryClient.invalidateQueries(['goal-history']);
+            refetchGoals();
+          }}
+          isFetching={isFetching}
+          workshopId={workshop?.id}
+          filterMonth={filterMonth}
+          onSyncSuccess={handleSyncSuccess}
+        />
 
-              {filterType === "employee" && (
-                <div>
-                  <Label>Colaborador</Label>
-                  <Select value={filterEmployee} onValueChange={setFilterEmployee}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Todos os colaboradores" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={null}>Todos</SelectItem>
-                      {employees.map(emp => (
-                        <SelectItem key={emp.id} value={emp.id}>
-                          {emp.full_name} - {emp.position}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-              </div>
+        <HistoricoFilters
+          filterType={filterType}
+          setFilterType={setFilterType}
+          filterEmployee={filterEmployee}
+          setFilterEmployee={setFilterEmployee}
+          filterMonth={filterMonth}
+          setFilterMonth={setFilterMonth}
+          showAllRecords={showAllRecords}
+          setShowAllRecords={setShowAllRecords}
+          employees={employees}
+        />
 
-              <div className="mt-4">
-              <Label>Filtrar por Mês</Label>
-              <Input
-                type="month"
-                value={filterMonth}
-                onChange={(e) => setFilterMonth(e.target.value)}
-                className="max-w-xs"
-              />
-              </div>
+        {filterType === "workshop" && (
+          <WorkshopSummaryCard workshop={workshop} goalHistory={goalHistory} />
+        )}
 
-              <div className="mt-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowAllRecords(!showAllRecords)}
-                  className="w-full"
-                >
-                  {showAllRecords ? (
-                    <>
-                      <EyeOff className="w-4 h-4 mr-2" />
-                      Ocultar registros sem faturamento
-                    </>
-                  ) : (
-                    <>
-                      <Eye className="w-4 h-4 mr-2" />
-                      Mostrar todos os registros (incluindo sem faturamento)
-                    </>
-                  )}
-                </Button>
-                <p className="text-xs text-gray-500 mt-1">
-                  {showAllRecords 
-                    ? "Mostrando todos os registros, inclusive dias sem faturamento (para editar dados de marketing, agendamentos, etc.)" 
-                    : "Mostrando apenas dias com faturamento registrado"}
-                </p>
-              </div>
-              </CardContent>
-              </Card>
-
-        {/* Resumo da Oficina (Geral) */}
-        {filterType === "workshop" && (() => {
-          const currentMonth = new Date().toISOString().slice(0, 7);
-          const currentMonthRecords = goalHistory.filter(
-            record => record.entity_type === "workshop" && record.month === currentMonth
-          );
-
-          const monthlyActualRevenue = currentMonthRecords.reduce(
-            (sum, record) => sum + (record.achieved_total || 0), 
-            0
-          );
-
-          // Puxar meta projetada corretamente: Melhor Mês + % Crescimento
-          // Usar dados sincronizados do workshop se disponível
-          const bestMonthRevenue = workshop.best_month_history?.revenue_total || 0;
-          const growthPercentage = workshop.monthly_goals?.growth_percentage || 10;
-          const monthlyGoal = bestMonthRevenue > 0 
-            ? bestMonthRevenue * (1 + growthPercentage / 100)
-            : workshop.monthly_goals?.individual_goal || 0;
-          const actualRevenue = monthlyActualRevenue;
-          
-          const achievementPercentage = monthlyGoal > 0 ? (actualRevenue / monthlyGoal) * 100 : 0;
-          const missingToGoal = Math.max(0, monthlyGoal - actualRevenue);
-
-          return (
-            <Card className="mb-6 shadow-xl border-2 border-blue-300 bg-gradient-to-r from-blue-50 to-indigo-50">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Building2 className="w-6 h-6 text-blue-600" />
-                    <div>
-                      <CardTitle className="text-xl text-blue-900">{workshop.name}</CardTitle>
-                      <p className="text-sm text-gray-600">Resumo Geral da Oficina - {new Date(currentMonth + '-01').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs text-gray-600 mb-1">Atingimento</p>
-                    <Badge className={`text-lg px-4 py-2 ${
-                      achievementPercentage >= 100 ? 'bg-green-100 text-green-800' : 
-                      achievementPercentage >= 70 ? 'bg-yellow-100 text-yellow-800' : 
-                      'bg-red-100 text-red-800'
-                    }`}>
-                      {achievementPercentage.toFixed(1)}%
-                    </Badge>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-white p-4 rounded-lg border-l-4 border-blue-500 shadow-sm">
-                    <p className="text-xs text-gray-600 mb-1 flex items-center gap-1">
-                      <Target className="w-3 h-3" />
-                      Meta Mensal (Previsto)
-                    </p>
-                    <p className="text-2xl font-bold text-blue-600">
-                      R$ {formatCurrency(monthlyGoal)}
-                    </p>
-                    {monthlyGoal === 0 && (
-                      <p className="text-xs text-red-500 mt-1">⚠️ Meta não definida</p>
-                    )}
-                  </div>
-                  <div className="bg-white p-4 rounded-lg border-l-4 border-green-500 shadow-sm">
-                    <p className="text-xs text-gray-600 mb-1 flex items-center gap-1">
-                      <TrendingUp className="w-3 h-3" />
-                      Realizado no Mês
-                    </p>
-                    <p className="text-2xl font-bold text-green-600">
-                      R$ {formatCurrency(actualRevenue)}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {currentMonthRecords.length} registro(s) no mês
-                    </p>
-                  </div>
-                  <div className="bg-white p-4 rounded-lg border-l-4 border-orange-500 shadow-sm">
-                    <p className="text-xs text-gray-600 mb-1 flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3" />
-                      Falta para Meta
-                    </p>
-                    <p className={`text-2xl font-bold ${achievementPercentage >= 100 ? 'text-green-600' : 'text-orange-600'}`}>
-                      R$ {formatCurrency(missingToGoal)}
-                    </p>
-                    {achievementPercentage >= 100 ? (
-                      <p className="text-xs text-green-600 mt-1 font-semibold">🎉 Meta batida!</p>
-                    ) : (
-                      <p className="text-xs text-gray-500 mt-1">Para atingir</p>
-                    )}
-                  </div>
-                  <div className="bg-white p-4 rounded-lg border-l-4 border-purple-500 shadow-sm">
-                    <p className="text-xs text-gray-600 mb-1 flex items-center gap-1">
-                      <Award className="w-3 h-3" />
-                      Dias Registrados
-                    </p>
-                    <p className="text-2xl font-bold text-purple-600">
-                      {currentMonthRecords.length}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      no mês atual
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })()}
-
-        {/* Resumo do Colaborador Selecionado */}
         {filterType === "employee" && filterEmployee && (() => {
           const selectedEmployee = employees.find(e => e.id === filterEmployee);
           if (!selectedEmployee) {
@@ -413,114 +216,7 @@ export default function HistoricoMetas() {
               </Card>
             );
           }
-
-          // Calcular o mês atual
-          const currentMonth = new Date().toISOString().slice(0, 7);
-          
-          // Buscar registros do mês atual para este colaborador
-          const currentMonthRecords = goalHistory.filter(
-            record => record.employee_id === filterEmployee && record.month === currentMonth
-          );
-          
-          // Somar o realizado de todos os registros do mês
-          const monthlyActualRevenue = currentMonthRecords.reduce(
-            (sum, record) => sum + (record.achieved_total || 0), 
-            0
-          );
-
-          // Puxar meta projetada corretamente: Melhor Mês + % Crescimento
-          const bestMonthRevenue = selectedEmployee.best_month_history?.revenue_total || 0;
-          const growthPercentage = selectedEmployee.monthly_goals?.growth_percentage || 10;
-          const monthlyGoal = selectedEmployee.monthly_goals?.individual_goal || 
-            (bestMonthRevenue > 0 ? bestMonthRevenue * (1 + growthPercentage / 100) : 0);
-          const dailyGoalCalculated = monthlyGoal > 0 ? monthlyGoal / 22 : 0;
-          const dailyGoal = selectedEmployee.monthly_goals?.daily_projected_goal || dailyGoalCalculated;
-          
-          // Usar APENAS o valor calculado dos registros
-          const actualRevenue = monthlyActualRevenue;
-          
-          const achievementPercentage = monthlyGoal > 0 ? (actualRevenue / monthlyGoal) * 100 : 0;
-          const missingToGoal = Math.max(0, monthlyGoal - actualRevenue);
-
-          return (
-            <Card className="mb-6 shadow-xl border-2 border-purple-300 bg-gradient-to-r from-purple-50 to-blue-50">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <User className="w-6 h-6 text-purple-600" />
-                    <div>
-                      <CardTitle className="text-xl text-purple-900">{selectedEmployee.full_name}</CardTitle>
-                      <p className="text-sm text-gray-600">{selectedEmployee.position} - {selectedEmployee.area || "Geral"}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs text-gray-600 mb-1">Atingimento</p>
-                    <Badge className={`text-lg px-4 py-2 ${
-                      achievementPercentage >= 100 ? 'bg-green-100 text-green-800' : 
-                      achievementPercentage >= 70 ? 'bg-yellow-100 text-yellow-800' : 
-                      'bg-red-100 text-red-800'
-                    }`}>
-                      {achievementPercentage.toFixed(1)}%
-                    </Badge>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-white p-4 rounded-lg border-l-4 border-blue-500 shadow-sm">
-                    <p className="text-xs text-gray-600 mb-1 flex items-center gap-1">
-                      <Target className="w-3 h-3" />
-                      Meta Mensal (Previsto)
-                    </p>
-                    <p className="text-2xl font-bold text-blue-600">
-                      R$ {formatCurrency(monthlyGoal)}
-                    </p>
-                    {monthlyGoal === 0 && (
-                      <p className="text-xs text-red-500 mt-1">⚠️ Meta não definida</p>
-                    )}
-                  </div>
-                  <div className="bg-white p-4 rounded-lg border-l-4 border-purple-500 shadow-sm">
-                    <p className="text-xs text-gray-600 mb-1 flex items-center gap-1">
-                      <Target className="w-3 h-3" />
-                      Meta Diária
-                    </p>
-                    <p className="text-2xl font-bold text-purple-600">
-                      R$ {formatCurrency(dailyGoal)}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {dailyGoalCalculated > 0 ? `(${formatCurrency(monthlyGoal)} ÷ 22 dias)` : 'Não calculada'}
-                    </p>
-                  </div>
-                  <div className="bg-white p-4 rounded-lg border-l-4 border-green-500 shadow-sm">
-                    <p className="text-xs text-gray-600 mb-1 flex items-center gap-1">
-                      <TrendingUp className="w-3 h-3" />
-                      Realizado no Mês
-                    </p>
-                    <p className="text-2xl font-bold text-green-600">
-                      R$ {formatCurrency(actualRevenue)}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {currentMonthRecords.length} registro(s) no mês
-                    </p>
-                  </div>
-                  <div className="bg-white p-4 rounded-lg border-l-4 border-orange-500 shadow-sm">
-                    <p className="text-xs text-gray-600 mb-1 flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3" />
-                      Falta para Meta
-                    </p>
-                    <p className={`text-2xl font-bold ${achievementPercentage >= 100 ? 'text-green-600' : 'text-orange-600'}`}>
-                      R$ {formatCurrency(missingToGoal)}
-                    </p>
-                    {achievementPercentage >= 100 ? (
-                      <p className="text-xs text-green-600 mt-1 font-semibold">🎉 Meta batida!</p>
-                    ) : (
-                      <p className="text-xs text-gray-500 mt-1">Para atingir</p>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
+          return <EmployeeSummaryCard employee={selectedEmployee} goalHistory={goalHistory} />;
         })()}
 
         {/* Lista de Histórico */}
