@@ -1,22 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "react-router-dom";
-import { Plus, Download, Target, TrendingUp, Award, AlertCircle, Building2, User, X, Activity, BarChart3, Calendar, DollarSign, CheckCircle2, Eye, EyeOff, RefreshCw, Trash2, Sparkles } from "lucide-react";
-import { formatCurrency, formatNumber } from "../components/utils/formatters";
-import ManualGoalRegistration from "../components/goals/ManualGoalRegistration";
 import { toast } from "sonner";
-import { createPageUrl } from "@/utils";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Target } from "lucide-react";
+import ManualGoalRegistration from "../components/goals/ManualGoalRegistration";
 import AdminViewBanner from "../components/shared/AdminViewBanner";
 import { useSyncData } from "../components/hooks/useSyncData";
 import FeedbackIAModal from "../components/historico/FeedbackIAModal";
+import HistoricoHeader from "../components/historico/HistoricoHeader";
+import HistoricoFilters from "../components/historico/HistoricoFilters";
+import WorkshopSummaryCard from "../components/historico/WorkshopSummaryCard";
+import EmployeeSummaryCard from "../components/historico/EmployeeSummaryCard";
+import RecordCard from "../components/historico/RecordCard";
 
 export default function HistoricoMetas() {
   const [workshop, setWorkshop] = useState(null);
