@@ -103,62 +103,51 @@ Deno.serve(async (req) => {
       ? `${origin}/PrimeiroAcesso?token=${invite.invite_token}`
       : `${origin}/PrimeiroAcesso`;
 
-    // 7. Enviar dados para Zapier Webhook
+    // 7. Enviar dados para Zapier via integração Base44
     console.log("📤 Enviando dados para Zapier...");
     
-    const ZAPIER_WEBHOOK_URL = Deno.env.get("ZAPIER_WEBHOOK_URL");
     let zapierStatus = 'não configurado';
     
-    if (ZAPIER_WEBHOOK_URL) {
-      try {
-        const webhookData = {
-          event: 'employee_invite',
-          timestamp: new Date().toISOString(),
-          employee: {
-            name: name,
-            email: email,
-            telefone: telefone || '',
-            position: position || 'Colaborador',
-            area: area || 'tecnico',
-            job_role: job_role || 'outros'
-          },
-          workshop: {
-            id: workshop_id,
-            name: workshopData.name
-          },
-          invite: {
-            link: inviteLink,
-            token: invite.invite_token,
-            temporary_password: "Oficina@2025",
-            expires_at: invite.expires_at
-          }
-        };
-
-        const zapierResponse = await fetch(ZAPIER_WEBHOOK_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(webhookData)
-        });
-
-        if (zapierResponse.ok) {
-          await base44.asServiceRole.entities.EmployeeInvite.update(invite.id, {
-            status: 'enviado',
-            last_resent_at: new Date().toISOString()
-          });
-
-          zapierStatus = 'enviado';
-          console.log("✅ Dados enviados para Zapier com sucesso!");
-        } else {
-          const errorText = await zapierResponse.text();
-          zapierStatus = `erro: ${zapierResponse.status} - ${errorText}`;
-          console.error("⚠️ Erro ao enviar para Zapier:", zapierStatus);
+    try {
+      const webhookData = {
+        event: 'employee_invite',
+        timestamp: new Date().toISOString(),
+        employee: {
+          name: name,
+          email: email,
+          telefone: telefone || '',
+          position: position || 'Colaborador',
+          area: area || 'tecnico',
+          job_role: job_role || 'outros'
+        },
+        workshop: {
+          id: workshop_id,
+          name: workshopData.name
+        },
+        invite: {
+          link: inviteLink,
+          token: invite.invite_token,
+          temporary_password: "Oficina@2025",
+          expires_at: invite.expires_at
         }
-      } catch (zapierError) {
-        console.error("⚠️ Erro ao enviar para Zapier:", zapierError.message);
-        zapierStatus = 'erro: ' + zapierError.message;
-      }
+      };
+
+      await base44.asServiceRole.integrations.Zapier.TriggerZap({
+        event_name: 'employee_invite',
+        data: webhookData
+      });
+
+      await base44.asServiceRole.entities.EmployeeInvite.update(invite.id, {
+        status: 'enviado',
+        last_resent_at: new Date().toISOString()
+      });
+
+      zapierStatus = 'enviado';
+      console.log("✅ Dados enviados para Zapier com sucesso!");
+      
+    } catch (zapierError) {
+      console.error("⚠️ Erro ao enviar para Zapier:", zapierError.message);
+      zapierStatus = 'erro: ' + zapierError.message;
     }
 
     // 8. Retornar sucesso
