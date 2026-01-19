@@ -103,17 +103,103 @@ Deno.serve(async (req) => {
       ? `${origin}/PrimeiroAcesso?token=${invite.invite_token}`
       : `${origin}/PrimeiroAcesso`;
 
-    // 7. Retornar sucesso (usuário será criado quando acessar o link)
-    console.log("ℹ️ Usuário NÃO foi criado ainda - será criado no primeiro acesso");
-    console.log("ℹ️ Email será enviado via ActiveCampaign ao chamar sendEmployeeInvite");
+    // 7. Enviar automaticamente para ActiveCampaign
+    console.log("📤 Enviando dados para ActiveCampaign...");
+    
+    const AC_API_KEY = Deno.env.get("ACTIVECAMPAIGN_API_KEY");
+    const AC_API_URL = Deno.env.get("ACTIVECAMPAIGN_API_URL");
+    
+    let acStatus = 'não configurado';
+    
+    if (AC_API_KEY && AC_API_URL) {
+      try {
+        // Criar ou atualizar contato
+        const contactData = {
+          contact: {
+            email: email,
+            firstName: name.split(' ')[0],
+            lastName: name.split(' ').slice(1).join(' ') || '',
+            fieldValues: [
+              {
+                field: '1',
+                value: workshopData.name
+              }
+            ]
+          }
+        };
+
+        const contactResponse = await fetch(`${AC_API_URL}/api/3/contact/sync`, {
+          method: 'POST',
+          headers: {
+            'Api-Token': AC_API_KEY,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(contactData)
+        });
+
+        if (contactResponse.ok) {
+          const contactResult = await contactResponse.json();
+          console.log("✅ Contato criado/atualizado no AC:", contactResult.contact.id);
+
+          // Adicionar tag para disparar automação
+          const tagData = {
+            contactTag: {
+              contact: contactResult.contact.id,
+              tag: 'convite-colaborador'
+            }
+          };
+
+          await fetch(`${AC_API_URL}/api/3/contactTags`, {
+            method: 'POST',
+            headers: {
+              'Api-Token': AC_API_KEY,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(tagData)
+          });
+
+          // Salvar link nas notas
+          const noteData = {
+            note: {
+              note: `🔑 DADOS DO CONVITE\n\nLink: ${inviteLink}\nSenha Temporária: Oficina@2025\nOficina: ${workshopData.name}\nEmail: ${email}\nNome: ${name}`,
+              relid: contactResult.contact.id,
+              reltype: 'Subscriber'
+            }
+          };
+
+          await fetch(`${AC_API_URL}/api/3/notes`, {
+            method: 'POST',
+            headers: {
+              'Api-Token': AC_API_KEY,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(noteData)
+          });
+
+          // Atualizar convite
+          await base44.asServiceRole.entities.EmployeeInvite.update(invite.id, {
+            status: 'enviado',
+            last_resent_at: new Date().toISOString()
+          });
+
+          acStatus = 'enviado';
+          console.log("✅ Automação ActiveCampaign disparada!");
+        }
+      } catch (acError) {
+        console.error("⚠️ Erro ao enviar para ActiveCampaign:", acError.message);
+        acStatus = 'erro: ' + acError.message;
+      }
+    }
 
     // 8. Retornar sucesso
     return Response.json({ 
       success: true,
-      message: 'Colaborador criado com sucesso!',
+      message: 'Colaborador criado com sucesso! Email será enviado via ActiveCampaign.',
       email: email,
-      temporary_password: temporaryPassword,
-      employee_id: employee.id
+      temporary_password: "Oficina@2025",
+      employee_id: employee.id,
+      invite_link: inviteLink,
+      activecampaign_status: acStatus
     });
 
   } catch (error) {
