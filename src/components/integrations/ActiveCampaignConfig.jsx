@@ -293,6 +293,58 @@ export default function ActiveCampaignConfig() {
                   </div>
                 </div>
               </div>
+
+              {/* Automação de Convite para Colaboradores */}
+              <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-6 space-y-4 mt-6">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-purple-600" />
+                  <h3 className="text-base font-bold text-purple-900">Automação: Convite para Colaboradores</h3>
+                </div>
+                
+                <div className="space-y-4">
+                  {/* Passo 1 */}
+                  <div className="bg-white rounded-lg p-4 shadow-sm">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-7 h-7 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                        1
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-900 mb-1">Criar Automação de Convite</h4>
+                        <ul className="text-sm text-gray-700 space-y-1 ml-1">
+                          <li>• Vá em <code className="bg-gray-100 px-1.5 py-0.5 rounded">Automations → Create an Automation</code></li>
+                          <li>• Escolha: <strong>"Start from scratch"</strong></li>
+                          <li>• <strong>Gatilho:</strong> "Tag is added" → Selecione <code className="bg-pink-100 px-1.5 py-0.5 rounded font-semibold">convite-colaborador</code></li>
+                          <li>• <strong>Ação:</strong> "Send email" → Crie template com:</li>
+                          <li className="ml-4">- Link do convite: <code className="bg-gray-100 px-1 rounded text-xs">%NOTE_CONTENT%</code></li>
+                          <li className="ml-4">- Senha temporária: <strong>Oficina@2025</strong></li>
+                          <li>• <strong>Ative</strong> a automação</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Passo 2 */}
+                  <div className="bg-white rounded-lg p-4 shadow-sm">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-7 h-7 bg-orange-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                        2
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-900 mb-1">Testar Envio</h4>
+                        <p className="text-sm text-gray-700 ml-1">
+                          Ao clicar em "Reenviar Convite" no cadastro de colaborador, o sistema adiciona a tag automaticamente e dispara o email.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-purple-100 border border-purple-300 rounded-lg p-3 mt-4">
+                  <p className="text-xs text-purple-900">
+                    📌 <strong>Nota:</strong> O link de convite e senha são salvos nas <strong>Notas</strong> do contato no ActiveCampaign. Use <code className="bg-white px-1 rounded">%NOTE_CONTENT%</code> no template do email.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         )}
