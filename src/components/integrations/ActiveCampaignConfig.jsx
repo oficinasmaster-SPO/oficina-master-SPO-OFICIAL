@@ -281,10 +281,17 @@ export default function ActiveCampaignConfig() {
                 </div>
               </div>
 
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-4">
-                <p className="text-xs text-yellow-800">
-                  💡 <strong>Dica:</strong> Certifique-se de que a automação está <strong>ATIVA</strong> antes de enviar para clientes em massa.
-                </p>
+              <div className="bg-red-50 border-l-4 border-red-500 p-4 mt-4">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-bold text-red-900 mb-1">⚠️ IMPORTANTE:</p>
+                    <p className="text-sm text-red-800">
+                      O botão "Testar Email" <strong>NÃO envia email diretamente</strong>. Ele apenas adiciona o contato com a tag <code className="bg-red-100 px-1 rounded">academia_acesso</code>. 
+                      O email só é enviado se você <strong>criar e ATIVAR a automação</strong> no ActiveCampaign (Passo 1).
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
