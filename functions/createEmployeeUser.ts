@@ -53,18 +53,7 @@ Deno.serve(async (req) => {
 
     console.log("✅ Employee criado:", employee.id);
 
-    // 3. Convidar usuário Base44
-    const temporaryPassword = "Oficina@2025";
-    
-    try {
-      await base44.users.inviteUser(email, role);
-      console.log(`✅ Usuário convidado como ${role}:`, email);
-    } catch (inviteError) {
-      console.error("⚠️ Erro ao convidar usuário:", inviteError.message);
-      // Continua mesmo se falhar o convite
-    }
-
-    // 4. Criar registro de convite no sistema
+    // 3. Criar registro de convite no sistema (usuário será criado quando acessar)
     try {
       const inviteToken = Math.random().toString(36).substring(2, 15) + 
                          Math.random().toString(36).substring(2, 15);
@@ -84,7 +73,8 @@ Deno.serve(async (req) => {
         invite_token: inviteToken,
         invite_type: 'workshop',
         expires_at: expiresAt.toISOString(),
-        status: "enviado"
+        status: "pendente",
+        metadata: { role: role } // Salvar role para criar usuário depois
       });
 
       console.log("✅ Convite criado no sistema");
@@ -113,8 +103,9 @@ Deno.serve(async (req) => {
       ? `${origin}/PrimeiroAcesso?token=${invite.invite_token}`
       : `${origin}/PrimeiroAcesso`;
 
-    // 7. ActiveCampaign enviará o email através da automação
-    console.log("ℹ️ Email será enviado via automação ActiveCampaign");
+    // 7. Retornar sucesso (usuário será criado quando acessar o link)
+    console.log("ℹ️ Usuário NÃO foi criado ainda - será criado no primeiro acesso");
+    console.log("ℹ️ Email será enviado via ActiveCampaign ao chamar sendEmployeeInvite");
 
     // 8. Retornar sucesso
     return Response.json({ 
