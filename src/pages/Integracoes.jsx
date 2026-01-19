@@ -13,6 +13,7 @@ import IntegrationMetricsChart from "@/components/dashboard/IntegrationMetricsCh
 import IntegrationAdvancedSettings from "@/components/integrations/IntegrationAdvancedSettings";
 import GoogleMeetConfig from "@/components/integrations/GoogleMeetConfig";
 import GoogleCalendarConfig from "@/components/integrations/GoogleCalendarConfig";
+import ActiveCampaignConfig from "@/components/integrations/ActiveCampaignConfig";
 
 export default function Integracoes() {
   const [user, setUser] = useState(null);
@@ -183,6 +184,9 @@ export default function Integracoes() {
         <GoogleCalendarConfig />
         <GoogleMeetConfig />
       </div>
+
+      {/* ActiveCampaign Config */}
+      <ActiveCampaignConfig />
 
       {/* Painel de Monitoramento */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
