@@ -220,13 +220,72 @@ export default function ActiveCampaignConfig() {
                 ✅ Integração ativa
               </p>
             </div>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
-              <p className="text-sm font-semibold text-blue-900">📋 Próximos Passos:</p>
-              <ol className="text-xs text-gray-700 space-y-1 list-decimal ml-4">
-                <li><strong>Criar Automação:</strong> Gera lista, tag e campanha automática de boas-vindas</li>
-                <li><strong>Enviar para Clientes:</strong> Adiciona clientes ativos à lista com a tag "academia_acesso"</li>
-                <li><strong>No ActiveCampaign:</strong> Ative a campanha em Rascunhos e configure gatilhos</li>
-              </ol>
+            
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6 space-y-4">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-blue-600" />
+                <h3 className="text-base font-bold text-blue-900">Configuração no ActiveCampaign</h3>
+              </div>
+              
+              <div className="space-y-4">
+                {/* Passo 1 */}
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-7 h-7 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                      1
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-900 mb-1">Criar Automação no ActiveCampaign</h4>
+                      <ul className="text-sm text-gray-700 space-y-1 ml-1">
+                        <li>• Vá em <code className="bg-gray-100 px-1.5 py-0.5 rounded">Automations → Create an Automation</code></li>
+                        <li>• Escolha: <strong>"Start from scratch"</strong></li>
+                        <li>• <strong>Gatilho:</strong> "Tag is added" → Selecione <code className="bg-yellow-100 px-1.5 py-0.5 rounded font-semibold">academia_acesso</code></li>
+                        <li>• <strong>Ação:</strong> "Send email" → Crie template de boas-vindas</li>
+                        <li>• <strong>Ative</strong> a automação</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Passo 2 */}
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-7 h-7 bg-orange-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                      2
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-900 mb-1">Testar o Fluxo</h4>
+                      <ul className="text-sm text-gray-700 space-y-1 ml-1">
+                        <li>• Clique no botão <strong>"🧪 Testar Email"</strong> acima</li>
+                        <li>• Verifique o email: <code className="bg-gray-100 px-1.5 py-0.5 rounded">ghrs.guilherme@gmail.com</code></li>
+                        <li>• O contato recebe a tag automaticamente</li>
+                        <li>• A automação dispara o email</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Passo 3 */}
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-7 h-7 bg-green-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                      3
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-900 mb-1">Enviar para Todos os Clientes</h4>
+                      <p className="text-sm text-gray-700 ml-1">
+                        Depois de testar, clique em <strong>"Enviar para Clientes"</strong> para adicionar todos os alunos ativos da Academia.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-4">
+                <p className="text-xs text-yellow-800">
+                  💡 <strong>Dica:</strong> Certifique-se de que a automação está <strong>ATIVA</strong> antes de enviar para clientes em massa.
+                </p>
+              </div>
             </div>
           </div>
         )}
