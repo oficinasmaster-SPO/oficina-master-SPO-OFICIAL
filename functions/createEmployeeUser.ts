@@ -103,103 +103,77 @@ Deno.serve(async (req) => {
       ? `${origin}/PrimeiroAcesso?token=${invite.invite_token}`
       : `${origin}/PrimeiroAcesso`;
 
-    // 7. Enviar automaticamente para ActiveCampaign
-    console.log("📤 Enviando dados para ActiveCampaign...");
+    // 7. Enviar email automaticamente via Base44
+    console.log("📤 Enviando email de convite via Base44...");
     
-    const AC_API_KEY = Deno.env.get("ACTIVECAMPAIGN_API_KEY");
-    const AC_API_URL = Deno.env.get("ACTIVECAMPAIGN_API_URL");
+    let emailStatus = 'não enviado';
     
-    let acStatus = 'não configurado';
-    
-    if (AC_API_KEY && AC_API_URL) {
-      try {
-        // Criar ou atualizar contato
-        const contactData = {
-          contact: {
-            email: email,
-            firstName: name.split(' ')[0],
-            lastName: name.split(' ').slice(1).join(' ') || '',
-            fieldValues: [
-              {
-                field: '1',
-                value: workshopData.name
-              }
-            ]
-          }
-        };
+    try {
+      const emailBody = `
+        <h2>Bem-vindo(a) ao time da ${workshopData.name}! 🎉</h2>
+        
+        <p>Olá <strong>${name}</strong>,</p>
+        
+        <p>Você foi convidado(a) para fazer parte da equipe da <strong>${workshopData.name}</strong> na plataforma Oficinas Master.</p>
+        
+        <h3>📋 Seus dados de acesso:</h3>
+        <ul>
+          <li><strong>Email:</strong> ${email}</li>
+          <li><strong>Senha temporária:</strong> Oficina@2025</li>
+        </ul>
+        
+        <p>⚠️ <strong>Importante:</strong> Por segurança, altere sua senha no primeiro acesso.</p>
+        
+        <p style="margin: 30px 0;">
+          <a href="${inviteLink}" 
+             style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+            Acessar Plataforma
+          </a>
+        </p>
+        
+        <p>Se o botão não funcionar, copie e cole este link no navegador:</p>
+        <p style="background-color: #f3f4f6; padding: 10px; border-radius: 4px; word-break: break-all;">
+          ${inviteLink}
+        </p>
+        
+        <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
+        
+        <p style="color: #6b7280; font-size: 14px;">
+          Esta é uma mensagem automática da plataforma Oficinas Master.<br>
+          Em caso de dúvidas, entre em contato com a gestão da sua oficina.
+        </p>
+      `;
 
-        const contactResponse = await fetch(`${AC_API_URL}/api/3/contact/sync`, {
-          method: 'POST',
-          headers: {
-            'Api-Token': AC_API_KEY,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(contactData)
-        });
+      await base44.asServiceRole.integrations.Core.SendEmail({
+        to: email,
+        subject: `Bem-vindo(a) à ${workshopData.name} - Oficinas Master`,
+        body: emailBody,
+        from_name: workshopData.name || 'Oficinas Master'
+      });
 
-        if (contactResponse.ok) {
-          const contactResult = await contactResponse.json();
-          console.log("✅ Contato criado/atualizado no AC:", contactResult.contact.id);
+      // Atualizar convite
+      await base44.asServiceRole.entities.EmployeeInvite.update(invite.id, {
+        status: 'enviado',
+        last_resent_at: new Date().toISOString()
+      });
 
-          // Adicionar tag para disparar automação
-          const tagData = {
-            contactTag: {
-              contact: contactResult.contact.id,
-              tag: 'convite-colaborador'
-            }
-          };
-
-          await fetch(`${AC_API_URL}/api/3/contactTags`, {
-            method: 'POST',
-            headers: {
-              'Api-Token': AC_API_KEY,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(tagData)
-          });
-
-          // Salvar link nas notas
-          const noteData = {
-            note: {
-              note: `🔑 DADOS DO CONVITE\n\nLink: ${inviteLink}\nSenha Temporária: Oficina@2025\nOficina: ${workshopData.name}\nEmail: ${email}\nNome: ${name}`,
-              relid: contactResult.contact.id,
-              reltype: 'Subscriber'
-            }
-          };
-
-          await fetch(`${AC_API_URL}/api/3/notes`, {
-            method: 'POST',
-            headers: {
-              'Api-Token': AC_API_KEY,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(noteData)
-          });
-
-          // Atualizar convite
-          await base44.asServiceRole.entities.EmployeeInvite.update(invite.id, {
-            status: 'enviado',
-            last_resent_at: new Date().toISOString()
-          });
-
-          acStatus = 'enviado';
-          console.log("✅ Automação ActiveCampaign disparada!");
-        }
-      } catch (acError) {
-        console.error("⚠️ Erro ao enviar para ActiveCampaign:", acError.message);
-        acStatus = 'erro: ' + acError.message;
-      }
+      emailStatus = 'enviado';
+      console.log("✅ Email enviado com sucesso via Base44!");
+      
+    } catch (emailError) {
+      console.error("⚠️ Erro ao enviar email:", emailError.message);
+      emailStatus = 'erro: ' + emailError.message;
     }
 
     // 8. Retornar sucesso
     return Response.json({ 
       success: true,
-      message: 'Colaborador criado com sucesso! Email será enviado via ActiveCampaign.',
+      message: 'Colaborador criado e email de convite enviado!',
       email: email,
       temporary_password: "Oficina@2025",
       employee_id: employee.id,
       invite_link: inviteLink,
-      activecampaign_status: acStatus
+      email_status: emailStatus
     });
 
   } catch (error) {
