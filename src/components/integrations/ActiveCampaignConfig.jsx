@@ -11,6 +11,7 @@ import { toast } from "sonner";
 export default function ActiveCampaignConfig() {
   const [testing, setTesting] = useState(false);
   const [sending, setSending] = useState(false);
+  const [settingUp, setSettingUp] = useState(false);
   const [status, setStatus] = useState("checking");
   const [apiUrl, setApiUrl] = useState("");
   const [apiKey, setApiKey] = useState("");
@@ -54,6 +55,24 @@ export default function ActiveCampaignConfig() {
       setStatus("error");
     } finally {
       setTesting(false);
+    }
+  };
+
+  const handleSetupAutomation = async () => {
+    setSettingUp(true);
+    try {
+      const response = await base44.functions.invoke('setupActiveCampaignAutomation', {});
+      
+      if (response.data.success) {
+        toast.success("✅ Automação criada! Verifique os rascunhos no ActiveCampaign");
+      } else {
+        toast.error("❌ Erro: " + response.data.error);
+      }
+    } catch (error) {
+      toast.error("Erro ao configurar automação");
+      console.error(error);
+    } finally {
+      setSettingUp(false);
     }
   };
 
@@ -136,31 +155,51 @@ export default function ActiveCampaignConfig() {
               {testing ? "Testando..." : "Testar Conexão"}
             </Button>
           ) : (
-            <Button
-              onClick={handleSendToClients}
-              disabled={sending}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              {sending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Enviando...
-                </>
-              ) : (
-                <>
-                  <Send className="w-4 h-4 mr-2" />
-                  Enviar para Clientes
-                </>
-              )}
-            </Button>
+            <>
+              <Button
+                onClick={handleSetupAutomation}
+                disabled={settingUp}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                {settingUp && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                {settingUp ? "Configurando..." : "Criar Automação"}
+              </Button>
+              <Button
+                onClick={handleSendToClients}
+                disabled={sending}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                {sending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Enviando...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4 mr-2" />
+                    Enviar para Clientes
+                  </>
+                )}
+              </Button>
+            </>
           )}
         </div>
 
         {status === "connected" && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-            <p className="text-sm text-green-800">
-              ✅ Integração ativa. Clique em "Enviar para Clientes" para disparar emails.
-            </p>
+          <div className="space-y-3">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+              <p className="text-sm text-green-800">
+                ✅ Integração ativa
+              </p>
+            </div>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
+              <p className="text-sm font-semibold text-blue-900">📋 Próximos Passos:</p>
+              <ol className="text-xs text-gray-700 space-y-1 list-decimal ml-4">
+                <li><strong>Criar Automação:</strong> Gera lista, tag e campanha automática de boas-vindas</li>
+                <li><strong>Enviar para Clientes:</strong> Adiciona clientes ativos à lista com a tag "academia_acesso"</li>
+                <li><strong>No ActiveCampaign:</strong> Ative a campanha em Rascunhos e configure gatilhos</li>
+              </ol>
+            </div>
           </div>
         )}
       </CardContent>
