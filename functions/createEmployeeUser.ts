@@ -103,103 +103,73 @@ Deno.serve(async (req) => {
       ? `${origin}/PrimeiroAcesso?token=${invite.invite_token}`
       : `${origin}/PrimeiroAcesso`;
 
-    // 7. Enviar automaticamente para ActiveCampaign
-    console.log("📤 Enviando dados para ActiveCampaign...");
+    // 7. Enviar dados para Zapier Webhook
+    console.log("📤 Enviando dados para Zapier...");
     
-    const AC_API_KEY = Deno.env.get("ACTIVECAMPAIGN_API_KEY");
-    const AC_API_URL = Deno.env.get("ACTIVECAMPAIGN_API_URL");
+    const ZAPIER_WEBHOOK_URL = Deno.env.get("ZAPIER_WEBHOOK_URL");
+    let zapierStatus = 'não configurado';
     
-    let acStatus = 'não configurado';
-    
-    if (AC_API_KEY && AC_API_URL) {
+    if (ZAPIER_WEBHOOK_URL) {
       try {
-        // Criar ou atualizar contato
-        const contactData = {
-          contact: {
+        const webhookData = {
+          event: 'employee_invite',
+          timestamp: new Date().toISOString(),
+          employee: {
+            name: name,
             email: email,
-            firstName: name.split(' ')[0],
-            lastName: name.split(' ').slice(1).join(' ') || '',
-            fieldValues: [
-              {
-                field: '1',
-                value: workshopData.name
-              }
-            ]
+            telefone: telefone || '',
+            position: position || 'Colaborador',
+            area: area || 'tecnico',
+            job_role: job_role || 'outros'
+          },
+          workshop: {
+            id: workshop_id,
+            name: workshopData.name
+          },
+          invite: {
+            link: inviteLink,
+            token: invite.invite_token,
+            temporary_password: "Oficina@2025",
+            expires_at: invite.expires_at
           }
         };
 
-        const contactResponse = await fetch(`${AC_API_URL}/api/3/contact/sync`, {
+        const zapierResponse = await fetch(ZAPIER_WEBHOOK_URL, {
           method: 'POST',
           headers: {
-            'Api-Token': AC_API_KEY,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify(contactData)
+          body: JSON.stringify(webhookData)
         });
 
-        if (contactResponse.ok) {
-          const contactResult = await contactResponse.json();
-          console.log("✅ Contato criado/atualizado no AC:", contactResult.contact.id);
-
-          // Adicionar tag para disparar automação
-          const tagData = {
-            contactTag: {
-              contact: contactResult.contact.id,
-              tag: 'convite-colaborador'
-            }
-          };
-
-          await fetch(`${AC_API_URL}/api/3/contactTags`, {
-            method: 'POST',
-            headers: {
-              'Api-Token': AC_API_KEY,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(tagData)
-          });
-
-          // Salvar link nas notas
-          const noteData = {
-            note: {
-              note: `🔑 DADOS DO CONVITE\n\nLink: ${inviteLink}\nSenha Temporária: Oficina@2025\nOficina: ${workshopData.name}\nEmail: ${email}\nNome: ${name}`,
-              relid: contactResult.contact.id,
-              reltype: 'Subscriber'
-            }
-          };
-
-          await fetch(`${AC_API_URL}/api/3/notes`, {
-            method: 'POST',
-            headers: {
-              'Api-Token': AC_API_KEY,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(noteData)
-          });
-
-          // Atualizar convite
+        if (zapierResponse.ok) {
           await base44.asServiceRole.entities.EmployeeInvite.update(invite.id, {
             status: 'enviado',
             last_resent_at: new Date().toISOString()
           });
 
-          acStatus = 'enviado';
-          console.log("✅ Automação ActiveCampaign disparada!");
+          zapierStatus = 'enviado';
+          console.log("✅ Dados enviados para Zapier com sucesso!");
+        } else {
+          const errorText = await zapierResponse.text();
+          zapierStatus = `erro: ${zapierResponse.status} - ${errorText}`;
+          console.error("⚠️ Erro ao enviar para Zapier:", zapierStatus);
         }
-      } catch (acError) {
-        console.error("⚠️ Erro ao enviar para ActiveCampaign:", acError.message);
-        acStatus = 'erro: ' + acError.message;
+      } catch (zapierError) {
+        console.error("⚠️ Erro ao enviar para Zapier:", zapierError.message);
+        zapierStatus = 'erro: ' + zapierError.message;
       }
     }
 
     // 8. Retornar sucesso
     return Response.json({ 
       success: true,
-      message: 'Colaborador criado com sucesso! Email será enviado via ActiveCampaign.',
+      message: 'Colaborador criado! Dados enviados para automação.',
       email: email,
       temporary_password: "Oficina@2025",
       employee_id: employee.id,
       invite_link: inviteLink,
-      activecampaign_status: acStatus
+      zapier_status: zapierStatus
     });
 
   } catch (error) {
