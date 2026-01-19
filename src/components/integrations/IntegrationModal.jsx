@@ -7,6 +7,7 @@ import AsasConfig from "./AsasConfig";
 import WebhookConfig from "./WebhookConfig";
 import ClickSignConfig from "./ClickSignConfig";
 import SerasaConfig from "./SerasaConfig";
+import ResendConfig from "./ResendConfig";
 
 export default function IntegrationModal({ open, onClose, integration, user }) {
   if (!integration) return null;
@@ -29,6 +30,8 @@ export default function IntegrationModal({ open, onClose, integration, user }) {
         return <ClickSignConfig user={user} />;
       case "serasa":
         return <SerasaConfig user={user} />;
+      case "resend":
+        return <ResendConfig user={user} />;
       default:
         return null;
     }
