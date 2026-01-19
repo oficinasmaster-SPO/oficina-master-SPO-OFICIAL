@@ -137,9 +137,10 @@ Deno.serve(async (req) => {
 
     return Response.json({ 
       success: true,
-      message: 'Convite preparado! O email será enviado pela automação do ActiveCampaign.',
+      message: '✅ Convite adicionado ao ActiveCampaign! Verifique se a automação "convite-colaborador" está ativa.',
       invite_link: inviteLink,
-      note: 'Certifique-se de que a automação "convite-colaborador" está ATIVA no ActiveCampaign'
+      contact_id: contactResult.contact.id,
+      activecampaign_status: 'Tag adicionada - automação irá disparar email'
     });
 
   } catch (error) {
