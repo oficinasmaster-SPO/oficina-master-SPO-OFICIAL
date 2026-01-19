@@ -103,62 +103,97 @@ Deno.serve(async (req) => {
       ? `${origin}/PrimeiroAcesso?token=${invite.invite_token}`
       : `${origin}/PrimeiroAcesso`;
 
-    // 7. Enviar dados para Zapier via integração Base44
-    console.log("📤 Enviando dados para Zapier...");
-    
-    let zapierStatus = 'não configurado';
-    
+    // 7. Enviar email via Resend
+    console.log("📧 Enviando email de convite via Resend...");
+
+    let emailStatus = 'não enviado';
+
     try {
-      const webhookData = {
-        event: 'employee_invite',
-        timestamp: new Date().toISOString(),
-        employee: {
-          name: name,
-          email: email,
-          telefone: telefone || '',
-          position: position || 'Colaborador',
-          area: area || 'tecnico',
-          job_role: job_role || 'outros'
-        },
-        workshop: {
-          id: workshop_id,
-          name: workshopData.name
-        },
-        invite: {
-          link: inviteLink,
-          token: invite.invite_token,
-          temporary_password: "Oficina@2025",
-          expires_at: invite.expires_at
-        }
-      };
+      const emailHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #2563eb; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+            .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
+            .button { display: inline-block; background: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+            .info-box { background: white; padding: 15px; border-left: 4px solid #2563eb; margin: 20px 0; }
+            .footer { text-align: center; margin-top: 30px; color: #6b7280; font-size: 14px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Bem-vindo à ${workshopData.name}!</h1>
+            </div>
+            <div class="content">
+              <p>Olá <strong>${name}</strong>,</p>
+              <p>Você foi convidado(a) para fazer parte da equipe <strong>${workshopData.name}</strong> como <strong>${position || 'Colaborador'}</strong>.</p>
 
-      await base44.asServiceRole.integrations.Zapier.TriggerZap({
-        event_name: 'employee_invite',
-        data: webhookData
+              <div class="info-box">
+                <p><strong>📧 Email:</strong> ${email}</p>
+                <p><strong>🔑 Senha temporária:</strong> Oficina@2025</p>
+                <p><strong>⏰ Validade:</strong> 7 dias</p>
+              </div>
+
+              <p>Para completar seu cadastro e acessar a plataforma, clique no botão abaixo:</p>
+
+              <div style="text-align: center;">
+                <a href="${inviteLink}" class="button">Acessar Plataforma</a>
+              </div>
+
+              <p style="font-size: 14px; color: #6b7280;">
+                Ou copie e cole este link no seu navegador:<br>
+                <a href="${inviteLink}">${inviteLink}</a>
+              </p>
+
+              <p><strong>Importante:</strong> Por segurança, você deverá alterar sua senha no primeiro acesso.</p>
+            </div>
+            <div class="footer">
+              <p>Este é um email automático. Em caso de dúvidas, entre em contato com o administrador.</p>
+              <p>&copy; ${new Date().getFullYear()} ${workshopData.name}. Todos os direitos reservados.</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+
+      const emailResult = await base44.asServiceRole.functions.invoke('sendEmailResend', {
+        to: email,
+        subject: `Convite para ${workshopData.name} - Complete seu cadastro`,
+        html: emailHtml,
+        from_name: workshopData.name
       });
 
-      await base44.asServiceRole.entities.EmployeeInvite.update(invite.id, {
-        status: 'enviado',
-        last_resent_at: new Date().toISOString()
-      });
+      if (emailResult.data?.success) {
+        await base44.asServiceRole.entities.EmployeeInvite.update(invite.id, {
+          status: 'enviado',
+          last_resent_at: new Date().toISOString()
+        });
+        emailStatus = 'enviado';
+        console.log("✅ Email enviado com sucesso via Resend!");
+      } else {
+        emailStatus = 'erro: ' + (emailResult.data?.error || 'Falha desconhecida');
+        console.error("⚠️ Erro ao enviar email:", emailResult.data);
+      }
 
-      zapierStatus = 'enviado';
-      console.log("✅ Dados enviados para Zapier com sucesso!");
-      
-    } catch (zapierError) {
-      console.error("⚠️ Erro ao enviar para Zapier:", zapierError.message);
-      zapierStatus = 'erro: ' + zapierError.message;
+    } catch (emailError) {
+      console.error("⚠️ Erro ao enviar email:", emailError.message);
+      emailStatus = 'erro: ' + emailError.message;
     }
 
     // 8. Retornar sucesso
     return Response.json({ 
       success: true,
-      message: 'Colaborador criado! Dados enviados para automação.',
+      message: 'Colaborador criado! Email de convite enviado.',
       email: email,
       temporary_password: "Oficina@2025",
       employee_id: employee.id,
       invite_link: inviteLink,
-      zapier_status: zapierStatus
+      email_status: emailStatus
     });
 
   } catch (error) {
