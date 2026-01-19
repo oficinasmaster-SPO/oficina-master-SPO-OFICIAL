@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Video, CheckCircle, AlertCircle, Loader2, Settings, CreditCard, Wallet, Webhook, Sliders } from "lucide-react";
+import { Calendar, Video, CheckCircle, AlertCircle, Loader2, Settings, CreditCard, Wallet, Webhook, Sliders, Mail } from "lucide-react";
 import IntegrationModal from "@/components/integrations/IntegrationModal";
 import IntegrationStatusWidget from "@/components/dashboard/IntegrationStatusWidget";
 import IntegrationHealthScore from "@/components/dashboard/IntegrationHealthScore";
@@ -90,6 +90,20 @@ export default function Integracoes() {
             "Gestão de cobranças recorrentes",
             "Avisos de renovação",
             "Webhooks de pagamento"
+          ]
+        },
+        {
+          id: "resend",
+          name: "Resend",
+          description: "Envio de e-mails transacionais e convites personalizados",
+          icon: Mail,
+          status: "connected",
+          lastSync: new Date().toISOString(),
+          features: [
+            "E-mails de convite personalizados",
+            "Domínio customizado",
+            "Templates HTML responsivos",
+            "Rastreamento de entregas"
           ]
         },
         {
