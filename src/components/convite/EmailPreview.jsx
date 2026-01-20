@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { X, Mail } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 
-export default function EmailPreview({ isOpen, onClose, email, name, workshopName, inviteLink, isPreview = true }) {
+export default function EmailPreview({ isOpen, onClose, email, name, workshopName, inviteLink, temporaryPassword = "Oficina@2025", isPreview = true }) {
   const displayLink = inviteLink && !inviteLink.includes("...") ? inviteLink : "[LINK_DO_CONVITE_SERÁ_GERADO]";
 
   return (
@@ -33,7 +33,7 @@ export default function EmailPreview({ isOpen, onClose, email, name, workshopNam
 
             <div className="bg-white border-l-4 border-blue-600 p-4 space-y-2">
               <p><strong>📧 Email:</strong> {email}</p>
-              <p><strong>🔑 Senha temporária:</strong> Oficina@2025</p>
+              <p><strong>🔑 Senha temporária:</strong> {temporaryPassword}</p>
               <p><strong>⏰ Validade:</strong> 7 dias</p>
             </div>
 
