@@ -74,37 +74,28 @@ export default function PrimeiroAcesso() {
     setSubmitting(true);
 
     try {
-      // Fazer login com senha temporária "Oficina@2025"
-      await base44.auth.login(invite.email, "Oficina@2025");
-      
-      console.log("✅ Login realizado");
-
-      // Trocar senha
-      await base44.auth.updatePassword(formData.password);
-      
-      console.log("✅ Senha atualizada");
-
-      // Vincular Employee ao User
-      await base44.functions.invoke('linkUserToEmployee', {});
-      
-      console.log("✅ Employee vinculado");
-
-      // Marcar convite como concluído
-      await base44.asServiceRole.entities.EmployeeInvite.update(invite.id, {
-        status: 'concluido',
-        completed_at: new Date().toISOString()
+      // Chamar função para criar/atualizar usuário e vincular ao employee
+      const response = await base44.functions.invoke('createUserOnFirstAccess', {
+        invite_id: invite.id,
+        password: formData.password
       });
 
-      toast.success("✅ Conta ativada com sucesso!");
+      if (!response.data.success) {
+        throw new Error(response.data.error || "Erro ao criar conta");
+      }
+
+      console.log("✅ Conta criada com sucesso");
+
+      toast.success("✅ Conta ativada! Redirecionando...");
       
-      // Redirecionar para home
+      // Redirecionar para login
       setTimeout(() => {
-        navigate(createPageUrl("Home"));
-      }, 1000);
+        base44.auth.redirectToLogin(window.location.origin + createPageUrl("Dashboard"));
+      }, 1500);
 
     } catch (err) {
       console.error("❌ Erro ao ativar conta:", err);
-      toast.error(err.message || "Erro ao ativar conta");
+      toast.error(err.response?.data?.error || err.message || "Erro ao ativar conta");
     } finally {
       setSubmitting(false);
     }
