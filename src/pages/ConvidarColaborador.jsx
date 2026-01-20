@@ -180,20 +180,23 @@ export default function ConvidarColaborador() {
         }
         
         // Reenviar convite
-        const resendResponse = await base44.functions.invoke('resendEmployeeInvite', {
-          employee_id: existing.id
-        });
-        
-        if (!resendResponse.data.success) {
-          throw new Error(resendResponse.data.error || "Erro ao reenviar convite");
-        }
-        
-        return {
-          success: true,
-          message: 'Convite reenviado com sucesso!',
-          employee: existing,
-          action: 'resent'
-        };
+          const resendResponse = await base44.functions.invoke('resendEmployeeInvite', {
+            employee_id: existing.id
+          });
+
+          if (!resendResponse.data.success) {
+            throw new Error(resendResponse.data.error || "Erro ao reenviar convite");
+          }
+
+          return {
+            success: true,
+            message: 'Convite reenviado com sucesso!',
+            email: resendResponse.data.email,
+            temporary_password: resendResponse.data.temporary_password,
+            invite_link: resendResponse.data.invite_link,
+            employee: existing,
+            action: 'resent'
+          };
       }
 
       console.log("🚀 Criando novo colaborador:", data.email);
