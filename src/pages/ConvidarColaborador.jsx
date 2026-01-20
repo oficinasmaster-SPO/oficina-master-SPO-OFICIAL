@@ -267,7 +267,7 @@ export default function ConvidarColaborador() {
   const copyCredentials = () => {
     if (createdUser) {
       const text = `Email: ${createdUser.email}\nSenha: ${createdUser.temporary_password}`;
-      navigator.clipboard.writeWith(text);
+      navigator.clipboard.writeText(text);
       toast.success("✅ Credenciais copiadas!");
     }
   };
