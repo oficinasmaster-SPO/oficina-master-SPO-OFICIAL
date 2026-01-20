@@ -60,44 +60,13 @@ export default function PrimeiroAcesso() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (formData.password.length < 6) {
-      toast.error("A senha deve ter no mínimo 6 caracteres");
-      return;
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      toast.error("As senhas não coincidem");
-      return;
-    }
-
-    setSubmitting(true);
-
-    try {
-      // Chamar função para criar/atualizar usuário e vincular ao employee
-      const response = await base44.functions.invoke('createUserOnFirstAccess', {
-        invite_id: invite.id,
-        password: formData.password
-      });
-
-      if (!response.data.success) {
-        throw new Error(response.data.error || "Erro ao criar conta");
-      }
-
-      console.log("✅ Conta criada com sucesso");
-
-      toast.success("✅ Conta ativada! Redirecionando...");
-      
-      // Redirecionar para login
-      setTimeout(() => {
-        base44.auth.redirectToLogin(window.location.origin + createPageUrl("Dashboard"));
-      }, 1500);
-
-    } catch (err) {
-      console.error("❌ Erro ao ativar conta:", err);
-      toast.error(err.response?.data?.error || err.message || "Erro ao ativar conta");
-    } finally {
-      setSubmitting(false);
+    
+    // Redirecionar para MeuPerfil passando o token
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    
+    if (token) {
+      window.location.href = `${createPageUrl("MeuPerfil")}?onboarding=true&invite_token=${token}`;
     }
   };
 
