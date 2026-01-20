@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
         position: position || 'Colaborador',
         area: area || 'tecnico',
         job_role: job_role || 'outros',
-        profile_id: profile_id || null,
+        profile_id: profile_id || profileId, // Usar Profile ID gerado
         invite_token: inviteToken,
         invite_type: 'workshop',
         expires_at: expiresAt.toISOString(),
