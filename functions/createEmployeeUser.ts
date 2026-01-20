@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
     // Gerar Profile ID: 001.01, 001.02, etc
     const profileId = `${workshopId}.${String(employeeCount).padStart(2, '0')}`;
 
-    // 2. Criar Employee
+    // 2. Criar Employee com Profile ID automático se não foi fornecido
     const employee = await base44.asServiceRole.entities.Employee.create({
       identificador: employeeId,
       full_name: name,
@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
       status: 'ativo',
       tipo_vinculo: 'cliente',
       workshop_id: workshop_id,
-      profile_id: profile_id || null,
+      profile_id: profile_id || profileId, // Usar o Profile ID gerado automaticamente
       user_status: 'ativo',
       hire_date: new Date().toISOString().split('T')[0]
     });
