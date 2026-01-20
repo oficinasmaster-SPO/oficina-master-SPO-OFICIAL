@@ -98,9 +98,8 @@ Deno.serve(async (req) => {
 
     const invite = Array.isArray(invites) && invites.length > 0 ? invites[0] : null;
     
-    // Gerar domínio correto (oficina-master-copy-[appId].base44.app)
-    const appId = Deno.env.get("BASE44_APP_ID") || "default";
-    const inviteDomain = `https://oficina-master-copy-${appId}.base44.app`;
+    // Gerar domínio correto
+    const inviteDomain = `https://oficinasmastergtr.com`;
     
     const inviteLink = invite && invite.invite_token
       ? `${inviteDomain}/PrimeiroAcesso?token=${invite.invite_token}`

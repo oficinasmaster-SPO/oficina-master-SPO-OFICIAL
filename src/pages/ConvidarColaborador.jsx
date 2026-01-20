@@ -331,8 +331,7 @@ export default function ConvidarColaborador() {
     if (!invite.invite_token) return null;
 
     // Usar domínio publicado correto
-    const appId = window.location.hostname.match(/oficina-master-copy-([a-z0-9]+)/)?.[1] || "default";
-    const inviteDomain = `https://oficina-master-copy-${appId}.base44.app`;
+    const inviteDomain = `https://oficinasmastergtr.com`;
     
     return `${inviteDomain}/PrimeiroAcesso?token=${invite.invite_token}`;
   };

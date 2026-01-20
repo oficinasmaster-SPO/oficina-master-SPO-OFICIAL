@@ -73,8 +73,7 @@ Deno.serve(async (req) => {
     }
 
     // Gerar link de convite com domínio correto
-    const appId = Deno.env.get("BASE44_APP_ID") || "default";
-    const inviteDomain = `https://oficina-master-copy-${appId}.base44.app`;
+    const inviteDomain = `https://oficinasmastergtr.com`;
     const inviteLink = `${inviteDomain}/PrimeiroAcesso?token=${invite.invite_token}`;
 
     // Enviar email
