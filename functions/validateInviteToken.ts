@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     
-    let token: string | null = null;
+    let token = null;
 
     try {
       const body = await req.json();
@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: 'Token não fornecido' }, { status: 400 });
     }
 
-    // Buscar convite pelo token usando service role - usando filter é mais eficiente
+    // Buscar convite pelo token usando service role
     const invites = await base44.asServiceRole.entities.EmployeeInvite.filter({ invite_token: token });
     const invite = Array.isArray(invites) ? invites[0] : null;
 
@@ -58,9 +58,6 @@ Deno.serve(async (req) => {
         error: 'Este convite expirou. Solicite um novo convite ao gestor.' 
       }, { status: 400 });
     }
-
-    // Permitir acesso mesmo se status for "concluido" - o fluxo de primeiro acesso irá redirecionar
-    // O importante é que o token seja válido e não tenha expirado
 
     // Marcar como acessado se ainda não foi
     if (invite.status === 'enviado') {
