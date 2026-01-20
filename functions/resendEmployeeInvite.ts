@@ -72,6 +72,10 @@ Deno.serve(async (req) => {
       console.log("✅ Novo convite criado");
     }
 
+    // Gerar link de convite
+    const origin = new URL(req.url).origin;
+    const inviteLink = `${origin}/PrimeiroAcesso?token=${invite.invite_token}`;
+
     // Enviar email
     try {
       await base44.functions.invoke('sendEmployeeInvite', {
@@ -88,7 +92,10 @@ Deno.serve(async (req) => {
 
     return Response.json({ 
       success: true,
-      message: 'Convite reenviado com sucesso!'
+      message: 'Convite reenviado com sucesso!',
+      email: employee.email,
+      temporary_password: "Oficina@2025",
+      invite_link: inviteLink
     });
 
   } catch (error) {
