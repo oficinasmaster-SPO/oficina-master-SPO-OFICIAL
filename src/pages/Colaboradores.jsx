@@ -246,79 +246,73 @@ export default function Colaboradores() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="lista-colaboradores">
-            {filteredEmployees.map((employee) => {
-              const totalCost = getTotalCost(employee);
-              const totalProduction = getTotalProduction(employee);
-              const productivity = totalCost > 0 ? ((totalProduction / totalCost) * 100).toFixed(0) : 0;
-              const activeCOEX = getActiveCOEX(employee.id);
+          <div className="bg-white rounded-lg shadow-lg overflow-x-auto">
+            <table className="w-full" id="lista-colaboradores">
+              <thead className="bg-gray-100 border-b-2 border-gray-300">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Nome</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Cargo</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700">Status</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700">Maturidade</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700">Custo Total</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700">Produção</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700">Produtividade</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {filteredEmployees.map((employee) => {
+                  const totalCost = getTotalCost(employee);
+                  const totalProduction = getTotalProduction(employee);
+                  const productivity = totalCost > 0 ? ((totalProduction / totalCost) * 100).toFixed(0) : 0;
+                  const activeCOEX = getActiveCOEX(employee.id);
 
-              return (
-                <Card key={employee.id} className="shadow-lg hover:shadow-xl transition-shadow">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="text-xl">{employee.full_name}</CardTitle>
-                        <p className="text-sm text-gray-600 mt-1">{employee.position}</p>
-                        {employee.job_role && (
-                          <span className="text-xs text-gray-500 mt-0.5 block capitalize">
-                            {employee.job_role.replace('_', ' ')}
-                          </span>
+                  return (
+                    <tr key={employee.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3">
+                        <div className="flex flex-col">
+                          <p className="font-medium text-gray-900">{employee.full_name}</p>
+                          {employee.job_role && (
+                            <span className="text-xs text-gray-500 capitalize">{employee.job_role.replace('_', ' ')}</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-600">{employee.position}</td>
+                      <td className="px-4 py-3 text-center">
+                        <Badge className={statusColors[employee.status]}>
+                          {employee.status}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {employee.current_maturity_level && (
+                          <Badge className={maturityColors[employee.current_maturity_level] || "bg-gray-100 text-gray-700"}>
+                            {maturityLabels[employee.current_maturity_level] || employee.current_maturity_level}
+                          </Badge>
                         )}
-                      </div>
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[employee.status]}`}>
-                        {employee.status}
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      {employee.current_maturity_level && (
-                        <span className={`px-2 py-1 rounded text-xs font-medium border flex items-center gap-1 ${maturityColors[employee.current_maturity_level] || "bg-gray-100 text-gray-700"}`}>
-                          {maturityLabels[employee.current_maturity_level] || employee.current_maturity_level}
-                        </span>
-                      )}
-                      {employee.cdc_completed && (
-                        <span className="px-2 py-1 bg-pink-100 text-pink-700 rounded text-xs flex items-center gap-1 border border-pink-200">
-                          <Heart className="w-3 h-3" />
-                          CDC ✓
-                        </span>
-                      )}
-                      {activeCOEX && (
-                        <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs flex items-center gap-1 border border-orange-200">
-                          <FilePenLine className="w-3 h-3" />
-                          COEX ✓
-                        </span>
-                      )}
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Custo Total:</span>
-                        <span className="font-bold">R$ {totalCost.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Produção Total:</span>
-                        <span className="font-bold text-green-600">R$ {totalProduction.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Produtividade:</span>
+                      </td>
+                      <td className="px-4 py-3 text-right text-sm font-medium">
+                        R$ {totalCost.toFixed(2)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-sm font-medium text-green-600">
+                        R$ {totalProduction.toFixed(2)}
+                      </td>
+                      <td className="px-4 py-3 text-center">
                         <span className={`font-bold ${
                           productivity >= 100 ? 'text-green-600' : 'text-orange-600'
                         }`}>
                           {productivity}%
                         </span>
-                      </div>
-                      
-                      <div className="space-y-2 mt-4">
-                        <div className="flex gap-2">
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <div className="flex flex-wrap gap-1 justify-center">
                           <PermissionGuard resource="employees" action="read" hideOnDenied>
                             <Button
                               onClick={() => navigate(createPageUrl("DetalhesColaborador") + `?id=${employee.id}`)}
-                              className="flex-1"
                               size="sm"
                               variant="outline"
+                              title="Ver Detalhes"
                             >
-                              Ver Detalhes
+                              Detalhes
                             </Button>
                           </PermissionGuard>
                           <PermissionGuard resource="employees" action="read" hideOnDenied>
@@ -351,8 +345,6 @@ export default function Colaboradores() {
                               <Sparkles className="w-4 h-4" />
                             </Button>
                           </PermissionGuard>
-                        </div>
-                        <div className="flex gap-2">
                           <PermissionGuard resource="employees" action="update" hideOnDenied>
                             <Button
                               onClick={async () => {
@@ -369,7 +361,6 @@ export default function Colaboradores() {
                               }}
                               size="sm"
                               variant="outline"
-                              className="flex-1"
                             >
                               {employee.status === 'ativo' ? 'Inativar' : 'Ativar'}
                             </Button>
@@ -393,12 +384,12 @@ export default function Colaboradores() {
                             </Button>
                           </PermissionGuard>
                         </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
 
