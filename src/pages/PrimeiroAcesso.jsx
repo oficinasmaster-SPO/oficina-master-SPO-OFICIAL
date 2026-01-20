@@ -112,7 +112,7 @@ export default function PrimeiroAcesso() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="text-center pb-4">
-          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center mb-4">
+          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-green-600 to-emerald-600 rounded-full flex items-center justify-center mb-4">
             <CheckCircle2 className="w-8 h-8 text-white" />
           </div>
           <CardTitle className="text-2xl text-gray-900">Bem-vindo(a)!</CardTitle>
@@ -122,74 +122,48 @@ export default function PrimeiroAcesso() {
         </CardHeader>
         
         <CardContent>
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
             <div className="flex gap-3">
-              <Lock className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-blue-900">Configure sua senha</p>
-                <p className="text-xs text-blue-700 mt-1">
-                  Crie uma senha segura para acessar a plataforma
+                <p className="text-sm font-medium text-green-900">Clique para continuar</p>
+                <p className="text-xs text-green-700 mt-1">
+                  Você será levado para completar seu perfil e configurar a senha
                 </p>
               </div>
             </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="password">Nova Senha *</Label>
-              <Input
-                id="password"
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                placeholder="Mínimo 6 caracteres"
-                required
-                minLength={6}
-                className="mt-1"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="confirmPassword">Confirmar Senha *</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                value={formData.confirmPassword}
-                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                placeholder="Digite a senha novamente"
-                required
-                minLength={6}
-                className="mt-1"
-              />
-            </div>
-
             <div className="bg-gray-50 rounded-lg p-3 text-xs text-gray-600">
-              <p className="font-medium mb-1">📧 Seus dados de acesso:</p>
+              <p className="font-medium mb-2">📋 Dados do Convite:</p>
+              <p><strong>Nome:</strong> {invite?.name}</p>
               <p><strong>Email:</strong> {invite?.email}</p>
               <p><strong>Cargo:</strong> {invite?.position}</p>
+              <p><strong>Oficina:</strong> {workshop?.name}</p>
             </div>
 
             <Button
               type="submit"
               disabled={submitting}
-              className="w-full bg-blue-600 hover:bg-blue-700 h-11"
+              className="w-full bg-green-600 hover:bg-green-700 h-11"
             >
               {submitting ? (
                 <>
                   <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Ativando Conta...
+                  Redirecionando...
                 </>
               ) : (
                 <>
                   <CheckCircle2 className="w-5 h-5 mr-2" />
-                  Ativar Conta
+                  Ir para Meu Perfil
                 </>
               )}
             </Button>
           </form>
 
           <p className="text-xs text-gray-500 text-center mt-4">
-            Ao ativar sua conta, você concorda com os Termos de Uso da plataforma
+            Você completará seu cadastro na próxima tela
           </p>
         </CardContent>
       </Card>
