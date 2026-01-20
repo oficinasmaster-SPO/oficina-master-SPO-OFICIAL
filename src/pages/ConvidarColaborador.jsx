@@ -336,9 +336,9 @@ export default function ConvidarColaborador() {
     if (!invite) return null;
     if (!invite.invite_token) return null;
 
-    // Usar domínio publicado correto
+    // Usar domínio publicado correto + workshop_id para rastreamento
     const inviteDomain = `https://oficinasmastergtr.com`;
-    return `${inviteDomain}/PrimeiroAcesso?token=${invite.invite_token}`;
+    return `${inviteDomain}/PrimeiroAcesso?token=${invite.invite_token}&workshop_id=${invite.workshop_id}`;
   };
 
   const getInviteStatus = (employeeId) => {
