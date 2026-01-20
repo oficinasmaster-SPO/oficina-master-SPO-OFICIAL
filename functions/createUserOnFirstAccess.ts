@@ -4,7 +4,7 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json();
-    const { invite_id, password } = body;
+    const { invite_id, password, workshop_id, full_name, telefone, data_nascimento } = body;
     
     if (!invite_id) {
       return Response.json({ error: 'invite_id obrigatório' }, { status: 400 });
@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Atualizar Employee com user_id se encontrado
+    // Atualizar Employee com user_id e dados consolidados
     if (invite.employee_id) {
       try {
         // Buscar usuário criado
@@ -73,11 +73,20 @@ Deno.serve(async (req) => {
         const user = users[0];
         
         if (user) {
-          await base44.asServiceRole.entities.Employee.update(invite.employee_id, {
+          const updateData = {
             user_id: user.id,
-            first_login_at: new Date().toISOString()
-          });
-          console.log(`✅ Employee atualizado com user_id: ${user.id}`);
+            first_login_at: new Date().toISOString(),
+            workshop_id: workshop_id || invite.workshop_id,
+            user_status: 'ativo'
+          };
+          
+          // Atualizar dados adicionais se fornecidos
+          if (full_name) updateData.full_name = full_name;
+          if (telefone) updateData.telefone = telefone;
+          if (data_nascimento) updateData.data_nascimento = data_nascimento;
+          
+          await base44.asServiceRole.entities.Employee.update(invite.employee_id, updateData);
+          console.log(`✅ Employee atualizado com user_id: ${user.id}, workshop_id: ${workshop_id || invite.workshop_id}`);
         }
       } catch (e) {
         console.error("⚠️ Erro ao atualizar Employee:", e.message);
