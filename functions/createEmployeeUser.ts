@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
-    // 1b. Gerar ID sequencial para o colaborador
+    // 1b. Gerar ID sequencial para o colaborador e Profile ID automático
     const idResponse = await base44.functions.invoke('generateEmployeeId', { workshop_id: workshop_id });
     
     if (!idResponse.data.success) {
@@ -43,6 +43,17 @@ Deno.serve(async (req) => {
     }
 
     const employeeId = idResponse.data?.employee_id || null;
+
+    // Buscar workshop para pegar seu identificador (Workshop ID)
+    const workshop = await base44.asServiceRole.entities.Workshop.get(workshop_id);
+    const workshopId = workshop?.identificador || workshop_id;
+
+    // Contar colaboradores existentes para gerar Profile ID automático
+    const allEmployees = await base44.asServiceRole.entities.Employee.filter({ workshop_id: workshop_id });
+    const employeeCount = Array.isArray(allEmployees) ? allEmployees.length + 1 : 1;
+    
+    // Gerar Profile ID: 001.01, 001.02, etc
+    const profileId = `${workshopId}.${String(employeeCount).padStart(2, '0')}`;
 
     // 2. Criar Employee
     const employee = await base44.asServiceRole.entities.Employee.create({
