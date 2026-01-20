@@ -296,7 +296,7 @@ export default function ConvidarColaborador() {
 
   const copyCredentials = () => {
     if (createdUser) {
-      const text = `Email: ${createdUser.email}\nSenha: ${createdUser.temporary_password}`;
+      const text = `Você foi convidado para acessar a plataforma.\nEmail: ${createdUser.email}\nSenha: ${createdUser.temporary_password}\nAcesse: ${createdUser.invite_link}`;
       navigator.clipboard.writeText(text);
       toast.success("✅ Credenciais copiadas!");
     }
@@ -410,12 +410,13 @@ export default function ConvidarColaborador() {
                 <p className="text-sm text-gray-700 mb-3">
                   <strong>Ou envie estas credenciais:</strong>
                 </p>
-                <div className="bg-gray-50 p-4 rounded border mb-3 font-mono text-sm">
-                  <p className="mb-1"><strong>Email:</strong> {createdUser.email}</p>
-                  <p><strong>Senha:</strong> {createdUser.temporary_password}</p>
+                <div className="bg-gray-50 p-4 rounded border mb-3 font-mono text-sm space-y-2">
+                  <p><strong>📧 Email:</strong> {createdUser.email}</p>
+                  <p><strong>🔑 Senha:</strong> {createdUser.temporary_password}</p>
+                  <p className="break-all"><strong>🔗 Link de Acesso:</strong> {createdUser.invite_link}</p>
                 </div>
                 <div className="flex gap-2">
-                  <Button onClick={copyCredentials} className="flex-1">
+                  <Button onClick={copyCredentials} className="flex-1 bg-green-600 hover:bg-green-700">
                     <Copy className="w-4 h-4 mr-2" />
                     Copiar Credenciais
                   </Button>
