@@ -130,6 +130,27 @@ export default function ConvidarColaborador() {
     enabled: !!workshop?.id
   });
 
+  // Busca convites para os colaboradores
+  const { data: invites = {}, isLoading: isLoadingInvites } = useQuery({
+    queryKey: ['employee-invites', workshop?.id],
+    queryFn: async () => {
+      if (!workshop?.id) return {};
+      const allInvites = await base44.entities.EmployeeInvite.filter({ workshop_id: workshop.id });
+      const invitesMap = {};
+      
+      if (Array.isArray(allInvites)) {
+        allInvites.forEach(invite => {
+          if (invite.employee_id) {
+            invitesMap[invite.employee_id] = invite;
+          }
+        });
+      }
+      
+      return invitesMap;
+    },
+    enabled: !!workshop?.id
+  });
+
 
 
   // Mutação para criar colaborador
@@ -286,6 +307,30 @@ export default function ConvidarColaborador() {
       navigator.clipboard.writeText(createdUser.invite_link);
       toast.success("✅ Link copiado para a área de transferência!");
     }
+  };
+
+  const copyInviteLink = (link) => {
+    if (link) {
+      navigator.clipboard.writeText(link);
+      toast.success("✅ Link copiado para a área de transferência!");
+    }
+  };
+
+  const getInviteLinkForEmployee = (employeeId) => {
+    const invite = invites[employeeId];
+    if (!invite) return null;
+
+    const now = new Date();
+    const expiresAt = invite.expires_at ? new Date(invite.expires_at) : null;
+
+    // Se expirou, não mostrar link
+    if (expiresAt && expiresAt < now) {
+      return null;
+    }
+
+    return invite.invite_token 
+      ? `${window.location.origin}/PrimeiroAcesso?token=${invite.invite_token}`
+      : null;
   };
 
 
@@ -611,32 +656,62 @@ export default function ConvidarColaborador() {
                 </div>
               ) : (
                 <div className="divide-y max-h-[600px] overflow-y-auto">
-                  {employees.map((emp) => (
-                    <div key={emp.id} className="p-4 hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => {
-                      fillFormWithEmployee(emp);
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }}>
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <p className="font-semibold text-gray-900">{emp.full_name}</p>
-                          <p className="text-sm text-gray-600">{emp.email}</p>
-                          {emp.telefone && <p className="text-sm text-gray-600">{emp.telefone}</p>}
+                  {employees.map((emp) => {
+                    const inviteLink = getInviteLinkForEmployee(emp.id);
+                    
+                    return (
+                      <div key={emp.id} className="p-4 hover:bg-gray-50 transition-colors" onClick={() => {
+                        fillFormWithEmployee(emp);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}>
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <p className="font-semibold text-gray-900">{emp.full_name}</p>
+                            <p className="text-sm text-gray-600">{emp.email}</p>
+                            {emp.telefone && <p className="text-sm text-gray-600">{emp.telefone}</p>}
+                          </div>
+                          <Badge className={emp.user_status === 'ativo' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
+                            {emp.user_status === 'ativo' ? 'Ativo' : 'Pendente'}
+                          </Badge>
                         </div>
-                        <Badge className={emp.user_status === 'ativo' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
-                          {emp.user_status === 'ativo' ? 'Ativo' : 'Pendente'}
-                        </Badge>
-                      </div>
 
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 text-xs text-gray-500">
-                          <span className="bg-gray-100 px-2 py-1 rounded">{emp.position}</span>
-                          <span>•</span>
-                          <span>{emp.area}</span>
+                        <div className="flex items-center justify-between gap-2 mb-3">
+                          <div className="flex items-center gap-2 text-xs text-gray-500">
+                            <span className="bg-gray-100 px-2 py-1 rounded">{emp.position}</span>
+                            <span>•</span>
+                            <span>{emp.area}</span>
+                          </div>
+                          <StatusBadge status={emp.user_status} expiresAt={emp.updated_date} />
                         </div>
-                        <StatusBadge status={emp.user_status} expiresAt={emp.updated_date} />
+
+                        {/* Link de Acesso */}
+                        {inviteLink && (
+                          <div className="bg-blue-50 border border-blue-200 rounded p-3 text-xs" onClick={(e) => e.stopPropagation()}>
+                            <p className="text-blue-900 font-medium mb-2 flex items-center gap-1">
+                              <LinkIcon className="w-3 h-3" />
+                              Link de acesso:
+                            </p>
+                            <div className="flex items-center gap-2">
+                              <code className="bg-white border border-blue-300 px-2 py-1 rounded flex-1 text-blue-600 break-all">
+                                {inviteLink.length > 40 ? inviteLink.substring(0, 40) + '...' : inviteLink}
+                              </code>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="flex-shrink-0 h-7 w-7 p-0"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  copyInviteLink(inviteLink);
+                                }}
+                              >
+                                <Copy className="w-3 h-3 text-blue-600" />
+                              </Button>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
