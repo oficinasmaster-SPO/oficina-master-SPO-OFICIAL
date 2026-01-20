@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Loader2, UserPlus, CheckCircle2, Users, Copy, Key, AlertCircle
+  Loader2, UserPlus, CheckCircle2, Users, Copy, Key, AlertCircle, Link as LinkIcon
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -267,8 +267,15 @@ export default function ConvidarColaborador() {
   const copyCredentials = () => {
     if (createdUser) {
       const text = `Email: ${createdUser.email}\nSenha: ${createdUser.temporary_password}`;
-      navigator.clipboard.writeText(text);
+      navigator.clipboard.writeWith(text);
       toast.success("✅ Credenciais copiadas!");
+    }
+  };
+
+  const copyLink = () => {
+    if (createdUser?.invite_link) {
+      navigator.clipboard.writeText(createdUser.invite_link);
+      toast.success("✅ Link copiado para a área de transferência!");
     }
   };
 
@@ -307,10 +314,31 @@ export default function ConvidarColaborador() {
                 Colaborador Criado com Sucesso!
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
+              {/* Link de Acesso */}
+              {createdUser.invite_link && (
+                <div className="bg-white rounded-lg p-4 border-2 border-blue-300">
+                  <p className="text-sm text-gray-700 mb-3 flex items-center gap-2">
+                    <LinkIcon className="w-4 h-4 text-blue-600" />
+                    <strong>Link de Acesso:</strong>
+                  </p>
+                  <div className="bg-gray-50 p-3 rounded border mb-3 break-all text-sm font-mono">
+                    {createdUser.invite_link}
+                  </div>
+                  <Button onClick={copyLink} className="w-full bg-blue-600 hover:bg-blue-700">
+                    <Copy className="w-4 h-4 mr-2" />
+                    Copiar Link
+                  </Button>
+                  <p className="text-xs text-blue-600 mt-2">
+                    💡 Compartilhe este link com o colaborador para que ele se cadastre
+                  </p>
+                </div>
+              )}
+
+              {/* Credenciais */}
               <div className="bg-white rounded-lg p-4 border-2 border-green-300">
                 <p className="text-sm text-gray-700 mb-3">
-                  <strong>Envie estas credenciais para o colaborador:</strong>
+                  <strong>Ou envie estas credenciais:</strong>
                 </p>
                 <div className="bg-gray-50 p-4 rounded border mb-3 font-mono text-sm">
                   <p className="mb-1"><strong>Email:</strong> {createdUser.email}</p>
