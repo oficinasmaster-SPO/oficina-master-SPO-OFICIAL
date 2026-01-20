@@ -22,6 +22,14 @@ export default function UserPermissionsViewer() {
     },
   });
 
+  const { data: employees = [] } = useQuery({
+    queryKey: ["all-employees"],
+    queryFn: async () => {
+      const data = await base44.asServiceRole.entities.Employee.list();
+      return data || [];
+    },
+  });
+
   const { data: profiles = [] } = useQuery({
     queryKey: ["user-profiles"],
     queryFn: async () => {
@@ -72,8 +80,12 @@ export default function UserPermissionsViewer() {
       };
     }
 
+    // Tentar encontrar Employee vinculado para obter profile_id correto
+    const employee = employees.find(emp => emp.user_id === user.id);
+    const profileIdToUse = employee?.profile_id || user.profile_id;
+
     // Buscar perfil do usuário
-    const userProfile = profiles.find(p => p.id === user.profile_id);
+    const userProfile = profiles.find(p => p.id === profileIdToUse);
     
     // Buscar custom roles
     const userCustomRoles = customRoles.filter(cr => 
