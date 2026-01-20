@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
         position: position || 'Colaborador',
         area: area || 'tecnico',
         job_role: job_role || 'outros',
-        profile_id: profile_id || profileId, // Usar Profile ID gerado
+        profile_id: profile_id || null,
         invite_token: inviteToken,
         invite_type: 'workshop',
         expires_at: expiresAt.toISOString(),
@@ -123,7 +123,7 @@ Deno.serve(async (req) => {
     const inviteDomain = `https://oficinasmastergtr.com`;
     
     const inviteLink = invite && invite.invite_token
-      ? `${inviteDomain}/PrimeiroAcesso?token=${invite.invite_token}&workshop_id=${workshop_id}`
+      ? `${inviteDomain}/PrimeiroAcesso?token=${invite.invite_token}&workshop_id=${workshop_id}&profile_id=${profileId}&employee_id=${employee.id}`
       : `${inviteDomain}/PrimeiroAcesso`;
 
     console.log("🔗 Convite encontrado:", invite?.invite_token, "Link:", inviteLink);
