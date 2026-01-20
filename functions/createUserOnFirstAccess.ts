@@ -4,7 +4,7 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json();
-    const { invite_id } = body;
+    const { invite_id, password } = body;
     
     if (!invite_id) {
       return Response.json({ error: 'invite_id obrigatório' }, { status: 400 });
