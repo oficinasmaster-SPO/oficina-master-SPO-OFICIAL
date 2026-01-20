@@ -93,15 +93,16 @@ Deno.serve(async (req) => {
 
     // 6. Buscar token do convite
     const invites = await base44.asServiceRole.entities.EmployeeInvite.filter({ 
-      email: email,
-      workshop_id: workshop_id
+      employee_id: employee.id
     }, '-created_date', 1);
 
-    const invite = invites[0];
+    const invite = Array.isArray(invites) && invites.length > 0 ? invites[0] : null;
     const origin = new URL(req.url).origin;
-    const inviteLink = invite 
+    const inviteLink = invite && invite.invite_token
       ? `${origin}/PrimeiroAcesso?token=${invite.invite_token}`
       : `${origin}/PrimeiroAcesso`;
+
+    console.log("🔗 Convite encontrado:", invite?.invite_token, "Link:", inviteLink);
 
     // 7. Enviar email via Resend
     console.log("📧 Enviando email de convite via Resend...");
