@@ -97,10 +97,14 @@ Deno.serve(async (req) => {
     }, '-created_date', 1);
 
     const invite = Array.isArray(invites) && invites.length > 0 ? invites[0] : null;
-    const origin = new URL(req.url).origin;
+    
+    // Gerar domínio correto (oficina-master-copy-[appId].base44.app)
+    const appId = Deno.env.get("BASE44_APP_ID") || "default";
+    const inviteDomain = `https://oficina-master-copy-${appId}.base44.app`;
+    
     const inviteLink = invite && invite.invite_token
-      ? `${origin}/PrimeiroAcesso?token=${invite.invite_token}`
-      : `${origin}/PrimeiroAcesso`;
+      ? `${inviteDomain}/PrimeiroAcesso?token=${invite.invite_token}`
+      : `${inviteDomain}/PrimeiroAcesso`;
 
     console.log("🔗 Convite encontrado:", invite?.invite_token, "Link:", inviteLink);
 

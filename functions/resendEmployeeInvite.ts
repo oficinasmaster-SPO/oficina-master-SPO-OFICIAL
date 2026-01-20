@@ -72,9 +72,10 @@ Deno.serve(async (req) => {
       console.log("✅ Novo convite criado");
     }
 
-    // Gerar link de convite
-    const origin = new URL(req.url).origin;
-    const inviteLink = `${origin}/PrimeiroAcesso?token=${invite.invite_token}`;
+    // Gerar link de convite com domínio correto
+    const appId = Deno.env.get("BASE44_APP_ID") || "default";
+    const inviteDomain = `https://oficina-master-copy-${appId}.base44.app`;
+    const inviteLink = `${inviteDomain}/PrimeiroAcesso?token=${invite.invite_token}`;
 
     // Enviar email
     try {

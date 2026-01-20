@@ -328,9 +328,13 @@ export default function ConvidarColaborador() {
       return null;
     }
 
-    return invite.invite_token 
-      ? `${window.location.origin}/PrimeiroAcesso?token=${invite.invite_token}`
-      : null;
+    if (!invite.invite_token) return null;
+
+    // Usar domínio publicado correto
+    const appId = window.location.hostname.match(/oficina-master-copy-([a-z0-9]+)/)?.[1] || "default";
+    const inviteDomain = `https://oficina-master-copy-${appId}.base44.app`;
+    
+    return `${inviteDomain}/PrimeiroAcesso?token=${invite.invite_token}`;
   };
 
 
