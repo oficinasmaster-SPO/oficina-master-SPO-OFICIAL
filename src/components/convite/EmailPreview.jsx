@@ -95,7 +95,7 @@ export default function EmailPreview({ isOpen, onClose, email, name, workshopNam
               <p className="text-blue-600 break-all mt-1">{inviteLink}</p>
             </div>
 
-            <p className="font-semibold">Importante:</strong> Por segurança, você deverá alterar sua senha no primeiro acesso.</p>
+            <p className="font-semibold"><strong>Importante:</strong> Por segurança, você deverá alterar sua senha no primeiro acesso.</p>
           </div>
 
           <div className="bg-gray-100 text-center py-4 text-sm text-gray-600">
