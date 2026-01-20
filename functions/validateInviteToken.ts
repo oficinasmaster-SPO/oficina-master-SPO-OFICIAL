@@ -59,14 +59,8 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
-    // Permitir que convites "acessados" ainda sejam válidos (até o primeiro login)
-    // Apenas bloquear se estiver "concluido" de verdade
-    if (invite.status === 'concluido') {
-      return Response.json({ 
-        success: false, 
-        error: 'Este convite já foi utilizado completamente. Faça login na sua conta.' 
-      }, { status: 400 });
-    }
+    // Permitir acesso mesmo se status for "concluido" - o fluxo de primeiro acesso irá redirecionar
+    // O importante é que o token seja válido e não tenha expirado
 
     // Marcar como acessado se ainda não foi
     if (invite.status === 'enviado') {
