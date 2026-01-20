@@ -210,13 +210,13 @@ export default function ConvidarColaborador() {
       console.log("🔗 invite_link:", data?.invite_link);
       console.log("📧 email:", data?.email);
       queryClient.invalidateQueries({ queryKey: ['employees-list'] });
-      
+
+      console.log("📝 Setando createdUser com:", data);
+      setCreatedUser(data);
+
       if (data.action === 'resent') {
         toast.success("📧 Convite reenviado com sucesso!", { duration: 5000 });
-        setCreatedUser(null); // Não exibir modal de credenciais
       } else {
-        console.log("📝 Setando createdUser com:", data);
-        setCreatedUser(data);
         toast.success("✅ Colaborador criado com sucesso!", { duration: 5000 });
       }
       
