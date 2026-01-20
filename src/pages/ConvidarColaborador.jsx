@@ -681,21 +681,28 @@ export default function ConvidarColaborador() {
                     
                     return (
                       <div key={emp.id} className="p-4 hover:bg-gray-50 transition-colors" onClick={() => {
-                        fillFormWithEmployee(emp);
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      fillFormWithEmployee(emp);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}>
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
                             <p className="font-semibold text-gray-900">
                               {emp.identificador ? `[${emp.identificador}]` : ''} {emp.full_name}
                             </p>
-                            <p className="text-sm text-gray-600">{emp.email}</p>
-                            {emp.telefone && <p className="text-sm text-gray-600">{emp.telefone}</p>}
+                            {workshop?.identificador && (
+                              <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-bold rounded">
+                                {workshop.identificador}
+                              </span>
+                            )}
                           </div>
-                          <Badge className={emp.user_status === 'ativo' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
-                            {emp.user_status === 'ativo' ? 'Ativo' : 'Pendente'}
-                          </Badge>
+                          <p className="text-sm text-gray-600">{emp.email}</p>
+                          {emp.telefone && <p className="text-sm text-gray-600">{emp.telefone}</p>}
                         </div>
+                        <Badge className={emp.user_status === 'ativo' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
+                          {emp.user_status === 'ativo' ? 'Ativo' : 'Pendente'}
+                        </Badge>
+                      </div>
 
                         <div className="flex items-center justify-between gap-2 mb-3">
                           <div className="flex items-center gap-2 text-xs text-gray-500">

@@ -190,7 +190,14 @@ export default function AprovarColaboradores() {
                       </div>
                     )}
                     <div>
-                      <CardTitle className="text-xl">{employee.full_name}</CardTitle>
+                      <div className="flex items-center gap-2">
+                        <CardTitle className="text-xl">{employee.full_name}</CardTitle>
+                        {employee.identificador && (
+                          <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded">
+                            {employee.identificador}
+                          </span>
+                        )}
+                      </div>
                       <Badge className="bg-yellow-100 text-yellow-800 mt-1">
                         <Clock className="w-3 h-3 mr-1" />
                         Aguardando Aprovação
@@ -245,7 +252,17 @@ export default function AprovarColaboradores() {
                       <p className="font-medium text-gray-900 capitalize">{employee.area}</p>
                     </div>
                   </div>
-                </div>
+
+                  {workshop?.identificador && (
+                    <div className="flex items-start gap-3">
+                      <Briefcase className="w-5 h-5 text-gray-400 mt-0.5" />
+                      <div>
+                        <p className="text-xs text-gray-500">Empresa</p>
+                        <p className="font-medium text-gray-900">{workshop.identificador}</p>
+                      </div>
+                    </div>
+                  )}
+                  </div>
 
                 {/* Alerta de Configuração */}
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
