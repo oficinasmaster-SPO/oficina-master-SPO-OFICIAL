@@ -385,35 +385,37 @@ export default function ConvidarColaborador() {
 
 
 
-        {/* Modal de credenciais - Só exibe quando todos os dados estão disponíveis */}
-        {createdUser && createdUser.email && createdUser.temporary_password && createdUser.invite_link && (
-          <Card className="mb-6 border-green-300 bg-green-50 animate-slide-up">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-green-800">
+        {/* Modal de credenciais - Foco em WhatsApp */}
+        {createdUser && createdUser.email && createdUser.invite_link && (
+          <Card className="mb-6 border-2 border-green-400 bg-gradient-to-br from-green-50 to-emerald-50 shadow-lg animate-slide-up">
+            <CardHeader className="pb-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-t-lg">
+              <CardTitle className="flex items-center gap-2 text-white">
                 <CheckCircle2 className="w-6 h-6" />
-                ✅ Colaborador Criado com Sucesso!
+                ✅ Link de Acesso Gerado!
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Link de Acesso - Sempre disponível quando modal aparece */}
-              <div className="bg-white rounded-lg p-4 border-2 border-blue-300 space-y-3">
-                <p className="text-sm text-gray-700 flex items-center gap-2">
-                  <LinkIcon className="w-4 h-4 text-blue-600" />
-                  <strong>🔗 Link de Acesso:</strong>
+            <CardContent className="space-y-4 pt-6">
+              {/* SEÇÃO PRINCIPAL - Link para WhatsApp */}
+              <div className="bg-white rounded-xl p-6 border-2 border-green-300 shadow-md">
+                <p className="text-lg font-bold text-green-700 mb-4 flex items-center gap-2">
+                  📱 Enviar por WhatsApp
                 </p>
-                <div className="bg-gray-50 p-3 rounded border break-all text-sm font-mono">
-                  {createdUser.invite_link}
-                </div>
-                <div className="flex gap-2">
-                  <Button onClick={copyLink} className="flex-1 bg-blue-600 hover:bg-blue-700">
+                
+                {/* Link em destaque */}
+                <div className="bg-gradient-to-b from-blue-50 to-blue-100 p-6 rounded-lg border-2 border-blue-400 mb-4">
+                  <p className="text-xs text-blue-700 mb-2 font-semibold">🔗 Link de Acesso (7 dias):</p>
+                  <p className="text-sm font-mono bg-white p-4 rounded border-2 border-blue-300 break-all text-blue-900 mb-3">
+                    {createdUser.invite_link}
+                  </p>
+                  <Button onClick={copyLink} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold h-11 mb-3">
                     <Copy className="w-4 h-4 mr-2" />
                     Copiar Link
                   </Button>
                 </div>
-                
-                {/* WhatsApp Button */}
-                <div className="pt-2 border-t">
-                  <p className="text-xs text-gray-600 mb-2">📱 Compartilhar via WhatsApp:</p>
+
+                {/* WhatsApp Button Destaque */}
+                <div className="bg-gradient-to-r from-green-100 to-emerald-100 p-4 rounded-lg border-2 border-green-400">
+                  <p className="text-sm font-bold text-green-800 mb-3">Mensagem formatada para WhatsApp:</p>
                   <WhatsAppButton 
                     inviteLink={createdUser.invite_link} 
                     email={createdUser.email}
@@ -421,35 +423,25 @@ export default function ConvidarColaborador() {
                     workshopName={workshop.name}
                   />
                 </div>
-                
-                <p className="text-xs text-blue-600">
-                  💡 Compartilhe este link com o colaborador para que ele se cadastre
+
+                <p className="text-xs text-green-700 mt-4 text-center italic">
+                  💡 Cole o link ou a mensagem formatada direto no WhatsApp do colaborador
                 </p>
               </div>
 
-              {/* Credenciais */}
-              <div className="bg-white rounded-lg p-4 border-2 border-green-300">
-                <p className="text-sm text-gray-700 mb-3">
-                  <strong>Ou envie estas credenciais:</strong>
-                </p>
-                <div className="bg-gray-50 p-4 rounded border mb-3 font-mono text-sm space-y-2">
+              {/* Informações Adicionais */}
+              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <p className="text-xs font-semibold text-gray-700 mb-3">📋 Dados do Colaborador:</p>
+                <div className="space-y-2 text-sm text-gray-600 font-mono">
                   <p><strong>📧 Email:</strong> {createdUser.email}</p>
-                  <p><strong>🔑 Senha:</strong> {createdUser.temporary_password}</p>
-                  <p className="break-all"><strong>🔗 Link de Acesso:</strong> {createdUser.invite_link}</p>
+                  <p><strong>🔑 Senha temporária:</strong> {createdUser.temporary_password}</p>
+                  <p><strong>⏰ Validade do link:</strong> 7 dias</p>
                 </div>
-                <div className="flex gap-2">
-                  <Button onClick={copyCredentials} className="flex-1 bg-green-600 hover:bg-green-700">
-                    <Copy className="w-4 h-4 mr-2" />
-                    Copiar Credenciais
-                  </Button>
-                  <Button onClick={() => setCreatedUser(null)} variant="outline">
-                    Fechar
-                  </Button>
-                </div>
-                <p className="text-xs text-gray-600 mt-3">
-                  💡 O colaborador deve trocar a senha no primeiro login
-                </p>
               </div>
+
+              <Button onClick={() => setCreatedUser(null)} variant="outline" className="w-full">
+                Fechar
+              </Button>
             </CardContent>
           </Card>
         )}
