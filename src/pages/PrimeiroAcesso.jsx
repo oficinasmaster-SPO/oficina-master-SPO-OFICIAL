@@ -19,8 +19,12 @@ export default function PrimeiroAcesso() {
   
   const [formData, setFormData] = useState({
     password: "",
-    confirmPassword: ""
+    confirmPassword: "",
+    full_name: "",
+    telefone: "",
+    data_nascimento: ""
   });
+  const [step, setStep] = useState(1); // 1: validação, 2: dados, 3: sucesso
 
   useEffect(() => {
     validateToken();
