@@ -80,9 +80,9 @@ Deno.serve(async (req) => {
       console.log("✅ Novo convite criado");
     }
 
-    // Gerar link de convite com domínio correto
+    // Gerar link de convite com domínio correto + workshop_id para rastreamento
     const inviteDomain = `https://oficinasmastergtr.com`;
-    const inviteLink = `${inviteDomain}/PrimeiroAcesso?token=${invite.invite_token}`;
+    const inviteLink = `${inviteDomain}/PrimeiroAcesso?token=${invite.invite_token}&workshop_id=${employee.workshop_id}`;
 
     console.log("🔗 Link gerado para reenvio:", inviteLink);
     console.log("🔑 Token utilizado:", invite.invite_token);
