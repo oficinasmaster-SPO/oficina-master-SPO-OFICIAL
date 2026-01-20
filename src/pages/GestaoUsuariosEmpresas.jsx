@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import AIProfileSuggestions from "@/components/admin/users/AIProfileSuggestions";
 
 export default function GestaoUsuariosEmpresas() {
   const navigate = useNavigate();
@@ -27,6 +28,7 @@ export default function GestaoUsuariosEmpresas() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [resetPasswordDialog, setResetPasswordDialog] = useState({ open: false, password: "" });
   const [expandedRow, setExpandedRow] = useState(null);
+  const [aiFormData, setAiFormData] = useState({ cargo: "", area: "" });
   
   // Filtros avançados
   const [filters, setFilters] = useState({
@@ -797,7 +799,7 @@ export default function GestaoUsuariosEmpresas() {
         </Dialog>
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Editar Usuário: {selectedUser?.full_name}</DialogTitle>
             </DialogHeader>
@@ -883,14 +885,40 @@ export default function GestaoUsuariosEmpresas() {
                   </Select>
                 </div>
 
+                {/* Sugestões de IA */}
+                <AIProfileSuggestions
+                  cargo={aiFormData.cargo || selectedUser.position}
+                  area={aiFormData.area || selectedUser.area}
+                  workshopId={selectedUser.workshop_id}
+                  onApplySuggestion={(suggestions) => {
+                    // Aplicar sugestões nos campos do form
+                    const jobRoleSelect = document.querySelector('select[name="job_role"]');
+                    if (jobRoleSelect && suggestions.job_role) {
+                      jobRoleSelect.value = suggestions.job_role;
+                      jobRoleSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                  }}
+                />
+
                 <div>
                   <Label>Cargo *</Label>
-                  <Input name="position" defaultValue={selectedUser.position || ""} placeholder="Ex: Gerente de Operações" required />
+                  <Input 
+                    name="position" 
+                    defaultValue={selectedUser.position || ""} 
+                    placeholder="Ex: Gerente de Operações" 
+                    required
+                    onChange={(e) => setAiFormData(prev => ({ ...prev, cargo: e.target.value }))}
+                  />
                 </div>
 
                 <div>
                   <Label>Função *</Label>
-                  <Select name="job_role" defaultValue={selectedUser.job_role || ""} required>
+                  <Select 
+                    name="job_role" 
+                    defaultValue={selectedUser.job_role || ""} 
+                    required
+                    onValueChange={(val) => setAiFormData(prev => ({ ...prev, job_role: val }))}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione uma função" />
                     </SelectTrigger>
@@ -913,7 +941,12 @@ export default function GestaoUsuariosEmpresas() {
 
                 <div>
                   <Label>Área *</Label>
-                  <Select name="area" defaultValue={selectedUser.area || ""} required>
+                  <Select 
+                    name="area" 
+                    defaultValue={selectedUser.area || ""} 
+                    required
+                    onValueChange={(val) => setAiFormData(prev => ({ ...prev, area: val }))}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione uma área" />
                     </SelectTrigger>
