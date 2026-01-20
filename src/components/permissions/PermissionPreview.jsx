@@ -204,8 +204,7 @@ export default function PermissionPreview({ permissions = {}, jobRoles = [] }) {
                     const hasModulePerms = rolePerms.modules && Object.keys(rolePerms.modules).length > 0;
                     
                     return (
-                      <div className="space-y-6")
-
+                      <div className="space-y-6">
                         {/* Resource Permissions */}
                         <div className="bg-gray-50 rounded-lg p-5">
                           <h4 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
