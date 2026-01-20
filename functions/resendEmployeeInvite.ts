@@ -33,20 +33,28 @@ Deno.serve(async (req) => {
     let invite;
     
     if (existingInvites && existingInvites.length > 0) {
-      // Atualizar convite existente
+      // Atualizar convite existente - GERAR NOVO TOKEN
       invite = existingInvites[0];
+      
+      // Gerar novo invite_token aleatório
+      const newInviteToken = Math.random().toString(36).substring(2, 15) + 
+                            Math.random().toString(36).substring(2, 15);
       
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 7);
       
       await base44.asServiceRole.entities.EmployeeInvite.update(invite.id, {
+        invite_token: newInviteToken,
         status: 'enviado',
         expires_at: expiresAt.toISOString(),
         resent_count: (invite.resent_count || 0) + 1,
         last_resent_at: new Date().toISOString()
       });
       
-      console.log("✅ Convite atualizado");
+      // Atualizar o objeto invite com o novo token para usar na construção do link
+      invite.invite_token = newInviteToken;
+      
+      console.log("✅ Convite atualizado com novo token:", newInviteToken);
     } else {
       // Criar novo convite
       const inviteToken = Math.random().toString(36).substring(2, 15) + 
@@ -76,6 +84,9 @@ Deno.serve(async (req) => {
     const inviteDomain = `https://oficinasmastergtr.com`;
     const inviteLink = `${inviteDomain}/PrimeiroAcesso?token=${invite.invite_token}`;
 
+    console.log("🔗 Link gerado para reenvio:", inviteLink);
+    console.log("🔑 Token utilizado:", invite.invite_token);
+
     // Enviar email
     try {
       const emailResponse = await base44.functions.invoke('sendEmployeeInvite', {
@@ -98,6 +109,7 @@ Deno.serve(async (req) => {
       email: employee.email,
       temporary_password: "Oficina@2025",
       invite_link: inviteLink,
+      invite_token: invite.invite_token,
       action: 'resent'
     });
 
