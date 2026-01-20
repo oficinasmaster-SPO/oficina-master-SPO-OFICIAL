@@ -112,7 +112,7 @@ Deno.serve(async (req) => {
     const inviteDomain = `https://oficinasmastergtr.com`;
     
     const inviteLink = invite && invite.invite_token
-      ? `${inviteDomain}/PrimeiroAcesso?token=${invite.invite_token}`
+      ? `${inviteDomain}/PrimeiroAcesso?token=${invite.invite_token}&workshop_id=${workshop_id}`
       : `${inviteDomain}/PrimeiroAcesso`;
 
     console.log("🔗 Convite encontrado:", invite?.invite_token, "Link:", inviteLink);
