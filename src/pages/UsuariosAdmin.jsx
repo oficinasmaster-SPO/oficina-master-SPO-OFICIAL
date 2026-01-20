@@ -53,13 +53,21 @@ export default function UsuariosAdmin() {
     queryFn: async () => {
       const allProfiles = await base44.entities.UserProfile.list();
       console.log("📋 Todos os perfis:", allProfiles);
-      // Filtra perfis internos ativos (mesma lógica da Gestão de Perfis)
-      const internoProfiles = allProfiles.filter(p => p.type === 'interno' && p.status === 'ativo');
-      console.log("✅ Perfis internos ativos:", internoProfiles);
-      return internoProfiles;
+      // Filtra perfis externos e internos ativos
+      const externalProfiles = allProfiles.filter(p => (p.type === 'externo' || p.type === 'interno') && p.status === 'ativo');
+      console.log("✅ Perfis ativos:", externalProfiles);
+      return externalProfiles;
     },
     staleTime: 30000,
     refetchOnWindowFocus: true // Atualiza quando voltar para a aba
+  });
+
+  const { data: workshops = [] } = useQuery({
+    queryKey: ['workshops'],
+    queryFn: async () => {
+      const result = await base44.entities.Workshop.list();
+      return Array.isArray(result) ? result : [];
+    }
   });
 
   const { data: customRoles = [] } = useQuery({
@@ -174,6 +182,9 @@ export default function UsuariosAdmin() {
         full_name: data.full_name,
         telefone: data.telefone,
         position: data.position,
+        area: data.area,
+        job_role: data.job_role,
+        workshop_id: data.workshop_id,
         profile_id: data.profile_id,
         user_status: data.user_status,
         audit_log: [...currentAuditLog, auditEntry]
@@ -191,7 +202,11 @@ export default function UsuariosAdmin() {
         const userUpdateData = {
           profile_id: data.profile_id,
           custom_role_ids: data.custom_role_ids,
-          user_status: normalizedUserStatus
+          user_status: normalizedUserStatus,
+          position: data.position,
+          area: data.area,
+          job_role: data.job_role,
+          workshop_id: data.workshop_id
         };
 
         if (data.role) {
@@ -323,13 +338,18 @@ export default function UsuariosAdmin() {
         setRequestFormOpen(true);
       } else {
         // Mudanças não críticas (nome, telefone, cargo) - aplicar diretamente
-        let changes = { action: 'updated', field: 'dados_basicos', oldValue: '', newValue: '' };
-        
-        updateUserMutation.mutate({ 
-          userId: selectedUser.id, 
-          data,
-          changes 
-        });
+           const fieldsChanged = [];
+           if (selectedUser.position !== data.position) fieldsChanged.push('position');
+           if (selectedUser.area !== data.area) fieldsChanged.push('area');
+           if (selectedUser.job_role !== data.job_role) fieldsChanged.push('job_role');
+
+           let changes = { action: 'updated', field: fieldsChanged.join(', ') || 'dados_basicos', oldValue: '', newValue: '' };
+
+           updateUserMutation.mutate({ 
+             userId: selectedUser.id, 
+             data,
+             changes 
+           });
       }
     }
   };
