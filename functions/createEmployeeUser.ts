@@ -165,23 +165,54 @@ Deno.serve(async (req) => {
         </html>
       `;
 
-      const emailResult = await base44.asServiceRole.functions.invoke('sendEmailResend', {
-        to: email,
-        subject: `Convite para ${workshopData.name} - Complete seu cadastro`,
-        html: emailHtml,
-        from_name: workshopData.name
-      });
-
-      if (emailResult.data?.success) {
-        await base44.asServiceRole.entities.EmployeeInvite.update(invite.id, {
-          status: 'enviado',
-          last_resent_at: new Date().toISOString()
+      // Tentar enviar via Resend primeiro
+      try {
+        const emailResult = await base44.asServiceRole.functions.invoke('sendEmailResend', {
+          to: email,
+          subject: `Convite para ${workshopData.name} - Complete seu cadastro`,
+          html: emailHtml,
+          from_name: workshopData.name
         });
-        emailStatus = 'enviado';
-        console.log("✅ Email enviado com sucesso via Resend!");
-      } else {
-        emailStatus = 'erro: ' + (emailResult.data?.error || 'Falha desconhecida');
-        console.error("⚠️ Erro ao enviar email:", emailResult.data);
+
+        if (emailResult.data?.success) {
+          await base44.asServiceRole.entities.EmployeeInvite.update(invite.id, {
+            status: 'enviado',
+            last_resent_at: new Date().toISOString()
+          });
+          emailStatus = 'enviado';
+          console.log("✅ Email enviado com sucesso via Resend!");
+        } else {
+          emailStatus = 'erro: ' + (emailResult.data?.error || 'Falha desconhecida');
+          console.error("⚠️ Erro ao enviar via Resend:", emailResult.data);
+        }
+      } catch (resendError) {
+        // Fallback para ActiveCampaign se Resend falhar
+        console.log("⚠️ Tentando enviar via ActiveCampaign...");
+        try {
+          const acResponse = await base44.asServiceRole.functions.invoke('sendEmployeeInvite', {
+            name: name,
+            email: email,
+            workshop_id: workshop_id,
+            employee_id: employee.id,
+            invite_link: inviteLink,
+            invite_token: invite.invite_token
+          });
+          
+          if (acResponse.data?.success) {
+            await base44.asServiceRole.entities.EmployeeInvite.update(invite.id, {
+              status: 'enviado',
+              last_resent_at: new Date().toISOString()
+            });
+            emailStatus = 'enviado via ActiveCampaign';
+            console.log("✅ Email enviado via ActiveCampaign!");
+          } else {
+            emailStatus = 'erro: ' + (acResponse.data?.error || 'Falha em ambos sistemas');
+            console.error("⚠️ Erro também no ActiveCampaign:", acResponse.data);
+          }
+        } catch (acError) {
+          emailStatus = 'erro: ' + acError.message;
+          console.error("⚠️ Erro em ambos sistemas de email:", acError.message);
+        }
       }
 
     } catch (emailError) {

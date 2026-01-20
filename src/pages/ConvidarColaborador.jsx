@@ -450,10 +450,11 @@ export default function ConvidarColaborador() {
           <EmailPreview 
             isOpen={showEmailPreview}
             onClose={() => setShowEmailPreview(false)}
-            email={formData.email || "email@exemplo.com"}
-            name={formData.name || "Colaborador"}
+            email={createdUser?.email || formData.email || "email@exemplo.com"}
+            name={createdUser?.email ? (employees.find(e => e.email === createdUser.email)?.full_name || formData.name) : formData.name || "Colaborador"}
             workshopName={workshop.name}
             inviteLink={createdUser?.invite_link || "https://..."}
+            temporaryPassword={createdUser?.temporary_password || "Oficina@2025"}
           />
         )}
 
