@@ -2,11 +2,13 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle2, XCircle, Eye, Users } from "lucide-react";
+import { CheckCircle2, XCircle, Eye, Users, ChevronRight, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 export default function PermissionPreview({ permissions = {}, jobRoles = [] }) {
   const [selectedRole, setSelectedRole] = useState(jobRoles[0]?.value || null);
+  const [viewMode, setViewMode] = useState("grid"); // "grid" ou "list"
 
   const getRolePermissions = (roleId) => {
     return permissions[roleId] || {};
@@ -109,10 +111,18 @@ export default function PermissionPreview({ permissions = {}, jobRoles = [] }) {
         </Card>
       </div>
 
-      {/* Role Selector */}
+      {/* Role Selector - Modo Cartões Selecionáveis */}
       <Card>
         <CardHeader>
-          <CardTitle>Visualizar Permissões por Cargo</CardTitle>
+          <CardTitle className="flex items-center justify-between">
+            <span>Permissões por Cargo</span>
+            <Badge variant="outline" className="font-normal">
+              {Object.keys(permissions).length} cargo(s) configurado(s)
+            </Badge>
+          </CardTitle>
+          <p className="text-sm text-gray-600 mt-1">
+            Clique em um cargo para visualizar suas permissões detalhadas
+          </p>
         </CardHeader>
         <CardContent>
           {jobRoles.length === 0 ? (
@@ -120,104 +130,172 @@ export default function PermissionPreview({ permissions = {}, jobRoles = [] }) {
               <p>Nenhum cargo configurado ainda.</p>
             </div>
           ) : (
-            <Tabs value={selectedRole || ''} onValueChange={setSelectedRole}>
-              <TabsList className="grid grid-cols-3 lg:grid-cols-6 mb-6">
-                {jobRoles.map((role) => (
-                  <TabsTrigger key={role.value} value={role.value}>
-                    {role.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-
-              {jobRoles.map((role) => {
-                const rolePerms = getRolePermissions(role.value);
-                const hasResourcePerms = Object.keys(rolePerms).filter(k => k !== 'modules').length > 0;
-                const hasModulePerms = rolePerms.modules && Object.keys(rolePerms.modules).length > 0;
-                
-                return (
-                  <TabsContent key={role.value} value={role.value}>
-                    <div className="space-y-6">
-                      {/* Resource Permissions */}
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                          Permissões CRUD por Recurso
-                        </h3>
-                        {!hasResourcePerms ? (
-                          <p className="text-sm text-gray-500 text-center py-8">
-                            Nenhuma permissão de recurso configurada para este cargo.
-                          </p>
-                        ) : (
-                          <div className="grid md:grid-cols-2 gap-4">
-                            {Object.keys(rolePerms)
-                              .filter(key => key !== 'modules')
-                              .map((resourceId) => {
-                                const resourcePerms = getResourcePermissions(role.value, resourceId);
-                                
-                                return (
-                                  <Card key={resourceId} className="border-2">
-                                    <CardContent className="p-4">
-                                      <h4 className="font-medium text-gray-900 capitalize mb-3">
-                                        {resourceId}
-                                      </h4>
-                                      <div className="grid grid-cols-2 gap-2">
-                                        {['create', 'read', 'update', 'delete'].map((action) => (
-                                          <div
-                                            key={action}
-                                            className={cn(
-                                              "flex items-center gap-2 p-2 rounded text-sm",
-                                              resourcePerms[action]
-                                                ? "bg-green-50 text-green-700"
-                                                : "bg-gray-50 text-gray-500"
-                                            )}
-                                          >
-                                            {resourcePerms[action] ? (
-                                              <CheckCircle2 className="w-4 h-4" />
-                                            ) : (
-                                              <XCircle className="w-4 h-4" />
-                                            )}
-                                            <span className="capitalize">{action}</span>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    </CardContent>
-                                  </Card>
-                                );
-                              })}
+            <div className="space-y-6">
+              {/* Grid de Seleção de Cargos */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {jobRoles.map((role) => {
+                  const isSelected = selectedRole === role.value;
+                  const totalPerms = countTotalPermissions(role.value);
+                  const rolePerms = getRolePermissions(role.value);
+                  const moduleCount = rolePerms.modules ? Object.keys(rolePerms.modules).length : 0;
+                  
+                  return (
+                    <button
+                      key={role.value}
+                      onClick={() => setSelectedRole(role.value)}
+                      className={cn(
+                        "p-4 rounded-lg border-2 transition-all text-left hover:shadow-md",
+                        isSelected 
+                          ? "border-blue-500 bg-blue-50 shadow-md" 
+                          : "border-gray-200 hover:border-blue-300 bg-white"
+                      )}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Shield className={cn(
+                              "w-5 h-5 flex-shrink-0",
+                              isSelected ? "text-blue-600" : "text-gray-400"
+                            )} />
+                            <h3 className={cn(
+                              "font-semibold truncate",
+                              isSelected ? "text-blue-900" : "text-gray-900"
+                            )}>
+                              {role.label}
+                            </h3>
                           </div>
-                        )}
-                      </div>
-
-                      {/* Module Access */}
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                          Acesso por Módulo
-                        </h3>
-                        {!hasModulePerms ? (
-                          <p className="text-sm text-gray-500 text-center py-8">
-                            Nenhuma permissão de módulo configurada para este cargo.
-                          </p>
-                        ) : (
-                          <div className="grid md:grid-cols-3 gap-3">
-                            {Object.entries(rolePerms.modules).map(([moduleId, level]) => (
-                              <Card key={moduleId} className="border-2">
-                                <CardContent className="p-4">
-                                  <div className="flex items-center justify-between">
-                                    <span className="font-medium text-gray-900 capitalize text-sm">
-                                      {moduleId}
-                                    </span>
-                                    {getAccessLevelBadge(level)}
-                                  </div>
-                                </CardContent>
-                              </Card>
-                            ))}
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 text-xs">
+                              <CheckCircle2 className="w-3 h-3 text-green-600" />
+                              <span className="text-gray-600">
+                                {totalPerms} permissões ativas
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs">
+                              <Eye className="w-3 h-3 text-purple-600" />
+                              <span className="text-gray-600">
+                                {moduleCount} módulos configurados
+                              </span>
+                            </div>
                           </div>
-                        )}
+                        </div>
+                        <ChevronRight className={cn(
+                          "w-5 h-5 flex-shrink-0 transition-transform",
+                          isSelected ? "text-blue-600 transform rotate-90" : "text-gray-400"
+                        )} />
                       </div>
-                    </div>
-                  </TabsContent>
-                );
-              })}
-            </Tabs>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Detalhes do Cargo Selecionado */}
+              {selectedRole && (
+                <div className="border-t pt-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-bold text-gray-900">
+                      Detalhes: {jobRoles.find(r => r.value === selectedRole)?.label}
+                    </h3>
+                  </div>
+                  
+                  {(() => {
+                    const rolePerms = getRolePermissions(selectedRole);
+                    const hasResourcePerms = Object.keys(rolePerms).filter(k => k !== 'modules').length > 0;
+                    const hasModulePerms = rolePerms.modules && Object.keys(rolePerms.modules).length > 0;
+                    
+                    return (
+                      <div className="space-y-6")
+
+                        {/* Resource Permissions */}
+                        <div className="bg-gray-50 rounded-lg p-5">
+                          <h4 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                            <CheckCircle2 className="w-5 h-5 text-green-600" />
+                            Permissões CRUD por Recurso
+                          </h4>
+                          {!hasResourcePerms ? (
+                            <p className="text-sm text-gray-500 text-center py-6 bg-white rounded-lg border border-dashed border-gray-300">
+                              Nenhuma permissão de recurso configurada para este cargo.
+                            </p>
+                          ) : (
+                            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+                              {Object.keys(rolePerms)
+                                .filter(key => key !== 'modules')
+                                .map((resourceId) => {
+                                  const resourcePerms = getResourcePermissions(selectedRole, resourceId);
+                                  const activePerms = Object.values(resourcePerms).filter(Boolean).length;
+                                  
+                                  return (
+                                    <Card key={resourceId} className="border hover:shadow-md transition-shadow">
+                                      <CardContent className="p-4">
+                                        <div className="flex items-center justify-between mb-3">
+                                          <h5 className="font-semibold text-gray-900 capitalize text-sm">
+                                            {resourceId}
+                                          </h5>
+                                          <Badge variant="outline" className="text-xs">
+                                            {activePerms}/4
+                                          </Badge>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-2">
+                                          {['create', 'read', 'update', 'delete'].map((action) => (
+                                            <div
+                                              key={action}
+                                              className={cn(
+                                                "flex items-center gap-1.5 p-2 rounded text-xs font-medium transition-colors",
+                                                resourcePerms[action]
+                                                  ? "bg-green-100 text-green-800 border border-green-200"
+                                                  : "bg-gray-100 text-gray-500 border border-gray-200"
+                                              )}
+                                            >
+                                              {resourcePerms[action] ? (
+                                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                              ) : (
+                                                <XCircle className="w-3.5 h-3.5" />
+                                              )}
+                                              <span className="capitalize">{action}</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </CardContent>
+                                    </Card>
+                                  );
+                                })}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Module Access */}
+                        <div className="bg-gray-50 rounded-lg p-5">
+                          <h4 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                            <Eye className="w-5 h-5 text-purple-600" />
+                            Acesso por Módulo do Sistema
+                          </h4>
+                          {!hasModulePerms ? (
+                            <p className="text-sm text-gray-500 text-center py-6 bg-white rounded-lg border border-dashed border-gray-300">
+                              Nenhuma permissão de módulo configurada para este cargo.
+                            </p>
+                          ) : (
+                            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3">
+                              {Object.entries(rolePerms.modules).map(([moduleId, level]) => (
+                                <Card key={moduleId} className="border hover:shadow-md transition-shadow">
+                                  <CardContent className="p-3">
+                                    <div className="space-y-2">
+                                      <span className="font-medium text-gray-900 capitalize text-sm block truncate">
+                                        {moduleId}
+                                      </span>
+                                      {getAccessLevelBadge(level)}
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+            </div>
           )}
         </CardContent>
       </Card>
