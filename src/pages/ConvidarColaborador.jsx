@@ -570,11 +570,15 @@ export default function ConvidarColaborador() {
               ) : (
                 <div className="divide-y max-h-[600px] overflow-y-auto">
                   {employees.map((emp) => (
-                    <div key={emp.id} className="p-4 hover:bg-gray-50 transition-colors">
+                    <div key={emp.id} className="p-4 hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => {
+                      fillFormWithEmployee(emp);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}>
                       <div className="flex items-start justify-between mb-2">
                         <div>
                           <p className="font-semibold text-gray-900">{emp.full_name}</p>
                           <p className="text-sm text-gray-600">{emp.email}</p>
+                          {emp.telefone && <p className="text-sm text-gray-600">{emp.telefone}</p>}
                         </div>
                         <Badge className={emp.user_status === 'ativo' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
                           {emp.user_status === 'ativo' ? 'Ativo' : 'Pendente'}
