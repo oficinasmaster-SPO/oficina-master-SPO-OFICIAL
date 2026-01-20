@@ -334,21 +334,29 @@ export default function ConvidarColaborador() {
   const getInviteLinkForEmployee = (employeeId) => {
     const invite = invites[employeeId];
     if (!invite) return null;
-
-    const now = new Date();
-    const expiresAt = invite.expires_at ? new Date(invite.expires_at) : null;
-
-    // Se expirou, não mostrar link
-    if (expiresAt && expiresAt < now) {
-      return null;
-    }
-
     if (!invite.invite_token) return null;
 
     // Usar domínio publicado correto
     const inviteDomain = `https://oficinasmastergtr.com`;
-    
     return `${inviteDomain}/PrimeiroAcesso?token=${invite.invite_token}`;
+  };
+
+  const getInviteStatus = (employeeId) => {
+    const invite = invites[employeeId];
+    if (!invite) return { status: 'Sem convite', color: 'bg-gray-100', textColor: 'text-gray-700' };
+
+    const now = new Date();
+    const expiresAt = invite.expires_at ? new Date(invite.expires_at) : null;
+
+    if (invite.status === 'concluido' || invite.status === 'acessado') {
+      return { status: 'Ativado', color: 'bg-green-100', textColor: 'text-green-700' };
+    }
+
+    if (expiresAt && expiresAt < now) {
+      return { status: 'Expirado', color: 'bg-red-100', textColor: 'text-red-700' };
+    }
+
+    return { status: 'Pendente', color: 'bg-yellow-100', textColor: 'text-yellow-700' };
   };
 
 
@@ -704,30 +712,33 @@ export default function ConvidarColaborador() {
                         </div>
 
                         {/* Link de Acesso */}
-                        {inviteLink && (
-                          <div className="bg-blue-50 border border-blue-200 rounded p-3 text-xs" onClick={(e) => e.stopPropagation()}>
-                            <p className="text-blue-900 font-medium mb-2 flex items-center gap-1">
-                              <LinkIcon className="w-3 h-3" />
-                              Link de acesso:
-                            </p>
-                            <div className="flex items-center gap-2">
-                              <code className="bg-white border border-blue-300 px-2 py-1 rounded flex-1 text-blue-600 break-all">
-                                {inviteLink.length > 40 ? inviteLink.substring(0, 40) + '...' : inviteLink}
-                              </code>
+                        {/* Status e Link do Convite */}
+                        <div className={`${getInviteStatus(emp.id).color} rounded p-3 mb-3`}>
+                          <div className="flex items-center justify-between">
+                            <span className={`text-xs font-semibold ${getInviteStatus(emp.id).textColor}`}>
+                              {getInviteStatus(emp.id).status}
+                            </span>
+                            {inviteLink && (
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                className="flex-shrink-0 h-7 w-7 p-0"
+                                className="h-6 px-2 text-xs"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   copyInviteLink(inviteLink);
                                 }}
                               >
-                                <Copy className="w-3 h-3 text-blue-600" />
+                                <Copy className="w-3 h-3 mr-1" />
+                                Copiar Link
                               </Button>
-                            </div>
+                            )}
                           </div>
-                        )}
+                          {inviteLink && (
+                            <code className="text-xs text-gray-600 bg-white rounded px-2 py-1 mt-2 block break-all font-mono">
+                              {inviteLink.length > 45 ? inviteLink.substring(0, 45) + '...' : inviteLink}
+                            </code>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
