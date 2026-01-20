@@ -53,8 +53,12 @@ export default function Layout({ children, currentPageName }) {
 
   useEffect(() => {
     const loadUser = async () => {
-      const publicPages = ['/PrimeiroAcesso', '/ClientRegistration', '/login', '/signup'];
-      const isPublicPage = publicPages.some(page => location.pathname.toLowerCase().includes(page.toLowerCase()));
+      const publicPages = ['primeiroaçesso', 'primeiroacesso', '/PrimeiroAcesso', '/ClientRegistration', '/login', '/signup'];
+      const isPublicPage = publicPages.some(page => 
+        location.pathname.toLowerCase().includes(page.toLowerCase()) ||
+        location.pathname.includes('PrimeiroAcesso') ||
+        location.pathname.includes('primeiroaçesso')
+      );
 
       if (isPublicPage) {
         setIsAuthenticated(false);
