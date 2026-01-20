@@ -20,10 +20,13 @@ export default function UserFormDialog({
   isLoading
 }) {
   const [selectedProfileId, setSelectedProfileId] = useState(selectedUser?.profile_id || "");
-  const [selectedCustomRoles, setSelectedCustomRoles] = useState(selectedUser?.custom_role_ids || []);
-  const [formData, setFormData] = useState({
-    role: selectedUser?.role || "user"
-  });
+   const [selectedCustomRoles, setSelectedCustomRoles] = useState(selectedUser?.custom_role_ids || []);
+   const [formData, setFormData] = useState({
+     role: selectedUser?.role || "user",
+     area: selectedUser?.area || "",
+     job_role: selectedUser?.job_role || "outros",
+     workshop_id: selectedUser?.workshop_id || ""
+   });
   
   // Atualiza selectedProfileId, selectedCustomRoles e formData quando selectedUser mudar (modo edição)
   React.useEffect(() => {
@@ -39,7 +42,13 @@ export default function UserFormDialog({
       setSelectedCustomRoles([]);
     }
 
-    setFormData(prev => ({ ...prev, role: selectedUser?.role || "user" }));
+    setFormData(prev => ({ 
+      ...prev, 
+      role: selectedUser?.role || "user",
+      area: selectedUser?.area || "",
+      job_role: selectedUser?.job_role || "outros",
+      workshop_id: selectedUser?.workshop_id || ""
+    }));
   }, [selectedUser, isCreateMode]);
   
   const selectedProfile = profiles?.find(p => p.id === selectedProfileId);
@@ -78,15 +87,18 @@ export default function UserFormDialog({
     }
     
     const data = {
-      full_name: formDataObj.get('full_name'),
-      email: formDataObj.get('email'),
-      telefone: formDataObj.get('telefone'),
-      position: formDataObj.get('position'),
-      profile_id: selectedProfileId,
-      custom_role_ids: selectedCustomRoles,
-      user_status: formDataObj.get('user_status') || 'ativo',
-      role: formData.role
-    };
+       full_name: formDataObj.get('full_name'),
+       email: formDataObj.get('email'),
+       telefone: formDataObj.get('telefone'),
+       position: formDataObj.get('position'),
+       area: formData.area,
+       job_role: formData.job_role,
+       workshop_id: formData.workshop_id,
+       profile_id: selectedProfileId,
+       custom_role_ids: selectedCustomRoles,
+       user_status: formDataObj.get('user_status') || 'ativo',
+       role: formData.role
+     };
 
     console.log("📤 Enviando dados do usuário interno:", {
       ...data,
@@ -138,27 +150,84 @@ export default function UserFormDialog({
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Telefone *</Label>
-                <Input 
-                  name="telefone" 
-                  defaultValue={selectedUser?.telefone || ""} 
-                  placeholder="(00) 00000-0000"
-                  required 
-                />
-              </div>
+               <div>
+                 <Label>Telefone *</Label>
+                 <Input 
+                   name="telefone" 
+                   defaultValue={selectedUser?.telefone || ""} 
+                   placeholder="(00) 00000-0000"
+                   required 
+                 />
+               </div>
 
-              <div>
-                <Label>Cargo *</Label>
-                <Input 
-                  name="position" 
-                  defaultValue={selectedUser?.position || ""} 
-                  placeholder="Ex: Consultor Sênior"
-                  required 
-                />
-              </div>
+               <div>
+                 <Label>Cargo *</Label>
+                 <Input 
+                   name="position" 
+                   defaultValue={selectedUser?.position || ""} 
+                   placeholder="Ex: Consultor Sênior"
+                   required 
+                 />
+               </div>
+             </div>
+
+             <div className="grid grid-cols-3 gap-4">
+               <div>
+                 <Label>Área *</Label>
+                 <Select 
+                   value={formData.area}
+                   onValueChange={(value) => setFormData({...formData, area: value})}
+                 >
+                   <SelectTrigger>
+                     <SelectValue placeholder="Selecione a área" />
+                   </SelectTrigger>
+                   <SelectContent>
+                     <SelectItem value="vendas">Vendas</SelectItem>
+                     <SelectItem value="comercial">Comercial</SelectItem>
+                     <SelectItem value="marketing">Marketing</SelectItem>
+                     <SelectItem value="tecnico">Técnico</SelectItem>
+                     <SelectItem value="administrativo">Administrativo</SelectItem>
+                     <SelectItem value="financeiro">Financeiro</SelectItem>
+                     <SelectItem value="gerencia">Gerência</SelectItem>
+                   </SelectContent>
+                 </Select>
+               </div>
+
+               <div>
+                 <Label>Função/Role *</Label>
+                 <Select 
+                   value={formData.job_role}
+                   onValueChange={(value) => setFormData({...formData, job_role: value})}
+                 >
+                   <SelectTrigger>
+                     <SelectValue placeholder="Selecione a função" />
+                   </SelectTrigger>
+                   <SelectContent>
+                     <SelectItem value="socio">Sócio</SelectItem>
+                     <SelectItem value="diretor">Diretor</SelectItem>
+                     <SelectItem value="gerente">Gerente</SelectItem>
+                     <SelectItem value="supervisor_loja">Supervisor Loja</SelectItem>
+                     <SelectItem value="lider_tecnico">Líder Técnico</SelectItem>
+                     <SelectItem value="tecnico">Técnico</SelectItem>
+                     <SelectItem value="administrativo">Administrativo</SelectItem>
+                     <SelectItem value="financeiro">Financeiro</SelectItem>
+                     <SelectItem value="comercial">Comercial</SelectItem>
+                     <SelectItem value="consultor">Consultor</SelectItem>
+                     <SelectItem value="outros">Outros</SelectItem>
+                   </SelectContent>
+                 </Select>
+               </div>
+
+               <div>
+                 <Label>Workshop ID *</Label>
+                 <Input 
+                   value={formData.workshop_id}
+                   onChange={(e) => setFormData({...formData, workshop_id: e.target.value})}
+                   placeholder="ID da loja/oficina"
+                 />
+               </div>
+             </div>
             </div>
-          </div>
 
           {/* Perfil e Permissões */}
           <div className="space-y-4">
