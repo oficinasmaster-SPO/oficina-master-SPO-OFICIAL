@@ -686,7 +686,9 @@ export default function ConvidarColaborador() {
                       }}>
                         <div className="flex items-start justify-between mb-2">
                           <div>
-                            <p className="font-semibold text-gray-900">{emp.full_name}</p>
+                            <p className="font-semibold text-gray-900">
+                              {emp.identificador ? `[${emp.identificador}]` : ''} {emp.full_name}
+                            </p>
                             <p className="text-sm text-gray-600">{emp.email}</p>
                             {emp.telefone && <p className="text-sm text-gray-600">{emp.telefone}</p>}
                           </div>
