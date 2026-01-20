@@ -32,14 +32,34 @@ Deno.serve(async (req) => {
     
     console.log(`📧 Criando usuário Base44 com role: ${role}`);
 
-    // Criar usuário no Base44
+    // Criar usuário no Base44 com senha fornecida
     try {
       await base44.users.inviteUser(invite.email, role);
-      console.log(`✅ Usuário criado no Base44: ${invite.email}`);
+      console.log(`✅ Convite de usuário enviado para: ${invite.email}`);
+      
+      // Aguardar um pouco para o usuário ser criado
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Buscar o usuário criado e definir senha
+      const users = await base44.asServiceRole.entities.User.filter({ email: invite.email }, '-created_date', 1);
+      const user = users[0];
+      
+      if (user && password) {
+        // Atualizar senha do usuário usando asServiceRole
+        await base44.asServiceRole.auth.updateUserPassword(user.id, password);
+        console.log(`✅ Senha definida para o usuário: ${invite.email}`);
+      }
     } catch (inviteError) {
-      // Se o usuário já existir, não é erro crítico
+      // Se o usuário já existir, atualizar senha
       if (inviteError.message.includes('already exists') || inviteError.message.includes('já existe')) {
-        console.log("ℹ️ Usuário já existe no Base44");
+        console.log("ℹ️ Usuário já existe no Base44, atualizando senha...");
+        const users = await base44.asServiceRole.entities.User.filter({ email: invite.email }, '-created_date', 1);
+        const user = users[0];
+        
+        if (user && password) {
+          await base44.asServiceRole.auth.updateUserPassword(user.id, password);
+          console.log(`✅ Senha atualizada para: ${invite.email}`);
+        }
       } else {
         throw inviteError;
       }
