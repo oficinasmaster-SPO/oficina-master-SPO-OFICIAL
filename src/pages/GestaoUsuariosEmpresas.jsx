@@ -53,14 +53,23 @@ export default function GestaoUsuariosEmpresas() {
     }
   });
 
-  const { data: users = [], isLoading } = useQuery({
+  const { data: users = [], isLoading: usersLoading } = useQuery({
     queryKey: ['users-list'],
     queryFn: async () => {
-      // Lista todos os usuários - admin vê todos, usuário comum só vê da sua empresa
       const allUsers = await base44.entities.User.list();
       return Array.isArray(allUsers) ? allUsers : [];
     }
   });
+
+  const { data: employees = [], isLoading: employeesLoading } = useQuery({
+    queryKey: ['employees-list'],
+    queryFn: async () => {
+      const allEmployees = await base44.entities.Employee.list();
+      return Array.isArray(allEmployees) ? allEmployees : [];
+    }
+  });
+
+  const isLoading = usersLoading || employeesLoading;
 
   const updateUserMutation = useMutation({
     mutationFn: async ({ userId, data }) => {
@@ -163,46 +172,59 @@ export default function GestaoUsuariosEmpresas() {
     }
   };
 
-  // Combinar users com workshops para tabela
-  const usersWithWorkshops = useMemo(() => {
-    return users.map(user => {
-      const workshop = workshops.find(w => w.id === user.workshop_id);
+  // Combinar WORKSHOPS com employees para tabela
+  const workshopsWithData = useMemo(() => {
+    return workshops.map(workshop => {
+      // Buscar employees desta oficina
+      const workshopEmployees = employees.filter(emp => emp.workshop_id === workshop.id);
+      
+      // Separar entre com login e sem login
+      const employeesWithLogin = workshopEmployees.filter(emp => emp.user_id);
+      const employeesPending = workshopEmployees.filter(emp => !emp.user_id);
+      
       return {
-        ...user,
-        workshopName: workshop?.name || "Sem empresa",
-        workshopPlan: workshop?.planoAtual || "FREE",
-        workshopState: workshop?.state || "",
-        workshopCity: workshop?.city || "",
-        workshopRevenue: workshop?.monthly_revenue || "",
-        planStartDate: workshop?.dataAssinatura || null,
-        planEndDate: workshop?.dataRenovacao || null,
-        workshop: workshop
+        id: workshop.id,
+        workshopName: workshop.name || "Sem nome",
+        workshopPlan: workshop.planoAtual || "FREE",
+        workshopState: workshop.state || "",
+        workshopCity: workshop.city || "",
+        workshopRevenue: workshop.monthly_revenue || "",
+        planStartDate: workshop.dataAssinatura || null,
+        planEndDate: workshop.dataRenovacao || null,
+        status: workshop.status || "ativo",
+        workshop: workshop,
+        totalEmployees: workshopEmployees.length,
+        employeesWithLogin: employeesWithLogin.length,
+        employeesPending: employeesPending.length,
+        employees: workshopEmployees
       };
     });
-  }, [users, workshops]);
+  }, [workshops, employees]);
 
   // Aplicar filtros
-  const filteredUsers = useMemo(() => {
-    return usersWithWorkshops.filter(user => {
+  const filteredWorkshops = useMemo(() => {
+    return workshopsWithData.filter(workshop => {
       const matchesSearch = 
-        user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.workshopName?.toLowerCase().includes(searchTerm.toLowerCase());
+        workshop.workshopName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        workshop.employees.some(emp => 
+          emp.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          emp.email?.toLowerCase().includes(searchTerm.toLowerCase())
+        );
       
-      const matchesEmpresa = !filters.empresa || user.workshopName?.toLowerCase().includes(filters.empresa.toLowerCase());
-      const matchesPlano = !filters.plano || user.workshopPlan === filters.plano;
-      const matchesEstado = !filters.estado || user.workshopState === filters.estado;
-      const matchesCidade = !filters.cidade || user.workshopCity?.toLowerCase().includes(filters.cidade.toLowerCase());
-      const matchesStatus = !filters.status || user.user_status === filters.status;
-      const matchesFaturamento = !filters.faturamento || user.workshopRevenue === filters.faturamento;
+      const matchesEmpresa = !filters.empresa || workshop.workshopName?.toLowerCase().includes(filters.empresa.toLowerCase());
+      const matchesPlano = !filters.plano || workshop.workshopPlan === filters.plano;
+      const matchesEstado = !filters.estado || workshop.workshopState === filters.estado;
+      const matchesCidade = !filters.cidade || workshop.workshopCity?.toLowerCase().includes(filters.cidade.toLowerCase());
+      const matchesStatus = !filters.status || workshop.status === filters.status;
+      const matchesFaturamento = !filters.faturamento || workshop.workshopRevenue === filters.faturamento;
       
-      // Se não for admin, mostra só da mesma empresa
-      const matchesPermission = currentUser?.role === 'admin' || user.workshop_id === currentUser?.workshop_id;
+      // Se não for admin, mostra só a própria empresa
+      const matchesPermission = currentUser?.role === 'admin' || workshop.id === currentUser?.workshop_id;
       
       return matchesSearch && matchesEmpresa && matchesPlano && matchesEstado && 
              matchesCidade && matchesStatus && matchesFaturamento && matchesPermission;
     });
-  }, [usersWithWorkshops, searchTerm, filters, currentUser]);
+  }, [workshopsWithData, searchTerm, filters, currentUser]);
 
   // Listas únicas para filtros
   const uniqueStates = useMemo(() => {
@@ -261,7 +283,10 @@ export default function GestaoUsuariosEmpresas() {
           </div>
           <div className="flex items-center gap-3">
             <Badge variant="outline" className="text-lg px-4 py-2">
-              Total: {filteredUsers.length} registro{filteredUsers.length !== 1 ? 's' : ''}
+              {filteredWorkshops.length} empresa{filteredWorkshops.length !== 1 ? 's' : ''}
+            </Badge>
+            <Badge variant="outline" className="text-lg px-4 py-2 bg-blue-50">
+              {filteredWorkshops.reduce((sum, w) => sum + w.totalEmployees, 0)} colaboradores
             </Badge>
             {activeFiltersCount > 0 && (
               <Button variant="outline" size="sm" onClick={clearFilters}>
@@ -367,7 +392,7 @@ export default function GestaoUsuariosEmpresas() {
         </Card>
 
         {/* Tabela de Resultados */}
-        {filteredUsers.length === 0 ? (
+        {filteredWorkshops.length === 0 ? (
           <Card className="shadow-lg">
             <CardContent className="p-12 text-center">
               <UserPlus className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -384,58 +409,67 @@ export default function GestaoUsuariosEmpresas() {
                 <thead className="bg-gray-50 border-b-2 border-gray-200">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Empresa</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Colaborador</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Localização</th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase">Colaboradores</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Plano</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Data Início</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Data Fim</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Data Assinatura</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Status</th>
                     <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
-                  {filteredUsers.map((user) => (
-                    <React.Fragment key={user.id}>
+                  {filteredWorkshops.map((workshop) => (
+                    <React.Fragment key={workshop.id}>
                       <tr className="hover:bg-gray-50 transition-colors">
                         <td className="px-4 py-4">
                           <div className="flex items-center gap-2">
                             <Building2 className="w-4 h-4 text-gray-500 flex-shrink-0" />
                             <div>
-                              <p className="font-medium text-gray-900">{user.workshopName}</p>
-                              {user.workshopCity && user.workshopState && (
-                                <p className="text-xs text-gray-500">{user.workshopCity} - {user.workshopState}</p>
-                              )}
+                              <p className="font-medium text-gray-900">{workshop.workshopName}</p>
                             </div>
                           </div>
                         </td>
                         <td className="px-4 py-4">
-                          <div>
-                            <p className="font-medium text-gray-900">{user.full_name || "Sem nome"}</p>
-                            <p className="text-xs text-gray-500">{user.email}</p>
-                            {user.position && <p className="text-xs text-gray-600 mt-0.5">{user.position}</p>}
+                          {workshop.workshopCity && workshop.workshopState ? (
+                            <p className="text-sm text-gray-700">{workshop.workshopCity} - {workshop.workshopState}</p>
+                          ) : (
+                            <p className="text-sm text-gray-400">-</p>
+                          )}
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="text-center space-y-1">
+                            <Badge className="bg-blue-600 text-white">
+                              {workshop.totalEmployees} total
+                            </Badge>
+                            {workshop.employeesWithLogin > 0 && (
+                              <Badge className="bg-green-100 text-green-700 block">
+                                {workshop.employeesWithLogin} ativo{workshop.employeesWithLogin !== 1 ? 's' : ''}
+                              </Badge>
+                            )}
+                            {workshop.employeesPending > 0 && (
+                              <Badge className="bg-orange-100 text-orange-700 block">
+                                {workshop.employeesPending} pendente{workshop.employeesPending !== 1 ? 's' : ''}
+                              </Badge>
+                            )}
                           </div>
                         </td>
                         <td className="px-4 py-4">
                           <Badge className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-                            {user.workshopPlan}
+                            {workshop.workshopPlan}
                           </Badge>
                         </td>
                         <td className="px-4 py-4">
                           <p className="text-sm text-gray-700">
-                            {user.planStartDate ? format(new Date(user.planStartDate), 'dd/MM/yyyy') : '-'}
-                          </p>
-                        </td>
-                        <td className="px-4 py-4">
-                          <p className="text-sm text-gray-700">
-                            {user.planEndDate ? format(new Date(user.planEndDate), 'dd/MM/yyyy') : '-'}
+                            {workshop.planStartDate ? format(new Date(workshop.planStartDate), 'dd/MM/yyyy') : '-'}
                           </p>
                         </td>
                         <td className="px-4 py-4">
                           <Badge className={
-                            user.user_status === 'ativo' ? 'bg-green-100 text-green-700' :
-                            user.user_status === 'ferias' ? 'bg-blue-100 text-blue-700' :
+                            workshop.status === 'ativo' ? 'bg-green-100 text-green-700' :
+                            workshop.status === 'acompanhamento' ? 'bg-blue-100 text-blue-700' :
                             'bg-gray-100 text-gray-700'
                           }>
-                            {user.user_status || 'ativo'}
+                            {workshop.status || 'ativo'}
                           </Badge>
                         </td>
                         <td className="px-4 py-4">
@@ -443,42 +477,85 @@ export default function GestaoUsuariosEmpresas() {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => {
-                                setSelectedUser(user);
-                                setIsDialogOpen(true);
-                              }}
-                              title="Editar"
+                              onClick={() => setExpandedRow(expandedRow === workshop.id ? null : workshop.id)}
+                              title="Ver Detalhes"
                             >
-                              <Edit className="w-4 h-4" />
+                              <Eye className="w-4 h-4" />
                             </Button>
-                            {user.workshop_id && (
-                              <Button
-                                size="sm"
-                                variant="default"
-                                className="bg-blue-600 hover:bg-blue-700"
-                                onClick={() => setExpandedRow(expandedRow === user.id ? null : user.id)}
-                                title="Acessar Páginas do Cliente"
-                              >
-                                <ExternalLink className="w-4 h-4 mr-1" />
-                                {expandedRow === user.id ? <ChevronDown className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                              </Button>
-                            )}
+                            <Button
+                              size="sm"
+                              variant="default"
+                              className="bg-blue-600 hover:bg-blue-700"
+                              onClick={() => navigate(`${createPageUrl("Home")}?workshop_id=${workshop.id}`)}
+                              title="Acessar Dashboard"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                            </Button>
                           </div>
                         </td>
                       </tr>
                       
-                      {expandedRow === user.id && user.workshop_id && (
+                      {expandedRow === workshop.id && (
                         <tr className="bg-gradient-to-br from-blue-50 to-indigo-50">
                           <td colSpan="7" className="px-4 py-6">
                             <div className="max-w-7xl mx-auto space-y-6">
                               <div className="flex items-center justify-between">
                                 <h4 className="font-bold text-lg text-gray-900 flex items-center gap-2">
-                                  <ExternalLink className="w-5 h-5" />
-                                  Painel de {user.full_name}
+                                  <Users className="w-5 h-5" />
+                                  Colaboradores de {workshop.workshopName}
                                 </h4>
                                 <Badge className="bg-blue-600 text-white">
-                                  {user.workshopName}
+                                  {workshop.totalEmployees} colaborador{workshop.totalEmployees !== 1 ? 'es' : ''}
                                 </Badge>
+                              </div>
+
+                              {/* Lista de Colaboradores */}
+                              {workshop.employees.length > 0 ? (
+                                <div className="bg-white rounded-lg p-4 shadow-sm">
+                                  <div className="space-y-3">
+                                    {workshop.employees.map((employee) => {
+                                      const hasLogin = !!employee.user_id;
+                                      return (
+                                        <div key={employee.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                          <div className="flex items-center gap-3">
+                                            <div className={`w-2 h-2 rounded-full ${hasLogin ? 'bg-green-500' : 'bg-orange-400'}`} />
+                                            <div>
+                                              <p className="font-medium text-gray-900">{employee.full_name || "Sem nome"}</p>
+                                              <p className="text-xs text-gray-500">{employee.email || "Sem email"}</p>
+                                              {employee.position && <p className="text-xs text-gray-600 mt-0.5">{employee.position}</p>}
+                                            </div>
+                                          </div>
+                                          <div className="flex items-center gap-2">
+                                            {hasLogin ? (
+                                              <Badge className="bg-green-100 text-green-700">Ativo</Badge>
+                                            ) : (
+                                              <Badge className="bg-orange-100 text-orange-700">Pendente Login</Badge>
+                                            )}
+                                            <Button
+                                              size="sm"
+                                              variant="outline"
+                                              onClick={() => navigate(`${createPageUrl("DetalhesColaborador")}?id=${employee.id}`)}
+                                            >
+                                              <Eye className="w-3 h-3" />
+                                            </Button>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="bg-white rounded-lg p-8 text-center">
+                                  <UserX className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                                  <p className="text-gray-600">Nenhum colaborador cadastrado</p>
+                                </div>
+                              )}
+
+                              <div className="flex items-center justify-between">
+                                <h4 className="font-bold text-lg text-gray-900 flex items-center gap-2">
+                                  <ExternalLink className="w-5 h-5" />
+                                  Acesso Rápido às Páginas
+                                </h4>
                               </div>
 
                               {/* Dashboard & Rankings */}
@@ -488,7 +565,7 @@ export default function GestaoUsuariosEmpresas() {
                                   Dashboard & Rankings
                                 </h5>
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("Home")}?workshop_id=${user.workshop_id}`)}>
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("Home")}?workshop_id=${workshop.id}`)}>
                                     <Home className="w-4 h-4 mr-2" />Tela Início
                                   </Button>
                                   <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("DashboardOverview")}?workshop_id=${user.workshop_id}`)}>
