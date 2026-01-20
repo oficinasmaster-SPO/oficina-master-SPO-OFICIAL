@@ -231,12 +231,18 @@ export default function ConvidarColaborador() {
     },
     onSuccess: (data) => {
       console.log("🎉 Sucesso ao criar colaborador:", data);
-      console.log("📊 Estrutura completa do data:", JSON.stringify(data, null, 2));
-      console.log("🔗 invite_link:", data?.invite_link);
-      console.log("📧 email:", data?.email);
+      
+      // Validar se todos os dados necessários estão presentes
+      if (!data?.email || !data?.temporary_password || !data?.invite_link) {
+        console.error("❌ Dados incompletos na resposta:", data);
+        toast.error("Erro: Dados incompletos na resposta do servidor");
+        return;
+      }
+      
+      console.log("✅ Dados validados e prontos para exibição");
       queryClient.invalidateQueries({ queryKey: ['employees-list'] });
-
-      console.log("📝 Setando createdUser com:", data);
+      
+      // Somente setar createdUser quando TODOS os dados estão disponíveis
       setCreatedUser(data);
 
       if (data.action === 'resent') {
@@ -245,6 +251,7 @@ export default function ConvidarColaborador() {
         toast.success("✅ Colaborador criado com sucesso!", { duration: 5000 });
       }
       
+      // Limpar formulário
       setFormData({ 
         name: "", 
         email: "", 
@@ -362,48 +369,46 @@ export default function ConvidarColaborador() {
 
 
 
-        {/* Modal de credenciais */}
-        {createdUser && (
-          <Card className="mb-6 border-green-300 bg-green-50">
+        {/* Modal de credenciais - Só exibe quando todos os dados estão disponíveis */}
+        {createdUser && createdUser.email && createdUser.temporary_password && createdUser.invite_link && (
+          <Card className="mb-6 border-green-300 bg-green-50 animate-slide-up">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-green-800">
                 <CheckCircle2 className="w-6 h-6" />
-                Colaborador Criado com Sucesso!
+                ✅ Colaborador Criado com Sucesso!
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Link de Acesso */}
-              {createdUser.invite_link && (
-                <div className="bg-white rounded-lg p-4 border-2 border-blue-300 space-y-3">
-                  <p className="text-sm text-gray-700 flex items-center gap-2">
-                    <LinkIcon className="w-4 h-4 text-blue-600" />
-                    <strong>Link de Acesso:</strong>
-                  </p>
-                  <div className="bg-gray-50 p-3 rounded border break-all text-sm font-mono">
-                    {createdUser.invite_link}
-                  </div>
-                  <div className="flex gap-2">
-                    <Button onClick={copyLink} className="flex-1 bg-blue-600 hover:bg-blue-700">
-                      <Copy className="w-4 h-4 mr-2" />
-                      Copiar Link
-                    </Button>
-                  </div>
-                  
-                  {/* WhatsApp Button */}
-                  <div className="pt-2 border-t">
-                    <p className="text-xs text-gray-600 mb-2">📱 Compartilhar via WhatsApp:</p>
-                    <WhatsAppButton 
-                      inviteLink={createdUser.invite_link} 
-                      name={createdUser.email}
-                      workshopName={workshop.name}
-                    />
-                  </div>
-                  
-                  <p className="text-xs text-blue-600">
-                    💡 Compartilhe este link com o colaborador para que ele se cadastre
-                  </p>
+              {/* Link de Acesso - Sempre disponível quando modal aparece */}
+              <div className="bg-white rounded-lg p-4 border-2 border-blue-300 space-y-3">
+                <p className="text-sm text-gray-700 flex items-center gap-2">
+                  <LinkIcon className="w-4 h-4 text-blue-600" />
+                  <strong>🔗 Link de Acesso:</strong>
+                </p>
+                <div className="bg-gray-50 p-3 rounded border break-all text-sm font-mono">
+                  {createdUser.invite_link}
                 </div>
-              )}
+                <div className="flex gap-2">
+                  <Button onClick={copyLink} className="flex-1 bg-blue-600 hover:bg-blue-700">
+                    <Copy className="w-4 h-4 mr-2" />
+                    Copiar Link
+                  </Button>
+                </div>
+                
+                {/* WhatsApp Button */}
+                <div className="pt-2 border-t">
+                  <p className="text-xs text-gray-600 mb-2">📱 Compartilhar via WhatsApp:</p>
+                  <WhatsAppButton 
+                    inviteLink={createdUser.invite_link} 
+                    name={createdUser.email}
+                    workshopName={workshop.name}
+                  />
+                </div>
+                
+                <p className="text-xs text-blue-600">
+                  💡 Compartilhe este link com o colaborador para que ele se cadastre
+                </p>
+              </div>
 
               {/* Credenciais */}
               <div className="bg-white rounded-lg p-4 border-2 border-green-300">
