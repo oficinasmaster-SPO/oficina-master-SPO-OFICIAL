@@ -95,7 +95,8 @@ Deno.serve(async (req) => {
       message: 'Convite reenviado com sucesso!',
       email: employee.email,
       temporary_password: "Oficina@2025",
-      invite_link: inviteLink
+      invite_link: inviteLink,
+      action: 'resent'
     });
 
   } catch (error) {
