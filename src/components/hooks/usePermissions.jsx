@@ -151,6 +151,14 @@ export function usePermissions() {
         }
       }
       
+      // Fallback: Sócios e Gestores tem permissão por padrão para employees
+      if (profile?.job_roles?.includes('socio') || profile?.job_roles?.includes('diretor') || profile?.job_roles?.includes('gerente')) {
+        if (resourceId === 'employees' && (actionId === 'read' || actionId === 'create' || actionId === 'update')) {
+          console.log(`✅ [hasGranularPermission] ${profile.job_roles[0]} tem acesso padrão a employees`);
+          return true;
+        }
+      }
+      
       // Verificar permissões de módulos
       if (profile?.module_permissions) {
         const moduleAccess = profile.module_permissions[resourceId];
