@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Atualizar Employee com user_id e dados consolidados
+    // Buscar Employee e transferir dados para User
     if (invite.employee_id) {
       try {
         // Buscar usuário criado
@@ -73,7 +73,11 @@ Deno.serve(async (req) => {
         const user = users[0];
         
         if (user) {
-          const updateData = {
+          // Buscar dados completos do Employee
+          const employee = await base44.asServiceRole.entities.Employee.get(invite.employee_id);
+          
+          // Preparar dados do Employee para atualizar
+          const updateEmployeeData = {
             user_id: user.id,
             first_login_at: new Date().toISOString(),
             workshop_id: workshop_id || invite.workshop_id,
@@ -81,15 +85,43 @@ Deno.serve(async (req) => {
           };
           
           // Atualizar dados adicionais se fornecidos
-          if (full_name) updateData.full_name = full_name;
-          if (telefone) updateData.telefone = telefone;
-          if (data_nascimento) updateData.data_nascimento = data_nascimento;
+          if (full_name) updateEmployeeData.full_name = full_name;
+          if (telefone) updateEmployeeData.telefone = telefone;
+          if (data_nascimento) updateEmployeeData.data_nascimento = data_nascimento;
           
-          await base44.asServiceRole.entities.Employee.update(invite.employee_id, updateData);
-          console.log(`✅ Employee atualizado com user_id: ${user.id}, workshop_id: ${workshop_id || invite.workshop_id}`);
+          // Atualizar Employee
+          await base44.asServiceRole.entities.Employee.update(invite.employee_id, updateEmployeeData);
+          console.log(`✅ Employee atualizado com user_id: ${user.id}`);
+          
+          // Transferir dados do Employee para o User (IMPORTANTE!)
+          const updateUserData = {
+            profile_id: employee?.profile_id || null,
+            position: employee?.position || null,
+            job_role: employee?.job_role || 'outros',
+            area: employee?.area || null,
+            workshop_id: workshop_id || invite.workshop_id || employee?.workshop_id,
+            telefone: telefone || employee?.telefone || null,
+          };
+          
+          // Remover campos null para evitar sobrescrever com null
+          Object.keys(updateUserData).forEach(key => {
+            if (updateUserData[key] === null) {
+              delete updateUserData[key];
+            }
+          });
+          
+          console.log("📝 Atualizando User com dados:", updateUserData);
+          
+          // Atualizar User com dados do Employee
+          try {
+            await base44.asServiceRole.entities.User.update(user.id, updateUserData);
+            console.log(`✅ User atualizado com dados do Employee:`, updateUserData);
+          } catch (userUpdateError) {
+            console.warn("⚠️ Erro ao atualizar User (pode ser falta de campo no schema):", userUpdateError.message);
+          }
         }
       } catch (e) {
-        console.error("⚠️ Erro ao atualizar Employee:", e.message);
+        console.error("⚠️ Erro ao processar Employee:", e.message);
       }
     }
 
