@@ -87,21 +87,8 @@ Deno.serve(async (req) => {
     console.log("🔗 Link gerado para reenvio:", inviteLink);
     console.log("🔑 Token utilizado:", invite.invite_token);
 
-    // Enviar email
-    try {
-      const emailResponse = await base44.functions.invoke('sendEmployeeInvite', {
-        name: employee.full_name || employee.name,
-        email: employee.email,
-        workshop_id: employee.workshop_id,
-        employee_id: employee.id,
-        invite_link: inviteLink,
-        invite_token: invite.invite_token
-      });
-      
-      console.log("✅ Email enviado:", emailResponse.data?.success);
-    } catch (emailError) {
-      console.error("⚠️ Erro ao enviar email:", emailError.message);
-    }
+    // ⏸️ ENVIO DE EMAIL DESABILITADO - Focar em WhatsApp
+    console.log("📱 Link disponível para compartilhar via WhatsApp");
 
     return Response.json({ 
       success: true,
