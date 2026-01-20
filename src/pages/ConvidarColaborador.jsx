@@ -453,8 +453,9 @@ export default function ConvidarColaborador() {
             email={createdUser?.email || formData.email || "email@exemplo.com"}
             name={createdUser?.email ? (employees.find(e => e.email === createdUser.email)?.full_name || formData.name) : formData.name || "Colaborador"}
             workshopName={workshop.name}
-            inviteLink={createdUser?.invite_link || "https://..."}
+            inviteLink={createdUser?.invite_link || formData.email ? `https://[seu-domínio]/PrimeiroAcesso?token=[token-será-gerado]` : "https://..."}
             temporaryPassword={createdUser?.temporary_password || "Oficina@2025"}
+            isPreview={!createdUser}
           />
         )}
 
