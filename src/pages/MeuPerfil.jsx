@@ -36,12 +36,36 @@ export default function MeuPerfil() {
 
   const loadMyProfile = async () => {
     try {
-      // Verificar modo assistência
+      // Verificar modo assistência ou onboarding
       const params = new URLSearchParams(window.location.search);
       const isAssisting = params.get('assistance_mode') === 'true';
+      const isOnboarding = params.get('onboarding') === 'true';
+      const inviteToken = params.get('invite_token');
       const workshopId = params.get('workshop_id');
       
       setAssistanceMode(isAssisting && !!workshopId);
+      
+      // Se é onboarding com token, processar convite primeiro
+      if (isOnboarding && inviteToken) {
+        try {
+          const tokenResponse = await base44.functions.invoke('validateInviteToken', { token: inviteToken });
+          if (tokenResponse.data.success) {
+            // Validar e criar conta
+            const createResponse = await base44.functions.invoke('createUserOnFirstAccess', {
+              invite_id: tokenResponse.data.invite.id,
+              password: 'temp' // Será definido depois
+            });
+            if (createResponse.data.success) {
+              // Redirecionar para login para autenticar
+              base44.auth.redirectToLogin(window.location.origin + createPageUrl("MeuPerfil"));
+              return;
+            }
+          }
+        } catch (err) {
+          console.error("Erro ao processar onboarding:", err);
+          toast.error("Erro ao processar seu convite");
+        }
+      }
       
       const currentUser = await base44.auth.me();
       setUser(currentUser);
