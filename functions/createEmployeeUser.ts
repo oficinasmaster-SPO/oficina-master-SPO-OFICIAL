@@ -35,8 +35,18 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
+    // 1b. Gerar ID sequencial para o colaborador
+    const idResponse = await base44.functions.invoke('generateEmployeeId', { workshop_id: workshop_id });
+    
+    if (!idResponse.data.success) {
+      console.warn("⚠️ Aviso: Não foi possível gerar ID do colaborador");
+    }
+
+    const employeeId = idResponse.data?.employee_id || null;
+
     // 2. Criar Employee
     const employee = await base44.asServiceRole.entities.Employee.create({
+      identificador: employeeId,
       full_name: name,
       email: email,
       telefone: telefone || '',

@@ -67,8 +67,18 @@ export default function Cadastro() {
     setCreating(true);
     setErrorMsg(null);
     try {
+      // Gerar ID sequencial para a nova oficina
+      const idResponse = await base44.functions.invoke('generateWorkshopId', {});
+      
+      if (!idResponse.data.success) {
+        throw new Error("Erro ao gerar ID da oficina");
+      }
+
+      const workshopId = idResponse.data.workshop_id;
+
       // Payload completo para evitar erros de validação nos defaults
       const newWorkshop = await base44.entities.Workshop.create({
+        identificador: workshopId,
         owner_id: user.id,
         name: "Minha Nova Oficina",
         city: "A Definir",
@@ -82,7 +92,7 @@ export default function Cadastro() {
         tempo_medio_servico: 0
       });
       setWorkshop(newWorkshop);
-      toast.success("Ambiente de cadastro criado com sucesso!");
+      toast.success(`Ambiente criado! Código: ${workshopId}`);
     } catch (error) {
       console.error("Erro ao criar oficina:", error);
       const msg = error.message || JSON.stringify(error);
