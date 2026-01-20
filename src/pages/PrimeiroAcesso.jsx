@@ -65,12 +65,55 @@ export default function PrimeiroAcesso() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Redirecionar para MeuPerfil passando o token
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
-    
-    if (token) {
-      window.location.href = `${createPageUrl("MeuPerfil")}?onboarding=true&invite_token=${token}`;
+    if (step === 1) {
+      // Primeiro passo: validação passada, ir para cadastro
+      setStep(2);
+      return;
+    }
+
+    // Segundo passo: salvar dados e criar conta
+    setSubmitting(true);
+
+    try {
+      if (!formData.password || formData.password.length < 6) {
+        toast.error("A senha deve ter no mínimo 6 caracteres");
+        return;
+      }
+
+      if (formData.password !== formData.confirmPassword) {
+        toast.error("As senhas não coincidem");
+        return;
+      }
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get('token');
+
+      // Criar conta com os dados
+      const response = await base44.functions.invoke('createUserOnFirstAccess', {
+        invite_id: invite.id,
+        password: formData.password,
+        full_name: formData.full_name || invite.name,
+        telefone: formData.telefone,
+        data_nascimento: formData.data_nascimento
+      });
+
+      if (!response.data.success) {
+        throw new Error(response.data.error || "Erro ao criar conta");
+      }
+
+      toast.success("✅ Conta criada com sucesso!");
+      setStep(3); // Ir para tela de sucesso
+
+      // Redirecionar para login após 2 segundos
+      setTimeout(() => {
+        base44.auth.redirectToLogin(window.location.origin + createPageUrl("Dashboard"));
+      }, 2000);
+
+    } catch (err) {
+      console.error("❌ Erro:", err);
+      toast.error(err.response?.data?.error || err.message || "Erro ao criar conta");
+    } finally {
+      setSubmitting(false);
     }
   };
 
