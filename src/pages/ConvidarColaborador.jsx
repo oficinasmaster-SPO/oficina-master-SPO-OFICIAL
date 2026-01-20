@@ -416,7 +416,8 @@ export default function ConvidarColaborador() {
                   <p className="text-xs text-gray-600 mb-2">📱 Compartilhar via WhatsApp:</p>
                   <WhatsAppButton 
                     inviteLink={createdUser.invite_link} 
-                    name={createdUser.email}
+                    email={createdUser.email}
+                    temporaryPassword={createdUser.temporary_password}
                     workshopName={workshop.name}
                   />
                 </div>
@@ -714,7 +715,7 @@ export default function ConvidarColaborador() {
                         {/* Link de Acesso */}
                         {/* Status e Link do Convite */}
                         <div className={`${getInviteStatus(emp.id).color} rounded p-3 mb-3`}>
-                          <div className="flex items-center justify-between">
+                          <div className="flex items-center justify-between mb-2">
                             <span className={`text-xs font-semibold ${getInviteStatus(emp.id).textColor}`}>
                               {getInviteStatus(emp.id).status}
                             </span>
@@ -734,9 +735,17 @@ export default function ConvidarColaborador() {
                             )}
                           </div>
                           {inviteLink && (
-                            <code className="text-xs text-gray-600 bg-white rounded px-2 py-1 mt-2 block break-all font-mono">
+                            <code className="text-xs text-gray-600 bg-white rounded px-2 py-1 block break-all font-mono mb-2">
                               {inviteLink.length > 45 ? inviteLink.substring(0, 45) + '...' : inviteLink}
                             </code>
+                          )}
+                          {inviteLink && (
+                            <WhatsAppButton
+                              inviteLink={inviteLink}
+                              email={emp.email}
+                              temporaryPassword="Oficina@2025"
+                              workshopName={workshop.name}
+                            />
                           )}
                         </div>
                       </div>

@@ -4,11 +4,11 @@ import { MessageCircle, Copy, Check } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-export default function WhatsAppButton({ inviteLink, name, workshopName }) {
+export default function WhatsAppButton({ inviteLink, name, workshopName, email, temporaryPassword }) {
   const [copied, setCopied] = useState(false);
 
   const generateWhatsAppMessage = () => {
-    const message = `Olá! 👋\n\nVocê foi convidado para acessar o sistema de ${workshopName}! 🎉\n\n📧 Use este link para se cadastrar:\n${inviteLink}\n\n🔑 Sua senha temporária é: Oficina@2025\n⏰ Este link expira em 7 dias.\n\nAté logo! 🚀`;
+    const message = `Olá! 👋 Você foi convidado para acessar a plataforma Oficinas Master.\n\n📧 Email: ${email}\n🔑 Senha temporária: ${temporaryPassword}\n🔗 Acesse: ${inviteLink}\n\nLembre-se de trocar sua senha no primeiro acesso. 🔒`;
     return message;
   };
 
