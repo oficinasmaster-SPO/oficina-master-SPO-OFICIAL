@@ -206,6 +206,9 @@ export default function ConvidarColaborador() {
     },
     onSuccess: (data) => {
       console.log("🎉 Sucesso ao criar colaborador:", data);
+      console.log("📊 Estrutura completa do data:", JSON.stringify(data, null, 2));
+      console.log("🔗 invite_link:", data?.invite_link);
+      console.log("📧 email:", data?.email);
       queryClient.invalidateQueries({ queryKey: ['employees-list'] });
       
       if (data.action === 'resent') {
