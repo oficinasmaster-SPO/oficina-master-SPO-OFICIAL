@@ -186,6 +186,13 @@ Deno.serve(async (req) => {
     }
 
     // 8. Retornar sucesso
+    console.log("✅ Resposta final:", {
+      success: true,
+      email: email,
+      invite_link: inviteLink,
+      email_status: emailStatus
+    });
+
     return Response.json({ 
       success: true,
       message: 'Colaborador criado! Email de convite enviado.',
