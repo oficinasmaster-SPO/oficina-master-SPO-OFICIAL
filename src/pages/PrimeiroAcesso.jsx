@@ -18,11 +18,9 @@ export default function PrimeiroAcesso() {
   const [error, setError] = useState(null);
   
   const [formData, setFormData] = useState({
+    email: "",
     password: "",
-    confirmPassword: "",
-    full_name: "",
-    telefone: "",
-    data_nascimento: ""
+    confirmPassword: ""
   });
   const [step, setStep] = useState(1); // 1: validação, 2: formulário de cadastro
 
