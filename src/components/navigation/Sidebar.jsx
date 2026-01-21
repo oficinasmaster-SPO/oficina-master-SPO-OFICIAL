@@ -60,7 +60,8 @@ import {
   UserCheck,
   Network,
   AlertCircle,
-  HelpCircle
+  HelpCircle,
+  UserPlus
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -818,6 +819,15 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           description: 'Controle de permissões e recursos por plano',
           adminOnly: true,
           requiredPermission: 'admin.system_config'
+        },
+        { 
+          name: 'Cadastro Direto User', 
+          href: createPageUrl('CadastroUsuarioDireto'), 
+          icon: UserPlus,
+          description: 'Criar usuário direto no sistema',
+          adminOnly: true,
+          highlight: true,
+          requiredPermission: 'admin.users'
         },
         { 
           name: 'Debug Permissões', 
