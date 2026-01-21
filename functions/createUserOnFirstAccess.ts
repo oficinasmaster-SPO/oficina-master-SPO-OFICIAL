@@ -47,9 +47,10 @@ Deno.serve(async (req) => {
     const userId = employee.user_id;
     console.log("✅ User ID encontrado:", userId);
     
-    // Definir senha
+    // Definir senha do usuário
     if (password) {
-      const authResponse = await fetch(`https://base44.app/api/auth/users/${user.id}/password`, {
+      console.log(`🔐 Definindo senha para o usuário: ${invite.email}`);
+      const authResponse = await fetch(`https://base44.app/api/auth/users/${userId}/password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -59,9 +60,11 @@ Deno.serve(async (req) => {
       });
       
       if (!authResponse.ok) {
-        throw new Error(`Falha ao definir senha: ${await authResponse.text()}`);
+        const errorText = await authResponse.text();
+        console.error("❌ Erro ao definir senha:", errorText);
+        throw new Error(`Falha ao definir senha: ${errorText}`);
       }
-      console.log(`✅ Senha definida para o usuário: ${invite.email}`);
+      console.log(`✅ Senha definida com sucesso`);
     }
 
     // Atualizar User e Employee no primeiro acesso
