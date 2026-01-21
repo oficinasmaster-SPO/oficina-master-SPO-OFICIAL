@@ -54,19 +54,24 @@ Deno.serve(async (req) => {
     // Definir senha do usuário
     if (password) {
       console.log(`🔐 Definindo senha para o usuário: ${invite.email}`);
-      const authResponse = await fetch(`https://base44.app/api/auth/users/${userId}/password`, {
+      
+      // Usar endpoint correto da API Base44 para definir senha
+      const apiUrl = `https://base44.app/api/apps/${Deno.env.get('BASE44_APP_ID')}/users/${userId}/password`;
+      console.log(`📍 URL de autenticação:`, apiUrl);
+      
+      const authResponse = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${Deno.env.get('BASE44_SERVICE_TOKEN')}`
+          'x-base44-key': Deno.env.get('BASE44_SERVICE_ROLE_KEY')
         },
         body: JSON.stringify({ password })
       });
       
       if (!authResponse.ok) {
         const errorText = await authResponse.text();
-        console.error("❌ Erro ao definir senha:", errorText);
-        throw new Error(`Falha ao definir senha: ${errorText}`);
+        console.error("❌ Erro ao definir senha:", authResponse.status, errorText);
+        throw new Error(`Falha ao definir senha (${authResponse.status}): ${errorText}`);
       }
       console.log(`✅ Senha definida com sucesso`);
     }
