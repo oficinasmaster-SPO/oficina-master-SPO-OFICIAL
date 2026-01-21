@@ -4,10 +4,14 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json();
-    const { invite_id, password, workshop_id, full_name, telefone, data_nascimento } = body;
+    const { invite_id, password, workshop_id, email } = body;
     
     if (!invite_id) {
       return Response.json({ error: 'invite_id obrigatório' }, { status: 400 });
+    }
+    
+    if (!password) {
+      return Response.json({ error: 'Senha é obrigatória' }, { status: 400 });
     }
 
     console.log("👤 Criando usuário no primeiro acesso para convite:", invite_id);
