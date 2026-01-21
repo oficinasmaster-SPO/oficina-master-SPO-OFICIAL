@@ -45,8 +45,19 @@ Deno.serve(async (req) => {
       const user = users[0];
       
       if (user && password) {
-        // Atualizar senha do usuário usando asServiceRole
-        await base44.asServiceRole.auth.updateUserPassword(user.id, password);
+        // Definir senha através do endpoint de auth
+        const authResponse = await fetch(`https://base44.app/api/auth/users/${user.id}/password`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${Deno.env.get('BASE44_SERVICE_TOKEN')}`
+          },
+          body: JSON.stringify({ password })
+        });
+        
+        if (!authResponse.ok) {
+          throw new Error(`Falha ao definir senha: ${await authResponse.text()}`);
+        }
         console.log(`✅ Senha definida para o usuário: ${invite.email}`);
       }
     } catch (inviteError) {
@@ -57,7 +68,18 @@ Deno.serve(async (req) => {
         const user = users[0];
         
         if (user && password) {
-          await base44.asServiceRole.auth.updateUserPassword(user.id, password);
+          const authResponse = await fetch(`https://base44.app/api/auth/users/${user.id}/password`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${Deno.env.get('BASE44_SERVICE_TOKEN')}`
+            },
+            body: JSON.stringify({ password })
+          });
+          
+          if (!authResponse.ok) {
+            throw new Error(`Falha ao atualizar senha: ${await authResponse.text()}`);
+          }
           console.log(`✅ Senha atualizada para: ${invite.email}`);
         }
       } else {
