@@ -37,31 +37,19 @@ Deno.serve(async (req) => {
     const workshop = await base44.asServiceRole.entities.Workshop.get(workshop_id);
     const workshopId = workshop?.identificador || workshop_id;
 
-    // Contar usuários existentes para gerar Profile ID automático
-    const allUsers = await base44.asServiceRole.entities.User.filter({ workshop_id: workshop_id });
-    const userCount = Array.isArray(allUsers) ? allUsers.length + 1 : 1;
+    // Contar employees existentes para gerar Profile ID automático
+    const allEmployees = await base44.asServiceRole.entities.Employee.filter({ workshop_id: workshop_id });
+    const employeeCount = Array.isArray(allEmployees) ? allEmployees.length + 1 : 1;
     
     // Gerar Profile ID: 001.01, 001.02, etc
-    const generatedProfileId = `${workshopId}.${String(userCount).padStart(2, '0')}`;
+    const generatedProfileId = `${workshopId}.${String(employeeCount).padStart(2, '0')}`;
     const finalProfileId = profile_id || generatedProfileId;
 
     // Convidar usuário via Base44
     console.log("👤 Convidando usuário via Base44 com role:", role);
     await base44.users.inviteUser(email, role);
     
-    // Aguardar um pouco para o usuário ser criado
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Buscar usuário criado
-    console.log("🔍 Buscando usuário criado...");
-    const users = await base44.asServiceRole.entities.User.filter({ email: email }, '-created_date', 1);
-    const createdUser = users && users.length > 0 ? users[0] : null;
-    
-    if (!createdUser) {
-      throw new Error("Usuário não foi criado pelo Base44");
-    }
-
-    console.log("✅ User criado via inviteUser:", createdUser.id);
+    console.log("✅ Convite Base44 enviado para:", email);
 
     // Gerar token de convite
     const inviteToken = Math.random().toString(36).substring(2, 15) + 
@@ -110,7 +98,8 @@ Deno.serve(async (req) => {
 
     console.log("✅ Employee criado:", employee.id);
 
-    // Atualizar User com todos os dados
+    // Atualizar User com todos os dados usando updateMe
+    console.log("📝 Atualizando dados do usuário criado...");
     const userData = {
       full_name: name,
       workshop_id: workshop_id,
@@ -124,14 +113,15 @@ Deno.serve(async (req) => {
       is_internal: true,
       invite_id: invite.id,
       admin_responsavel_id: user.id,
-      profile_picture_url: null
+      employee_id: employee.id
     };
 
     if (data_nascimento) {
       userData.data_nascimento = data_nascimento;
     }
 
-    await base44.asServiceRole.entities.User.update(createdUser.id, userData);
+    // Atualizar via auth.updateUser com service role
+    await base44.asServiceRole.auth.updateUser(email, userData);
     console.log("✅ User atualizado com dados completos");
 
     // Gerar link de convite
