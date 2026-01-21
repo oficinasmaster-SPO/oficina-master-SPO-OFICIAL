@@ -121,6 +121,7 @@ Deno.serve(async (req) => {
 
     // Atualizar User com todos os dados
     const userData = {
+      full_name: name,
       workshop_id: workshop_id,
       profile_id: finalProfileId,
       position: position || 'Colaborador',
@@ -131,7 +132,8 @@ Deno.serve(async (req) => {
       user_status: 'pending',
       is_internal: true,
       invite_id: invite.id,
-      admin_responsavel_id: user.id
+      admin_responsavel_id: user.id,
+      profile_picture_url: null
     };
 
     if (data_nascimento) {
