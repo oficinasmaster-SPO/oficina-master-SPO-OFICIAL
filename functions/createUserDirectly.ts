@@ -33,14 +33,6 @@ Deno.serve(async (req) => {
 
     console.log("👤 Criando usuário diretamente:", email);
 
-    // Verificar se já existe User com este email
-    const existingUsers = await base44.asServiceRole.entities.User.filter({ email: email });
-    if (existingUsers && existingUsers.length > 0) {
-      return Response.json({ 
-        error: 'Já existe um usuário com este email' 
-      }, { status: 400 });
-    }
-
     // Buscar workshop para pegar identificador
     const workshop = await base44.asServiceRole.entities.Workshop.get(workshop_id);
     const workshopId = workshop?.identificador || workshop_id;
