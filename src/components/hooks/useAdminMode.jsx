@@ -7,6 +7,16 @@ export function useAdminMode() {
   const location = useLocation();
 
   useEffect(() => {
+    // Não ativar modo admin em páginas de primeiro acesso
+    const isPublicPage = location.pathname.toLowerCase().includes('primeiroacesso') || 
+                        location.pathname.toLowerCase().includes('primeiroaçesso');
+    
+    if (isPublicPage) {
+      setIsAdminMode(false);
+      setAdminWorkshopId(null);
+      return;
+    }
+
     const params = new URLSearchParams(window.location.search);
     const workshopId = params.get('workshop_id');
     
