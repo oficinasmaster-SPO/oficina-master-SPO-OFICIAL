@@ -251,19 +251,6 @@ export default function PrimeiroAcesso() {
     );
   }
 
-  // STEP 3: Sucesso
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-50 p-4">
-      <Card className="w-full max-w-md shadow-xl">
-        <CardContent className="text-center p-12">
-          <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-6">
-            <CheckCircle2 className="w-8 h-8 text-green-600" />
-          </div>
-          <h2 className="text-2xl font-bold text-green-900 mb-2">Conta ativada com sucesso!</h2>
-          <p className="text-gray-600 mb-6">Você será redirecionado para fazer login em alguns momentos...</p>
-          <Loader2 className="w-8 h-8 animate-spin text-green-600 mx-auto" />
-        </CardContent>
-      </Card>
-    </div>
-  );
+  // Fallback: não deveria chegar aqui
+  return null;
 }
