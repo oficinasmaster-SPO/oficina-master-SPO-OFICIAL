@@ -164,36 +164,17 @@ export default function PrimeiroAcesso() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="full_name">Nome Completo</Label>
+                <Label htmlFor="email">E-mail</Label>
                 <Input
-                  id="full_name"
-                  value={formData.full_name}
-                  onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                  placeholder={invite?.name}
-                  className="mt-1"
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  required
+                  disabled
+                  className="mt-1 bg-gray-50"
                 />
-              </div>
-
-              <div>
-                <Label htmlFor="telefone">Telefone</Label>
-                <Input
-                  id="telefone"
-                  value={formData.telefone}
-                  onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
-                  placeholder="(00) 00000-0000"
-                  className="mt-1"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="data_nascimento">Data de Nascimento</Label>
-                <Input
-                  id="data_nascimento"
-                  type="date"
-                  value={formData.data_nascimento}
-                  onChange={(e) => setFormData({ ...formData, data_nascimento: e.target.value })}
-                  className="mt-1"
-                />
+                <p className="text-xs text-gray-500 mt-1">E-mail do convite</p>
               </div>
 
               <div>
@@ -224,6 +205,12 @@ export default function PrimeiroAcesso() {
                 />
               </div>
 
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p className="text-xs text-blue-900">
+                  ℹ️ Após criar sua conta, você será direcionado para completar seu perfil com nome, telefone e outras informações.
+                </p>
+              </div>
+
               <Button
                 type="submit"
                 disabled={submitting}
@@ -232,12 +219,12 @@ export default function PrimeiroAcesso() {
                 {submitting ? (
                   <>
                     <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    Ativando Conta...
+                    Criando Conta...
                   </>
                 ) : (
                   <>
                     <CheckCircle2 className="w-5 h-5 mr-2" />
-                    Ativar Conta e Entrar
+                    Criar Conta e Entrar
                   </>
                 )}
               </Button>
