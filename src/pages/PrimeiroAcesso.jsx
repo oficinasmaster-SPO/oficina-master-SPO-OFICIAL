@@ -24,7 +24,7 @@ export default function PrimeiroAcesso() {
     telefone: "",
     data_nascimento: ""
   });
-  const [step, setStep] = useState(1); // 1: validação, 2: dados, 3: sucesso
+  const [step, setStep] = useState(1); // 1: validação, 2: formulário de cadastro
 
   useEffect(() => {
     validateToken();
