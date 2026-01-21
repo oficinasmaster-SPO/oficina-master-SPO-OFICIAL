@@ -4,7 +4,18 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json();
-    const { name, email, workshop_id, employee_id } = body;
+    const { 
+      name, 
+      email, 
+      workshop_id, 
+      employee_id,
+      telefone,
+      position,
+      area,
+      job_role,
+      profile_id,
+      role = "user"
+    } = body;
     
     if (!name || !email || !workshop_id) {
       return Response.json({ error: 'Dados incompletos' }, { status: 400 });
@@ -17,6 +28,55 @@ Deno.serve(async (req) => {
     
     if (!workshop) {
       return Response.json({ error: 'Oficina não encontrada' }, { status: 404 });
+    }
+
+    // Verificar se User já existe
+    let userExists = false;
+    const existingUsers = await base44.asServiceRole.entities.User.filter({ email: email });
+    if (existingUsers && existingUsers.length > 0) {
+      userExists = true;
+      console.log("✅ User já existe para:", email);
+    }
+
+    // Se User não existe, criar agora com todos os dados
+    if (!userExists) {
+      console.log("🆕 Criando User completo para:", email);
+      
+      // Criar usuário Base44
+      await base44.users.inviteUser(email, role);
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      
+      // Buscar usuário criado
+      const users = await base44.asServiceRole.entities.User.filter({ email: email }, '-created_date', 1);
+      const createdUser = users && users.length > 0 ? users[0] : null;
+      
+      if (createdUser) {
+        // Gerar Profile ID automático
+        const workshopIdentifier = workshop?.identificador || workshop_id;
+        const allUsers = await base44.asServiceRole.entities.User.filter({ workshop_id: workshop_id });
+        const userCount = Array.isArray(allUsers) ? allUsers.length + 1 : 1;
+        const generatedProfileId = `${workshopIdentifier}.${String(userCount).padStart(2, '0')}`;
+        const finalProfileId = profile_id || generatedProfileId;
+
+        // Atualizar User com todos os dados
+        const currentUser = await base44.auth.me();
+        await base44.asServiceRole.entities.User.update(createdUser.id, {
+          full_name: name,
+          workshop_id: workshop_id,
+          profile_id: finalProfileId,
+          position: position || 'Colaborador',
+          job_role: job_role || 'outros',
+          area: area || 'tecnico',
+          telefone: telefone || '',
+          hire_date: new Date().toISOString().split('T')[0],
+          user_status: 'pending',
+          is_internal: true,
+          admin_responsavel_id: currentUser?.id,
+          profile_picture_url: null
+        });
+        
+        console.log("✅ User atualizado com dados completos");
+      }
     }
 
     // Buscar convite criado
