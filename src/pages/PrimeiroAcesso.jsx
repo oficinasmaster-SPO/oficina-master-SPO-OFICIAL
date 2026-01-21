@@ -50,6 +50,7 @@ export default function PrimeiroAcesso() {
       if (response.data.success) {
         setInvite(response.data.invite);
         setWorkshop(response.data.workshop);
+        setFormData(prev => ({ ...prev, email: response.data.invite.email }));
         setStep(2); // Ir direto para o formulário de cadastro
         console.log("✅ Convite válido:", response.data.invite);
       } else {
