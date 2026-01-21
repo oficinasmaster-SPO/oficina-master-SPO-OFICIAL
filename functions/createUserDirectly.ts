@@ -37,19 +37,31 @@ Deno.serve(async (req) => {
     const workshop = await base44.asServiceRole.entities.Workshop.get(workshop_id);
     const workshopId = workshop?.identificador || workshop_id;
 
-    // Contar employees existentes para gerar Profile ID automático
-    const allEmployees = await base44.asServiceRole.entities.Employee.filter({ workshop_id: workshop_id });
-    const employeeCount = Array.isArray(allEmployees) ? allEmployees.length + 1 : 1;
+    // Contar usuários existentes para gerar Profile ID automático
+    const allUsers = await base44.asServiceRole.entities.User.filter({ workshop_id: workshop_id });
+    const userCount = Array.isArray(allUsers) ? allUsers.length + 1 : 1;
     
     // Gerar Profile ID: 001.01, 001.02, etc
-    const generatedProfileId = `${workshopId}.${String(employeeCount).padStart(2, '0')}`;
+    const generatedProfileId = `${workshopId}.${String(userCount).padStart(2, '0')}`;
     const finalProfileId = profile_id || generatedProfileId;
 
     // Convidar usuário via Base44
     console.log("👤 Convidando usuário via Base44 com role:", role);
     await base44.users.inviteUser(email, role);
     
-    console.log("✅ Convite Base44 enviado para:", email);
+    // Aguardar um pouco para o usuário ser criado
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Buscar usuário criado
+    console.log("🔍 Buscando usuário criado...");
+    const users = await base44.asServiceRole.entities.User.filter({ email: email }, '-created_date', 1);
+    const createdUser = users && users.length > 0 ? users[0] : null;
+    
+    if (!createdUser) {
+      throw new Error("Usuário não foi criado pelo Base44");
+    }
+
+    console.log("✅ User criado via inviteUser:", createdUser.id);
 
     // Gerar token de convite
     const inviteToken = Math.random().toString(36).substring(2, 15) + 
