@@ -128,12 +128,13 @@ Deno.serve(async (req) => {
 
     return Response.json({ 
       success: true,
-      message: 'Usuário criado diretamente na entidade User',
-      user_id: createdUser.id,
+      message: 'Usuário criado com sucesso. E-mail de convite enviado pelo Base44.',
+      user_id: inviteResult.id,
       email: email,
       profile_id: finalProfileId,
       invite_link: inviteLink,
-      invite_id: invite.id
+      invite_id: invite.id,
+      employee_id: employee.id
     });
 
   } catch (error) {
