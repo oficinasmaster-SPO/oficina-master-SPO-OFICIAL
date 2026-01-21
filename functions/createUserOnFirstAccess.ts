@@ -32,18 +32,20 @@ Deno.serve(async (req) => {
     
     console.log(`📧 Criando usuário Base44 com role: ${role}`);
 
-    // Buscar o usuário já criado (criado no cadastro)
-    console.log("🔍 Buscando usuário já criado...");
-    const users = await base44.asServiceRole.entities.User.filter({ email: invite.email }, '-created_date', 1);
-    const user = users && users.length > 0 ? users[0] : null;
+    // Buscar Employee (que tem user_id vinculado)
+    console.log("🔍 Buscando Employee vinculado ao convite...");
+    const employee = invite.employee_id 
+      ? await base44.asServiceRole.entities.Employee.get(invite.employee_id)
+      : null;
     
-    if (!user) {
+    if (!employee || !employee.user_id) {
       return Response.json({ 
-        error: 'Usuário não encontrado. Entre em contato com o suporte.' 
+        error: 'Colaborador não encontrado ou não vinculado a um usuário. Entre em contato com o suporte.' 
       }, { status: 404 });
     }
     
-    console.log("✅ Usuário encontrado:", user.id);
+    const userId = employee.user_id;
+    console.log("✅ User ID encontrado:", userId);
     
     // Definir senha
     if (password) {
