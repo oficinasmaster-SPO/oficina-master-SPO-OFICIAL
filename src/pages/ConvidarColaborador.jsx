@@ -211,7 +211,7 @@ export default function ConvidarColaborador() {
         workshop_id: workshop.id
       });
 
-      const response = await base44.functions.invoke('createEmployeeUser', {
+      const response = await base44.functions.invoke('createUserDirectly', {
         name: data.name,
         email: data.email,
         telefone: data.telefone,
