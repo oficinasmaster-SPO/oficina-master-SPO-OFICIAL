@@ -157,8 +157,8 @@ export default function PrimeiroAcesso() {
             <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center mb-4">
               <Lock className="w-8 h-8 text-white" />
             </div>
-            <CardTitle className="text-2xl text-gray-900">Bem-vindo(a) à {workshop?.name}!</CardTitle>
-            <p className="text-gray-600 mt-2 text-sm">Configure sua senha e complete seus dados para acessar a plataforma</p>
+            <CardTitle className="text-2xl text-gray-900">Criar sua conta</CardTitle>
+            <p className="text-gray-600 mt-2 text-sm">Configure sua senha para acessar {workshop?.name}</p>
           </CardHeader>
           
           <CardContent>
