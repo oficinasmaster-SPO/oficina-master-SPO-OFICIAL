@@ -75,14 +75,15 @@ Deno.serve(async (req) => {
 
     console.log("✅ Employee criado:", employee.id);
 
-    // 3. Criar registro de convite no sistema (usuário será criado quando acessar)
+    // 3. Criar registro de convite no sistema
+    let inviteId;
     try {
       const inviteToken = Math.random().toString(36).substring(2, 15) + 
                          Math.random().toString(36).substring(2, 15);
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 7); // 7 dias
 
-      await base44.asServiceRole.entities.EmployeeInvite.create({
+      const invite = await base44.asServiceRole.entities.EmployeeInvite.create({
         workshop_id: workshop_id,
         employee_id: employee.id,
         name: name,
@@ -91,17 +92,60 @@ Deno.serve(async (req) => {
         position: position || 'Colaborador',
         area: area || 'tecnico',
         job_role: job_role || 'outros',
-        profile_id: profile_id || profileId, // Usar Profile ID gerado
+        profile_id: profile_id || profileId,
         invite_token: inviteToken,
         invite_type: 'workshop',
         expires_at: expiresAt.toISOString(),
         status: "pendente",
-        metadata: { role: role } // Salvar role para criar usuário depois
+        metadata: { role: role }
       });
 
+      inviteId = invite.id;
       console.log("✅ Convite criado no sistema");
     } catch (inviteDbError) {
       console.error("⚠️ Erro ao criar convite no banco:", inviteDbError.message);
+    }
+
+    // 4. CRIAR USER IMEDIATAMENTE com status pending
+    try {
+      console.log("👤 Criando User com status pending...");
+      
+      // Criar usuário no Base44
+      await base44.users.inviteUser(email, role);
+      console.log(`✅ Usuário Base44 criado com role: ${role}`);
+      
+      // Aguardar criação
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Buscar o usuário criado
+      const users = await base44.asServiceRole.entities.User.filter({ email: email }, '-created_date', 1);
+      const createdUser = users && users.length > 0 ? users[0] : null;
+      
+      if (createdUser) {
+        // Atualizar User com todos os dados do colaborador
+        const userData = {
+          workshop_id: workshop_id,
+          profile_id: profileId,
+          position: position || 'Colaborador',
+          job_role: job_role || 'outros',
+          area: area || 'tecnico',
+          telefone: telefone || '',
+          hire_date: new Date().toISOString().split('T')[0],
+          user_status: 'pending',
+          is_internal: true,
+          invite_id: inviteId,
+          admin_responsavel_id: user.id
+        };
+
+        await base44.asServiceRole.entities.User.update(createdUser.id, userData);
+        console.log("✅ User atualizado com dados completos:", userData);
+        
+        // Vincular user_id no Employee
+        await base44.asServiceRole.entities.Employee.update(employee.id, { user_id: createdUser.id });
+        console.log("✅ Employee vinculado ao User");
+      }
+    } catch (userError) {
+      console.error("⚠️ Erro ao criar User:", userError.message);
     }
 
     // 5. Buscar oficina para enviar email

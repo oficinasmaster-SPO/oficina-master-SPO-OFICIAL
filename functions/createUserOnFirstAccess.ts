@@ -32,129 +32,71 @@ Deno.serve(async (req) => {
     
     console.log(`📧 Criando usuário Base44 com role: ${role}`);
 
-    // Criar usuário no Base44 com senha fornecida
-    try {
-      await base44.users.inviteUser(invite.email, role);
-      console.log(`✅ Convite de usuário enviado para: ${invite.email}`);
+    // Buscar o usuário já criado (criado no cadastro)
+    console.log("🔍 Buscando usuário já criado...");
+    const users = await base44.asServiceRole.entities.User.filter({ email: invite.email }, '-created_date', 1);
+    const user = users && users.length > 0 ? users[0] : null;
+    
+    if (!user) {
+      return Response.json({ 
+        error: 'Usuário não encontrado. Entre em contato com o suporte.' 
+      }, { status: 404 });
+    }
+    
+    console.log("✅ Usuário encontrado:", user.id);
+    
+    // Definir senha
+    if (password) {
+      const authResponse = await fetch(`https://base44.app/api/auth/users/${user.id}/password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Deno.env.get('BASE44_SERVICE_TOKEN')}`
+        },
+        body: JSON.stringify({ password })
+      });
       
-      // Aguardar um pouco para o usuário ser criado
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Buscar o usuário criado e definir senha
-      const users = await base44.asServiceRole.entities.User.filter({ email: invite.email }, '-created_date', 1);
-      const user = users[0];
-      
-      if (user && password) {
-        // Definir senha através do endpoint de auth
-        const authResponse = await fetch(`https://base44.app/api/auth/users/${user.id}/password`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${Deno.env.get('BASE44_SERVICE_TOKEN')}`
-          },
-          body: JSON.stringify({ password })
-        });
-        
-        if (!authResponse.ok) {
-          throw new Error(`Falha ao definir senha: ${await authResponse.text()}`);
-        }
-        console.log(`✅ Senha definida para o usuário: ${invite.email}`);
+      if (!authResponse.ok) {
+        throw new Error(`Falha ao definir senha: ${await authResponse.text()}`);
       }
-    } catch (inviteError) {
-      // Se o usuário já existir, atualizar senha
-      if (inviteError.message.includes('already exists') || inviteError.message.includes('já existe')) {
-        console.log("ℹ️ Usuário já existe no Base44, atualizando senha...");
-        const users = await base44.asServiceRole.entities.User.filter({ email: invite.email }, '-created_date', 1);
-        const user = users[0];
-        
-        if (user && password) {
-          const authResponse = await fetch(`https://base44.app/api/auth/users/${user.id}/password`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${Deno.env.get('BASE44_SERVICE_TOKEN')}`
-            },
-            body: JSON.stringify({ password })
-          });
-          
-          if (!authResponse.ok) {
-            throw new Error(`Falha ao atualizar senha: ${await authResponse.text()}`);
-          }
-          console.log(`✅ Senha atualizada para: ${invite.email}`);
-        }
-      } else {
-        throw inviteError;
-      }
+      console.log(`✅ Senha definida para o usuário: ${invite.email}`);
     }
 
-    // Buscar Employee e transferir dados para User
+    // Atualizar User e Employee no primeiro acesso
     if (invite.employee_id) {
       try {
-        // Buscar usuário criado
-        const users = await base44.asServiceRole.entities.User.filter({ email: invite.email }, '-created_date', 1);
-        const user = users[0];
+        // Buscar Employee
+        const employee = await base44.asServiceRole.entities.Employee.get(invite.employee_id);
         
-        if (user) {
-          // Buscar dados completos do Employee
-          const employee = await base44.asServiceRole.entities.Employee.get(invite.employee_id);
-          
-          // Preparar dados do Employee para atualizar
-          const updateEmployeeData = {
-            user_id: user.id,
-            first_login_at: new Date().toISOString(),
-            workshop_id: workshop_id || invite.workshop_id,
-            user_status: 'ativo'
-          };
-          
-          // Atualizar dados adicionais se fornecidos
-          if (full_name) updateEmployeeData.full_name = full_name;
-          if (telefone) updateEmployeeData.telefone = telefone;
-          if (data_nascimento) updateEmployeeData.data_nascimento = data_nascimento;
-          
-          // Atualizar Employee
-          await base44.asServiceRole.entities.Employee.update(invite.employee_id, updateEmployeeData);
-          console.log(`✅ Employee atualizado com user_id: ${user.id}`);
-          
-          // Transferir dados do Employee para o User (IMPORTANTE!)
-          const updateUserData = {
-            profile_id: employee?.profile_id || null,
-            position: employee?.position || null,
-            job_role: employee?.job_role || 'outros',
-            area: employee?.area || null,
-            workshop_id: workshop_id || invite.workshop_id || employee?.workshop_id,
-            telefone: telefone || employee?.telefone || null,
-            user_status: 'active',
-            first_login_at: new Date().toISOString()
-          };
-          
-          // Remover campos null para evitar sobrescrever com null
-          Object.keys(updateUserData).forEach(key => {
-            if (updateUserData[key] === null || updateUserData[key] === undefined) {
-              delete updateUserData[key];
-            }
-          });
-          
-          console.log("📝 Atualizando User com dados:", updateUserData);
-          
-          // CRÍTICO: Atualizar User com dados do Employee
-          try {
-            await base44.asServiceRole.entities.User.update(user.id, updateUserData);
-            console.log(`✅ User atualizado com sucesso:`, updateUserData);
-            
-            // Verificar se realmente salvou
-            const verifyUser = await base44.asServiceRole.entities.User.get(user.id);
-            console.log(`🔍 Verificação - workshop_id no User: ${verifyUser.workshop_id}`);
-            
-            if (!verifyUser.workshop_id) {
-              console.error("❌ FALHA CRÍTICA: workshop_id não foi salvo no User!");
-            }
-          } catch (userUpdateError) {
-            console.error("❌ ERRO CRÍTICO ao atualizar User:", userUpdateError.message);
-            throw userUpdateError;
-          }
-        }
+        // Atualizar Employee com dados do primeiro acesso
+        const updateEmployeeData = {
+          first_login_at: new Date().toISOString(),
+          user_status: 'ativo'
+        };
+        
+        if (full_name) updateEmployeeData.full_name = full_name;
+        if (telefone) updateEmployeeData.telefone = telefone;
+        if (data_nascimento) updateEmployeeData.data_nascimento = data_nascimento;
+        
+        await base44.asServiceRole.entities.Employee.update(invite.employee_id, updateEmployeeData);
+        console.log(`✅ Employee atualizado no primeiro acesso`);
+        
+        // Atualizar User: apenas status e first_login (dados já estão preenchidos)
+        const updateUserData = {
+          user_status: 'active',
+          first_login_at: new Date().toISOString(),
+          last_login_at: new Date().toISOString()
+        };
+        
+        // Atualizar telefone e data_nascimento se fornecidos
+        if (telefone) updateUserData.telefone = telefone;
+        if (data_nascimento) updateUserData.data_nascimento = data_nascimento;
+        
+        await base44.asServiceRole.entities.User.update(user.id, updateUserData);
+        console.log(`✅ User ativado no primeiro acesso`);
+        
       } catch (e) {
-        console.error("⚠️ Erro ao processar Employee:", e.message);
+        console.error("⚠️ Erro ao atualizar no primeiro acesso:", e.message);
       }
     }
 
