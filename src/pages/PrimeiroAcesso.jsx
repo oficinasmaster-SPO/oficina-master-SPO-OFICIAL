@@ -67,29 +67,22 @@ export default function PrimeiroAcesso() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (step === 1) {
-      // Primeiro passo: validação passada, ir para cadastro
-      setStep(2);
-      return;
-    }
-
-    // Segundo passo: salvar dados e criar conta
     setSubmitting(true);
 
     try {
       if (!formData.password || formData.password.length < 6) {
         toast.error("A senha deve ter no mínimo 6 caracteres");
+        setSubmitting(false);
         return;
       }
 
       if (formData.password !== formData.confirmPassword) {
         toast.error("As senhas não coincidem");
+        setSubmitting(false);
         return;
       }
 
       const urlParams = new URLSearchParams(window.location.search);
-      const token = urlParams.get('token');
       const workshopId = urlParams.get('workshop_id');
 
       // Criar conta com os dados
@@ -106,18 +99,16 @@ export default function PrimeiroAcesso() {
         throw new Error(response.data.error || "Erro ao criar conta");
       }
 
-      toast.success("✅ Conta criada com sucesso!");
-      setStep(3); // Ir para tela de sucesso
+      toast.success("✅ Conta ativada! Redirecionando...");
 
-      // Redirecionar para login após 2 segundos
+      // Fazer login automático e redirecionar para Meu Perfil
       setTimeout(() => {
-        base44.auth.redirectToLogin(window.location.origin + createPageUrl("Dashboard"));
-      }, 2000);
+        base44.auth.redirectToLogin(window.location.origin + createPageUrl("MeuPerfil"));
+      }, 1500);
 
     } catch (err) {
       console.error("❌ Erro:", err);
       toast.error(err.response?.data?.error || err.message || "Erro ao criar conta");
-    } finally {
       setSubmitting(false);
     }
   };
