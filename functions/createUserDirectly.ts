@@ -98,6 +98,8 @@ Deno.serve(async (req) => {
     console.log("✅ Convite criado:", invite.id);
 
     // Atualizar User com todos os dados
+    console.log("📝 Preparando dados para atualizar User com workshop_id:", workshop_id);
+    
     const userData = {
       workshop_id: workshop_id,
       profile_id: finalProfileId,
@@ -116,8 +118,18 @@ Deno.serve(async (req) => {
       userData.data_nascimento = data_nascimento;
     }
 
+    console.log("📤 Dados que serão salvos:", JSON.stringify(userData, null, 2));
+    
     await base44.asServiceRole.entities.User.update(createdUser.id, userData);
     console.log("✅ User atualizado com dados completos");
+    
+    // Verificar se foi salvo
+    const verifyUser = await base44.asServiceRole.entities.User.get(createdUser.id);
+    console.log("🔍 Verificação: workshop_id salvo =", verifyUser.workshop_id);
+    
+    if (!verifyUser.workshop_id) {
+      console.error("❌ CRÍTICO: workshop_id não foi salvo!");
+    }
 
     // Gerar link de convite
     const inviteDomain = `https://oficinasmastergtr.com`;
