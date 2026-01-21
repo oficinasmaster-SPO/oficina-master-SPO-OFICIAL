@@ -24,7 +24,9 @@ export default function CadastroUsuarioDireto() {
     area: "tecnico",
     job_role: "outros",
     role: "user",
-    data_nascimento: ""
+    data_nascimento: "",
+    workshop_id: "",
+    profile_id: ""
   });
 
   const { data: user } = useQuery({
@@ -152,7 +154,9 @@ export default function CadastroUsuarioDireto() {
                   area: "tecnico",
                   job_role: "outros",
                   role: "user",
-                  data_nascimento: ""
+                  data_nascimento: "",
+                  workshop_id: "",
+                  profile_id: ""
                 });
               }}
               variant="outline"
