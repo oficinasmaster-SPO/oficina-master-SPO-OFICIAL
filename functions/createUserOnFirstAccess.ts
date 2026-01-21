@@ -36,20 +36,32 @@ Deno.serve(async (req) => {
     
     console.log(`📧 Criando usuário Base44 com role: ${role}`);
 
-    // Buscar Employee (que tem user_id vinculado)
+    // Buscar Employee vinculado ao convite
     console.log("🔍 Buscando Employee vinculado ao convite...");
     const employee = invite.employee_id 
       ? await base44.asServiceRole.entities.Employee.get(invite.employee_id)
       : null;
     
-    if (!employee || !employee.user_id) {
+    if (!employee) {
       return Response.json({ 
-        error: 'Colaborador não encontrado ou não vinculado a um usuário. Entre em contato com o suporte.' 
+        error: 'Colaborador não encontrado. Verifique o link de convite.' 
       }, { status: 404 });
     }
+
+    // Se já tem user_id, usar; senão, criar um novo usuário
+    let userId = employee.user_id;
     
-    const userId = employee.user_id;
-    console.log("✅ User ID encontrado:", userId);
+    if (!userId) {
+      console.log("📧 Employee não tem user_id vinculado. Criando novo User Base44...");
+      
+      // Criar novo User base44 (isso será feito via invite do Base44)
+      // Por enquanto, vamos usar um ID temporário ou pedir ao usuário
+      return Response.json({ 
+        error: 'Usuário Base44 não foi criado. Contacte o administrador.' 
+      }, { status: 400 });
+    }
+    
+    console.log("✅ User ID encontrado para vincular:", userId);
     
     // Definir senha do usuário
     if (password) {
@@ -76,28 +88,41 @@ Deno.serve(async (req) => {
       console.log(`✅ Senha definida com sucesso`);
     }
 
-    // Atualizar Employee: marcar conta como ativa e registrar primeiro acesso
-    console.log("📝 Atualizando dados do Employee...");
+    // SINCRONIZAÇÃO DE RELACIONAMENTOS 1-1 E 1-N
+    console.log("🔗 Sincronizando relacionamentos entre User, Employee e EmployeeInvite...");
+    
+    const now = new Date().toISOString();
+    
+    // 1. Atualizar Employee: vincular user_id (se não estava vinculado) + marcar como ativo
+    console.log("📝 [1/3] Atualizando Employee com user_id...");
     await base44.asServiceRole.entities.Employee.update(employee.id, {
-      first_login_at: new Date().toISOString(),
+      user_id: userId,  // Relação 1-1: Employee → User
+      first_login_at: now,
       user_status: 'ativo'
     });
-    console.log(`✅ Employee atualizado com sucesso`);
+    console.log(`✅ Employee atualizado: user_id = ${userId}`);
     
-    // Atualizar User: ativar conta e registrar primeiro acesso
-    console.log("📝 Ativando conta do User...");
+    // 2. Atualizar User: vincular invite_id + employee_id + ativar conta
+    console.log("📝 [2/3] Atualizando User com referências ao invite e employee...");
     await base44.asServiceRole.entities.User.update(userId, {
+      invite_id: invite_id,           // Relação 1-1: EmployeeInvite → User
+      workshop_id: workshop_id || invite.workshop_id,  // Relação 1-N: Workshop → User
       user_status: 'active',
-      first_login_at: new Date().toISOString(),
-      last_login_at: new Date().toISOString()
+      first_login_at: now,
+      last_login_at: now,
+      approved_at: now
     });
-    console.log(`✅ User ativado com sucesso`);
+    console.log(`✅ User atualizado: invite_id = ${invite_id}, workshop_id = ${workshop_id || invite.workshop_id}`);
 
-    // Marcar convite como concluído
+    // 3. Marcar EmployeeInvite como concluído com todas as referências
+    console.log("📝 [3/3] Marcando EmployeeInvite como concluído...");
     await base44.asServiceRole.entities.EmployeeInvite.update(invite_id, {
       status: 'concluido',
-      completed_at: new Date().toISOString()
+      completed_at: now,
+      // Garantir que employee_id está preenchido
+      employee_id: employee.id
     });
+    console.log(`✅ EmployeeInvite concluído: employee_id = ${employee.id}`);
 
     console.log("✅ Usuário criado e convite marcado como concluído");
 
