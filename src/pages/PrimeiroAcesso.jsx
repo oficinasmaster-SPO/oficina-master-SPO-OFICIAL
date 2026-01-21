@@ -52,6 +52,7 @@ export default function PrimeiroAcesso() {
       if (response.data.success) {
         setInvite(response.data.invite);
         setWorkshop(response.data.workshop);
+        setStep(2); // Ir direto para o formulário de cadastro
         console.log("✅ Convite válido:", response.data.invite);
       } else {
         setError(response.data.error || "Convite inválido");

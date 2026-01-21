@@ -36,6 +36,7 @@ import Cadastro from './pages/Cadastro';
 import CadastroColaborador from './pages/CadastroColaborador';
 import CadastroPlanos from './pages/CadastroPlanos';
 import CadastroSucesso from './pages/CadastroSucesso';
+import CadastroUsuarioDireto from './pages/CadastroUsuarioDireto';
 import ClientRegistration from './pages/ClientRegistration';
 import Clientes from './pages/Clientes';
 import Colaboradores from './pages/Colaboradores';
@@ -168,7 +169,6 @@ import TesteOpenAI from './pages/TesteOpenAI';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
-import CadastroUsuarioDireto from './pages/CadastroUsuarioDireto';
 import __Layout from './Layout.jsx';
 
 
@@ -211,6 +211,7 @@ export const PAGES = {
     "CadastroColaborador": CadastroColaborador,
     "CadastroPlanos": CadastroPlanos,
     "CadastroSucesso": CadastroSucesso,
+    "CadastroUsuarioDireto": CadastroUsuarioDireto,
     "ClientRegistration": ClientRegistration,
     "Clientes": Clientes,
     "Colaboradores": Colaboradores,
@@ -343,7 +344,6 @@ export const PAGES = {
     "TreinamentoVendas": TreinamentoVendas,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
-    "CadastroUsuarioDireto": CadastroUsuarioDireto,
 }
 
 export const pagesConfig = {
