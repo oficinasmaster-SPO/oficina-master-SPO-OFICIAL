@@ -154,6 +154,7 @@ export const sidebarStructure = [
       { name: "Produtividade", description: "Métricas KPIs" },
       { name: "Desafios Globais", description: "Nível Brasil" },
       { name: "Planos", description: "Gerenciar planos" },
+      { name: "Cadastro Direto User", description: "Criar usuário direto" },
       { name: "Mensagens", description: "Templates" },
       { name: "Notificações", description: "Automação" },
       { name: "Clientes", description: "Painel admin" },
