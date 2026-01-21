@@ -67,43 +67,33 @@ Deno.serve(async (req) => {
       console.log(`✅ Senha definida com sucesso`);
     }
 
-    // Atualizar User e Employee no primeiro acesso
-    if (invite.employee_id) {
-      try {
-        // Buscar Employee
-        const employee = await base44.asServiceRole.entities.Employee.get(invite.employee_id);
-        
-        // Atualizar Employee com dados do primeiro acesso
-        const updateEmployeeData = {
-          first_login_at: new Date().toISOString(),
-          user_status: 'ativo'
-        };
-        
-        if (full_name) updateEmployeeData.full_name = full_name;
-        if (telefone) updateEmployeeData.telefone = telefone;
-        if (data_nascimento) updateEmployeeData.data_nascimento = data_nascimento;
-        
-        await base44.asServiceRole.entities.Employee.update(invite.employee_id, updateEmployeeData);
-        console.log(`✅ Employee atualizado no primeiro acesso`);
-        
-        // Atualizar User: apenas status e first_login (dados já estão preenchidos)
-        const updateUserData = {
-          user_status: 'active',
-          first_login_at: new Date().toISOString(),
-          last_login_at: new Date().toISOString()
-        };
-        
-        // Atualizar telefone e data_nascimento se fornecidos
-        if (telefone) updateUserData.telefone = telefone;
-        if (data_nascimento) updateUserData.data_nascimento = data_nascimento;
-        
-        await base44.asServiceRole.entities.User.update(user.id, updateUserData);
-        console.log(`✅ User ativado no primeiro acesso`);
-        
-      } catch (e) {
-        console.error("⚠️ Erro ao atualizar no primeiro acesso:", e.message);
-      }
-    }
+    // Atualizar Employee com dados do primeiro acesso
+    console.log("📝 Atualizando dados do Employee...");
+    const updateEmployeeData = {
+      first_login_at: new Date().toISOString(),
+      user_status: 'ativo'
+    };
+    
+    if (full_name) updateEmployeeData.full_name = full_name;
+    if (telefone) updateEmployeeData.telefone = telefone;
+    if (data_nascimento) updateEmployeeData.data_nascimento = data_nascimento;
+    
+    await base44.asServiceRole.entities.Employee.update(employee.id, updateEmployeeData);
+    console.log(`✅ Employee atualizado com sucesso`);
+    
+    // Atualizar User: ativar conta e registrar primeiro acesso
+    console.log("📝 Ativando conta do User...");
+    const updateUserData = {
+      user_status: 'active',
+      first_login_at: new Date().toISOString(),
+      last_login_at: new Date().toISOString()
+    };
+    
+    if (telefone) updateUserData.telefone = telefone;
+    if (data_nascimento) updateUserData.data_nascimento = data_nascimento;
+    
+    await base44.asServiceRole.entities.User.update(userId, updateUserData);
+    console.log(`✅ User ativado com sucesso`);
 
     // Marcar convite como concluído
     await base44.asServiceRole.entities.EmployeeInvite.update(invite_id, {
