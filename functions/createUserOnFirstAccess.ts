@@ -101,23 +101,34 @@ Deno.serve(async (req) => {
             area: employee?.area || null,
             workshop_id: workshop_id || invite.workshop_id || employee?.workshop_id,
             telefone: telefone || employee?.telefone || null,
+            user_status: 'active',
+            first_login_at: new Date().toISOString()
           };
           
           // Remover campos null para evitar sobrescrever com null
           Object.keys(updateUserData).forEach(key => {
-            if (updateUserData[key] === null) {
+            if (updateUserData[key] === null || updateUserData[key] === undefined) {
               delete updateUserData[key];
             }
           });
           
           console.log("📝 Atualizando User com dados:", updateUserData);
           
-          // Atualizar User com dados do Employee
+          // CRÍTICO: Atualizar User com dados do Employee
           try {
             await base44.asServiceRole.entities.User.update(user.id, updateUserData);
-            console.log(`✅ User atualizado com dados do Employee:`, updateUserData);
+            console.log(`✅ User atualizado com sucesso:`, updateUserData);
+            
+            // Verificar se realmente salvou
+            const verifyUser = await base44.asServiceRole.entities.User.get(user.id);
+            console.log(`🔍 Verificação - workshop_id no User: ${verifyUser.workshop_id}`);
+            
+            if (!verifyUser.workshop_id) {
+              console.error("❌ FALHA CRÍTICA: workshop_id não foi salvo no User!");
+            }
           } catch (userUpdateError) {
-            console.warn("⚠️ Erro ao atualizar User (pode ser falta de campo no schema):", userUpdateError.message);
+            console.error("❌ ERRO CRÍTICO ao atualizar User:", userUpdateError.message);
+            throw userUpdateError;
           }
         }
       } catch (e) {
