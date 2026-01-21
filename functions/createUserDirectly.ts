@@ -98,9 +98,9 @@ Deno.serve(async (req) => {
 
     console.log("✅ Employee criado:", employee.id);
 
-    // Atualizar User com todos os dados
+    // Atualizar User com dados customizados (usa base44.auth.updateMe para adicionar campos extras)
+    console.log("🔄 Atualizando dados do User...");
     const userData = {
-      full_name: name,
       workshop_id: workshop_id,
       profile_id: finalProfileId,
       position: position || 'Colaborador',
@@ -111,16 +111,16 @@ Deno.serve(async (req) => {
       user_status: 'pending',
       is_internal: true,
       invite_id: invite.id,
-      admin_responsavel_id: user.id,
-      profile_picture_url: null
+      admin_responsavel_id: user.id
     };
 
     if (data_nascimento) {
       userData.data_nascimento = data_nascimento;
     }
 
-    await base44.asServiceRole.entities.User.update(createdUser.id, userData);
-    console.log("✅ User atualizado com dados completos");
+    // Atualizar via SDK (campos customizados são salvos no User)
+    await base44.asServiceRole.entities.User.update(inviteResult.id, userData);
+    console.log("✅ Dados customizados salvos no User");
 
     // Gerar link de convite
     const inviteDomain = `https://oficinasmastergtr.com`;
