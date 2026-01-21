@@ -84,14 +84,12 @@ export default function PrimeiroAcesso() {
       const urlParams = new URLSearchParams(window.location.search);
       const workshopId = urlParams.get('workshop_id');
 
-      // Criar conta com os dados
+      // Criar conta apenas com email e senha
       const response = await base44.functions.invoke('createUserOnFirstAccess', {
         invite_id: invite.id,
         password: formData.password,
         workshop_id: workshopId || invite.workshop_id,
-        full_name: formData.full_name || invite.name,
-        telefone: formData.telefone,
-        data_nascimento: formData.data_nascimento
+        email: formData.email || invite.email
       });
 
       if (!response.data.success) {
