@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Role deve ser "user" ou "admin"' }, { status: 400 });
     }
 
-    console.log("👤 Criando usuário diretamente:", email);
+    console.log("👤 Convidando usuário:", email);
 
     // Buscar workshop para pegar identificador
     const workshop = await base44.asServiceRole.entities.Workshop.get(workshop_id);
@@ -45,11 +45,11 @@ Deno.serve(async (req) => {
     const generatedProfileId = `${workshopId}.${String(employeeCount).padStart(2, '0')}`;
     const finalProfileId = profile_id || generatedProfileId;
 
-    // Convidar usuário via Base44
-    console.log("👤 Convidando usuário via Base44 com role:", role);
-    await base44.users.inviteUser(email, role);
+    // Convidar usuário via Base44 (cria o User automaticamente e envia email)
+    console.log("📧 Convidando usuário via Base44 com role:", role);
+    const inviteResult = await base44.users.inviteUser(email, role);
     
-    console.log("✅ Convite Base44 enviado para:", email);
+    console.log("✅ Convite enviado pelo Base44 (email automático)");
 
     // Gerar token de convite
     const inviteToken = Math.random().toString(36).substring(2, 15) + 
@@ -98,8 +98,7 @@ Deno.serve(async (req) => {
 
     console.log("✅ Employee criado:", employee.id);
 
-    // Atualizar User com todos os dados usando updateMe
-    console.log("📝 Atualizando dados do usuário criado...");
+    // Atualizar User com todos os dados
     const userData = {
       full_name: name,
       workshop_id: workshop_id,
@@ -113,15 +112,14 @@ Deno.serve(async (req) => {
       is_internal: true,
       invite_id: invite.id,
       admin_responsavel_id: user.id,
-      employee_id: employee.id
+      profile_picture_url: null
     };
 
     if (data_nascimento) {
       userData.data_nascimento = data_nascimento;
     }
 
-    // Atualizar via auth.updateUser com service role
-    await base44.asServiceRole.auth.updateUser(email, userData);
+    await base44.asServiceRole.entities.User.update(createdUser.id, userData);
     console.log("✅ User atualizado com dados completos");
 
     // Gerar link de convite
