@@ -240,19 +240,9 @@ export default function PrimeiroAcesso() {
                 ) : (
                   <>
                     <CheckCircle2 className="w-5 h-5 mr-2" />
-                    Finalizar Cadastro
+                    Ativar Conta e Entrar
                   </>
                 )}
-              </Button>
-
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={() => setStep(1)}
-                disabled={submitting}
-              >
-                Voltar
               </Button>
             </form>
           </CardContent>
