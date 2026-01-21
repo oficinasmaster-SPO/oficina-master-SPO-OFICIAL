@@ -53,24 +53,16 @@ Deno.serve(async (req) => {
     const generatedProfileId = `${workshopId}.${String(userCount).padStart(2, '0')}`;
     const finalProfileId = profile_id || generatedProfileId;
 
-    // Criar usuário Base44
-    console.log("👤 Criando usuário Base44 com role:", role);
-    await base44.users.inviteUser(email, role);
+    // Criar usuário diretamente na entidade User
+    console.log("👤 Criando usuário diretamente na entidade User...");
     
-    // Aguardar criação
-    console.log("⏳ Aguardando criação do usuário...");
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    // Buscar usuário criado
-    console.log("🔍 Buscando usuário criado...");
-    const users = await base44.asServiceRole.entities.User.filter({ email: email }, '-created_date', 1);
-    const createdUser = users && users.length > 0 ? users[0] : null;
-    
-    if (!createdUser) {
-      throw new Error("Usuário não foi criado no Base44");
-    }
+    const createdUser = await base44.asServiceRole.entities.User.create({
+      email: email,
+      full_name: name,
+      role: role
+    });
 
-    console.log("✅ Usuário Base44 criado:", createdUser.id);
+    console.log("✅ User criado:", createdUser.id);
 
     // Gerar token de convite
     const inviteToken = Math.random().toString(36).substring(2, 15) + 
