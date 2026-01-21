@@ -97,6 +97,28 @@ Deno.serve(async (req) => {
 
     console.log("✅ Convite criado:", invite.id);
 
+    // Criar Employee com os dados
+    console.log("👥 Criando Employee...");
+    const employee = await base44.asServiceRole.entities.Employee.create({
+      workshop_id: workshop_id,
+      user_id: createdUser.id,
+      full_name: name,
+      email: email,
+      telefone: telefone || '',
+      position: position || 'Colaborador',
+      job_role: job_role || 'outros',
+      area: area || 'tecnico',
+      profile_id: finalProfileId,
+      user_status: 'pending',
+      is_internal: true,
+      tipo_vinculo: 'interno',
+      admin_responsavel_id: user.id,
+      hire_date: new Date().toISOString().split('T')[0],
+      data_nascimento: data_nascimento || null
+    });
+
+    console.log("✅ Employee criado:", employee.id);
+
     // Atualizar User com todos os dados
     const userData = {
       workshop_id: workshop_id,
