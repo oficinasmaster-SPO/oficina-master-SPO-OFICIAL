@@ -80,7 +80,7 @@ Deno.serve(async (req) => {
     console.log("👥 Criando Employee...");
     const employee = await base44.asServiceRole.entities.Employee.create({
       workshop_id: workshop_id,
-      user_id: createdUser.id,
+      user_id: inviteResult.id,
       full_name: name,
       email: email,
       telefone: telefone || '',
