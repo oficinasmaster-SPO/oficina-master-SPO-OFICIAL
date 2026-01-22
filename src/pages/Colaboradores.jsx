@@ -30,10 +30,6 @@ export default function Colaboradores() {
   const [profileViewerEmployee, setProfileViewerEmployee] = useState(null);
   const queryClient = useQueryClient();
   
-  // Hook de atribuição automática de perfis
-  useProfileAutoAssignment(false, (employee, result) => {
-    queryClient.invalidateQueries({ queryKey: ['employees', workshop?.id] });
-  });
   // const [showSettings, setShowSettings] = useState(false);
 
   // Fetch user first to get workshop context
