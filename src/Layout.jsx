@@ -131,6 +131,14 @@ export default function Layout({ children, currentPageName }) {
     location.pathname.toLowerCase().includes(page.toLowerCase())
   );
 
+  // IMPORTANTE: Desabilitar modo Admin em páginas de primeiro acesso
+  const isFirstAccessPage = location.pathname.toLowerCase().includes('primeiroacesso');
+  if (isFirstAccessPage && isAdminMode) {
+    // Forçar saída do modo admin em páginas de primeiro acesso
+    localStorage.removeItem('admin_workshop_id');
+    window.location.search = '';
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
 

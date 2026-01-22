@@ -22,7 +22,6 @@ export default function PrimeiroAcesso() {
     password: "",
     confirmPassword: ""
   });
-  const [step, setStep] = useState(1); // 1: validação, 2: formulário de cadastro
 
   useEffect(() => {
     validateToken();
@@ -48,11 +47,15 @@ export default function PrimeiroAcesso() {
       console.log("📦 Resposta validação:", response.data);
 
       if (response.data.success) {
+        console.log("✅ Convite válido, redirecionando para login...");
+
+        // Redirecionar para login com nextUrl para Meu Perfil
+        setTimeout(() => {
+          base44.auth.redirectToLogin(window.location.origin + createPageUrl("MeuPerfil"));
+        }, 1000);
+
         setInvite(response.data.invite);
         setWorkshop(response.data.workshop);
-        setFormData(prev => ({ ...prev, email: response.data.invite.email }));
-        setStep(2); // Ir direto para o formulário de cadastro
-        console.log("✅ Convite válido:", response.data.invite);
       } else {
         setError(response.data.error || "Convite inválido");
       }
@@ -64,177 +67,51 @@ export default function PrimeiroAcesso() {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSubmitting(true);
 
-    try {
-      if (!formData.password || formData.password.length < 6) {
-        toast.error("A senha deve ter no mínimo 6 caracteres");
-        setSubmitting(false);
-        return;
-      }
 
-      if (formData.password !== formData.confirmPassword) {
-        toast.error("As senhas não coincidem");
-        setSubmitting(false);
-        return;
-      }
-
-      const urlParams = new URLSearchParams(window.location.search);
-      const workshopId = urlParams.get('workshop_id');
-
-      // Criar conta apenas com email e senha
-      const response = await base44.functions.invoke('createUserOnFirstAccess', {
-        invite_id: invite.id,
-        password: formData.password,
-        workshop_id: workshopId || invite.workshop_id,
-        email: formData.email || invite.email
-      });
-
-      if (!response.data.success) {
-        throw new Error(response.data.error || "Erro ao criar conta");
-      }
-
-      toast.success("✅ Conta ativada! Redirecionando...");
-
-      // Fazer login automático e redirecionar para Meu Perfil
-      setTimeout(() => {
-        base44.auth.redirectToLogin(window.location.origin + createPageUrl("MeuPerfil"));
-      }, 1500);
-
-    } catch (err) {
-      console.error("❌ Erro:", err);
-      toast.error(err.response?.data?.error || err.message || "Erro ao criar conta");
-      setSubmitting(false);
-    }
-  };
-
-  if (loading) {
+  if (loading || invite) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50">
         <Card className="w-full max-w-md shadow-xl">
           <CardContent className="p-12 text-center">
-            <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
-            <p className="text-gray-600">Validando convite...</p>
+            {invite ? (
+              <>
+                <CheckCircle2 className="w-12 h-12 text-green-600 mx-auto mb-4" />
+                <p className="text-gray-900 font-semibold text-lg mb-2">Convite Validado!</p>
+                <p className="text-gray-600">Redirecionando para login...</p>
+              </>
+            ) : (
+              <>
+                <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
+                <p className="text-gray-600">Validando convite...</p>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
     );
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
-        <Card className="w-full max-w-md shadow-xl">
-          <CardHeader className="text-center pb-4">
-            <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
-              <AlertCircle className="w-8 h-8 text-red-600" />
-            </div>
-            <CardTitle className="text-2xl text-red-900">Convite Inválido</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center">
-            <p className="text-gray-600 mb-6">{error}</p>
-            <Button
-              onClick={() => window.location.href = createPageUrl("Home")}
-              variant="outline"
-              className="w-full"
-            >
-              Voltar ao Início
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Formulário de cadastro (único step após validação)
-  if (step === 2) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
-        <Card className="w-full max-w-md shadow-xl">
-          <CardHeader className="text-center pb-4">
-            <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center mb-4">
-              <Lock className="w-8 h-8 text-white" />
-            </div>
-            <CardTitle className="text-2xl text-gray-900">Criar sua conta</CardTitle>
-            <p className="text-gray-600 mt-2 text-sm">Configure sua senha para acessar {workshop?.name}</p>
-          </CardHeader>
-          
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="email">E-mail</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  required
-                  disabled
-                  className="mt-1 bg-gray-50"
-                />
-                <p className="text-xs text-gray-500 mt-1">E-mail do convite</p>
-              </div>
-
-              <div>
-                <Label htmlFor="password">Senha *</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  placeholder="Mínimo 6 caracteres"
-                  required
-                  minLength={6}
-                  className="mt-1"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="confirmPassword">Confirmar Senha *</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  value={formData.confirmPassword}
-                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                  placeholder="Digite a senha novamente"
-                  required
-                  minLength={6}
-                  className="mt-1"
-                />
-              </div>
-
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <p className="text-xs text-blue-900">
-                  ℹ️ Após criar sua conta, você será direcionado para completar seu perfil com nome, telefone e outras informações.
-                </p>
-              </div>
-
-              <Button
-                type="submit"
-                disabled={submitting}
-                className="w-full bg-blue-600 hover:bg-blue-700 h-11"
-              >
-                {submitting ? (
-                  <>
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    Criando Conta...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="w-5 h-5 mr-2" />
-                    Criar Conta e Entrar
-                  </>
-                )}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Fallback: não deveria chegar aqui
-  return null;
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
+      <Card className="w-full max-w-md shadow-xl">
+        <CardHeader className="text-center pb-4">
+          <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+            <AlertCircle className="w-8 h-8 text-red-600" />
+          </div>
+          <CardTitle className="text-2xl text-red-900">Convite Inválido</CardTitle>
+        </CardHeader>
+        <CardContent className="text-center">
+          <p className="text-gray-600 mb-6">{error}</p>
+          <Button
+            onClick={() => window.location.href = createPageUrl("Home")}
+            variant="outline"
+            className="w-full"
+          >
+            Voltar ao Início
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
