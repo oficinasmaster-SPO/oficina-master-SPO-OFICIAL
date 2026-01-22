@@ -71,11 +71,29 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Buscar oficina apenas para convites de workshop
+    // Buscar profile_id e através dele obter workshop_id
     let workshop = null;
-    if (invite.workshop_id) {
+    let workshopId = invite.workshop_id;
+    
+    if (invite.profile_id) {
       try {
-        const workshops = await base44.asServiceRole.entities.Workshop.filter({ id: invite.workshop_id });
+        console.log("🔍 Buscando perfil para obter workshop_id...");
+        const profiles = await base44.asServiceRole.entities.UserProfile.filter({ id: invite.profile_id });
+        const profile = profiles[0];
+        
+        if (profile && profile.workshop_id) {
+          workshopId = profile.workshop_id;
+          console.log("✅ workshop_id obtido via profile:", workshopId);
+        }
+      } catch (e) {
+        console.error('Erro ao buscar perfil:', e);
+      }
+    }
+    
+    // Buscar oficina
+    if (workshopId) {
+      try {
+        const workshops = await base44.asServiceRole.entities.Workshop.filter({ id: workshopId });
         workshop = workshops[0];
         console.log("✅ Oficina encontrada:", workshop?.name);
       } catch (e) {
@@ -95,7 +113,8 @@ Deno.serve(async (req) => {
         email: invite.email,
         position: invite.position,
         area: invite.area,
-        workshop_id: invite.workshop_id,
+        workshop_id: workshopId,
+        profile_id: invite.profile_id,
         invite_token: invite.invite_token,
         job_role: invite.job_role,
         invite_type: invite.invite_type,

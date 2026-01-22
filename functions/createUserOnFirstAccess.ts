@@ -4,7 +4,7 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json();
-    const { invite_id, password, workshop_id, email } = body;
+    const { invite_id, password, email } = body;
     
     if (!invite_id) {
       return Response.json({ error: 'invite_id obrigatório' }, { status: 400 });
@@ -93,36 +93,84 @@ Deno.serve(async (req) => {
     
     const now = new Date().toISOString();
     
+    // Obter workshop_id através do profile_id (relação 1-N)
+    let workshopId = invite.workshop_id;
+    if (invite.profile_id) {
+      console.log("🔍 Buscando workshop_id via profile_id...");
+      try {
+        const profile = await base44.asServiceRole.entities.UserProfile.get(invite.profile_id);
+        if (profile && profile.workshop_id) {
+          workshopId = profile.workshop_id;
+          console.log(`✅ workshop_id obtido via perfil: ${workshopId}`);
+        }
+      } catch (e) {
+        console.error("⚠️ Erro ao buscar perfil:", e);
+      }
+    }
+    
     // 1. Atualizar Employee: vincular user_id (se não estava vinculado) + marcar como ativo
-    console.log("📝 [1/3] Atualizando Employee com user_id...");
+    console.log("📝 [1/4] Atualizando Employee com user_id...");
     await base44.asServiceRole.entities.Employee.update(employee.id, {
       user_id: userId,  // Relação 1-1: Employee → User
       first_login_at: now,
-      user_status: 'ativo'
+      user_status: 'ativo',
+      profile_id: invite.profile_id  // Relação 1-1: Employee → UserProfile
     });
     console.log(`✅ Employee atualizado: user_id = ${userId}`);
     
-    // 2. Atualizar User: vincular invite_id + employee_id + ativar conta
-    console.log("📝 [2/3] Atualizando User com referências ao invite e employee...");
+    // 2. Atualizar User: vincular invite_id + profile_id + workshop_id + ativar conta
+    console.log("📝 [2/4] Atualizando User com referências completas...");
     await base44.asServiceRole.entities.User.update(userId, {
       invite_id: invite_id,           // Relação 1-1: EmployeeInvite → User
-      workshop_id: workshop_id || invite.workshop_id,  // Relação 1-N: Workshop → User
+      profile_id: invite.profile_id,  // Relação 1-N: UserProfile → User
+      workshop_id: workshopId,        // Relação 1-N: Workshop → User (via profile)
       user_status: 'active',
       first_login_at: now,
       last_login_at: now,
       approved_at: now
     });
-    console.log(`✅ User atualizado: invite_id = ${invite_id}, workshop_id = ${workshop_id || invite.workshop_id}`);
+    console.log(`✅ User atualizado: invite_id=${invite_id}, profile_id=${invite.profile_id}, workshop_id=${workshopId}`);
 
     // 3. Marcar EmployeeInvite como concluído com todas as referências
-    console.log("📝 [3/3] Marcando EmployeeInvite como concluído...");
+    console.log("📝 [3/4] Marcando EmployeeInvite como concluído...");
     await base44.asServiceRole.entities.EmployeeInvite.update(invite_id, {
       status: 'concluido',
       completed_at: now,
-      // Garantir que employee_id está preenchido
       employee_id: employee.id
     });
     console.log(`✅ EmployeeInvite concluído: employee_id = ${employee.id}`);
+    
+    // 4. Criar UserPermission se não existir
+    console.log("📝 [4/4] Criando/atualizando UserPermission...");
+    try {
+      const existingPermissions = await base44.asServiceRole.entities.UserPermission.filter({ user_id: userId });
+      
+      if (existingPermissions && existingPermissions.length > 0) {
+        // Atualizar permissão existente
+        await base44.asServiceRole.entities.UserPermission.update(existingPermissions[0].id, {
+          profile_id: invite.profile_id,
+          workshop_id: workshopId,
+          is_active: true,
+          approved_at: now,
+          approved_by: invite.admin_responsavel_id
+        });
+        console.log("✅ UserPermission atualizada");
+      } else {
+        // Criar nova permissão
+        await base44.asServiceRole.entities.UserPermission.create({
+          user_id: userId,
+          profile_id: invite.profile_id,
+          workshop_id: workshopId,
+          permission_level: 'visualizador',
+          is_active: true,
+          approved_at: now,
+          approved_by: invite.admin_responsavel_id
+        });
+        console.log("✅ UserPermission criada");
+      }
+    } catch (e) {
+      console.error("⚠️ Erro ao gerenciar UserPermission:", e);
+    }
 
     console.log("✅ Usuário criado e convite marcado como concluído");
 

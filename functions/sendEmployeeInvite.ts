@@ -91,9 +91,10 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Convite não encontrado' }, { status: 404 });
     }
 
-    // Montar link do convite
+    // Montar link do convite com profile_id em vez de workshop_id
     const origin = new URL(req.url).origin;
-    const inviteLink = `${origin}/PrimeiroAcesso?token=${invite.invite_token}`;
+    const finalProfileId = profile_id || invite.profile_id;
+    const inviteLink = `${origin}/PrimeiroAcesso?token=${invite.invite_token}&profile_id=${finalProfileId}`;
     
     console.log("🔗 Link gerado:", inviteLink);
 

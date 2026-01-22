@@ -31,7 +31,7 @@ export default function PrimeiroAcesso() {
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const token = urlParams.get('token');
-      const workshopId = urlParams.get('workshop_id');
+      const profileId = urlParams.get('profile_id');
 
       if (!token) {
         setError("Link de convite inválido. Token não encontrado.");
@@ -40,7 +40,7 @@ export default function PrimeiroAcesso() {
       }
 
       console.log("🔍 Validando token:", token);
-      console.log("🏢 Workshop ID:", workshopId);
+      console.log("👤 Profile ID:", profileId);
 
       const response = await base44.functions.invoke('validateInviteToken', { token });
 
