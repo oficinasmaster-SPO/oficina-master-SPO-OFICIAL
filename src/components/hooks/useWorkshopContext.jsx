@@ -14,10 +14,17 @@ export function useWorkshopContext() {
 
   useEffect(() => {
     let cancelled = false;
+    let debounceTimer = null;
     
     const loadWorkshop = async () => {
-      try {
-        setIsLoading(true);
+      // Debounce para evitar múltiplas chamadas
+      if (debounceTimer) clearTimeout(debounceTimer);
+      
+      debounceTimer = setTimeout(async () => {
+        if (cancelled) return;
+        
+        try {
+          setIsLoading(true);
         
         // PRIORIDADE 1: Modo Admin
         if (isAdminMode && adminWorkshopId) {
@@ -68,10 +75,12 @@ export function useWorkshopContext() {
       }
     };
 
-    loadWorkshop();
+      loadWorkshop();
+    }, 150); // 150ms de debounce
     
     return () => {
       cancelled = true;
+      if (debounceTimer) clearTimeout(debounceTimer);
     };
   }, [isAdminMode, adminWorkshopId]);
 
