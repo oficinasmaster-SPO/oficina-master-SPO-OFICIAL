@@ -35,9 +35,10 @@ export function SharedDataProvider({ children, workshopId, userId }) {
       }
     },
     enabled: !!workshopId,
-    staleTime: 0,
-    gcTime: 0,
-    refetchOnMount: 'always',
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
     retry: 1,
   });
 
@@ -56,8 +57,10 @@ export function SharedDataProvider({ children, workshopId, userId }) {
       }
     },
     enabled: !!workshopId,
-    staleTime: 0,
-    gcTime: 0,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
     retry: 1,
   });
 
@@ -76,8 +79,10 @@ export function SharedDataProvider({ children, workshopId, userId }) {
       }
     },
     enabled: !!workshopId,
-    staleTime: 0,
-    gcTime: 0,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
     retry: 1,
   });
 
@@ -96,8 +101,10 @@ export function SharedDataProvider({ children, workshopId, userId }) {
       }
     },
     enabled: !!workshopId,
-    staleTime: 0,
-    gcTime: 0,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
     retry: 1,
   });
 
@@ -117,8 +124,10 @@ export function SharedDataProvider({ children, workshopId, userId }) {
       return result;
     },
     enabled: !!workshopId,
-    staleTime: 0,
-    gcTime: 0,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   // Histórico de metas
@@ -133,8 +142,10 @@ export function SharedDataProvider({ children, workshopId, userId }) {
       return Array.isArray(history) ? history : [];
     },
     enabled: !!workshopId,
-    staleTime: 0,
-    gcTime: 0,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   // Função para invalidar e atualizar dados

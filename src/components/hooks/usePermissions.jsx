@@ -16,17 +16,24 @@ export function usePermissions() {
 
   useEffect(() => {
     let mounted = true;
+    let timeoutId;
     
-    const load = async () => {
+    const loadWithDelay = async () => {
+      // Adiciona delay aleatório para evitar rate limit
+      await new Promise(resolve => {
+        timeoutId = setTimeout(resolve, Math.random() * 1000);
+      });
+      
       if (mounted) {
         await loadUserPermissions();
       }
     };
     
-    load();
+    loadWithDelay();
     
     return () => {
       mounted = false;
+      if (timeoutId) clearTimeout(timeoutId);
     };
   }, []);
 
