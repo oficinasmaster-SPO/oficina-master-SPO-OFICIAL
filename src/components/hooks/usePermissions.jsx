@@ -16,21 +16,34 @@ export function usePermissions() {
 
   useEffect(() => {
     let mounted = true;
+    let debounceTimer = null;
     
     const load = async () => {
-      if (mounted) {
-        await loadUserPermissions();
-      }
+      // Debounce para evitar múltiplas chamadas simultâneas
+      if (debounceTimer) clearTimeout(debounceTimer);
+      
+      debounceTimer = setTimeout(async () => {
+        if (mounted) {
+          await loadUserPermissions();
+        }
+      }, 100);
     };
     
     load();
     
     return () => {
       mounted = false;
+      if (debounceTimer) clearTimeout(debounceTimer);
     };
   }, []);
 
   const loadUserPermissions = async () => {
+    // Evitar chamadas duplicadas simultâneas
+    if (loading) {
+      console.log("⏳ usePermissions: Já carregando, ignorando...");
+      return;
+    }
+    
     try {
       setLoading(true);
       const currentUser = await base44.auth.me();
