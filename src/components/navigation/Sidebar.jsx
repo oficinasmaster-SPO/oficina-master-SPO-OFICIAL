@@ -181,10 +181,8 @@ function UserProfileSection({ user, collapsed }) {
 
 export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
   const location = useLocation();
-  const { queryString } = useAssistanceMode();
-  
-  // Carregar permissões apenas uma vez
   const { profile, hasPermission, canAccessPage } = usePermissions();
+  const { queryString } = useAssistanceMode();
   
   const [expandedGroups, setExpandedGroups] = React.useState(['dashboard', 'patio', 'treinamentos', 'inteligencia']);
   const [isCollapsed, setIsCollapsed] = React.useState(() => {

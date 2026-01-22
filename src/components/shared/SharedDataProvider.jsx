@@ -7,16 +7,11 @@ const SharedDataContext = createContext(null);
 export function SharedDataProvider({ children, workshopId, userId }) {
   const queryClient = useQueryClient();
 
-  // Invalidar apenas quando workshopId muda de fato
+  // FORÇA INVALIDAR tudo quando workshopId muda
   useEffect(() => {
     if (workshopId) {
       console.log('🔥 SharedDataProvider: workshopId mudou para:', workshopId);
-      // Invalidar apenas queries relacionadas ao workshop
-      queryClient.invalidateQueries({ queryKey: ['shared-workshop'] });
-      queryClient.invalidateQueries({ queryKey: ['shared-dre'] });
-      queryClient.invalidateQueries({ queryKey: ['shared-os-diagnostic'] });
-      queryClient.invalidateQueries({ queryKey: ['shared-employees'] });
-      queryClient.invalidateQueries({ queryKey: ['shared-goals'] });
+      queryClient.invalidateQueries();
     }
   }, [workshopId, queryClient]);
 
@@ -40,10 +35,9 @@ export function SharedDataProvider({ children, workshopId, userId }) {
       }
     },
     enabled: !!workshopId,
-    staleTime: 5 * 60 * 1000, // 5 minutos
-    gcTime: 10 * 60 * 1000, // 10 minutos
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: 'always',
     retry: 1,
   });
 
@@ -62,10 +56,8 @@ export function SharedDataProvider({ children, workshopId, userId }) {
       }
     },
     enabled: !!workshopId,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
+    staleTime: 0,
+    gcTime: 0,
     retry: 1,
   });
 
@@ -84,10 +76,8 @@ export function SharedDataProvider({ children, workshopId, userId }) {
       }
     },
     enabled: !!workshopId,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
+    staleTime: 0,
+    gcTime: 0,
     retry: 1,
   });
 
@@ -106,10 +96,8 @@ export function SharedDataProvider({ children, workshopId, userId }) {
       }
     },
     enabled: !!workshopId,
-    staleTime: 2 * 60 * 1000, // 2 minutos para employees (dados mais dinâmicos)
-    gcTime: 5 * 60 * 1000,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
+    staleTime: 0,
+    gcTime: 0,
     retry: 1,
   });
 
@@ -129,11 +117,8 @@ export function SharedDataProvider({ children, workshopId, userId }) {
       return result;
     },
     enabled: !!workshopId,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    retry: 1,
+    staleTime: 0,
+    gcTime: 0,
   });
 
   // Histórico de metas
@@ -148,11 +133,8 @@ export function SharedDataProvider({ children, workshopId, userId }) {
       return Array.isArray(history) ? history : [];
     },
     enabled: !!workshopId,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    retry: 1,
+    staleTime: 0,
+    gcTime: 0,
   });
 
   // Função para invalidar e atualizar dados
