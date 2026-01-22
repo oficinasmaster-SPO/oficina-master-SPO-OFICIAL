@@ -24,12 +24,12 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
-    // Verificar se convite foi acessado ou concluído
-    if (!['acessado', 'concluido'].includes(invite.status)) {
-      console.log('⏭️ Status não requer vínculo:', invite.status);
+    // Só processar quando status for "concluido"
+    if (invite.status !== 'concluido') {
+      console.log('⏭️ Aguardando conclusão do cadastro. Status atual:', invite.status);
       return Response.json({ 
         success: true, 
-        message: 'Status não requer vínculo' 
+        message: 'Aguardando conclusão do cadastro' 
       });
     }
 
@@ -39,11 +39,11 @@ Deno.serve(async (req) => {
     });
     
     if (!users || users.length === 0) {
-      console.log('⚠️ Usuário não encontrado para:', email);
+      console.log('⚠️ Usuário ainda não criou a conta. Aguardando...');
       return Response.json({ 
-        success: false, 
-        error: 'Usuário não encontrado' 
-      }, { status: 404 });
+        success: true, 
+        message: 'Usuário ainda não criou conta, aguardando' 
+      });
     }
 
     const user = users[0];
