@@ -1,11 +1,18 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
-  const base44 = createClientFromRequest(req);
-  
   try {
-    const user = await base44.auth.me();
-    if (!user) {
+    const base44 = createClientFromRequest(req);
+    
+    // Validar autenticação SEM alterar sessão
+    let currentUser = null;
+    try {
+      currentUser = await base44.auth.me();
+    } catch (e) {
+      return Response.json({ error: 'Não autenticado' }, { status: 401 });
+    }
+    
+    if (!currentUser) {
       return Response.json({ error: 'Não autenticado' }, { status: 401 });
     }
 
@@ -45,11 +52,11 @@ Deno.serve(async (req) => {
     const generatedProfileId = `${workshopId}.${String(employeeCount).padStart(2, '0')}`;
     const finalProfileId = profile_id || generatedProfileId;
 
-    // Convidar usuário via Base44 (cria o User automaticamente e envia email)
+    // Convidar usuário via Base44 usando SERVICE ROLE (não afeta sessão do admin)
     console.log("📧 Convidando usuário via Base44 com role:", role);
-    const inviteResult = await base44.users.inviteUser(email, role);
+    const inviteResult = await base44.asServiceRole.users.inviteUser(email, role);
     
-    console.log("✅ Convite enviado pelo Base44 (email automático)");
+    console.log("✅ Convite enviado pelo Base44 (email automático) - sessão do admin mantida");
 
     // Gerar token de convite
     const inviteToken = Math.random().toString(36).substring(2, 15) + 
@@ -91,14 +98,14 @@ Deno.serve(async (req) => {
       user_status: 'pending',
       is_internal: true,
       tipo_vinculo: 'interno',
-      admin_responsavel_id: user.id,
+      admin_responsavel_id: currentUser.id,
       hire_date: new Date().toISOString().split('T')[0],
       data_nascimento: data_nascimento || null
     });
 
     console.log("✅ Employee criado:", employee.id);
 
-    // Atualizar User com dados customizados (usa base44.auth.updateMe para adicionar campos extras)
+    // Atualizar User com dados customizados usando SERVICE ROLE (não afeta sessão)
     console.log("🔄 Atualizando dados do User...");
     const userData = {
       workshop_id: workshop_id,
@@ -111,14 +118,14 @@ Deno.serve(async (req) => {
       user_status: 'pending',
       is_internal: true,
       invite_id: invite.id,
-      admin_responsavel_id: user.id
+      admin_responsavel_id: currentUser.id
     };
 
     if (data_nascimento) {
       userData.data_nascimento = data_nascimento;
     }
 
-    // Atualizar via SDK (campos customizados são salvos no User)
+    // Atualizar via SERVICE ROLE (não afeta sessão do admin logado)
     await base44.asServiceRole.entities.User.update(inviteResult.id, userData);
     console.log("✅ Dados customizados salvos no User");
 
