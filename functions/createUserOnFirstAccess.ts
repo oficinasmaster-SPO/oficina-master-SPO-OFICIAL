@@ -172,6 +172,24 @@ Deno.serve(async (req) => {
       console.error("⚠️ Erro ao gerenciar UserPermission:", e);
     }
 
+    // 5. Criar EmployeeInviteAcceptance para disparar automação de criação de Employee
+    console.log("📝 [5/5] Criando EmployeeInviteAcceptance para automação...");
+    try {
+      await base44.asServiceRole.entities.EmployeeInviteAcceptance.create({
+        user_id: userId,
+        invite_id: invite_id,
+        workshop_id: workshopId,
+        profile_id: invite.profile_id,
+        email: invite.email,
+        full_name: employee.full_name,
+        processed: false
+      });
+      console.log("✅ EmployeeInviteAcceptance criado - automação será disparada");
+    } catch (e) {
+      console.error("⚠️ Erro ao criar EmployeeInviteAcceptance:", e);
+      // Não bloqueia o fluxo se essa criação falhar
+    }
+
     console.log("✅ Usuário criado e convite marcado como concluído");
 
     return Response.json({ 
