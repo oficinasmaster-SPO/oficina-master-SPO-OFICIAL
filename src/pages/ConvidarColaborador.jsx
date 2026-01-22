@@ -192,10 +192,11 @@ export default function ConvidarColaborador() {
           throw new Error("Operação cancelada pelo usuário");
         }
         
-        // Reenviar convite
-          const resendResponse = await base44.functions.invoke('resendEmployeeInvite', {
-            employee_id: existing.id
-          });
+        // Reenviar convite com workshop_id
+            const resendResponse = await base44.functions.invoke('resendEmployeeInvite', {
+              employee_id: existing.id,
+              workshop_id: data.workshop_id || workshop?.id
+            });
 
           if (!resendResponse.data.success) {
             throw new Error(resendResponse.data.error || "Erro ao reenviar convite");
