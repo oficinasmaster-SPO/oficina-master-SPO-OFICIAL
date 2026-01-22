@@ -78,7 +78,12 @@ Deno.serve(async (req) => {
       invite_type: 'workshop',
       expires_at: expiresAt.toISOString(),
       status: "pendente",
-      metadata: { role: role }
+      metadata: { 
+        role: role,
+        workshop_id: workshop_id,
+        profile_id: finalProfileId,
+        invited_at: new Date().toISOString()
+      }
     });
 
     console.log("✅ Convite criado:", invite.id);
