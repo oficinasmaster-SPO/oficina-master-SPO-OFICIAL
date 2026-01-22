@@ -107,7 +107,8 @@ export default function Layout({ children, currentPageName }) {
     },
     enabled: !!user?.id && isAuthenticated && !isCheckingAuth,
     refetchOnWindowFocus: false,
-    staleTime: 60000,
+    refetchOnMount: false,
+    staleTime: 5 * 60 * 1000,
     retry: 1
   });
 
