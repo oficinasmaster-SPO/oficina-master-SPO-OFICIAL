@@ -47,15 +47,34 @@ export default function PrimeiroAcesso() {
       console.log("📦 Resposta validação:", response.data);
 
       if (response.data.success) {
-        console.log("✅ Convite válido, redirecionando para login...");
+        console.log("✅ Convite válido");
 
-        // Redirecionar para login com nextUrl para Meu Perfil
-        setTimeout(() => {
-          base44.auth.redirectToLogin(window.location.origin + createPageUrl("MeuPerfil"));
-        }, 1000);
-
-        setInvite(response.data.invite);
-        setWorkshop(response.data.workshop);
+        // Se já está logado, completar a aceitação do convite
+        const isAuthenticated = await base44.auth.isAuthenticated();
+        if (isAuthenticated) {
+          console.log("✅ Usuário já autenticado, completando aceitação...");
+          try {
+            const completeResponse = await base44.functions.invoke('completeInviteOnFirstAccess', { invite_token: token });
+            if (completeResponse.data.success) {
+              console.log("✅ Convite aceito com sucesso!");
+              toast.success("Bem-vindo! Acesso liberado.");
+              setTimeout(() => {
+                navigate(createPageUrl("MeuPerfil"));
+              }, 1500);
+            }
+          } catch (err) {
+            console.error("❌ Erro ao completar convite:", err);
+            toast.error("Erro ao processar convite: " + err.message);
+            setError(err.response?.data?.error || "Erro ao processar convite");
+          }
+        } else {
+          console.log("🔄 Redirecionando para login...");
+          setInvite(response.data.invite);
+          setWorkshop(response.data.workshop);
+          setTimeout(() => {
+            base44.auth.redirectToLogin(window.location.origin + window.location.pathname + window.location.search);
+          }, 1000);
+        }
       } else {
         setError(response.data.error || "Convite inválido");
       }
