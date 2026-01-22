@@ -1,137 +1,76 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
-  // Permitir CORS e aceitar POST
-  if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Accept'
-      }
-    });
-  }
-
-  if (req.method !== 'POST') {
-    return Response.json({ success: false, error: 'Método não permitido' }, { status: 405 });
-  }
-
   try {
     const base44 = createClientFromRequest(req);
-    
-    let token = null;
-
-    try {
-      const body = await req.json();
-      token = body?.token ?? null;
-    } catch (error) {
-      console.warn('⚠️ Não foi possível ler JSON do corpo:', error);
-    }
+    const { token } = await req.json();
 
     if (!token) {
-      const url = new URL(req.url);
-      token = url.searchParams.get('token');
+      return Response.json({ error: 'Token obrigatório' }, { status: 400 });
     }
 
-    console.log("🔍 Validando token:", token);
+    console.log("🔍 Validando token de convite:", token);
 
-    if (!token) {
-      return Response.json({ success: false, error: 'Token não fornecido' }, { status: 400 });
-    }
+    // Buscar convite pelo token
+    const invites = await base44.asServiceRole.entities.EmployeeInvite.filter({
+      invite_token: token
+    });
 
-    // Buscar convite pelo token usando service role
-    const invites = await base44.asServiceRole.entities.EmployeeInvite.filter({ invite_token: token });
-    const invite = Array.isArray(invites) ? invites[0] : null;
-
-    if (!invite) {
+    if (!invites || invites.length === 0) {
+      console.error("❌ Convite não encontrado com token:", token);
       return Response.json({ 
         success: false, 
-        error: 'Convite não encontrado ou link inválido. Solicite um novo convite ao gestor.' 
+        error: 'Convite não encontrado ou expirado' 
       }, { status: 404 });
     }
 
+    const invite = invites[0];
+
     // Verificar se expirou
-    if (invite.expires_at && new Date(invite.expires_at) < new Date()) {
-      return Response.json({ 
-        success: false, 
-        error: 'Este convite expirou. Solicite um novo convite ao gestor.' 
-      }, { status: 400 });
-    }
-
-    // Marcar como acessado se ainda não foi
-    if (invite.status === 'enviado') {
-      try {
-        await base44.asServiceRole.entities.EmployeeInvite.update(invite.id, {
-          status: 'acessado',
-          accessed_at: new Date().toISOString()
-        });
-      } catch (e) {
-        console.log('Aviso: não foi possível atualizar status do convite');
+    if (invite.expires_at) {
+      const expiresAt = new Date(invite.expires_at);
+      if (expiresAt < new Date()) {
+        console.error("❌ Convite expirado");
+        return Response.json({ 
+          success: false, 
+          error: 'Convite expirado. Solicite um novo convite.' 
+        }, { status: 410 });
       }
     }
 
-    // Buscar profile_id e através dele obter workshop_id
+    console.log("✅ Convite validado:", invite.id);
+
+    // Buscar workshop
     let workshop = null;
-    let workshopId = invite.workshop_id;
-    
-    if (invite.profile_id) {
+    if (invite.workshop_id) {
       try {
-        console.log("🔍 Buscando perfil para obter workshop_id...");
-        const profiles = await base44.asServiceRole.entities.UserProfile.filter({ id: invite.profile_id });
-        const profile = profiles[0];
-        
-        if (profile && profile.workshop_id) {
-          workshopId = profile.workshop_id;
-          console.log("✅ workshop_id obtido via profile:", workshopId);
-        }
+        workshop = await base44.asServiceRole.entities.Workshop.get(invite.workshop_id);
       } catch (e) {
-        console.error('Erro ao buscar perfil:', e);
+        console.warn("⚠️ Workshop não encontrado:", e.message);
       }
     }
-    
-    // Buscar oficina
-    if (workshopId) {
-      try {
-        const workshops = await base44.asServiceRole.entities.Workshop.filter({ id: workshopId });
-        workshop = workshops[0];
-        console.log("✅ Oficina encontrada:", workshop?.name);
-      } catch (e) {
-        console.error('Erro ao carregar oficina:', e);
-      }
-    } else {
-      console.log("ℹ️ Convite interno - sem oficina");
-    }
 
-    console.log("✅ Convite validado com sucesso:", invite.email);
-
-    return Response.json({ 
-      success: true, 
+    return Response.json({
+      success: true,
       invite: {
         id: invite.id,
-        name: invite.name,
         email: invite.email,
-        position: invite.position,
-        area: invite.area,
-        workshop_id: workshopId,
+        name: invite.name,
+        workshop_id: invite.workshop_id,
         profile_id: invite.profile_id,
-        invite_token: invite.invite_token,
-        job_role: invite.job_role,
-        invite_type: invite.invite_type,
-        metadata: invite.metadata
+        status: invite.status
       },
       workshop: workshop ? {
         id: workshop.id,
-        name: workshop.name,
-        logo_url: workshop.logo_url
+        name: workshop.name
       } : null
     });
 
   } catch (error) {
-    console.error('Erro ao validar token:', error);
+    console.error('❌ Erro ao validar token:', error);
     return Response.json({ 
-      success: false, 
-      error: 'Erro ao validar convite. Tente novamente.' 
+      success: false,
+      error: error.message 
     }, { status: 500 });
   }
 });
