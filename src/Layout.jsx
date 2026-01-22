@@ -13,11 +13,11 @@ import GlobalSearch from "@/components/navigation/GlobalSearch";
 import NotificationListener from "@/components/notifications/NotificationListener";
 import NotificationPermissionBanner from "@/components/notifications/NotificationPermissionBanner";
 // import ActivityTracker from "@/components/tracking/ActivityTracker";
-import { usePermissions } from "@/components/hooks/usePermissions";
 import AssistanceModeBanner from "@/components/shared/AssistanceModeBanner.jsx";
 import AdminModeBanner from "@/components/shared/AdminModeBanner.jsx";
 import { useAdminMode } from "@/components/hooks/useAdminMode";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
+import { PermissionsProvider } from "@/components/contexts/PermissionsContext";
 
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
@@ -27,8 +27,6 @@ export default function Layout({ children, currentPageName }) {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const { isAdminMode, getAdminUrl } = useAdminMode();
   const { workshop, workshopId } = useWorkshopContext();
-  // TEMPORARIAMENTE DESABILITADO
-  // const { canAccessPage } = usePermissions();
 
   // Monitora mudanças no estado de colapso da sidebar
   useEffect(() => {
@@ -141,16 +139,17 @@ export default function Layout({ children, currentPageName }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <PermissionsProvider>
+      <div className="min-h-screen bg-gray-50">
 
-      {isAuthenticated && !isPublicPage && (
-        <Sidebar 
-          user={user}
-          unreadCount={unreadCount}
-          isOpen={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-        />
-      )}
+        {isAuthenticated && !isPublicPage && (
+          <Sidebar 
+            user={user}
+            unreadCount={unreadCount}
+            isOpen={sidebarOpen}
+            onClose={() => setSidebarOpen(false)}
+          />
+        )}
 
       {/* {isAuthenticated && <ActivityTracker user={user} workshop={workshop} />} */}
       {isAuthenticated && user && (
@@ -278,6 +277,6 @@ export default function Layout({ children, currentPageName }) {
           </div>
         </footer>
       </div>
-    </div>
+    </PermissionsProvider>
   );
 }
