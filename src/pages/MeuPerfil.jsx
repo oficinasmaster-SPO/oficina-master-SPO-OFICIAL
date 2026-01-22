@@ -91,42 +91,9 @@ export default function MeuPerfil() {
       if (employees && employees.length > 0) {
         setEmployee(employees[0]);
       } else if (!isAssisting) {
-        // Só criar automaticamente se NÃO estiver em modo assistência
-        try {
-          // Buscar oficina do usuário
-          let userWorkshop = null;
-          const ownedWorkshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
-          
-          if (ownedWorkshops && ownedWorkshops.length > 0) {
-            userWorkshop = ownedWorkshops[0];
-          } else if (currentUser.workshop_id) {
-            userWorkshop = await base44.entities.Workshop.get(currentUser.workshop_id);
-          }
-
-          if (userWorkshop) {
-            const newEmployee = await base44.entities.Employee.create({
-              workshop_id: userWorkshop.id,
-              owner_id: userWorkshop.owner_id || currentUser.id,
-              user_id: currentUser.id,
-              full_name: currentUser.full_name || currentUser.email,
-              email: currentUser.email,
-              position: "Colaborador",
-              job_role: "outros",
-              area: "administrativo",
-              tipo_vinculo: 'cliente',
-              status: 'ativo',
-              user_status: 'ativo',
-              hire_date: new Date().toISOString().split('T')[0]
-            });
-            setEmployee(newEmployee);
-            toast.success("Perfil criado! Complete seus dados.");
-          } else {
-            toast.error("Oficina não encontrada. Complete o cadastro primeiro.");
-          }
-        } catch (createError) {
-          console.error("Erro ao criar Employee:", createError);
-          toast.error("Erro ao criar perfil");
-        }
+        // Employee será criado automaticamente pela automação quando EmployeeInviteAcceptance for criado
+        // Se ainda assim não existir, é porque o usuário não foi convidado corretamente
+        console.warn("Employee não encontrado para usuário:", currentUser.id);
       } else {
         toast.error("Nenhum colaborador encontrado nesta oficina");
       }
