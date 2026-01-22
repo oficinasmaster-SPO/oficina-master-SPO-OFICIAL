@@ -7,31 +7,47 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { user_id, email } = await req.json();
+    const payload = await req.json();
+
+    console.log('🔗 Payload recebido:', JSON.stringify(payload));
+
+    // Extrair dados da automação de entidade
+    const invite = payload.data || payload;
+    const email = invite.email;
 
     console.log('🔗 Iniciando vínculo automático para:', email);
 
-    if (!user_id || !email) {
+    if (!email) {
       return Response.json({ 
         success: false, 
-        error: 'user_id e email são obrigatórios' 
+        error: 'Email não encontrado no convite' 
       }, { status: 400 });
     }
 
-    // Buscar convite pelo email
-    const invites = await base44.asServiceRole.entities.EmployeeInvite.filter({ 
+    // Verificar se convite foi acessado ou concluído
+    if (!['acessado', 'concluido'].includes(invite.status)) {
+      console.log('⏭️ Status não requer vínculo:', invite.status);
+      return Response.json({ 
+        success: true, 
+        message: 'Status não requer vínculo' 
+      });
+    }
+
+    // Buscar User pelo email
+    const users = await base44.asServiceRole.entities.User.filter({ 
       email: email 
     });
     
-    if (!invites || invites.length === 0) {
-      console.log('⚠️ Nenhum convite encontrado para:', email);
+    if (!users || users.length === 0) {
+      console.log('⚠️ Usuário não encontrado para:', email);
       return Response.json({ 
         success: false, 
-        error: 'Convite não encontrado' 
+        error: 'Usuário não encontrado' 
       }, { status: 404 });
     }
 
-    const invite = invites[0];
+    const user = users[0];
+    const user_id = user.id;
     console.log('✅ Convite encontrado:', {
       workshop_id: invite.workshop_id,
       profile_id: invite.profile_id,
