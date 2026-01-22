@@ -31,6 +31,7 @@ export default function ConvidarColaborador() {
     area: "",
     job_role: "outros",
     profile_id: "",
+    workshop_id: "",
     role: "user"
   });
 
@@ -55,6 +56,17 @@ export default function ConvidarColaborador() {
     { value: "consultor", label: "Consultor" },
     { value: "outros", label: "Outros" }
   ];
+
+  // Buscar oficinas do usuário (não apenas a principal)
+  const { data: userWorkshops = [], isLoading: isLoadingWorkshops } = useQuery({
+    queryKey: ['user-workshops'],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const workshops = await base44.entities.Workshop.filter({ owner_id: user.id });
+      return Array.isArray(workshops) ? workshops : [];
+    },
+    enabled: !!user?.id
+  });
 
   // Buscar perfis disponíveis
   const { data: profiles = [], isLoading: isLoadingProfiles } = useQuery({
@@ -82,6 +94,7 @@ export default function ConvidarColaborador() {
       area: employee.area || "",
       job_role: employee.job_role || "outros",
       profile_id: employee.profile_id || "",
+      workshop_id: employee.workshop_id || workshop?.id || "",
       role: "user"
     });
   };
@@ -219,7 +232,7 @@ export default function ConvidarColaborador() {
         area: data.area,
         job_role: data.job_role,
         profile_id: data.profile_id,
-        workshop_id: workshop.id,
+        workshop_id: data.workshop_id || workshop.id,
         role: data.role
       });
 
@@ -268,6 +281,7 @@ export default function ConvidarColaborador() {
         area: "", 
         job_role: "outros",
         profile_id: "",
+        workshop_id: workshop?.id || "",
         role: "user"
       });
     },
@@ -291,7 +305,7 @@ export default function ConvidarColaborador() {
       return;
     }
     
-    if (!workshop?.id) {
+    if (!formData.workshop_id && !workshop?.id) {
       toast.error("❌ Erro: Oficina não identificada");
       return;
     }
@@ -575,6 +589,22 @@ export default function ConvidarColaborador() {
                      </SelectContent>
                    </Select>
                  </div>
+
+                <div>
+                  <Label htmlFor="workshop_id">Oficina *</Label>
+                  <Select value={formData.workshop_id} onValueChange={(value) => setFormData({ ...formData, workshop_id: value })}>
+                    <SelectTrigger className="bg-gray-50 focus:bg-white transition-colors">
+                      <SelectValue placeholder="Selecione a oficina" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {userWorkshops.map((ws) => (
+                        <SelectItem key={ws.id} value={ws.id}>
+                          {ws.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
                 <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-4">
                   <Label htmlFor="profile_id" className="text-blue-900 font-bold flex items-center gap-2">
