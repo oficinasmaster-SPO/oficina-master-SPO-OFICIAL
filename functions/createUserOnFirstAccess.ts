@@ -181,13 +181,14 @@ Deno.serve(async (req) => {
         workshop_id: workshopId,
         profile_id: invite.profile_id,
         email: invite.email,
-        full_name: employee.full_name,
+        full_name: employee.full_name || invite.name,
         processed: false
       });
       console.log("✅ EmployeeInviteAcceptance criado - automação será disparada");
     } catch (e) {
-      console.error("⚠️ Erro ao criar EmployeeInviteAcceptance:", e);
-      // Não bloqueia o fluxo se essa criação falhar
+      console.error("❌ ERRO CRÍTICO ao criar EmployeeInviteAcceptance:", e.message);
+      console.error("📋 Stack:", e);
+      // Não bloqueia o fluxo se essa criação falhar, mas loga o erro
     }
 
     console.log("✅ Usuário criado e convite marcado como concluído");
