@@ -129,24 +129,15 @@ Deno.serve(async (req) => {
     await base44.asServiceRole.entities.User.update(inviteResult.id, userData);
     console.log("✅ Dados customizados salvos no User");
 
-    // Atualizar employee_id no convite
-    await base44.asServiceRole.entities.EmployeeInvite.update(invite.id, {
-      employee_id: employee.id
-    });
-
     // Gerar link de convite com profile_id (sem workshop_id)
     const inviteDomain = `https://oficinasmastergtr.com`;
     const inviteLink = `${inviteDomain}/PrimeiroAcesso?token=${invite.invite_token}&profile_id=${finalProfileId}`;
-    
-    // Senha temporária padrão
-    const temporaryPassword = "Oficina@2025";
 
     return Response.json({ 
       success: true,
       message: 'Usuário criado com sucesso. E-mail de convite enviado pelo Base44.',
       user_id: inviteResult.id,
       email: email,
-      temporary_password: temporaryPassword,
       profile_id: finalProfileId,
       invite_link: inviteLink,
       invite_id: invite.id,
