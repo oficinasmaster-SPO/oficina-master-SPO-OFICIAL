@@ -277,6 +277,7 @@ export default function Layout({ children, currentPageName }) {
           </div>
         </footer>
       </div>
+    </div>
     </PermissionsProvider>
   );
 }
