@@ -31,8 +31,7 @@ export default function ConvidarColaborador() {
     area: "",
     job_role: "outros",
     profile_id: "",
-    role: "user",
-    workshop_id: ""
+    role: "user"
   });
 
   const jobRoles = [
@@ -87,20 +86,19 @@ export default function ConvidarColaborador() {
     });
   };
 
-  // Carregar usuário e oficinas
+  // Carregar usuário e oficina
   useEffect(() => {
     const loadUserAndWorkshop = async () => {
       try {
         const currentUser = await base44.auth.me();
         setUser(currentUser);
 
-        // Busca todas as oficinas onde o usuário é dono
+        // Busca oficina onde o usuário é dono (mais seguro que listar todas)
         const workshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
         const userWorkshop = Array.isArray(workshops) && workshops.length > 0 ? workshops[0] : null;
 
         if (userWorkshop) {
           setWorkshop(userWorkshop);
-          setFormData(prev => ({ ...prev, workshop_id: userWorkshop.id }));
           
           // Se tiver ID na URL, preenche o formulário
           const urlParams = new URLSearchParams(window.location.search);
@@ -202,28 +200,28 @@ export default function ConvidarColaborador() {
       }
 
       console.log("🚀 Criando novo colaborador:", data.email);
-       console.log("📤 PAYLOAD ENVIADO:", {
-         name: data.name,
-         email: data.email,
-         telefone: data.telefone,
-         position: data.position,
-         area: data.area,
-         job_role: data.job_role,
-         profile_id: data.profile_id,
-         workshop_id: data.workshop_id || workshop.id
-       });
+      console.log("📤 PAYLOAD ENVIADO:", {
+        name: data.name,
+        email: data.email,
+        telefone: data.telefone,
+        position: data.position,
+        area: data.area,
+        job_role: data.job_role,
+        profile_id: data.profile_id,
+        workshop_id: workshop.id
+      });
 
-       const response = await base44.functions.invoke('createUserDirectly', {
-         name: data.name,
-         email: data.email,
-         telefone: data.telefone,
-         position: data.position,
-         area: data.area,
-         job_role: data.job_role,
-         profile_id: data.profile_id,
-         workshop_id: data.workshop_id || workshop.id,
-         role: data.role
-       });
+      const response = await base44.functions.invoke('createUserDirectly', {
+        name: data.name,
+        email: data.email,
+        telefone: data.telefone,
+        position: data.position,
+        area: data.area,
+        job_role: data.job_role,
+        profile_id: data.profile_id,
+        workshop_id: workshop.id,
+        role: data.role
+      });
 
       console.log("📦 RESPONSE STATUS:", response.status);
       console.log("📦 RESPONSE DATA:", response.data);
@@ -262,17 +260,16 @@ export default function ConvidarColaborador() {
       }
       
       // Limpar formulário
-       setFormData({ 
-         name: "", 
-         email: "", 
-         telefone: "",
-         position: "", 
-         area: "", 
-         job_role: "outros",
-         profile_id: "",
-         workshop_id: workshop?.id || "",
-         role: "user"
-       });
+      setFormData({ 
+        name: "", 
+        email: "", 
+        telefone: "",
+        position: "", 
+        area: "", 
+        job_role: "outros",
+        profile_id: "",
+        role: "user"
+      });
     },
     onError: (error) => {
       console.error("❌ Erro:", error);
@@ -578,19 +575,6 @@ export default function ConvidarColaborador() {
                      </SelectContent>
                    </Select>
                  </div>
-
-                <div>
-                  <Label htmlFor="workshop_id">Oficina *</Label>
-                  <Select value={formData.workshop_id} onValueChange={(value) => setFormData({ ...formData, workshop_id: value })}>
-                    <SelectTrigger className="bg-gray-50 focus:bg-white transition-colors">
-                      <SelectValue placeholder="Selecione a oficina" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={workshop.id}>{workshop.name}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-gray-600 mt-1">O colaborador será vinculado a esta oficina</p>
-                </div>
 
                 <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-4">
                   <Label htmlFor="profile_id" className="text-blue-900 font-bold flex items-center gap-2">
