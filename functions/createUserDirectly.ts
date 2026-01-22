@@ -122,9 +122,9 @@ Deno.serve(async (req) => {
     await base44.asServiceRole.entities.User.update(inviteResult.id, userData);
     console.log("✅ Dados customizados salvos no User");
 
-    // Gerar link de convite
+    // Gerar link de convite com profile_id (sem workshop_id)
     const inviteDomain = `https://oficinasmastergtr.com`;
-    const inviteLink = `${inviteDomain}/PrimeiroAcesso?token=${invite.invite_token}&workshop_id=${workshop_id}&profile_id=${finalProfileId}`;
+    const inviteLink = `${inviteDomain}/PrimeiroAcesso?token=${invite.invite_token}&profile_id=${finalProfileId}`;
 
     return Response.json({ 
       success: true,
