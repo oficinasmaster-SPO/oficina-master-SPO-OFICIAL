@@ -151,15 +151,16 @@ export function usePermissions() {
         }
       }
       
-      // Fallback: Sócios e Gestores tem permissão por padrão para employees
-      if (profile?.job_roles?.includes('socio') || profile?.job_roles?.includes('diretor') || profile?.job_roles?.includes('gerente')) {
-        if (resourceId === 'employees' && (actionId === 'read' || actionId === 'create' || actionId === 'update')) {
-          console.log(`✅ [hasGranularPermission] ${profile.job_roles[0]} tem acesso padrão a employees`);
-          return true;
-        }
-        // Sócios tem permissão total incluindo delete
-        if (profile?.job_roles?.includes('socio') && resourceId === 'employees' && actionId === 'delete') {
-          console.log(`✅ [hasGranularPermission] Sócio tem permissão de delete em employees`);
+      // Fallback: Sócios têm permissão total (CRUD completo) para employees
+      if (profile?.job_roles?.includes('socio') && resourceId === 'employees') {
+        console.log(`✅ [hasGranularPermission] Sócio tem permissão ${actionId} em employees (CRUD completo)`);
+        return true;
+      }
+      
+      // Gestores tem permissão limitada (read, create, update) para employees
+      if ((profile?.job_roles?.includes('diretor') || profile?.job_roles?.includes('gerente')) && resourceId === 'employees') {
+        if (actionId === 'read' || actionId === 'create' || actionId === 'update') {
+          console.log(`✅ [hasGranularPermission] ${profile.job_roles[0]} tem acesso ${actionId} a employees`);
           return true;
         }
       }

@@ -377,10 +377,21 @@ export default function Colaboradores() {
                               onClick={async () => {
                                 if (confirm(`EXCLUIR ${employee.full_name}? Ação irreversível!`)) {
                                   try {
+                                    // Validar permissão no backend antes de deletar
+                                    const validation = await base44.functions.invoke('validateEmployeeDelete', {
+                                      employee_id: employee.id
+                                    });
+                                    
+                                    if (!validation.data?.can_delete) {
+                                      alert('Você não tem permissão para excluir este colaborador.');
+                                      return;
+                                    }
+                                    
                                     await base44.entities.Employee.delete(employee.id);
-                                    window.location.reload();
+                                    queryClient.invalidateQueries({ queryKey: ['employees'] });
                                   } catch (error) {
                                     console.error(error);
+                                    alert('Erro ao excluir colaborador: ' + (error.message || 'Erro desconhecido'));
                                   }
                                 }
                               }}
