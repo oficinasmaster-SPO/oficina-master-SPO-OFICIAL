@@ -18,6 +18,7 @@ import AdminModeBanner from "@/components/shared/AdminModeBanner.jsx";
 import { useAdminMode } from "@/components/hooks/useAdminMode";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 import { PermissionsProvider } from "@/components/contexts/PermissionsContext";
+import OnboardingGate from "@/components/onboarding/OnboardingGate";
 
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
@@ -140,6 +141,7 @@ export default function Layout({ children, currentPageName }) {
 
   return (
     <PermissionsProvider>
+      <OnboardingGate user={user} isAuthenticated={isAuthenticated}>
       <div className="min-h-screen bg-gray-50">
 
         {isAuthenticated && !isPublicPage && (
@@ -278,6 +280,7 @@ export default function Layout({ children, currentPageName }) {
         </footer>
       </div>
     </div>
+      </OnboardingGate>
     </PermissionsProvider>
   );
 }
