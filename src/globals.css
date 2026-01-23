@@ -123,20 +123,26 @@
     height: auto !important;
   }
 
-  /* Remove all max-width constraints in print */
+  /* Force full width - remove all constraints */
   body > div,
   .min-h-screen,
   .max-w-7xl,
   .max-w-6xl,
   .max-w-5xl,
   .max-w-4xl,
+  .max-w-3xl,
+  .max-w-2xl,
   .container,
-  main {
+  main,
+  div[class*="max-w"],
+  div[class*="mx-auto"] {
     width: 100% !important;
     max-width: none !important;
-    margin: 0 !important;
-    padding: 0 15mm !important;
-    transform: scale(1) !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 10mm !important;
+    padding-right: 10mm !important;
+    transform: none !important;
     zoom: 1 !important;
   }
 
@@ -228,10 +234,20 @@
 
   /* Cards and containers - Full width */
   .card,
-  [class*="Card"] {
+  [class*="Card"],
+  .shadow-lg,
+  .shadow-2xl,
+  .shadow-xl {
     width: 100% !important;
     max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
     box-sizing: border-box !important;
+  }
+
+  /* Text and content - Full width */
+  p, h1, h2, h3, h4, h5, h6, div {
+    max-width: none !important;
   }
 
   /* Preserve gradients and colors */
@@ -259,10 +275,19 @@
   .grid {
     width: 100% !important;
     max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
   }
 
   .grid > * {
+    max-width: none !important;
+  }
+
+  /* Flex layouts - Full width */
+  .flex,
+  .flex-col {
     width: 100% !important;
+    max-width: none !important;
   }
 
   /* Tables - Padrão ÚNICO para todas */
