@@ -175,17 +175,18 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
 
 
   const { data: diagnostics = [] } = useQuery({
-    queryKey: ['user-diagnostics', user?.id],
+    queryKey: ['user-diagnostics', user?.id, workshop?.id],
     queryFn: async () => {
       try {
-        const result = await base44.entities.Diagnostic.list('-created_date');
+        if (!workshop?.id) return [];
+        const result = await base44.entities.Diagnostic.filter({ workshop_id: workshop.id }, '-created_date');
         return Array.isArray(result) ? result : [];
       } catch (error) {
         console.log("Error fetching diagnostics:", error);
         return [];
       }
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && !!workshop?.id,
     retry: 1
   });
 
