@@ -123,11 +123,20 @@
     line-height: 1.5 !important;
   }
 
-  /* Only control root container - preserve layout */
-  .max-w-7xl {
+  /* Force full-width on ALL structural containers */
+  .max-w-7xl,
+  .container,
+  .mx-auto,
+  [class*="container"],
+  [class*="mx-auto"] {
     width: 100% !important;
     max-width: none !important;
-    margin: 0 auto !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  /* Remove horizontal paddings that shrink print width */
+  [class*="px-"] {
     padding-left: 0 !important;
     padding-right: 0 !important;
   }
