@@ -6,8 +6,9 @@ import { Loader2 } from "lucide-react";
 
 /**
  * OnboardingGate: Verifica se o usuário autenticado tem workshop cadastrado
- * Se não tiver, redireciona para /cadastro
- * Se tiver, permite navegação normal
+ * - Se estiver em /cadastro, renderiza imediatamente (sem bloqueio)
+ * - Se não tiver workshop em outra rota, redireciona para /cadastro
+ * - Se tiver workshop, permite navegação normal
  * 
  * ⚠️ NÃO altera fluxo de colaboradores (Employee, convites, etc)
  */
@@ -15,11 +16,10 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [isChecking, setIsChecking] = useState(true);
-  const [shouldRedirect, setShouldRedirect] = useState(false);
 
   useEffect(() => {
     checkOnboarding();
-  }, [user, isAuthenticated]);
+  }, [user, isAuthenticated, location.pathname]);
 
   const checkOnboarding = async () => {
     try {
@@ -29,20 +29,25 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
         return;
       }
 
-      // Páginas que devem pular essa verificação
+      const currentPath = location.pathname.toLowerCase();
+
+      // Páginas que devem pular essa verificação completamente
       const bypassPages = [
         'primeiroacesso',
         'clientregistration',
-        'cadastro',
         'cadastrosucesso',
         'login',
         'signup'
       ];
 
-      const currentPath = location.pathname.toLowerCase();
       const shouldBypass = bypassPages.some(page => currentPath.includes(page));
-
       if (shouldBypass) {
+        setIsChecking(false);
+        return;
+      }
+
+      // ✅ Se já está em /cadastro, renderizar imediatamente (sem loop)
+      if (currentPath.includes('cadastro')) {
         setIsChecking(false);
         return;
       }
@@ -55,18 +60,12 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
       // Se tem workshops, tudo ok
       if (workshops && workshops.length > 0) {
         setIsChecking(false);
-        setShouldRedirect(false);
         return;
       }
 
-      // Se não tem workshop E não é apenas colaborador, redirecionar
-      // (colaboradores são redirecionados via employee.workshop_id)
+      // Se não tem workshop E não é apenas colaborador, redirecionar para /cadastro
       if (!user.workshop_id) {
-        setShouldRedirect(true);
-        // Aguardar um tick para evitar race condition
-        setTimeout(() => {
-          navigate(createPageUrl("Cadastro"), { replace: true });
-        }, 100);
+        navigate(createPageUrl("Cadastro"), { replace: true });
       }
 
       setIsChecking(false);
@@ -76,8 +75,8 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
     }
   };
 
-  // Se está verificando ou precisa redirecionar, mostrar loading
-  if (isChecking || shouldRedirect) {
+  // Mostrar loading apenas enquanto verifica (não em /cadastro)
+  if (isChecking && !location.pathname.toLowerCase().includes('cadastro')) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50">
         <div className="flex flex-col items-center gap-4">
@@ -88,6 +87,6 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
     );
   }
 
-  // Render normal do app
+  // Render normal
   return children;
 }
