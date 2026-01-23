@@ -119,17 +119,25 @@
     color: #000 !important;
     font-size: 10pt !important;
     line-height: 1.5 !important;
-    width: 210mm !important;
+    width: 100% !important;
     height: auto !important;
   }
 
-  /* Main container - Full A4 width */
-  body > div {
+  /* Remove all max-width constraints in print */
+  body > div,
+  .min-h-screen,
+  .max-w-7xl,
+  .max-w-6xl,
+  .max-w-5xl,
+  .max-w-4xl,
+  .container,
+  main {
     width: 100% !important;
-    max-width: 210mm !important;
+    max-width: none !important;
     margin: 0 !important;
-    padding: 0 !important;
+    padding: 0 15mm !important;
     transform: scale(1) !important;
+    zoom: 1 !important;
   }
 
   /* Page breaks */
@@ -218,12 +226,12 @@
     page-break-inside: avoid !important;
   }
 
-  /* Cards and containers */
-  .max-w-7xl,
-  .max-w-6xl {
-    max-width: 100% !important;
+  /* Cards and containers - Full width */
+  .card,
+  [class*="Card"] {
     width: 100% !important;
-    padding: 0 10mm !important;
+    max-width: none !important;
+    box-sizing: border-box !important;
   }
 
   /* Preserve gradients and colors */
@@ -233,17 +241,28 @@
     background: inherit !important;
   }
 
-  /* Charts - Full resolution */
+  /* Charts - Full width and resolution */
   svg, canvas {
     width: 100% !important;
     height: auto !important;
-    max-width: 100% !important;
+    max-width: none !important;
   }
 
   .recharts-wrapper,
   .recharts-surface {
     width: 100% !important;
+    max-width: none !important;
     height: auto !important;
+  }
+
+  /* Grid layouts - Full width */
+  .grid {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .grid > * {
+    width: 100% !important;
   }
 
   /* Tables - Padrão ÚNICO para todas */
