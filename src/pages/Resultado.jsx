@@ -13,11 +13,13 @@ import ExecutiveSummary from "../components/resultado/ExecutiveSummary";
 import ActionPlanCard from "../components/diagnostics/ActionPlanCard";
 import ActionPlanDetails from "../components/diagnostics/ActionPlanDetails";
 import ActionPlanFeedbackModal from "../components/diagnostics/ActionPlanFeedbackModal";
+import DiagnosticPDFGenerator from "../components/diagnostics/DiagnosticPDFGenerator";
 
 export default function Resultado() {
   const navigate = useNavigate();
   const [diagnostic, setDiagnostic] = useState(null);
   const [workshop, setWorkshop] = useState(null);
+  const [owner, setOwner] = useState(null);
   const [loading, setLoading] = useState(true);
   const [phaseDistribution, setPhaseDistribution] = useState(null);
   const [showActionPlanDetails, setShowActionPlanDetails] = useState(false);
@@ -125,6 +127,17 @@ export default function Resultado() {
         const workshops = await base44.entities.Workshop.list();
         const ws = workshops.find(w => w.id === diag.workshop_id);
         setWorkshop(ws);
+
+        // Carregar dados do sócio/proprietário
+        if (ws?.owner_id) {
+          try {
+            const users = await base44.entities.User.list();
+            const ownerUser = users.find(u => u.id === ws.owner_id);
+            setOwner(ownerUser);
+          } catch (error) {
+            console.error("Erro ao carregar proprietário:", error);
+          }
+        }
       }
 
       calculatePhaseDistribution(diag);
@@ -423,7 +436,7 @@ export default function Resultado() {
           </div>
 
           {/* Gráficos */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <div id="charts-for-pdf" className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             {/* Gráfico de Barras */}
             <Card className="shadow-lg">
               <CardHeader>
@@ -542,6 +555,15 @@ export default function Resultado() {
           >
             Voltar ao Início
           </Button>
+          
+          <DiagnosticPDFGenerator
+            diagnostic={diagnostic}
+            workshop={workshop}
+            phaseDistribution={phaseDistribution}
+            dominantPhase={dominantPhase}
+            owner={owner}
+          />
+          
           <Button variant="outline" className="flex-1 py-6" onClick={() => window.print()}>
             <Printer className="w-5 h-5 mr-2" />
             Imprimir
