@@ -9,30 +9,63 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    const { email, entity_name } = await req.json();
+    const { email } = await req.json();
 
-    if (!email || !entity_name) {
-      return Response.json({ error: 'Email and entity_name are required' }, { status: 400 });
+    if (!email) {
+      return Response.json({ error: 'Email is required' }, { status: 400 });
     }
 
-    // Buscar todos os registros criados por esse email
-    const records = await base44.asServiceRole.entities[entity_name].filter({
-      created_by: email
-    });
+    console.log(`🗑️ Deletando TODOS os registros de: ${email}`);
 
-    console.log(`Found ${records.length} records for ${email} in ${entity_name}`);
+    const results = {
+      employee: 0,
+      employee_invite: 0,
+      employee_invite_acceptance: 0
+    };
 
-    // Deletar todos os registros
-    const deletePromises = records.map(record => 
-      base44.asServiceRole.entities[entity_name].delete(record.id)
-    );
+    // 1. Deletar Employee
+    try {
+      const employees = await base44.asServiceRole.entities.Employee.filter({ email });
+      for (const emp of employees) {
+        await base44.asServiceRole.entities.Employee.delete(emp.id);
+        results.employee++;
+      }
+      console.log(`✅ ${results.employee} Employee deletados`);
+    } catch (e) {
+      console.error('Erro ao deletar Employee:', e);
+    }
 
-    await Promise.all(deletePromises);
+    // 2. Deletar EmployeeInvite
+    try {
+      const invites = await base44.asServiceRole.entities.EmployeeInvite.filter({ email });
+      for (const inv of invites) {
+        await base44.asServiceRole.entities.EmployeeInvite.delete(inv.id);
+        results.employee_invite++;
+      }
+      console.log(`✅ ${results.employee_invite} EmployeeInvite deletados`);
+    } catch (e) {
+      console.error('Erro ao deletar EmployeeInvite:', e);
+    }
+
+    // 3. Deletar EmployeeInviteAcceptance
+    try {
+      const acceptances = await base44.asServiceRole.entities.EmployeeInviteAcceptance.filter({ email });
+      for (const acc of acceptances) {
+        await base44.asServiceRole.entities.EmployeeInviteAcceptance.delete(acc.id);
+        results.employee_invite_acceptance++;
+      }
+      console.log(`✅ ${results.employee_invite_acceptance} EmployeeInviteAcceptance deletados`);
+    } catch (e) {
+      console.error('Erro ao deletar EmployeeInviteAcceptance:', e);
+    }
+
+    const totalDeleted = results.employee + results.employee_invite + results.employee_invite_acceptance;
 
     return Response.json({ 
       success: true, 
-      deleted_count: records.length,
-      message: `${records.length} registros deletados com sucesso`
+      total_deleted: totalDeleted,
+      details: results,
+      message: `${totalDeleted} registros deletados para ${email}`
     });
 
   } catch (error) {
