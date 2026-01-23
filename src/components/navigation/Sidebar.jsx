@@ -184,7 +184,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
   const { profile, hasPermission, canAccessPage } = usePermissions();
   const { queryString } = useAssistanceMode();
   
-  const [expandedGroups, setExpandedGroups] = React.useState(['dashboard', 'patio', 'treinamentos', 'inteligencia']);
+  const [expandedGroups, setExpandedGroups] = React.useState([]);
   const [isCollapsed, setIsCollapsed] = React.useState(() => {
     try {
       const saved = localStorage.getItem('sidebar-collapsed');
@@ -211,6 +211,11 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
         : [...prev, groupId]
     );
   };
+
+  // Recolher todos os grupos quando a rota mudar (após clicar em um item)
+  useEffect(() => {
+    setExpandedGroups([]);
+  }, [location.pathname]);
 
   // Verificar se o usuário é acelerador
   const isAcelerador = user?.job_role === 'acelerador' || user?.role === 'admin';
