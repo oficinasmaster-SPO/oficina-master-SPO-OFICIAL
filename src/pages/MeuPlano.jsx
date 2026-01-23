@@ -83,12 +83,37 @@ export default function MeuPlano() {
   };
 
   // Determine overall loading state for initial data
-  const isLoading = isUserLoading || isWorkshopsLoading || isPlansLoading || !workshop || !currentPlan;
+  const isLoading = isUserLoading || isWorkshopsLoading || isPlansLoading;
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  // ❌ Bloquear acesso se não tem workshop
+  if (!workshop) {
+    navigate(createPageUrl("Cadastro"), { replace: true });
+    return null;
+  }
+
+  // ❌ Bloquear acesso se não tem plano válido
+  if (!currentPlan) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 p-6">
+        <div className="max-w-md text-center">
+          <AlertCircle className="w-12 h-12 text-yellow-600 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-3">Plano não encontrado</h2>
+          <p className="text-gray-600 mb-6">Não conseguimos carregar as informações do seu plano.</p>
+          <button
+            onClick={() => navigate(createPageUrl("Home"))}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Voltar ao Início
+          </button>
+        </div>
       </div>
     );
   }

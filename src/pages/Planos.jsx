@@ -26,21 +26,24 @@ export default function Planos() {
     try {
       const user = await base44.auth.me();
       
-      // Buscar planos
+      // Buscar workshops do usuário
+      const workshops = await base44.entities.Workshop.list();
+      const userWorkshop = workshops.find(w => w.owner_id === user.id);
+      
+      // ❌ Se não tem workshop, bloquear acesso
+      if (!userWorkshop) {
+        setLoading(false);
+        navigate(createPageUrl("Cadastro"), { replace: true });
+        return;
+      }
+
+      // ✅ Se tem workshop, carregar planos normalmente
       const allPlans = await base44.entities.Plan.list();
       const sortedPlans = allPlans.sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
       setPlans(sortedPlans);
 
-      // Buscar workshop do usuário
-      const workshops = await base44.entities.Workshop.list();
-      const userWorkshop = workshops.find(w => w.owner_id === user.id);
-      
-      if (userWorkshop) {
-        setWorkshop(userWorkshop);
-        setCurrentPlan(userWorkshop.planoAtual || "FREE");
-      } else {
-        setCurrentPlan("FREE");
-      }
+      setWorkshop(userWorkshop);
+      setCurrentPlan(userWorkshop.planoAtual || "FREE");
     } catch (error) {
       console.error("Erro ao carregar planos:", error);
       toast.error("Erro ao carregar planos");
