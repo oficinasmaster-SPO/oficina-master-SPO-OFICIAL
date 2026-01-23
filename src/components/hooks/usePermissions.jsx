@@ -157,6 +157,11 @@ export function usePermissions() {
           console.log(`✅ [hasGranularPermission] ${profile.job_roles[0]} tem acesso padrão a employees`);
           return true;
         }
+        // Sócios tem permissão total incluindo delete
+        if (profile?.job_roles?.includes('socio') && resourceId === 'employees' && actionId === 'delete') {
+          console.log(`✅ [hasGranularPermission] Sócio tem permissão de delete em employees`);
+          return true;
+        }
       }
       
       // Verificar permissões de módulos
