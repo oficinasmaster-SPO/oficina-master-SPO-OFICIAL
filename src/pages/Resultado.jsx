@@ -264,9 +264,18 @@ export default function Resultado() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4">
+      {/* Print Header - Only visible on print */}
+      <div className="print:block hidden">
+        <div className="bg-blue-600 text-white p-4 mb-6">
+          <h1 className="text-xl font-bold">OFICINAS MASTER - Educação Empresarial</h1>
+          <p className="text-sm">Diagnóstico de Fase da Oficina</p>
+          <p className="text-xs">{workshop?.name || 'Oficina'} | {new Date().toLocaleDateString('pt-BR')}</p>
+        </div>
+      </div>
+
       <div className="max-w-7xl mx-auto">
         {/* Fase Dominante - Destaque Principal */}
-        <Card id="dominant-phase-card" className={`shadow-2xl border-4 ${dominantPhase.borderColor} mb-8`}>
+        <Card id="dominant-phase-card" className={`shadow-2xl border-4 ${dominantPhase.borderColor} mb-8 page-break-inside-avoid`}>
           <CardHeader className={`${dominantPhase.bgColor} border-b-4 ${dominantPhase.borderColor}`}>
             <div className="flex items-center gap-4">
               <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${dominantPhase.color} flex items-center justify-center flex-shrink-0`}>
@@ -308,7 +317,7 @@ export default function Resultado() {
         </Card>
 
         {/* Resumo Executivo com IA */}
-        <div id="executive-summary-section" className="mb-8">
+        <div id="executive-summary-section" className="mb-8 page-break-inside-avoid">
           <ExecutiveSummary 
             diagnostic={diagnostic}
             workshop={workshop}
@@ -496,7 +505,7 @@ export default function Resultado() {
         </div>
 
         {/* Interpretação e Insights */}
-        <Card id="insights-section" className="shadow-lg mb-8 border-l-4 border-blue-500">
+        <Card id="insights-section" className="shadow-lg mb-8 border-l-4 border-blue-500 page-break-inside-avoid">
           <CardHeader className="bg-blue-50">
             <CardTitle className="text-xl">
               💡 O que isso significa para sua oficina?
@@ -545,8 +554,14 @@ export default function Resultado() {
           isLoading={refinePlanMutation.isPending}
         />
 
+        {/* Print Footer - Only visible on print */}
+        <div className="print:block hidden mt-8 pt-4 border-t border-gray-300 text-center text-xs text-gray-600">
+          <p>Oficinas Master - Educação Empresarial | www.oficinamaster.com.br</p>
+          <p>Gerado em {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR')}</p>
+        </div>
+
         {/* Botões de Ação */}
-        <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex flex-col sm:flex-row gap-4 print:hidden">
           
           <Button
             variant="outline"
