@@ -111,9 +111,26 @@ export default function Cadastro() {
       const updated = await base44.entities.Workshop.update(workshop.id, updates);
       setWorkshop(updated);
       toast.success("Dados salvos com sucesso!");
+      return true;
     } catch (error) {
       console.error(error);
       toast.error("Erro ao salvar alterações.");
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleNextTab = async (nextTab) => {
+    // Auto-save antes de trocar de aba
+    setSaving(true);
+    try {
+      await base44.entities.Workshop.update(workshop.id, workshop);
+      setActiveTab(nextTab);
+      toast.success("Progresso salvo!");
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao salvar. Verifique os dados.");
     } finally {
       setSaving(false);
     }
@@ -246,7 +263,8 @@ export default function Cadastro() {
               onUpdate={handleWorkshopUpdate} 
             />
             <div className="mt-6 flex justify-end">
-              <Button onClick={() => setActiveTab("servicos")} className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={() => handleNextTab("servicos")} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+                {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Próximo: Serviços <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
             </div>
@@ -260,7 +278,8 @@ export default function Cadastro() {
             />
             <div className="mt-6 flex justify-between">
               <Button variant="outline" onClick={() => setActiveTab("dados")}>Voltar</Button>
-              <Button onClick={() => setActiveTab("equipamentos")} className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={() => handleNextTab("equipamentos")} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+                {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Próximo: Equipamentos <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
             </div>
@@ -274,7 +293,8 @@ export default function Cadastro() {
             />
             <div className="mt-6 flex justify-between">
               <Button variant="outline" onClick={() => setActiveTab("servicos")}>Voltar</Button>
-              <Button onClick={() => setActiveTab("terceirizados")} className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={() => handleNextTab("terceirizados")} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+                {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Próximo: Terceirizados <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
             </div>
@@ -287,7 +307,8 @@ export default function Cadastro() {
             />
             <div className="mt-6 flex justify-between">
               <Button variant="outline" onClick={() => setActiveTab("equipamentos")}>Voltar</Button>
-              <Button onClick={() => setActiveTab("metas")} className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={() => handleNextTab("metas")} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+                {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Próximo: Metas <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
             </div>
@@ -303,9 +324,11 @@ export default function Cadastro() {
               <div className="flex flex-col items-end gap-2">
                 <p className="text-sm text-slate-500">Tudo preenchido?</p>
                 <Button 
-                  onClick={() => setActiveTab("perfil-socio")}
+                  onClick={() => handleNextTab("perfil-socio")}
+                  disabled={saving}
                   className="bg-blue-600 hover:bg-blue-700 shadow-lg"
                 >
+                  {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                   Próximo: Meu Perfil como Sócio <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
               </div>
