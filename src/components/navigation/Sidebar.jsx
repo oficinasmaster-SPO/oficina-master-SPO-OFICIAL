@@ -193,6 +193,26 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       return false;
     }
   });
+  const [hasWorkshop, setHasWorkshop] = React.useState(false);
+
+  // Carregar workshop ao montar o componente
+  React.useEffect(() => {
+    if (user?.id) {
+      loadUserWorkshop();
+    }
+  }, [user?.id]);
+
+  const loadUserWorkshop = async () => {
+    try {
+      const workshops = await base44.entities.Workshop.filter({ 
+        owner_id: user.id 
+      });
+      setHasWorkshop(workshops && workshops.length > 0);
+    } catch (error) {
+      console.error("Erro ao carregar workshop:", error);
+      setHasWorkshop(false);
+    }
+  };
 
   const toggleCollapse = () => {
     const newState = !isCollapsed;
@@ -1183,27 +1203,29 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
             </div>
           )}
 
-          {/* Item fixo: Escolha seu Plano */}
-          <div className="mt-6 border-t border-gray-200 pt-4">
-            <Link
-              to={createPageUrl('CadastroPlanos') + queryString}
-              onClick={onClose}
-              className={cn(
-                "flex items-center gap-3 px-3 py-3 rounded-lg transition-all",
-                "bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 shadow-md",
-                isCollapsed && "justify-center"
-              )}
-              title={isCollapsed ? "Escolha seu Plano" : ""}
-            >
-              <Crown className="w-5 h-5" />
-              {!isCollapsed && (
-                <div className="flex-1">
-                  <span className="text-sm font-semibold">Escolha seu Plano</span>
-                  <p className="text-xs text-purple-100">Upgrade ou altere seu plano</p>
-                </div>
-              )}
-            </Link>
-          </div>
+          {/* Item fixo: Escolha seu Plano - Apenas se tem workshop */}
+          {hasWorkshop && (
+           <div className="mt-6 border-t border-gray-200 pt-4">
+             <Link
+               to={createPageUrl('CadastroPlanos') + queryString}
+               onClick={onClose}
+               className={cn(
+                 "flex items-center gap-3 px-3 py-3 rounded-lg transition-all",
+                 "bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 shadow-md",
+                 isCollapsed && "justify-center"
+               )}
+               title={isCollapsed ? "Escolha seu Plano" : ""}
+             >
+               <Crown className="w-5 h-5" />
+               {!isCollapsed && (
+                 <div className="flex-1">
+                   <span className="text-sm font-semibold">Escolha seu Plano</span>
+                   <p className="text-xs text-purple-100">Upgrade ou altere seu plano</p>
+                 </div>
+               )}
+             </Link>
+           </div>
+          )}
         </nav>
 
         {user && <UserProfileSection user={user} collapsed={isCollapsed} />}
