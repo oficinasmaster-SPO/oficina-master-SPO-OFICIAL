@@ -266,7 +266,7 @@ export default function Resultado() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4">
       <div className="max-w-7xl mx-auto">
         {/* Fase Dominante - Destaque Principal */}
-        <Card className={`shadow-2xl border-4 ${dominantPhase.borderColor} mb-8`}>
+        <Card id="dominant-phase-card" className={`shadow-2xl border-4 ${dominantPhase.borderColor} mb-8`}>
           <CardHeader className={`${dominantPhase.bgColor} border-b-4 ${dominantPhase.borderColor}`}>
             <div className="flex items-center gap-4">
               <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${dominantPhase.color} flex items-center justify-center flex-shrink-0`}>
@@ -308,7 +308,7 @@ export default function Resultado() {
         </Card>
 
         {/* Resumo Executivo com IA */}
-        <div className="mb-8">
+        <div id="executive-summary-section" className="mb-8">
           <ExecutiveSummary 
             diagnostic={diagnostic}
             workshop={workshop}
@@ -318,7 +318,7 @@ export default function Resultado() {
 
         {/* Plano de Ação com IA */}
         {showActionPlanDetails && actionPlan ? (
-          <div className="mb-8">
+          <div id="action-plan-section" className="mb-8">
             <ActionPlanDetails
               plan={actionPlan}
               onUpdateActivity={(index, status) => updateActivityMutation.mutate({ activityIndex: index, status })}
@@ -326,7 +326,7 @@ export default function Resultado() {
             />
           </div>
         ) : actionPlan ? (
-          <div className="mb-8">
+          <div id="action-plan-section" className="mb-8">
             <ActionPlanCard
               plan={actionPlan}
               onViewDetails={() => setShowActionPlanDetails(true)}
@@ -334,7 +334,7 @@ export default function Resultado() {
             />
           </div>
         ) : (
-          <Card className="mb-8 border-2 border-dashed border-blue-300 bg-blue-50">
+          <Card id="action-plan-section" className="mb-8 border-2 border-dashed border-blue-300 bg-blue-50">
             <CardContent className="p-8 text-center">
               <Sparkles className="w-12 h-12 text-blue-600 mx-auto mb-4" />
               <h3 className="text-xl font-bold text-gray-900 mb-2">
@@ -375,7 +375,7 @@ export default function Resultado() {
           </p>
 
           {/* Cards das 4 Fases */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div id="phases-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {phaseDistribution.map((phase) => {
               const PhaseIcon = phase.icon;
               const isDominant = phase.phase === dominantPhase.phase;
@@ -496,7 +496,7 @@ export default function Resultado() {
         </div>
 
         {/* Interpretação e Insights */}
-        <Card className="shadow-lg mb-8 border-l-4 border-blue-500">
+        <Card id="insights-section" className="shadow-lg mb-8 border-l-4 border-blue-500">
           <CardHeader className="bg-blue-50">
             <CardTitle className="text-xl">
               💡 O que isso significa para sua oficina?
