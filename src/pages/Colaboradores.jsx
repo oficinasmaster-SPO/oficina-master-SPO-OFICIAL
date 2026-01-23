@@ -16,8 +16,9 @@ import EmployeeProfileViewer from "../components/employee/EmployeeProfileViewer"
 import DynamicHelpSystem from "../components/help/DynamicHelpSystem";
 import QuickTipsBar from "../components/help/QuickTipsBar";
 import AdvancedFilter from "@/components/shared/AdvancedFilter";
-import PermissionGuard from "@/components/auth/PermissionGuard";
 import { useProfileAutoAssignment } from "@/components/hooks/useProfileAutoAssignment";
+import { useOnDemandPermission } from "@/components/hooks/useOnDemandPermission";
+import { toast } from "sonner";
 // import ActivityNotificationSettings from "../components/rh/ActivityNotificationSettings"; // Removed
 // import { Settings } from "lucide-react"; // Removed if unused elsewhere
 
@@ -29,6 +30,7 @@ export default function Colaboradores() {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [profileViewerEmployee, setProfileViewerEmployee] = useState(null);
   const queryClient = useQueryClient();
+  const { checkPermission, checking } = useOnDemandPermission();
   
   // Hook de atribuição automática de perfis
   useProfileAutoAssignment(false, (employee, result) => {
@@ -176,16 +178,20 @@ export default function Colaboradores() {
             <h1 className="text-4xl font-bold text-gray-900 mb-2">Colaboradores</h1>
             <p className="text-gray-600">Gerencie sua equipe com inteligência artificial</p>
           </div>
-          <PermissionGuard resource="employees" action="create" hideOnDenied>
-            <Button
-              onClick={() => navigate(createPageUrl("CadastroColaborador"))}
-              className="bg-blue-600 hover:bg-blue-700"
-              id="btn-novo-colaborador"
-            >
-              <UserPlus className="w-5 h-5 mr-2" />
-              Novo Colaborador
-            </Button>
-          </PermissionGuard>
+          <Button
+            onClick={async () => {
+              const allowed = await checkPermission('employees', 'create', {
+                onDenied: () => toast.error('Você não tem permissão para criar colaboradores')
+              });
+              if (allowed) navigate(createPageUrl("CadastroColaborador"));
+            }}
+            className="bg-blue-600 hover:bg-blue-700"
+            id="btn-novo-colaborador"
+            disabled={checking}
+          >
+            {checking ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <UserPlus className="w-5 h-5 mr-2" />}
+            Novo Colaborador
+          </Button>
           
           {/* Button Notificações removido e movido para Admin */}
         </div>
@@ -312,95 +318,119 @@ export default function Colaboradores() {
                       </td>
                       <td className="px-4 py-3 text-center">
                         <div className="flex flex-wrap gap-1 justify-center">
-                          <PermissionGuard resource="employees" action="read" hideOnDenied>
-                            <Button
-                              onClick={() => navigate(createPageUrl("DetalhesColaborador") + `?id=${employee.id}`)}
-                              size="sm"
-                              variant="outline"
-                              title="Ver Detalhes"
-                            >
-                              Detalhes
-                            </Button>
-                          </PermissionGuard>
-                          <PermissionGuard resource="employees" action="read" hideOnDenied>
-                            <Button
-                              onClick={() => setProfileViewerEmployee(employee)}
-                              size="sm"
-                              variant="outline"
-                              title="Ver Perfil de Acesso"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                          </PermissionGuard>
-                          <PermissionGuard resource="employees" action="create" hideOnDenied>
-                            <Button
-                              onClick={() => navigate(createPageUrl("ConvidarColaborador") + `?id=${employee.id}`)}
-                              size="sm"
-                              className="bg-blue-600 hover:bg-blue-700"
-                              title="Convidar para o Portal"
-                            >
-                              <UserPlus className="w-4 h-4" />
-                            </Button>
-                          </PermissionGuard>
-                          <PermissionGuard resource="employees" action="update" hideOnDenied>
-                            <Button
-                              onClick={() => setSelectedEmployee(employee)}
-                              size="sm"
-                              className="bg-purple-600 hover:bg-purple-700"
-                              title="Sugestões de IA"
-                            >
-                              <Sparkles className="w-4 h-4" />
-                            </Button>
-                          </PermissionGuard>
-                          <PermissionGuard resource="employees" action="update" hideOnDenied>
-                            <Button
-                              onClick={async () => {
-                                if (confirm(`${employee.status === 'ativo' ? 'Inativar' : 'Ativar'} ${employee.full_name}?`)) {
-                                  try {
-                                    await base44.entities.Employee.update(employee.id, {
-                                      status: employee.status === 'ativo' ? 'inativo' : 'ativo'
-                                    });
-                                    window.location.reload();
-                                  } catch (error) {
-                                    console.error(error);
-                                  }
+                          <Button
+                            onClick={async () => {
+                              const allowed = await checkPermission('employees', 'read', {
+                                onDenied: () => toast.error('Sem permissão para ver detalhes')
+                              });
+                              if (allowed) navigate(createPageUrl("DetalhesColaborador") + `?id=${employee.id}`);
+                            }}
+                            size="sm"
+                            variant="outline"
+                            title="Ver Detalhes"
+                            disabled={checking}
+                          >
+                            Detalhes
+                          </Button>
+                          <Button
+                            onClick={async () => {
+                              const allowed = await checkPermission('employees', 'read', {
+                                onDenied: () => toast.error('Sem permissão para ver perfil')
+                              });
+                              if (allowed) setProfileViewerEmployee(employee);
+                            }}
+                            size="sm"
+                            variant="outline"
+                            title="Ver Perfil de Acesso"
+                            disabled={checking}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            onClick={async () => {
+                              const allowed = await checkPermission('employees', 'create', {
+                                onDenied: () => toast.error('Sem permissão para convidar')
+                              });
+                              if (allowed) navigate(createPageUrl("ConvidarColaborador") + `?id=${employee.id}`);
+                            }}
+                            size="sm"
+                            className="bg-blue-600 hover:bg-blue-700"
+                            title="Convidar para o Portal"
+                            disabled={checking}
+                          >
+                            <UserPlus className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            onClick={async () => {
+                              const allowed = await checkPermission('employees', 'update', {
+                                onDenied: () => toast.error('Sem permissão para usar IA')
+                              });
+                              if (allowed) setSelectedEmployee(employee);
+                            }}
+                            size="sm"
+                            className="bg-purple-600 hover:bg-purple-700"
+                            title="Sugestões de IA"
+                            disabled={checking}
+                          >
+                            <Sparkles className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            onClick={async () => {
+                              const allowed = await checkPermission('employees', 'update', {
+                                onDenied: () => toast.error('Sem permissão para alterar status')
+                              });
+                              if (!allowed) return;
+                              
+                              if (confirm(`${employee.status === 'ativo' ? 'Inativar' : 'Ativar'} ${employee.full_name}?`)) {
+                                try {
+                                  await base44.entities.Employee.update(employee.id, {
+                                    status: employee.status === 'ativo' ? 'inativo' : 'ativo'
+                                  });
+                                  queryClient.invalidateQueries({ queryKey: ['employees'] });
+                                  toast.success('Status atualizado');
+                                } catch (error) {
+                                  toast.error('Erro ao atualizar status');
                                 }
-                              }}
-                              size="sm"
-                              variant="outline"
-                            >
-                              {employee.status === 'ativo' ? 'Inativar' : 'Ativar'}
-                            </Button>
-                          </PermissionGuard>
-                          <PermissionGuard resource="employees" action="delete" hideOnDenied>
-                            <Button
-                              onClick={async () => {
-                                if (confirm(`EXCLUIR ${employee.full_name}? Ação irreversível!`)) {
-                                  try {
-                                    // Validar permissão no backend antes de deletar
-                                    const validation = await base44.functions.invoke('validateEmployeeDelete', {
-                                      employee_id: employee.id
-                                    });
-                                    
-                                    if (!validation.data?.can_delete) {
-                                      alert('Você não tem permissão para excluir este colaborador.');
-                                      return;
-                                    }
-                                    
-                                    await base44.entities.Employee.delete(employee.id);
-                                    queryClient.invalidateQueries({ queryKey: ['employees'] });
-                                  } catch (error) {
-                                    console.error(error);
-                                    alert('Erro ao excluir colaborador: ' + (error.message || 'Erro desconhecido'));
+                              }
+                            }}
+                            size="sm"
+                            variant="outline"
+                            disabled={checking}
+                          >
+                            {employee.status === 'ativo' ? 'Inativar' : 'Ativar'}
+                          </Button>
+                          <Button
+                            onClick={async () => {
+                              const allowed = await checkPermission('employees', 'delete', {
+                                onDenied: () => toast.error('Sem permissão para excluir')
+                              });
+                              if (!allowed) return;
+                              
+                              if (confirm(`EXCLUIR ${employee.full_name}? Ação irreversível!`)) {
+                                try {
+                                  const validation = await base44.functions.invoke('validateEmployeeDelete', {
+                                    employee_id: employee.id
+                                  });
+                                  
+                                  if (!validation.data?.can_delete) {
+                                    toast.error('Backend negou a exclusão');
+                                    return;
                                   }
+                                  
+                                  await base44.entities.Employee.delete(employee.id);
+                                  queryClient.invalidateQueries({ queryKey: ['employees'] });
+                                  toast.success('Colaborador excluído');
+                                } catch (error) {
+                                  toast.error('Erro ao excluir: ' + (error.message || 'desconhecido'));
                                 }
-                              }}
-                              size="sm"
-                              variant="destructive"
-                            >
-                              Excluir
-                            </Button>
-                          </PermissionGuard>
+                              }
+                            }}
+                            size="sm"
+                            variant="destructive"
+                            disabled={checking}
+                          >
+                            Excluir
+                          </Button>
                         </div>
                       </td>
                     </tr>
