@@ -111,48 +111,25 @@
     color-adjust: exact !important;
   }
 
-  /* Reset body and root - FORCE DESKTOP */
-  html {
-    width: 210mm !important;
-    min-width: 210mm !important;
-  }
-
-  body {
+  /* Reset body and root - DO NOT FIX WIDTH */
+  html, body {
+    width: auto !important;
+    max-width: none !important;
     margin: 0 !important;
     padding: 0 !important;
     background: white !important;
     color: #000 !important;
     font-size: 10pt !important;
     line-height: 1.5 !important;
-    width: 210mm !important;
-    min-width: 210mm !important;
-    height: auto !important;
   }
 
-  /* FORCE FULL WIDTH - DISABLE RESPONSIVE */
-  body > div,
-  .min-h-screen,
-  .max-w-7xl,
-  .max-w-6xl,
-  .max-w-5xl,
-  .max-w-4xl,
-  .max-w-3xl,
-  .max-w-2xl,
-  .container,
-  main,
-  section,
-  article,
-  div[class*="max-w"],
-  div[class*="mx-auto"] {
+  /* Only control root container - preserve layout */
+  .max-w-7xl {
     width: 100% !important;
-    min-width: 100% !important;
     max-width: none !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    padding-left: 10mm !important;
-    padding-right: 10mm !important;
-    transform: none !important;
-    zoom: 1 !important;
+    margin: 0 auto !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
   }
 
   /* Page breaks */
@@ -235,111 +212,41 @@
     text-align: left !important;
   }
 
-  /* Print sections */
-  .print-section {
-    margin-bottom: 20px !important;
-    page-break-inside: avoid !important;
-    width: 100% !important;
-  }
-
-  /* Cards and containers - Full width */
+  /* Prevent content breaking */
   .card,
   [class*="Card"],
-  .shadow-lg,
-  .shadow-2xl,
-  .shadow-xl,
-  .rounded,
-  .border {
-    width: 100% !important;
-    min-width: 100% !important;
-    max-width: none !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
+  .print-section {
+    page-break-inside: avoid !important;
+  }
+
+  /* Preserve box-sizing and colors */
+  * {
     box-sizing: border-box !important;
   }
 
-  /* Text and content - Full width */
-  p, h1, h2, h3, h4, h5, h6, div, span {
-    max-width: none !important;
-  }
-
-  /* DISABLE ALL RESPONSIVE BREAKPOINTS */
-  [class*="sm\\:"],
-  [class*="md\\:"],
-  [class*="lg\\:"] {
-    /* Responsive classes are overridden by print-specific rules above */
-  }
-
-  /* Preserve gradients and colors */
-  .bg-gradient-to-br,
-  .bg-gradient-to-r,
-  [class*="gradient"] {
-    background: inherit !important;
-  }
-
-  /* Charts - Full width and resolution */
-  svg, canvas {
-    width: 100% !important;
-    height: auto !important;
-    max-width: none !important;
-  }
-
-  .recharts-wrapper,
-  .recharts-surface {
-    width: 100% !important;
-    max-width: none !important;
+  /* Charts - responsive sizing */
+  canvas,
+  svg {
+    max-width: 100% !important;
     height: auto !important;
   }
 
-  /* FORCE DESKTOP GRID LAYOUT */
+  /* Preserve desktop grid layout */
   .grid {
     display: grid !important;
-    width: 100% !important;
-    max-width: none !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
   }
 
   /* Force desktop grid columns */
-  .grid-cols-1 {
-    grid-template-columns: 1fr !important;
-  }
-
-  .grid-cols-2,
-  [class*="md:grid-cols-2"],
-  [class*="lg:grid-cols-2"] {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
-
-  .grid-cols-3,
-  [class*="md:grid-cols-3"],
-  [class*="lg:grid-cols-3"] {
-    grid-template-columns: repeat(3, 1fr) !important;
-  }
-
-  .grid-cols-4,
-  [class*="md:grid-cols-4"],
   [class*="lg:grid-cols-4"] {
     grid-template-columns: repeat(4, 1fr) !important;
   }
 
-  .grid > * {
-    max-width: none !important;
-    width: 100% !important;
+  [class*="lg:grid-cols-3"] {
+    grid-template-columns: repeat(3, 1fr) !important;
   }
 
-  /* Flex layouts - Full width */
-  .flex,
-  .flex-col,
-  [class*="sm:flex"],
-  [class*="md:flex"] {
-    display: flex !important;
-    width: 100% !important;
-    max-width: none !important;
-  }
-
-  .flex-row {
-    flex-direction: row !important;
+  [class*="md:grid-cols-2"] {
+    grid-template-columns: repeat(2, 1fr) !important;
   }
 
   /* Tables - Padrão ÚNICO para todas */
@@ -412,14 +319,6 @@
   p, td, th, li, span, div, h1, h2, h3, h4, h5, h6, label, strong, em, b, i {
     color: #000 !important;
     text-align: left !important;
-  }
-
-  /* Remove flexbox/grid que causam desalinhamento */
-  .flex,
-  .grid,
-  [class*="flex"],
-  [class*="grid"] {
-    display: block !important;
   }
 
   /* Links em preto */
