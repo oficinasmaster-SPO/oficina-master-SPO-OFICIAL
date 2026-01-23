@@ -562,6 +562,8 @@ export default function Resultado() {
             phaseDistribution={phaseDistribution}
             dominantPhase={dominantPhase}
             owner={owner}
+            executiveSummary={diagnostic?.ai_summary}
+            actionPlan={actionPlan}
           />
           
           <Button variant="outline" className="flex-1 py-6" onClick={() => window.print()}>

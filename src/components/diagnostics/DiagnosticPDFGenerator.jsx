@@ -5,8 +5,9 @@ import { FileText, Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import "jspdf-autotable";
 
-export default function DiagnosticPDFGenerator({ diagnostic, workshop, phaseDistribution, dominantPhase, owner }) {
+export default function DiagnosticPDFGenerator({ diagnostic, workshop, phaseDistribution, dominantPhase, owner, executiveSummary, actionPlan }) {
   const [showPreview, setShowPreview] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [pdfBlob, setPdfBlob] = useState(null);
@@ -114,6 +115,134 @@ export default function DiagnosticPDFGenerator({ diagnostic, workshop, phaseDist
       });
 
       yPos += 10;
+
+      // ===== RESUMO EXECUTIVO DA IA =====
+      if (executiveSummary) {
+        if (yPos > pageHeight - 60) {
+          pdf.addPage();
+          yPos = margin;
+        }
+
+        pdf.setFontSize(14);
+        pdf.setFont(undefined, 'bold');
+        pdf.setFillColor(59, 130, 246); // Blue
+        pdf.rect(margin, yPos - 3, pageWidth - 2 * margin, 8, 'F');
+        pdf.setTextColor(255, 255, 255);
+        pdf.text('RESUMO EXECUTIVO - ANÁLISE DA IA', margin + 2, yPos + 3);
+        yPos += 12;
+
+        pdf.setTextColor(0, 0, 0);
+        pdf.setFontSize(10);
+        pdf.setFont(undefined, 'normal');
+        const summaryLines = pdf.splitTextToSize(executiveSummary, pageWidth - 2 * margin);
+        pdf.text(summaryLines, margin, yPos);
+        yPos += summaryLines.length * 5 + 10;
+      }
+
+      // ===== PLANO DE AÇÃO =====
+      if (actionPlan) {
+        if (yPos > pageHeight - 60) {
+          pdf.addPage();
+          yPos = margin;
+        }
+
+        pdf.setFontSize(14);
+        pdf.setFont(undefined, 'bold');
+        pdf.setFillColor(16, 185, 129); // Green
+        pdf.rect(margin, yPos - 3, pageWidth - 2 * margin, 8, 'F');
+        pdf.setTextColor(255, 255, 255);
+        pdf.text('PLANO DE AÇÃO PERSONALIZADO COM IA', margin + 2, yPos + 3);
+        yPos += 12;
+
+        pdf.setTextColor(0, 0, 0);
+        pdf.setFontSize(10);
+        pdf.setFont(undefined, 'normal');
+        
+        if (actionPlan.plan_data?.summary) {
+          const planLines = pdf.splitTextToSize(actionPlan.plan_data.summary, pageWidth - 2 * margin);
+          pdf.text(planLines, margin, yPos);
+          yPos += planLines.length * 5 + 8;
+        }
+
+        // Cronograma de Implementação
+        if (actionPlan.plan_data?.implementation_schedule && actionPlan.plan_data.implementation_schedule.length > 0) {
+          if (yPos > pageHeight - 80) {
+            pdf.addPage();
+            yPos = margin;
+          }
+
+          pdf.setFont(undefined, 'bold');
+          pdf.text('Cronograma de Implementação:', margin, yPos);
+          yPos += 6;
+          pdf.setFont(undefined, 'normal');
+
+          actionPlan.plan_data.implementation_schedule.slice(0, 5).forEach((activity, index) => {
+            if (yPos > pageHeight - 30) {
+              pdf.addPage();
+              yPos = margin;
+            }
+            pdf.text(`${index + 1}. ${activity.activity}`, margin + 5, yPos);
+            yPos += 5;
+            pdf.setFontSize(9);
+            pdf.setTextColor(100, 100, 100);
+            pdf.text(`   Prazo: ${activity.deadline} | Responsável: ${activity.responsible}`, margin + 5, yPos);
+            yPos += 6;
+            pdf.setFontSize(10);
+            pdf.setTextColor(0, 0, 0);
+          });
+          yPos += 5;
+        }
+      }
+
+      // ===== O QUE ISSO SIGNIFICA =====
+      if (yPos > pageHeight - 80) {
+        pdf.addPage();
+        yPos = margin;
+      }
+
+      pdf.setFontSize(14);
+      pdf.setFont(undefined, 'bold');
+      pdf.setFillColor(251, 191, 36); // Yellow
+      pdf.rect(margin, yPos - 3, pageWidth - 2 * margin, 8, 'F');
+      pdf.setTextColor(255, 255, 255);
+      pdf.text('💡 O QUE ISSO SIGNIFICA PARA SUA OFICINA?', margin + 2, yPos + 3);
+      yPos += 12;
+
+      pdf.setTextColor(0, 0, 0);
+      pdf.setFontSize(10);
+      pdf.setFont(undefined, 'normal');
+      
+      const meaningText = `Fase Principal: Sua oficina está predominantemente na Fase ${dominantPhase.phase} - ${dominantPhase.shortTitle}, o que significa que suas maiores necessidades e prioridades estão relacionadas a ${dominantPhase.shortTitle.toLowerCase()}.`;
+      const meaningLines = pdf.splitTextToSize(meaningText, pageWidth - 2 * margin);
+      pdf.text(meaningLines, margin, yPos);
+      yPos += meaningLines.length * 5 + 8;
+
+      // Características Secundárias
+      const secondaryPhases = phaseDistribution.filter(p => p.percent >= 15 && p.phase !== dominantPhase.phase);
+      if (secondaryPhases.length > 0) {
+        pdf.setFont(undefined, 'bold');
+        pdf.text('Características Secundárias:', margin, yPos);
+        yPos += 6;
+        pdf.setFont(undefined, 'normal');
+
+        secondaryPhases.forEach(phase => {
+          pdf.text(`• Fase ${phase.phase} - ${phase.shortTitle} (${phase.percent}% das respostas)`, margin + 5, yPos);
+          yPos += 6;
+        });
+        yPos += 5;
+      }
+
+      // Dica
+      pdf.setFillColor(254, 243, 199); // Yellow-100
+      pdf.rect(margin, yPos, pageWidth - 2 * margin, 20, 'F');
+      pdf.setFontSize(9);
+      pdf.setFont(undefined, 'bold');
+      pdf.text('💡 Dica:', margin + 3, yPos + 5);
+      pdf.setFont(undefined, 'normal');
+      const tipText = 'É normal que sua oficina apresente características de múltiplas fases. O plano de ação vai priorizar as necessidades da sua fase principal, mas também vai abordar aspectos das outras fases identificadas.';
+      const tipLines = pdf.splitTextToSize(tipText, pageWidth - 2 * margin - 6);
+      pdf.text(tipLines, margin + 3, yPos + 10);
+      yPos += 25;
 
       // ===== CAPTURAR GRÁFICOS =====
       const chartsContainer = document.getElementById('charts-for-pdf');
