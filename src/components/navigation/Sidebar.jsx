@@ -473,12 +473,14 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           highlight: true,
           requiredPermission: 'processes.view'
         },
-// { 
-        //   name: 'Descrições de Cargo', 
-        //   href: createPageUrl('DescricoesCargo'), 
-        //   icon: ClipboardList,
-        //   description: 'Geração com IA'
-        // },
+        { 
+          name: 'Descrições de Cargo', 
+          href: createPageUrl('DescricoesCargo'), 
+          icon: ClipboardList,
+          description: 'Cargos e responsabilidades',
+          highlight: true,
+          requiredPermission: 'employees.view'
+        },
         { 
           name: 'Perfil do Empresário', 
           href: createPageUrl('DiagnosticoEmpresario'), 
