@@ -187,7 +187,7 @@ export default function SaturacaoLegendaModal({ open, onOpenChange }) {
 
               <div className="space-y-4">
                 <div className="bg-red-50 border-l-4 border-red-600 p-4 rounded">
-                  <p className="font-bold text-red-900 mb-2">🔴 CRÍTICO (>150%): Ação Urgente</p>
+                  <p className="font-bold text-red-900 mb-2">🔴 CRÍTICO ({'>'}150%): Ação Urgente</p>
                   <ul className="text-sm text-red-800 space-y-1">
                     <li>✓ Redistribuir clientes imediatamente</li>
                     <li>✓ Priorizar tarefas críticas somente</li>
