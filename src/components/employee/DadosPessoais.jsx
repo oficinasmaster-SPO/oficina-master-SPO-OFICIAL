@@ -18,13 +18,10 @@ export default function DadosPessoais({ employee, onUpdate }) {
   const signatureInputRef = useRef(null);
 
   useEffect(() => {
-    console.log("🔍 DadosPessoais mounted");
     const loadUser = async () => {
       try {
         const user = await base44.auth.me();
         setCurrentUser(user);
-        console.log("👤 currentUser.id:", user?.id);
-        console.log("👤 currentUser.role:", user?.role);
       } catch (error) {
         console.error("Erro ao carregar usuário:", error);
       }
@@ -53,8 +50,10 @@ export default function DadosPessoais({ employee, onUpdate }) {
 
   const handleSave = async () => {
     // Validação: bloquear perfis internos para usuários não-admin
-    const internalRoles = ['acelerador', 'consultor'];
-    if (currentUser?.role !== 'admin' && internalRoles.includes(formData.job_role)) {
+    const selectedRole = jobRoles.find(r => r.value === formData.job_role);
+    const isInternalRole = selectedRole?.category === 'consultoria';
+    
+    if (currentUser?.role !== 'admin' && isInternalRole) {
       toast.error("Este perfil é restrito a administradores.");
       return;
     }
@@ -67,12 +66,6 @@ export default function DadosPessoais({ employee, onUpdate }) {
   const availableJobRoles = currentUser?.role === 'admin' 
     ? jobRoles 
     : jobRoles.filter(role => role.category !== 'consultoria');
-
-  // LOGS DE VALIDAÇÃO (TEMPORÁRIO)
-  console.log("📊 jobRoles.length (total):", jobRoles.length);
-  console.log("📊 availableJobRoles.length (após filtro):", availableJobRoles.length);
-  console.log("📋 availableJobRoles mapeados:", availableJobRoles.map(r => r.value + ":" + r.category));
-  console.log("🔍 Verificando itens 'consultoria' em jobRoles:", jobRoles.filter(r => r.category === 'consultoria'));
 
   const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0];
