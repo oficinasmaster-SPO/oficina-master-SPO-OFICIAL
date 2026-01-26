@@ -292,9 +292,10 @@ export default function Cadastro() {
               user={user}
               onComplete={handleFinish}
               onBack={() => {}}
+              onEditingChange={setIsEditing}
             />
             <div className="mt-6 flex justify-end">
-              <Button onClick={() => handleNextTab(perfilSocioRef, "dados")} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={() => handleNextTab(perfilSocioRef, "dados")} disabled={saving || isEditing} className="bg-blue-600 hover:bg-blue-700">
                 {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Próximo: Dados <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
@@ -305,11 +306,12 @@ export default function Cadastro() {
             <DadosBasicosOficina 
               ref={dadosBasicosRef}
               workshop={workshop} 
-              onUpdate={handleWorkshopUpdate} 
+              onUpdate={handleWorkshopUpdate}
+              onEditingChange={setIsEditing}
             />
             <div className="mt-6 flex justify-between">
               <Button variant="outline" onClick={() => setActiveTab("perfil-socio")}>Voltar</Button>
-              <Button onClick={() => handleNextTab(dadosBasicosRef, "servicos")} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={() => handleNextTab(dadosBasicosRef, "servicos")} disabled={saving || isEditing} className="bg-blue-600 hover:bg-blue-700">
                 {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Próximo: Serviços <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
@@ -322,10 +324,11 @@ export default function Cadastro() {
               workshop={workshop} 
               onUpdate={handleWorkshopUpdate}
               showServicesOnly={true}
+              onEditingChange={setIsEditing}
             />
             <div className="mt-6 flex justify-between">
               <Button variant="outline" onClick={() => setActiveTab("dados")}>Voltar</Button>
-              <Button onClick={() => handleNextTab(servicosRef, "equipamentos")} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={() => handleNextTab(servicosRef, "equipamentos")} disabled={saving || isEditing} className="bg-blue-600 hover:bg-blue-700">
                 {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Próximo: Equipamentos <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
@@ -338,10 +341,11 @@ export default function Cadastro() {
               workshop={workshop} 
               onUpdate={handleWorkshopUpdate}
               showEquipmentOnly={true}
+              onEditingChange={setIsEditing}
             />
             <div className="mt-6 flex justify-between">
               <Button variant="outline" onClick={() => setActiveTab("servicos")}>Voltar</Button>
-              <Button onClick={() => handleNextTab(equipamentosRef, "terceirizados")} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={() => handleNextTab(equipamentosRef, "terceirizados")} disabled={saving || isEditing} className="bg-blue-600 hover:bg-blue-700">
                 {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Próximo: Terceirizados <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
@@ -352,11 +356,12 @@ export default function Cadastro() {
             <ServicosTerceirizados 
               ref={terceirizadosRef}
               workshop={workshop} 
-              onUpdate={handleWorkshopUpdate} 
+              onUpdate={handleWorkshopUpdate}
+              onEditingChange={setIsEditing}
             />
             <div className="mt-6 flex justify-between">
               <Button variant="outline" onClick={() => setActiveTab("equipamentos")}>Voltar</Button>
-              <Button onClick={() => handleNextTab(terceirizadosRef, "metas")} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={() => handleNextTab(terceirizadosRef, "metas")} disabled={saving || isEditing} className="bg-blue-600 hover:bg-blue-700">
                 {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Próximo: Metas <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
@@ -367,7 +372,8 @@ export default function Cadastro() {
             <MetasObjetivosCompleto 
               ref={metasRef}
               workshop={workshop} 
-              onUpdate={handleWorkshopUpdate} 
+              onUpdate={handleWorkshopUpdate}
+              onEditingChange={setIsEditing}
             />
             <div className="mt-8 pt-6 border-t border-slate-200 flex justify-between items-center">
               <Button variant="outline" onClick={() => setActiveTab("terceirizados")}>Voltar</Button>
@@ -390,7 +396,7 @@ export default function Cadastro() {
                       setSaving(false);
                     }
                   }}
-                  disabled={saving}
+                  disabled={saving || isEditing}
                   className="bg-green-600 hover:bg-green-700 shadow-lg"
                 >
                   {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
