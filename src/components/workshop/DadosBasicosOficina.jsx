@@ -681,8 +681,4 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate }, ref) => {
 
 DadosBasicosOficina.displayName = "DadosBasicosOficina";
 
-export default DadosBasicosOficina;);
-
-DadosBasicosOficina.displayName = "DadosBasicosOficina";
-
 export default DadosBasicosOficina;
