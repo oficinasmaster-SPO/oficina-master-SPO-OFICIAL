@@ -105,6 +105,36 @@ export default function Cadastro() {
 
   const [saving, setSaving] = useState(false);
 
+  // ✅ FUNÇÃO CENTRALIZADA: Salva o estado atual do workshop antes de avançar
+  const saveCurrentStep = async (currentStep) => {
+    console.log(`💾 [saveCurrentStep] Iniciando salvamento da etapa: ${currentStep}`);
+    
+    if (!workshop?.id) {
+      console.error("❌ [saveCurrentStep] Workshop não encontrado");
+      toast.error("Erro: Oficina não encontrada");
+      return false;
+    }
+
+    // Validar campos obrigatórios
+    if (!workshop.name || !workshop.city || !workshop.state) {
+      console.warn("⚠️ [saveCurrentStep] Campos obrigatórios não preenchidos");
+      toast.error("Preencha os campos obrigatórios antes de avançar");
+      return false;
+    }
+
+    try {
+      console.log(`🔄 [saveCurrentStep] Persistindo workshop ID: ${workshop.id}`);
+      const updated = await base44.entities.Workshop.update(workshop.id, workshop);
+      setWorkshop(updated);
+      console.log(`✅ [saveCurrentStep] Etapa "${currentStep}" salva com sucesso!`);
+      return true;
+    } catch (error) {
+      console.error(`❌ [saveCurrentStep] Erro ao salvar etapa "${currentStep}":`, error);
+      toast.error("Erro ao salvar: " + (error.message || "Verifique os dados"));
+      return false;
+    }
+  };
+
   const handleWorkshopUpdate = async (updates) => {
     setSaving(true);
     try {
@@ -121,27 +151,23 @@ export default function Cadastro() {
     }
   };
 
-  const handleNextTab = async (nextTab) => {
+  // ✅ FUNÇÃO CENTRALIZADA: Salva e avança para a próxima aba
+  const handleNextTab = async (currentStep, nextTab) => {
+    if (saving) return; // Evitar duplo clique
+    
     setSaving(true);
     try {
-      // Validar campos obrigatórios antes de salvar
-      if (!workshop?.name || !workshop?.city || !workshop?.state) {
-        toast.error("Preencha os campos obrigatórios antes de avançar");
-        setSaving(false);
-        return;
-      }
-
-      // Persistir dados atuais no banco
-      const updated = await base44.entities.Workshop.update(workshop.id, workshop);
-      setWorkshop(updated);
+      // Salvar etapa atual ANTES de avançar
+      const success = await saveCurrentStep(currentStep);
       
-      // Só avançar após salvamento com sucesso
-      setActiveTab(nextTab);
-      toast.success("Dados salvos! Avançando...");
-    } catch (error) {
-      console.error("Erro ao salvar antes de avançar:", error);
-      toast.error("Erro ao salvar: " + (error.message || "Verifique os dados e tente novamente"));
-      // NÃO avançar se houver erro
+      if (success) {
+        // Só avançar se salvamento foi bem-sucedido
+        console.log(`➡️ [handleNextTab] Avançando de "${currentStep}" para "${nextTab}"`);
+        setActiveTab(nextTab);
+        toast.success("Progresso salvo! Avançando...");
+      } else {
+        console.warn(`⚠️ [handleNextTab] Não avançou - salvamento falhou na etapa "${currentStep}"`);
+      }
     } finally {
       setSaving(false);
     }
@@ -276,7 +302,7 @@ export default function Cadastro() {
               onBack={() => {}}
             />
             <div className="mt-6 flex justify-end">
-              <Button onClick={() => handleNextTab("dados")} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={() => handleNextTab("perfil-socio", "dados")} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
                 {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Próximo: Dados <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
@@ -290,7 +316,7 @@ export default function Cadastro() {
             />
             <div className="mt-6 flex justify-between">
               <Button variant="outline" onClick={() => setActiveTab("perfil-socio")}>Voltar</Button>
-              <Button onClick={() => handleNextTab("servicos")} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={() => handleNextTab("dados", "servicos")} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
                 {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Próximo: Serviços <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
@@ -305,7 +331,7 @@ export default function Cadastro() {
             />
             <div className="mt-6 flex justify-between">
               <Button variant="outline" onClick={() => setActiveTab("dados")}>Voltar</Button>
-              <Button onClick={() => handleNextTab("equipamentos")} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={() => handleNextTab("servicos", "equipamentos")} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
                 {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Próximo: Equipamentos <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
@@ -320,7 +346,7 @@ export default function Cadastro() {
             />
             <div className="mt-6 flex justify-between">
               <Button variant="outline" onClick={() => setActiveTab("servicos")}>Voltar</Button>
-              <Button onClick={() => handleNextTab("terceirizados")} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={() => handleNextTab("equipamentos", "terceirizados")} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
                 {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Próximo: Terceirizados <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
@@ -334,7 +360,7 @@ export default function Cadastro() {
             />
             <div className="mt-6 flex justify-between">
               <Button variant="outline" onClick={() => setActiveTab("equipamentos")}>Voltar</Button>
-              <Button onClick={() => handleNextTab("metas")} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={() => handleNextTab("terceirizados", "metas")} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
                 {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Próximo: Metas <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
@@ -351,7 +377,14 @@ export default function Cadastro() {
               <div className="flex flex-col items-end gap-2">
                 <p className="text-sm text-slate-500">Tudo preenchido?</p>
                 <Button 
-                  onClick={handleFinish}
+                  onClick={async () => {
+                    setSaving(true);
+                    const success = await saveCurrentStep("metas");
+                    setSaving(false);
+                    if (success) {
+                      handleFinish();
+                    }
+                  }}
                   disabled={saving}
                   className="bg-green-600 hover:bg-green-700 shadow-lg"
                 >
