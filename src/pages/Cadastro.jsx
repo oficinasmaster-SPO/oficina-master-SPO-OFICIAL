@@ -122,15 +122,26 @@ export default function Cadastro() {
   };
 
   const handleNextTab = async (nextTab) => {
-    // Auto-save antes de trocar de aba
     setSaving(true);
     try {
-      await base44.entities.Workshop.update(workshop.id, workshop);
+      // Validar campos obrigatórios antes de salvar
+      if (!workshop?.name || !workshop?.city || !workshop?.state) {
+        toast.error("Preencha os campos obrigatórios antes de avançar");
+        setSaving(false);
+        return;
+      }
+
+      // Persistir dados atuais no banco
+      const updated = await base44.entities.Workshop.update(workshop.id, workshop);
+      setWorkshop(updated);
+      
+      // Só avançar após salvamento com sucesso
       setActiveTab(nextTab);
-      toast.success("Progresso salvo!");
+      toast.success("Dados salvos! Avançando...");
     } catch (error) {
-      console.error(error);
-      toast.error("Erro ao salvar. Verifique os dados.");
+      console.error("Erro ao salvar antes de avançar:", error);
+      toast.error("Erro ao salvar: " + (error.message || "Verifique os dados e tente novamente"));
+      // NÃO avançar se houver erro
     } finally {
       setSaving(false);
     }
