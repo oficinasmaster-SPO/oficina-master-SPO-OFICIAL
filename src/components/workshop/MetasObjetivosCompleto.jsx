@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useImperativeHandle, forwardRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
@@ -14,7 +14,7 @@ import { Save, Target, TrendingUp, Calendar, Building2, User, Users, FileText, D
 import { formatCurrency, formatNumber, formatInteger } from "../utils/formatters";
 import { toast } from "sonner";
 
-export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
+const MetasObjetivosCompleto = forwardRef(({ workshop, onUpdate }, ref) => {
   const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
   const [editingGrowth, setEditingGrowth] = useState(false);
@@ -396,6 +396,45 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
       setLoadingTCMP2(false);
     }
   };
+
+  // Expor função saveCurrentData para componente pai
+  useImperativeHandle(ref, () => ({
+    saveCurrentData: async () => {
+      try {
+        const dataToSave = {
+          serves_fleet_insurance: formData.serves_fleet_insurance,
+          best_month_history: {
+            ...formData.best_month_history,
+            clients_scheduled_base: formData.best_month_history.clients_scheduled_base || 0,
+            clients_delivered_base: formData.best_month_history.clients_delivered_base || 0,
+            sales_base: formData.best_month_history.sales_base || 0,
+            clients_scheduled_mkt: formData.best_month_history.clients_scheduled_mkt || 0,
+            clients_delivered_mkt: formData.best_month_history.clients_delivered_mkt || 0,
+            sales_marketing: formData.best_month_history.sales_marketing || 0,
+            clients_scheduled_referral: formData.best_month_history.clients_scheduled_referral || 0,
+            clients_delivered_referral: formData.best_month_history.clients_delivered_referral || 0,
+            marketing: {
+              leads_generated: formData.best_month_history.marketing?.leads_generated || 0,
+              leads_scheduled: formData.best_month_history.marketing?.leads_scheduled || 0,
+              leads_showed_up: formData.best_month_history.marketing?.leads_showed_up || 0,
+              leads_sold: formData.best_month_history.marketing?.leads_sold || 0,
+              cost_per_sale: formData.best_month_history.marketing?.cost_per_sale || 0,
+              invested_value: formData.best_month_history.marketing?.invested_value || 0,
+              revenue_from_traffic: formData.best_month_history.marketing?.revenue_from_traffic || 0
+            }
+          },
+          monthly_goals: formData.monthly_goals
+        };
+        
+        await onUpdate(dataToSave);
+        return true;
+      } catch (error) {
+        console.error("Erro ao salvar:", error);
+        toast.error("Erro ao salvar metas: " + error.message);
+        return false;
+      }
+    }
+  }));
 
   if (!workshop) {
     return <div className="p-8 text-center text-gray-500">Carregando...</div>;
@@ -1762,4 +1801,8 @@ export default function MetasObjetivosCompleto({ workshop, onUpdate }) {
       </Tabs>
     </div>);
 
-}
+});
+
+MetasObjetivosCompleto.displayName = "MetasObjetivosCompleto";
+
+export default MetasObjetivosCompleto;

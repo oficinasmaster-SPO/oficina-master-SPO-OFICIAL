@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
@@ -22,6 +22,14 @@ export default function Cadastro() {
   const [workshop, setWorkshop] = useState(null);
   const [activeTab, setActiveTab] = useState("perfil-socio");
   const [user, setUser] = useState(null);
+
+  // Refs para acessar funções dos componentes filhos
+  const perfilSocioRef = useRef(null);
+  const dadosBasicosRef = useRef(null);
+  const servicosRef = useRef(null);
+  const equipamentosRef = useRef(null);
+  const terceirizadosRef = useRef(null);
+  const metasRef = useRef(null);
 
   useEffect(() => {
     loadData();
@@ -105,36 +113,6 @@ export default function Cadastro() {
 
   const [saving, setSaving] = useState(false);
 
-  // ✅ FUNÇÃO CENTRALIZADA: Salva o estado atual do workshop antes de avançar
-  const saveCurrentStep = async (currentStep) => {
-    console.log(`💾 [saveCurrentStep] Iniciando salvamento da etapa: ${currentStep}`);
-    
-    if (!workshop?.id) {
-      console.error("❌ [saveCurrentStep] Workshop não encontrado");
-      toast.error("Erro: Oficina não encontrada");
-      return false;
-    }
-
-    // Validar campos obrigatórios
-    if (!workshop.name || !workshop.city || !workshop.state) {
-      console.warn("⚠️ [saveCurrentStep] Campos obrigatórios não preenchidos");
-      toast.error("Preencha os campos obrigatórios antes de avançar");
-      return false;
-    }
-
-    try {
-      console.log(`🔄 [saveCurrentStep] Persistindo workshop ID: ${workshop.id}`);
-      const updated = await base44.entities.Workshop.update(workshop.id, workshop);
-      setWorkshop(updated);
-      console.log(`✅ [saveCurrentStep] Etapa "${currentStep}" salva com sucesso!`);
-      return true;
-    } catch (error) {
-      console.error(`❌ [saveCurrentStep] Erro ao salvar etapa "${currentStep}":`, error);
-      toast.error("Erro ao salvar: " + (error.message || "Verifique os dados"));
-      return false;
-    }
-  };
-
   const handleWorkshopUpdate = async (updates) => {
     setSaving(true);
     try {
@@ -151,23 +129,29 @@ export default function Cadastro() {
     }
   };
 
-  // ✅ FUNÇÃO CENTRALIZADA: Salva e avança para a próxima aba
-  const handleNextTab = async (currentStep, nextTab) => {
-    if (saving) return; // Evitar duplo clique
-    
+  const handleNextTab = async (currentTabRef, nextTab) => {
     setSaving(true);
     try {
-      // Salvar etapa atual ANTES de avançar
-      const success = await saveCurrentStep(currentStep);
-      
-      if (success) {
-        // Só avançar se salvamento foi bem-sucedido
-        console.log(`➡️ [handleNextTab] Avançando de "${currentStep}" para "${nextTab}"`);
-        setActiveTab(nextTab);
-        toast.success("Progresso salvo! Avançando...");
-      } else {
-        console.warn(`⚠️ [handleNextTab] Não avançou - salvamento falhou na etapa "${currentStep}"`);
+      // Salvar dados do componente atual antes de avançar
+      if (currentTabRef?.current?.saveCurrentData) {
+        const success = await currentTabRef.current.saveCurrentData();
+        if (!success) {
+          setSaving(false);
+          return; // Bloquear navegação se falhar
+        }
       }
+      
+      // Recarregar workshop para garantir dados atualizados
+      const workshops = await base44.entities.Workshop.filter({ owner_id: user.id });
+      if (workshops && workshops.length > 0) {
+        setWorkshop(workshops[0]);
+      }
+      
+      setActiveTab(nextTab);
+      toast.success("Progresso salvo!");
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao salvar. Verifique os dados.");
     } finally {
       setSaving(false);
     }
@@ -296,13 +280,14 @@ export default function Cadastro() {
 
           <TabsContent value="perfil-socio" className="animate-in fade-in-50 duration-300">
             <CadastroPerfilSocio 
+              ref={perfilSocioRef}
               workshop={workshop}
               user={user}
               onComplete={handleFinish}
               onBack={() => {}}
             />
             <div className="mt-6 flex justify-end">
-              <Button onClick={() => handleNextTab("perfil-socio", "dados")} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={() => handleNextTab(perfilSocioRef, "dados")} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
                 {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Próximo: Dados <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
@@ -311,12 +296,13 @@ export default function Cadastro() {
 
           <TabsContent value="dados" className="animate-in fade-in-50 duration-300">
             <DadosBasicosOficina 
+              ref={dadosBasicosRef}
               workshop={workshop} 
               onUpdate={handleWorkshopUpdate} 
             />
             <div className="mt-6 flex justify-between">
               <Button variant="outline" onClick={() => setActiveTab("perfil-socio")}>Voltar</Button>
-              <Button onClick={() => handleNextTab("dados", "servicos")} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={() => handleNextTab(dadosBasicosRef, "servicos")} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
                 {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Próximo: Serviços <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
@@ -325,13 +311,14 @@ export default function Cadastro() {
 
           <TabsContent value="servicos" className="animate-in fade-in-50 duration-300">
             <ServicosEquipamentos 
+              ref={servicosRef}
               workshop={workshop} 
               onUpdate={handleWorkshopUpdate}
               showServicesOnly={true}
             />
             <div className="mt-6 flex justify-between">
               <Button variant="outline" onClick={() => setActiveTab("dados")}>Voltar</Button>
-              <Button onClick={() => handleNextTab("servicos", "equipamentos")} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={() => handleNextTab(servicosRef, "equipamentos")} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
                 {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Próximo: Equipamentos <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
@@ -340,13 +327,14 @@ export default function Cadastro() {
 
           <TabsContent value="equipamentos" className="animate-in fade-in-50 duration-300">
             <ServicosEquipamentos 
+              ref={equipamentosRef}
               workshop={workshop} 
               onUpdate={handleWorkshopUpdate}
               showEquipmentOnly={true}
             />
             <div className="mt-6 flex justify-between">
               <Button variant="outline" onClick={() => setActiveTab("servicos")}>Voltar</Button>
-              <Button onClick={() => handleNextTab("equipamentos", "terceirizados")} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={() => handleNextTab(equipamentosRef, "terceirizados")} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
                 {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Próximo: Terceirizados <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
@@ -355,12 +343,13 @@ export default function Cadastro() {
 
           <TabsContent value="terceirizados" className="animate-in fade-in-50 duration-300">
             <ServicosTerceirizados 
+              ref={terceirizadosRef}
               workshop={workshop} 
               onUpdate={handleWorkshopUpdate} 
             />
             <div className="mt-6 flex justify-between">
               <Button variant="outline" onClick={() => setActiveTab("equipamentos")}>Voltar</Button>
-              <Button onClick={() => handleNextTab("terceirizados", "metas")} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={() => handleNextTab(terceirizadosRef, "metas")} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
                 {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Próximo: Metas <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
@@ -369,6 +358,7 @@ export default function Cadastro() {
 
           <TabsContent value="metas" className="animate-in fade-in-50 duration-300">
             <MetasObjetivosCompleto 
+              ref={metasRef}
               workshop={workshop} 
               onUpdate={handleWorkshopUpdate} 
             />
@@ -379,10 +369,18 @@ export default function Cadastro() {
                 <Button 
                   onClick={async () => {
                     setSaving(true);
-                    const success = await saveCurrentStep("metas");
-                    setSaving(false);
-                    if (success) {
+                    try {
+                      // Salvar dados da aba atual antes de finalizar
+                      if (metasRef?.current?.saveCurrentData) {
+                        const success = await metasRef.current.saveCurrentData();
+                        if (!success) {
+                          setSaving(false);
+                          return;
+                        }
+                      }
                       handleFinish();
+                    } finally {
+                      setSaving(false);
                     }
                   }}
                   disabled={saving}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useImperativeHandle, forwardRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { Settings, Package, Plus, Trash2, Save } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 
-export default function ServicosEquipamentos({ workshop, onUpdate, showServicesOnly, showEquipmentOnly }) {
+const ServicosEquipamentos = forwardRef(({ workshop, onUpdate, showServicesOnly, showEquipmentOnly }, ref) => {
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState({
     vehicle_types: [],
@@ -296,6 +296,20 @@ export default function ServicosEquipamentos({ workshop, onUpdate, showServicesO
       setEditing(false);
     }
   };
+
+  // Expor função saveCurrentData para componente pai
+  useImperativeHandle(ref, () => ({
+    saveCurrentData: async () => {
+      try {
+        await onUpdate(formData);
+        return true;
+      } catch (error) {
+        console.error("Erro ao salvar:", error);
+        toast.error("Erro ao salvar");
+        return false;
+      }
+    }
+  }));
 
   const shouldShowServices = !showEquipmentOnly;
   const shouldShowEquipment = !showServicesOnly;
@@ -796,4 +810,8 @@ export default function ServicosEquipamentos({ workshop, onUpdate, showServicesO
       )}
     </div>
   );
-}
+});
+
+ServicosEquipamentos.displayName = "ServicosEquipamentos";
+
+export default ServicosEquipamentos;
