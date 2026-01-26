@@ -24,7 +24,6 @@ export default function CriarDescricaoCargo() {
   
   const [formData, setFormData] = useState({
     job_title: "",
-    job_role: "",
     area: "",
     previous_experience: [],
     education: [],
@@ -353,26 +352,6 @@ export default function CriarDescricaoCargo() {
                     className="mt-2"
                   />
                   <p className="text-xs text-gray-500 mt-1">Digite livremente o nome do cargo</p>
-                </div>
-
-                <div>
-                  <Label>Função no Sistema</Label>
-                  <Select 
-                    value={formData.job_role} 
-                    onValueChange={(value) => setFormData({...formData, job_role: value})}
-                  >
-                    <SelectTrigger className="mt-2">
-                      <SelectValue placeholder="Selecione a função..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {jobRoles.map(role => (
-                        <SelectItem key={role.value} value={role.value}>
-                          {role.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-gray-500 mt-1">Função padrão do sistema SPO</p>
                 </div>
 
                 <div>
