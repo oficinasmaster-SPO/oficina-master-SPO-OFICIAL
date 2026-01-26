@@ -20,7 +20,7 @@ export default function Cadastro() {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [workshop, setWorkshop] = useState(null);
-  const [activeTab, setActiveTab] = useState("dados");
+  const [activeTab, setActiveTab] = useState("perfil-socio");
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -231,6 +231,10 @@ export default function Cadastro() {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-2 md:grid-cols-6 bg-white shadow-sm p-1 h-auto">
+            <TabsTrigger value="perfil-socio" className="py-3">
+              <User className="w-4 h-4 mr-2" />
+              Meu Perfil
+            </TabsTrigger>
             <TabsTrigger value="dados" className="py-3">
               <Building2 className="w-4 h-4 mr-2" />
               Dados
@@ -251,18 +255,30 @@ export default function Cadastro() {
               <Target className="w-4 h-4 mr-2" />
               Metas
             </TabsTrigger>
-            <TabsTrigger value="perfil-socio" className="py-3">
-              <User className="w-4 h-4 mr-2" />
-              Meu Perfil
-            </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="perfil-socio" className="animate-in fade-in-50 duration-300">
+            <CadastroPerfilSocio 
+              workshop={workshop}
+              user={user}
+              onComplete={handleFinish}
+              onBack={() => {}}
+            />
+            <div className="mt-6 flex justify-end">
+              <Button onClick={() => handleNextTab("dados")} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+                {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                Próximo: Dados <ArrowRight className="ml-2 w-4 h-4" />
+              </Button>
+            </div>
+          </TabsContent>
 
           <TabsContent value="dados" className="animate-in fade-in-50 duration-300">
             <DadosBasicosOficina 
               workshop={workshop} 
               onUpdate={handleWorkshopUpdate} 
             />
-            <div className="mt-6 flex justify-end">
+            <div className="mt-6 flex justify-between">
+              <Button variant="outline" onClick={() => setActiveTab("perfil-socio")}>Voltar</Button>
               <Button onClick={() => handleNextTab("servicos")} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
                 {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Próximo: Serviços <ArrowRight className="ml-2 w-4 h-4" />
@@ -324,24 +340,16 @@ export default function Cadastro() {
               <div className="flex flex-col items-end gap-2">
                 <p className="text-sm text-slate-500">Tudo preenchido?</p>
                 <Button 
-                  onClick={() => handleNextTab("perfil-socio")}
+                  onClick={handleFinish}
                   disabled={saving}
-                  className="bg-blue-600 hover:bg-blue-700 shadow-lg"
+                  className="bg-green-600 hover:bg-green-700 shadow-lg"
                 >
                   {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                  Próximo: Meu Perfil como Sócio <ArrowRight className="ml-2 w-4 h-4" />
+                  <CheckCircle2 className="w-5 h-5 mr-2" />
+                  Finalizar Cadastro
                 </Button>
               </div>
             </div>
-          </TabsContent>
-
-          <TabsContent value="perfil-socio" className="animate-in fade-in-50 duration-300">
-            <CadastroPerfilSocio 
-              workshop={workshop}
-              user={user}
-              onComplete={handleFinish}
-              onBack={() => setActiveTab("metas")}
-            />
           </TabsContent>
         </Tabs>
       </div>

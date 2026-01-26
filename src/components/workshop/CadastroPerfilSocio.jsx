@@ -159,10 +159,9 @@ export default function CadastroPerfilSocio({ workshop, user, onComplete, onBack
         full_name: formData.full_name
       });
 
-      // Pequeno delay para garantir sincronização
-      await new Promise(resolve => setTimeout(resolve, 500));
+      toast.success("Perfil salvo! Avançar para próxima etapa.");
       
-      onComplete();
+      // Não chamar onComplete aqui, deixar o usuário navegar manualmente
     } catch (error) {
       console.error("Erro ao salvar perfil:", error);
       toast.error("Erro: " + error.message);
@@ -317,13 +316,10 @@ export default function CadastroPerfilSocio({ workshop, user, onComplete, onBack
             </div>
           </div>
 
-          <div className="flex justify-between pt-6 border-t">
-            <Button type="button" variant="outline" onClick={onBack}>
-              Voltar
-            </Button>
+          <div className="flex justify-end pt-6 border-t">
             <Button 
               type="submit" 
-              className="bg-green-600 hover:bg-green-700 shadow-lg"
+              className="bg-blue-600 hover:bg-blue-700"
               disabled={saving}
             >
               {saving ? (
@@ -333,8 +329,7 @@ export default function CadastroPerfilSocio({ workshop, user, onComplete, onBack
                 </>
               ) : (
                 <>
-                  <CheckCircle2 className="w-5 h-5 mr-2" />
-                  Finalizar Cadastro
+                  Salvar e Continuar
                 </>
               )}
             </Button>
