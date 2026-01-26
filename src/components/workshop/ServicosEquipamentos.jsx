@@ -9,8 +9,14 @@ import { Settings, Package, Plus, Trash2, Save } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 
-const ServicosEquipamentos = forwardRef(({ workshop, onUpdate, showServicesOnly, showEquipmentOnly }, ref) => {
+const ServicosEquipamentos = forwardRef(({ workshop, onUpdate, showServicesOnly, showEquipmentOnly, onEditingChange }, ref) => {
   const [editing, setEditing] = useState(false);
+  
+  useEffect(() => {
+    if (onEditingChange) {
+      onEditingChange(editing);
+    }
+  }, [editing, onEditingChange]);
   const [formData, setFormData] = useState({
     vehicle_types: [],
     fuel_types: [],

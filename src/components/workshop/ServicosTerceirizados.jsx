@@ -7,8 +7,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Save, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-const ServicosTerceirizados = forwardRef(({ workshop, onUpdate }, ref) => {
+const ServicosTerceirizados = forwardRef(({ workshop, onUpdate, onEditingChange }, ref) => {
   const [editing, setEditing] = useState(false);
+  
+  useEffect(() => {
+    if (onEditingChange) {
+      onEditingChange(editing);
+    }
+  }, [editing, onEditingChange]);
   const [formData, setFormData] = useState({
     third_party_services: []
   });

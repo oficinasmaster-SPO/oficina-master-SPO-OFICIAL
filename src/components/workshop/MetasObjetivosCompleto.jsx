@@ -14,10 +14,16 @@ import { Save, Target, TrendingUp, Calendar, Building2, User, Users, FileText, D
 import { formatCurrency, formatNumber, formatInteger } from "../utils/formatters";
 import { toast } from "sonner";
 
-const MetasObjetivosCompleto = forwardRef(({ workshop, onUpdate }, ref) => {
+const MetasObjetivosCompleto = forwardRef(({ workshop, onUpdate, onEditingChange }, ref) => {
   const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
   const [editingGrowth, setEditingGrowth] = useState(false);
+  
+  useEffect(() => {
+    if (onEditingChange) {
+      onEditingChange(editing || editingGrowth);
+    }
+  }, [editing, editingGrowth, onEditingChange]);
   const [growthPercentageInput, setGrowthPercentageInput] = useState(10);
   const [activeTab, setActiveTab] = useState("melhor_mes");
   const [loadingTCMP2, setLoadingTCMP2] = useState(false);
