@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Building2, Settings, Target, FileText, Users, TrendingUp, Package, DollarSign, BarChart3, Calculator, MessageCircle, Trophy, Briefcase, Calendar as CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency } from "../components/utils/formatters";
+import { markModuleCompleted } from "@/components/hooks/useModuleTracking";
 import DadosBasicosOficina from "../components/workshop/DadosBasicosOficina";
 import ServicosEquipamentos from "../components/workshop/ServicosEquipamentos";
 import EquipamentosCompletos from "../components/workshop/EquipamentosCompletos";
@@ -159,6 +160,13 @@ export default function GestaoOficina() {
       const updatedWorkshop = await base44.entities.Workshop.update(workshop.id, data);
       setWorkshop(updatedWorkshop);
       toast.success("Oficina atualizada!");
+      
+      // Marcar cadastro como concluído quando dados importantes forem preenchidos
+      const camposEssenciais = ['monthly_revenue', 'employees_count', 'services_offered', 'segment', 'cnpj'];
+      const campoAtualizado = Object.keys(data)[0];
+      if (camposEssenciais.includes(campoAtualizado)) {
+        await markModuleCompleted(workshop.id, 'CADAS', `Campo ${campoAtualizado} atualizado`);
+      }
     } catch (error) {
       console.error(error);
       toast.error("Erro ao atualizar");
