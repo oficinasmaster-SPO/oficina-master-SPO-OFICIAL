@@ -169,6 +169,7 @@ import TesteOpenAI from './pages/TesteOpenAI';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
+import ChatGestorOficina from './pages/ChatGestorOficina';
 import __Layout from './Layout.jsx';
 
 
@@ -344,6 +345,7 @@ export const PAGES = {
     "TreinamentoVendas": TreinamentoVendas,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
+    "ChatGestorOficina": ChatGestorOficina,
 }
 
 export const pagesConfig = {
