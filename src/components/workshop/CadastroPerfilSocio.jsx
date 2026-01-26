@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, CheckCircle2, User, Upload } from "lucide-react";
+import { Loader2, CheckCircle2, User, Upload, Save } from "lucide-react";
 import { toast } from "sonner";
 import { jobRoles } from "@/components/lib/jobRoles";
 
@@ -159,9 +159,8 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack }, 
         full_name: formData.full_name
       });
 
-      toast.success("Perfil salvo! Avançar para próxima etapa.");
-      
-      // Não chamar onComplete aqui, deixar o usuário navegar manualmente
+      toast.success(existingEmployee ? "Perfil atualizado!" : "Perfil criado!");
+      setEditing(false);
     } catch (error) {
       console.error("Erro ao salvar perfil:", error);
       toast.error("Erro: " + error.message);
@@ -249,13 +248,26 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack }, 
   return (
     <Card className="shadow-md">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <User className="w-6 h-6 text-blue-600" />
-          Meu Perfil como Sócio/Proprietário
-        </CardTitle>
-        <CardDescription>
-          Complete seus dados pessoais para finalizar o cadastro
-        </CardDescription>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <User className="w-6 h-6 text-blue-600" />
+            <div>
+              <CardTitle>Meu Perfil como Sócio/Proprietário</CardTitle>
+              <CardDescription>Complete seus dados pessoais para finalizar o cadastro</CardDescription>
+            </div>
+          </div>
+          {!editing ? (
+            <Button onClick={() => setEditing(true)}>Editar</Button>
+          ) : (
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setEditing(false)}>Cancelar</Button>
+              <Button onClick={handleSubmit}>
+                <Save className="w-4 h-4 mr-2" />
+                Salvar
+              </Button>
+            </div>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -273,10 +285,12 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack }, 
                   <User className="w-10 h-10 text-gray-400" />
                 </div>
               )}
-              <label className="absolute bottom-0 right-0 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-700 transition-colors">
-                <Upload className="w-4 h-4 text-white" />
-                <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-              </label>
+              {editing && (
+                <label className="absolute bottom-0 right-0 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-700 transition-colors">
+                  <Upload className="w-4 h-4 text-white" />
+                  <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                </label>
+              )}
             </div>
             <p className="text-sm text-gray-500 mt-2">Foto de perfil (opcional)</p>
           </div>
@@ -288,6 +302,7 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack }, 
                 id="full_name"
                 value={formData.full_name}
                 onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                disabled={!editing}
                 className="mt-1"
               />
             </div>
@@ -310,6 +325,7 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack }, 
                 value={formData.cpf}
                 onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
                 placeholder="000.000.000-00"
+                disabled={!editing}
                 className="mt-1"
               />
             </div>
@@ -320,6 +336,7 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack }, 
                 id="rg"
                 value={formData.rg}
                 onChange={(e) => setFormData({ ...formData, rg: e.target.value })}
+                disabled={!editing}
                 className="mt-1"
               />
             </div>
@@ -331,6 +348,7 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack }, 
                 value={formData.telefone}
                 onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
                 placeholder="(00) 00000-0000"
+                disabled={!editing}
                 className="mt-1"
               />
             </div>
@@ -341,13 +359,18 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack }, 
                 id="position"
                 value={formData.position}
                 onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                disabled={!editing}
                 className="mt-1"
               />
             </div>
 
             <div>
               <Label htmlFor="job_role">Função do Sistema</Label>
-              <Select value={formData.job_role} onValueChange={(value) => setFormData({ ...formData, job_role: value })}>
+              <Select 
+                value={formData.job_role} 
+                onValueChange={(value) => setFormData({ ...formData, job_role: value })}
+                disabled={!editing}
+              >
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Selecione uma função" />
                 </SelectTrigger>
@@ -366,7 +389,11 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack }, 
 
             <div>
               <Label htmlFor="profile_id">Perfil de Acesso</Label>
-              <Select value={formData.profile_id} onValueChange={(value) => setFormData({ ...formData, profile_id: value })}>
+              <Select 
+                value={formData.profile_id} 
+                onValueChange={(value) => setFormData({ ...formData, profile_id: value })}
+                disabled={!editing}
+              >
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Selecione um perfil" />
                 </SelectTrigger>
@@ -384,24 +411,7 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack }, 
             </div>
           </div>
 
-          <div className="flex justify-end pt-6 border-t">
-            <Button 
-              type="submit" 
-              className="bg-blue-600 hover:bg-blue-700"
-              disabled={saving}
-            >
-              {saving ? (
-                <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Salvando...
-                </>
-              ) : (
-                <>
-                  Salvar e Continuar
-                </>
-              )}
-            </Button>
-          </div>
+
         </form>
       </CardContent>
     </Card>

@@ -22,6 +22,7 @@ export default function Cadastro() {
   const [workshop, setWorkshop] = useState(null);
   const [activeTab, setActiveTab] = useState("perfil-socio");
   const [user, setUser] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   // Refs para acessar funções dos componentes filhos
   const perfilSocioRef = useRef(null);
@@ -250,7 +251,13 @@ export default function Cadastro() {
           </div>
         )}
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={(newTab) => {
+          if (isEditing) {
+            toast.error("Salve as alterações antes de continuar.");
+            return;
+          }
+          setActiveTab(newTab);
+        }} className="space-y-6">
           <TabsList className="grid w-full grid-cols-2 md:grid-cols-6 bg-white shadow-sm p-1 h-auto">
             <TabsTrigger value="perfil-socio" className="py-3">
               <User className="w-4 h-4 mr-2" />

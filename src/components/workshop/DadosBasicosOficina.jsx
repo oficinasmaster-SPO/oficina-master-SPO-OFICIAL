@@ -11,8 +11,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import SliderWithMax from "@/components/ui/slider-with-max";
 import { toast } from "sonner";
 
-const DadosBasicosOficina = forwardRef(({ workshop, onUpdate }, ref) => {
+const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange }, ref) => {
   const [editing, setEditing] = useState(false);
+  
+  useEffect(() => {
+    if (onEditingChange) {
+      onEditingChange(editing);
+    }
+  }, [editing, onEditingChange]);
   const [loadingCEP, setLoadingCEP] = useState(false);
   const [loadingCities, setLoadingCities] = useState(false);
   const [cities, setCities] = useState([]);
