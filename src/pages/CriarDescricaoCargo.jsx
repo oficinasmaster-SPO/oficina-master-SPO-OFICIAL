@@ -12,7 +12,7 @@ import { Progress } from "@/components/ui/progress";
 import { Loader2, Save, ArrowLeft, ArrowRight, CheckCircle, FileText, Mic, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { JOB_ROLES } from "@/components/lib/jobRoles";
+import { jobRoles } from "@/components/lib/jobRoles";
 
 export default function CriarDescricaoCargo() {
   const navigate = useNavigate();
@@ -365,7 +365,7 @@ export default function CriarDescricaoCargo() {
                       <SelectValue placeholder="Selecione a função..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {JOB_ROLES.map(role => (
+                      {jobRoles.map(role => (
                         <SelectItem key={role.value} value={role.value}>
                           {role.label}
                         </SelectItem>
