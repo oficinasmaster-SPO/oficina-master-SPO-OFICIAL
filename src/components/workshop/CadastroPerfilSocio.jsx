@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useImperativeHandle, forwardRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { Loader2, CheckCircle2, User, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { jobRoles } from "@/components/lib/jobRoles";
 
-export default function CadastroPerfilSocio({ workshop, user, onComplete, onBack }) {
+const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack }, ref) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [existingEmployee, setExistingEmployee] = useState(null);
@@ -169,6 +169,74 @@ export default function CadastroPerfilSocio({ workshop, user, onComplete, onBack
       setSaving(false);
     }
   };
+
+  // Expor função saveCurrentData para componente pai
+  useImperativeHandle(ref, () => ({
+    saveCurrentData: async () => {
+      // Validação e salvamento sem chamar onComplete
+      if (!formData.full_name || !formData.email) {
+        toast.error("Nome e email são obrigatórios");
+        return false;
+      }
+
+      // VALIDAÇÃO DE SEGURANÇA: Bloquear job_role interno para usuários comuns
+      const selectedJobRole = jobRoles.find(r => r.value === formData.job_role);
+      if (currentUser?.role !== 'admin' && selectedJobRole?.category === 'consultoria') {
+        toast.error("Este perfil é restrito a administradores.");
+        return false;
+      }
+
+      // VALIDAÇÃO DE SEGURANÇA: Bloquear UserProfile interno para usuários comuns
+      if (formData.profile_id) {
+        const selectedProfile = profiles.find(p => p.id === formData.profile_id);
+        if (currentUser?.role !== 'admin' && selectedProfile?.type === 'interno') {
+          toast.error("Este perfil de acesso é restrito a administradores.");
+          return false;
+        }
+      }
+
+      try {
+        const employeeData = {
+          workshop_id: workshop.id,
+          owner_id: workshop.owner_id || user.id,
+          user_id: user.id,
+          full_name: formData.full_name,
+          email: formData.email,
+          cpf: formData.cpf,
+          rg: formData.rg,
+          telefone: formData.telefone,
+          position: formData.position,
+          job_role: formData.job_role,
+          area: formData.area,
+          profile_picture_url: formData.profile_picture_url,
+          is_partner: formData.is_partner,
+          profile_id: formData.profile_id,
+          tipo_vinculo: 'cliente',
+          status: 'ativo',
+          user_status: 'ativo',
+          hire_date: new Date().toISOString().split('T')[0]
+        };
+
+        if (existingEmployee) {
+          await base44.entities.Employee.update(existingEmployee.id, employeeData);
+        } else {
+          const created = await base44.entities.Employee.create(employeeData);
+          setExistingEmployee(created);
+        }
+
+        await base44.auth.updateMe({
+          workshop_id: workshop.id,
+          full_name: formData.full_name
+        });
+
+        return true;
+      } catch (error) {
+        console.error("Erro ao salvar perfil:", error);
+        toast.error("Erro: " + error.message);
+        return false;
+      }
+    }
+  }));
 
   if (loading) {
     return (
@@ -338,4 +406,8 @@ export default function CadastroPerfilSocio({ workshop, user, onComplete, onBack
       </CardContent>
     </Card>
   );
-}
+});
+
+CadastroPerfilSocio.displayName = "CadastroPerfilSocio";
+
+export default CadastroPerfilSocio;

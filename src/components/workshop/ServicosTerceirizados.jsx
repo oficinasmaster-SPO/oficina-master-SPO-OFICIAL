@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useImperativeHandle, forwardRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Save, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-export default function ServicosTerceirizados({ workshop, onUpdate }) {
+const ServicosTerceirizados = forwardRef(({ workshop, onUpdate }, ref) => {
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState({
     third_party_services: []
@@ -51,6 +51,20 @@ export default function ServicosTerceirizados({ workshop, onUpdate }) {
     newServices[index][field] = field === 'value' ? parseFloat(value) || 0 : value;
     setFormData({ ...formData, third_party_services: newServices });
   };
+
+  // Expor função saveCurrentData para componente pai
+  useImperativeHandle(ref, () => ({
+    saveCurrentData: async () => {
+      try {
+        await onUpdate(formData);
+        return true;
+      } catch (error) {
+        console.error("Erro ao salvar:", error);
+        toast.error("Erro ao salvar serviços");
+        return false;
+      }
+    }
+  }));
 
   if (!workshop) {
     return (
@@ -200,4 +214,8 @@ export default function ServicosTerceirizados({ workshop, onUpdate }) {
       </CardContent>
     </Card>
   );
-}
+});
+
+ServicosTerceirizados.displayName = "ServicosTerceirizados";
+
+export default ServicosTerceirizados;
