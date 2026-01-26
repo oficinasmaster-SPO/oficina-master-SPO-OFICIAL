@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useImperativeHandle, forwardRef } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import SliderWithMax from "@/components/ui/slider-with-max";
 import { toast } from "sonner";
 
-const DadosBasicosOficina = forwardRef(({ workshop, onUpdate }, ref) => {
+export default function DadosBasicosOficina({ workshop, onUpdate }) {
   const [editing, setEditing] = useState(false);
   const [loadingCEP, setLoadingCEP] = useState(false);
   const [loadingCities, setLoadingCities] = useState(false);
@@ -677,8 +677,4 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate }, ref) => {
       )}
     </div>
   );
-});
-
-DadosBasicosOficina.displayName = "DadosBasicosOficina";
-
-export default DadosBasicosOficina;
+}
