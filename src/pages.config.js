@@ -38,6 +38,7 @@ import CadastroPlanos from './pages/CadastroPlanos';
 import CadastroSucesso from './pages/CadastroSucesso';
 import CadastroUsuarioDireto from './pages/CadastroUsuarioDireto';
 import ChatGestorOficina from './pages/ChatGestorOficina';
+import ChatQGPTecnico from './pages/ChatQGPTecnico';
 import ClientRegistration from './pages/ClientRegistration';
 import Clientes from './pages/Clientes';
 import Colaboradores from './pages/Colaboradores';
@@ -170,7 +171,6 @@ import TesteOpenAI from './pages/TesteOpenAI';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
-import ChatQGPTecnico from './pages/ChatQGPTecnico';
 import __Layout from './Layout.jsx';
 
 
@@ -215,6 +215,7 @@ export const PAGES = {
     "CadastroSucesso": CadastroSucesso,
     "CadastroUsuarioDireto": CadastroUsuarioDireto,
     "ChatGestorOficina": ChatGestorOficina,
+    "ChatQGPTecnico": ChatQGPTecnico,
     "ClientRegistration": ClientRegistration,
     "Clientes": Clientes,
     "Colaboradores": Colaboradores,
@@ -347,7 +348,6 @@ export const PAGES = {
     "TreinamentoVendas": TreinamentoVendas,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
-    "ChatQGPTecnico": ChatQGPTecnico,
 }
 
 export const pagesConfig = {
