@@ -10,14 +10,16 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Save, Target, TrendingUp, Calendar, Building2, User, Users, FileText, Download, Edit } from "lucide-react";
+import { Save, Target, TrendingUp, Calendar, Building2, User, Users, FileText, Download, Edit, Loader2 } from "lucide-react";
 import { formatCurrency, formatNumber, formatInteger } from "../utils/formatters";
 import { toast } from "sonner";
 
 const MetasObjetivosCompleto = forwardRef(({ workshop, onUpdate, onEditingChange }, ref) => {
   const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [editingGrowth, setEditingGrowth] = useState(false);
+  const [savingGrowth, setSavingGrowth] = useState(false);
   
   useEffect(() => {
     if (onEditingChange) {
@@ -195,6 +197,7 @@ const MetasObjetivosCompleto = forwardRef(({ workshop, onUpdate, onEditingChange
   }, [workshop]);
 
   const handleSave = async () => {
+    setSaving(true);
     try {
       // Garantir que todos os campos do best_month_history sejam salvos corretamente
       const dataToSave = {
@@ -231,10 +234,13 @@ const MetasObjetivosCompleto = forwardRef(({ workshop, onUpdate, onEditingChange
     } catch (error) {
       console.error("Erro ao salvar:", error);
       toast.error("Erro ao salvar metas: " + error.message);
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleSaveGrowth = async () => {
+    setSavingGrowth(true);
     try {
       const bestMonthRevenue = formData.best_month_history?.revenue_total || 0;
       const newGrowthPercentage = growthPercentageInput || 10;
@@ -260,6 +266,7 @@ const MetasObjetivosCompleto = forwardRef(({ workshop, onUpdate, onEditingChange
       toast.error("Erro ao salvar crescimento");
     } finally {
       setEditingGrowth(false);
+      setSavingGrowth(false);
     }
   };
 
@@ -465,10 +472,10 @@ const MetasObjetivosCompleto = forwardRef(({ workshop, onUpdate, onEditingChange
         <Button onClick={() => setEditing(true)}>Editar</Button> :
 
         <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setEditing(false)}>Cancelar</Button>
-            <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
-              <Save className="w-4 h-4 mr-2" />
-              Salvar
+            <Button variant="outline" onClick={() => setEditing(false)} disabled={saving}>Cancelar</Button>
+            <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700" disabled={saving}>
+              {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+              {saving ? 'Salvando...' : 'Salvar'}
             </Button>
           </div>
         }
@@ -511,10 +518,10 @@ const MetasObjetivosCompleto = forwardRef(({ workshop, onUpdate, onEditingChange
                     <Button variant="outline" onClick={() => {
                     setEditingGrowth(false);
                     setGrowthPercentageInput(formData.monthly_goals?.growth_percentage || 10);
-                  }} size="sm">Cancelar</Button>
-                    <Button onClick={handleSaveGrowth} size="sm" className="bg-orange-600 hover:bg-orange-700">
-                      <Save className="w-4 h-4 mr-2" />
-                      Salvar
+                  }} size="sm" disabled={savingGrowth}>Cancelar</Button>
+                    <Button onClick={handleSaveGrowth} size="sm" className="bg-orange-600 hover:bg-orange-700" disabled={savingGrowth}>
+                      {savingGrowth ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                      {savingGrowth ? 'Salvando...' : 'Salvar'}
                     </Button>
                   </div>
                 }

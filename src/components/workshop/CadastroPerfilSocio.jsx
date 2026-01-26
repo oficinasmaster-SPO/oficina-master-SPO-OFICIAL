@@ -266,10 +266,10 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack, on
             <Button onClick={() => setEditing(true)}>Editar</Button>
           ) : (
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setEditing(false)}>Cancelar</Button>
-              <Button onClick={handleSubmit}>
-                <Save className="w-4 h-4 mr-2" />
-                Salvar
+              <Button variant="outline" onClick={() => setEditing(false)} disabled={saving}>Cancelar</Button>
+              <Button onClick={handleSubmit} disabled={saving}>
+                {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                {saving ? 'Salvando...' : 'Salvar'}
               </Button>
             </div>
           )}

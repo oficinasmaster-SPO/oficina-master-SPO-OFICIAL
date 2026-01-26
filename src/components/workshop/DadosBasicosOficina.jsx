@@ -13,6 +13,7 @@ import { toast } from "sonner";
 
 const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange }, ref) => {
   const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
   
   useEffect(() => {
     if (onEditingChange) {
@@ -81,6 +82,7 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
   }, [workshop]);
 
   const handleSave = async () => {
+    setSaving(true);
     try {
       await onUpdate(formData);
       toast.success("Dados básicos salvos!");
@@ -89,6 +91,7 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
       toast.error("Erro ao salvar dados");
     } finally {
       setEditing(false);
+      setSaving(false);
     }
   };
 
@@ -206,10 +209,10 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
               <Button onClick={() => setEditing(true)}>Editar</Button>
             ) : (
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setEditing(false)}>Cancelar</Button>
-                <Button onClick={handleSave}>
-                  <Save className="w-4 h-4 mr-2" />
-                  Salvar
+                <Button variant="outline" onClick={() => setEditing(false)} disabled={saving}>Cancelar</Button>
+                <Button onClick={handleSave} disabled={saving}>
+                  {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                  {saving ? 'Salvando...' : 'Salvar'}
                 </Button>
               </div>
             )}

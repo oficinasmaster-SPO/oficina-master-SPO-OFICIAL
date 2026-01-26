@@ -5,12 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Settings, Package, Plus, Trash2, Save } from "lucide-react";
+import { Settings, Package, Plus, Trash2, Save, Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 
 const ServicosEquipamentos = forwardRef(({ workshop, onUpdate, showServicesOnly, showEquipmentOnly, onEditingChange }, ref) => {
   const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
   
   useEffect(() => {
     if (onEditingChange) {
@@ -292,6 +293,7 @@ const ServicosEquipamentos = forwardRef(({ workshop, onUpdate, showServicesOnly,
   };
 
   const handleSave = async () => {
+    setSaving(true);
     try {
       await onUpdate(formData);
       toast.success("Serviços e equipamentos salvos!");
@@ -300,6 +302,7 @@ const ServicosEquipamentos = forwardRef(({ workshop, onUpdate, showServicesOnly,
       toast.error("Erro ao salvar");
     } finally {
       setEditing(false);
+      setSaving(false);
     }
   };
 
@@ -359,10 +362,10 @@ const ServicosEquipamentos = forwardRef(({ workshop, onUpdate, showServicesOnly,
                             pneumatic_wrench: 0, paint_booth: 0, lathe: 0, scanners: []
                         }
                       });
-                    }}>Cancelar</Button>
-                    <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
-                      <Save className="w-4 h-4 mr-2" />
-                      Salvar
+                    }} disabled={saving}>Cancelar</Button>
+                    <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700" disabled={saving}>
+                      {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                      {saving ? 'Salvando...' : 'Salvar'}
                     </Button>
                   </div>
                 )}
