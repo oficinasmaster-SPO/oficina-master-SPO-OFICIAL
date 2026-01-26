@@ -7,11 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Plus, FileText, Search, Briefcase, Download } from "lucide-react";
+import { Loader2, Plus, FileText, Search, Briefcase, Download, Eye } from "lucide-react";
+import JobDescriptionViewer from "@/components/job-description/JobDescriptionViewer";
 
 export default function DescricoesCargo() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedDescription, setSelectedDescription] = useState(null);
+  const [showViewer, setShowViewer] = useState(false);
 
   const { data: jobDescriptions = [], isLoading } = useQuery({
     queryKey: ['job-descriptions'],
@@ -93,9 +96,10 @@ export default function DescricoesCargo() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredDescriptions.map((desc) => (
-              <Card key={desc.id} className="shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredDescriptions.map((desc) => (
+                <Card key={desc.id} className="shadow-lg hover:shadow-xl transition-shadow">
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -131,110 +135,38 @@ export default function DescricoesCargo() {
                         variant="outline"
                         size="sm"
                         className="flex-1"
-                        onClick={() => navigate(createPageUrl("EditarDescricaoCargo") + `?id=${desc.id}`)}
+                        onClick={() => {
+                          setSelectedDescription(desc);
+                          setShowViewer(true);
+                        }}
                       >
-                        <FileText className="w-4 h-4 mr-1" />
-                        Ver/Editar
+                        <Eye className="w-4 h-4 mr-1" />
+                        Visualizar
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => {
-                          // Lógica de impressão melhorada
-                          const printWindow = window.open('', '_blank');
-                          printWindow.document.write(`
-                            <html>
-                              <head>
-                                <title>${desc.job_title}</title>
-                                <style>
-                                  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #333; line-height: 1.6; }
-                                  .header { text-align: center; border-bottom: 3px solid #4F46E5; padding-bottom: 20px; margin-bottom: 30px; }
-                                  .workshop-name { font-size: 14px; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
-                                  h1 { color: #1F2937; margin: 0; font-size: 28px; text-transform: uppercase; }
-                                  .meta { color: #6B7280; font-size: 12px; margin-top: 5px; }
-                                  
-                                  .section { margin-bottom: 25px; page-break-inside: avoid; }
-                                  h2 { color: #4F46E5; font-size: 16px; border-bottom: 1px solid #E5E7EB; padding-bottom: 5px; margin-bottom: 15px; text-transform: uppercase; }
-                                  
-                                  ul { padding-left: 20px; }
-                                  li { margin-bottom: 8px; }
-                                  p { margin-bottom: 10px; text-align: justify; }
-                                  
-                                  .footer { margin-top: 50px; border-top: 1px solid #E5E7EB; padding-top: 20px; text-align: center; font-size: 10px; color: #9CA3AF; }
-                                </style>
-                              </head>
-                              <body>
-                                <div class="header">
-                                  <div class="workshop-name">${getWorkshopName(desc.workshop_id)}</div>
-                                  <h1>${desc.job_title}</h1>
-                                  <div class="meta">Descrição de Cargo • Gerado em ${new Date(desc.created_date).toLocaleDateString('pt-BR')}</div>
-                                </div>
-                                
-                                <div class="content">
-                                  ${desc.main_activities && desc.main_activities.length > 0 ? `
-                                    <div class="section">
-                                      <h2>Principais Atividades</h2>
-                                      <ul>${desc.main_activities.map(a => `<li>${a}</li>`).join('')}</ul>
-                                    </div>
-                                  ` : ''}
-                                  
-                                  ${desc.main_responsibilities ? `
-                                    <div class="section">
-                                      <h2>Responsabilidades Principais</h2>
-                                      <p>${desc.main_responsibilities}</p>
-                                    </div>
-                                  ` : ''}
-
-                                  ${desc.education && desc.education.length > 0 ? `
-                                    <div class="section">
-                                      <h2>Escolaridade</h2>
-                                      <ul>${desc.education.map(e => `<li>${e.item || e}</li>`).join('')}</ul>
-                                    </div>
-                                  ` : ''}
-
-                                  ${desc.previous_experience && desc.previous_experience.length > 0 ? `
-                                    <div class="section">
-                                      <h2>Experiência Necessária</h2>
-                                      <ul>${desc.previous_experience.map(e => `<li>${e.item || e}</li>`).join('')}</ul>
-                                    </div>
-                                  ` : ''}
-                                </div>
-
-                                <div class="footer">
-                                  Documento interno. Uso exclusivo para gestão de pessoas.
-                                </div>
-
-                                <script>
-                                  window.onload = function() {
-                                    setTimeout(function() {
-                                      window.print();
-                                      window.close();
-                                    }, 500);
-                                  };
-                                </script>
-                              </body>
-                            </html>
-                          `);
-                          printWindow.document.close();
-                        }}
+                        onClick={() => navigate(createPageUrl("EditarDescricaoCargo") + `?id=${desc.id}`)}
                       >
-                        <Download className="w-4 h-4" />
+                        <FileText className="w-4 h-4" />
                       </Button>
-                      {desc.pdf_url && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => window.open(desc.pdf_url, '_blank')}
-                        >
-                          <Download className="w-4 h-4" />
-                        </Button>
-                      )}
                     </div>
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
+
+          <JobDescriptionViewer
+            open={showViewer}
+            onClose={() => {
+              setShowViewer(false);
+              setSelectedDescription(null);
+            }}
+            jobDescription={selectedDescription}
+            workshop={workshops.find(w => w.id === selectedDescription?.workshop_id)}
+          />
+          </>
         )}
       </div>
     </div>
