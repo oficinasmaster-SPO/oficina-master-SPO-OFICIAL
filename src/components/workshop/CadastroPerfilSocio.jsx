@@ -7,12 +7,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, CheckCircle2, User, Upload } from "lucide-react";
 import { toast } from "sonner";
+import { jobRoles } from "@/components/lib/jobRoles";
 
 export default function CadastroPerfilSocio({ workshop, user, onComplete, onBack }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [existingEmployee, setExistingEmployee] = useState(null);
   const [profiles, setProfiles] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
   
   const [formData, setFormData] = useState({
     full_name: user?.full_name || "",
@@ -34,6 +36,14 @@ export default function CadastroPerfilSocio({ workshop, user, onComplete, onBack
 
   const loadData = async () => {
     try {
+      console.log("🔍 CadastroPerfilSocio mounted");
+      
+      // Carregar usuário atual para verificar role
+      const authUser = await base44.auth.me();
+      setCurrentUser(authUser);
+      console.log("👤 currentUser.id:", authUser?.id);
+      console.log("👤 currentUser.role:", authUser?.role);
+      
       // Buscar se já existe Employee para este usuário
       const employees = await base44.entities.Employee.filter({ 
         user_id: user.id,
@@ -60,8 +70,12 @@ export default function CadastroPerfilSocio({ workshop, user, onComplete, onBack
 
       // Buscar perfis disponíveis para sócio
       const allProfiles = await base44.entities.UserProfile.list();
+      console.log("📊 allProfiles total:", allProfiles.length);
+      console.log("🔍 UserProfiles com type interno:", allProfiles.filter(p => p.type === 'interno'));
+      
       const filtered = allProfiles.filter(p => p.status === 'ativo');
       setProfiles(filtered);
+      console.log("📊 profiles filtrados (apenas ativos):", filtered.length);
 
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
@@ -90,6 +104,22 @@ export default function CadastroPerfilSocio({ workshop, user, onComplete, onBack
     if (!formData.full_name || !formData.email) {
       toast.error("Nome e email são obrigatórios");
       return;
+    }
+
+    // VALIDAÇÃO DE SEGURANÇA: Bloquear job_role interno para usuários comuns
+    const selectedJobRole = jobRoles.find(r => r.value === formData.job_role);
+    if (currentUser?.role !== 'admin' && selectedJobRole?.category === 'consultoria') {
+      toast.error("Este perfil é restrito a administradores.");
+      return;
+    }
+
+    // VALIDAÇÃO DE SEGURANÇA: Bloquear UserProfile interno para usuários comuns
+    if (formData.profile_id) {
+      const selectedProfile = profiles.find(p => p.id === formData.profile_id);
+      if (currentUser?.role !== 'admin' && selectedProfile?.type === 'interno') {
+        toast.error("Este perfil de acesso é restrito a administradores.");
+        return;
+      }
     }
 
     setSaving(true);
@@ -249,13 +279,35 @@ export default function CadastroPerfilSocio({ workshop, user, onComplete, onBack
             </div>
 
             <div>
+              <Label htmlFor="job_role">Função do Sistema</Label>
+              <Select value={formData.job_role} onValueChange={(value) => setFormData({ ...formData, job_role: value })}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Selecione uma função" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(currentUser?.role === 'admin' 
+                    ? jobRoles 
+                    : jobRoles.filter(role => role.category !== 'consultoria')
+                  ).map((role) => (
+                    <SelectItem key={role.value} value={role.value}>
+                      {role.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
               <Label htmlFor="profile_id">Perfil de Acesso</Label>
               <Select value={formData.profile_id} onValueChange={(value) => setFormData({ ...formData, profile_id: value })}>
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Selecione um perfil" />
                 </SelectTrigger>
                 <SelectContent>
-                  {profiles.map((p) => (
+                  {(currentUser?.role === 'admin'
+                    ? profiles
+                    : profiles.filter(p => p.type !== 'interno')
+                  ).map((p) => (
                     <SelectItem key={p.id} value={p.id}>
                       {p.name}
                     </SelectItem>
