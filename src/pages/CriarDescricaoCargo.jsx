@@ -11,6 +11,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { Loader2, Save, ArrowLeft, ArrowRight, CheckCircle, FileText, Mic, Wand2 } from "lucide-react";
 import { toast } from "sonner";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { JOB_ROLES } from "@/components/lib/jobRoles";
 
 export default function CriarDescricaoCargo() {
   const navigate = useNavigate();
@@ -22,6 +24,8 @@ export default function CriarDescricaoCargo() {
   
   const [formData, setFormData] = useState({
     job_title: "",
+    job_role: "",
+    area: "",
     previous_experience: [],
     education: [],
     knowledge: [],
@@ -148,8 +152,18 @@ export default function CriarDescricaoCargo() {
     }
   };
 
+  const areas = [
+    { value: "vendas", label: "Vendas" },
+    { value: "comercial", label: "Comercial" },
+    { value: "marketing", label: "Marketing" },
+    { value: "tecnico", label: "Técnico" },
+    { value: "administrativo", label: "Administrativo" },
+    { value: "financeiro", label: "Financeiro" },
+    { value: "gerencia", label: "Gerência" }
+  ];
+
   const questions = [
-    { id: "job_title", title: "1. Nome do Cargo", type: "text", hasRequiredDesired: false },
+    { id: "job_title", title: "1. Identificação do Cargo", type: "job-info", hasRequiredDesired: false },
     { id: "previous_experience", title: "2. Experiência Prévia", type: "list-checkbox", hasRequiredDesired: true },
     { id: "education", title: "3. Formação Escolar", type: "list-checkbox", hasRequiredDesired: true },
     { id: "knowledge", title: "4. Conhecimentos", type: "list-checkbox", hasRequiredDesired: true },
@@ -328,15 +342,58 @@ export default function CriarDescricaoCargo() {
             </div>
           </CardHeader>
           <CardContent className="p-6 min-h-[400px]">
-            {currentQuestion.type === "text" && (
-              <div>
-                <Label>Nome do Cargo *</Label>
-                <Input
-                  value={formData[currentQuestion.id]}
-                  onChange={(e) => setFormData({...formData, [currentQuestion.id]: e.target.value})}
-                  placeholder="Ex: Mecânico Líder"
-                  className="mt-2"
-                />
+            {currentQuestion.type === "job-info" && (
+              <div className="space-y-6">
+                <div>
+                  <Label>Nome do Cargo *</Label>
+                  <Input
+                    value={formData.job_title}
+                    onChange={(e) => setFormData({...formData, job_title: e.target.value})}
+                    placeholder="Ex: Mecânico Líder, Gerente Comercial..."
+                    className="mt-2"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Digite livremente o nome do cargo</p>
+                </div>
+
+                <div>
+                  <Label>Função no Sistema</Label>
+                  <Select 
+                    value={formData.job_role} 
+                    onValueChange={(value) => setFormData({...formData, job_role: value})}
+                  >
+                    <SelectTrigger className="mt-2">
+                      <SelectValue placeholder="Selecione a função..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {JOB_ROLES.map(role => (
+                        <SelectItem key={role.value} value={role.value}>
+                          {role.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500 mt-1">Função padrão do sistema SPO</p>
+                </div>
+
+                <div>
+                  <Label>Área de Atuação</Label>
+                  <Select 
+                    value={formData.area} 
+                    onValueChange={(value) => setFormData({...formData, area: value})}
+                  >
+                    <SelectTrigger className="mt-2">
+                      <SelectValue placeholder="Selecione a área..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {areas.map(area => (
+                        <SelectItem key={area.value} value={area.value}>
+                          {area.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500 mt-1">Área padrão do sistema</p>
+                </div>
               </div>
             )}
 
