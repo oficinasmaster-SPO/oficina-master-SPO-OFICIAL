@@ -22,6 +22,7 @@ import { useMemo } from "react";
 import AdminViewBanner from "../components/shared/AdminViewBanner";
 import { useSyncData } from "../components/hooks/useSyncData";
 import DiscrepancyAlert from "../components/sync/DiscrepancyAlert";
+import { markModuleCompleted } from "@/components/hooks/useModuleTracking";
 
 const getCurrentMonth = () => {
   const now = new Date();
@@ -227,9 +228,12 @@ export default function DRETCMP2() {
         return await base44.entities.DREMonthly.create(dreData);
       }
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries(['dre-list']);
       toast.success("DRE salvo com sucesso!");
+      
+      // Marcar módulo DRE como concluído
+      await markModuleCompleted(workshop.id, 'DRE', 'DRE mensal salvo com sucesso');
     },
     onError: () => {
       toast.error("Erro ao salvar DRE");
