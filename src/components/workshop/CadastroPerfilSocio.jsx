@@ -9,12 +9,19 @@ import { Loader2, CheckCircle2, User, Upload, Save } from "lucide-react";
 import { toast } from "sonner";
 import { jobRoles } from "@/components/lib/jobRoles";
 
-const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack }, ref) => {
+const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack, onEditingChange }, ref) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [existingEmployee, setExistingEmployee] = useState(null);
   const [profiles, setProfiles] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
+  
+  useEffect(() => {
+    if (onEditingChange) {
+      onEditingChange(editing);
+    }
+  }, [editing, onEditingChange]);
   
   const [formData, setFormData] = useState({
     full_name: user?.full_name || "",
@@ -159,7 +166,6 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack }, 
         full_name: formData.full_name
       });
 
-      toast.success(existingEmployee ? "Perfil atualizado!" : "Perfil criado!");
       setEditing(false);
     } catch (error) {
       console.error("Erro ao salvar perfil:", error);
