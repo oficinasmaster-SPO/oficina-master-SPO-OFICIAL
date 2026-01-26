@@ -72,7 +72,41 @@ export default function CronogramaImplementacao() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }) => {
+    mutationFn: async ({ id, data, isNew }) => {
+      // Se é item novo (virtual), criar ao invés de atualizar
+      if (isNew) {
+        const created = await base44.entities.CronogramaImplementacao.create({
+          workshop_id: workshop.id,
+          ...data,
+          historico_alteracoes: [{
+            data_alteracao: new Date().toISOString(),
+            campo_alterado: 'criacao',
+            valor_anterior: '',
+            valor_novo: 'Item iniciado pelo cliente',
+            usuario_id: user.id,
+            usuario_nome: user.full_name
+          }]
+        });
+        
+        // Sincronizar com CronogramaProgresso
+        try {
+          await base44.functions.invoke('syncCronogramaProgress', {
+            workshop_id: workshop.id,
+            item_id: data.item_id,
+            item_nome: data.item_nome,
+            status: data.status,
+            data_termino_real: data.data_termino_real,
+            data_termino_previsto: data.data_termino_previsto,
+            progresso_percentual: data.progresso_percentual
+          });
+        } catch (syncError) {
+          console.error('Erro ao sincronizar com CronogramaProgresso:', syncError);
+        }
+
+        return created;
+      }
+
+      // Se é item existente, atualizar normalmente
       const item = cronograma.find(c => c.id === id);
       const historicoAtualizado = [...(item.historico_alteracoes || [])];
       
@@ -566,9 +600,14 @@ export default function CronogramaImplementacao() {
                 </Button>
                 <Button 
                   onClick={() => updateMutation.mutate({ 
-                    id: editingItem.id, 
+                    id: editingItem.id,
+                    isNew: editingItem.not_started,
                     data: {
+                      item_tipo: editingItem.item_tipo,
+                      item_id: editingItem.item_id,
+                      item_nome: editingItem.item_nome,
                       status: editingItem.status,
+                      data_inicio_real: editingItem.data_inicio_real || new Date().toISOString(),
                       data_termino_previsto: editingItem.data_termino_previsto,
                       data_termino_real: editingItem.data_termino_real,
                       progresso_percentual: editingItem.progresso_percentual,
