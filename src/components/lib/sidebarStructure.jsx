@@ -48,6 +48,7 @@ export const sidebarStructure = [
     items: [
       { name: "Mapas de Autoavaliação", description: "Autoavaliações" },
       { name: "Colaboradores", description: "Gestão de equipe" },
+      { name: "Descrições de Cargo", description: "Cargos e responsabilidades" },
       { name: "Convidar Colaborador", description: "Envio de convites" },
       { name: "Aprovar Colaboradores", description: "Aprovar acessos pendentes" },
       { name: "CESPE - Contratação Inteligente", description: "Canal → Entrevista → Sonho → Proposta → Integração" },
