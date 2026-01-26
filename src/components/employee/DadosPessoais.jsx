@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,13 +7,27 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Save, Upload, User, PenTool, Loader2, Camera } from "lucide-react";
 import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
+import { jobRoles } from "@/components/lib/jobRoles";
 
 export default function DadosPessoais({ employee, onUpdate }) {
   const [editing, setEditing] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [uploadingSignature, setUploadingSignature] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
   const photoInputRef = useRef(null);
   const signatureInputRef = useRef(null);
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const user = await base44.auth.me();
+        setCurrentUser(user);
+      } catch (error) {
+        console.error("Erro ao carregar usuário:", error);
+      }
+    };
+    loadUser();
+  }, []);
   
   const [formData, setFormData] = useState({
     full_name: employee.full_name || "",
@@ -35,9 +49,21 @@ export default function DadosPessoais({ employee, onUpdate }) {
   });
 
   const handleSave = async () => {
+    // Validação: bloquear perfis internos para usuários não-admin
+    const internalRoles = ['acelerador', 'consultor'];
+    if (currentUser?.role !== 'admin' && internalRoles.includes(formData.job_role)) {
+      toast.error("Este perfil é restrito a administradores.");
+      return;
+    }
+    
     await onUpdate(formData);
     setEditing(false);
   };
+
+  // Filtrar perfis disponíveis conforme role do usuário
+  const availableJobRoles = currentUser?.role === 'admin' 
+    ? jobRoles 
+    : jobRoles.filter(role => role.category !== 'consultoria');
 
   const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -244,25 +270,11 @@ export default function DadosPessoais({ employee, onUpdate }) {
                 <SelectValue placeholder="Selecione..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="socio">Sócio</SelectItem>
-                <SelectItem value="diretor">Diretor</SelectItem>
-                <SelectItem value="supervisor_loja">Supervisor de Loja</SelectItem>
-                <SelectItem value="gerente">Gerente</SelectItem>
-                <SelectItem value="lider_tecnico">Líder Técnico</SelectItem>
-                <SelectItem value="financeiro">Financeiro</SelectItem>
-                <SelectItem value="rh">RH</SelectItem>
-                <SelectItem value="tecnico">Técnico / Mecânico / Eletricista</SelectItem>
-                <SelectItem value="funilaria_pintura">Funileiro / Pintor / Chapeador</SelectItem>
-                <SelectItem value="comercial">Comercial / Telemarketing</SelectItem>
-                <SelectItem value="consultor_vendas">Consultor de Vendas</SelectItem>
-                <SelectItem value="marketing">Marketing / Tráfego</SelectItem>
-                <SelectItem value="estoque">Estoque</SelectItem>
-                <SelectItem value="administrativo">Administrativo</SelectItem>
-                <SelectItem value="motoboy">Moto Boy</SelectItem>
-                <SelectItem value="lavador">Lavador</SelectItem>
-                <SelectItem value="acelerador">Acelerador</SelectItem>
-                <SelectItem value="consultor">Consultor</SelectItem>
-                <SelectItem value="outros">Outros</SelectItem>
+                {availableJobRoles.map((role) => (
+                  <SelectItem key={role.value} value={role.value}>
+                    {role.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
