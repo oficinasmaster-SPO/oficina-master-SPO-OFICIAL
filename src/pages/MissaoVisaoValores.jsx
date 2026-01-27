@@ -396,9 +396,8 @@ Retorne em formato JSON com a estrutura:
     }
   };
 
-  const exportToPDF = () => {
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
+  const generatePDFContent = () => {
+    return `
       <html>
         <head>
           <title>Missão, Visão e Valores - ${workshop?.name || 'Oficina'}</title>
@@ -526,7 +525,16 @@ Retorne em formato JSON com a estrutura:
           </div>
         </body>
       </html>
-    `);
+    `;
+  };
+
+  const exportToPDF = () => {
+    const htmlContent = generatePDFContent();
+    // Salvar no sessionStorage para CulturaOrganizacional acessar
+    sessionStorage.setItem(`mvv_pdf_${workshop?.id}`, htmlContent);
+    
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(htmlContent);
     printWindow.document.close();
     printWindow.print();
   };
