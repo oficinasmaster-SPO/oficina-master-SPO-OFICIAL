@@ -26,20 +26,29 @@ export default function ManualDownloadButton({ workshopId, onDownload }) {
         include_master_processes: includeMaster
       });
 
-      if (response.data?.pdf_url) {
-        // Abrir/baixar o PDF
-        window.open(response.data.pdf_url, '_blank');
+      console.log('Response:', response);
+
+      if (response.data?.pdf_data) {
+        // Criar link para download
+        const link = document.createElement('a');
+        link.href = response.data.pdf_data;
+        link.download = `manual-${workshopId}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
         toast.success('PDF baixado com sucesso!');
         
         if (onDownload) {
           onDownload();
         }
       } else {
-        toast.error('Erro ao gerar PDF');
+        console.error('Resposta inválida:', response);
+        toast.error('Erro ao gerar PDF: resposta inválida');
       }
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
-      console.error('Detalhes:', error.response?.data || error.message);
+      console.error('Detalhes completos:', error);
       toast.error('Erro ao gerar PDF: ' + (error.message || 'Erro desconhecido'));
     } finally {
       setLoading(false);
