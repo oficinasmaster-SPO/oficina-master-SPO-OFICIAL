@@ -459,23 +459,12 @@ Deno.serve(async (req) => {
 
     // Gerar novo PDF
     console.log('🔵 [PDF] Gerando PDF...');
-    const pdfDataUrl = await generatePDF(data);
-    console.log('🔵 [PDF] PDF gerado, tamanho:', pdfDataUrl?.length || 'unknown');
+    const pdfArrayBuffer = await generatePDFBuffer(data);
+    console.log('🔵 [PDF] PDF gerado, tamanho:', pdfArrayBuffer?.byteLength || 'unknown');
 
-    // Converter data URL em Blob para upload
-    console.log('🔵 [Upload] Convertendo para Blob...');
-    const base64Data = pdfDataUrl.split(',')[1];
-    const binaryString = atob(base64Data);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-    const blob = new Blob([bytes], { type: 'application/pdf' });
-    console.log('🔵 [Upload] Blob criado, tamanho:', blob.size);
-
-    // Fazer upload para cloud
+    // Enviar ArrayBuffer direto para upload
     console.log('🔵 [Upload] Enviando para cloud...');
-    const uploadResponse = await base44.integrations.Core.UploadFile({ file: blob });
+    const uploadResponse = await base44.integrations.Core.UploadFile({ file: pdfArrayBuffer });
     const pdfUrl = uploadResponse?.file_url;
     console.log('🔵 [Upload] URL recebida:', pdfUrl);
 
