@@ -1,9 +1,13 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-const { jsPDF } = await import('npm:jspdf@4.0.0');
 
 Deno.serve(async (req) => {
   try {
     console.log('🔵 PDF Generation started');
+    
+    // Dynamic import de jsPDF
+    const { jsPDF } = await import('npm:jspdf@4.0.0');
+    console.log('✅ jsPDF imported');
+    
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
     console.log('✅ User authenticated:', user?.email);
