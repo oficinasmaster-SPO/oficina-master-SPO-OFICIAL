@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Package, Plus, Trash2, Save, Wrench, Zap, Car, Truck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 
 const EQUIPMENT_CATALOG = {
   mecanica_autocenter: {
@@ -164,6 +165,9 @@ export default function EquipamentosCompletos({ workshop, onUpdate }) {
   useEffect(() => {
     if (workshop?.equipment_list) {
       setEquipmentList(workshop.equipment_list);
+    } else {
+      // Inicializar lista vazia se não existir
+      setEquipmentList([]);
     }
   }, [workshop]);
 

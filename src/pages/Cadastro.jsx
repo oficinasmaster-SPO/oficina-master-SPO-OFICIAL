@@ -11,6 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 // Importando componentes da Gestão para manter consistência visual e funcional
 import DadosBasicosOficina from "../components/workshop/DadosBasicosOficina";
 import ServicosEquipamentos from "../components/workshop/ServicosEquipamentos";
+import EquipamentosCompletos from "../components/workshop/EquipamentosCompletos";
 import ServicosTerceirizados from "../components/workshop/ServicosTerceirizados";
 import MetasObjetivosCompleto from "../components/workshop/MetasObjetivosCompleto";
 import CadastroPerfilSocio from "../components/workshop/CadastroPerfilSocio";
@@ -336,13 +337,20 @@ export default function Cadastro() {
           </TabsContent>
 
           <TabsContent value="equipamentos" className="animate-in fade-in-50 duration-300">
-            <ServicosEquipamentos 
-              ref={equipamentosRef}
-              workshop={workshop} 
-              onUpdate={handleWorkshopUpdate}
-              showEquipmentOnly={true}
-              onEditingChange={setIsEditing}
-            />
+            <div className="space-y-6">
+              <ServicosEquipamentos 
+                ref={equipamentosRef}
+                workshop={workshop} 
+                onUpdate={handleWorkshopUpdate}
+                showEquipmentOnly={true}
+                onEditingChange={setIsEditing}
+              />
+              
+              <EquipamentosCompletos
+                workshop={workshop}
+                onUpdate={handleWorkshopUpdate}
+              />
+            </div>
             <div className="mt-6 flex justify-between">
               <Button variant="outline" onClick={() => setActiveTab("servicos")}>Voltar</Button>
               <Button onClick={() => handleNextTab(equipamentosRef, "terceirizados")} disabled={saving || isEditing} className="bg-blue-600 hover:bg-blue-700">
