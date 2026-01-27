@@ -97,6 +97,7 @@ import GerenciarToursVideos from './pages/GerenciarToursVideos';
 import GerenciarTreinamentos from './pages/GerenciarTreinamentos';
 import GestaoContratos from './pages/GestaoContratos';
 import GestaoDesafios from './pages/GestaoDesafios';
+import GestaoMetas from './pages/GestaoMetas';
 import GestaoOficina from './pages/GestaoOficina';
 import GestaoRBAC from './pages/GestaoRBAC';
 import GestaoRoles from './pages/GestaoRoles';
@@ -171,7 +172,6 @@ import TesteOpenAI from './pages/TesteOpenAI';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
-import GestaoMetas from './pages/GestaoMetas';
 import __Layout from './Layout.jsx';
 
 
@@ -275,6 +275,7 @@ export const PAGES = {
     "GerenciarTreinamentos": GerenciarTreinamentos,
     "GestaoContratos": GestaoContratos,
     "GestaoDesafios": GestaoDesafios,
+    "GestaoMetas": GestaoMetas,
     "GestaoOficina": GestaoOficina,
     "GestaoRBAC": GestaoRBAC,
     "GestaoRoles": GestaoRoles,
@@ -349,7 +350,6 @@ export const PAGES = {
     "TreinamentoVendas": TreinamentoVendas,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
-    "GestaoMetas": GestaoMetas,
 }
 
 export const pagesConfig = {

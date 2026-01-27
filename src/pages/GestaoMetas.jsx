@@ -15,6 +15,7 @@ export default function GestaoMetas() {
   const [workshop, setWorkshop] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editingGoal, setEditingGoal] = useState(null);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().substring(0, 7));
 
   useEffect(() => {
     loadUser();
@@ -45,10 +46,24 @@ export default function GestaoMetas() {
   };
 
   const { data: goals = [], isLoading } = useQuery({
-    queryKey: ['goals', workshop?.id],
+    queryKey: ['goals', workshop?.id, selectedMonth],
     queryFn: async () => {
-      const result = await base44.entities.Goal.filter({ workshop_id: workshop.id });
-      return Array.isArray(result) ? result : [];
+      // Buscar todas as metas do workshop
+      const allGoals = await base44.entities.Goal.filter({ workshop_id: workshop.id });
+      
+      if (!selectedMonth) return allGoals;
+      
+      // Filtrar por interseção de datas
+      const [year, month] = selectedMonth.split('-');
+      const filterStart = `${year}-${month}-01`;
+      const filterEnd = new Date(parseInt(year), parseInt(month), 0).toISOString().split('T')[0];
+      
+      const filtered = allGoals.filter(goal => {
+        // Interseção: data_inicio <= filterEnd AND data_fim >= filterStart
+        return goal.data_inicio <= filterEnd && goal.data_fim >= filterStart;
+      });
+      
+      return Array.isArray(filtered) ? filtered : [];
     },
     enabled: !!workshop
   });
@@ -131,7 +146,7 @@ export default function GestaoMetas() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-8 px-4">
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
               <Target className="w-8 h-8 text-blue-600" />
@@ -152,6 +167,31 @@ export default function GestaoMetas() {
             Nova Meta
           </Button>
         </div>
+
+        {/* Filtro por Mês/Ano */}
+        <Card className="mb-6">
+          <CardContent className="py-4">
+            <div className="flex items-center gap-4">
+              <Label className="text-sm font-semibold">Filtrar por Mês/Ano:</Label>
+              <Input
+                type="month"
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="w-48"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedMonth("")}
+              >
+                Ver Todas
+              </Button>
+              <span className="text-sm text-gray-500">
+                {selectedMonth ? `Mostrando metas que intersectam ${selectedMonth}` : "Mostrando todas as metas"}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
 
         <div className="grid gap-4">
           {goals.length === 0 ? (

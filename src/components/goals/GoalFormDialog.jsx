@@ -14,6 +14,7 @@ import { toast } from "sonner";
 export default function GoalFormDialog({ open, onClose, goal, employees, onSave }) {
   const [formData, setFormData] = useState({
     periodo: "mensal",
+    periodo_mes_ano: "",
     data_inicio: "",
     data_fim: "",
     area: "geral",
@@ -42,6 +43,7 @@ export default function GoalFormDialog({ open, onClose, goal, employees, onSave 
       // Editando meta existente
       setFormData({
         periodo: goal.periodo || "mensal",
+        periodo_mes_ano: goal.periodo_mes_ano || "",
         data_inicio: goal.data_inicio || "",
         data_fim: goal.data_fim || "",
         area: goal.area || "geral",
@@ -62,11 +64,13 @@ export default function GoalFormDialog({ open, onClose, goal, employees, onSave 
         status: goal.status || "ativa"
       });
     } else if (open) {
-      // Nova meta
-      const today = new Date().toISOString().split('T')[0];
+      // Nova meta - inicializar com mês atual
+      const today = new Date();
+      const currentMonth = today.toISOString().substring(0, 7);
       setFormData({
         periodo: "mensal",
-        data_inicio: today,
+        periodo_mes_ano: currentMonth,
+        data_inicio: "",
         data_fim: "",
         area: "geral",
         meta_areas: [],
@@ -185,18 +189,40 @@ export default function GoalFormDialog({ open, onClose, goal, employees, onSave 
   };
 
   const handleSubmit = async () => {
-    if (!formData.data_inicio || !formData.data_fim) {
+    // Auto-preencher datas se período mensal e não informado
+    let finalData = { ...formData };
+    
+    if (formData.periodo === "mensal" && formData.periodo_mes_ano) {
+      if (!formData.data_inicio || !formData.data_fim) {
+        const [year, month] = formData.periodo_mes_ano.split('-');
+        const firstDay = `${year}-${month}-01`;
+        const lastDay = new Date(parseInt(year), parseInt(month), 0).toISOString().split('T')[0];
+        
+        finalData.data_inicio = formData.data_inicio || firstDay;
+        finalData.data_fim = formData.data_fim || lastDay;
+        
+        toast.info("Datas preenchidas automaticamente para o mês selecionado!");
+      }
+    }
+    
+    // Validação obrigatória
+    if (!finalData.data_inicio || !finalData.data_fim) {
       toast.error("Preencha as datas de início e fim");
       return;
     }
 
-    if (formData.responsible_employee_ids.length === 0) {
+    if (finalData.responsible_employee_ids.length === 0) {
       toast.error("Selecione pelo menos um responsável");
       return;
     }
 
+    // Auto-preencher periodo_mes_ano a partir de data_inicio
+    if (finalData.data_inicio) {
+      finalData.periodo_mes_ano = finalData.data_inicio.substring(0, 7);
+    }
+
     try {
-      await onSave(formData);
+      await onSave(finalData);
       onClose();
     } catch (error) {
       console.error(error);
@@ -238,7 +264,7 @@ export default function GoalFormDialog({ open, onClose, goal, employees, onSave 
             {/* Período e Datas */}
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <Label>Período</Label>
+                <Label>Período *</Label>
                 <Select value={formData.periodo} onValueChange={(val) => setFormData({...formData, periodo: val})}>
                   <SelectTrigger>
                     <SelectValue />
@@ -251,23 +277,54 @@ export default function GoalFormDialog({ open, onClose, goal, employees, onSave 
                   </SelectContent>
                 </Select>
               </div>
+              {formData.periodo === "mensal" && (
+                <div>
+                  <Label>Mês/Ano</Label>
+                  <Input
+                    type="month"
+                    value={formData.periodo_mes_ano}
+                    onChange={(e) => {
+                      const mesAno = e.target.value;
+                      const [year, month] = mesAno.split('-');
+                      const firstDay = `${year}-${month}-01`;
+                      const lastDay = new Date(parseInt(year), parseInt(month), 0).toISOString().split('T')[0];
+                      setFormData({
+                        ...formData, 
+                        periodo_mes_ano: mesAno,
+                        data_inicio: firstDay,
+                        data_fim: lastDay
+                      });
+                    }}
+                  />
+                </div>
+              )}
               <div>
-                <Label>Data Início</Label>
+                <Label>Data Início *</Label>
                 <Input
                   type="date"
                   value={formData.data_inicio}
                   onChange={(e) => setFormData({...formData, data_inicio: e.target.value})}
+                  required
                 />
               </div>
               <div>
-                <Label>Data Fim</Label>
+                <Label>Data Fim *</Label>
                 <Input
                   type="date"
                   value={formData.data_fim}
                   onChange={(e) => setFormData({...formData, data_fim: e.target.value})}
+                  required
                 />
               </div>
             </div>
+            
+            {formData.periodo === "mensal" && !formData.data_inicio && (
+              <Alert className="bg-blue-50 border-blue-200">
+                <AlertDescription className="text-sm text-blue-800">
+                  💡 Selecione o Mês/Ano acima para preencher as datas automaticamente
+                </AlertDescription>
+              </Alert>
+            )}
 
             {/* Responsáveis pela Meta */}
             <div className="border-l-4 border-blue-500 pl-4 py-3 bg-blue-50/50">

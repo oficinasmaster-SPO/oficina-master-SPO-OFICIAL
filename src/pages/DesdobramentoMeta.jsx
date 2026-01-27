@@ -308,7 +308,66 @@ export default function DesdobramentoMeta() {
             created_at: new Date().toISOString()
         };
 
-        await base44.entities.GoalBreakdown.create(breakdownPayload);
+        const breakdown = await base44.entities.GoalBreakdown.create(breakdownPayload);
+
+        // 1.1. PONTE: Criar/atualizar Goal a partir do GoalBreakdown
+        const mesAno = config.target_month_date.substring(0, 7);
+        const [year, month] = mesAno.split('-');
+        const dataInicio = `${year}-${month}-01`;
+        const dataFim = new Date(parseInt(year), parseInt(month), 0).toISOString().split('T')[0];
+
+        // Coletar todos os colaboradores do desdobramento
+        const allEmployeeIds = Object.values(tableData)
+          .flat()
+          .map(emp => emp.id)
+          .filter(Boolean);
+        
+        // Calcular áreas baseado nos colaboradores
+        const metaAreas = [...new Set(
+          Object.keys(tableData).filter(area => tableData[area].length > 0)
+        )];
+
+        // Verificar se já existe Goal para este desdobramento
+        const existingGoals = await base44.entities.Goal.filter({
+          workshop_id: workshop.id,
+          source_type: "desdobramento",
+          source_id: breakdown.id
+        });
+
+        const goalData = {
+          workshop_id: workshop.id,
+          periodo: "mensal",
+          periodo_mes_ano: mesAno,
+          data_inicio: dataInicio,
+          data_fim: dataFim,
+          meta_areas: metaAreas,
+          responsible_employee_ids: allEmployeeIds,
+          involved_employee_ids: [],
+          metricas: {
+            volume_clientes: { 
+              meta: Object.values(tableData).flat().reduce((sum, e) => sum + (e.target_clients || 0), 0),
+              realizado: 0
+            },
+            faturamento_pecas: { meta: 0, realizado: 0 },
+            faturamento_servicos: { meta: 0, realizado: 0 },
+            rentabilidade: { meta: 0, realizado: 0 },
+            lucro: { meta: 0, realizado: 0 },
+            ticket_medio_pecas: { meta: 0, realizado: 0 },
+            ticket_medio_servicos: { meta: 0, realizado: 0 }
+          },
+          observacoes: `Meta criada automaticamente via desdobramento (crescimento: ${config.growth_percentage}%)`,
+          status: "ativa",
+          source_type: "desdobramento",
+          source_id: breakdown.id
+        };
+
+        if (existingGoals && existingGoals.length > 0) {
+          // Atualizar Goal existente
+          await base44.entities.Goal.update(existingGoals[0].id, goalData);
+        } else {
+          // Criar novo Goal
+          await base44.entities.Goal.create(goalData);
+        }
 
         // 2. Atualizar Colaboradores (Best Month e Metas Atuais)
         const promises = [];
