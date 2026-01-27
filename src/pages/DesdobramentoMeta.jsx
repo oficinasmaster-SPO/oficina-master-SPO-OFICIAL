@@ -21,6 +21,7 @@ export default function DesdobramentoMeta() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [editing, setEditing] = useState(true);
   const [workshop, setWorkshop] = useState(null);
   const [employees, setEmployees] = useState([]);
   const [activeTab, setActiveTab] = useState("vendas");
@@ -336,6 +337,7 @@ export default function DesdobramentoMeta() {
 
         // 3. Notificar (Mock)
         toast.success("Metas desdobradas e enviadas aos colaboradores!");
+        setEditing(false);
         
         // Opcional: Gerar PDF (Mock da função)
         // generatePDF(breakdownPayload);
@@ -374,22 +376,37 @@ export default function DesdobramentoMeta() {
                         type="month" 
                         value={config.target_month_date.slice(0, 7)}
                         onChange={(e) => setConfig({...config, target_month_date: e.target.value + "-01"})}
-                        className="ml-2 border rounded px-2 py-1 text-slate-900 font-medium"
+                        disabled={!editing}
+                        className="ml-2 border rounded px-2 py-1 text-slate-900 font-medium disabled:bg-gray-100 disabled:cursor-not-allowed"
                     />
                 </p>
             </div>
             <div className="flex gap-3">
-                <Button variant="outline" onClick={handleRunForecast} disabled={isForecasting} className="border-purple-200 text-purple-700 hover:bg-purple-50">
-                    {isForecasting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Target className="w-4 h-4 mr-2" />}
-                    Previsão IA
-                </Button>
-                <Button variant="outline" onClick={() => toast.info("Gerando PDF...")}>
-                    <Download className="w-4 h-4 mr-2" /> PDF
-                </Button>
-                <Button onClick={handleSave} disabled={saving} className="bg-green-600 hover:bg-green-700">
-                    {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-                    Salvar e Notificar Equipe
-                </Button>
+                {!editing ? (
+                  <Button onClick={() => setEditing(true)} className="bg-blue-600 hover:bg-blue-700">
+                    Editar Metas
+                  </Button>
+                ) : (
+                  <>
+                    <Button variant="outline" onClick={handleRunForecast} disabled={isForecasting} className="border-purple-200 text-purple-700 hover:bg-purple-50">
+                        {isForecasting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Target className="w-4 h-4 mr-2" />}
+                        Previsão IA
+                    </Button>
+                    <Button variant="outline" onClick={() => toast.info("Gerando PDF...")}>
+                        <Download className="w-4 h-4 mr-2" /> PDF
+                    </Button>
+                    <Button variant="outline" onClick={() => {
+                      setEditing(false);
+                      initializeTableData(employees, workshop);
+                    }} disabled={saving}>
+                      Cancelar
+                    </Button>
+                    <Button onClick={handleSave} disabled={saving} className="bg-green-600 hover:bg-green-700">
+                        {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                        Salvar e Notificar Equipe
+                    </Button>
+                  </>
+                )}
             </div>
         </div>
       </div>
@@ -418,9 +435,10 @@ export default function DesdobramentoMeta() {
                                     type="number" 
                                     value={config.growth_percentage}
                                     onChange={(e) => setConfig({...config, growth_percentage: e.target.value})}
+                                    disabled={!editing}
                                     className="text-lg font-bold w-32"
                                 />
-                                <Button variant="secondary" onClick={applyGlobalGrowth}>
+                                <Button variant="secondary" onClick={applyGlobalGrowth} disabled={!editing}>
                                     Aplicar a Todos <ArrowRight className="w-4 h-4 ml-2" />
                                 </Button>
                             </div>
@@ -521,6 +539,7 @@ export default function DesdobramentoMeta() {
                                                             className="h-8 text-center text-blue-700 font-bold pr-4"
                                                             value={row.growth_pct}
                                                             onChange={(e) => updateRow(area, index, 'growth_pct', e.target.value)}
+                                                            disabled={!editing}
                                                         />
                                                         <span className="absolute right-2 top-1.5 text-xs text-blue-400">%</span>
                                                     </div>
@@ -531,6 +550,7 @@ export default function DesdobramentoMeta() {
                                                         className="h-8 text-right font-bold border-blue-200"
                                                         value={row.target_revenue}
                                                         onChange={(e) => updateRow(area, index, 'target_revenue', e.target.value)}
+                                                        disabled={!editing}
                                                     />
                                                 </TableCell>
 
@@ -541,6 +561,7 @@ export default function DesdobramentoMeta() {
                                                         className="h-8 text-center"
                                                         value={row.target_clients}
                                                         onChange={(e) => updateRow(area, index, 'target_clients', e.target.value)}
+                                                        disabled={!editing}
                                                     />
                                                 </TableCell>
                                                 <TableCell className="text-center text-xs font-medium text-slate-600">
@@ -562,6 +583,7 @@ export default function DesdobramentoMeta() {
                                                         className="h-8 text-right text-green-700 font-bold border-green-200"
                                                         value={row.bonus_value}
                                                         onChange={(e) => updateRow(area, index, 'bonus_value', e.target.value)}
+                                                        disabled={!editing}
                                                         placeholder="0,00"
                                                     />
                                                 </TableCell>
@@ -572,6 +594,7 @@ export default function DesdobramentoMeta() {
                                                         variant="ghost" 
                                                         size="sm" 
                                                         onClick={() => handleOpenServiceModal(area, index)}
+                                                        disabled={!editing}
                                                         title="Metas por Serviço"
                                                     >
                                                         <Target className="w-4 h-4 text-purple-600" />
