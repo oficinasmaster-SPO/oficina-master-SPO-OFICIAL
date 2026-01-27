@@ -119,22 +119,17 @@ Deno.serve(async (req) => {
     doc.setFontSize(8);
     doc.text(`Gerado em ${new Date().toLocaleDateString('pt-BR')} via Oficinas Master`, 20, 290);
 
-    // Converter para Data URL e depois para arquivo
-    const pdfDataUrl = doc.output('datauristring');
+    // Converter para Base64
+    const pdfBase64 = doc.output('datauristring');
     
-    // Fazer upload do PDF usando a Data URL diretamente
-    const { file_url } = await base44.integrations.Core.UploadFile({
-      file: pdfDataUrl
+    // Retornar o PDF em Base64
+    return new Response(JSON.stringify({ 
+      pdf_data: pdfBase64,
+      success: true 
+    }), { 
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
     });
-
-    // Atualizar Workshop com a URL do PDF
-    const fieldName = include_master_processes ? 'manual_pdf_url_master' : 'manual_pdf_url_nomaster';
-    await base44.entities.Workshop.update(workshop_id, {
-      [fieldName]: file_url,
-      manual_pdf_last_generated_at: new Date().toISOString()
-    });
-
-    return new Response(JSON.stringify({ pdf_url: file_url }), { status: 200 });
 
   } catch (error) {
     console.error('Error generating PDF:', error);
