@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
@@ -222,7 +222,7 @@ export default function GestaoOficina() {
               variant="outline"
               size="sm"
               onClick={() => {
-                navigate(`/GestaoOficina?tab=${activeTab}`);
+                navigate(`/GestaoOficina/${activeTab}`);
               }}
               className="bg-white text-purple-700 hover:bg-purple-50"
             >
