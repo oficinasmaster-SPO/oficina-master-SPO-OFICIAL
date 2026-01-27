@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 
-// Rotas que nunca devem ser salvas como "última visitada"
 const IGNORED_ROUTES = [
   '/login',
   '/signup',
@@ -16,22 +15,38 @@ const IGNORED_ROUTES = [
   '/unauthorized'
 ];
 
-// Rotas técnicas que não contam como "visitadas reais"
 const TECHNICAL_ROUTES = [
   'AssistirAula',
   'AssistirCurso',
   'VisualizarProcesso'
 ];
 
+const HISTORY_KEY = 'navigationHistoryStack';
+const MAX_HISTORY = 50;
+
+const getHistory = () => {
+  try {
+    return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  } catch {
+    return [];
+  }
+};
+
+const saveHistory = (history) => {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(-MAX_HISTORY)));
+  } catch (e) {
+    console.error('Erro ao salvar histórico:', e);
+  }
+};
+
 export const useNavigationHistory = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Registrar rota atual no histórico
   useEffect(() => {
     const currentPath = location.pathname;
 
-    // Verificar se é uma rota que deve ser ignorada
     const shouldIgnore = IGNORED_ROUTES.some(route =>
       currentPath.toLowerCase().includes(route.toLowerCase())
     ) || TECHNICAL_ROUTES.some(route =>
@@ -39,61 +54,37 @@ export const useNavigationHistory = () => {
     );
 
     if (shouldIgnore) {
-      return; // Não registra
-    }
-
-    // Obter última rota salva
-    const lastRoute = localStorage.getItem('lastVisitedRoute');
-
-    // Não salvar a mesma rota duas vezes
-    if (lastRoute === currentPath) {
       return;
     }
 
-    // Salvar rota atual como "última visitada"
-    const navigationData = {
-      route: currentPath,
-      timestamp: new Date().toISOString(),
-      search: location.search || ''
-    };
-
-    localStorage.setItem('lastVisitedRoute', currentPath);
-    localStorage.setItem('lastVisitedRouteData', JSON.stringify(navigationData));
-  }, [location.pathname, location.search]);
-
-  // Voltar para última rota
-  const goBack = () => {
-    const lastRoute = localStorage.getItem('lastVisitedRoute');
-
-    if (lastRoute && !IGNORED_ROUTES.some(route => 
-      lastRoute.toLowerCase().includes(route.toLowerCase())
-    )) {
-      navigate(lastRoute);
-    } else {
-      // Fallback seguro: ir para página inicial
-      navigate(createPageUrl('Home'));
+    let history = getHistory();
+    
+    // Se a última rota é diferente, adiciona a atual
+    if (history.length === 0 || history[history.length - 1] !== currentPath) {
+      history.push(currentPath);
+      saveHistory(history);
     }
-  };
+  }, [location.pathname]);
 
-  // Obter informações da última rota
-  const getLastRoute = () => {
-    try {
-      const data = localStorage.getItem('lastVisitedRouteData');
-      return data ? JSON.parse(data) : null;
-    } catch {
-      return null;
+  const goBack = () => {
+    let history = getHistory();
+    
+    if (history.length > 1) {
+      history.pop(); // Remove rota atual
+      const previousRoute = history[history.length - 1];
+      saveHistory(history);
+      navigate(previousRoute);
+    } else {
+      navigate(createPageUrl('Home'));
     }
   };
 
   return {
     goBack,
-    getLastRoute,
     currentPath: location.pathname
   };
 };
 
-// Função helper para limpar histórico (útil em logout)
 export const clearNavigationHistory = () => {
-  localStorage.removeItem('lastVisitedRoute');
-  localStorage.removeItem('lastVisitedRouteData');
+  localStorage.removeItem(HISTORY_KEY);
 };
