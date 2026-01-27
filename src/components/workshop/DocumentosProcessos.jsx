@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { base44 } from "@/api/base44Client";
 import { FileText, Upload, Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import ManualDownloadButton from "./ManualDownloadButton";
+import ManualDownloadButton from "../manual/ManualDownloadButton";
 
 export default function DocumentosProcessos({ workshop, onUpdate }) {
   const [uploading, setUploading] = useState(false);
