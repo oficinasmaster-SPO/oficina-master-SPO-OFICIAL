@@ -32,7 +32,10 @@ export default function Layout({ children, currentPageName }) {
   const { workshop, workshopId } = useWorkshopContext();
   
   // Rastrear acesso a módulos automaticamente
-  useModuleTracking(workshop);
+      useModuleTracking(workshop);
+
+      // Rastrear histórico de navegação
+      useNavigationHistory();
 
   // Monitora mudanças no estado de colapso da sidebar
   useEffect(() => {
