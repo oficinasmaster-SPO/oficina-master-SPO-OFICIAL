@@ -42,6 +42,13 @@ export default function GestaoOficina() {
     loadData();
   }, []);
 
+  // Sincronizar aba com URL
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const tabFromUrl = searchParams.get('tab') || 'dados';
+    setActiveTab(tabFromUrl);
+  }, [location.search]);
+
   const loadData = async () => {
     setLoading(true);
     try {
