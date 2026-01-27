@@ -38,8 +38,9 @@ export default function ManualDownloadButton({ workshopId, onDownload }) {
         toast.error('Erro ao gerar PDF');
       }
     } catch (error) {
-      console.error('Erro:', error);
-      toast.error('Erro ao gerar PDF do manual');
+      console.error('Erro ao gerar PDF:', error);
+      console.error('Detalhes:', error.response?.data || error.message);
+      toast.error('Erro ao gerar PDF: ' + (error.message || 'Erro desconhecido'));
     } finally {
       setLoading(false);
     }

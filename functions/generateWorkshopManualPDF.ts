@@ -138,7 +138,8 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('Error generating PDF:', error);
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    console.error('Stack:', error.stack);
+    return new Response(JSON.stringify({ error: error.message, details: String(error) }), { status: 500 });
   }
 });
 
