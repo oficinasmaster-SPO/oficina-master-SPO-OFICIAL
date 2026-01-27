@@ -26,7 +26,7 @@ async function loadImageAsBase64(url) {
   }
 }
 
-async function generatePDFBuffer(data) {
+async function generatePDFDataUrl(data) {
   const { cultura, processos, instructionDocs, cargos, areas, workshop } = data;
 
   // Pré-carregar imagens
@@ -381,8 +381,8 @@ async function generatePDFBuffer(data) {
     );
   }
 
-  // Retornar como Uint8Array (ArrayBuffer)
-  return doc.output('arraybuffer');
+  // Retornar como data URL
+  return doc.output('dataurlstring');
 }
 
 Deno.serve(async (req) => {
@@ -460,19 +460,10 @@ Deno.serve(async (req) => {
 
     // Gerar novo PDF
     console.log('🔵 [PDF] Gerando PDF...');
-    const pdfArrayBuffer = await generatePDFBuffer(data);
-    console.log('🔵 [PDF] PDF gerado, tamanho:', pdfArrayBuffer?.byteLength || 'unknown');
+    const pdfDataUrl = await generatePDFDataUrl(data);
+    console.log('🔵 [PDF] PDF gerado, tamanho:', pdfDataUrl?.length || 'unknown');
 
-    // Enviar ArrayBuffer direto para upload
-    console.log('🔵 [Upload] Enviando para cloud...');
-    const uploadResponse = await base44.integrations.Core.UploadFile({ file: pdfArrayBuffer });
-    const pdfUrl = uploadResponse?.file_url;
-    console.log('🔵 [Upload] URL recebida:', pdfUrl);
-
-    if (!pdfUrl) {
-      console.error('❌ [Upload] Sem file_url na resposta');
-      return Response.json({ error: 'Upload failed - no file_url' }, { status: 500 });
-    }
+    const pdfUrl = pdfDataUrl;
 
     // Salvar URL no Workshop
     console.log('🔵 [Update] Atualizando Workshop...');
