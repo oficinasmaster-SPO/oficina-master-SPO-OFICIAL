@@ -112,7 +112,6 @@ import IAAnalytics from './pages/IAAnalytics';
 import Integracoes from './pages/Integracoes';
 import IntelligenciaCliente from './pages/IntelligenciaCliente';
 import LogsAuditoriaRBAC from './pages/LogsAuditoriaRBAC';
-import ManualProcessos from './pages/ManualProcessos';
 import MapaChecklists from './pages/MapaChecklists';
 import MeuPerfil from './pages/MeuPerfil';
 import MeuPlano from './pages/MeuPlano';
@@ -171,6 +170,7 @@ import TesteOpenAI from './pages/TesteOpenAI';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
+import ManualProcessos from './pages/ManualProcessos';
 import __Layout from './Layout.jsx';
 
 
@@ -289,7 +289,6 @@ export const PAGES = {
     "Integracoes": Integracoes,
     "IntelligenciaCliente": IntelligenciaCliente,
     "LogsAuditoriaRBAC": LogsAuditoriaRBAC,
-    "ManualProcessos": ManualProcessos,
     "MapaChecklists": MapaChecklists,
     "MeuPerfil": MeuPerfil,
     "MeuPlano": MeuPlano,
@@ -348,6 +347,7 @@ export const PAGES = {
     "TreinamentoVendas": TreinamentoVendas,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
+    "ManualProcessos": ManualProcessos,
 }
 
 export const pagesConfig = {
