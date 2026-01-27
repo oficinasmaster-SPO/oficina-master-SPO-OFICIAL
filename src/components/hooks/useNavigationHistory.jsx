@@ -45,12 +45,13 @@ export const useNavigationHistory = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const currentPath = location.pathname;
+    // Captura a rota completa COM query params e hash
+    const currentPath = location.pathname + location.search + location.hash;
 
     const shouldIgnore = IGNORED_ROUTES.some(route =>
-      currentPath.toLowerCase().includes(route.toLowerCase())
+      location.pathname.toLowerCase().includes(route.toLowerCase())
     ) || TECHNICAL_ROUTES.some(route =>
-      currentPath.includes(route)
+      location.pathname.includes(route)
     );
 
     if (shouldIgnore) {
@@ -59,12 +60,12 @@ export const useNavigationHistory = () => {
 
     let history = getHistory();
     
-    // Se a última rota é diferente, adiciona a atual
+    // Se a última rota é diferente, adiciona a atual (com query params preservados)
     if (history.length === 0 || history[history.length - 1] !== currentPath) {
       history.push(currentPath);
       saveHistory(history);
     }
-  }, [location.pathname]);
+  }, [location.pathname, location.search, location.hash]);
 
   const goBack = () => {
     let history = getHistory();
@@ -73,6 +74,7 @@ export const useNavigationHistory = () => {
       history.pop(); // Remove rota atual
       const previousRoute = history[history.length - 1];
       saveHistory(history);
+      // previousRoute já contém query params se houver
       navigate(previousRoute);
     } else {
       navigate(createPageUrl('Home'));
