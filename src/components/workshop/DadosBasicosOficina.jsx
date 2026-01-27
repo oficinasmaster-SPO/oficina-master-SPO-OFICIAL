@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useImperativeHandle, forwardRef } from "react";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +11,7 @@ import { base44 } from "@/api/base44Client";
 import { Checkbox } from "@/components/ui/checkbox";
 import SliderWithMax from "@/components/ui/slider-with-max";
 import { toast } from "sonner";
+import { createPageUrl } from "@/utils";
 
 const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange }, ref) => {
   const [editing, setEditing] = useState(false);
