@@ -462,12 +462,19 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
 
       <Card className="shadow-lg border-2 border-green-200">
         <CardHeader>
-          <div className="flex items-center gap-3">
-            <Store className="w-6 h-6 text-green-600" />
-            <div>
-              <CardTitle>Estrutura e Franquias</CardTitle>
-              <CardDescription>Informações sobre unidades e franquias</CardDescription>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Store className="w-6 h-6 text-green-600" />
+              <div>
+                <CardTitle>Estrutura Organizacional e Franquias</CardTitle>
+                <CardDescription>Organograma, unidades e franquias</CardDescription>
+              </div>
             </div>
+            <Link to={createPageUrl("Organograma") + "?from=cadastro"}>
+              <Button variant="outline" size="sm">
+                Gerenciar Organograma
+              </Button>
+            </Link>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
