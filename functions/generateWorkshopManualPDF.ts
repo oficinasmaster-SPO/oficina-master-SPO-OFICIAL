@@ -26,7 +26,7 @@ async function loadImageAsBase64(url) {
   }
 }
 
-async function generatePDF(data) {
+async function generatePDFBuffer(data) {
   const { cultura, processos, instructionDocs, cargos, areas, workshop } = data;
 
   // Pré-carregar imagens
@@ -381,7 +381,8 @@ async function generatePDF(data) {
     );
   }
 
-  return doc.output('dataurlstring');
+  // Retornar como Uint8Array (ArrayBuffer)
+  return doc.output('arraybuffer');
 }
 
 Deno.serve(async (req) => {
