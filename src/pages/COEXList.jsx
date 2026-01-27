@@ -18,7 +18,6 @@ import AdminViewBanner from "../components/shared/AdminViewBanner";
 export default function COEXList() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const [workshop, setWorkshop] = useState(null);
   const [isAdminView, setIsAdminView] = useState(false);
 
   const { data: user } = useQuery({
@@ -26,7 +25,7 @@ export default function COEXList() {
     queryFn: () => base44.auth.me()
   });
 
-  const { data: workshopData } = useQuery({
+  const { data: workshop } = useQuery({
     queryKey: ['workshop', user?.id],
     queryFn: async () => {
       if (!user) return null;
@@ -43,8 +42,7 @@ export default function COEXList() {
       const workshops = await base44.entities.Workshop.filter({ owner_id: user.id });
       return workshops[0];
     },
-    enabled: !!user,
-    onSuccess: (data) => setWorkshop(data)
+    enabled: !!user
   });
 
   const { data: employees = [], isLoading: loadingEmployees } = useQuery({
@@ -124,7 +122,7 @@ export default function COEXList() {
     ]
   };
 
-  if (loadingEmployees || loadingContracts) {
+  if (loadingEmployees || loadingContracts || !workshop) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />

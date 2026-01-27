@@ -15,7 +15,6 @@ import AdminViewBanner from "../components/shared/AdminViewBanner";
 export default function CDCList() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const [workshop, setWorkshop] = useState(null);
   const [isAdminView, setIsAdminView] = useState(false);
 
   const { data: user } = useQuery({
@@ -23,12 +22,11 @@ export default function CDCList() {
     queryFn: () => base44.auth.me()
   });
 
-  const { data: workshopData } = useQuery({
+  const { data: workshop } = useQuery({
     queryKey: ['workshop', user?.id],
     queryFn: async () => {
       if (!user) return null;
       
-      // Verificar se há workshop_id na URL (admin visualizando)
       const urlParams = new URLSearchParams(window.location.search);
       const adminWorkshopId = urlParams.get('workshop_id');
       
@@ -41,8 +39,7 @@ export default function CDCList() {
       const workshops = await base44.entities.Workshop.filter({ owner_id: user.id });
       return workshops[0];
     },
-    enabled: !!user,
-    onSuccess: (data) => setWorkshop(data)
+    enabled: !!user
   });
 
   const { data: employees = [], isLoading } = useQuery({
@@ -110,7 +107,7 @@ export default function CDCList() {
     ]
   };
 
-  if (isLoading) {
+  if (isLoading || !workshop) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
