@@ -187,59 +187,6 @@ export default function PainelMetas() {
           </CardContent>
         </Card>
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-8 px-4">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-3 bg-blue-100 rounded-lg">
-                <Target className="w-6 h-6 text-blue-600" />
-              </div>
-              <h1 className="text-3xl font-bold text-gray-900">Painel de Metas</h1>
-            </div>
-            <p className="text-gray-600 flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              {selectedMonth ? new Date(selectedMonth + '-02').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }) : "Todas as metas"}
-            </p>
-          </div>
-          <Button variant="outline" onClick={() => navigate(createPageUrl("GestaoOficina"))}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar
-          </Button>
-        </div>
-
-        {/* Filtros */}
-        <Card>
-          <CardContent className="py-4">
-            <div className="flex items-center gap-4 flex-wrap">
-              <div className="flex items-center gap-2">
-                <Filter className="w-4 h-4 text-gray-500" />
-                <Label className="text-sm font-semibold">Período:</Label>
-                <Input
-                  type="month"
-                  value={selectedMonth}
-                  onChange={(e) => setSelectedMonth(e.target.value)}
-                  className="w-48"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <Label className="text-sm font-semibold">Origem:</Label>
-                <Select value={filterSourceType} onValueChange={setFilterSourceType}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas</SelectItem>
-                    <SelectItem value="manual">Manuais</SelectItem>
-                    <SelectItem value="desdobramento">Desdobramento</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* KPIs Consolidados */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="border-2 border-blue-200">
