@@ -89,21 +89,6 @@ export default function ManualProcessos() {
     }, 1500);
   };
 
-  const handleToggleChange = async (checked) => {
-    setIncluirProcessosOficiais(checked);
-    
-    // Atualizar Workshop com a nova preferência
-    if (workshop?.id) {
-      try {
-        await base44.entities.Workshop.update(workshop.id, {
-          include_master_processes: checked
-        });
-      } catch (error) {
-        console.error("Erro ao atualizar preferência:", error);
-      }
-    }
-  };
-
   if (!user || !workshop) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -210,7 +195,7 @@ export default function ManualProcessos() {
               <Switch
                 id="incluir-oficiais"
                 checked={incluirProcessosOficiais}
-                onCheckedChange={handleToggleChange}
+                onCheckedChange={setIncluirProcessosOficiais}
               />
             </div>
           </div>
