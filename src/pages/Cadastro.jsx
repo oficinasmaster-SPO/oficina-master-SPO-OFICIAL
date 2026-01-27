@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
@@ -18,10 +18,16 @@ import CadastroPerfilSocio from "../components/workshop/CadastroPerfilSocio";
 
 export default function Cadastro() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [workshop, setWorkshop] = useState(null);
-  const [activeTab, setActiveTab] = useState("perfil-socio");
+  
+  // Pega step da URL, senão usa default
+  const searchParams = new URLSearchParams(location.search);
+  const initialStep = searchParams.get('step') || 'perfil-socio';
+  const [activeTab, setActiveTab] = useState(initialStep);
+  
   const [user, setUser] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -150,6 +156,8 @@ export default function Cadastro() {
       }
       
       setActiveTab(nextTab);
+      // Atualizar URL com o step atual
+      window.history.replaceState(null, '', `${location.pathname}?step=${nextTab}`);
       toast.success("Progresso salvo!");
     } catch (error) {
       console.error(error);
@@ -258,6 +266,8 @@ export default function Cadastro() {
             return;
           }
           setActiveTab(newTab);
+          // Atualizar URL com a aba selecionada
+          window.history.replaceState(null, '', `${location.pathname}?step=${newTab}`);
         }} className="space-y-6">
           <TabsList className="grid w-full grid-cols-2 md:grid-cols-6 bg-white shadow-sm p-1 h-auto">
             <TabsTrigger value="perfil-socio" className="py-3">
@@ -311,7 +321,10 @@ export default function Cadastro() {
               onEditingChange={setIsEditing}
             />
             <div className="mt-6 flex justify-between">
-              <Button variant="outline" onClick={() => setActiveTab("perfil-socio")}>Voltar</Button>
+              <Button variant="outline" onClick={() => {
+                setActiveTab("perfil-socio");
+                window.history.replaceState(null, '', `${location.pathname}?step=perfil-socio`);
+              }}>Voltar</Button>
               <Button onClick={() => handleNextTab(dadosBasicosRef, "servicos")} disabled={saving || isEditing} className="bg-blue-600 hover:bg-blue-700">
                 {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Próximo: Serviços <ArrowRight className="ml-2 w-4 h-4" />
@@ -328,7 +341,10 @@ export default function Cadastro() {
               onEditingChange={setIsEditing}
             />
             <div className="mt-6 flex justify-between">
-              <Button variant="outline" onClick={() => setActiveTab("dados")}>Voltar</Button>
+              <Button variant="outline" onClick={() => {
+                setActiveTab("dados");
+                window.history.replaceState(null, '', `${location.pathname}?step=dados`);
+              }}>Voltar</Button>
               <Button onClick={() => handleNextTab(servicosRef, "equipamentos")} disabled={saving || isEditing} className="bg-blue-600 hover:bg-blue-700">
                 {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Próximo: Equipamentos <ArrowRight className="ml-2 w-4 h-4" />
@@ -352,7 +368,10 @@ export default function Cadastro() {
               />
             </div>
             <div className="mt-6 flex justify-between">
-              <Button variant="outline" onClick={() => setActiveTab("servicos")}>Voltar</Button>
+              <Button variant="outline" onClick={() => {
+                setActiveTab("servicos");
+                window.history.replaceState(null, '', `${location.pathname}?step=servicos`);
+              }}>Voltar</Button>
               <Button onClick={() => handleNextTab(equipamentosRef, "terceirizados")} disabled={saving || isEditing} className="bg-blue-600 hover:bg-blue-700">
                 {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Próximo: Terceirizados <ArrowRight className="ml-2 w-4 h-4" />
@@ -368,7 +387,10 @@ export default function Cadastro() {
               onEditingChange={setIsEditing}
             />
             <div className="mt-6 flex justify-between">
-              <Button variant="outline" onClick={() => setActiveTab("equipamentos")}>Voltar</Button>
+              <Button variant="outline" onClick={() => {
+                setActiveTab("equipamentos");
+                window.history.replaceState(null, '', `${location.pathname}?step=equipamentos`);
+              }}>Voltar</Button>
               <Button onClick={() => handleNextTab(terceirizadosRef, "metas")} disabled={saving || isEditing} className="bg-blue-600 hover:bg-blue-700">
                 {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Próximo: Metas <ArrowRight className="ml-2 w-4 h-4" />
