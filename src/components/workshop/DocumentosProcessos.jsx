@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { base44 } from "@/api/base44Client";
 import { FileText, Upload, Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import ManualDownloadButton from "./ManualDownloadButton";
 
 export default function DocumentosProcessos({ workshop, onUpdate }) {
   const [uploading, setUploading] = useState(false);
@@ -73,31 +74,21 @@ export default function DocumentosProcessos({ workshop, onUpdate }) {
         </CardContent>
       </Card>
 
-      <Card className="shadow-lg">
+      <Card className="shadow-lg border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50">
         <CardHeader>
-          <CardTitle>Manual da Oficina</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="w-5 h-5 text-blue-600" />
+            Manual da Oficina
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {workshop.company_manual_url ? (
-            <a href={workshop.company_manual_url} target="_blank" rel="noopener noreferrer">
-              <Button variant="outline" className="w-full">
-                <Download className="w-4 h-4 mr-2" />
-                Baixar Manual
-              </Button>
-            </a>
-          ) : (
-            <p className="text-sm text-gray-500">Nenhum manual cadastrado</p>
-          )}
-          <div>
-            <Label htmlFor="manual-upload">Enviar Manual (PDF)</Label>
-            <Input
-              id="manual-upload"
-              type="file"
-              accept=".pdf"
-              onChange={(e) => handleUpload('manual', e.target.files[0])}
-              disabled={uploading}
-            />
-          </div>
+          <p className="text-sm text-gray-600">
+            Gere automaticamente o manual da sua oficina baseado nos processos cadastrados.
+          </p>
+          <ManualDownloadButton workshopId={workshop.id} />
+          <p className="text-xs text-gray-500 italic">
+            💡 O manual é gerado dinamicamente com base em seus processos. Use o dropdown para escolher incluir ou não os processos das Oficinas Master.
+          </p>
         </CardContent>
       </Card>
 
