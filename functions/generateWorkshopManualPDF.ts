@@ -386,38 +386,51 @@ async function generatePDF(data) {
 
 Deno.serve(async (req) => {
   try {
+    console.log('🔵 [generateWorkshopManualPDF] Recebida requisição');
+    
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
 
+    console.log('🔵 [Auth] user:', user?.email, 'role:', user?.role);
+
     if (!user) {
+      console.error('❌ [Auth] Usuário não autenticado');
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { workshop_id, include_master_processes } = await req.json();
+    console.log('🔵 [Input] workshop_id:', workshop_id, 'include_master:', include_master_processes);
 
     if (!workshop_id) {
+      console.error('❌ [Input] workshop_id ausente');
       return Response.json({ error: 'workshop_id is required' }, { status: 400 });
     }
 
     // Buscar workshop
+    console.log('🔵 [DB] Buscando workshop...');
     const workshop = await base44.entities.Workshop.get(workshop_id);
+    console.log('🔵 [DB] Workshop encontrado:', workshop?.name);
 
     // Buscar dados do manual
+    console.log('🔵 [DB] Buscando processos...');
     const allProcessos = await base44.entities.ProcessDocument.list();
     const processos = include_master_processes
       ? allProcessos.filter(p => p.is_template || p.workshop_id === workshop_id)
       : allProcessos.filter(p => p.workshop_id === workshop_id);
+    console.log('🔵 [DB] Processos encontrados:', processos.length);
 
     const allITs = await base44.entities.InstructionDocument.list();
     const instructionDocs = include_master_processes
       ? allITs.filter(it => it.is_official || it.workshop_id === workshop_id)
       : allITs.filter(it => it.workshop_id === workshop_id);
+    console.log('🔵 [DB] ITs encontrados:', instructionDocs.length);
 
     const [cultura, cargos, areas] = await Promise.all([
       base44.entities.MissionVisionValues.filter({ workshop_id }),
       base44.entities.JobDescription.filter({ workshop_id }),
       base44.entities.ProcessArea.list()
     ]);
+    console.log('🔵 [DB] Cultura:', !!cultura?.[0], 'Cargos:', cargos.length, 'Áreas:', areas.length);
 
     const data = {
       cultura: cultura && cultura.length > 0 ? cultura[0] : null,
@@ -429,12 +442,15 @@ Deno.serve(async (req) => {
     };
 
     // Calcular hash do conteúdo
+    console.log('🔵 [Hash] Calculando hash...');
     const newHash = await calculateContentHash(data);
     const urlFieldKey = include_master_processes ? 'manual_pdf_url_master' : 'manual_pdf_url_nomaster';
+    console.log('🔵 [Hash] newHash:', newHash, 'urlFieldKey:', urlFieldKey);
+    console.log('🔵 [Cache] oldHash:', workshop.manual_pdf_content_hash, 'existingUrl:', !!workshop[urlFieldKey]);
 
     // Verificar se conteúdo mudou
     if (workshop.manual_pdf_content_hash === newHash && workshop[urlFieldKey]) {
-      // Reutilizar URL existente
+      console.log('✅ [Cache] Conteúdo não mudou, usando URL em cache');
       return Response.json({
         pdfUrl: workshop[urlFieldKey],
         cached: true
@@ -442,23 +458,54 @@ Deno.serve(async (req) => {
     }
 
     // Gerar novo PDF
+    console.log('🔵 [PDF] Gerando PDF...');
     const pdfDataUrl = await generatePDF(data);
+    console.log('🔵 [PDF] PDF gerado, tamanho:', pdfDataUrl?.length || 'unknown');
+
+    // Converter data URL em Blob para upload
+    console.log('🔵 [Upload] Convertendo para Blob...');
+    const base64Data = pdfDataUrl.split(',')[1];
+    const binaryString = atob(base64Data);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    const blob = new Blob([bytes], { type: 'application/pdf' });
+    console.log('🔵 [Upload] Blob criado, tamanho:', blob.size);
+
+    // Fazer upload para cloud
+    console.log('🔵 [Upload] Enviando para cloud...');
+    const uploadResponse = await base44.integrations.Core.UploadFile({ file: blob });
+    const pdfUrl = uploadResponse?.file_url;
+    console.log('🔵 [Upload] URL recebida:', pdfUrl);
+
+    if (!pdfUrl) {
+      console.error('❌ [Upload] Sem file_url na resposta');
+      return Response.json({ error: 'Upload failed - no file_url' }, { status: 500 });
+    }
 
     // Salvar URL no Workshop
+    console.log('🔵 [Update] Atualizando Workshop...');
     const updateData = {
-      [urlFieldKey]: pdfDataUrl,
+      [urlFieldKey]: pdfUrl,
       manual_pdf_last_generated_at: new Date().toISOString(),
       manual_pdf_content_hash: newHash
     };
+    console.log('🔵 [Update] updateData:', updateData);
 
     await base44.entities.Workshop.update(workshop_id, updateData);
+    console.log('✅ [Update] Workshop atualizado com sucesso');
 
     return Response.json({
-      pdfUrl: pdfDataUrl,
+      pdfUrl: pdfUrl,
       cached: false
     });
   } catch (error) {
-    console.error('Erro ao gerar manual:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('❌ [Error] Erro ao gerar manual:', error);
+    console.error('❌ [Error] Stack:', error?.stack);
+    return Response.json({ 
+      error: error?.message || 'Unknown error',
+      stack: error?.stack 
+    }, { status: 500 });
   }
 });

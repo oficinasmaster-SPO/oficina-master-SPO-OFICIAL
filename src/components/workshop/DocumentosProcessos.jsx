@@ -50,20 +50,30 @@ export default function DocumentosProcessos({ workshop, onUpdate }) {
     try {
       includeMaster ? setGeneratingMaster(true) : setGeneratingNoMaster(true);
 
-      const { pdfUrl } = await base44.functions.invoke('generateWorkshopManualPDF', {
+      console.log('🔵 Iniciando geração do manual:', {
+        workshop_id: workshop.id,
+        include_master_processes: includeMaster,
+        workshop_name: workshop.name
+      });
+
+      const response = await base44.functions.invoke('generateWorkshopManualPDF', {
         workshop_id: workshop.id,
         include_master_processes: includeMaster
       });
 
-      if (pdfUrl) {
-        window.open(pdfUrl, '_blank');
-        toast.success("Manual gerado e aberto!");
+      console.log('🟢 Resposta da função:', response);
+
+      if (response?.pdfUrl) {
+        console.log('🟢 Abrindo URL:', response.pdfUrl);
+        window.open(response.pdfUrl, '_blank');
+        toast.success(`Manual ${response.cached ? 'recuperado do cache' : 'gerado'} com sucesso!`);
       } else {
-        toast.error("Erro ao gerar manual");
+        console.error('❌ Sem pdfUrl na resposta:', response);
+        toast.error("Erro ao gerar manual: resposta sem URL");
       }
     } catch (error) {
-      console.error(error);
-      toast.error("Erro ao gerar manual: " + error.message);
+      console.error('❌ Erro ao gerar manual:', error);
+      toast.error("Erro: " + (error?.message || error));
     } finally {
       includeMaster ? setGeneratingMaster(false) : setGeneratingNoMaster(false);
     }
