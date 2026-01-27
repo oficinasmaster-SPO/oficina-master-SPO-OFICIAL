@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { FileText, Download, Eye, Loader2, AlertCircle, Building2 } from "lucide-react";
+import { FileText, Download, Eye, Loader2, AlertCircle, Building2, ChevronDown } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import ManualViewer from "@/components/manual/ManualViewer";
 
 export default function ManualProcessos() {
@@ -87,6 +88,29 @@ export default function ManualProcessos() {
       setGenerating(false);
       setShowViewer(true);
     }, 1500);
+  };
+
+  const handleDownloadPDF = async () => {
+    setGenerating(true);
+    try {
+      const { toast } = await import('sonner');
+      toast.loading('Gerando PDF...');
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Importa o gerador dinamicamente
+      const { default: ManualPDFGenerator } = await import('@/components/manual/ManualPDFGenerator');
+      await ManualPDFGenerator.generate(manualData);
+      
+      toast.dismiss();
+      toast.success('PDF baixado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      const { toast } = await import('sonner');
+      toast.dismiss();
+      toast.error('Erro ao gerar PDF');
+    } finally {
+      setGenerating(false);
+    }
   };
 
   if (!user || !workshop) {
@@ -219,6 +243,34 @@ export default function ManualProcessos() {
                 </>
               )}
             </Button>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  disabled={generating || isLoading || !manualData}
+                  size="lg"
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <Download className="w-5 h-5 mr-2" />
+                  Baixar PDF
+                  <ChevronDown className="w-4 h-4 ml-1" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleDownloadPDF}>
+                  <Download className="w-4 h-4 mr-2" />
+                  Baixar {incluirProcessosOficiais ? 'Com Oficinas Master' : 'Sem Oficinas Master'}
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => {
+                    setIncluirProcessosOficiais(!incluirProcessosOficiais);
+                  }}
+                  className="text-xs text-gray-600"
+                >
+                  {incluirProcessosOficiais ? '✓' : ''} Incluir Oficinas Master
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           <div className="bg-gray-50 p-4 rounded-lg w-full mt-6">
