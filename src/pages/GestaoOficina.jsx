@@ -17,7 +17,6 @@ import MetasObjetivosCompleto from "../components/workshop/MetasObjetivosComplet
 import CulturaOrganizacional from "../components/workshop/CulturaOrganizacional";
 import DocumentosProcessos from "../components/workshop/DocumentosProcessos";
 import WorkshopLevelBadge from "../components/gamification/WorkshopLevelBadge";
-import ManualDownloadButton from "../components/manual/ManualDownloadButton";
 
 import GrowthDashboard from "../components/management/GrowthDashboard";
 import WorkshopMilestones from "../components/management/WorkshopMilestones";
@@ -401,12 +400,7 @@ export default function GestaoOficina() {
           </TabsContent>
 
           <TabsContent value="processos">
-            <div className="space-y-4">
-              <div className="flex justify-end">
-                <ManualDownloadButton workshopId={workshop?.id} />
-              </div>
-              <DocumentosProcessos workshop={workshop} onUpdate={handleUpdate} />
-            </div>
+            <DocumentosProcessos workshop={workshop} onUpdate={handleUpdate} />
           </TabsContent>
 
           <TabsContent value="relatorios">
