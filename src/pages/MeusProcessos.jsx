@@ -19,6 +19,7 @@ import ProcessHierarchyView from "../components/processes/ProcessHierarchyView";
 import ProcessMetricsCards from "../components/processes/ProcessMetricsCards";
 import MetricsDetailsDialog from "../components/processes/MetricsDetailsDialog";
 import ITViewerModal from "../components/processes/ITViewerModal";
+import ManualDownloadButton from "../components/manual/ManualDownloadButton";
 
 export default function MeusProcessos() {
   const navigate = useNavigate();
