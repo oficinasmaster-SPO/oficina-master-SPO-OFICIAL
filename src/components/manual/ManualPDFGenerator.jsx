@@ -96,18 +96,6 @@ export default class ManualPDFGenerator {
     doc.setFontSize(11);
     doc.setTextColor(0, 0, 0);
     
-    // Quem Somos
-    doc.setFont(undefined, 'bold');
-    doc.text("Quem Somos", 20, yPos);
-    yPos += 7;
-    doc.setFont(undefined, 'normal');
-    doc.text(workshop?.name || "Empresa", 20, yPos);
-    yPos += 6;
-    const segmentLines = doc.splitTextToSize(workshop?.segment_auto || workshop?.segment || "Segmento automotivo", 170);
-    doc.text(segmentLines, 20, yPos);
-    yPos += segmentLines.length * 6 + 8;
-    checkPageBreak();
-    
     if (cultura?.mission_statement) {
       doc.setFont(undefined, 'bold');
       doc.text("Missão", 20, yPos);
@@ -637,55 +625,6 @@ export default class ManualPDFGenerator {
         yPos += 8;
       });
     }
-
-    // 6. INDICADORES E METAS
-    doc.addPage();
-    yPos = 20;
-    doc.setFontSize(18);
-    doc.setTextColor(217, 119, 6);
-    doc.text("6. Indicadores e Metas", 20, yPos);
-    yPos += 12;
-
-    doc.setFontSize(11);
-    doc.setTextColor(0, 0, 0);
-    
-    if (workshop?.monthly_goals?.projected_revenue) {
-      doc.setFont(undefined, 'bold');
-      doc.text("Meta de Faturamento Mensal", 20, yPos);
-      yPos += 7;
-      doc.setFont(undefined, 'normal');
-      doc.setFontSize(14);
-      doc.setTextColor(22, 163, 74);
-      doc.text(
-        `R$ ${(workshop.monthly_goals.projected_revenue || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-        20,
-        yPos
-      );
-      doc.setTextColor(0, 0, 0);
-      doc.setFontSize(11);
-      yPos += 12;
-    } else {
-      doc.setFont(undefined, 'normal');
-      doc.text("Configure as metas em Cadastros → Gestão da Oficina", 20, yPos);
-      yPos += 10;
-    }
-
-    // 7. REGRAS GERAIS E COMPLIANCE
-    doc.addPage();
-    yPos = 20;
-    doc.setFontSize(18);
-    doc.setTextColor(220, 38, 38);
-    doc.text("7. Regras Gerais e Compliance", 20, yPos);
-    yPos += 12;
-
-    doc.setFontSize(11);
-    doc.setTextColor(0, 0, 0);
-    doc.setFont(undefined, 'normal');
-    const complianceLines = doc.splitTextToSize(
-      "Todos os colaboradores devem seguir os processos e procedimentos definidos neste manual, garantindo qualidade, segurança e eficiência operacional.",
-      170
-    );
-    doc.text(complianceLines, 20, yPos);
 
     // RODAPÉ EM TODAS AS PÁGINAS
     const pageCount = doc.internal.getNumberOfPages();
