@@ -406,7 +406,10 @@ export default function Cadastro() {
               onEditingChange={setIsEditing}
             />
             <div className="mt-8 pt-6 border-t border-slate-200 flex justify-between items-center">
-              <Button variant="outline" onClick={() => setActiveTab("terceirizados")}>Voltar</Button>
+              <Button variant="outline" onClick={() => {
+                setActiveTab("terceirizados");
+                window.history.replaceState(null, '', `${location.pathname}?step=terceirizados`);
+              }}>Voltar</Button>
               <div className="flex flex-col items-end gap-2">
                 <p className="text-sm text-slate-500">Tudo preenchido?</p>
                 <Button 

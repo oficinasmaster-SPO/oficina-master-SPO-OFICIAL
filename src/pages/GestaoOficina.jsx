@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ import WorkshopMilestones from "../components/management/WorkshopMilestones";
 
 export default function GestaoOficina() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [workshop, setWorkshop] = useState(null);
   const [workshopGameProfile, setWorkshopGameProfile] = useState(null);
@@ -31,6 +32,11 @@ export default function GestaoOficina() {
   const [tcmp2Value, setTcmp2Value] = useState(0);
   const [loadingTcmp2, setLoadingTcmp2] = useState(true);
   const [isAdminViewing, setIsAdminViewing] = useState(false);
+  
+  // Pega aba da URL, senão usa default
+  const searchParams = new URLSearchParams(location.search);
+  const initialTab = searchParams.get('tab') || 'dados';
+  const [activeTab, setActiveTab] = useState(initialTab);
 
   useEffect(() => {
     loadData();
@@ -210,7 +216,7 @@ export default function GestaoOficina() {
               variant="outline"
               size="sm"
               onClick={() => {
-                window.history.back();
+                navigate(`/GestaoOficina?tab=${activeTab}`);
               }}
               className="bg-white text-purple-700 hover:bg-purple-50"
             >
@@ -316,9 +322,10 @@ export default function GestaoOficina() {
           </Card>
         </div>
 
-        <Tabs defaultValue="dados" className="space-y-6" onValueChange={(value) => {
-          // Preservar a aba ativa ao salvar
-          console.log("Aba ativa:", value);
+        <Tabs value={activeTab} className="space-y-6" onValueChange={(value) => {
+          setActiveTab(value);
+          // Atualizar URL com a aba selecionada
+          window.history.replaceState(null, '', `${location.pathname}?tab=${value}`);
         }}>
           <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-10 bg-white shadow-md gap-1 p-2">
             <TabsTrigger value="dados" className="text-xs md:text-sm">
