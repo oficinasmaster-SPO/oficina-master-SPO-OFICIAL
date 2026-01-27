@@ -119,12 +119,16 @@ Deno.serve(async (req) => {
     doc.setFontSize(8);
     doc.text(`Gerado em ${new Date().toLocaleDateString('pt-BR')} via Oficinas Master`, 20, 290);
 
-    // Converter para Base64
-    const pdfData = doc.output('datauristring').split(',')[1];
+    // Converter para Blob
+    const pdfBlob = doc.output('blob');
+    
+    // Criar FormData com o arquivo
+    const formData = new FormData();
+    formData.append('file', pdfBlob, `manual-${workshop_id}.pdf`);
 
     // Fazer upload do PDF
     const { file_url } = await base44.integrations.Core.UploadFile({
-      file: Buffer.from(pdfData, 'base64')
+      file: pdfBlob
     });
 
     // Atualizar Workshop com a URL do PDF
