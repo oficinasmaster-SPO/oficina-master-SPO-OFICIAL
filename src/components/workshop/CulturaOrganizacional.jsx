@@ -50,32 +50,31 @@ export default function CulturaOrganizacional({ workshop }) {
     eventual: "Eventual"
   };
 
-  const handleExportPDF = async () => {
+  const handleExportPDF = () => {
     if (!workshop?.id) {
-      toast.error("Oficina não encontrada");
+      toast.error("Gere o PDF abaixo do editor antes de visualizar.");
+      return;
+    }
+
+    // Recuperar PDF gerado do sessionStorage (salvo por MissaoVisaoValores.jsx)
+    const htmlContent = sessionStorage.getItem(`mvv_pdf_${workshop.id}`);
+    
+    if (!htmlContent) {
+      toast.error("Gere o PDF abaixo do editor antes de visualizar.");
       return;
     }
 
     setExportingPDF(true);
     try {
-      const response = await base44.functions.invoke('exportCultureManual', {
-        workshop_id: workshop.id
-      });
-
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Manual_Cultura_${workshop.name || 'Oficina'}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      a.remove();
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
+      printWindow.print();
       
-      toast.success("PDF exportado com sucesso!");
+      toast.success("PDF aberto!");
     } catch (error) {
       console.error(error);
-      toast.error("Erro ao exportar PDF");
+      toast.error("Erro ao abrir PDF");
     } finally {
       setExportingPDF(false);
     }
