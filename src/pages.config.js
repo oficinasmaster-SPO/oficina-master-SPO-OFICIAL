@@ -126,6 +126,7 @@ import Organograma from './pages/Organograma';
 import OrganogramaFuncional from './pages/OrganogramaFuncional';
 import PainelAcoes from './pages/PainelAcoes';
 import PainelClienteAceleracao from './pages/PainelClienteAceleracao';
+import PainelMetas from './pages/PainelMetas';
 import PesquisaClima from './pages/PesquisaClima';
 import PlanoAcao from './pages/PlanoAcao';
 import Planos from './pages/Planos';
@@ -170,7 +171,6 @@ import TesteOpenAI from './pages/TesteOpenAI';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
-import PainelMetas from './pages/PainelMetas';
 import __Layout from './Layout.jsx';
 
 
@@ -303,6 +303,7 @@ export const PAGES = {
     "OrganogramaFuncional": OrganogramaFuncional,
     "PainelAcoes": PainelAcoes,
     "PainelClienteAceleracao": PainelClienteAceleracao,
+    "PainelMetas": PainelMetas,
     "PesquisaClima": PesquisaClima,
     "PlanoAcao": PlanoAcao,
     "Planos": Planos,
@@ -347,7 +348,6 @@ export const PAGES = {
     "TreinamentoVendas": TreinamentoVendas,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
-    "PainelMetas": PainelMetas,
 }
 
 export const pagesConfig = {
