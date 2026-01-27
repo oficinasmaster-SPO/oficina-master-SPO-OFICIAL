@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation, useParams } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,6 @@ import WorkshopMilestones from "../components/management/WorkshopMilestones";
 export default function GestaoOficina() {
   const navigate = useNavigate();
   const location = useLocation();
-  const params = useParams();
   const [loading, setLoading] = useState(true);
   const [workshop, setWorkshop] = useState(null);
   const [workshopGameProfile, setWorkshopGameProfile] = useState(null);
@@ -34,19 +33,17 @@ export default function GestaoOficina() {
   const [loadingTcmp2, setLoadingTcmp2] = useState(true);
   const [isAdminViewing, setIsAdminViewing] = useState(false);
   
-  // Pega a aba da rota ou usa default
-  const activeTab = params.tab || 'dados';
+  const [activeTab, setActiveTab] = useState('dados');
 
   useEffect(() => {
     loadData();
   }, []);
 
-  // Se não houver aba na rota, ir para a aba dados
+  // Sincronizar aba com URL ao carregar
   useEffect(() => {
-    if (!params.tab) {
-      navigate('/GestaoOficina/dados', { replace: true });
-    }
-  }, [params.tab, navigate]);
+    const tabFromUrl = new URLSearchParams(location.search).get('tab') || 'dados';
+    setActiveTab(tabFromUrl);
+  }, [location.search]);
 
   const loadData = async () => {
     setLoading(true);
@@ -222,7 +219,7 @@ export default function GestaoOficina() {
               variant="outline"
               size="sm"
               onClick={() => {
-                navigate(`/GestaoOficina/${activeTab}`);
+                navigate(`/GestaoOficina?tab=${activeTab}`);
               }}
               className="bg-white text-purple-700 hover:bg-purple-50"
             >
@@ -329,8 +326,9 @@ export default function GestaoOficina() {
         </div>
 
         <Tabs value={activeTab} className="space-y-6" onValueChange={(value) => {
-          // Mudar para a rota da aba selecionada
-          navigate(`/GestaoOficina/${value}`);
+          setActiveTab(value);
+          // Atualizar URL com a aba selecionada
+          window.history.replaceState(null, '', `${location.pathname}?tab=${value}`);
         }}>
           <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-10 bg-white shadow-md gap-1 p-2">
             <TabsTrigger value="dados" className="text-xs md:text-sm">
