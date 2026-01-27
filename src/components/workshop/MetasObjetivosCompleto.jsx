@@ -229,10 +229,6 @@ const MetasObjetivosCompleto = forwardRef(({ workshop, onUpdate, onEditingChange
       
       console.log("Salvando dados:", dataToSave);
       await onUpdate(dataToSave);
-      
-      // 🔄 ESPELHAMENTO AUTOMÁTICO PARA GOAL
-      await mirrorToGoal();
-      
       toast.success("Metas salvas com sucesso!");
       setEditing(false);
     } catch (error) {
@@ -240,87 +236,6 @@ const MetasObjetivosCompleto = forwardRef(({ workshop, onUpdate, onEditingChange
       toast.error("Erro ao salvar metas: " + error.message);
     } finally {
       setSaving(false);
-    }
-  };
-
-  const mirrorToGoal = async () => {
-    try {
-      console.log("🔄 Iniciando espelhamento para Goal...");
-      
-      const currentMonth = formData.monthly_goals?.month || getCurrentMonth();
-      const [year, month] = currentMonth.split('-');
-      
-      // Calcular datas do mês
-      const data_inicio = `${year}-${month}-01`;
-      const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
-      const data_fim = `${year}-${month}-${String(lastDay).padStart(2, '0')}`;
-      
-      // Source ID único para esta meta do cadastro
-      const source_id = `${workshop.id}:cadastro:${currentMonth}`;
-      
-      // Verificar se já existe Goal com este source_id
-      const existingGoals = await base44.entities.Goal.filter({ source_id });
-      
-      // Calcular métricas projetadas (melhor mês + crescimento)
-      const growthFactor = 1 + (formData.monthly_goals?.growth_percentage || 10) / 100;
-      
-      const goalData = {
-        workshop_id: workshop.id,
-        periodo: "mensal",
-        periodo_mes_ano: currentMonth,
-        data_inicio,
-        data_fim,
-        source_type: "manual",
-        source_id,
-        status: "ativa",
-        metricas: {
-          volume_clientes: {
-            meta: Math.round((formData.best_month_history?.customer_volume || 0) * growthFactor),
-            realizado: formData.monthly_goals?.customer_volume || 0
-          },
-          faturamento_pecas: {
-            meta: (formData.best_month_history?.revenue_parts || 0) * growthFactor,
-            realizado: formData.monthly_goals?.revenue_parts || 0
-          },
-          faturamento_servicos: {
-            meta: (formData.best_month_history?.revenue_services || 0) * growthFactor,
-            realizado: formData.monthly_goals?.revenue_services || 0
-          },
-          rentabilidade: {
-            meta: (formData.best_month_history?.rentability_percentage || 0) * growthFactor,
-            realizado: formData.monthly_goals?.profitability_percentage || 0
-          },
-          lucro: {
-            meta: (formData.best_month_history?.profit_percentage || 0) * growthFactor,
-            realizado: formData.monthly_goals?.profit_percentage || 0
-          },
-          ticket_medio_pecas: {
-            meta: (formData.best_month_history?.average_ticket_parts || 0) * growthFactor,
-            realizado: 0
-          },
-          ticket_medio_servicos: {
-            meta: (formData.best_month_history?.average_ticket_services || 0) * growthFactor,
-            realizado: 0
-          }
-        },
-        observacoes: `Meta projetada automaticamente do cadastro (${currentMonth}). Base: Melhor Mês + ${formData.monthly_goals?.growth_percentage || 10}% crescimento.`
-      };
-      
-      if (existingGoals && existingGoals.length > 0) {
-        // Atualizar Goal existente
-        const goalId = existingGoals[0].id;
-        await base44.entities.Goal.update(goalId, goalData);
-        console.log("✅ Goal atualizado:", goalId);
-      } else {
-        // Criar novo Goal
-        const newGoal = await base44.entities.Goal.create(goalData);
-        console.log("✅ Goal criado:", newGoal.id);
-      }
-      
-      console.log("🎯 Espelhamento concluído - source_id:", source_id);
-    } catch (error) {
-      console.error("❌ Erro no espelhamento para Goal:", error);
-      // Não bloqueia o salvamento do Workshop
     }
   };
 
@@ -345,10 +260,6 @@ const MetasObjetivosCompleto = forwardRef(({ workshop, onUpdate, onEditingChange
         ...prev,
         monthly_goals: updatedMonthlyGoals
       }));
-      
-      // 🔄 ESPELHAMENTO AUTOMÁTICO PARA GOAL
-      await mirrorToGoal();
-      
       toast.success("Crescimento geral atualizado!");
     } catch (error) {
       console.error("Erro ao salvar crescimento:", error);
@@ -529,10 +440,6 @@ const MetasObjetivosCompleto = forwardRef(({ workshop, onUpdate, onEditingChange
         };
         
         await onUpdate(dataToSave);
-        
-        // 🔄 ESPELHAMENTO AUTOMÁTICO PARA GOAL
-        await mirrorToGoal();
-        
         return true;
       } catch (error) {
         console.error("Erro ao salvar:", error);

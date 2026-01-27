@@ -357,14 +357,6 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       icon: BarChart4,
       items: [
         { 
-          name: 'Gestão de Metas', 
-          href: createPageUrl('GestaoMetas'), 
-          icon: Target,
-          description: 'Criar e gerenciar metas',
-          highlight: true,
-          requiredPermission: 'workshop.manage_goals'
-        },
-        { 
           name: 'Histórico de Metas', 
           href: createPageUrl('HistoricoMetas'), 
           icon: BarChart2,

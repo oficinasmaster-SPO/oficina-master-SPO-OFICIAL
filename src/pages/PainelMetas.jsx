@@ -5,23 +5,17 @@ import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Loader2, TrendingUp, Users, DollarSign, Target, ArrowLeft, Calendar, Sparkles, Filter } from "lucide-react";
+import { Loader2, TrendingUp, Users, DollarSign, Target, ArrowLeft, Calendar, Sparkles } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import ActionPlanCard from "../components/diagnostics/ActionPlanCard";
 import ActionPlanDetails from "../components/diagnostics/ActionPlanDetails";
 import ActionPlanFeedbackModal from "../components/diagnostics/ActionPlanFeedbackModal";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function PainelMetas() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [workshop, setWorkshop] = useState(null);
-  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().substring(0, 7));
-  const [filterSourceType, setFilterSourceType] = useState("all");
   const [breakdown, setBreakdown] = useState(null);
   const [managementDiagnostic, setManagementDiagnostic] = useState(null);
   const [showActionPlanDetails, setShowActionPlanDetails] = useState(false);
@@ -34,27 +28,33 @@ export default function PainelMetas() {
 
   const loadData = async () => {
     try {
-      const user = await base44.auth.me();
-      
       const urlParams = new URLSearchParams(window.location.search);
-      const adminWorkshopId = urlParams.get('workshop_id');
-      
-      let userWorkshop = null;
-      
-      if (adminWorkshopId && user.role === 'admin') {
-        userWorkshop = await base44.entities.Workshop.get(adminWorkshopId);
-      } else {
-        const workshops = await base44.entities.Workshop.filter({ owner_id: user.id });
-        userWorkshop = workshops[0];
-      }
-      
-      if (!userWorkshop) {
-        toast.error("Oficina não encontrada");
+      const breakdownId = urlParams.get("id");
+
+      if (!breakdownId) {
+        toast.error("Desdobramento não encontrado");
         navigate(createPageUrl("Home"));
         return;
       }
-      
-      setWorkshop(userWorkshop);
+
+      const breakdowns = await base44.entities.GoalBreakdown.list();
+      const current = breakdowns.find(b => b.id === breakdownId);
+
+      if (!current) {
+        toast.error("Desdobramento não encontrado");
+        navigate(createPageUrl("Home"));
+        return;
+      }
+
+      setBreakdown(current);
+
+      // Buscar ManagementDiagnostic associado
+      const diagnostics = await base44.entities.ManagementDiagnostic.filter({
+        goal_breakdown_id: breakdownId
+      });
+      if (diagnostics && diagnostics.length > 0) {
+        setManagementDiagnostic(diagnostics[0]);
+      }
     } catch (error) {
       console.error(error);
       toast.error("Erro ao carregar dados");
@@ -63,52 +63,58 @@ export default function PainelMetas() {
     }
   };
 
-  // Buscar metas do mês selecionado
-  const { data: goals = [], isLoading: goalsLoading } = useQuery({
-    queryKey: ['goals', workshop?.id, selectedMonth, filterSourceType],
+  const { data: actionPlan } = useQuery({
+    queryKey: ['action-plan', managementDiagnostic?.id],
     queryFn: async () => {
-      const allGoals = await base44.entities.Goal.filter({ workshop_id: workshop.id });
-      
-      // Filtrar por interseção de datas
-      const [year, month] = selectedMonth.split('-');
-      const filterStart = `${year}-${month}-01`;
-      const filterEnd = new Date(parseInt(year), parseInt(month), 0).toISOString().split('T')[0];
-      
-      let filtered = allGoals.filter(goal => {
-        return goal.data_inicio <= filterEnd && goal.data_fim >= filterStart;
+      const plans = await base44.entities.DiagnosticActionPlan.filter({
+        diagnostic_id: managementDiagnostic.id,
+        diagnostic_type: 'ManagementDiagnostic'
       });
-      
-      // Filtrar por tipo de origem
-      if (filterSourceType !== "all") {
-        filtered = filtered.filter(g => g.source_type === filterSourceType);
-      }
-      
-      return filtered;
+      return plans.sort((a, b) => new Date(b.created_date) - new Date(a.created_date))[0];
     },
-    enabled: !!workshop
+    enabled: !!managementDiagnostic?.id
   });
 
-  const { data: employees = [] } = useQuery({
-    queryKey: ['employees', workshop?.id],
-    queryFn: async () => {
-      const result = await base44.entities.Employee.filter({ workshop_id: workshop.id, status: 'ativo' });
-      return Array.isArray(result) ? result : [];
-    },
-    enabled: !!workshop
+  const generatePlanMutation = useMutation({
+    mutationFn: async () => base44.functions.invoke('generateActionPlanManagement', { diagnostic_id: managementDiagnostic.id }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['action-plan', managementDiagnostic.id]);
+      toast.success('Plano gerado!');
+    }
   });
 
-  const getEmployeeName = (id) => {
-    const emp = employees.find(e => e.id === id);
-    return emp ? emp.full_name : 'Desconhecido';
-  };
+  const refinePlanMutation = useMutation({
+    mutationFn: async ({ feedback }) => base44.functions.invoke('refineActionPlan', {
+      plan_id: actionPlan.id,
+      feedback_content: feedback.content,
+      feedback_type: feedback.type,
+      audio_url: feedback.audio_url
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['action-plan', managementDiagnostic.id]);
+      setShowFeedbackModal(false);
+      toast.success('Plano refinado!');
+    }
+  });
 
-  const statusColors = {
-    ativa: "bg-blue-100 text-blue-800",
-    concluida: "bg-green-100 text-green-800",
-    cancelada: "bg-gray-100 text-gray-800"
-  };
+  const updateActivityMutation = useMutation({
+    mutationFn: async ({ activityIndex, status }) => {
+      const updatedSchedule = [...actionPlan.plan_data.implementation_schedule];
+      updatedSchedule[activityIndex].status = status;
+      if (status === 'concluida') updatedSchedule[activityIndex].completed_date = new Date().toISOString();
+      const completion = Math.round((updatedSchedule.filter(a => a.status === 'concluida').length / updatedSchedule.length) * 100);
+      return await base44.entities.DiagnosticActionPlan.update(actionPlan.id, {
+        plan_data: { ...actionPlan.plan_data, implementation_schedule: updatedSchedule },
+        completion_percentage: completion
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['action-plan', managementDiagnostic.id]);
+      toast.success('Atividade atualizada!');
+    }
+  });
 
-  if (loading || goalsLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
@@ -116,23 +122,35 @@ export default function PainelMetas() {
     );
   }
 
-  if (!workshop) return null;
+  if (!breakdown) return null;
 
-  // Calcular totais e agregações das metas
-  const totalMetas = goals.reduce((sum, g) => {
-    const faturamentoPecas = g.metricas?.faturamento_pecas?.meta || 0;
-    const faturamentoServicos = g.metricas?.faturamento_servicos?.meta || 0;
-    return sum + faturamentoPecas + faturamentoServicos;
-  }, 0);
+  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
-  const totalRealizado = goals.reduce((sum, g) => {
-    const faturamentoPecas = g.metricas?.faturamento_pecas?.realizado || 0;
-    const faturamentoServicos = g.metricas?.faturamento_servicos?.realizado || 0;
-    return sum + faturamentoPecas + faturamentoServicos;
-  }, 0);
+  const areaData = [
+    {
+      area: "Vendas",
+      melhor: breakdown.areas?.vendas?.best_revenue || 0,
+      meta: breakdown.areas?.vendas?.best_revenue * (1 + breakdown.growth_percentage / 100) || 0,
+      clientes: breakdown.areas?.vendas?.best_clients || 0
+    },
+    {
+      area: "Comercial",
+      melhor: breakdown.areas?.comercial?.best_revenue || 0,
+      meta: breakdown.areas?.comercial?.best_revenue * (1 + breakdown.growth_percentage / 100) || 0,
+      clientes: breakdown.areas?.comercial?.best_clients || 0
+    },
+    {
+      area: "Técnico",
+      melhor: breakdown.areas?.tecnico?.best_revenue || 0,
+      meta: breakdown.areas?.tecnico?.best_revenue * (1 + breakdown.growth_percentage / 100) || 0,
+      clientes: breakdown.areas?.tecnico?.best_clients || 0
+    }
+  ];
 
-  const totalClientes = goals.reduce((sum, g) => g.metricas?.volume_clientes?.meta || 0, 0);
-  const totalClientesRealizado = goals.reduce((sum, g) => g.metricas?.volume_clientes?.realizado || 0, 0);
+  const pieData = areaData.map(d => ({
+    name: d.area,
+    value: d.melhor
+  }));
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-8 px-4">
@@ -147,78 +165,45 @@ export default function PainelMetas() {
             </div>
             <p className="text-gray-600 flex items-center gap-2">
               <Calendar className="w-4 h-4" />
-              {selectedMonth ? new Date(selectedMonth + '-02').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }) : "Todas as metas"}
+              Referência: {new Date(breakdown.best_month_date + '-02').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
             </p>
           </div>
-          <Button variant="outline" onClick={() => navigate(createPageUrl("GestaoOficina"))}>
+          <Button variant="outline" onClick={() => navigate(createPageUrl("DiagnosticoGerencial"))}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Voltar
           </Button>
         </div>
 
-        {/* Filtros */}
-        <Card>
-          <CardContent className="py-4">
-            <div className="flex items-center gap-4 flex-wrap">
-              <div className="flex items-center gap-2">
-                <Filter className="w-4 h-4 text-gray-500" />
-                <Label className="text-sm font-semibold">Período:</Label>
-                <Input
-                  type="month"
-                  value={selectedMonth}
-                  onChange={(e) => setSelectedMonth(e.target.value)}
-                  className="w-48"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <Label className="text-sm font-semibold">Origem:</Label>
-                <Select value={filterSourceType} onValueChange={setFilterSourceType}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas</SelectItem>
-                    <SelectItem value="manual">Manuais</SelectItem>
-                    <SelectItem value="desdobramento">Desdobramento</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* KPIs Consolidados */}
+        {/* KPIs Principais */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="border-2 border-blue-200">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Target className="w-5 h-5 text-blue-600" />
-                </div>
-                <h3 className="font-semibold text-gray-700">Meta Total</h3>
-              </div>
-              <p className="text-2xl font-bold text-blue-600">
-                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalMetas)}
-              </p>
-            </CardContent>
-          </Card>
-
           <Card className="border-2 border-green-200">
             <CardContent className="p-6">
               <div className="flex items-center gap-3 mb-2">
                 <div className="p-2 bg-green-100 rounded-lg">
                   <DollarSign className="w-5 h-5 text-green-600" />
                 </div>
-                <h3 className="font-semibold text-gray-700">Realizado</h3>
+                <h3 className="font-semibold text-gray-700">Melhor Mês</h3>
               </div>
               <p className="text-2xl font-bold text-green-600">
-                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalRealizado)}
+                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(breakdown.best_month_revenue)}
               </p>
-              {totalMetas > 0 && (
-                <Badge className="mt-1 bg-green-100 text-green-800">
-                  {((totalRealizado / totalMetas) * 100).toFixed(1)}%
-                </Badge>
-              )}
+            </CardContent>
+          </Card>
+
+          <Card className="border-2 border-blue-200">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Target className="w-5 h-5 text-blue-600" />
+                </div>
+                <h3 className="font-semibold text-gray-700">Meta de Receita</h3>
+              </div>
+              <p className="text-2xl font-bold text-blue-600">
+                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(breakdown.target_revenue)}
+              </p>
+              <Badge className="mt-1 bg-blue-100 text-blue-800">
+                +{breakdown.growth_percentage}%
+              </Badge>
             </CardContent>
           </Card>
 
@@ -228,10 +213,10 @@ export default function PainelMetas() {
                 <div className="p-2 bg-purple-100 rounded-lg">
                   <Users className="w-5 h-5 text-purple-600" />
                 </div>
-                <h3 className="font-semibold text-gray-700">Clientes (Meta)</h3>
+                <h3 className="font-semibold text-gray-700">Clientes (Melhor)</h3>
               </div>
               <p className="text-2xl font-bold text-purple-600">
-                {totalClientes}
+                {breakdown.best_month_clients}
               </p>
             </CardContent>
           </Card>
@@ -242,125 +227,175 @@ export default function PainelMetas() {
                 <div className="p-2 bg-orange-100 rounded-lg">
                   <TrendingUp className="w-5 h-5 text-orange-600" />
                 </div>
-                <h3 className="font-semibold text-gray-700">Clientes (Real)</h3>
+                <h3 className="font-semibold text-gray-700">Meta de Clientes</h3>
               </div>
               <p className="text-2xl font-bold text-orange-600">
-                {totalClientesRealizado}
+                {breakdown.target_clients}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                {breakdown.target_daily_clients?.toFixed(1)} por dia
               </p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Lista de Metas */}
-        <div className="space-y-4">
-          {goals.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <Target className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 text-lg">Nenhuma meta encontrada para este período</p>
+        {/* Gráficos */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Comparativo: Melhor Mês vs Meta</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={areaData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="area" />
+                  <YAxis />
+                  <Tooltip formatter={(val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val)} />
+                  <Legend />
+                  <Bar dataKey="melhor" fill="#10b981" name="Melhor Mês" />
+                  <Bar dataKey="meta" fill="#3b82f6" name="Meta" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Distribuição por Área (Melhor Mês)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={100}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {pieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val)} />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Detalhamento por Área */}
+        {['vendas', 'comercial', 'tecnico'].map((areaKey) => {
+          const area = breakdown.areas?.[areaKey];
+          if (!area || !area.employees || area.employees.length === 0) return null;
+
+          const areaLabel = areaKey === 'vendas' ? 'Vendas' : areaKey === 'comercial' ? 'Comercial' : 'Técnico';
+
+          return (
+            <Card key={areaKey}>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>{areaLabel}</span>
+                  <Badge className="bg-blue-600 text-white">
+                    Meta: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(area.best_revenue * (1 + breakdown.growth_percentage / 100))}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 border-b">
+                      <tr>
+                        <th className="text-left p-3 font-semibold text-gray-700">Colaborador</th>
+                        <th className="text-right p-3 font-semibold text-gray-700">Melhor Mês</th>
+                        <th className="text-right p-3 font-semibold text-gray-700">Meta</th>
+                        <th className="text-center p-3 font-semibold text-gray-700">% Presença</th>
+                        <th className="text-right p-3 font-semibold text-gray-700">Clientes (Melhor)</th>
+                        <th className="text-right p-3 font-semibold text-gray-700">Clientes (Meta)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {area.employees.map((emp, idx) => (
+                        <tr key={idx} className="border-b hover:bg-gray-50">
+                          <td className="p-3">{emp.employee_name}</td>
+                          <td className="text-right p-3 font-medium text-green-600">
+                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(emp.best_revenue)}
+                          </td>
+                          <td className="text-right p-3 font-medium text-blue-600">
+                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(emp.target_revenue)}
+                          </td>
+                          <td className="text-center p-3">
+                            <Badge variant="outline">{emp.percentage?.toFixed(1)}%</Badge>
+                          </td>
+                          <td className="text-right p-3">{emp.best_clients}</td>
+                          <td className="text-right p-3 font-medium">{emp.target_clients}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </CardContent>
             </Card>
-          ) : (
-            goals.map(goal => (
-              <Card key={goal.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <CardTitle className="text-xl">
-                          Meta {goal.periodo.charAt(0).toUpperCase() + goal.periodo.slice(1)}
-                          {goal.source_type === "desdobramento" && (
-                            <Badge variant="outline" className="ml-2 text-xs">Desdobramento</Badge>
-                          )}
-                        </CardTitle>
-                        <Badge className={statusColors[goal.status]}>
-                          {goal.status}
-                        </Badge>
-                      </div>
-                      
-                      <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
-                        <Calendar className="w-4 h-4" />
-                        {new Date(goal.data_inicio).toLocaleDateString('pt-BR')} até {new Date(goal.data_fim).toLocaleDateString('pt-BR')}
-                      </div>
+          );
+        })}
 
-                      {goal.meta_areas && goal.meta_areas.length > 0 && (
-                        <div className="mb-3">
-                          <p className="text-xs text-gray-500 mb-1">Áreas impactadas:</p>
-                          <div className="flex flex-wrap gap-1">
-                            {goal.meta_areas.map(area => (
-                              <Badge key={area} variant="outline" className="text-xs">
-                                {area}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {goal.responsible_employee_ids && goal.responsible_employee_ids.length > 0 && (
-                        <div className="mb-2">
-                          <p className="text-xs text-gray-500 mb-1">Responsáveis:</p>
-                          <div className="flex flex-wrap gap-1">
-                            {goal.responsible_employee_ids.map(id => (
-                              <Badge key={id} className="bg-blue-100 text-blue-800 text-xs">
-                                {getEmployeeName(id)}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {goal.metricas?.volume_clientes?.meta > 0 && (
-                      <div className="bg-gray-50 p-3 rounded">
-                        <p className="text-xs text-gray-600">Clientes</p>
-                        <p className="text-lg font-bold">{goal.metricas.volume_clientes.meta}</p>
-                        <p className="text-xs text-green-600">
-                          Realizado: {goal.metricas.volume_clientes.realizado || 0}
-                        </p>
-                      </div>
+        {/* Plano Personalizado com IA */}
+        {managementDiagnostic && (
+          <>
+            {showActionPlanDetails && actionPlan ? (
+              <div className="mb-6">
+                <ActionPlanDetails
+                  plan={actionPlan}
+                  onUpdateActivity={(index, status) => updateActivityMutation.mutate({ activityIndex: index, status })}
+                  onBack={() => setShowActionPlanDetails(false)}
+                />
+              </div>
+            ) : actionPlan ? (
+              <div className="mb-6">
+                <ActionPlanCard
+                  plan={actionPlan}
+                  onViewDetails={() => setShowActionPlanDetails(true)}
+                  onRefine={() => setShowFeedbackModal(true)}
+                />
+              </div>
+            ) : (
+              <Card className="mb-6 border-2 border-dashed border-blue-300 bg-blue-50">
+                <CardContent className="p-8 text-center">
+                  <Sparkles className="w-12 h-12 text-blue-600 mx-auto mb-4" />
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                    Plano de Melhoria Gerencial com IA
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    Gere um plano estratégico para otimizar a gestão e alcançar suas metas.
+                  </p>
+                  <Button
+                    onClick={() => generatePlanMutation.mutate()}
+                    disabled={generatePlanMutation.isPending}
+                    className="bg-blue-600 hover:bg-blue-700"
+                    size="lg"
+                  >
+                    {generatePlanMutation.isPending ? (
+                      <><Loader2 className="w-5 h-5 mr-2 animate-spin" />Gerando...</>
+                    ) : (
+                      <><Sparkles className="w-5 h-5 mr-2" />Gerar Plano com IA</>
                     )}
-                    {goal.metricas?.faturamento_pecas?.meta > 0 && (
-                      <div className="bg-gray-50 p-3 rounded">
-                        <p className="text-xs text-gray-600">Peças</p>
-                        <p className="text-lg font-bold">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(goal.metricas.faturamento_pecas.meta)}</p>
-                        <p className="text-xs text-green-600">
-                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(goal.metricas.faturamento_pecas.realizado || 0)}
-                        </p>
-                      </div>
-                    )}
-                    {goal.metricas?.faturamento_servicos?.meta > 0 && (
-                      <div className="bg-gray-50 p-3 rounded">
-                        <p className="text-xs text-gray-600">Serviços</p>
-                        <p className="text-lg font-bold">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(goal.metricas.faturamento_servicos.meta)}</p>
-                        <p className="text-xs text-green-600">
-                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(goal.metricas.faturamento_servicos.realizado || 0)}
-                        </p>
-                      </div>
-                    )}
-                    {goal.metricas?.rentabilidade?.meta > 0 && (
-                      <div className="bg-gray-50 p-3 rounded">
-                        <p className="text-xs text-gray-600">Rentabilidade</p>
-                        <p className="text-lg font-bold">{goal.metricas.rentabilidade.meta}%</p>
-                        <p className="text-xs text-green-600">
-                          {goal.metricas.rentabilidade.realizado || 0}%
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  {goal.observacoes && (
-                    <div className="mt-4 p-3 bg-gray-50 rounded text-sm text-gray-700">
-                      {goal.observacoes}
-                    </div>
-                  )}
+                  </Button>
                 </CardContent>
               </Card>
-            ))
-          )}
-        </div>
+            )}
+
+            <ActionPlanFeedbackModal
+              open={showFeedbackModal}
+              onClose={() => setShowFeedbackModal(false)}
+              onSubmit={(feedback) => refinePlanMutation.mutate({ feedback })}
+              isLoading={refinePlanMutation.isPending}
+            />
+          </>
+        )}
       </div>
     </div>
   );
