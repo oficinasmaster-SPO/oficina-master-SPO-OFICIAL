@@ -43,24 +43,30 @@ Deno.serve(async (req) => {
   <meta charset="UTF-8">
   <title>Missão, Visão e Valores - ${workshop.name}</title>
   <style>
+    @page {
+      margin: 2cm 2cm 2cm 2cm;
+      size: A4;
+    }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { 
       font-family: 'Arial', sans-serif; 
-      padding: 40px; 
       color: #333;
       line-height: 1.6;
     }
     .header { 
       text-align: center; 
-      margin-bottom: 40px; 
+      margin-bottom: 30px; 
       padding-bottom: 20px;
       border-bottom: 3px solid #3b82f6;
     }
     .logo { 
-      max-height: 80px; 
-      max-width: 200px;
+      max-height: 100px; 
+      max-width: 250px;
       object-fit: contain;
-      margin-bottom: 15px; 
+      margin-bottom: 15px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
     }
     h1 { 
       color: #3b82f6; 
