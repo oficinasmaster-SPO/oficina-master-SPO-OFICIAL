@@ -6,6 +6,7 @@ import { Download, X, Building2, Users, Target, FileText, BookOpen, Shield, Chev
 import ManualPDFGenerator from "./ManualPDFGenerator";
 import ITViewer from "@/components/processes/ITViewer";
 import ProcessViewer from "./ProcessViewer";
+import ManualDownloadButton from "./ManualDownloadButton";
 
 export default function ManualViewer({ data, onClose }) {
   const { cultura, processos, instructionDocs, cargos, areas, workshop } = data;
@@ -60,6 +61,8 @@ export default function ManualViewer({ data, onClose }) {
     await ManualPDFGenerator.generate(data);
   };
 
+  // Este botão agora será substituído pelo ManualDownloadButton
+
   return (
     <div className="fixed inset-0 bg-white z-50 overflow-y-auto">
       <div className="max-w-[210mm] mx-auto p-8 space-y-6">
@@ -70,10 +73,7 @@ export default function ManualViewer({ data, onClose }) {
             <p className="text-gray-600">{workshop?.name}</p>
           </div>
           <div className="flex gap-2">
-            <Button onClick={handleDownloadPDF} className="bg-blue-600 hover:bg-blue-700">
-              <Download className="w-4 h-4 mr-2" />
-              Baixar PDF
-            </Button>
+            <ManualDownloadButton workshopId={workshop?.id} />
             <Button variant="outline" onClick={onClose}>
               <X className="w-4 h-4 mr-2" />
               Fechar
