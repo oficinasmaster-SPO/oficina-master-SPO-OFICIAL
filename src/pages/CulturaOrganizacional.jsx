@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Heart, BookOpen, Calendar, TrendingUp, Plus, Trash2, Save, Wand2, Mic, Video, Presentation, Info, FileText } from "lucide-react";
+import { Loader2, Heart, BookOpen, Calendar, TrendingUp, Plus, Trash2, Save, Wand2, Mic, Video, Presentation, Info, FileText, Download } from "lucide-react";
+import ManualDownloadButton from "@/components/manual/ManualDownloadButton";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import AudioRecorder from "@/components/audio/AudioRecorder";
@@ -594,8 +595,9 @@ export default function CulturaOrganizacional() {
             <Presentation className="w-5 h-5 mr-2" /> Gerar Apresentação (PPTX)
           </Button>
           <Button onClick={handleGenerateCultureManualPDF} variant="outline" className="border-purple-200 text-purple-700 hover:bg-purple-50">
-            <FileText className="w-5 h-5 mr-2" /> Baixar PDF
+            <FileText className="w-5 h-5 mr-2" /> Baixar PDF Manual de Cultura
           </Button>
+          <ManualDownloadButton workshopId={workshop?.id} className="text-sm" />
           <Button onClick={handleSave} disabled={saving} className="bg-purple-600 hover:bg-purple-700 px-8">
             {saving ? (
               <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Salvando...</>

@@ -19,6 +19,7 @@ import ProcessHierarchyView from "../components/processes/ProcessHierarchyView";
 import ProcessMetricsCards from "../components/processes/ProcessMetricsCards";
 import MetricsDetailsDialog from "../components/processes/MetricsDetailsDialog";
 import ITViewerModal from "../components/processes/ITViewerModal";
+import ManualDownloadButton from "../components/manual/ManualDownloadButton";
 
 export default function MeusProcessos() {
   const navigate = useNavigate();
@@ -240,12 +241,15 @@ export default function MeusProcessos() {
             </p>
           </div>
           
-          <Link to={createPageUrl('GerenciarProcessos')}>
-            <Button className="bg-red-600 hover:bg-red-700 text-white border-0">
-              <Settings className="w-4 h-4 mr-2" /> 
-              {user?.role === 'admin' ? 'Gerenciar Biblioteca (Admin)' : 'Criar e Gerenciar Processos'}
-            </Button>
-          </Link>
+          <div className="flex gap-2">
+            <ManualDownloadButton workshopId={workshop?.id} />
+            <Link to={createPageUrl('GerenciarProcessos')}>
+              <Button className="bg-red-600 hover:bg-red-700 text-white border-0">
+                <Settings className="w-4 h-4 mr-2" /> 
+                {user?.role === 'admin' ? 'Gerenciar Biblioteca (Admin)' : 'Criar e Gerenciar Processos'}
+              </Button>
+            </Link>
+          </div>
         </div>
 
         <ProcessMetricsCards
