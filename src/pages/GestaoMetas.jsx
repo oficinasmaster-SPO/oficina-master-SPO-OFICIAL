@@ -51,18 +51,32 @@ export default function GestaoMetas() {
       // Buscar todas as metas do workshop
       const allGoals = await base44.entities.Goal.filter({ workshop_id: workshop.id });
       
-      if (!selectedMonth) return allGoals;
+      console.log("🎯 DIAGNÓSTICO - Total de metas no banco:", allGoals.length);
+      console.log("🎯 Metas encontradas:", allGoals);
+      
+      if (!selectedMonth) {
+        console.log("📅 Sem filtro de mês - mostrando todas:", allGoals.length);
+        return allGoals;
+      }
       
       // Filtrar por interseção de datas
       const [year, month] = selectedMonth.split('-');
       const filterStart = `${year}-${month}-01`;
       const filterEnd = new Date(parseInt(year), parseInt(month), 0).toISOString().split('T')[0];
       
+      console.log("📅 Filtro aplicado:", { selectedMonth, filterStart, filterEnd });
+      
       const filtered = allGoals.filter(goal => {
-        // Interseção: data_inicio <= filterEnd AND data_fim >= filterStart
-        return goal.data_inicio <= filterEnd && goal.data_fim >= filterStart;
+        const intersects = goal.data_inicio <= filterEnd && goal.data_fim >= filterStart;
+        console.log(`   Meta ${goal.id}:`, { 
+          data_inicio: goal.data_inicio, 
+          data_fim: goal.data_fim, 
+          intersects 
+        });
+        return intersects;
       });
       
+      console.log("✅ Metas após filtro:", filtered.length);
       return Array.isArray(filtered) ? filtered : [];
     },
     enabled: !!workshop
@@ -168,10 +182,10 @@ export default function GestaoMetas() {
           </Button>
         </div>
 
-        {/* Filtro por Mês/Ano */}
+        {/* Filtro por Mês/Ano + Diagnóstico */}
         <Card className="mb-6">
           <CardContent className="py-4">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 flex-wrap">
               <Label className="text-sm font-semibold">Filtrar por Mês/Ano:</Label>
               <Input
                 type="month"
@@ -186,8 +200,12 @@ export default function GestaoMetas() {
               >
                 Ver Todas
               </Button>
+              <div className="flex-1" />
+              <Badge variant="outline" className="text-xs">
+                {goals.length} meta(s) encontrada(s)
+              </Badge>
               <span className="text-sm text-gray-500">
-                {selectedMonth ? `Mostrando metas que intersectam ${selectedMonth}` : "Mostrando todas as metas"}
+                {selectedMonth ? `Intersectando ${selectedMonth}` : "Todas"}
               </span>
             </div>
           </CardContent>
