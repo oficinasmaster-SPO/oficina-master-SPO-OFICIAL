@@ -225,7 +225,7 @@ export default function GestaoOficina() {
               variant="outline"
               size="sm"
               onClick={() => {
-                navigate(`/GestaoOficina?tab=${activeTab}`);
+                navigate(createPageUrl("UsuariosAdmin"));
               }}
               className="bg-white text-purple-700 hover:bg-purple-50"
             >
