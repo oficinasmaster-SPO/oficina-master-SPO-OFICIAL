@@ -123,18 +123,42 @@ export default function DocumentosProcessos({ workshop, onUpdate }) {
           <CardTitle>Organograma</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {workshop.organizational_chart_url ? (
-            <a href={workshop.organizational_chart_url} target="_blank" rel="noopener noreferrer">
-              <Button variant="outline" className="w-full">
+          <div className="space-y-3">
+            <Link to={createPageUrl("Organograma")}>
+              <Button className="w-full bg-green-600 hover:bg-green-700">
                 <Download className="w-4 h-4 mr-2" />
-                Baixar Organograma
+                Organograma Estrutural
               </Button>
-            </a>
-          ) : (
-            <p className="text-sm text-gray-500">Nenhum organograma cadastrado</p>
+            </Link>
+
+            <Link to={createPageUrl("OrganogramaFuncional")}>
+              <Button className="w-full bg-purple-600 hover:bg-purple-700">
+                <Download className="w-4 h-4 mr-2" />
+                Organograma Funcional
+              </Button>
+            </Link>
+
+            <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg text-sm text-blue-700">
+              <p className="font-semibold mb-1">💡 Dica:</p>
+              <p>Gere seus organogramas estruturais e funcionais dinamicamente.</p>
+            </div>
+          </div>
+
+          {workshop.organizational_chart_url && (
+            <div className="pt-4 border-t">
+              <Label className="text-sm font-medium mb-2 block">Organograma Enviado (Upload)</Label>
+              <a href={workshop.organizational_chart_url} target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" className="w-full">
+                  <Download className="w-4 h-4 mr-2" />
+                  Baixar Organograma Enviado
+                </Button>
+              </a>
+            </div>
           )}
-          <div>
-            <Label htmlFor="orgchart-upload">Enviar Organograma (Imagem/PDF)</Label>
+
+          <div className="pt-4 border-t">
+            <Label htmlFor="orgchart-upload" className="text-sm font-medium">Enviar Organograma Personalizado (Imagem/PDF)</Label>
+            <p className="text-xs text-gray-600 mt-1 mb-3">Se preferir usar um organograma customizado</p>
             <Input
               id="orgchart-upload"
               type="file"
