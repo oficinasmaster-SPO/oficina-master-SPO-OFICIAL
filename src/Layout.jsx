@@ -121,6 +121,10 @@ export default function Layout({ children, currentPageName }) {
 
   const handleLogout = async () => {
     try {
+      // Limpar histórico de navegação no logout
+      localStorage.removeItem('lastVisitedRoute');
+      localStorage.removeItem('lastVisitedRouteData');
+      
       await base44.auth.logout();
       window.location.href = createPageUrl("Home");
     } catch (error) {
