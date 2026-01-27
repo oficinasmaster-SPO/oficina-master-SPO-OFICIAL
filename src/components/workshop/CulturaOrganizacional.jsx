@@ -56,28 +56,33 @@ export default function CulturaOrganizacional({ workshop }) {
       return;
     }
 
+    if (!workshop.mission && !workshop.vision) {
+      toast.error("Gere Missão e Visão no editor antes de exportar PDF");
+      return;
+    }
+
     setExportingPDF(true);
     try {
-      const response = await base44.functions.invoke('exportCultureManual', {
+      const response = await base44.functions.invoke('generateMissionVisionPDF', {
         workshop_id: workshop.id
       });
 
       if (response.data) {
-        const blob = new Blob([response.data], { type: 'application/pdf' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `Manual_Cultura_${workshop.name || 'Oficina'}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        a.remove();
+        const htmlContent = response.data;
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(htmlContent);
+        printWindow.document.close();
         
-        toast.success("PDF exportado com sucesso!");
+        // Iniciar impressão após carregamento
+        setTimeout(() => {
+          printWindow.print();
+        }, 250);
+        
+        toast.success("PDF aberto para impressão!");
       }
     } catch (error) {
       console.error(error);
-      toast.error("Erro ao exportar PDF. Certifique-se que missão e visão foram preenchidas.");
+      toast.error("Erro ao gerar PDF");
     } finally {
       setExportingPDF(false);
     }
