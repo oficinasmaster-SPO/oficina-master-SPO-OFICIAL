@@ -33,19 +33,15 @@ export default function GestaoOficina() {
   const [loadingTcmp2, setLoadingTcmp2] = useState(true);
   const [isAdminViewing, setIsAdminViewing] = useState(false);
   
-  // Pega aba da URL, senão usa default
-  const searchParams = new URLSearchParams(location.search);
-  const initialTab = searchParams.get('tab') || 'dados';
-  const [activeTab, setActiveTab] = useState(initialTab);
+  const [activeTab, setActiveTab] = useState('dados');
 
   useEffect(() => {
     loadData();
   }, []);
 
-  // Sincronizar aba com URL
+  // Sincronizar aba com URL ao carregar
   useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const tabFromUrl = searchParams.get('tab') || 'dados';
+    const tabFromUrl = new URLSearchParams(location.search).get('tab') || 'dados';
     setActiveTab(tabFromUrl);
   }, [location.search]);
 
