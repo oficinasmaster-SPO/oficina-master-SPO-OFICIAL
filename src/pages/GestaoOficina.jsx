@@ -327,8 +327,8 @@ export default function GestaoOficina() {
 
         <Tabs value={activeTab} className="space-y-6" onValueChange={(value) => {
           setActiveTab(value);
-          // Navegar para a URL com a aba (ex: /gestaooficina/dados)
-          navigate(`${location.pathname.split('/').slice(0, -1).join('/')}/${value}`, { replace: false });
+          // Atualizar URL com a aba selecionada
+          navigate(`?tab=${value}`, { replace: false });
         }}>
           <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-10 bg-white shadow-md gap-1 p-2">
             <TabsTrigger value="dados" className="text-xs md:text-sm">
