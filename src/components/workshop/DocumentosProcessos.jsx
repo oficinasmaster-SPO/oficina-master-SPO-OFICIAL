@@ -4,11 +4,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { base44 } from "@/api/base44Client";
-import { FileText, Upload, Download, Loader2 } from "lucide-react";
+import { FileText, Upload, Download, Loader2, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 export default function DocumentosProcessos({ workshop, onUpdate }) {
   const [uploading, setUploading] = useState(false);
+  const [generatingMaster, setGeneratingMaster] = useState(false);
+  const [generatingNoMaster, setGeneratingNoMaster] = useState(false);
 
   const handleUpload = async (type, file) => {
     if (!file) return;
@@ -29,6 +38,34 @@ export default function DocumentosProcessos({ workshop, onUpdate }) {
       toast.error("Erro ao enviar arquivo");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const generateManual = async (includeMaster) => {
+    if (!workshop?.id) {
+      toast.error("Oficina não encontrada");
+      return;
+    }
+
+    try {
+      includeMaster ? setGeneratingMaster(true) : setGeneratingNoMaster(true);
+
+      const { pdfUrl } = await base44.functions.invoke('generateWorkshopManualPDF', {
+        workshop_id: workshop.id,
+        include_master_processes: includeMaster
+      });
+
+      if (pdfUrl) {
+        window.open(pdfUrl, '_blank');
+        toast.success("Manual gerado e aberto!");
+      } else {
+        toast.error("Erro ao gerar manual");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao gerar manual: " + error.message);
+    } finally {
+      includeMaster ? setGeneratingMaster(false) : setGeneratingNoMaster(false);
     }
   };
 
@@ -78,18 +115,80 @@ export default function DocumentosProcessos({ workshop, onUpdate }) {
           <CardTitle>Manual da Oficina</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {workshop.company_manual_url ? (
-            <a href={workshop.company_manual_url} target="_blank" rel="noopener noreferrer">
-              <Button variant="outline" className="w-full">
-                <Download className="w-4 h-4 mr-2" />
-                Baixar Manual
-              </Button>
-            </a>
-          ) : (
-            <p className="text-sm text-gray-500">Nenhum manual cadastrado</p>
-          )}
-          <div>
-            <Label htmlFor="manual-upload">Enviar Manual (PDF)</Label>
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button className="flex-1 bg-blue-600 hover:bg-blue-700">
+                    <Download className="w-4 h-4 mr-2" />
+                    Baixar Manual
+                    <ChevronDown className="w-4 h-4 ml-2" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-80">
+                  <div className="p-3 text-sm font-semibold text-gray-700">
+                    Manual Gerado Automaticamente
+                  </div>
+                  <DropdownMenuItem 
+                    onClick={() => generateManual(true)}
+                    disabled={generatingMaster}
+                    className="flex flex-col items-start py-3 cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2">
+                      {generatingMaster && <Loader2 className="w-4 h-4 animate-spin" />}
+                      <span className="font-medium">Com Processos Oficinas Master</span>
+                    </div>
+                    <span className="text-xs text-gray-500 ml-6">Inclui processos padrão da consultoria</span>
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuItem 
+                    onClick={() => generateManual(false)}
+                    disabled={generatingNoMaster}
+                    className="flex flex-col items-start py-3 cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2">
+                      {generatingNoMaster && <Loader2 className="w-4 h-4 animate-spin" />}
+                      <span className="font-medium">Sem Processos Oficinas Master</span>
+                    </div>
+                    <span className="text-xs text-gray-500 ml-6">Apenas processos da sua oficina</span>
+                  </DropdownMenuItem>
+
+                  {workshop.company_manual_url && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <div className="p-3 text-sm font-semibold text-gray-700">
+                        Manual Enviado (Upload)
+                      </div>
+                      <DropdownMenuItem asChild>
+                        <a 
+                          href={workshop.company_manual_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 cursor-pointer py-3"
+                        >
+                          <Download className="w-4 h-4" />
+                          <span>Baixar Manual Enviado</span>
+                        </a>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg text-sm text-blue-700">
+              <p className="font-semibold mb-1">💡 Dica:</p>
+              <p>O manual é gerado automaticamente com todos os seus processos, instruções, descrições de cargo e cultura organizacional.</p>
+            </div>
+          </div>
+
+          <div className="pt-4 border-t">
+            <Label htmlFor="manual-upload" className="text-sm font-medium">
+              Ou enviar Manual Personalizado (PDF)
+            </Label>
+            <p className="text-xs text-gray-600 mt-1 mb-3">
+              Se preferir usar um manual customizado, upload aqui
+            </p>
             <Input
               id="manual-upload"
               type="file"
