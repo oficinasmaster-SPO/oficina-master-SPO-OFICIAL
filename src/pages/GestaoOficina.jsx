@@ -25,6 +25,7 @@ import WorkshopMilestones from "../components/management/WorkshopMilestones";
 export default function GestaoOficina() {
   const navigate = useNavigate();
   const location = useLocation();
+  const params = useParams();
   const [loading, setLoading] = useState(true);
   const [workshop, setWorkshop] = useState(null);
   const [workshopGameProfile, setWorkshopGameProfile] = useState(null);
@@ -33,17 +34,19 @@ export default function GestaoOficina() {
   const [loadingTcmp2, setLoadingTcmp2] = useState(true);
   const [isAdminViewing, setIsAdminViewing] = useState(false);
   
-  const [activeTab, setActiveTab] = useState('dados');
+  // Pega a aba da rota ou usa default
+  const activeTab = params.tab || 'dados';
 
   useEffect(() => {
     loadData();
   }, []);
 
-  // Sincronizar aba com URL ao carregar
+  // Se não houver aba na rota, ir para a aba dados
   useEffect(() => {
-    const tabFromUrl = new URLSearchParams(location.search).get('tab') || 'dados';
-    setActiveTab(tabFromUrl);
-  }, [location.search]);
+    if (!params.tab) {
+      navigate('/GestaoOficina/dados', { replace: true });
+    }
+  }, [params.tab, navigate]);
 
   const loadData = async () => {
     setLoading(true);
@@ -326,9 +329,8 @@ export default function GestaoOficina() {
         </div>
 
         <Tabs value={activeTab} className="space-y-6" onValueChange={(value) => {
-          setActiveTab(value);
-          // Atualizar URL com a aba selecionada
-          window.history.replaceState(null, '', `${location.pathname}?tab=${value}`);
+          // Mudar para a rota da aba selecionada
+          navigate(`/GestaoOficina/${value}`);
         }}>
           <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-10 bg-white shadow-md gap-1 p-2">
             <TabsTrigger value="dados" className="text-xs md:text-sm">
