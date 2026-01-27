@@ -1,11 +1,13 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { base44 } from "@/api/base44Client";
-import { FileText, Upload, Download, Loader2 } from "lucide-react";
+import { Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { createPageUrl } from "@/utils";
 
 export default function DocumentosProcessos({ workshop, onUpdate }) {
   const [uploading, setUploading] = useState(false);
@@ -78,18 +80,33 @@ export default function DocumentosProcessos({ workshop, onUpdate }) {
           <CardTitle>Manual da Oficina</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {workshop.company_manual_url ? (
-            <a href={workshop.company_manual_url} target="_blank" rel="noopener noreferrer">
-              <Button variant="outline" className="w-full">
-                <Download className="w-4 h-4 mr-2" />
-                Baixar Manual
-              </Button>
-            </a>
-          ) : (
-            <p className="text-sm text-gray-500">Nenhum manual cadastrado</p>
+          <Link to={createPageUrl("ManualProcessos")}>
+            <Button className="w-full bg-blue-600 hover:bg-blue-700">
+              <Download className="w-4 h-4 mr-2" />
+              Baixar Manual
+            </Button>
+          </Link>
+
+          <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg text-sm text-blue-700">
+            <p className="font-semibold mb-1">💡 Dica:</p>
+            <p>Gere o manual automaticamente com todos os seus processos, instruções, descrições de cargo e cultura organizacional.</p>
+          </div>
+
+          {workshop.company_manual_url && (
+            <div className="pt-4 border-t">
+              <Label className="text-sm font-medium mb-2 block">Manual Enviado (Upload)</Label>
+              <a href={workshop.company_manual_url} target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" className="w-full">
+                  <Download className="w-4 h-4 mr-2" />
+                  Baixar Manual Enviado
+                </Button>
+              </a>
+            </div>
           )}
-          <div>
-            <Label htmlFor="manual-upload">Enviar Manual (PDF)</Label>
+
+          <div className="pt-4 border-t">
+            <Label htmlFor="manual-upload" className="text-sm font-medium">Enviar Manual Personalizado (PDF)</Label>
+            <p className="text-xs text-gray-600 mt-1 mb-3">Se preferir usar um manual customizado</p>
             <Input
               id="manual-upload"
               type="file"
