@@ -4,43 +4,54 @@ import 'npm:html2canvas@1.4.1';
 
 Deno.serve(async (req) => {
   try {
+    console.log('🔵 PDF Generation started');
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
+    console.log('✅ User authenticated:', user?.email);
 
     if (!user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
     }
 
     const { workshop_id, include_master_processes } = await req.json();
+    console.log('📋 Params:', { workshop_id, include_master_processes });
 
     if (!workshop_id) {
       return new Response(JSON.stringify({ error: 'workshop_id is required' }), { status: 400 });
     }
 
     // Buscar workshop
+    console.log('🔵 Fetching workshop:', workshop_id);
     const workshop = await base44.entities.Workshop.get(workshop_id);
     if (!workshop) {
       return new Response(JSON.stringify({ error: 'Workshop not found' }), { status: 404 });
     }
+    console.log('✅ Workshop found:', workshop.name);
 
     // Buscar todos os processos
+    console.log('🔵 Fetching processes...');
     const allProcessos = await base44.entities.ProcessDocument.list();
     const processos = include_master_processes
       ? allProcessos.filter(p => p.is_template || p.workshop_id === workshop_id)
       : allProcessos.filter(p => p.workshop_id === workshop_id);
+    console.log('✅ Processes found:', processos.length);
 
     // Buscar todos os ITs
+    console.log('🔵 Fetching instruction documents...');
     const allITs = await base44.entities.InstructionDocument.list();
     const instructionDocs = include_master_processes
       ? allITs.filter(it => it.is_official || it.workshop_id === workshop_id)
       : allITs.filter(it => it.workshop_id === workshop_id);
+    console.log('✅ Instruction docs found:', instructionDocs.length);
 
     // Buscar dados complementares
+    console.log('🔵 Fetching complementary data...');
     const [cultura, cargos, areas] = await Promise.all([
       base44.entities.MissionVisionValues.filter({ workshop_id: workshop_id }).then(r => r?.[0] || null),
       base44.entities.JobDescription.filter({ workshop_id: workshop_id }),
       base44.entities.ProcessArea.list()
     ]);
+    console.log('✅ Complementary data loaded');
 
     // Gerar conteúdo HTML do manual
     const htmlContent = generateManualHTML({
@@ -120,21 +131,33 @@ Deno.serve(async (req) => {
     doc.text(`Gerado em ${new Date().toLocaleDateString('pt-BR')} via Oficinas Master`, 20, 290);
 
     // Converter para Base64
+    console.log('🔵 Generating PDF...');
     const pdfBase64 = doc.output('datauristring');
+    console.log('✅ PDF generated, size:', pdfBase64.length);
     
     // Retornar o PDF em Base64
+    console.log('✅ Returning PDF data');
     return new Response(JSON.stringify({ 
       pdf_data: pdfBase64,
-      success: true 
+      success: true,
+      size: pdfBase64.length
     }), { 
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });
 
   } catch (error) {
-    console.error('Error generating PDF:', error);
+    console.error('❌ Error generating PDF:', error);
     console.error('Stack:', error.stack);
-    return new Response(JSON.stringify({ error: error.message, details: String(error) }), { status: 500 });
+    console.error('Message:', error.message);
+    return new Response(JSON.stringify({ 
+      error: error.message,
+      details: String(error),
+      stack: error.stack?.substring(0, 500)
+    }), { 
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 });
 
