@@ -848,6 +848,15 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           requiredPermission: 'admin.system_config'
         },
         { 
+          name: 'Calendário de Eventos', 
+          href: createPageUrl('CalendarioEventos'), 
+          icon: Calendar,
+          description: 'Eventos anuais (imersões, treinamentos)',
+          highlight: true,
+          adminOnly: true,
+          requiredPermission: 'admin.system_config'
+        },
+        { 
           name: 'Cadastro Direto User', 
           href: createPageUrl('CadastroUsuarioDireto'), 
           icon: UserPlus,
