@@ -21,7 +21,10 @@ export default function AttendanceRulesTab({ planId, planName }) {
   const [formData, setFormData] = useState({
     attendance_type_id: "",
     total_allowed: 1,
+    scheduling_type: "frequency",
     frequency_days: 30,
+    fixed_dates: [],
+    start_from_contract_date: true,
     allow_anticipation: true
   });
 
@@ -76,7 +79,10 @@ export default function AttendanceRulesTab({ planId, planName }) {
     setFormData({
       attendance_type_id: "",
       total_allowed: 1,
+      scheduling_type: "frequency",
       frequency_days: 30,
+      fixed_dates: [],
+      start_from_contract_date: true,
       allow_anticipation: true
     });
     setEditingRule(null);
@@ -88,7 +94,10 @@ export default function AttendanceRulesTab({ planId, planName }) {
     setFormData({
       attendance_type_id: rule.attendance_type_id,
       total_allowed: rule.total_allowed,
-      frequency_days: rule.frequency_days,
+      scheduling_type: rule.scheduling_type || "frequency",
+      frequency_days: rule.frequency_days || 30,
+      fixed_dates: rule.fixed_dates || [],
+      start_from_contract_date: rule.start_from_contract_date !== undefined ? rule.start_from_contract_date : true,
       allow_anticipation: rule.allow_anticipation
     });
     setDialogOpen(true);
@@ -126,7 +135,10 @@ export default function AttendanceRulesTab({ planId, planName }) {
       attendance_type_id: formData.attendance_type_id,
       attendance_type_name: attendanceType?.name || "",
       total_allowed: formData.total_allowed,
-      frequency_days: formData.frequency_days,
+      scheduling_type: formData.scheduling_type,
+      frequency_days: formData.scheduling_type === "frequency" ? formData.frequency_days : null,
+      fixed_dates: formData.scheduling_type === "fixed_dates" ? formData.fixed_dates : null,
+      start_from_contract_date: formData.start_from_contract_date,
       allow_anticipation: formData.allow_anticipation,
       is_active: true
     };
@@ -204,48 +216,149 @@ export default function AttendanceRulesTab({ planId, planName }) {
               </div>
 
               <div>
-                <Label>Quantidade Total Permitida *</Label>
-                <Input
-                  type="number"
-                  min="1"
-                  value={formData.total_allowed}
-                  onChange={(e) => setFormData({ ...formData, total_allowed: parseInt(e.target.value) })}
-                  placeholder="Ex: 12"
-                />
-                <p className="text-xs text-gray-500 mt-1">Quantos atendimentos deste tipo o cliente terá acesso</p>
+                <Label>Tipo de Agendamento *</Label>
+                <Select
+                  value={formData.scheduling_type}
+                  onValueChange={(value) => setFormData({ ...formData, scheduling_type: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="frequency">Por Frequência (ex: mensal, quinzenal)</SelectItem>
+                    <SelectItem value="fixed_dates">Datas Fixas (ex: imersões específicas)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500 mt-1">
+                  {formData.scheduling_type === "frequency" 
+                    ? "Atendimentos distribuídos por frequência a partir do contrato"
+                    : "Atendimentos em datas específicas predefinidas"}
+                </p>
               </div>
 
-              <div>
-                <Label>Frequência (Cadência) *</Label>
-                <div className="space-y-2">
-                  <div className="grid grid-cols-3 gap-2">
-                    {frequencyPresets.map((preset) => (
-                      <Button
-                        key={preset.value}
-                        type="button"
-                        variant={formData.frequency_days === preset.value ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setFormData({ ...formData, frequency_days: preset.value })}
-                        className={formData.frequency_days === preset.value ? "bg-blue-600" : ""}
-                      >
-                        {preset.label.split(' ')[0]}
-                      </Button>
-                    ))}
+              {formData.scheduling_type === "fixed_dates" && (
+                <div>
+                  <Label>Quantidade de Datas Fixas *</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={formData.total_allowed}
+                    onChange={(e) => setFormData({ ...formData, total_allowed: parseInt(e.target.value) })}
+                    placeholder="Ex: 2"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Quantas datas específicas você vai definir</p>
+                </div>
+              )}
+
+              {formData.scheduling_type === "frequency" && (
+                <div>
+                  <Label>Quantidade Total Permitida *</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={formData.total_allowed}
+                    onChange={(e) => setFormData({ ...formData, total_allowed: parseInt(e.target.value) })}
+                    placeholder="Ex: 12"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Quantos atendimentos deste tipo o cliente terá acesso</p>
+                </div>
+              )}
+
+              {formData.scheduling_type === "frequency" && (
+                <div>
+                  <Label>Frequência (Cadência) *</Label>
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-3 gap-2">
+                      {frequencyPresets.map((preset) => (
+                        <Button
+                          key={preset.value}
+                          type="button"
+                          variant={formData.frequency_days === preset.value ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setFormData({ ...formData, frequency_days: preset.value })}
+                          className={formData.frequency_days === preset.value ? "bg-blue-600" : ""}
+                        >
+                          {preset.label.split(' ')[0]}
+                        </Button>
+                      ))}
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min="1"
+                        value={formData.frequency_days}
+                        onChange={(e) => setFormData({ ...formData, frequency_days: parseInt(e.target.value) })}
+                        placeholder="Dias"
+                        className="w-24"
+                      />
+                      <span className="text-sm text-gray-600">dias entre atendimentos</span>
+                    </div>
                   </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      min="1"
-                      value={formData.frequency_days}
-                      onChange={(e) => setFormData({ ...formData, frequency_days: parseInt(e.target.value) })}
-                      placeholder="Dias"
-                      className="w-24"
+
+                  <div className="flex items-center space-x-2 border rounded-lg p-3 mt-3">
+                    <Checkbox
+                      checked={formData.start_from_contract_date}
+                      onCheckedChange={(checked) => setFormData({ ...formData, start_from_contract_date: checked })}
                     />
-                    <span className="text-sm text-gray-600">dias entre atendimentos</span>
+                    <div>
+                      <label className="text-sm font-medium cursor-pointer">
+                        Iniciar a partir da data de ativação do contrato
+                      </label>
+                      <p className="text-xs text-gray-500">
+                        Se marcado, o 1º atendimento será na data do contrato + frequência
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
+
+              {formData.scheduling_type === "fixed_dates" && (
+                <div className="border rounded-lg p-4 bg-yellow-50">
+                  <Label>Datas Fixas do Ano</Label>
+                  <p className="text-sm text-gray-600 mb-3">
+                    Defina as datas específicas para este tipo de atendimento (ex: Imersões)
+                  </p>
+                  
+                  <div className="space-y-2">
+                    {Array.from({ length: formData.total_allowed }).map((_, index) => (
+                      <div key={index} className="flex gap-2 items-end">
+                        <div className="flex-1">
+                          <Label className="text-xs">Data {index + 1}</Label>
+                          <Input
+                            type="date"
+                            value={formData.fixed_dates[index]?.date || ""}
+                            onChange={(e) => {
+                              const newDates = [...formData.fixed_dates];
+                              newDates[index] = { 
+                                date: e.target.value, 
+                                description: newDates[index]?.description || ""
+                              };
+                              setFormData({ ...formData, fixed_dates: newDates });
+                            }}
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <Label className="text-xs">Descrição (opcional)</Label>
+                          <Input
+                            type="text"
+                            placeholder="Ex: Imersão 1º Semestre"
+                            value={formData.fixed_dates[index]?.description || ""}
+                            onChange={(e) => {
+                              const newDates = [...formData.fixed_dates];
+                              newDates[index] = { 
+                                date: newDates[index]?.date || "", 
+                                description: e.target.value 
+                              };
+                              setFormData({ ...formData, fixed_dates: newDates });
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="flex items-center space-x-2 border rounded-lg p-3">
                 <Checkbox
@@ -338,44 +451,75 @@ export default function AttendanceRulesTab({ planId, planName }) {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-blue-600" />
-                      <div>
-                        <p className="font-medium">Frequência</p>
-                        <p className="text-gray-600">A cada {rule.frequency_days} dias</p>
+                  {rule.scheduling_type === "frequency" ? (
+                    <>
+                      <div className="grid grid-cols-3 gap-4 text-sm">
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-blue-600" />
+                          <div>
+                            <p className="font-medium">Frequência</p>
+                            <p className="text-gray-600">A cada {rule.frequency_days} dias</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4 text-blue-600" />
+                          <div>
+                            <p className="font-medium">Quantidade</p>
+                            <p className="text-gray-600">{rule.total_allowed} atendimentos</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {rule.allow_anticipation ? (
+                            <CheckCircle2 className="w-4 h-4 text-green-600" />
+                          ) : (
+                            <AlertCircle className="w-4 h-4 text-orange-600" />
+                          )}
+                          <div>
+                            <p className="font-medium">Antecipação</p>
+                            <p className="text-gray-600">
+                              {rule.allow_anticipation ? "Permitida" : "Bloqueada"}
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-blue-600" />
-                      <div>
-                        <p className="font-medium">Quantidade</p>
-                        <p className="text-gray-600">{rule.total_allowed} atendimentos</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {rule.allow_anticipation ? (
-                        <CheckCircle2 className="w-4 h-4 text-green-600" />
-                      ) : (
-                        <AlertCircle className="w-4 h-4 text-orange-600" />
-                      )}
-                      <div>
-                        <p className="font-medium">Antecipação</p>
-                        <p className="text-gray-600">
-                          {rule.allow_anticipation ? "Permitida" : "Bloqueada"}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
 
-                  {/* Previsão de duração do contrato */}
-                  <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <p className="text-xs font-medium text-blue-900 mb-1">📅 Previsão de duração</p>
-                    <p className="text-xs text-blue-700">
-                      Com {rule.total_allowed} atendimentos a cada {rule.frequency_days} dias = {" "}
-                      <strong>{rule.total_allowed * rule.frequency_days} dias</strong> ({Math.ceil((rule.total_allowed * rule.frequency_days) / 30)} meses aprox.)
-                    </p>
-                  </div>
+                      <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <p className="text-xs font-medium text-blue-900 mb-1">📅 Previsão de duração</p>
+                        <p className="text-xs text-blue-700">
+                          Com {rule.total_allowed} atendimentos a cada {rule.frequency_days} dias = {" "}
+                          <strong>{rule.total_allowed * rule.frequency_days} dias</strong> ({Math.ceil((rule.total_allowed * rule.frequency_days) / 30)} meses aprox.)
+                        </p>
+                        {rule.start_from_contract_date && (
+                          <p className="text-xs text-blue-600 mt-1">
+                            ✓ Inicia a partir da data de ativação do contrato
+                          </p>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <div>
+                      <div className="mb-3">
+                        <Badge variant="outline" className="bg-yellow-50">
+                          Datas Fixas ({rule.total_allowed} eventos)
+                        </Badge>
+                      </div>
+                      <div className="space-y-2">
+                        {rule.fixed_dates?.map((fixedDate, idx) => (
+                          <div key={idx} className="flex items-center gap-2 text-sm border-l-2 border-yellow-500 pl-3 py-1">
+                            <Calendar className="w-4 h-4 text-yellow-600" />
+                            <div>
+                              <p className="font-medium">
+                                {new Date(fixedDate.date).toLocaleDateString('pt-BR')}
+                              </p>
+                              {fixedDate.description && (
+                                <p className="text-xs text-gray-600">{fixedDate.description}</p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             );
