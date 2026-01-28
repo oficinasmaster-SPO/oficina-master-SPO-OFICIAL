@@ -71,6 +71,36 @@ export default function CronogramaImplementacao() {
     enabled: !!workshop?.id
   });
 
+  // Carregar regras de atendimento do plano
+  const { data: planAttendanceRules = [] } = useQuery({
+    queryKey: ['plan-attendance-rules', workshop?.planoAtual],
+    queryFn: async () => {
+      if (!workshop?.planoAtual) return [];
+      return await base44.entities.PlanAttendanceRule.filter({ 
+        plan_id: workshop.planoAtual, 
+        is_active: true 
+      });
+    },
+    enabled: !!workshop?.planoAtual
+  });
+
+  // Mutation para sincronizar atendimentos
+  const syncAttendancesMutation = useMutation({
+    mutationFn: async () => {
+      const response = await base44.functions.invoke('syncPlanAttendancesToCronograma', {
+        workshop_id: workshop?.id
+      });
+      return response.data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries(['cronograma-implementacao']);
+      toast.success(data.message);
+    },
+    onError: (error) => {
+      toast.error('Erro ao sincronizar: ' + (error.response?.data?.error || error.message));
+    }
+  });
+
   const updateMutation = useMutation({
     mutationFn: async ({ id, data, isNew }) => {
       // Se é item novo (virtual), criar ao invés de atualizar
@@ -210,6 +240,12 @@ export default function CronogramaImplementacao() {
       codigo: m,
       nome: m,
       tipo: 'modulo'
+    })),
+    // Adicionar atendimentos configurados no plano
+    ...planAttendanceRules.map(rule => ({
+      codigo: rule.attendance_type_id,
+      nome: `${rule.attendance_type_name} (${rule.total_allowed}x)`,
+      tipo: 'atendimento'
     }))
   ];
 
@@ -285,13 +321,35 @@ export default function CronogramaImplementacao() {
             Acompanhe o progresso da implementação das ferramentas e processos
           </p>
         </div>
-        <Button 
-          onClick={() => setShowExportModal(true)}
-          className="bg-blue-600 hover:bg-blue-700"
-        >
-          <FileDown className="w-4 h-4 mr-2" />
-          Exportar Relatório
-        </Button>
+        <div className="flex gap-2">
+          {user?.role === 'admin' && (
+            <Button
+              onClick={() => syncAttendancesMutation.mutate()}
+              disabled={syncAttendancesMutation.isPending}
+              variant="outline"
+              className="gap-2"
+            >
+              {syncAttendancesMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Sincronizando...
+                </>
+              ) : (
+                <>
+                  <Calendar className="w-4 h-4" />
+                  Sincronizar Atendimentos
+                </>
+              )}
+            </Button>
+          )}
+          <Button 
+            onClick={() => setShowExportModal(true)}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            <FileDown className="w-4 h-4 mr-2" />
+            Exportar Relatório
+          </Button>
+        </div>
       </div>
 
       {/* Cards de Resumo */}
@@ -377,6 +435,7 @@ export default function CronogramaImplementacao() {
                   <SelectItem value="ferramenta">Ferramentas</SelectItem>
                   <SelectItem value="teste">Testes</SelectItem>
                   <SelectItem value="modulo">Módulos</SelectItem>
+                  <SelectItem value="atendimento">Atendimentos</SelectItem>
                 </SelectContent>
               </Select>
             </div>
