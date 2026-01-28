@@ -9,10 +9,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Save, Shield, Lock, Unlock, Settings } from "lucide-react";
+import { Loader2, Save, Shield, Lock, Unlock, Settings, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { createPageUrl } from "@/utils";
 import { useNavigate } from "react-router-dom";
+import AttendanceRulesTab from "@/components/plans/AttendanceRulesTab";
 
 export default function GerenciarPlanos() {
   const navigate = useNavigate();
@@ -407,11 +408,15 @@ export default function GerenciarPlanos() {
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="info" className="space-y-6">
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className="grid w-full grid-cols-5">
                   <TabsTrigger value="info">Informações</TabsTrigger>
                   <TabsTrigger value="features">Funcionalidades</TabsTrigger>
                   <TabsTrigger value="modules">Módulos</TabsTrigger>
                   <TabsTrigger value="limits">Limites</TabsTrigger>
+                  <TabsTrigger value="attendances">
+                    <Calendar className="w-4 h-4 mr-2" />
+                    Atendimentos
+                  </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="info" className="space-y-4">
@@ -569,6 +574,13 @@ export default function GerenciarPlanos() {
                     />
                     <label className="text-sm font-medium">Plano Ativo</label>
                   </div>
+                </TabsContent>
+
+                <TabsContent value="attendances">
+                  <AttendanceRulesTab 
+                    planId={selectedPlan.plan_id} 
+                    planName={selectedPlan.plan_name}
+                  />
                 </TabsContent>
               </Tabs>
 
