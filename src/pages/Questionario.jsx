@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, ArrowRight, CheckCircle2, Loader2 } from "lucide-react";
 import { questions } from "../components/diagnostic/Questions";
+import { PHASE_LETTER_TO_NUMBER, TIE_BREAK_PRIORITY } from "../components/lib/phaseConstants";
 import { toast } from "sonner";
 import DynamicHelpSystem from "@/components/help/DynamicHelpSystem";
 import TrackingWrapper from "@/components/shared/TrackingWrapper";
@@ -96,14 +97,12 @@ export default function Questionario() {
       const tiedLetters = Object.keys(letterCounts).filter(letter => letterCounts[letter] === maxCount);
       
       // Passo 4: Desempate por PRIORIDADE DE SEVERIDADE (D > A > C > B)
-      const priorityOrder = ['D', 'A', 'C', 'B'];
       const dominantLetter = tiedLetters.sort((a, b) => 
-        priorityOrder.indexOf(a) - priorityOrder.indexOf(b)
+        TIE_BREAK_PRIORITY.indexOf(a) - TIE_BREAK_PRIORITY.indexOf(b)
       )[0];
       
-      // Passo 5: Mapear para fase
-      const phaseMap = { D: 1, A: 2, C: 3, B: 4 };
-      const phase = phaseMap[dominantLetter];
+      // Passo 5: Mapear para fase (A=F1, B=F2, C=F3, D=F4)
+      const phase = PHASE_LETTER_TO_NUMBER[dominantLetter];
       
       const answersArray = Object.entries(answers).map(([id, letter]) => ({
         question_id: parseInt(id),

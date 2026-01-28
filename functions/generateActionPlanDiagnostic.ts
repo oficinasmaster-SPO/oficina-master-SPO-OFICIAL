@@ -29,10 +29,10 @@ Deno.serve(async (req) => {
 
     // Mapear fase para descrição
     const phaseDescriptions = {
-      1: "Sobrevivência - Foco em fluxo de caixa e vendas básicas",
-      2: "Estruturação - Organização de processos e equipe",
-      3: "Crescimento - Expansão e otimização",
-      4: "Expansão - Escala e múltiplas unidades"
+      1: "F1 Base - Sobrevivência e geração de caixa",
+      2: "F2 Organização - Estruturação de processos e equipe",
+      3: "F3 Tração - Crescimento e otimização",
+      4: "F4 Excelência - Consolidação e escala"
     };
 
     const phaseDesc = phaseDescriptions[diagnostic.phase] || "Fase não identificada";

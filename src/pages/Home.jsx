@@ -14,6 +14,7 @@ import DynamicHelpSystem from "@/components/help/DynamicHelpSystem";
 import QuickTipsBar from "@/components/help/QuickTipsBar";
 import AdminViewBanner from "../components/shared/AdminViewBanner";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
+import { getPhaseInfo } from "@/components/lib/phaseConstants";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -207,36 +208,18 @@ export default function Home() {
     base44.auth.redirectToLogin();
   };
 
-  const phases = [
-    {
-      phase: 1,
-      title: "Sobrevivência e Geração de Caixa",
-      description: "Foco em gerar lucro imediato para consolidar o negócio. Equipe reduzida com múltiplas funções.",
-      icon: TrendingUp,
-      color: "from-red-500 to-orange-500"
-    },
-    {
-      phase: 2,
-      title: "Crescimento com Equipe em Formação",
-      description: "Necessidade de aumentar o time para continuar crescendo e lucrando. Início da estruturação.",
-      icon: Users,
-      color: "from-yellow-500 to-amber-500"
-    },
-    {
-      phase: 3,
-      title: "Organização, Liderança e Processos",
-      description: "Estruturação de atividades, estabelecimento de processos e desenvolvimento de liderança.",
-      icon: BarChart3,
-      color: "from-blue-500 to-cyan-500"
-    },
-    {
-      phase: 4,
-      title: "Consolidação e Escala",
-      description: "Empresa consolidada com planejamento estratégico de longo prazo e processos estabelecidos.",
-      icon: Rocket,
-      color: "from-green-500 to-emerald-500"
-    }
-  ];
+  const phases = [1, 2, 3, 4].map(phaseNum => {
+    const phaseData = getPhaseInfo(phaseNum);
+    return {
+      phase: phaseNum,
+      code: phaseData.code,
+      name: phaseData.name,
+      title: phaseData.title,
+      description: phaseData.description,
+      icon: phaseNum === 1 ? TrendingUp : phaseNum === 2 ? Users : phaseNum === 3 ? BarChart3 : Rocket,
+      color: phaseData.color
+    };
+  });
 
   const dashboardTips = [
     "Complete seu perfil da oficina para desbloquear mais funcionalidades",
@@ -355,7 +338,7 @@ export default function Home() {
                     </div>
                     <div className="flex-1">
                       <div className="text-sm font-semibold text-gray-500 mb-1">
-                        FASE {phase.phase}
+                        {phase.code} - {phase.name.toUpperCase()}
                       </div>
                       <CardTitle className="text-xl text-gray-900">
                         {phase.title}

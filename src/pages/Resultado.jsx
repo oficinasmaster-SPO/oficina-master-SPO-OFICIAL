@@ -9,6 +9,7 @@ import { Loader2, TrendingUp, Users, BarChart3, Rocket, ArrowRight, PieChart as 
 import { toast } from "sonner";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { PHASE_LETTER_TO_NUMBER, getPhaseInfo } from "../components/lib/phaseConstants";
 import ExecutiveSummary from "../components/resultado/ExecutiveSummary";
 import ActionPlanCard from "../components/diagnostics/ActionPlanCard";
 import ActionPlanDetails from "../components/diagnostics/ActionPlanDetails";
@@ -149,17 +150,10 @@ export default function Resultado() {
   };
 
   const calculatePhaseDistribution = (diag) => {
-    const letterToPhase = {
-      'D': 1,
-      'A': 2,
-      'C': 3,
-      'B': 4
-    };
-
     const phaseCounts = { 1: 0, 2: 0, 3: 0, 4: 0 };
     
     diag.answers.forEach(answer => {
-      const phase = letterToPhase[answer.selected_option];
+      const phase = PHASE_LETTER_TO_NUMBER[answer.selected_option];
       if (phase) {
         phaseCounts[phase]++;
       }
@@ -182,56 +176,6 @@ export default function Resultado() {
     setPhaseDistribution(distribution);
   };
 
-  const getPhaseInfo = (phase) => {
-    const phases = {
-      1: {
-        title: "Sobrevivência e Geração de Lucro",
-        shortTitle: "Sobrevivência",
-        description: "Sua oficina está na fase inicial, focada em gerar lucro para consolidar o negócio. Nesta etapa, é fundamental trabalhar com foco em resultados imediatos, controlar custos rigorosamente e estabelecer uma base sólida de clientes.",
-        icon: TrendingUp,
-        color: "from-red-500 to-orange-500",
-        bgColor: "bg-red-50",
-        textColor: "text-red-700",
-        borderColor: "border-red-200",
-        chartColor: "#ef4444"
-      },
-      2: {
-        title: "Crescimento e Ampliação de Time",
-        shortTitle: "Crescimento",
-        description: "Sua oficina está em crescimento! Já tem lucro razoável e agora precisa aumentar a equipe para continuar expandindo. É hora de contratar pessoas certas e começar a estruturar processos básicos de gestão.",
-        icon: Users,
-        color: "from-yellow-500 to-amber-500",
-        bgColor: "bg-yellow-50",
-        textColor: "text-yellow-700",
-        borderColor: "border-yellow-200",
-        chartColor: "#f59e0b"
-      },
-      3: {
-        title: "Organização, Processos e Liderança",
-        shortTitle: "Organização",
-        description: "Sua oficina está se organizando! Você já tem uma equipe formada e agora precisa estabelecer processos claros, desenvolver liderança e criar indicadores para medir resultados. Foco em estruturação e eficiência.",
-        icon: BarChart3,
-        color: "from-blue-500 to-cyan-500",
-        bgColor: "bg-blue-50",
-        textColor: "text-blue-700",
-        borderColor: "border-blue-200",
-        chartColor: "#3b82f6"
-      },
-      4: {
-        title: "Consolidação e Escala",
-        shortTitle: "Consolidação",
-        description: "Parabéns! Sua oficina está consolidada no mercado. Você tem processos estabelecidos, equipe engajada e pode focar em planejamento estratégico de longo prazo. É hora de pensar em expansão e escala.",
-        icon: Rocket,
-        color: "from-green-500 to-emerald-500",
-        bgColor: "bg-green-50",
-        textColor: "text-green-700",
-        borderColor: "border-green-200",
-        chartColor: "#10b981"
-      }
-    };
-    return phases[phase] || phases[1];
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -251,13 +195,13 @@ export default function Resultado() {
   const DominantIcon = dominantPhase.icon;
 
   const barChartData = phaseDistribution.map(p => ({
-    name: `Fase ${p.phase}`,
+    name: `${p.code} ${p.name}`,
     respostas: p.count,
     percentual: p.percent
   }));
 
   const pieChartData = phaseDistribution.map(p => ({
-    name: `Fase ${p.phase} (${p.percent}%)`,
+    name: `${p.fullName} (${p.percent}%)`,
     value: p.count,
     color: p.chartColor
   }));
@@ -286,7 +230,7 @@ export default function Resultado() {
                   SUA FASE PRINCIPAL
                 </Badge>
                 <CardTitle className="text-2xl md:text-3xl text-gray-900">
-                  Fase {dominantPhase.phase} – {dominantPhase.title}
+                  {dominantPhase.fullName} – {dominantPhase.title}
                 </CardTitle>
                 <p className="text-gray-700 mt-2">
                   {dominantPhase.count} de {diagnostic.answers.length} respostas ({dominantPhase.percent}%) apontam para esta fase
@@ -305,11 +249,11 @@ export default function Resultado() {
                 Suas Respostas Predominantes:
               </h3>
               <div className="flex items-center gap-3">
-                <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${dominantPhase.color} flex items-center justify-center text-white font-bold text-xl`}>
-                  {diagnostic.dominant_letter}
+                <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${dominantPhase.color} flex items-center justify-center text-white font-bold text-lg`}>
+                  {dominantPhase.code}
                 </div>
                 <div className="text-gray-700">
-                  A maioria das suas respostas indicou características da <span className="font-semibold">Fase {dominantPhase.phase}</span>
+                  A maioria das suas respostas indicou características da <span className="font-semibold">{dominantPhase.fullName}</span>
                 </div>
               </div>
             </div>
@@ -409,10 +353,10 @@ export default function Resultado() {
                     </div>
                     
                     <h3 className="font-bold text-gray-900 mb-1">
-                      Fase {phase.phase}
+                      {phase.fullName}
                     </h3>
                     <p className="text-sm text-gray-600 mb-4">
-                      {phase.shortTitle}
+                      {phase.name}
                     </p>
                     
                     <div className="space-y-2">
@@ -514,8 +458,8 @@ export default function Resultado() {
           <CardContent className="p-6">
             <div className="space-y-4">
               <p className="text-gray-700 leading-relaxed">
-                <strong>Fase Principal:</strong> Sua oficina está predominantemente na <strong>Fase {dominantPhase.phase} - {dominantPhase.shortTitle}</strong>, 
-                o que significa que suas maiores necessidades e prioridades estão relacionadas a {dominantPhase.shortTitle.toLowerCase()}.
+                <strong>Fase Principal:</strong> Sua oficina está predominantemente na <strong>{dominantPhase.fullName} - {dominantPhase.name}</strong>, 
+                o que significa que suas maiores necessidades e prioridades estão relacionadas a {dominantPhase.name.toLowerCase()}.
               </p>
               
               {phaseDistribution.filter(p => p.percent >= 15 && p.phase !== dominantPhase.phase).length > 0 && (
@@ -530,7 +474,7 @@ export default function Resultado() {
                   .sort((a, b) => b.percent - a.percent)
                   .map(phase => (
                     <li key={phase.phase} className="text-gray-700">
-                      <strong>Fase {phase.phase} - {phase.shortTitle}</strong> ({phase.percent}% das respostas)
+                      <strong>{phase.fullName} - {phase.name}</strong> ({phase.percent}% das respostas)
                     </li>
                   ))}
               </ul>
