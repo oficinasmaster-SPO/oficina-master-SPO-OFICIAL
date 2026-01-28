@@ -84,10 +84,10 @@ export default function CronogramaImplementacao() {
     enabled: !!workshop?.planoAtual
   });
 
-  // Mutation para sincronizar atendimentos
-  const syncAttendancesMutation = useMutation({
+  // Mutation para gerar cronograma completo
+  const generateFullCronogramaMutation = useMutation({
     mutationFn: async () => {
-      const response = await base44.functions.invoke('syncPlanAttendancesToCronograma', {
+      const response = await base44.functions.invoke('generateFullCronograma', {
         workshop_id: workshop?.id
       });
       return response.data;
@@ -97,7 +97,7 @@ export default function CronogramaImplementacao() {
       toast.success(data.message);
     },
     onError: (error) => {
-      toast.error('Erro ao sincronizar: ' + (error.response?.data?.error || error.message));
+      toast.error('Erro ao gerar cronograma: ' + (error.response?.data?.error || error.message));
     }
   });
 
@@ -324,20 +324,20 @@ export default function CronogramaImplementacao() {
         <div className="flex gap-2">
           {user?.role === 'admin' && (
             <Button
-              onClick={() => syncAttendancesMutation.mutate()}
-              disabled={syncAttendancesMutation.isPending}
+              onClick={() => generateFullCronogramaMutation.mutate()}
+              disabled={generateFullCronogramaMutation.isPending}
               variant="outline"
               className="gap-2"
             >
-              {syncAttendancesMutation.isPending ? (
+              {generateFullCronogramaMutation.isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Sincronizando...
+                  Gerando...
                 </>
               ) : (
                 <>
                   <Calendar className="w-4 h-4" />
-                  Sincronizar Atendimentos
+                  Gerar Cronograma Completo
                 </>
               )}
             </Button>

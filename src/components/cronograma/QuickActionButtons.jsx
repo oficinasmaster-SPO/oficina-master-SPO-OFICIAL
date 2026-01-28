@@ -11,7 +11,7 @@ export default function QuickActionButtons({ item, workshop, compact = false }) 
   const navigate = useNavigate();
   const navigationInfo = getNavigationForItem(item, workshop);
 
-  const handleExecute = async (e) => {
+  const handleExecute = (e) => {
     if (e) e.stopPropagation();
     
     if (!navigationInfo) {
@@ -28,57 +28,6 @@ export default function QuickActionButtons({ item, workshop, compact = false }) 
           `✅ Este item já está concluído.\n\nDeseja reabrir para edição?`
         );
         if (!confirmReopen) return;
-      }
-
-      // Se é um tipo de atendimento, criar ContractAttendance antes de navegar
-      if (navigationInfo.requiresAttendance && item.item_tipo === 'atendimento') {
-        try {
-          // Buscar contrato ativo do workshop
-          const contracts = await base44.entities.Contract.filter({
-            workshop_id: workshop.id,
-            status: 'efetivado'
-          }, '-activated_at', 1);
-
-          if (!contracts || contracts.length === 0) {
-            toast.error('Contrato não encontrado', {
-              description: 'Não foi possível criar o agendamento sem um contrato ativo'
-            });
-            return;
-          }
-
-          const contract = contracts[0];
-
-          // Verificar se já existe um atendimento pendente para este tipo
-          const existingAttendances = await base44.entities.ContractAttendance.filter({
-            contract_id: contract.id,
-            attendance_type_id: item.item_id,
-            status: 'pendente'
-          });
-
-          if (!existingAttendances || existingAttendances.length === 0) {
-            // Criar novo ContractAttendance
-            await base44.entities.ContractAttendance.create({
-              contract_id: contract.id,
-              workshop_id: workshop.id,
-              plan_id: contract.plan_type,
-              attendance_type_id: item.item_id,
-              attendance_type_name: item.item_nome,
-              scheduled_date: new Date().toISOString(),
-              status: 'pendente',
-              generated_by: 'manual'
-            });
-
-            toast.success('Atendimento criado!', {
-              description: 'Você será redirecionado para agendar'
-            });
-          }
-        } catch (error) {
-          console.error('Erro ao criar atendimento:', error);
-          toast.error('Erro ao criar atendimento', {
-            description: error.message
-          });
-          return;
-        }
       }
 
       if (navigationInfo.isFallback) {
