@@ -814,6 +814,15 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           requiredPermission: 'admin.system_config'
         },
         { 
+          name: 'Configurações Kiwify', 
+          href: createPageUrl('ConfiguracoesKiwify'), 
+          icon: CreditCard,
+          description: 'Integração de pagamentos',
+          highlight: true,
+          adminOnly: true,
+          requiredPermission: 'admin.system_config'
+        },
+        { 
           name: 'Usuários e Empresas', 
           href: createPageUrl('GestaoUsuariosEmpresas'), 
           icon: Users,
