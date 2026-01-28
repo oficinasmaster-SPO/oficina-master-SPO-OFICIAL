@@ -98,17 +98,10 @@ Deno.serve(async (req) => {
 
     // Se já existe, atualizar status para em_andamento se estiver a_fazer
     const item = existingItems[0];
-    const historicoAtualizado = [...(item.historico_alteracoes || []), {
-      data_alteracao: new Date().toISOString(),
-      campo_alterado: 'acesso',
-      valor_anterior: '',
-      valor_novo: 'Página acessada novamente',
-      usuario_id: user.id,
-      usuario_nome: user.full_name
-    }];
+    const historicoAtualizado = [...(item.historico_alteracoes || [])];
 
     const updateData = {
-      historico_alteracoes: historicoAtualizado
+      total_visualizacoes: (item.total_visualizacoes || 0) + 1
     };
 
     // Se o item está "a_fazer", mudar para "em_andamento" no acesso
@@ -123,14 +116,26 @@ Deno.serve(async (req) => {
         usuario_id: user.id,
         usuario_nome: user.full_name
       });
+      updateData.historico_alteracoes = historicoAtualizado;
+    } else {
+      // Apenas incrementar visualizações se já estiver em andamento/concluído
+      historicoAtualizado.push({
+        data_alteracao: new Date().toISOString(),
+        campo_alterado: 'visualizacao',
+        valor_anterior: String(item.total_visualizacoes || 0),
+        valor_novo: String((item.total_visualizacoes || 0) + 1),
+        usuario_id: user.id,
+        usuario_nome: user.full_name
+      });
+      updateData.historico_alteracoes = historicoAtualizado;
     }
 
-    await base44.asServiceRole.entities.CronogramaImplementacao.update(item.id, updateData);
+    const updated = await base44.asServiceRole.entities.CronogramaImplementacao.update(item.id, updateData);
 
     return Response.json({ 
       success: true,
-      action: 'updated',
-      item: item
+      action: item.status === 'a_fazer' ? 'status_changed_to_em_andamento' : 'view_registered',
+      item: updated
     });
 
   } catch (error) {
