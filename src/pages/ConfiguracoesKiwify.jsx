@@ -29,15 +29,31 @@ export default function ConfiguracoesKiwify() {
     },
   });
 
-  // Fetch existing plans for mapping options
-  const { data: plans } = useQuery({
-    queryKey: ['plansList'],
+  // Fetch existing plans from PlanFeature
+  const { data: planFeatures = [] } = useQuery({
+    queryKey: ['planFeatures'],
     queryFn: async () => {
-      const response = await base44.entities.Plan.list();
+      const response = await base44.entities.PlanFeature.list();
       return response;
     },
     staleTime: Infinity,
   });
+
+  // Lista de planos padrão (fallback caso não tenha PlanFeatures cadastrados)
+  const defaultPlans = [
+    { id: "FREE", name: "Grátis" },
+    { id: "START", name: "Start" },
+    { id: "BRONZE", name: "Bronze" },
+    { id: "PRATA", name: "Prata" },
+    { id: "GOLD", name: "Gold" },
+    { id: "IOM", name: "IOM" },
+    { id: "MILLIONS", name: "Millions" }
+  ];
+
+  // Usar PlanFeatures ou fallback para planos padrão
+  const plans = planFeatures.length > 0 
+    ? planFeatures.map(pf => ({ id: pf.plan_id, name: pf.plan_name }))
+    : defaultPlans;
 
   useEffect(() => {
     if (settings) {
