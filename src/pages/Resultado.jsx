@@ -161,15 +161,25 @@ export default function Resultado() {
 
     const totalQuestions = diag.answers.length;
 
+    // Mapeamento de ícones para cada fase
+    const phaseIcons = {
+      1: TrendingUp,
+      2: Users,
+      3: BarChart3,
+      4: Rocket
+    };
+
     const distribution = Object.keys(phaseCounts).map(phase => {
       const count = phaseCounts[phase];
       const percent = Math.round((count / totalQuestions) * 100);
+      const phaseNum = parseInt(phase);
       
       return {
-        phase: parseInt(phase),
+        phase: phaseNum,
         count,
         percent,
-        ...getPhaseInfo(parseInt(phase))
+        icon: phaseIcons[phaseNum],
+        ...getPhaseInfo(phaseNum)
       };
     });
 
