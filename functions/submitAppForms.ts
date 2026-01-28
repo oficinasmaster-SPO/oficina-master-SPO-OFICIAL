@@ -24,8 +24,8 @@ Deno.serve(async (req) => {
         return Response.json({ success: true, id: diagnostic.id, diagnostic });
     }
 
-    if (form_type === 'workshop_diagnostic') {
-        const { workshop_id, answers, phase, dominant_letter } = body;
+    if (form_type === 'workshop_diagnostic' || form_type === 'workshop_phase_diagnostic') {
+        const { workshop_id, answers, phase, dominant_letter, letter_distribution } = body;
         
         const diagnostic = await base44.asServiceRole.entities.Diagnostic.create({
             user_id: user.id,
@@ -33,6 +33,7 @@ Deno.serve(async (req) => {
             answers,
             phase,
             dominant_letter,
+            letter_distribution: letter_distribution || { A: 0, B: 0, C: 0, D: 0 },
             completed: true
         });
         

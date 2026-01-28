@@ -83,15 +83,25 @@ export default function Questionario() {
     try {
       const user = await base44.auth.me();
       
+      // Passo 1: Contar letras
       const letterCounts = { A: 0, B: 0, C: 0, D: 0 };
       Object.values(answers).forEach(letter => {
         letterCounts[letter]++;
       });
       
-      const dominantLetter = Object.keys(letterCounts).reduce((a, b) => 
-        letterCounts[a] > letterCounts[b] ? a : b
-      );
+      // Passo 2: Encontrar a contagem máxima
+      const maxCount = Math.max(...Object.values(letterCounts));
       
+      // Passo 3: Identificar todas as letras empatadas
+      const tiedLetters = Object.keys(letterCounts).filter(letter => letterCounts[letter] === maxCount);
+      
+      // Passo 4: Desempate por PRIORIDADE DE SEVERIDADE (D > A > C > B)
+      const priorityOrder = ['D', 'A', 'C', 'B'];
+      const dominantLetter = tiedLetters.sort((a, b) => 
+        priorityOrder.indexOf(a) - priorityOrder.indexOf(b)
+      )[0];
+      
+      // Passo 5: Mapear para fase
       const phaseMap = { D: 1, A: 2, C: 3, B: 4 };
       const phase = phaseMap[dominantLetter];
       
@@ -100,14 +110,15 @@ export default function Questionario() {
         selected_option: letter
       }));
       
-      console.log("Enviando diagnóstico:", { workshop_id: workshop.id, answers: answersArray, phase, dominantLetter });
+      console.log("Enviando diagnóstico:", { workshop_id: workshop.id, answers: answersArray, phase, dominantLetter, letterCounts });
       
       const response = await base44.functions.invoke('submitAppForms', {
-        form_type: 'workshop_diagnostic',
+        form_type: 'workshop_phase_diagnostic',
         workshop_id: workshop.id,
         answers: answersArray,
         phase: phase,
-        dominant_letter: dominantLetter
+        dominant_letter: dominantLetter,
+        letter_distribution: letterCounts
       });
 
       console.log("Resposta recebida:", response.data);

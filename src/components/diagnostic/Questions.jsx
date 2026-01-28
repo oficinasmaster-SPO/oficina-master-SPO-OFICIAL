@@ -1,7 +1,7 @@
 export const questions = [
   {
     id: 1,
-    question: "Sua empresa em relação ao lucro já se percebe?",
+    question: "1.1 - Sua empresa em relação ao lucro já se percebe?",
     options: [
       { letter: "A", text: "Estabelecida já tem uma reserva financeira e precisa se preocupar mais com os processos, organizar as atividades para continuar lucrando." },
       { letter: "B", text: "Já consegue respirar e já sente falta de aumentar o time para continuar lucrando." },
@@ -11,7 +11,7 @@ export const questions = [
   },
   {
     id: 2,
-    question: "Sua empresa hoje em relação a gestão de pessoas está?",
+    question: "1.2 - Sua empresa hoje em relação a gestão de pessoas está?",
     options: [
       { letter: "A", text: "Está focando em contratar pessoal para aumentar o quadro de funcionários para continuar lucrando e crescendo." },
       { letter: "B", text: "Tem um bom quadro de funcionários, os processos já estão estabelecidos e aumentamos o lucro." },
@@ -21,7 +21,7 @@ export const questions = [
   },
   {
     id: 3,
-    question: "Em relação a gestão onde sua empresa está focada atualmente?",
+    question: "1.3 - Em relação a gestão onde sua empresa está focada atualmente?",
     options: [
       { letter: "A", text: "Está focada em organizar, estruturar as atividades e criar indicadores." },
       { letter: "B", text: "A gestão está focada mais em pessoas, para gerar engajamento na equipe." },
@@ -31,7 +31,7 @@ export const questions = [
   },
   {
     id: 4,
-    question: "Na questão formação de liderança como está sua empresa hoje?",
+    question: "1.4 - Na questão formação de liderança como está sua empresa hoje?",
     options: [
       { letter: "A", text: "A empresa já tem uma liderança estabelecida e em constante desenvolvimento para alcançar as metas do planejamento estratégico." },
       { letter: "B", text: "Não há tanta necessidade de trabalhar liderança, pois todos estão bastante envolvidos e ocupados em fazer suas atividades, não sobra tempo para pensar em liderança." },
@@ -41,7 +41,7 @@ export const questions = [
   },
   {
     id: 5,
-    question: "Em relação aos processos como está sua empresa hoje?",
+    question: "1.5 - Em relação aos processos como está sua empresa hoje?",
     options: [
       { letter: "A", text: "Temos um quadro bem reduzido de colaboradores e sentimos a necessidade de aumentar o time para executar todos os processos da empresa." },
       { letter: "B", text: "Nossos processos estão estabelecidos e controlamos os indicadores." },
@@ -51,7 +51,7 @@ export const questions = [
   },
   {
     id: 6,
-    question: "Qual você percebe que é o foco de sua empresa no momento?",
+    question: "1.6 - Qual você percebe que é o foco de sua empresa no momento?",
     options: [
       { letter: "A", text: "Já temos um lucro razoável e para crescer sentimos a necessidade de mais braços." },
       { letter: "B", text: "Temos um time engajado, os conflitos internos diminuíram muito e aumentamos os lucros." },
@@ -61,7 +61,7 @@ export const questions = [
   },
   {
     id: 7,
-    question: "A direção da empresa hoje?",
+    question: "1.7 - A direção da empresa hoje?",
     options: [
       { letter: "A", text: "Está focada em cuidar do time e percebe que precisa de novos talentos para a empresa crescer." },
       { letter: "B", text: "Só tem tempo para fazer e não para planejar a longo prazo." },
@@ -71,7 +71,7 @@ export const questions = [
   },
   {
     id: 8,
-    question: "Já é possível descentralizar e delegar atividades?",
+    question: "1.8 - Já é possível descentralizar e delegar atividades?",
     options: [
       { letter: "A", text: "Tenho uma boa equipe e já delego grande parte das atividades, ficando somente com as funções gerenciais para o alcance do planejamento estabelecido." },
       { letter: "B", text: "Já delego as atividades necessárias para o meu time e consigo desenvolver mais o pessoal." },
@@ -81,7 +81,7 @@ export const questions = [
   },
   {
     id: 9,
-    question: "Como é a relação da empresa com os consumidores?",
+    question: "1.9 - Como é a relação da empresa com os consumidores?",
     options: [
       { letter: "A", text: "Temos uma equipe formada, mas nossos clientes ainda reclamam muito de nosso atendimento e produto." },
       { letter: "B", text: "Já estabelecemos nossa cultura, marca e nossos clientes já nos identificam no mercado, temos índice de reclamações bem baixos." },
@@ -91,7 +91,7 @@ export const questions = [
   },
   {
     id: 10,
-    question: "Como é a relação da empresa hoje com os funcionários?",
+    question: "1.10 - Como é a relação da empresa hoje com os funcionários?",
     options: [
       { letter: "A", text: "Temos poucos funcionários, um quadro bem reduzido, só para conseguir manter o negócio funcionando." },
       { letter: "B", text: "Já conseguimos aumentar um pouco a equipe e dividir algumas atividades." },
@@ -101,7 +101,7 @@ export const questions = [
   },
   {
     id: 11,
-    question: "Qual é a estratégia da empresa no momento?",
+    question: "1.11 - Qual é a estratégia da empresa no momento?",
     options: [
       { letter: "A", text: "De aumentar o time para gerar mais lucros, já perdemos negócio por falta de pessoal." },
       { letter: "B", text: "De gerar lucro para se manter no mercado." },
@@ -111,7 +111,7 @@ export const questions = [
   },
   {
     id: 12,
-    question: "Como está a cultura da empresa no momento?",
+    question: "1.12 - Como está a cultura da empresa no momento?",
     options: [
       { letter: "A", text: "Já temos uma equipe, mas ainda não conseguimos encontrar a melhor maneira de trabalhar para alcançar os resultados." },
       { letter: "B", text: "Já contamos com uma equipe formada, mas a missão da empresa não é clara para todos." },
