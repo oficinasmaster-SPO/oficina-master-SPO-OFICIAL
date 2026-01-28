@@ -94,6 +94,7 @@ import Clientes from './pages/Clientes';
 import Colaboradores from './pages/Colaboradores';
 import ConfiguracaoAcademia from './pages/ConfiguracaoAcademia';
 import ConfiguracaoPermissoesGranulares from './pages/ConfiguracaoPermissoesGranulares';
+import ConfiguracoesKiwify from './pages/ConfiguracoesKiwify';
 import ConfiguracoesNotificacao from './pages/ConfiguracoesNotificacao';
 import ConsolidadoMensal from './pages/ConsolidadoMensal';
 import ControleAceleracao from './pages/ControleAceleracao';
@@ -221,7 +222,6 @@ import TesteOpenAI from './pages/TesteOpenAI';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
-import ConfiguracoesKiwify from './pages/ConfiguracoesKiwify';
 import __Layout from './Layout.jsx';
 
 
@@ -273,6 +273,7 @@ export const PAGES = {
     "Colaboradores": Colaboradores,
     "ConfiguracaoAcademia": ConfiguracaoAcademia,
     "ConfiguracaoPermissoesGranulares": ConfiguracaoPermissoesGranulares,
+    "ConfiguracoesKiwify": ConfiguracoesKiwify,
     "ConfiguracoesNotificacao": ConfiguracoesNotificacao,
     "ConsolidadoMensal": ConsolidadoMensal,
     "ControleAceleracao": ControleAceleracao,
@@ -400,7 +401,6 @@ export const PAGES = {
     "TreinamentoVendas": TreinamentoVendas,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
-    "ConfiguracoesKiwify": ConfiguracoesKiwify,
 }
 
 export const pagesConfig = {

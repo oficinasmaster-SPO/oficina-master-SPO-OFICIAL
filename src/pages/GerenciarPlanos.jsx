@@ -250,6 +250,12 @@ export default function GerenciarPlanos() {
     enabled: !loading
   });
 
+  const { data: plansFromDB = [] } = useQuery({
+    queryKey: ['plans'],
+    queryFn: () => base44.entities.Plan.list(),
+    enabled: !loading
+  });
+
   const createPlanMutation = useMutation({
     mutationFn: (data) => base44.entities.PlanFeature.create(data),
     onSuccess: () => {
@@ -267,7 +273,8 @@ export default function GerenciarPlanos() {
     }
   });
 
-  const plans = [
+  // Usar planos do banco de dados, com fallback para lista padrão
+  const defaultPlans = [
     { id: "FREE", name: "Grátis", color: "bg-gray-100" },
     { id: "START", name: "Start", color: "bg-blue-100" },
     { id: "BRONZE", name: "Bronze", color: "bg-orange-100" },
@@ -276,6 +283,14 @@ export default function GerenciarPlanos() {
     { id: "IOM", name: "IOM", color: "bg-purple-100" },
     { id: "MILLIONS", name: "Millions", color: "bg-pink-100" }
   ];
+
+  const plans = plansFromDB.length > 0 
+    ? plansFromDB.map(p => ({
+        id: p.id,
+        name: p.name,
+        color: p.color || "bg-gray-100"
+      }))
+    : defaultPlans;
 
   const handleEditPlan = (planId) => {
     const existing = planFeatures.find(p => p.plan_id === planId);
