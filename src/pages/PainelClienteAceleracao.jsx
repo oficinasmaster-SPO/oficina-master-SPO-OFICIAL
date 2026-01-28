@@ -54,10 +54,11 @@ export default function PainelClienteAceleracao() {
     enabled: !!workshop?.id
   });
 
-  const { data: progresso } = useQuery({
-    queryKey: ['meu-progresso', workshop?.id],
+  // Buscar progresso do cronograma de implementação (nova fonte única de verdade)
+  const { data: progressoItems } = useQuery({
+    queryKey: ['progresso-implementacao', workshop?.id],
     queryFn: async () => {
-      return await base44.entities.CronogramaProgresso.filter({
+      return await base44.entities.CronogramaImplementacao.filter({
         workshop_id: workshop.id
       });
     },
@@ -235,12 +236,12 @@ export default function PainelClienteAceleracao() {
     a.status === 'realizado' && a.ata_ia
   ).slice(0, 5) || [];
 
-  const tarefasPendentes = progresso?.filter(p => 
-    p.situacao === 'em_andamento' || p.situacao === 'nao_iniciado'
+  const tarefasPendentes = progressoItems?.filter(p => 
+    p.status === 'em_andamento' || p.status === 'a_fazer'
   ) || [];
 
-  const progressoGeral = progresso?.length > 0 
-    ? Math.round((progresso.filter(p => p.situacao === 'concluido').length / progresso.length) * 100)
+  const progressoGeral = progressoItems?.length > 0 
+    ? Math.round((progressoItems.filter(p => p.status === 'concluido').length / progressoItems.length) * 100)
     : 0;
 
   const handleGeneratePlan = async () => {
@@ -285,21 +286,21 @@ export default function PainelClienteAceleracao() {
               <div className="grid grid-cols-3 gap-4 mt-4 text-center">
                 <div>
                   <p className="text-2xl font-bold text-green-600">
-                    {progresso?.filter(p => p.situacao === 'concluido').length || 0}
+                    {progressoItems?.filter(p => p.status === 'concluido').length || 0}
                   </p>
                   <p className="text-xs text-gray-600">Concluídos</p>
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-yellow-600">
-                    {progresso?.filter(p => p.situacao === 'em_andamento').length || 0}
+                    {progressoItems?.filter(p => p.status === 'em_andamento').length || 0}
                   </p>
                   <p className="text-xs text-gray-600">Em Andamento</p>
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-gray-600">
-                    {progresso?.filter(p => p.situacao === 'nao_iniciado').length || 0}
+                    {progressoItems?.filter(p => p.status === 'a_fazer').length || 0}
                   </p>
-                  <p className="text-xs text-gray-600">Não Iniciados</p>
+                  <p className="text-xs text-gray-600">A Fazer</p>
                 </div>
               </div>
             </div>
@@ -465,9 +466,9 @@ export default function PainelClienteAceleracao() {
                   <div key={tarefa.id} className="flex items-start gap-3 p-3 border rounded-lg">
                     <AlertCircle className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
-                      <p className="font-medium text-sm">{tarefa.modulo_nome}</p>
+                      <p className="font-medium text-sm">{tarefa.item_nome}</p>
                       <p className="text-xs text-gray-600">
-                        {tarefa.atividades_previstas - tarefa.atividades_realizadas} atividades pendentes
+                        Status: {tarefa.status === 'em_andamento' ? 'Em andamento' : 'A fazer'}
                       </p>
                     </div>
                   </div>
