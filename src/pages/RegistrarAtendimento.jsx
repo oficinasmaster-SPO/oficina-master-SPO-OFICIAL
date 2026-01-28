@@ -165,6 +165,14 @@ export default function RegistrarAtendimento() {
     }
   });
 
+  // Carregar tipos de atendimento
+  const { data: tiposAtendimento = [] } = useQuery({
+    queryKey: ['attendance-types'],
+    queryFn: async () => {
+      return await base44.entities.AttendanceType.filter({ is_active: true });
+    }
+  });
+
   // Carregar cursos de treinamento
   const { data: cursos } = useQuery({
     queryKey: ['cursos-treinamento'],
@@ -526,24 +534,10 @@ export default function RegistrarAtendimento() {
                 <Select
                   value={formData.tipo_atendimento}
                   onValueChange={(value) => {
-                    const duracoes = {
-                      diagnostico_inicial: 45,
-                      acompanhamento_mensal: 45,
-                      reuniao_estrategica: 45,
-                      treinamento: 45,
-                      auditoria: 45,
-                      revisao_metas: 45,
-                      imersao_individual: 480,
-                      imersao_presencial: 1800,
-                      pda_grupo: 120,
-                      aceleradores_presenciais: 1200,
-                      imersao_online: 480,
-                      mentoria: 45,
-                      outros: 60
-                    };
-
+                    // Buscar duração do tipo selecionado
+                    const tipoAtendimento = tiposAtendimento.find(t => t.code === value);
                     const tipoCustom = customTipos.find(t => t.value === value);
-                    const duracao = tipoCustom?.duracao_minutos || duracoes[value] || 60;
+                    const duracao = tipoAtendimento?.default_duration_minutes || tipoCustom?.duracao_minutos || 60;
 
                     setFormData({ 
                       ...formData, 
@@ -553,22 +547,14 @@ export default function RegistrarAtendimento() {
                   }}
                 >
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Selecione o tipo..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="diagnostico_inicial">Diagnóstico Inicial (45min)</SelectItem>
-                    <SelectItem value="acompanhamento_mensal">Acompanhamento Mensal (45min)</SelectItem>
-                    <SelectItem value="reuniao_estrategica">Reunião Estratégica (45min)</SelectItem>
-                    <SelectItem value="treinamento">Treinamento (45min)</SelectItem>
-                    <SelectItem value="auditoria">Auditoria (45min)</SelectItem>
-                    <SelectItem value="revisao_metas">Revisão de Metas (45min)</SelectItem>
-                    <SelectItem value="imersao_individual">Imersão Individual (8h)</SelectItem>
-                    <SelectItem value="imersao_presencial">Imersão Presencial (30h)</SelectItem>
-                    <SelectItem value="pda_grupo">PDA em Grupo (2h)</SelectItem>
-                    <SelectItem value="aceleradores_presenciais">Aceleradores Presenciais (20h)</SelectItem>
-                    <SelectItem value="imersao_online">Imersão Online (8h)</SelectItem>
-                    <SelectItem value="mentoria">Mentoria (45min)</SelectItem>
-                    <SelectItem value="outros">Outros</SelectItem>
+                    {tiposAtendimento.map(tipo => (
+                      <SelectItem key={tipo.id} value={tipo.code}>
+                        {tipo.name} ({tipo.default_duration_minutes}min)
+                      </SelectItem>
+                    ))}
                     {customTipos.map(tipo => (
                       <SelectItem key={tipo.value} value={tipo.value}>
                         {tipo.label}
