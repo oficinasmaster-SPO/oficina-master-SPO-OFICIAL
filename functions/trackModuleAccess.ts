@@ -11,6 +11,19 @@ const PAGE_TO_MODULE_MAP = {
   '/DiagnosticoDesempenho': 'DESEMP',
   '/PesquisaClima': 'CLIMA',
   '/DiagnosticoOS': 'TCMP2',
+  '/DiagnosticoGerencial': 'diagnostico_gerencial',
+  '/DiagnosticoEndividamento': 'diagnostico_endividamento',
+  '/DiagnosticoComercial': 'diagnostico_comercial',
+  '/DiagnosticoCarga': 'diagnostico_carga_trabalho',
+  
+  // Autoavaliações
+  '/AutoavaliacaoMA3': 'autoavaliacao_ma3',
+  '/AutoavaliacaoEmpresarial': 'autoavaliacao_empresarial',
+  '/AutoavaliacaoFinanceiro': 'autoavaliacao_financeiro',
+  '/AutoavaliacaoPessoas': 'autoavaliacao_pessoas',
+  '/AutoavaliacaoMarketing': 'autoavaliacao_marketing',
+  '/AutoavaliacaoVendas': 'autoavaliacao_vendas',
+  '/AutoavaliacaoComercial': 'autoavaliacao_comercial',
   
   // Implementações
   '/GestaoOficina': 'CADAS',
