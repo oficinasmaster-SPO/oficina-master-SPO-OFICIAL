@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, ArrowRight, CheckCircle2, Loader2 } from "lucide-react";
-import { questions } from "../components/diagnostic/Questions";
+import { questions, getQuestionsInDisplayOrder } from "../components/diagnostic/Questions";
 import { PHASE_LETTER_TO_NUMBER, TIE_BREAK_PRIORITY } from "../components/lib/phaseConstants";
 import { toast } from "sonner";
 import DynamicHelpSystem from "@/components/help/DynamicHelpSystem";
@@ -19,6 +19,9 @@ export default function Questionario() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadingWorkshop, setLoadingWorkshop] = useState(true);
   const [workshop, setWorkshop] = useState(null);
+  
+  // Usar ordem embaralhada V2 para exibição
+  const displayQuestions = getQuestionsInDisplayOrder();
 
   useEffect(() => {
     checkWorkshop();
@@ -53,8 +56,8 @@ export default function Questionario() {
     }
   };
 
-  const progress = ((currentQuestion + 1) / questions.length) * 100;
-  const question = questions[currentQuestion];
+  const progress = ((currentQuestion + 1) / displayQuestions.length) * 100;
+  const question = displayQuestions[currentQuestion];
 
   const handleAnswer = (letter) => {
     setAnswers({ ...answers, [question.id]: letter });
@@ -66,7 +69,7 @@ export default function Questionario() {
       return;
     }
     
-    if (currentQuestion < questions.length - 1) {
+    if (currentQuestion < displayQuestions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
     } else {
       handleSubmit();
@@ -170,7 +173,7 @@ export default function Questionario() {
               )}
             </div>
             <div className="text-sm text-gray-600">
-              Pergunta {currentQuestion + 1} de {questions.length}
+              Pergunta {currentQuestion + 1} de {displayQuestions.length}
             </div>
           </div>
           <Progress value={progress} className="h-2" />
@@ -234,7 +237,7 @@ export default function Questionario() {
             disabled={!answers[question.id] || isSubmitting}
             className="px-6 bg-blue-600 hover:bg-blue-700"
           >
-            {currentQuestion === questions.length - 1 ? (
+            {currentQuestion === displayQuestions.length - 1 ? (
               isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />

@@ -1,3 +1,7 @@
+// Ordem de exibição V2 (embaralhada para melhor distribuição de temas)
+// Mantém IDs estáveis para comparabilidade histórica
+export const DISPLAY_ORDER_V2 = [1, 6, 2, 11, 5, 9, 4, 10, 3, 8, 12, 7];
+
 export const questions = [
   {
     id: 1,
@@ -120,3 +124,8 @@ export const questions = [
     ]
   }
 ];
+
+// Função auxiliar para obter perguntas na ordem de exibição
+export const getQuestionsInDisplayOrder = () => {
+  return DISPLAY_ORDER_V2.map(id => questions.find(q => q.id === id)).filter(Boolean);
+};
