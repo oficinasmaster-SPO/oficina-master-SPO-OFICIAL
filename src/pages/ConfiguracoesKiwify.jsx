@@ -193,69 +193,85 @@ export default function ConfiguracoesKiwify() {
               <p className="text-sm text-gray-500">URL para onde o usuário será redirecionado após um pagamento falho ou cancelado.</p>
             </div>
 
-            {/* Plan Mappings */}
+            {/* Plan Mappings Grid */}
             <div className="space-y-4 border-t pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-lg font-semibold">Mapeamento de Planos</h3>
                   <p className="text-sm text-gray-500">
-                    Associe seus planos internos aos produtos correspondentes na Kiwify.
+                    Configure o ID do produto Kiwify para cada plano interno.
                   </p>
                 </div>
-                <Button type="button" variant="outline" onClick={addPlanMapping} size="sm" className="gap-2">
-                  <Plus className="h-4 w-4" /> Adicionar
-                </Button>
               </div>
 
-              {formData.plan_mappings.length === 0 ? (
+              {!plans || plans.length === 0 ? (
                 <div className="text-center py-8 text-gray-500 border-2 border-dashed rounded-lg">
-                  <p>Nenhum mapeamento configurado.</p>
-                  <p className="text-sm">Clique em "Adicionar" para criar um mapeamento.</p>
+                  <p>Nenhum plano cadastrado no sistema.</p>
+                  <p className="text-sm">Acesse "Gerenciar Planos" para criar seus planos.</p>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {formData.plan_mappings.map((mapping, index) => (
-                    <div key={index} className="flex items-end gap-3 border p-4 rounded-lg bg-gray-50">
-                      <div className="flex-1 space-y-2">
-                        <Label htmlFor={`internal_plan_id-${index}`}>Plano Interno</Label>
-                        <select
-                          id={`internal_plan_id-${index}`}
-                          name="internal_plan_id"
-                          value={mapping.internal_plan_id}
-                          onChange={(e) => handlePlanMappingChange(index, 'internal_plan_id', e.target.value)}
-                          className="flex h-9 w-full rounded-md border border-input bg-white px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                          required
-                        >
-                          <option value="">Selecione um plano</option>
-                          {plans?.map((plan) => (
-                            <option key={plan.id} value={plan.id}>
-                              {plan.name}
-                            </option>
-                          ))}
-                        </select>
+                  {plans.map((plan) => {
+                    const existingMapping = formData.plan_mappings.find(m => m.internal_plan_id === plan.id);
+                    const mappingIndex = existingMapping 
+                      ? formData.plan_mappings.findIndex(m => m.internal_plan_id === plan.id)
+                      : -1;
+
+                    return (
+                      <div key={plan.id} className="flex items-center gap-3 border p-4 rounded-lg bg-gray-50">
+                        <div className="flex-1">
+                          <div className="font-semibold text-gray-900">{plan.name}</div>
+                          <div className="text-sm text-gray-500">
+                            {existingMapping ? (
+                              <span className="text-green-600">✓ Configurado</span>
+                            ) : (
+                              <span className="text-orange-600">⚠ Não configurado</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex-1 space-y-2">
+                          <Label htmlFor={`kiwify_product_id-${plan.id}`}>ID do Produto Kiwify</Label>
+                          <Input
+                            id={`kiwify_product_id-${plan.id}`}
+                            name="kiwify_product_id"
+                            value={existingMapping?.kiwify_product_id || ''}
+                            onChange={(e) => {
+                              const newValue = e.target.value;
+                              if (existingMapping) {
+                                // Atualizar mapeamento existente
+                                handlePlanMappingChange(mappingIndex, 'kiwify_product_id', newValue);
+                              } else {
+                                // Criar novo mapeamento
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  plan_mappings: [
+                                    ...prev.plan_mappings,
+                                    { internal_plan_id: plan.id, kiwify_product_id: newValue }
+                                  ]
+                                }));
+                              }
+                            }}
+                            placeholder="Ex: prod_abc123 ou deixe vazio"
+                          />
+                        </div>
+                        {existingMapping && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              const newMappings = formData.plan_mappings.filter(m => m.internal_plan_id !== plan.id);
+                              setFormData((prev) => ({ ...prev, plan_mappings: newMappings }));
+                            }}
+                            className="shrink-0"
+                            title="Remover configuração"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
-                      <div className="flex-1 space-y-2">
-                        <Label htmlFor={`kiwify_product_id-${index}`}>ID do Produto Kiwify</Label>
-                        <Input
-                          id={`kiwify_product_id-${index}`}
-                          name="kiwify_product_id"
-                          value={mapping.kiwify_product_id}
-                          onChange={(e) => handlePlanMappingChange(index, 'kiwify_product_id', e.target.value)}
-                          placeholder="Ex: prod_abc123"
-                          required
-                        />
-                      </div>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="icon"
-                        onClick={() => removePlanMapping(index)}
-                        className="shrink-0"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
