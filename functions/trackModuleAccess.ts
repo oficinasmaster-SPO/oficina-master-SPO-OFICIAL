@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Se já existe, apenas registrar no histórico que foi acessado novamente
+    // Se já existe, atualizar status para em_andamento se estiver a_fazer
     const item = existingItems[0];
     const historicoAtualizado = [...(item.historico_alteracoes || []), {
       data_alteracao: new Date().toISOString(),
@@ -107,9 +107,25 @@ Deno.serve(async (req) => {
       usuario_nome: user.full_name
     }];
 
-    await base44.asServiceRole.entities.CronogramaImplementacao.update(item.id, {
+    const updateData = {
       historico_alteracoes: historicoAtualizado
-    });
+    };
+
+    // Se o item está "a_fazer", mudar para "em_andamento" no acesso
+    if (item.status === 'a_fazer') {
+      updateData.status = 'em_andamento';
+      updateData.data_inicio_real = new Date().toISOString().split('T')[0];
+      historicoAtualizado.push({
+        data_alteracao: new Date().toISOString(),
+        campo_alterado: 'status',
+        valor_anterior: 'a_fazer',
+        valor_novo: 'em_andamento',
+        usuario_id: user.id,
+        usuario_nome: user.full_name
+      });
+    }
+
+    await base44.asServiceRole.entities.CronogramaImplementacao.update(item.id, updateData);
 
     return Response.json({ 
       success: true,
