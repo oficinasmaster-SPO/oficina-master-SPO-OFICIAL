@@ -41,23 +41,34 @@ Deno.serve(async (req) => {
 
     // Para cada regra de atendimento
     for (const rule of planRules) {
-      if (rule.scheduling_type === 'fixed_dates') {
-        // DATAS FIXAS (ex: Imersões)
-        if (rule.fixed_dates && Array.isArray(rule.fixed_dates)) {
-          for (let i = 0; i < rule.fixed_dates.length; i++) {
-            const fixedDate = rule.fixed_dates[i];
-            attendancesToCreate.push({
-              contract_id: contract.id,
-              workshop_id: contract.workshop_id,
-              plan_id: contract.plan_id,
-              attendance_type_id: rule.attendance_type_id,
-              attendance_type_name: rule.attendance_type_name,
-              scheduled_date: new Date(fixedDate.date).toISOString(),
-              status: 'pendente',
-              generated_by: 'system',
-              sequence_number: i + 1
-            });
-          }
+      if (rule.scheduling_type === 'event_based') {
+        // BASEADO EM EVENTOS DO CALENDÁRIO
+        const currentYear = new Date().getFullYear();
+        const futureEvents = await base44.asServiceRole.entities.EventCalendar.filter({
+          attendance_type_id: rule.attendance_type_id,
+          is_active: true
+        });
+
+        // Filtrar eventos futuros e ordenar por data
+        const upcomingEvents = futureEvents
+          .filter(event => new Date(event.event_date) >= contractStartDate)
+          .sort((a, b) => new Date(a.event_date) - new Date(b.event_date))
+          .slice(0, rule.total_allowed);
+
+        for (let i = 0; i < upcomingEvents.length; i++) {
+          const event = upcomingEvents[i];
+          attendancesToCreate.push({
+            contract_id: contract.id,
+            workshop_id: contract.workshop_id,
+            plan_id: contract.plan_id,
+            attendance_type_id: rule.attendance_type_id,
+            attendance_type_name: rule.attendance_type_name,
+            event_calendar_id: event.id,
+            scheduled_date: new Date(event.event_date).toISOString(),
+            status: 'pendente',
+            generated_by: 'system',
+            sequence_number: i + 1
+          });
         }
       } else {
         // FREQUÊNCIA (ex: Mensais, Quinzenais)

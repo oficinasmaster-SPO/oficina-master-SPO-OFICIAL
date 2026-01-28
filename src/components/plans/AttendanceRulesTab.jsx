@@ -23,7 +23,6 @@ export default function AttendanceRulesTab({ planId, planName }) {
     total_allowed: 1,
     scheduling_type: "frequency",
     frequency_days: 30,
-    fixed_dates: [],
     start_from_contract_date: true,
     allow_anticipation: true
   });
@@ -81,7 +80,6 @@ export default function AttendanceRulesTab({ planId, planName }) {
       total_allowed: 1,
       scheduling_type: "frequency",
       frequency_days: 30,
-      fixed_dates: [],
       start_from_contract_date: true,
       allow_anticipation: true
     });
@@ -96,7 +94,6 @@ export default function AttendanceRulesTab({ planId, planName }) {
       total_allowed: rule.total_allowed,
       scheduling_type: rule.scheduling_type || "frequency",
       frequency_days: rule.frequency_days || 30,
-      fixed_dates: rule.fixed_dates || [],
       start_from_contract_date: rule.start_from_contract_date !== undefined ? rule.start_from_contract_date : true,
       allow_anticipation: rule.allow_anticipation
     });
@@ -137,7 +134,6 @@ export default function AttendanceRulesTab({ planId, planName }) {
       total_allowed: formData.total_allowed,
       scheduling_type: formData.scheduling_type,
       frequency_days: formData.scheduling_type === "frequency" ? formData.frequency_days : null,
-      fixed_dates: formData.scheduling_type === "fixed_dates" ? formData.fixed_dates : null,
       start_from_contract_date: formData.start_from_contract_date,
       allow_anticipation: formData.allow_anticipation,
       is_active: true
@@ -226,43 +222,31 @@ export default function AttendanceRulesTab({ planId, planName }) {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="frequency">Por Frequência (ex: mensal, quinzenal)</SelectItem>
-                    <SelectItem value="fixed_dates">Datas Fixas (ex: imersões específicas)</SelectItem>
+                    <SelectItem value="event_based">Baseado em Calendário de Eventos</SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-gray-500 mt-1">
                   {formData.scheduling_type === "frequency" 
                     ? "Atendimentos distribuídos por frequência a partir do contrato"
-                    : "Atendimentos em datas específicas predefinidas"}
+                    : "Atendimentos puxados automaticamente do Calendário Anual de Eventos"}
                 </p>
               </div>
 
-              {formData.scheduling_type === "fixed_dates" && (
-                <div>
-                  <Label>Quantidade de Datas Fixas *</Label>
-                  <Input
-                    type="number"
-                    min="1"
-                    value={formData.total_allowed}
-                    onChange={(e) => setFormData({ ...formData, total_allowed: parseInt(e.target.value) })}
-                    placeholder="Ex: 2"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Quantas datas específicas você vai definir</p>
-                </div>
-              )}
-
-              {formData.scheduling_type === "frequency" && (
-                <div>
-                  <Label>Quantidade Total Permitida *</Label>
-                  <Input
-                    type="number"
-                    min="1"
-                    value={formData.total_allowed}
-                    onChange={(e) => setFormData({ ...formData, total_allowed: parseInt(e.target.value) })}
-                    placeholder="Ex: 12"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Quantos atendimentos deste tipo o cliente terá acesso</p>
-                </div>
-              )}
+              <div>
+                <Label>Quantidade Permitida *</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  value={formData.total_allowed}
+                  onChange={(e) => setFormData({ ...formData, total_allowed: parseInt(e.target.value) })}
+                  placeholder="Ex: 12"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  {formData.scheduling_type === "event_based"
+                    ? "Quantos eventos futuros serão vinculados automaticamente"
+                    : "Quantos atendimentos deste tipo o cliente terá acesso"}
+                </p>
+              </div>
 
               {formData.scheduling_type === "frequency" && (
                 <div>
@@ -313,49 +297,19 @@ export default function AttendanceRulesTab({ planId, planName }) {
                 </div>
               )}
 
-              {formData.scheduling_type === "fixed_dates" && (
-                <div className="border rounded-lg p-4 bg-yellow-50">
-                  <Label>Datas Fixas do Ano</Label>
-                  <p className="text-sm text-gray-600 mb-3">
-                    Defina as datas específicas para este tipo de atendimento (ex: Imersões)
-                  </p>
-                  
-                  <div className="space-y-2">
-                    {Array.from({ length: formData.total_allowed }).map((_, index) => (
-                      <div key={index} className="flex gap-2 items-end">
-                        <div className="flex-1">
-                          <Label className="text-xs">Data {index + 1}</Label>
-                          <Input
-                            type="date"
-                            value={formData.fixed_dates[index]?.date || ""}
-                            onChange={(e) => {
-                              const newDates = [...formData.fixed_dates];
-                              newDates[index] = { 
-                                date: e.target.value, 
-                                description: newDates[index]?.description || ""
-                              };
-                              setFormData({ ...formData, fixed_dates: newDates });
-                            }}
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <Label className="text-xs">Descrição (opcional)</Label>
-                          <Input
-                            type="text"
-                            placeholder="Ex: Imersão 1º Semestre"
-                            value={formData.fixed_dates[index]?.description || ""}
-                            onChange={(e) => {
-                              const newDates = [...formData.fixed_dates];
-                              newDates[index] = { 
-                                date: newDates[index]?.date || "", 
-                                description: e.target.value 
-                              };
-                              setFormData({ ...formData, fixed_dates: newDates });
-                            }}
-                          />
-                        </div>
-                      </div>
-                    ))}
+              {formData.scheduling_type === "event_based" && (
+                <div className="border rounded-lg p-4 bg-blue-50 border-blue-200">
+                  <div className="flex items-start gap-2">
+                    <Calendar className="w-5 h-5 text-blue-600 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-blue-900">
+                        Eventos do Calendário Anual
+                      </p>
+                      <p className="text-xs text-blue-700 mt-1">
+                        Os {formData.total_allowed} próximos eventos deste tipo serão automaticamente vinculados ao contrato.
+                        Para configurar os eventos do ano, acesse: <strong>Gestão de Planos → Calendário de Eventos</strong>
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
@@ -499,24 +453,16 @@ export default function AttendanceRulesTab({ planId, planName }) {
                   ) : (
                     <div>
                       <div className="mb-3">
-                        <Badge variant="outline" className="bg-yellow-50">
-                          Datas Fixas ({rule.total_allowed} eventos)
+                        <Badge variant="outline" className="bg-blue-50 text-blue-800">
+                          Baseado em Calendário ({rule.total_allowed} eventos)
                         </Badge>
                       </div>
-                      <div className="space-y-2">
-                        {rule.fixed_dates?.map((fixedDate, idx) => (
-                          <div key={idx} className="flex items-center gap-2 text-sm border-l-2 border-yellow-500 pl-3 py-1">
-                            <Calendar className="w-4 h-4 text-yellow-600" />
-                            <div>
-                              <p className="font-medium">
-                                {new Date(fixedDate.date).toLocaleDateString('pt-BR')}
-                              </p>
-                              {fixedDate.description && (
-                                <p className="text-xs text-gray-600">{fixedDate.description}</p>
-                              )}
-                            </div>
-                          </div>
-                        ))}
+                      <div className="text-sm text-blue-700 border-l-2 border-blue-500 pl-3">
+                        <p className="font-medium">📅 Eventos Automáticos</p>
+                        <p className="text-xs mt-1">
+                          Os {rule.total_allowed} próximos eventos de "{rule.attendance_type_name}" do Calendário Anual 
+                          serão automaticamente vinculados ao contrato quando ativado.
+                        </p>
                       </div>
                     </div>
                   )}
