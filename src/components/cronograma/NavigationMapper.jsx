@@ -322,6 +322,26 @@ const NAVIGATION_MATRIX = {
     }
   },
 
+  // === ATENDIMENTOS ===
+  atendimentos: {
+    'imersao_presencial': {
+      url: 'CronogramaConsultoria',
+      label: '🎯 Imersão Presencial',
+      description: 'Agendar imersão presencial',
+      keywords: ['imersao presencial', 'imersao', 'imersao 1x'],
+      is_primary: true,
+      requiresAttendance: true
+    },
+    'reuniao_estrategica': {
+      url: 'CronogramaConsultoria',
+      label: '📅 Reunião Estratégica',
+      description: 'Agendar reunião estratégica',
+      keywords: ['reuniao estrategica', 'reuniao', 'encontro', '12x'],
+      is_primary: true,
+      requiresAttendance: true
+    }
+  },
+
   // === GESTÃO E RESULTADOS ===
   gestao: {
     'dashboard': {
