@@ -147,6 +147,7 @@ export const sidebarStructure = [
     label: "Administração",
     items: [
       { name: "Dashboard Financeiro", description: "Métricas financeiras e pagamentos" },
+      { name: "Configurações Kiwify", description: "Integração de pagamentos" },
       { name: "Usuários", description: "Gerenciar usuários" },
       { name: "Monitoramento de Usuários", description: "Relatórios e atividades" },
       { name: "Gestão de Perfis", description: "Perfis e permissões" },
@@ -155,7 +156,6 @@ export const sidebarStructure = [
       { name: "Produtividade", description: "Métricas KPIs" },
       { name: "Desafios Globais", description: "Nível Brasil" },
       { name: "Planos", description: "Gerenciar planos" },
-      { name: "Configurações Kiwify", description: "Integração de pagamentos" },
       { name: "Calendário de Eventos", description: "Eventos anuais (imersões, treinamentos)" },
       { name: "Cadastro Direto User", description: "Criar usuário direto" },
       { name: "Mensagens", description: "Templates" },
