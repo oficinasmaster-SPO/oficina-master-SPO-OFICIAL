@@ -17,6 +17,14 @@ const NAVIGATION_MATRIX = {
       is_primary: true,
       stage: 'inicio'
     },
+    'autoavaliacao_empresarial': {
+      url: 'AutoavaliacaoEmpresarial',
+      label: '📊 Autoavaliação Empresarial',
+      description: 'Avalie sua gestão empresarial',
+      keywords: ['autoavaliacao empresarial', 'gestao empresarial', 'avaliacao empresarial'],
+      is_primary: true,
+      stage: 'inicio'
+    },
     'diagnostico_maturidade': {
       url: 'DiagnosticoMaturidade',
       label: '📊 Diagnóstico de Maturidade',
@@ -86,6 +94,54 @@ const NAVIGATION_MATRIX = {
       label: '📊 Diagnóstico de Carga de Trabalho',
       description: 'Avalie capacidade de trabalho',
       keywords: ['diagnostico carga', 'diagnostico carga trabalho', 'capacidade trabalho'],
+      is_primary: true,
+      stage: 'inicio'
+    },
+    'autoavaliacao_ma3': {
+      url: 'AutoavaliacaoMA3',
+      label: '📊 Autoavaliação MA3',
+      description: 'Avalie seus processos com a metodologia MA3',
+      keywords: ['autoavaliacao ma3', 'ma3', 'metodologia ma3'],
+      is_primary: true,
+      stage: 'inicio'
+    },
+    'autoavaliacao_financeiro': {
+      url: 'AutoavaliacaoFinanceiro',
+      label: '📊 Autoavaliação Financeiro',
+      description: 'Avalie sua gestão financeira',
+      keywords: ['autoavaliacao financeiro', 'gestao financeira', 'avaliacao financeira'],
+      is_primary: true,
+      stage: 'inicio'
+    },
+    'autoavaliacao_pessoas': {
+      url: 'AutoavaliacaoPessoas',
+      label: '📊 Autoavaliação Pessoas',
+      description: 'Avalie sua gestão de pessoas',
+      keywords: ['autoavaliacao pessoas', 'gestao pessoas', 'avaliacao pessoas'],
+      is_primary: true,
+      stage: 'inicio'
+    },
+    'autoavaliacao_marketing': {
+      url: 'AutoavaliacaoMarketing',
+      label: '📊 Autoavaliação Marketing',
+      description: 'Avalie suas estratégias de marketing',
+      keywords: ['autoavaliacao marketing', 'gestao marketing', 'avaliacao marketing'],
+      is_primary: true,
+      stage: 'inicio'
+    },
+    'autoavaliacao_vendas': {
+      url: 'AutoavaliacaoVendas',
+      label: '📊 Autoavaliação Vendas',
+      description: 'Avalie seus processos de vendas',
+      keywords: ['autoavaliacao vendas', 'gestao vendas', 'avaliacao vendas'],
+      is_primary: true,
+      stage: 'inicio'
+    },
+    'autoavaliacao_comercial': {
+      url: 'AutoavaliacaoComercial',
+      label: '📊 Autoavaliação Comercial',
+      description: 'Avalie sua gestão comercial',
+      keywords: ['autoavaliacao comercial', 'gestao comercial', 'avaliacao comercial'],
       is_primary: true,
       stage: 'inicio'
     }
