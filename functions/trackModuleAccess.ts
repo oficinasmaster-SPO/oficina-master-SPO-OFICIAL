@@ -27,18 +27,21 @@ const PAGE_TO_MODULE_MAP = {
   
   // Implementações
   '/GestaoOficina': 'CADAS',
-  '/DRETCMP2': 'DRE',
+  '/DRETCMP2': 'dre_tcmp2',
   '/Tarefas': 'TAREFAS',
   '/DesdobramentoMeta': 'DESM',
   '/RegistroDiario': 'REGDIA',
-  '/MissaoVisaoValores': 'MVV',
+  '/MissaoVisaoValores': 'missao_visao_valores',
   '/CulturaOrganizacional': 'CULT',
   '/MeusProcessos': 'MAPS',
   '/RituaisAculturamento': 'RITUAL',
   '/GerenciarTreinamentos': 'TREN',
   '/Colaboradores': 'COLAB',
-  '/CDCList': 'CDC',
-  '/COEXList': 'COEX',
+  '/ConvidarColaborador': 'convidar_colaboradores',
+  '/DescricoesCargo': 'descricoes_cargo',
+  '/CDCList': 'cdc_colaborador',
+  '/COEXList': 'coex_contrato',
+  '/TreinamentoVendas': 'treinamento_vendas',
   
   // Fase 4
   '/Dashboard': 'RANKING',

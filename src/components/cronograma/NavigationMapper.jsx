@@ -93,9 +93,30 @@ const NAVIGATION_MATRIX = {
       url: 'DiagnosticoCarga',
       label: '📊 Diagnóstico de Carga de Trabalho',
       description: 'Avalie capacidade de trabalho',
-      keywords: ['diagnostico carga', 'diagnostico carga trabalho', 'capacidade trabalho'],
+      keywords: ['diagnostico carga', 'diagnostico carga trabalho', 'capacidade trabalho', 'carga de trabalho'],
       is_primary: true,
       stage: 'inicio'
+    },
+    'cdc_colaborador': {
+      url: 'CDCList',
+      label: '📋 CDC - Contratos de Desempenho',
+      description: 'Contratos de desempenho comercial',
+      keywords: ['cdc colaborador', 'cdc', 'contrato desempenho', 'contrato comercial'],
+      is_primary: true
+    },
+    'coex_contrato': {
+      url: 'COEXList',
+      label: '📋 COEX - Contratos de Experiência',
+      description: 'Contratos de experiência cliente',
+      keywords: ['coex contrato', 'coex', 'contrato experiencia', 'experiencia cliente'],
+      is_primary: true
+    },
+    'treinamento_vendas': {
+      url: 'TreinamentoVendas',
+      label: '🎓 Treinamento de Vendas',
+      description: 'Capacitação comercial',
+      keywords: ['treinamento vendas', 'capacitacao vendas', 'treinamento comercial'],
+      is_primary: true
     },
     'autoavaliacao_ma3': {
       url: 'AutoavaliacaoMA3',
@@ -159,7 +180,7 @@ const NAVIGATION_MATRIX = {
       url: 'DRETCMP2',
       label: '💰 DRE / TCMP2',
       description: 'Demonstrativo e custos',
-      keywords: ['dre', 'tcmp2', 'financeiro', 'custo']
+      keywords: ['dre', 'tcmp2', 'financeiro', 'custo', 'dre tcmp2']
     },
     'qgp': {
       url: 'QGPBoard',
@@ -189,17 +210,31 @@ const NAVIGATION_MATRIX = {
       description: 'Gerencie equipe',
       keywords: ['colaborador', 'funcionario', 'equipe', 'time']
     },
+    'convidar_colaboradores': {
+      url: 'ConvidarColaborador',
+      label: '👥 Convidar Colaboradores',
+      description: 'Convide novos colaboradores',
+      keywords: ['convidar colaboradores', 'convidar', 'adicionar colaborador', 'novo colaborador'],
+      is_primary: true
+    },
     'descricoes_cargo': {
       url: 'DescricoesCargo',
       label: '📄 Descrições de Cargo',
       description: 'Defina cargos e funções',
-      keywords: ['cargo', 'funcao', 'descricao']
+      keywords: ['cargo', 'funcao', 'descricao', 'descricoes cargo']
     },
     'cultura_organizacional': {
       url: 'CulturaOrganizacional',
       label: '🏛️ Cultura Organizacional',
       description: 'Missão, visão e valores',
       keywords: ['cultura', 'missao', 'visao', 'valores']
+    },
+    'missao_visao_valores': {
+      url: 'MissaoVisaoValores',
+      label: '🏛️ Missão, Visão e Valores',
+      description: 'Defina identidade organizacional',
+      keywords: ['missao visao valores', 'mvv', 'identidade', 'proposito'],
+      is_primary: true
     },
     'pesquisa_clima': {
       url: 'PesquisaClima',
