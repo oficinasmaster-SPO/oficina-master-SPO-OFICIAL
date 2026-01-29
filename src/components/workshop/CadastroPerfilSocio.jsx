@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, CheckCircle2, User, Upload, Save } from "lucide-react";
+import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Loader2, CheckCircle2, User, Upload, Save, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { jobRoles } from "@/components/lib/jobRoles";
 
@@ -16,6 +17,7 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack, on
   const [existingEmployee, setExistingEmployee] = useState(null);
   const [profiles, setProfiles] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
+  const [showAlert, setShowAlert] = useState(false);
   
   useEffect(() => {
     if (onEditingChange) {
@@ -114,7 +116,7 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack, on
     }
 
     if (!formData.profile_id) {
-      toast.error("Perfil de Acesso é obrigatório");
+      setShowAlert(true);
       return;
     }
 
@@ -190,7 +192,7 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack, on
       }
 
       if (!formData.profile_id) {
-        toast.error("Perfil de Acesso é obrigatório");
+        setShowAlert(true);
         return false;
       }
 
@@ -262,8 +264,31 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack, on
   }
 
   return (
-    <Card className="shadow-md">
-      <CardHeader>
+    <>
+      <AlertDialog open={showAlert} onOpenChange={setShowAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+              </div>
+              <AlertDialogTitle className="text-xl">Campo Obrigatório</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="text-base">
+              O campo <strong>Perfil de Acesso</strong> é obrigatório para prosseguir com o cadastro. 
+              Por favor, selecione um perfil antes de continuar.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button onClick={() => setShowAlert(false)} className="bg-blue-600 hover:bg-blue-700">
+              Entendi
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Card className="shadow-md">
+        <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <User className="w-6 h-6 text-blue-600" />
@@ -431,6 +456,7 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack, on
         </form>
       </CardContent>
     </Card>
+    </>
   );
 });
 
