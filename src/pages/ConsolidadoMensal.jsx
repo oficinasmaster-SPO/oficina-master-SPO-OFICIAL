@@ -275,11 +275,7 @@ export default function ConsolidadoMensal() {
                                         cursor={{ fill: 'transparent' }}
                                         contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                                     />
-                                    <Bar dataKey="average" name="Média" radius={[0, 4, 4, 0]}>
-                                        {monthlyData.averages.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
-                                        ))}
-                                    </Bar>
+                                    <Bar dataKey="average" name="Média" radius={[0, 4, 4, 0]} fill="#8b5cf6" />
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
