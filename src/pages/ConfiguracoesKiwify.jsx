@@ -385,28 +385,60 @@ export default function ConfiguracoesKiwify() {
       {/* Documentation Card */}
       <Card className="mt-6 bg-blue-50">
         <CardHeader>
-          <CardTitle className="text-blue-900">Documentação e Próximos Passos</CardTitle>
+          <CardTitle className="text-blue-900">📋 Como Configurar o Webhook na Kiwify</CardTitle>
         </CardHeader>
-        <CardContent className="text-sm text-blue-800 space-y-2">
-          <p>
-            <strong>1. Webhook da Kiwify:</strong> Configure o webhook da Kiwify para apontar para: 
-            <code className="bg-blue-200 px-2 py-1 rounded ml-2">{window.location.origin}/api/functions/webhookKiwify</code>
-          </p>
-          <p>
-            <strong>2. Documentação:</strong> Consulte a{' '}
-            <a 
-              href="https://docs.kiwify.com.br/api-reference/general" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="underline font-semibold"
-            >
-              documentação oficial da Kiwify
-            </a>
-            {' '}para mais detalhes sobre a integração.
-          </p>
-          <p>
-            <strong>3. Teste:</strong> Use a aba "Testar Webhook" para verificar se a integração está funcionando corretamente.
-          </p>
+        <CardContent className="text-sm text-blue-800 space-y-4">
+          <div className="bg-white p-4 rounded-lg border border-blue-200">
+            <p className="font-bold mb-2">1️⃣ Copie a URL do Webhook:</p>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 bg-blue-50 px-3 py-2 rounded border text-xs">
+                {window.location.origin}/api/functions/webhookKiwify
+              </code>
+              <Button
+                size="sm"
+                onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/api/functions/webhookKiwify`);
+                  toast.success('URL copiada!');
+                }}
+              >
+                Copiar
+              </Button>
+            </div>
+          </div>
+
+          <div className="bg-white p-4 rounded-lg border border-blue-200">
+            <p className="font-bold mb-2">2️⃣ Configure no Painel Kiwify:</p>
+            <ol className="list-decimal list-inside space-y-2 ml-2">
+              <li>Acesse seu painel Kiwify</li>
+              <li>Vá em <strong>Apps → Webhooks</strong></li>
+              <li>Clique em <strong>"Criar Webhook"</strong></li>
+              <li>Cole a URL copiada acima</li>
+              <li>Selecione os eventos que deseja receber:
+                <ul className="list-disc list-inside ml-4 mt-1 text-xs">
+                  <li><code>compra_aprovada</code> - Pagamento aprovado</li>
+                  <li><code>compra_recusada</code> - Pagamento recusado</li>
+                  <li><code>subscription_canceled</code> - Assinatura cancelada</li>
+                  <li><code>subscription_renewed</code> - Assinatura renovada</li>
+                  <li><code>compra_reembolsada</code> - Reembolso efetuado</li>
+                </ul>
+              </li>
+              <li>Salve a configuração</li>
+            </ol>
+          </div>
+
+          <div className="bg-white p-4 rounded-lg border border-blue-200">
+            <p className="font-bold mb-2">3️⃣ Teste a Conexão:</p>
+            <p>Use o botão <strong>"Test Webhook"</strong> no painel Kiwify para enviar um evento de teste.</p>
+            <p className="mt-2">Os eventos aparecerão automaticamente na aba <strong>"Logs Recebidos"</strong> desta página.</p>
+          </div>
+
+          <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-300">
+            <p className="font-bold text-yellow-900 mb-2">⚠️ Importante:</p>
+            <p className="text-yellow-800">
+              A Kiwify envia os dados para VOCÊ quando eventos ocorrem (compras, cancelamentos, etc). 
+              Você não precisa fazer requisições para a Kiwify - eles vão notificar seu sistema automaticamente.
+            </p>
+          </div>
         </CardContent>
       </Card>
         </TabsContent>
@@ -584,10 +616,18 @@ export default function ConfiguracoesKiwify() {
               {webhookLogs.length === 0 ? (
                 <div className="text-center py-12">
                   <AlertCircle className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                  <p className="text-gray-600">Nenhum evento recebido ainda</p>
+                  <p className="text-gray-600 font-semibold">Nenhum evento recebido ainda</p>
                   <p className="text-sm text-gray-500 mt-2">
-                    Os eventos da Kiwify aparecerão aqui automaticamente
+                    Quando a Kiwify enviar eventos de pagamento, eles aparecerão aqui automaticamente
                   </p>
+                  <div className="mt-4 p-4 bg-blue-50 rounded-lg text-left max-w-md mx-auto">
+                    <p className="text-xs text-blue-800 mb-2"><strong>Como receber eventos:</strong></p>
+                    <ol className="text-xs text-blue-700 list-decimal list-inside space-y-1">
+                      <li>Configure o webhook no painel Kiwify (veja instruções na aba "Configurações")</li>
+                      <li>Use o botão "Test Webhook" no painel Kiwify para enviar um teste</li>
+                      <li>Ou realize uma compra real de teste</li>
+                    </ol>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-3">
