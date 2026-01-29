@@ -1,15 +1,16 @@
 import React from "react";
-import UnifiedAudioRecorder from "@/components/shared/UnifiedAudioRecorder";
+import AudioCaptureField from "@/components/shared/AudioCaptureField";
 
+/**
+ * Wrapper para transcrição automática
+ * Usado nas autoavaliações para gravar + transcrever automaticamente
+ */
 export default function AudioTranscriber({ onTranscriptionComplete, placeholder = "Clique para gravar e transcrever..." }) {
-  const handleTranscriptionComplete = (text) => {
-    onTranscriptionComplete(text);
-  };
-
   return (
-    <UnifiedAudioRecorder
-      showTranscription={true}
-      onTranscriptionComplete={handleTranscriptionComplete}
+    <AudioCaptureField
+      mode="transcribe"
+      onTranscribed={(text) => onTranscriptionComplete(text)}
+      showManualTranscribe={false}
     />
   );
 }

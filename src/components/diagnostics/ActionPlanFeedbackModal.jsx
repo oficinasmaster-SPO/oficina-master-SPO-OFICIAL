@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Sparkles } from "lucide-react";
-import AudioRecorder from "@/components/audio/AudioRecorder";
+import AudioCaptureField from "@/components/shared/AudioCaptureField";
 
 export default function ActionPlanFeedbackModal({ 
   open, 
@@ -99,9 +99,10 @@ export default function ActionPlanFeedbackModal({
 
           <TabsContent value="audio" className="space-y-4">
             <div className="border rounded-lg p-6 bg-gray-50">
-              <AudioRecorder
-                onRecordingComplete={(url) => setAudioUrl(url)}
-                audioUrl={audioUrl}
+              <AudioCaptureField
+                existingAudioUrl={audioUrl}
+                onAudioSaved={(url) => setAudioUrl(url)}
+                mode="simple"
               />
             </div>
           </TabsContent>

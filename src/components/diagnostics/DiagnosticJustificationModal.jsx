@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Save, Sparkles, AlertCircle, CheckCircle2, Mic } from "lucide-react";
 import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
-import UnifiedAudioRecorder from "@/components/shared/UnifiedAudioRecorder";
+import AudioCaptureField from "@/components/shared/AudioCaptureField";
 import { questions } from "@/components/diagnostic/Questions";
 
 export default function DiagnosticJustificationModal({ 
@@ -216,9 +216,10 @@ export default function DiagnosticJustificationModal({
                         <Mic className="w-4 h-4" />
                         Áudio (opcional)
                       </label>
-                      <UnifiedAudioRecorder
+                      <AudioCaptureField
                         existingAudioUrl={currentJust.justificativa_audio_url}
-                        onAudioRecorded={(url) => handleJustificationChange(answer.question_id, 'justificativa_audio_url', url)}
+                        onAudioSaved={(url) => handleJustificationChange(answer.question_id, 'justificativa_audio_url', url)}
+                        mode="simple"
                       />
                     </div>
 
