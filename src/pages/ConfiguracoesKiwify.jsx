@@ -622,13 +622,25 @@ export default function ConfiguracoesKiwify() {
                   <p className="text-sm text-gray-500 mt-2">
                     Quando a Kiwify enviar eventos de pagamento, eles aparecerão aqui automaticamente
                   </p>
-                  <div className="mt-4 p-4 bg-blue-50 rounded-lg text-left max-w-md mx-auto">
-                    <p className="text-xs text-blue-800 mb-2"><strong>Como receber eventos:</strong></p>
-                    <ol className="text-xs text-blue-700 list-decimal list-inside space-y-1">
-                      <li>Configure o webhook no painel Kiwify (veja instruções na aba "Configurações")</li>
-                      <li>Use o botão "Test Webhook" no painel Kiwify para enviar um teste</li>
-                      <li>Ou realize uma compra real de teste</li>
-                    </ol>
+                  <div className="mt-6 space-y-3">
+                    <div className="p-4 bg-orange-50 rounded-lg text-left max-w-2xl mx-auto border border-orange-200">
+                      <p className="text-sm font-bold text-orange-900 mb-2">🚨 Não está recebendo eventos?</p>
+                      <ol className="text-xs text-orange-800 list-decimal list-inside space-y-2">
+                        <li><strong>Verifique se configurou no painel Kiwify:</strong>
+                          <ul className="list-disc list-inside ml-4 mt-1">
+                            <li>Vá em Apps → Webhooks no painel Kiwify</li>
+                            <li>Cole a URL do webhook (copie da aba "Configurações")</li>
+                            <li>Selecione os eventos a receber</li>
+                            <li>Salve a configuração</li>
+                          </ul>
+                        </li>
+                        <li><strong>Use a aba "Testar Webhook"</strong> para simular um evento localmente</li>
+                        <li><strong>Ou use o botão "Test Webhook"</strong> no painel Kiwify para enviar um evento real</li>
+                      </ol>
+                    </div>
+                    <div className="p-4 bg-blue-50 rounded-lg text-left max-w-2xl mx-auto border border-blue-200">
+                      <p className="text-xs text-blue-800"><strong>💡 Dica:</strong> Teste primeiro usando a aba "Testar Webhook" aqui na plataforma para verificar se o sistema está funcionando corretamente antes de configurar no painel Kiwify.</p>
+                    </div>
                   </div>
                 </div>
               ) : (
