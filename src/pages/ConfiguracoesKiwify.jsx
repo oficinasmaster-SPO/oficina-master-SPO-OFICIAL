@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
-import { Loader2, Plus, X, Save, AlertCircle, CheckCircle2, Zap, Activity } from 'lucide-react';
+import { Loader2, Plus, X, Save, AlertCircle, CheckCircle2, Zap, Activity, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -162,11 +162,15 @@ export default function ConfiguracoesKiwify() {
       </div>
 
       <Tabs defaultValue="config" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="config">Configurações</TabsTrigger>
           <TabsTrigger value="test">
             <Activity className="w-4 h-4 mr-2" />
             Testar Webhook
+          </TabsTrigger>
+          <TabsTrigger value="logs">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Logs Recebidos
           </TabsTrigger>
         </TabsList>
 
@@ -538,6 +542,112 @@ export default function ConfiguracoesKiwify() {
                   <li>Verifique os logs da função <code>webhookKiwify</code> para mais detalhes</li>
                 </ul>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="logs">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Logs de Webhook Recebidos</CardTitle>
+                  <p className="text-sm text-gray-600 mt-2">
+                    Histórico dos últimos 50 eventos recebidos da Kiwify
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => refetchLogs()}
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Atualizar
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {webhookLogs.length === 0 ? (
+                <div className="text-center py-12">
+                  <AlertCircle className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                  <p className="text-gray-600">Nenhum evento recebido ainda</p>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Os eventos da Kiwify aparecerão aqui automaticamente
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {webhookLogs.map((log) => (
+                    <Card key={log.id} className="border">
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <Badge variant={
+                              log.processing_status === 'success' ? 'default' :
+                              log.processing_status === 'error' ? 'destructive' : 'secondary'
+                            }>
+                              {log.event_type || 'Desconhecido'}
+                            </Badge>
+                            {log.processing_status === 'success' && (
+                              <CheckCircle2 className="w-4 h-4 text-green-600" />
+                            )}
+                            {log.processing_status === 'error' && (
+                              <X className="w-4 h-4 text-red-600" />
+                            )}
+                            {log.processing_status === 'warning' && (
+                              <AlertCircle className="w-4 h-4 text-yellow-600" />
+                            )}
+                          </div>
+                          <span className="text-xs text-gray-500">
+                            {new Date(log.created_date).toLocaleString('pt-BR')}
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 text-sm mb-3">
+                          {log.customer_email && (
+                            <div>
+                              <span className="text-gray-600">Cliente:</span>
+                              <span className="ml-2 font-medium">{log.customer_email}</span>
+                            </div>
+                          )}
+                          {log.order_id && (
+                            <div>
+                              <span className="text-gray-600">Pedido:</span>
+                              <span className="ml-2 font-mono text-xs">{log.order_id}</span>
+                            </div>
+                          )}
+                          {log.product_id && (
+                            <div>
+                              <span className="text-gray-600">Produto:</span>
+                              <span className="ml-2 font-mono text-xs">{log.product_id}</span>
+                            </div>
+                          )}
+                          {log.workshop_id && (
+                            <div>
+                              <span className="text-gray-600">Oficina:</span>
+                              <span className="ml-2 font-mono text-xs">{log.workshop_id}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="text-sm">
+                          <span className="text-gray-600">Resultado:</span>
+                          <span className="ml-2">{log.processing_message}</span>
+                        </div>
+
+                        <details className="mt-3">
+                          <summary className="text-xs text-blue-600 cursor-pointer hover:underline">
+                            Ver payload completo
+                          </summary>
+                          <pre className="mt-2 p-3 bg-gray-50 rounded text-xs overflow-auto max-h-60">
+                            {JSON.stringify(log.payload, null, 2)}
+                          </pre>
+                        </details>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

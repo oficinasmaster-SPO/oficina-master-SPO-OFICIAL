@@ -15,70 +15,92 @@ Deno.serve(async (req) => {
     }
     
     console.log("📩 Kiwify Webhook recebido:", payload);
-
-    // Validar assinatura do webhook (se Kiwify fornecer)
-    const signature = req.headers.get('x-kiwify-signature');
-    const clientSecret = Deno.env.get('KIWIFY_CLIENT_SECRET');
     
-    if (clientSecret && signature) {
-      // Validar assinatura usando HMAC
-      const encoder = new TextEncoder();
-      const key = await crypto.subtle.importKey(
-        'raw',
-        encoder.encode(clientSecret),
-        { name: 'HMAC', hash: 'SHA-256' },
-        false,
-        ['sign']
-      );
-      
-      const expectedSignature = await crypto.subtle.sign(
-        'HMAC',
-        key,
-        encoder.encode(body)
-      );
-      
-      const expectedHex = Array.from(new Uint8Array(expectedSignature))
-        .map(b => b.toString(16).padStart(2, '0'))
-        .join('');
-      
-      if (signature !== expectedHex) {
-        console.error("❌ Assinatura inválida");
-        return Response.json({ error: 'Invalid signature' }, { status: 401 });
-      }
-    }
-
-    // Eventos oficiais da Kiwify API
+    // Extrair dados básicos para log
     const eventType = payload.event || payload.trigger;
+    const customerEmail = payload.Customer?.email || payload.customer_email;
+    const productId = payload.Product?.product_id || payload.product_id;
+    const orderId = payload.order_id || payload.transaction_id || payload.id;
     const eventData = payload.data || payload;
     
-    // Processar diferentes eventos conforme documentação Kiwify
-    switch (eventType) {
-      case 'compra_aprovada':
-      case 'subscription_renewed':
-        await handlePaymentApproved(base44, eventData);
-        break;
-        
-      case 'compra_recusada':
-        await handlePaymentFailed(base44, eventData);
-        break;
-        
-      case 'subscription_canceled':
-      case 'subscription_late':
-        await handleSubscriptionCancelled(base44, eventData);
-        break;
-        
-      case 'compra_reembolsada':
-      case 'chargeback':
-        await handleRefund(base44, eventData);
-        break;
-        
-      default:
-        console.log(`⚠️ Evento não tratado: ${eventType}`);
+    // Buscar configurações do Kiwify
+    const kiwifySettings = await base44.asServiceRole.entities.KiwifySettings.list();
+    const kiwifyConfig = kiwifySettings[0];
+    
+    if (!kiwifyConfig || !kiwifyConfig.is_active) {
+      // Registrar log mesmo se integração não estiver ativa
+      await base44.asServiceRole.entities.KiwifyWebhookLog.create({
+        event_type: eventType,
+        payload: payload,
+        customer_email: customerEmail,
+        product_id: productId,
+        order_id: orderId,
+        processing_status: 'warning',
+        processing_message: 'Integração Kiwify não está ativa',
+        received_at: new Date().toISOString()
+      });
+      
+      console.log("⚠️ Integração Kiwify não está ativa");
+      return Response.json({ error: 'Kiwify integration not active' }, { status: 400 });
     }
-
+    
+    let processingStatus = 'success';
+    let processingMessage = 'Evento processado com sucesso';
+    let workshopId = null;
+    
+    try {
+      // Processar diferentes eventos conforme documentação Kiwify
+      switch (eventType) {
+        case 'compra_aprovada':
+        case 'subscription_renewed':
+          workshopId = await handlePaymentApproved(base44, eventData, kiwifyConfig);
+          break;
+          
+        case 'compra_recusada':
+          await handlePaymentFailed(base44, eventData);
+          processingMessage = 'Pagamento recusado registrado';
+          break;
+          
+        case 'subscription_canceled':
+        case 'subscription_late':
+          await handleSubscriptionCancelled(base44, eventData);
+          processingMessage = 'Assinatura cancelada';
+          break;
+          
+        case 'compra_reembolsada':
+        case 'chargeback':
+          await handleRefund(base44, eventData);
+          processingMessage = 'Reembolso processado';
+          break;
+          
+        default:
+          processingStatus = 'warning';
+          processingMessage = `Evento não tratado: ${eventType}`;
+          console.log(`⚠️ Evento não tratado: ${eventType}`);
+      }
+    } catch (error) {
+      processingStatus = 'error';
+      processingMessage = error.message;
+      console.error('Erro ao processar webhook:', error);
+    }
+    
+    // Registrar log do webhook
+    await base44.asServiceRole.entities.KiwifyWebhookLog.create({
+      event_type: eventType,
+      payload: payload,
+      customer_email: customerEmail,
+      product_id: productId,
+      order_id: orderId,
+      workshop_id: workshopId,
+      processing_status: processingStatus,
+      processing_message: processingMessage,
+      received_at: new Date().toISOString()
+    });
+    
     return Response.json({ 
-      success: true, 
-      message: 'Webhook processado com sucesso' 
+      success: true,
+      message: 'Webhook processed successfully',
+      status: processingStatus
     });
 
   } catch (error) {
@@ -89,22 +111,13 @@ Deno.serve(async (req) => {
   }
 });
 
-async function handlePaymentApproved(base44, data) {
+async function handlePaymentApproved(base44, data, kiwifyConfig) {
   console.log("✅ Pagamento aprovado:", data);
   
   // Kiwify API retorna: Customer { email }, Product { product_id }, custom_data
   const customerEmail = data.Customer?.email || data.customer_email;
   const productId = data.Product?.product_id || data.product_id;
   const customData = data.custom_data || data.custom_fields || {};
-  
-  // Buscar configurações Kiwify para mapear produto -> plano
-  const settings = await base44.asServiceRole.entities.KiwifySettings.list();
-  const kiwifyConfig = settings[0];
-  
-  if (!kiwifyConfig) {
-    console.error("❌ Configuração Kiwify não encontrada");
-    return;
-  }
   
   // Encontrar mapeamento do produto
   const mapping = kiwifyConfig.plan_mappings?.find(
