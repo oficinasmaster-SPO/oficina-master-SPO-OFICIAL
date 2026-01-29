@@ -102,15 +102,17 @@ export default function DiagnosticJustificationModal({
     }
 
     if (!diagnostic.justifications_completed) {
-      toast.error("Salve as justificativas antes de gerar o plano.");
-      return;
+      // Auto-salvar se não foi salvo ainda
+      await handleSave();
     }
 
     setGenerating(true);
     try {
       await onGeneratePlan();
+      toast.success("Gerando seu plano personalizado com IA...");
       onClose();
     } catch (error) {
+      console.error("Erro ao gerar plano:", error);
       toast.error("Erro ao gerar plano: " + error.message);
     } finally {
       setGenerating(false);
@@ -275,7 +277,7 @@ export default function DiagnosticJustificationModal({
           </Button>
           <Button
             onClick={handleGeneratePlan}
-            disabled={!allFilled || !diagnostic.justifications_completed || saving || generating}
+            disabled={!allFilled || saving || generating}
             className="bg-green-600 hover:bg-green-700"
           >
             {generating ? (
