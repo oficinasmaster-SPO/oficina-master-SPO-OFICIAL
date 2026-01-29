@@ -15,40 +15,48 @@ Deno.serve(async (req) => {
     // URL do webhook (pegar da URL atual)
     const webhookUrl = `${new URL(req.url).origin}/api/functions/webhookKiwify`;
 
-    // Payloads de teste simulando eventos Kiwify
+    // Payloads de teste simulando eventos oficiais da Kiwify API
     const testPayloads = {
       payment_approved: {
-        event: 'payment.approved',
-        data: {
-          id: 'test_' + Date.now(),
-          transaction_id: 'txn_test_' + Date.now(),
-          customer_email: user.email,
+        event: 'compra_aprovada',
+        trigger: 'compra_aprovada',
+        Customer: {
+          email: user.email,
+          full_name: user.full_name
+        },
+        Product: {
           product_id: 'prod_test_123',
-          amount: 19700, // R$ 197,00
-          custom_fields: {
-            workshop_id: null // Será buscado pelo email
-          },
-          created_at: new Date().toISOString()
-        }
+          product_name: 'Plano Teste'
+        },
+        order_id: 'test_order_' + Date.now(),
+        order_amount: 19700,
+        custom_data: {
+          workshop_id: null // Será buscado pelo email
+        },
+        created_at: new Date().toISOString()
       },
       payment_refused: {
-        event: 'payment.refused',
-        data: {
-          id: 'test_' + Date.now(),
-          transaction_id: 'txn_test_failed_' + Date.now(),
-          customer_email: user.email,
-          product_id: 'prod_test_123',
-          reason: 'Insufficient funds',
-          created_at: new Date().toISOString()
-        }
+        event: 'compra_recusada',
+        trigger: 'compra_recusada',
+        Customer: {
+          email: user.email,
+          full_name: user.full_name
+        },
+        Product: {
+          product_id: 'prod_test_123'
+        },
+        order_id: 'test_failed_' + Date.now(),
+        reason: 'Insufficient funds',
+        created_at: new Date().toISOString()
       },
       subscription_cancelled: {
-        event: 'subscription.cancelled',
-        data: {
-          id: 'sub_test_' + Date.now(),
-          customer_email: user.email,
-          cancelled_at: new Date().toISOString()
-        }
+        event: 'subscription_canceled',
+        trigger: 'subscription_canceled',
+        Customer: {
+          email: user.email
+        },
+        subscription_id: 'sub_test_' + Date.now(),
+        cancelled_at: new Date().toISOString()
       }
     };
 

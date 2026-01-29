@@ -41,27 +41,33 @@ Deno.serve(async (req) => {
       }
     }
 
-    const { event, data } = payload;
+    // Eventos oficiais da Kiwify API
+    const eventType = payload.event || payload.trigger;
+    const eventData = payload.data || payload;
     
-    // Processar diferentes eventos
-    switch (event) {
-      case 'payment.approved':
-      case 'subscription.created':
-        await handlePaymentApproved(base44, data);
+    // Processar diferentes eventos conforme documentação Kiwify
+    switch (eventType) {
+      case 'compra_aprovada':
+      case 'subscription_renewed':
+        await handlePaymentApproved(base44, eventData);
         break;
         
-      case 'payment.refused':
-      case 'payment.cancelled':
-        await handlePaymentFailed(base44, data);
+      case 'compra_recusada':
+        await handlePaymentFailed(base44, eventData);
         break;
         
-      case 'subscription.cancelled':
-      case 'subscription.expired':
-        await handleSubscriptionCancelled(base44, data);
+      case 'subscription_canceled':
+      case 'subscription_late':
+        await handleSubscriptionCancelled(base44, eventData);
+        break;
+        
+      case 'compra_reembolsada':
+      case 'chargeback':
+        await handleRefund(base44, eventData);
         break;
         
       default:
-        console.log(`⚠️ Evento não tratado: ${event}`);
+        console.log(`⚠️ Evento não tratado: ${eventType}`);
     }
 
     return Response.json({ 
@@ -80,7 +86,10 @@ Deno.serve(async (req) => {
 async function handlePaymentApproved(base44, data) {
   console.log("✅ Pagamento aprovado:", data);
   
-  const { customer_email, product_id, custom_fields } = data;
+  // Kiwify API retorna: Customer { email }, Product { product_id }, custom_data
+  const customerEmail = data.Customer?.email || data.customer_email;
+  const productId = data.Product?.product_id || data.product_id;
+  const customData = data.custom_data || data.custom_fields || {};
   
   // Buscar configurações Kiwify para mapear produto -> plano
   const settings = await base44.asServiceRole.entities.KiwifySettings.list();
@@ -93,18 +102,18 @@ async function handlePaymentApproved(base44, data) {
   
   // Encontrar mapeamento do produto
   const mapping = kiwifyConfig.plan_mappings?.find(
-    m => m.kiwify_product_id === product_id
+    m => m.kiwify_product_id === productId
   );
   
   if (!mapping) {
-    console.error(`❌ Produto ${product_id} não mapeado para nenhum plano`);
+    console.error(`❌ Produto ${productId} não mapeado para nenhum plano`);
     return;
   }
   
   const planId = mapping.internal_plan_id;
   
-  // Buscar workshop pelo email do cliente ou custom_field
-  const workshopId = custom_fields?.workshop_id;
+  // Buscar workshop pelo email do cliente ou custom_data
+  const workshopId = customData?.workshop_id;
   let workshop;
   
   if (workshopId) {
@@ -112,7 +121,7 @@ async function handlePaymentApproved(base44, data) {
   } else {
     // Buscar por email do owner
     const users = await base44.asServiceRole.entities.User.list();
-    const user = users.find(u => u.email === customer_email);
+    const user = users.find(u => u.email === customerEmail);
     
     if (user) {
       const workshops = await base44.asServiceRole.entities.Workshop.list();
@@ -121,7 +130,7 @@ async function handlePaymentApproved(base44, data) {
   }
   
   if (!workshop) {
-    console.error(`❌ Workshop não encontrado para email: ${customer_email}`);
+    console.error(`❌ Workshop não encontrado para email: ${customerEmail}`);
     return;
   }
   
@@ -138,8 +147,8 @@ async function handlePaymentApproved(base44, data) {
     plan_id: planId,
     payment_provider: 'kiwify',
     payment_status: 'approved',
-    amount: data.amount || 0,
-    transaction_id: data.transaction_id || data.id,
+    amount: data.order_amount || data.amount || 0,
+    transaction_id: data.order_id || data.transaction_id || data.id,
     payment_date: new Date().toISOString(),
     metadata: data
   });
@@ -147,14 +156,49 @@ async function handlePaymentApproved(base44, data) {
   console.log(`✅ Plano atualizado: ${workshop.name} -> ${planId}`);
 }
 
+async function handleRefund(base44, data) {
+  console.log("💸 Reembolso/Chargeback:", data);
+  
+  const customerEmail = data.Customer?.email || data.customer_email;
+  
+  // Buscar workshop e voltar para plano FREE
+  const users = await base44.asServiceRole.entities.User.list();
+  const user = users.find(u => u.email === customerEmail);
+  
+  if (user) {
+    const workshops = await base44.asServiceRole.entities.Workshop.list();
+    const workshop = workshops.find(w => w.owner_id === user.id);
+    
+    if (workshop) {
+      await base44.asServiceRole.entities.Workshop.update(workshop.id, {
+        planoAtual: 'FREE',
+        dataAssinatura: new Date().toISOString()
+      });
+      
+      // Registrar no histórico
+      await base44.asServiceRole.entities.PaymentHistory.create({
+        workshop_id: workshop.id,
+        payment_provider: 'kiwify',
+        payment_status: 'refunded',
+        transaction_id: data.order_id || data.transaction_id,
+        payment_date: new Date().toISOString(),
+        metadata: data
+      });
+      
+      console.log(`✅ Workshop ${workshop.name} voltou para plano FREE (reembolso)`);
+    }
+  }
+}
+
 async function handlePaymentFailed(base44, data) {
   console.log("❌ Pagamento falhou:", data);
   
-  const { customer_email, transaction_id } = data;
+  const customerEmail = data.Customer?.email || data.customer_email;
+  const transactionId = data.order_id || data.transaction_id;
   
   // Registrar falha no histórico
   const users = await base44.asServiceRole.entities.User.list();
-  const user = users.find(u => u.email === customer_email);
+  const user = users.find(u => u.email === customerEmail);
   
   if (user) {
     const workshops = await base44.asServiceRole.entities.Workshop.list();
@@ -165,7 +209,7 @@ async function handlePaymentFailed(base44, data) {
         workshop_id: workshop.id,
         payment_provider: 'kiwify',
         payment_status: 'failed',
-        transaction_id: transaction_id || data.id,
+        transaction_id: transactionId,
         payment_date: new Date().toISOString(),
         metadata: data
       });
@@ -176,11 +220,11 @@ async function handlePaymentFailed(base44, data) {
 async function handleSubscriptionCancelled(base44, data) {
   console.log("🚫 Assinatura cancelada:", data);
   
-  const { customer_email } = data;
+  const customerEmail = data.Customer?.email || data.customer_email;
   
   // Buscar workshop e voltar para plano FREE
   const users = await base44.asServiceRole.entities.User.list();
-  const user = users.find(u => u.email === customer_email);
+  const user = users.find(u => u.email === customerEmail);
   
   if (user) {
     const workshops = await base44.asServiceRole.entities.Workshop.list();
