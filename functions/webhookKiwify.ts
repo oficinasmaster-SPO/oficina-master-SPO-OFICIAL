@@ -5,8 +5,14 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     
     // Parse webhook payload
-    const body = await req.text();
-    const payload = JSON.parse(body);
+    let payload;
+    try {
+      const body = await req.text();
+      payload = JSON.parse(body);
+    } catch (e) {
+      // Se falhar, pode ser uma chamada direta via SDK (teste)
+      payload = await req.json();
+    }
     
     console.log("📩 Kiwify Webhook recebido:", payload);
 

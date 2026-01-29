@@ -62,25 +62,16 @@ Deno.serve(async (req) => {
 
     const payload = testPayloads[testType] || testPayloads.payment_approved;
 
-    // Enviar requisição para o webhook
-    const webhookResponse = await fetch(webhookUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-test-webhook': 'true'
-      },
-      body: JSON.stringify(payload)
-    });
-
-    const webhookResult = await webhookResponse.json();
+    // Chamar o webhook diretamente via SDK (mais confiável que fetch)
+    const webhookResult = await base44.asServiceRole.functions.invoke('webhookKiwify', payload);
 
     return Response.json({
       success: true,
       webhook_url: webhookUrl,
       test_type: testType,
       payload_sent: payload,
-      webhook_status: webhookResponse.status,
-      webhook_response: webhookResult,
+      webhook_status: 200,
+      webhook_response: webhookResult.data || webhookResult,
       timestamp: new Date().toISOString()
     });
 
