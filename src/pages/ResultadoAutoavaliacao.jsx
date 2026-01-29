@@ -4,7 +4,7 @@ import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Loader2, Home, RotateCcw, TrendingUp, AlertTriangle, CheckCircle2, Sparkles, Printer, Share2 } from "lucide-react";
+import { Loader2, Home, RotateCcw, TrendingUp, AlertTriangle, CheckCircle2, Sparkles, Printer, Share2, Database } from "lucide-react";
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer, Tooltip } from "recharts";
 import { assessmentCriteria } from "../components/assessment/AssessmentCriteria";
 import ReactMarkdown from "react-markdown";
@@ -22,6 +22,7 @@ export default function ResultadoAutoavaliacao() {
   const [assessment, setAssessment] = useState(null);
   const [showActionPlanDetails, setShowActionPlanDetails] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [savingToIntelligence, setSavingToIntelligence] = useState(false);
 
   const { data: actionPlan } = useQuery({
     queryKey: ['action-plan', assessment?.id],
@@ -127,6 +128,58 @@ export default function ResultadoAutoavaliacao() {
     }
   };
 
+  const saveToClientIntelligence = async () => {
+    if (!assessment?.answers || !assessment?.workshop_id) {
+      toast.error("Dados incompletos para salvar");
+      return;
+    }
+
+    setSavingToIntelligence(true);
+    try {
+      const areaMap = {
+        vendas: 'vendas_conversao',
+        comercial: 'vendas_conversao',
+        marketing: 'marketing_demanda',
+        pessoas: 'pessoas_contratacao',
+        financeiro: 'financeiro',
+        empresarial: 'gestao_processos',
+        ma3: 'gestao_processos'
+      };
+
+      const records = assessment.answers
+        .filter(a => a.situacao?.trim() || a.justificativa?.trim())
+        .map(answer => ({
+          workshop_id: assessment.workshop_id,
+          area: areaMap[assessment.assessment_type] || 'gestao_processos',
+          type: answer.score < 5 ? 'dor' : answer.score < 7 ? 'duvida' : 'evolucao',
+          subcategory: answer.question_key,
+          title: `${answer.question_label} (Nota: ${answer.score})`,
+          description: `**Situação:** ${answer.situacao || 'Não informado'}\n\n**Justificativa:** ${answer.justificativa || 'Não informado'}${answer.audio_url ? `\n\n**Áudio:** ${answer.audio_url}` : ''}`,
+          gravity: answer.score < 4 ? 'critica' : answer.score < 6 ? 'alta' : answer.score < 8 ? 'media' : 'baixa',
+          tags: [
+            'autoavaliacao',
+            assessment.assessment_type,
+            `ProcessAssessment:${assessment.id}`,
+            `score_${answer.score}`
+          ],
+          status: 'ativo'
+        }));
+
+      if (records.length > 0) {
+        await Promise.all(records.map(record => base44.entities.ClientIntelligence.create(record)));
+        toast.success(`${records.length} situações salvas na Inteligência do Cliente`);
+        navigate(createPageUrl("IntelligenciaCliente") + "?source=autoavaliacao");
+      } else {
+        toast.info("Nenhuma situação detalhada para salvar");
+      }
+    } catch (error) {
+      console.error("Erro ao salvar:", error);
+      toast.error("Erro ao salvar na Inteligência: " + error.message);
+    } finally {
+      setSavingToIntelligence(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -146,6 +199,53 @@ export default function ResultadoAutoavaliacao() {
       score: value
     };
   });
+
+  const getContextualFeedback = () => {
+    if (!assessment?.answers || assessment.answers.length === 0) {
+      return assessment.ai_recommendations;
+    }
+
+    const groupedByScore = {
+      criticos: assessment.answers.filter(a => a.score < 5),
+      atencao: assessment.answers.filter(a => a.score >= 5 && a.score < 7),
+      bons: assessment.answers.filter(a => a.score >= 7)
+    };
+
+    let contextualText = `## Análise Detalhada - ${criteriaConfig.title}\n\n`;
+    contextualText += `**Média Geral:** ${assessment.average_score.toFixed(1)}/10\n\n`;
+
+    if (groupedByScore.criticos.length > 0) {
+      contextualText += `### 🔴 Pontos Críticos (Score < 5)\n\n`;
+      groupedByScore.criticos.forEach(a => {
+        contextualText += `**${a.question_label}** - Nota: ${a.score}/10\n`;
+        if (a.situacao) contextualText += `- *Situação:* ${a.situacao}\n`;
+        if (a.justificativa) contextualText += `- *Justificativa:* ${a.justificativa}\n`;
+        contextualText += '\n';
+      });
+    }
+
+    if (groupedByScore.atencao.length > 0) {
+      contextualText += `### 🟡 Pontos de Atenção (Score 5-6)\n\n`;
+      groupedByScore.atencao.forEach(a => {
+        contextualText += `**${a.question_label}** - Nota: ${a.score}/10\n`;
+        if (a.situacao) contextualText += `- *Situação:* ${a.situacao}\n`;
+        if (a.justificativa) contextualText += `- *Justificativa:* ${a.justificativa}\n`;
+        contextualText += '\n';
+      });
+    }
+
+    if (groupedByScore.bons.length > 0) {
+      contextualText += `### 🟢 Pontos Fortes (Score ≥ 7)\n\n`;
+      groupedByScore.bons.forEach(a => {
+        contextualText += `**${a.question_label}** - Nota: ${a.score}/10\n`;
+        if (a.situacao) contextualText += `- *Situação:* ${a.situacao}\n`;
+        contextualText += '\n';
+      });
+    }
+
+    contextualText += `\n---\n\n${assessment.ai_recommendations}`;
+    return contextualText;
+  };
 
   const healthStatus = assessment.average_score >= 8 ? "excelente" :
                       assessment.average_score >= 6 ? "bom" :
@@ -256,17 +356,17 @@ export default function ResultadoAutoavaliacao() {
           </div>
         </div>
 
-        {/* Análise IA */}
+        {/* Análise IA com Feedback Contextual */}
         <Card className="border-2 border-purple-200">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Sparkles className="w-6 h-6 text-purple-600" />
               Análise Detalhada & Recomendações IA
             </CardTitle>
-            <CardDescription>Diagnóstico profissional baseado na metodologia Oficinas Master</CardDescription>
+            <CardDescription>Diagnóstico profissional com base nas suas respostas</CardDescription>
           </CardHeader>
           <CardContent className="prose max-w-none">
-            <ReactMarkdown>{assessment.ai_recommendations}</ReactMarkdown>
+            <ReactMarkdown>{getContextualFeedback()}</ReactMarkdown>
           </CardContent>
         </Card>
 
@@ -319,6 +419,35 @@ export default function ResultadoAutoavaliacao() {
           onSubmit={(feedback) => refinePlanMutation.mutate({ feedback })}
           isLoading={refinePlanMutation.isPending}
         />
+
+        {/* Salvar na Inteligência do Cliente */}
+        {assessment?.answers?.length > 0 && (
+          <Card className="border-2 border-blue-200 bg-blue-50">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 mb-1">
+                    💡 Salvar na Inteligência do Cliente
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Registre suas situações detalhadas para acompanhamento contínuo e análise de evolução
+                  </p>
+                </div>
+                <Button
+                  onClick={saveToClientIntelligence}
+                  disabled={savingToIntelligence}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {savingToIntelligence ? (
+                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Salvando...</>
+                  ) : (
+                    <><Database className="w-4 h-4 mr-2" />Ir para Inteligência</>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Ações */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
