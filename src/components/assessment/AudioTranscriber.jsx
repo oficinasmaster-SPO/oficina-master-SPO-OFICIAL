@@ -48,15 +48,14 @@ export default function AudioTranscriber({ onTranscription, placeholder = "Grava
     setIsTranscribing(true);
     try {
       const file = new File([audioBlob], "audio.webm", { type: "audio/webm" });
-      const { data: uploadResult } = await base44.integrations.Core.UploadFile({ file });
+      const uploadResult = await base44.integrations.Core.UploadFile({ file });
       
-      const { data: transcription } = await base44.integrations.Core.InvokeLLM({
-        prompt: "Transcreva o áudio a seguir em texto corrido, sem formatação especial. Apenas o texto falado:",
-        file_urls: [uploadResult.file_url]
+      const transcriptionResult = await base44.functions.invoke('transcribeAudio', {
+        audio_url: uploadResult.file_url
       });
 
-      if (transcription && typeof transcription === 'string') {
-        onTranscription(transcription.trim());
+      if (transcriptionResult?.data?.success && transcriptionResult.data.text) {
+        onTranscription(transcriptionResult.data.text.trim());
         toast.success("Áudio transcrito com sucesso!");
       } else {
         toast.error("Erro ao transcrever áudio");
