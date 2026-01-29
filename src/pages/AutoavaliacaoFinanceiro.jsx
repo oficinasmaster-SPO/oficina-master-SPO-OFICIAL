@@ -9,7 +9,7 @@ import { Slider } from "@/components/ui/slider";
 import { Loader2, DollarSign, Sparkles } from "lucide-react";
 import { assessmentCriteria } from "../components/assessment/AssessmentCriteria";
 import { toast } from "sonner";
-import AudioRecorder from "../components/assessment/AudioRecorder";
+import AudioTranscriber from "../components/assessment/AudioTranscriber";
 import { Textarea } from "@/components/ui/textarea";
 
 export default function AutoavaliacaoFinanceiro() {
@@ -218,6 +218,10 @@ Feedback adicional do usuário para consideração: """${userFeedback}"""
                       className="min-h-[80px]"
                       required
                     />
+                    <AudioTranscriber
+                      placeholder="Gravar situação"
+                      onTranscription={(text) => setAnswers({...answers, [criterion.key]: {...answers[criterion.key], situacao: text}})}
+                    />
                   </div>
 
                   <div className="space-y-2">
@@ -231,13 +235,9 @@ Feedback adicional do usuário para consideração: """${userFeedback}"""
                       className="min-h-[80px]"
                       required
                     />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Áudio (opcional)</Label>
-                    <AudioRecorder
-                      audioUrl={answers[criterion.key]?.audio_url}
-                      onAudioChange={(url) => setAnswers({...answers, [criterion.key]: {...answers[criterion.key], audio_url: url}})}
+                    <AudioTranscriber
+                      placeholder="Gravar justificativa"
+                      onTranscription={(text) => setAnswers({...answers, [criterion.key]: {...answers[criterion.key], justificativa: text}})}
                     />
                   </div>
                 </div>
