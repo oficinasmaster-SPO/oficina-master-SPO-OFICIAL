@@ -16,12 +16,12 @@ Deno.serve(async (req) => {
     
     console.log("📩 Kiwify Webhook recebido:", payload);
     
-    // Extrair dados básicos para log
-    const eventType = payload.event || payload.trigger;
-    const customerEmail = payload.Customer?.email || payload.customer_email;
-    const productId = payload.Product?.product_id || payload.product_id;
-    const orderId = payload.order_id || payload.transaction_id || payload.id;
-    const eventData = payload.data || payload;
+    // Extrair dados básicos para log (formato real da Kiwify)
+    const eventType = payload.order?.webhook_event_type || payload.event || payload.trigger;
+    const customerEmail = payload.order?.Customer?.email || payload.Customer?.email || payload.customer_email;
+    const productId = payload.order?.Product?.product_id || payload.Product?.product_id || payload.product_id;
+    const orderId = payload.order?.order_id || payload.order_id || payload.transaction_id || payload.id;
+    const eventData = payload.order || payload.data || payload;
     
     // Buscar configurações do Kiwify
     const kiwifySettings = await base44.asServiceRole.entities.KiwifySettings.list();
@@ -51,11 +51,13 @@ Deno.serve(async (req) => {
     try {
       // Processar diferentes eventos conforme documentação Kiwify
       switch (eventType) {
+        case 'order_approved':
         case 'compra_aprovada':
         case 'subscription_renewed':
           workshopId = await handlePaymentApproved(base44, eventData, kiwifyConfig);
           break;
           
+        case 'order_refused':
         case 'compra_recusada':
           await handlePaymentFailed(base44, eventData);
           processingMessage = 'Pagamento recusado registrado';
@@ -67,6 +69,7 @@ Deno.serve(async (req) => {
           processingMessage = 'Assinatura cancelada';
           break;
           
+        case 'order_refunded':
         case 'compra_reembolsada':
         case 'chargeback':
           await handleRefund(base44, eventData);
@@ -114,9 +117,10 @@ Deno.serve(async (req) => {
 async function handlePaymentApproved(base44, data, kiwifyConfig) {
   console.log("✅ Pagamento aprovado:", data);
   
-  // Kiwify API retorna: Customer { email }, Product { product_id }, custom_data
+  // Kiwify API retorna: order { Customer { email }, Product { product_id } }
   const customerEmail = data.Customer?.email || data.customer_email;
   const productId = data.Product?.product_id || data.product_id;
+  const orderAmount = data.Commissions?.charge_amount || data.order_amount || data.amount || 0;
   const customData = data.custom_data || data.custom_fields || {};
   
   // Encontrar mapeamento do produto
@@ -166,9 +170,9 @@ async function handlePaymentApproved(base44, data, kiwifyConfig) {
     plan_id: planId,
     payment_provider: 'kiwify',
     payment_status: 'approved',
-    amount: data.order_amount || data.amount || 0,
+    amount: orderAmount / 100, // Kiwify envia em centavos
     transaction_id: data.order_id || data.transaction_id || data.id,
-    payment_date: new Date().toISOString(),
+    payment_date: data.approved_date || new Date().toISOString(),
     metadata: data
   });
   
