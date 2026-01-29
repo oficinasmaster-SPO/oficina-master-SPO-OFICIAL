@@ -9,6 +9,8 @@ import { Slider } from "@/components/ui/slider";
 import { Loader2, Building2, Sparkles } from "lucide-react";
 import { assessmentCriteria } from "../components/assessment/AssessmentCriteria";
 import { toast } from "sonner";
+import AudioRecorder from "../components/assessment/AudioRecorder";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function AutoavaliacaoEmpresarial() {
   const navigate = useNavigate();
@@ -17,6 +19,7 @@ export default function AutoavaliacaoEmpresarial() {
   const [user, setUser] = useState(null);
   const [workshop, setWorkshop] = useState(null);
   const [scores, setScores] = useState({});
+  const [answers, setAnswers] = useState({});
   const [userFeedback, setUserFeedback] = useState("");
 
   const criteria = assessmentCriteria.empresarial;
@@ -35,10 +38,18 @@ export default function AutoavaliacaoEmpresarial() {
       setWorkshop(userWorkshop);
 
       const initialScores = {};
+      const initialAnswers = {};
       criteria.criteria.forEach(c => {
         initialScores[c.key] = 5;
+        initialAnswers[c.key] = {
+          score: 5,
+          situacao: "",
+          justificativa: "",
+          audio_url: null
+        };
       });
       setScores(initialScores);
+      setAnswers(initialAnswers);
     } catch (error) {
       toast.error("Você precisa estar logado");
       base44.auth.redirectToLogin(createPageUrl("AutoavaliacaoEmpresarial"));
@@ -49,6 +60,17 @@ export default function AutoavaliacaoEmpresarial() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    const incompleteQuestions = criteria.criteria.filter(c => {
+      const answer = answers[c.key];
+      return !answer?.situacao?.trim() || !answer?.justificativa?.trim();
+    });
+
+    if (incompleteQuestions.length > 0) {
+      toast.error(`Complete todas as perguntas: ${incompleteQuestions.map(q => q.label).join(", ")}`);
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -92,10 +114,20 @@ Feedback adicional do usuário para consideração: """${userFeedback}"""
         throw new Error("Falha ao gerar análise com IA");
       }
 
+      const formattedAnswers = criteria.criteria.map(c => ({
+        question_key: c.key,
+        question_label: c.label,
+        score: scores[c.key],
+        situacao: answers[c.key].situacao,
+        justificativa: answers[c.key].justificativa,
+        audio_url: answers[c.key].audio_url
+      }));
+
       const assessment = await base44.entities.ProcessAssessment.create({
         workshop_id: workshop?.id || null,
         evaluator_id: user?.id || null,
         assessment_type: "empresarial",
+        answers: formattedAnswers,
         scores: scores,
         average_score: average,
         strengths: strongPoints,
@@ -153,7 +185,7 @@ Feedback adicional do usuário para consideração: """${userFeedback}"""
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <Label>Nota: {scores[criterion.key]}/10</Label>
                     <div className={`text-2xl font-bold ${
@@ -165,7 +197,10 @@ Feedback adicional do usuário para consideração: """${userFeedback}"""
                   </div>
                   <Slider
                     value={[scores[criterion.key]]}
-                    onValueChange={(value) => setScores({...scores, [criterion.key]: value[0]})}
+                    onValueChange={(value) => {
+                      setScores({...scores, [criterion.key]: value[0]});
+                      setAnswers({...answers, [criterion.key]: {...answers[criterion.key], score: value[0]}});
+                    }}
                     min={0}
                     max={10}
                     step={1}
@@ -175,6 +210,40 @@ Feedback adicional do usuário para consideração: """${userFeedback}"""
                     <span>0 - Inexistente</span>
                     <span>5 - Médio</span>
                     <span>10 - Excelente</span>
+                  </div>
+
+                  <div className="space-y-2 pt-2 border-t">
+                    <Label className="flex items-center gap-1">
+                      Situação Atual <span className="text-red-500">*</span>
+                    </Label>
+                    <Textarea
+                      placeholder="Descreva qual é a situação real que acontece hoje..."
+                      value={answers[criterion.key]?.situacao || ""}
+                      onChange={(e) => setAnswers({...answers, [criterion.key]: {...answers[criterion.key], situacao: e.target.value}})}
+                      className="min-h-[80px]"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-1">
+                      Justificativa <span className="text-red-500">*</span>
+                    </Label>
+                    <Textarea
+                      placeholder="Por que você deu essa nota? O que precisa melhorar?"
+                      value={answers[criterion.key]?.justificativa || ""}
+                      onChange={(e) => setAnswers({...answers, [criterion.key]: {...answers[criterion.key], justificativa: e.target.value}})}
+                      className="min-h-[80px]"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Áudio (opcional)</Label>
+                    <AudioRecorder
+                      audioUrl={answers[criterion.key]?.audio_url}
+                      onAudioChange={(url) => setAnswers({...answers, [criterion.key]: {...answers[criterion.key], audio_url: url}})}
+                    />
                   </div>
                 </div>
               </CardContent>
