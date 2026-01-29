@@ -6,10 +6,16 @@ import AudioCaptureField from "@/components/shared/AudioCaptureField";
  * Usado nas autoavaliações para gravar + transcrever automaticamente
  */
 export default function AudioTranscriber({ onTranscriptionComplete, placeholder = "Clique para gravar e transcrever..." }) {
+  const handleTranscribed = (text) => {
+    if (onTranscriptionComplete && typeof onTranscriptionComplete === 'function') {
+      onTranscriptionComplete(text);
+    }
+  };
+
   return (
     <AudioCaptureField
       mode="transcribe"
-      onTranscribed={(text) => onTranscriptionComplete(text)}
+      onTranscribed={handleTranscribed}
       showManualTranscribe={false}
     />
   );
