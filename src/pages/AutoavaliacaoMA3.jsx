@@ -41,12 +41,7 @@ export default function AutoavaliacaoMA3() {
       const initialAnswers = {};
       criteria.criteria.forEach(c => {
         initialScores[c.key] = 5;
-        initialAnswers[c.key] = {
-          score: 5,
-          situacao: "",
-          justificativa: "",
-          audio_url: null
-        };
+        initialAnswers[c.key] = { score: 5, situacao: "", justificativa: "", audio_url: null };
       });
       setScores(initialScores);
       setAnswers(initialAnswers);

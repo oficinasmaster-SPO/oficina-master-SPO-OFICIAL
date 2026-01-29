@@ -41,12 +41,7 @@ export default function AutoavaliacaoFinanceiro() {
       const initialAnswers = {};
       criteria.criteria.forEach(c => {
         initialScores[c.key] = 5;
-        initialAnswers[c.key] = {
-          score: 5,
-          situacao: "",
-          justificativa: "",
-          audio_url: null
-        };
+        initialAnswers[c.key] = { score: 5, situacao: "", justificativa: "", audio_url: null };
       });
       setScores(initialScores);
       setAnswers(initialAnswers);
@@ -131,7 +126,7 @@ Feedback adicional do usuário para consideração: """${userFeedback}"""
         scores: scores,
         average_score: average,
         strengths: strongPoints,
-        weaknesses: weakPoints,
+        weaknesses: weakPoint,
         bottlenecks: weakPoints,
         ai_recommendations: typeof aiResponse === 'string' ? aiResponse : JSON.stringify(aiResponse),
         user_feedback: userFeedback || "",
