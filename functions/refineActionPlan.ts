@@ -49,16 +49,17 @@ Retorne o plano refinado no mesmo formato JSON.`;
         type: "object",
         properties: {
           diagnostic_summary: { type: "string" },
-          main_objective: { type: "string" },
-          action_directions: {
+          main_objective_90_days: { type: "string" },
+          pillar_directions: {
             type: "array",
             items: {
               type: "object",
               properties: {
-                area_name: { type: "string" },
+                pillar_name: { type: "string" },
                 direction: { type: "string" },
                 priority: { type: "string", enum: ["alta", "media", "baixa"] }
-              }
+              },
+              required: ["pillar_name", "direction"]
             }
           },
           timeline_plan: {
@@ -67,7 +68,8 @@ Retorne o plano refinado no mesmo formato JSON.`;
               short_term: { type: "array", items: { type: "string" } },
               medium_term: { type: "array", items: { type: "string" } },
               long_term: { type: "array", items: { type: "string" } }
-            }
+            },
+            required: ["short_term", "medium_term", "long_term"]
           },
           implementation_schedule: {
             type: "array",
@@ -77,8 +79,10 @@ Retorne o plano refinado no mesmo formato JSON.`;
                 activity_name: { type: "string" },
                 description: { type: "string" },
                 deadline_days: { type: "integer" },
-                status: { type: "string", enum: ["pendente"] }
-              }
+                status: { type: "string", enum: ["pendente", "em_andamento", "concluida"], default: "pendente" },
+                completed_date: { type: "string", format: "date-time" }
+              },
+              required: ["activity_name", "description", "deadline_days"]
             }
           },
           key_indicators: {
@@ -90,11 +94,13 @@ Retorne o plano refinado no mesmo formato JSON.`;
                 current_value: { type: "string" },
                 target_value: { type: "string" },
                 measurement_frequency: { type: "string" }
-              }
+              },
+              required: ["indicator_name", "current_value", "target_value", "measurement_frequency"]
             }
           },
           next_steps_week: { type: "array", items: { type: "string" } }
-        }
+        },
+        required: ["diagnostic_summary", "main_objective_90_days", "pillar_directions", "timeline_plan", "implementation_schedule", "key_indicators", "next_steps_week"]
       }
     });
 
