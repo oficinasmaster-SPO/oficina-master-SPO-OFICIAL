@@ -67,7 +67,7 @@ export default function DiagnosticJustificationModal({
     
     if (missing.length > 0) {
       toast.error(`Preencha as justificativas de ${missing.length} pergunta(s) antes de salvar.`);
-      return;
+      return false;
     }
 
     setSaving(true);
@@ -79,15 +79,20 @@ export default function DiagnosticJustificationModal({
         observacoes: justifications[answer.question_id]?.observacoes || ""
       }));
 
+      console.log('💾 Salvando justificativas para diagnostic:', diagnostic.id);
       await base44.entities.Diagnostic.update(diagnostic.id, {
         answers: updatedAnswers,
         justifications_completed: true
       });
 
+      console.log('✅ Justificativas salvas com sucesso');
       toast.success("Justificativas salvas com sucesso!");
       onJustificationsSaved?.();
+      return true;
     } catch (error) {
+      console.error('❌ Erro ao salvar justificativas:', error);
       toast.error("Erro ao salvar justificativas: " + error.message);
+      return false;
     } finally {
       setSaving(false);
     }
@@ -101,18 +106,25 @@ export default function DiagnosticJustificationModal({
       return;
     }
 
-    if (!diagnostic.justifications_completed) {
-      // Auto-salvar se não foi salvo ainda
-      await handleSave();
-    }
-
     setGenerating(true);
     try {
+      // Auto-salvar se não foi salvo ainda
+      if (!diagnostic.justifications_completed) {
+        console.log('📝 Salvando justificativas antes de gerar plano...');
+        const saved = await handleSave();
+        if (!saved) {
+          setGenerating(false);
+          return;
+        }
+        // Aguardar um pouco para garantir que o banco salvou
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      console.log('🚀 Chamando onGeneratePlan...');
       await onGeneratePlan();
-      toast.success("Gerando seu plano personalizado com IA...");
-      onClose();
+      console.log('✅ Plano gerado, fechando modal');
     } catch (error) {
-      console.error("Erro ao gerar plano:", error);
+      console.error("❌ Erro ao gerar plano:", error);
       toast.error("Erro ao gerar plano: " + error.message);
     } finally {
       setGenerating(false);

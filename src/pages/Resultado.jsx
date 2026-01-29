@@ -43,16 +43,22 @@ export default function Resultado() {
 
   const generatePlanMutation = useMutation({
     mutationFn: async () => {
-      return await base44.functions.invoke('generateActionPlanDiagnostic', {
+      console.log('🚀 Gerando plano para diagnostic_id:', diagnostic.id);
+      const result = await base44.functions.invoke('generateActionPlanDiagnostic', {
         diagnostic_id: diagnostic.id
       });
+      console.log('✅ Plano gerado:', result);
+      return result;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('✅ Success callback - invalidando queries');
       queryClient.invalidateQueries(['action-plan', diagnostic.id]);
       queryClient.invalidateQueries(['diagnostic', diagnostic.id]);
       toast.success('Plano de ação gerado com sucesso!');
+      setShowJustificationModal(false);
     },
     onError: (error) => {
+      console.error('❌ Erro ao gerar plano:', error);
       toast.error('Erro ao gerar plano: ' + error.message);
     }
   });
