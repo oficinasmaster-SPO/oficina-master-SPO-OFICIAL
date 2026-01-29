@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
   try {
@@ -169,7 +169,9 @@ Retorne APENAS o JSON no formato especificado, sem texto adicional.`;
       generated_from_justifications: hasJustifications
     };
 
+    console.log('📝 Criando plano com dados:', planData);
     const plan = await base44.asServiceRole.entities.DiagnosticActionPlan.create(planData);
+    console.log('✅ Plano criado com ID:', plan.id);
 
     return Response.json({ 
       success: true, 
@@ -177,10 +179,12 @@ Retorne APENAS o JSON no formato especificado, sem texto adicional.`;
       had_justifications: hasJustifications
     });
   } catch (error) {
-    console.error('Erro ao gerar plano:', error);
+    console.error('❌ Erro ao gerar plano:', error);
+    console.error('Stack:', error.stack);
     return Response.json({ 
       error: 'Erro ao gerar plano de ação',
-      details: error.message 
+      details: error.message,
+      stack: error.stack
     }, { status: 500 });
   }
 });
