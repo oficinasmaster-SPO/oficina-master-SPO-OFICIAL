@@ -32,11 +32,15 @@ export default function Resultado() {
   const { data: actionPlan, refetch: refetchActionPlan } = useQuery({
     queryKey: ['action-plan', diagnostic?.id],
     queryFn: async () => {
+      console.log('🔍 Buscando plano para diagnostic_id:', diagnostic.id);
       const plans = await base44.entities.DiagnosticActionPlan.filter({
         diagnostic_id: diagnostic.id,
         diagnostic_type: 'Diagnostic'
       });
-      return plans.sort((a, b) => new Date(b.created_date) - new Date(a.created_date))[0];
+      console.log('📋 Planos encontrados:', plans.length);
+      const latestPlan = plans.sort((a, b) => new Date(b.created_date) - new Date(a.created_date))[0];
+      console.log('✅ Último plano:', latestPlan?.id || 'nenhum');
+      return latestPlan;
     },
     enabled: !!diagnostic?.id,
     refetchOnMount: true,
@@ -54,10 +58,16 @@ export default function Resultado() {
     },
     onSuccess: async (data) => {
       console.log('✅ Success callback - invalidando queries e refetchando');
+      setShowJustificationModal(false);
+      
+      // Aguardar um pouco para garantir que o banco salvou
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       await queryClient.invalidateQueries(['action-plan', diagnostic.id]);
       await queryClient.invalidateQueries(['diagnostic', diagnostic.id]);
-      await refetchActionPlan();
-      setShowJustificationModal(false);
+      const result = await refetchActionPlan();
+      console.log('🔄 Refetch result:', result);
+      
       toast.success('🎉 Plano de ação gerado com sucesso!');
     },
     onError: (error) => {
