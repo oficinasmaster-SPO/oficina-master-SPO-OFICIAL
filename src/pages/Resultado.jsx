@@ -29,7 +29,7 @@ export default function Resultado() {
   const [showJustificationModal, setShowJustificationModal] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: actionPlan } = useQuery({
+  const { data: actionPlan, refetch: refetchActionPlan } = useQuery({
     queryKey: ['action-plan', diagnostic?.id],
     queryFn: async () => {
       const plans = await base44.entities.DiagnosticActionPlan.filter({
@@ -38,7 +38,9 @@ export default function Resultado() {
       });
       return plans.sort((a, b) => new Date(b.created_date) - new Date(a.created_date))[0];
     },
-    enabled: !!diagnostic?.id
+    enabled: !!diagnostic?.id,
+    refetchOnMount: true,
+    staleTime: 0
   });
 
   const generatePlanMutation = useMutation({
