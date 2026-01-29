@@ -11,10 +11,25 @@ import { differenceInDays } from "date-fns";
 export default function Autoavaliacoes() {
   const navigate = useNavigate();
 
+  const { data: user } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: () => base44.auth.me()
+  });
+
+  const { data: workshop } = useQuery({
+    queryKey: ['user-workshop', user?.id],
+    queryFn: async () => {
+      const workshops = await base44.entities.Workshop.list();
+      return workshops.find(w => w.owner_id === user?.id);
+    },
+    enabled: !!user
+  });
+
   const { data: assessmentsHistory = [] } = useQuery({
-    queryKey: ['process-assessments-check'],
-    queryFn: () => base44.entities.ProcessAssessment.list(),
-    initialData: []
+    queryKey: ['process-assessments-check', workshop?.id],
+    queryFn: () => base44.entities.ProcessAssessment.filter({ workshop_id: workshop.id }),
+    initialData: [],
+    enabled: !!workshop
   });
 
   const checkAvailability = (typeId) => {
