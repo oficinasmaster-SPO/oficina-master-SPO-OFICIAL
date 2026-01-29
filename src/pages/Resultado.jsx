@@ -50,12 +50,12 @@ export default function Resultado() {
       console.log('✅ Plano gerado:', result);
       return result;
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       console.log('✅ Success callback - invalidando queries');
-      queryClient.invalidateQueries(['action-plan', diagnostic.id]);
-      queryClient.invalidateQueries(['diagnostic', diagnostic.id]);
-      toast.success('Plano de ação gerado com sucesso!');
+      await queryClient.invalidateQueries(['action-plan', diagnostic.id]);
+      await queryClient.invalidateQueries(['diagnostic', diagnostic.id]);
       setShowJustificationModal(false);
+      toast.success('🎉 Plano de ação gerado com sucesso!');
     },
     onError: (error) => {
       console.error('❌ Erro ao gerar plano:', error);

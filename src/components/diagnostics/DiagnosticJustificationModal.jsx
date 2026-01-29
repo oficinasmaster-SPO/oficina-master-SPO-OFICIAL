@@ -117,16 +117,16 @@ export default function DiagnosticJustificationModal({
           return;
         }
         // Aguardar um pouco para garantir que o banco salvou
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 800));
       }
 
       console.log('🚀 Chamando onGeneratePlan...');
+      toast.info('⏳ Gerando plano personalizado com IA... Aguarde.');
       await onGeneratePlan();
-      console.log('✅ Plano gerado, fechando modal');
+      console.log('✅ Plano gerado com sucesso');
     } catch (error) {
       console.error("❌ Erro ao gerar plano:", error);
-      toast.error("Erro ao gerar plano: " + error.message);
-    } finally {
+      toast.error("Erro ao gerar plano: " + (error?.message || 'Erro desconhecido'));
       setGenerating(false);
     }
   };
