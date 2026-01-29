@@ -51,9 +51,10 @@ export default function Resultado() {
       return result;
     },
     onSuccess: async (data) => {
-      console.log('✅ Success callback - invalidando queries');
+      console.log('✅ Success callback - invalidando queries e refetchando');
       await queryClient.invalidateQueries(['action-plan', diagnostic.id]);
       await queryClient.invalidateQueries(['diagnostic', diagnostic.id]);
+      await refetchActionPlan();
       setShowJustificationModal(false);
       toast.success('🎉 Plano de ação gerado com sucesso!');
     },
