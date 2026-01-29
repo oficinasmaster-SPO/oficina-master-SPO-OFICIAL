@@ -5,9 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
-import { Loader2, Plus, X, Save, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Loader2, Plus, X, Save, AlertCircle, CheckCircle2, Zap, Activity } from 'lucide-react';
 import { toast } from 'sonner';
 import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 
 export default function ConfiguracoesKiwify() {
   const queryClient = useQueryClient();
@@ -19,6 +21,8 @@ export default function ConfiguracoesKiwify() {
     plan_mappings: [],
     is_active: true
   });
+
+  const [testResult, setTestResult] = useState(null);
 
   // Fetch Kiwify settings
   const { data: settings, isLoading, isError } = useQuery({
@@ -85,6 +89,24 @@ export default function ConfiguracoesKiwify() {
     },
   });
 
+  // Mutation to test webhook
+  const testWebhookMutation = useMutation({
+    mutationFn: async (testType) => {
+      const response = await base44.functions.invoke('testKiwifyWebhook', { testType });
+      return response.data;
+    },
+    onSuccess: (data) => {
+      setTestResult(data);
+      toast.success('Teste de webhook executado com sucesso!');
+    },
+    onError: (error) => {
+      toast.error('Erro ao testar webhook', {
+        description: error.message
+      });
+      setTestResult({ success: false, error: error.message });
+    },
+  });
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -139,6 +161,16 @@ export default function ConfiguracoesKiwify() {
         <p className="text-gray-600 mt-2">Configure a integração com a plataforma Kiwify para processar pagamentos dos planos.</p>
       </div>
 
+      <Tabs defaultValue="config" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="config">Configurações</TabsTrigger>
+          <TabsTrigger value="test">
+            <Activity className="w-4 h-4 mr-2" />
+            Testar Webhook
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="config">
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -340,7 +372,7 @@ export default function ConfiguracoesKiwify() {
         <CardContent className="text-sm text-blue-800 space-y-2">
           <p>
             <strong>1. Webhook da Kiwify:</strong> Configure o webhook da Kiwify para apontar para: 
-            <code className="bg-blue-200 px-2 py-1 rounded ml-2">https://sua-app.base44.app/kiwifyWebhookHandler</code>
+            <code className="bg-blue-200 px-2 py-1 rounded ml-2">{window.location.origin}/api/functions/webhookKiwify</code>
           </p>
           <p>
             <strong>2. Documentação:</strong> Consulte a{' '}
@@ -355,10 +387,161 @@ export default function ConfiguracoesKiwify() {
             {' '}para mais detalhes sobre a integração.
           </p>
           <p>
-            <strong>3. Teste:</strong> Após configurar, teste a integração fazendo um pagamento de teste.
+            <strong>3. Teste:</strong> Use a aba "Testar Webhook" para verificar se a integração está funcionando corretamente.
           </p>
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="test">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Zap className="w-5 h-5 text-yellow-600" />
+                Teste de Webhook Kiwify
+              </CardTitle>
+              <p className="text-sm text-gray-600 mt-2">
+                Simule eventos do webhook Kiwify para verificar se a integração está funcionando corretamente.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Webhook URL */}
+              <div className="bg-gray-50 p-4 rounded-lg border">
+                <Label className="text-sm font-semibold">URL do Webhook</Label>
+                <div className="flex items-center gap-2 mt-2">
+                  <code className="flex-1 bg-white px-3 py-2 rounded border text-sm">
+                    {window.location.origin}/api/functions/webhookKiwify
+                  </code>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${window.location.origin}/api/functions/webhookKiwify`);
+                      toast.success('URL copiada!');
+                    }}
+                  >
+                    Copiar
+                  </Button>
+                </div>
+              </div>
+
+              {/* Test Buttons */}
+              <div className="space-y-3">
+                <Label className="text-base font-semibold">Cenários de Teste</Label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <Button
+                    onClick={() => testWebhookMutation.mutate('payment_approved')}
+                    disabled={testWebhookMutation.isPending}
+                    variant="outline"
+                    className="w-full justify-start gap-2"
+                  >
+                    {testWebhookMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <CheckCircle2 className="w-4 h-4 text-green-600" />
+                    )}
+                    Pagamento Aprovado
+                  </Button>
+
+                  <Button
+                    onClick={() => testWebhookMutation.mutate('payment_refused')}
+                    disabled={testWebhookMutation.isPending}
+                    variant="outline"
+                    className="w-full justify-start gap-2"
+                  >
+                    {testWebhookMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <X className="w-4 h-4 text-red-600" />
+                    )}
+                    Pagamento Recusado
+                  </Button>
+
+                  <Button
+                    onClick={() => testWebhookMutation.mutate('subscription_cancelled')}
+                    disabled={testWebhookMutation.isPending}
+                    variant="outline"
+                    className="w-full justify-start gap-2"
+                  >
+                    {testWebhookMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <AlertCircle className="w-4 h-4 text-orange-600" />
+                    )}
+                    Assinatura Cancelada
+                  </Button>
+                </div>
+              </div>
+
+              {/* Test Results */}
+              {testResult && (
+                <div className={`p-4 rounded-lg border-2 ${testResult.success ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                  <div className="flex items-center gap-2 mb-3">
+                    {testResult.success ? (
+                      <CheckCircle2 className="w-5 h-5 text-green-600" />
+                    ) : (
+                      <AlertCircle className="w-5 h-5 text-red-600" />
+                    )}
+                    <Label className="text-base font-semibold">
+                      {testResult.success ? 'Teste Executado com Sucesso' : 'Erro no Teste'}
+                    </Label>
+                  </div>
+
+                  <div className="space-y-2 text-sm">
+                    {testResult.webhook_url && (
+                      <div>
+                        <span className="font-semibold">URL Testada:</span>
+                        <code className="ml-2 text-xs">{testResult.webhook_url}</code>
+                      </div>
+                    )}
+
+                    {testResult.test_type && (
+                      <div>
+                        <span className="font-semibold">Tipo de Teste:</span>
+                        <Badge className="ml-2" variant="outline">{testResult.test_type}</Badge>
+                      </div>
+                    )}
+
+                    {testResult.webhook_status && (
+                      <div>
+                        <span className="font-semibold">Status HTTP:</span>
+                        <Badge className={`ml-2 ${testResult.webhook_status === 200 ? 'bg-green-600' : 'bg-red-600'} text-white`}>
+                          {testResult.webhook_status}
+                        </Badge>
+                      </div>
+                    )}
+
+                    {testResult.timestamp && (
+                      <div className="text-xs text-gray-600">
+                        Testado em: {new Date(testResult.timestamp).toLocaleString('pt-BR')}
+                      </div>
+                    )}
+
+                    {/* Collapsible Details */}
+                    <details className="mt-3">
+                      <summary className="cursor-pointer font-semibold text-gray-700">Ver Detalhes Técnicos</summary>
+                      <pre className="mt-2 p-3 bg-white rounded border text-xs overflow-auto max-h-60">
+                        {JSON.stringify(testResult, null, 2)}
+                      </pre>
+                    </details>
+                  </div>
+                </div>
+              )}
+
+              {/* Instructions */}
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <Label className="text-sm font-semibold text-blue-900">ℹ️ Como Interpretar os Resultados</Label>
+                <ul className="mt-2 space-y-1 text-sm text-blue-800 list-disc list-inside">
+                  <li><strong>Status 200:</strong> O webhook está configurado e respondeu corretamente</li>
+                  <li><strong>Payload Sent:</strong> Dados enviados simulando o evento da Kiwify</li>
+                  <li><strong>Webhook Response:</strong> Resposta do seu webhook (success/error)</li>
+                  <li>Verifique os logs da função <code>webhookKiwify</code> para mais detalhes</li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
