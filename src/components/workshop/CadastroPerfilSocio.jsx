@@ -113,6 +113,11 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack, on
       return;
     }
 
+    if (!formData.profile_id) {
+      toast.error("Perfil de Acesso é obrigatório");
+      return;
+    }
+
     // VALIDAÇÃO DE SEGURANÇA: Bloquear job_role interno para usuários comuns
     const selectedJobRole = jobRoles.find(r => r.value === formData.job_role);
     if (currentUser?.role !== 'admin' && selectedJobRole?.category === 'consultoria') {
@@ -181,6 +186,11 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack, on
       // Validação e salvamento sem chamar onComplete
       if (!formData.full_name || !formData.email) {
         toast.error("Nome e email são obrigatórios");
+        return false;
+      }
+
+      if (!formData.profile_id) {
+        toast.error("Perfil de Acesso é obrigatório");
         return false;
       }
 
@@ -394,7 +404,7 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack, on
             </div>
 
             <div>
-              <Label htmlFor="profile_id">Perfil de Acesso</Label>
+              <Label htmlFor="profile_id">Perfil de Acesso *</Label>
               <Select 
                 value={formData.profile_id} 
                 onValueChange={(value) => setFormData({ ...formData, profile_id: value })}
