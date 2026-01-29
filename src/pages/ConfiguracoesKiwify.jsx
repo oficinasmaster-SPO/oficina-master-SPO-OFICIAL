@@ -391,13 +391,13 @@ export default function ConfiguracoesKiwify() {
           <div className="bg-white p-4 rounded-lg border border-blue-200">
             <p className="font-bold mb-2">1️⃣ Copie a URL do Webhook:</p>
             <div className="flex items-center gap-2">
-              <code className="flex-1 bg-blue-50 px-3 py-2 rounded border text-xs">
-                {window.location.origin}/functions/webhookKiwify
+              <code className="flex-1 bg-blue-50 px-3 py-2 rounded border text-xs break-all">
+                {window.location.origin}/api/apps/69540822472c4a70b54d47aa/functions/webhookKiwify
               </code>
               <Button
                 size="sm"
                 onClick={() => {
-                  navigator.clipboard.writeText(`${window.location.origin}/functions/webhookKiwify`);
+                  navigator.clipboard.writeText(`${window.location.origin}/api/apps/69540822472c4a70b54d47aa/functions/webhookKiwify`);
                   toast.success('URL copiada!');
                 }}
               >
@@ -433,11 +433,13 @@ export default function ConfiguracoesKiwify() {
           </div>
 
           <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-300">
-            <p className="font-bold text-yellow-900 mb-2">⚠️ Importante:</p>
-            <p className="text-yellow-800">
-              A Kiwify envia os dados para VOCÊ quando eventos ocorrem (compras, cancelamentos, etc). 
-              Você não precisa fazer requisições para a Kiwify - eles vão notificar seu sistema automaticamente.
-            </p>
+            <p className="font-bold text-yellow-900 mb-2">⚠️ Importante - Segurança:</p>
+            <ul className="text-yellow-800 space-y-2 text-sm list-disc list-inside">
+              <li>A Kiwify envia os dados diretamente para seu webhook quando eventos ocorrem</li>
+              <li>O <strong>Client Secret</strong> está configurado de forma segura como variável de ambiente</li>
+              <li>Nunca exponha suas credenciais no código frontend</li>
+              <li>Todos os pagamentos são processados via backend functions para máxima segurança</li>
+            </ul>
           </div>
         </CardContent>
       </Card>
@@ -459,14 +461,14 @@ export default function ConfiguracoesKiwify() {
               <div className="bg-gray-50 p-4 rounded-lg border">
                 <Label className="text-sm font-semibold">URL do Webhook</Label>
                 <div className="flex items-center gap-2 mt-2">
-                  <code className="flex-1 bg-white px-3 py-2 rounded border text-sm">
-                    {window.location.origin}/functions/webhookKiwify
+                  <code className="flex-1 bg-white px-3 py-2 rounded border text-sm break-all">
+                    {window.location.origin}/api/apps/69540822472c4a70b54d47aa/functions/webhookKiwify
                   </code>
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => {
-                      navigator.clipboard.writeText(`${window.location.origin}/functions/webhookKiwify`);
+                      navigator.clipboard.writeText(`${window.location.origin}/api/apps/69540822472c4a70b54d47aa/functions/webhookKiwify`);
                       toast.success('URL copiada!');
                     }}
                   >

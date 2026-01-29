@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
   try {
+    // IMPORTANTE: Usar asServiceRole para webhooks externos (sem auth de usuário)
     const base44 = createClientFromRequest(req);
     
     // Parse webhook payload
@@ -10,11 +11,11 @@ Deno.serve(async (req) => {
       const body = await req.text();
       payload = JSON.parse(body);
     } catch (e) {
-      // Se falhar, pode ser uma chamada direta via SDK (teste)
-      payload = await req.json();
+      console.error("❌ Erro ao parsear payload do webhook:", e);
+      return Response.json({ error: 'Invalid JSON payload' }, { status: 400 });
     }
     
-    console.log("📩 Kiwify Webhook recebido:", payload);
+    console.log("📩 Kiwify Webhook recebido:", JSON.stringify(payload, null, 2));
     
     // Extrair dados básicos para log (formato real da Kiwify)
     const eventType = payload.order?.webhook_event_type || payload.event || payload.trigger;
