@@ -160,6 +160,8 @@ async function handlePaymentApproved(base44, data) {
   });
   
   console.log(`✅ Plano atualizado: ${workshop.name} -> ${planId}`);
+  
+  return workshop.id;
 }
 
 async function handleRefund(base44, data) {
