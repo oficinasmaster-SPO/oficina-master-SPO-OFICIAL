@@ -37,6 +37,36 @@ Deno.serve(async (req) => {
 
     const phaseDesc = phaseDescriptions[diagnostic.phase] || "Fase não identificada";
 
+    // Verificar se tem justificativas
+    const hasJustifications = diagnostic.justifications_completed && 
+      diagnostic.answers?.some(a => a.justificativa_texto?.trim());
+
+    // Construir seção de respostas e justificativas
+    let answersSection = "\n### Respostas do Diagnóstico:\n\n";
+    
+    if (hasJustifications) {
+      diagnostic.answers.forEach((answer, index) => {
+        answersSection += `**Pergunta ${answer.question_id}:**\n`;
+        answersSection += `- Resposta escolhida: ${answer.selected_option}\n`;
+        answersSection += `- Justificativa: "${answer.justificativa_texto}"\n`;
+        if (answer.observacoes?.trim()) {
+          answersSection += `- Observações: "${answer.observacoes}"\n`;
+        }
+        if (answer.justificativa_audio_url) {
+          answersSection += `- Áudio disponível: ${answer.justificativa_audio_url}\n`;
+        }
+        answersSection += '\n';
+      });
+    } else {
+      answersSection += "⚠️ Este diagnóstico não possui justificativas detalhadas.\n";
+      answersSection += "Distribuição de respostas:\n";
+      const letterCount = { A: 0, B: 0, C: 0, D: 0 };
+      diagnostic.answers.forEach(a => letterCount[a.selected_option]++);
+      Object.entries(letterCount).forEach(([letter, count]) => {
+        answersSection += `- Letra ${letter}: ${count} respostas\n`;
+      });
+    }
+
     // Gerar plano com IA
     const prompt = `Você é um consultor especializado em gestão de oficinas automotivas.
 
@@ -47,9 +77,18 @@ Baseado neste diagnóstico da oficina:
 - Faturamento: ${workshop?.monthly_revenue || 'Não informado'}
 - Colaboradores: ${workshop?.employees_count || 'Não informado'}
 
+${answersSection}
+
+${hasJustifications ? `
+**IMPORTANTE:** Use as justificativas acima para personalizar o plano. Cite explicitamente o que o cliente relatou.
+Exemplo: "Você mencionou que [citação da justificativa], por isso a ação recomendada é..."
+` : `
+**NOTA:** Como não há justificativas detalhadas, crie um plano genérico baseado na fase identificada.
+`}
+
 Gere um plano de ação estruturado para os próximos 90 dias com:
 
-1. Resumo do diagnóstico (2-3 parágrafos)
+1. Resumo do diagnóstico (2-3 parágrafos) - ${hasJustifications ? 'citando insights das justificativas' : 'baseado na fase'}
 2. Objetivo principal para 90 dias (específico e mensurável)
 3. Direcionamentos por área (4-6 áreas prioritárias: vendas, processos, pessoas, financeiro, etc)
 4. Timeline de ações:
@@ -126,12 +165,17 @@ Retorne APENAS o JSON no formato especificado, sem texto adicional.`;
       plan_data: response,
       status: 'ativo',
       completion_percentage: 0,
-      generated_by_ai: true
+      generated_by_ai: true,
+      generated_from_justifications: hasJustifications
     };
 
     const plan = await base44.asServiceRole.entities.DiagnosticActionPlan.create(planData);
 
-    return Response.json({ success: true, plan });
+    return Response.json({ 
+      success: true, 
+      plan,
+      had_justifications: hasJustifications
+    });
   } catch (error) {
     console.error('Erro ao gerar plano:', error);
     return Response.json({ 
