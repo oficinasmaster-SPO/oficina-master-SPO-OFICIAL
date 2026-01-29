@@ -214,12 +214,18 @@ export default function DiagnosticJustificationModal({
                     <div>
                       <label className="block text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
                         <Mic className="w-4 h-4" />
-                        Áudio (opcional)
+                        Gravar Justificativa (transcreve automaticamente)
                       </label>
                       <AudioCaptureField
                         existingAudioUrl={currentJust.justificativa_audio_url}
                         onAudioSaved={(url) => handleJustificationChange(answer.question_id, 'justificativa_audio_url', url)}
-                        mode="simple"
+                        onTranscribed={(text) => {
+                          // Append ao texto existente ou sobrescreve se vazio
+                          const currentText = currentJust.justificativa_texto || "";
+                          const newText = currentText ? currentText + "\n\n" + text : text;
+                          handleJustificationChange(answer.question_id, 'justificativa_texto', newText);
+                        }}
+                        mode="transcribe"
                       />
                     </div>
 
