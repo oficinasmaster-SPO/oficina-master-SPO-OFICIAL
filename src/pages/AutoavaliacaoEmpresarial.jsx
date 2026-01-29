@@ -220,7 +220,7 @@ Feedback adicional do usuário para consideração: """${userFeedback}"""
                     />
                     <AudioTranscriber
                       placeholder="Gravar situação"
-                      onTranscription={(text) => setAnswers({...answers, [criterion.key]: {...answers[criterion.key], situacao: text}})}
+                      onTranscriptionComplete={(text) => setAnswers({...answers, [criterion.key]: {...answers[criterion.key], situacao: text}})}
                     />
                   </div>
 
@@ -237,7 +237,7 @@ Feedback adicional do usuário para consideração: """${userFeedback}"""
                     />
                     <AudioTranscriber
                       placeholder="Gravar justificativa"
-                      onTranscription={(text) => setAnswers({...answers, [criterion.key]: {...answers[criterion.key], justificativa: text}})}
+                      onTranscriptionComplete={(text) => setAnswers({...answers, [criterion.key]: {...answers[criterion.key], justificativa: text}})}
                     />
                   </div>
                 </div>
