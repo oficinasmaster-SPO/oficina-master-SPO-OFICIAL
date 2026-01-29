@@ -16,10 +16,25 @@ export default function ConsolidadoMensal() {
   const navigate = useNavigate();
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM'));
 
+  const { data: user } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: () => base44.auth.me()
+  });
+
+  const { data: workshop } = useQuery({
+    queryKey: ['user-workshop', user?.id],
+    queryFn: async () => {
+      const workshops = await base44.entities.Workshop.list();
+      return workshops.find(w => w.owner_id === user?.id);
+    },
+    enabled: !!user
+  });
+
   const { data: assessments = [], isLoading } = useQuery({
-    queryKey: ['process-assessments-monthly'],
-    queryFn: () => base44.entities.ProcessAssessment.list(),
-    initialData: []
+    queryKey: ['process-assessments-monthly', workshop?.id],
+    queryFn: () => base44.entities.ProcessAssessment.filter({ workshop_id: workshop.id }),
+    initialData: [],
+    enabled: !!workshop
   });
 
   const monthlyData = useMemo(() => {
