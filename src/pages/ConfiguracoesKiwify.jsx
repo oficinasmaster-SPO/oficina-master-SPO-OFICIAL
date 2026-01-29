@@ -43,6 +43,20 @@ export default function ConfiguracoesKiwify() {
     staleTime: Infinity,
   });
 
+  // Buscar logs de webhook
+  const { data: webhookLogs = [], refetch: refetchLogs } = useQuery({
+    queryKey: ['kiwify-webhook-logs'],
+    queryFn: async () => {
+      try {
+        const logs = await base44.entities.KiwifyWebhookLog.list('-created_date', 50);
+        return logs;
+      } catch (error) {
+        console.error('Erro ao buscar logs:', error);
+        return [];
+      }
+    },
+  });
+
   // Lista de planos padrão (fallback caso não tenha PlanFeatures cadastrados)
   const defaultPlans = [
     { id: "FREE", name: "Grátis" },
