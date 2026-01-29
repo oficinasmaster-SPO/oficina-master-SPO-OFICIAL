@@ -514,7 +514,9 @@ export default function Resultado() {
           onClose={() => setShowJustificationModal(false)}
           diagnostic={diagnostic}
           onJustificationsSaved={handleJustificationsSaved}
-          onGeneratePlan={() => generatePlanMutation.mutate()}
+          onGeneratePlan={async () => {
+            await generatePlanMutation.mutateAsync();
+          }}
         />
 
         {/* Feedback Modal */}
