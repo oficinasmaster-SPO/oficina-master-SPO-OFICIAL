@@ -15,6 +15,7 @@ import ActionPlanCard from "../components/diagnostics/ActionPlanCard";
 import ActionPlanDetails from "../components/diagnostics/ActionPlanDetails";
 import ActionPlanFeedbackModal from "../components/diagnostics/ActionPlanFeedbackModal";
 import DiagnosticPDFGenerator from "../components/diagnostics/DiagnosticPDFGenerator";
+import DiagnosticJustificationModal from "../components/diagnostics/DiagnosticJustificationModal";
 
 export default function Resultado() {
   const navigate = useNavigate();
@@ -25,6 +26,7 @@ export default function Resultado() {
   const [phaseDistribution, setPhaseDistribution] = useState(null);
   const [showActionPlanDetails, setShowActionPlanDetails] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [showJustificationModal, setShowJustificationModal] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: actionPlan } = useQuery({
@@ -47,12 +49,22 @@ export default function Resultado() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['action-plan', diagnostic.id]);
+      queryClient.invalidateQueries(['diagnostic', diagnostic.id]);
       toast.success('Plano de ação gerado com sucesso!');
     },
     onError: (error) => {
       toast.error('Erro ao gerar plano: ' + error.message);
     }
   });
+
+  const handleOpenJustificationModal = () => {
+    setShowJustificationModal(true);
+  };
+
+  const handleJustificationsSaved = () => {
+    queryClient.invalidateQueries(['diagnostic', diagnostic.id]);
+    loadDiagnostic();
+  };
 
   const refinePlanMutation = useMutation({
     mutationFn: async ({ feedback }) => {
@@ -307,22 +319,12 @@ export default function Resultado() {
                 Nossa IA vai criar um plano de ação específico para sua fase, com cronograma, ações práticas e indicadores de acompanhamento.
               </p>
               <Button
-                onClick={() => generatePlanMutation.mutate()}
-                disabled={generatePlanMutation.isPending}
+                onClick={handleOpenJustificationModal}
                 className="bg-blue-600 hover:bg-blue-700"
                 size="lg"
               >
-                {generatePlanMutation.isPending ? (
-                  <>
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    Gerando Plano...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-5 h-5 mr-2" />
-                    Gerar Plano com IA
-                  </>
-                )}
+                <Sparkles className="w-5 h-5 mr-2" />
+                Gerar Plano com IA
               </Button>
             </CardContent>
           </Card>
@@ -499,6 +501,15 @@ export default function Resultado() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Justification Modal */}
+        <DiagnosticJustificationModal
+          open={showJustificationModal}
+          onClose={() => setShowJustificationModal(false)}
+          diagnostic={diagnostic}
+          onJustificationsSaved={handleJustificationsSaved}
+          onGeneratePlan={() => generatePlanMutation.mutate()}
+        />
 
         {/* Feedback Modal */}
         <ActionPlanFeedbackModal
