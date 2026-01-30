@@ -13,20 +13,24 @@ export default function CheckoutDialog({ open, onClose, plan, user, workshop }) 
     setIsProcessing(true);
     
     try {
-      // Simular processamento
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Verificar se o link de checkout existe
+      if (!plan.kiwify_checkout_url) {
+        toast.error("Plano sem link de checkout configurado. Entre em contato com o suporte.");
+        setIsProcessing(false);
+        return;
+      }
+
+      // Log para debug
+      console.log("[Checkout] planId=", plan.plan_id, "url=", plan.kiwify_checkout_url);
       
-      // Aqui seria a integração real com Kiwify ou Asas
-      const checkoutUrl = selectedGateway === "kiwify" 
-        ? `https://kiwify.com.br/checkout?product=${plan.id}`
-        : `https://asaas.com/checkout?product=${plan.id}`;
+      toast.success("Redirecionando para pagamento...");
       
-      // Abrir checkout em nova aba
-      window.open(checkoutUrl, '_blank');
+      // Redirecionar para checkout Kiwify
+      window.location.href = plan.kiwify_checkout_url;
       
-      toast.success("Redirecionando para checkout...");
       onClose();
     } catch (error) {
+      console.error("[Checkout Error]", error);
       toast.error("Erro ao processar: " + error.message);
     } finally {
       setIsProcessing(false);
@@ -37,65 +41,22 @@ export default function CheckoutDialog({ open, onClose, plan, user, workshop }) 
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Checkout - Plano {plan?.name}</DialogTitle>
-          <p className="text-sm text-gray-600">Escolha a plataforma de pagamento</p>
+          <DialogTitle>Checkout - Plano {plan?.plan_name}</DialogTitle>
+          <p className="text-sm text-gray-600">Confirme sua escolha</p>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="bg-blue-50 p-4 rounded-lg">
             <div className="flex justify-between items-center mb-2">
-              <span className="font-semibold">{plan?.name}</span>
+              <span className="font-semibold">{plan?.plan_name}</span>
               <span className="text-2xl font-bold text-blue-600">
-                R$ {plan?.price?.toLocaleString('pt-BR')}
-                <span className="text-sm text-gray-600">/mês</span>
+                {plan?.price}
               </span>
             </div>
-            <div className="space-y-1 text-sm text-gray-700">
-              {plan?.features?.map((feature, idx) => (
-                <div key={idx} className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-green-600" />
-                  <span>{feature}</span>
-                </div>
-              ))}
-            </div>
+            <p className="text-xs text-gray-600 mt-2">
+              Você será redirecionado para a plataforma de pagamento Kiwify.
+            </p>
           </div>
-
-          <Tabs value={selectedGateway} onValueChange={setSelectedGateway}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="kiwify">
-                <CreditCard className="w-4 h-4 mr-2" />
-                Kiwify
-              </TabsTrigger>
-              <TabsTrigger value="asas">
-                <Wallet className="w-4 h-4 mr-2" />
-                Asas
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="kiwify" className="space-y-3">
-              <div className="p-4 border rounded-lg">
-                <p className="text-sm font-semibold mb-2">Pagamento via Kiwify</p>
-                <ul className="text-xs text-gray-600 space-y-1">
-                  <li>• Pix, Cartão de Crédito e Boleto</li>
-                  <li>• Parcelamento em até 12x</li>
-                  <li>• Aprovação instantânea via Pix</li>
-                  <li>• Área de membros integrada</li>
-                </ul>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="asas" className="space-y-3">
-              <div className="p-4 border rounded-lg">
-                <p className="text-sm font-semibold mb-2">Pagamento via Asas</p>
-                <ul className="text-xs text-gray-600 space-y-1">
-                  <li>• Pix, Cartão de Crédito e Boleto</li>
-                  <li>• Parcelamento em até 12x</li>
-                  <li>• Cobrança recorrente automática</li>
-                  <li>• Split de pagamento</li>
-                </ul>
-              </div>
-            </TabsContent>
-          </Tabs>
 
           <div className="flex gap-3 pt-4 border-t">
             <Button variant="outline" onClick={onClose} className="flex-1">
