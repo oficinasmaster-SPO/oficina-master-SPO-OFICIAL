@@ -312,12 +312,35 @@ export default function ConfiguracoesKiwify() {
                                   ...prev,
                                   plan_mappings: [
                                     ...prev.plan_mappings,
-                                    { internal_plan_id: plan.id, kiwify_product_id: newValue }
+                                    { internal_plan_id: plan.id, kiwify_product_id: newValue, checkout_url: '' }
                                   ]
                                 }));
                               }
                             }}
                             placeholder="Ex: prod_abc123 ou deixe vazio"
+                          />
+                        </div>
+                        <div className="flex-1 space-y-2">
+                          <Label htmlFor={`checkout_url-${plan.id}`}>Link de Checkout</Label>
+                          <Input
+                            id={`checkout_url-${plan.id}`}
+                            name="checkout_url"
+                            value={existingMapping?.checkout_url || ''}
+                            onChange={(e) => {
+                              const newValue = e.target.value;
+                              if (existingMapping) {
+                                handlePlanMappingChange(mappingIndex, 'checkout_url', newValue);
+                              } else {
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  plan_mappings: [
+                                    ...prev.plan_mappings,
+                                    { internal_plan_id: plan.id, kiwify_product_id: '', checkout_url: newValue }
+                                  ]
+                                }));
+                              }
+                            }}
+                            placeholder="Ex: https://pay.kiwify.com.br/5FpagLC"
                           />
                         </div>
                         {existingMapping && (
