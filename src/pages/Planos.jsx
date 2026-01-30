@@ -28,14 +28,17 @@ export default function Planos() {
       // Carregar planos configurados (PlanFeature tem os links de checkout)
       const allPlans = await base44.entities.PlanFeature.list();
       
-      console.log("[PLANOS DEBUG] Raw response:", allPlans);
-      console.log("[PLANOS DEBUG] Plans count:", allPlans?.length);
-      console.log("[PLANOS DEBUG] First plan sample:", allPlans?.[0]);
+      console.log("=== [PLANOS DEBUG] ===");
+      console.log("Raw response:", allPlans);
+      console.log("Plans count:", allPlans?.length);
+      console.log("First plan sample:", allPlans?.[0]);
+      console.log("All plans IDs:", allPlans?.map(p => ({ id: p.plan_id, name: p.plan_name, active: p.active })));
       
-      // Filtrar por target_audience se não for admin
+      // Filtrar apenas por active
       let filteredPlans = allPlans.filter(p => p.active);
       
-      console.log("[PLANOS DEBUG] After active filter:", filteredPlans?.length);
+      console.log("After active filter count:", filteredPlans?.length);
+      console.log("Filtered plans:", filteredPlans?.map(p => ({ id: p.plan_id, name: p.plan_name })));
       
       if (user && user.role !== 'admin') {
         filteredPlans = filteredPlans.filter(p => 
@@ -43,11 +46,12 @@ export default function Planos() {
           p.target_audience === 'cliente' || 
           p.target_audience === 'todos'
         );
-        console.log("[PLANOS DEBUG] After audience filter:", filteredPlans?.length);
+        console.log("After audience filter count:", filteredPlans?.length);
       }
       
       const sortedPlans = filteredPlans.sort((a, b) => (a.order || 0) - (b.order || 0));
-      console.log("[PLANOS DEBUG] Final sorted plans:", sortedPlans);
+      console.log("Final sorted plans:", sortedPlans);
+      console.log("=== [FIM DEBUG] ===");
       setPlans(sortedPlans);
 
       // Tentar carregar dados do usuário (opcional)

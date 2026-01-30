@@ -260,6 +260,7 @@ export default function GerenciarPlanos() {
     mutationFn: (data) => base44.entities.PlanFeature.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries(['planFeatures']);
+      queryClient.invalidateQueries(['plans']);
       toast.success("Plano criado com sucesso!");
     }
   });
@@ -268,6 +269,7 @@ export default function GerenciarPlanos() {
     mutationFn: ({ id, data }) => base44.entities.PlanFeature.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries(['planFeatures']);
+      queryClient.invalidateQueries(['plans']);
       toast.success("Plano atualizado com sucesso!");
       setSelectedPlan(null);
     }
