@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Save, Shield, Lock, Unlock, Settings, Calendar } from "lucide-react";
+import { Loader2, Save, Shield, Lock, Unlock, Settings, Calendar, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { createPageUrl } from "@/utils";
 import { useNavigate } from "react-router-dom";
@@ -262,6 +262,7 @@ export default function GerenciarPlanos() {
       queryClient.invalidateQueries(['planFeatures']);
       queryClient.invalidateQueries(['plans']);
       toast.success("Plano criado com sucesso!");
+      setSelectedPlan(null);
     }
   });
 
@@ -272,6 +273,15 @@ export default function GerenciarPlanos() {
       queryClient.invalidateQueries(['plans']);
       toast.success("Plano atualizado com sucesso!");
       setSelectedPlan(null);
+    }
+  });
+
+  const deletePlanMutation = useMutation({
+    mutationFn: (planId) => base44.entities.PlanFeature.delete(planId),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['planFeatures']);
+      queryClient.invalidateQueries(['plans']);
+      toast.success("Plano deletado com sucesso!");
     }
   });
 
@@ -302,9 +312,15 @@ export default function GerenciarPlanos() {
       const planInfo = plans.find(p => p.id === planId);
       setSelectedPlan({
         plan_id: planId,
-        plan_name: planInfo.name,
+        plan_name: planInfo?.name || "",
         plan_description: "",
-        price: "",
+        price_monthly: 0,
+        price_annual: 0,
+        price_display_monthly: "",
+        price_display_annual: "",
+        kiwify_checkout_url_monthly: "",
+        kiwify_checkout_url_annual: "",
+        features_highlights: [],
         features_allowed: [],
         features_blocked: [],
         modules_allowed: [],
@@ -315,9 +331,44 @@ export default function GerenciarPlanos() {
         max_diagnostics_per_month: -1,
         max_employees: -1,
         max_branches: -1,
-        active: true
+        active: true,
+        order: 0
       });
     }
+  };
+
+  const handleCreateNewPlan = () => {
+    setSelectedPlan({
+      plan_id: "",
+      plan_name: "",
+      plan_description: "",
+      price_monthly: 0,
+      price_annual: 0,
+      price_display_monthly: "",
+      price_display_annual: "",
+      kiwify_checkout_url_monthly: "",
+      kiwify_checkout_url_annual: "",
+      features_highlights: [],
+      features_allowed: [],
+      features_blocked: [],
+      modules_allowed: [],
+      cronograma_features: [],
+      cronograma_modules: [],
+      extra_resources: "",
+      limitations: "",
+      max_diagnostics_per_month: -1,
+      max_employees: -1,
+      max_branches: -1,
+      active: true,
+      order: planFeatures.length
+    });
+  };
+
+  const handleDeletePlan = async (planId) => {
+    if (!confirm("Tem certeza que deseja deletar este plano? Esta ação não pode ser desfeita.")) {
+      return;
+    }
+    deletePlanMutation.mutate(planId);
   };
 
   const handleSavePlan = () => {
@@ -371,48 +422,88 @@ export default function GerenciarPlanos() {
         </div>
 
         {!selectedPlan ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {plans.map(plan => {
-              const existing = planFeatures.find(p => p.plan_id === plan.id);
-              return (
-                <Card key={plan.id} className={`${plan.color} border-2 hover:shadow-lg transition-all cursor-pointer`}>
+          <>
+            <div className="flex justify-end mb-6">
+              <Button 
+                onClick={handleCreateNewPlan}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Adicionar Novo Plano
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Planos configurados (do banco) */}
+              {planFeatures.map(plan => (
+                <Card key={plan.id} className="border-2 hover:shadow-lg transition-all bg-white">
                   <CardHeader>
                     <CardTitle className="flex items-center justify-between">
-                      {plan.name}
-                      {existing ? (
-                        <Badge className="bg-green-600 text-white">
-                          <Settings className="w-3 h-3 mr-1" />
-                          Configurado
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline">Não configurado</Badge>
-                      )}
+                      {plan.plan_name}
+                      <Badge className="bg-green-600 text-white">
+                        <Settings className="w-3 h-3 mr-1" />
+                        Configurado
+                      </Badge>
                     </CardTitle>
                     <CardDescription>
-                      {existing ? existing.plan_description : "Clique para configurar"}
+                      {plan.plan_description || "Sem descrição"}
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <Button onClick={() => handleEditPlan(plan.id)} className="w-full">
-                      {existing ? "Editar Configurações" : "Configurar Plano"}
-                    </Button>
-                    {existing && (
-                      <div className="mt-4 space-y-2 text-sm">
-                        <p className="text-gray-700">
-                          <Lock className="w-4 h-4 inline mr-1" />
-                          {existing.features_allowed?.length || 0} funcionalidades permitidas
-                        </p>
-                        <p className="text-gray-700">
-                          <Unlock className="w-4 h-4 inline mr-1" />
-                          {existing.modules_allowed?.length || 0} módulos liberados
-                        </p>
-                      </div>
-                    )}
+                  <CardContent className="space-y-3">
+                    <div className="space-y-2 text-sm">
+                      <p className="text-gray-700">
+                        <Lock className="w-4 h-4 inline mr-1" />
+                        {plan.features_allowed?.length || 0} funcionalidades
+                      </p>
+                      <p className="text-gray-700">
+                        <Unlock className="w-4 h-4 inline mr-1" />
+                        {plan.modules_allowed?.length || 0} módulos
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        onClick={() => setSelectedPlan(plan)} 
+                        className="flex-1"
+                        variant="outline"
+                      >
+                        Editar
+                      </Button>
+                      <Button 
+                        onClick={() => handleDeletePlan(plan.id)}
+                        variant="destructive"
+                        size="icon"
+                        disabled={deletePlanMutation.isPending}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
-              );
-            })}
-          </div>
+              ))}
+
+              {/* Planos padrão não configurados */}
+              {plans
+                .filter(p => !planFeatures.some(pf => pf.plan_id === p.id))
+                .map(plan => (
+                  <Card key={plan.id} className={`${plan.color} border-2 hover:shadow-lg transition-all cursor-pointer opacity-60`}>
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between">
+                        {plan.name}
+                        <Badge variant="outline">Não configurado</Badge>
+                      </CardTitle>
+                      <CardDescription>
+                        Clique para configurar
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Button onClick={() => handleEditPlan(plan.id)} className="w-full" variant="outline">
+                        Configurar Plano
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+            </div>
+          </>
         ) : (
           <Card className="border-2">
             <CardHeader>
@@ -438,31 +529,65 @@ export default function GerenciarPlanos() {
 
                 <TabsContent value="info" className="space-y-4">
                   <div>
+                    <Label>ID do Plano (obrigatório, único)</Label>
+                    <Input
+                      value={selectedPlan.plan_id}
+                      onChange={(e) => setSelectedPlan({...selectedPlan, plan_id: e.target.value.toUpperCase()})}
+                      placeholder="CUSTOM_PLAN"
+                      disabled={!!selectedPlan.id}
+                    />
+                    {selectedPlan.id && (
+                      <p className="text-xs text-gray-500 mt-1">ID não pode ser alterado após criação</p>
+                    )}
+                  </div>
+                  <div>
                     <Label>Nome do Plano</Label>
                     <Input
                       value={selectedPlan.plan_name}
                       onChange={(e) => setSelectedPlan({...selectedPlan, plan_name: e.target.value})}
+                      placeholder="Plano Premium"
                     />
                   </div>
-                  <div>
-                    <Label>Preço</Label>
-                    <Input
-                      value={selectedPlan.price}
-                      onChange={(e) => setSelectedPlan({...selectedPlan, price: e.target.value})}
-                      placeholder="R$ 197/mês"
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Preço Mensal (R$)</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={selectedPlan.price_monthly || 0}
+                        onChange={(e) => setSelectedPlan({...selectedPlan, price_monthly: parseFloat(e.target.value) || 0})}
+                        placeholder="197.00"
+                      />
+                    </div>
+                    <div>
+                      <Label>Preço Anual (R$)</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={selectedPlan.price_annual || 0}
+                        onChange={(e) => setSelectedPlan({...selectedPlan, price_annual: parseFloat(e.target.value) || 0})}
+                        placeholder="1970.00"
+                      />
+                    </div>
                   </div>
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
-                    <Label className="text-blue-900 font-semibold">🔗 Link de Checkout Kiwify</Label>
-                    <Input
-                      value={selectedPlan.kiwify_checkout_url || ''}
-                      onChange={(e) => setSelectedPlan({...selectedPlan, kiwify_checkout_url: e.target.value})}
-                      placeholder="https://pay.kiwify.com.br/5FpagLC"
-                    />
-                    <p className="text-xs text-blue-700">
-                      Cole aqui o link fixo de checkout gerado na Kiwify para este plano. 
-                      Quando o usuário clicar para assinar, será redirecionado para este link.
-                    </p>
+                    <Label className="text-blue-900 font-semibold">🔗 Links de Checkout Kiwify</Label>
+                    <div>
+                      <Label className="text-sm">Checkout Mensal</Label>
+                      <Input
+                        value={selectedPlan.kiwify_checkout_url_monthly || ''}
+                        onChange={(e) => setSelectedPlan({...selectedPlan, kiwify_checkout_url_monthly: e.target.value})}
+                        placeholder="https://pay.kiwify.com.br/..."
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm">Checkout Anual</Label>
+                      <Input
+                        value={selectedPlan.kiwify_checkout_url_annual || ''}
+                        onChange={(e) => setSelectedPlan({...selectedPlan, kiwify_checkout_url_annual: e.target.value})}
+                        placeholder="https://pay.kiwify.com.br/..."
+                      />
+                    </div>
                   </div>
                   <div>
                     <Label>Descrição do Plano</Label>
