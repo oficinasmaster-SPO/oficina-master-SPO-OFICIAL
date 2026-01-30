@@ -43,7 +43,7 @@ export default function ChatGestorOficina() {
     const loadConversations = async () => {
       try {
         const convs = await base44.agents.listConversations({
-          agent_name: "gestor_oficina"
+          agent_name: "Gestor da Oficina"
         });
         setConversations(convs || []);
       } catch (error) {
