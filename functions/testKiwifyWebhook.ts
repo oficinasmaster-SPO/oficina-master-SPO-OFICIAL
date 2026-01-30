@@ -22,12 +22,12 @@ Deno.serve(async (req) => {
 
     // Buscar workshop do usuário para teste
     const workshops = await base44.asServiceRole.entities.Workshop.list();
-    const userWorkshop = workshops.find(w => w.owner_id === user.id);
+    const userWorkshop = workshops.find(w => w.email === user.email || w.owner_id === user.id);
     
     if (!userWorkshop) {
       return Response.json({
         success: false,
-        error: 'Nenhuma oficina encontrada para seu usuário'
+        error: 'Nenhuma oficina encontrada para seu usuário. Email do usuário: ' + user.email
       }, { status: 400 });
     }
 
