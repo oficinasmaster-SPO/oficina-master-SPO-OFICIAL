@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import CheckoutDialog from "./CheckoutDialog";
 
 export default function PlanCard({ plan, currentPlan, actionType, onSelect, workshopLimits, user, workshop }) {
-  const isCurrentPlan = plan.nome === currentPlan;
+  const isCurrentPlan = plan.plan_id === currentPlan;
   const isHighlighted = plan.destacado || isCurrentPlan;
   const [showCheckout, setShowCheckout] = useState(false);
 
@@ -102,7 +102,7 @@ export default function PlanCard({ plan, currentPlan, actionType, onSelect, work
   };
 
   const getPriceDisplay = () => {
-    if (!plan.preco || plan.preco === 0) {
+    if (!plan.price || plan.price === "0" || plan.price === "Grátis") {
       return (
         <div className="mb-6">
           <div className="text-4xl font-bold text-gray-900">Grátis</div>
@@ -113,12 +113,8 @@ export default function PlanCard({ plan, currentPlan, actionType, onSelect, work
 
     return (
       <div className="mb-6">
-        <div className="flex items-baseline gap-1">
-          <span className="text-2xl font-semibold text-gray-900">R$</span>
-          <span className="text-4xl font-bold text-gray-900">
-            {plan.preco.toFixed(2).replace('.', ',')}
-          </span>
-          <span className="text-gray-600">/mês</span>
+        <div className="text-4xl font-bold text-gray-900">
+          {plan.price}
         </div>
       </div>
     );
@@ -152,10 +148,10 @@ export default function PlanCard({ plan, currentPlan, actionType, onSelect, work
 
       <CardHeader className={cn("text-center pb-4", isCurrentPlan && "pt-8")}>
         <CardTitle className="text-2xl font-bold text-gray-900 mb-2">
-          {plan.nome}
+          {plan.plan_name}
         </CardTitle>
-        {plan.descricao && (
-          <p className="text-sm text-gray-600">{plan.descricao}</p>
+        {plan.plan_description && (
+          <p className="text-sm text-gray-600">{plan.plan_description}</p>
         )}
       </CardHeader>
 
@@ -168,50 +164,44 @@ export default function PlanCard({ plan, currentPlan, actionType, onSelect, work
           </h4>
           
           {/* Limites Principais */}
-          {plan.limites && (
+          {(plan.max_diagnostics_per_month || plan.max_employees || plan.max_branches) && (
             <div className="space-y-2">
-              {Object.entries(plan.limites).map(([key, value]) => {
-                // Pular alguns campos específicos que não queremos mostrar
-                if (key === "usuarios" && value === 0) return null;
-
-                return (
-                  <div 
-                    key={key} 
-                    className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0"
-                  >
-                    <span className="text-sm text-gray-700 flex-1">
-                      {getLimitLabel(key)}
-                    </span>
-                    <div className="font-semibold text-gray-900 flex items-center gap-2">
-                      {renderLimitValue(key, value)}
-                      
-                      {/* Mostrar uso atual se disponível */}
-                      {workshopLimits && typeof value === "number" && workshopLimits[key] !== undefined && (
-                        <span className="text-xs text-gray-500">
-                          ({workshopLimits[key]} usado)
-                        </span>
-                      )}
-                    </div>
+              {plan.max_diagnostics_per_month && (
+                <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                  <span className="text-sm text-gray-700 flex-1">Diagnósticos/Mês</span>
+                  <div className="font-semibold text-gray-900">
+                    {plan.max_diagnostics_per_month === -1 ? "Ilimitado" : plan.max_diagnostics_per_month}
                   </div>
-                );
-              })}
+                </div>
+              )}
+              {plan.max_employees && (
+                <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                  <span className="text-sm text-gray-700 flex-1">Colaboradores</span>
+                  <div className="font-semibold text-gray-900">
+                    {plan.max_employees === -1 ? "Ilimitado" : plan.max_employees}
+                  </div>
+                </div>
+              )}
+              {plan.max_branches && (
+                <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                  <span className="text-sm text-gray-700 flex-1">Filiais</span>
+                  <div className="font-semibold text-gray-900">
+                    {plan.max_branches === -1 ? "Ilimitado" : plan.max_branches}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
-          {/* Benefícios Adicionais */}
-          {plan.beneficios && plan.beneficios.length > 0 && (
+          {/* Recursos Extras */}
+          {plan.extra_resources && (
             <div className="mt-4 pt-4 border-t border-gray-200">
               <h5 className="font-semibold text-gray-900 text-xs uppercase tracking-wide mb-2">
-                Benefícios:
+                Recursos:
               </h5>
-              <ul className="space-y-2">
-                {plan.beneficios.map((beneficio, index) => (
-                  <li key={index} className="flex items-start gap-2 text-sm text-gray-700">
-                    <Check className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                    <span>{beneficio}</span>
-                  </li>
-                ))}
-              </ul>
+              <p className="text-sm text-gray-700 whitespace-pre-line">
+                {plan.extra_resources}
+              </p>
             </div>
           )}
         </div>
@@ -225,9 +215,10 @@ export default function PlanCard({ plan, currentPlan, actionType, onSelect, work
           onClose={() => setShowCheckout(false)}
           plan={{
             id: plan.id,
-            name: plan.nome,
-            price: plan.preco,
-            features: plan.beneficios || []
+            plan_id: plan.plan_id,
+            plan_name: plan.plan_name,
+            price: plan.price,
+            kiwify_checkout_url: plan.kiwify_checkout_url
           }}
           user={user}
           workshop={workshop}
