@@ -392,12 +392,12 @@ export default function ConfiguracoesKiwify() {
             <p className="font-bold mb-2">1️⃣ Copie a URL do Webhook:</p>
             <div className="flex items-center gap-2">
               <code className="flex-1 bg-blue-50 px-3 py-2 rounded border text-xs break-all">
-                {window.location.origin}/api/apps/69540822472c4a70b54d47aa/functions/webhookKiwify
+                https://app.base44.com/api/apps/69540822472c4a70b54d47aa/functions/webhookKiwify
               </code>
               <Button
                 size="sm"
                 onClick={() => {
-                  navigator.clipboard.writeText(`${window.location.origin}/api/apps/69540822472c4a70b54d47aa/functions/webhookKiwify`);
+                  navigator.clipboard.writeText('https://app.base44.com/api/apps/69540822472c4a70b54d47aa/functions/webhookKiwify');
                   toast.success('URL copiada!');
                 }}
               >
@@ -462,13 +462,13 @@ export default function ConfiguracoesKiwify() {
                 <Label className="text-sm font-semibold">URL do Webhook</Label>
                 <div className="flex items-center gap-2 mt-2">
                   <code className="flex-1 bg-white px-3 py-2 rounded border text-sm break-all">
-                    {window.location.origin}/api/apps/69540822472c4a70b54d47aa/functions/webhookKiwify
+                    https://app.base44.com/api/apps/69540822472c4a70b54d47aa/functions/webhookKiwify
                   </code>
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => {
-                      navigator.clipboard.writeText(`${window.location.origin}/api/apps/69540822472c4a70b54d47aa/functions/webhookKiwify`);
+                      navigator.clipboard.writeText('https://app.base44.com/api/apps/69540822472c4a70b54d47aa/functions/webhookKiwify');
                       toast.success('URL copiada!');
                     }}
                   >
