@@ -28,17 +28,29 @@ export default function Planos() {
       // Carregar planos configurados (PlanFeature tem os links de checkout)
       const allPlans = await base44.entities.PlanFeature.list();
       
-      console.log("=== [PLANOS DEBUG] ===");
-      console.log("Raw response:", allPlans);
-      console.log("Plans count:", allPlans?.length);
-      console.log("First plan sample:", allPlans?.[0]);
-      console.log("All plans IDs:", allPlans?.map(p => ({ id: p.plan_id, name: p.plan_name, active: p.active })));
+      console.log("=== [PLANOS DEBUG COMPLETO] ===");
+      console.log("Raw response count:", allPlans?.length);
+      
+      // Log detalhado de CADA plano
+      allPlans?.forEach((plan, idx) => {
+        console.log(`\n--- Plano ${idx + 1}: ${plan.plan_name} ---`);
+        console.log("ID:", plan.plan_id);
+        console.log("Nome:", plan.plan_name);
+        console.log("Preço Mensal:", plan.price_monthly);
+        console.log("Preço Anual:", plan.price_annual);
+        console.log("Link Mensal:", plan.kiwify_checkout_url_monthly);
+        console.log("Link Anual:", plan.kiwify_checkout_url_annual);
+        console.log("Features Highlights:", plan.features_highlights?.length || 0, "itens");
+        console.log("Features Allowed:", plan.features_allowed?.length || 0, "itens");
+        console.log("Modules Allowed:", plan.modules_allowed?.length || 0, "itens");
+        console.log("Active:", plan.active);
+        console.log("Order:", plan.order);
+      });
       
       // Filtrar apenas por active
       let filteredPlans = allPlans.filter(p => p.active);
       
-      console.log("After active filter count:", filteredPlans?.length);
-      console.log("Filtered plans:", filteredPlans?.map(p => ({ id: p.plan_id, name: p.plan_name })));
+      console.log("\n✅ Após filtro active:", filteredPlans?.length, "planos");
       
       if (user && user.role !== 'admin') {
         filteredPlans = filteredPlans.filter(p => 
@@ -46,12 +58,12 @@ export default function Planos() {
           p.target_audience === 'cliente' || 
           p.target_audience === 'todos'
         );
-        console.log("After audience filter count:", filteredPlans?.length);
+        console.log("✅ Após filtro audience:", filteredPlans?.length, "planos");
       }
       
       const sortedPlans = filteredPlans.sort((a, b) => (a.order || 0) - (b.order || 0));
-      console.log("Final sorted plans:", sortedPlans);
-      console.log("=== [FIM DEBUG] ===");
+      console.log("\n✅ Planos finais ordenados:", sortedPlans.map(p => p.plan_name));
+      console.log("=== [FIM DEBUG] ===\n");
       setPlans(sortedPlans);
 
       // Tentar carregar dados do usuário (opcional)

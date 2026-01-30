@@ -372,6 +372,24 @@ export default function GerenciarPlanos() {
   };
 
   const handleSavePlan = () => {
+    // Validações básicas
+    if (!selectedPlan.plan_id || !selectedPlan.plan_name) {
+      toast.error("ID e Nome do plano são obrigatórios");
+      return;
+    }
+
+    console.log("💾 Salvando plano:", {
+      id: selectedPlan.id,
+      plan_id: selectedPlan.plan_id,
+      plan_name: selectedPlan.plan_name,
+      price_monthly: selectedPlan.price_monthly,
+      price_annual: selectedPlan.price_annual,
+      features_highlights_count: selectedPlan.features_highlights?.length || 0,
+      features_allowed_count: selectedPlan.features_allowed?.length || 0,
+      modules_allowed_count: selectedPlan.modules_allowed?.length || 0,
+      active: selectedPlan.active
+    });
+
     if (selectedPlan.id) {
       updatePlanMutation.mutate({ id: selectedPlan.id, data: selectedPlan });
     } else {
@@ -590,6 +608,16 @@ export default function GerenciarPlanos() {
                     </div>
                   </div>
                   <div>
+                    <Label>Ordem de Exibição</Label>
+                    <Input
+                      type="number"
+                      value={selectedPlan.order || 0}
+                      onChange={(e) => setSelectedPlan({...selectedPlan, order: parseInt(e.target.value) || 0})}
+                      placeholder="0"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Menor número aparece primeiro</p>
+                  </div>
+                  <div>
                     <Label>Descrição do Plano</Label>
                     <Textarea
                       value={selectedPlan.plan_description}
@@ -599,22 +627,43 @@ export default function GerenciarPlanos() {
                     />
                   </div>
                   <div>
-                    <Label>Recursos Extras</Label>
+                    <Label>Destaques do Plano (separados por linha, máx 8)</Label>
                     <Textarea
-                      value={selectedPlan.extra_resources}
-                      onChange={(e) => setSelectedPlan({...selectedPlan, extra_resources: e.target.value})}
-                      rows={3}
-                      placeholder="Recursos exclusivos deste plano..."
+                      value={selectedPlan.features_highlights?.join('\n') || ''}
+                      onChange={(e) => setSelectedPlan({
+                        ...selectedPlan, 
+                        features_highlights: e.target.value.split('\n').filter(f => f.trim())
+                      })}
+                      rows={6}
+                      placeholder="✓ Diagnósticos ilimitados&#10;✓ Suporte prioritário&#10;✓ IA avançada"
                     />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Cada linha será um item com check verde no card do plano
+                    </p>
                   </div>
-                  <div>
-                    <Label>Limitações</Label>
-                    <Textarea
-                      value={selectedPlan.limitations}
-                      onChange={(e) => setSelectedPlan({...selectedPlan, limitations: e.target.value})}
-                      rows={3}
-                      placeholder="Limitações deste plano..."
-                    />
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="is_popular"
+                        checked={selectedPlan.is_popular || false}
+                        onChange={(e) => setSelectedPlan({...selectedPlan, is_popular: e.target.checked})}
+                        className="w-4 h-4"
+                      />
+                      <Label htmlFor="is_popular" className="cursor-pointer">
+                        Marcar como "Mais Popular"
+                      </Label>
+                    </div>
+                    {selectedPlan.is_popular && (
+                      <div>
+                        <Label>Texto do Badge</Label>
+                        <Input
+                          value={selectedPlan.badge_text || ''}
+                          onChange={(e) => setSelectedPlan({...selectedPlan, badge_text: e.target.value})}
+                          placeholder="Mais Popular"
+                        />
+                      </div>
+                    )}
                   </div>
                 </TabsContent>
 

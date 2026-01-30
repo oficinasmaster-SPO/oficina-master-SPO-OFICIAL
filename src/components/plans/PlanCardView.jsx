@@ -10,6 +10,14 @@ export default function PlanCardView({ plans, billingCycle, currentPlan, onSelec
   const [selectedPlanForCheckout, setSelectedPlanForCheckout] = useState(null);
 
   const getPrice = (plan) => {
+    console.log(`[CARD] Calculando preço para ${plan.plan_name}:`, {
+      cycle: billingCycle,
+      price_monthly: plan.price_monthly,
+      price_annual: plan.price_annual,
+      display_monthly: plan.price_display_monthly,
+      display_annual: plan.price_display_annual
+    });
+
     if (billingCycle === "monthly") {
       return plan.price_display_monthly || `R$ ${(plan.price_monthly || 0).toFixed(2)}`;
     }
