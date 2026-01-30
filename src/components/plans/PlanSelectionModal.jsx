@@ -21,18 +21,31 @@ export default function PlanSelectionModal({
 
   // Filtrar planos ativos e ordenados
   const activePlans = useMemo(() => {
-    return plans
-      .filter(p => p.active)
-      .sort((a, b) => (a.order || 0) - (b.order || 0));
+    console.log("[MODAL] Plans recebidos:", plans?.length);
+    console.log("[MODAL] Plans sample:", plans?.[0]);
+    const filtered = plans.filter(p => p.active);
+    console.log("[MODAL] Plans ativos após filtro:", filtered?.length);
+    const sorted = filtered.sort((a, b) => (a.order || 0) - (b.order || 0));
+    console.log("[MODAL] Plans finais ordenados:", sorted?.map(p => ({ id: p.plan_id, name: p.plan_name })));
+    return sorted;
   }, [plans]);
+
+  console.log("[MODAL] Renderizando com", activePlans?.length, "planos");
+  console.log("[MODAL] ViewMode:", viewMode);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent 
+        className="max-w-[95vw] h-[90vh] overflow-hidden flex flex-col"
+        aria-describedby="plan-selection-description"
+      >
         <DialogHeader className="border-b pb-4">
           <DialogTitle className="text-2xl font-bold text-center">
             Escolha o Plano Ideal para sua Oficina
           </DialogTitle>
+          <p id="plan-selection-description" className="sr-only">
+            Escolha entre planos mensais e anuais, visualize em cards ou compare recursos
+          </p>
           
           {/* Controles superiores */}
           <div className="flex items-center justify-between mt-4">
