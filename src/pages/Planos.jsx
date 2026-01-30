@@ -24,26 +24,28 @@ export default function Planos() {
 
   const loadData = async () => {
     try {
-      const user = await base44.auth.me();
-      
-      // Buscar workshops do usuário
-      const workshops = await base44.entities.Workshop.list();
-      const userWorkshop = workshops.find(w => w.owner_id === user.id);
-      
-      // ❌ Se não tem workshop, bloquear acesso
-      if (!userWorkshop) {
-        setLoading(false);
-        navigate(createPageUrl("Cadastro"), { replace: true });
-        return;
-      }
-
-      // ✅ Se tem workshop, carregar planos normalmente
+      // Carregar planos (público)
       const allPlans = await base44.entities.Plan.list();
       const sortedPlans = allPlans.sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
       setPlans(sortedPlans);
 
-      setWorkshop(userWorkshop);
-      setCurrentPlan(userWorkshop.planoAtual || "FREE");
+      // Tentar carregar dados do usuário (opcional)
+      try {
+        const isAuth = await base44.auth.isAuthenticated();
+        if (isAuth) {
+          const user = await base44.auth.me();
+          const workshops = await base44.entities.Workshop.list();
+          const userWorkshop = workshops.find(w => w.owner_id === user.id);
+          
+          if (userWorkshop) {
+            setWorkshop(userWorkshop);
+            setCurrentPlan(userWorkshop.planoAtual || "FREE");
+          }
+        }
+      } catch (authError) {
+        // Usuário não autenticado - continua sem workshop
+        console.log("Visitante não autenticado");
+      }
     } catch (error) {
       console.error("Erro ao carregar planos:", error);
       toast.error("Erro ao carregar planos");
@@ -53,6 +55,16 @@ export default function Planos() {
   };
 
   const handleSelectPlan = async (planName) => {
+    // Verificar se está autenticado
+    const isAuth = await base44.auth.isAuthenticated();
+    
+    if (!isAuth) {
+      // Redirecionar para primeiro acesso com plano selecionado
+      toast.info("Faça login para continuar com a assinatura");
+      navigate(createPageUrl("PrimeiroAcesso") + `?plano=${planName}`);
+      return;
+    }
+
     if (!workshop) {
       toast.error("Cadastre sua oficina primeiro");
       navigate(createPageUrl("Cadastro"));
@@ -112,8 +124,10 @@ export default function Planos() {
     );
   }
 
-  // Bloquear acesso para perfis específicos (mentor, consultor)
-  if (user?.job_role === 'mentor' || user?.job_role === 'consultor' || user?.job_role === 'acelerador') {
+  // Bloquear upgrade/downgrade para perfis específicos (mas permite visualização)
+  const isRestrictedRole = user?.job_role === 'mentor' || user?.job_role === 'consultor' || user?.job_role === 'acelerador';
+  
+  if (isRestrictedRole && workshop) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 p-6">
         <div className="max-w-md text-center">

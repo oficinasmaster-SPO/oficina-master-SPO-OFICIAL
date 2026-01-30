@@ -138,7 +138,7 @@ export default function Layout({ children, currentPageName }) {
   };
 
   // Verificar se a página atual é pública (não precisa de autenticação)
-  const publicPages = ['/PrimeiroAcesso', '/ClientRegistration', '/CadastroSucesso'];
+  const publicPages = ['/PrimeiroAcesso', '/ClientRegistration', '/CadastroSucesso', '/Planos'];
   const isPublicPage = publicPages.some(page => 
     location.pathname.toLowerCase().includes(page.toLowerCase())
   );
