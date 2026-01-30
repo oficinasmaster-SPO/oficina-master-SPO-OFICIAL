@@ -141,16 +141,12 @@ async function handlePaymentApproved(base44, data, kiwifyConfig) {
   let workshop;
   
   if (workshopId) {
-    workshop = await base44.asServiceRole.entities.Workshop.get(workshopId);
+    const workshops = await base44.asServiceRole.entities.Workshop.list();
+    workshop = workshops.find(w => w.id === workshopId);
   } else {
-    // Buscar por email do owner
-    const users = await base44.asServiceRole.entities.User.list();
-    const user = users.find(u => u.email === customerEmail);
-    
-    if (user) {
-      const workshops = await base44.asServiceRole.entities.Workshop.list();
-      workshop = workshops.find(w => w.owner_id === user.id);
-    }
+    // Buscar workshop por email do owner
+    const workshops = await base44.asServiceRole.entities.Workshop.list();
+    workshop = workshops.find(w => w.email === customerEmail);
   }
   
   if (!workshop) {
@@ -194,25 +190,22 @@ async function handleRefund(base44, data) {
   if (user) {
     const workshops = await base44.asServiceRole.entities.Workshop.list();
     const workshop = workshops.find(w => w.owner_id === user.id);
+    await base44.asServiceRole.entities.Workshop.update(workshop.id, {
+      planoAtual: 'FREE',
+      dataAssinatura: new Date().toISOString()
+    });
     
-    if (workshop) {
-      await base44.asServiceRole.entities.Workshop.update(workshop.id, {
-        planoAtual: 'FREE',
-        dataAssinatura: new Date().toISOString()
-      });
-      
-      // Registrar no histórico
-      await base44.asServiceRole.entities.PaymentHistory.create({
-        workshop_id: workshop.id,
-        payment_provider: 'kiwify',
-        payment_status: 'refunded',
-        transaction_id: data.order_id || data.transaction_id,
-        payment_date: new Date().toISOString(),
-        metadata: data
-      });
-      
-      console.log(`✅ Workshop ${workshop.name} voltou para plano FREE (reembolso)`);
-    }
+    // Registrar no histórico
+    await base44.asServiceRole.entities.PaymentHistory.create({
+      workshop_id: workshop.id,
+      payment_provider: 'kiwify',
+      payment_status: 'refunded',
+      transaction_id: data.order_id || data.transaction_id,
+      payment_date: new Date().toISOString(),
+      metadata: data
+    });
+    
+    console.log(`✅ Workshop ${workshop.name} voltou para plano FREE (reembolso)`);
   }
 }
 
@@ -222,24 +215,19 @@ async function handlePaymentFailed(base44, data) {
   const customerEmail = data.Customer?.email || data.customer_email;
   const transactionId = data.order_id || data.transaction_id;
   
-  // Registrar falha no histórico
-  const users = await base44.asServiceRole.entities.User.list();
-  const user = users.find(u => u.email === customerEmail);
+  // Buscar workshop pelo email
+  const workshops = await base44.asServiceRole.entities.Workshop.list();
+  const workshop = workshops.find(w => w.email === customerEmail);
   
-  if (user) {
-    const workshops = await base44.asServiceRole.entities.Workshop.list();
-    const workshop = workshops.find(w => w.owner_id === user.id);
-    
-    if (workshop) {
-      await base44.asServiceRole.entities.PaymentHistory.create({
-        workshop_id: workshop.id,
-        payment_provider: 'kiwify',
-        payment_status: 'failed',
-        transaction_id: transactionId,
-        payment_date: new Date().toISOString(),
-        metadata: data
-      });
-    }
+  if (workshop) {
+    await base44.asServiceRole.entities.PaymentHistory.create({
+      workshop_id: workshop.id,
+      payment_provider: 'kiwify',
+      payment_status: 'failed',
+      transaction_id: transactionId,
+      payment_date: new Date().toISOString(),
+      metadata: data
+    });
   }
 }
 
@@ -255,14 +243,11 @@ async function handleSubscriptionCancelled(base44, data) {
   if (user) {
     const workshops = await base44.asServiceRole.entities.Workshop.list();
     const workshop = workshops.find(w => w.owner_id === user.id);
+    await base44.asServiceRole.entities.Workshop.update(workshop.id, {
+      planoAtual: 'FREE',
+      dataAssinatura: new Date().toISOString()
+    });
     
-    if (workshop) {
-      await base44.asServiceRole.entities.Workshop.update(workshop.id, {
-        planoAtual: 'FREE',
-        dataAssinatura: new Date().toISOString()
-      });
-      
-      console.log(`✅ Workshop ${workshop.name} voltou para plano FREE`);
-    }
+    console.log(`✅ Workshop ${workshop.name} voltou para plano FREE`);
   }
 }
