@@ -1,21 +1,30 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
+  const base44 = createClientFromRequest(req);
+  let payload;
+  
   try {
-    // IMPORTANTE: Usar asServiceRole para webhooks externos (sem auth de usuário)
-    const base44 = createClientFromRequest(req);
+    // LOGGING INICIAL - Capturar tudo que chegar
+    console.log("🔔 WEBHOOK KIWIFY ACIONADO!");
+    console.log("URL:", req.url);
+    console.log("Method:", req.method);
+    console.log("Headers:", JSON.stringify(Object.fromEntries(req.headers)));
     
     // Parse webhook payload
-    let payload;
     try {
       const body = await req.text();
+      console.log("📦 Body recebido (raw):", body);
       payload = JSON.parse(body);
+      console.log("📩 Payload parseado:", JSON.stringify(payload, null, 2));
     } catch (e) {
       console.error("❌ Erro ao parsear payload do webhook:", e);
-      return Response.json({ error: 'Invalid JSON payload' }, { status: 400 });
+      // SEMPRE retornar 200 para não marcar erro na Kiwify
+      return Response.json({ 
+        success: true, 
+        message: 'Received but invalid JSON' 
+      }, { status: 200 });
     }
-    
-    console.log("📩 Kiwify Webhook recebido:", JSON.stringify(payload, null, 2));
     
     // Extrair dados básicos para log (formato real da Kiwify)
     const eventType = payload.order?.webhook_event_type || payload.event || payload.trigger;
@@ -24,9 +33,18 @@ Deno.serve(async (req) => {
     const orderId = payload.order?.order_id || payload.order_id || payload.transaction_id || payload.id;
     const eventData = payload.order || payload.data || payload;
     
+    console.log("📊 Dados extraídos:");
+    console.log("  - Event Type:", eventType);
+    console.log("  - Customer Email:", customerEmail);
+    console.log("  - Product ID:", productId);
+    console.log("  - Order ID:", orderId);
+    
     // Buscar configurações do Kiwify
+    console.log("🔍 Buscando configurações Kiwify...");
     const kiwifySettings = await base44.asServiceRole.entities.KiwifySettings.list();
     const kiwifyConfig = kiwifySettings[0];
+    console.log("⚙️ Config encontrada:", kiwifyConfig ? "Sim" : "Não");
+    console.log("✅ Integração ativa:", kiwifyConfig?.is_active);
     
     if (!kiwifyConfig || !kiwifyConfig.is_active) {
       // Registrar log mesmo se integração não estiver ativa
@@ -92,7 +110,8 @@ Deno.serve(async (req) => {
     }
     
     // Registrar log do webhook
-    await base44.asServiceRole.entities.KiwifyWebhookLog.create({
+    console.log("💾 Criando log no banco de dados...");
+    const logEntry = await base44.asServiceRole.entities.KiwifyWebhookLog.create({
       event_type: eventType,
       payload: payload,
       customer_email: customerEmail,
@@ -103,11 +122,14 @@ Deno.serve(async (req) => {
       processing_message: processingMessage,
       received_at: new Date().toISOString()
     });
+    console.log("✅ Log criado com ID:", logEntry.id);
     
+    console.log("🎉 WEBHOOK PROCESSADO COM SUCESSO!");
     return Response.json({ 
       success: true,
       message: 'Webhook processed successfully',
-      status: processingStatus
+      status: processingStatus,
+      log_id: logEntry.id
     });
 
   } catch (error) {
