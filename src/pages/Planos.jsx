@@ -94,25 +94,40 @@ export default function Planos() {
       }
     }
 
-    // Para planos pagos, gerar link de checkout Kiwify
+    // Para planos pagos, buscar link de checkout da Kiwify
     try {
-      toast.loading("Gerando checkout...");
-      const response = await base44.functions.invoke('gerarLinkCheckoutKiwify', {
-        plan_id: planName
-      });
-
-      if (response.data.success) {
+      toast.loading("Carregando checkout...");
+      
+      // Buscar configurações da Kiwify
+      const kiwifySettings = await base44.entities.KiwifySettings.list();
+      const kiwifyConfig = kiwifySettings[0];
+      
+      if (!kiwifyConfig || !kiwifyConfig.is_active) {
         toast.dismiss();
-        toast.success("Redirecionando para pagamento...");
-        // Redirecionar para checkout Kiwify
-        window.location.href = response.data.checkout_url;
-      } else {
-        toast.dismiss();
-        toast.error(response.data.error || "Erro ao gerar checkout");
+        toast.error("Integração com Kiwify não está configurada");
+        return;
       }
+      
+      // Encontrar mapeamento do plano
+      const mapping = kiwifyConfig.plan_mappings?.find(
+        m => m.internal_plan_id === planName
+      );
+      
+      if (!mapping || !mapping.checkout_url) {
+        toast.dismiss();
+        toast.error(`Plano ${planName} não possui link de checkout configurado`);
+        return;
+      }
+      
+      toast.dismiss();
+      toast.success("Redirecionando para pagamento...");
+      
+      // Redirecionar para checkout fixo da Kiwify
+      window.location.href = mapping.checkout_url;
+      
     } catch (error) {
       toast.dismiss();
-      console.error("Erro ao gerar checkout:", error);
+      console.error("Erro ao processar checkout:", error);
       toast.error("Erro ao processar pagamento. Tente novamente.");
     }
   };
