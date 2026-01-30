@@ -24,8 +24,8 @@ export default function Planos() {
 
   const loadData = async () => {
     try {
-      // Carregar planos (público)
-      const allPlans = await base44.entities.Plan.list();
+      // Carregar planos configurados (PlanFeature tem os links de checkout)
+      const allPlans = await base44.entities.PlanFeature.list();
       const sortedPlans = allPlans.sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
       setPlans(sortedPlans);
 
@@ -232,8 +232,8 @@ export default function Planos() {
                 key={plan.id}
                 plan={plan}
                 currentPlan={currentPlan}
-                actionType={getActionType(plan.nome)}
-                onSelect={() => handleSelectPlan(plan.nome)}
+                actionType={getActionType(plan.plan_id)}
+                onSelect={() => handleSelectPlan(plan.plan_id)}
                 workshopLimits={workshop?.limitesUtilizados}
               />
             ))}
