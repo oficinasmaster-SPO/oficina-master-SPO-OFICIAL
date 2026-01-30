@@ -450,6 +450,18 @@ export default function GerenciarPlanos() {
                       placeholder="R$ 197/mês"
                     />
                   </div>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
+                    <Label className="text-blue-900 font-semibold">🔗 Link de Checkout Kiwify</Label>
+                    <Input
+                      value={selectedPlan.kiwify_checkout_url || ''}
+                      onChange={(e) => setSelectedPlan({...selectedPlan, kiwify_checkout_url: e.target.value})}
+                      placeholder="https://pay.kiwify.com.br/5FpagLC"
+                    />
+                    <p className="text-xs text-blue-700">
+                      Cole aqui o link fixo de checkout gerado na Kiwify para este plano. 
+                      Quando o usuário clicar para assinar, será redirecionado para este link.
+                    </p>
+                  </div>
                   <div>
                     <Label>Descrição do Plano</Label>
                     <Textarea
