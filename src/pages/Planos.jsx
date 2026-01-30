@@ -76,20 +76,44 @@ export default function Planos() {
       return;
     }
 
-    // Por enquanto, apenas atualiza o plano (quando implementar pagamento, será diferente)
+    // Plano FREE não precisa de pagamento
+    if (planName === "FREE") {
+      try {
+        await base44.entities.Workshop.update(workshop.id, {
+          planoAtual: planName,
+          dataAssinatura: new Date().toISOString()
+        });
+        toast.success("Plano FREE ativado com sucesso!");
+        setCurrentPlan(planName);
+        loadData();
+        return;
+      } catch (error) {
+        console.error("Erro ao ativar plano FREE:", error);
+        toast.error("Erro ao ativar plano");
+        return;
+      }
+    }
+
+    // Para planos pagos, gerar link de checkout Kiwify
     try {
-      await base44.entities.Workshop.update(workshop.id, {
-        planoAtual: planName,
-        dataAssinatura: new Date().toISOString(),
-        dataRenovacao: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // +30 dias
+      toast.loading("Gerando checkout...");
+      const response = await base44.functions.invoke('gerarLinkCheckoutKiwify', {
+        plan_id: planName
       });
 
-      toast.success(`Plano ${planName} ativado com sucesso!`);
-      setCurrentPlan(planName);
-      loadData(); // Recarregar dados
+      if (response.data.success) {
+        toast.dismiss();
+        toast.success("Redirecionando para pagamento...");
+        // Redirecionar para checkout Kiwify
+        window.location.href = response.data.checkout_url;
+      } else {
+        toast.dismiss();
+        toast.error(response.data.error || "Erro ao gerar checkout");
+      }
     } catch (error) {
-      console.error("Erro ao ativar plano:", error);
-      toast.error("Erro ao ativar plano");
+      toast.dismiss();
+      console.error("Erro ao gerar checkout:", error);
+      toast.error("Erro ao processar pagamento. Tente novamente.");
     }
   };
 
