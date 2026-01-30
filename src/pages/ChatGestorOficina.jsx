@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Send, Plus, Loader2, ExternalLink, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
+import { Send, Plus, Loader2, ExternalLink, MessageCircle } from "lucide-react";
 import MessageBubble from "@/components/agent/MessageBubble";
 
 export default function ChatGestorOficina() {
