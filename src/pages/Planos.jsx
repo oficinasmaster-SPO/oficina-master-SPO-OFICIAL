@@ -28,8 +28,14 @@ export default function Planos() {
       // Carregar planos configurados (PlanFeature tem os links de checkout)
       const allPlans = await base44.entities.PlanFeature.list();
       
+      console.log("[PLANOS DEBUG] Raw response:", allPlans);
+      console.log("[PLANOS DEBUG] Plans count:", allPlans?.length);
+      console.log("[PLANOS DEBUG] First plan sample:", allPlans?.[0]);
+      
       // Filtrar por target_audience se não for admin
       let filteredPlans = allPlans.filter(p => p.active);
+      
+      console.log("[PLANOS DEBUG] After active filter:", filteredPlans?.length);
       
       if (user && user.role !== 'admin') {
         filteredPlans = filteredPlans.filter(p => 
@@ -37,9 +43,11 @@ export default function Planos() {
           p.target_audience === 'cliente' || 
           p.target_audience === 'todos'
         );
+        console.log("[PLANOS DEBUG] After audience filter:", filteredPlans?.length);
       }
       
       const sortedPlans = filteredPlans.sort((a, b) => (a.order || 0) - (b.order || 0));
+      console.log("[PLANOS DEBUG] Final sorted plans:", sortedPlans);
       setPlans(sortedPlans);
 
       // Tentar carregar dados do usuário (opcional)
