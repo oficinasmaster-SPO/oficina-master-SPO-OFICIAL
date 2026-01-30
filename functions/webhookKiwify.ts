@@ -183,13 +183,11 @@ async function handleRefund(base44, data) {
   
   const customerEmail = data.Customer?.email || data.customer_email;
   
-  // Buscar workshop e voltar para plano FREE
-  const users = await base44.asServiceRole.entities.User.list();
-  const user = users.find(u => u.email === customerEmail);
+  // Buscar workshop pelo email
+  const workshops = await base44.asServiceRole.entities.Workshop.list();
+  const workshop = workshops.find(w => w.email === customerEmail);
   
-  if (user) {
-    const workshops = await base44.asServiceRole.entities.Workshop.list();
-    const workshop = workshops.find(w => w.owner_id === user.id);
+  if (workshop) {
     await base44.asServiceRole.entities.Workshop.update(workshop.id, {
       planoAtual: 'FREE',
       dataAssinatura: new Date().toISOString()
@@ -236,13 +234,11 @@ async function handleSubscriptionCancelled(base44, data) {
   
   const customerEmail = data.Customer?.email || data.customer_email;
   
-  // Buscar workshop e voltar para plano FREE
-  const users = await base44.asServiceRole.entities.User.list();
-  const user = users.find(u => u.email === customerEmail);
+  // Buscar workshop pelo email
+  const workshops = await base44.asServiceRole.entities.Workshop.list();
+  const workshop = workshops.find(w => w.email === customerEmail);
   
-  if (user) {
-    const workshops = await base44.asServiceRole.entities.Workshop.list();
-    const workshop = workshops.find(w => w.owner_id === user.id);
+  if (workshop) {
     await base44.asServiceRole.entities.Workshop.update(workshop.id, {
       planoAtual: 'FREE',
       dataAssinatura: new Date().toISOString()
