@@ -1227,8 +1227,11 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           {hasWorkshop && (
            <div className="mt-6 border-t border-gray-200 pt-4">
              <Link
-               to={createPageUrl('CadastroPlanos') + queryString}
-               onClick={onClose}
+               to={createPageUrl('Planos') + queryString}
+               onClick={() => {
+                 console.log("[NAV] Sidebar: clique em 'Escolha seu Plano' -> indo para Planos");
+                 onClose();
+               }}
                className={cn(
                  "flex items-center gap-3 px-3 py-3 rounded-lg transition-all",
                  "bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 shadow-md",

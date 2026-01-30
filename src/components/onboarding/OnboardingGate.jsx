@@ -36,6 +36,7 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
         'primeiroacesso',
         'clientregistration',
         'cadastrosucesso',
+        'planos',
         'login',
         'signup'
       ];

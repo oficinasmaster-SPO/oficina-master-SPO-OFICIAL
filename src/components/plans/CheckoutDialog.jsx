@@ -13,15 +13,18 @@ export default function CheckoutDialog({ open, onClose, plan, user, workshop }) 
     setIsProcessing(true);
     
     try {
+      console.log("[CheckoutDialog] Iniciando checkout para plano:", plan);
+      
       // Verificar se o link de checkout existe
-      if (!plan.kiwify_checkout_url) {
+      if (!plan?.kiwify_checkout_url) {
+        console.error("[CheckoutDialog] Link não configurado para plano:", plan?.plan_id);
         toast.error("Plano sem link de checkout configurado. Entre em contato com o suporte.");
         setIsProcessing(false);
         return;
       }
 
       // Log para debug
-      console.log("[Checkout] planId=", plan.plan_id, "url=", plan.kiwify_checkout_url);
+      console.log("[CheckoutDialog] Redirecionando - planId:", plan.plan_id, "url:", plan.kiwify_checkout_url);
       
       toast.success("Redirecionando para pagamento...");
       
@@ -30,7 +33,7 @@ export default function CheckoutDialog({ open, onClose, plan, user, workshop }) 
       
       onClose();
     } catch (error) {
-      console.error("[Checkout Error]", error);
+      console.error("[CheckoutDialog] Erro:", error);
       toast.error("Erro ao processar: " + error.message);
     } finally {
       setIsProcessing(false);

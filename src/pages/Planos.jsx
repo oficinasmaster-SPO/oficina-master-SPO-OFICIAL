@@ -19,6 +19,7 @@ export default function Planos() {
   const [viewMode, setViewMode] = useState("cards"); // "cards" or "table"
 
   useEffect(() => {
+    console.log("[PLANOS] Página montada, pathname:", window.location.pathname);
     loadData();
   }, []);
 
@@ -55,6 +56,8 @@ export default function Planos() {
   };
 
   const handleSelectPlan = async (planName) => {
+    console.log("[PLANOS] handleSelectPlan chamado com planName:", planName);
+    
     // Verificar se está autenticado
     const isAuth = await base44.auth.isAuthenticated();
     
@@ -102,6 +105,9 @@ export default function Planos() {
       const planFeatures = await base44.entities.PlanFeature.list();
       const planInfo = planFeatures.find(p => p.plan_id === planName);
       
+      console.log("[PLANOS] PlanInfo encontrado:", planInfo);
+      console.log("[PLANOS] Link checkout:", planInfo?.kiwify_checkout_url);
+      
       if (!planInfo || !planInfo.kiwify_checkout_url) {
         toast.dismiss();
         toast.error(`Plano ${planName} não possui link de checkout configurado`);
@@ -112,11 +118,12 @@ export default function Planos() {
       toast.success("Redirecionando para pagamento...");
       
       // Redirecionar para checkout Kiwify
+      console.log("[PLANOS] Redirecionando para:", planInfo.kiwify_checkout_url);
       window.location.href = planInfo.kiwify_checkout_url;
       
     } catch (error) {
       toast.dismiss();
-      console.error("Erro ao processar checkout:", error);
+      console.error("[PLANOS] Erro ao processar checkout:", error);
       toast.error("Erro ao processar pagamento. Tente novamente.");
     }
   };
