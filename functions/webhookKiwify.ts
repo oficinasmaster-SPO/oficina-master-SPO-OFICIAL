@@ -42,7 +42,10 @@ Deno.serve(async (req) => {
       });
       
       console.log("⚠️ Integração Kiwify não está ativa");
-      return Response.json({ error: 'Kiwify integration not active' }, { status: 400 });
+      return Response.json({ 
+        success: true,
+        message: 'Webhook received but integration not active' 
+      }, { status: 200 });
     }
     
     let processingStatus = 'success';
@@ -109,9 +112,25 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error("❌ Erro ao processar webhook:", error);
+    
+    // IMPORTANTE: Sempre retornar 200 para Kiwify não marcar como erro
+    try {
+      await base44.asServiceRole.entities.KiwifyWebhookLog.create({
+        event_type: 'error',
+        payload: payload || {},
+        processing_status: 'error',
+        processing_message: error.message,
+        received_at: new Date().toISOString()
+      });
+    } catch (logError) {
+      console.error("Erro ao criar log:", logError);
+    }
+    
     return Response.json({ 
+      success: true,
+      message: 'Webhook received with errors',
       error: error.message 
-    }, { status: 500 });
+    }, { status: 200 });
   }
 });
 
