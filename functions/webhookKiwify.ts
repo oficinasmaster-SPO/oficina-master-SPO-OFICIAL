@@ -177,23 +177,42 @@ async function handlePaymentApproved(base44, data, kiwifyConfig) {
   
   const planId = mapping.internal_plan_id;
   
-  // Buscar workshop pelo email do cliente ou custom_data
-  const workshopId = customData?.workshop_id;
-  let workshop;
+  // Buscar workshop por múltiplas estratégias
+  let workshop = null;
   
-  if (workshopId) {
+  // 1. Tentar por custom_data.workshop_id
+  if (customData?.workshop_id) {
+    console.log("🔍 Buscando por custom_data.workshop_id:", customData.workshop_id);
     const workshops = await base44.asServiceRole.entities.Workshop.list();
-    workshop = workshops.find(w => w.id === workshopId);
-  } else {
-    // Buscar workshop por email do owner
+    workshop = workshops.find(w => w.id === customData.workshop_id);
+  }
+  
+  // 2. Tentar por email do cliente no workshop.email
+  if (!workshop) {
+    console.log("🔍 Buscando por workshop.email:", customerEmail);
     const workshops = await base44.asServiceRole.entities.Workshop.list();
     workshop = workshops.find(w => w.email === customerEmail);
+  }
+  
+  // 3. Tentar por owner_id (buscar user pelo email e depois workshop)
+  if (!workshop) {
+    console.log("🔍 Buscando user pelo email:", customerEmail);
+    const users = await base44.asServiceRole.entities.User.list();
+    const user = users.find(u => u.email === customerEmail);
+    
+    if (user) {
+      console.log("✅ User encontrado, buscando workshop por owner_id:", user.id);
+      const workshops = await base44.asServiceRole.entities.Workshop.list();
+      workshop = workshops.find(w => w.owner_id === user.id);
+    }
   }
   
   if (!workshop) {
     console.error(`❌ Workshop não encontrado para email: ${customerEmail}`);
     return;
   }
+  
+  console.log("✅ Workshop encontrado:", workshop.id, "-", workshop.name);
   
   // Atualizar plano do workshop
   await base44.asServiceRole.entities.Workshop.update(workshop.id, {
