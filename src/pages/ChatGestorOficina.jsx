@@ -43,7 +43,7 @@ export default function ChatGestorOficina() {
     const loadConversations = async () => {
       try {
         const convs = await base44.agents.listConversations({
-          agent_name: "Gestor da Oficina"
+          agent_name: "Mavi"
         });
         setConversations(convs || []);
       } catch (error) {
@@ -78,7 +78,7 @@ export default function ChatGestorOficina() {
     setLoading(true);
     try {
       const newConv = await base44.agents.createConversation({
-        agent_name: "gestor_oficina",
+        agent_name: "Mavi",
         metadata: {
           name: `Conversa ${new Date().toLocaleDateString('pt-BR')}`,
           description: "Conversa com Gestor da Oficina AI"
@@ -128,7 +128,7 @@ export default function ChatGestorOficina() {
     }
   };
 
-  const whatsappURL = base44.agents.getWhatsAppConnectURL('gestor_oficina');
+  const whatsappURL = base44.agents.getWhatsAppConnectURL('Mavi');
 
   return (
     <div className="max-w-7xl mx-auto p-6">
