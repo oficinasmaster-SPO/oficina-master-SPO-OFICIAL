@@ -7,10 +7,11 @@ import { format, subDays } from "date-fns";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, BarChart3, Calendar, FileText, Settings, ClipboardList, Users } from "lucide-react";
+import { Loader2, BarChart3, Calendar, FileText, Settings, ClipboardList, Users, Clock } from "lucide-react";
 import VisaoGeralTab from "@/components/aceleracao/VisaoGeralTab";
 import PainelAtendimentosTab from "@/components/aceleracao/PainelAtendimentosTab";
 import PedidosInternosTab from "@/components/aceleracao/PedidosInternosTab";
+import CapacidadeConsultoresTab from "@/components/aceleracao/CapacidadeConsultoresTab";
 import RegistroAtendimentoMassaModal from "@/components/aceleracao/RegistroAtendimentoMassaModal";
 import FiltrosControleAceleracao from "@/components/aceleracao/FiltrosControleAceleracao";
 
@@ -95,7 +96,7 @@ export default function ControleAceleracao() {
       />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 bg-white shadow-md">
+        <TabsList className="grid w-full grid-cols-5 bg-white shadow-md">
           <TabsTrigger value="visao-geral">
             <BarChart3 className="w-4 h-4 mr-2" />
             Visão Geral
@@ -115,6 +116,10 @@ export default function ControleAceleracao() {
             <FileText className="w-4 h-4 mr-2" />
             Pedidos & Backlog
           </TabsTrigger>
+          <TabsTrigger value="capacidade">
+            <Clock className="w-4 h-4 mr-2" />
+            Capacidade (70/30)
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="visao-geral">
@@ -132,6 +137,10 @@ export default function ControleAceleracao() {
 
         <TabsContent value="pedidos">
           <PedidosInternosTab user={user} />
+        </TabsContent>
+
+        <TabsContent value="capacidade">
+          <CapacidadeConsultoresTab user={user} />
         </TabsContent>
       </Tabs>
     </div>
