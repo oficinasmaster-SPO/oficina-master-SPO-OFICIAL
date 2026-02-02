@@ -11,7 +11,7 @@ import UserPermissionsViewer from "@/components/rbac/UserPermissionsViewer";
 import DocumentacaoRBAC from "@/pages/DocumentacaoRBAC";
 import RBACAnalyticsDashboard from "@/components/rbac/analytics/RBACAnalyticsDashboard";
 import PendingRequestsList from "@/components/rbac/PendingRequestsList";
-import AuditLogViewer from "@/components/rbac/audit/AuditLogViewer";
+import AuditHistoryViewer from "@/components/rbac/audit/AuditHistoryViewer";
 import ProfileTemplateManager from "@/components/rbac/templates/ProfileTemplateManager";
 import RoleTemplateManager from "@/components/rbac/templates/RoleTemplateManager";
 import ModuleAccessConfig from "@/components/permissions/ModuleAccessConfig";
@@ -113,7 +113,7 @@ export default function GestaoRBAC() {
           </TabsContent>
 
           <TabsContent value="audit">
-            <AuditLogViewer />
+            <AuditHistoryViewer />
           </TabsContent>
 
           <TabsContent value="profile-templates">
