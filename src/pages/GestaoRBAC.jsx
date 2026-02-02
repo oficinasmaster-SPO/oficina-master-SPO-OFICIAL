@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, Users, Eye, FileText, BarChart3, GitPullRequest } from "lucide-react";
+import { Shield, Users, Eye, FileText, BarChart3, GitPullRequest, AlertCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Badge } from "@/components/ui/badge";
-import PermissionGuard from "@/components/auth/PermissionGuard";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import ProfilesManagement from "@/components/rbac/ProfilesManagement";
 import RolesManagement from "@/components/rbac/RolesManagement";
 import UserPermissionsViewer from "@/components/rbac/UserPermissionsViewer";
@@ -14,6 +14,34 @@ import PendingRequestsList from "@/components/rbac/PendingRequestsList";
 
 export default function GestaoRBAC() {
   const [activeTab, setActiveTab] = useState("profiles");
+  const [user, setUser] = useState(null);
+  const [isInternal, setIsInternal] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkInternalAccess = async () => {
+      try {
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
+        
+        const employees = await base44.entities.Employee.filter({ user_id: currentUser.id });
+        const employee = employees && employees.length > 0 ? employees[0] : null;
+        
+        const hasInternalAccess = currentUser.role === 'admin' || 
+                                  currentUser.is_internal === true || 
+                                  employee?.tipo_vinculo === 'interno';
+        
+        setIsInternal(hasInternalAccess);
+      } catch (error) {
+        console.error("Erro ao verificar acesso:", error);
+        setIsInternal(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    checkInternalAccess();
+  }, []);
 
   const { data: pendingCount = 0 } = useQuery({
     queryKey: ['pending-requests-count'],
@@ -24,9 +52,29 @@ export default function GestaoRBAC() {
     refetchInterval: 30000
   });
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!isInternal) {
+    return (
+      <div className="max-w-2xl mx-auto mt-20">
+        <Alert variant="destructive">
+          <AlertCircle className="h-5 w-5" />
+          <AlertDescription className="text-base">
+            <strong>Acesso Restrito:</strong> Esta área é exclusiva para usuários internos da Oficinas Master.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
   return (
-    <PermissionGuard resource="admin" action="read">
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl flex items-center justify-center">
             <Shield className="w-6 h-6 text-white" />
@@ -97,6 +145,5 @@ export default function GestaoRBAC() {
           </TabsContent>
         </Tabs>
       </div>
-    </PermissionGuard>
   );
 }
