@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, Users, Eye, FileText, BarChart3, GitPullRequest, History, Layout, Settings } from "lucide-react";
+import { Shield, Users, Eye, FileText, BarChart3, GitPullRequest } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Badge } from "@/components/ui/badge";
@@ -11,10 +11,6 @@ import UserPermissionsViewer from "@/components/rbac/UserPermissionsViewer";
 import DocumentacaoRBAC from "@/pages/DocumentacaoRBAC";
 import RBACAnalyticsDashboard from "@/components/rbac/analytics/RBACAnalyticsDashboard";
 import PendingRequestsList from "@/components/rbac/PendingRequestsList";
-import AuditHistoryViewer from "@/components/rbac/audit/AuditHistoryViewer";
-import ProfileTemplateManager from "@/components/rbac/templates/ProfileTemplateManager";
-import RoleTemplateManager from "@/components/rbac/templates/RoleTemplateManager";
-import ModuleAccessConfig from "@/components/permissions/ModuleAccessConfig";
 
 export default function GestaoRBAC() {
   const [activeTab, setActiveTab] = useState("profiles");
@@ -44,7 +40,7 @@ export default function GestaoRBAC() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 lg:grid-cols-10 gap-2">
+          <TabsList className="grid w-full max-w-5xl grid-cols-6">
             <TabsTrigger value="analytics" className="gap-2">
               <BarChart3 className="w-4 h-4" />
               Analytics
@@ -70,22 +66,6 @@ export default function GestaoRBAC() {
               <Eye className="w-4 h-4" />
               Usuários
             </TabsTrigger>
-            <TabsTrigger value="audit" className="gap-2">
-              <History className="w-4 h-4" />
-              Auditoria
-            </TabsTrigger>
-            <TabsTrigger value="profile-templates" className="gap-2">
-              <Layout className="w-4 h-4" />
-              Templates Perfil
-            </TabsTrigger>
-            <TabsTrigger value="role-templates" className="gap-2">
-              <Layout className="w-4 h-4" />
-              Templates Role
-            </TabsTrigger>
-            <TabsTrigger value="module-config" className="gap-2">
-              <Settings className="w-4 h-4" />
-              Config Módulos
-            </TabsTrigger>
             <TabsTrigger value="documentation" className="gap-2">
               <FileText className="w-4 h-4" />
               Docs
@@ -110,22 +90,6 @@ export default function GestaoRBAC() {
 
           <TabsContent value="user-permissions">
             <UserPermissionsViewer />
-          </TabsContent>
-
-          <TabsContent value="audit">
-            <AuditHistoryViewer />
-          </TabsContent>
-
-          <TabsContent value="profile-templates">
-            <ProfileTemplateManager />
-          </TabsContent>
-
-          <TabsContent value="role-templates">
-            <RoleTemplateManager />
-          </TabsContent>
-
-          <TabsContent value="module-config">
-            <ModuleAccessConfig />
           </TabsContent>
 
           <TabsContent value="documentation">
