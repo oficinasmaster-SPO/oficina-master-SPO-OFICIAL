@@ -1004,9 +1004,6 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
     // Verificar permissões específicas de acelerador
     if (item.aceleradorOnly && !isAcelerador) return false;
 
-    // Verificar permissões específicas de admin
-    if (item.adminOnly) return false;
-    
     // Sistema RBAC Granular: Verificar permissão granular se definida
     if (item.requiredPermission) {
       return hasPermission(item.requiredPermission);
