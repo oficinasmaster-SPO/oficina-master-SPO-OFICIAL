@@ -1001,23 +1001,46 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
     // Admin sempre tem acesso total
     if (user.role === 'admin') return true;
 
+    // ✅ RBAC AUDIT: Log de verificação de acesso
+    const debugAccess = false; // Trocar para true para debug
+    
     // Verificar permissões específicas de acelerador
-    if (item.aceleradorOnly && !isAcelerador) return false;
+    if (item.aceleradorOnly && !isAcelerador) {
+      if (debugAccess) console.log(`❌ [Sidebar] ${item.label}: Negado (aceleradorOnly)`);
+      return false;
+    }
 
-    // ✅ FIX: Permitir itens adminOnly para usuários internos com a permissão necessária
+    // ✅ FIX: Lógica adminOnly mais flexível
     if (item.adminOnly) {
-      const isInternalUser = user.is_internal === true;
-      if (!isInternalUser) return false;
-      // Se é interno e tem a permissão específica, permitir acesso
-      if (item.requiredPermission && !hasPermission(item.requiredPermission)) return false;
+      const isInternalUser = user.is_internal === true || employee?.is_internal === true;
+      
+      // Se não é interno, negar
+      if (!isInternalUser) {
+        if (debugAccess) console.log(`❌ [Sidebar] ${item.label}: Negado (não interno)`);
+        return false;
+      }
+      
+      // Se é interno mas tem permissão específica requerida, verificar
+      if (item.requiredPermission) {
+        const hasAccess = hasPermission(item.requiredPermission);
+        if (debugAccess) console.log(`${hasAccess ? '✅' : '❌'} [Sidebar] ${item.label}: ${hasAccess ? 'Permitido' : 'Negado'} (adminOnly + permission)`);
+        return hasAccess;
+      }
+      
+      // Se é interno sem permissão específica, permitir
+      if (debugAccess) console.log(`✅ [Sidebar] ${item.label}: Permitido (interno)`);
+      return true;
     }
     
     // Sistema RBAC Granular: Verificar permissão granular se definida
     if (item.requiredPermission) {
-      return hasPermission(item.requiredPermission);
+      const hasAccess = hasPermission(item.requiredPermission);
+      if (debugAccess) console.log(`${hasAccess ? '✅' : '❌'} [Sidebar] ${item.label}: ${hasAccess ? 'Permitido' : 'Negado'} (permission check)`);
+      return hasAccess;
     }
     
     // Fallback: permite acesso se não há permissão definida
+    if (debugAccess) console.log(`✅ [Sidebar] ${item.label}: Permitido (sem restrição)`);
     return true;
   };
 

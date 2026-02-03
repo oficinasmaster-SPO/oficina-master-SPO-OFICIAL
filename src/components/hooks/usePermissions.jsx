@@ -52,40 +52,49 @@ export function usePermissions() {
           }
 
           const profileId = currentUser.profile_id || employeeProfileId;
-          
-          if (profileId) {
-            try {
-              const userProfile = await base44.entities.UserProfile.get(profileId);
 
-              if (!userProfile || !userProfile.id) {
-                setProfile(null);
-              } else {
-                setProfile(userProfile);
-
-                // ✅ FIX: Acessar roles corretamente (dentro de data se vier da API)
-                const profileRoles = userProfile.data?.roles || userProfile.roles || [];
-                aggregatedPermissions = [...aggregatedPermissions, ...profileRoles];
-
-                const customRoleIds = userProfile.data?.custom_role_ids || userProfile.custom_role_ids || [];
-                if (customRoleIds && customRoleIds.length > 0) {
-                  for (const roleId of customRoleIds) {
+                  if (profileId) {
                     try {
-                      const customRole = await base44.entities.CustomRole.get(roleId);
-                      const systemRoles = customRole.data?.system_roles || customRole.system_roles || [];
-                      if (systemRoles && systemRoles.length > 0) {
-                        aggregatedPermissions = [...aggregatedPermissions, ...systemRoles];
+                      const userProfile = await base44.entities.UserProfile.get(profileId);
+
+                      if (!userProfile || !userProfile.id) {
+                        setProfile(null);
+                      } else {
+                        setProfile(userProfile);
+
+                        // ✅ FIX: Acessar roles corretamente (dentro de data se vier da API)
+                        const profileRoles = userProfile.data?.roles || userProfile.roles || [];
+                        aggregatedPermissions = [...aggregatedPermissions, ...profileRoles];
+
+                        const customRoleIds = userProfile.data?.custom_role_ids || userProfile.custom_role_ids || [];
+                        if (customRoleIds && customRoleIds.length > 0) {
+                          for (const roleId of customRoleIds) {
+                            try {
+                              const customRole = await base44.entities.CustomRole.get(roleId);
+                              const systemRoles = customRole.data?.system_roles || customRole.system_roles || [];
+                              if (systemRoles && systemRoles.length > 0) {
+                                aggregatedPermissions = [...aggregatedPermissions, ...systemRoles];
+                              }
+                            } catch (roleError) {
+                              console.warn("CustomRole não encontrada:", roleId);
+                            }
+                          }
+                        }
+
+                        // ✅ AUDITORIA: Log das permissões carregadas
+                        console.log('📋 [RBAC Audit] Permissões carregadas:', {
+                          user: currentUser.email,
+                          profile: userProfile.name,
+                          profileRoles: profileRoles,
+                          customRoleIds: customRoleIds,
+                          totalPermissions: aggregatedPermissions.length
+                        });
                       }
-                    } catch (roleError) {
-                      console.warn("CustomRole não encontrada:", roleId);
+                    } catch (profileError) {
+                      console.error("Erro ao carregar UserProfile:", profileError);
+                      setProfile(null);
                     }
                   }
-                }
-              }
-            } catch (profileError) {
-              console.error("Erro ao carregar UserProfile:", profileError);
-              setProfile(null);
-            }
-          }
 
           if (currentUser.custom_role_id) {
             try {
