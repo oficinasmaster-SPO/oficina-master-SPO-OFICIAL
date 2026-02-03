@@ -194,11 +194,13 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
     }
   });
   const [hasWorkshop, setHasWorkshop] = React.useState(false);
+  const [employee, setEmployee] = React.useState(null);
 
-  // Carregar workshop ao montar o componente
+  // Carregar workshop e employee ao montar o componente
   React.useEffect(() => {
     if (user?.id) {
       loadUserWorkshop();
+      loadUserEmployee();
     }
   }, [user?.id]);
 
@@ -211,6 +213,16 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
     } catch (error) {
       console.error("Erro ao carregar workshop:", error);
       setHasWorkshop(false);
+    }
+  };
+
+  const loadUserEmployee = async () => {
+    try {
+      const employees = await base44.entities.Employee.filter({ user_id: user.id });
+      setEmployee(employees?.[0] || null);
+    } catch (error) {
+      console.error("Erro ao carregar employee:", error);
+      setEmployee(null);
     }
   };
 
@@ -831,14 +843,13 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           adminOnly: true,
           requiredPermission: 'admin.users'
         },
-
         { 
           name: 'Config. Produtividade', 
           href: createPageUrl('AdminProdutividade'), 
           icon: Target,
           description: 'Métricas e KPIs globais',
           adminOnly: true,
-          requiredPermission: 'admin.system_config'
+          requiredPermission: 'productivity.settings'
         },
         { 
           name: 'Gestão Desafios Globais', 
@@ -846,7 +857,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: Trophy,
           description: 'Desafios nível Brasil',
           adminOnly: true,
-          requiredPermission: 'admin.system_config'
+          requiredPermission: 'challenge.manage'
         },
         { 
           name: 'Gerenciar Planos', 
@@ -854,7 +865,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: CreditCard,
           description: 'Controle de permissões e recursos por plano',
           adminOnly: true,
-          requiredPermission: 'admin.system_config'
+          requiredPermission: 'plans.manage'
         },
         { 
           name: 'Calendário de Eventos', 
@@ -863,7 +874,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           description: 'Eventos anuais (imersões, treinamentos)',
           highlight: true,
           adminOnly: true,
-          requiredPermission: 'admin.system_config'
+          requiredPermission: 'events.calendar'
         },
         { 
           name: 'Cadastro Direto User', 
@@ -889,7 +900,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: MessageCircle,
           description: 'Configurar mensagens de incentivo',
           adminOnly: true,
-          requiredPermission: 'admin.system_config'
+          requiredPermission: 'messages.templates'
         },
         { 
           name: 'Automação de E-mails', 
@@ -897,9 +908,8 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: Mail,
           description: 'Alertas de inatividade e resumos',
           adminOnly: true,
-          requiredPermission: 'admin.system_config'
+          requiredPermission: 'email.manage'
         },
-
         { 
           name: 'Gerenciar Tours e Vídeos', 
           href: createPageUrl('GerenciarToursVideos'), 
@@ -914,7 +924,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: FileText,
           description: 'Upload e gestão de MAPs',
           adminOnly: true,
-          requiredPermission: 'admin.system_config'
+          requiredPermission: 'processes.admin'
         },
         { 
           name: 'Gestão RBAC', 
@@ -949,7 +959,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           description: 'Consultores e aceleradores do sistema',
           adminOnly: true,
           highlight: true,
-          requiredPermission: 'admin.users'
+          requiredPermission: 'internal_users.manage'
         },
         { 
           name: 'Monitoramento de Usuários', 
