@@ -170,6 +170,8 @@ export const pagePermissions = {
   AdminNotificacoes: "admin.system_config",
   MonitoramentoUsuarios: "admin.audit",
   AuditLogs: "admin.audit",
+  AuditoriaAcesso: "admin.audit",
+  LogsAuditoriaRBAC: "admin.audit",
   RelatorioUsuario: "admin.audit",
   TesteUsuarios: "admin.system_config",
   
