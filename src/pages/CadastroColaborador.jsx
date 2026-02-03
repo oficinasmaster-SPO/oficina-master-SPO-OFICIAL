@@ -436,16 +436,36 @@ export default function CadastroColaborador() {
                     onValueChange={(value) => {
                       const selectedProfile = profiles.find(p => p.id === value);
                       if (selectedProfile) {
+                        let newJobRole = formData.job_role;
+                        let newArea = formData.area;
+                        
                         // Se o perfil usa job_role, pegar o primeiro job_role da lista
-                        const newJobRole = selectedProfile.permission_type === 'job_role' && 
-                                          selectedProfile.job_roles?.length > 0 
-                                          ? selectedProfile.job_roles[0] 
-                                          : formData.job_role;
+                        if (selectedProfile.permission_type === 'job_role' && 
+                            selectedProfile.job_roles?.length > 0) {
+                          newJobRole = selectedProfile.job_roles[0];
+                        }
+                        
+                        // ✅ Auto-preencher baseado no nome do perfil
+                        const profileName = selectedProfile.name.toLowerCase();
+                        if (profileName.includes('marketing')) {
+                          newJobRole = 'marketing';
+                          newArea = 'marketing';
+                        } else if (profileName.includes('closer') || profileName.includes('vendas')) {
+                          newJobRole = 'consultor_vendas';
+                          newArea = 'vendas';
+                        } else if (profileName.includes('sdr') || profileName.includes('comercial')) {
+                          newJobRole = 'comercial';
+                          newArea = 'comercial';
+                        } else if (profileName.includes('acelerador') || profileName.includes('consultor')) {
+                          newJobRole = 'consultor';
+                          newArea = 'gerencia';
+                        }
                         
                         setFormData({
                           ...formData, 
                           user_profile_id: value,
-                          job_role: newJobRole
+                          job_role: newJobRole,
+                          area: newArea
                         });
                       } else {
                         setFormData({...formData, user_profile_id: value});
