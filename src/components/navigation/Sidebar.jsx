@@ -1004,8 +1004,13 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
     // Verificar permissões específicas de acelerador
     if (item.aceleradorOnly && !isAcelerador) return false;
 
-    // Verificar permissões específicas de admin
-    if (item.adminOnly) return false;
+    // ✅ FIX: Permitir itens adminOnly para usuários internos com a permissão necessária
+    if (item.adminOnly) {
+      const isInternalUser = user.is_internal === true;
+      if (!isInternalUser) return false;
+      // Se é interno e tem a permissão específica, permitir acesso
+      if (item.requiredPermission && !hasPermission(item.requiredPermission)) return false;
+    }
     
     // Sistema RBAC Granular: Verificar permissão granular se definida
     if (item.requiredPermission) {
