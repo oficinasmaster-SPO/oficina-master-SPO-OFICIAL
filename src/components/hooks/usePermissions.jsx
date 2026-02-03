@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { systemRoles } from "@/components/lib/systemRoles";
-import { pagePermissions } from "@/components/lib/pagePermissions";
+import { PERMISSIONS_MAP, PUBLIC_PAGES } from "@/components/lib/permissionsMap";
 
 /**
  * Hook para verificar permissões do usuário atual
@@ -127,7 +127,16 @@ export function usePermissions() {
   const hasPermission = (permissionId) => {
     if (!user) return false;
     if (user.role === 'admin') return true;
-    return permissions.includes(permissionId);
+    
+    const hasAccess = permissions.includes(permissionId);
+    
+    // ✅ RBAC AUDIT: Log de verificação de permissão (ativar para debug)
+    const debugPermission = true; // Temporário para validação
+    if (debugPermission) {
+      console.log(`${hasAccess ? '✅' : '❌'} [hasPermission] ${permissionId}: ${hasAccess ? 'Permitido' : 'Negado'} (user: ${user.email})`);
+    }
+    
+    return hasAccess;
   };
 
   /**
@@ -205,13 +214,13 @@ export function usePermissions() {
       if (user.role === 'admin') return true;
 
       // Páginas públicas não requerem autenticação
-      const isPublicPage = pagePermissions[pageName] === null;
+      const isPublicPage = PUBLIC_PAGES.includes(pageName);
       if (isPublicPage) {
         return true;
       }
 
-      // Obter permissão necessária para a página
-      const requiredPermission = pagePermissions[pageName];
+      // Obter permissão necessária para a página do PERMISSIONS_MAP
+      const requiredPermission = PERMISSIONS_MAP[pageName];
       
       // Se não há permissão mapeada, permitir acesso (fallback)
       if (!requiredPermission) {
@@ -219,7 +228,15 @@ export function usePermissions() {
       }
 
       // Verificar se o usuário tem a permissão granular necessária
-      return hasPermission(requiredPermission);
+      const hasAccess = hasPermission(requiredPermission);
+      
+      // ✅ RBAC AUDIT: Log de acesso a páginas (ativar para debug)
+      const debugPageAccess = true; // Temporário para validação
+      if (debugPageAccess) {
+        console.log(`${hasAccess ? '✅' : '❌'} [Page Access] ${pageName}: ${hasAccess ? 'Permitido' : 'Negado'} (${requiredPermission})`);
+      }
+      
+      return hasAccess;
     } catch (error) {
       console.error("❌ Erro ao verificar acesso à página:", error);
       // Em caso de erro, bloquear acesso por segurança

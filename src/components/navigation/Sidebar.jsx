@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { usePermissions } from "@/components/hooks/usePermissions";
 import { useAssistanceMode } from "@/components/hooks/useAssistanceMode";
 import { base44 } from "@/api/base44Client";
+import { canAccessMenuItem } from "@/components/utils/rbacHelpers";
 import { 
   Home, 
   FileText, 
@@ -1039,67 +1040,8 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
   };
 
   const canAccessItem = (item) => {
-    if (item.public) return true;
-    if (!user) return false;
-
-    // Admin sempre tem acesso total
-    if (user.role === 'admin') return true;
-
-    // ✅ RBAC AUDIT: Log de verificação de acesso
-    const debugAccess = false; // Trocar para true para debug
-    
-    // Verificar permissões específicas de acelerador
-    if (item.aceleradorOnly && !isAcelerador) {
-      if (debugAccess) console.log(`❌ [Sidebar] ${item.name}: Negado (aceleradorOnly)`);
-      return false;
-    }
-
-    // Verificar permissões específicas de técnico
-    if (item.technicianOnly) {
-      const isTechnician = user.job_role === 'tecnico' || 
-                          user.job_role === 'lider_tecnico' ||
-                          employee?.job_role === 'tecnico' ||
-                          employee?.job_role === 'lider_tecnico';
-      if (!isTechnician) {
-        if (debugAccess) console.log(`❌ [Sidebar] ${item.name}: Negado (technicianOnly)`);
-        return false;
-      }
-    }
-
-    // ✅ FIX CRÍTICO: Lógica adminOnly mais flexível + verificação employee
-    if (item.adminOnly) {
-      const isInternalUser = user.is_internal === true || 
-                            employee?.is_internal === true ||
-                            employee?.tipo_vinculo === 'interno';
-      
-      // Se não é interno, negar
-      if (!isInternalUser) {
-        if (debugAccess) console.log(`❌ [Sidebar] ${item.name}: Negado (não interno) - user.is_internal=${user.is_internal}, employee.is_internal=${employee?.is_internal}, tipo_vinculo=${employee?.tipo_vinculo}`);
-        return false;
-      }
-      
-      // Se é interno mas tem permissão específica requerida, verificar
-      if (item.requiredPermission) {
-        const hasAccess = hasPermission(item.requiredPermission);
-        if (debugAccess) console.log(`${hasAccess ? '✅' : '❌'} [Sidebar] ${item.name}: ${hasAccess ? 'Permitido' : 'Negado'} (adminOnly + permission ${item.requiredPermission})`);
-        return hasAccess;
-      }
-      
-      // Se é interno sem permissão específica, permitir
-      if (debugAccess) console.log(`✅ [Sidebar] ${item.name}: Permitido (interno)`);
-      return true;
-    }
-    
-    // Sistema RBAC Granular: Verificar permissão granular se definida
-    if (item.requiredPermission) {
-      const hasAccess = hasPermission(item.requiredPermission);
-      if (debugAccess) console.log(`${hasAccess ? '✅' : '❌'} [Sidebar] ${item.name}: ${hasAccess ? 'Permitido' : 'Negado'} (permission check ${item.requiredPermission})`);
-      return hasAccess;
-    }
-    
-    // Fallback: permite acesso se não há permissão definida
-    if (debugAccess) console.log(`✅ [Sidebar] ${item.name}: Permitido (sem restrição)`);
-    return true;
+    // ✅ Usar função centralizada do rbacHelpers
+    return canAccessMenuItem(item, user, employee, hasPermission);
   };
 
   return (

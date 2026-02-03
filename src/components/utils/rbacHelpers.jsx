@@ -64,9 +64,13 @@ export function canAccessMenuItem(item, user, employee, hasPermission) {
   
   // Admin tem acesso total
   if (user.role === 'admin') return true;
+
+  // ✅ RBAC AUDIT: Log de verificação de acesso (ativar para debug)
+  const debugAccess = true; // Temporário para validação
   
   // Verificar restrição de acelerador
   if (item.aceleradorOnly && !isAccelerator(user, employee)) {
+    if (debugAccess) console.log(`❌ [RBAC] ${item.name}: Negado (aceleradorOnly)`);
     return false;
   }
   
@@ -76,29 +80,41 @@ export function canAccessMenuItem(item, user, employee, hasPermission) {
                         user.job_role === 'lider_tecnico' ||
                         employee?.job_role === 'tecnico' ||
                         employee?.job_role === 'lider_tecnico';
-    if (!isTechnician) return false;
+    if (!isTechnician) {
+      if (debugAccess) console.log(`❌ [RBAC] ${item.name}: Negado (technicianOnly)`);
+      return false;
+    }
   }
   
   // Verificar restrição de interno (adminOnly)
   if (item.adminOnly) {
     const isInternal = isInternalUser(user, employee);
-    if (!isInternal) return false;
+    if (!isInternal) {
+      if (debugAccess) console.log(`❌ [RBAC] ${item.name}: Negado (não interno)`);
+      return false;
+    }
     
     // Se é interno E tem permissão específica, verificar
     if (item.requiredPermission) {
-      return hasPermission(item.requiredPermission);
+      const hasAccess = hasPermission(item.requiredPermission);
+      if (debugAccess) console.log(`${hasAccess ? '✅' : '❌'} [RBAC] ${item.name}: ${hasAccess ? 'Permitido' : 'Negado'} (adminOnly + ${item.requiredPermission})`);
+      return hasAccess;
     }
     
     // Se é interno sem permissão específica, permitir
+    if (debugAccess) console.log(`✅ [RBAC] ${item.name}: Permitido (interno genérico)`);
     return true;
   }
   
   // Verificar permissão granular
   if (item.requiredPermission) {
-    return hasPermission(item.requiredPermission);
+    const hasAccess = hasPermission(item.requiredPermission);
+    if (debugAccess) console.log(`${hasAccess ? '✅' : '❌'} [RBAC] ${item.name}: ${hasAccess ? 'Permitido' : 'Negado'} (permission ${item.requiredPermission})`);
+    return hasAccess;
   }
   
   // Sem restrições, permitir
+  if (debugAccess) console.log(`✅ [RBAC] ${item.name}: Permitido (sem restrição)`);
   return true;
 }
 
