@@ -64,7 +64,6 @@ import {
   UserPlus
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { isMenuItemVisible } from "@/components/lib/menuVisibilityGate";
 
 function UserProfileSection({ user, collapsed }) {
   const [employee, setEmployee] = useState(null);
@@ -182,7 +181,7 @@ function UserProfileSection({ user, collapsed }) {
 
 export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
   const location = useLocation();
-  const { profile } = usePermissions();
+  const { profile, hasPermission, canAccessPage } = usePermissions();
   const { queryString } = useAssistanceMode();
   
   const [expandedGroups, setExpandedGroups] = React.useState([]);
@@ -996,8 +995,25 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
   };
 
   const canAccessItem = (item) => {
-    // Usar o menuVisibilityGate como fonte única de verdade
-    return isMenuItemVisible(item, user, profile);
+    if (item.public) return true;
+    if (!user) return false;
+
+    // Admin sempre tem acesso total
+    if (user.role === 'admin') return true;
+
+    // Verificar permissões específicas de acelerador
+    if (item.aceleradorOnly && !isAcelerador) return false;
+
+    // Verificar permissões específicas de admin
+    if (item.adminOnly) return false;
+    
+    // Sistema RBAC Granular: Verificar permissão granular se definida
+    if (item.requiredPermission) {
+      return hasPermission(item.requiredPermission);
+    }
+    
+    // Fallback: permite acesso se não há permissão definida
+    return true;
   };
 
   return (

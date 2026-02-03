@@ -222,7 +222,6 @@ import TesteOpenAI from './pages/TesteOpenAI';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
-import RBACAccessReport from './pages/RBACAccessReport';
 import __Layout from './Layout.jsx';
 
 
@@ -402,7 +401,6 @@ export const PAGES = {
     "TreinamentoVendas": TreinamentoVendas,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
-    "RBACAccessReport": RBACAccessReport,
 }
 
 export const pagesConfig = {
