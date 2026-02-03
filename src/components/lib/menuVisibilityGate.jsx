@@ -170,34 +170,43 @@ export const routePermissionMap = {
   AcessoAceleracao: { key: "acceleration.view", type: "all", module: "aceleracao" },
   RelatoriosAvancados: { key: "acceleration.manage", type: "interno", module: "aceleracao" },
   
-  // ===== ADMIN - BLOQUEADO PARA EXTERNOS =====
-  DashboardFinanceiro: { key: "admin.system_config", type: "admin", module: "admin" },
+  // ===== ADMIN - CONTROLE GRANULAR POR RBAC =====
+  
+  // Sistema Base44 (APENAS Admin real)
+  DashboardFinanceiro: { key: "admin.financial_dashboard", type: "admin", module: "admin" },
   ConfiguracoesKiwify: { key: "admin.system_config", type: "admin", module: "admin" },
   GestaoUsuariosEmpresas: { key: "admin.users", type: "admin", module: "admin" },
-  UsuariosAdmin: { key: "admin.users", type: "admin", module: "admin" },
-  AdminProdutividade: { key: "admin.system_config", type: "admin", module: "admin" },
-  AdminDesafios: { key: "admin.system_config", type: "admin", module: "admin" },
-  GerenciarPlanos: { key: "admin.system_config", type: "admin", module: "admin" },
-  CadastroPlanos: { key: "admin.system_config", type: "admin", module: "admin" },
-  Planos: { key: "admin.system_config", type: "admin", module: "admin" },
-  MeuPlano: { key: "dashboard.view", type: "all", module: "dashboard" },
-  CalendarioEventos: { key: "admin.system_config", type: "admin", module: "admin" },
   CadastroUsuarioDireto: { key: "admin.users", type: "admin", module: "admin" },
   TestUsuarios: { key: "admin.system_config", type: "admin", module: "admin" },
-  AdminMensagens: { key: "admin.system_config", type: "admin", module: "admin" },
-  AdminNotificacoes: { key: "admin.system_config", type: "admin", module: "admin" },
-  GerenciarToursVideos: { key: "admin.system_config", type: "admin", module: "admin" },
-  GestaoRBAC: { key: "admin.profiles", type: "admin", module: "admin" },
-  GestaoPerfis: { key: "admin.profiles", type: "admin", module: "admin" },
   ConfiguracaoPermissoesGranulares: { key: "admin.system_config", type: "admin", module: "admin" },
   LogsAuditoriaRBAC: { key: "admin.audit", type: "admin", module: "admin" },
-  MonitoramentoUsuarios: { key: "admin.audit", type: "admin", module: "admin" },
   AuditLogs: { key: "admin.audit", type: "admin", module: "admin" },
   RelatorioUsuario: { key: "admin.audit", type: "admin", module: "admin" },
   DiagnosticoPlano: { key: "admin.system_config", type: "admin", module: "admin" },
   Integracoes: { key: "admin.system_config", type: "admin", module: "admin" },
   TesteOpenAI: { key: "admin.system_config", type: "admin", module: "admin" },
   GraficosProducao: { key: "admin.audit", type: "admin", module: "admin" },
+  GestaoRBAC: { key: "admin.profiles", type: "admin", module: "admin" },
+  GestaoPerfis: { key: "admin.profiles", type: "admin", module: "admin" },
+  MonitoramentoUsuarios: { key: "admin.audit", type: "admin", module: "admin" },
+  
+  // TELAS ADMINISTRATIVAS LIBERADAS PARA EXTERNOS/INTERNOS VIA RBAC
+  Planos: { key: "plans.change", type: "rbac", module: "admin" },
+  GerenciarPlanos: { key: "plans.manage", type: "rbac", module: "admin" },
+  CadastroPlanos: { key: "plans.manage", type: "rbac", module: "admin" },
+  MeuPlano: { key: "dashboard.view", type: "all", module: "dashboard" },
+  
+  AdminProdutividade: { key: "productivity.settings", type: "rbac", module: "admin" },
+  AdminDesafios: { key: "challenge.manage", type: "rbac", module: "admin" },
+  GestaoDesafios: { key: "challenge.manage", type: "rbac", module: "gestao" },
+  
+  CalendarioEventos: { key: "events.calendar", type: "rbac", module: "admin" },
+  AdminMensagens: { key: "messages.templates", type: "rbac", module: "admin" },
+  AdminNotificacoes: { key: "email.manage", type: "rbac", module: "admin" },
+  
+  GerenciarProcessos: { key: "processes.admin", type: "rbac", module: "admin" },
+  UsuariosAdmin: { key: "internal_users.manage", type: "rbac", module: "admin" },
+  GerenciarToursVideos: { key: "admin.system_config", type: "admin", module: "admin" },
   
   // ===== PÁGINAS PÚBLICAS (SEM AUTENTICAÇÃO) =====
   PrimeiroAcesso: { key: null, type: "public", module: null },
@@ -245,6 +254,19 @@ export function canAccessRoute(pageName, user, profile) {
   // Se for tipo "interno", verificar se o usuário é interno
   if (routeConfig.type === "interno") {
     if (!profile || profile.type !== "interno") {
+      return false;
+    }
+  }
+  
+  // Tipo "rbac" = controle via UserProfile.roles (permissões específicas)
+  if (routeConfig.type === "rbac") {
+    if (!profile || !profile.roles) {
+      return false;
+    }
+    
+    // Verificar se possui a permissão específica
+    const hasSpecificPermission = profile.roles.includes(routeConfig.key);
+    if (!hasSpecificPermission) {
       return false;
     }
   }
