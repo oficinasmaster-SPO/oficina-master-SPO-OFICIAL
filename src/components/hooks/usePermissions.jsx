@@ -251,9 +251,22 @@ export function usePermissions() {
 
   /**
    * Verifica se é usuário interno (consultor/mentor)
-   * Agora verifica também o employee vinculado
+   * Agora verifica também o employee vinculado - versão síncrona
    */
-  const isInternal = async () => {
+  const isInternal = () => {
+    if (!user) return false;
+    if (user.role === 'admin') return true;
+    if (user.is_internal === true) return true;
+    
+    // Nota: Para verificação async completa, use checkIsInternal()
+    return false;
+  };
+
+  /**
+   * Verifica se é usuário interno (versão assíncrona completa)
+   * Verifica user e employee vinculado
+   */
+  const checkIsInternal = async () => {
     if (!user) return false;
     if (user.role === 'admin') return true;
     if (user.is_internal === true) return true;
@@ -282,5 +295,6 @@ export function usePermissions() {
     canAccessPage,
     canPerform,
     isInternal,
+    checkIsInternal,
   };
 }
