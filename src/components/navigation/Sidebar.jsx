@@ -1041,41 +1041,55 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
     
     // Verificar permissões específicas de acelerador
     if (item.aceleradorOnly && !isAcelerador) {
-      if (debugAccess) console.log(`❌ [Sidebar] ${item.label}: Negado (aceleradorOnly)`);
+      if (debugAccess) console.log(`❌ [Sidebar] ${item.name}: Negado (aceleradorOnly)`);
       return false;
     }
 
-    // ✅ FIX: Lógica adminOnly mais flexível
+    // Verificar permissões específicas de técnico
+    if (item.technicianOnly) {
+      const isTechnician = user.job_role === 'tecnico' || 
+                          user.job_role === 'lider_tecnico' ||
+                          employee?.job_role === 'tecnico' ||
+                          employee?.job_role === 'lider_tecnico';
+      if (!isTechnician) {
+        if (debugAccess) console.log(`❌ [Sidebar] ${item.name}: Negado (technicianOnly)`);
+        return false;
+      }
+    }
+
+    // ✅ FIX CRÍTICO: Lógica adminOnly mais flexível + verificação employee
     if (item.adminOnly) {
-      const isInternalUser = user.is_internal === true || employee?.is_internal === true;
+      const isInternalUser = user.is_internal === true || 
+                            employee?.is_internal === true ||
+                            employee?.tipo_vinculo === 'interno';
       
       // Se não é interno, negar
       if (!isInternalUser) {
-        if (debugAccess) console.log(`❌ [Sidebar] ${item.label}: Negado (não interno)`);
+        if (debugAccess) console.log(`❌ [Sidebar] ${item.name}: Negado (não interno) - user.is_internal=${user.is_internal}, employee.is_internal=${employee?.is_internal}, tipo_vinculo=${employee?.tipo_vinculo}`);
         return false;
       }
       
       // Se é interno mas tem permissão específica requerida, verificar
       if (item.requiredPermission) {
         const hasAccess = hasPermission(item.requiredPermission);
-        if (debugAccess) console.log(`${hasAccess ? '✅' : '❌'} [Sidebar] ${item.label}: ${hasAccess ? 'Permitido' : 'Negado'} (adminOnly + permission)`);
+        if (debugAccess) console.log(`${hasAccess ? '✅' : '❌'} [Sidebar] ${item.name}: ${hasAccess ? 'Permitido' : 'Negado'} (adminOnly + permission ${item.requiredPermission})`);
         return hasAccess;
       }
       
       // Se é interno sem permissão específica, permitir
-      if (debugAccess) console.log(`✅ [Sidebar] ${item.label}: Permitido (interno)`);
+      if (debugAccess) console.log(`✅ [Sidebar] ${item.name}: Permitido (interno)`);
       return true;
     }
     
     // Sistema RBAC Granular: Verificar permissão granular se definida
     if (item.requiredPermission) {
       const hasAccess = hasPermission(item.requiredPermission);
-      if (debugAccess) console.log(`${hasAccess ? '✅' : '❌'} [Sidebar] ${item.label}: ${hasAccess ? 'Permitido' : 'Negado'} (permission check)`);
+      if (debugAccess) console.log(`${hasAccess ? '✅' : '❌'} [Sidebar] ${item.name}: ${hasAccess ? 'Permitido' : 'Negado'} (permission check ${item.requiredPermission})`);
       return hasAccess;
     }
     
     // Fallback: permite acesso se não há permissão definida
-    if (debugAccess) console.log(`✅ [Sidebar] ${item.label}: Permitido (sem restrição)`);
+    if (debugAccess) console.log(`✅ [Sidebar] ${item.name}: Permitido (sem restrição)`);
     return true;
   };
 
