@@ -61,14 +61,19 @@ export function usePermissions() {
                 setProfile(null);
               } else {
                 setProfile(userProfile);
-                aggregatedPermissions = [...aggregatedPermissions, ...(userProfile.roles || [])];
-                
-                if (userProfile.custom_role_ids && userProfile.custom_role_ids.length > 0) {
-                  for (const roleId of userProfile.custom_role_ids) {
+
+                // ✅ FIX: Acessar roles corretamente (dentro de data se vier da API)
+                const profileRoles = userProfile.data?.roles || userProfile.roles || [];
+                aggregatedPermissions = [...aggregatedPermissions, ...profileRoles];
+
+                const customRoleIds = userProfile.data?.custom_role_ids || userProfile.custom_role_ids || [];
+                if (customRoleIds && customRoleIds.length > 0) {
+                  for (const roleId of customRoleIds) {
                     try {
                       const customRole = await base44.entities.CustomRole.get(roleId);
-                      if (customRole && customRole.system_roles) {
-                        aggregatedPermissions = [...aggregatedPermissions, ...(customRole.system_roles || [])];
+                      const systemRoles = customRole.data?.system_roles || customRole.system_roles || [];
+                      if (systemRoles && systemRoles.length > 0) {
+                        aggregatedPermissions = [...aggregatedPermissions, ...systemRoles];
                       }
                     } catch (roleError) {
                       console.warn("CustomRole não encontrada:", roleId);
