@@ -223,6 +223,9 @@ import TreinamentoVendas from './pages/TreinamentoVendas';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
 import RBACDiagnostico from './pages/RBACDiagnostico';
+import OnboardingColaborador from './pages/OnboardingColaborador';
+import Avaliacao360 from './pages/Avaliacao360';
+import GestaoBeneficios from './pages/GestaoBeneficios';
 import __Layout from './Layout.jsx';
 
 
@@ -403,6 +406,9 @@ export const PAGES = {
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
     "RBACDiagnostico": RBACDiagnostico,
+    "OnboardingColaborador": OnboardingColaborador,
+    "Avaliacao360": Avaliacao360,
+    "GestaoBeneficios": GestaoBeneficios,
 }
 
 export const pagesConfig = {

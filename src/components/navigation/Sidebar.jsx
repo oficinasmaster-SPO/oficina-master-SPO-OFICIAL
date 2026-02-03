@@ -61,7 +61,8 @@ import {
   Network,
   AlertCircle,
   HelpCircle,
-  UserPlus
+  UserPlus,
+  Gift
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -490,6 +491,30 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('DescricoesCargo'), 
           icon: ClipboardList,
           description: 'Cargos e responsabilidades',
+          highlight: true,
+          requiredPermission: 'employees.view'
+        },
+        { 
+          name: 'Onboarding', 
+          href: createPageUrl('OnboardingColaborador'), 
+          icon: Target,
+          description: 'Integração guiada de novos colaboradores',
+          highlight: true,
+          requiredPermission: 'employees.view'
+        },
+        { 
+          name: 'Avaliação 360°', 
+          href: createPageUrl('Avaliacao360'), 
+          icon: Users,
+          description: 'Avaliação multidirecional de desempenho',
+          highlight: true,
+          requiredPermission: 'employees.view'
+        },
+        { 
+          name: 'Gestão de Benefícios', 
+          href: createPageUrl('GestaoBeneficios'), 
+          icon: Gift,
+          description: 'Visualize e solicite benefícios',
           highlight: true,
           requiredPermission: 'employees.view'
         },
