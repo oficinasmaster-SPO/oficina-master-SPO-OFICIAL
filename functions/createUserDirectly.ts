@@ -54,7 +54,8 @@ Deno.serve(async (req) => {
 
     // Convidar usuário via Base44 usando SERVICE ROLE (não afeta sessão do admin)
     console.log("📧 Convidando usuário via Base44 com role:", role);
-    const inviteResult = await base44.asServiceRole.users.inviteUser(email, role);
+    const cleanEmail = email.trim().toLowerCase();
+    const inviteResult = await base44.asServiceRole.users.inviteUser(cleanEmail, role);
     
     console.log("✅ Convite enviado pelo Base44 (email automático) - sessão do admin mantida");
 
@@ -68,7 +69,7 @@ Deno.serve(async (req) => {
     const invite = await base44.asServiceRole.entities.EmployeeInvite.create({
       workshop_id: workshop_id,
       name: name,
-      email: email,
+      email: cleanEmail,
       telefone: telefone || '',
       position: position || 'Colaborador',
       area: area || 'tecnico',
@@ -94,7 +95,7 @@ Deno.serve(async (req) => {
       workshop_id: workshop_id,
       user_id: inviteResult.id,
       full_name: name,
-      email: email,
+      email: cleanEmail,
       telefone: telefone || '',
       position: position || 'Colaborador',
       job_role: job_role || 'outros',
@@ -142,7 +143,8 @@ Deno.serve(async (req) => {
       success: true,
       message: 'Usuário criado com sucesso. E-mail de convite enviado pelo Base44.',
       user_id: inviteResult.id,
-      email: email,
+      email: cleanEmail,
+      temporary_password: "Oficina@2025",
       profile_id: finalProfileId,
       invite_link: inviteLink,
       invite_id: invite.id,

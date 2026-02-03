@@ -31,12 +31,15 @@ Deno.serve(async (req) => {
 
     const invite = invites[0];
 
-    // Validar email
-    if (invite.email !== user.email) {
-      console.error(`❌ Email mismatch: invite ${invite.email} vs user ${user.email}`);
+    // Validar email (case-insensitive e sem espaços)
+    const inviteEmail = (invite.email || '').trim().toLowerCase();
+    const userEmail = (user.email || '').trim().toLowerCase();
+    
+    if (inviteEmail !== userEmail) {
+      console.error(`❌ Email mismatch: invite "${inviteEmail}" vs user "${userEmail}"`);
       return Response.json({ 
         success: false, 
-        error: 'Email do convite não corresponde ao usuário logado' 
+        error: `Email do convite (${invite.email}) não corresponde ao usuário logado (${user.email})` 
       }, { status: 403 });
     }
 
