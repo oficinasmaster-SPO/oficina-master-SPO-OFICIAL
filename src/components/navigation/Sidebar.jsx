@@ -978,6 +978,15 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           requiredPermission: 'admin.audit'
         },
         { 
+          name: 'Auditoria de Acesso', 
+          href: createPageUrl('AuditoriaAcesso'), 
+          icon: Shield,
+          description: 'Logs de acesso a páginas restritas',
+          adminOnly: true,
+          highlight: true,
+          requiredPermission: 'admin.audit'
+        },
+        { 
           name: 'Usuários Internos', 
           href: createPageUrl('UsuariosAdmin'), 
           icon: Users,
