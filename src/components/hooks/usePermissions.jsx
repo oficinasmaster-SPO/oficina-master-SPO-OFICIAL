@@ -251,9 +251,24 @@ export function usePermissions() {
 
   /**
    * Verifica se é usuário interno (consultor/mentor)
+   * Agora verifica também o employee vinculado
    */
-  const isInternal = () => {
-    return user?.is_internal === true || user?.tipo_vinculo === 'interno';
+  const isInternal = async () => {
+    if (!user) return false;
+    if (user.role === 'admin') return true;
+    if (user.is_internal === true) return true;
+    
+    try {
+      const employees = await base44.entities.Employee.filter({ user_id: user.id });
+      const employee = employees?.[0];
+      if (employee?.is_internal === true || employee?.tipo_vinculo === 'interno') {
+        return true;
+      }
+    } catch (error) {
+      console.error("Erro ao verificar employee interno:", error);
+    }
+    
+    return false;
   };
 
   return {

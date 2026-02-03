@@ -29,6 +29,7 @@ export default function GestaoRBAC() {
         
         const hasInternalAccess = currentUser.role === 'admin' || 
                                   currentUser.is_internal === true || 
+                                  employee?.is_internal === true ||
                                   employee?.tipo_vinculo === 'interno';
         
         setIsInternal(hasInternalAccess);

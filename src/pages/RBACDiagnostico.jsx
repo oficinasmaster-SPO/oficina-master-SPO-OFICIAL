@@ -3,9 +3,10 @@ import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Shield, Check, X, AlertCircle, Download } from "lucide-react";
+import { Loader2, Shield, Check, X, AlertCircle, Download, User, Briefcase } from "lucide-react";
 import { usePermissions } from "@/components/hooks/usePermissions";
 import { PERMISSIONS_MAP, INTERNAL_ONLY_PAGES } from "@/components/lib/permissionsMap";
+import { isInternalUser } from "@/components/utils/rbacHelpers";
 import { toast } from "sonner";
 
 export default function RBACDiagnostico() {
@@ -43,6 +44,7 @@ export default function RBACDiagnostico() {
           name: employee?.full_name,
           job_role: employee?.job_role,
           is_internal: employee?.is_internal,
+          tipo_vinculo: employee?.tipo_vinculo,
           area: employee?.area,
         },
         profile: {
@@ -55,6 +57,12 @@ export default function RBACDiagnostico() {
           total: permissions.length,
           list: permissions,
         },
+        internalCheck: {
+          isInternalUser: isInternalUser(user, employee),
+          userIsInternal: user?.is_internal,
+          employeeIsInternal: employee?.is_internal,
+          tipoVinculo: employee?.tipo_vinculo
+        },
         pageAccess: {},
         issues: [],
       };
@@ -65,16 +73,16 @@ export default function RBACDiagnostico() {
         const requiredPermission = PERMISSIONS_MAP[pageName];
         const isInternal = INTERNAL_ONLY_PAGES.includes(pageName);
         const hasPermission = permissions.includes(requiredPermission);
-        const isInternalUser = user?.is_internal || employee?.is_internal;
+        const userIsInternal = isInternalUser(user, employee);
 
         const canAccess = user?.role === 'admin' || 
-                         (hasPermission && (!isInternal || isInternalUser));
+                         (hasPermission && (!isInternal || userIsInternal));
 
         report.pageAccess[pageName] = {
           requiredPermission,
           hasPermission,
-          isInternal,
-          isInternalUser,
+          isInternalOnlyPage: isInternal,
+          userIsInternal,
           canAccess,
         };
 
@@ -83,7 +91,15 @@ export default function RBACDiagnostico() {
           report.issues.push({
             page: pageName,
             issue: 'Tem permissão mas está bloqueado',
-            reason: isInternal && !isInternalUser ? 'Não é usuário interno' : 'Desconhecido',
+            reason: isInternal && !userIsInternal ? 'Página requer usuário interno' : 'Desconhecido',
+          });
+        }
+
+        if (!hasPermission && isInternal && userIsInternal) {
+          report.issues.push({
+            page: pageName,
+            issue: 'É interno mas não tem permissão',
+            reason: `Falta permissão: ${requiredPermission}`,
           });
         }
       }
@@ -154,28 +170,42 @@ export default function RBACDiagnostico() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm">Usuário</CardTitle>
+            <CardTitle className="text-sm flex items-center gap-2">
+              <User className="w-4 h-4" />
+              Usuário
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="font-medium">{user?.email}</p>
-            <Badge className="mt-2">{user?.role}</Badge>
-            {user?.is_internal && (
-              <Badge className="mt-2 ml-2 bg-purple-100 text-purple-700">Interno</Badge>
-            )}
+            <div className="flex gap-2 mt-2 flex-wrap">
+              <Badge className="bg-blue-600">{user?.role}</Badge>
+              {user?.is_internal && (
+                <Badge className="bg-purple-100 text-purple-700">User Interno</Badge>
+              )}
+            </div>
           </CardContent>
         </Card>
 
         {employee && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">Colaborador</CardTitle>
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Briefcase className="w-4 h-4" />
+                Colaborador
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="font-medium">{employee.full_name}</p>
               <p className="text-sm text-gray-600">{employee.position}</p>
-              <div className="mt-2 flex gap-2">
+              <div className="mt-2 flex gap-2 flex-wrap">
                 <Badge>{employee.job_role}</Badge>
                 {employee.area && <Badge variant="outline">{employee.area}</Badge>}
+                {employee.is_internal && (
+                  <Badge className="bg-green-100 text-green-700">Employee Interno</Badge>
+                )}
+                {employee.tipo_vinculo === 'interno' && (
+                  <Badge className="bg-green-100 text-green-700">Vínculo Interno</Badge>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -193,6 +223,50 @@ export default function RBACDiagnostico() {
           </Card>
         )}
       </div>
+
+      {/* Status Interno */}
+      {diagnosticData?.internalCheck && (
+        <Card className={diagnosticData.internalCheck.isInternalUser ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              {diagnosticData.internalCheck.isInternalUser ? (
+                <Check className="w-5 h-5 text-green-600" />
+              ) : (
+                <X className="w-5 h-5 text-red-600" />
+              )}
+              Status de Usuário Interno
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="bg-white p-3 rounded-lg">
+                <p className="text-xs text-gray-600">Resultado Final</p>
+                <Badge className={diagnosticData.internalCheck.isInternalUser ? 'bg-green-600' : 'bg-red-600'}>
+                  {diagnosticData.internalCheck.isInternalUser ? 'É Interno' : 'Não é Interno'}
+                </Badge>
+              </div>
+              <div className="bg-white p-3 rounded-lg">
+                <p className="text-xs text-gray-600">User.is_internal</p>
+                <Badge variant={diagnosticData.internalCheck.userIsInternal ? 'default' : 'outline'}>
+                  {diagnosticData.internalCheck.userIsInternal ? 'true' : 'false'}
+                </Badge>
+              </div>
+              <div className="bg-white p-3 rounded-lg">
+                <p className="text-xs text-gray-600">Employee.is_internal</p>
+                <Badge variant={diagnosticData.internalCheck.employeeIsInternal ? 'default' : 'outline'}>
+                  {diagnosticData.internalCheck.employeeIsInternal ? 'true' : 'false'}
+                </Badge>
+              </div>
+              <div className="bg-white p-3 rounded-lg">
+                <p className="text-xs text-gray-600">tipo_vinculo</p>
+                <Badge variant="outline">
+                  {diagnosticData.internalCheck.tipoVinculo || 'null'}
+                </Badge>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Permissões */}
       <Card>
@@ -264,12 +338,15 @@ export default function RBACDiagnostico() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-wrap justify-end">
                         {access.hasPermission && (
                           <Badge className="bg-green-100 text-green-700">Tem permissão</Badge>
                         )}
-                        {access.isInternal && (
+                        {access.isInternalOnlyPage && (
                           <Badge variant="outline">Requer Interno</Badge>
+                        )}
+                        {access.userIsInternal && (
+                          <Badge className="bg-purple-100 text-purple-700">É Interno</Badge>
                         )}
                       </div>
                     </div>
