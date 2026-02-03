@@ -56,17 +56,43 @@ export function isAccelerator(user, employee = null) {
  * @returns {boolean}
  */
 export function canAccessMenuItem(item, user, employee, hasPermission) {
-  // Páginas públicas são sempre acessíveis
-  if (item.public) return true;
-  
-  // Sem usuário, negar
-  if (!user) return false;
-  
-  // Admin tem acesso total
-  if (user.role === 'admin') return true;
-
   // ✅ RBAC AUDIT: Log de verificação de acesso (ativar para debug)
   const debugAccess = true; // Temporário para validação
+  
+  if (debugAccess) {
+    console.log(`🔍 [canAccessMenuItem] Verificando "${item.name || item.href}"`, {
+      user_email: user?.email,
+      user_role: user?.role,
+      user_is_internal: user?.is_internal,
+      employee_exists: !!employee,
+      employee_is_internal: employee?.is_internal,
+      employee_tipo_vinculo: employee?.tipo_vinculo,
+      employee_job_role: employee?.job_role,
+      item_public: item.public,
+      item_adminOnly: item.adminOnly,
+      item_aceleradorOnly: item.aceleradorOnly,
+      item_technicianOnly: item.technicianOnly,
+      item_requiredPermission: item.requiredPermission,
+    });
+  }
+  
+  // Páginas públicas são sempre acessíveis
+  if (item.public) {
+    if (debugAccess) console.log(`✅ [canAccessMenuItem] "${item.name}": Público`);
+    return true;
+  }
+  
+  // Sem usuário, negar
+  if (!user) {
+    if (debugAccess) console.log(`❌ [canAccessMenuItem] "${item.name}": Sem usuário`);
+    return false;
+  }
+  
+  // Admin tem acesso total
+  if (user.role === 'admin') {
+    if (debugAccess) console.log(`✅ [canAccessMenuItem] "${item.name}": Admin (acesso total)`);
+    return true;
+  }
   
   // Verificar restrição de acelerador
   if (item.aceleradorOnly && !isAccelerator(user, employee)) {

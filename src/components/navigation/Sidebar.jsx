@@ -198,6 +198,20 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
   const [hasWorkshop, setHasWorkshop] = React.useState(false);
   const [employee, setEmployee] = React.useState(null);
 
+  // ✅ RBAC AUDIT: Log do estado da Sidebar
+  React.useEffect(() => {
+    console.log('🔧 [Sidebar] Estado atual:', {
+      user_email: user?.email,
+      user_role: user?.role,
+      user_is_internal: user?.is_internal,
+      profile_name: profile?.name,
+      profile_type: profile?.type,
+      employee_loaded: !!employee,
+      employee_name: employee?.full_name,
+      hasWorkshop,
+    });
+  }, [user, profile, employee, hasWorkshop]);
+
   // Carregar workshop e employee ao montar o componente
   React.useEffect(() => {
     if (user?.id) {
@@ -221,9 +235,20 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
   const loadUserEmployee = async () => {
     try {
       const employees = await base44.entities.Employee.filter({ user_id: user.id });
-      setEmployee(employees?.[0] || null);
+      const loadedEmployee = employees?.[0] || null;
+      setEmployee(loadedEmployee);
+      
+      // ✅ RBAC AUDIT: Log do employee carregado
+      console.log('👤 [Sidebar] Employee carregado:', {
+        user_id: user.id,
+        employee_found: !!loadedEmployee,
+        employee_name: loadedEmployee?.full_name,
+        employee_job_role: loadedEmployee?.job_role,
+        employee_is_internal: loadedEmployee?.is_internal,
+        employee_tipo_vinculo: loadedEmployee?.tipo_vinculo,
+      });
     } catch (error) {
-      console.error("Erro ao carregar employee:", error);
+      console.error("❌ [Sidebar] Erro ao carregar employee:", error);
       setEmployee(null);
     }
   };
@@ -1160,10 +1185,26 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           <div className="space-y-6">
                     {navigationGroups.map((group) => {
                       // Se o grupo é exclusivo para aceleradores, verificar acesso
-                      if (group.aceleradorOnly && !isAcelerador) return null;
+                      if (group.aceleradorOnly && !isAcelerador) {
+                        console.log(`🚫 [Sidebar] Grupo "${group.label}" bloqueado (aceleradorOnly)`);
+                        return null;
+                      }
 
-                      const visibleItems = group.items.filter(canAccessItem);
-                      if (visibleItems.length === 0) return null;
+                      // ✅ RBAC AUDIT: Log de filtragem de itens
+                      console.log(`📂 [Sidebar] Processando grupo: "${group.label}" (${group.items.length} itens)`);
+                      
+                      const visibleItems = group.items.filter((item) => {
+                        const canAccess = canAccessItem(item);
+                        console.log(`  ${canAccess ? '✅' : '❌'} [Sidebar] Item "${item.name}": ${canAccess ? 'Visível' : 'Oculto'} | adminOnly: ${item.adminOnly || false} | aceleradorOnly: ${item.aceleradorOnly || false} | requiredPermission: ${item.requiredPermission || 'nenhuma'}`);
+                        return canAccess;
+                      });
+                      
+                      console.log(`📊 [Sidebar] Grupo "${group.label}": ${visibleItems.length}/${group.items.length} itens visíveis`);
+                      
+                      if (visibleItems.length === 0) {
+                        console.log(`🚫 [Sidebar] Grupo "${group.label}" oculto (sem itens visíveis)`);
+                        return null;
+                      }
 
               const isExpanded = expandedGroups.includes(group.id);
               const GroupIcon = group.icon;
