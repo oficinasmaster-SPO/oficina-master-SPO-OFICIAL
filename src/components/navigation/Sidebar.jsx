@@ -259,7 +259,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('Dashboard'), 
           icon: TrendingUp,
           description: 'Métricas, rankings e KPIs',
-          adminOnly: true,
+
           requiredPermission: 'admin.audit'
         },
         { 
@@ -679,7 +679,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('ConfiguracaoAcademia'), 
           icon: Settings,
           description: 'Regras e comportamento da academia',
-          adminOnly: true,
+
           requiredPermission: 'training.manage'
         },
         { 
@@ -810,7 +810,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: DollarSign,
           description: 'Métricas financeiras e pagamentos',
           highlight: true,
-          adminOnly: true,
+
           requiredPermission: 'admin.system_config'
         },
         { 
@@ -819,7 +819,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: CreditCard,
           description: 'Integração de pagamentos',
           highlight: true,
-          adminOnly: true,
+
           requiredPermission: 'admin.system_config'
         },
         { 
@@ -828,7 +828,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: Users,
           description: 'Central de gestão de usuários e oficinas',
           highlight: true,
-          adminOnly: true,
+
           requiredPermission: 'admin.users'
         },
 
@@ -837,7 +837,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('AdminProdutividade'), 
           icon: Target,
           description: 'Métricas e KPIs globais',
-          adminOnly: true,
+
           requiredPermission: 'admin.system_config'
         },
         { 
@@ -845,7 +845,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('AdminDesafios'), 
           icon: Trophy,
           description: 'Desafios nível Brasil',
-          adminOnly: true,
+
           requiredPermission: 'admin.system_config'
         },
         { 
@@ -853,7 +853,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('GerenciarPlanos'), 
           icon: CreditCard,
           description: 'Controle de permissões e recursos por plano',
-          adminOnly: true,
+
           requiredPermission: 'admin.system_config'
         },
         { 
@@ -862,7 +862,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: Calendar,
           description: 'Eventos anuais (imersões, treinamentos)',
           highlight: true,
-          adminOnly: true,
+
           requiredPermission: 'admin.system_config'
         },
         { 
@@ -870,7 +870,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('CadastroUsuarioDireto'), 
           icon: UserPlus,
           description: 'Criar usuário direto no sistema',
-          adminOnly: true,
+
           highlight: true,
           requiredPermission: 'admin.users'
         },
@@ -879,7 +879,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('TestUsuarios'), 
           icon: Bug,
           description: 'Diagnóstico de permissões e perfis',
-          adminOnly: true,
+
           highlight: true,
           requiredPermission: 'admin.system_config'
         },
@@ -888,7 +888,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('AdminMensagens'), 
           icon: MessageCircle,
           description: 'Configurar mensagens de incentivo',
-          adminOnly: true,
+
           requiredPermission: 'admin.system_config'
         },
         { 
@@ -896,7 +896,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('AdminNotificacoes'), 
           icon: Mail,
           description: 'Alertas de inatividade e resumos',
-          adminOnly: true,
+
           requiredPermission: 'admin.system_config'
         },
 
@@ -905,7 +905,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('GerenciarToursVideos'), 
           icon: Video,
           description: 'Configure ajuda e tours guiados',
-          adminOnly: true,
+
           requiredPermission: 'admin.system_config'
         },
         { 
@@ -913,7 +913,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('GerenciarProcessos'), 
           icon: FileText,
           description: 'Upload e gestão de MAPs',
-          adminOnly: true,
+
           requiredPermission: 'admin.system_config'
         },
         { 
@@ -921,7 +921,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('GestaoRBAC'), 
           icon: Shield,
           description: 'Perfis e permissões centralizados',
-          adminOnly: true,
+
           highlight: true,
           requiredPermission: 'admin.profiles'
         },
@@ -930,7 +930,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('ConfiguracaoPermissoesGranulares'), 
           icon: Settings,
           description: 'Configure por cargo e módulo',
-          adminOnly: true,
+
           highlight: true,
           requiredPermission: 'admin.system_config'
         },
@@ -939,7 +939,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('LogsAuditoriaRBAC'), 
           icon: Activity,
           description: 'Histórico de alterações em permissões',
-          adminOnly: true,
+
           requiredPermission: 'admin.audit'
         },
         { 
@@ -947,7 +947,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('UsuariosAdmin'), 
           icon: Users,
           description: 'Consultores e aceleradores do sistema',
-          adminOnly: true,
+
           highlight: true,
           requiredPermission: 'admin.users'
         },
@@ -956,7 +956,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('MonitoramentoUsuarios'), 
           icon: Activity,
           description: 'Rastreamento e tempo no sistema',
-          adminOnly: true,
+
           highlight: true,
           requiredPermission: 'admin.audit'
         },
@@ -965,7 +965,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('DiagnosticoPlano'), 
           icon: Bug,
           description: 'Verificar status do plano Base44',
-          adminOnly: true,
+
           requiredPermission: 'admin.system_config'
         },
         { 
@@ -974,7 +974,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: Network,
           description: 'Google Calendar & Meet',
           highlight: true,
-          adminOnly: true,
+
           requiredPermission: 'admin.system_config'
         },
         { 
@@ -1003,8 +1003,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
     // Verificar permissões específicas de acelerador
     if (item.aceleradorOnly && !isAcelerador) return false;
 
-    // Verificar permissões específicas de admin
-    if (item.adminOnly) return false;
+    // Verificação de adminOnly removida em favor do RBAC granular
     
     // Sistema RBAC Granular: Verificar permissão granular se definida
     if (item.requiredPermission) {
