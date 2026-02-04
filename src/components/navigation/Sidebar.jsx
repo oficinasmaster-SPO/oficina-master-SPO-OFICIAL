@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { usePermissions } from "@/components/hooks/usePermissions";
 import { useAssistanceMode } from "@/components/hooks/useAssistanceMode";
 import { base44 } from "@/api/base44Client";
-import { canAccessMenuItem } from "@/components/utils/rbacHelpers";
 import { 
   Home, 
   FileText, 
@@ -62,8 +61,7 @@ import {
   Network,
   AlertCircle,
   HelpCircle,
-  UserPlus,
-  Gift
+  UserPlus
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -196,27 +194,11 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
     }
   });
   const [hasWorkshop, setHasWorkshop] = React.useState(false);
-  const [employee, setEmployee] = React.useState(null);
 
-  // ✅ RBAC AUDIT: Log do estado da Sidebar
-  React.useEffect(() => {
-    console.log('🔧 [Sidebar] Estado atual:', {
-      user_email: user?.email,
-      user_role: user?.role,
-      user_is_internal: user?.is_internal,
-      profile_name: profile?.name,
-      profile_type: profile?.type,
-      employee_loaded: !!employee,
-      employee_name: employee?.full_name,
-      hasWorkshop,
-    });
-  }, [user, profile, employee, hasWorkshop]);
-
-  // Carregar workshop e employee ao montar o componente
+  // Carregar workshop ao montar o componente
   React.useEffect(() => {
     if (user?.id) {
       loadUserWorkshop();
-      loadUserEmployee();
     }
   }, [user?.id]);
 
@@ -229,27 +211,6 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
     } catch (error) {
       console.error("Erro ao carregar workshop:", error);
       setHasWorkshop(false);
-    }
-  };
-
-  const loadUserEmployee = async () => {
-    try {
-      const employees = await base44.entities.Employee.filter({ user_id: user.id });
-      const loadedEmployee = employees?.[0] || null;
-      setEmployee(loadedEmployee);
-      
-      // ✅ RBAC AUDIT: Log do employee carregado
-      console.log('👤 [Sidebar] Employee carregado:', {
-        user_id: user.id,
-        employee_found: !!loadedEmployee,
-        employee_name: loadedEmployee?.full_name,
-        employee_job_role: loadedEmployee?.job_role,
-        employee_is_internal: loadedEmployee?.is_internal,
-        employee_tipo_vinculo: loadedEmployee?.tipo_vinculo,
-      });
-    } catch (error) {
-      console.error("❌ [Sidebar] Erro ao carregar employee:", error);
-      setEmployee(null);
     }
   };
 
@@ -517,30 +478,6 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('DescricoesCargo'), 
           icon: ClipboardList,
           description: 'Cargos e responsabilidades',
-          highlight: true,
-          requiredPermission: 'employees.view'
-        },
-        { 
-          name: 'Onboarding', 
-          href: createPageUrl('OnboardingColaborador'), 
-          icon: Target,
-          description: 'Integração guiada de novos colaboradores',
-          highlight: true,
-          requiredPermission: 'employees.view'
-        },
-        { 
-          name: 'Avaliação 360°', 
-          href: createPageUrl('Avaliacao360'), 
-          icon: Users,
-          description: 'Avaliação multidirecional de desempenho',
-          highlight: true,
-          requiredPermission: 'employees.view'
-        },
-        { 
-          name: 'Gestão de Benefícios', 
-          href: createPageUrl('GestaoBeneficios'), 
-          icon: Gift,
-          description: 'Visualize e solicite benefícios',
           highlight: true,
           requiredPermission: 'employees.view'
         },
@@ -894,13 +831,14 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           adminOnly: true,
           requiredPermission: 'admin.users'
         },
+
         { 
           name: 'Config. Produtividade', 
           href: createPageUrl('AdminProdutividade'), 
           icon: Target,
           description: 'Métricas e KPIs globais',
           adminOnly: true,
-          requiredPermission: 'productivity.settings'
+          requiredPermission: 'admin.system_config'
         },
         { 
           name: 'Gestão Desafios Globais', 
@@ -908,7 +846,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: Trophy,
           description: 'Desafios nível Brasil',
           adminOnly: true,
-          requiredPermission: 'challenge.manage'
+          requiredPermission: 'admin.system_config'
         },
         { 
           name: 'Gerenciar Planos', 
@@ -916,7 +854,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: CreditCard,
           description: 'Controle de permissões e recursos por plano',
           adminOnly: true,
-          requiredPermission: 'plans.manage'
+          requiredPermission: 'admin.system_config'
         },
         { 
           name: 'Calendário de Eventos', 
@@ -925,7 +863,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           description: 'Eventos anuais (imersões, treinamentos)',
           highlight: true,
           adminOnly: true,
-          requiredPermission: 'events.calendar'
+          requiredPermission: 'admin.system_config'
         },
         { 
           name: 'Cadastro Direto User', 
@@ -951,7 +889,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: MessageCircle,
           description: 'Configurar mensagens de incentivo',
           adminOnly: true,
-          requiredPermission: 'messages.templates'
+          requiredPermission: 'admin.system_config'
         },
         { 
           name: 'Automação de E-mails', 
@@ -959,8 +897,9 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: Mail,
           description: 'Alertas de inatividade e resumos',
           adminOnly: true,
-          requiredPermission: 'email.manage'
+          requiredPermission: 'admin.system_config'
         },
+
         { 
           name: 'Gerenciar Tours e Vídeos', 
           href: createPageUrl('GerenciarToursVideos'), 
@@ -975,7 +914,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: FileText,
           description: 'Upload e gestão de MAPs',
           adminOnly: true,
-          requiredPermission: 'processes.admin'
+          requiredPermission: 'admin.system_config'
         },
         { 
           name: 'Gestão RBAC', 
@@ -1004,22 +943,13 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           requiredPermission: 'admin.audit'
         },
         { 
-          name: 'Auditoria de Acesso', 
-          href: createPageUrl('AuditoriaAcesso'), 
-          icon: Shield,
-          description: 'Logs de acesso a páginas restritas',
-          adminOnly: true,
-          highlight: true,
-          requiredPermission: 'admin.audit'
-        },
-        { 
           name: 'Usuários Internos', 
           href: createPageUrl('UsuariosAdmin'), 
           icon: Users,
           description: 'Consultores e aceleradores do sistema',
           adminOnly: true,
           highlight: true,
-          requiredPermission: 'internal_users.manage'
+          requiredPermission: 'admin.users'
         },
         { 
           name: 'Monitoramento de Usuários', 
@@ -1065,8 +995,25 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
   };
 
   const canAccessItem = (item) => {
-    // ✅ Usar função centralizada do rbacHelpers
-    return canAccessMenuItem(item, user, employee, hasPermission);
+    if (item.public) return true;
+    if (!user) return false;
+
+    // Admin sempre tem acesso total
+    if (user.role === 'admin') return true;
+
+    // Verificar permissões específicas de acelerador
+    if (item.aceleradorOnly && !isAcelerador) return false;
+
+    // Verificar permissões específicas de admin
+    if (item.adminOnly) return false;
+    
+    // Sistema RBAC Granular: Verificar permissão granular se definida
+    if (item.requiredPermission) {
+      return hasPermission(item.requiredPermission);
+    }
+    
+    // Fallback: permite acesso se não há permissão definida
+    return true;
   };
 
   return (
@@ -1185,26 +1132,10 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           <div className="space-y-6">
                     {navigationGroups.map((group) => {
                       // Se o grupo é exclusivo para aceleradores, verificar acesso
-                      if (group.aceleradorOnly && !isAcelerador) {
-                        console.log(`🚫 [Sidebar] Grupo "${group.label}" bloqueado (aceleradorOnly)`);
-                        return null;
-                      }
+                      if (group.aceleradorOnly && !isAcelerador) return null;
 
-                      // ✅ RBAC AUDIT: Log de filtragem de itens
-                      console.log(`📂 [Sidebar] Processando grupo: "${group.label}" (${group.items.length} itens)`);
-                      
-                      const visibleItems = group.items.filter((item) => {
-                        const canAccess = canAccessItem(item);
-                        console.log(`  ${canAccess ? '✅' : '❌'} [Sidebar] Item "${item.name}": ${canAccess ? 'Visível' : 'Oculto'} | adminOnly: ${item.adminOnly || false} | aceleradorOnly: ${item.aceleradorOnly || false} | requiredPermission: ${item.requiredPermission || 'nenhuma'}`);
-                        return canAccess;
-                      });
-                      
-                      console.log(`📊 [Sidebar] Grupo "${group.label}": ${visibleItems.length}/${group.items.length} itens visíveis`);
-                      
-                      if (visibleItems.length === 0) {
-                        console.log(`🚫 [Sidebar] Grupo "${group.label}" oculto (sem itens visíveis)`);
-                        return null;
-                      }
+                      const visibleItems = group.items.filter(canAccessItem);
+                      if (visibleItems.length === 0) return null;
 
               const isExpanded = expandedGroups.includes(group.id);
               const GroupIcon = group.icon;

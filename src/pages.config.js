@@ -71,7 +71,6 @@ import AutoavaliacaoMaturidade from './pages/AutoavaliacaoMaturidade';
 import AutoavaliacaoPessoas from './pages/AutoavaliacaoPessoas';
 import AutoavaliacaoVendas from './pages/AutoavaliacaoVendas';
 import Autoavaliacoes from './pages/Autoavaliacoes';
-import Avaliacao360 from './pages/Avaliacao360';
 import AvaliarAtendimento from './pages/AvaliarAtendimento';
 import CDCForm from './pages/CDCForm';
 import CDCList from './pages/CDCList';
@@ -147,7 +146,6 @@ import GerenciarProcessos from './pages/GerenciarProcessos';
 import GerenciarRoles from './pages/GerenciarRoles';
 import GerenciarToursVideos from './pages/GerenciarToursVideos';
 import GerenciarTreinamentos from './pages/GerenciarTreinamentos';
-import GestaoBeneficios from './pages/GestaoBeneficios';
 import GestaoContratos from './pages/GestaoContratos';
 import GestaoDesafios from './pages/GestaoDesafios';
 import GestaoOficina from './pages/GestaoOficina';
@@ -175,7 +173,6 @@ import MissaoVisaoValores from './pages/MissaoVisaoValores';
 import MonitoramentoRH from './pages/MonitoramentoRH';
 import MonitoramentoUsuarios from './pages/MonitoramentoUsuarios';
 import Notificacoes from './pages/Notificacoes';
-import OnboardingColaborador from './pages/OnboardingColaborador';
 import Organograma from './pages/Organograma';
 import OrganogramaFuncional from './pages/OrganogramaFuncional';
 import PainelAcoes from './pages/PainelAcoes';
@@ -189,7 +186,6 @@ import PrimeiroAcesso from './pages/PrimeiroAcesso';
 import PublicFeedback from './pages/PublicFeedback';
 import QGPBoard from './pages/QGPBoard';
 import Questionario from './pages/Questionario';
-import RBACDiagnostico from './pages/RBACDiagnostico';
 import RankingBrasil from './pages/RankingBrasil';
 import Regimento from './pages/Regimento';
 import RegistrarAtendimento from './pages/RegistrarAtendimento';
@@ -226,7 +222,6 @@ import TesteOpenAI from './pages/TesteOpenAI';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
-import AuditoriaAcesso from './pages/AuditoriaAcesso';
 import __Layout from './Layout.jsx';
 
 
@@ -255,7 +250,6 @@ export const PAGES = {
     "AutoavaliacaoPessoas": AutoavaliacaoPessoas,
     "AutoavaliacaoVendas": AutoavaliacaoVendas,
     "Autoavaliacoes": Autoavaliacoes,
-    "Avaliacao360": Avaliacao360,
     "AvaliarAtendimento": AvaliarAtendimento,
     "CDCForm": CDCForm,
     "CDCList": CDCList,
@@ -331,7 +325,6 @@ export const PAGES = {
     "GerenciarRoles": GerenciarRoles,
     "GerenciarToursVideos": GerenciarToursVideos,
     "GerenciarTreinamentos": GerenciarTreinamentos,
-    "GestaoBeneficios": GestaoBeneficios,
     "GestaoContratos": GestaoContratos,
     "GestaoDesafios": GestaoDesafios,
     "GestaoOficina": GestaoOficina,
@@ -359,7 +352,6 @@ export const PAGES = {
     "MonitoramentoRH": MonitoramentoRH,
     "MonitoramentoUsuarios": MonitoramentoUsuarios,
     "Notificacoes": Notificacoes,
-    "OnboardingColaborador": OnboardingColaborador,
     "Organograma": Organograma,
     "OrganogramaFuncional": OrganogramaFuncional,
     "PainelAcoes": PainelAcoes,
@@ -373,7 +365,6 @@ export const PAGES = {
     "PublicFeedback": PublicFeedback,
     "QGPBoard": QGPBoard,
     "Questionario": Questionario,
-    "RBACDiagnostico": RBACDiagnostico,
     "RankingBrasil": RankingBrasil,
     "Regimento": Regimento,
     "RegistrarAtendimento": RegistrarAtendimento,
@@ -410,7 +401,6 @@ export const PAGES = {
     "TreinamentoVendas": TreinamentoVendas,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
-    "AuditoriaAcesso": AuditoriaAcesso,
 }
 
 export const pagesConfig = {

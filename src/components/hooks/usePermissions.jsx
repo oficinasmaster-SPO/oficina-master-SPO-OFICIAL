@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { systemRoles } from "@/components/lib/systemRoles";
-import { PERMISSIONS_MAP, PUBLIC_PAGES } from "@/components/lib/permissionsMap";
+import { pagePermissions } from "@/components/lib/pagePermissions";
 
 /**
  * Hook para verificar permissões do usuário atual
@@ -52,49 +52,40 @@ export function usePermissions() {
           }
 
           const profileId = currentUser.profile_id || employeeProfileId;
+          
+          if (profileId) {
+            try {
+              const userProfile = await base44.entities.UserProfile.get(profileId);
 
-                  if (profileId) {
+              if (!userProfile || !userProfile.id) {
+                setProfile(null);
+              } else {
+                setProfile(userProfile);
+
+                // ✅ FIX: Acessar roles corretamente (dentro de data se vier da API)
+                const profileRoles = userProfile.data?.roles || userProfile.roles || [];
+                aggregatedPermissions = [...aggregatedPermissions, ...profileRoles];
+
+                const customRoleIds = userProfile.data?.custom_role_ids || userProfile.custom_role_ids || [];
+                if (customRoleIds && customRoleIds.length > 0) {
+                  for (const roleId of customRoleIds) {
                     try {
-                      const userProfile = await base44.entities.UserProfile.get(profileId);
-
-                      if (!userProfile || !userProfile.id) {
-                        setProfile(null);
-                      } else {
-                        setProfile(userProfile);
-
-                        // ✅ FIX: Acessar roles corretamente (dentro de data se vier da API)
-                        const profileRoles = userProfile.data?.roles || userProfile.roles || [];
-                        aggregatedPermissions = [...aggregatedPermissions, ...profileRoles];
-
-                        const customRoleIds = userProfile.data?.custom_role_ids || userProfile.custom_role_ids || [];
-                        if (customRoleIds && customRoleIds.length > 0) {
-                          for (const roleId of customRoleIds) {
-                            try {
-                              const customRole = await base44.entities.CustomRole.get(roleId);
-                              const systemRoles = customRole.data?.system_roles || customRole.system_roles || [];
-                              if (systemRoles && systemRoles.length > 0) {
-                                aggregatedPermissions = [...aggregatedPermissions, ...systemRoles];
-                              }
-                            } catch (roleError) {
-                              console.warn("CustomRole não encontrada:", roleId);
-                            }
-                          }
-                        }
-
-                        // ✅ AUDITORIA: Log das permissões carregadas
-                        console.log('📋 [RBAC Audit] Permissões carregadas:', {
-                          user: currentUser.email,
-                          profile: userProfile.name,
-                          profileRoles: profileRoles,
-                          customRoleIds: customRoleIds,
-                          totalPermissions: aggregatedPermissions.length
-                        });
+                      const customRole = await base44.entities.CustomRole.get(roleId);
+                      const systemRoles = customRole.data?.system_roles || customRole.system_roles || [];
+                      if (systemRoles && systemRoles.length > 0) {
+                        aggregatedPermissions = [...aggregatedPermissions, ...systemRoles];
                       }
-                    } catch (profileError) {
-                      console.error("Erro ao carregar UserProfile:", profileError);
-                      setProfile(null);
+                    } catch (roleError) {
+                      console.warn("CustomRole não encontrada:", roleId);
                     }
                   }
+                }
+              }
+            } catch (profileError) {
+              console.error("Erro ao carregar UserProfile:", profileError);
+              setProfile(null);
+            }
+          }
 
           if (currentUser.custom_role_id) {
             try {
@@ -127,16 +118,7 @@ export function usePermissions() {
   const hasPermission = (permissionId) => {
     if (!user) return false;
     if (user.role === 'admin') return true;
-    
-    const hasAccess = permissions.includes(permissionId);
-    
-    // ✅ RBAC AUDIT: Log de verificação de permissão (ativar para debug)
-    const debugPermission = true; // Temporário para validação
-    if (debugPermission) {
-      console.log(`${hasAccess ? '✅' : '❌'} [hasPermission] ${permissionId}: ${hasAccess ? 'Permitido' : 'Negado'} (user: ${user.email})`);
-    }
-    
-    return hasAccess;
+    return permissions.includes(permissionId);
   };
 
   /**
@@ -214,13 +196,13 @@ export function usePermissions() {
       if (user.role === 'admin') return true;
 
       // Páginas públicas não requerem autenticação
-      const isPublicPage = PUBLIC_PAGES.includes(pageName);
+      const isPublicPage = pagePermissions[pageName] === null;
       if (isPublicPage) {
         return true;
       }
 
-      // Obter permissão necessária para a página do PERMISSIONS_MAP
-      const requiredPermission = PERMISSIONS_MAP[pageName];
+      // Obter permissão necessária para a página
+      const requiredPermission = pagePermissions[pageName];
       
       // Se não há permissão mapeada, permitir acesso (fallback)
       if (!requiredPermission) {
@@ -228,15 +210,7 @@ export function usePermissions() {
       }
 
       // Verificar se o usuário tem a permissão granular necessária
-      const hasAccess = hasPermission(requiredPermission);
-      
-      // ✅ RBAC AUDIT: Log de acesso a páginas (ativar para debug)
-      const debugPageAccess = true; // Temporário para validação
-      if (debugPageAccess) {
-        console.log(`${hasAccess ? '✅' : '❌'} [Page Access] ${pageName}: ${hasAccess ? 'Permitido' : 'Negado'} (${requiredPermission})`);
-      }
-      
-      return hasAccess;
+      return hasPermission(requiredPermission);
     } catch (error) {
       console.error("❌ Erro ao verificar acesso à página:", error);
       // Em caso de erro, bloquear acesso por segurança
@@ -268,37 +242,9 @@ export function usePermissions() {
 
   /**
    * Verifica se é usuário interno (consultor/mentor)
-   * Agora verifica também o employee vinculado - versão síncrona
    */
   const isInternal = () => {
-    if (!user) return false;
-    if (user.role === 'admin') return true;
-    if (user.is_internal === true) return true;
-    
-    // Nota: Para verificação async completa, use checkIsInternal()
-    return false;
-  };
-
-  /**
-   * Verifica se é usuário interno (versão assíncrona completa)
-   * Verifica user e employee vinculado
-   */
-  const checkIsInternal = async () => {
-    if (!user) return false;
-    if (user.role === 'admin') return true;
-    if (user.is_internal === true) return true;
-    
-    try {
-      const employees = await base44.entities.Employee.filter({ user_id: user.id });
-      const employee = employees?.[0];
-      if (employee?.is_internal === true || employee?.tipo_vinculo === 'interno') {
-        return true;
-      }
-    } catch (error) {
-      console.error("Erro ao verificar employee interno:", error);
-    }
-    
-    return false;
+    return user?.is_internal === true || user?.tipo_vinculo === 'interno';
   };
 
   return {
@@ -312,6 +258,5 @@ export function usePermissions() {
     canAccessPage,
     canPerform,
     isInternal,
-    checkIsInternal,
   };
 }

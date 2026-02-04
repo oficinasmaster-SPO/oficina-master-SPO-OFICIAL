@@ -35,32 +35,20 @@ export function PermissionsProvider({ children }) {
                 
                 if (userProfile && userProfile.id) {
                   setProfile(userProfile);
-                  const profileRoles = userProfile.data?.roles || userProfile.roles || [];
-                  aggregatedPermissions = [...aggregatedPermissions, ...profileRoles];
+                  aggregatedPermissions = [...aggregatedPermissions, ...(userProfile.roles || [])];
                   
-                  const customRoleIds = userProfile.data?.custom_role_ids || userProfile.custom_role_ids || [];
-                  if (customRoleIds && customRoleIds.length > 0) {
-                    for (const roleId of customRoleIds) {
+                  if (userProfile.custom_role_ids && userProfile.custom_role_ids.length > 0) {
+                    for (const roleId of userProfile.custom_role_ids) {
                       try {
                         const role = await base44.entities.CustomRole.get(roleId);
-                        if (mounted && role) {
-                          const systemRoles = role.data?.system_roles || role.system_roles || [];
-                          aggregatedPermissions = [...aggregatedPermissions, ...systemRoles];
+                        if (mounted && role && role.system_roles) {
+                          aggregatedPermissions = [...aggregatedPermissions, ...(role.system_roles || [])];
                         }
                       } catch (e) {
                         console.warn("CustomRole não encontrada:", roleId);
                       }
                     }
                   }
-
-                  // ✅ AUDITORIA: Log de permissões
-                  console.log('📋 [PermissionsContext] Permissões carregadas:', {
-                    user: currentUser.email,
-                    profile: userProfile.name,
-                    profileRoles: profileRoles,
-                    customRoleIds: customRoleIds,
-                    totalPermissions: aggregatedPermissions.length
-                  });
                 }
               } catch (e) {
                 console.error("Erro ao carregar UserProfile:", e);
