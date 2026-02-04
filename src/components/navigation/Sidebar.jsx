@@ -983,8 +983,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: Sparkles,
           description: 'Testar chave secundária',
           highlight: true,
-          adminOnly: true,
-          requiredPermission: 'admin.system_config'
+          requiredPermission: 'diagnostics.ai_access'
         }
       ]
     }
