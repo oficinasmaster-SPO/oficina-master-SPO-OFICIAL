@@ -1312,6 +1312,7 @@ export default function RegistrarAtendimento() {
                   Plataforma
                 </Button>
               </div>
+              </div>
             </CardContent>
           </Card>
         )}
