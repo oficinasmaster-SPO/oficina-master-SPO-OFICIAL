@@ -153,6 +153,25 @@ const DEFAULT_PERMISSIONS = {
     }
   },
 
+  // CLOSER - Foco em fechamento
+  closer: {
+    permission_level: "personalizado",
+    modules_access: {
+      dashboard: { view: true, edit: false },
+      cadastros: { view: false, edit: false, delete: false },
+      patio: { view: true, edit: false },
+      resultados: { view: true, edit: false },
+      pessoas: { view: false, edit: false, delete: false },
+      diagnosticos: { view: true, create: true },
+      processos: { view: true, edit: false },
+      documentos: { view: true, upload: true, delete: true }, // Closer pode precisar deletar contratos errados
+      cultura: { view: true, edit: false },
+      treinamentos: { view: true, create: false, manage: false },
+      gestao: { view: false, edit: false },
+      admin: { users: false, permissions: false, settings: false }
+    }
+  },
+
   // FINANCEIRO - Acesso a resultados
   financeiro: {
     permission_level: "personalizado",
