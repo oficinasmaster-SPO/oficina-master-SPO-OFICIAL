@@ -1190,14 +1190,66 @@ export default function RegistrarAtendimento() {
           </CardContent>
         </Card>
 
-        {/* Ações de Envio da Ata */}
+        {/* Ações de Envio e Gestão da Ata */}
         {formData.status === 'realizado' && (
           <Card>
             <CardHeader>
-              <CardTitle>Enviar Documento para Cliente</CardTitle>
+              <CardTitle>Documentação e Envio (ATA)</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="flex flex-col gap-4">
+                <div className="flex gap-3">
+                  {!formData.ata_id ? (
+                    <Button 
+                      type="button" 
+                      variant="default" 
+                      className="flex-1 bg-green-600 hover:bg-green-700"
+                      onClick={() => gerarAtaMutation.mutate(formData.id)}
+                      disabled={gerarAtaMutation.isPending}
+                    >
+                      {gerarAtaMutation.isPending ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <FilePlus className="w-4 h-4 mr-2" />
+                      )}
+                      Gerar ATA Agora
+                    </Button>
+                  ) : (
+                    <div className="flex-1 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between">
+                      <span className="text-green-800 font-medium flex items-center gap-2">
+                        <FileText className="w-5 h-5" />
+                        ATA Gerada
+                      </span>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm"
+                        onClick={async () => {
+                          try {
+                            // Buscar ata para visualizar/finalizar
+                            const ata = await base44.entities.MeetingMinutes.get(formData.ata_id);
+                            if (ata) {
+                              // Se precisar, poderia abrir o modal aqui, mas como estamos em outra página,
+                              // vamos redirecionar para o painel com o ID da ata ou apenas baixar o PDF
+                              // Por enquanto, vamos baixar o PDF direto
+                              const { downloadAtaPDF } = await import("@/components/aceleracao/AtasPDFGenerator");
+                              const workshop = workshops?.find(w => w.id === formData.workshop_id);
+                              downloadAtaPDF(ata, workshop);
+                              toast.success("Download iniciado!");
+                            }
+                          } catch (error) {
+                            toast.error("Erro ao acessar ATA: " + error.message);
+                          }
+                        }}
+                      >
+                        <Upload className="w-4 h-4 mr-2" />
+                        Baixar PDF
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-3 gap-3">
                 <Button 
                   type="button" 
                   variant="outline" 
