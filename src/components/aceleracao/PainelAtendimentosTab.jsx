@@ -4,10 +4,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit, AlertTriangle, FilePlus, Play, StopCircle, CalendarClock, FileText } from "lucide-react";
+import { Edit, AlertTriangle, FilePlus, Play, StopCircle, CalendarClock, FileText, CheckCircle } from "lucide-react";
 import GerarAtaModal from "./GerarAtaModal";
 import VisualizarAtaModal from "./VisualizarAtaModal";
 import ReagendarAtendimentoModal from "./ReagendarAtendimentoModal";
+import FinalizarAtendimentoModal from "./FinalizarAtendimentoModal";
 import FiltrosAtendimentos from "./FiltrosAtendimentos";
 import DashboardAtendimentos from "./DashboardAtendimentos";
 import { ATENDIMENTO_STATUS, ATENDIMENTO_STATUS_COLORS, ATENDIMENTO_STATUS_LABELS } from "@/components/lib/ataConstants";
@@ -23,7 +24,9 @@ export default function PainelAtendimentosTab({ user }) {
   const [showGerarAta, setShowGerarAta] = useState(false);
   const [showVisualizarAta, setShowVisualizarAta] = useState(false);
   const [showReagendar, setShowReagendar] = useState(false);
+  const [showFinalizar, setShowFinalizar] = useState(false);
   const [selectedAtendimento, setSelectedAtendimento] = useState(null);
+  const [atendimentoFinalizar, setAtendimentoFinalizar] = useState(null);
   const [selectedAta, setSelectedAta] = useState(null);
   const processedIdsRef = useRef(new Set());
   const [filtrosAtas, setFiltrosAtas] = useState({
@@ -214,6 +217,17 @@ export default function PainelAtendimentosTab({ user }) {
         />
       )}
 
+      {showFinalizar && atendimentoFinalizar && (
+        <FinalizarAtendimentoModal
+          atendimento={atendimentoFinalizar}
+          onClose={() => {
+            setShowFinalizar(false);
+            setAtendimentoFinalizar(null);
+            queryClient.invalidateQueries(['todos-atendimentos']);
+          }}
+        />
+      )}
+
       {/* Filtros de Atendimentos */}
       <FiltrosAtendimentos
         filters={filtrosAtas}
@@ -318,9 +332,27 @@ export default function PainelAtendimentosTab({ user }) {
                               variant="ghost"
                               size="sm"
                               onClick={() => finalizarMutation.mutate(atendimento.id)}
-                              title="Finalizar"
+                              title="Finalizar Rápido"
                             >
                               <StopCircle className="w-4 h-4 text-green-600" />
+                            </Button>
+                          )}
+
+                          {(atendimento.status === ATENDIMENTO_STATUS.PARTICIPANDO || 
+                            atendimento.status === ATENDIMENTO_STATUS.AGENDADO || 
+                            atendimento.status === ATENDIMENTO_STATUS.CONFIRMADO || 
+                            atendimento.status === ATENDIMENTO_STATUS.REAGENDADO || 
+                            atendimento.status === ATENDIMENTO_STATUS.ATRASADO) && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setAtendimentoFinalizar(atendimento);
+                                setShowFinalizar(true);
+                              }}
+                              title="Finalizar Atendimento"
+                            >
+                              <CheckCircle className="w-4 h-4 text-green-600" />
                             </Button>
                           )}
 
