@@ -43,6 +43,19 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
     }
   };
 
+  const handleFinalizar = async () => {
+    try {
+      await base44.entities.MeetingMinutes.update(ataAtualizada.id, {
+        status: 'finalizada'
+      });
+      setAtaAtualizada(prev => ({ ...prev, status: 'finalizada' }));
+      toast.success("ATA finalizada com sucesso!");
+    } catch (error) {
+      console.error("Erro ao finalizar ATA:", error);
+      toast.error("Erro ao finalizar ATA");
+    }
+  };
+
   if (!ataAtualizada) return null;
 
   return (
@@ -60,10 +73,18 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
                 <FileText className="w-5 h-5" />
                 ATA de Atendimento - {ataAtualizada.code}
               </span>
-              <Button size="sm" variant="outline" onClick={handleDownload}>
-                <Download className="w-4 h-4 mr-2" />
-                Download PDF
-              </Button>
+              <div className="flex gap-2">
+                {ataAtualizada.status !== 'finalizada' && (
+                  <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={handleFinalizar}>
+                    <FileText className="w-4 h-4 mr-2" />
+                    Finalizar ATA
+                  </Button>
+                )}
+                <Button size="sm" variant="outline" onClick={handleDownload}>
+                  <Download className="w-4 h-4 mr-2" />
+                  Download PDF
+                </Button>
+              </div>
             </div>
             <AtaSendOptionsBar ata={ataAtualizada} workshop={workshop} atendimento={atendimento} />
           </div>
