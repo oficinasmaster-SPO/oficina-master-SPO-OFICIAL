@@ -496,7 +496,7 @@ export default function RelatoriosTab({ user }) {
                       <td className="py-3 px-4 text-right">{a.duracao_minutos || 0} min</td>
                       <td className="py-3 px-4 text-right print:hidden">
                         <div className="flex items-center justify-end gap-1">
-                          {(a.status === ATENDIMENTO_STATUS.AGENDADO || a.status === ATENDIMENTO_STATUS.CONFIRMADO || a.status === ATENDIMENTO_STATUS.REAGENDADO) && (
+                          {(a.status === ATENDIMENTO_STATUS.AGENDADO || a.status === ATENDIMENTO_STATUS.CONFIRMADO || a.status === ATENDIMENTO_STATUS.REAGENDADO || a.status === ATENDIMENTO_STATUS.ATRASADO) && (
                             <>
                               <Button
                                 variant="ghost"
