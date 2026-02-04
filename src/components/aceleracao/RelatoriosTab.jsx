@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Download, Loader2, BarChart3, TrendingUp, Users, Calendar as CalendarIcon, Play, Edit, CalendarClock } from "lucide-react";
+import { FileText, Download, Loader2, BarChart3, TrendingUp, Users, Calendar as CalendarIcon, Play, Edit, CalendarClock, CheckCircle } from "lucide-react";
 import { ATENDIMENTO_STATUS, ATENDIMENTO_STATUS_LABELS } from "@/components/lib/ataConstants";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { format, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths } from "date-fns";
@@ -17,13 +17,16 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import ReagendarAtendimentoModal from "./ReagendarAtendimentoModal";
 import VisualizarAtaModal from "./VisualizarAtaModal";
+import FinalizarAtendimentoModal from "./FinalizarAtendimentoModal";
 
 export default function RelatoriosTab({ user }) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [showReagendar, setShowReagendar] = useState(false);
   const [showVisualizarAta, setShowVisualizarAta] = useState(false);
+  const [showFinalizar, setShowFinalizar] = useState(false);
   const [atendimentoReagendar, setAtendimentoReagendar] = useState(null);
+  const [atendimentoFinalizar, setAtendimentoFinalizar] = useState(null);
   const [selectedAta, setSelectedAta] = useState(null);
   const [filtros, setFiltros] = useState({
     dataInicio: format(startOfMonth(subMonths(new Date(), 5)), 'yyyy-MM-dd'),
@@ -516,6 +519,21 @@ export default function RelatoriosTab({ user }) {
                               </Button>
                             </>
                           )}
+                          
+                          {(a.status === ATENDIMENTO_STATUS.PARTICIPANDO || a.status === ATENDIMENTO_STATUS.AGENDADO || a.status === ATENDIMENTO_STATUS.CONFIRMADO || a.status === ATENDIMENTO_STATUS.REAGENDADO || a.status === ATENDIMENTO_STATUS.ATRASADO) && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setAtendimentoFinalizar(a);
+                                setShowFinalizar(true);
+                              }}
+                              title="Finalizar Atendimento"
+                            >
+                              <CheckCircle className="w-4 h-4 text-green-600" />
+                            </Button>
+                          )}
+
                           <Button
                             variant="ghost"
                             size="sm"
@@ -573,6 +591,17 @@ export default function RelatoriosTab({ user }) {
             queryClient.invalidateQueries(['atendimentos-relatorios']);
             setShowReagendar(false);
             setAtendimentoReagendar(null);
+          }}
+        />
+      )}
+
+      {showFinalizar && atendimentoFinalizar && (
+        <FinalizarAtendimentoModal
+          atendimento={atendimentoFinalizar}
+          onClose={() => {
+            setShowFinalizar(false);
+            setAtendimentoFinalizar(null);
+            queryClient.invalidateQueries(['atendimentos-relatorios']);
           }}
         />
       )}
