@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar as CalendarIcon, Plus, Trash2, Upload, Sparkles, Loader2, Video, Link as LinkIcon, Image, Film, Send, FileText, MessageSquare, Package, Clock } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, Trash2, Upload, Sparkles, Loader2, Video, Link as LinkIcon, Image, Film, Send, FileText, MessageSquare, Package, Clock, FilePlus } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import NotificationSchedulerModal from "@/components/aceleracao/NotificationSchedulerModal";
