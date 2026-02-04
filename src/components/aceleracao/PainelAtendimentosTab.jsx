@@ -343,12 +343,14 @@ export default function PainelAtendimentosTab({ user }) {
                                   if (ata) {
                                     setSelectedAta(ata);
                                     setShowVisualizarAta(true);
+                                  } else {
+                                    toast.error("ATA não encontrada");
                                   }
                                 } catch (error) {
                                   toast.error("Erro ao carregar ATA");
                                 }
                               }}
-                              title="Ver ATA em PDF"
+                              title="Ver/Finalizar ATA"
                             >
                               <FileText className="w-4 h-4 text-green-600" />
                             </Button>
