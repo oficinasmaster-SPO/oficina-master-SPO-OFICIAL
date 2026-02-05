@@ -16,9 +16,24 @@ export default function AtasSection({ atas, workshop }) {
   const [sendingEmail, setSendingEmail] = useState(false);
   const [sendingWhatsapp, setSendingWhatsapp] = useState(false);
 
-  const handleDownloadPDF = (ata) => {
+  const handleDownloadPDF = async (ata) => {
     try {
-      downloadAtaPDF(ata, workshop);
+      let ataParaDownload = { ...ata };
+      
+      // Buscar o atendimento vinculado a esta ATA
+      const atendimentos = await base44.entities.ConsultoriaAtendimento.filter({ ata_id: ata.id });
+      if (atendimentos && atendimentos.length > 0) {
+        const atendimentoId = atendimentos[0].id;
+        
+        // Buscar inteligência vinculada ao atendimento
+        const intelligence = await base44.entities.ClientIntelligence.filter({ 
+          attendance_id: atendimentoId 
+        });
+        
+        ataParaDownload.client_intelligence = intelligence || [];
+      }
+
+      downloadAtaPDF(ataParaDownload, workshop);
       toast.success("PDF baixado com sucesso!");
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);

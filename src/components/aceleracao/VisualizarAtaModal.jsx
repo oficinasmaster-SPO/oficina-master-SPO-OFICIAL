@@ -33,9 +33,28 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
     window.print();
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     try {
-      downloadAtaPDF(ataAtualizada, workshop);
+      let ataParaDownload = { ...ataAtualizada };
+      
+      // Tentar encontrar o atendimento se não fornecido
+      let atendimentoId = atendimento?.id;
+      if (!atendimentoId) {
+        const atendimentos = await base44.entities.ConsultoriaAtendimento.filter({ ata_id: ataParaDownload.id });
+        if (atendimentos && atendimentos.length > 0) {
+          atendimentoId = atendimentos[0].id;
+        }
+      }
+
+      // Buscar inteligência se tivermos o ID do atendimento
+      if (atendimentoId) {
+        const intelligence = await base44.entities.ClientIntelligence.filter({ 
+          attendance_id: atendimentoId 
+        });
+        ataParaDownload.client_intelligence = intelligence || [];
+      }
+
+      downloadAtaPDF(ataParaDownload, workshop);
       toast.success("PDF baixado com sucesso!");
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);
