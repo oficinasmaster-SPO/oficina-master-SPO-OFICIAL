@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Download, Loader2, BarChart3, TrendingUp, Users, Calendar as CalendarIcon, Play, Edit, CalendarClock, CheckCircle } from "lucide-react";
+import { FileText, Download, Loader2, BarChart3, TrendingUp, Users, Calendar as CalendarIcon, Play, Edit, CalendarClock, CheckCircle, Trash2 } from "lucide-react";
 import { ATENDIMENTO_STATUS, ATENDIMENTO_STATUS_LABELS } from "@/components/lib/ataConstants";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { format, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths } from "date-fns";
@@ -561,6 +561,28 @@ export default function RelatoriosTab({ user }) {
                               title="Ver ATA em PDF"
                             >
                               <FileText className="w-4 h-4 text-green-600" />
+                            </Button>
+                          )}
+
+                          {a.ata_id && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={async () => {
+                                if (window.confirm("Tem certeza que deseja excluir esta ATA?")) {
+                                  try {
+                                    await base44.functions.invoke('deleteAta', { ata_id: a.ata_id });
+                                    toast.success("ATA excluída com sucesso!");
+                                    queryClient.invalidateQueries(['atendimentos-relatorios']);
+                                    queryClient.invalidateQueries(['atas-relatorios']);
+                                  } catch (error) {
+                                    toast.error("Erro ao excluir ATA: " + error.message);
+                                  }
+                                }
+                              }}
+                              title="Excluir ATA"
+                            >
+                              <Trash2 className="w-4 h-4 text-red-600" />
                             </Button>
                           )}
                         </div>

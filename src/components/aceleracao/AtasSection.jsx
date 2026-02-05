@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Download, Mail, Share2, Eye } from "lucide-react";
+import { FileText, Download, Mail, Share2, Eye, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import VisualizarAtaModal from "./VisualizarAtaModal";
@@ -15,6 +15,26 @@ export default function AtasSection({ atas, workshop }) {
   const [selectedAta, setSelectedAta] = useState(null);
   const [sendingEmail, setSendingEmail] = useState(false);
   const [sendingWhatsapp, setSendingWhatsapp] = useState(false);
+  const queryClient = useQueryClient();
+
+  const handleDeleteAta = async (ata) => {
+    if (window.confirm("Tem certeza que deseja excluir esta ATA permanentemente?")) {
+      try {
+        await base44.functions.invoke('deleteAta', { ata_id: ata.id });
+        toast.success("ATA excluída com sucesso!");
+        if (queryClient) {
+            queryClient.invalidateQueries(['meeting-minutes']);
+            queryClient.invalidateQueries(['consultoria-atendimentos']);
+        } else {
+            // Fallback se queryClient não estiver disponível via prop ou contexto (embora deva estar na árvore)
+            window.location.reload(); 
+        }
+      } catch (error) {
+        console.error("Erro ao excluir ATA:", error);
+        toast.error("Erro ao excluir ATA: " + error.message);
+      }
+    }
+  };
 
   const handleDownloadPDF = async (ata) => {
     try {
@@ -191,6 +211,16 @@ export default function AtasSection({ atas, workshop }) {
                         title="Enviar por WhatsApp"
                       >
                         <Share2 className="w-4 h-4" />
+                      </Button>
+                      
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleDeleteAta(ata)}
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        title="Excluir ATA"
+                      >
+                        <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
                   </div>
