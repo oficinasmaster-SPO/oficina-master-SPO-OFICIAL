@@ -32,6 +32,7 @@ import AccessReport from "@/components/documents/AccessReport";
 import DocumentFilters from "@/components/documents/DocumentFilters";
 import DocumentFormDialog from "@/components/documents/DocumentFormDialog";
 import { useDocumentNotifications, notifyNewDocument } from "../components/documents/DocumentNotificationManager";
+import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 
 export default function RepositorioDocumentos() {
   const navigate = useNavigate();
@@ -47,7 +48,6 @@ export default function RepositorioDocumentos() {
   const [selectedDocForReport, setSelectedDocForReport] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [isAdminView, setIsAdminView] = useState(false);
   const [showFormDialog, setShowFormDialog] = useState(false);
   const [editingDocument, setEditingDocument] = useState(null);
   const [filters, setFilters] = useState({
@@ -66,25 +66,7 @@ export default function RepositorioDocumentos() {
     queryFn: () => base44.auth.me()
   });
 
-  const { data: workshop } = useQuery({
-    queryKey: ['workshop', user?.id],
-    queryFn: async () => {
-      if (!user) return null;
-      
-      const urlParams = new URLSearchParams(window.location.search);
-      const adminWorkshopId = urlParams.get('workshop_id');
-      
-      if (adminWorkshopId && user.role === 'admin') {
-        setIsAdminView(true);
-        return await base44.entities.Workshop.get(adminWorkshopId);
-      }
-      
-      setIsAdminView(false);
-      const ws = await base44.entities.Workshop.filter({ owner_id: user.id });
-      return ws[0];
-    },
-    enabled: !!user
-  });
+  const { workshop, isAdminMode: isAdminView } = useWorkshopContext();
 
   useDocumentNotifications(user, workshop);
 
