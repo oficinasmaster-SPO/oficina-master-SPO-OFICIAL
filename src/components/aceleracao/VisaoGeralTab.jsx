@@ -73,16 +73,13 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
     }
   });
 
-  // Filtrar atendimentos do mês atual
-  const atendimentosMes = atendimentos?.filter(a => {
-    const now = new Date();
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-    return new Date(a.data_agendada) >= firstDay;
-  }) || [];
-
   const clientesAtivos = workshops?.length || 0;
-  const reunioesRealizadas = atendimentosMes?.filter(a => a.status === 'realizado').length || 0;
-  const reunioesFuturas = atendimentosMes?.filter(a => 
+  
+  // Usar atendimentos filtrados para os KPIs
+  const atendimentosPeriodo = atendimentos || [];
+  
+  const reunioesRealizadas = atendimentosPeriodo.filter(a => a.status === 'realizado').length || 0;
+  const reunioesFuturas = atendimentosPeriodo.filter(a => 
     ['agendado', 'confirmado'].includes(a.status)
   ).length || 0;
   
@@ -92,7 +89,7 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
     .reduce((acc, a) => acc + (a.duracao_real_minutos || a.duracao_minutos || 0), 0) || 0;
   const horasDisponiveis = totalHorasContratadas - Math.round(totalHorasRealizadas / 60);
   
-  const tarefasPendentes = atendimentosMes?.filter(a => 
+  const tarefasPendentes = atendimentosPeriodo.filter(a => 
     a.status !== 'realizado' && new Date(a.data_agendada) < new Date()
   ) || [];
 
@@ -110,7 +107,7 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
   };
 
   const handleReunioesRealizadasClick = () => {
-    const realizadas = atendimentosMes?.filter(a => a.status === 'realizado') || [];
+    const realizadas = atendimentosPeriodo.filter(a => a.status === 'realizado') || [];
     setModalReunioes({ 
       isOpen: true, 
       tipo: 'realizadas', 
@@ -119,7 +116,7 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
   };
 
   const handleReunioesFuturasClick = () => {
-    const futuras = atendimentosMes?.filter(a => 
+    const futuras = atendimentosPeriodo.filter(a => 
       ['agendado', 'confirmado'].includes(a.status)
     ) || [];
     setModalReunioes({ 
@@ -158,7 +155,7 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600 hover:text-green-700">{reunioesRealizadas}</div>
-            <p className="text-xs text-gray-600">Neste mês</p>
+            <p className="text-xs text-gray-600">No período</p>
           </CardContent>
         </Card>
 
@@ -169,7 +166,7 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-purple-600 hover:text-purple-700">{reunioesFuturas}</div>
-            <p className="text-xs text-gray-600">Agendadas</p>
+            <p className="text-xs text-gray-600">No período</p>
           </CardContent>
         </Card>
 
@@ -282,7 +279,7 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
 
       <div className="grid md:grid-cols-2 gap-6">
         {/* Gráfico de Atendimentos */}
-        <GraficoAtendimentos atendimentos={atendimentosMes} />
+        <GraficoAtendimentos atendimentos={atendimentosPeriodo} />
 
         {/* Agenda Visual */}
         <AgendaVisual 
