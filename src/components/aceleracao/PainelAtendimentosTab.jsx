@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit, AlertTriangle, FilePlus, Play, StopCircle, CalendarClock, FileText, CheckCircle } from "lucide-react";
+import { Edit, AlertTriangle, FilePlus, Play, StopCircle, CalendarClock, FileText, CheckCircle, Trash2 } from "lucide-react";
 import GerarAtaModal from "./GerarAtaModal";
 import VisualizarAtaModal from "./VisualizarAtaModal";
 import ReagendarAtendimentoModal from "./ReagendarAtendimentoModal";
@@ -366,26 +366,48 @@ export default function PainelAtendimentosTab({ user }) {
                           </Button>
 
                           {atendimento.ata_id && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={async () => {
-                                try {
-                                  const ata = await base44.entities.MeetingMinutes.get(atendimento.ata_id);
-                                  if (ata) {
-                                    setSelectedAta(ata);
-                                    setShowVisualizarAta(true);
-                                  } else {
-                                    toast.error("ATA não encontrada");
+                            <>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={async () => {
+                                  try {
+                                    const ata = await base44.entities.MeetingMinutes.get(atendimento.ata_id);
+                                    if (ata) {
+                                      setSelectedAta(ata);
+                                      setShowVisualizarAta(true);
+                                    } else {
+                                      toast.error("ATA não encontrada");
+                                    }
+                                  } catch (error) {
+                                    toast.error("Erro ao carregar ATA");
                                   }
-                                } catch (error) {
-                                  toast.error("Erro ao carregar ATA");
-                                }
-                              }}
-                              title="Ver/Finalizar ATA"
-                            >
-                              <FileText className="w-4 h-4 text-green-600" />
-                            </Button>
+                                }}
+                                title="Ver/Finalizar ATA"
+                              >
+                                <FileText className="w-4 h-4 text-green-600" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={async () => {
+                                  if (confirm("Tem certeza que deseja excluir esta ATA? Esta ação não pode ser desfeita.")) {
+                                    try {
+                                      await base44.functions.invoke('deleteAta', { ata_id: atendimento.ata_id });
+                                      toast.success("ATA excluída com sucesso!");
+                                      queryClient.invalidateQueries(['todos-atendimentos']);
+                                      queryClient.invalidateQueries(['meeting-minutes']);
+                                    } catch (error) {
+                                      console.error(error);
+                                      toast.error("Erro ao excluir ATA: " + error.message);
+                                    }
+                                  }
+                                }}
+                                title="Excluir ATA"
+                              >
+                                <Trash2 className="w-4 h-4 text-red-600" />
+                              </Button>
+                            </>
                           )}
                           
                           {!atendimento.ata_id && atendimento.status === ATENDIMENTO_STATUS.REALIZADO && (
