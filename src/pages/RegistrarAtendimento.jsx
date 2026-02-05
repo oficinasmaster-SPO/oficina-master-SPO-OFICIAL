@@ -1229,15 +1229,24 @@ export default function RegistrarAtendimento() {
                             // Buscar ata para visualizar/finalizar
                             const ata = await base44.entities.MeetingMinutes.get(formData.ata_id);
                             if (ata) {
-                              // Se precisar, poderia abrir o modal aqui, mas como estamos em outra página,
-                              // vamos redirecionar para o painel com o ID da ata ou apenas baixar o PDF
-                              // Por enquanto, vamos baixar o PDF direto
+                              // Buscar inteligência do cliente vinculada ao atendimento
+                              const intelligence = await base44.entities.ClientIntelligence.filter({ 
+                                attendance_id: formData.id 
+                              });
+                              
+                              // Adicionar inteligência ao objeto ata para o PDF
+                              const ataComInteligencia = {
+                                ...ata,
+                                client_intelligence: intelligence || []
+                              };
+
                               const { downloadAtaPDF } = await import("@/components/aceleracao/AtasPDFGenerator");
                               const workshop = workshops?.find(w => w.id === formData.workshop_id);
-                              downloadAtaPDF(ata, workshop);
+                              downloadAtaPDF(ataComInteligencia, workshop);
                               toast.success("Download iniciado!");
                             }
                           } catch (error) {
+                            console.error(error);
                             toast.error("Erro ao acessar ATA: " + error.message);
                           }
                         }}

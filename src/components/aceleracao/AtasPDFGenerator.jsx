@@ -552,6 +552,63 @@ export const generateAtaPDF = (ata, workshop) => {
     addSection('12', 'VISÃO GERAL DO PROJETO DE ACELERAÇÃO', ata.visao_geral_projeto);
   }
 
+  // 13. INTELIGÊNCIA DO CLIENTE
+  if (ata.client_intelligence && ata.client_intelligence.length > 0) {
+    checkPageBreak(30);
+    doc.setFontSize(13);
+    doc.setFont(undefined, 'bold');
+    doc.text('13. INTELIGÊNCIA DO CLIENTE (DORES E OPORTUNIDADES)', margin, y);
+    y += 2;
+    doc.setLineWidth(0.5);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 10;
+
+    ata.client_intelligence.forEach((item, idx) => {
+      checkPageBreak(25);
+      
+      // Box laranja claro para inteligência
+      doc.setFillColor(255, 247, 237);
+      doc.setDrawColor(249, 115, 22);
+      doc.setLineWidth(0.5);
+      doc.rect(margin, y - 3, contentWidth, 22, 'FD');
+
+      // Título: Área - Tipo
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(194, 65, 12); // Laranja escuro
+      doc.text(`${item.area} - ${item.type}`, margin + 2, y + 2);
+      
+      // Gravidade
+      doc.setFontSize(8);
+      doc.setTextColor(0, 0, 0);
+      const gravidade = item.gravityLabel || item.gravity || 'Média';
+      doc.text(`Gravidade: ${gravidade}`, pageWidth - margin - 30, y + 2);
+
+      y += 6;
+      
+      // Subcategoria / Problema
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'bold');
+      doc.text(item.subcategory || item.title, margin + 2, y);
+      
+      y += 5;
+      
+      // Descrição
+      if (item.description) {
+        doc.setFontSize(9);
+        doc.setFont(undefined, 'normal');
+        const descLines = doc.splitTextToSize(item.description, contentWidth - 5);
+        descLines.forEach(line => {
+          doc.text(line, margin + 2, y);
+          y += 4;
+        });
+      }
+      
+      y += 6;
+    });
+    y += 5;
+  }
+
   // Rodapé
   const finalY = pageHeight - 15;
   doc.setFontSize(9);

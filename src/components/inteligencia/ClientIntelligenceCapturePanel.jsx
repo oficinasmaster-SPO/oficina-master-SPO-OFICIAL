@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -25,6 +25,34 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
   const [pendingIntelligence, setPendingIntelligence] = useState(null);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+
+  useEffect(() => {
+    const loadIntelligence = async () => {
+      if (ataId) {
+        try {
+          const items = await base44.entities.ClientIntelligence.filter({ attendance_id: ataId });
+          const formattedItems = items.map(item => {
+            const typeObj = INTELLIGENCE_TYPES[item.type];
+            const gravityLabel = { baixa: "Baixa", media: "Média", alta: "Alta", critica: "Crítica" }[item.gravity || "media"];
+            
+            return {
+              ...item,
+              gravityLabel,
+              typeIcon: typeObj?.icon,
+              typeColor: typeObj?.color,
+              // Ensure labels are present if stored as codes
+              area: INTELLIGENCE_AREAS[item.area]?.label || item.area,
+              type: INTELLIGENCE_TYPES[item.type]?.label || item.type,
+            };
+          });
+          setCapturedItems(formattedItems);
+        } catch (error) {
+          console.error("Erro ao carregar inteligência:", error);
+        }
+      }
+    };
+    loadIntelligence();
+  }, [ataId]);
 
   const handleAddItem = async () => {
     if (!selectedArea || !selectedType || !selectedSubcategory) {
