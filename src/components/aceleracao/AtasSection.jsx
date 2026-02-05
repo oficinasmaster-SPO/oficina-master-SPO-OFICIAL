@@ -27,7 +27,6 @@ export default function AtasSection({ atas, workshop }) {
             queryClient.invalidateQueries(['meeting-minutes']);
             queryClient.invalidateQueries(['consultoria-atendimentos']);
         } else {
-            // Fallback se queryClient não estiver disponível via prop ou contexto (embora deva estar na árvore)
             window.location.reload(); 
         }
       } catch (error) {
@@ -213,7 +212,7 @@ export default function AtasSection({ atas, workshop }) {
                       >
                         <Share2 className="w-4 h-4" />
                       </Button>
-                      
+
                       <Button
                         size="sm"
                         variant="ghost"
