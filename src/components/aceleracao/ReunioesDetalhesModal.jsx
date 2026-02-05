@@ -284,6 +284,7 @@ export default function ReunioesDetalhesModal({ isOpen, onClose, reunioes, tipo,
         {showVisualizarAta && selectedAta && (
           <VisualizarAtaModal
             ata={selectedAta}
+            workshop={workshops?.find(w => w.id === selectedAta.workshop_id || (selectedAtendimento && w.id === selectedAtendimento.workshop_id))}
             onClose={() => {
               setShowVisualizarAta(false);
               setSelectedAta(null);
