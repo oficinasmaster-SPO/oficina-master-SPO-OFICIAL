@@ -4,17 +4,19 @@ Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
         
-        console.log("Service role available:", !!base44.asServiceRole);
+        // Use exact email from previous find
+        const employees = await base44.asServiceRole.entities.Employee.filter({
+            email: "ghrs.guilherme+Diretor@gmail.com" 
+        });
         
-        // Try to read first
-        const emp = await base44.asServiceRole.entities.Employee.get("6984e80881b5b2b276d2b518");
-        console.log("Employee found:", emp);
+        if (employees.length === 0) {
+             return Response.json({ error: "Employee not found with exact email" });
+        }
         
-        if (!emp) return Response.json({ error: "Employee not found" });
+        const emp = employees[0];
 
-        // Try update
         const result = await base44.asServiceRole.entities.Employee.update(
-            "6984e80881b5b2b276d2b518", 
+            emp.id, 
             { 
                 job_role: "diretor",
                 position: "Diretor"
@@ -22,7 +24,6 @@ Deno.serve(async (req) => {
         );
         return Response.json({ success: true, result });
     } catch (error) {
-        console.error("Error:", error);
         return Response.json({ error: error.message }, { status: 500 });
     }
 });
