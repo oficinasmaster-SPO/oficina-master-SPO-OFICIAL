@@ -564,27 +564,34 @@ export default function RelatoriosTab({ user }) {
                             </Button>
                           )}
 
-                          {a.ata_id && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={async () => {
-                                if (window.confirm("Tem certeza que deseja excluir esta ATA?")) {
-                                  try {
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={async () => {
+                              const confirmMessage = a.ata_id 
+                                ? "Tem certeza que deseja excluir esta ATA? Esta ação também removerá o vínculo com o atendimento."
+                                : "Tem certeza que deseja excluir este registro de atendimento?";
+                              
+                              if (window.confirm(confirmMessage)) {
+                                try {
+                                  if (a.ata_id) {
                                     await base44.functions.invoke('deleteAta', { ata_id: a.ata_id });
                                     toast.success("ATA excluída com sucesso!");
-                                    queryClient.invalidateQueries(['atendimentos-relatorios']);
                                     queryClient.invalidateQueries(['atas-relatorios']);
-                                  } catch (error) {
-                                    toast.error("Erro ao excluir ATA: " + error.message);
+                                  } else {
+                                    await base44.entities.ConsultoriaAtendimento.delete(a.id);
+                                    toast.success("Atendimento excluído com sucesso!");
                                   }
+                                  queryClient.invalidateQueries(['atendimentos-relatorios']);
+                                } catch (error) {
+                                  toast.error("Erro ao excluir: " + error.message);
                                 }
-                              }}
-                              title="Excluir ATA"
-                            >
-                              <Trash2 className="w-4 h-4 text-red-600" />
-                            </Button>
-                          )}
+                              }
+                            }}
+                            title={a.ata_id ? "Excluir ATA" : "Excluir Atendimento"}
+                          >
+                            <Trash2 className="w-4 h-4 text-red-600" />
+                          </Button>
                         </div>
                       </td>
                     </tr>

@@ -409,6 +409,36 @@ export default function PainelAtendimentosTab({ user }) {
                               </Button>
                             </>
                           )}
+
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={async () => {
+                              const confirmMessage = atendimento.ata_id 
+                                ? "Tem certeza que deseja excluir esta ATA? Esta ação não pode ser desfeita."
+                                : "Tem certeza que deseja excluir este registro de atendimento?";
+
+                              if (confirm(confirmMessage)) {
+                                try {
+                                  if (atendimento.ata_id) {
+                                    await base44.functions.invoke('deleteAta', { ata_id: atendimento.ata_id });
+                                    toast.success("ATA excluída com sucesso!");
+                                    queryClient.invalidateQueries(['meeting-minutes']);
+                                  } else {
+                                    await base44.entities.ConsultoriaAtendimento.delete(atendimento.id);
+                                    toast.success("Atendimento excluído com sucesso!");
+                                  }
+                                  queryClient.invalidateQueries(['todos-atendimentos']);
+                                } catch (error) {
+                                  console.error(error);
+                                  toast.error("Erro ao excluir: " + error.message);
+                                }
+                              }
+                            }}
+                            title={atendimento.ata_id ? "Excluir ATA" : "Excluir Atendimento"}
+                          >
+                            <Trash2 className="w-4 h-4 text-red-600" />
+                          </Button>
                           
                           {!atendimento.ata_id && atendimento.status === ATENDIMENTO_STATUS.REALIZADO && (
                             <Button
