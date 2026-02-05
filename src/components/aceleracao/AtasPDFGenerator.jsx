@@ -324,18 +324,18 @@ export const generateAtaPDF = (ata, workshop) => {
       doc.setFontSize(10);
       doc.setFont(undefined, 'bold');
       doc.setTextColor(0, 0, 0);
-      doc.text(decisao.decisao, margin + 2, y + 2);
+      doc.text(decisao.decisao || '', margin + 2, y + 2);
       
       y += 7;
       doc.setFont(undefined, 'normal');
       doc.setFontSize(9);
-      doc.text(`Responsável: ${decisao.responsavel}`, margin + 2, y);
       
-      if (decisao.prazo) {
-        y += 5;
-        doc.setTextColor(100, 100, 100);
-        doc.text(`Prazo: ${format(new Date(decisao.prazo), 'dd/MM/yyyy')}`, margin + 2, y);
-        doc.setTextColor(0, 0, 0);
+      let detalhes = [];
+      if (decisao.responsavel) detalhes.push(`Responsável: ${decisao.responsavel}`);
+      if (decisao.prazo) detalhes.push(`Prazo: ${format(new Date(decisao.prazo), 'dd/MM/yyyy')}`);
+      
+      if (detalhes.length > 0) {
+        doc.text(detalhes.join(' | '), margin + 2, y);
       }
 
       y += 8;

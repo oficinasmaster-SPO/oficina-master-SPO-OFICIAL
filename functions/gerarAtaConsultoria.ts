@@ -25,6 +25,16 @@ Deno.serve(async (req) => {
     // Buscar dados da oficina
     const workshop = await base44.entities.Workshop.get(atendimento.workshop_id);
 
+    // Buscar inteligência do cliente vinculada
+    let clientIntelligence = [];
+    try {
+        clientIntelligence = await base44.entities.ClientIntelligence.filter({ 
+            attendance_id: atendimento_id 
+        });
+    } catch (e) {
+        console.error("Erro ao buscar inteligência:", e);
+    }
+
     // Preparar prompt para IA
     const prompt = `
 Você é um consultor especializado em gestão de oficinas automotivas. Gere uma ata de reunião profissional e detalhada.
@@ -90,16 +100,51 @@ Formate em Markdown para fácil leitura. Seja profissional, objetivo e completo.
 
     console.log("✅ Ata gerada com sucesso!");
 
+    // CRIAR REGISTRO NA ENTIDADE MeetingMinutes
+    // Isso garante que todos os dados estruturados estejam disponíveis para o PDF
+    const dataAta = {
+        code: `ATA${Math.floor(1000 + Math.random() * 9000)}`, // Gerar código simples por enquanto
+        workshop_id: atendimento.workshop_id,
+        atendimento_id: atendimento.id,
+        meeting_date: atendimento.data_realizada ? atendimento.data_realizada.split('T')[0] : atendimento.data_agendada.split('T')[0],
+        meeting_time: atendimento.data_realizada ? atendimento.data_realizada.split('T')[1].slice(0, 5) : atendimento.data_agendada.split('T')[1].slice(0, 5),
+        tipo_aceleracao: atendimento.tipo_atendimento,
+        consultor_name: atendimento.consultor_nome,
+        consultor_id: atendimento.consultor_id,
+        participantes: atendimento.participantes?.map(p => ({ name: p.nome, role: p.cargo })) || [],
+        responsavel: { name: workshop.owner_name || workshop.name, role: 'Proprietário' },
+        plano_nome: atendimento.plano_cliente,
+        pauta: atendimento.pauta,
+        objetivos: atendimento.objetivos,
+        objetivos_consultor: atendimento.objetivos_consultor || '', // Se tiver campo específico mapear aqui
+        observacoes_consultor: atendimento.observacoes_consultor,
+        proximos_passos: atendimento.proximos_passos, // Texto
+        proximos_passos_list: [], // Mapear se tiver estrutura
+        decisoes_tomadas: atendimento.decisoes_tomadas || [], // IMPORTANTE: Copiar decisões
+        acoes_geradas: atendimento.acoes_geradas || [], // IMPORTANTE: Copiar ações
+        client_intelligence: clientIntelligence || [], // IMPORTANTE: Copiar inteligência
+        processos_vinculados: atendimento.processos_vinculados,
+        videoaulas_vinculadas: atendimento.videoaulas_vinculadas,
+        midias_anexas: atendimento.midias_anexas,
+        ata_ia: ataGerada,
+        status: 'rascunho'
+    };
+
+    console.log("📝 Criando registro de ATA...", dataAta);
+    const novaAta = await base44.entities.MeetingMinutes.create(dataAta);
+
     // Atualizar atendimento com a ata
     await base44.entities.ConsultoriaAtendimento.update(atendimento_id, {
+      ata_id: novaAta.id,
+      ata_gerada: true,
       ata_ia: ataGerada,
       ata_gerada_em: new Date().toISOString()
     });
 
     return Response.json({ 
       success: true, 
-      ata: ataGerada,
-      atendimento_id: atendimento_id
+      ata_id: novaAta.id,
+      ata: novaAta
     });
 
   } catch (error) {
