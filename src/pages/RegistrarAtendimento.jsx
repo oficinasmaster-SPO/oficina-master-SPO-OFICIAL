@@ -320,6 +320,25 @@ export default function RegistrarAtendimento() {
     }
   });
 
+  const handleDeleteAta = async () => {
+    if (window.confirm("Tem certeza que deseja excluir esta ATA permanentemente?")) {
+      try {
+        await base44.functions.invoke('deleteAta', { ata_id: formData.ata_id });
+        toast.success("ATA excluída com sucesso!");
+        
+        // Update local state to remove ata_id and allow generating a new one
+        setFormData(prev => ({ ...prev, ata_id: null }));
+        
+        // Invalidate queries to refresh lists
+        queryClient.invalidateQueries(['consultoria-atendimentos']);
+        queryClient.invalidateQueries(['meeting-minutes']);
+      } catch (error) {
+        console.error("Erro ao excluir ATA:", error);
+        toast.error("Erro ao excluir ATA: " + error.message);
+      }
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -1220,40 +1239,52 @@ export default function RegistrarAtendimento() {
                         <FileText className="w-5 h-5" />
                         ATA Gerada
                       </span>
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm"
-                        onClick={async () => {
-                          try {
-                            // Buscar ata para visualizar/finalizar
-                            const ata = await base44.entities.MeetingMinutes.get(formData.ata_id);
-                            if (ata) {
-                              // Buscar inteligência do cliente vinculada ao atendimento
-                              const intelligence = await base44.entities.ClientIntelligence.filter({ 
-                                attendance_id: formData.id 
-                              });
-                              
-                              // Adicionar inteligência ao objeto ata para o PDF
-                              const ataComInteligencia = {
-                                ...ata,
-                                client_intelligence: intelligence || []
-                              };
+                      <div className="flex gap-2">
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          size="sm"
+                          onClick={async () => {
+                            try {
+                              // Buscar ata para visualizar/finalizar
+                              const ata = await base44.entities.MeetingMinutes.get(formData.ata_id);
+                              if (ata) {
+                                // Buscar inteligência do cliente vinculada ao atendimento
+                                const intelligence = await base44.entities.ClientIntelligence.filter({ 
+                                  attendance_id: formData.id 
+                                });
+                                
+                                // Adicionar inteligência ao objeto ata para o PDF
+                                const ataComInteligencia = {
+                                  ...ata,
+                                  client_intelligence: intelligence || []
+                                };
 
-                              const { downloadAtaPDF } = await import("@/components/aceleracao/AtasPDFGenerator");
-                              const workshop = workshops?.find(w => w.id === formData.workshop_id);
-                              downloadAtaPDF(ataComInteligencia, workshop);
-                              toast.success("Download iniciado!");
+                                const { downloadAtaPDF } = await import("@/components/aceleracao/AtasPDFGenerator");
+                                const workshop = workshops?.find(w => w.id === formData.workshop_id);
+                                downloadAtaPDF(ataComInteligencia, workshop);
+                                toast.success("Download iniciado!");
+                              }
+                            } catch (error) {
+                              console.error(error);
+                              toast.error("Erro ao acessar ATA: " + error.message);
                             }
-                          } catch (error) {
-                            console.error(error);
-                            toast.error("Erro ao acessar ATA: " + error.message);
-                          }
-                        }}
-                      >
-                        <Upload className="w-4 h-4 mr-2" />
-                        Baixar PDF
-                      </Button>
+                          }}
+                        >
+                          <Upload className="w-4 h-4 mr-2" />
+                          Baixar PDF
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleDeleteAta}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50 border-red-200"
+                          title="Excluir ATA"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </div>
