@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
         const role = "admin";
 
         // Try standard invite
-        await base44.asServiceRole.users.inviteUser(email, role);
+        await base44.users.inviteUser(email, role);
 
         return Response.json({ success: true, message: "User invited/updated to admin" });
     } catch (error) {
