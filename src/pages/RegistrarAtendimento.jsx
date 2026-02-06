@@ -127,11 +127,9 @@ export default function RegistrarAtendimento() {
   const { data: consultores } = useQuery({
     queryKey: ['consultores-list'],
     queryFn: async () => {
-      // Busca todos os colaboradores internos ativos (SPO Global)
-      return await base44.entities.Employee.filter({ 
-        workshop_id: '69540822472c4a70b54d47aa',
-        status: 'ativo'
-      });
+      // Busca todos os usuários admin (igual à tela de Saturação)
+      const users = await base44.entities.User.list();
+      return users.filter(u => u.role === 'admin');
     },
     enabled: user?.role === 'admin'
   });
@@ -533,8 +531,8 @@ export default function RegistrarAtendimento() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value={user.id}>{user.full_name} (Eu)</SelectItem>
-                      {consultores?.filter(c => c.user_id !== user.id).map((c) => (
-                        <SelectItem key={c.id} value={c.user_id}>
+                      {consultores?.filter(c => c.id !== user.id).map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
                           {c.full_name}
                         </SelectItem>
                       ))}

@@ -33,10 +33,8 @@ export default function ControleAceleracao() {
   const { data: consultores } = useQuery({
     queryKey: ['consultores-list'],
     queryFn: async () => {
-      return await base44.entities.Employee.filter({
-        workshop_id: '69540822472c4a70b54d47aa',
-        status: 'ativo'
-      });
+      const users = await base44.entities.User.list();
+      return users.filter(u => u.role === 'admin');
     },
     enabled: user?.role === 'admin'
   });

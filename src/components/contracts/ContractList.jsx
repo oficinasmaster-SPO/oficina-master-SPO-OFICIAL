@@ -82,7 +82,7 @@ export default function ContractList({ contracts, isLoading, onEdit, consultores
               <SelectContent>
                 <SelectItem value="all">Todos os consultores</SelectItem>
                 {consultores.map((c) => (
-                  <SelectItem key={c.id} value={c.user_id}>
+                  <SelectItem key={c.id} value={c.id}>
                     {c.full_name}
                   </SelectItem>
                 ))}

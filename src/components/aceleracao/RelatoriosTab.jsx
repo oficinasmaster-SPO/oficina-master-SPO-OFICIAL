@@ -69,11 +69,8 @@ export default function RelatoriosTab({ user }) {
   const { data: consultores = [] } = useQuery({
     queryKey: ['consultores-relatorios'],
     queryFn: async () => {
-      const employees = await base44.entities.Employee.filter({
-        workshop_id: '69540822472c4a70b54d47aa',
-        status: 'ativo'
-      });
-      return employees;
+      const users = await base44.entities.User.list();
+      return users.filter(u => u.role === 'admin');
     }
   });
 
@@ -253,7 +250,7 @@ export default function RelatoriosTab({ user }) {
                 <SelectContent>
                   <SelectItem value={null}>Todos</SelectItem>
                   {consultores?.map(c => (
-                    <SelectItem key={c.user_id} value={c.user_id}>{c.full_name}</SelectItem>
+                    <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
