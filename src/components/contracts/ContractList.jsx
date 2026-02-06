@@ -9,9 +9,10 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import ContractDetailsModal from "./ContractDetailsModal";
 
-export default function ContractList({ contracts, isLoading, onEdit }) {
+export default function ContractList({ contracts, isLoading, onEdit, consultores = [] }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [consultorFilter, setConsultorFilter] = useState("all");
   const [selectedContract, setSelectedContract] = useState(null);
 
   const contractsWithIds = React.useMemo(() => {
@@ -36,7 +37,8 @@ export default function ContractList({ contracts, isLoading, onEdit }) {
     const matchesSearch = contract.workshop_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          contract.contract_id?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || contract.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesConsultor = consultorFilter === "all" || contract.consultor_id === consultorFilter;
+    return matchesSearch && matchesStatus && matchesConsultor;
   });
 
   if (isLoading) {
@@ -69,6 +71,20 @@ export default function ContractList({ contracts, isLoading, onEdit }) {
                 <SelectItem value="all">Todos os status</SelectItem>
                 {Object.entries(statusConfig).map(([key, config]) => (
                   <SelectItem key={key} value={key}>{config.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={consultorFilter} onValueChange={setConsultorFilter}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Filtrar por consultor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os consultores</SelectItem>
+                {consultores.map((c) => (
+                  <SelectItem key={c.id} value={c.user_id}>
+                    {c.full_name}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>

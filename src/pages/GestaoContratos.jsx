@@ -28,6 +28,17 @@ export default function GestaoContratos() {
     enabled: !!user
   });
 
+  const { data: consultores } = useQuery({
+    queryKey: ['consultores-list-contratos'],
+    queryFn: async () => {
+      return await base44.entities.Employee.filter({
+        workshop_id: '69540822472c4a70b54d47aa',
+        status: 'ativo'
+      });
+    },
+    enabled: !!user
+  });
+
   const stats = React.useMemo(() => {
     if (!contracts || contracts.length === 0) {
       return {
@@ -179,6 +190,7 @@ export default function GestaoContratos() {
         <TabsContent value="lista">
           <ContractList 
             contracts={contracts} 
+            consultores={consultores || []}
             isLoading={isLoading}
             onEdit={handleEdit}
           />
