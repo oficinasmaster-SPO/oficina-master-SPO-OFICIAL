@@ -10,7 +10,8 @@ Deno.serve(async (req) => {
     }
 
     const consultores = await base44.asServiceRole.entities.Employee.filter({
-      tipo_vinculo: 'interno'
+      tipo_vinculo: 'interno',
+      status: 'ativo'
     });
 
     const atendimentos = await base44.asServiceRole.entities.ConsultoriaAtendimento.filter({

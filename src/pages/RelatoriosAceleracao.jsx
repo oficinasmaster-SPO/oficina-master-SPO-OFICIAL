@@ -48,7 +48,8 @@ export default function RelatoriosAceleracao() {
     queryKey: ['aceleradores-desempenho'],
     queryFn: async () => {
       const employees = await base44.entities.Employee.filter({ 
-        tipo_vinculo: 'interno'
+        tipo_vinculo: 'interno',
+        status: 'ativo'
       });
       
       const atendimentos = await base44.entities.ConsultoriaAtendimento.list();
