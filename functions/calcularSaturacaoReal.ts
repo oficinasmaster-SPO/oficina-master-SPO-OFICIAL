@@ -15,6 +15,17 @@ Deno.serve(async (req) => {
     const consultores = await base44.asServiceRole.entities.User.list();
     const admins = consultores.filter(u => u.role === 'admin');
 
+    // Buscar dados do perfil (Employee) para pegar o nome correto
+    const adminIds = admins.map(u => u.id);
+    const employees = await base44.asServiceRole.entities.Employee.filter({
+      user_id: { $in: adminIds }
+    });
+    
+    const employeeMap = {};
+    employees.forEach(e => {
+      employeeMap[e.user_id] = e;
+    });
+
     // Converter datas para filtro
     const dataInicio = new Date(startDate);
     const dataFim = new Date(endDate);
@@ -186,9 +197,12 @@ Deno.serve(async (req) => {
         statusGargalo = 'baixo';
       }
 
+      const employee = employeeMap[consultor.id];
+      const nomeExibicao = employee ? employee.full_name : consultor.full_name;
+
       return {
         consultor_id: consultor.id,
-        consultor_nome: consultor.full_name,
+        consultor_nome: nomeExibicao,
         consultor_email: consultor.email,
         horas_semanais_disponiveis: horasSemanaisDisponiveis,
         // DEBUG: atendimentos detalhados
