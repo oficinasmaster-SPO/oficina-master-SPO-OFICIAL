@@ -129,7 +129,7 @@ export default function RegistrarAtendimento() {
     queryFn: async () => {
       // Busca todos os colaboradores internos ativos (SPO Global)
       return await base44.entities.Employee.filter({ 
-        tipo_vinculo: 'interno',
+        workshop_id: '69540822472c4a70b54d47aa',
         status: 'ativo'
       });
     },

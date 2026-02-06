@@ -69,8 +69,11 @@ export default function RelatoriosTab({ user }) {
   const { data: consultores = [] } = useQuery({
     queryKey: ['consultores-relatorios'],
     queryFn: async () => {
-      const employees = await base44.entities.Employee.list();
-      return employees.filter(e => e.tipo_vinculo === 'interno' && e.status === 'ativo');
+      const employees = await base44.entities.Employee.filter({
+        workshop_id: '69540822472c4a70b54d47aa',
+        status: 'ativo'
+      });
+      return employees;
     }
   });
 
