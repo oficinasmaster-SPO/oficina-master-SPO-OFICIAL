@@ -33,10 +33,13 @@ export default function ControleAceleracao() {
   const { data: consultores } = useQuery({
     queryKey: ['consultores-list'],
     queryFn: async () => {
-      return await base44.entities.Employee.filter({
-        tipo_vinculo: 'interno',
-        status: 'ativo'
-      });
+      // Busca colaboradores ativos e filtra no front para garantir inclusão de sócios
+      const employees = await base44.entities.Employee.filter({ status: 'ativo' }, null, 1000);
+      return employees.filter(e => 
+        e.tipo_vinculo === 'interno' || 
+        ['socio', 'diretor', 'acelerador'].includes(e.job_role) ||
+        e.position?.toLowerCase().includes('consultor')
+      );
     },
     enabled: user?.role === 'admin'
   });

@@ -9,10 +9,15 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    const consultores = await base44.asServiceRole.entities.Employee.filter({
-      tipo_vinculo: 'interno',
+    const allEmployees = await base44.asServiceRole.entities.Employee.filter({
       status: 'ativo'
-    });
+    }, null, 1000);
+
+    const consultores = allEmployees.filter(e => 
+      e.tipo_vinculo === 'interno' || 
+      ['socio', 'diretor', 'acelerador'].includes(e.job_role) ||
+      (e.position && e.position.toLowerCase().includes('consultor'))
+    );
 
     const atendimentos = await base44.asServiceRole.entities.ConsultoriaAtendimento.filter({
       status: { $in: ['agendado', 'confirmado', 'participando', 'reagendado'] }
