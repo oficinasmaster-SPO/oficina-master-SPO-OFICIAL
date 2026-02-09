@@ -1,0 +1,442 @@
+import React from "react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import ReactMarkdown from "react-markdown";
+
+export default function AtaPrintLayout({ atendimento, workshop }) {
+  const styles = {
+    container: {
+      width: '210mm',
+      maxWidth: '100%',
+      margin: '0 auto',
+      padding: '20mm',
+      backgroundColor: 'white',
+      color: '#000',
+      fontFamily: 'Arial, sans-serif',
+      fontSize: '11pt',
+      lineHeight: '1.6',
+      boxSizing: 'border-box'
+    },
+    header: {
+      marginBottom: '20px',
+      paddingBottom: '10px',
+      textAlign: 'center'
+    },
+    h1: {
+      fontSize: '18pt',
+      fontWeight: 'bold',
+      margin: '0 0 8px 0',
+      textTransform: 'uppercase',
+      color: '#000'
+    },
+    h2: {
+      fontSize: '13pt',
+      margin: '4px 0',
+      color: '#000'
+    },
+    metadata: {
+      fontSize: '10pt',
+      margin: '15px 0 10px 0',
+      lineHeight: '1.5',
+      textAlign: 'left'
+    },
+    metadataItem: {
+      margin: '2px 0',
+      color: '#000'
+    },
+    redLine: {
+      height: '3px',
+      backgroundColor: '#dc2626',
+      margin: '15px 0',
+      border: 'none'
+    },
+    typeSection: {
+      marginTop: '15px',
+      marginBottom: '15px',
+      fontSize: '12pt',
+      textAlign: 'left'
+    },
+    typeLabel: {
+      fontWeight: 'bold',
+      color: '#000',
+      display: 'inline'
+    },
+    typeValue: {
+      color: '#dc2626',
+      textTransform: 'uppercase',
+      fontWeight: 'bold',
+      display: 'inline',
+      marginLeft: '8px'
+    },
+    infoBox: {
+      border: '1px solid #000',
+      marginBottom: '15px',
+      width: '100%',
+      borderCollapse: 'collapse'
+    },
+    infoBoxHeader: {
+      backgroundColor: '#dc2626',
+      color: 'white',
+      padding: '10px',
+      fontWeight: 'bold',
+      fontSize: '10pt',
+      textTransform: 'uppercase',
+      textAlign: 'left',
+      border: '1px solid #000'
+    },
+    infoBoxContent: {
+      padding: '12px',
+      fontSize: '10pt',
+      color: '#000',
+      border: '1px solid #000',
+      textAlign: 'left'
+    },
+    h3: {
+      fontSize: '13pt',
+      fontWeight: 'bold',
+      margin: '20px 0 12px 0',
+      paddingBottom: '4px',
+      borderBottom: '2px solid #000',
+      textTransform: 'uppercase',
+      color: '#000',
+      textAlign: 'left'
+    },
+    section: {
+      marginBottom: '24px',
+      textAlign: 'left'
+    },
+    content: {
+      fontSize: '11pt',
+      lineHeight: '1.6',
+      color: '#000',
+      marginBottom: '16px',
+      whiteSpace: 'pre-line',
+      textAlign: 'left'
+    },
+    list: {
+      margin: '8px 0',
+      paddingLeft: '20px',
+      listStyleType: 'disc',
+      textAlign: 'left'
+    },
+    listItem: {
+      margin: '4px 0',
+      fontSize: '10pt',
+      color: '#000',
+      textAlign: 'left'
+    },
+    decisaoBox: {
+      borderLeft: '4px solid #2563eb',
+      backgroundColor: '#f0f9ff',
+      padding: '12px',
+      marginBottom: '12px'
+    },
+    acaoBox: {
+      borderLeft: '4px solid #16a34a',
+      backgroundColor: '#f0fdf4',
+      padding: '12px',
+      marginBottom: '12px'
+    },
+    footer: {
+      marginTop: '20px',
+      paddingTop: '10px',
+      borderTop: '1px solid #ccc',
+      fontSize: '9pt',
+      textAlign: 'center',
+      color: '#666'
+    }
+  };
+
+  return (
+    <div style={styles.container}>
+      {/* Cabeçalho Centralizado */}
+      <header style={styles.header}>
+        {workshop?.logo_url && (
+          <img 
+            src={workshop.logo_url} 
+            alt="Logo" 
+            style={{ height: '40px', marginBottom: '10px', display: 'block', margin: '0 auto 10px auto' }} 
+          />
+        )}
+        <h1 style={styles.h1}>GESTÃO DE PROCESSOS</h1>
+        <h2 style={styles.h2}>IT - Instrução de Trabalho</h2>
+      </header>
+
+      {/* Linha de Metadados (Código, Data/Hora, Status) */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '10pt', marginBottom: '5px' }}>
+        <span><strong>Código:</strong> {atendimento.code || 'IT.' + String(Math.floor(Math.random() * 10000)).padStart(4, '0')}</span>
+        <span>
+          <strong>Data/Hora:</strong> {format(new Date(atendimento.data_agendada), "dd/MM/yyyy", { locale: ptBR })} / {format(new Date(atendimento.data_agendada), "HH:mm")}
+        </span>
+        <span style={{ fontWeight: 'bold' }}>{atendimento.status === 'finalizada' ? 'Finalizada' : 'Rascunho'}</span>
+      </div>
+
+      <hr style={styles.redLine} />
+
+      {/* Tipo de Aceleração */}
+      <div style={styles.typeSection}>
+        <span style={styles.typeLabel}>Tipo de Aceleração:</span>
+        <span style={styles.typeValue}>{atendimento.tipo_atendimento?.replace(/_/g, ' ').toUpperCase() || 'MENSAL'}</span>
+      </div>
+
+      {/* Caixa de Informações - Participantes, Responsável, Plano */}
+      <table style={styles.infoBox}>
+        <thead>
+          <tr>
+            <th style={{...styles.infoBoxHeader, width: '40%'}}>PARTICIPANTES</th>
+            <th style={{...styles.infoBoxHeader, width: '30%'}}>RESPONSÁVEL</th>
+            <th style={{...styles.infoBoxHeader, width: '30%'}}>PLANO</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style={styles.infoBoxContent}>
+              {atendimento.participantes && atendimento.participantes.length > 0 ? (
+                <ul style={{ margin: 0, paddingLeft: '15px', listStyleType: 'disc' }}>
+                  {atendimento.participantes.map((p, idx) => (
+                    <li key={idx} style={{ marginBottom: '4px' }}>
+                      {p.nome} - {p.cargo}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p style={{ margin: 0 }}>• Aceleradora Oficinas Master - Consultor/Acelerador</p>
+              )}
+            </td>
+            <td style={styles.infoBoxContent}>
+              <p style={{ margin: 0, fontWeight: 'bold' }}>{workshop?.name || 'OFICINA CLIENTE'}</p>
+              <p style={{ margin: '4px 0 0 0', fontSize: '9pt', color: '#666' }}>Proprietário</p>
+            </td>
+            <td style={styles.infoBoxContent}>
+              <p style={{ margin: 0 }}>Plano de Aceleração</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      {/* Seção 0: INTELIGÊNCIA DO CLIENTE (se houver) */}
+      {atendimento.inteligencias_capturadas && atendimento.inteligencias_capturadas.length > 0 && (
+        <div style={styles.section}>
+          <h3 style={styles.h3}>0. INTELIGÊNCIAS CAPTURADAS DO CLIENTE</h3>
+          <div>
+            {atendimento.inteligencias_capturadas.map((intel, idx) => (
+              <div key={idx} style={{ 
+                borderLeft: '4px solid #dc2626', 
+                backgroundColor: '#fef2f2', 
+                padding: '12px', 
+                marginBottom: '12px',
+                fontSize: '10pt'
+              }}>
+                <p style={{ fontWeight: 'bold', margin: '0 0 6px 0', color: '#dc2626' }}>
+                  {intel.area}
+                </p>
+                <table style={{ width: '100%', fontSize: '9pt', borderCollapse: 'collapse' }}>
+                  <tbody>
+                    <tr>
+                      <td style={{ padding: '2px 0', fontWeight: 'bold', width: '30%' }}>Classificação:</td>
+                      <td style={{ padding: '2px 0' }}>{intel.type}</td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: '2px 0', fontWeight: 'bold' }}>Problema:</td>
+                      <td style={{ padding: '2px 0' }}>{intel.subcategory}</td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: '2px 0', fontWeight: 'bold' }}>Gravidade:</td>
+                      <td style={{ padding: '2px 0' }}>{intel.gravity || 'Média'}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Seção 1: PAUTAS */}
+      <div style={styles.section}>
+        <h3 style={styles.h3}>{atendimento.inteligencias_capturadas?.length > 0 ? '1' : '1'}. PAUTAS</h3>
+        {atendimento.pauta && atendimento.pauta.length > 0 ? (
+          <div>
+            {atendimento.pauta.map((item, idx) => (
+              <div key={idx} style={{ marginBottom: '12px' }}>
+                <p style={{ fontWeight: 'bold', margin: '4px 0', fontSize: '10pt' }}>
+                  {idx + 1}. {item.titulo}
+                </p>
+                {item.descricao && (
+                  <p style={{ marginLeft: '16px', fontSize: '10pt', color: '#333', margin: '4px 0 4px 16px' }}>
+                    {item.descricao}
+                  </p>
+                )}
+                {item.tempo_estimado && (
+                  <p style={{ marginLeft: '16px', fontSize: '9pt', color: '#666', margin: '2px 0 0 16px' }}>
+                    Tempo estimado: {item.tempo_estimado} min
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p style={styles.content}>{atendimento.pautas || 'Não informado'}</p>
+        )}
+      </div>
+
+      {/* Seção 2: OBJETIVOS DO ATENDIMENTO */}
+      <div style={styles.section}>
+        <h3 style={styles.h3}>2. OBJETIVOS DO ATENDIMENTO</h3>
+        {atendimento.objetivos && atendimento.objetivos.length > 0 ? (
+          <ul style={styles.list}>
+            {atendimento.objetivos.map((obj, idx) => (
+              <li key={idx} style={styles.listItem}>{obj}</li>
+            ))}
+          </ul>
+        ) : (
+          <p style={styles.content}>{atendimento.objetivos_atendimento || 'Não informado'}</p>
+        )}
+      </div>
+
+      {/* Seção 3: OBJETIVOS DO CONSULTOR */}
+      <div style={styles.section}>
+        <h3 style={styles.h3}>3. OBJETIVOS DO CONSULTOR</h3>
+        <p style={styles.content}>{atendimento.objetivos_consultor || 'Não informado'}</p>
+      </div>
+
+      {/* Seção 4: PRÓXIMOS PASSOS */}
+      <div style={styles.section}>
+        <h3 style={styles.h3}>4. PRÓXIMOS PASSOS</h3>
+        {atendimento.proximos_passos_list && atendimento.proximos_passos_list.length > 0 ? (
+          <div>
+            {atendimento.proximos_passos_list.map((passo, idx) => (
+              <div key={idx} style={styles.acaoBox}>
+                <p style={{ fontWeight: 'bold', margin: '0 0 4px 0', fontSize: '10pt' }}>
+                  • {passo.descricao}
+                </p>
+                <p style={{ margin: '2px 0', fontSize: '10pt' }}>
+                  <strong>Responsável:</strong> {passo.responsavel}
+                </p>
+                {passo.prazo && (
+                  <p style={{ margin: '2px 0', fontSize: '10pt', color: '#666' }}>
+                    <strong>Prazo:</strong> {format(new Date(passo.prazo), "dd/MM/yyyy")}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : atendimento.proximos_passos ? (
+          <p style={styles.content}>{atendimento.proximos_passos}</p>
+        ) : (
+          <p style={styles.content}>Nenhum próximo passo definido</p>
+        )}
+      </div>
+
+      {/* Seção 5: RESUMO DA REUNIÃO */}
+      {atendimento.ata_ia && (
+        <div style={styles.section}>
+          <h3 style={styles.h3}>5. RESUMO DA REUNIÃO</h3>
+          <div style={styles.content}>
+            <ReactMarkdown>{atendimento.ata_ia}</ReactMarkdown>
+          </div>
+        </div>
+      )}
+
+      {/* Seção 6: DECISÕES TOMADAS */}
+      {atendimento.decisoes_tomadas && atendimento.decisoes_tomadas.length > 0 && (
+        <div style={styles.section}>
+          <h3 style={styles.h3}>6. DECISÕES TOMADAS</h3>
+          <div>
+            {atendimento.decisoes_tomadas.map((decisao, idx) => (
+              <div key={idx} style={styles.decisaoBox}>
+                <p style={{ fontWeight: 'bold', margin: '0 0 4px 0', fontSize: '10pt' }}>
+                  {decisao.decisao}
+                </p>
+                <p style={{ margin: '2px 0', fontSize: '10pt' }}>
+                  <strong>Responsável:</strong> {decisao.responsavel}
+                </p>
+                {decisao.prazo && (
+                  <p style={{ margin: '2px 0', fontSize: '10pt', color: '#666' }}>
+                    <strong>Prazo:</strong> {format(new Date(decisao.prazo), "dd/MM/yyyy")}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Seção 7: AÇÕES GERADAS */}
+      {atendimento.acoes_geradas && atendimento.acoes_geradas.length > 0 && (
+        <div style={styles.section}>
+          <h3 style={styles.h3}>7. AÇÕES DE ACOMPANHAMENTO</h3>
+          <div>
+            {atendimento.acoes_geradas.map((acao, idx) => (
+              <div key={idx} style={styles.acaoBox}>
+                <p style={{ fontWeight: 'bold', margin: '0 0 4px 0', fontSize: '10pt' }}>
+                  {acao.acao}
+                </p>
+                <p style={{ margin: '2px 0', fontSize: '10pt' }}>
+                  <strong>Responsável:</strong> {acao.responsavel}
+                </p>
+                {acao.prazo && (
+                  <p style={{ margin: '2px 0', fontSize: '10pt', color: '#666' }}>
+                    <strong>Prazo:</strong> {format(new Date(acao.prazo), "dd/MM/yyyy")}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Seção 8: PROCESSOS VINCULADOS */}
+      {atendimento.processos_vinculados && atendimento.processos_vinculados.length > 0 && (
+        <div style={styles.section}>
+          <h3 style={styles.h3}>8. PROCESSOS COMPARTILHADOS (MAPs)</h3>
+          <ul style={styles.list}>
+            {atendimento.processos_vinculados.map((proc, idx) => (
+              <li key={idx} style={styles.listItem}>
+                {proc.titulo} - {proc.categoria}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Seção 9: VIDEOAULAS VINCULADAS */}
+      {atendimento.videoaulas_vinculadas && atendimento.videoaulas_vinculadas.length > 0 && (
+        <div style={styles.section}>
+          <h3 style={styles.h3}>9. VIDEOAULAS E TREINAMENTOS</h3>
+          <ul style={styles.list}>
+            {atendimento.videoaulas_vinculadas.map((video, idx) => (
+              <li key={idx} style={styles.listItem}>{video.titulo}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Seção 10: OBSERVAÇÕES DO CONSULTOR */}
+      {atendimento.observacoes_consultor && (
+        <div style={styles.section}>
+          <h3 style={styles.h3}>10. OBSERVAÇÕES DO CONSULTOR</h3>
+          <p style={styles.content}>{atendimento.observacoes_consultor}</p>
+        </div>
+      )}
+
+      {/* Seção 11: VISÃO GERAL DO PROJETO */}
+      {atendimento.visao_geral_projeto && (
+        <div style={styles.section}>
+          <h3 style={styles.h3}>11. VISÃO GERAL DO PROJETO DE ACELERAÇÃO</h3>
+          <p style={styles.content}>{atendimento.visao_geral_projeto}</p>
+        </div>
+      )}
+
+      {/* Rodapé */}
+      <footer style={styles.footer}>
+        <p style={{ margin: '4px 0' }}>
+          Documento Controlado - Status: {atendimento.status || 'finalizada'}
+        </p>
+        <p style={{ margin: '4px 0' }}>
+          Oficinas Master - Impresso em {format(new Date(), "dd/MM/yyyy 'às' HH:mm")}
+        </p>
+      </footer>
+    </div>
+  );
+}

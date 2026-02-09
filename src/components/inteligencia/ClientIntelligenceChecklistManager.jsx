@@ -1,0 +1,236 @@
+import React, { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { base44 } from "@/api/base44Client";
+import { Plus, X, GripVertical, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { INTELLIGENCE_AREAS } from "@/components/lib/clientIntelligenceConstants";
+
+export default function ClientIntelligenceChecklistManager({
+  open,
+  onOpenChange,
+  area: defaultArea,
+  type,
+  workshopId,
+  onChecklistCreated,
+  initialData
+}) {
+  const [checklistId, setChecklistId] = useState(null);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [selectedArea, setSelectedArea] = useState(defaultArea || "");
+  const [items, setItems] = useState([]);
+  const [newItemLabel, setNewItemLabel] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Carregar dados quando initialData mudar
+  useEffect(() => {
+    if (initialData) {
+      setChecklistId(initialData.id);
+      setTitle(initialData.title || "");
+      setDescription(initialData.description || "");
+      setSelectedArea(initialData.area || defaultArea || "");
+      setItems(initialData.items || []);
+    } else {
+      resetForm();
+    }
+  }, [initialData, defaultArea]);
+
+  const handleAddItem = () => {
+    if (!newItemLabel.trim()) return;
+
+    setItems([
+      ...items,
+      {
+        id: `item_${Date.now()}`,
+        label: newItemLabel,
+        order: items.length
+      }
+    ]);
+    setNewItemLabel("");
+  };
+
+  const handleRemoveItem = (itemId) => {
+    setItems(items.filter(i => i.id !== itemId).map((item, idx) => ({ ...item, order: idx })));
+  };
+
+  const handleSaveChecklist = async () => {
+    if (!title.trim() || !selectedArea || items.length === 0) {
+      toast.error("Preencha o título, selecione uma área e adicione pelo menos um item");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const checklistData = {
+        workshop_id: workshopId,
+        area: selectedArea,
+        type,
+        title,
+        description,
+        items: items.map((item, idx) => ({
+          id: item.id,
+          label: item.label,
+          order: idx
+        })),
+        is_default: false,
+        status: "ativo"
+      };
+
+      if (checklistId) {
+        // Atualizar checklist existente
+        await base44.entities.ClientIntelligenceChecklist.update(checklistId, checklistData);
+        toast.success("Checklist atualizado com sucesso");
+      } else {
+        // Criar novo checklist
+        await base44.entities.ClientIntelligenceChecklist.create(checklistData);
+        toast.success("Checklist criado com sucesso");
+      }
+
+      resetForm();
+      onOpenChange(false);
+      onChecklistCreated?.();
+    } catch (error) {
+      toast.error(checklistId ? "Erro ao atualizar checklist" : "Erro ao criar checklist");
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const resetForm = () => {
+    setChecklistId(null);
+    setTitle("");
+    setDescription("");
+    setSelectedArea(defaultArea || "");
+    setItems([]);
+    setNewItemLabel("");
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>{checklistId ? "Editar Checklist" : "Criar Checklist"}</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4 py-4">
+           {/* Área Principal */}
+           <div>
+             <label className="text-sm font-semibold text-gray-700 mb-1 block">
+               Área Principal *
+             </label>
+             <Select value={selectedArea} onValueChange={setSelectedArea}>
+               <SelectTrigger>
+                 <SelectValue placeholder="Selecione uma área" />
+               </SelectTrigger>
+               <SelectContent>
+                 {Object.entries(INTELLIGENCE_AREAS).map(([key, val]) => (
+                   <SelectItem key={key} value={key}>
+                     {val.label}
+                   </SelectItem>
+                 ))}
+               </SelectContent>
+             </Select>
+           </div>
+
+           {/* Título */}
+           <div>
+             <label className="text-sm font-semibold text-gray-700 mb-1 block">
+               Nome do Checklist
+             </label>
+             <Input
+               value={title}
+               onChange={(e) => setTitle(e.target.value)}
+               placeholder="Ex: Validação de Causa-Raiz"
+             />
+           </div>
+
+           {/* Descrição */}
+           <div>
+             <label className="text-sm font-semibold text-gray-700 mb-1 block">
+               Descrição (opcional)
+             </label>
+             <Textarea
+               value={description}
+               onChange={(e) => setDescription(e.target.value)}
+               placeholder="Descreva o propósito deste checklist"
+               className="h-20"
+             />
+           </div>
+
+          {/* Items */}
+          <div>
+            <label className="text-sm font-semibold text-gray-700 mb-2 block">
+              Items do Checklist
+            </label>
+
+            <div className="space-y-2 mb-4 max-h-48 overflow-y-auto bg-gray-50 p-3 rounded-lg">
+              {items.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-4">
+                  Nenhum item adicionado
+                </p>
+              ) : (
+                items.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center gap-2 bg-white p-2 rounded border border-gray-200"
+                  >
+                    <GripVertical className="w-4 h-4 text-gray-400" />
+                    <span className="flex-1 text-sm text-gray-700">{item.label}</span>
+                    <button
+                      onClick={() => handleRemoveItem(item.id)}
+                      className="p-1 hover:bg-red-100 rounded transition-colors"
+                    >
+                      <X className="w-4 h-4 text-red-600" />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Adicionar novo item */}
+            <div className="flex gap-2">
+              <Input
+                value={newItemLabel}
+                onChange={(e) => setNewItemLabel(e.target.value)}
+                onKeyPress={(e) => e.key === "Enter" && handleAddItem()}
+                placeholder="Digite o item e pressione Enter"
+              />
+              <Button
+                variant="outline"
+                onClick={handleAddItem}
+                className="px-3"
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleSaveChecklist}
+            disabled={isLoading}
+            className="bg-indigo-600 hover:bg-indigo-700"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Salvando...
+              </>
+            ) : (
+              checklistId ? "Atualizar Checklist" : "Salvar Checklist"
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

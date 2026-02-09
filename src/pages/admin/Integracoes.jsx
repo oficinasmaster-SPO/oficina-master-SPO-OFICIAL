@@ -1,0 +1,335 @@
+﻿import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from '@/api/base44Client';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Calendar, Video, CheckCircle, AlertCircle, Loader2, Settings, CreditCard, Wallet, Webhook, Sliders, Mail } from "lucide-react";
+import IntegrationModal from "@/components/integrations/IntegrationModal";
+import IntegrationStatusWidget from "@/components/dashboard/IntegrationStatusWidget";
+import IntegrationHealthScore from "@/components/dashboard/IntegrationHealthScore";
+import QuickIntegrationsPanel from "@/components/dashboard/QuickIntegrationsPanel";
+import IntegrationMetricsChart from "@/components/dashboard/IntegrationMetricsChart";
+import IntegrationAdvancedSettings from "@/components/integrations/IntegrationAdvancedSettings";
+import GoogleMeetConfig from "@/components/integrations/GoogleMeetConfig";
+import GoogleCalendarConfig from "@/components/integrations/GoogleCalendarConfig";
+import ActiveCampaignConfig from "@/components/integrations/ActiveCampaignConfig";
+
+export default function Integracoes() {
+  const [user, setUser] = useState(null);
+  const [selectedIntegration, setSelectedIntegration] = useState(null);
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
+
+  React.useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
+      } catch (error) {
+        console.error("Erro ao carregar usuÃ¡rio:", error);
+      }
+    };
+    loadUser();
+  }, []);
+
+  const { data: integrations = [], isLoading } = useQuery({
+    queryKey: ["integrations-list"],
+    queryFn: async () => {
+      return [
+        {
+          id: "google_calendar",
+          name: "Google Calendar",
+          description: "Sincronize agendas dos consultores e mentores",
+          icon: Calendar,
+          status: "disconnected",
+          lastSync: null,
+          features: [
+            "SincronizaÃ§Ã£o bidirecional de eventos",
+            "Filtro por consultor/mentor",
+            "AtualizaÃ§Ã£o automÃ¡tica de status",
+            "VisualizaÃ§Ã£o de disponibilidade"
+          ]
+        },
+        {
+          id: "google_meet",
+          name: "Google Meet",
+          description: "Gere links e obtenha transcriÃ§Ãµes automÃ¡ticas",
+          icon: Video,
+          status: "disconnected",
+          lastSync: null,
+          features: [
+            "GeraÃ§Ã£o automÃ¡tica de links",
+            "TranscriÃ§Ã£o automÃ¡tica de reuniÃµes",
+            "ExtraÃ§Ã£o de pontos principais",
+            "GeraÃ§Ã£o de ATAs inteligentes"
+          ]
+        },
+        {
+          id: "kiwify",
+          name: "Kiwify",
+          description: "Plataforma de cursos e gestÃ£o de conteÃºdo",
+          icon: CreditCard,
+          status: "disconnected",
+          lastSync: null,
+          features: [
+            "GestÃ£o de cursos e conteÃºdos",
+            "Controle de assinaturas",
+            "Avisos automÃ¡ticos de cobranÃ§a",
+            "Bloqueio por inadimplÃªncia"
+          ]
+        },
+        {
+          id: "asas",
+          name: "Asas",
+          description: "Plataforma de gestÃ£o de pagamentos",
+          icon: Wallet,
+          status: "disconnected",
+          lastSync: null,
+          features: [
+            "Processamento de pagamentos",
+            "GestÃ£o de cobranÃ§as recorrentes",
+            "Avisos de renovaÃ§Ã£o",
+            "Webhooks de pagamento"
+          ]
+        },
+        {
+          id: "resend",
+          name: "Resend",
+          description: "Envio de e-mails transacionais e convites personalizados",
+          icon: Mail,
+          status: "connected",
+          lastSync: new Date().toISOString(),
+          features: [
+            "E-mails de convite personalizados",
+            "DomÃ­nio customizado",
+            "Templates HTML responsivos",
+            "Rastreamento de entregas"
+          ]
+        },
+        {
+          id: "webhook",
+          name: "Webhook GenÃ©rico",
+          description: "Integre com qualquer sistema via webhooks personalizados",
+          icon: Webhook,
+          status: "connected",
+          lastSync: null,
+          features: [
+            "Webhooks customizados",
+            "IntegraÃ§Ã£o com ERP/Financeiro",
+            "NotificaÃ§Ãµes de eventos",
+            "AutenticaÃ§Ã£o com Secret"
+          ]
+        },
+        {
+          id: "clicksign",
+          name: "ClickSign",
+          description: "Assinatura eletrÃ´nica de contratos e documentos",
+          icon: CreditCard,
+          status: "disconnected",
+          lastSync: null,
+          features: [
+            "Envio automÃ¡tico de contratos",
+            "Assinatura eletrÃ´nica vÃ¡lida",
+            "Acompanhamento de status",
+            "Webhooks de notificaÃ§Ã£o"
+          ]
+        },
+        {
+          id: "serasa",
+          name: "Serasa Experian",
+          description: "Consulta de crÃ©dito e anÃ¡lise de CNPJ/CPF",
+          icon: AlertCircle,
+          status: "disconnected",
+          lastSync: null,
+          features: [
+            "Consulta de score de crÃ©dito",
+            "ValidaÃ§Ã£o de CNPJ/CPF",
+            "AnÃ¡lise de risco",
+            "HistÃ³rico de consultas"
+          ]
+        }
+      ];
+    },
+    enabled: !!user
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  const handleSaveAdvancedSettings = async (settings) => {
+    console.log("Salvando configuraÃ§Ãµes avanÃ§adas:", settings);
+    // Implementar salvamento via API
+  };
+
+  if (showAdvancedSettings && selectedIntegration) {
+    return (
+      <div className="space-y-6">
+        <Button
+          variant="outline"
+          onClick={() => setShowAdvancedSettings(false)}
+          className="mb-4"
+        >
+          â† Voltar para IntegraÃ§Ãµes
+        </Button>
+        <IntegrationAdvancedSettings
+          integration={selectedIntegration}
+          onSave={handleSaveAdvancedSettings}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">IntegraÃ§Ãµes</h1>
+        <p className="text-gray-600 mt-2">
+          Conecte serviÃ§os externos para automatizar processos
+        </p>
+      </div>
+
+      {/* Google Calendar & Meet Config */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <GoogleCalendarConfig />
+        <GoogleMeetConfig />
+      </div>
+
+      {/* ActiveCampaign Config */}
+      <ActiveCampaignConfig />
+
+      {/* Painel de Monitoramento */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <IntegrationStatusWidget />
+        <IntegrationHealthScore />
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <QuickIntegrationsPanel />
+        <Card className="shadow-lg">
+          <CardContent className="p-4">
+            <h3 className="text-sm font-medium text-gray-700 mb-3">Uso das IntegraÃ§Ãµes (Ãšltimos 7 dias)</h3>
+            <IntegrationMetricsChart />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Tabela de IntegraÃ§Ãµes */}
+      <Card>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    IntegraÃ§Ã£o
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    DescriÃ§Ã£o
+                  </th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    AÃ§Ãµes
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {integrations.map((integration) => {
+                  const Icon = integration.icon;
+                  const isConnected = integration.status === "connected";
+                  const hasError = integration.status === "error";
+
+                  return (
+                    <tr 
+                      key={integration.id} 
+                      className="hover:bg-gray-50 cursor-pointer transition-colors"
+                      onClick={() => setSelectedIntegration(integration)}
+                    >
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-lg ${isConnected ? 'bg-green-50' : 'bg-gray-50'}`}>
+                            <Icon className={`w-5 h-5 ${isConnected ? 'text-green-600' : 'text-gray-600'}`} />
+                          </div>
+                          <span className="font-medium text-gray-900">{integration.name}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-sm text-gray-600">{integration.description}</span>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <Badge 
+                          variant={isConnected ? "default" : hasError ? "destructive" : "secondary"}
+                          className={isConnected ? "bg-green-600" : ""}
+                        >
+                          {isConnected ? (
+                            <>
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              Conectado
+                            </>
+                          ) : hasError ? (
+                            <>
+                              <AlertCircle className="w-3 h-3 mr-1" />
+                              Erro
+                            </>
+                          ) : (
+                            "Desconectado"
+                          )}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedIntegration(integration);
+                            }}
+                            className="gap-2"
+                          >
+                            <Settings className="w-4 h-4" />
+                            {isConnected ? "Configurar" : "Integrar"}
+                          </Button>
+                          {isConnected && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedIntegration(integration);
+                                setShowAdvancedSettings(true);
+                              }}
+                              className="gap-2"
+                            >
+                              <Sliders className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+
+      <IntegrationModal
+        open={!!selectedIntegration}
+        onClose={() => setSelectedIntegration(null)}
+        integration={selectedIntegration}
+        user={user}
+      />
+    </div>
+  );
+}
+
+
+
