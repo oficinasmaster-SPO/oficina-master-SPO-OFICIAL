@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useImperativeHandle, forwardRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -157,7 +157,7 @@ const EQUIPMENT_CATALOG = {
   }
 };
 
-export default function EquipamentosCompletos({ workshop, onUpdate }) {
+const EquipamentosCompletos = forwardRef(({ workshop, onUpdate }, ref) => {
   const [editing, setEditing] = useState(false);
   const [equipmentList, setEquipmentList] = useState([]);
   const [activeCategory, setActiveCategory] = useState("mecanica_autocenter");
@@ -182,6 +182,20 @@ export default function EquipamentosCompletos({ workshop, onUpdate }) {
       setEditing(false);
     }
   };
+
+  // Expor função saveCurrentData para componente pai
+  useImperativeHandle(ref, () => ({
+    saveCurrentData: async () => {
+      try {
+        await onUpdate({ equipment_list: equipmentList });
+        return true;
+      } catch (error) {
+        console.error("Erro ao salvar:", error);
+        toast.error("Erro ao salvar equipamentos");
+        return false;
+      }
+    }
+  }));
 
   const toggleEquipment = (category, name, isSpecial = false) => {
     const existing = equipmentList.find(
@@ -432,4 +446,8 @@ export default function EquipamentosCompletos({ workshop, onUpdate }) {
       </CardContent>
     </Card>
   );
-}
+});
+
+EquipamentosCompletos.displayName = "EquipamentosCompletos";
+
+export default EquipamentosCompletos;

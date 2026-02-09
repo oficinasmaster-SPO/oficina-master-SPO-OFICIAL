@@ -37,6 +37,7 @@ export default function Cadastro() {
   const servicosRef = useRef(null);
   const equipamentosRef = useRef(null);
   const terceirizadosRef = useRef(null);
+  const equipamentosCompletosRef = useRef(null);
   const metasRef = useRef(null);
 
   useEffect(() => {
@@ -363,6 +364,7 @@ export default function Cadastro() {
               />
               
               <EquipamentosCompletos
+                ref={equipamentosCompletosRef}
                 workshop={workshop}
                 onUpdate={handleWorkshopUpdate}
               />
@@ -372,7 +374,31 @@ export default function Cadastro() {
                 setActiveTab("servicos");
                 window.history.replaceState(null, '', `${location.pathname}?step=servicos`);
               }}>Voltar</Button>
-              <Button onClick={() => handleNextTab(equipamentosRef, "terceirizados")} disabled={saving || isEditing} className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={async () => {
+                setSaving(true);
+                try {
+                  let success = true;
+                  // Salvar ServicosEquipamentos
+                  if (equipamentosRef.current?.saveCurrentData) {
+                    const s1 = await equipamentosRef.current.saveCurrentData();
+                    if (!s1) success = false;
+                  }
+                  // Salvar EquipamentosCompletos
+                  if (success && equipamentosCompletosRef.current?.saveCurrentData) {
+                    const s2 = await equipamentosCompletosRef.current.saveCurrentData();
+                    if (!s2) success = false;
+                  }
+                  
+                  if (success) {
+                    handleNextTab(null, "terceirizados");
+                  } else {
+                    setSaving(false);
+                  }
+                } catch (e) {
+                  console.error(e);
+                  setSaving(false);
+                }
+              }} disabled={saving || isEditing} className="bg-blue-600 hover:bg-blue-700">
                 {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Próximo: Terceirizados <ArrowRight className="ml-2 w-4 h-4" />
               </Button>

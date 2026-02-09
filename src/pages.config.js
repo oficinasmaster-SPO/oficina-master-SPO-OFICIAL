@@ -191,6 +191,7 @@ import Regimento from './pages/Regimento';
 import RegistrarAtendimento from './pages/RegistrarAtendimento';
 import RegistroDiario from './pages/RegistroDiario';
 import RelatorioUsuario from './pages/RelatorioUsuario';
+import RelatoriosAceleracao from './pages/RelatoriosAceleracao';
 import RelatoriosAvancados from './pages/RelatoriosAvancados';
 import RelatoriosInteligencia from './pages/RelatoriosInteligencia';
 import RepositorioDocumentos from './pages/RepositorioDocumentos';
@@ -221,7 +222,6 @@ import TesteOpenAI from './pages/TesteOpenAI';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
-import RelatoriosAceleracao from './pages/RelatoriosAceleracao';
 import __Layout from './Layout.jsx';
 
 
@@ -370,6 +370,7 @@ export const PAGES = {
     "RegistrarAtendimento": RegistrarAtendimento,
     "RegistroDiario": RegistroDiario,
     "RelatorioUsuario": RelatorioUsuario,
+    "RelatoriosAceleracao": RelatoriosAceleracao,
     "RelatoriosAvancados": RelatoriosAvancados,
     "RelatoriosInteligencia": RelatoriosInteligencia,
     "RepositorioDocumentos": RepositorioDocumentos,
@@ -400,7 +401,6 @@ export const PAGES = {
     "TreinamentoVendas": TreinamentoVendas,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
-    "RelatoriosAceleracao": RelatoriosAceleracao,
 }
 
 export const pagesConfig = {
