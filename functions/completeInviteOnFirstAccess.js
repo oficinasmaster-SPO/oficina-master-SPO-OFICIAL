@@ -23,9 +23,9 @@ Deno.serve(async (req) => {
     });
 
     if (!invites || invites.length === 0) {
-      return Response.json({ 
-        success, 
-        error: 'Convite não encontrado' 
+      return Response.json({
+        success,
+        error: 'Convite não encontrado'
       }, { status: 404 });
     }
 
@@ -34,9 +34,9 @@ Deno.serve(async (req) => {
     // Validar email
     if (invite.email !== user.email) {
       console.error(`❌ Email mismatch ${invite.email} vs user ${user.email}`);
-      return Response.json({ 
-        success, 
-        error: 'Email do convite não corresponde ao usuário logado' 
+      return Response.json({
+        success,
+        error: 'Email do convite não corresponde ao usuário logado'
       }, { status: 403 });
     }
 
@@ -72,12 +72,69 @@ Deno.serve(async (req) => {
       }
       if (invite.profile_id && !user.profile_id) {
         updateData.profile_id = invite.profile_id;
+
+        // Se tem profile_id, buscar o perfil para pegar a role
+        try {
+          const profile = await base44.asServiceRole.entities.UserProfile.get(invite.profile_id);
+          if (profile && profile.roles && profile.roles.length > 0) {
+            // Atualizar também o campo roles do usuário (se existir na tabela User) ou apenas ter a referência
+            // updateData.roles = profile.roles; // Comentado pois roles ficam em UserPermission geralmente
+          }
+        } catch (e) {
+          console.error("Erro ao buscar perfil para update do user:", e);
+        }
       }
+
       if (Object.keys(updateData).length > 0) {
         await base44.asServiceRole.entities.User.update(user.id, updateData);
         console.log(`✅ User atualizado com workshop/profile:`, updateData);
       }
     }
+
+    // --- CORREÇÃO: CRIAR PERMISSÕES (UserPermission) ---
+    // O sistema depende da tabela UserPermission para liberar acesso.
+    // Sem isso, o usuário tem o profile_id mas não tem a permissão efetiva carregada.
+    if (invite.profile_id) {
+      try {
+        console.log("🔐 Iniciando criação de permissões (UserPermission)...");
+
+        // 1. Verificar se já existe permissão
+        const existingPerms = await base44.asServiceRole.entities.UserPermission.filter({ user_id: user.id });
+
+        if (existingPerms && existingPerms.length > 0) {
+          console.log("⚠️ Usuário já possui tabela de permissões. Pulando criação.");
+          // Opcional: Poderíamos atualizar a permissão existente aqui se fosse necessário.
+        } else {
+          // 2. Buscar dados do perfil
+          const profile = await base44.asServiceRole.entities.UserProfile.get(invite.profile_id);
+
+          if (!profile) {
+            console.error("❌ Perfil não encontrado ao criar permissões:", invite.profile_id);
+          } else {
+            // 3. Criar UserPermission
+            const permissionData = {
+              user_id: user.id,
+              user_email: user.email,
+              profile_id: invite.profile_id,
+              profile_name: profile.name,
+              custom_roles: profile.roles || [],
+              custom_role_ids: profile.custom_role_ids || [],
+              module_permissions: profile.module_permissions || {},
+              sidebar_permissions: profile.sidebar_permissions || {},
+              is_active: true,
+              created_at: new Date().toISOString()
+            };
+
+            const createdPermission = await base44.asServiceRole.entities.UserPermission.create(permissionData);
+            console.log("✅ Permissões criadas com sucesso! ID:", createdPermission.id);
+          }
+        }
+      } catch (permError) {
+        console.error("❌ Erro CRÍTICO ao criar permissões:", permError);
+        // Não vamos travar o fluxo aqui, mas é um erro grave se falhar.
+      }
+    }
+    // ----------------------------------------------------
 
     return Response.json({
       success,
@@ -89,7 +146,7 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('❌ Erro ao completar convite:', error);
-    return Response.json({ 
+    return Response.json({
       success,
       error.message,
       stack.stack
