@@ -11,9 +11,6 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const { startDate, endDate } = await req.json();
 
-    // Buscar todos os usuários
-    const allUsers = await base44.asServiceRole.entities.User.list(null, 1000);
-    
     // Buscar employees que são consultores/aceleradores
     const employees = await base44.asServiceRole.entities.Employee.filter({
         job_role: { $in: ['consultor', 'acelerador', 'socio', 'diretor'] }
@@ -23,10 +20,15 @@ Deno.serve(async (req) => {
         .filter(e => e.user_id)
         .map(e => e.user_id);
         
-    // Filtrar usuários que são admin OU estão ligados a um employee consultor
-    const admins = allUsers.filter(u => 
-        u.role === 'admin' || employeeUserIds.includes(u.id)
-    );
+    // Filtrar usuários que estão ligados a um employee consultor (garante sincronia com tela de colaboradores)
+    // Se foi excluído da tela colaboradores, o employee não existe, logo não entra aqui.
+    let admins = [];
+    if (employeeUserIds.length > 0) {
+        // Buscar usuários em lotes ou filtrar da lista total se a API de filtro por ID não suportar array grande
+        // Como User.filter com $in no id pode não ser suportado dependendo da versão, vamos listar e filtrar
+        const allUsers = await base44.asServiceRole.entities.User.list(null, 1000);
+        admins = allUsers.filter(u => employeeUserIds.includes(u.id));
+    }
 
     // Converter datas para filtro
     const dataInicio = new Date(startDate);

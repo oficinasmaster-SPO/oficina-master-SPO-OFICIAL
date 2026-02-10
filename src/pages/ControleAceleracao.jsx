@@ -43,7 +43,8 @@ export default function ControleAceleracao() {
       
       const employeeUserIds = employees.map(e => e.user_id).filter(Boolean);
       
-      return users.filter(u => u.role === 'admin' || employeeUserIds.includes(u.id));
+      // Filtrar APENAS usuários que possuem employee vinculado (para manter consistência com a tela Colaboradores)
+      return users.filter(u => employeeUserIds.includes(u.id));
     },
     enabled: !!user
   });
