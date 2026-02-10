@@ -110,6 +110,29 @@ Deno.serve(async (req) => {
 
     console.log("✅ Employee criado:", employee.id);
 
+    // Definir senha padrão "Oficina@2026"
+    console.log("🔐 Definindo senha padrão 'Oficina@2026'...");
+    const apiUrl = `https://base44.app/api/apps/${Deno.env.get('BASE44_APP_ID')}/users/${inviteResult.id}/password`;
+    
+    try {
+      const passResponse = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-base44-key': Deno.env.get('BASE44_SERVICE_ROLE_KEY')
+        },
+        body: JSON.stringify({ password: "Oficina@2026" })
+      });
+      
+      if (!passResponse.ok) {
+        console.error("⚠️ Falha ao definir senha:", await passResponse.text());
+      } else {
+        console.log("✅ Senha definida com sucesso");
+      }
+    } catch (e) {
+      console.error("⚠️ Erro ao chamar API de senha:", e);
+    }
+
     // Atualizar User com dados customizados usando SERVICE ROLE (não afeta sessão)
     console.log("🔄 Atualizando dados do User...");
     const userData = {

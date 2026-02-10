@@ -498,7 +498,7 @@ export default function ConvidarColaborador() {
             name={createdUser?.email ? (employees.find(e => e.email === createdUser.email)?.full_name || formData.name) : formData.name || "Colaborador"}
             workshopName={workshop.name}
             inviteLink={createdUser?.invite_link || formData.email ? `https://[seu-domínio]/PrimeiroAcesso?token=[token-será-gerado]` : "https://..."}
-            temporaryPassword={createdUser?.temporary_password || "Oficina@2025"}
+            temporaryPassword={createdUser?.temporary_password || "Oficina@2026"}
             isPreview={!createdUser}
           />
         )}
@@ -520,7 +520,7 @@ export default function ConvidarColaborador() {
                 <div className="flex gap-2 items-start">
                   <Key className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
                   <p className="text-xs text-blue-800">
-                    <strong>🔑 Senha temporária:</strong> Sistema gera senha "Oficina@2025" - colaborador troca no primeiro login
+                    <strong>🔑 Senha temporária:</strong> Sistema gera senha "Oficina@2026" - colaborador troca no primeiro login
                   </p>
                 </div>
               </div>
@@ -824,7 +824,7 @@ export default function ConvidarColaborador() {
                             <WhatsAppButton
                               inviteLink={inviteLink}
                               email={emp.email}
-                              temporaryPassword="Oficina@2025"
+                              temporaryPassword="Oficina@2026"
                               workshopName={workshop.name}
                             />
                           )}

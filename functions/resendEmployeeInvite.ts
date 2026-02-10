@@ -55,6 +55,32 @@ Deno.serve(async (req) => {
       invite.invite_token = newInviteToken;
       
       console.log("✅ Convite atualizado com novo token:", newInviteToken);
+
+      // RESETAR SENHA SE O USUÁRIO EXISTIR
+      if (employee.user_id) {
+        console.log("🔐 Resetando senha para 'Oficina@2026'...");
+        const apiUrl = `https://base44.app/api/apps/${Deno.env.get('BASE44_APP_ID')}/users/${employee.user_id}/password`;
+        
+        try {
+          const passResponse = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-base44-key': Deno.env.get('BASE44_SERVICE_ROLE_KEY')
+            },
+            body: JSON.stringify({ password: "Oficina@2026" })
+          });
+          
+          if (!passResponse.ok) {
+            console.error("⚠️ Falha ao resetar senha:", await passResponse.text());
+          } else {
+            console.log("✅ Senha resetada com sucesso");
+          }
+        } catch (e) {
+          console.error("⚠️ Erro ao chamar API de senha:", e);
+        }
+      }
+
     } else {
       // Criar novo convite
       const inviteToken = Math.random().toString(36).substring(2, 15) + 
@@ -94,7 +120,7 @@ Deno.serve(async (req) => {
       success: true,
       message: 'Convite reenviado com sucesso!',
       email: employee.email,
-      temporary_password: "Oficina@2025",
+      temporary_password: "Oficina@2026",
       invite_link: inviteLink,
       invite_token: invite.invite_token,
       action: 'resent'
