@@ -181,7 +181,7 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
           <Card>
             <CardContent className="pt-6">
               <h3 className="font-bold text-lg mb-3">4. PRÓXIMOS PASSOS</h3>
-              {ataAtualizada.proximos_passos?.length > 0 ? (
+              {Array.isArray(ataAtualizada.proximos_passos) && ataAtualizada.proximos_passos.length > 0 ? (
                 <div className="space-y-2">
                   {ataAtualizada.proximos_passos.map((passo, i) => (
                     <div key={i} className="border-l-4 border-blue-600 pl-3">
