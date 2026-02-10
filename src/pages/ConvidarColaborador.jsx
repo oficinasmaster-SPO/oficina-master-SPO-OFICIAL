@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Loader2, UserPlus, CheckCircle2, Users, Copy, Key, AlertCircle, Link as LinkIcon, Mail
+  Loader2, UserPlus, CheckCircle2, Users, Copy, Key, AlertCircle, Link as LinkIcon, Mail, RefreshCw
 } from "lucide-react";
 import { toast } from "sonner";
 import EmailPreview from "@/components/convite/EmailPreview";
@@ -165,6 +165,34 @@ export default function ConvidarColaborador() {
   });
 
 
+
+  // Mutação para regerar link (reenviar convite)
+  const regenerateLinkMutation = useMutation({
+    mutationFn: async (employeeId) => {
+      if (!workshop?.id) throw new Error("Oficina não identificada");
+      
+      const response = await base44.functions.invoke('resendEmployeeInvite', {
+        employee_id: employeeId,
+        workshop_id: workshop.id
+      });
+
+      if (!response.data.success) {
+        throw new Error(response.data.error || "Erro ao regerar link");
+      }
+
+      return response.data;
+    },
+    onSuccess: (data) => {
+      toast.success("✅ Link regerado com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ['employee-invites'] });
+      // Atualizar createdUser para mostrar o modal de sucesso com o novo link se desejado, 
+      // ou apenas copiar para área de transferência? 
+      // O usuário pediu "um botão de regerar link", vamos manter simples e talvez atualizar a UI.
+    },
+    onError: (error) => {
+      toast.error(error.message || "Erro ao regerar link");
+    }
+  });
 
   // Mutação para criar colaborador
   const createUserMutation = useMutation({
@@ -751,20 +779,41 @@ export default function ConvidarColaborador() {
                             <span className={`text-xs font-semibold ${getInviteStatus(emp.id).textColor}`}>
                               {getInviteStatus(emp.id).status}
                             </span>
-                            {inviteLink && (
+                            <div className="flex gap-1">
+                              {inviteLink && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 px-2 text-xs"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    copyInviteLink(inviteLink);
+                                  }}
+                                >
+                                  <Copy className="w-3 h-3 mr-1" />
+                                  Copiar
+                                </Button>
+                              )}
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                className="h-6 px-2 text-xs"
+                                className="h-6 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                disabled={regenerateLinkMutation.isPending}
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  copyInviteLink(inviteLink);
+                                  if (window.confirm("Deseja regerar o link deste colaborador? O link anterior deixará de funcionar.")) {
+                                    regenerateLinkMutation.mutate(emp.id);
+                                  }
                                 }}
                               >
-                                <Copy className="w-3 h-3 mr-1" />
-                                Copiar Link
+                                {regenerateLinkMutation.isPending ? (
+                                  <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                                ) : (
+                                  <RefreshCw className="w-3 h-3 mr-1" />
+                                )}
+                                Regerar
                               </Button>
-                            )}
+                            </div>
                           </div>
                           {inviteLink && (
                             <code className="text-xs text-gray-600 bg-white rounded px-2 py-1 block break-all font-mono mb-2">
