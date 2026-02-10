@@ -30,8 +30,9 @@ Deno.serve(async (req) => {
       data_nascimento 
     } = body;
     
-    if (!name || !email || !workshop_id) {
-      return Response.json({ error: 'Nome, email e workshop_id obrigatórios' }, { status: 400 });
+    // Validação estrita: profile_id agora é obrigatório para garantir permissões corretas
+    if (!name || !email || !workshop_id || !profile_id) {
+      return Response.json({ error: 'Nome, email, workshop_id e profile_id são obrigatórios' }, { status: 400 });
     }
     
     if (!['user', 'admin'].includes(role)) {
@@ -39,18 +40,9 @@ Deno.serve(async (req) => {
     }
 
     console.log("👤 Convidando usuário:", email);
-
-    // Buscar workshop para pegar identificador
-    const workshop = await base44.asServiceRole.entities.Workshop.get(workshop_id);
-    const workshopId = workshop?.identificador || workshop_id;
-
-    // Contar employees existentes para gerar Profile ID automático
-    const allEmployees = await base44.asServiceRole.entities.Employee.filter({ workshop_id: workshop_id });
-    const employeeCount = Array.isArray(allEmployees) ? allEmployees.length + 1 : 1;
     
-    // Gerar Profile ID: 001.01, 001.02, etc
-    const generatedProfileId = `${workshopId}.${String(employeeCount).padStart(2, '0')}`;
-    const finalProfileId = profile_id || generatedProfileId;
+    // O profile_id enviado é a fonte da verdade para as permissões
+    const finalProfileId = profile_id;
 
     // Convidar usuário via Base44 usando SERVICE ROLE (não afeta sessão do admin)
     console.log("📧 Convidando usuário via Base44 com role:", role);
@@ -64,7 +56,7 @@ Deno.serve(async (req) => {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7); // 7 dias
 
-    // Criar convite
+    // Criar convite com METADADOS SEGUROS (Fonte da verdade)
     const invite = await base44.asServiceRole.entities.EmployeeInvite.create({
       workshop_id: workshop_id,
       name: name,
@@ -73,13 +65,15 @@ Deno.serve(async (req) => {
       position: position || 'Colaborador',
       area: area || 'tecnico',
       job_role: job_role || 'outros',
-      profile_id: finalProfileId,
+      profile_id: finalProfileId, // Informativo na entidade raiz
       invite_token: inviteToken,
       invite_type: 'workshop',
       expires_at: expiresAt.toISOString(),
       status: "pendente",
       metadata: { 
+        // DADOS SEGUROS: Estes valores prevalecem sobre qualquer parâmetro de URL
         role: role,
+        company_id: workshop_id, // Alias para workshop_id conforme solicitado
         workshop_id: workshop_id,
         profile_id: finalProfileId,
         invited_at: new Date().toISOString()

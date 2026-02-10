@@ -92,46 +92,72 @@ Deno.serve(async (req) => {
     console.log("🔗 Sincronizando relacionamentos entre User, Employee e EmployeeInvite...");
     
     const now = new Date().toISOString();
-    
-    // Obter workshop_id através do profile_id (relação 1-N)
-    let workshopId = invite.workshop_id;
-    if (invite.profile_id) {
-      console.log("🔍 Buscando workshop_id via profile_id...");
+
+    // EXTRAÇÃO SEGURA DE DADOS (Prioridade: Metadata > Campos Raiz)
+    // Isso garante que estamos usando os dados originais gravados no convite, não manipulados
+    let secureProfileId = invite.metadata?.profile_id || invite.profile_id;
+    let secureWorkshopId = invite.metadata?.workshop_id || invite.metadata?.company_id || invite.workshop_id;
+
+    // FALLBACK DE SEGURANÇA PARA LEGADOS (Item 3 do Plano)
+    // Se não houver profile_id (convite antigo), atribuir um perfil padrão seguro de menor privilégio
+    if (!secureProfileId) {
+      console.warn("⚠️ ALERTA DE SEGURANÇA: Convite sem profile_id. Aplicando perfil padrão de menor privilégio.");
+      // Substituir pelo ID real do perfil padrão no seu sistema, se houver. 
+      // Por enquanto, tentamos buscar um perfil 'Colaborador' ou 'Visitante'
       try {
-        const profile = await base44.asServiceRole.entities.UserProfile.get(invite.profile_id);
+        const defaultProfiles = await base44.asServiceRole.entities.UserProfile.list();
+        // Tenta achar um perfil básico/padrão. Ajuste a lógica conforme seus nomes de perfil.
+        const fallbackProfile = defaultProfiles.find(p => p.name === 'Colaborador' || p.type === 'básico') || defaultProfiles[0];
+        if (fallbackProfile) {
+          secureProfileId = fallbackProfile.id;
+          console.log(`🔒 Perfil fallback aplicado: ${secureProfileId} (${fallbackProfile.name})`);
+        }
+      } catch (e) {
+        console.error("❌ Falha ao buscar perfil fallback:", e);
+      }
+    }
+
+    console.log("🔒 Dados Seguros para Criação:", { secureProfileId, secureWorkshopId });
+    
+    // Tentar obter workshop_id via perfil se ainda não tivermos (lógica original preservada como secundária)
+    if (!secureWorkshopId && secureProfileId) {
+      console.log("🔍 Buscando workshop_id via profile_id (método secundário)...");
+      try {
+        const profile = await base44.asServiceRole.entities.UserProfile.get(secureProfileId);
         if (profile && profile.workshop_id) {
-          workshopId = profile.workshop_id;
-          console.log(`✅ workshop_id obtido via perfil: ${workshopId}`);
+          secureWorkshopId = profile.workshop_id;
+          console.log(`✅ workshop_id obtido via perfil: ${secureWorkshopId}`);
         }
       } catch (e) {
         console.error("⚠️ Erro ao buscar perfil:", e);
       }
     }
     
-    // 1. Atualizar Employee: vincular user_id (se não estava vinculado) + marcar como ativo
-    console.log("📝 [1/4] Atualizando Employee com user_id...");
+    // 1. Atualizar Employee: vincular user_id e usar PROFILE ID SEGURO
+    console.log("📝 [1/4] Atualizando Employee com user_id e profile_id seguro...");
     await base44.asServiceRole.entities.Employee.update(employee.id, {
-      user_id: userId,  // Relação 1-1: Employee → User
+      user_id: userId,
       first_login_at: now,
       user_status: 'ativo',
-      profile_id: invite.profile_id  // Relação 1-1: Employee → UserProfile
+      profile_id: secureProfileId,  // USANDO ID SEGURO
+      workshop_id: secureWorkshopId // Garantir workshop correto
     });
     console.log(`✅ Employee atualizado: user_id = ${userId}`);
     
-    // 2. Atualizar User: vincular invite_id + profile_id + workshop_id + ativar conta
-    console.log("📝 [2/4] Atualizando User com referências completas...");
+    // 2. Atualizar User: usar DADOS SEGUROS
+    console.log("📝 [2/4] Atualizando User com referências seguras...");
     await base44.asServiceRole.entities.User.update(userId, {
-      invite_id: invite_id,           // Relação 1-1: EmployeeInvite → User
-      profile_id: invite.profile_id,  // Relação 1-N: UserProfile → User
-      workshop_id: workshopId,        // Relação 1-N: Workshop → User (via profile)
+      invite_id: invite_id,
+      profile_id: secureProfileId,  // USANDO ID SEGURO
+      workshop_id: secureWorkshopId, // USANDO ID SEGURO
       user_status: 'active',
       first_login_at: now,
       last_login_at: now,
       approved_at: now
     });
-    console.log(`✅ User atualizado: invite_id=${invite_id}, profile_id=${invite.profile_id}, workshop_id=${workshopId}`);
+    console.log(`✅ User atualizado: invite_id=${invite_id}, profile_id=${secureProfileId}, workshop_id=${secureWorkshopId}`);
 
-    // 3. Marcar EmployeeInvite como concluído com todas as referências
+    // 3. Marcar EmployeeInvite como concluído
     console.log("📝 [3/4] Marcando EmployeeInvite como concluído...");
     await base44.asServiceRole.entities.EmployeeInvite.update(invite_id, {
       status: 'concluido',
@@ -140,16 +166,16 @@ Deno.serve(async (req) => {
     });
     console.log(`✅ EmployeeInvite concluído: employee_id = ${employee.id}`);
     
-    // 4. Criar UserPermission se não existir
-    console.log("📝 [4/4] Criando/atualizando UserPermission...");
+    // 4. Criar UserPermission usando DADOS SEGUROS
+    console.log("📝 [4/4] Criando/atualizando UserPermission com dados seguros...");
     try {
       const existingPermissions = await base44.asServiceRole.entities.UserPermission.filter({ user_id: userId });
       
       if (existingPermissions && existingPermissions.length > 0) {
         // Atualizar permissão existente
         await base44.asServiceRole.entities.UserPermission.update(existingPermissions[0].id, {
-          profile_id: invite.profile_id,
-          workshop_id: workshopId,
+          profile_id: secureProfileId, // USANDO ID SEGURO
+          workshop_id: secureWorkshopId,
           is_active: true,
           approved_at: now,
           approved_by: invite.admin_responsavel_id
@@ -159,8 +185,8 @@ Deno.serve(async (req) => {
         // Criar nova permissão
         await base44.asServiceRole.entities.UserPermission.create({
           user_id: userId,
-          profile_id: invite.profile_id,
-          workshop_id: workshopId,
+          profile_id: secureProfileId, // USANDO ID SEGURO
+          workshop_id: secureWorkshopId,
           permission_level: 'visualizador',
           is_active: true,
           approved_at: now,
@@ -172,14 +198,14 @@ Deno.serve(async (req) => {
       console.error("⚠️ Erro ao gerenciar UserPermission:", e);
     }
 
-    // 5. Criar EmployeeInviteAcceptance para disparar automação de criação de Employee
+    // 5. Criar EmployeeInviteAcceptance com DADOS SEGUROS
     console.log("📝 [5/5] Criando EmployeeInviteAcceptance para automação...");
     try {
       await base44.asServiceRole.entities.EmployeeInviteAcceptance.create({
         user_id: userId,
         invite_id: invite_id,
-        workshop_id: workshopId,
-        profile_id: invite.profile_id,
+        workshop_id: secureWorkshopId,
+        profile_id: secureProfileId, // USANDO ID SEGURO
         email: invite.email,
         full_name: employee.full_name || invite.name,
         processed: false

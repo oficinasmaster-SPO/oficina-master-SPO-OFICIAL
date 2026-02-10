@@ -40,11 +40,18 @@ Deno.serve(async (req) => {
 
     console.log("✅ Convite validado:", invite.id);
 
+    // EXTRAÇÃO SEGURA DE DADOS (Fonte da verdade: Metadata)
+    // Prioriza os dados gravados no metadata para evitar manipulação
+    const secureProfileId = invite.metadata?.profile_id || invite.profile_id;
+    const secureWorkshopId = invite.metadata?.workshop_id || invite.metadata?.company_id || invite.workshop_id;
+
+    console.log("🔒 Dados Seguros Extraídos:", { secureProfileId, secureWorkshopId });
+
     // Buscar workshop
     let workshop = null;
-    if (invite.workshop_id) {
+    if (secureWorkshopId) {
       try {
-        workshop = await base44.asServiceRole.entities.Workshop.get(invite.workshop_id);
+        workshop = await base44.asServiceRole.entities.Workshop.get(secureWorkshopId);
       } catch (e) {
         console.warn("⚠️ Workshop não encontrado:", e.message);
       }
@@ -56,9 +63,10 @@ Deno.serve(async (req) => {
         id: invite.id,
         email: invite.email,
         name: invite.name,
-        workshop_id: invite.workshop_id,
-        profile_id: invite.profile_id,
-        status: invite.status
+        workshop_id: secureWorkshopId, // ID Seguro
+        profile_id: secureProfileId,   // ID Seguro
+        status: invite.status,
+        metadata: invite.metadata // Retornar metadata completo se necessário
       },
       workshop: workshop ? {
         id: workshop.id,

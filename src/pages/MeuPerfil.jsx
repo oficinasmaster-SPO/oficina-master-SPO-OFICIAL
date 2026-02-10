@@ -55,10 +55,23 @@ export default function MeuPerfil() {
               invite_id: tokenResponse.data.invite.id,
               password: 'temp' // Será definido depois
             });
+
             if (createResponse.data.success) {
-              // Redirecionar para login para autenticar
-              base44.auth.redirectToLogin(window.location.origin + createPageUrl("MeuPerfil"));
-              return;
+              console.log("✅ Onboarding concluído com sucesso. Forçando atualização de sessão...");
+
+              // FORÇAR ATUALIZAÇÃO DE SESSÃO:
+              // Atualiza o objeto user local para refletir as novas permissões (profile_id) recém-atribuídas
+              const refreshedUser = await base44.auth.me();
+              setUser(refreshedUser);
+
+              toast.success("Perfil configurado com sucesso!");
+
+              // Remover query params da URL para limpar estado
+              const newUrl = window.location.pathname;
+              window.history.replaceState({}, document.title, newUrl);
+
+              // Continuar carregamento com usuário atualizado
+              // Não faz return aqui para permitir o fluxo seguir com o usuário atualizado
             }
           }
         } catch (err) {
@@ -66,7 +79,8 @@ export default function MeuPerfil() {
           toast.error("Erro ao processar seu convite");
         }
       }
-      
+
+      // Busca usuário (pode ser o atualizado acima ou o da sessão atual)
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 

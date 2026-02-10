@@ -68,20 +68,26 @@ export default function ConvidarColaborador() {
     enabled: !!user?.id
   });
 
-  // Buscar perfis disponíveis
+  // Buscar perfis disponíveis - FILTRADOS POR WORKSHOP/ADMIN
   const { data: profiles = [], isLoading: isLoadingProfiles } = useQuery({
-    queryKey: ['user-profiles'],
+    queryKey: ['user-profiles', workshop?.id], // Dependência do workshop
     queryFn: async () => {
       const allProfiles = await base44.entities.UserProfile.list();
-      // CORRIGIDO: Busca perfis 'externo' ao invés de 'cliente'
+      
+      // Filtro de segurança: perfis devem ser do tipo adequado E pertencer ao workshop/tenant atual
+      // Se UserProfile não tiver workshop_id explícito, assume-se perfis globais ou criados pelo admin
       const filtered = allProfiles.filter(p => 
-        (p.type === 'externo' || p.type === 'cliente') && 
-        p.status === 'ativo'
+        (p.type === 'externo' || p.type === 'cliente' || p.type === 'interno') && 
+        p.status === 'ativo' &&
+        // Verifica se o perfil pertence ao workshop do admin (Isolamento Multi-tenant)
+        // Se p.workshop_id existir, deve bater. Se não existir, assume perfil de sistema (global).
+        (!p.workshop_id || p.workshop_id === workshop?.id)
       );
-      console.log("📋 Perfis carregados:", filtered);
-      console.log("📋 Total de perfis no sistema:", allProfiles.length);
+      
+      console.log("📋 Perfis filtrados por segurança:", filtered);
       return filtered;
-    }
+    },
+    enabled: !!workshop?.id // Só busca quando tiver oficina carregada
   });
 
   // Preencher formulário com dados do Employee
