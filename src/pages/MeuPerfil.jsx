@@ -57,21 +57,17 @@ export default function MeuPerfil() {
             });
 
             if (createResponse.data.success) {
-              console.log("✅ Onboarding concluído com sucesso. Forçando atualização de sessão...");
+              console.log("✅ Onboarding concluído com sucesso. Recarregando aplicação para atualizar permissões...");
+              toast.success("Perfil configurado com sucesso! Atualizando sistema...", { duration: 3000 });
 
-              // FORÇAR ATUALIZAÇÃO DE SESSÃO:
-              // Atualiza o objeto user local para refletir as novas permissões (profile_id) recém-atribuídas
-              const refreshedUser = await base44.auth.me();
-              setUser(refreshedUser);
+              // Aguardar brevemente para o usuário ver a mensagem e então recarregar
+              // Isso garante que o Layout e a Sidebar recebam os novos dados (profile_id e workshop_id)
+              setTimeout(() => {
+                window.location.reload();
+              }, 1500);
 
-              toast.success("Perfil configurado com sucesso!");
-
-              // Remover query params da URL para limpar estado
-              const newUrl = window.location.pathname;
-              window.history.replaceState({}, document.title, newUrl);
-
-              // Continuar carregamento com usuário atualizado
-              // Não faz return aqui para permitir o fluxo seguir com o usuário atualizado
+              // Interromper o fluxo para evitar renderização com estado antigo
+              return;
             }
           }
         } catch (err) {

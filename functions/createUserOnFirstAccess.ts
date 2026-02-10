@@ -132,6 +132,14 @@ Deno.serve(async (req) => {
         console.error("⚠️ Erro ao buscar perfil:", e);
       }
     }
+
+    // VALIDAÇÃO CRÍTICA DE SEGURANÇA (Protocolo Company ID)
+    if (!secureWorkshopId) {
+      console.error("❌ ERRO CRÍTICO: Tentativa de criação de usuário sem workshop_id (Company ID). Invite ID:", invite_id);
+      return Response.json({ 
+        error: 'Erro de segurança: Identificador da empresa (Company ID) não encontrado no convite. Por favor, solicite um novo convite ao administrador.' 
+      }, { status: 400 });
+    }
     
     // 1. Atualizar Employee: vincular user_id e usar PROFILE ID SEGURO
     console.log("📝 [1/4] Atualizando Employee com user_id e profile_id seguro...");
