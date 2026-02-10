@@ -194,6 +194,32 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
     }
   });
   const [hasWorkshop, setHasWorkshop] = React.useState(false);
+  
+  // Controle de acesso Admin Global (SPO)
+  const [isGlobalContext, setIsGlobalContext] = React.useState(false);
+  const GLOBAL_ADMIN_ID = '69540822472c4a70b54d47ab';
+
+  React.useEffect(() => {
+    const checkGlobalContext = async () => {
+       if (!user) return;
+       // 1. Verificar ID direto (Owner Global)
+       if (user.id === GLOBAL_ADMIN_ID) {
+         setIsGlobalContext(true);
+         return;
+       }
+       // 2. Verificar colaboradores do Admin Global
+       try {
+         const employees = await base44.entities.Employee.filter({ user_id: user.id });
+         if (employees && employees.length > 0) {
+            const isGlobalEmployee = employees.some(emp => emp.owner_id === GLOBAL_ADMIN_ID);
+            if (isGlobalEmployee) setIsGlobalContext(true);
+         }
+       } catch (e) {
+         console.error("Erro ao verificar contexto global:", e);
+       }
+    }
+    checkGlobalContext();
+  }, [user?.id]);
 
   // Carregar workshop ao montar o componente
   React.useEffect(() => {
@@ -777,6 +803,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: Briefcase,
           description: 'Painel completo de gestão',
           highlight: true,
+          globalAdminOnly: true,
           aceleradorOnly: true,
           requiredPermission: 'acceleration.manage'
         },
@@ -786,6 +813,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: Receipt,
           description: 'Gestão e envio de contratos',
           highlight: true,
+          globalAdminOnly: true,
           aceleradorOnly: true,
           requiredPermission: 'acceleration.manage'
         },
@@ -794,6 +822,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('RelatoriosAceleracao'), 
           icon: FileText,
           description: 'Testes, diagnósticos e desempenho',
+          globalAdminOnly: true,
           aceleradorOnly: true,
           requiredPermission: 'acceleration.manage'
         }
@@ -810,7 +839,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: DollarSign,
           description: 'Métricas financeiras e pagamentos',
           highlight: true,
-
+          globalAdminOnly: true,
           requiredPermission: 'admin.system_config'
         },
         { 
@@ -819,7 +848,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: CreditCard,
           description: 'Integração de pagamentos',
           highlight: true,
-
+          globalAdminOnly: true,
           requiredPermission: 'admin.system_config'
         },
         { 
@@ -828,7 +857,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: Users,
           description: 'Central de gestão de usuários e oficinas',
           highlight: true,
-
+          globalAdminOnly: true,
           requiredPermission: 'admin.users'
         },
 
@@ -837,7 +866,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('AdminProdutividade'), 
           icon: Target,
           description: 'Métricas e KPIs globais',
-
+          globalAdminOnly: true,
           requiredPermission: 'admin.system_config'
         },
         { 
@@ -845,7 +874,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('AdminDesafios'), 
           icon: Trophy,
           description: 'Desafios nível Brasil',
-
+          globalAdminOnly: true,
           requiredPermission: 'admin.system_config'
         },
         { 
@@ -853,7 +882,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('GerenciarPlanos'), 
           icon: CreditCard,
           description: 'Controle de permissões e recursos por plano',
-
+          globalAdminOnly: true,
           requiredPermission: 'admin.system_config'
         },
         { 
@@ -862,7 +891,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: Calendar,
           description: 'Eventos anuais (imersões, treinamentos)',
           highlight: true,
-
+          globalAdminOnly: true,
           requiredPermission: 'admin.system_config'
         },
         { 
@@ -870,7 +899,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('CadastroUsuarioDireto'), 
           icon: UserPlus,
           description: 'Criar usuário direto no sistema',
-
+          globalAdminOnly: true,
           highlight: true,
           requiredPermission: 'admin.users'
         },
@@ -879,7 +908,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('TestUsuarios'), 
           icon: Bug,
           description: 'Diagnóstico de permissões e perfis',
-
+          globalAdminOnly: true,
           highlight: true,
           requiredPermission: 'admin.system_config'
         },
@@ -888,7 +917,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('AdminMensagens'), 
           icon: MessageCircle,
           description: 'Configurar mensagens de incentivo',
-
+          globalAdminOnly: true,
           requiredPermission: 'admin.system_config'
         },
         { 
@@ -896,7 +925,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('AdminNotificacoes'), 
           icon: Mail,
           description: 'Alertas de inatividade e resumos',
-
+          globalAdminOnly: true,
           requiredPermission: 'admin.system_config'
         },
 
@@ -905,7 +934,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('GerenciarToursVideos'), 
           icon: Video,
           description: 'Configure ajuda e tours guiados',
-
+          globalAdminOnly: true,
           requiredPermission: 'admin.system_config'
         },
         { 
@@ -913,7 +942,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('GerenciarProcessos'), 
           icon: FileText,
           description: 'Upload e gestão de MAPs',
-
+          globalAdminOnly: true,
           requiredPermission: 'admin.system_config'
         },
         { 
@@ -921,7 +950,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('GestaoRBAC'), 
           icon: Shield,
           description: 'Perfis e permissões centralizados',
-
+          globalAdminOnly: true,
           highlight: true,
           requiredPermission: 'admin.profiles'
         },
@@ -930,7 +959,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('ConfiguracaoPermissoesGranulares'), 
           icon: Settings,
           description: 'Configure por cargo e módulo',
-
+          globalAdminOnly: true,
           highlight: true,
           requiredPermission: 'admin.system_config'
         },
@@ -939,7 +968,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('LogsAuditoriaRBAC'), 
           icon: Activity,
           description: 'Histórico de alterações em permissões',
-
+          globalAdminOnly: true,
           requiredPermission: 'admin.audit'
         },
         { 
@@ -947,7 +976,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('UsuariosAdmin'), 
           icon: Users,
           description: 'Consultores e aceleradores do sistema',
-
+          globalAdminOnly: true,
           highlight: true,
           requiredPermission: 'admin.users'
         },
@@ -956,7 +985,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('MonitoramentoUsuarios'), 
           icon: Activity,
           description: 'Rastreamento e tempo no sistema',
-
+          globalAdminOnly: true,
           highlight: true,
           requiredPermission: 'admin.audit'
         },
@@ -965,7 +994,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('DiagnosticoPlano'), 
           icon: Bug,
           description: 'Verificar status do plano Base44',
-
+          globalAdminOnly: true,
           requiredPermission: 'admin.system_config'
         },
         { 
@@ -974,7 +1003,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: Network,
           description: 'Google Calendar & Meet',
           highlight: true,
-
+          globalAdminOnly: true,
           requiredPermission: 'admin.system_config'
         },
         { 
@@ -983,6 +1012,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           icon: Sparkles,
           description: 'Testar chave secundária',
           highlight: true,
+          globalAdminOnly: true,
           requiredPermission: 'diagnostics.ai_access'
         }
       ]
@@ -994,6 +1024,9 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
   };
 
   const canAccessItem = (item) => {
+    // Bloqueio Global: Se o item é exclusivo do Admin Global e o usuário não é, bloqueia
+    if (item.globalAdminOnly && !isGlobalContext) return false;
+
     if (item.public) return true;
     if (!user) return false;
 
