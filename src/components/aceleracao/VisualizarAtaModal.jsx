@@ -144,7 +144,7 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
             <div className="bg-red-600 text-white p-4 font-bold">PLANO</div>
             
             <div className="p-4">
-              {ataAtualizada.participantes?.map((p, i) => (
+              {Array.isArray(ataAtualizada.participantes) && ataAtualizada.participantes.map((p, i) => (
                 <p key={i} className="mb-1">• {p.name} - {p.role}</p>
               ))}
             </div>
@@ -206,7 +206,7 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
             </CardContent>
           </Card>
 
-          {ataAtualizada.processos_vinculados?.length > 0 && (
+          {Array.isArray(ataAtualizada.processos_vinculados) && ataAtualizada.processos_vinculados.length > 0 && (
             <Card>
               <CardContent className="pt-6">
                 <h3 className="font-bold text-lg mb-3">📋 PROCESSOS (MAPs) COMPARTILHADOS</h3>
@@ -228,7 +228,7 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
             </Card>
           )}
 
-          {ataAtualizada.videoaulas_vinculadas?.length > 0 && (
+          {Array.isArray(ataAtualizada.videoaulas_vinculadas) && ataAtualizada.videoaulas_vinculadas.length > 0 && (
             <Card>
               <CardContent className="pt-6">
                 <h3 className="font-bold text-lg mb-3">🎥 VIDEOAULAS RECOMENDADAS</h3>
@@ -250,7 +250,7 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
             </Card>
           )}
 
-          {ataAtualizada.midias_anexas?.length > 0 && (
+          {Array.isArray(ataAtualizada.midias_anexas) && ataAtualizada.midias_anexas.length > 0 && (
             <Card>
               <CardContent className="pt-6">
                 <h3 className="font-bold text-lg mb-3">📎 MÍDIAS E ANEXOS</h3>
