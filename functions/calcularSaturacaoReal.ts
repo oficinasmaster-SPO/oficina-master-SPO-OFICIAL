@@ -11,9 +11,22 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const { startDate, endDate } = await req.json();
 
-    // Buscar todos os consultores (users admin)
-    const consultores = await base44.asServiceRole.entities.User.list();
-    const admins = consultores.filter(u => u.role === 'admin');
+    // Buscar todos os usuários
+    const allUsers = await base44.asServiceRole.entities.User.list(null, 1000);
+    
+    // Buscar employees que são consultores/aceleradores
+    const employees = await base44.asServiceRole.entities.Employee.filter({
+        job_role: { $in: ['consultor', 'acelerador', 'socio', 'diretor'] }
+    }, null, 1000);
+    
+    const employeeUserIds = employees
+        .filter(e => e.user_id)
+        .map(e => e.user_id);
+        
+    // Filtrar usuários que são admin OU estão ligados a um employee consultor
+    const admins = allUsers.filter(u => 
+        u.role === 'admin' || employeeUserIds.includes(u.id)
+    );
 
     // Converter datas para filtro
     const dataInicio = new Date(startDate);

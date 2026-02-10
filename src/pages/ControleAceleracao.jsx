@@ -33,10 +33,19 @@ export default function ControleAceleracao() {
   const { data: consultores } = useQuery({
     queryKey: ['consultores-list'],
     queryFn: async () => {
-      const users = await base44.entities.User.list();
-      return users.filter(u => u.role === 'admin');
+      // Buscar usuários (limite aumentado para garantir que todos sejam trazidos)
+      const users = await base44.entities.User.list(null, 1000);
+      
+      // Buscar colaboradores com perfil de consultor
+      const employees = await base44.entities.Employee.filter({
+        job_role: { $in: ['consultor', 'acelerador', 'socio', 'diretor'] }
+      }, null, 1000);
+      
+      const employeeUserIds = employees.map(e => e.user_id).filter(Boolean);
+      
+      return users.filter(u => u.role === 'admin' || employeeUserIds.includes(u.id));
     },
-    enabled: user?.role === 'admin'
+    enabled: !!user
   });
 
   // Verificar permissão
