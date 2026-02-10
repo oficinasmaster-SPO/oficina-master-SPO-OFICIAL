@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useLocation } from "react-router-dom";
-import { UserPlus, Loader2, Sparkles, Heart, FilePenLine, Eye } from "lucide-react";
+import { UserPlus, Loader2, Sparkles, Heart, FilePenLine, Eye, UserCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -35,6 +35,23 @@ export default function Colaboradores() {
   // Hook de atribuição automática de perfis
   useProfileAutoAssignment(false, (employee, result) => {
     queryClient.invalidateQueries({ queryKey: ['employees', workshop?.id] });
+  });
+
+  const assignEmployeeToUserMutation = useMutation({
+    mutationFn: async ({ employeeId, email, workshopId }) => {
+      const response = await base44.functions.invoke('assignEmployeeToUser', { employeeId, email, workshopId });
+      if (!response.data.success) {
+        throw new Error(response.data.error || "Erro ao atribuir colaborador ao usuário.");
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.success("✅ Colaborador vinculado com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+    },
+    onError: (error) => {
+      toast.error(error.message || "Erro ao vincular colaborador.");
+    },
   });
   // const [showSettings, setShowSettings] = useState(false);
 
@@ -360,6 +377,35 @@ export default function Colaboradores() {
                           >
                             <UserPlus className="w-4 h-4" />
                           </Button>
+                          {(!employee.user_id && employee.email) && (
+                            <Button
+                                onClick={async (e) => {
+                                    e.stopPropagation();
+                                    const allowed = await checkPermission('employees', 'update', {
+                                        onDenied: () => toast.error('Sem permissão para vincular')
+                                    });
+                                    if (!allowed) return;
+
+                                    if (window.confirm(`Deseja vincular o colaborador ${employee.full_name} (${employee.email}) a um usuário existente com o mesmo e-mail?`)) {
+                                        assignEmployeeToUserMutation.mutate({ 
+                                            employeeId: employee.id, 
+                                            email: employee.email, 
+                                            workshopId: workshop.id 
+                                        });
+                                    }
+                                }}
+                                size="sm"
+                                className="bg-purple-600 hover:bg-purple-700"
+                                title="Atribuir Colaborador Existente"
+                                disabled={checking || assignEmployeeToUserMutation.isPending}
+                            >
+                                {assignEmployeeToUserMutation.isPending ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                    <UserCheck className="w-4 h-4" />
+                                )}
+                            </Button>
+                          )}
                           <Button
                             onClick={async () => {
                               const allowed = await checkPermission('employees', 'update', {
