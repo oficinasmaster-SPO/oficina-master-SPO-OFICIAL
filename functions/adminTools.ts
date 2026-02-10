@@ -4,7 +4,7 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json();
-    const { email, target_role, set_password } = body;
+    const { email, target_role } = body;
 
     if (!email) return Response.json({ error: 'Email required' }, { status: 400 });
 
@@ -22,10 +22,9 @@ Deno.serve(async (req) => {
     console.log(`User found: ${user.id} (${user.email}), current role: ${user.role}`);
 
     let roleUpdated = false;
-    let passwordUpdated = false;
     let logs = [];
 
-    // 1. Update Role via inviteUser (standard way to update role)
+    // 1. Update Role via inviteUser
     if (target_role) {
         try {
             console.log(`Attempting to promote user to ${target_role} via inviteUser...`);
@@ -38,39 +37,11 @@ Deno.serve(async (req) => {
         }
     }
 
-    // 2. Set Password via API (using pattern from createUserOnFirstAccess)
-    if (set_password) {
-        try {
-             const apiUrl = `https://base44.app/api/apps/${Deno.env.get('BASE44_APP_ID')}/users/${user.id}/password`;
-             const authResponse = await fetch(apiUrl, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'x-base44-key': Deno.env.get('BASE44_SERVICE_ROLE_KEY') // Assuming this env var exists as seen in other functions
-                },
-                body: JSON.stringify({ password: set_password })
-              });
-              
-              if (!authResponse.ok) {
-                const errorText = await authResponse.text();
-                throw new Error(`API Error ${authResponse.status}: ${errorText}`);
-              }
-
-              console.log(`Password set to ${set_password}`);
-              logs.push(`Password successfully updated`);
-              passwordUpdated = true;
-        } catch (e) {
-             console.error("Failed to update password via API:", e);
-             logs.push(`Failed to update password: ${e.message}`);
-        }
-    }
-
     return Response.json({ 
         success: true, 
         user_id: user.id, 
         email: user.email, 
         roleUpdated,
-        passwordUpdated,
         logs
     });
 
