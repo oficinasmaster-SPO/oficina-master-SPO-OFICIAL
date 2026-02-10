@@ -4,7 +4,7 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json();
-    const { email, target_role, set_password } = body;
+    const { email, target_role } = body;
 
     if (!email) return Response.json({ error: 'Email required' }, { status: 400 });
 
@@ -22,32 +22,26 @@ Deno.serve(async (req) => {
     console.log(`User found: ${user.id} (${user.email}), current role: ${user.role}`);
 
     let roleUpdated = false;
-    let passwordUpdated = false;
     let logs = [];
 
-    // Update Role via Entity Update
+    // Try to update role by re-inviting with new role
     if (target_role) {
         try {
-            await base44.asServiceRole.entities.User.update(user.id, { role: target_role });
-            console.log(`Role updated to ${target_role} via entity update`);
-            logs.push(`Role updated to ${target_role}`);
-            roleUpdated = true;
+            console.log(`Attempting to promote user to ${target_role} via inviteUser...`);
+            const inviteRes = await base44.asServiceRole.users.inviteUser(email, target_role);
+            console.log(`inviteUser result:`, inviteRes);
+            
+            // Check if role changed
+            const updatedUsers = await base44.asServiceRole.entities.User.filter({ email: email });
+            if (updatedUsers && updatedUsers[0] && updatedUsers[0].role === target_role) {
+                logs.push(`Role successfully updated to ${target_role}`);
+                roleUpdated = true;
+            } else {
+                logs.push(`Role update check failed. Current role: ${updatedUsers[0]?.role}`);
+            }
         } catch (e) {
-            console.error("Failed to update role via entity update:", e);
+            console.error("Failed to update role via inviteUser:", e);
             logs.push(`Failed to update role: ${e.message}`);
-        }
-    }
-
-    // Set Password via Entity Update (Experimental)
-    if (set_password) {
-        try {
-            await base44.asServiceRole.entities.User.update(user.id, { password: set_password });
-            console.log(`Password update attempted via entity update`);
-            logs.push(`Password update attempted via entity update`);
-            passwordUpdated = true;
-        } catch (e) {
-             console.error("Failed to update password via entity update:", e);
-             logs.push(`Failed to update password: ${e.message}`);
         }
     }
 
@@ -56,7 +50,6 @@ Deno.serve(async (req) => {
         user_id: user.id, 
         email: user.email, 
         roleUpdated,
-        passwordUpdated,
         logs
     });
 
