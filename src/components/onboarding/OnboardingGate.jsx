@@ -70,7 +70,8 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
 
       // Se não tem workshop E não é apenas colaborador, redirecionar para /cadastro
       if (!user.workshop_id) {
-        navigate(createPageUrl("Cadastro"), { replace: true });
+        // navigate(createPageUrl("Cadastro"), { replace: true });
+        console.log("Redirect to Cadastro disabled to fix refresh issue");
       }
 
       setIsChecking(false);
