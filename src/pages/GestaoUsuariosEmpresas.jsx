@@ -26,6 +26,8 @@ export default function GestaoUsuariosEmpresas() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingWorkshop, setEditingWorkshop] = useState(null);
+  const [isWorkshopDialogOpen, setIsWorkshopDialogOpen] = useState(false);
   const [resetPasswordDialog, setResetPasswordDialog] = useState({ open: false, password: "" });
   const [expandedRow, setExpandedRow] = useState(null);
   const [aiFormData, setAiFormData] = useState({ cargo: "", area: "" });
@@ -114,6 +116,39 @@ export default function GestaoUsuariosEmpresas() {
     },
     onError: () => toast.error("Erro ao gerar senha temporária")
   });
+
+  const updateWorkshopMutation = useMutation({
+    mutationFn: async ({ id, data }) => {
+      return await base44.entities.Workshop.update(id, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['workshops']);
+      toast.success("Oficina atualizada com sucesso!");
+      setIsWorkshopDialogOpen(false);
+      setEditingWorkshop(null);
+    },
+    onError: () => toast.error("Erro ao atualizar oficina")
+  });
+
+  const handleSaveWorkshop = async (e) => {
+    e.preventDefault();
+    if (!editingWorkshop) return;
+
+    const formData = new FormData(e.target);
+    const plano = formData.get('plano');
+    const status = formData.get('status');
+    const dataRenovacao = formData.get('dataRenovacao');
+
+    const data = {
+      planoAtual: plano,
+      status: status,
+      dataRenovacao: dataRenovacao ? new Date(dataRenovacao).toISOString() : null,
+      // Se mudou o plano, atualiza a data de assinatura para hoje
+      ...(plano !== editingWorkshop.planoAtual ? { dataAssinatura: new Date().toISOString() } : {})
+    };
+
+    updateWorkshopMutation.mutate({ id: editingWorkshop.id, data });
+  };
 
   const handleSaveUser = async (e) => {
     e.preventDefault();
@@ -477,6 +512,17 @@ export default function GestaoUsuariosEmpresas() {
                             <Button
                               size="sm"
                               variant="outline"
+                              onClick={() => {
+                                setEditingWorkshop(workshop.workshop);
+                                setIsWorkshopDialogOpen(true);
+                              }}
+                              title="Editar Plano/Empresa"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
                               onClick={() => setExpandedRow(expandedRow === workshop.id ? null : workshop.id)}
                               title="Ver Detalhes"
                             >
@@ -829,6 +875,63 @@ export default function GestaoUsuariosEmpresas() {
             </div>
           </Card>
         )}
+
+        <Dialog open={isWorkshopDialogOpen} onOpenChange={setIsWorkshopDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Editar Oficina: {editingWorkshop?.name}</DialogTitle>
+            </DialogHeader>
+            {editingWorkshop && (
+              <form onSubmit={handleSaveWorkshop} className="space-y-4">
+                <div>
+                  <Label>Plano Atual</Label>
+                  <Select name="plano" defaultValue={editingWorkshop.planoAtual || "FREE"}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {uniquePlans.map(plan => (
+                        <SelectItem key={plan} value={plan}>{plan}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label>Status</Label>
+                  <Select name="status" defaultValue={editingWorkshop.status || "ativo"}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ativo">Ativo</SelectItem>
+                      <SelectItem value="inativo">Inativo</SelectItem>
+                      <SelectItem value="acompanhamento">Acompanhamento</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label>Data de Renovação</Label>
+                  <Input 
+                    type="date" 
+                    name="dataRenovacao" 
+                    defaultValue={editingWorkshop.dataRenovacao ? format(new Date(editingWorkshop.dataRenovacao), 'yyyy-MM-dd') : ''} 
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2 pt-4">
+                  <Button type="button" variant="outline" onClick={() => setIsWorkshopDialogOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={updateWorkshopMutation.isPending}>
+                    {updateWorkshopMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar Alterações"}
+                  </Button>
+                </div>
+              </form>
+            )}
+          </DialogContent>
+        </Dialog>
 
         <Dialog open={resetPasswordDialog.open} onOpenChange={(open) => setResetPasswordDialog({ ...resetPasswordDialog, open })}>
           <DialogContent className="max-w-md">
