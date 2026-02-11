@@ -53,6 +53,10 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
         return;
       }
 
+      // ⚠️ Correção: Se estiver em /CadastroColaborador, não fazer nada (deixar o usuário lá se ele navegou intencionalmente)
+      // Mas se o objetivo é forçar Home no F5, o comportamento padrão do React Router é manter a rota.
+      // Se o usuário diz que "vai para CadastroColaborador", algo está redirecionando para lá.
+
       // Buscar workshops onde o usuário é owner
       const workshops = await base44.entities.Workshop.filter({ 
         owner_id: user.id 
