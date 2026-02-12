@@ -100,17 +100,13 @@ export default function RankingBrasil() {
         if (record.entity_type === 'workshop') {
             acc.projected_total = Math.max(acc.projected_total, record.projected_total || record.projected_revenue || 0);
             
-            // Se a oficina já tem valores consolidados maiores que zero, consideramos
-            // Mas cuidado para não somar oficina + funcionários se a oficina já for a soma
-            // Estratégia: Somar funcionários. Se o valor da oficina for maior que a soma dos funcionários, usamos o da oficina.
-            // Para isso, armazenamos separadamente ou usamos lógica de max no final.
-            // Aqui, vamos tratar o registro da oficina como um "base" ou "target", mas a soma real virá dos funcionários
-            // SE não houver funcionários, usamos o da oficina.
+            // Dados diretos do registro da oficina
             acc.workshop_record_revenue = record.revenue_total || record.achieved_total || 0;
             acc.workshop_record_kit = record.kit_master || 0;
             acc.workshop_record_tires = record.tire_sales || 0;
             
-            // Rentabilidade e Lucro geralmente estão no registro da oficina
+            // Dados de média (Rentabilidade, Lucro, TCMP2, Ticket Médio)
+            // Se existirem no registro da oficina, usamos para compor as médias
             if (record.profit_percentage) {
                 acc.profit_sum += record.profit_percentage;
                 acc.profit_count++;
@@ -118,6 +114,13 @@ export default function RankingBrasil() {
             if (record.rentability_percentage || (record.r70_i30?.r70)) {
                 acc.rentability_sum += (record.rentability_percentage || record.r70_i30?.r70 || 0);
                 acc.rentability_count++;
+            }
+            if (record.tcmp2 || record.actual_tcmp2_value) {
+                acc.tcmp2_sum += (record.tcmp2 || record.actual_tcmp2_value);
+                acc.tcmp2_count++;
+            }
+            if (record.average_ticket) {
+                acc.workshop_avg_ticket = record.average_ticket;
             }
         }
         
@@ -135,10 +138,7 @@ export default function RankingBrasil() {
             acc.leads_sold += (mkt.leads_sold || 0);
             acc.leads_showed_up += (mkt.leads_showed_up || 0);
 
-            if (record.tcmp2 || record.actual_tcmp2_value) {
-                acc.tcmp2_sum += (record.tcmp2 || record.actual_tcmp2_value);
-                acc.tcmp2_count++;
-            }
+            // Colaborador geralmente não tem TCMP2 ou Rentabilidade da oficina, mas pode ter produção
         }
     });
 
@@ -157,8 +157,13 @@ export default function RankingBrasil() {
         const avgProfit = aggregated.profit_count > 0 ? (aggregated.profit_sum / aggregated.profit_count) : 0;
         const avgRentability = aggregated.rentability_count > 0 ? (aggregated.rentability_sum / aggregated.rentability_count) : 0;
         
-        // Ticket Médio Calculado
-        const avgTicket = aggregated.customer_volume > 0 ? (finalRevenue / aggregated.customer_volume) : 0;
+        // Ticket Médio Calculado: Se tiver volume de clientes > 0, calcula. Senão usa o registrado na oficina se existir.
+        let avgTicket = 0;
+        if (aggregated.customer_volume > 0) {
+            avgTicket = finalRevenue / aggregated.customer_volume;
+        } else if (aggregated.workshop_avg_ticket) {
+            avgTicket = aggregated.workshop_avg_ticket;
+        }
 
         const consolidatedRecord = {
             ...aggregated,
