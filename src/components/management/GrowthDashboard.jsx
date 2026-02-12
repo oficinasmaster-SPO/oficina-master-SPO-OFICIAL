@@ -3,10 +3,8 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Save, RefreshCw, TrendingUp, Target, CheckCircle2, AlertCircle, Calendar } from "lucide-react";
+import { Loader2, RefreshCw, TrendingUp, Target, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency } from "@/components/utils/formatters";
 import { format, subMonths } from "date-fns";
@@ -15,7 +13,6 @@ import { ptBR } from "date-fns/locale";
 export default function GrowthDashboard({ workshop }) {
     const queryClient = useQueryClient();
     const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM'));
-    const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({});
 
     // Fetch Monthly History for selected month
@@ -37,12 +34,9 @@ export default function GrowthDashboard({ workshop }) {
         queryKey: ['diagnostics-aggregate', workshop?.id, selectedMonth],
         queryFn: async () => {
             if (!workshop?.id) return null;
-            // In a real app, we would use a backend aggregation function
-            // Here we fetch a batch and calculate client-side for demonstration
+            // Fetch batch and calculate client-side
             const res = await base44.entities.ServiceOrderDiagnostic.filter({
                 workshop_id: workshop.id,
-                // Filter by month would be ideal if API supported 'contains' or date range
-                // For now, assume we filter relevant ones or fetching recent
             }, '-created_date', 100);
             
             const monthDiagnostics = res.filter(d => d.reference_month === selectedMonth || d.created_date.startsWith(selectedMonth));
@@ -71,21 +65,6 @@ export default function GrowthDashboard({ workshop }) {
         },
         enabled: !!workshop?.id
     });
-
-    useEffect(() => {
-        if (isEditing) {
-            const newTargetTotal = (formData.target_revenue_parts || 0) + (formData.target_revenue_services || 0);
-            const newActualTotal = (formData.actual_revenue_parts || 0) + (formData.actual_revenue_services || 0);
-            
-            if (newTargetTotal !== formData.target_revenue_total || newActualTotal !== formData.actual_revenue_total) {
-                setFormData(prev => ({
-                    ...prev,
-                    target_revenue_total: newTargetTotal,
-                    actual_revenue_total: newActualTotal
-                }));
-            }
-        }
-    }, [formData.target_revenue_parts, formData.target_revenue_services, formData.actual_revenue_parts, formData.actual_revenue_services, isEditing]);
 
     useEffect(() => {
         if (monthlyData) {
@@ -144,36 +123,36 @@ export default function GrowthDashboard({ workshop }) {
     }, [monthlyData, workshop, selectedMonth]);
 
     const saveMutation = useMutation({
-        mutationFn: async (formData) => {
+        mutationFn: async (dataToSave) => {
             // Map form data back to entity schema
             const entityData = {
-                ...formData,
+                ...dataToSave,
                 entity_type: 'workshop',
                 entity_id: workshop.id,
                 reference_date: `${selectedMonth}-01`,
                 
                 // Map Targets
-                projected_total: formData.target_revenue_total,
-                target_revenue_parts: formData.target_revenue_parts,
-                target_revenue_services: formData.target_revenue_services,
-                target_customer_volume: formData.target_customer_volume,
-                target_average_ticket: formData.target_average_ticket,
-                target_r70_i30_score: formData.target_r70_i30_score,
-                target_tcmp2_value: formData.target_tcmp2_value,
-                target_sales_gps_score: formData.target_sales_gps_score,
-                target_kit_master_score: formData.target_kit_master_score,
+                projected_total: dataToSave.target_revenue_total,
+                target_revenue_parts: dataToSave.target_revenue_parts,
+                target_revenue_services: dataToSave.target_revenue_services,
+                target_customer_volume: dataToSave.target_customer_volume,
+                target_average_ticket: dataToSave.target_average_ticket,
+                target_r70_i30_score: dataToSave.target_r70_i30_score,
+                target_tcmp2_value: dataToSave.target_tcmp2_value,
+                target_sales_gps_score: dataToSave.target_sales_gps_score,
+                target_kit_master_score: dataToSave.target_kit_master_score,
 
                 // Map Actuals
-                revenue_total: formData.actual_revenue_total,
-                achieved_total: formData.actual_revenue_total, // redundancy for safety
-                revenue_parts: formData.actual_revenue_parts,
-                revenue_services: formData.actual_revenue_services,
-                customer_volume: formData.actual_customer_volume,
-                average_ticket: formData.actual_average_ticket,
-                tcmp2: formData.actual_tcmp2_value,
-                actual_r70_i30_score: formData.actual_r70_i30_score,
-                actual_sales_gps_score: formData.actual_sales_gps_score,
-                actual_kit_master_score: formData.actual_kit_master_score
+                revenue_total: dataToSave.actual_revenue_total,
+                achieved_total: dataToSave.actual_revenue_total, // redundancy for safety
+                revenue_parts: dataToSave.actual_revenue_parts,
+                revenue_services: dataToSave.actual_revenue_services,
+                customer_volume: dataToSave.actual_customer_volume,
+                average_ticket: dataToSave.actual_average_ticket,
+                tcmp2: dataToSave.actual_tcmp2_value,
+                actual_r70_i30_score: dataToSave.actual_r70_i30_score,
+                actual_sales_gps_score: dataToSave.actual_sales_gps_score,
+                actual_kit_master_score: dataToSave.actual_kit_master_score
             };
 
             if (monthlyData?.id) {
@@ -183,49 +162,47 @@ export default function GrowthDashboard({ workshop }) {
             }
         },
         onSuccess: async (data) => {
-            toast.success("Dados de crescimento salvos!");
+            toast.success("Resultados sincronizados com sucesso!");
             
             // Check for milestones
             if (data) {
-                const revenueTotal = Number(data.actual_revenue_parts || 0) + Number(data.actual_revenue_services || 0);
+                const revenueTotal = Number(data.revenue_total || 0);
                 try {
                     await base44.functions.invoke('checkMilestones', {
                         workshop_id: workshop.id,
                         revenue_total: revenueTotal,
-                        // units_count: workshop.units_count (se disponível no futuro)
                     });
                 } catch (e) {
                     console.error("Error checking milestones:", e);
                 }
             }
 
-            setIsEditing(false);
             refetch();
             queryClient.invalidateQueries(['monthly-history']);
             queryClient.invalidateQueries(['workshop-milestones']);
         },
-        onError: (err) => toast.error("Erro ao salvar: " + err.message)
+        onError: (err) => toast.error("Erro ao sincronizar: " + err.message)
     });
 
-    const handleAutoFill = () => {
+    const handleSync = () => {
         if (!diagnostics) {
-            toast.warning("Nenhum dado encontrado para preenchimento automático.");
+            toast.warning("Aguarde o carregamento dos dados do sistema.");
             return;
         }
         
-        setFormData(prev => ({
-            ...prev,
+        const syncData = {
+            ...formData,
+            // Force update actuals from System
             actual_revenue_parts: diagnostics.totalParts || 0,
             actual_revenue_services: diagnostics.totalServices || 0,
             actual_customer_volume: diagnostics.customerCount || 0,
             actual_average_ticket: diagnostics.avgTicket || 0,
-            actual_tcmp2_value: diagnostics.avgTcmp2 || 0
-            // Other metrics like GPS, Kit Master might need manual input or other sources
-        }));
-        toast.info("Dados preenchidos com base nos diagnósticos encontrados.");
-    };
+            actual_tcmp2_value: diagnostics.avgTcmp2 || 0,
+            actual_revenue_total: (diagnostics.totalParts || 0) + (diagnostics.totalServices || 0)
+        };
 
-    const calculateTotal = (parts, services) => (Number(parts) || 0) + (Number(services) || 0);
+        saveMutation.mutate(syncData);
+    };
     
     const renderMetricRow = (label, targetKey, actualKey, type = 'currency', suffix = '') => {
         const target = formData[targetKey] || 0;
@@ -246,31 +223,13 @@ export default function GrowthDashboard({ workshop }) {
                 </div>
                 <div className="flex flex-col gap-1">
                     <span className="text-xs text-gray-500">Meta</span>
-                    {isEditing ? (
-                        <Input 
-                            type="number" 
-                            value={formData[targetKey] || ''}
-                            onChange={(e) => setFormData({...formData, [targetKey]: parseFloat(e.target.value)})}
-                            className="h-8"
-                        />
-                    ) : (
-                        <span className="font-medium text-gray-900">{formatValue(target)}{suffix}</span>
-                    )}
+                    <span className="font-medium text-gray-900">{formatValue(target)}{suffix}</span>
                 </div>
                 <div className="flex flex-col gap-1">
                     <span className="text-xs text-gray-500">Realizado</span>
-                    {isEditing ? (
-                        <Input 
-                            type="number" 
-                            value={formData[actualKey] || ''}
-                            onChange={(e) => setFormData({...formData, [actualKey]: parseFloat(e.target.value)})}
-                            className="h-8 bg-blue-50"
-                        />
-                    ) : (
-                        <span className={`font-bold ${isGood ? 'text-green-600' : 'text-blue-600'}`}>
-                            {formatValue(actual)}{suffix}
-                        </span>
-                    )}
+                    <span className={`font-bold ${isGood ? 'text-green-600' : 'text-blue-600'}`}>
+                        {formatValue(actual)}{suffix}
+                    </span>
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -323,24 +282,19 @@ export default function GrowthDashboard({ workshop }) {
                         <CardDescription>Resultados acumulados de {format(new Date(selectedMonth + '-01'), 'MMMM yyyy', { locale: ptBR })}</CardDescription>
                     </div>
                     <div className="flex gap-2">
-                         {isEditing && (
-                            <Button variant="outline" size="sm" onClick={handleAutoFill} className="gap-2 text-blue-600 border-blue-200 hover:bg-blue-50">
-                                <RefreshCw className="w-4 h-4" />
-                                Puxar do Sistema
-                            </Button>
-                        )}
-                        {!isEditing ? (
-                            <Button onClick={() => setIsEditing(true)} variant="outline" className="border-green-200 hover:bg-green-50 text-green-700">
-                                Atualizar Resultados
-                            </Button>
-                        ) : (
-                            <>
-                                <Button variant="ghost" onClick={() => setIsEditing(false)}>Cancelar</Button>
-                                <Button onClick={() => saveMutation.mutate(formData)} className="bg-green-600 hover:bg-green-700 gap-2">
-                                    <Save className="w-4 h-4" /> Salvar
-                                </Button>
-                            </>
-                        )}
+                        <Button 
+                            onClick={handleSync} 
+                            disabled={saveMutation.isPending}
+                            variant="outline" 
+                            className="border-green-200 hover:bg-green-50 text-green-700"
+                        >
+                            {saveMutation.isPending ? (
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            ) : (
+                                <RefreshCw className="w-4 h-4 mr-2" />
+                            )}
+                            Atualizar Resultados
+                        </Button>
                     </div>
                 </CardHeader>
                 <CardContent>
@@ -351,8 +305,6 @@ export default function GrowthDashboard({ workshop }) {
                     ) : (
                         <div className="space-y-1">
                             {renderMetricRow("Faturamento (Peças + Serviços)", "target_revenue_total", "actual_revenue_total", "currency")} 
-                            {/* Note: We calculate totals for display but store parts/services separately. 
-                                For editing, let's edit parts and services directly or show them split */}
                             
                             {renderMetricRow("Faturamento Peças", "target_revenue_parts", "actual_revenue_parts", "currency")}
                             {renderMetricRow("Faturamento Serviços", "target_revenue_services", "actual_revenue_services", "currency")}
