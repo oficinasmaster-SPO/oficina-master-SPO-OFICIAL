@@ -129,11 +129,42 @@ export default function GrowthDashboard({ workshop }) {
     }, [monthlyData, workshop, selectedMonth]);
 
     const saveMutation = useMutation({
-        mutationFn: async (data) => {
+        mutationFn: async (formData) => {
+            // Map form data back to entity schema
+            const entityData = {
+                ...formData,
+                entity_type: 'workshop',
+                entity_id: workshop.id,
+                reference_date: `${selectedMonth}-01`,
+                
+                // Map Targets
+                projected_total: formData.target_revenue_total,
+                target_revenue_parts: formData.target_revenue_parts,
+                target_revenue_services: formData.target_revenue_services,
+                target_customer_volume: formData.target_customer_volume,
+                target_average_ticket: formData.target_average_ticket,
+                target_r70_i30_score: formData.target_r70_i30_score,
+                target_tcmp2_value: formData.target_tcmp2_value,
+                target_sales_gps_score: formData.target_sales_gps_score,
+                target_kit_master_score: formData.target_kit_master_score,
+
+                // Map Actuals
+                revenue_total: formData.actual_revenue_total,
+                achieved_total: formData.actual_revenue_total, // redundancy for safety
+                revenue_parts: formData.actual_revenue_parts,
+                revenue_services: formData.actual_revenue_services,
+                customer_volume: formData.actual_customer_volume,
+                average_ticket: formData.actual_average_ticket,
+                tcmp2: formData.actual_tcmp2_value,
+                actual_r70_i30_score: formData.actual_r70_i30_score,
+                actual_sales_gps_score: formData.actual_sales_gps_score,
+                actual_kit_master_score: formData.actual_kit_master_score
+            };
+
             if (monthlyData?.id) {
-                return await base44.entities.MonthlyGoalHistory.update(monthlyData.id, data);
+                return await base44.entities.MonthlyGoalHistory.update(monthlyData.id, entityData);
             } else {
-                return await base44.entities.MonthlyGoalHistory.create(data);
+                return await base44.entities.MonthlyGoalHistory.create(entityData);
             }
         },
         onSuccess: async (data) => {
