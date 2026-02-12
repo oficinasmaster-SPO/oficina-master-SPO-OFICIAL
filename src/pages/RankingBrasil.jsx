@@ -3,7 +3,8 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trophy, Medal, Award, TrendingUp, Users, Building2 } from "lucide-react";
+import { Trophy, Medal, Award, TrendingUp, Users, Building2, BarChart3, Target, DollarSign, Percent } from "lucide-react";
+import { formatCurrency, formatPercent } from "@/components/utils/formatters";
 import { Loader2 } from "lucide-react";
 
 export default function RankingBrasil() {
@@ -56,32 +57,50 @@ export default function RankingBrasil() {
   const getWorkshopRanking = () => {
     return workshops
       .map(workshop => {
-        const workshopEmployees = employees.filter(e => e.workshop_id === workshop.id && e.status === "ativo");
+        const bestMonth = workshop.best_month_history || {};
+        const employeeCount = workshop.employees_count || 1;
         
-        const totalProduction = workshopEmployees.reduce((sum, emp) => 
-          sum + (emp.production_parts || 0) + (emp.production_parts_sales || 0) + (emp.production_services || 0), 0
-        );
-
-        const avgProductivity = workshopEmployees.length > 0
-          ? workshopEmployees.reduce((sum, emp) => {
-              const cost = (emp.salary || 0) + (emp.commission || 0) + (emp.bonus || 0);
-              const prod = (emp.production_parts || 0) + (emp.production_parts_sales || 0) + (emp.production_services || 0);
-              return sum + (cost > 0 ? (prod / cost) * 100 : 0);
-            }, 0) / workshopEmployees.length
+        // Dados do Melhor Mês
+        const revenue_total = bestMonth.revenue_total || 0;
+        const average_ticket = bestMonth.average_ticket || 0;
+        const profit_percentage = bestMonth.profit_percentage || 0;
+        const rentability = bestMonth.rentability_percentage || 0; // Rentabilidade
+        const tcmp2 = bestMonth.tcmp2 || 0;
+        const kit_master = bestMonth.kit_master || 0;
+        
+        // Calculados / Mapeados
+        const revenue_per_tech = employeeCount > 0 ? revenue_total / employeeCount : 0;
+        
+        // Mock ou dados não disponíveis no schema atual
+        const conversion_rate = bestMonth.marketing?.leads_sold && bestMonth.marketing?.leads_showed_up 
+          ? (bestMonth.marketing.leads_sold / bestMonth.marketing.leads_showed_up) * 100 
           : 0;
+          
+        const goal_achievement = bestMonth.monthly_goals?.projected_revenue 
+          ? (revenue_total / bestMonth.monthly_goals.projected_revenue) * 100 
+          : 100;
 
         return {
           id: workshop.id,
           name: workshop.name,
           city: workshop.city,
           state: workshop.state,
-          employeeCount: workshopEmployees.length,
-          totalProduction,
-          avgProductivity
+          employeeCount,
+          
+          // Métricas Solicitadas
+          revenue_total,
+          average_ticket,
+          rentability, // R70/I30 contexto
+          profit_percentage,
+          revenue_per_tech,
+          tcmp2,
+          conversion_rate,
+          goal_achievement,
+          kit_master,
+          tire_sales: 0 // Dado não disponível no schema atual
         };
       })
-      .filter(w => w.employeeCount > 0)
-      .sort((a, b) => b.avgProductivity - a.avgProductivity);
+      .sort((a, b) => b.revenue_total - a.revenue_total); // Ordenar por faturamento do melhor mês
   };
 
   const employeeRanking = getEmployeeRanking();
@@ -194,7 +213,7 @@ export default function RankingBrasil() {
                 </div>
                 <div>
                   <CardTitle>Top Oficinas</CardTitle>
-                  <CardDescription>Por média de produtividade</CardDescription>
+                  <CardDescription>Por Faturamento Recorde</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -203,34 +222,66 @@ export default function RankingBrasil() {
                 {workshopRanking.slice(0, 50).map((workshop, index) => (
                   <div 
                     key={workshop.id} 
-                    className={`flex items-center justify-between p-4 rounded-lg border-2 ${
+                    className={`flex flex-col p-4 rounded-lg border-2 ${
                       index === 0 ? 'bg-yellow-50 border-yellow-300' :
                       index === 1 ? 'bg-gray-50 border-gray-300' :
                       index === 2 ? 'bg-orange-50 border-orange-300' :
                       'bg-white border-gray-200'
                     }`}
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 flex justify-center">
-                        {getMedalIcon(index)}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 flex justify-center">
+                          {getMedalIcon(index)}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900">{workshop.name}</p>
+                          <p className="text-xs text-gray-600">
+                            {workshop.city}/{workshop.state} • {workshop.employeeCount} colab.
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-semibold text-gray-900">{workshop.name}</p>
-                        <p className="text-xs text-gray-600">
-                          {workshop.city}/{workshop.state}
+                      <div className="text-right">
+                        <p className="text-lg font-bold text-green-700">
+                          {formatCurrency(workshop.revenue_total)}
                         </p>
-                        <p className="text-xs text-gray-500">
-                          {workshop.employeeCount} colaboradores
-                        </p>
+                        <p className="text-xs text-gray-500">Faturamento Recorde</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-xl font-bold text-green-600">
-                        {workshop.avgProductivity.toFixed(0)}%
-                      </p>
-                      <p className="text-xs text-gray-600">
-                        R$ {workshop.totalProduction.toFixed(0)}
-                      </p>
+
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs border-t pt-2 border-gray-200/50">
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Ticket Médio:</span>
+                        <span className="font-medium">{formatCurrency(workshop.average_ticket)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Lucro Médio:</span>
+                        <span className="font-medium text-green-600">{formatPercent(workshop.profit_percentage)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Rentabilidade:</span>
+                        <span className="font-medium">{formatPercent(workshop.rentability)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Fat./Técnico:</span>
+                        <span className="font-medium">{formatCurrency(workshop.revenue_per_tech)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">TCMP² Médio:</span>
+                        <span className="font-medium">{formatCurrency(workshop.tcmp2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Conversão:</span>
+                        <span className="font-medium">{formatPercent(workshop.conversion_rate)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Meta Atingida:</span>
+                        <span className="font-medium text-blue-600">{formatPercent(workshop.goal_achievement)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Kit Master:</span>
+                        <span className="font-medium">{workshop.kit_master}</span>
+                      </div>
                     </div>
                   </div>
                 ))}
