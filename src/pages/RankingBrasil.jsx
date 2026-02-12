@@ -168,6 +168,36 @@ export default function RankingBrasil() {
              consolidated.revenue_total = aggregated.revenue_total;
         }
 
+        // --- FALLBACK FINAL PARA FATURAMENTO ZERADO ---
+        // Se após tudo o faturamento ainda for zero, tentamos estimar pela faixa de faturamento cadastrada
+        if (!consolidated.revenue_total || consolidated.revenue_total === 0) {
+            const revenueMap = {
+                "0_20k": 10000,
+                "20k_40k": 30000,
+                "40k_60k": 50000,
+                "60k_80k": 70000,
+                "80k_100k": 90000,
+                "100k_130k": 115000,
+                "130k_160k": 145000,
+                "160k_190k": 175000,
+                "190k_200k": 195000,
+                "200k_250k": 225000,
+                "250k_300k": 275000,
+                "300k_350k": 325000,
+                "350k_400k": 375000,
+                "400k_450k": 425000,
+                "450k_500k": 475000,
+                "500k_600k": 550000,
+                "600k_700k": 650000,
+                "700k_800k": 750000,
+                "800k_900k": 850000,
+                "900k_1m": 950000,
+                "acima_1m": 1000000
+            };
+            // Usa o valor médio da faixa ou 0 se não tiver faixa
+            consolidated.revenue_total = revenueMap[workshop.monthly_revenue] || 0;
+        }
+
         const employeeCount = workshop.employees_count || 1;
         
         // Extração Final
