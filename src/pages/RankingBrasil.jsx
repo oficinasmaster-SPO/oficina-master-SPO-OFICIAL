@@ -262,46 +262,52 @@ export default function RankingBrasil() {
             return result;
         };
 
-        // Ordem de merge: Metas -> Cadastro -> Histórico -> Agregado (Apenas Revenue) -> Diagnóstico
-        // Agregado entra apenas para Revenue se for maior
-        const consolidated = mergeData(currentGoals, registeredBest, historyRecord);
+        // NOVA LÓGICA: Seleção baseada no Maior Faturamento (Recorde)
+        // Coletamos todas as fontes possíveis
+        const sources = [
+            { name: 'diagnostic', data: normalize(diagnosticBest) },
+            { name: 'history', data: normalize(historyRecord) },
+            { name: 'cadastro', data: normalize(registeredBest) },
+            { name: 'metas', data: normalize(currentGoals) },
+            { name: 'agregado', data: normalize(aggregated) }
+        ];
+
+        // Ordenamos decrescente pelo faturamento total para encontrar o "Recorde"
+        sources.sort((a, b) => b.data.revenue_total - a.data.revenue_total);
+
+        // O primeiro da lista é nossa fonte principal (Winner)
+        const winner = sources[0].data;
         
-        // Se diagnóstico tiver faturamento maior, usa ele para faturamento
-        if (diagnosticBest.revenue_total > (consolidated.revenue_total || 0)) {
-            consolidated.revenue_total = diagnosticBest.revenue_total;
-        }
-        // Se agregado de colaboradores for maior que o consolidado até agora, usa ele (garantia mínima)
-        if (aggregated.revenue_total > (consolidated.revenue_total || 0)) {
-             consolidated.revenue_total = aggregated.revenue_total;
-        }
+        // Criamos o objeto consolidado inicial com os dados do vencedor
+        const consolidated = { ...winner };
+
+        // FALLBACK INTELIGENTE:
+        // Se o vencedor tiver campos zerados (ex: tem faturamento mas não tem lucro),
+        // buscamos o melhor valor disponível nas outras fontes para preencher os buracos.
+        // Isso garante que o dashboard fique o mais completo possível.
+        const fieldsToFill = ['average_ticket', 'tcmp2', 'kit_master', 'profit_percentage', 'rentability', 'tire_sales', 'projected'];
+        
+        fieldsToFill.forEach(field => {
+            if (!consolidated[field] || consolidated[field] === 0) {
+                // Procura na lista de fontes alguém que tenha esse dado
+                const backupSource = sources.find(s => s.data[field] > 0);
+                if (backupSource) {
+                    consolidated[field] = backupSource.data[field];
+                }
+            }
+        });
 
         // --- FALLBACK FINAL PARA FATURAMENTO ZERADO ---
-        // Se após tudo o faturamento ainda for zero, tentamos estimar pela faixa de faturamento cadastrada
+        // Se após tudo o faturamento ainda for zero, usamos a faixa de faturamento cadastrada
         if (!consolidated.revenue_total || consolidated.revenue_total === 0) {
             const revenueMap = {
-                "0_20k": 10000,
-                "20k_40k": 30000,
-                "40k_60k": 50000,
-                "60k_80k": 70000,
-                "80k_100k": 90000,
-                "100k_130k": 115000,
-                "130k_160k": 145000,
-                "160k_190k": 175000,
-                "190k_200k": 195000,
-                "200k_250k": 225000,
-                "250k_300k": 275000,
-                "300k_350k": 325000,
-                "350k_400k": 375000,
-                "400k_450k": 425000,
-                "450k_500k": 475000,
-                "500k_600k": 550000,
-                "600k_700k": 650000,
-                "700k_800k": 750000,
-                "800k_900k": 850000,
-                "900k_1m": 950000,
+                "0_20k": 10000, "20k_40k": 30000, "40k_60k": 50000, "60k_80k": 70000,
+                "80k_100k": 90000, "100k_130k": 115000, "130k_160k": 145000, "160k_190k": 175000,
+                "190k_200k": 195000, "200k_250k": 225000, "250k_300k": 275000, "300k_350k": 325000,
+                "350k_400k": 375000, "400k_450k": 425000, "450k_500k": 475000, "500k_600k": 550000,
+                "600k_700k": 650000, "700k_800k": 750000, "800k_900k": 850000, "900k_1m": 950000,
                 "acima_1m": 1000000
             };
-            // Usa o valor médio da faixa ou 0 se não tiver faixa
             consolidated.revenue_total = revenueMap[workshop.monthly_revenue] || 0;
         }
 
