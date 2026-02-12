@@ -108,52 +108,85 @@ export default function RankingBrasil() {
 
     return workshops
       .map(workshop => {
-        const hasData = (data) => data && ((data.revenue_total > 0) || (data.actual_revenue_achieved > 0));
+        // Estratégia de Consolidação de Dados (Merge de Fontes)
+        // Prioridade (da menor para maior): Metas < Cadastro (Best Month) < Histórico < Diagnósticos
+        // Isso garante que dados parciais sejam preenchidos pelas fontes de menor prioridade se faltarem na principal
+        
+        const currentGoals = workshop.monthly_goals || {};
+        const registeredBest = workshop.best_month_history || {};
+        const historyRecord = bestHistoryByWorkshop[workshop.id] || {};
+        const diagnosticBest = bestDiagnosticByWorkshop[workshop.id] || {};
+        const aggregated = employeeAggregation[workshop.id] || {};
 
-        // Fontes de dados
-        const registeredBest = workshop.best_month_history;
-        const historyRecord = bestHistoryByWorkshop[workshop.id];
-        const diagnosticBest = bestDiagnosticByWorkshop[workshop.id];
-        const currentGoals = workshop.monthly_goals;
-        const aggregated = employeeAggregation[workshop.id];
+        // Normalização de campos para um objeto comum antes do merge
+        const normalize = (data) => ({
+            revenue_total: data.revenue_total || data.actual_revenue_achieved || data.revenue || 0,
+            average_ticket: data.average_ticket || 0,
+            tcmp2: data.tcmp2 || data.actual_tcmp2_value || data.target_tcmp2_value || 0,
+            kit_master: data.kit_master || data.actual_kit_master_score || data.target_kit_master_score || 0,
+            profit_percentage: data.profit_percentage || 0,
+            rentability: data.rentability_percentage || (typeof data.r70_i30 === 'object' ? data.r70_i30.r70 : 0) || 0,
+            tire_sales: data.tire_sales || data.revenue_tires || data.vendas_pneus || 0,
+            marketing: data.marketing_data || data.marketing || {},
+            projected: data.projected_revenue || data.projected_total || data.target_revenue_total || 0
+        });
 
-        // Seleção da melhor fonte (Prioridade: Diagnóstico Real > Histórico > Cadastro > Metas > Agregado)
-        let sourceData = {};
-        if (hasData(diagnosticBest)) sourceData = diagnosticBest;
-        else if (hasData(historyRecord)) sourceData = historyRecord;
-        else if (hasData(registeredBest)) sourceData = registeredBest;
-        else if (hasData(currentGoals)) sourceData = currentGoals;
-        else if (hasData(aggregated)) sourceData = aggregated;
+        // Mesclando fontes (último objeto sobrescreve campos anteriores se tiver valor > 0)
+        // Usamos uma lógica customizada de merge: só sobrescreve se o novo valor for válido (truthy/positivo)
+        const mergeData = (...sources) => {
+            const result = {};
+            sources.forEach(src => {
+                const norm = normalize(src);
+                Object.keys(norm).forEach(key => {
+                    // Sobrescreve se o valor no source atual for válido/existente
+                    // Para números, considera > 0. Para objetos, considera não vazio.
+                    const val = norm[key];
+                    const isNumber = typeof val === 'number';
+                    const isObject = typeof val === 'object' && val !== null;
+                    
+                    if ((isNumber && val > 0) || (isObject && Object.keys(val).length > 0)) {
+                        result[key] = val;
+                    } else if (result[key] === undefined) {
+                         // Se ainda não tem valor, aceita mesmo que seja 0 ou vazio, para inicializar
+                        result[key] = val;
+                    }
+                });
+            });
+            return result;
+        };
+
+        // Ordem de merge: Metas -> Cadastro -> Histórico -> Agregado (Apenas Revenue) -> Diagnóstico
+        // Agregado entra apenas para Revenue se for maior
+        const consolidated = mergeData(currentGoals, registeredBest, historyRecord);
+        
+        // Se diagnóstico tiver faturamento maior, usa ele para faturamento
+        if (diagnosticBest.revenue_total > (consolidated.revenue_total || 0)) {
+            consolidated.revenue_total = diagnosticBest.revenue_total;
+        }
+        // Se agregado de colaboradores for maior que o consolidado até agora, usa ele (garantia mínima)
+        if (aggregated.revenue_total > (consolidated.revenue_total || 0)) {
+             consolidated.revenue_total = aggregated.revenue_total;
+        }
 
         const employeeCount = workshop.employees_count || 1;
         
-        // Extração de dados
-        const revenue_total = sourceData.revenue_total || sourceData.actual_revenue_achieved || 0;
-        
-        // Dados complementares (tentar buscar do histórico se a fonte principal não tiver)
-        const secondarySource = historyRecord || registeredBest || currentGoals || {};
-        
-        const average_ticket = sourceData.average_ticket || secondarySource.average_ticket || 0;
-        const tcmp2 = sourceData.tcmp2 || sourceData.actual_tcmp2_value || secondarySource.tcmp2 || 0;
-        const kit_master = sourceData.kit_master || sourceData.actual_kit_master_score || secondarySource.kit_master || 0;
-        const profit_percentage = sourceData.profit_percentage || secondarySource.profit_percentage || 0;
-        
-        let rentability = sourceData.rentability_percentage || 0;
-        if (!rentability && sourceData.r70_i30) {
-           rentability = typeof sourceData.r70_i30 === 'object' ? (sourceData.r70_i30.r70 || 0) : 0;
-        }
-        if (!rentability) rentability = secondarySource.rentability_percentage || (secondarySource.r70_i30?.r70 || 0);
-
-        const tire_sales = sourceData.tire_sales || sourceData.revenue_tires || secondarySource.tire_sales || 0;
+        // Extração Final
+        const revenue_total = consolidated.revenue_total || 0;
+        const average_ticket = consolidated.average_ticket || 0;
+        const tcmp2 = consolidated.tcmp2 || 0;
+        const kit_master = consolidated.kit_master || 0;
+        const profit_percentage = consolidated.profit_percentage || 0;
+        const rentability = consolidated.rentability || 0;
+        const tire_sales = consolidated.tire_sales || 0;
 
         const revenue_per_tech = employeeCount > 0 ? revenue_total / employeeCount : 0;
         
-        const marketing = sourceData.marketing_data || sourceData.marketing || secondarySource.marketing_data || {};
+        const marketing = consolidated.marketing || {};
         const leads_sold = marketing.leads_sold || 0;
         const leads_showed_up = marketing.leads_showed_up || 0;
         const conversion_rate = (leads_sold > 0 && leads_showed_up > 0) ? (leads_sold / leads_showed_up) * 100 : 0;
           
-        const projected = sourceData.projected_revenue || sourceData.projected_total || secondarySource.monthly_goals?.projected_revenue || 0;
+        const projected = consolidated.projected || 0;
         const goal_achievement = projected > 0 ? (revenue_total / projected) * 100 : 0;
 
         return {
