@@ -12,20 +12,25 @@ export default function RankingBrasil() {
 
   const { data: employees = [], isLoading: loadingEmployees } = useQuery({
     queryKey: ['employees-all'],
-    queryFn: () => base44.entities.Employee.list(null, 200)
+    queryFn: () => base44.entities.Employee.list(null, 1000)
   });
 
   const { data: workshops = [], isLoading: loadingWorkshops } = useQuery({
     queryKey: ['workshops-all'],
-    queryFn: () => base44.entities.Workshop.list(null, 200)
+    queryFn: () => base44.entities.Workshop.list(null, 1000)
   });
 
   const { data: history = [], isLoading: loadingHistory } = useQuery({
     queryKey: ['history-all'],
-    queryFn: () => base44.entities.MonthlyGoalHistory.filter({ entity_type: 'workshop' }, '-revenue_total', 300)
+    queryFn: () => base44.entities.MonthlyGoalHistory.filter({ entity_type: 'workshop' }, '-revenue_total', 1000)
   });
 
-  const isLoading = loadingEmployees || loadingWorkshops || loadingHistory;
+  const { data: diagnostics = [], isLoading: loadingDiagnostics } = useQuery({
+    queryKey: ['diagnostics-all'],
+    queryFn: () => base44.entities.ProductivityDiagnostic.list(null, 2000)
+  });
+
+  const isLoading = loadingEmployees || loadingWorkshops || loadingHistory || loadingDiagnostics;
 
   const getEmployeeRanking = () => {
     let filtered = employees.filter(e => e.status === "ativo");
@@ -62,72 +67,93 @@ export default function RankingBrasil() {
   const getWorkshopRanking = () => {
     // 1. Processar histórico para encontrar o melhor mês de cada oficina
     const bestHistoryByWorkshop = {};
-    
-    // Ordena histórico por faturamento decrescente para pegar o melhor primeiro
     const sortedHistory = [...history].sort((a, b) => (b.revenue_total || 0) - (a.revenue_total || 0));
-    
     sortedHistory.forEach(record => {
-      // Se ainda não temos um registro para esta oficina, este é o melhor (pois está ordenado)
       if (record.workshop_id && !bestHistoryByWorkshop[record.workshop_id]) {
         bestHistoryByWorkshop[record.workshop_id] = record;
       }
     });
 
+    // 2. Processar diagnósticos para encontrar faturamento recorde calculado
+    const bestDiagnosticByWorkshop = {};
+    const workshopMonthlyRevenue = {};
+    diagnostics.forEach(diag => {
+        if (!diag.workshop_id) return;
+        const key = `${diag.workshop_id}-${diag.period_month}`;
+        if (!workshopMonthlyRevenue[key]) workshopMonthlyRevenue[key] = 0;
+        
+        const prod = diag.productivity_data || {};
+        const total = (prod.services_value || 0) + (prod.parts_value || 0) + (prod.sales_value || 0);
+        workshopMonthlyRevenue[key] += total;
+    });
+    
+    // Encontrar o maior faturamento mensal por oficina
+    Object.keys(workshopMonthlyRevenue).forEach(key => {
+        const [wid, month] = key.split('-');
+        const revenue = workshopMonthlyRevenue[key];
+        if (!bestDiagnosticByWorkshop[wid] || revenue > bestDiagnosticByWorkshop[wid].revenue_total) {
+            bestDiagnosticByWorkshop[wid] = { revenue_total: revenue };
+        }
+    });
+
+    // 3. Consolidar dados de produção dos colaboradores (acumulado)
+    const employeeAggregation = employees.reduce((acc, emp) => {
+        if (emp.status !== 'ativo' || !emp.workshop_id) return acc;
+        if (!acc[emp.workshop_id]) acc[emp.workshop_id] = { revenue_total: 0 };
+        
+        const prod = (emp.production_parts || 0) + (emp.production_parts_sales || 0) + (emp.production_services || 0);
+        acc[emp.workshop_id].revenue_total += prod;
+        return acc;
+    }, {});
+
     return workshops
       .map(workshop => {
-        // Função para verificar se o objeto tem dados relevantes
-        const hasData = (data) => {
-          if (!data) return false;
-          return (data.revenue_total > 0) || (data.actual_revenue_achieved > 0) || (data.average_ticket > 0);
-        };
+        const hasData = (data) => data && ((data.revenue_total > 0) || (data.actual_revenue_achieved > 0));
 
-        // Prioridade inteligente: Pega o primeiro que tiver dados reais
+        // Fontes de dados
         const registeredBest = workshop.best_month_history;
         const historyRecord = bestHistoryByWorkshop[workshop.id];
+        const diagnosticBest = bestDiagnosticByWorkshop[workshop.id];
         const currentGoals = workshop.monthly_goals;
+        const aggregated = employeeAggregation[workshop.id];
 
+        // Seleção da melhor fonte (Prioridade: Diagnóstico Real > Histórico > Cadastro > Metas > Agregado)
         let sourceData = {};
-        if (hasData(registeredBest)) {
-          sourceData = registeredBest;
-        } else if (hasData(historyRecord)) {
-          sourceData = historyRecord;
-        } else if (hasData(currentGoals)) {
-          sourceData = currentGoals;
-        }
+        if (hasData(diagnosticBest)) sourceData = diagnosticBest;
+        else if (hasData(historyRecord)) sourceData = historyRecord;
+        else if (hasData(registeredBest)) sourceData = registeredBest;
+        else if (hasData(currentGoals)) sourceData = currentGoals;
+        else if (hasData(aggregated)) sourceData = aggregated;
 
         const employeeCount = workshop.employees_count || 1;
         
-        // Extração de dados com suporte a múltiplos formatos de campo
+        // Extração de dados
         const revenue_total = sourceData.revenue_total || sourceData.actual_revenue_achieved || 0;
-        const average_ticket = sourceData.average_ticket || 0;
-        const tcmp2 = sourceData.tcmp2 || sourceData.actual_tcmp2_value || 0;
-        const kit_master = sourceData.kit_master || sourceData.actual_kit_master_score || 0;
         
-        // Métricas Específicas
-        const profit_percentage = sourceData.profit_percentage || 0; 
+        // Dados complementares (tentar buscar do histórico se a fonte principal não tiver)
+        const secondarySource = historyRecord || registeredBest || currentGoals || {};
         
-        // Rentabilidade (suporta formato direto ou objeto r70_i30)
+        const average_ticket = sourceData.average_ticket || secondarySource.average_ticket || 0;
+        const tcmp2 = sourceData.tcmp2 || sourceData.actual_tcmp2_value || secondarySource.tcmp2 || 0;
+        const kit_master = sourceData.kit_master || sourceData.actual_kit_master_score || secondarySource.kit_master || 0;
+        const profit_percentage = sourceData.profit_percentage || secondarySource.profit_percentage || 0;
+        
         let rentability = sourceData.rentability_percentage || 0;
         if (!rentability && sourceData.r70_i30) {
            rentability = typeof sourceData.r70_i30 === 'object' ? (sourceData.r70_i30.r70 || 0) : 0;
         }
-        
-        // Vendas Pneus
-        const tire_sales = sourceData.tire_sales || sourceData.revenue_tires || 0;
+        if (!rentability) rentability = secondarySource.rentability_percentage || (secondarySource.r70_i30?.r70 || 0);
 
-        // Cálculos derivados
+        const tire_sales = sourceData.tire_sales || sourceData.revenue_tires || secondarySource.tire_sales || 0;
+
         const revenue_per_tech = employeeCount > 0 ? revenue_total / employeeCount : 0;
         
-        // Taxa de Conversão (suporta marketing_data do histórico ou marketing do cadastro)
-        const marketing = sourceData.marketing_data || sourceData.marketing || {};
+        const marketing = sourceData.marketing_data || sourceData.marketing || secondarySource.marketing_data || {};
         const leads_sold = marketing.leads_sold || 0;
         const leads_showed_up = marketing.leads_showed_up || 0;
-        const conversion_rate = (leads_sold > 0 && leads_showed_up > 0) 
-          ? (leads_sold / leads_showed_up) * 100 
-          : 0;
+        const conversion_rate = (leads_sold > 0 && leads_showed_up > 0) ? (leads_sold / leads_showed_up) * 100 : 0;
           
-        // Atingimento de Metas
-        const projected = sourceData.monthly_goals?.projected_revenue || sourceData.projected_revenue || sourceData.projected_total || 0;
+        const projected = sourceData.projected_revenue || sourceData.projected_total || secondarySource.monthly_goals?.projected_revenue || 0;
         const goal_achievement = projected > 0 ? (revenue_total / projected) * 100 : 0;
 
         return {
@@ -136,7 +162,6 @@ export default function RankingBrasil() {
           city: workshop.city,
           state: workshop.state,
           employeeCount,
-          
           revenue_total,
           average_ticket,
           rentability,
