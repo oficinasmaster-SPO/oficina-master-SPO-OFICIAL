@@ -75,39 +75,59 @@ export default function RankingBrasil() {
 
     return workshops
       .map(workshop => {
-        // Prioridade: 1. Best Month no Cadastro (Já consolidado pelo sistema) | 2. Histórico | 3. Metas Atuais
+        // Função para verificar se o objeto tem dados relevantes
+        const hasData = (data) => {
+          if (!data) return false;
+          return (data.revenue_total > 0) || (data.actual_revenue_achieved > 0) || (data.average_ticket > 0);
+        };
+
+        // Prioridade inteligente: Pega o primeiro que tiver dados reais
         const registeredBest = workshop.best_month_history;
         const historyRecord = bestHistoryByWorkshop[workshop.id];
         const currentGoals = workshop.monthly_goals;
 
-        // Fonte de dados consolidada - Priorizando o registro do Melhor Mês da Oficina
-        const sourceData = registeredBest || historyRecord || currentGoals || {};
+        let sourceData = {};
+        if (hasData(registeredBest)) {
+          sourceData = registeredBest;
+        } else if (hasData(historyRecord)) {
+          sourceData = historyRecord;
+        } else if (hasData(currentGoals)) {
+          sourceData = currentGoals;
+        }
+
         const employeeCount = workshop.employees_count || 1;
         
-        // Extração de dados
+        // Extração de dados com suporte a múltiplos formatos de campo
         const revenue_total = sourceData.revenue_total || sourceData.actual_revenue_achieved || 0;
         const average_ticket = sourceData.average_ticket || 0;
-        const tcmp2 = sourceData.tcmp2 || 0;
-        const kit_master = sourceData.kit_master || 0;
+        const tcmp2 = sourceData.tcmp2 || sourceData.actual_tcmp2_value || 0;
+        const kit_master = sourceData.kit_master || sourceData.actual_kit_master_score || 0;
         
-        // Métricas Específicas (Prioritariamente do Best Month History)
+        // Métricas Específicas
         const profit_percentage = sourceData.profit_percentage || 0; 
-        const rentability = sourceData.rentability_percentage || sourceData.r70_i30?.r70 || 0; 
         
-        // Vendas Pneus (Tentativa de buscar em campos específicos ou customizados se houver)
+        // Rentabilidade (suporta formato direto ou objeto r70_i30)
+        let rentability = sourceData.rentability_percentage || 0;
+        if (!rentability && sourceData.r70_i30) {
+           rentability = typeof sourceData.r70_i30 === 'object' ? (sourceData.r70_i30.r70 || 0) : 0;
+        }
+        
+        // Vendas Pneus
         const tire_sales = sourceData.tire_sales || sourceData.revenue_tires || 0;
 
         // Cálculos derivados
         const revenue_per_tech = employeeCount > 0 ? revenue_total / employeeCount : 0;
         
-        // Taxa de Conversão
+        // Taxa de Conversão (suporta marketing_data do histórico ou marketing do cadastro)
         const marketing = sourceData.marketing_data || sourceData.marketing || {};
-        const conversion_rate = marketing.leads_sold && marketing.leads_showed_up 
-          ? (marketing.leads_sold / marketing.leads_showed_up) * 100 
+        const leads_sold = marketing.leads_sold || 0;
+        const leads_showed_up = marketing.leads_showed_up || 0;
+        const conversion_rate = (leads_sold > 0 && leads_showed_up > 0) 
+          ? (leads_sold / leads_showed_up) * 100 
           : 0;
           
         // Atingimento de Metas
-        const projected = sourceData.monthly_goals?.projected_revenue || sourceData.projected_revenue || sourceData.projected_total || 1;
+        const projected = sourceData.monthly_goals?.projected_revenue || sourceData.projected_revenue || sourceData.projected_total || 0;
         const goal_achievement = projected > 0 ? (revenue_total / projected) * 100 : 0;
 
         return {
