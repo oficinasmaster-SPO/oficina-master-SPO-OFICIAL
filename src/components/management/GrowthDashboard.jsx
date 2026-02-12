@@ -74,12 +74,37 @@ export default function GrowthDashboard({ workshop }) {
 
     useEffect(() => {
         if (monthlyData) {
-            setFormData(monthlyData);
+            // Map entity fields to form state
+            setFormData({
+                ...monthlyData,
+                // Map Targets
+                target_revenue_total: monthlyData.projected_total || 0,
+                target_revenue_parts: monthlyData.target_revenue_parts || workshop?.monthly_goals?.revenue_parts || 0,
+                target_revenue_services: monthlyData.target_revenue_services || workshop?.monthly_goals?.revenue_services || 0,
+                target_customer_volume: monthlyData.target_customer_volume || workshop?.monthly_goals?.customer_volume || 0,
+                target_average_ticket: monthlyData.target_average_ticket || workshop?.monthly_goals?.average_ticket || 0,
+                target_r70_i30_score: monthlyData.target_r70_i30_score || 70,
+                target_tcmp2_value: monthlyData.target_tcmp2_value || workshop?.tcmp2_value || 0,
+                target_sales_gps_score: monthlyData.target_sales_gps_score || 100,
+                target_kit_master_score: monthlyData.target_kit_master_score || 100,
+                
+                // Map Actuals (support legacy fields)
+                actual_revenue_total: monthlyData.revenue_total || monthlyData.achieved_total || 0,
+                actual_revenue_parts: monthlyData.revenue_parts || monthlyData.actual_revenue_parts || 0,
+                actual_revenue_services: monthlyData.revenue_services || monthlyData.actual_revenue_services || 0,
+                actual_customer_volume: monthlyData.customer_volume || monthlyData.actual_customer_volume || 0,
+                actual_average_ticket: monthlyData.average_ticket || monthlyData.actual_average_ticket || 0,
+                actual_r70_i30_score: monthlyData.actual_r70_i30_score || 0,
+                actual_tcmp2_value: monthlyData.tcmp2 || monthlyData.actual_tcmp2_value || 0,
+                actual_sales_gps_score: monthlyData.actual_sales_gps_score || 0,
+                actual_kit_master_score: monthlyData.actual_kit_master_score || 0
+            });
         } else {
             // Initialize with Workshop Goals if no history exists
             setFormData({
                 workshop_id: workshop?.id,
                 month: selectedMonth,
+                target_revenue_total: workshop?.monthly_goals?.projected_revenue || 0,
                 target_revenue_parts: workshop?.monthly_goals?.revenue_parts || 0,
                 target_revenue_services: workshop?.monthly_goals?.revenue_services || 0,
                 target_customer_volume: workshop?.monthly_goals?.customer_volume || 0,
@@ -90,6 +115,7 @@ export default function GrowthDashboard({ workshop }) {
                 target_sales_gps_score: 100,
                 target_kit_master_score: 100,
                 // Actuals
+                actual_revenue_total: 0,
                 actual_revenue_parts: 0,
                 actual_revenue_services: 0,
                 actual_customer_volume: 0,
