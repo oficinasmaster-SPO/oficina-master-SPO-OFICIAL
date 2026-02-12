@@ -12,15 +12,20 @@ export default function RankingBrasil() {
 
   const { data: employees = [], isLoading: loadingEmployees } = useQuery({
     queryKey: ['employees-all'],
-    queryFn: () => base44.entities.Employee.list()
+    queryFn: () => base44.entities.Employee.list(null, 200)
   });
 
   const { data: workshops = [], isLoading: loadingWorkshops } = useQuery({
     queryKey: ['workshops-all'],
-    queryFn: () => base44.entities.Workshop.list()
+    queryFn: () => base44.entities.Workshop.list(null, 200)
   });
 
-  const isLoading = loadingEmployees || loadingWorkshops;
+  const { data: history = [], isLoading: loadingHistory } = useQuery({
+    queryKey: ['history-all'],
+    queryFn: () => base44.entities.MonthlyGoalHistory.filter({ entity_type: 'workshop' }, '-revenue_total', 300)
+  });
+
+  const isLoading = loadingEmployees || loadingWorkshops || loadingHistory;
 
   const getEmployeeRanking = () => {
     let filtered = employees.filter(e => e.status === "ativo");
@@ -55,30 +60,55 @@ export default function RankingBrasil() {
   };
 
   const getWorkshopRanking = () => {
+    // 1. Processar histórico para encontrar o melhor mês de cada oficina
+    const bestHistoryByWorkshop = {};
+    
+    // Ordena histórico por faturamento decrescente para pegar o melhor primeiro
+    const sortedHistory = [...history].sort((a, b) => (b.revenue_total || 0) - (a.revenue_total || 0));
+    
+    sortedHistory.forEach(record => {
+      // Se ainda não temos um registro para esta oficina, este é o melhor (pois está ordenado)
+      if (record.workshop_id && !bestHistoryByWorkshop[record.workshop_id]) {
+        bestHistoryByWorkshop[record.workshop_id] = record;
+      }
+    });
+
     return workshops
       .map(workshop => {
-        const bestMonth = workshop.best_month_history || {};
+        // Prioridade: 1. Histórico (Melhor Mês Global) | 2. Best Month no Cadastro | 3. Metas Atuais
+        const historyRecord = bestHistoryByWorkshop[workshop.id];
+        const registeredBest = workshop.best_month_history;
+        const currentGoals = workshop.monthly_goals;
+
+        // Fonte de dados consolidada
+        const sourceData = historyRecord || registeredBest || currentGoals || {};
         const employeeCount = workshop.employees_count || 1;
         
-        // Dados do Melhor Mês
-        const revenue_total = bestMonth.revenue_total || 0;
-        const average_ticket = bestMonth.average_ticket || 0;
-        const profit_percentage = bestMonth.profit_percentage || 0;
-        const rentability = bestMonth.rentability_percentage || 0; // Rentabilidade
-        const tcmp2 = bestMonth.tcmp2 || 0;
-        const kit_master = bestMonth.kit_master || 0;
+        // Extração de dados com fallbacks entre as fontes
+        const revenue_total = sourceData.revenue_total || sourceData.actual_revenue_achieved || 0;
+        const average_ticket = sourceData.average_ticket || 0;
+        const tcmp2 = sourceData.tcmp2 || 0;
+        const kit_master = sourceData.kit_master || 0;
         
-        // Calculados / Mapeados
+        // Métricas compostas ou específicas
+        const profit_percentage = sourceData.profit_percentage || 0; // Mais comum em best_month_history
+        const rentability = sourceData.rentability_percentage || sourceData.r70_i30?.r70 || 0; 
+        
+        // Vendas Pneus (Não presente no schema padrão, tentando campo customizado ou revenue_parts como proxy se zero)
+        const tire_sales = sourceData.tire_sales || 0;
+
+        // Cálculos derivados
         const revenue_per_tech = employeeCount > 0 ? revenue_total / employeeCount : 0;
         
-        // Mock ou dados não disponíveis no schema atual
-        const conversion_rate = bestMonth.marketing?.leads_sold && bestMonth.marketing?.leads_showed_up 
-          ? (bestMonth.marketing.leads_sold / bestMonth.marketing.leads_showed_up) * 100 
+        // Taxa de Conversão
+        const marketing = sourceData.marketing_data || sourceData.marketing || {};
+        const conversion_rate = marketing.leads_sold && marketing.leads_showed_up 
+          ? (marketing.leads_sold / marketing.leads_showed_up) * 100 
           : 0;
           
-        const goal_achievement = bestMonth.monthly_goals?.projected_revenue 
-          ? (revenue_total / bestMonth.monthly_goals.projected_revenue) * 100 
-          : 100;
+        // Atingimento de Metas
+        const projected = sourceData.monthly_goals?.projected_revenue || sourceData.projected_revenue || sourceData.projected_total || 1;
+        const goal_achievement = projected > 0 ? (revenue_total / projected) * 100 : 0;
 
         return {
           id: workshop.id,
@@ -87,20 +117,19 @@ export default function RankingBrasil() {
           state: workshop.state,
           employeeCount,
           
-          // Métricas Solicitadas
           revenue_total,
           average_ticket,
-          rentability, // R70/I30 contexto
+          rentability,
           profit_percentage,
           revenue_per_tech,
           tcmp2,
           conversion_rate,
           goal_achievement,
           kit_master,
-          tire_sales: 0 // Dado não disponível no schema atual
+          tire_sales
         };
       })
-      .sort((a, b) => b.revenue_total - a.revenue_total); // Ordenar por faturamento do melhor mês
+      .sort((a, b) => b.revenue_total - a.revenue_total);
   };
 
   const employeeRanking = getEmployeeRanking();
