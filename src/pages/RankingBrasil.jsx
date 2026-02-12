@@ -21,8 +21,8 @@ export default function RankingBrasil() {
   });
 
   const { data: history = [], isLoading: loadingHistory } = useQuery({
-    queryKey: ['history-all'],
-    queryFn: () => base44.entities.MonthlyGoalHistory.filter({ entity_type: 'workshop' }, '-revenue_total', 1000)
+    queryKey: ['history-all-types'],
+    queryFn: () => base44.entities.MonthlyGoalHistory.list(null, 3000)
   });
 
   const { data: diagnostics = [], isLoading: loadingDiagnostics } = useQuery({
@@ -65,13 +65,120 @@ export default function RankingBrasil() {
   };
 
   const getWorkshopRanking = () => {
-    // 1. Processar histórico para encontrar o melhor mês de cada oficina
+    // 1. Processar e Consolidar Histórico (Agregando Colaboradores)
+    const historyByWorkshopMonth = {}; // Map: workshopId-month -> { ...aggregatedData }
+
+    history.forEach(record => {
+        if (!record.workshop_id || !record.month) return;
+        const key = `${record.workshop_id}-${record.month}`;
+        
+        if (!historyByWorkshopMonth[key]) {
+            historyByWorkshopMonth[key] = {
+                workshop_id: record.workshop_id,
+                month: record.month,
+                revenue_total: 0,
+                revenue_parts: 0,
+                revenue_services: 0,
+                kit_master: 0,
+                tire_sales: 0,
+                leads_sold: 0,
+                leads_showed_up: 0,
+                customer_volume: 0,
+                tcmp2_sum: 0,
+                tcmp2_count: 0,
+                profit_sum: 0,
+                profit_count: 0,
+                rentability_sum: 0,
+                rentability_count: 0,
+                projected_total: 0 // Usually target is on workshop record
+            };
+        }
+
+        const acc = historyByWorkshopMonth[key];
+
+        // Se for registro de OFICINA, pegamos as metas e valores consolidados se existirem
+        if (record.entity_type === 'workshop') {
+            acc.projected_total = Math.max(acc.projected_total, record.projected_total || record.projected_revenue || 0);
+            
+            // Se a oficina já tem valores consolidados maiores que zero, consideramos
+            // Mas cuidado para não somar oficina + funcionários se a oficina já for a soma
+            // Estratégia: Somar funcionários. Se o valor da oficina for maior que a soma dos funcionários, usamos o da oficina.
+            // Para isso, armazenamos separadamente ou usamos lógica de max no final.
+            // Aqui, vamos tratar o registro da oficina como um "base" ou "target", mas a soma real virá dos funcionários
+            // SE não houver funcionários, usamos o da oficina.
+            acc.workshop_record_revenue = record.revenue_total || record.achieved_total || 0;
+            acc.workshop_record_kit = record.kit_master || 0;
+            acc.workshop_record_tires = record.tire_sales || 0;
+            
+            // Rentabilidade e Lucro geralmente estão no registro da oficina
+            if (record.profit_percentage) {
+                acc.profit_sum += record.profit_percentage;
+                acc.profit_count++;
+            }
+            if (record.rentability_percentage || (record.r70_i30?.r70)) {
+                acc.rentability_sum += (record.rentability_percentage || record.r70_i30?.r70 || 0);
+                acc.rentability_count++;
+            }
+        }
+        
+        // Se for registro de COLABORADOR, somamos na agregação
+        if (record.entity_type === 'employee') {
+            acc.revenue_total += (record.revenue_total || record.achieved_total || 0);
+            acc.revenue_parts += (record.revenue_parts || 0);
+            acc.revenue_services += (record.revenue_services || 0);
+            acc.kit_master += (record.kit_master || record.actual_kit_master_score || 0);
+            acc.tire_sales += (record.tire_sales || 0); // Assuming field name
+            acc.customer_volume += (record.customer_volume || 0);
+            
+            // Marketing data aggregation
+            const mkt = record.marketing_data || {};
+            acc.leads_sold += (mkt.leads_sold || 0);
+            acc.leads_showed_up += (mkt.leads_showed_up || 0);
+
+            if (record.tcmp2 || record.actual_tcmp2_value) {
+                acc.tcmp2_sum += (record.tcmp2 || record.actual_tcmp2_value);
+                acc.tcmp2_count++;
+            }
+        }
+    });
+
+    // Encontrar o MELHOR mês para cada oficina (baseado no faturamento consolidado)
     const bestHistoryByWorkshop = {};
-    const sortedHistory = [...history].sort((a, b) => (b.revenue_total || 0) - (a.revenue_total || 0));
-    sortedHistory.forEach(record => {
-      if (record.workshop_id && !bestHistoryByWorkshop[record.workshop_id]) {
-        bestHistoryByWorkshop[record.workshop_id] = record;
-      }
+    
+    Object.values(historyByWorkshopMonth).forEach(aggregated => {
+        // Resolve conflito: Soma de Colaboradores vs Registro da Oficina
+        // Usamos o MAIOR valor para não zerar se não tiver colaboradores lançados mas tiver oficina
+        const finalRevenue = Math.max(aggregated.revenue_total, aggregated.workshop_record_revenue || 0);
+        const finalKit = Math.max(aggregated.kit_master, aggregated.workshop_record_kit || 0);
+        const finalTires = Math.max(aggregated.tire_sales, aggregated.workshop_record_tires || 0);
+        
+        // Médias
+        const avgTcmp2 = aggregated.tcmp2_count > 0 ? (aggregated.tcmp2_sum / aggregated.tcmp2_count) : 0;
+        const avgProfit = aggregated.profit_count > 0 ? (aggregated.profit_sum / aggregated.profit_count) : 0;
+        const avgRentability = aggregated.rentability_count > 0 ? (aggregated.rentability_sum / aggregated.rentability_count) : 0;
+        
+        // Ticket Médio Calculado
+        const avgTicket = aggregated.customer_volume > 0 ? (finalRevenue / aggregated.customer_volume) : 0;
+
+        const consolidatedRecord = {
+            ...aggregated,
+            revenue_total: finalRevenue,
+            kit_master: finalKit,
+            tire_sales: finalTires,
+            tcmp2: avgTcmp2,
+            profit_percentage: avgProfit,
+            rentability_percentage: avgRentability,
+            average_ticket: avgTicket,
+            marketing_data: {
+                leads_sold: aggregated.leads_sold,
+                leads_showed_up: aggregated.leads_showed_up
+            }
+        };
+
+        if (!bestHistoryByWorkshop[aggregated.workshop_id] || 
+            finalRevenue > bestHistoryByWorkshop[aggregated.workshop_id].revenue_total) {
+            bestHistoryByWorkshop[aggregated.workshop_id] = consolidatedRecord;
+        }
     });
 
     // 2. Processar diagnósticos para encontrar faturamento recorde calculado
