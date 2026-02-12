@@ -73,6 +73,21 @@ export default function GrowthDashboard({ workshop }) {
     });
 
     useEffect(() => {
+        if (isEditing) {
+            const newTargetTotal = (formData.target_revenue_parts || 0) + (formData.target_revenue_services || 0);
+            const newActualTotal = (formData.actual_revenue_parts || 0) + (formData.actual_revenue_services || 0);
+            
+            if (newTargetTotal !== formData.target_revenue_total || newActualTotal !== formData.actual_revenue_total) {
+                setFormData(prev => ({
+                    ...prev,
+                    target_revenue_total: newTargetTotal,
+                    actual_revenue_total: newActualTotal
+                }));
+            }
+        }
+    }, [formData.target_revenue_parts, formData.target_revenue_services, formData.actual_revenue_parts, formData.actual_revenue_services, isEditing]);
+
+    useEffect(() => {
         if (monthlyData) {
             // Map entity fields to form state
             setFormData({
