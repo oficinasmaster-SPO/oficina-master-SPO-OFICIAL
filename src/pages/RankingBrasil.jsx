@@ -282,6 +282,10 @@ export default function RankingBrasil() {
                         <span className="text-gray-500">Kit Master:</span>
                         <span className="font-medium">{workshop.kit_master}</span>
                       </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Vendas Pneus:</span>
+                        <span className="font-medium">{formatCurrency(workshop.tire_sales)}</span>
+                      </div>
                     </div>
                   </div>
                 ))}
