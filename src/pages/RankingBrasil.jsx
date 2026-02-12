@@ -75,27 +75,27 @@ export default function RankingBrasil() {
 
     return workshops
       .map(workshop => {
-        // Prioridade: 1. Histórico (Melhor Mês Global) | 2. Best Month no Cadastro | 3. Metas Atuais
-        const historyRecord = bestHistoryByWorkshop[workshop.id];
+        // Prioridade: 1. Best Month no Cadastro (Já consolidado pelo sistema) | 2. Histórico | 3. Metas Atuais
         const registeredBest = workshop.best_month_history;
+        const historyRecord = bestHistoryByWorkshop[workshop.id];
         const currentGoals = workshop.monthly_goals;
 
-        // Fonte de dados consolidada
-        const sourceData = historyRecord || registeredBest || currentGoals || {};
+        // Fonte de dados consolidada - Priorizando o registro do Melhor Mês da Oficina
+        const sourceData = registeredBest || historyRecord || currentGoals || {};
         const employeeCount = workshop.employees_count || 1;
         
-        // Extração de dados com fallbacks entre as fontes
+        // Extração de dados
         const revenue_total = sourceData.revenue_total || sourceData.actual_revenue_achieved || 0;
         const average_ticket = sourceData.average_ticket || 0;
         const tcmp2 = sourceData.tcmp2 || 0;
         const kit_master = sourceData.kit_master || 0;
         
-        // Métricas compostas ou específicas
-        const profit_percentage = sourceData.profit_percentage || 0; // Mais comum em best_month_history
+        // Métricas Específicas (Prioritariamente do Best Month History)
+        const profit_percentage = sourceData.profit_percentage || 0; 
         const rentability = sourceData.rentability_percentage || sourceData.r70_i30?.r70 || 0; 
         
-        // Vendas Pneus (Não presente no schema padrão, tentando campo customizado ou revenue_parts como proxy se zero)
-        const tire_sales = sourceData.tire_sales || 0;
+        // Vendas Pneus (Tentativa de buscar em campos específicos ou customizados se houver)
+        const tire_sales = sourceData.tire_sales || sourceData.revenue_tires || 0;
 
         // Cálculos derivados
         const revenue_per_tech = employeeCount > 0 ? revenue_total / employeeCount : 0;
