@@ -152,17 +152,17 @@ export default function DiagnosticReports({ filters }) {
             <p className="text-center text-gray-500 py-8">Nenhum diagnóstico encontrado no período selecionado</p>
           ) : (
             <ResponsiveContainer width="100%" height={400}>
-              <BarChart data={evolutionData}>
+              <LineChart data={evolutionData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="fase1" stackId="a" fill="#ef4444" name="Fase 1" />
-                <Bar dataKey="fase2" stackId="a" fill="#f59e0b" name="Fase 2" />
-                <Bar dataKey="fase3" stackId="a" fill="#3b82f6" name="Fase 3" />
-                <Bar dataKey="fase4" stackId="a" fill="#10b981" name="Fase 4" />
-              </BarChart>
+                <Line type="monotone" dataKey="fase1" stroke="#ef4444" name="Fase 1" />
+                <Line type="monotone" dataKey="fase2" stroke="#f59e0b" name="Fase 2" />
+                <Line type="monotone" dataKey="fase3" stroke="#3b82f6" name="Fase 3" />
+                <Line type="monotone" dataKey="fase4" stroke="#10b981" name="Fase 4" />
+              </LineChart>
             </ResponsiveContainer>
           )}
         </CardContent>
