@@ -544,52 +544,6 @@ export default function DiagnosticReports({ filters }) {
     }
   };
 
-  // Partner Comparison Data
-  const partnerComparisonData = useMemo(() => {
-    if (!isWorkload || !diagnostics.length || !employees.length) return null;
-    
-    // Filter partners
-    const partners = employees.filter(e => e.is_partner || e.job_role === 'socio');
-    if (partners.length < 2) return null; // Only show if more than 1 partner
-    
-    // Get latest diagnostic
-    const latest = diagnostics.sort((a, b) => new Date(b.created_date) - new Date(a.created_date))[0];
-    if (!latest || !latest.workload_data) return null;
-    
-    // Map partners to workload data
-    return partners.map(partner => {
-      // Find workload entry for this partner
-      // First try by employee_id, then by name match if possible (risky), or assume workload_data has metadata
-      // The sample data had employee_id: None. We need to handle this.
-      // If no employee_id in workload_data, we can't reliably map. 
-      // But let's try to find by employee_id if it exists.
-      const entry = latest.workload_data.find(w => w.employee_id === partner.id);
-      
-      let status = "Sem dados";
-      let load = 0;
-      
-      if (entry) {
-         const worked = parseFloat(entry.weekly_hours_worked || 0);
-         const ideal = parseFloat(entry.ideal_weekly_hours || 40);
-         if (ideal > 0) {
-           const ratio = worked / ideal;
-           load = Math.round(ratio * 100);
-           if (ratio > 1.1) status = "Sobrecaregado";
-           else if (ratio < 0.9) status = "Ocioso";
-           else status = "Equilibrado";
-         }
-      }
-      
-      return {
-        name: partner.full_name,
-        role: partner.position || "Sócio",
-        status,
-        load
-      };
-    }).filter(p => p.status !== "Sem dados"); // Only show partners with data
-    
-  }, [isWorkload, diagnostics, employees]);
-
   if (isLoading) {
     return (
       <Card>
