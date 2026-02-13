@@ -271,74 +271,63 @@ export default function Autoavaliacoes() {
                   <FileText className="w-6 h-6 text-blue-600" />
                 </div>
                 <div>
-                  <CardTitle>Histórico de Avaliações</CardTitle>
+                  <CardTitle>Histórico de Diagnósticos Realizados</CardTitle>
                   <CardDescription>
-                    Lista completa de todos os diagnósticos e autoavaliações realizados
+                    Checklist de todas as execuções do Diagnóstico Geral (Fase)
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="p-0">
-              <div className="rounded-md border-t border-slate-100">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-slate-50 hover:bg-slate-50">
-                      <TableHead className="w-[180px]">Data</TableHead>
-                      <TableHead>Tipo de Avaliação</TableHead>
-                      <TableHead>Resultado/Fase</TableHead>
-                      <TableHead className="text-right">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {loadingHistory ? (
-                      <TableRow>
-                        <TableCell colSpan={4} className="h-24 text-center">
-                          Carregando histórico...
-                        </TableCell>
-                      </TableRow>
-                    ) : fullHistory.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
-                          Nenhuma avaliação encontrada no histórico.
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      fullHistory.map((item) => (
-                        <TableRow key={item.id} className="hover:bg-slate-50/50">
-                          <TableCell className="font-medium">
-                            {item.date ? format(new Date(item.date), "dd 'de' MMMM, yyyy", { locale: ptBR }) : '-'}
-                            <div className="text-xs text-muted-foreground">
-                              {item.date ? format(new Date(item.date), "HH:mm") : ''}
+            <CardContent className="p-6">
+              {loadingHistory ? (
+                <div className="text-center py-8 text-muted-foreground">Carregando histórico...</div>
+              ) : (
+                <ul className="space-y-4">
+                  {fullHistory.filter(i => i.type === 'diagnostic').length === 0 ? (
+                    <li className="text-center py-8 text-muted-foreground">Nenhum diagnóstico realizado encontrado.</li>
+                  ) : (
+                    fullHistory
+                      .filter(i => i.type === 'diagnostic')
+                      .map((item) => (
+                      <li key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white border border-slate-200 rounded-lg hover:border-blue-300 hover:shadow-md transition-all">
+                        <div className="flex items-start gap-4">
+                          <div className="mt-1 p-2 bg-green-50 rounded-full">
+                            <CalendarClock className="w-5 h-5 text-green-600" />
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-slate-800">{item.label}</h4>
+                            <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
+                              <Badge variant="outline" className="bg-slate-50">
+                                {item.date ? format(new Date(item.date), "dd/MM/yyyy", { locale: ptBR }) : '-'}
+                              </Badge>
+                              <Badge variant="outline" className="bg-slate-50">
+                                {item.date ? format(new Date(item.date), "HH:mm") : '-'}
+                              </Badge>
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex flex-col">
-                              <span className="font-semibold text-slate-700">{item.label}</span>
-                              <span className="text-xs text-slate-500 capitalize">{item.type === 'process' ? 'Autoavaliação Semanal' : 'Diagnóstico Completo'}</span>
+                            <div className="mt-2 flex items-center gap-2">
+                                <span className="text-sm font-medium text-slate-700">Resultado / Fase:</span>
+                                <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200 border-none">
+                                    {item.score}
+                                </Badge>
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="secondary" className="font-medium">
-                              {typeof item.score === 'number' ? item.score.toFixed(1) : item.score}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              className="gap-2 hover:border-blue-300 hover:text-blue-600"
-                              onClick={() => navigate(item.route)}
-                            >
-                              Ver Detalhes
-                              <ArrowRight className="w-3 h-3" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
+                          </div>
+                        </div>
+                        <div className="mt-4 sm:mt-0">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 w-full sm:w-auto"
+                            onClick={() => navigate(item.route)}
+                          >
+                            Ver Detalhes
+                            <ArrowRight className="w-4 h-4 ml-2" />
+                          </Button>
+                        </div>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              )}
             </CardContent>
           </Card>
         </div>
