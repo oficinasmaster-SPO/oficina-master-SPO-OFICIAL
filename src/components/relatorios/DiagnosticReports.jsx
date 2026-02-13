@@ -17,6 +17,7 @@ export default function DiagnosticReports({ filters }) {
   const isProductivity = filters.diagnosticType === 'producao';
   const isPerformance = filters.diagnosticType === 'desempenho';
   const isDISC = filters.diagnosticType === 'disc';
+  const isWorkload = filters.diagnosticType === 'carga';
 
   const [productivityTeamFilter, setProductivityTeamFilter] = useState('all'); // 'all', 'commercial', 'technical'
 
@@ -29,6 +30,7 @@ export default function DiagnosticReports({ filters }) {
     if (isProductivity) title = 'Evolução de Produtividade vs Salário';
     if (isPerformance) title = 'Evolução de Desempenho Comportamental e Técnico';
     if (isDISC) title = 'Evolução de Perfil Comportamental (DISC)';
+    if (isWorkload) title = 'Evolução de Carga de Trabalho';
     
     doc.text(title, 14, 20);
     doc.setFontSize(10);
@@ -46,6 +48,8 @@ export default function DiagnosticReports({ filters }) {
         doc.text(`${item.month}: Dem=${item.dismissal}%, Obs=${item.observation}%, TT=${item.technical_training}%, TE=${item.emotional_training}%, Inv=${item.investment}%, Pro=${item.promotion}%, Rec=${item.recognition}%`, 14, y);
       } else if (isDISC) {
         doc.text(`${item.month}: Dom=${item.dominant}%, Inf=${item.influential}%, Est=${item.stable}%, Conf=${item.conscientious}%`, 14, y);
+      } else if (isWorkload) {
+        doc.text(`${item.month}: Bal=${item.balanced}%, Sob=${item.overloaded}%, Oci=${item.underutilized}%`, 14, y);
       } else {
         doc.text(`${item.month}: F1=${item.fase1}%, F2=${item.fase2}%, F3=${item.fase3}%, F4=${item.fase4}%`, 14, y);
       }
@@ -83,8 +87,17 @@ export default function DiagnosticReports({ filters }) {
     }
   });
 
+  const { data: employees = [] } = useQuery({
+    queryKey: ['employees-workload', workshop?.id],
+    queryFn: async () => {
+      if (!workshop?.id || !isWorkload) return [];
+      return await base44.entities.Employee.filter({ workshop_id: workshop.id, status: 'ativo' });
+    },
+    enabled: !!workshop?.id && isWorkload
+  });
+
   const { data: diagnostics = [], isLoading } = useQuery({
-    queryKey: ['diagnostics-report', workshop?.id, filters, isEntrepreneur, isMaturity, isProductivity, isPerformance, isDISC],
+    queryKey: ['diagnostics-report', workshop?.id, filters, isEntrepreneur, isMaturity, isProductivity, isPerformance, isDISC, isWorkload],
     queryFn: async () => {
       if (!workshop?.id) return [];
       
@@ -99,6 +112,8 @@ export default function DiagnosticReports({ filters }) {
         allDiagnostics = await base44.entities.PerformanceMatrixDiagnostic.filter({ workshop_id: workshop.id });
       } else if (isDISC) {
         allDiagnostics = await base44.entities.DISCDiagnostic.filter({ workshop_id: workshop.id });
+      } else if (isWorkload) {
+        allDiagnostics = await base44.entities.WorkloadDiagnostic.filter({ workshop_id: workshop.id });
       } else {
         allDiagnostics = await base44.entities.Diagnostic.filter({ workshop_id: workshop.id });
       }
@@ -189,6 +204,10 @@ export default function DiagnosticReports({ filters }) {
           acc[key].influential = 0;
           acc[key].stable = 0;
           acc[key].conscientious = 0;
+        } else if (isWorkload) {
+          acc[key].balanced = 0;
+          acc[key].overloaded = 0;
+          acc[key].underutilized = 0;
         } else {
           acc[key].fase1 = 0;
           acc[key].fase2 = 0;
@@ -265,13 +284,46 @@ export default function DiagnosticReports({ filters }) {
           else if (profile === 'comunicador_i') acc[key].influential++;
           else if (profile === 'planejador_s') acc[key].stable++;
           else if (profile === 'analista_c') acc[key].conscientious++;
+        } else if (isWorkload) {
+          // Process workload_data array
+          const workloadData = d.workload_data || [];
+          if (workloadData.length === 0) {
+             acc[key].total -= 1; 
+             return acc;
+          }
+          
+          let hasData = false;
+          workloadData.forEach(w => {
+             const worked = parseFloat(w.weekly_hours_worked || 0);
+             const ideal = parseFloat(w.ideal_weekly_hours || 40); // Default 40 if missing
+             
+             if (ideal > 0) {
+               hasData = true;
+               const ratio = worked / ideal;
+               if (ratio > 1.1) acc[key].overloaded++;
+               else if (ratio < 0.9) acc[key].underutilized++;
+               else acc[key].balanced++;
+             }
+          });
+          
+          if (!hasData) {
+             acc[key].total -= 1;
+             return acc;
+          }
+          // Note: total here refers to diagnostic records, but for percentage calculation in map we need total employees.
+          // The current structure counts diagnostic records as 'total' for other types (one record per employee usually).
+          // But WorkloadDiagnostic is aggregated. 
+          // So we need to override 'total' with the number of evaluated items in this record.
+          acc[key].total = (acc[key].total - 1) + workloadData.length; // Replace the incremented 1 with actual count
+          return acc; 
+          
         } else {
         const phase = parseInt(d.phase, 10);
         if ([1, 2, 3, 4].includes(phase)) {
           acc[key][`fase${phase}`] = (acc[key][`fase${phase}`] || 0) + 1;
         }
         }
-        acc[key].total += 1;
+        if (!isWorkload) acc[key].total += 1;
         return acc;
         }, {});
 
@@ -391,6 +443,33 @@ export default function DiagnosticReports({ filters }) {
         { label: 'Estável', percentage: parseFloat(((diagnostics.filter(d => d.dominant_profile === 'planejador_s').length / total) * 100).toFixed(1)) },
         { label: 'Conforme', percentage: parseFloat(((diagnostics.filter(d => d.dominant_profile === 'analista_c').length / total) * 100).toFixed(1)) }
       ];
+    } else if (isWorkload) {
+      // Get latest diagnostic
+      const latest = diagnostics.sort((a, b) => new Date(b.created_date) - new Date(a.created_date))[0];
+      if (!latest || !latest.workload_data) return [];
+      
+      const workloadData = latest.workload_data;
+      let balanced = 0, overloaded = 0, underutilized = 0, count = 0;
+      
+      workloadData.forEach(w => {
+         const worked = parseFloat(w.weekly_hours_worked || 0);
+         const ideal = parseFloat(w.ideal_weekly_hours || 40); 
+         if (ideal > 0) {
+           count++;
+           const ratio = worked / ideal;
+           if (ratio > 1.1) overloaded++;
+           else if (ratio < 0.9) underutilized++;
+           else balanced++;
+         }
+      });
+      
+      const safeTotal = count || 1;
+      
+      return [
+        { label: 'Equilibrado', percentage: parseFloat(((balanced / safeTotal) * 100).toFixed(1)) },
+        { label: 'Sobrecaregado', percentage: parseFloat(((overloaded / safeTotal) * 100).toFixed(1)) },
+        { label: 'Ocioso', percentage: parseFloat(((underutilized / safeTotal) * 100).toFixed(1)) }
+      ];
     } else {
       return [
         { label: 'Fase 1', percentage: parseFloat(((diagnostics.filter(d => parseInt(d.phase) === 1).length / total) * 100).toFixed(1)) },
@@ -399,7 +478,7 @@ export default function DiagnosticReports({ filters }) {
         { label: 'Fase 4', percentage: parseFloat(((diagnostics.filter(d => parseInt(d.phase) === 4).length / total) * 100).toFixed(1)) }
       ];
     }
-  }, [diagnostics, isEntrepreneur, isMaturity, isProductivity, isPerformance, isDISC, productivityTeamFilter]);
+  }, [diagnostics, isEntrepreneur, isMaturity, isProductivity, isPerformance, isDISC, isWorkload, productivityTeamFilter]);
 
   const handleExportPDF = () => {
     setExporting(true);
@@ -427,6 +506,52 @@ export default function DiagnosticReports({ filters }) {
     }
   };
 
+  // Partner Comparison Data
+  const partnerComparisonData = useMemo(() => {
+    if (!isWorkload || !diagnostics.length || !employees.length) return null;
+    
+    // Filter partners
+    const partners = employees.filter(e => e.is_partner || e.job_role === 'socio');
+    if (partners.length < 2) return null; // Only show if more than 1 partner
+    
+    // Get latest diagnostic
+    const latest = diagnostics.sort((a, b) => new Date(b.created_date) - new Date(a.created_date))[0];
+    if (!latest || !latest.workload_data) return null;
+    
+    // Map partners to workload data
+    return partners.map(partner => {
+      // Find workload entry for this partner
+      // First try by employee_id, then by name match if possible (risky), or assume workload_data has metadata
+      // The sample data had employee_id: None. We need to handle this.
+      // If no employee_id in workload_data, we can't reliably map. 
+      // But let's try to find by employee_id if it exists.
+      const entry = latest.workload_data.find(w => w.employee_id === partner.id);
+      
+      let status = "Sem dados";
+      let load = 0;
+      
+      if (entry) {
+         const worked = parseFloat(entry.weekly_hours_worked || 0);
+         const ideal = parseFloat(entry.ideal_weekly_hours || 40);
+         if (ideal > 0) {
+           const ratio = worked / ideal;
+           load = Math.round(ratio * 100);
+           if (ratio > 1.1) status = "Sobrecaregado";
+           else if (ratio < 0.9) status = "Ocioso";
+           else status = "Equilibrado";
+         }
+      }
+      
+      return {
+        name: partner.full_name,
+        role: partner.position || "Sócio",
+        status,
+        load
+      };
+    }).filter(p => p.status !== "Sem dados"); // Only show partners with data
+    
+  }, [isWorkload, diagnostics, employees]);
+
   if (isLoading) {
     return (
       <Card>
@@ -444,7 +569,7 @@ export default function DiagnosticReports({ filters }) {
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-blue-600" />
-              {isEntrepreneur ? "Evolução do Perfil Empresarial" : isMaturity ? "Evolução da Maturidade dos Colaboradores" : isProductivity ? "Evolução Produtividade vs Salário" : isPerformance ? "Evolução de Desempenho Comportamental e Técnico" : isDISC ? "Evolução de Perfil Comportamental (DISC)" : "Evolução de Fases ao Longo do Tempo"}
+              {isEntrepreneur ? "Evolução do Perfil Empresarial" : isMaturity ? "Evolução da Maturidade dos Colaboradores" : isProductivity ? "Evolução Produtividade vs Salário" : isPerformance ? "Evolução de Desempenho Comportamental e Técnico" : isDISC ? "Evolução de Perfil Comportamental (DISC)" : isWorkload ? "Evolução de Carga de Trabalho" : "Evolução de Fases ao Longo do Tempo"}
             </CardTitle>
             <div className="flex gap-2 items-center">
               {isProductivity && (
@@ -517,6 +642,12 @@ export default function DiagnosticReports({ filters }) {
                     <Line type="monotone" dataKey="stable" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} name="Estável" connectNulls />
                     <Line type="monotone" dataKey="conscientious" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4 }} name="Conforme" connectNulls />
                   </>
+                ) : isWorkload ? (
+                  <>
+                    <Line type="monotone" dataKey="balanced" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} name="Equilibrado" connectNulls />
+                    <Line type="monotone" dataKey="overloaded" stroke="#ef4444" strokeWidth={3} dot={{ r: 4 }} name="Sobrecaregado" connectNulls />
+                    <Line type="monotone" dataKey="underutilized" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4 }} name="Ocioso" connectNulls />
+                  </>
                 ) : (
                   <>
                     <Line type="monotone" dataKey="fase1" stroke="#ef4444" strokeWidth={3} dot={{ r: 4 }} name="Fase 1" connectNulls />
@@ -534,7 +665,7 @@ export default function DiagnosticReports({ filters }) {
       <Card>
         <CardHeader>
           <CardTitle>
-            {isEntrepreneur ? "Distribuição Atual de Perfis" : isMaturity ? "Distribuição Atual da Maturidade" : isProductivity ? "Distribuição Atual de Produtividade" : isPerformance ? "Distribuição Comportamental e Técnica" : isDISC ? "Distribuição de Perfil Comportamental" : "Distribuição Atual de Fases"}
+            {isEntrepreneur ? "Distribuição Atual de Perfis" : isMaturity ? "Distribuição Atual da Maturidade" : isProductivity ? "Distribuição Atual de Produtividade" : isPerformance ? "Distribuição Comportamental e Técnica" : isDISC ? "Distribuição de Perfil Comportamental" : isWorkload ? "Distribuição de Carga de Trabalho" : "Distribuição Atual de Fases"}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -555,6 +686,34 @@ export default function DiagnosticReports({ filters }) {
           )}
         </CardContent>
       </Card>
+
+      {partnerComparisonData && partnerComparisonData.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Comparativo de Sócios</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {partnerComparisonData.map((partner, index) => (
+                <div key={index} className="p-4 border rounded-lg shadow-sm">
+                  <h3 className="font-bold text-lg">{partner.name}</h3>
+                  <p className="text-sm text-gray-500 mb-2">{partner.role}</p>
+                  <div className="flex justify-between items-center mt-2">
+                    <span className="text-sm font-medium">Carga:</span>
+                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                      partner.status === 'Equilibrado' ? 'bg-green-100 text-green-800' :
+                      partner.status === 'Sobrecaregado' ? 'bg-red-100 text-red-800' :
+                      'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {partner.status} ({partner.load}%)
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
