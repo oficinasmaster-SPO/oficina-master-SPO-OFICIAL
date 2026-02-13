@@ -3,10 +3,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, Phone, Megaphone, Users, DollarSign, Building2, LayoutGrid, ArrowRight, History, CalendarClock, AlertCircle, Lock } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { TrendingUp, Phone, Megaphone, Users, DollarSign, Building2, LayoutGrid, ArrowRight, History, CalendarClock, AlertCircle, Lock, FileText, Search, Filter } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
-import { differenceInDays } from "date-fns";
+import { differenceInDays, format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export default function Autoavaliacoes() {
   const navigate = useNavigate();
@@ -30,6 +33,56 @@ export default function Autoavaliacoes() {
     queryFn: () => base44.entities.ProcessAssessment.filter({ workshop_id: workshop.id }),
     initialData: [],
     enabled: !!workshop
+  });
+
+  const { data: fullHistory = [], isLoading: loadingHistory } = useQuery({
+    queryKey: ['full-history', workshop?.id],
+    queryFn: async () => {
+      if (!workshop?.id) return [];
+      
+      const [
+        processAssessments,
+        diagnostics,
+        entrepreneurDiagnostics,
+        discDiagnostics
+      ] = await Promise.all([
+        base44.entities.ProcessAssessment.filter({ workshop_id: workshop.id }),
+        base44.entities.Diagnostic.filter({ workshop_id: workshop.id }),
+        base44.entities.EntrepreneurDiagnostic.filter({ workshop_id: workshop.id }),
+        base44.entities.DISCDiagnostic.filter({ workshop_id: workshop.id })
+      ]);
+
+      const normalize = (item, type, label, route) => ({
+        id: item.id,
+        date: item.created_date,
+        type: type,
+        label: label,
+        score: item.score || item.phase || item.dominant_profile || '-',
+        route: route,
+        original: item
+      });
+
+      const mapProcessType = (type) => {
+        const types = {
+          vendas: 'Processos de Vendas',
+          comercial: 'Processos Comerciais',
+          marketing: 'Processos de Marketing',
+          pessoas: 'Processos de Pessoas',
+          financeiro: 'Processos Financeiros',
+          empresarial: 'Avaliação Empresarial',
+          ma3: 'Avaliação MA3'
+        };
+        return types[type] || 'Autoavaliação';
+      };
+
+      return [
+        ...processAssessments.map(a => normalize(a, 'process', mapProcessType(a.assessment_type), `/VisualizarProcesso?id=${a.id}`)),
+        ...diagnostics.map(d => normalize(d, 'diagnostic', 'Diagnóstico Geral (Fase)', `/Resultado?id=${d.id}`)),
+        ...entrepreneurDiagnostics.map(e => normalize(e, 'entrepreneur', 'Diagnóstico Empresarial', `/ResultadoEmpresario?id=${e.id}`)),
+        ...discDiagnostics.map(d => normalize(d, 'disc', 'Perfil DISC', `/ResultadoDISC?id=${d.id}`))
+      ].sort((a, b) => new Date(b.date) - new Date(a.date));
+    },
+    enabled: !!workshop?.id
   });
 
   const checkAvailability = (typeId) => {
@@ -208,6 +261,86 @@ export default function Autoavaliacoes() {
               </div>
             );
           })}
+        </div>
+
+        <div className="mt-16">
+          <Card className="border-2 border-slate-200 shadow-lg">
+            <CardHeader className="bg-slate-50 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <FileText className="w-6 h-6 text-blue-600" />
+                </div>
+                <div>
+                  <CardTitle>Histórico de Avaliações</CardTitle>
+                  <CardDescription>
+                    Lista completa de todos os diagnósticos e autoavaliações realizados
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="rounded-md border-t border-slate-100">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-slate-50 hover:bg-slate-50">
+                      <TableHead className="w-[180px]">Data</TableHead>
+                      <TableHead>Tipo de Avaliação</TableHead>
+                      <TableHead>Resultado/Fase</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {loadingHistory ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="h-24 text-center">
+                          Carregando histórico...
+                        </TableCell>
+                      </TableRow>
+                    ) : fullHistory.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                          Nenhuma avaliação encontrada no histórico.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      fullHistory.map((item) => (
+                        <TableRow key={item.id} className="hover:bg-slate-50/50">
+                          <TableCell className="font-medium">
+                            {item.date ? format(new Date(item.date), "dd 'de' MMMM, yyyy", { locale: ptBR }) : '-'}
+                            <div className="text-xs text-muted-foreground">
+                              {item.date ? format(new Date(item.date), "HH:mm") : ''}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="font-semibold text-slate-700">{item.label}</span>
+                              <span className="text-xs text-slate-500 capitalize">{item.type === 'process' ? 'Autoavaliação Semanal' : 'Diagnóstico Completo'}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary" className="font-medium">
+                              {typeof item.score === 'number' ? item.score.toFixed(1) : item.score}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className="gap-2 hover:border-blue-300 hover:text-blue-600"
+                              onClick={() => navigate(item.route)}
+                            >
+                              Ver Detalhes
+                              <ArrowRight className="w-3 h-3" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
