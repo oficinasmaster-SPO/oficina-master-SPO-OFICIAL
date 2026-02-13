@@ -16,6 +16,7 @@ export default function DiagnosticReports({ filters }) {
   const isMaturity = filters.diagnosticType === 'maturidade';
   const isProductivity = filters.diagnosticType === 'producao';
   const isPerformance = filters.diagnosticType === 'desempenho';
+  const isDISC = filters.diagnosticType === 'disc';
 
   const [productivityTeamFilter, setProductivityTeamFilter] = useState('all'); // 'all', 'commercial', 'technical'
 
@@ -27,6 +28,7 @@ export default function DiagnosticReports({ filters }) {
     if (isMaturity) title = 'Evolução de Maturidade do Colaborador';
     if (isProductivity) title = 'Evolução de Produtividade vs Salário';
     if (isPerformance) title = 'Evolução de Desempenho Comportamental e Técnico';
+    if (isDISC) title = 'Evolução de Perfil Comportamental (DISC)';
     
     doc.text(title, 14, 20);
     doc.setFontSize(10);
@@ -42,6 +44,8 @@ export default function DiagnosticReports({ filters }) {
         doc.text(`${item.month}: Lim=${item.limit}%, Ide=${item.ideal}%, Exc=${item.excess}%`, 14, y);
       } else if (isPerformance) {
         doc.text(`${item.month}: Dem=${item.dismissal}%, Obs=${item.observation}%, TT=${item.technical_training}%, TE=${item.emotional_training}%, Inv=${item.investment}%, Pro=${item.promotion}%, Rec=${item.recognition}%`, 14, y);
+      } else if (isDISC) {
+        doc.text(`${item.month}: Dom=${item.dominant}%, Inf=${item.influential}%, Est=${item.stable}%, Conf=${item.conscientious}%`, 14, y);
       } else {
         doc.text(`${item.month}: F1=${item.fase1}%, F2=${item.fase2}%, F3=${item.fase3}%, F4=${item.fase4}%`, 14, y);
       }
@@ -80,7 +84,7 @@ export default function DiagnosticReports({ filters }) {
   });
 
   const { data: diagnostics = [], isLoading } = useQuery({
-    queryKey: ['diagnostics-report', workshop?.id, filters, isEntrepreneur, isMaturity, isProductivity, isPerformance],
+    queryKey: ['diagnostics-report', workshop?.id, filters, isEntrepreneur, isMaturity, isProductivity, isPerformance, isDISC],
     queryFn: async () => {
       if (!workshop?.id) return [];
       
@@ -93,6 +97,8 @@ export default function DiagnosticReports({ filters }) {
         allDiagnostics = await base44.entities.ProductivityDiagnostic.filter({ workshop_id: workshop.id });
       } else if (isPerformance) {
         allDiagnostics = await base44.entities.PerformanceMatrixDiagnostic.filter({ workshop_id: workshop.id });
+      } else if (isDISC) {
+        allDiagnostics = await base44.entities.DISCDiagnostic.filter({ workshop_id: workshop.id });
       } else {
         allDiagnostics = await base44.entities.Diagnostic.filter({ workshop_id: workshop.id });
       }
@@ -178,6 +184,11 @@ export default function DiagnosticReports({ filters }) {
           acc[key].investment = 0;
           acc[key].promotion = 0;
           acc[key].recognition = 0;
+        } else if (isDISC) {
+          acc[key].dominant = 0;
+          acc[key].influential = 0;
+          acc[key].stable = 0;
+          acc[key].conscientious = 0;
         } else {
           acc[key].fase1 = 0;
           acc[key].fase2 = 0;
@@ -243,7 +254,17 @@ export default function DiagnosticReports({ filters }) {
           else if (classification === 'treinamento_emocional') acc[key].emotional_training++;
           else if (classification === 'investimento') acc[key].investment++;
           else if (classification === 'reconhecimento') acc[key].recognition++;
-          else if (classification === 'promocao') acc[key].promotion++; // Assuming potential future value
+          else if (classification === 'promocao') acc[key].promotion++;
+        } else if (isDISC) {
+          // Identify primary profile (highest score)
+          // In DISCDiagnostic entity: 
+          // dominant_profile enum: ["executor_d", "comunicador_i", "planejador_s", "analista_c"]
+          const profile = d.dominant_profile;
+          
+          if (profile === 'executor_d') acc[key].dominant++;
+          else if (profile === 'comunicador_i') acc[key].influential++;
+          else if (profile === 'planejador_s') acc[key].stable++;
+          else if (profile === 'analista_c') acc[key].conscientious++;
         } else {
         const phase = parseInt(d.phase, 10);
         if ([1, 2, 3, 4].includes(phase)) {
@@ -282,6 +303,11 @@ export default function DiagnosticReports({ filters }) {
           result.investment = parseFloat(((item.investment / total) * 100).toFixed(1));
           result.promotion = parseFloat(((item.promotion / total) * 100).toFixed(1));
           result.recognition = parseFloat(((item.recognition / total) * 100).toFixed(1));
+        } else if (isDISC) {
+          result.dominant = parseFloat(((item.dominant / total) * 100).toFixed(1));
+          result.influential = parseFloat(((item.influential / total) * 100).toFixed(1));
+          result.stable = parseFloat(((item.stable / total) * 100).toFixed(1));
+          result.conscientious = parseFloat(((item.conscientious / total) * 100).toFixed(1));
         } else {
           result.fase1 = parseFloat(((item.fase1 / total) * 100).toFixed(1));
           result.fase2 = parseFloat(((item.fase2 / total) * 100).toFixed(1));
@@ -290,7 +316,7 @@ export default function DiagnosticReports({ filters }) {
         }
         return result;
         });
-        }, [diagnostics, filters, isEntrepreneur, isMaturity, isProductivity, isPerformance, productivityTeamFilter]);
+        }, [diagnostics, filters, isEntrepreneur, isMaturity, isProductivity, isPerformance, isDISC, productivityTeamFilter]);
 
   const currentDistributionData = useMemo(() => {
     if (diagnostics.length === 0) return [];
@@ -358,6 +384,13 @@ export default function DiagnosticReports({ filters }) {
         { label: 'Promoção', percentage: parseFloat(((diagnostics.filter(d => d.classification === 'promocao').length / total) * 100).toFixed(1)) },
         { label: 'Reconhecimento', percentage: parseFloat(((diagnostics.filter(d => d.classification === 'reconhecimento').length / total) * 100).toFixed(1)) }
       ];
+    } else if (isDISC) {
+      return [
+        { label: 'Dominante', percentage: parseFloat(((diagnostics.filter(d => d.dominant_profile === 'executor_d').length / total) * 100).toFixed(1)) },
+        { label: 'Influente', percentage: parseFloat(((diagnostics.filter(d => d.dominant_profile === 'comunicador_i').length / total) * 100).toFixed(1)) },
+        { label: 'Estável', percentage: parseFloat(((diagnostics.filter(d => d.dominant_profile === 'planejador_s').length / total) * 100).toFixed(1)) },
+        { label: 'Conforme', percentage: parseFloat(((diagnostics.filter(d => d.dominant_profile === 'analista_c').length / total) * 100).toFixed(1)) }
+      ];
     } else {
       return [
         { label: 'Fase 1', percentage: parseFloat(((diagnostics.filter(d => parseInt(d.phase) === 1).length / total) * 100).toFixed(1)) },
@@ -366,7 +399,7 @@ export default function DiagnosticReports({ filters }) {
         { label: 'Fase 4', percentage: parseFloat(((diagnostics.filter(d => parseInt(d.phase) === 4).length / total) * 100).toFixed(1)) }
       ];
     }
-  }, [diagnostics, isEntrepreneur, isMaturity, isProductivity, isPerformance, productivityTeamFilter]);
+  }, [diagnostics, isEntrepreneur, isMaturity, isProductivity, isPerformance, isDISC, productivityTeamFilter]);
 
   const handleExportPDF = () => {
     setExporting(true);
@@ -411,7 +444,7 @@ export default function DiagnosticReports({ filters }) {
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-blue-600" />
-              {isEntrepreneur ? "Evolução do Perfil Empresarial" : isMaturity ? "Evolução da Maturidade dos Colaboradores" : isProductivity ? "Evolução Produtividade vs Salário" : isPerformance ? "Evolução de Desempenho Comportamental e Técnico" : "Evolução de Fases ao Longo do Tempo"}
+              {isEntrepreneur ? "Evolução do Perfil Empresarial" : isMaturity ? "Evolução da Maturidade dos Colaboradores" : isProductivity ? "Evolução Produtividade vs Salário" : isPerformance ? "Evolução de Desempenho Comportamental e Técnico" : isDISC ? "Evolução de Perfil Comportamental (DISC)" : "Evolução de Fases ao Longo do Tempo"}
             </CardTitle>
             <div className="flex gap-2 items-center">
               {isProductivity && (
@@ -477,6 +510,13 @@ export default function DiagnosticReports({ filters }) {
                     <Line type="monotone" dataKey="promotion" stroke="#eab308" strokeWidth={3} dot={{ r: 4 }} name="Promoção" connectNulls />
                     <Line type="monotone" dataKey="recognition" stroke="#06b6d4" strokeWidth={3} dot={{ r: 4 }} name="Reconhecimento" connectNulls />
                   </>
+                ) : isDISC ? (
+                  <>
+                    <Line type="monotone" dataKey="dominant" stroke="#ef4444" strokeWidth={3} dot={{ r: 4 }} name="Dominante" connectNulls />
+                    <Line type="monotone" dataKey="influential" stroke="#eab308" strokeWidth={3} dot={{ r: 4 }} name="Influente" connectNulls />
+                    <Line type="monotone" dataKey="stable" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} name="Estável" connectNulls />
+                    <Line type="monotone" dataKey="conscientious" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4 }} name="Conforme" connectNulls />
+                  </>
                 ) : (
                   <>
                     <Line type="monotone" dataKey="fase1" stroke="#ef4444" strokeWidth={3} dot={{ r: 4 }} name="Fase 1" connectNulls />
@@ -494,7 +534,7 @@ export default function DiagnosticReports({ filters }) {
       <Card>
         <CardHeader>
           <CardTitle>
-            {isEntrepreneur ? "Distribuição Atual de Perfis" : isMaturity ? "Distribuição Atual da Maturidade" : isProductivity ? "Distribuição Atual de Produtividade" : isPerformance ? "Distribuição Comportamental e Técnica" : "Distribuição Atual de Fases"}
+            {isEntrepreneur ? "Distribuição Atual de Perfis" : isMaturity ? "Distribuição Atual da Maturidade" : isProductivity ? "Distribuição Atual de Produtividade" : isPerformance ? "Distribuição Comportamental e Técnica" : isDISC ? "Distribuição de Perfil Comportamental" : "Distribuição Atual de Fases"}
           </CardTitle>
         </CardHeader>
         <CardContent>
