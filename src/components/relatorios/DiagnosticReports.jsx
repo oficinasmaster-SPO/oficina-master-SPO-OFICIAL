@@ -72,15 +72,24 @@ export default function DiagnosticReports({ filters }) {
 
   const evolutionData = React.useMemo(() => {
     const grouped = diagnostics.reduce((acc, d) => {
-      const month = new Date(d.created_date).toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
-      if (!acc[month]) {
-        acc[month] = { month, fase1: 0, fase2: 0, fase3: 0, fase4: 0 };
+      const date = new Date(d.created_date);
+      const monthKey = date.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
+      
+      if (!acc[monthKey]) {
+        acc[monthKey] = { 
+          month: monthKey, 
+          sortDate: new Date(date.getFullYear(), date.getMonth(), 1).getTime(),
+          fase1: 0, 
+          fase2: 0, 
+          fase3: 0, 
+          fase4: 0 
+        };
       }
-      acc[month][`fase${d.phase}`] = (acc[month][`fase${d.phase}`] || 0) + 1;
+      acc[monthKey][`fase${d.phase}`] = (acc[monthKey][`fase${d.phase}`] || 0) + 1;
       return acc;
     }, {});
     
-    return Object.values(grouped);
+    return Object.values(grouped).sort((a, b) => a.sortDate - b.sortDate);
   }, [diagnostics]);
 
   const handleExportPDF = () => {
@@ -143,17 +152,17 @@ export default function DiagnosticReports({ filters }) {
             <p className="text-center text-gray-500 py-8">Nenhum diagnóstico encontrado no período selecionado</p>
           ) : (
             <ResponsiveContainer width="100%" height={400}>
-              <LineChart data={evolutionData}>
+              <BarChart data={evolutionData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="fase1" stroke="#ef4444" name="Fase 1" />
-                <Line type="monotone" dataKey="fase2" stroke="#f59e0b" name="Fase 2" />
-                <Line type="monotone" dataKey="fase3" stroke="#3b82f6" name="Fase 3" />
-                <Line type="monotone" dataKey="fase4" stroke="#10b981" name="Fase 4" />
-              </LineChart>
+                <Bar dataKey="fase1" stackId="a" fill="#ef4444" name="Fase 1" />
+                <Bar dataKey="fase2" stackId="a" fill="#f59e0b" name="Fase 2" />
+                <Bar dataKey="fase3" stackId="a" fill="#3b82f6" name="Fase 3" />
+                <Bar dataKey="fase4" stackId="a" fill="#10b981" name="Fase 4" />
+              </BarChart>
             </ResponsiveContainer>
           )}
         </CardContent>
