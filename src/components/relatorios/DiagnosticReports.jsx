@@ -120,7 +120,10 @@ export default function DiagnosticReports({ filters }) {
         };
       }
       
-      acc[key][`fase${d.phase}`] = (acc[key][`fase${d.phase}`] || 0) + 1;
+      const phase = parseInt(d.phase, 10);
+      if ([1, 2, 3, 4].includes(phase)) {
+        acc[key][`fase${phase}`] = (acc[key][`fase${phase}`] || 0) + 1;
+      }
       acc[key].total += 1;
       return acc;
     }, {});
@@ -206,10 +209,10 @@ export default function DiagnosticReports({ filters }) {
                 <YAxis domain={[0, 100]} tickFormatter={(val) => `${val}%`} />
                 <Tooltip formatter={(value, name) => [`${value}%`, name]} />
                 <Legend />
-                <Line type="monotone" dataKey="fase1" stroke="#ef4444" strokeWidth={3} dot={{ r: 4 }} name="Fase 1" />
-                <Line type="monotone" dataKey="fase2" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4 }} name="Fase 2" />
-                <Line type="monotone" dataKey="fase3" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4 }} name="Fase 3" />
-                <Line type="monotone" dataKey="fase4" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} name="Fase 4" />
+                <Line type="monotone" dataKey="fase1" stroke="#ef4444" strokeWidth={3} dot={{ r: 4 }} name="Fase 1" connectNulls />
+                <Line type="monotone" dataKey="fase2" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4 }} name="Fase 2" connectNulls />
+                <Line type="monotone" dataKey="fase3" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4 }} name="Fase 3" connectNulls />
+                <Line type="monotone" dataKey="fase4" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} name="Fase 4" connectNulls />
               </LineChart>
             </ResponsiveContainer>
           )}
