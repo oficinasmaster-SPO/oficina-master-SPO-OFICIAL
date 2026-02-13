@@ -61,8 +61,17 @@ export default function DiagnosticReports({ filters }) {
         if (!d.created_date) return false;
         
         const createdDate = new Date(d.created_date);
-        if (filters.startDate && createdDate < new Date(filters.startDate)) return false;
-        if (filters.endDate && createdDate > new Date(filters.endDate)) return false;
+        if (filters.startDate) {
+          const startDate = new Date(filters.startDate);
+          startDate.setHours(0, 0, 0, 0);
+          if (createdDate < startDate) return false;
+        }
+        
+        if (filters.endDate) {
+          const endDate = new Date(filters.endDate);
+          endDate.setHours(23, 59, 59, 999);
+          if (createdDate > endDate) return false;
+        }
         
         return true;
       });
@@ -197,10 +206,10 @@ export default function DiagnosticReports({ filters }) {
                 <YAxis domain={[0, 100]} tickFormatter={(val) => `${val}%`} />
                 <Tooltip formatter={(value, name) => [`${value}%`, name]} />
                 <Legend />
-                <Line type="monotone" dataKey="fase1" stroke="#ef4444" name="Fase 1" />
-                <Line type="monotone" dataKey="fase2" stroke="#f59e0b" name="Fase 2" />
-                <Line type="monotone" dataKey="fase3" stroke="#3b82f6" name="Fase 3" />
-                <Line type="monotone" dataKey="fase4" stroke="#10b981" name="Fase 4" />
+                <Line type="monotone" dataKey="fase1" stroke="#ef4444" strokeWidth={3} dot={{ r: 4 }} name="Fase 1" />
+                <Line type="monotone" dataKey="fase2" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4 }} name="Fase 2" />
+                <Line type="monotone" dataKey="fase3" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4 }} name="Fase 3" />
+                <Line type="monotone" dataKey="fase4" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} name="Fase 4" />
               </LineChart>
             </ResponsiveContainer>
           )}
