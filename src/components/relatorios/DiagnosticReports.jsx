@@ -194,8 +194,8 @@ export default function DiagnosticReports({ filters }) {
               <LineChart data={evolutionData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
+                <YAxis domain={[0, 100]} tickFormatter={(val) => `${val}%`} />
+                <Tooltip formatter={(value, name) => [`${value}%`, name]} />
                 <Legend />
                 <Line type="monotone" dataKey="fase1" stroke="#ef4444" name="Fase 1" />
                 <Line type="monotone" dataKey="fase2" stroke="#f59e0b" name="Fase 2" />
