@@ -184,45 +184,42 @@ export default function DiagnosticReports({ filters }) {
         else if (level === 'adolescente') acc[key].pleno++;
         else if (level === 'adulto') acc[key].senior++;
         } else if (isProductivity) {
-         const role = d.employee_role || 'outros';
-         const isSales = ['vendas', 'comercial', 'consultor_vendas'].includes(role);
-         const isTech = ['tecnico', 'tecnico_lider', 'funilaria_pintura'].includes(role);
+           // Ensure counters exist even if key existed before
+           if (acc[key].limit === undefined) acc[key].limit = 0;
+           if (acc[key].ideal === undefined) acc[key].ideal = 0;
+           if (acc[key].excess === undefined) acc[key].excess = 0;
 
-         // Apply Team Filter
-         let skip = false;
-         if (productivityTeamFilter === 'commercial' && !isSales) skip = true;
-         if (productivityTeamFilter === 'technical' && !isTech) skip = true;
+           const role = d.employee_role || 'outros';
+           const isSales = ['vendas', 'comercial', 'consultor_vendas'].includes(role);
+           const isTech = ['tecnico', 'tecnico_lider', 'funilaria_pintura'].includes(role);
 
-         if (!skip) {
-             // Logic:
-             // Sales: Target 4%
-             // Tech: Target 9%
-             // Classification:
-             // Excess: Cost % > Target
-             // Ideal: Cost % <= Target AND Cost % >= Target/2
-             // Limit: Cost % < Target/2
+           // Apply Team Filter
+           let skip = false;
+           if (productivityTeamFilter === 'commercial' && !isSales) skip = true;
+           if (productivityTeamFilter === 'technical' && !isTech) skip = true;
 
-             let target = 0;
-             if (isSales) target = 4;
-             else if (isTech) target = 9;
-             else target = 9; // Default to tech logic for others if included
+           if (!skip) {
+               let target = 9; // Default target
+               if (isSales) target = 4;
+               else if (isTech) target = 9;
 
-             const totalCost = d.total_cost || 0;
-             const totalProd = d.total_productivity || 0;
-             const percentage = totalProd > 0 ? (totalCost / totalProd) * 100 : 0;
+               // Force float conversion for safety
+               const totalCost = parseFloat(d.total_cost || 0);
+               const totalProd = parseFloat(d.total_productivity || 0);
+               const percentage = totalProd > 0 ? (totalCost / totalProd) * 100 : 0;
 
-             if (percentage > target) {
-                 acc[key].excess++;
-             } else if (percentage >= (target / 2)) {
-                 acc[key].ideal++;
-             } else {
-                 acc[key].limit++;
-             }
-         } else {
-             // Decrement total because this record was skipped
-             acc[key].total -= 1;
-             return acc; // Return early
-         }
+               if (percentage > target) {
+                   acc[key].excess = (acc[key].excess || 0) + 1;
+               } else if (percentage >= (target / 2)) {
+                   acc[key].ideal = (acc[key].ideal || 0) + 1;
+               } else {
+                   acc[key].limit = (acc[key].limit || 0) + 1;
+               }
+           } else {
+               // Decrement total because this record was skipped
+               acc[key].total -= 1;
+               return acc; 
+           }
 
         } else {
         const phase = parseInt(d.phase, 10);
@@ -296,13 +293,12 @@ export default function DiagnosticReports({ filters }) {
            
            if (!skip) {
                count++;
-               let target = 0;
+               let target = 9;
                if (isSales) target = 4;
                else if (isTech) target = 9;
-               else target = 9; 
                
-               const totalCost = d.total_cost || 0;
-               const totalProd = d.total_productivity || 0;
+               const totalCost = parseFloat(d.total_cost || 0);
+               const totalProd = parseFloat(d.total_productivity || 0);
                const percentage = totalProd > 0 ? (totalCost / totalProd) * 100 : 0;
                
                if (percentage > target) {
