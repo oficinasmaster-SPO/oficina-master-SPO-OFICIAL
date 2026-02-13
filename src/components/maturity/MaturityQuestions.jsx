@@ -268,7 +268,7 @@ export const maturityQuestions = [
 export const maturityLevels = {
   bebe: {
     name: "Maturidade 1",
-    title: "Bebê",
+    title: "Auxiliar",
     subtitle: "Direção",
     color: "from-red-500 to-pink-500",
     description: "Colaborador(a) necessita de direção constante, orientação detalhada e acompanhamento próximo. Ainda está desenvolvendo habilidades básicas e precisa de supervisão para realizar suas tarefas.",
@@ -291,7 +291,7 @@ export const maturityLevels = {
   },
   crianca: {
     name: "Maturidade 2",
-    title: "Criança",
+    title: "Júnior",
     subtitle: "Orientação",
     color: "from-orange-500 to-yellow-500",
     description: "Colaborador(a) tem energia e vontade, mas ainda precisa de orientação e direcionamento. Já possui algumas habilidades mas necessita de apoio para executar com qualidade.",
@@ -314,7 +314,7 @@ export const maturityLevels = {
   },
   adolescente: {
     name: "Maturidade 3",
-    title: "Adolescente",
+    title: "Pleno",
     subtitle: "Apoio",
     color: "from-blue-500 to-cyan-500",
     description: "Colaborador(a) tem competência técnica mas pode faltar confiança ou consistência. Precisa de apoio e incentivo para manter a qualidade e assumir mais responsabilidades.",
@@ -337,7 +337,7 @@ export const maturityLevels = {
   },
   adulto: {
     name: "Maturidade 4",
-    title: "Adulto",
+    title: "Sênior",
     subtitle: "Delegação",
     color: "from-green-500 to-emerald-500",
     description: "Colaborador(a) maduro, autônomo e confiável. Possui alto nível de competência e comprometimento. Capaz de trabalhar de forma independente e até treinar outros.",

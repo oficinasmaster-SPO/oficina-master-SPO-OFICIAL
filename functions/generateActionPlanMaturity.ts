@@ -26,10 +26,10 @@ Deno.serve(async (req) => {
       : null;
 
     const maturityLabels = {
-      bebe: "Bebê - Necessita desenvolvimento básico e supervisão constante",
-      crianca: "Criança - Em desenvolvimento, precisa orientação regular",
-      adolescente: "Adolescente - Quase autônomo, precisa validação ocasional",
-      adulto: "Adulto - Totalmente autônomo e referência para outros"
+      bebe: "Auxiliar - Necessita desenvolvimento básico e supervisão constante",
+      crianca: "Júnior - Em desenvolvimento, precisa orientação regular",
+      adolescente: "Pleno - Quase autônomo, precisa validação ocasional",
+      adulto: "Sênior - Totalmente autônomo e referência para outros"
     };
 
     const maturityDesc = maturityLabels[diagnostic.maturity_level] || "Nível não identificado";

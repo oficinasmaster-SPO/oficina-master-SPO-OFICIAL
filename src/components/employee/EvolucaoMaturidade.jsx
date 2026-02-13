@@ -28,10 +28,10 @@ export default function EvolucaoMaturidade({ employee }) {
   });
 
   const maturityLevels = {
-    bebe: { label: "Bebê", value: 1, color: "#ef4444" },
-    crianca: { label: "Criança", value: 2, color: "#f59e0b" },
-    adolescente: { label: "Adolescente", value: 3, color: "#3b82f6" },
-    adulto: { label: "Adulto", value: 4, color: "#22c55e" }
+    bebe: { label: "Auxiliar", value: 1, color: "#ef4444" },
+    crianca: { label: "Júnior", value: 2, color: "#f59e0b" },
+    adolescente: { label: "Pleno", value: 3, color: "#3b82f6" },
+    adulto: { label: "Sênior", value: 4, color: "#22c55e" }
   };
 
   const chartData = maturityDiagnostics.map(diag => ({
