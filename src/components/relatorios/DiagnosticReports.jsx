@@ -71,26 +71,65 @@ export default function DiagnosticReports({ filters }) {
   });
 
   const evolutionData = React.useMemo(() => {
+    // Determine grouping based on date range
+    let groupBy = 'month';
+    if (filters.startDate && filters.endDate) {
+      const start = new Date(filters.startDate);
+      const end = new Date(filters.endDate);
+      const diffTime = Math.abs(end - start);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays <= 60) groupBy = 'day';
+      else if (diffDays > 730) groupBy = 'year';
+    }
+
     const grouped = diagnostics.reduce((acc, d) => {
       const date = new Date(d.created_date);
-      const monthKey = date.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
+      let key, sortDate, label;
+
+      if (groupBy === 'day') {
+        key = date.toISOString().split('T')[0]; // YYYY-MM-DD
+        sortDate = date.getTime();
+        label = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+      } else if (groupBy === 'year') {
+        key = date.getFullYear().toString();
+        sortDate = new Date(date.getFullYear(), 0, 1).getTime();
+        label = key;
+      } else {
+        // Default to month
+        key = date.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
+        sortDate = new Date(date.getFullYear(), date.getMonth(), 1).getTime();
+        label = key;
+      }
       
-      if (!acc[monthKey]) {
-        acc[monthKey] = { 
-          month: monthKey, 
-          sortDate: new Date(date.getFullYear(), date.getMonth(), 1).getTime(),
-          fase1: 0, 
-          fase2: 0, 
-          fase3: 0, 
-          fase4: 0 
+      if (!acc[key]) {
+        acc[key] = { 
+          month: label, 
+          sortDate: sortDate,
+          fase1: 0, fase2: 0, fase3: 0, fase4: 0,
+          total: 0
         };
       }
-      acc[monthKey][`fase${d.phase}`] = (acc[monthKey][`fase${d.phase}`] || 0) + 1;
+      
+      acc[key][`fase${d.phase}`] = (acc[key][`fase${d.phase}`] || 0) + 1;
+      acc[key].total += 1;
       return acc;
     }, {});
     
-    return Object.values(grouped).sort((a, b) => a.sortDate - b.sortDate);
-  }, [diagnostics]);
+    // Convert counts to percentages
+    return Object.values(grouped)
+      .sort((a, b) => a.sortDate - b.sortDate)
+      .map(item => {
+        const total = item.total || 1; // Avoid division by zero
+        return {
+          ...item,
+          fase1: parseFloat(((item.fase1 / total) * 100).toFixed(1)),
+          fase2: parseFloat(((item.fase2 / total) * 100).toFixed(1)),
+          fase3: parseFloat(((item.fase3 / total) * 100).toFixed(1)),
+          fase4: parseFloat(((item.fase4 / total) * 100).toFixed(1)),
+        };
+      });
+  }, [diagnostics, filters]);
 
   const handleExportPDF = () => {
     setExporting(true);
