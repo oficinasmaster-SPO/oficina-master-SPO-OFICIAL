@@ -13,7 +13,7 @@ export default function ReportFilters({ filters, onChange }) {
     { value: "fase", label: "Fase da Oficina" },
     { value: "empresario", label: "Perfil Empresário" },
     { value: "maturidade", label: "Maturidade Colaborador" },
-    { value: "producao", label: "Produção Colaborador" },
+    { value: "producao", label: "Produtividade vs Salário" },
     { value: "desempenho", label: "Desempenho (Matriz)" },
     { value: "disc", label: "DISC Comportamental" },
     { value: "os", label: "Ordem de Serviço" },
