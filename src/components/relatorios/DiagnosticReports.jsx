@@ -12,11 +12,16 @@ import jsPDF from "jspdf";
 export default function DiagnosticReports({ filters }) {
   const [exporting, setExporting] = useState(false);
   const isEntrepreneur = filters.diagnosticType === 'empresario';
+  const isMaturity = filters.diagnosticType === 'maturidade';
 
   const exportToPDF = (data) => {
     const doc = new jsPDF();
     doc.setFontSize(16);
-    doc.text(isEntrepreneur ? 'Evolução de Perfil Empresário' : 'Evolução de Diagnósticos', 14, 20);
+    let title = 'Evolução de Diagnósticos';
+    if (isEntrepreneur) title = 'Evolução de Perfil Empresário';
+    if (isMaturity) title = 'Evolução de Maturidade do Colaborador';
+    
+    doc.text(title, 14, 20);
     doc.setFontSize(10);
     doc.text(`${data.workshop} - ${new Date().toLocaleDateString('pt-BR')}`, 14, 30);
     
@@ -24,6 +29,8 @@ export default function DiagnosticReports({ filters }) {
     data.data.forEach(item => {
       if (isEntrepreneur) {
         doc.text(`${item.month}: Adv=${item.aventureiro}%, Emp=${item.empreendedor}%, Ges=${item.gestor}%`, 14, y);
+      } else if (isMaturity) {
+        doc.text(`${item.month}: Aux=${item.auxiliar}%, Jr=${item.junior}%, Pl=${item.pleno}%, Sr=${item.senior}%`, 14, y);
       } else {
         doc.text(`${item.month}: F1=${item.fase1}%, F2=${item.fase2}%, F3=${item.fase3}%, F4=${item.fase4}%`, 14, y);
       }
@@ -62,13 +69,15 @@ export default function DiagnosticReports({ filters }) {
   });
 
   const { data: diagnostics = [], isLoading } = useQuery({
-    queryKey: ['diagnostics-report', workshop?.id, filters, isEntrepreneur],
+    queryKey: ['diagnostics-report', workshop?.id, filters, isEntrepreneur, isMaturity],
     queryFn: async () => {
       if (!workshop?.id) return [];
       
       let allDiagnostics = [];
       if (isEntrepreneur) {
         allDiagnostics = await base44.entities.EntrepreneurDiagnostic.filter({ workshop_id: workshop.id });
+      } else if (isMaturity) {
+        allDiagnostics = await base44.entities.CollaboratorMaturityDiagnostic.filter({ workshop_id: workshop.id });
       } else {
         allDiagnostics = await base44.entities.Diagnostic.filter({ workshop_id: workshop.id });
       }
@@ -137,6 +146,11 @@ export default function DiagnosticReports({ filters }) {
           acc[key].aventureiro = 0;
           acc[key].empreendedor = 0;
           acc[key].gestor = 0;
+        } else if (isMaturity) {
+          acc[key].auxiliar = 0;
+          acc[key].junior = 0;
+          acc[key].pleno = 0;
+          acc[key].senior = 0;
         } else {
           acc[key].fase1 = 0;
           acc[key].fase2 = 0;
@@ -144,12 +158,18 @@ export default function DiagnosticReports({ filters }) {
           acc[key].fase4 = 0;
         }
       }
-      
+
       if (isEntrepreneur) {
         const profile = d.dominant_profile;
         if (profile === 'aventureiro') acc[key].aventureiro++;
         else if (profile === 'empreendedor') acc[key].empreendedor++;
         else if (profile === 'gestor') acc[key].gestor++;
+      } else if (isMaturity) {
+        const level = d.maturity_level;
+        if (level === 'bebe') acc[key].auxiliar++;
+        else if (level === 'crianca') acc[key].junior++;
+        else if (level === 'adolescente') acc[key].pleno++;
+        else if (level === 'adulto') acc[key].senior++;
       } else {
         const phase = parseInt(d.phase, 10);
         if ([1, 2, 3, 4].includes(phase)) {
@@ -158,19 +178,24 @@ export default function DiagnosticReports({ filters }) {
       }
       acc[key].total += 1;
       return acc;
-    }, {});
-    
-    // Convert counts to percentages
-    return Object.values(grouped)
+      }, {});
+
+      // Convert counts to percentages
+      return Object.values(grouped)
       .sort((a, b) => a.sortDate - b.sortDate)
       .map(item => {
         const total = item.total || 1; // Avoid division by zero
         const result = { ...item };
-        
+
         if (isEntrepreneur) {
           result.aventureiro = parseFloat(((item.aventureiro / total) * 100).toFixed(1));
           result.empreendedor = parseFloat(((item.empreendedor / total) * 100).toFixed(1));
           result.gestor = parseFloat(((item.gestor / total) * 100).toFixed(1));
+        } else if (isMaturity) {
+          result.auxiliar = parseFloat(((item.auxiliar / total) * 100).toFixed(1));
+          result.junior = parseFloat(((item.junior / total) * 100).toFixed(1));
+          result.pleno = parseFloat(((item.pleno / total) * 100).toFixed(1));
+          result.senior = parseFloat(((item.senior / total) * 100).toFixed(1));
         } else {
           result.fase1 = parseFloat(((item.fase1 / total) * 100).toFixed(1));
           result.fase2 = parseFloat(((item.fase2 / total) * 100).toFixed(1));
@@ -179,7 +204,7 @@ export default function DiagnosticReports({ filters }) {
         }
         return result;
       });
-  }, [diagnostics, filters, isEntrepreneur]);
+      }, [diagnostics, filters, isEntrepreneur, isMaturity]);
 
   const currentDistributionData = useMemo(() => {
     if (diagnostics.length === 0) return [];
@@ -191,6 +216,13 @@ export default function DiagnosticReports({ filters }) {
         { label: 'Empreendedor', percentage: parseFloat(((diagnostics.filter(d => d.dominant_profile === 'empreendedor').length / total) * 100).toFixed(1)) },
         { label: 'Gestor', percentage: parseFloat(((diagnostics.filter(d => d.dominant_profile === 'gestor').length / total) * 100).toFixed(1)) }
       ];
+    } else if (isMaturity) {
+      return [
+        { label: 'Auxiliar', percentage: parseFloat(((diagnostics.filter(d => d.maturity_level === 'bebe').length / total) * 100).toFixed(1)) },
+        { label: 'Júnior', percentage: parseFloat(((diagnostics.filter(d => d.maturity_level === 'crianca').length / total) * 100).toFixed(1)) },
+        { label: 'Pleno', percentage: parseFloat(((diagnostics.filter(d => d.maturity_level === 'adolescente').length / total) * 100).toFixed(1)) },
+        { label: 'Sênior', percentage: parseFloat(((diagnostics.filter(d => d.maturity_level === 'adulto').length / total) * 100).toFixed(1)) }
+      ];
     } else {
       return [
         { label: 'Fase 1', percentage: parseFloat(((diagnostics.filter(d => parseInt(d.phase) === 1).length / total) * 100).toFixed(1)) },
@@ -199,7 +231,7 @@ export default function DiagnosticReports({ filters }) {
         { label: 'Fase 4', percentage: parseFloat(((diagnostics.filter(d => parseInt(d.phase) === 4).length / total) * 100).toFixed(1)) }
       ];
     }
-  }, [diagnostics, isEntrepreneur]);
+  }, [diagnostics, isEntrepreneur, isMaturity]);
 
   const handleExportPDF = () => {
     setExporting(true);
@@ -244,7 +276,7 @@ export default function DiagnosticReports({ filters }) {
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-blue-600" />
-              {isEntrepreneur ? "Evolução do Perfil Empresarial" : "Evolução de Fases ao Longo do Tempo"}
+              {isEntrepreneur ? "Evolução do Perfil Empresarial" : isMaturity ? "Evolução da Maturidade dos Colaboradores" : "Evolução de Fases ao Longo do Tempo"}
             </CardTitle>
             <div className="flex gap-2">
               <Button onClick={handleExportCSV} variant="outline" size="sm">
@@ -275,6 +307,13 @@ export default function DiagnosticReports({ filters }) {
                     <Line type="monotone" dataKey="empreendedor" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4 }} name="Empreendedor" connectNulls />
                     <Line type="monotone" dataKey="gestor" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} name="Gestor" connectNulls />
                   </>
+                ) : isMaturity ? (
+                  <>
+                    <Line type="monotone" dataKey="auxiliar" stroke="#ef4444" strokeWidth={3} dot={{ r: 4 }} name="Auxiliar" connectNulls />
+                    <Line type="monotone" dataKey="junior" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4 }} name="Júnior" connectNulls />
+                    <Line type="monotone" dataKey="pleno" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4 }} name="Pleno" connectNulls />
+                    <Line type="monotone" dataKey="senior" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} name="Sênior" connectNulls />
+                  </>
                 ) : (
                   <>
                     <Line type="monotone" dataKey="fase1" stroke="#ef4444" strokeWidth={3} dot={{ r: 4 }} name="Fase 1" connectNulls />
@@ -292,7 +331,7 @@ export default function DiagnosticReports({ filters }) {
       <Card>
         <CardHeader>
           <CardTitle>
-            {isEntrepreneur ? "Distribuição Atual de Perfis" : "Distribuição Atual de Fases"}
+            {isEntrepreneur ? "Distribuição Atual de Perfis" : isMaturity ? "Distribuição Atual da Maturidade" : "Distribuição Atual de Fases"}
           </CardTitle>
         </CardHeader>
         <CardContent>
