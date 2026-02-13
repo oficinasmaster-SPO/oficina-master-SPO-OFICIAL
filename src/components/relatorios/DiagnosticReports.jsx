@@ -229,16 +229,16 @@ export default function DiagnosticReports({ filters }) {
           ) : (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={[
-                { fase: 'Fase 1', count: diagnostics.filter(d => d.phase === 1).length },
-                { fase: 'Fase 2', count: diagnostics.filter(d => d.phase === 2).length },
-                { fase: 'Fase 3', count: diagnostics.filter(d => d.phase === 3).length },
-                { fase: 'Fase 4', count: diagnostics.filter(d => d.phase === 4).length }
+                { fase: 'Fase 1', percentage: parseFloat(((diagnostics.filter(d => parseInt(d.phase) === 1).length / diagnostics.length) * 100).toFixed(1)) },
+                { fase: 'Fase 2', percentage: parseFloat(((diagnostics.filter(d => parseInt(d.phase) === 2).length / diagnostics.length) * 100).toFixed(1)) },
+                { fase: 'Fase 3', percentage: parseFloat(((diagnostics.filter(d => parseInt(d.phase) === 3).length / diagnostics.length) * 100).toFixed(1)) },
+                { fase: 'Fase 4', percentage: parseFloat(((diagnostics.filter(d => parseInt(d.phase) === 4).length / diagnostics.length) * 100).toFixed(1)) }
               ]}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="fase" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="count" fill="#3b82f6" />
+                <YAxis domain={[0, 100]} tickFormatter={(val) => `${val}%`} />
+                <Tooltip formatter={(value) => [`${value}%`, 'Porcentagem']} />
+                <Bar dataKey="percentage" fill="#3b82f6" name="Porcentagem" />
               </BarChart>
             </ResponsiveContainer>
           )}
