@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,26 +8,37 @@ import { toast } from "sonner";
 import { Line, Bar } from "recharts";
 import { ResponsiveContainer, LineChart, BarChart, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from "recharts";
 import jsPDF from "jspdf";
+
 export default function DiagnosticReports({ filters }) {
   const [exporting, setExporting] = useState(false);
+  const isEntrepreneur = filters.diagnosticType === 'empresario';
 
   const exportToPDF = (data) => {
     const doc = new jsPDF();
     doc.setFontSize(16);
-    doc.text('Evolução de Diagnósticos', 14, 20);
+    doc.text(isEntrepreneur ? 'Evolução de Perfil Empresário' : 'Evolução de Diagnósticos', 14, 20);
     doc.setFontSize(10);
     doc.text(`${data.workshop} - ${new Date().toLocaleDateString('pt-BR')}`, 14, 30);
     
     let y = 40;
     data.data.forEach(item => {
-      doc.text(`${item.month}: F1=${item.fase1}, F2=${item.fase2}, F3=${item.fase3}, F4=${item.fase4}`, 14, y);
+      if (isEntrepreneur) {
+        doc.text(`${item.month}: Adv=${item.aventureiro}%, Emp=${item.empreendedor}%, Ges=${item.gestor}%`, 14, y);
+      } else {
+        doc.text(`${item.month}: F1=${item.fase1}%, F2=${item.fase2}%, F3=${item.fase3}%, F4=${item.fase4}%`, 14, y);
+      }
       y += 7;
+      if (y > 280) {
+        doc.addPage();
+        y = 20;
+      }
     });
     
     doc.save(`diagnosticos-${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
   const exportToCSV = (data, filename) => {
+    if (!data || data.length === 0) return;
     const headers = Object.keys(data[0]);
     const csv = [
       headers.join(','),
@@ -51,11 +62,16 @@ export default function DiagnosticReports({ filters }) {
   });
 
   const { data: diagnostics = [], isLoading } = useQuery({
-    queryKey: ['diagnostics-report', workshop?.id, filters],
+    queryKey: ['diagnostics-report', workshop?.id, filters, isEntrepreneur],
     queryFn: async () => {
       if (!workshop?.id) return [];
       
-      const allDiagnostics = await base44.entities.Diagnostic.filter({ workshop_id: workshop.id });
+      let allDiagnostics = [];
+      if (isEntrepreneur) {
+        allDiagnostics = await base44.entities.EntrepreneurDiagnostic.filter({ workshop_id: workshop.id });
+      } else {
+        allDiagnostics = await base44.entities.Diagnostic.filter({ workshop_id: workshop.id });
+      }
       
       return allDiagnostics.filter(d => {
         if (!d.created_date) return false;
@@ -79,7 +95,7 @@ export default function DiagnosticReports({ filters }) {
     enabled: !!workshop?.id
   });
 
-  const evolutionData = React.useMemo(() => {
+  const evolutionData = useMemo(() => {
     // Determine grouping based on date range
     let groupBy = 'month';
     if (filters.startDate && filters.endDate) {
@@ -115,14 +131,30 @@ export default function DiagnosticReports({ filters }) {
         acc[key] = { 
           month: label, 
           sortDate: sortDate,
-          fase1: 0, fase2: 0, fase3: 0, fase4: 0,
           total: 0
         };
+        if (isEntrepreneur) {
+          acc[key].aventureiro = 0;
+          acc[key].empreendedor = 0;
+          acc[key].gestor = 0;
+        } else {
+          acc[key].fase1 = 0;
+          acc[key].fase2 = 0;
+          acc[key].fase3 = 0;
+          acc[key].fase4 = 0;
+        }
       }
       
-      const phase = parseInt(d.phase, 10);
-      if ([1, 2, 3, 4].includes(phase)) {
-        acc[key][`fase${phase}`] = (acc[key][`fase${phase}`] || 0) + 1;
+      if (isEntrepreneur) {
+        const profile = d.dominant_profile;
+        if (profile === 'aventureiro') acc[key].aventureiro++;
+        else if (profile === 'empreendedor') acc[key].empreendedor++;
+        else if (profile === 'gestor') acc[key].gestor++;
+      } else {
+        const phase = parseInt(d.phase, 10);
+        if ([1, 2, 3, 4].includes(phase)) {
+          acc[key][`fase${phase}`] = (acc[key][`fase${phase}`] || 0) + 1;
+        }
       }
       acc[key].total += 1;
       return acc;
@@ -133,15 +165,41 @@ export default function DiagnosticReports({ filters }) {
       .sort((a, b) => a.sortDate - b.sortDate)
       .map(item => {
         const total = item.total || 1; // Avoid division by zero
-        return {
-          ...item,
-          fase1: parseFloat(((item.fase1 / total) * 100).toFixed(1)),
-          fase2: parseFloat(((item.fase2 / total) * 100).toFixed(1)),
-          fase3: parseFloat(((item.fase3 / total) * 100).toFixed(1)),
-          fase4: parseFloat(((item.fase4 / total) * 100).toFixed(1)),
-        };
+        const result = { ...item };
+        
+        if (isEntrepreneur) {
+          result.aventureiro = parseFloat(((item.aventureiro / total) * 100).toFixed(1));
+          result.empreendedor = parseFloat(((item.empreendedor / total) * 100).toFixed(1));
+          result.gestor = parseFloat(((item.gestor / total) * 100).toFixed(1));
+        } else {
+          result.fase1 = parseFloat(((item.fase1 / total) * 100).toFixed(1));
+          result.fase2 = parseFloat(((item.fase2 / total) * 100).toFixed(1));
+          result.fase3 = parseFloat(((item.fase3 / total) * 100).toFixed(1));
+          result.fase4 = parseFloat(((item.fase4 / total) * 100).toFixed(1));
+        }
+        return result;
       });
-  }, [diagnostics, filters]);
+  }, [diagnostics, filters, isEntrepreneur]);
+
+  const currentDistributionData = useMemo(() => {
+    if (diagnostics.length === 0) return [];
+    const total = diagnostics.length;
+
+    if (isEntrepreneur) {
+      return [
+        { label: 'Aventureiro', percentage: parseFloat(((diagnostics.filter(d => d.dominant_profile === 'aventureiro').length / total) * 100).toFixed(1)) },
+        { label: 'Empreendedor', percentage: parseFloat(((diagnostics.filter(d => d.dominant_profile === 'empreendedor').length / total) * 100).toFixed(1)) },
+        { label: 'Gestor', percentage: parseFloat(((diagnostics.filter(d => d.dominant_profile === 'gestor').length / total) * 100).toFixed(1)) }
+      ];
+    } else {
+      return [
+        { label: 'Fase 1', percentage: parseFloat(((diagnostics.filter(d => parseInt(d.phase) === 1).length / total) * 100).toFixed(1)) },
+        { label: 'Fase 2', percentage: parseFloat(((diagnostics.filter(d => parseInt(d.phase) === 2).length / total) * 100).toFixed(1)) },
+        { label: 'Fase 3', percentage: parseFloat(((diagnostics.filter(d => parseInt(d.phase) === 3).length / total) * 100).toFixed(1)) },
+        { label: 'Fase 4', percentage: parseFloat(((diagnostics.filter(d => parseInt(d.phase) === 4).length / total) * 100).toFixed(1)) }
+      ];
+    }
+  }, [diagnostics, isEntrepreneur]);
 
   const handleExportPDF = () => {
     setExporting(true);
@@ -152,6 +210,7 @@ export default function DiagnosticReports({ filters }) {
       });
       toast.success("PDF exportado com sucesso!");
     } catch (error) {
+      console.error(error);
       toast.error("Erro ao exportar PDF");
     } finally {
       setExporting(false);
@@ -163,6 +222,7 @@ export default function DiagnosticReports({ filters }) {
       exportToCSV(evolutionData, 'evolucao-diagnosticos.csv');
       toast.success("CSV exportado com sucesso!");
     } catch (error) {
+      console.error(error);
       toast.error("Erro ao exportar CSV");
     }
   };
@@ -184,7 +244,7 @@ export default function DiagnosticReports({ filters }) {
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-blue-600" />
-              Evolução de Fases ao Longo do Tempo
+              {isEntrepreneur ? "Evolução do Perfil Empresarial" : "Evolução de Fases ao Longo do Tempo"}
             </CardTitle>
             <div className="flex gap-2">
               <Button onClick={handleExportCSV} variant="outline" size="sm">
@@ -209,10 +269,20 @@ export default function DiagnosticReports({ filters }) {
                 <YAxis domain={[0, 100]} tickFormatter={(val) => `${val}%`} />
                 <Tooltip formatter={(value, name) => [`${value}%`, name]} />
                 <Legend />
-                <Line type="monotone" dataKey="fase1" stroke="#ef4444" strokeWidth={3} dot={{ r: 4 }} name="Fase 1" connectNulls />
-                <Line type="monotone" dataKey="fase2" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4 }} name="Fase 2" connectNulls />
-                <Line type="monotone" dataKey="fase3" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4 }} name="Fase 3" connectNulls />
-                <Line type="monotone" dataKey="fase4" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} name="Fase 4" connectNulls />
+                {isEntrepreneur ? (
+                  <>
+                    <Line type="monotone" dataKey="aventureiro" stroke="#ef4444" strokeWidth={3} dot={{ r: 4 }} name="Aventureiro" connectNulls />
+                    <Line type="monotone" dataKey="empreendedor" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4 }} name="Empreendedor" connectNulls />
+                    <Line type="monotone" dataKey="gestor" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} name="Gestor" connectNulls />
+                  </>
+                ) : (
+                  <>
+                    <Line type="monotone" dataKey="fase1" stroke="#ef4444" strokeWidth={3} dot={{ r: 4 }} name="Fase 1" connectNulls />
+                    <Line type="monotone" dataKey="fase2" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4 }} name="Fase 2" connectNulls />
+                    <Line type="monotone" dataKey="fase3" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4 }} name="Fase 3" connectNulls />
+                    <Line type="monotone" dataKey="fase4" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} name="Fase 4" connectNulls />
+                  </>
+                )}
               </LineChart>
             </ResponsiveContainer>
           )}
@@ -221,24 +291,23 @@ export default function DiagnosticReports({ filters }) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Distribuição Atual de Fases</CardTitle>
+          <CardTitle>
+            {isEntrepreneur ? "Distribuição Atual de Perfis" : "Distribuição Atual de Fases"}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {diagnostics.length === 0 ? (
             <p className="text-center text-gray-500 py-8">Sem dados disponíveis</p>
           ) : (
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={[
-                { fase: 'Fase 1', percentage: parseFloat(((diagnostics.filter(d => parseInt(d.phase) === 1).length / diagnostics.length) * 100).toFixed(1)) },
-                { fase: 'Fase 2', percentage: parseFloat(((diagnostics.filter(d => parseInt(d.phase) === 2).length / diagnostics.length) * 100).toFixed(1)) },
-                { fase: 'Fase 3', percentage: parseFloat(((diagnostics.filter(d => parseInt(d.phase) === 3).length / diagnostics.length) * 100).toFixed(1)) },
-                { fase: 'Fase 4', percentage: parseFloat(((diagnostics.filter(d => parseInt(d.phase) === 4).length / diagnostics.length) * 100).toFixed(1)) }
-              ]}>
+              <BarChart data={currentDistributionData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="fase" />
+                <XAxis dataKey="label" />
                 <YAxis domain={[0, 100]} tickFormatter={(val) => `${val}%`} />
                 <Tooltip formatter={(value) => [`${value}%`, 'Porcentagem']} />
-                <Bar dataKey="percentage" fill="#3b82f6" name="Porcentagem" />
+                <Bar dataKey="percentage" fill="#3b82f6" name="Porcentagem">
+                  {/* Optional: Customize bar colors if desired, using Cell from recharts */}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           )}
