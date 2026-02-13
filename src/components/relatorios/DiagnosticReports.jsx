@@ -480,6 +480,44 @@ export default function DiagnosticReports({ filters }) {
     }
   }, [diagnostics, isEntrepreneur, isMaturity, isProductivity, isPerformance, isDISC, isWorkload, productivityTeamFilter]);
 
+  // Partner Comparison Data
+  const partnerComparisonData = useMemo(() => {
+    if (!isWorkload || !diagnostics.length || !employees.length) return null;
+    
+    const partners = employees.filter(e => e.is_partner || e.job_role === 'socio');
+    if (partners.length < 2) return null; 
+    
+    const latest = diagnostics.sort((a, b) => new Date(b.created_date) - new Date(a.created_date))[0];
+    if (!latest || !latest.workload_data) return null;
+    
+    return partners.map(partner => {
+      const entry = latest.workload_data.find(w => w.employee_id === partner.id);
+      
+      let status = "Sem dados";
+      let load = 0;
+      
+      if (entry) {
+         const worked = parseFloat(entry.weekly_hours_worked || 0);
+         const ideal = parseFloat(entry.ideal_weekly_hours || 40);
+         if (ideal > 0) {
+           const ratio = worked / ideal;
+           load = Math.round(ratio * 100);
+           if (ratio > 1.1) status = "Sobrecaregado";
+           else if (ratio < 0.9) status = "Ocioso";
+           else status = "Equilibrado";
+         }
+      }
+      
+      return {
+        name: partner.full_name,
+        role: partner.position || "Sócio",
+        status,
+        load
+      };
+    }).filter(p => p.status !== "Sem dados"); 
+    
+  }, [isWorkload, diagnostics, employees]);
+
   const handleExportPDF = () => {
     setExporting(true);
     try {
