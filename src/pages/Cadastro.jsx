@@ -203,9 +203,27 @@ export default function Cadastro() {
     }
   };
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
+    try {
+      // Atualizar flags de onboarding
+      const updates = {};
+      if (user.first_access_completed === false) {
+        updates.first_access_completed = true;
+      }
+      if (user.profile_completed === false) {
+        updates.profile_completed = true;
+      }
+      
+      if (Object.keys(updates).length > 0) {
+        await base44.auth.updateMe(updates);
+      }
+    } catch (e) {
+      console.error("Erro ao atualizar status do usuário:", e);
+    }
+
     toast.success("Cadastro finalizado!");
-    navigate(createPageUrl("GestaoOficina"));
+    // Redirecionar para Home (Dashboard) conforme especificação
+    navigate(createPageUrl("Home"));
   };
 
   if (loading) {
