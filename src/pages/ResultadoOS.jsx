@@ -129,10 +129,10 @@ export default function ResultadoOS() {
       description: "Dentro dos parâmetros aceitáveis"
     },
     alerta_renda: {
-      title: "ALERTA - Renda Baixa",
+      title: "ALERTA - Retorno Baixo",
       color: "from-yellow-500 to-amber-600",
       icon: AlertTriangle,
-      description: "Renda abaixo de 70% - Ajustes recomendados"
+      description: "Retorno abaixo de 70% - Ajustes recomendados"
     },
     alerta_investimento: {
       title: "ALERTA - Investimento Alto",
@@ -424,7 +424,7 @@ export default function ResultadoOS() {
                 {diagnostic.recommendations.map((rec, index) => (
                   <li key={index} className="flex items-start gap-3 bg-purple-50 rounded-lg p-3 border border-purple-200">
                     <CheckCircle2 className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
-                    <span className="text-purple-900">{rec}</span>
+                    <span className="text-purple-900">{rec.replace(/Renda/g, 'Retorno')}</span>
                   </li>
                 ))}
               </ul>

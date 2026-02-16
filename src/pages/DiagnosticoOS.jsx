@@ -239,7 +239,7 @@ export default function DiagnosticoOS() {
     
     if (revenuePercentage < 70) {
       classification = "alerta_renda";
-      recommendations.push("Renda abaixo de 70% - Aumentar valor da mão de obra");
+      recommendations.push("Retorno abaixo de 70% - Aumentar valor da mão de obra");
       recommendations.push("Descrever cada passo da mão de obra para aumentar valor percebido");
     }
     
