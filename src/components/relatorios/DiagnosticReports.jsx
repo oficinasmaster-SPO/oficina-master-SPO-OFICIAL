@@ -380,6 +380,15 @@ export default function DiagnosticReports({ filters }) {
           result.influential = parseFloat(((item.influential / total) * 100).toFixed(1));
           result.stable = parseFloat(((item.stable / total) * 100).toFixed(1));
           result.conscientious = parseFloat(((item.conscientious / total) * 100).toFixed(1));
+        } else if (isWorkload) {
+          result.balanced = parseFloat(((item.balanced / total) * 100).toFixed(1));
+          result.overloaded = parseFloat(((item.overloaded / total) * 100).toFixed(1));
+          result.underutilized = parseFloat(((item.underutilized / total) * 100).toFixed(1));
+        } else if (isServiceOrder) {
+          result.below60 = parseFloat(((item.below60 / total) * 100).toFixed(1));
+          result.range70 = parseFloat(((item.range70 / total) * 100).toFixed(1));
+          result.range80 = parseFloat(((item.range80 / total) * 100).toFixed(1));
+          result.range90 = parseFloat(((item.range90 / total) * 100).toFixed(1));
         } else {
           result.fase1 = parseFloat(((item.fase1 / total) * 100).toFixed(1));
           result.fase2 = parseFloat(((item.fase2 / total) * 100).toFixed(1));
