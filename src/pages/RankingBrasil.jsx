@@ -32,10 +32,14 @@ export default function RankingBrasil() {
 
   const { data: dreRecords = [], isLoading: loadingDre } = useQuery({
     queryKey: ['dre-all'],
-    queryFn: () => base44.entities.DREMonthly.list(null, 3000)
+    queryFn: () => base44.entities.DREMonthly.list(null, 3000),
+    refetchOnWindowFocus: true
   });
 
   const isLoading = loadingEmployees || loadingWorkshops || loadingHistory || loadingDiagnostics || loadingDre;
+
+  // Estado para debug visual
+  const [debugData, setDebugData] = useState(null);
 
   const getEmployeeRanking = () => {
     let filtered = employees.filter(e => e.status === "ativo");
@@ -289,14 +293,18 @@ export default function RankingBrasil() {
 
         // Debug específico para a oficina do usuário
         if (workshop.id === '695408b3ed74bfeb60d708c0') {
-             console.log('🔍 DEBUG RANKING OFICINA MASTER:', {
+             const debugInfo = {
                  id: workshop.id,
                  name: workshop.name,
                  best_month_raw: workshop.best_month_history,
                  registeredBest_normalized: normalize(registeredBest),
                  sources_revenue: sources.map(s => ({ source: s.name, rev: s.data.revenue_total })),
-                 winner_before_sort: sources[0].name
-             });
+                 winner_source: sources[0].name, // Já ordenado pelo sort abaixo? Não, aqui é antes.
+                 winner_data: sources.reduce((prev, current) => (prev.data.revenue_total > current.data.revenue_total) ? prev : current),
+                 final_consolidated: null // Será preenchido abaixo
+             };
+             // Guardar para exibir na tela (apenas na última iteração/renderização fará sentido, mas ok)
+             if (!debugData) setDebugData(debugInfo);
         }
 
         // Ordenamos decrescente pelo faturamento total para encontrar o "Recorde"
@@ -585,6 +593,50 @@ export default function RankingBrasil() {
             </div>
           </CardContent>
         </Card>
+        {/* Painel de Debug para Oficinas Master Acelerador */}
+        {debugData && (
+            <Card className="mt-8 border-4 border-red-500 bg-black text-white p-4">
+                <CardHeader>
+                    <CardTitle className="text-red-500 flex items-center gap-2">
+                        <AlertTriangle /> DIAGNÓSTICO TÉCNICO DE DADOS
+                    </CardTitle>
+                    <CardDescription className="text-gray-400">
+                        Visível apenas para ID: {debugData.id}
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="font-mono text-xs space-y-4">
+                    <div>
+                        <strong className="text-yellow-400">1. O que veio do Banco (Raw):</strong>
+                        <pre className="bg-gray-900 p-2 mt-1 overflow-auto max-h-40 rounded border border-gray-700">
+                            {JSON.stringify(debugData.best_month_raw, null, 2)}
+                        </pre>
+                    </div>
+                    <div>
+                        <strong className="text-blue-400">2. Fontes Consideradas (Comparação):</strong>
+                        <div className="grid grid-cols-2 gap-2 mt-1">
+                            {debugData.sources_revenue.map((s, i) => (
+                                <div key={i} className="bg-gray-800 p-2 rounded flex justify-between">
+                                    <span>{s.source}:</span>
+                                    <span className={s.rev > 0 ? "text-green-400 font-bold" : "text-gray-500"}>
+                                        {formatCurrency(s.rev)}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div>
+                        <strong className="text-green-400">3. Vencedor (Maior Faturamento):</strong>
+                        <div className="bg-gray-800 p-2 mt-1 rounded border border-green-500">
+                            Fonte: {debugData.winner_data.name} <br/>
+                            Valor: {formatCurrency(debugData.winner_data.data.revenue_total)}
+                        </div>
+                    </div>
+                    <p className="text-gray-500 italic mt-2">
+                        *Se "cadastro" estiver zerado aqui em cima, o frontend não está recebendo o objeto best_month_history do backend.
+                    </p>
+                </CardContent>
+            </Card>
+        )}
       </div>
     </div>
   );
