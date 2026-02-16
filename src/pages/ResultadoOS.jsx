@@ -153,7 +153,7 @@ export default function ResultadoOS() {
 
   // Dados para gráfico R70/I30
   const r70i30Data = [
-    { name: "Renda (R70)", value: diagnostic.revenue_percentage, color: "#22c55e" },
+    { name: "Retorno", value: diagnostic.revenue_percentage, color: "#22c55e" },
     { name: "Investimento (I30)", value: diagnostic.investment_percentage, color: "#3b82f6" }
   ];
 
@@ -215,7 +215,7 @@ export default function ResultadoOS() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-600">Renda (R70)</span>
+                <span className="text-sm text-gray-600">Retorno</span>
                 <TrendingUp className="w-5 h-5 text-green-600" />
               </div>
               <p className={`text-3xl font-bold ${diagnostic.revenue_percentage >= 70 ? 'text-green-600' : 'text-red-600'}`}>
