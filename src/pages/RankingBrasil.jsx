@@ -256,8 +256,16 @@ export default function RankingBrasil() {
         // Prioridade (da menor para maior): Metas < Cadastro (Best Month) < Histórico < Diagnósticos
         // Isso garante que dados parciais sejam preenchidos pelas fontes de menor prioridade se faltarem na principal
         
-        const currentGoals = workshop.monthly_goals || {};
-        const registeredBest = workshop.best_month_history || {};
+        // Garantir que campos JSON sejam objetos, mesmo se vierem como string
+        const parseJSON = (val) => {
+            if (typeof val === 'string') {
+                try { return JSON.parse(val); } catch (e) { return {}; }
+            }
+            return val || {};
+        };
+
+        const currentGoals = parseJSON(workshop.monthly_goals);
+        const registeredBest = parseJSON(workshop.best_month_history);
         const historyRecord = bestHistoryByWorkshop[workshop.id] || {};
         const diagnosticBest = bestDiagnosticByWorkshop[workshop.id] || {};
         const dreBest = bestDreByWorkshop[workshop.id] || {};
@@ -269,11 +277,26 @@ export default function RankingBrasil() {
             if (valor === null || valor === undefined || valor === '') return 0;
             if (typeof valor === 'number') return valor;
             
-            // Remove "R$", espaços, e converte formato brasileiro (290.000,00) para universal (290000.00)
-            let textoLimpo = String(valor)
-                .replace(/R\$\s?/gi, '') // Remove R$
-                .replace(/\./g, '')      // Remove pontos de milhar
-                .replace(',', '.');      // Troca vírgula decimal por ponto
+            // Limpeza agressiva de caracteres não numéricos
+            let textoLimpo = String(valor).trim();
+            
+            // Remove R$ e caracteres invisíveis/espaços
+            textoLimpo = textoLimpo.replace(/R\$|\s|&nbsp;/gi, '');
+            
+            // Detecção de formato:
+            // Se tiver vírgula como último separador, assume BR (milhar.centavos)
+            // Ex: 290.000,00 -> remove ponto, troca vírgula por ponto
+            if (textoLimpo.includes(',') && (!textoLimpo.includes('.') || textoLimpo.indexOf(',') > textoLimpo.indexOf('.'))) {
+                textoLimpo = textoLimpo.replace(/\./g, '').replace(',', '.');
+            } 
+            // Se tiver ponto como último separador ou único, assume US ou BR sem milhar
+            // Ex: 290,000.00 -> remove vírgula
+            else if (textoLimpo.includes(',') && textoLimpo.includes('.')) {
+                textoLimpo = textoLimpo.replace(/,/g, '');
+            }
+
+            // Remove tudo que não for dígito, ponto ou sinal de menos
+            textoLimpo = textoLimpo.replace(/[^0-9.-]/g, '');
 
             let numeroTratado = parseFloat(textoLimpo);
             return isNaN(numeroTratado) ? 0 : numeroTratado;
