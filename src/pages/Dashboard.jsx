@@ -197,18 +197,42 @@ export default function Dashboard() {
     outro: "Outro"
   };
 
-  // KPIs principais
-  const totalRevenue = filteredWorkshops.reduce((sum, w) => 
-    sum + (w.monthly_goals?.revenue_parts || 0) + (w.monthly_goals?.revenue_services || 0), 0
-  );
+  // KPIs principais com Tratamento de Dados (Correção de Zeros)
+  const processedData = filteredWorkshops.map(w => {
+      const parseJSON = (val) => { try { return typeof val === 'string' ? JSON.parse(val) : (val || {}); } catch { return {}; } };
+      const cleanNum = (val) => {
+          if (typeof val === 'number') return val;
+          if (!val) return 0;
+          let s = String(val).replace(/R\$|\s|&nbsp;/gi, '').trim();
+          if (s.includes(',') && (!s.includes('.') || s.indexOf(',') > s.indexOf('.'))) s = s.replace(/\./g, '').replace(',', '.');
+          else if (s.includes(',') && s.includes('.')) s = s.replace(/,/g, '');
+          return parseFloat(s.replace(/[^0-9.-]/g, '')) || 0;
+      };
 
-  const avgTicket = filteredWorkshops.length > 0
-    ? filteredWorkshops.reduce((sum, w) => sum + (w.monthly_goals?.average_ticket || 0), 0) / filteredWorkshops.length
-    : 0;
+      const goals = parseJSON(w.monthly_goals);
+      const best = parseJSON(w.best_month_history);
+      
+      // Lógica "Vencedor": Pega o maior valor encontrado entre Metas e Histórico
+      const revGoals = cleanNum(goals.actual_revenue_achieved) || (cleanNum(goals.revenue_parts) + cleanNum(goals.revenue_services));
+      const revBest = cleanNum(best.revenue_total);
+      
+      return {
+          revenue: Math.max(revGoals, revBest),
+          ticket: Math.max(cleanNum(goals.average_ticket), cleanNum(best.average_ticket)),
+          profit: Math.max(cleanNum(goals.profit_percentage), cleanNum(best.profit_percentage)),
+          kit: Math.max(cleanNum(goals.kit_master_sales), cleanNum(best.kit_master)),
+          pneus: Math.max(cleanNum(goals.pneus_sales), cleanNum(best.tire_sales)),
+          scheduled: cleanNum(goals.scheduled) || cleanNum(best.leads_scheduled),
+          sold: cleanNum(goals.customer_volume) || cleanNum(best.customer_volume)
+      };
+  });
 
-  const avgProfit = filteredWorkshops.length > 0
-    ? filteredWorkshops.reduce((sum, w) => sum + (w.monthly_goals?.profit_percentage || 0), 0) / filteredWorkshops.length
-    : 0;
+  const totalRevenue = processedData.reduce((sum, d) => sum + d.revenue, 0);
+  
+  const activeWorkshopsCount = processedData.filter(d => d.revenue > 0).length || 1; // Evita divisão por zero
+  
+  const avgTicket = processedData.reduce((sum, d) => sum + d.ticket, 0) / (processedData.length || 1);
+  const avgProfit = processedData.reduce((sum, d) => sum + d.profit, 0) / (processedData.length || 1);
 
   const totalOS = osAssessments.length;
   const perfectOS = osAssessments.filter(os => os.classification === 'perfeita').length;
@@ -224,18 +248,13 @@ export default function Dashboard() {
   );
   const avgTechRevenue = technicians.length > 0 ? totalTechProduction / technicians.length : 0;
 
-  // Kit Master e Pneus (simulado - pode ser adicionado ao Workshop schema)
-  const avgKitMaster = filteredWorkshops.length > 0 
-    ? filteredWorkshops.reduce((sum, w) => sum + ((w.monthly_goals?.kit_master_sales || 0)), 0) / filteredWorkshops.length
-    : 0;
+  // Kit Master e Pneus
+  const avgKitMaster = processedData.reduce((sum, d) => sum + d.kit, 0) / (processedData.length || 1);
+  const avgPneusSales = processedData.reduce((sum, d) => sum + d.pneus, 0) / (processedData.length || 1);
 
-  const avgPneusSales = filteredWorkshops.length > 0
-    ? filteredWorkshops.reduce((sum, w) => sum + ((w.monthly_goals?.pneus_sales || 0)), 0) / filteredWorkshops.length
-    : 0;
-
-  // Agendamentos vs Vendas (simulado)
-  const totalScheduled = filteredWorkshops.reduce((sum, w) => sum + (w.monthly_goals?.scheduled || 0), 0);
-  const totalSold = filteredWorkshops.reduce((sum, w) => sum + (w.monthly_goals?.customer_volume || 0), 0);
+  // Agendamentos vs Vendas
+  const totalScheduled = processedData.reduce((sum, d) => sum + d.scheduled, 0);
+  const totalSold = processedData.reduce((sum, d) => sum + d.sold, 0);
   const conversionRate = totalScheduled > 0 ? (totalSold / totalScheduled) * 100 : 0;
 
   // TCMP2 médio
