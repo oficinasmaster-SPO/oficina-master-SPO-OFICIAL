@@ -9,6 +9,7 @@ import { Loader2 } from "lucide-react";
 
 export default function RankingBrasil() {
   const [selectedArea, setSelectedArea] = useState("all");
+  const [selectedSegment, setSelectedSegment] = useState("all");
 
   const { data: employees = [], isLoading: loadingEmployees } = useQuery({
     queryKey: ['employees-all'],
