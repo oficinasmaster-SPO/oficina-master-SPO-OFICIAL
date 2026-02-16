@@ -209,6 +209,11 @@ export function usePermissions() {
         return true;
       }
 
+      // Permissão especial: Apenas autenticação necessária
+      if (requiredPermission === "public_authenticated") {
+        return !!user;
+      }
+
       // Verificar se o usuário tem a permissão granular necessária
       return hasPermission(requiredPermission);
     } catch (error) {

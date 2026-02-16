@@ -178,6 +178,9 @@ export const pagePermissions = {
   PrimeiroAcesso: null,
   Cadastro: null,
   ClientRegistration: null,
+
+  // Página pública para autenticados (qualquer usuário logado pode acessar)
+  MeuPerfil: "public_authenticated",
 };
 
 /**

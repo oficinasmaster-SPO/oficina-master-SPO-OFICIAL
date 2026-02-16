@@ -51,7 +51,15 @@ export function useWorkshopContext() {
 
           // Se ainda não encontrou, busca via Employee (colaborador)
           if (!userWorkshop) {
-            const employees = await base44.entities.Employee.filter({ user_id: user.id });
+            // Tenta buscar por ID
+            let employees = await base44.entities.Employee.filter({ user_id: user.id });
+            
+            // Fallback: Tenta buscar por Email se falhar por ID
+            if (!employees || employees.length === 0) {
+              console.log('⚠️ WorkshopContext: Buscando employee por email (fallback)');
+              employees = await base44.entities.Employee.filter({ email: user.email });
+            }
+
             if (Array.isArray(employees) && employees.length > 0) {
               const employee = employees[0];
               if (employee.workshop_id) {
