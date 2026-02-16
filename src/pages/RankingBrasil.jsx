@@ -30,11 +30,18 @@ export default function RankingBrasil() {
     queryFn: () => base44.entities.ProductivityDiagnostic.list(null, 2000)
   });
 
-  const { data: dreRecords = [], isLoading: loadingDre } = useQuery({
+  const { data: dreRecords = [], isLoading: loadingDre, refetch: refetchDre } = useQuery({
     queryKey: ['dre-all'],
     queryFn: () => base44.entities.DREMonthly.list(null, 3000),
-    refetchOnWindowFocus: true
+    refetchOnWindowFocus: true,
+    staleTime: 0 
   });
+
+  // Função para forçar recarregamento de todos os dados
+  const handleRefresh = () => {
+      // Invalida queries
+      window.location.reload(); 
+  };
 
   const isLoading = loadingEmployees || loadingWorkshops || loadingHistory || loadingDiagnostics || loadingDre;
 
@@ -260,8 +267,27 @@ export default function RankingBrasil() {
         const safeNum = (val) => {
             if (typeof val === 'number') return val;
             if (typeof val === 'string') {
-                // Tenta converter string numérica (ex: "290000" ou "290000.00")
-                const parsed = parseFloat(val);
+                // Tratamento robusto para formatos BR (1.000,00) e US (1,000.00)
+                let clean = val.replace(/[R$\s]/g, ''); // Remove R$ e espaços
+                
+                // Se tem vírgula e ponto, decide qual é o decimal pela posição
+                if (clean.includes(',') && clean.includes('.')) {
+                    if (clean.lastIndexOf(',') > clean.lastIndexOf('.')) {
+                        // Formato BR: 1.234,56 -> Remove ponto, troca vírgula por ponto
+                        clean = clean.replace(/\./g, '').replace(',', '.');
+                    } else {
+                        // Formato US: 1,234.56 -> Remove vírgula
+                        clean = clean.replace(/,/g, '');
+                    }
+                } else if (clean.includes(',')) {
+                    // Só vírgula: 1000,00 ou 1,000. Assume decimal se parece BR
+                    clean = clean.replace(',', '.');
+                } else if ((clean.match(/\./g) || []).length > 1) {
+                    // Múltiplos pontos: 1.000.000 -> 1000000
+                    clean = clean.replace(/\./g, '');
+                }
+                
+                const parsed = parseFloat(clean);
                 return isNaN(parsed) ? 0 : parsed;
             }
             return 0;
@@ -409,7 +435,12 @@ export default function RankingBrasil() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-8">
+        <div className="text-center mb-8 relative">
+          <div className="absolute right-0 top-0 hidden md:block">
+              <Button variant="outline" size="sm" onClick={handleRefresh} className="gap-2">
+                  <Loader2 className="w-3 h-3" /> Atualizar Dados
+              </Button>
+          </div>
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full mb-4">
             <Trophy className="w-8 h-8 text-white" />
           </div>
