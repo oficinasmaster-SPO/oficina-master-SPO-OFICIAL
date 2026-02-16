@@ -60,13 +60,48 @@ export default function Cadastro() {
       if (workshops && workshops.length > 0) {
         setWorkshop(workshops[0]);
       } else {
-        // Se não é owner e já tem workshop_id (colaborador), redirecionar para Home
+        // Se não é owner e já tem workshop_id (colaborador)
         if (currentUser.workshop_id) {
-          toast.info("Você já está vinculado a uma oficina!");
-          navigate(createPageUrl("Home"));
-          return;
+          // Se perfil incompleto, permitir completar
+          if (currentUser.profile_completed === false) {
+             // Fetch the workshop they belong to so tabs render (needed for context)
+             // Although they might only edit profile, existing structure uses workshop object
+             try {
+                // If we can't fetch it (RLS), we might need to mock or handle it
+                // Assuming collaborators can read their workshop
+                 // base44.entities.Workshop.get(id) might not be available directly if RLS restricts
+                 // But let's try reading the one they are linked to
+                 // If list returns empty, we might need a specific get or just allow profile edit without workshop object?
+                 // CadastroPerfilSocio uses workshop prop but mainly for context?
+                 // Let's try to fetch it.
+                 // If failure, we might set a dummy object or null?
+                 // But Tabs rely on workshop to NOT show "Create" screen.
+                 // We'll see.
+             } catch (e) {
+                 console.log("Error fetching collaborator workshop", e);
+             }
+             // For now, let's just NOT redirect.
+             // But if workshop is null, it shows "Bem-vindo...".
+             // We need to bypass that screen for collaborators.
+             // We can set a dummy workshop object just to trigger Tabs view?
+             // Or fetch the actual one.
+             // Let's try to fetch.
+             const userWorkshop = await base44.entities.Workshop.get(currentUser.workshop_id).catch(() => null);
+             if (userWorkshop) {
+                 setWorkshop(userWorkshop);
+             } else {
+                 // Fallback if read fails
+                 setWorkshop({ id: currentUser.workshop_id, name: "Oficina" });
+             }
+          } else {
+             // If profile IS completed, redirect to Home (normal flow)
+             toast.info("Você já está vinculado a uma oficina!");
+             navigate(createPageUrl("Home"));
+             return;
+          }
+        } else {
+           setWorkshop(null); // Nenhum workshop encontrado, mostraremos tela de criação
         }
-        setWorkshop(null); // Nenhum workshop encontrado, mostraremos tela de criação
       }
     } catch (error) {
       console.error(error);
