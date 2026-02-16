@@ -469,6 +469,30 @@ export default function RankingBrasil() {
           <p className="text-gray-600">
             Os melhores colaboradores e oficinas do Brasil
           </p>
+          
+          <div className="mt-6 flex justify-center">
+             <div className="w-full max-w-md">
+                <Select value={selectedSegment} onValueChange={setSelectedSegment}>
+                  <SelectTrigger className="bg-white/80 backdrop-blur-sm border-gray-300">
+                    <SelectValue placeholder="Filtrar por Segmento" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os Segmentos</SelectItem>
+                    <SelectItem value="Centro automotivo (revisão, manutenção rápida, serviços gerais)">Centro automotivo (revisão, manutenção rápida, serviços gerais)</SelectItem>
+                    <SelectItem value="Loja de pneus (foco principal em venda de pneus)">Loja de pneus (foco principal em venda de pneus)</SelectItem>
+                    <SelectItem value="Oficina de motos">Oficina de motos</SelectItem>
+                    <SelectItem value="Funilaria e pintura">Funilaria e pintura</SelectItem>
+                    <SelectItem value="Estética automotiva">Estética automotiva</SelectItem>
+                    <SelectItem value="Retífica / usinagem / tornearia">Retífica / usinagem / tornearia</SelectItem>
+                    <SelectItem value="Autopeças (loja ou distribuidor)">Autopeças (loja ou distribuidor)</SelectItem>
+                    <SelectItem value="Motopeças (loja ou distribuidor)">Motopeças (loja ou distribuidor)</SelectItem>
+                    <SelectItem value="Oficina diesel (linha leve)">Oficina diesel (linha leve)</SelectItem>
+                    <SelectItem value="Oficina diesel (linha pesada)">Oficina diesel (linha pesada)</SelectItem>
+                    <SelectItem value="Posto de molas">Posto de molas</SelectItem>
+                  </SelectContent>
+                </Select>
+             </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
