@@ -287,6 +287,18 @@ export default function RankingBrasil() {
             { name: 'agregado', data: normalize(aggregated) }
         ];
 
+        // Debug específico para a oficina do usuário
+        if (workshop.id === '695408b3ed74bfeb60d708c0') {
+             console.log('🔍 DEBUG RANKING OFICINA MASTER:', {
+                 id: workshop.id,
+                 name: workshop.name,
+                 best_month_raw: workshop.best_month_history,
+                 registeredBest_normalized: normalize(registeredBest),
+                 sources_revenue: sources.map(s => ({ source: s.name, rev: s.data.revenue_total })),
+                 winner_before_sort: sources[0].name
+             });
+        }
+
         // Ordenamos decrescente pelo faturamento total para encontrar o "Recorde"
         sources.sort((a, b) => b.data.revenue_total - a.data.revenue_total);
 
