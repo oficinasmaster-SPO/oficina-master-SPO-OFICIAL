@@ -75,9 +75,11 @@ export default function RankingBrasil() {
           city: workshop?.city || "-",
           state: workshop?.state || "-",
           totalProduction,
-          productivity
+          productivity,
+          segment: workshop?.segment || ""
         };
       })
+      .filter(e => selectedSegment === "all" || e.segment === selectedSegment)
       .sort((a, b) => b.productivity - a.productivity);
   };
 
