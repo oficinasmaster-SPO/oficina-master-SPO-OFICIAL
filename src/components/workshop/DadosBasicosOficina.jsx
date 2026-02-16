@@ -366,15 +366,31 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
               </p>
             </div>
           <div className="md:col-span-2">
-            <Label>Segmento (edição livre)</Label>
-            <Input
-              value={formData.segment}
-              onChange={(e) => setFormData({...formData, segment: e.target.value})}
+            <Label>Segmento</Label>
+            <Select 
+              value={formData.segment} 
+              onValueChange={(value) => setFormData({...formData, segment: value})}
               disabled={!editing}
-              placeholder="Ex: Mecânica Geral, Auto Center, Elétrica Automotiva..."
-            />
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o segmento..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Centro automotivo (revisão, manutenção rápida, serviços gerais)">Centro automotivo (revisão, manutenção rápida, serviços gerais)</SelectItem>
+                <SelectItem value="Loja de pneus (foco principal em venda de pneus)">Loja de pneus (foco principal em venda de pneus)</SelectItem>
+                <SelectItem value="Oficina de motos">Oficina de motos</SelectItem>
+                <SelectItem value="Funilaria e pintura">Funilaria e pintura</SelectItem>
+                <SelectItem value="Estética automotiva">Estética automotiva</SelectItem>
+                <SelectItem value="Retífica / usinagem / tornearia">Retífica / usinagem / tornearia</SelectItem>
+                <SelectItem value="Autopeças (loja ou distribuidor)">Autopeças (loja ou distribuidor)</SelectItem>
+                <SelectItem value="Motopeças (loja ou distribuidor)">Motopeças (loja ou distribuidor)</SelectItem>
+                <SelectItem value="Oficina diesel (linha leve)">Oficina diesel (linha leve)</SelectItem>
+                <SelectItem value="Oficina diesel (linha pesada)">Oficina diesel (linha pesada)</SelectItem>
+                <SelectItem value="Posto de molas">Posto de molas</SelectItem>
+              </SelectContent>
+            </Select>
             <p className="text-xs text-gray-500 mt-1">
-              O segmento também é calculado automaticamente com base nos serviços selecionados
+              O segmento define o perfil de atuação da sua empresa
             </p>
           </div>
           <div>
