@@ -253,41 +253,28 @@ export default function RankingBrasil() {
         const aggregated = employeeAggregation[workshop.id] || {};
 
         // Normalização de campos para um objeto comum antes do merge
-        const normalize = (data) => ({
-            revenue_total: data.revenue_total || data.actual_revenue_achieved || data.revenue || 0,
-            average_ticket: data.average_ticket || 0,
-            tcmp2: data.tcmp2 || data.actual_tcmp2_value || data.target_tcmp2_value || 0,
-            kit_master: data.kit_master || data.actual_kit_master_score || data.target_kit_master_score || 0,
-            profit_percentage: data.profit_percentage || 0,
-            rentability: data.rentability_percentage || (typeof data.r70_i30 === 'object' ? data.r70_i30.r70 : 0) || 0,
-            tire_sales: data.tire_sales || data.revenue_tires || data.vendas_pneus || 0,
-            marketing: data.marketing_data || data.marketing || {},
-            projected: data.projected_revenue || data.projected_total || data.target_revenue_total || 0
-        });
-
-        // Mesclando fontes (último objeto sobrescreve campos anteriores se tiver valor > 0)
-        // Usamos uma lógica customizada de merge: só sobrescreve se o novo valor for válido (truthy/positivo)
-        const mergeData = (...sources) => {
-            const result = {};
-            sources.forEach(src => {
-                const norm = normalize(src);
-                Object.keys(norm).forEach(key => {
-                    // Sobrescreve se o valor no source atual for válido/existente
-                    // Para números, considera > 0. Para objetos, considera não vazio.
-                    const val = norm[key];
-                    const isNumber = typeof val === 'number';
-                    const isObject = typeof val === 'object' && val !== null;
-                    
-                    if ((isNumber && val > 0) || (isObject && Object.keys(val).length > 0)) {
-                        result[key] = val;
-                    } else if (result[key] === undefined) {
-                         // Se ainda não tem valor, aceita mesmo que seja 0 ou vazio, para inicializar
-                        result[key] = val;
-                    }
-                });
-            });
-            return result;
+        const safeNum = (val) => {
+            if (typeof val === 'number') return val;
+            if (typeof val === 'string') {
+                // Tenta converter string numérica (ex: "290000" ou "290000.00")
+                const parsed = parseFloat(val);
+                return isNaN(parsed) ? 0 : parsed;
+            }
+            return 0;
         };
+
+        const normalize = (data) => ({
+            revenue_total: safeNum(data.revenue_total || data.actual_revenue_achieved || data.revenue),
+            average_ticket: safeNum(data.average_ticket),
+            tcmp2: safeNum(data.tcmp2 || data.actual_tcmp2_value || data.target_tcmp2_value),
+            kit_master: safeNum(data.kit_master || data.actual_kit_master_score || data.target_kit_master_score),
+            profit_percentage: safeNum(data.profit_percentage),
+            rentability: safeNum(data.rentability_percentage || (typeof data.r70_i30 === 'object' ? data.r70_i30.r70 : 0) || data.rentability),
+            tire_sales: safeNum(data.tire_sales || data.revenue_tires || data.vendas_pneus),
+            marketing: data.marketing_data || data.marketing || {},
+            // Se não houver projeção explícita, mas houver faturamento total (caso do histórico/recorde), usa o faturamento como base para meta 100%
+            projected: safeNum(data.projected_revenue || data.projected_total || data.target_revenue_total || data.revenue_total)
+        });
 
         // NOVA LÓGICA: Seleção baseada no Maior Faturamento (Recorde)
         // Coletamos todas as fontes possíveis
