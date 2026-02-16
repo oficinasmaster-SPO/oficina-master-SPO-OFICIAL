@@ -18,6 +18,7 @@ export default function DiagnosticReports({ filters }) {
   const isPerformance = filters.diagnosticType === 'desempenho';
   const isDISC = filters.diagnosticType === 'disc';
   const isWorkload = filters.diagnosticType === 'carga';
+  const isServiceOrder = filters.diagnosticType === 'os';
 
   const [productivityTeamFilter, setProductivityTeamFilter] = useState('all'); // 'all', 'commercial', 'technical'
 
@@ -31,6 +32,7 @@ export default function DiagnosticReports({ filters }) {
     if (isPerformance) title = 'Evolução de Desempenho Comportamental e Técnico';
     if (isDISC) title = 'Evolução de Perfil Comportamental (DISC)';
     if (isWorkload) title = 'Evolução de Carga de Trabalho';
+    if (isServiceOrder) title = 'Evolução de Rentabilidade (OS)';
     
     doc.text(title, 14, 20);
     doc.setFontSize(10);
@@ -50,6 +52,8 @@ export default function DiagnosticReports({ filters }) {
         doc.text(`${item.month}: Dom=${item.dominant}%, Inf=${item.influential}%, Est=${item.stable}%, Conf=${item.conscientious}%`, 14, y);
       } else if (isWorkload) {
         doc.text(`${item.month}: Bal=${item.balanced}%, Sob=${item.overloaded}%, Oci=${item.underutilized}%`, 14, y);
+      } else if (isServiceOrder) {
+        doc.text(`${item.month}: <60%=${item.below60}%, 70%=${item.range70}%, 80%=${item.range80}%, 90%+=${item.range90}%`, 14, y);
       } else {
         doc.text(`${item.month}: F1=${item.fase1}%, F2=${item.fase2}%, F3=${item.fase3}%, F4=${item.fase4}%`, 14, y);
       }
@@ -97,7 +101,7 @@ export default function DiagnosticReports({ filters }) {
   });
 
   const { data: diagnostics = [], isLoading } = useQuery({
-    queryKey: ['diagnostics-report', workshop?.id, filters, isEntrepreneur, isMaturity, isProductivity, isPerformance, isDISC, isWorkload],
+    queryKey: ['diagnostics-report', workshop?.id, filters, isEntrepreneur, isMaturity, isProductivity, isPerformance, isDISC, isWorkload, isServiceOrder],
     queryFn: async () => {
       if (!workshop?.id) return [];
       
@@ -114,6 +118,8 @@ export default function DiagnosticReports({ filters }) {
         allDiagnostics = await base44.entities.DISCDiagnostic.filter({ workshop_id: workshop.id });
       } else if (isWorkload) {
         allDiagnostics = await base44.entities.WorkloadDiagnostic.filter({ workshop_id: workshop.id });
+      } else if (isServiceOrder) {
+        allDiagnostics = await base44.entities.ServiceOrderDiagnostic.filter({ workshop_id: workshop.id });
       } else {
         allDiagnostics = await base44.entities.Diagnostic.filter({ workshop_id: workshop.id });
       }
@@ -208,6 +214,11 @@ export default function DiagnosticReports({ filters }) {
           acc[key].balanced = 0;
           acc[key].overloaded = 0;
           acc[key].underutilized = 0;
+        } else if (isServiceOrder) {
+          acc[key].below60 = 0;
+          acc[key].range70 = 0;
+          acc[key].range80 = 0;
+          acc[key].range90 = 0;
         } else {
           acc[key].fase1 = 0;
           acc[key].fase2 = 0;
@@ -316,16 +327,25 @@ export default function DiagnosticReports({ filters }) {
           // So we need to override 'total' with the number of evaluated items in this record.
           acc[key].total = (acc[key].total - 1) + workloadData.length; // Replace the incremented 1 with actual count
           return acc; 
-          
-        } else {
-        const phase = parseInt(d.phase, 10);
-        if ([1, 2, 3, 4].includes(phase)) {
+
+          } else if (isServiceOrder) {
+          const profitability = parseFloat(d.revenue_percentage || 0); // Assuming R70
+
+          if (profitability < 60) acc[key].below60++;
+          else if (profitability >= 70 && profitability < 80) acc[key].range70++;
+          else if (profitability >= 80 && profitability < 90) acc[key].range80++;
+          else if (profitability >= 90) acc[key].range90++;
+          // Note: 60-69 range is implicitly ignored in the line chart counts as per request, but counted in total
+
+          } else {
+          const phase = parseInt(d.phase, 10);
+          if ([1, 2, 3, 4].includes(phase)) {
           acc[key][`fase${phase}`] = (acc[key][`fase${phase}`] || 0) + 1;
-        }
-        }
-        if (!isWorkload) acc[key].total += 1;
-        return acc;
-        }, {});
+          }
+          }
+          if (!isWorkload) acc[key].total += 1;
+          return acc;
+          }, {});
 
         // Convert counts to percentages
         return Object.values(grouped)
@@ -470,6 +490,19 @@ export default function DiagnosticReports({ filters }) {
         { label: 'Sobrecaregado', percentage: parseFloat(((overloaded / safeTotal) * 100).toFixed(1)) },
         { label: 'Ocioso', percentage: parseFloat(((underutilized / safeTotal) * 100).toFixed(1)) }
       ];
+    } else if (isServiceOrder) {
+      return [
+        { label: 'Abaixo de 70%', percentage: parseFloat(((diagnostics.filter(d => (parseFloat(d.revenue_percentage || 0) < 70)).length / total) * 100).toFixed(1)) },
+        { label: '70%', percentage: parseFloat(((diagnostics.filter(d => {
+           const val = parseFloat(d.revenue_percentage || 0);
+           return val >= 70 && val < 80;
+        }).length / total) * 100).toFixed(1)) },
+        { label: '80%', percentage: parseFloat(((diagnostics.filter(d => {
+           const val = parseFloat(d.revenue_percentage || 0);
+           return val >= 80 && val < 90;
+        }).length / total) * 100).toFixed(1)) },
+        { label: '90%+', percentage: parseFloat(((diagnostics.filter(d => parseFloat(d.revenue_percentage || 0) >= 90).length / total) * 100).toFixed(1)) }
+      ];
     } else {
       return [
         { label: 'Fase 1', percentage: parseFloat(((diagnostics.filter(d => parseInt(d.phase) === 1).length / total) * 100).toFixed(1)) },
@@ -478,7 +511,7 @@ export default function DiagnosticReports({ filters }) {
         { label: 'Fase 4', percentage: parseFloat(((diagnostics.filter(d => parseInt(d.phase) === 4).length / total) * 100).toFixed(1)) }
       ];
     }
-  }, [diagnostics, isEntrepreneur, isMaturity, isProductivity, isPerformance, isDISC, isWorkload, productivityTeamFilter]);
+  }, [diagnostics, isEntrepreneur, isMaturity, isProductivity, isPerformance, isDISC, isWorkload, isServiceOrder, productivityTeamFilter]);
 
   // Partner Comparison Data
   const partnerComparisonData = useMemo(() => {
@@ -561,7 +594,7 @@ export default function DiagnosticReports({ filters }) {
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-blue-600" />
-              {isEntrepreneur ? "Evolução do Perfil Empresarial" : isMaturity ? "Evolução da Maturidade dos Colaboradores" : isProductivity ? "Evolução Produtividade vs Salário" : isPerformance ? "Evolução de Desempenho Comportamental e Técnico" : isDISC ? "Evolução de Perfil Comportamental (DISC)" : isWorkload ? "Evolução de Carga de Trabalho" : "Evolução de Fases ao Longo do Tempo"}
+              {isEntrepreneur ? "Evolução do Perfil Empresarial" : isMaturity ? "Evolução da Maturidade dos Colaboradores" : isProductivity ? "Evolução Produtividade vs Salário" : isPerformance ? "Evolução de Desempenho Comportamental e Técnico" : isDISC ? "Evolução de Perfil Comportamental (DISC)" : isWorkload ? "Evolução de Carga de Trabalho" : isServiceOrder ? "Evolução de Rentabilidade (OS)" : "Evolução de Fases ao Longo do Tempo"}
             </CardTitle>
             <div className="flex gap-2 items-center">
               {isProductivity && (
@@ -640,6 +673,13 @@ export default function DiagnosticReports({ filters }) {
                     <Line type="monotone" dataKey="overloaded" stroke="#ef4444" strokeWidth={3} dot={{ r: 4 }} name="Sobrecaregado" connectNulls />
                     <Line type="monotone" dataKey="underutilized" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4 }} name="Ocioso" connectNulls />
                   </>
+                ) : isServiceOrder ? (
+                  <>
+                    <Line type="monotone" dataKey="below60" stroke="#ef4444" strokeWidth={3} dot={{ r: 4 }} name="Abaixo de 60%" connectNulls />
+                    <Line type="monotone" dataKey="range70" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4 }} name="70%" connectNulls />
+                    <Line type="monotone" dataKey="range80" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4 }} name="80%" connectNulls />
+                    <Line type="monotone" dataKey="range90" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} name="90%+" connectNulls />
+                  </>
                 ) : (
                   <>
                     <Line type="monotone" dataKey="fase1" stroke="#ef4444" strokeWidth={3} dot={{ r: 4 }} name="Fase 1" connectNulls />
@@ -657,7 +697,7 @@ export default function DiagnosticReports({ filters }) {
       <Card>
         <CardHeader>
           <CardTitle>
-            {isEntrepreneur ? "Distribuição Atual de Perfis" : isMaturity ? "Distribuição Atual da Maturidade" : isProductivity ? "Distribuição Atual de Produtividade" : isPerformance ? "Distribuição Comportamental e Técnica" : isDISC ? "Distribuição de Perfil Comportamental" : isWorkload ? "Distribuição de Carga de Trabalho" : "Distribuição Atual de Fases"}
+            {isEntrepreneur ? "Distribuição Atual de Perfis" : isMaturity ? "Distribuição Atual da Maturidade" : isProductivity ? "Distribuição Atual de Produtividade" : isPerformance ? "Distribuição Comportamental e Técnica" : isDISC ? "Distribuição de Perfil Comportamental" : isWorkload ? "Distribuição de Carga de Trabalho" : isServiceOrder ? "Distribuição Atual de Rentabilidade" : "Distribuição Atual de Fases"}
           </CardTitle>
         </CardHeader>
         <CardContent>
