@@ -77,7 +77,13 @@ function UserProfileSection({ user, collapsed }) {
 
   const loadEmployee = async () => {
     try {
-      const employees = await base44.entities.Employee.filter({ user_id: user.id });
+      let employees = await base44.entities.Employee.filter({ user_id: user.id });
+      
+      // Fallback: tentar por email se não encontrar por ID
+      if (!employees || employees.length === 0) {
+        employees = await base44.entities.Employee.filter({ email: user.email });
+      }
+
       if (employees && employees.length > 0) {
         setEmployee(employees[0]);
       }

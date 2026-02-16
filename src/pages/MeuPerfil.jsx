@@ -96,6 +96,25 @@ export default function MeuPerfil() {
       } else {
         // Caso contrário, buscar employee do usuário logado
         employees = await base44.entities.Employee.filter({ user_id: currentUser.id });
+
+        // Fallback: Se não encontrou por ID, tentar por email
+        if (!employees || employees.length === 0) {
+          console.warn("⚠️ Employee não encontrado por ID, tentando por email:", currentUser.email);
+          employees = await base44.entities.Employee.filter({ email: currentUser.email });
+          
+          // Auto-correção de vínculo se necessário
+          if (employees && employees.length > 0) {
+             const emp = employees[0];
+             if (!emp.user_id || emp.user_id !== currentUser.id) {
+                console.log("🔗 Vinculando user_id ao employee encontrado por email");
+                try {
+                  await base44.entities.Employee.update(emp.id, { user_id: currentUser.id });
+                } catch (e) {
+                  console.warn("Falha ao auto-vincular user_id (pode ser permissão):", e);
+                }
+             }
+          }
+        }
       }
       
       if (employees && employees.length > 0) {
