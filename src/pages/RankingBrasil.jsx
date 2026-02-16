@@ -30,7 +30,12 @@ export default function RankingBrasil() {
     queryFn: () => base44.entities.ProductivityDiagnostic.list(null, 2000)
   });
 
-  const isLoading = loadingEmployees || loadingWorkshops || loadingHistory || loadingDiagnostics;
+  const { data: dreRecords = [], isLoading: loadingDre } = useQuery({
+    queryKey: ['dre-all'],
+    queryFn: () => base44.entities.DREMonthly.list(null, 3000)
+  });
+
+  const isLoading = loadingEmployees || loadingWorkshops || loadingHistory || loadingDiagnostics || loadingDre;
 
   const getEmployeeRanking = () => {
     let filtered = employees.filter(e => e.status === "ativo");
@@ -208,6 +213,22 @@ export default function RankingBrasil() {
         }
     });
 
+    // 2.5 Processar DREMonthly para encontrar melhor mês financeiro (TCMP2, Lucro, Rentabilidade)
+    const bestDreByWorkshop = {};
+    dreRecords.forEach(dre => {
+        if (!dre.workshop_id) return;
+        const revenue = dre.calculated?.total_revenue || 0;
+        
+        if (!bestDreByWorkshop[dre.workshop_id] || revenue > bestDreByWorkshop[dre.workshop_id].revenue_total) {
+            bestDreByWorkshop[dre.workshop_id] = {
+                revenue_total: revenue,
+                tcmp2: dre.calculated?.tcmp2_value || 0,
+                profit_percentage: dre.calculated?.profit_percentage || 0,
+                rentability: dre.calculated?.r70_percentage || 0,
+            };
+        }
+    });
+
     // 3. Consolidar dados de produção dos colaboradores (acumulado)
     const employeeAggregation = employees.reduce((acc, emp) => {
         if (emp.status !== 'ativo' || !emp.workshop_id) return acc;
@@ -228,6 +249,7 @@ export default function RankingBrasil() {
         const registeredBest = workshop.best_month_history || {};
         const historyRecord = bestHistoryByWorkshop[workshop.id] || {};
         const diagnosticBest = bestDiagnosticByWorkshop[workshop.id] || {};
+        const dreBest = bestDreByWorkshop[workshop.id] || {};
         const aggregated = employeeAggregation[workshop.id] || {};
 
         // Normalização de campos para um objeto comum antes do merge
@@ -270,6 +292,7 @@ export default function RankingBrasil() {
         // NOVA LÓGICA: Seleção baseada no Maior Faturamento (Recorde)
         // Coletamos todas as fontes possíveis
         const sources = [
+            { name: 'dre', data: normalize(dreBest) },
             { name: 'diagnostic', data: normalize(diagnosticBest) },
             { name: 'history', data: normalize(historyRecord) },
             { name: 'cadastro', data: normalize(registeredBest) },
