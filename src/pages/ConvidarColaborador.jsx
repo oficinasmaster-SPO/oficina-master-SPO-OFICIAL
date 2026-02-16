@@ -333,7 +333,9 @@ export default function ConvidarColaborador() {
     e.preventDefault();
     
     console.log("📝 Dados do formulário:", formData);
-    console.log("🏢 Workshop ID:", workshop?.id);
+    console.log("🏢 Workshop ID (Inquilino):", workshop?.id);
+    console.log("🏭 Empresa:", workshop?.name);
+    console.log("🔗 Associando colaborador à empresa:", workshop?.name, `(ID: ${workshop?.id})`);
     
     if (!formData.name || !formData.email || !formData.telefone || !formData.position || !formData.area) {
       toast.error("Preencha todos os campos obrigatórios (*)");
