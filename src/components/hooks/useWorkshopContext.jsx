@@ -44,9 +44,20 @@ export function useWorkshopContext() {
           const ownedWorkshops = await base44.entities.Workshop.filter({ owner_id: user.id });
           userWorkshop = Array.isArray(ownedWorkshops) && ownedWorkshops.length > 0 ? ownedWorkshops[0] : null;
 
-          // Se não encontrou, tenta por workshop_id
+          // Se não encontrou, tenta por workshop_id (se salvo no usuário)
           if (!userWorkshop && user.workshop_id) {
             userWorkshop = await base44.entities.Workshop.get(user.workshop_id);
+          }
+
+          // Se ainda não encontrou, busca via Employee (colaborador)
+          if (!userWorkshop) {
+            const employees = await base44.entities.Employee.filter({ user_id: user.id });
+            if (Array.isArray(employees) && employees.length > 0) {
+              const employee = employees[0];
+              if (employee.workshop_id) {
+                userWorkshop = await base44.entities.Workshop.get(employee.workshop_id);
+              }
+            }
           }
 
           console.log('✅ Workshop NORMAL carregado:', {
