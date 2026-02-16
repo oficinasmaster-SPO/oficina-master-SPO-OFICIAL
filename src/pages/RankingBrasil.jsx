@@ -263,47 +263,33 @@ export default function RankingBrasil() {
         const dreBest = bestDreByWorkshop[workshop.id] || {};
         const aggregated = employeeAggregation[workshop.id] || {};
 
-        // Normalização de campos para um objeto comum antes do merge
-        const safeNum = (val) => {
-            if (typeof val === 'number') return val;
-            if (typeof val === 'string') {
-                // Tratamento robusto para formatos BR (1.000,00) e US (1,000.00)
-                let clean = val.replace(/[R$\s]/g, ''); // Remove R$ e espaços
-                
-                // Se tem vírgula e ponto, decide qual é o decimal pela posição
-                if (clean.includes(',') && clean.includes('.')) {
-                    if (clean.lastIndexOf(',') > clean.lastIndexOf('.')) {
-                        // Formato BR: 1.234,56 -> Remove ponto, troca vírgula por ponto
-                        clean = clean.replace(/\./g, '').replace(',', '.');
-                    } else {
-                        // Formato US: 1,234.56 -> Remove vírgula
-                        clean = clean.replace(/,/g, '');
-                    }
-                } else if (clean.includes(',')) {
-                    // Só vírgula: 1000,00 ou 1,000. Assume decimal se parece BR
-                    clean = clean.replace(',', '.');
-                } else if ((clean.match(/\./g) || []).length > 1) {
-                    // Múltiplos pontos: 1.000.000 -> 1000000
-                    clean = clean.replace(/\./g, '');
-                }
-                
-                const parsed = parseFloat(clean);
-                return isNaN(parsed) ? 0 : parsed;
-            }
-            return 0;
+        // Função de "Blindagem" de Dados (O segredo para não zerar)
+        // Função para garantir que qualquer valor vindo do banco se torne um número válido
+        const tratarValorNumerico = (valor) => {
+            if (valor === null || valor === undefined || valor === '') return 0;
+            if (typeof valor === 'number') return valor;
+            
+            // Remove "R$", espaços, e converte formato brasileiro (290.000,00) para universal (290000.00)
+            let textoLimpo = String(valor)
+                .replace(/R\$\s?/gi, '') // Remove R$
+                .replace(/\./g, '')      // Remove pontos de milhar
+                .replace(',', '.');      // Troca vírgula decimal por ponto
+
+            let numeroTratado = parseFloat(textoLimpo);
+            return isNaN(numeroTratado) ? 0 : numeroTratado;
         };
 
         const normalize = (data) => ({
-            revenue_total: safeNum(data.revenue_total || data.actual_revenue_achieved || data.revenue),
-            average_ticket: safeNum(data.average_ticket),
-            tcmp2: safeNum(data.tcmp2 || data.actual_tcmp2_value || data.target_tcmp2_value),
-            kit_master: safeNum(data.kit_master || data.actual_kit_master_score || data.target_kit_master_score),
-            profit_percentage: safeNum(data.profit_percentage),
-            rentability: safeNum(data.rentability_percentage || (typeof data.r70_i30 === 'object' ? data.r70_i30.r70 : 0) || data.rentability),
-            tire_sales: safeNum(data.tire_sales || data.revenue_tires || data.vendas_pneus),
+            revenue_total: tratarValorNumerico(data.revenue_total || data.actual_revenue_achieved || data.revenue || data.faturamento_recorde),
+            average_ticket: tratarValorNumerico(data.average_ticket || data.ticket_medio),
+            tcmp2: tratarValorNumerico(data.tcmp2 || data.actual_tcmp2_value || data.target_tcmp2_value),
+            kit_master: tratarValorNumerico(data.kit_master || data.actual_kit_master_score || data.target_kit_master_score),
+            profit_percentage: tratarValorNumerico(data.profit_percentage || data.lucro_medio),
+            rentability: tratarValorNumerico(data.rentability_percentage || (typeof data.r70_i30 === 'object' ? data.r70_i30.r70 : 0) || data.rentability),
+            tire_sales: tratarValorNumerico(data.tire_sales || data.revenue_tires || data.vendas_pneus),
             marketing: data.marketing_data || data.marketing || {},
             // Se não houver projeção explícita, mas houver faturamento total (caso do histórico/recorde), usa o faturamento como base para meta 100%
-            projected: safeNum(data.projected_revenue || data.projected_total || data.target_revenue_total || data.revenue_total)
+            projected: tratarValorNumerico(data.projected_revenue || data.projected_total || data.target_revenue_total || data.revenue_total || data.meta_projetada)
         });
 
         // NOVA LÓGICA: Seleção baseada no Maior Faturamento (Recorde)
@@ -391,7 +377,13 @@ export default function RankingBrasil() {
         const conversion_rate = (leads_sold > 0 && leads_showed_up > 0) ? (leads_sold / leads_showed_up) * 100 : 0;
           
         const projected = consolidated.projected || 0;
-        const goal_achievement = projected > 0 ? (revenue_total / projected) * 100 : 0;
+        let goal_achievement = 0;
+        
+        if (projected > 0) {
+            goal_achievement = (revenue_total / projected) * 100;
+        } else {
+            goal_achievement = 100; // Como o Base44 sugeriu quando não há meta
+        }
 
         return {
           id: workshop.id,
