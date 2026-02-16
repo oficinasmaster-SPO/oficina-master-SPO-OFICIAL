@@ -254,6 +254,7 @@ export default function RankingBrasil() {
     }, {});
 
     return workshops
+      .filter(w => selectedSegment === "all" || w.segment === selectedSegment)
       .map(workshop => {
         // Estratégia de Consolidação de Dados (Merge de Fontes)
         // Prioridade (da menor para maior): Metas < Cadastro (Best Month) < Histórico < Diagnósticos
