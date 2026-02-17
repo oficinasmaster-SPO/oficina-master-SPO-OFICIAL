@@ -18,6 +18,7 @@ export default function ContratoTrabalho({ employee, onUpdate }) {
   const [showGenerator, setShowGenerator] = useState(false);
   const [workshop, setWorkshop] = useState(null);
   const [contractType, setContractType] = useState("trabalho");
+  const [technicalLevel, setTechnicalLevel] = useState("");
   const [contractText, setContractText] = useState("");
   const [metrics, setMetrics] = useState([]);
 
@@ -51,7 +52,7 @@ export default function ContratoTrabalho({ employee, onUpdate }) {
     if (workshop) {
       updateTemplate();
     }
-  }, [workshop, contractType, employee, metrics]);
+  }, [workshop, contractType, technicalLevel, employee, metrics]);
 
   const getAddressString = (addr) => {
     if (!addr) return "_______________________";
@@ -116,9 +117,11 @@ export default function ContratoTrabalho({ employee, onUpdate }) {
     }
 
     let template = "";
+    
+    const levelTitle = technicalLevel ? ` (NÍVEL TÉCNICO ${technicalLevel.toUpperCase()})` : "";
 
     if (contractType === "trabalho") {
-      template = `CONTRATO INDIVIDUAL DE TRABALHO
+      template = `CONTRATO INDIVIDUAL DE TRABALHO${levelTitle}
 
 IDENTIFICAÇÃO DAS PARTES
 
@@ -254,7 +257,7 @@ _________________________________________________
 ${colab.nome} (Empregado)
 `;
     } else if (contractType === "confianca") {
-      template = `CONTRATO DE TRABALHO - CARGO DE CONFIANÇA
+      template = `CONTRATO DE TRABALHO - CARGO DE CONFIANÇA${levelTitle}
 
 IDENTIFICAÇÃO DAS PARTES
 
@@ -473,7 +476,10 @@ ${colab.nome} (Colaborador)
     // Título
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
-    const title = contractType === "trabalho" ? "CONTRATO DE TRABALHO" : "TERMO DE CONFIDENCIALIDADE";
+    let title = "TERMO DE CONFIDENCIALIDADE";
+    if (contractType === "trabalho") title = `CONTRATO DE TRABALHO${technicalLevel ? ` - ${technicalLevel.toUpperCase()}` : ""}`;
+    if (contractType === "confianca") title = `CARGO DE CONFIANÇA${technicalLevel ? ` - ${technicalLevel.toUpperCase()}` : ""}`;
+    
     doc.text(title, 105, y, { align: "center" });
     y += 15;
     
@@ -756,6 +762,23 @@ ${colab.nome} (Colaborador)
                             <SelectItem value="trabalho">Contrato de Trabalho</SelectItem>
                             <SelectItem value="confianca">Contrato Cargo de Confiança</SelectItem>
                             <SelectItem value="confidencialidade">Termo de Confidencialidade</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                <div className="flex items-center gap-2 w-full md:w-auto">
+                    <Label>Nível Técnico:</Label>
+                    <Select value={technicalLevel} onValueChange={(v) => setTechnicalLevel(v)}>
+                        <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Selecione o Nível" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value={null}>(Sem nível)</SelectItem>
+                            <SelectItem value="auxiliar">Auxiliar</SelectItem>
+                            <SelectItem value="junior">Junior</SelectItem>
+                            <SelectItem value="pleno">Pleno</SelectItem>
+                            <SelectItem value="senior">Senior</SelectItem>
+                            <SelectItem value="master">Master</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
