@@ -33,6 +33,7 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
     cep: "",
     city: "",
     state: "",
+    comarca: "",
     endereco_completo: "",
     segment: "",
     tax_regime: "",
@@ -62,6 +63,7 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
         cep: workshop.cep || "",
         city: workshop.city || "",
         state: workshop.state || "",
+        comarca: workshop.comarca || "",
         endereco_completo: workshop.endereco_completo || "",
         segment: workshop.segment || "",
         tax_regime: workshop.tax_regime || "",
@@ -113,10 +115,18 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
           }));
           // Buscar cidades do estado retornado
           if (response.data.state) {
-            await loadCities(response.data.state);
+          await loadCities(response.data.state);
           }
-        }
-      } catch (error) {
+
+          // Sugerir comarca igual à cidade se estiver vazia
+          if (!formData.comarca) {
+          setFormData(prev => ({
+            ...prev,
+            comarca: response.data.city
+          }));
+          }
+          }
+          } catch (error) {
         console.error('Erro ao consultar CEP:', error);
       } finally {
         setLoadingCEP(false);
@@ -363,6 +373,18 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
               )}
               <p className="text-xs text-gray-500 mt-1">
                 Selecione o estado primeiro para ver as cidades disponíveis
+              </p>
+            </div>
+            <div>
+              <Label>Comarca</Label>
+              <Input
+                value={formData.comarca || ''}
+                onChange={(e) => setFormData({...formData, comarca: e.target.value})}
+                disabled={!editing}
+                placeholder="Comarca Judicial (Geralmente a mesma cidade)"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Usado para contratos (foro eleito). Se vazio, usará a cidade.
               </p>
             </div>
           <div className="md:col-span-2">

@@ -273,7 +273,7 @@ CLÁUSULA 8ª – DA REVERSIBILIDADE
 O EMPREGADOR poderá, a qualquer tempo, reverter o EMPREGADO ao cargo efetivo anteriormente ocupado, deixando de ser devida a gratificação de função, nos termos do parágrafo único do art. 468 da CLT.
 
 CLÁUSULA 9ª – DO FORO
-Fica eleito o foro da Justiça do Trabalho de ${workshop.city || "Maringá"}/${workshop.state || "PR"}.
+Fica eleito o foro da Justiça do Trabalho da Comarca de ${workshop.comarca || workshop.city || "Maringá"}/${workshop.state || "PR"}.
 
 E por estarem assim justos e contratados, assinam o presente instrumento em 02 (duas) vias de igual teor.
 
