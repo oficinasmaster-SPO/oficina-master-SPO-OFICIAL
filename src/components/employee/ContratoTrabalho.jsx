@@ -166,21 +166,46 @@ Parágrafo 2º: Sobre o salário incidirão os descontos legais (INSS, IRRF, con
 CLÁUSULA 4ª – DO PRAZO
 O contrato é celebrado por prazo indeterminado, iniciando-se em ${employee.hire_date ? new Date(employee.hire_date).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR')}.
 
-CLÁUSULA 5ª – DA CONFIDENCIALIDADE
-O EMPREGADO compromete-se a manter sigilo sobre:
-- Cadastro de clientes e fornecedores
-- Estratégias comerciais
-- Precificação de serviços
+CLÁUSULA 5ª – DA CONFIDENCIALIDADE COM MULTA
+O EMPREGADO compromete-se a manter absoluto sigilo sobre:
+- Cadastro de clientes
+- Estrutura de custos
 - Margens de lucro
+- Estratégias comerciais
+- Processos internos
+- Fornecedores e negociações
 - Métodos operacionais da oficina
-- Informações financeiras
 
-A obrigação permanece mesmo após o término do contrato.
+A obrigação de confidencialidade permanece por prazo indeterminado, mesmo após o término do contrato.
 
-CLÁUSULA 6ª – DA PROPRIEDADE INTELECTUAL
+Parágrafo 1º: O descumprimento implicará multa equivalente a 5 (cinco) vezes a última remuneração mensal, além de indenização por eventuais prejuízos comprovados.
+
+Parágrafo 2º: A multa não substitui eventual responsabilidade civil ou penal cabível.
+
+CLÁUSULA 6ª – DO NÃO ALICIAMENTO DE CLIENTES
+O EMPREGADO compromete-se, pelo prazo de 24 (vinte e quatro) meses após o término do vínculo empregatício, a não praticar, direta ou indiretamente, qualquer ato que implique:
+
+I – Contatar clientes ativos ou inativos da empresa com o objetivo de oferecer serviços concorrentes;
+II – Induzir ou incentivar clientes a rescindirem contratos ou deixarem de contratar serviços da empresa;
+III – Utilizar informações comerciais, listas de clientes, histórico de serviços, precificação ou estratégias comerciais obtidas durante o vínculo empregatício.
+
+Parágrafo 1º: Consideram-se clientes aqueles que tenham contratado serviços da empresa nos últimos 24 meses anteriores ao desligamento.
+
+Parágrafo 2º: O descumprimento desta cláusula sujeitará o EMPREGADO ao pagamento de multa equivalente a 3 (três) vezes sua última remuneração mensal, sem prejuízo de indenização por perdas e danos comprovados.
+
+CLÁUSULA 7ª – DO NÃO ALICIAMENTO DE COLABORADORES
+O EMPREGADO compromete-se, pelo prazo de 24 (vinte e quatro) meses após o término do contrato, a não:
+
+I – Convidar, incentivar ou intermediar a saída de colaboradores da empresa;
+II – Induzir empregados a migrarem para empresa concorrente ou empreendimento próprio;
+III – Utilizar sua influência para desestruturar a equipe técnica ou administrativa.
+
+Parágrafo único: O descumprimento implicará multa equivalente a 3 (três) salários da última remuneração percebida por cada colaborador aliciado, sem prejuízo de indenização adicional.
+
+CLÁUSULA 8ª – DA PROPRIEDADE INTELECTUAL
 Procedimentos internos, manuais, treinamentos, métodos de gestão, estratégias comerciais e quaisquer materiais desenvolvidos durante o vínculo pertencem exclusivamente ao EMPREGADOR.
 
-CLÁUSULA 7ª – DO REGULAMENTO INTERNO E SEGURANÇA
+CLÁUSULA 9ª – DO REGULAMENTO INTERNO E SEGURANÇA
 O EMPREGADO declara ciência e concordância com:
 - Regulamento interno da oficina
 - Normas de segurança do trabalho
@@ -188,10 +213,10 @@ O EMPREGADO declara ciência e concordância com:
 - Normas ambientais e de descarte de resíduos automotivos
 - Política de proteção de dados (LGPD)
 
-CLÁUSULA 8ª – DOS EQUIPAMENTOS
+CLÁUSULA 10ª – DOS EQUIPAMENTOS
 Caso sejam fornecidos equipamentos, sistemas ou softwares de gestão automotiva, o EMPREGADO compromete-se a utilizá-los exclusivamente para fins profissionais.
 
-CLÁUSULA 9ª – DA AUTORIZAÇÃO DE USO DE IMAGEM
+CLÁUSULA 11ª – DA AUTORIZAÇÃO DE USO DE IMAGEM
 O EMPREGADO autoriza, de forma gratuita e por prazo indeterminado, o uso de sua imagem, voz e nome pelo EMPREGADOR, exclusivamente para fins institucionais, publicitários e comerciais relacionados às atividades da oficina mecânica.
 
 A autorização inclui, mas não se limita a:
@@ -215,7 +240,7 @@ A autorização poderá ser revogada mediante solicitação formal do EMPREGADO,
 Parágrafo 4º – LGPD
 O EMPREGADOR compromete-se a tratar a imagem e os dados pessoais do EMPREGADO conforme a Lei Geral de Proteção de Dados (LGPD).
 
-CLÁUSULA 10ª – DO FORO
+CLÁUSULA 12ª – DO FORO
 Fica eleito o foro da Justiça do Trabalho da Comarca de ${workshop.comarca || workshop.city || "Maringá"}/${workshop.state || "PR"}.
 
 E por estarem assim justos e contratados, assinam o presente instrumento em 02 (duas) vias de igual teor.
@@ -273,30 +298,56 @@ Parágrafo 2º: Sobre o salário incidirão os descontos legais (INSS, IRRF, con
 CLÁUSULA 4ª – DO PRAZO
 O contrato é celebrado por prazo indeterminado, iniciando-se em ${employee.hire_date ? new Date(employee.hire_date).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR')}.
 
-CLÁUSULA 5ª – DA CONFIDENCIALIDADE
-O EMPREGADO compromete-se a manter estrito sigilo sobre todas as informações estratégicas a que tiver acesso em razão de seu cargo de confiança, incluindo:
-- Cadastro de clientes e fornecedores
-- Estratégias comerciais e planos de expansão
-- Precificação de serviços e margens de lucro
-- Métodos operacionais e know-how da oficina
-- Informações financeiras e bancárias
+CLÁUSULA 5ª – DA CONFIDENCIALIDADE COM MULTA
+O EMPREGADO compromete-se a manter absoluto sigilo sobre:
+- Cadastro de clientes
+- Estrutura de custos
+- Margens de lucro
+- Estratégias comerciais
+- Processos internos
+- Fornecedores e negociações
+- Métodos operacionais da oficina
 
-A quebra deste sigilo constituirá falta grave, passível de demissão por justa causa.
+A obrigação de confidencialidade permanece por prazo indeterminado, mesmo após o término do contrato.
 
-CLÁUSULA 6ª – DA PROPRIEDADE INTELECTUAL
+Parágrafo 1º: O descumprimento implicará multa equivalente a 5 (cinco) vezes a última remuneração mensal, além de indenização por eventuais prejuízos comprovados.
+
+Parágrafo 2º: A multa não substitui eventual responsabilidade civil ou penal cabível.
+
+CLÁUSULA 6ª – DO NÃO ALICIAMENTO DE CLIENTES
+O EMPREGADO compromete-se, pelo prazo de 24 (vinte e quatro) meses após o término do vínculo empregatício, a não praticar, direta ou indiretamente, qualquer ato que implique:
+
+I – Contatar clientes ativos ou inativos da empresa com o objetivo de oferecer serviços concorrentes;
+II – Induzir ou incentivar clientes a rescindirem contratos ou deixarem de contratar serviços da empresa;
+III – Utilizar informações comerciais, listas de clientes, histórico de serviços, precificação ou estratégias comerciais obtidas durante o vínculo empregatício.
+
+Parágrafo 1º: Consideram-se clientes aqueles que tenham contratado serviços da empresa nos últimos 24 meses anteriores ao desligamento.
+
+Parágrafo 2º: O descumprimento desta cláusula sujeitará o EMPREGADO ao pagamento de multa equivalente a 3 (três) vezes sua última remuneração mensal, sem prejuízo de indenização por perdas e danos comprovados.
+
+CLÁUSULA 7ª – DO NÃO ALICIAMENTO DE COLABORADORES
+O EMPREGADO compromete-se, pelo prazo de 24 (vinte e quatro) meses após o término do contrato, a não:
+
+I – Convidar, incentivar ou intermediar a saída de colaboradores da empresa;
+II – Induzir empregados a migrarem para empresa concorrente ou empreendimento próprio;
+III – Utilizar sua influência para desestruturar a equipe técnica ou administrativa.
+
+Parágrafo único: O descumprimento implicará multa equivalente a 3 (três) salários da última remuneração percebida por cada colaborador aliciado, sem prejuízo de indenização adicional.
+
+CLÁUSULA 8ª – DA PROPRIEDADE INTELECTUAL
 Procedimentos internos, manuais, treinamentos, métodos de gestão, estratégias comerciais e quaisquer materiais desenvolvidos durante o vínculo pertencem exclusivamente ao EMPREGADOR.
 
-CLÁUSULA 7ª – DO REGULAMENTO INTERNO E SEGURANÇA
+CLÁUSULA 9ª – DO REGULAMENTO INTERNO E SEGURANÇA
 O EMPREGADO declara ciência e concordância com:
 - Regulamento interno da oficina
 - Normas de segurança do trabalho
 - Uso obrigatório de EPIs quando necessário
 - Política de proteção de dados (LGPD)
 
-CLÁUSULA 8ª – DA REVERSIBILIDADE
+CLÁUSULA 10ª – DA REVERSIBILIDADE
 O EMPREGADOR poderá, a qualquer tempo, reverter o EMPREGADO ao cargo efetivo anteriormente ocupado, deixando de ser devida a gratificação de função, nos termos do parágrafo único do art. 468 da CLT.
 
-CLÁUSULA 9ª – DA AUTORIZAÇÃO DE USO DE IMAGEM
+CLÁUSULA 11ª – DA AUTORIZAÇÃO DE USO DE IMAGEM
 O EMPREGADO autoriza, de forma gratuita e por prazo indeterminado, o uso de sua imagem, voz e nome pelo EMPREGADOR, exclusivamente para fins institucionais, publicitários e comerciais relacionados às atividades da oficina mecânica.
 
 A autorização inclui, mas não se limita a:
@@ -320,7 +371,7 @@ A autorização poderá ser revogada mediante solicitação formal do EMPREGADO,
 Parágrafo 4º – LGPD
 O EMPREGADOR compromete-se a tratar a imagem e os dados pessoais do EMPREGADO conforme a Lei Geral de Proteção de Dados (LGPD).
 
-CLÁUSULA 10ª – DO FORO
+CLÁUSULA 12ª – DO FORO
 Fica eleito o foro da Justiça do Trabalho da Comarca de ${workshop.comarca || workshop.city || "Maringá"}/${workshop.state || "PR"}.
 
 E por estarem assim justos e contratados, assinam o presente instrumento em 02 (duas) vias de igual teor.
