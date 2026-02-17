@@ -509,10 +509,26 @@ ${colab.nome} (Colaborador)
 
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      await onUpdate({ work_contract_url: file_url });
+      
+      const updateData = { work_contract_url: file_url };
+      
+      // Se já existe um contrato, salvar no histórico
+      if (employee.work_contract_url) {
+        const history = employee.contract_history || [];
+        updateData.contract_history = [
+          {
+            url: employee.work_contract_url,
+            uploaded_at: new Date().toISOString(),
+            name: `Contrato Anterior - ${new Date().toLocaleDateString('pt-BR')}`
+          },
+          ...history
+        ];
+      }
+
+      await onUpdate(updateData);
       
       setFile(null);
-      toast.success("Contrato enviado com sucesso!");
+      toast.success("Contrato atualizado com sucesso!");
     } catch (error) {
       console.error(error);
       toast.error("Erro ao fazer upload");
@@ -662,6 +678,32 @@ ${colab.nome} (Colaborador)
                   </Button>
                 </div>
               </div>
+
+              {employee.contract_history && employee.contract_history.length > 0 && (
+                <div className="pt-4 border-t">
+                  <h4 className="text-sm font-semibold text-gray-900 mb-2">Histórico de Contratos</h4>
+                  <div className="space-y-2">
+                    {employee.contract_history.map((hist, index) => (
+                      <div key={index} className="flex items-center justify-between text-sm bg-gray-50 p-2 rounded border">
+                        <div className="flex flex-col">
+                          <span className="font-medium text-gray-700">{hist.name || "Contrato Antigo"}</span>
+                          <span className="text-xs text-gray-500">
+                            {hist.uploaded_at ? new Date(hist.uploaded_at).toLocaleDateString('pt-BR') : "-"}
+                          </span>
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => window.open(hist.url, '_blank')}
+                          title="Visualizar"
+                        >
+                          <Download className="w-4 h-4 text-gray-600" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="space-y-4">
