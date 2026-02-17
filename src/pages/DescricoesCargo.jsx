@@ -9,10 +9,11 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Plus, FileText, Search, Briefcase, Download, Eye, Trash2, Globe, Copy } from "lucide-react";
+import { Loader2, Plus, FileText, Search, Briefcase, Download, Eye, Trash2, Globe, Copy, Pencil } from "lucide-react";
 import JobDescriptionViewer from "@/components/job-description/JobDescriptionViewer";
 import { toast } from "sonner";
 import { useAdminMode } from "@/components/hooks/useAdminMode";
+import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   AlertDialog,
@@ -34,6 +35,7 @@ export default function DescricoesCargo() {
   const [selectedDescription, setSelectedDescription] = useState(null);
   const [showViewer, setShowViewer] = useState(false);
   const { isAdminMode } = useAdminMode();
+  const { workshopId } = useWorkshopContext();
   const [isDeleting, setIsDeleting] = useState(false);
   const [isCloning, setIsCloning] = useState(false);
 
@@ -86,6 +88,33 @@ export default function DescricoesCargo() {
     } catch (error) {
       console.error(error);
       toast.error("Erro ao criar modelo global.");
+    } finally {
+      setIsCloning(false);
+    }
+  };
+
+  const handleDuplicate = async (desc) => {
+    setIsCloning(true);
+    try {
+      const { id, workshop_id, created_date, updated_date, created_by, ...dataToClone } = desc;
+      
+      // If it's a system template (no workshop_id), assign to current workshop
+      // If it has a workshop_id, use that (or current workshop if we want to be safe)
+      // Usually we want to duplicate into the CURRENT workshop context
+      const targetWorkshopId = workshopId || workshop_id;
+
+      await base44.entities.JobDescription.create({
+        ...dataToClone,
+        workshop_id: targetWorkshopId,
+        job_title: `${desc.job_title} (Cópia)`,
+        generated_by_ai: false
+      });
+      
+      await queryClient.invalidateQueries(['job-descriptions']);
+      toast.success("Descrição duplicada com sucesso!");
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao duplicar descrição.");
     } finally {
       setIsCloning(false);
     }
@@ -238,6 +267,16 @@ export default function DescricoesCargo() {
                             <Eye className="w-4 h-4 text-gray-500" />
                           </Button>
                           
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Duplicar"
+                            onClick={() => handleDuplicate(desc)}
+                            disabled={isCloning}
+                          >
+                            <Copy className="w-4 h-4 text-emerald-600" />
+                          </Button>
+
                           {(desc.workshop_id || isAdminMode) && (
                             <Button
                               variant="ghost"
@@ -245,7 +284,7 @@ export default function DescricoesCargo() {
                               title="Editar"
                               onClick={() => navigate(createPageUrl("EditarDescricaoCargo") + `?id=${desc.id}`)}
                             >
-                              <FileText className="w-4 h-4 text-blue-600" />
+                              <Pencil className="w-4 h-4 text-blue-600" />
                             </Button>
                           )}
 
