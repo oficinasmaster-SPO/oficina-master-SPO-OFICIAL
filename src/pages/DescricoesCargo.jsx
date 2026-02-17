@@ -31,8 +31,9 @@ export default function DescricoesCargo() {
   );
 
   const getWorkshopName = (workshopId) => {
+    if (!workshopId) return "Modelo Padrão do Sistema";
     const workshop = workshops.find(w => w.id === workshopId);
-    return workshop?.name || "Não informado";
+    return workshop?.name || "Oficina não encontrada";
   };
 
   if (isLoading) {
@@ -104,12 +105,19 @@ export default function DescricoesCargo() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <CardTitle className="text-xl mb-2">{desc.job_title}</CardTitle>
-                      <p className="text-sm text-gray-600">
-                        {getWorkshopName(desc.workshop_id)}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm text-gray-600">
+                          {getWorkshopName(desc.workshop_id)}
+                        </p>
+                        {!desc.workshop_id && (
+                          <Badge variant="secondary" className="bg-amber-100 text-amber-800 hover:bg-amber-100">
+                            Sistema
+                          </Badge>
+                        )}
+                      </div>
                     </div>
-                    <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <Briefcase className="w-6 h-6 text-purple-600" />
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${!desc.workshop_id ? 'bg-amber-100' : 'bg-purple-100'}`}>
+                      <Briefcase className={`w-6 h-6 ${!desc.workshop_id ? 'text-amber-600' : 'text-purple-600'}`} />
                     </div>
                   </div>
                 </CardHeader>
