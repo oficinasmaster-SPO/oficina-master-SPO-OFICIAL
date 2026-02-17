@@ -204,6 +204,87 @@ ${empresa.razao} (Empregador)
 _________________________________________________
 ${colab.nome} (Empregado)
 `;
+    } else if (contractType === "confianca") {
+      template = `CONTRATO DE TRABALHO - CARGO DE CONFIANÇA
+
+IDENTIFICAÇÃO DAS PARTES
+
+EMPREGADOR: ${empresa.razao}, pessoa jurídica de direito privado, inscrita no CNPJ sob o nº ${empresa.cnpj}, sediada em ${empresa.endereco}.
+
+EMPREGADO: ${colab.nome}, portador(a) do RG nº ${colab.rg} e CPF nº ${colab.cpf}, residente e domiciliado(a) em ${colab.endereco}, Telefone: ${colab.telefone}, Email: ${colab.email}.
+
+As partes acima identificadas têm, entre si, justo e acertado o presente Contrato Individual de Trabalho para Cargo de Confiança, que se regerá pelas cláusulas seguintes:
+
+CLÁUSULA 1ª – DA DESCRIÇÃO DE CARGO E PODERES DE GESTÃO
+O EMPREGADO exercerá a função de CONFIANÇA de “${colab.cargo}”, possuindo poderes de gestão e mando, conforme atribuições específicas descritas no documento interno “Descrição de Cargo”, integrante das políticas internas da empresa.
+
+Parágrafo Único: O EMPREGADO declara estar ciente de que o exercício desta função pressupõe a investidura de mandato, com poderes para intervir na gestão do negócio em nome do EMPREGADOR.
+
+CLÁUSULA 2ª – DA JORNADA DE TRABALHO (ART. 62, II, CLT)
+O EMPREGADO não estará sujeito a controle de horário ou jornada de trabalho, enquadrando-se na exceção prevista no artigo 62, inciso II, da Consolidação das Leis do Trabalho (CLT), dada a natureza de suas atribuições e a autonomia inerente ao cargo de confiança.
+
+Parágrafo 1º: Não haverá pagamento de horas extraordinárias, adicional noturno ou quaisquer outros adicionais relacionados à jornada, visto que a remuneração pactuada já engloba a gratificação de função superior a 40% (quarenta por cento) do salário efetivo, conforme exigência legal.
+
+Parágrafo 2º: O EMPREGADO deverá zelar pelo bom andamento dos serviços, organizando seu tempo de forma a cumprir suas metas e responsabilidades.
+
+CLÁUSULA 3ª – DA REMUNERAÇÃO
+O EMPREGADO receberá a remuneração composta da seguinte forma:
+
+1. Salário Base + Gratificação de Função (40%): ${salarioFixo}
+2. Comissão Mensal Estimada: ${comissaoMensal}
+3. Bonificação/Prêmio: ${bonificacao}
+
+Vales e Benefícios:
+${beneficiosTexto}
+
+Regras de Comissionamento:
+${regrasComissaoTexto}
+
+O pagamento será efetuado até o 5º dia útil do mês subsequente.
+
+Parágrafo 1º: A remuneração fixada compreende o salário base acrescido da gratificação de função, remunerando a maior responsabilidade do cargo.
+
+Parágrafo 2º: Sobre o salário incidirão os descontos legais (INSS, IRRF, contribuição sindical, quando aplicável).
+
+CLÁUSULA 4ª – DO PRAZO
+O contrato é celebrado por prazo indeterminado, iniciando-se em ${employee.hire_date ? new Date(employee.hire_date).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR')}.
+
+CLÁUSULA 5ª – DA CONFIDENCIALIDADE
+O EMPREGADO compromete-se a manter estrito sigilo sobre todas as informações estratégicas a que tiver acesso em razão de seu cargo de confiança, incluindo:
+- Cadastro de clientes e fornecedores
+- Estratégias comerciais e planos de expansão
+- Precificação de serviços e margens de lucro
+- Métodos operacionais e know-how da oficina
+- Informações financeiras e bancárias
+
+A quebra deste sigilo constituirá falta grave, passível de demissão por justa causa.
+
+CLÁUSULA 6ª – DA PROPRIEDADE INTELECTUAL
+Procedimentos internos, manuais, treinamentos, métodos de gestão, estratégias comerciais e quaisquer materiais desenvolvidos durante o vínculo pertencem exclusivamente ao EMPREGADOR.
+
+CLÁUSULA 7ª – DO REGULAMENTO INTERNO E SEGURANÇA
+O EMPREGADO declara ciência e concordância com:
+- Regulamento interno da oficina
+- Normas de segurança do trabalho
+- Uso obrigatório de EPIs quando necessário
+- Política de proteção de dados (LGPD)
+
+CLÁUSULA 8ª – DA REVERSIBILIDADE
+O EMPREGADOR poderá, a qualquer tempo, reverter o EMPREGADO ao cargo efetivo anteriormente ocupado, deixando de ser devida a gratificação de função, nos termos do parágrafo único do art. 468 da CLT.
+
+CLÁUSULA 9ª – DO FORO
+Fica eleito o foro da Justiça do Trabalho de ${workshop.city || "Maringá"}/${workshop.state || "PR"}.
+
+E por estarem assim justos e contratados, assinam o presente instrumento em 02 (duas) vias de igual teor.
+
+${workshop.city || "Cidade"}, ${dataAtual}.
+
+_________________________________________________
+${empresa.razao} (Empregador)
+
+_________________________________________________
+${colab.nome} (Empregado)
+`;
     } else if (contractType === "confidencialidade") {
       template = `TERMO DE CONFIDENCIALIDADE E SIGILO
 
@@ -510,6 +591,16 @@ ${colab.nome} (Colaborador)
                         Gerar Modelo
                     </Button>
                 </div>
+                <div className="p-4 bg-white rounded-lg border border-blue-100 shadow-sm">
+                    <h4 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                        <Award className="w-4 h-4 text-amber-500"/>
+                        Contrato Cargo de Confiança
+                    </h4>
+                    <p className="text-xs text-gray-600 mb-3">Modelo para cargos de gestão (Art. 62 CLT) sem controle de jornada.</p>
+                    <Button variant="outline" size="sm" className="w-full" onClick={() => { setContractType('confianca'); setShowGenerator(true); }}>
+                        Gerar Modelo
+                    </Button>
+                </div>
             </div>
         </CardContent>
       </Card>
@@ -533,6 +624,7 @@ ${colab.nome} (Colaborador)
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="trabalho">Contrato de Trabalho</SelectItem>
+                            <SelectItem value="confianca">Contrato Cargo de Confiança</SelectItem>
                             <SelectItem value="confidencialidade">Termo de Confidencialidade</SelectItem>
                         </SelectContent>
                     </Select>
