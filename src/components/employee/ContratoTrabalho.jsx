@@ -73,6 +73,15 @@ export default function ContratoTrabalho({ employee, onUpdate }) {
       endereco: getAddressString(employee.endereco)
     };
 
+    // Horários da Oficina
+    const h = workshop.horario_funcionamento || {};
+    const horarios = {
+      abertura: h.abertura || "___",
+      fechamento: h.fechamento || "___",
+      almoco_inicio: h.almoco_inicio || "___",
+      almoco_fim: h.almoco_fim || "___"
+    };
+
     let template = "";
 
     if (contractType === "trabalho") {
@@ -94,7 +103,7 @@ Parágrafo 1º: A Descrição de Cargo poderá ser atualizada para adequação o
 Parágrafo 2º: O EMPREGADO declara ciência das metas operacionais, indicadores de desempenho (KPIs) e responsabilidades inerentes ao cargo.
 
 CLÁUSULA 2ª – DA JORNADA DE TRABALHO
-A jornada será de 44 (quarenta e quatro) horas semanais, distribuídas de segunda a sexta-feira, das ___ às ___, e aos sábados das ___ às ___, conforme prática do setor automotivo, respeitando os limites legais.
+A jornada será de 44 (quarenta e quatro) horas semanais, distribuídas de segunda a sexta-feira, das ${horarios.abertura} às ${horarios.fechamento}, com intervalo das ${horarios.almoco_inicio} às ${horarios.almoco_fim}, e aos sábados das ___ às ___, conforme prática do setor automotivo, respeitando os limites legais.
 
 Parágrafo 1º: O controle de jornada será realizado por sistema eletrônico ou manual autorizado.
 
