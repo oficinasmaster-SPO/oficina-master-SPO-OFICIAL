@@ -13,9 +13,11 @@ import { Loader2, Save, ArrowLeft, ArrowRight, CheckCircle, FileText, Mic, Wand2
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { useAdminMode } from "@/components/hooks/useAdminMode";
 
 export default function EditarDescricaoCargo() {
   const navigate = useNavigate();
+  const { isAdminMode } = useAdminMode();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
@@ -285,6 +287,12 @@ export default function EditarDescricaoCargo() {
       return;
     }
 
+    // Bloquear edição de modelos de sistema por não-admins
+    if (!formData.workshop_id && !isAdminMode) {
+      toast.error("Apenas administradores podem editar modelos do sistema.");
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -293,7 +301,7 @@ export default function EditarDescricaoCargo() {
       navigate(createPageUrl("DescricoesCargo"));
     } catch (error) {
       console.error(error);
-      toast.error("Erro ao atualizar");
+      toast.error("Erro ao atualizar. Verifique suas permissões.");
     } finally {
       setSubmitting(false);
     }
