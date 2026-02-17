@@ -292,11 +292,11 @@ export default function DescricoesCargo() {
                             <Copy className="w-4 h-4 text-emerald-600" />
                           </Button>
 
-                            {(desc.workshop_id || isAdminMode) && (
+                            {((isAdminMode) || (desc.workshop_id && desc.workshop_id === workshopId)) && (
                             <Button
                               variant="ghost"
                               size="icon"
-                              title={!desc.workshop_id ? "Editar Modelo do Sistema" : "Editar"}
+                              title={!desc.workshop_id ? "Editar Modelo do Sistema (Admin)" : "Editar"}
                               onClick={() => navigate(createPageUrl("EditarDescricaoCargo") + `?id=${desc.id}`)}
                             >
                               <Pencil className={`w-4 h-4 ${!desc.workshop_id ? "text-purple-600 font-bold" : "text-blue-600"}`} />
