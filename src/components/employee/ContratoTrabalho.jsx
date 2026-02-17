@@ -508,7 +508,7 @@ ${colab.nome} (Colaborador)
 
             <div className="flex flex-col md:flex-row justify-between items-center gap-4 mt-2 bg-blue-50 p-4 rounded-lg border border-blue-100">
               <div className="text-xs text-blue-800">
-                <strong>Dados preenchidos automaticamente:</strong> Nome, CPF, RG, Endereço, Cargo, Salário e Dados da Empresa.
+                <strong>Dados preenchidos automaticamente:</strong> Nome, CPF, RG, Endereço, Cargo, Salário, Dados da Empresa, Horário de Funcionamento e Dias.
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" onClick={() => setShowGenerator(false)}>Cancelar</Button>
