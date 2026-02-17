@@ -22,6 +22,7 @@ import ContratoTrabalho from "../components/employee/ContratoTrabalho";
 import AI_PDI_Generator from "../components/rh/AI_PDI_Generator";
 import EmployeeGoals from "../components/employee/EmployeeGoals";
 import PermissoesColaborador from "../components/employee/PermissoesColaborador";
+import JobDescriptionTab from "../components/employee/JobDescriptionTab";
 
 export default function MeuPerfil() {
   const location = useLocation();
@@ -212,6 +213,10 @@ export default function MeuPerfil() {
               <Shield className="w-4 h-4 mr-2" />
               Permissões
             </TabsTrigger>
+            <TabsTrigger value="descricao_cargo" className="data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700">
+              <FileText className="w-4 h-4 mr-2" />
+              Cargo (DC)
+            </TabsTrigger>
             <TabsTrigger value="documentos_empresa" className="data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700">
               <BookOpen className="w-4 h-4 mr-2" />
               Regimento
@@ -272,6 +277,10 @@ export default function MeuPerfil() {
 
           <TabsContent value="permissoes">
             <PermissoesColaborador employee={employee} />
+          </TabsContent>
+
+          <TabsContent value="descricao_cargo">
+            <JobDescriptionTab employee={employee} onUpdate={handleUpdate} />
           </TabsContent>
 
           <TabsContent value="remuneracao">
