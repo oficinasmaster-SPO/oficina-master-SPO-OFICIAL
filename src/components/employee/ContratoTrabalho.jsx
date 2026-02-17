@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Upload, Download, CheckCircle2, AlertCircle, Printer, Edit, PenTool, Loader2 } from "lucide-react";
+import { FileText, Upload, Download, CheckCircle2, AlertCircle, Printer, Edit, PenTool, Loader2, Shield } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
