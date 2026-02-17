@@ -628,11 +628,14 @@ ${colab.nome} (Colaborador)
           {hasContract ? (
             <div className="space-y-4">
               <div className="bg-green-50 rounded-lg p-4 border border-green-200 flex items-center justify-between">
-                <div className="flex items-center gap-3">
+                <div 
+                  className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={() => window.open(employee.work_contract_url, '_blank')}
+                >
                   <CheckCircle2 className="w-5 h-5 text-green-600" />
                   <div>
                     <p className="font-semibold text-sm text-green-900">Contrato Anexado</p>
-                    <p className="text-xs text-green-700">Clique para visualizar</p>
+                    <p className="text-xs text-green-700 underline">Clique para visualizar</p>
                   </div>
                 </div>
                 <Button 
