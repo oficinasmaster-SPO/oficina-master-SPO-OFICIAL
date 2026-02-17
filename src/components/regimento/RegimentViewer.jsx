@@ -8,7 +8,7 @@ import { base44 } from "@/api/base44Client";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-export default function RegimentViewer({ regiment, workshop, onClose, autoAcknowledge = false }) {
+export default function RegimentViewer({ regiment, workshop, employee, onClose, autoAcknowledge = false }) {
   const [hasAcknowledged, setHasAcknowledged] = React.useState(false);
 
   const acknowledgeMutation = useMutation({
@@ -40,6 +40,26 @@ export default function RegimentViewer({ regiment, workshop, onClose, autoAcknow
     window.print();
   };
 
+  const replacePlaceholders = (text) => {
+    if (!text || !employee) return text;
+
+    let updatedText = text;
+    const now = new Date();
+    const formattedDate = format(now, 'dd/MM/yyyy');
+    const admissionDate = employee.hire_date ? format(new Date(employee.hire_date), 'dd/MM/yyyy') : '__/__/____';
+    const location = workshop ? `${workshop.city || ''}/${workshop.state || ''}` : '';
+
+    updatedText = updatedText.replace(/Nome completo:\s*\[X+\]/g, `Nome completo: ${employee.full_name || '________________________________'}`);
+    updatedText = updatedText.replace(/CPF:\s*\[X+\.?X+\.?X+\-?X+\]/g, `CPF: ${employee.cpf || '___________'}`);
+    updatedText = updatedText.replace(/RG:\s*\[X+\]/g, `RG: ${employee.rg || '___________'}`);
+    updatedText = updatedText.replace(/Cargo\/Função:\s*\[X+\]/g, `Cargo/Função: ${employee.position || '____________________'}`);
+    updatedText = updatedText.replace(/Data de Admissão:\s*\[X+\/X+\/X+\]/g, `Data de Admissão: ${admissionDate}`);
+    updatedText = updatedText.replace(/Data de Ciência do Regimento:\s*\[X+\/X+\/X+\]/g, `Data de Ciência do Regimento: ${formattedDate}`);
+    updatedText = updatedText.replace(/Local:\s*\[X+\]/g, `Local: ${location || '____________________'}`);
+
+    return updatedText;
+  };
+
   const renderSection = (section, index) => {
     return (
       <div key={section.id || index} className="page-break-inside-avoid mb-6">
@@ -47,12 +67,12 @@ export default function RegimentViewer({ regiment, workshop, onClose, autoAcknow
           {section.number} {section.title}
         </h3>
         {section.content && (
-          <div className="section-content mb-3">{section.content}</div>
+          <div className="section-content mb-3">{replacePlaceholders(section.content)}</div>
         )}
         {section.subsections?.map((subsection, subIndex) => (
           <div key={subsection.id || subIndex} className="ml-6 mb-2">
             <p className="text-sm">
-              <strong>{subsection.number}</strong> {subsection.content}
+              <strong>{subsection.number}</strong> {replacePlaceholders(subsection.content)}
             </p>
           </div>
         ))}

@@ -66,6 +66,7 @@ export default function DocumentsTab({ employee }) {
       <RegimentViewer 
         regiment={regiment}
         workshop={workshop}
+        employee={employee}
         onClose={() => setShowRegiment(false)}
         autoAcknowledge={true}
       />
