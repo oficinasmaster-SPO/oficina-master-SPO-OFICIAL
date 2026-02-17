@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2, Plus, FileText, Search, Briefcase, Download, Eye, Trash2, Globe, Copy } from "lucide-react";
 import JobDescriptionViewer from "@/components/job-description/JobDescriptionViewer";
 import { toast } from "sonner";
@@ -178,128 +179,126 @@ export default function DescricoesCargo() {
           </Card>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredDescriptions.map((desc) => (
-                <Card key={desc.id} className="shadow-lg hover:shadow-xl transition-shadow">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-xl mb-2">{desc.job_title}</CardTitle>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-sm text-gray-600">
-                          {getWorkshopName(desc.workshop_id)}
-                        </p>
-                        {!desc.workshop_id && (
-                          <Badge variant="secondary" className="bg-amber-100 text-amber-800 hover:bg-amber-100">
-                            Sistema
+            <div className="bg-white rounded-md border shadow-sm overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Cargo</TableHead>
+                    <TableHead>Área</TableHead>
+                    <TableHead>Origem</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredDescriptions.map((desc) => (
+                    <TableRow key={desc.id}>
+                      <TableCell className="font-medium">
+                        <div className="flex flex-col">
+                          <span className="text-base">{desc.job_title}</span>
+                          {desc.generated_by_ai && (
+                            <span className="text-xs text-blue-600 mt-1 flex items-center gap-1">
+                              <Badge variant="secondary" className="text-[10px] px-1 py-0 h-5 bg-blue-50 text-blue-700 border-blue-200">
+                                IA
+                              </Badge>
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {desc.area ? (
+                          <Badge variant="outline" className="capitalize">
+                            {desc.area}
                           </Badge>
+                        ) : (
+                          <span className="text-gray-400 text-sm">-</span>
                         )}
-                        {desc.area && (
-                           <Badge variant="outline" className="text-xs">
-                             {desc.area.charAt(0).toUpperCase() + desc.area.slice(1)}
-                           </Badge>
-                        )}
-                      </div>
-                    </div>
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${!desc.workshop_id ? 'bg-amber-100' : 'bg-purple-100'}`}>
-                      <Briefcase className={`w-6 h-6 ${!desc.workshop_id ? 'text-amber-600' : 'text-purple-600'}`} />
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {desc.generated_by_ai && (
-                      <Badge className="bg-blue-100 text-blue-700">
-                        Gerado por IA
-                      </Badge>
-                    )}
-                    
-                    {desc.main_activities && desc.main_activities.length > 0 && (
-                      <div>
-                        <p className="text-sm font-medium text-gray-700 mb-1">Atividades:</p>
-                        <p className="text-sm text-gray-600">
-                          {desc.main_activities.length} atividades definidas
-                        </p>
-                      </div>
-                    )}
-
-                    <div className="flex flex-col gap-2 mt-4">
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => {
-                            setSelectedDescription(desc);
-                            setShowViewer(true);
-                          }}
-                        >
-                          <Eye className="w-4 h-4 mr-1" />
-                          Visualizar
-                        </Button>
-                        
-                        {(desc.workshop_id || isAdminMode) && (
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {!desc.workshop_id ? (
+                            <Badge variant="secondary" className="bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200">
+                              Sistema
+                            </Badge>
+                          ) : (
+                            <span className="text-sm text-gray-600">{getWorkshopName(desc.workshop_id)}</span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
                           <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => navigate(createPageUrl("EditarDescricaoCargo") + `?id=${desc.id}`)}
-                            title="Editar"
+                            variant="ghost"
+                            size="icon"
+                            title="Visualizar"
+                            onClick={() => {
+                              setSelectedDescription(desc);
+                              setShowViewer(true);
+                            }}
                           >
-                            <FileText className="w-4 h-4" />
+                            <Eye className="w-4 h-4 text-gray-500" />
                           </Button>
-                        )}
+                          
+                          {(desc.workshop_id || isAdminMode) && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Editar"
+                              onClick={() => navigate(createPageUrl("EditarDescricaoCargo") + `?id=${desc.id}`)}
+                            >
+                              <FileText className="w-4 h-4 text-blue-600" />
+                            </Button>
+                          )}
 
-                        {(desc.workshop_id || isAdminMode) && (
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                title="Excluir"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Excluir Descrição de Cargo?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Esta ação não pode ser desfeita. A descrição de cargo será permanentemente removida.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction 
-                                  onClick={() => handleDelete(desc.id)}
-                                  className="bg-red-600 hover:bg-red-700"
+                          {isAdminMode && desc.workshop_id && (
+                             <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Liberar para Todos (SPO)"
+                              onClick={() => handleMakeGlobal(desc)}
+                              disabled={isCloning}
+                            >
+                              <Globe className="w-4 h-4 text-purple-600" />
+                            </Button>
+                          )}
+
+                          {(desc.workshop_id || isAdminMode) && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  title="Excluir"
+                                  className="hover:bg-red-50"
                                 >
-                                  Excluir
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        )}
-                      </div>
-
-                      {isAdminMode && desc.workshop_id && (
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          className="w-full bg-blue-100 text-blue-700 hover:bg-blue-200 mt-1"
-                          onClick={() => handleMakeGlobal(desc)}
-                          disabled={isCloning}
-                        >
-                          <Globe className="w-3 h-3 mr-2" />
-                          {isCloning ? "Processando..." : "Liberar para Todos (SPO)"}
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                                  <Trash2 className="w-4 h-4 text-red-600" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Excluir Descrição de Cargo?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Esta ação não pode ser desfeita. A descrição de cargo será permanentemente removida.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction 
+                                    onClick={() => handleDelete(desc.id)}
+                                    className="bg-red-600 hover:bg-red-700"
+                                  >
+                                    Excluir
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
 
           <JobDescriptionViewer
             open={showViewer}
