@@ -86,20 +86,59 @@ EMPREGADO: ${colab.nome}, portador(a) do RG nº ${colab.rg} e CPF nº ${colab.cp
 
 As partes acima identificadas têm, entre si, justo e acertado o presente Contrato Individual de Trabalho, que se regerá pelas cláusulas seguintes:
 
-CLÁUSULA 1ª - DA FUNÇÃO
-O EMPREGADO é contratado para exercer a função de ${colab.cargo}, comprometendo-se a executar todas as atividades inerentes ao cargo, com zelo, lealdade e dedicação.
+CLÁUSULA 1ª – DA DESCRIÇÃO DE CARGO
+O EMPREGADO exercerá a função conforme atribuições específicas descritas no documento interno denominado “Descrição de Cargo – ${colab.cargo}”, integrante das políticas internas da empresa.
 
-CLÁUSULA 2ª - DA REMUNERAÇÃO
-O EMPREGADO receberá o salário mensal de R$ ${employee.salary || "_______"}, pago até o 5º dia útil do mês subsequente ao vencido.
+Parágrafo 1º: A Descrição de Cargo poderá ser atualizada para adequação operacional, tecnológica ou estratégica da oficina, desde que mantida a compatibilidade com a função contratada e sem prejuízo salarial.
 
-CLÁUSULA 3ª - DO HORÁRIO DE TRABALHO
-A jornada de trabalho será cumprida conforme escala definida pela empresa, respeitando os limites legais.
+Parágrafo 2º: O EMPREGADO declara ciência das metas operacionais, indicadores de desempenho (KPIs) e responsabilidades inerentes ao cargo.
 
-CLÁUSULA 4ª - DO PRAZO
-O presente contrato é celebrado por prazo indeterminado, iniciando-se em ${new Date().toLocaleDateString('pt-BR')}.
+CLÁUSULA 2ª – DA JORNADA DE TRABALHO
+A jornada será de 44 (quarenta e quatro) horas semanais, distribuídas de segunda a sexta-feira, das ___ às ___, e aos sábados das ___ às ___, conforme prática do setor automotivo, respeitando os limites legais.
 
-CLÁUSULA 5ª - DISPOSIÇÕES GERAIS
-O EMPREGADO compromete-se a respeitar o regulamento interno da empresa e as normas de segurança e medicina do trabalho.
+Parágrafo 1º: O controle de jornada será realizado por sistema eletrônico ou manual autorizado.
+
+Parágrafo 2º: As horas extraordinárias, quando previamente autorizadas, serão remuneradas com adicional legal mínimo de 50% ou compensadas por meio de banco de horas, conforme legislação vigente.
+
+Parágrafo 3º: Será concedido intervalo mínimo de 1 (uma) hora para repouso e alimentação.
+
+CLÁUSULA 3ª – DA REMUNERAÇÃO
+O EMPREGADO receberá salário mensal de R$ ${employee.salary || "_______"}, pago até o 5º dia útil do mês subsequente.
+
+Parágrafo 1º: Poderá haver remuneração variável vinculada ao desempenho da oficina, metas de faturamento ou indicadores previamente definidos.
+
+Parágrafo 2º: Sobre o salário incidirão os descontos legais (INSS, IRRF, contribuição sindical, quando aplicável).
+
+CLÁUSULA 4ª – DO PRAZO
+O contrato é celebrado por prazo indeterminado, iniciando-se em ${employee.hire_date ? new Date(employee.hire_date).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR')}.
+
+CLÁUSULA 5ª – DA CONFIDENCIALIDADE
+O EMPREGADO compromete-se a manter sigilo sobre:
+- Cadastro de clientes e fornecedores
+- Estratégias comerciais
+- Precificação de serviços
+- Margens de lucro
+- Métodos operacionais da oficina
+- Informações financeiras
+
+A obrigação permanece mesmo após o término do contrato.
+
+CLÁUSULA 6ª – DA PROPRIEDADE INTELECTUAL
+Procedimentos internos, manuais, treinamentos, métodos de gestão, estratégias comerciais e quaisquer materiais desenvolvidos durante o vínculo pertencem exclusivamente ao EMPREGADOR.
+
+CLÁUSULA 7ª – DO REGULAMENTO INTERNO E SEGURANÇA
+O EMPREGADO declara ciência e concordância com:
+- Regulamento interno da oficina
+- Normas de segurança do trabalho
+- Uso obrigatório de EPIs quando necessário
+- Normas ambientais e de descarte de resíduos automotivos
+- Política de proteção de dados (LGPD)
+
+CLÁUSULA 8ª – DOS EQUIPAMENTOS
+Caso sejam fornecidos equipamentos, sistemas ou softwares de gestão automotiva, o EMPREGADO compromete-se a utilizá-los exclusivamente para fins profissionais.
+
+CLÁUSULA 9ª – DO FORO
+Fica eleito o foro da Justiça do Trabalho de ${workshop.city || "Maringá"}/${workshop.state || "PR"}.
 
 E por estarem assim justos e contratados, assinam o presente instrumento em 02 (duas) vias de igual teor.
 
