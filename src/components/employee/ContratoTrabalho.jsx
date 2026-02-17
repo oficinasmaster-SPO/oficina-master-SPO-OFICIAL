@@ -389,26 +389,57 @@ ${colab.nome} (Empregado)
 
 IDENTIFICAÇÃO DAS PARTES
 
-EMPRESA: ${empresa.razao}, inscrita no CNPJ nº ${empresa.cnpj}.
+EMPRESA: ${empresa.razao}, inscrita no CNPJ nº ${empresa.cnpj}, sediada em ${empresa.endereco}.
+
 COLABORADOR: ${colab.nome}, CPF nº ${colab.cpf}, Cargo: ${colab.cargo}.
 
-O COLABORADOR, em razão de seu vínculo com a EMPRESA, terá acesso a informações confidenciais, estratégicas e técnicas ("Informações Confidenciais").
+CLÁUSULA 1ª – DO OBJETO
+O presente Termo tem por finalidade proteger todas as informações confidenciais, estratégicas, técnicas, operacionais e comerciais da EMPRESA às quais o COLABORADOR tenha acesso em razão de suas atividades profissionais.
 
-CLÁUSULA 1ª - DO OBJETO
-O objetivo deste termo é garantir o sigilo e a proteção das Informações Confidenciais da EMPRESA a que o COLABORADOR tiver acesso.
+CLÁUSULA 2ª – DO CONCEITO DE INFORMAÇÕES CONFIDENCIAIS
+Consideram-se Informações Confidenciais, entre outras:
+- Cadastro de clientes e fornecedores
+- Margens de lucro e estrutura de custos
+- Precificação de serviços
+- Estratégias comerciais e campanhas
+- Métodos operacionais e processos internos
+- Dados financeiros
+- Planilhas, relatórios e indicadores
+- Informações protegidas pela LGPD
+- Documentos físicos ou digitais
 
-CLÁUSULA 2ª - DAS OBRIGAÇÕES DO COLABORADOR
+Independentemente do meio em que estejam armazenadas.
+
+CLÁUSULA 3ª – DAS OBRIGAÇÕES DO COLABORADOR
 O COLABORADOR obriga-se a:
-I - Manter o mais absoluto sigilo sobre as Informações Confidenciais;
-II - Não utilizar as Informações Confidenciais em benefício próprio ou de terceiros;
-III - Não copiar, reproduzir ou divulgar as Informações Confidenciais sem autorização expressa;
-IV - Zelar pela guarda e segurança dos documentos e materiais que lhe forem confiados.
 
-CLÁUSULA 3ª - DA VIGÊNCIA
-A obrigação de confidencialidade permanecerá vigente mesmo após o término do vínculo entre as partes, por prazo indeterminado.
+I – Manter absoluto sigilo sobre as Informações Confidenciais;
+II – Não utilizar tais informações em benefício próprio ou de terceiros;
+III – Não copiar, reproduzir, compartilhar ou armazenar informações fora dos sistemas autorizados;
+IV – Adotar medidas razoáveis de segurança na guarda de documentos físicos e digitais;
+V – Comunicar imediatamente à EMPRESA qualquer suspeita de vazamento.
 
-CLÁUSULA 4ª - DAS PENALIDADES
-O descumprimento deste termo sujeitará o COLABORADOR às sanções legais cabíveis, incluindo demissão por justa causa, além de reparação por perdas e danos.
+CLÁUSULA 4ª – DA DEVOLUÇÃO DE MATERIAIS
+No término do vínculo, o COLABORADOR deverá devolver imediatamente:
+- Documentos físicos
+- Arquivos digitais
+- Equipamentos
+- Senhas e acessos
+
+Declarando não manter qualquer cópia sob sua posse.
+
+CLÁUSULA 5ª – DA VIGÊNCIA
+A obrigação de confidencialidade permanecerá vigente por prazo indeterminado, mesmo após o encerramento do vínculo empregatício.
+
+CLÁUSULA 6ª – DAS PENALIDADES
+O descumprimento deste Termo implicará:
+
+I – Aplicação de medidas disciplinares, inclusive demissão por justa causa, nos termos do art. 482 da CLT;
+II – Pagamento de multa equivalente a 5 (cinco) vezes a última remuneração mensal, sem prejuízo de indenização por perdas e danos comprovados;
+III – Responsabilização civil e, se aplicável, penal.
+
+CLÁUSULA 7ª – DA TUTELA DE URGÊNCIA
+A EMPRESA poderá requerer judicialmente medida liminar para cessar imediatamente qualquer violação às disposições deste Termo.
 
 E por estar de acordo, assina o presente termo.
 
