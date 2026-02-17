@@ -52,6 +52,21 @@ export default function DescricoesCargo() {
   const filteredDescriptions = jobDescriptions.filter(desc => {
     const matchesSearch = desc.job_title.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesArea = selectedArea === "all" || desc.area === selectedArea;
+    
+    // Filter logic:
+    // 1. System Templates (no workshop_id) - Visible to everyone
+    // 2. Workshop Specific:
+    //    - If Admin Mode: Show all (or filter by selected workshop if needed, but 'all' gives overview)
+    //    - If Tenant: Show ONLY their own workshop's documents
+    
+    const isSystemDoc = !desc.workshop_id;
+    const isMyWorkshopDoc = workshopId && desc.workshop_id === workshopId;
+    
+    // If user is NOT admin, they should only see System Docs or Their Own Docs
+    if (!isAdminMode && !isSystemDoc && !isMyWorkshopDoc) {
+      return false;
+    }
+
     return matchesSearch && matchesArea;
   });
 
@@ -300,7 +315,7 @@ export default function DescricoesCargo() {
                             </Button>
                           )}
 
-                          {(desc.workshop_id || isAdminMode) && (
+                          {((isAdminMode) || (desc.workshop_id && desc.workshop_id === workshopId)) && (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button
