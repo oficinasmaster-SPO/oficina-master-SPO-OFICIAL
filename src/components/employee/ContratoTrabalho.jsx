@@ -19,6 +19,19 @@ export default function ContratoTrabalho({ employee, onUpdate }) {
   const [workshop, setWorkshop] = useState(null);
   const [contractType, setContractType] = useState("trabalho");
   const [contractText, setContractText] = useState("");
+  const [metrics, setMetrics] = useState([]);
+
+  useEffect(() => {
+    const loadMetrics = async () => {
+      try {
+        const result = await base44.entities.ProductivityMetric.filter({ is_active: true });
+        setMetrics(result);
+      } catch (error) {
+        console.error("Erro ao carregar métricas:", error);
+      }
+    };
+    loadMetrics();
+  }, []);
 
   useEffect(() => {
     const loadWorkshop = async () => {
@@ -38,7 +51,7 @@ export default function ContratoTrabalho({ employee, onUpdate }) {
     if (workshop) {
       updateTemplate();
     }
-  }, [workshop, contractType, employee]);
+  }, [workshop, contractType, employee, metrics]);
 
   const getAddressString = (addr) => {
     if (!addr) return "_______________________";
@@ -82,6 +95,26 @@ export default function ContratoTrabalho({ employee, onUpdate }) {
       almoco_fim: h.almoco_fim || "___"
     };
 
+    // Detalhes da Remuneração
+    const salarioFixo = employee.salary ? `R$ ${parseFloat(employee.salary).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : "R$ _______";
+    const comissaoMensal = employee.commission ? `R$ ${parseFloat(employee.commission).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : "R$ 0,00";
+    const bonificacao = employee.bonus ? `R$ ${parseFloat(employee.bonus).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : "R$ 0,00";
+
+    let beneficiosTexto = "Nenhum benefício cadastrado.";
+    if (Array.isArray(employee.benefits) && employee.benefits.length > 0) {
+        beneficiosTexto = employee.benefits.map(b => `- ${b.nome || "Benefício"}: R$ ${parseFloat(b.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`).join("\n");
+    }
+
+    let regrasComissaoTexto = "Nenhuma regra de comissão cadastrada.";
+    if (Array.isArray(employee.commission_rules) && employee.commission_rules.length > 0) {
+        regrasComissaoTexto = employee.commission_rules.map(r => {
+            const metricName = metrics.find(m => m.code === r.metric_code)?.name || r.metric_code || "Métrica";
+            const typeLabel = r.type === 'percentage' ? '%' : 'R$';
+            const valueLabel = r.type === 'percentage' ? `${r.value}%` : `R$ ${parseFloat(r.value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+            return `- ${metricName} (${typeLabel}): ${valueLabel}`;
+        }).join("\n");
+    }
+
     let template = "";
 
     if (contractType === "trabalho") {
@@ -112,7 +145,19 @@ Parágrafo 2º: As horas extraordinárias, quando previamente autorizadas, serã
 Parágrafo 3º: Será concedido intervalo mínimo de 1 (uma) hora para repouso e alimentação.
 
 CLÁUSULA 3ª – DA REMUNERAÇÃO
-O EMPREGADO receberá salário mensal de R$ ${employee.salary || "_______"}, pago até o 5º dia útil do mês subsequente.
+O EMPREGADO receberá a remuneração composta da seguinte forma:
+
+1. Salário Fixo: ${salarioFixo}
+2. Comissão Mensal Estimada: ${comissaoMensal}
+3. Bonificação/Prêmio: ${bonificacao}
+
+Vales e Benefícios:
+${beneficiosTexto}
+
+Regras de Comissionamento:
+${regrasComissaoTexto}
+
+O pagamento será efetuado até o 5º dia útil do mês subsequente.
 
 Parágrafo 1º: Poderá haver remuneração variável vinculada ao desempenho da oficina, metas de faturamento ou indicadores previamente definidos.
 
