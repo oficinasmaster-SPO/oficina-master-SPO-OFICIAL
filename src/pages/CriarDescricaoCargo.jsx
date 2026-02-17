@@ -47,7 +47,14 @@ export default function CriarDescricaoCargo() {
     trainings: []
   });
 
-  const [tempInput, setTempInput] = useState({ item: "", required: false, desired: false });
+  const [tempInput, setTempInput] = useState({ 
+    item: "", 
+    required: false, 
+    desired: false,
+    target_value: "",
+    percentage_weight: "",
+    frequency: "mensal"
+  });
   const [isListening, setIsListening] = useState(false);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
 
@@ -181,7 +188,7 @@ export default function CriarDescricaoCargo() {
     { id: "financial_transactions", title: "17. Volume de Transações Financeiras", type: "textarea", hasRequiredDesired: false },
     { id: "third_party_safety", title: "18. Responsabilidades pela Segurança de Terceiros", type: "textarea", hasRequiredDesired: false },
     { id: "contact_responsibilities", title: "19. Responsabilidades por Contatos", type: "textarea", hasRequiredDesired: false },
-    { id: "indicators", title: "20. Indicadores", type: "list-checkbox", hasRequiredDesired: true },
+    { id: "indicators", title: "20. Indicadores", type: "list-indicators-advanced", hasRequiredDesired: false },
     { id: "trainings", title: "21. Treinamentos", type: "list-simple", hasRequiredDesired: false }
   ];
 
@@ -226,6 +233,16 @@ export default function CriarDescricaoCargo() {
         ...formData,
         [field]: [...formData[field], { item: tempInput.item, internal: tempInput.required, external: tempInput.desired }]
       });
+    } else if (currentQuestion.type === "list-indicators-advanced") {
+      setFormData({
+        ...formData,
+        [field]: [...formData[field], { 
+          item: tempInput.item, 
+          target_value: tempInput.target_value,
+          percentage_weight: tempInput.percentage_weight,
+          frequency: tempInput.frequency
+        }]
+      });
     } else {
       setFormData({
         ...formData,
@@ -233,7 +250,14 @@ export default function CriarDescricaoCargo() {
       });
     }
     
-    setTempInput({ item: "", required: false, desired: false });
+    setTempInput({ 
+      item: "", 
+      required: false, 
+      desired: false,
+      target_value: "",
+      percentage_weight: "",
+      frequency: "mensal"
+    });
   };
 
   const removeItem = (index) => {
@@ -247,14 +271,28 @@ export default function CriarDescricaoCargo() {
   const handleNext = () => {
     if (currentStep < questions.length - 1) {
       setCurrentStep(currentStep + 1);
-      setTempInput({ item: "", required: false, desired: false });
+      setTempInput({ 
+        item: "", 
+        required: false, 
+        desired: false,
+        target_value: "",
+        percentage_weight: "",
+        frequency: "mensal"
+      });
     }
   };
 
   const handleBack = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
-      setTempInput({ item: "", required: false, desired: false });
+      setTempInput({ 
+        item: "", 
+        required: false, 
+        desired: false,
+        target_value: "",
+        percentage_weight: "",
+        frequency: "mensal"
+      });
     }
   };
 
@@ -385,6 +423,97 @@ export default function CriarDescricaoCargo() {
                   rows={8}
                   className="mt-2"
                 />
+              </div>
+            )}
+
+            {currentQuestion.type === "list-indicators-advanced" && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="md:col-span-2 lg:col-span-1">
+                    <Label>Descrição</Label>
+                    <Input
+                      value={tempInput.item}
+                      onChange={(e) => setTempInput({...tempInput, item: e.target.value})}
+                      placeholder="Ex: Ticket Médio"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label>Número/Quantidade</Label>
+                    <Input
+                      value={tempInput.target_value}
+                      onChange={(e) => setTempInput({...tempInput, target_value: e.target.value})}
+                      placeholder="Ex: R$ 500,00"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label>% se aplicado</Label>
+                    <Input
+                      value={tempInput.percentage_weight}
+                      onChange={(e) => setTempInput({...tempInput, percentage_weight: e.target.value})}
+                      placeholder="Ex: 10%"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label>Frequência</Label>
+                    <Select
+                      value={tempInput.frequency}
+                      onValueChange={(value) => setTempInput({...tempInput, frequency: value})}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="diario">Diário</SelectItem>
+                        <SelectItem value="semanal">Semanal</SelectItem>
+                        <SelectItem value="mensal">Mensal</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <Button onClick={addItem} className="w-full bg-blue-600 hover:bg-blue-700">+ Adicionar Indicador</Button>
+
+                <div className="border-t pt-4 mt-6">
+                  <Label className="text-sm text-gray-600 mb-2 block">Indicadores Adicionados ({formData.indicators?.length || 0})</Label>
+                  
+                  <div className="border rounded-lg overflow-hidden">
+                    <table className="w-full text-sm text-left">
+                      <thead className="bg-gray-100 text-gray-700 font-medium">
+                        <tr>
+                          <th className="p-3">Descrição</th>
+                          <th className="p-3">Quantidade</th>
+                          <th className="p-3">%</th>
+                          <th className="p-3">Frequência</th>
+                          <th className="p-3 w-20">Ação</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200 bg-white">
+                        {formData.indicators?.map((indicator, index) => (
+                          <tr key={index}>
+                            <td className="p-3">{indicator.item}</td>
+                            <td className="p-3">{indicator.target_value || "-"}</td>
+                            <td className="p-3">{indicator.percentage_weight || "-"}</td>
+                            <td className="p-3 capitalize">{indicator.frequency}</td>
+                            <td className="p-3">
+                              <Button variant="ghost" size="sm" onClick={() => removeItem(index)} className="text-red-500 hover:text-red-700 hover:bg-red-50">
+                                <span className="sr-only">Remover</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                        {(!formData.indicators || formData.indicators.length === 0) && (
+                          <tr>
+                            <td colSpan="5" className="p-4 text-center text-gray-400">Nenhum indicador adicionado</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
             )}
 

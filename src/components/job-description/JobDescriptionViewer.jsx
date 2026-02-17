@@ -250,7 +250,34 @@ export default function JobDescriptionViewer({ open, onClose, jobDescription, wo
           {jobDescription.indicators?.length > 0 && (
             <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-300 rounded-lg p-6">
               <h3 className="text-lg font-bold text-green-900 mb-4">Indicadores de Desempenho</h3>
-              {renderListItems(jobDescription.indicators)}
+              
+              {/* Check if new format (with target_value etc) or old format */}
+              {jobDescription.indicators.some(i => i.target_value || i.percentage_weight) ? (
+                <div className="border rounded-lg overflow-hidden border-green-200">
+                  <table className="w-full text-sm text-left">
+                    <thead className="bg-green-100 text-green-900 font-medium">
+                      <tr>
+                        <th className="p-3">Descrição</th>
+                        <th className="p-3">Quantidade</th>
+                        <th className="p-3">%</th>
+                        <th className="p-3">Frequência</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-green-200 bg-white/50">
+                      {jobDescription.indicators.map((indicator, index) => (
+                        <tr key={index}>
+                          <td className="p-3 font-medium text-gray-800">{indicator.item}</td>
+                          <td className="p-3 text-gray-600">{indicator.target_value || "-"}</td>
+                          <td className="p-3 text-gray-600">{indicator.percentage_weight || "-"}</td>
+                          <td className="p-3 text-gray-600 capitalize">{indicator.frequency || "-"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                renderListItems(jobDescription.indicators)
+              )}
             </div>
           )}
 
