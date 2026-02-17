@@ -191,7 +191,31 @@ O EMPREGADO declara ciência e concordância com:
 CLÁUSULA 8ª – DOS EQUIPAMENTOS
 Caso sejam fornecidos equipamentos, sistemas ou softwares de gestão automotiva, o EMPREGADO compromete-se a utilizá-los exclusivamente para fins profissionais.
 
-CLÁUSULA 9ª – DO FORO
+CLÁUSULA 9ª – DA AUTORIZAÇÃO DE USO DE IMAGEM
+O EMPREGADO autoriza, de forma gratuita e por prazo indeterminado, o uso de sua imagem, voz e nome pelo EMPREGADOR, exclusivamente para fins institucionais, publicitários e comerciais relacionados às atividades da oficina mecânica.
+
+A autorização inclui, mas não se limita a:
+- Fotografias
+- Vídeos institucionais
+- Redes sociais
+- Website
+- Materiais promocionais
+- Campanhas publicitárias
+- Treinamentos internos
+
+Parágrafo 1º – Finalidade
+O uso da imagem deverá estar relacionado às atividades profissionais desempenhadas pelo EMPREGADO e à divulgação institucional da empresa.
+
+Parágrafo 2º – Limitação
+Fica vedado o uso da imagem em contexto que possa gerar exposição vexatória, constrangimento ou desvio de finalidade.
+
+Parágrafo 3º – Revogação
+A autorização poderá ser revogada mediante solicitação formal do EMPREGADO, não gerando direito a indenização sobre materiais já produzidos ou divulgados anteriormente.
+
+Parágrafo 4º – LGPD
+O EMPREGADOR compromete-se a tratar a imagem e os dados pessoais do EMPREGADO conforme a Lei Geral de Proteção de Dados (LGPD).
+
+CLÁUSULA 10ª – DO FORO
 Fica eleito o foro da Justiça do Trabalho da Comarca de ${workshop.comarca || workshop.city || "Maringá"}/${workshop.state || "PR"}.
 
 E por estarem assim justos e contratados, assinam o presente instrumento em 02 (duas) vias de igual teor.
@@ -272,7 +296,31 @@ O EMPREGADO declara ciência e concordância com:
 CLÁUSULA 8ª – DA REVERSIBILIDADE
 O EMPREGADOR poderá, a qualquer tempo, reverter o EMPREGADO ao cargo efetivo anteriormente ocupado, deixando de ser devida a gratificação de função, nos termos do parágrafo único do art. 468 da CLT.
 
-CLÁUSULA 9ª – DO FORO
+CLÁUSULA 9ª – DA AUTORIZAÇÃO DE USO DE IMAGEM
+O EMPREGADO autoriza, de forma gratuita e por prazo indeterminado, o uso de sua imagem, voz e nome pelo EMPREGADOR, exclusivamente para fins institucionais, publicitários e comerciais relacionados às atividades da oficina mecânica.
+
+A autorização inclui, mas não se limita a:
+- Fotografias
+- Vídeos institucionais
+- Redes sociais
+- Website
+- Materiais promocionais
+- Campanhas publicitárias
+- Treinamentos internos
+
+Parágrafo 1º – Finalidade
+O uso da imagem deverá estar relacionado às atividades profissionais desempenhadas pelo EMPREGADO e à divulgação institucional da empresa.
+
+Parágrafo 2º – Limitação
+Fica vedado o uso da imagem em contexto que possa gerar exposição vexatória, constrangimento ou desvio de finalidade.
+
+Parágrafo 3º – Revogação
+A autorização poderá ser revogada mediante solicitação formal do EMPREGADO, não gerando direito a indenização sobre materiais já produzidos ou divulgados anteriormente.
+
+Parágrafo 4º – LGPD
+O EMPREGADOR compromete-se a tratar a imagem e os dados pessoais do EMPREGADO conforme a Lei Geral de Proteção de Dados (LGPD).
+
+CLÁUSULA 10ª – DO FORO
 Fica eleito o foro da Justiça do Trabalho da Comarca de ${workshop.comarca || workshop.city || "Maringá"}/${workshop.state || "PR"}.
 
 E por estarem assim justos e contratados, assinam o presente instrumento em 02 (duas) vias de igual teor.
