@@ -9,9 +9,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, Save, ArrowLeft, ArrowRight, CheckCircle, FileText, Mic, Wand2 } from "lucide-react";
+import { Loader2, Save, ArrowLeft, ArrowRight, CheckCircle, FileText, Mic, Wand2, Globe } from "lucide-react";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
 export default function EditarDescricaoCargo() {
   const navigate = useNavigate();
@@ -325,6 +326,16 @@ export default function EditarDescricaoCargo() {
           <h1 className="text-4xl font-bold text-gray-900 mb-3">
             Editar Descrição de Cargo
           </h1>
+          
+          {!formData.workshop_id && (
+            <div className="mb-4">
+              <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-sm py-1 px-3">
+                <Globe className="w-3 h-3 mr-2" />
+                Modelo Padrão do Sistema (Global)
+              </Badge>
+            </div>
+          )}
+
           <p className="text-gray-600">{formData.job_title}</p>
         </div>
 

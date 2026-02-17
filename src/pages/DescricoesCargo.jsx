@@ -281,10 +281,10 @@ export default function DescricoesCargo() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              title="Editar"
+                              title={!desc.workshop_id ? "Editar Modelo do Sistema (Admin)" : "Editar"}
                               onClick={() => navigate(createPageUrl("EditarDescricaoCargo") + `?id=${desc.id}`)}
                             >
-                              <Pencil className="w-4 h-4 text-blue-600" />
+                              <Pencil className={`w-4 h-4 ${!desc.workshop_id ? "text-purple-600" : "text-blue-600"}`} />
                             </Button>
                           )}
 
