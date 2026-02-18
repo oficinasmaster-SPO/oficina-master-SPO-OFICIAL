@@ -70,7 +70,7 @@ export default function ManualViewer({ data, onClose }) {
               <img 
                 src={workshop.logo_url} 
                 alt={`Logo ${workshop.name}`} 
-                className="h-16 w-auto object-contain"
+                className="max-h-24 w-auto max-w-[250px] object-contain shrink-0"
               />
             )}
             <div>
