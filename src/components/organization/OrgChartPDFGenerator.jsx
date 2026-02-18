@@ -82,18 +82,12 @@ export async function generateOrgChartPDF(nodes, workshop, download = true) {
     );
 
     // Salvar ou visualizar
-    const fileName = `Organograma_${workshop.name}_${new Date().toISOString().split('T')[0]}.pdf`;
+    // Sanitizar o nome do arquivo para evitar caracteres inválidos
+    const safeName = workshop.name ? workshop.name.replace(/[\/\\:*?"<>|]/g, '_') : 'Oficina';
+    const fileName = `Organograma_${safeName}_${new Date().toISOString().split('T')[0]}.pdf`;
     
     if (download) {
-      const pdfBlob = pdf.output('blob');
-      const url = URL.createObjectURL(pdfBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      pdf.save(fileName);
     } else {
       // Abrir em nova aba
       const pdfBlob = pdf.output('blob');
