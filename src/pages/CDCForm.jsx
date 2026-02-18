@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Loader2, Save, Download, Users, Printer, CheckCircle2, AlertCircle } from "lucide-react";
+import { Loader2, Save, Download, Users, Printer, CheckCircle2, AlertCircle, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import GuidedTour from "../components/help/GuidedTour";
 import HelpButton from "../components/help/HelpButton";
@@ -104,6 +104,8 @@ export default function CDCForm() {
     }
   }, [employee, discDiagnostic]);
 
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+
   const saveMutation = useMutation({
     mutationFn: async (data) => {
       const workshopId = workshop?.id || employee?.workshop_id;
@@ -129,7 +131,7 @@ export default function CDCForm() {
 
       return record;
     },
-    onSuccess: async () => {
+    onSuccess: async (record) => {
       // Track engagement
       try {
         await base44.functions.invoke('trackEngagement', {
@@ -142,8 +144,27 @@ export default function CDCForm() {
       }
 
       queryClient.invalidateQueries(['employee', employeeId]);
-      toast.success("CDC salvo com sucesso! +50 XP");
-      // navigate(createPageUrl("DetalhesColaborador") + `?id=${employeeId}`);
+      toast.success("CDC salvo! Gerando relatório inteligente...");
+      
+      // Iniciar geração do relatório
+      setIsGeneratingReport(true);
+      try {
+        const response = await base44.functions.invoke('generateCDCReport', {
+          cdc_record_id: record.id,
+          employee_id: employeeId
+        });
+        
+        if (response.data && response.data.id) {
+          toast.success("Relatório gerado com sucesso!");
+          navigate(createPageUrl("RelatorioCDC") + `?id=${response.data.id}`);
+        } else {
+          throw new Error("Falha ao receber ID do relatório");
+        }
+      } catch (error) {
+        console.error("Erro ao gerar relatório:", error);
+        toast.error("CDC salvo, mas houve um erro ao gerar a análise automática.");
+        setIsGeneratingReport(false);
+      }
     },
     onError: () => toast.error("Erro ao salvar CDC")
   });
@@ -588,14 +609,19 @@ export default function CDCForm() {
             <Button
               type="submit"
               className="flex-1 bg-blue-600 hover:bg-blue-700"
-              disabled={saveMutation.isPending}
+              disabled={saveMutation.isPending || isGeneratingReport}
             >
-              {saveMutation.isPending ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              {saveMutation.isPending || isGeneratingReport ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  {isGeneratingReport ? "Gerando Análise..." : "Salvando..."}
+                </>
               ) : (
-                <Save className="w-4 h-4 mr-2" />
+                <>
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Salvar e Gerar Relatório
+                </>
               )}
-              {employee?.cdc_completed ? "Editar CDC" : "Salvar CDC"}
             </Button>
           </div>
         </form>
