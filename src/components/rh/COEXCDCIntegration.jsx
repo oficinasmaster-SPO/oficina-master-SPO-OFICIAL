@@ -99,18 +99,24 @@ export default function COEXCDCIntegration({ employee }) {
                                 <Heart className="w-3 h-3 text-pink-400" />
                                 <span>{new Date(rec.date).toLocaleDateString('pt-BR')}</span>
                             </div>
-                            <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="h-6 px-2 text-xs"
-                                onClick={() => {
-                                    // Lógica de reimpressão/visualização pode ser adicionada aqui
-                                    // Por enquanto redireciona para o form preenchido ou apenas mostra
-                                    navigate(createPageUrl("CDCForm") + `?employeeId=${employee.id}&recordId=${rec.id}`); // recordId seria novo no form para carregar histórico
-                                }}
-                            >
-                                Ver
-                            </Button>
+                            <div className="flex gap-1">
+                                <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="h-6 px-2 text-xs text-gray-500 hover:text-gray-700"
+                                    onClick={() => navigate(createPageUrl("CDCForm") + `?employeeId=${employee.id}&recordId=${rec.id}`)}
+                                >
+                                    Respostas
+                                </Button>
+                                <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="h-6 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                    onClick={() => navigate(createPageUrl("RelatorioCDC") + `?record_id=${rec.id}`)}
+                                >
+                                    Ver Relatório
+                                </Button>
+                            </div>
                         </div>
                     ))}
                   </div>
