@@ -20,11 +20,31 @@ export default function RelatorioCDC() {
     queryKey: ['cdc-report', reportId, cdcRecordId],
     queryFn: async () => {
       let reportData;
+      
+      // 1. Tentar buscar relatório existente
       if (reportId) {
         reportData = await base44.entities.CDCReport.get(reportId);
       } else if (cdcRecordId) {
         const reports = await base44.entities.CDCReport.filter({ cdc_record_id: cdcRecordId });
         reportData = reports[0];
+      }
+
+      // 2. Se não encontrar, tentar gerar automaticamente (apenas se tivermos o ID do registro)
+      if (!reportData && cdcRecordId) {
+        try {
+          // Precisamos do ID do colaborador para gerar
+          const record = await base44.entities.CDCRecord.get(cdcRecordId);
+          if (record) {
+             // Chamada para a função backend que usa IA
+             const { data: newReport } = await base44.functions.invoke('generateCDCReport', {
+               cdc_record_id: cdcRecordId,
+               employee_id: record.employee_id
+             });
+             reportData = newReport;
+          }
+        } catch (err) {
+          console.error("Erro ao tentar gerar relatório automaticamente:", err);
+        }
       }
 
       if (!reportData) throw new Error("Relatório não encontrado");
