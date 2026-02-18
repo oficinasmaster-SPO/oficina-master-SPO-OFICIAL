@@ -36,9 +36,9 @@ export default function Notificacoes() {
     queryFn: async () => {
       if (!user?.id) return [];
       try {
-        const allNotifications = await base44.entities.Notification.list('-created_date');
-        const notificationsArray = Array.isArray(allNotifications) ? allNotifications : [];
-        return notificationsArray.filter(n => n.user_id === user.id);
+        // Filter notifications directly by user_id with a larger limit
+        const result = await base44.entities.Notification.filter({ user_id: user.id }, '-created_date', 100);
+        return Array.isArray(result) ? result : [];
       } catch (error) {
         console.log("Error fetching notifications:", error);
         return [];
@@ -53,10 +53,11 @@ export default function Notificacoes() {
     queryFn: async () => {
       if (!user?.id) return [];
       try {
-        const allTasks = await base44.entities.Task.list();
-        const tasksArray = Array.isArray(allTasks) ? allTasks : [];
-        // Filtra tarefas onde o usuário está atribuído
-        return tasksArray.filter(t => t.assigned_to && Array.isArray(t.assigned_to) && t.assigned_to.includes(user.id));
+        // Fetch tasks directly assigned to the user using filter
+        const result = await base44.entities.Task.filter({
+           assigned_to: { $in: [user.id] }
+        }, '-created_date', 100);
+        return Array.isArray(result) ? result : [];
       } catch (error) {
         console.log("Error fetching tasks:", error);
         return [];
@@ -102,15 +103,11 @@ export default function Notificacoes() {
     if (!currentUser?.id) return;
 
     try {
-      const allTasks = await base44.entities.Task.list();
-      const tasksArray = Array.isArray(allTasks) ? allTasks : [];
-      // Filtra tarefas atribuídas ao usuário e que não estão concluídas (status 'concluida')
-      const myTasks = tasksArray.filter(t => 
-        t.assigned_to && 
-        Array.isArray(t.assigned_to) && 
-        t.assigned_to.includes(currentUser.id) && 
-        t.status !== "concluida"
-      );
+      // Busca tarefas atribuídas ao usuário que não estão concluídas (com limite maior)
+      const myTasks = await base44.entities.Task.filter({
+        assigned_to: { $in: [currentUser.id] },
+        status: { $ne: "concluida" }
+      }, '-due_date', 100);
 
       for (const task of myTasks) {
         if (!task.due_date) continue;
