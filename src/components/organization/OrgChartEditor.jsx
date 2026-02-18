@@ -33,7 +33,8 @@ const COLOR_OPTIONS = [
 ];
 
 export default function OrgChartEditor({ nodes, workshopId, onCreateNode, onUpdateNode, onDeleteNode, autoOpenAddNodeDialog }) {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  // Initialize state based on prop to ensure it opens on mount
+  const [isDialogOpen, setIsDialogOpen] = useState(!!(autoOpenAddNodeDialog && nodes.length === 0));
 
   useEffect(() => {
     if (autoOpenAddNodeDialog && nodes.length === 0) {
