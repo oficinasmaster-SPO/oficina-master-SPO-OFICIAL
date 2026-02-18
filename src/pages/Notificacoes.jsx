@@ -48,16 +48,17 @@ export default function Notificacoes() {
     retry: 1
   });
 
-  const { data: subtasks = [] } = useQuery({
-    queryKey: ['my-subtasks', user?.id],
+  const { data: tasks = [] } = useQuery({
+    queryKey: ['my-tasks', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
       try {
-        const allSubtasks = await base44.entities.Subtask.list();
-        const subtasksArray = Array.isArray(allSubtasks) ? allSubtasks : [];
-        return subtasksArray.filter(s => s.responsible_user_id === user.id);
+        const allTasks = await base44.entities.Task.list();
+        const tasksArray = Array.isArray(allTasks) ? allTasks : [];
+        // Filtra tarefas onde o usuário está atribuído
+        return tasksArray.filter(t => t.assigned_to && Array.isArray(t.assigned_to) && t.assigned_to.includes(user.id));
       } catch (error) {
-        console.log("Error fetching subtasks:", error);
+        console.log("Error fetching tasks:", error);
         return [];
       }
     },
@@ -101,58 +102,68 @@ export default function Notificacoes() {
     if (!currentUser?.id) return;
 
     try {
-      const allSubtasks = await base44.entities.Subtask.list();
-      const subtasksArray = Array.isArray(allSubtasks) ? allSubtasks : [];
-      const mySubtasks = subtasksArray.filter(s => s.responsible_user_id === currentUser.id && s.status !== "concluido");
+      const allTasks = await base44.entities.Task.list();
+      const tasksArray = Array.isArray(allTasks) ? allTasks : [];
+      // Filtra tarefas atribuídas ao usuário e que não estão concluídas (status 'concluida')
+      const myTasks = tasksArray.filter(t => 
+        t.assigned_to && 
+        Array.isArray(t.assigned_to) && 
+        t.assigned_to.includes(currentUser.id) && 
+        t.status !== "concluida"
+      );
 
-    for (const subtask of mySubtasks) {
-      if (!subtask.due_date) continue;
+      for (const task of myTasks) {
+        if (!task.due_date) continue;
 
-      const dueDate = new Date(subtask.due_date);
-      const today = new Date();
-      const daysUntilDue = differenceInDays(dueDate, today);
+        const dueDate = new Date(task.due_date);
+        const today = new Date();
+        const daysUntilDue = differenceInDays(dueDate, today);
 
-      if (daysUntilDue <= 3 && daysUntilDue >= 0) {
-        const existingNotifications = await base44.entities.Notification.list();
-        const alreadyNotified = existingNotifications.some(
-          n => n.subtask_id === subtask.id && n.type === "prazo_proximo" && !n.is_read
-        );
+        // Notificação de prazo próximo (0 a 3 dias)
+        if (daysUntilDue <= 3 && daysUntilDue >= 0) {
+          const existingNotifications = await base44.entities.Notification.list();
+          // Verifica se já existe notificação para esta tarefa (usando metadata ou título similar como fallback)
+          const alreadyNotified = existingNotifications.some(
+            n => (n.metadata?.task_id === task.id || n.message.includes(task.title)) && n.type === "prazo_proximo" && !n.is_read
+          );
 
-        if (!alreadyNotified) {
-          await base44.entities.Notification.create({
-            user_id: currentUser.id,
-            subtask_id: subtask.id,
-            type: "prazo_proximo",
-            title: "Prazo se aproximando",
-            message: `A tarefa "${subtask.title}" vence em ${daysUntilDue} dia${daysUntilDue !== 1 ? 's' : ''}`,
-            is_read: false
-          });
+          if (!alreadyNotified) {
+            await base44.entities.Notification.create({
+              user_id: currentUser.id,
+              type: "prazo_proximo",
+              title: "Prazo se aproximando",
+              message: `A tarefa "${task.title}" vence em ${daysUntilDue} dia${daysUntilDue !== 1 ? 's' : ''}`,
+              is_read: false,
+              metadata: { task_id: task.id }
+            });
+          }
+        }
+
+        // Notificação de atraso
+        if (isPast(dueDate) && !isToday(dueDate)) {
+          const existingNotifications = await base44.entities.Notification.list();
+          const existingArray = Array.isArray(existingNotifications) ? existingNotifications : [];
+          const alreadyNotified = existingArray.some(
+            n => (n.metadata?.task_id === task.id || n.message.includes(task.title)) && n.type === "atrasada" && !n.is_read
+          );
+
+          if (!alreadyNotified) {
+            await base44.entities.Notification.create({
+              user_id: currentUser.id,
+              type: "atrasada",
+              title: "Tarefa atrasada",
+              message: `A tarefa "${task.title}" está atrasada há ${Math.abs(daysUntilDue)} dia${Math.abs(daysUntilDue) !== 1 ? 's' : ''}`,
+              is_read: false,
+              metadata: { task_id: task.id }
+            });
+            
+            // Opcional: Atualizar flag na tarefa se existir campo correspondente, mas Task geralmente não tem is_overdue por padrão
+            // await base44.entities.Task.update(task.id, { is_overdue: true });
+          }
         }
       }
 
-      if (isPast(dueDate) && !isToday(dueDate)) {
-        const existingNotifications = await base44.entities.Notification.list();
-        const existingArray = Array.isArray(existingNotifications) ? existingNotifications : [];
-        const alreadyNotified = existingArray.some(
-          n => n.subtask_id === subtask.id && n.type === "atrasada" && !n.is_read
-        );
-
-        if (!alreadyNotified) {
-          await base44.entities.Notification.create({
-            user_id: currentUser.id,
-            subtask_id: subtask.id,
-            type: "atrasada",
-            title: "Tarefa atrasada",
-            message: `A tarefa "${subtask.title}" está atrasada há ${Math.abs(daysUntilDue)} dia${Math.abs(daysUntilDue) !== 1 ? 's' : ''}`,
-            is_read: false
-          });
-
-          await base44.entities.Subtask.update(subtask.id, { is_overdue: true });
-        }
-      }
-    }
-
-    queryClient.invalidateQueries(['notifications']);
+      queryClient.invalidateQueries(['notifications']);
     } catch (error) {
       console.log("Error checking overdue tasks:", error);
     }
@@ -168,11 +179,12 @@ export default function Notificacoes() {
   };
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
-  const todayTasks = subtasks.filter(s => 
-    s.due_date && isToday(new Date(s.due_date)) && s.status !== "concluido"
+  // Usando tasks (Entidade Task) com status 'concluida'
+  const todayTasks = tasks.filter(t => 
+    t.due_date && isToday(new Date(t.due_date)) && t.status !== "concluida"
   );
-  const overdueTasks = subtasks.filter(s => 
-    s.due_date && isPast(new Date(s.due_date)) && !isToday(new Date(s.due_date)) && s.status !== "concluido"
+  const overdueTasks = tasks.filter(t => 
+    t.due_date && isPast(new Date(t.due_date)) && !isToday(new Date(t.due_date)) && t.status !== "concluida"
   );
 
   const testarNotificacoes = async () => {
