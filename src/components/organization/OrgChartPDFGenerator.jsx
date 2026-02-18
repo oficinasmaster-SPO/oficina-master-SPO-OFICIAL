@@ -14,7 +14,8 @@ export async function generateOrgChartPDF(nodes, workshop, download = true) {
     container.style.position = 'absolute';
     container.style.left = '-9999px';
     container.style.top = '0';
-    container.style.width = '1400px'; // Largura adequada para landscape
+    container.style.width = 'fit-content'; // Largura ajustável ao conteúdo
+    container.style.minWidth = '1400px'; // Mínimo para garantir boa resolução
     container.style.background = 'white';
     container.style.padding = '40px';
     document.body.appendChild(container);
@@ -184,7 +185,7 @@ function renderOrgChartHTML(nodes, workshop) {
         <p style="color: #6B7280; font-size: 14px; margin: 0;">${workshop.name}</p>
       </div>
       
-      <div style="display: flex; justify-content: center; overflow-x: auto; padding: 20px;">
+      <div style="display: flex; justify-content: center; padding: 20px;">
         <div style="display: flex; flex-direction: column; align-items: center; gap: 32px;">
           ${tree.map(rootNode => renderNode(rootNode)).join('')}
         </div>
