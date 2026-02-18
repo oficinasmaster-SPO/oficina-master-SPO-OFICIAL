@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { FileText, Link, ExternalLink, Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { FileText, Link, ExternalLink, Loader2, CheckCircle, AlertCircle, History } from "lucide-react";
 import JobDescriptionViewer from "../job-description/JobDescriptionViewer";
 
 export default function JobDescriptionTab({ employee, onUpdate }) {
@@ -197,6 +197,34 @@ export default function JobDescriptionTab({ employee, onUpdate }) {
           jobDescription={currentJob} 
           // Assuming we might have workshop details somewhere, but viewer handles missing workshop gracefully
         />
+      )}
+
+      {employee.career_history && employee.career_history.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <History className="w-5 h-5 text-gray-500" />
+              Histórico de Cargos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {employee.career_history.map((item, index) => (
+                <div key={index} className="flex justify-between items-start border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                  <div>
+                    <p className="font-medium text-gray-900">{item.job_title}</p>
+                    <p className="text-sm text-gray-500 mt-1">{item.reason}</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                      Encerrado em {new Date(item.end_date).toLocaleDateString('pt-BR')}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
