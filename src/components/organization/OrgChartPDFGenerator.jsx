@@ -85,7 +85,15 @@ export async function generateOrgChartPDF(nodes, workshop, download = true) {
     const fileName = `Organograma_${workshop.name}_${new Date().toISOString().split('T')[0]}.pdf`;
     
     if (download) {
-      pdf.save(fileName);
+      const pdfBlob = pdf.output('blob');
+      const url = URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     } else {
       // Abrir em nova aba
       const pdfBlob = pdf.output('blob');
@@ -183,7 +191,7 @@ function renderOrgChartHTML(nodes, workshop) {
   return `
     <div style="font-family: Arial, sans-serif; background: white; padding: 20px;">
       <div style="text-align: center; margin-bottom: 30px;">
-        <h1 style="color: #1F2937; font-size: 24px; margin: 0 0 8px 0;">Organograma</h1>
+        <h1 style="color: #1F2937; font-size: 24px; margin: 0 0 8px 0;">Organograma Estrutural</h1>
         <p style="color: #6B7280; font-size: 14px; margin: 0;">${workshop.name}</p>
       </div>
       
