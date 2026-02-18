@@ -33,6 +33,8 @@ export async function generateOrgChartPDF(nodes, workshop, download = true) {
       backgroundColor: '#ffffff',
       logging: false,
       useCORS: true,
+      windowWidth: container.scrollWidth,
+      windowHeight: container.scrollHeight
     });
 
     // Remover o container temporário
