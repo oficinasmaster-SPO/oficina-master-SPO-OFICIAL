@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Loader2, Save, Download, Users, Printer } from "lucide-react";
+import { Loader2, Save, Download, Users, Printer, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import GuidedTour from "../components/help/GuidedTour";
 import HelpButton from "../components/help/HelpButton";
@@ -82,8 +82,7 @@ export default function CDCForm() {
       
       let discProfile = initialFormData.disc_profile || "";
       
-      // Auto-fill DISC if available and not manually set (or just overwrite if desired, but let's prefer existing unless empty)
-      // Actually user said "puxar teste disc", implying auto-fill.
+      // Auto-fill DISC if available and not manually set
       if (discDiagnostic && discDiagnostic.dominant_profile) {
         const profileMap = {
           'executor_d': 'Executor (D)',
