@@ -1,12 +1,14 @@
 import React, { useState } from "react";
+import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Download, Settings } from "lucide-react";
+import { Download, Settings, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function CustomReports({ filters }) {
+  const [isGenerating, setIsGenerating] = useState(false);
   const [selectedMetrics, setSelectedMetrics] = useState({
     faturamento: true,
     clientes: true,
@@ -31,7 +33,7 @@ export default function CustomReports({ filters }) {
     setSelectedMetrics(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const handleGenerateCustomReport = () => {
+  const handleGenerateCustomReport = async () => {
     const selected = Object.keys(selectedMetrics).filter(k => selectedMetrics[k]);
     
     if (selected.length === 0) {
@@ -39,8 +41,33 @@ export default function CustomReports({ filters }) {
       return;
     }
 
-    toast.success(`Gerando relatório customizado com ${selected.length} métricas...`);
-    // Implementação futura: gerar relatório com métricas selecionadas
+    setIsGenerating(true);
+    toast.info("Gerando relatório, aguarde...");
+
+    try {
+      const response = await base44.functions.invoke('generateCustomReport', {
+        filters,
+        selectedMetrics: selected
+      });
+
+      // Criar Blob e link para download
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `relatorio_customizado_${new Date().getTime()}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success("Relatório gerado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao gerar relatório:", error);
+      toast.error("Erro ao gerar relatório. Tente novamente.");
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
@@ -70,9 +97,17 @@ export default function CustomReports({ filters }) {
 
           <div className="pt-4 border-t">
             <div className="flex gap-3">
-              <Button onClick={handleGenerateCustomReport} className="bg-purple-600 hover:bg-purple-700">
-                <Download className="w-4 h-4 mr-2" />
-                Gerar Relatório
+              <Button 
+                onClick={handleGenerateCustomReport} 
+                className="bg-purple-600 hover:bg-purple-700"
+                disabled={isGenerating}
+              >
+                {isGenerating ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Download className="w-4 h-4 mr-2" />
+                )}
+                {isGenerating ? "Gerando..." : "Gerar Relatório"}
               </Button>
               <Button variant="outline" onClick={() => setSelectedMetrics({
                 faturamento: true,
