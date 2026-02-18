@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, ArrowLeft, Printer, Share2, AlertTriangle, TrendingUp, Award, Heart, Zap, FileText } from "lucide-react";
+import { Loader2, ArrowLeft, Printer, Share2, AlertTriangle, TrendingUp, Award, Heart, Zap, FileText, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 
