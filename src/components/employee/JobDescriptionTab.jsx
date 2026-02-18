@@ -71,10 +71,23 @@ export default function JobDescriptionTab({ employee, onUpdate }) {
       
       setIsLinking(true);
       try {
-          await onUpdate({ job_description_id: null });
+          const historyEntry = {
+            job_description_id: currentJob.id,
+            job_title: currentJob.job_title,
+            end_date: new Date().toISOString(),
+            reason: "Desvinculação manual"
+          };
+
+          const newHistory = [...(employee.career_history || []), historyEntry];
+
+          await onUpdate({ 
+            job_description_id: null,
+            career_history: newHistory
+          });
+
           setCurrentJob(null);
           setSelectedJobId("");
-          toast.success("Descrição de cargo desvinculada.");
+          toast.success("Descrição de cargo desvinculada e histórico atualizado.");
       } catch (error) {
           console.error(error);
           toast.error("Erro ao desvincular.");
