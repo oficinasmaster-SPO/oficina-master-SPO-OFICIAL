@@ -67,13 +67,11 @@ export default function ManualViewer({ data, onClose }) {
         <div className="sticky top-0 bg-white border-b pb-4 z-10 flex justify-between items-center">
           <div className="flex items-center gap-4">
             {workshop?.logo_url && (
-              <div className="relative h-20 w-auto min-w-[80px] shrink-0">
-                <img 
-                  src={workshop.logo_url} 
-                  alt={`Logo ${workshop.name}`} 
-                  className="h-full w-auto object-contain"
-                />
-              </div>
+              <img 
+                src={workshop.logo_url} 
+                alt={`Logo ${workshop.name}`} 
+                className="h-16 w-auto object-contain"
+              />
             )}
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Manual de Processos e Procedimentos</h1>
