@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,8 @@ export default function DiagnosticoDISC() {
   const [workshop, setWorkshop] = useState(null);
   const [employees, setEmployees] = useState([]);
   
-  const [selectedEmployee, setSelectedEmployee] = useState("");
+  const [searchParams] = useSearchParams();
+  const [selectedEmployee, setSelectedEmployee] = useState(searchParams.get('employeeId') || "");
   const [isLeader, setIsLeader] = useState(false);
   const [teamName, setTeamName] = useState("");
   const [answers, setAnswers] = useState({});

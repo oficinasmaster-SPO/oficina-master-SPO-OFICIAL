@@ -48,6 +48,16 @@ export default function CDCForm() {
     enabled: !!employeeId,
   });
 
+  const { data: discDiagnostic } = useQuery({
+    queryKey: ['disc-diagnostic', employeeId],
+    queryFn: async () => {
+      const diagnostics = await base44.entities.DISCDiagnostic.filter({ employee_id: employeeId });
+      // Return the most recent one if multiple
+      return diagnostics.sort((a, b) => new Date(b.created_date) - new Date(a.created_date))[0];
+    },
+    enabled: !!employeeId,
+  });
+
   useEffect(() => {
     const loadInitialData = async () => {
       try {
@@ -69,12 +79,31 @@ export default function CDCForm() {
   useEffect(() => {
     if (employee) {
       const initialFormData = employee.cdc_data || {};
+      
+      let discProfile = initialFormData.disc_profile || "";
+      
+      // Auto-fill DISC if available and not manually set (or just overwrite if desired, but let's prefer existing unless empty)
+      // Actually user said "puxar teste disc", implying auto-fill.
+      if (discDiagnostic && discDiagnostic.dominant_profile) {
+        const profileMap = {
+          'executor_d': 'Executor (D)',
+          'comunicador_i': 'Comunicador (I)',
+          'planejador_s': 'Planejador (S)',
+          'analista_c': 'Analista (C)'
+        };
+        const profileName = profileMap[discDiagnostic.dominant_profile] || discDiagnostic.dominant_profile;
+        if (!discProfile) {
+            discProfile = profileName;
+        }
+      }
+
       setFormData({
         ...initialFormData,
         birth_date: initialFormData.birth_date || employee.data_nascimento || "",
+        disc_profile: discProfile
       });
     }
-  }, [employee]);
+  }, [employee, discDiagnostic]);
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
@@ -483,11 +512,41 @@ export default function CDCForm() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <Label>Perfil Comportamental (DISC)</Label>
-                  <Input
-                    value={formData.disc_profile}
-                    onChange={(e) => setFormData({...formData, disc_profile: e.target.value})}
-                    placeholder="Ex: Dominante, Influente..."
-                  />
+                  <div className="space-y-2">
+                    <Input
+                      value={formData.disc_profile}
+                      onChange={(e) => setFormData({...formData, disc_profile: e.target.value})}
+                      placeholder="Ex: Dominante, Influente..."
+                    />
+                    {discDiagnostic ? (
+                      <div className="text-xs flex items-center gap-2 text-green-600 bg-green-50 p-2 rounded border border-green-100">
+                        <CheckCircle2 className="w-3 h-3" />
+                        <span>Teste realizado em {new Date(discDiagnostic.created_date).toLocaleDateString()}</span>
+                        <Button 
+                          type="button" 
+                          variant="link" 
+                          className="h-auto p-0 text-xs ml-auto"
+                          onClick={() => navigate(createPageUrl("ResultadoDISC") + `?id=${discDiagnostic.id}`)}
+                        >
+                          Ver Resultado
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="text-xs flex items-center gap-2 text-amber-600 bg-amber-50 p-2 rounded border border-amber-100">
+                        <AlertCircle className="w-3 h-3" />
+                        <span>Teste DISC não realizado</span>
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          size="sm"
+                          className="h-6 text-xs ml-auto bg-white"
+                          onClick={() => window.open(createPageUrl("DiagnosticoDISC") + `?employeeId=${employeeId}`, '_blank')}
+                        >
+                          Realizar Teste
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <Label>Melhor canal de comunicação</Label>
