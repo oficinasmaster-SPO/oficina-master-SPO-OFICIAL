@@ -168,27 +168,36 @@ export default function CDCForm() {
       }
 
       queryClient.invalidateQueries(['employee', employeeId]);
-      toast.success("CDC salvo! Gerando relatório inteligente...");
+      toast.success("CDC salvo! Gerando relatório inteligente (pode levar alguns segundos)...");
       
       // Iniciar geração do relatório
       setIsGeneratingReport(true);
-      try {
-        const response = await base44.functions.invoke('generateCDCReport', {
-          cdc_record_id: record.id,
-          employee_id: employeeId
-        });
-        
-        if (response.data && response.data.id) {
-          toast.success("Relatório gerado com sucesso!");
-          navigate(createPageUrl("RelatorioCDC") + `?id=${response.data.id}`);
-        } else {
-          throw new Error("Falha ao receber ID do relatório");
+      
+      // Pequeno delay para garantir que o registro foi propagado no banco de dados
+      setTimeout(async () => {
+        try {
+          const response = await base44.functions.invoke('generateCDCReport', {
+            cdc_record_id: record.id,
+            employee_id: employeeId
+          });
+          
+          if (response.data && response.data.id) {
+            toast.success("Relatório gerado com sucesso!");
+            navigate(createPageUrl("RelatorioCDC") + `?id=${response.data.id}`);
+          } else {
+            console.error("Resposta inválida:", response);
+            throw new Error("Falha ao receber ID do relatório");
+          }
+        } catch (error) {
+          console.error("Erro ao gerar relatório:", error);
+          if (error.response?.status === 404) {
+             toast.error("CDC salvo, mas a função de geração de relatório não foi encontrada ou o registro ainda não está disponível.");
+          } else {
+             toast.error("CDC salvo, mas houve um erro ao gerar a análise automática. Tente novamente mais tarde.");
+          }
+          setIsGeneratingReport(false);
         }
-      } catch (error) {
-        console.error("Erro ao gerar relatório:", error);
-        toast.error("CDC salvo, mas houve um erro ao gerar a análise automática.");
-        setIsGeneratingReport(false);
-      }
+      }, 1500); // 1.5s delay
     },
     onError: () => toast.error("Erro ao salvar CDC")
   });
