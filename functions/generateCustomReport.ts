@@ -2,12 +2,11 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { jsPDF } from 'npm:jspdf@2.5.1';
 import 'npm:jspdf-autotable@3.8.2';
 
-// Função para buscar e converter fonte em base64
-async function fetchFontBase64(url) {
-    const response = await fetch(url);
-    const buffer = await response.arrayBuffer();
-    return btoa(String.fromCharCode(...new Uint8Array(buffer)));
-}
+// Função para remover acentos e caracteres especiais
+const removeAccents = (str) => {
+    if (str === null || str === undefined) return '';
+    return String(str).normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+};
 
 Deno.serve(async (req) => {
     try {
@@ -23,34 +22,19 @@ Deno.serve(async (req) => {
         // Inicializar documento PDF
         const doc = new jsPDF();
         
-        // Carregar fonte customizada (Roboto) para suportar UTF-8 corretamente
-        // Usando uma URL pública confiável para a fonte
-        try {
-            const fontUrl = 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Regular.ttf';
-            const fontBase64 = await fetchFontBase64(fontUrl);
-            
-            doc.addFileToVFS('Roboto-Regular.ttf', fontBase64);
-            doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
-            doc.setFont('Roboto');
-        } catch (fontError) {
-            console.error('Erro ao carregar fonte:', fontError);
-            // Fallback para helvetica se falhar (pode ter problemas de acento, mas gera o PDF)
-            doc.setFont('helvetica');
-        }
-
         // Cabeçalho
         doc.setFontSize(18);
-        doc.text('Relatório Customizado', 14, 22);
+        doc.text(removeAccents('Relatório Customizado'), 14, 22);
         
         doc.setFontSize(10);
         const userName = user.full_name || user.email || '';
-        doc.text(`Gerado por: ${userName}`, 14, 30);
-        doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 14, 35);
+        doc.text(removeAccents(`Gerado por: ${userName}`), 14, 30);
+        doc.text(removeAccents(`Data: ${new Date().toLocaleDateString('pt-BR')}`), 14, 35);
         
         if (filters?.dateRange?.from && filters?.dateRange?.to) {
             const from = new Date(filters.dateRange.from).toLocaleDateString('pt-BR');
             const to = new Date(filters.dateRange.to).toLocaleDateString('pt-BR');
-            doc.text(`Período: ${from} até ${to}`, 14, 40);
+            doc.text(removeAccents(`Período: ${from} até ${to}`), 14, 40);
         }
 
         // Buscar dados
@@ -60,7 +44,7 @@ Deno.serve(async (req) => {
 
         // Tabela de Workshops
         const tableData = workshops.map(w => {
-            const row = [w.name];
+            const row = [removeAccents(w.name)];
             
             if (selectedMetrics.includes('faturamento')) {
                 const fat = w.best_month_history?.revenue_total || 0;
@@ -84,8 +68,8 @@ Deno.serve(async (req) => {
         const tableHeaders = ['Oficina'];
         if (selectedMetrics.includes('faturamento')) tableHeaders.push('Faturamento');
         if (selectedMetrics.includes('lucratividade')) tableHeaders.push('Lucratividade');
-        if (selectedMetrics.includes('ticket_medio')) tableHeaders.push('Ticket Médio');
-        if (selectedMetrics.includes('satisfacao_cliente')) tableHeaders.push('Satisfação');
+        if (selectedMetrics.includes('ticket_medio')) tableHeaders.push(removeAccents('Ticket Médio'));
+        if (selectedMetrics.includes('satisfacao_cliente')) tableHeaders.push(removeAccents('Satisfação'));
 
         doc.autoTable({
             startY: yPos,
@@ -93,11 +77,7 @@ Deno.serve(async (req) => {
             body: tableData,
             theme: 'striped',
             headStyles: { fillColor: [41, 128, 185] },
-            styles: { 
-                fontSize: 8,
-                font: 'Roboto', // Usar a fonte customizada na tabela
-                fontStyle: 'normal'
-            },
+            styles: { fontSize: 8 },
         });
 
         // Rodapé
@@ -105,7 +85,7 @@ Deno.serve(async (req) => {
         for(let i = 1; i <= pageCount; i++) {
             doc.setPage(i);
             doc.setFontSize(8);
-            doc.text('Página ' + i + ' de ' + pageCount, doc.internal.pageSize.width - 20, doc.internal.pageSize.height - 10, {align: 'right'});
+            doc.text(removeAccents('Página ' + i + ' de ' + pageCount), doc.internal.pageSize.width - 20, doc.internal.pageSize.height - 10, {align: 'right'});
         }
 
         // Output como ArrayBuffer
