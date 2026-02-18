@@ -119,6 +119,7 @@ export default function CDCForm() {
       setFormData(prev => {
         // Only update if it's different or empty
         if (prev.disc_profile !== profileName) {
+            toast.success("Perfil DISC atualizado com o novo resultado!");
             return { ...prev, disc_profile: profileName };
         }
         return prev;
