@@ -127,18 +127,9 @@ export default function RegistrarAtendimento() {
   const { data: consultores } = useQuery({
     queryKey: ['consultores-list'],
     queryFn: async () => {
-      // Buscar usuários (limite aumentado para garantir que todos sejam trazidos)
-      const users = await base44.entities.User.list(null, 1000);
-      
-      // Buscar colaboradores com perfil de consultor
-      const employees = await base44.entities.Employee.filter({
-        job_role: { $in: ['consultor', 'acelerador', 'socio', 'diretor'] }
-      }, null, 1000);
-      
-      const employeeUserIds = employees.map(e => e.user_id).filter(Boolean);
-      
-      // Filtrar APENAS usuários que possuem employee vinculado (para manter consistência com a tela Colaboradores)
-      return users.filter(u => employeeUserIds.includes(u.id));
+      // Busca todos os usuários admin (igual à tela de Saturação)
+      const users = await base44.entities.User.list();
+      return users.filter(u => u.role === 'admin');
     },
     enabled: user?.role === 'admin'
   });
