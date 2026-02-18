@@ -422,12 +422,27 @@ function drawPieChart(doc, stats, x, y) {
   doc.setFont(undefined, 'bold');
   doc.text('Distribuição de Status (Gráfico Pizza)', x, y - 5);
 
-  const total = stats.total;
+  const total = stats.total || 0;
+  
+  if (total === 0) {
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(100, 100, 100);
+    doc.text('Não há itens para exibir no gráfico.', x + 10, y + 30);
+    doc.setTextColor(0, 0, 0);
+    return;
+  }
+
+  const concluidos = stats.concluidos || 0;
+  const emAndamento = stats.em_andamento || 0;
+  const atrasados = stats.atrasados || 0;
+  const naoIniciados = Math.max(0, total - concluidos - emAndamento - atrasados);
+
   const data = [
-    { label: 'Concluídos', value: stats.concluidos, color: [34, 197, 94] },
-    { label: 'Em Andamento', value: stats.em_andamento, color: [59, 130, 246] },
-    { label: 'Atrasados', value: stats.atrasados, color: [239, 68, 68] },
-    { label: 'Não Iniciados', value: total - stats.concluidos - stats.em_andamento - stats.atrasados, color: [156, 163, 175] }
+    { label: 'Concluídos', value: concluidos, color: [34, 197, 94] },
+    { label: 'Em Andamento', value: emAndamento, color: [59, 130, 246] },
+    { label: 'Atrasados', value: atrasados, color: [239, 68, 68] },
+    { label: 'Não Iniciados', value: naoIniciados, color: [156, 163, 175] }
   ];
 
   const centerX = x + 50;
@@ -458,16 +473,24 @@ function drawPieChart(doc, stats, x, y) {
 }
 
 function drawPieSlice(doc, centerX, centerY, radius, startAngle, endAngle) {
-  const steps = 50;
+  if (isNaN(startAngle) || isNaN(endAngle) || Math.abs(endAngle - startAngle) < 0.0001) return;
+
+  const steps = 20;
   const angleStep = (endAngle - startAngle) / steps;
   
-  doc.moveTo(centerX, centerY);
-  for (let i = 0; i <= steps; i++) {
-    const angle = startAngle + (i * angleStep);
-    const x = centerX + radius * Math.cos(angle);
-    const y = centerY + radius * Math.sin(angle);
-    doc.lineTo(x, y);
+  // Usando triângulos para desenhar o setor circular (mais seguro e compatível)
+  for (let i = 0; i < steps; i++) {
+    const a1 = startAngle + (i * angleStep);
+    const a2 = startAngle + ((i + 1) * angleStep);
+    
+    const x1 = centerX + radius * Math.cos(a1);
+    const y1 = centerY + radius * Math.sin(a1);
+    const x2 = centerX + radius * Math.cos(a2);
+    const y2 = centerY + radius * Math.sin(a2);
+    
+    // Verificar se coordenadas são válidas
+    if (!isNaN(x1) && !isNaN(y1) && !isNaN(x2) && !isNaN(y2)) {
+      doc.triangle(centerX, centerY, x1, y1, x2, y2, 'F');
+    }
   }
-  doc.lineTo(centerX, centerY);
-  doc.fill();
 }
