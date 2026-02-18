@@ -11,6 +11,7 @@ import { Loader2, BarChart3, Calendar, FileText, Settings, ClipboardList, Users 
 import VisaoGeralTab from "@/components/aceleracao/VisaoGeralTab";
 import PainelAtendimentosTab from "@/components/aceleracao/PainelAtendimentosTab";
 import PedidosInternosTab from "@/components/aceleracao/PedidosInternosTab";
+import AgendaVisualTab from "@/components/aceleracao/AgendaVisualTab";
 import RegistroAtendimentoMassaModal from "@/components/aceleracao/RegistroAtendimentoMassaModal";
 import FiltrosControleAceleracao from "@/components/aceleracao/FiltrosControleAceleracao";
 
@@ -125,6 +126,10 @@ export default function ControleAceleracao() {
             <FileText className="w-4 h-4 mr-2" />
             Pedidos & Backlog
           </TabsTrigger>
+          <TabsTrigger value="agenda-visual">
+            <Calendar className="w-4 h-4 mr-2" />
+            Agenda Visual
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="visao-geral">
@@ -142,6 +147,15 @@ export default function ControleAceleracao() {
 
         <TabsContent value="pedidos">
           <PedidosInternosTab user={user} />
+        </TabsContent>
+
+        <TabsContent value="agenda-visual">
+          <FiltrosControleAceleracao
+            consultores={consultores || []}
+            filtros={filtros}
+            onFiltrosChange={setFiltros}
+          />
+          <AgendaVisualTab user={user} filtros={filtros} />
         </TabsContent>
       </Tabs>
     </div>
