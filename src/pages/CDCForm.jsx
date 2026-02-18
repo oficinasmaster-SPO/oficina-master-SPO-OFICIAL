@@ -115,7 +115,7 @@ export default function CDCForm() {
 
       queryClient.invalidateQueries(['employee', employeeId]);
       toast.success("CDC salvo com sucesso! +50 XP");
-      navigate(createPageUrl("DetalhesColaborador") + `?id=${employeeId}`);
+      // navigate(createPageUrl("DetalhesColaborador") + `?id=${employeeId}`);
     },
     onError: () => toast.error("Erro ao salvar CDC")
   });
@@ -537,7 +537,7 @@ export default function CDCForm() {
               ) : (
                 <Save className="w-4 h-4 mr-2" />
               )}
-              Salvar CDC
+              {employee?.cdc_completed ? "Editar CDC" : "Salvar CDC"}
             </Button>
           </div>
         </form>
