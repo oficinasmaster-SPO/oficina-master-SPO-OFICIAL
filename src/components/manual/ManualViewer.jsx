@@ -65,9 +65,18 @@ export default function ManualViewer({ data, onClose }) {
       <div className="max-w-[210mm] mx-auto p-8 space-y-6">
         {/* Header Fixo */}
         <div className="sticky top-0 bg-white border-b pb-4 z-10 flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Manual de Processos e Procedimentos</h1>
-            <p className="text-gray-600">{workshop?.name}</p>
+          <div className="flex items-center gap-4">
+            {workshop?.logo_url && (
+              <img 
+                src={workshop.logo_url} 
+                alt="Logo" 
+                className="h-16 w-auto object-contain"
+              />
+            )}
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Manual de Processos e Procedimentos</h1>
+              <p className="text-gray-600">{workshop?.name}</p>
+            </div>
           </div>
           <div className="flex gap-2">
             <Button onClick={handleDownloadPDF} className="bg-blue-600 hover:bg-blue-700">
@@ -295,17 +304,81 @@ export default function ManualViewer({ data, onClose }) {
             </CardHeader>
             <CardContent className="p-6 space-y-4">
               {cargos.map(cargo => (
-                <div key={cargo.id} className="page-break-inside-avoid border-l-4 border-indigo-500 pl-4 py-2">
-                  <h3 className="font-bold text-lg text-gray-900">{cargo.title}</h3>
-                  {cargo.description && (
-                    <p className="text-sm text-gray-700 mt-2 section-content">{cargo.description}</p>
+                <div key={cargo.id} className="page-break-inside-avoid border-l-4 border-indigo-500 pl-4 py-4 space-y-4">
+                  <div>
+                    <h3 className="font-bold text-xl text-gray-900">{cargo.title}</h3>
+                    {cargo.description && (
+                      <p className="text-sm text-gray-700 mt-1 section-content">{cargo.description}</p>
+                    )}
+                  </div>
+
+                  {/* Atividades Principais */}
+                  {(cargo.main_activities?.length > 0 || cargo.responsibilities?.length > 0) && (
+                    <div>
+                      <h4 className="font-semibold text-gray-900 text-sm mb-1">Atividades Principais:</h4>
+                      <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
+                        {(cargo.main_activities || cargo.responsibilities).map((item, idx) => (
+                          <li key={idx}>{typeof item === 'string' ? item : item.item}</li>
+                        ))}
+                      </ul>
+                    </div>
                   )}
-                  {cargo.responsibilities && cargo.responsibilities.length > 0 && (
-                    <div className="mt-2">
-                      <p className="text-sm font-semibold text-gray-800">Responsabilidades:</p>
-                      <ul className="list-disc list-inside text-sm text-gray-700 mt-1">
-                        {cargo.responsibilities.map((resp, idx) => (
-                          <li key={idx}>{resp}</li>
+
+                  {/* Escolaridade */}
+                  {cargo.education?.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-gray-900 text-sm mb-1">Escolaridade:</h4>
+                      <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
+                        {cargo.education.map((item, idx) => (
+                          <li key={idx}>
+                            {item.item || item}
+                            {item.required ? <span className="text-xs text-red-600 ml-1">(Obrigatório)</span> : item.desired ? <span className="text-xs text-blue-600 ml-1">(Desejável)</span> : null}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Conhecimentos */}
+                  {cargo.knowledge?.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-gray-900 text-sm mb-1">Conhecimentos Específicos:</h4>
+                      <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
+                        {cargo.knowledge.map((item, idx) => (
+                          <li key={idx}>
+                            {item.item || item}
+                            {item.required ? <span className="text-xs text-red-600 ml-1">(Obrigatório)</span> : item.desired ? <span className="text-xs text-blue-600 ml-1">(Desejável)</span> : null}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Experiência */}
+                  {cargo.previous_experience?.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-gray-900 text-sm mb-1">Experiência Prévia:</h4>
+                      <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
+                        {cargo.previous_experience.map((item, idx) => (
+                          <li key={idx}>
+                            {item.item || item}
+                            {item.required ? <span className="text-xs text-red-600 ml-1">(Obrigatório)</span> : item.desired ? <span className="text-xs text-blue-600 ml-1">(Desejável)</span> : null}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Habilidades e Atitudes */}
+                  {cargo.personal_attributes?.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-gray-900 text-sm mb-1">Habilidades e Atitudes:</h4>
+                      <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
+                        {cargo.personal_attributes.map((item, idx) => (
+                          <li key={idx}>
+                            {item.item || item}
+                            {item.required ? <span className="text-xs text-red-600 ml-1">(Obrigatório)</span> : item.desired ? <span className="text-xs text-blue-600 ml-1">(Desejável)</span> : null}
+                          </li>
                         ))}
                       </ul>
                     </div>
