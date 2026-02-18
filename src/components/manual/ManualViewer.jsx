@@ -65,18 +65,9 @@ export default function ManualViewer({ data, onClose }) {
       <div className="max-w-[210mm] mx-auto p-8 space-y-6">
         {/* Header Fixo */}
         <div className="sticky top-0 bg-white border-b pb-4 z-10 flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            {workshop?.logo_url && (
-              <img 
-                src={workshop.logo_url} 
-                alt={`Logo ${workshop.name}`} 
-                className="h-16 w-auto object-contain"
-              />
-            )}
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Manual de Processos e Procedimentos</h1>
-              <p className="text-gray-600">{workshop?.name}</p>
-            </div>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Manual de Processos e Procedimentos</h1>
+            <p className="text-gray-600">{workshop?.name}</p>
           </div>
           <div className="flex gap-2">
             <Button onClick={handleDownloadPDF} className="bg-blue-600 hover:bg-blue-700">
@@ -309,80 +300,12 @@ export default function ManualViewer({ data, onClose }) {
                   {cargo.description && (
                     <p className="text-sm text-gray-700 mt-2 section-content">{cargo.description}</p>
                   )}
-                  {/* Atividades Principais */}
-                  {(cargo.main_activities?.length > 0 || cargo.responsibilities?.length > 0) && (
-                    <div className="mt-4">
-                      <p className="text-sm font-semibold text-gray-800 border-b pb-1 mb-2">Atividades Principais & Responsabilidades:</p>
-                      <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
-                        {(cargo.main_activities || []).map((item, idx) => (
-                          <li key={`act-${idx}`}>{typeof item === 'string' ? item : item.item}</li>
-                        ))}
-                        {(cargo.responsibilities || []).map((resp, idx) => (
-                          <li key={`resp-${idx}`}>{resp}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {/* Escolaridade */}
-                  {cargo.education?.length > 0 && (
-                    <div className="mt-4">
-                      <p className="text-sm font-semibold text-gray-800 border-b pb-1 mb-2">Escolaridade:</p>
-                      <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
-                        {cargo.education.map((item, idx) => (
-                          <li key={idx}>
-                            {item.item || item}
-                            {item.required && <span className="text-red-600 text-xs ml-2 font-medium">(Obrigatório)</span>}
-                            {item.desired && <span className="text-blue-600 text-xs ml-2 font-medium">(Desejável)</span>}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {/* Conhecimentos */}
-                  {cargo.knowledge?.length > 0 && (
-                    <div className="mt-4">
-                      <p className="text-sm font-semibold text-gray-800 border-b pb-1 mb-2">Conhecimentos Específicos:</p>
-                      <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
-                        {cargo.knowledge.map((item, idx) => (
-                          <li key={idx}>
-                            {item.item || item}
-                            {item.required && <span className="text-red-600 text-xs ml-2 font-medium">(Obrigatório)</span>}
-                            {item.desired && <span className="text-blue-600 text-xs ml-2 font-medium">(Desejável)</span>}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {/* Experiência */}
-                  {cargo.previous_experience?.length > 0 && (
-                    <div className="mt-4">
-                      <p className="text-sm font-semibold text-gray-800 border-b pb-1 mb-2">Experiência Prévia:</p>
-                      <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
-                        {cargo.previous_experience.map((item, idx) => (
-                          <li key={idx}>
-                            {item.item || item}
-                            {item.required && <span className="text-red-600 text-xs ml-2 font-medium">(Obrigatório)</span>}
-                            {item.desired && <span className="text-blue-600 text-xs ml-2 font-medium">(Desejável)</span>}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {/* Atributos Pessoais */}
-                  {cargo.personal_attributes?.length > 0 && (
-                    <div className="mt-4">
-                      <p className="text-sm font-semibold text-gray-800 border-b pb-1 mb-2">Habilidades e Atitudes:</p>
-                      <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
-                        {cargo.personal_attributes.map((item, idx) => (
-                          <li key={idx}>
-                            {item.item || item}
-                            {item.required && <span className="text-red-600 text-xs ml-2 font-medium">(Obrigatório)</span>}
-                            {item.desired && <span className="text-blue-600 text-xs ml-2 font-medium">(Desejável)</span>}
-                          </li>
+                  {cargo.responsibilities && cargo.responsibilities.length > 0 && (
+                    <div className="mt-2">
+                      <p className="text-sm font-semibold text-gray-800">Responsabilidades:</p>
+                      <ul className="list-disc list-inside text-sm text-gray-700 mt-1">
+                        {cargo.responsibilities.map((resp, idx) => (
+                          <li key={idx}>{resp}</li>
                         ))}
                       </ul>
                     </div>
