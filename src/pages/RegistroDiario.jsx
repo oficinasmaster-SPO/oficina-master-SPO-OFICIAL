@@ -105,6 +105,38 @@ export default function RegistroDiario() {
     }
   });
 
+  // Buscar tarefas do dia para o colaborador
+  const { data: dailyTasks = [], isLoading: isLoadingTasks } = useQuery({
+    queryKey: ['daily-tasks', date, currentUser?.id],
+    queryFn: async () => {
+      if (!currentUser?.id) return [];
+      try {
+        // Busca tarefas recentes para filtrar no cliente (limitação de filtro complexo na API)
+        const allTasks = await base44.entities.Task.list('-created_date', 300);
+        const targetDate = format(date, 'yyyy-MM-dd');
+        
+        return allTasks.filter(task => {
+          // Verifica se a tarefa está atribuída ao usuário atual
+          if (!task.assigned_to?.includes(currentUser.id)) return false;
+          
+          // Verifica se a tarefa é relevante para a data selecionada:
+          // 1. Tem data de vencimento (due_date) igual a data selecionada
+          // 2. Foi concluída (completed_date) na data selecionada
+          // 3. Foi atualizada na data selecionada e está em andamento (opcional, focado em due/completed)
+          
+          const isDueToday = task.due_date && format(new Date(task.due_date), 'yyyy-MM-dd') === targetDate;
+          const isCompletedToday = task.completed_date && format(new Date(task.completed_date), 'yyyy-MM-dd') === targetDate;
+          
+          return isDueToday || isCompletedToday;
+        });
+      } catch (error) {
+        console.error("Erro ao buscar tarefas do dia:", error);
+        return [];
+      }
+    },
+    enabled: !!currentUser && !!date
+  });
+
   // Buscar registro existente para a data
   const { data: existingLog, isLoading: isLoadingLog } = useQuery({
     queryKey: ['daily-log', date, employee?.id],
@@ -374,6 +406,7 @@ export default function RegistroDiario() {
       </div>
 
       {employee && (
+        <>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
                 <CardContent className="p-4">
@@ -399,6 +432,75 @@ export default function RegistroDiario() {
                 </CardContent>
             </Card>
         </div>
+
+        {/* Seção de Tarefas do Dia */}
+        <Card className="mb-8 shadow-md border-t-4 border-t-purple-600">
+            <CardHeader>
+                <div className="flex justify-between items-center">
+                    <div>
+                        <CardTitle className="flex items-center gap-2">
+                            <CheckCircle2 className="w-5 h-5 text-purple-600" />
+                            Tarefas do Dia
+                        </CardTitle>
+                        <CardDescription>
+                            Tarefas agendadas para vencer ou concluídas em {format(date, "dd/MM/yyyy")}
+                        </CardDescription>
+                    </div>
+                    <Badge variant="outline" className="text-purple-600 border-purple-200 bg-purple-50">
+                        {dailyTasks.length} tarefa(s)
+                    </Badge>
+                </div>
+            </CardHeader>
+            <CardContent>
+                {isLoadingTasks ? (
+                    <div className="flex justify-center py-8">
+                        <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+                    </div>
+                ) : dailyTasks.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500 bg-slate-50 rounded-lg border border-dashed">
+                        <p>Nenhuma tarefa vinculada a você encontrada para esta data.</p>
+                        <p className="text-xs mt-1">Tarefas com vencimento ou conclusão nesta data aparecerão aqui.</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {dailyTasks.map(task => (
+                            <div key={task.id} className="border rounded-lg p-4 hover:shadow-md transition-all bg-white group">
+                                <div className="flex justify-between items-start mb-2">
+                                    <h4 className="font-semibold text-gray-800 group-hover:text-purple-700 transition-colors">
+                                        {task.title}
+                                    </h4>
+                                    <Badge className={cn(
+                                        task.status === 'concluida' ? 'bg-green-100 text-green-700 hover:bg-green-200' : 
+                                        task.status === 'em_andamento' ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' : 
+                                        task.status === 'atrasada' ? 'bg-red-100 text-red-700 hover:bg-red-200' :
+                                        'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    )}>
+                                        {task.status === 'concluida' ? 'Concluída' : 
+                                         task.status === 'em_andamento' ? 'Em Andamento' : 
+                                         task.status === 'pendente' ? 'Pendente' : task.status}
+                                    </Badge>
+                                </div>
+                                {task.description && (
+                                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">{task.description}</p>
+                                )}
+                                <div className="flex flex-wrap justify-between items-center text-xs text-gray-500 pt-2 border-t mt-2">
+                                    <span className="capitalize">Prioridade: {task.priority}</span>
+                                    {task.completed_date && format(new Date(task.completed_date), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd') && (
+                                        <span className="text-green-600 flex items-center gap-1 font-medium">
+                                            <CheckCircle2 className="w-3 h-3" /> Concluída Hoje
+                                        </span>
+                                    )}
+                                    {task.qgp_data?.os_number && (
+                                        <span className="text-blue-600">OS: {task.qgp_data.os_number}</span>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+        </>
       )}
 
       <Card className="mb-8 shadow-md border-t-4 border-t-blue-600">
