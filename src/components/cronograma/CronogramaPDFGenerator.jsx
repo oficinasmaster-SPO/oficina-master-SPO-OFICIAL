@@ -1,4 +1,5 @@
 import jsPDF from "jspdf";
+import "jspdf-autotable";
 
 export const generateCronogramaPDF = (cronogramaData, workshop, mode = 'download', options = {}) => {
   const { stats, items, planName } = cronogramaData;
