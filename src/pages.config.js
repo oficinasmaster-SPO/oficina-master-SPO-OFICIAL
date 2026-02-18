@@ -190,6 +190,7 @@ import RankingBrasil from './pages/RankingBrasil';
 import Regimento from './pages/Regimento';
 import RegistrarAtendimento from './pages/RegistrarAtendimento';
 import RegistroDiario from './pages/RegistroDiario';
+import RelatorioCDC from './pages/RelatorioCDC';
 import RelatorioUsuario from './pages/RelatorioUsuario';
 import RelatoriosAceleracao from './pages/RelatoriosAceleracao';
 import RelatoriosAvancados from './pages/RelatoriosAvancados';
@@ -222,7 +223,6 @@ import TesteOpenAI from './pages/TesteOpenAI';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
-import RelatorioCDC from './pages/RelatorioCDC';
 import __Layout from './Layout.jsx';
 
 
@@ -370,6 +370,7 @@ export const PAGES = {
     "Regimento": Regimento,
     "RegistrarAtendimento": RegistrarAtendimento,
     "RegistroDiario": RegistroDiario,
+    "RelatorioCDC": RelatorioCDC,
     "RelatorioUsuario": RelatorioUsuario,
     "RelatoriosAceleracao": RelatoriosAceleracao,
     "RelatoriosAvancados": RelatoriosAvancados,
@@ -402,7 +403,6 @@ export const PAGES = {
     "TreinamentoVendas": TreinamentoVendas,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
-    "RelatorioCDC": RelatorioCDC,
 }
 
 export const pagesConfig = {

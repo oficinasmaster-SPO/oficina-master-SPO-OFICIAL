@@ -56,6 +56,7 @@ export default function CDCForm() {
       return diagnostics.sort((a, b) => new Date(b.created_date) - new Date(a.created_date))[0];
     },
     enabled: !!employeeId,
+    refetchOnWindowFocus: true,
   });
 
   useEffect(() => {
@@ -76,33 +77,50 @@ export default function CDCForm() {
     loadInitialData();
   }, []);
 
+  // Initial data load
   useEffect(() => {
     if (employee) {
       const initialFormData = employee.cdc_data || {};
       
       let discProfile = initialFormData.disc_profile || "";
       
-      // Auto-fill DISC if available and not manually set
-      if (discDiagnostic && discDiagnostic.dominant_profile) {
-        const profileMap = {
-          'executor_d': 'Executor (D)',
-          'comunicador_i': 'Comunicador (I)',
-          'planejador_s': 'Planejador (S)',
-          'analista_c': 'Analista (C)'
+      // Try to get DISC from saved data first, will be updated by separate effect if needed
+      setFormData(prev => {
+        // Only set if not already set (to avoid overwriting user input on re-renders if employee changes reference)
+        // But here we want to set initial state.
+        // Actually, we should only set this once or when employee changes significantly.
+        // Let's stick to setting it on load.
+        return {
+            ...initialFormData,
+            birth_date: initialFormData.birth_date || employee.data_nascimento || "",
+            disc_profile: discProfile,
+            // Preserve current form state if user already typed? 
+            // This effect runs when `employee` loads. usually once.
         };
-        const profileName = profileMap[discDiagnostic.dominant_profile] || discDiagnostic.dominant_profile;
-        if (!discProfile) {
-            discProfile = profileName;
-        }
-      }
-
-      setFormData({
-        ...initialFormData,
-        birth_date: initialFormData.birth_date || employee.data_nascimento || "",
-        disc_profile: discProfile
       });
     }
-  }, [employee, discDiagnostic]);
+  }, [employee]);
+
+  // DISC update listener
+  useEffect(() => {
+    if (discDiagnostic && discDiagnostic.dominant_profile) {
+      const profileMap = {
+        'executor_d': 'Executor (D)',
+        'comunicador_i': 'Comunicador (I)',
+        'planejador_s': 'Planejador (S)',
+        'analista_c': 'Analista (C)'
+      };
+      const profileName = profileMap[discDiagnostic.dominant_profile] || discDiagnostic.dominant_profile;
+      
+      setFormData(prev => {
+        // Only update if it's different or empty
+        if (prev.disc_profile !== profileName) {
+            return { ...prev, disc_profile: profileName };
+        }
+        return prev;
+      });
+    }
+  }, [discDiagnostic]);
 
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
