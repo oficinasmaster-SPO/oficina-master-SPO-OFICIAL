@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,8 +32,14 @@ const COLOR_OPTIONS = [
   { value: "#6B7280", label: "Cinza" },
 ];
 
-export default function OrgChartEditor({ nodes, workshopId, onCreateNode, onUpdateNode, onDeleteNode }) {
+export default function OrgChartEditor({ nodes, workshopId, onCreateNode, onUpdateNode, onDeleteNode, autoOpenAddNodeDialog }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (autoOpenAddNodeDialog && nodes.length === 0) {
+      setIsDialogOpen(true);
+    }
+  }, [autoOpenAddNodeDialog, nodes.length]);
   const [editingNode, setEditingNode] = useState(null);
   const [formData, setFormData] = useState({
     title: "",

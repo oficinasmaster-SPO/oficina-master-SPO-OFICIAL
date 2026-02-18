@@ -282,6 +282,7 @@ export default function Organograma() {
               onCreateNode={createNodeMutation.mutate}
               onUpdateNode={updateNodeMutation.mutate}
               onDeleteNode={deleteNodeMutation.mutate}
+              autoOpenAddNodeDialog={nodes.length === 0}
             />
           ) : (
             <OrgChartViewer nodes={nodes} />
