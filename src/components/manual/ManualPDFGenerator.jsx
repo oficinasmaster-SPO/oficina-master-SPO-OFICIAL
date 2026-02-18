@@ -25,8 +25,9 @@ export default class ManualPDFGenerator {
     const imageCache = {};
     const allImageUrls = [
       ...processos.map(p => p.content_json?.fluxo_image_url).filter(Boolean),
-      ...instructionDocs.map(it => it.content?.fluxo_image_url).filter(Boolean)
-    ];
+      ...instructionDocs.map(it => it.content?.fluxo_image_url).filter(Boolean),
+      workshop?.logo_url
+    ].filter(Boolean);
     
     for (const url of allImageUrls) {
       if (!imageCache[url]) {
@@ -50,9 +51,28 @@ export default class ManualPDFGenerator {
     doc.rect(0, 0, 210, 297, 'F');
     
     doc.setTextColor(255, 255, 255);
+
+    if (workshop?.logo_url && imageCache[workshop.logo_url]) {
+      try {
+        const logoImg = imageCache[workshop.logo_url];
+        const logoProps = doc.getImageProperties(logoImg);
+        const logoWidth = 60;
+        const logoHeight = (logoProps.height * logoWidth) / logoProps.width;
+        // Centralizar imagem (210mm largura página / 2 = 105)
+        const xPos = 105 - (logoWidth / 2);
+        const yPosLogo = 50;
+        
+        // Desenhar fundo branco para o logo se necessário ou apenas renderizar
+        // doc.rect(xPos - 5, yPosLogo - 5, logoWidth + 10, logoHeight + 10, 'F'); 
+        doc.addImage(logoImg, 'PNG', xPos, yPosLogo, logoWidth, logoHeight);
+      } catch (e) {
+        console.error("Erro ao renderizar logo", e);
+      }
+    }
+
     doc.setFontSize(32);
-    doc.text("Manual de Processos", 105, 100, { align: "center" });
-    doc.text("e Procedimentos", 105, 115, { align: "center" });
+    doc.text("Manual de Processos", 105, 130, { align: "center" });
+    doc.text("e Procedimentos", 105, 145, { align: "center" });
     
     doc.setFontSize(20);
     doc.text(workshop?.name || "Empresa", 105, 140, { align: "center" });
@@ -608,17 +628,98 @@ export default class ManualPDFGenerator {
           yPos += descLines.length * 6 + 5;
         }
 
-        if (cargo.responsibilities && cargo.responsibilities.length > 0) {
+        // Atividades Principais / Responsabilidades
+        const activities = cargo.main_activities || cargo.responsibilities || [];
+        if (activities.length > 0) {
+          yPos += 5;
+          checkPageBreak();
           doc.setFont(undefined, 'bold');
-          doc.text("Responsabilidades:", 25, yPos);
+          doc.text("Atividades Principais:", 25, yPos);
           yPos += 6;
           doc.setFont(undefined, 'normal');
           
-          cargo.responsibilities.forEach(resp => {
+          activities.forEach(item => {
             checkPageBreak();
-            const respLines = doc.splitTextToSize(`• ${resp}`, 165);
+            const text = typeof item === 'string' ? item : item.item || '';
+            const respLines = doc.splitTextToSize(`• ${text}`, 165);
             doc.text(respLines, 30, yPos);
             yPos += respLines.length * 6;
+          });
+        }
+
+        // Escolaridade
+        if (cargo.education && cargo.education.length > 0) {
+          yPos += 5;
+          checkPageBreak();
+          doc.setFont(undefined, 'bold');
+          doc.text("Escolaridade:", 25, yPos);
+          yPos += 6;
+          doc.setFont(undefined, 'normal');
+          
+          cargo.education.forEach(item => {
+            checkPageBreak();
+            const text = item.item || item;
+            const suffix = item.required ? ' (Obrigatório)' : (item.desired ? ' (Desejável)' : '');
+            const lines = doc.splitTextToSize(`• ${text}${suffix}`, 165);
+            doc.text(lines, 30, yPos);
+            yPos += lines.length * 6;
+          });
+        }
+
+        // Conhecimentos
+        if (cargo.knowledge && cargo.knowledge.length > 0) {
+          yPos += 5;
+          checkPageBreak();
+          doc.setFont(undefined, 'bold');
+          doc.text("Conhecimentos Específicos:", 25, yPos);
+          yPos += 6;
+          doc.setFont(undefined, 'normal');
+          
+          cargo.knowledge.forEach(item => {
+            checkPageBreak();
+            const text = item.item || item;
+            const suffix = item.required ? ' (Obrigatório)' : (item.desired ? ' (Desejável)' : '');
+            const lines = doc.splitTextToSize(`• ${text}${suffix}`, 165);
+            doc.text(lines, 30, yPos);
+            yPos += lines.length * 6;
+          });
+        }
+
+        // Experiência
+        if (cargo.previous_experience && cargo.previous_experience.length > 0) {
+          yPos += 5;
+          checkPageBreak();
+          doc.setFont(undefined, 'bold');
+          doc.text("Experiência Prévia:", 25, yPos);
+          yPos += 6;
+          doc.setFont(undefined, 'normal');
+          
+          cargo.previous_experience.forEach(item => {
+            checkPageBreak();
+            const text = item.item || item;
+            const suffix = item.required ? ' (Obrigatório)' : (item.desired ? ' (Desejável)' : '');
+            const lines = doc.splitTextToSize(`• ${text}${suffix}`, 165);
+            doc.text(lines, 30, yPos);
+            yPos += lines.length * 6;
+          });
+        }
+
+        // Atributos Pessoais
+        if (cargo.personal_attributes && cargo.personal_attributes.length > 0) {
+          yPos += 5;
+          checkPageBreak();
+          doc.setFont(undefined, 'bold');
+          doc.text("Habilidades e Atitudes:", 25, yPos);
+          yPos += 6;
+          doc.setFont(undefined, 'normal');
+          
+          cargo.personal_attributes.forEach(item => {
+            checkPageBreak();
+            const text = item.item || item;
+            const suffix = item.required ? ' (Obrigatório)' : (item.desired ? ' (Desejável)' : '');
+            const lines = doc.splitTextToSize(`• ${text}${suffix}`, 165);
+            doc.text(lines, 30, yPos);
+            yPos += lines.length * 6;
           });
         }
 
