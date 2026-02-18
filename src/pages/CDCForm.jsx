@@ -195,6 +195,10 @@ export default function CDCForm() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!employeeId) {
+      toast.error("Erro: ID do colaborador não encontrado. Por favor, recarregue a página.");
+      return;
+    }
     saveMutation.mutate(formData);
   };
 
@@ -633,7 +637,11 @@ export default function CDCForm() {
                           variant="outline" 
                           size="sm"
                           className="h-6 text-xs ml-auto bg-white"
-                          onClick={() => window.open(createPageUrl("DiagnosticoDISC") + `?employeeId=${employeeId}`, '_blank')}
+                          onClick={() => {
+                            const url = createPageUrl("DiagnosticoDISC");
+                            const fullUrl = employeeId ? `${url}?employeeId=${employeeId}` : url;
+                            window.open(fullUrl, '_blank');
+                          }}
                         >
                           Realizar Teste
                         </Button>
