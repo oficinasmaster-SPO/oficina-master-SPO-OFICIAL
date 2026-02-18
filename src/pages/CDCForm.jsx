@@ -18,7 +18,8 @@ export default function CDCForm() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
-  const employeeId = searchParams.get('employee_id');
+  // Support both employee_id and id parameters
+  const employeeId = searchParams.get('employee_id') || searchParams.get('id');
 
   const [user, setUser] = useState(null);
   const [workshop, setWorkshop] = useState(null);
