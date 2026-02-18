@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Save, Download, Users, Printer, CheckCircle2, AlertCircle, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import GuidedTour from "../components/help/GuidedTour";
@@ -36,7 +37,10 @@ export default function CDCForm() {
     professional_skills: "",
     disc_profile: "",
     communication_channel: "",
-    main_values: ""
+    main_values: "",
+    spouse_type: "",
+    spouse_name: "",
+    spouse_phone: ""
   });
 
   const { data: employee, isLoading: loadingEmployee } = useQuery({
@@ -254,6 +258,15 @@ export default function CDCForm() {
           <label>Filhos (nomes e idades):</label>
           <div>${formData.children || '-'}</div>
         </div>
+
+        <div class="field">
+          <label>Cônjuge / Parceiro(a):</label>
+          <div>
+            ${formData.spouse_type ? `<strong>${formData.spouse_type.charAt(0).toUpperCase() + formData.spouse_type.slice(1)}:</strong> ` : ''} 
+            ${formData.spouse_name || '-'} 
+            ${formData.spouse_phone ? ` - Tel: ${formData.spouse_phone}` : ''}
+          </div>
+        </div>
         
         <div class="field">
           <label>Qual o sonho grande:</label>
@@ -439,6 +452,46 @@ export default function CDCForm() {
                   placeholder="Ex: João - 5 anos, Maria - 8 anos"
                   rows={2}
                 />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-lg border border-slate-100">
+                <div>
+                  <Label>Tipo de Relacionamento</Label>
+                  <Select 
+                    value={formData.spouse_type} 
+                    onValueChange={(value) => setFormData({...formData, spouse_type: value})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="namorado">Namorado</SelectItem>
+                      <SelectItem value="namorada">Namorada</SelectItem>
+                      <SelectItem value="esposo">Esposo</SelectItem>
+                      <SelectItem value="esposa">Esposa</SelectItem>
+                      <SelectItem value="companheiro">Companheiro</SelectItem>
+                      <SelectItem value="companheira">Companheira</SelectItem>
+                      <SelectItem value="noivo">Noivo</SelectItem>
+                      <SelectItem value="noiva">Noiva</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Nome</Label>
+                  <Input
+                    value={formData.spouse_name}
+                    onChange={(e) => setFormData({...formData, spouse_name: e.target.value})}
+                    placeholder="Nome do parceiro(a)"
+                  />
+                </div>
+                <div>
+                  <Label>Telefone</Label>
+                  <Input
+                    value={formData.spouse_phone}
+                    onChange={(e) => setFormData({...formData, spouse_phone: e.target.value})}
+                    placeholder="(00) 00000-0000"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
