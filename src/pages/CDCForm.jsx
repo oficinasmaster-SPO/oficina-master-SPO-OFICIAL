@@ -78,10 +78,16 @@ export default function CDCForm() {
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
+      const workshopId = workshop?.id || employee?.workshop_id;
+      
+      if (!workshopId) {
+        throw new Error("Workshop ID não encontrado");
+      }
+
       // Salvar como histórico em CDCRecord
       const record = await base44.entities.CDCRecord.create({
         employee_id: employeeId,
-        workshop_id: workshop?.id,
+        workshop_id: workshopId,
         evaluator_id: user.id,
         date: new Date().toISOString(),
         ...data
@@ -90,7 +96,7 @@ export default function CDCForm() {
       // Atualizar flag no funcionário apenas para facilitar listagem rápida
       await base44.entities.Employee.update(employeeId, {
         cdc_completed: true,
-        cdc_data: data // Mantemos o último para referência rápida se necessário
+        cdc_data: { ...data, updated_date: new Date().toISOString() } // Adicionamos data para exibição
       });
 
       return record;
