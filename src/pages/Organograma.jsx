@@ -254,7 +254,7 @@ export default function Organograma() {
               onApply={handleApplyTemplate}
               onCancel={() => setShowTemplates(false)}
             />
-          ) : nodes.length === 0 ? (
+          ) : nodes.length === 0 && !isEditing ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                 <Plus className="w-12 h-12 text-gray-400" />
