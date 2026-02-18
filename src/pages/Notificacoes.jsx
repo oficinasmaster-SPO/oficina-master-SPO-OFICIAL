@@ -53,11 +53,15 @@ export default function Notificacoes() {
     queryFn: async () => {
       if (!user?.id) return [];
       try {
-        // Fetch tasks directly assigned to the user using filter
-        const result = await base44.entities.Task.filter({
-           assigned_to: { $in: [user.id] }
-        }, '-created_date', 100);
-        return Array.isArray(result) ? result : [];
+        // Fetch all tasks and filter in frontend to ensure array matching works correctly
+        const allTasks = await base44.entities.Task.list('-created_date', 500);
+        const tasksArray = Array.isArray(allTasks) ? allTasks : [];
+
+        return tasksArray.filter(t => 
+          t.assigned_to && 
+          Array.isArray(t.assigned_to) && 
+          t.assigned_to.includes(user.id)
+        );
       } catch (error) {
         console.log("Error fetching tasks:", error);
         return [];
@@ -103,11 +107,15 @@ export default function Notificacoes() {
     if (!currentUser?.id) return;
 
     try {
-      // Busca tarefas atribuídas ao usuário que não estão concluídas (com limite maior)
-      const myTasks = await base44.entities.Task.filter({
-        assigned_to: { $in: [currentUser.id] },
-        status: { $ne: "concluida" }
-      }, '-due_date', 100);
+      const allTasks = await base44.entities.Task.list('-created_date', 500);
+      const tasksArray = Array.isArray(allTasks) ? allTasks : [];
+      
+      const myTasks = tasksArray.filter(t => 
+        t.assigned_to && 
+        Array.isArray(t.assigned_to) && 
+        t.assigned_to.includes(currentUser.id) && 
+        t.status !== "concluida"
+      );
 
       for (const task of myTasks) {
         if (!task.due_date) continue;
