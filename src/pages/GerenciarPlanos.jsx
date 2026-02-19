@@ -258,11 +258,11 @@ export default function GerenciarPlanos() {
 
   const createPlanMutation = useMutation({
     mutationFn: (data) => base44.entities.PlanFeature.create(data),
-    onSuccess: () => {
+    onSuccess: (createdPlan) => {
       queryClient.invalidateQueries(['planFeatures']);
       queryClient.invalidateQueries(['plans']);
-      toast.success("Plano criado com sucesso!");
-      setSelectedPlan(null);
+      toast.success("Plano criado com sucesso! Você pode continuar editando.");
+      setSelectedPlan(createdPlan);
     }
   });
 
@@ -272,7 +272,7 @@ export default function GerenciarPlanos() {
       queryClient.invalidateQueries(['planFeatures']);
       queryClient.invalidateQueries(['plans']);
       toast.success("Plano atualizado com sucesso!");
-      setSelectedPlan(null);
+      // Mantém a tela aberta para continuar editando
     }
   });
 
