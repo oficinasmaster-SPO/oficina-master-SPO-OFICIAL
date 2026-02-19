@@ -307,7 +307,11 @@ export default function GerenciarPlanos() {
   const handleEditPlan = (planId) => {
     const existing = planFeatures.find(p => p.plan_id === planId);
     if (existing) {
-      setSelectedPlan(existing);
+      setSelectedPlan({
+        ...existing,
+        cronograma_features: existing.cronograma_features || [],
+        cronograma_modules: existing.cronograma_modules || []
+      });
     } else {
       const planInfo = plans.find(p => p.id === planId);
       setSelectedPlan({
