@@ -106,27 +106,28 @@ export default function ControleAceleracao() {
       />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 bg-white shadow-md">
-          <TabsTrigger value="visao-geral">
+        <TabsList className="flex w-full justify-start overflow-x-auto bg-white shadow-md h-auto p-1 gap-2">
+          <TabsTrigger value="visao-geral" className="flex-shrink-0">
             <BarChart3 className="w-4 h-4 mr-2" />
             Visão Geral
           </TabsTrigger>
-          <TabsTrigger value="atendimentos">
+          <TabsTrigger value="atendimentos" className="flex-shrink-0">
             <ClipboardList className="w-4 h-4 mr-2" />
             Atendimentos
           </TabsTrigger>
           <TabsTrigger 
             value="cronograma"
             onClick={() => navigate(createPageUrl('CronogramaGeral'))}
+            className="flex-shrink-0"
           >
             <Calendar className="w-4 h-4 mr-2" />
             Cronograma Geral
           </TabsTrigger>
-          <TabsTrigger value="pedidos">
+          <TabsTrigger value="pedidos" className="flex-shrink-0">
             <FileText className="w-4 h-4 mr-2" />
             Pedidos & Backlog
           </TabsTrigger>
-          <TabsTrigger value="agenda-visual">
+          <TabsTrigger value="agenda-visual" className="flex-shrink-0">
             <Calendar className="w-4 h-4 mr-2" />
             Agenda Visual
           </TabsTrigger>
