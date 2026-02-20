@@ -455,6 +455,26 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
     }
   };
 
+  const getRevenueData = () => {
+    const role = entityType === "employee" ? selectedEmployee?.job_role : "geral";
+    
+    // Se for comercial e não tiver valores explícitos de peças/serviços, usar as vendas como serviços
+    if (role === "comercial" && formData.revenue_parts === 0 && formData.revenue_services === 0) {
+      const salesTotal = (formData.sales_base || 0) + (formData.sales_marketing || 0);
+      return {
+        parts: 0,
+        services: salesTotal,
+        total: salesTotal
+      };
+    }
+    
+    return {
+      parts: formData.revenue_parts,
+      services: formData.revenue_services,
+      total: formData.revenue_parts + formData.revenue_services
+    };
+  };
+
   const handleSaveAndAnalyze = async () => {
     // Abre modal de atribuições (novo modelo Fato vs Atribuição)
     // Carregar atribuições existentes se estiver editando
@@ -493,7 +513,9 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
   const handleAtribuicoesConfirm = async (atribuicoes) => {
     try {
       setIsSaving(true);
-      const revenue_total = formData.revenue_parts + formData.revenue_services;
+      
+      const revenueData = getRevenueData();
+      const revenue_total = revenueData.total;
 
       // Detectar origem e ações baseadas nas atribuições para atualizar contadores
       const hasMarketing = atribuicoes.some(a => a.equipe === 'marketing' || a.papel === 'gerou_lead');
@@ -502,6 +524,12 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
 
       // Preparar novos valores incrementando os existentes
       let updatedFormData = { ...formData };
+      
+      // Atualizar receita se veio do cálculo comercial
+      if (revenueData.total > 0 && updatedFormData.revenue_parts === 0 && updatedFormData.revenue_services === 0) {
+          updatedFormData.revenue_parts = revenueData.parts;
+          updatedFormData.revenue_services = revenueData.services;
+      }
 
       if (hasMarketing) {
         // Origem: Marketing
@@ -544,8 +572,8 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
         data: formData.reference_date,
         month: formData.month,
         valor_total: revenue_total,
-        valor_pecas: formData.revenue_parts,
-        valor_servicos: formData.revenue_services,
+        valor_pecas: revenueData.parts,
+        valor_servicos: revenueData.services,
         categoria: "misto",
         origem: origemVenda,
         observacao: formData.notes || ""
@@ -656,7 +684,9 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
   const handleSaveDirect = async () => {
     try {
       setIsSaving(true);
-      const revenue_total = formData.revenue_parts + formData.revenue_services;
+      const revenueData = getRevenueData();
+      const revenue_total = revenueData.total;
+      
       const average_ticket = formData.customer_volume > 0 
         ? revenue_total / formData.customer_volume 
         : 0;
@@ -676,8 +706,8 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
         projected_total: formData.projected_total,
         achieved_total: formData.achieved_total,
         revenue_total: revenue_total,
-        revenue_parts: formData.revenue_parts,
-        revenue_services: formData.revenue_services,
+        revenue_parts: revenueData.parts,
+        revenue_services: revenueData.services,
         average_ticket: average_ticket,
         customer_volume: formData.customer_volume,
         r70_i30: formData.r70_i30,
@@ -776,7 +806,9 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
   const handleDistributionConfirm = async (distribution) => {
     try {
       setIsSaving(true);
-      const revenue_total = formData.revenue_parts + formData.revenue_services;
+      const revenueData = getRevenueData();
+      const revenue_total = revenueData.total;
+      
       const average_ticket = formData.customer_volume > 0 
         ? revenue_total / formData.customer_volume 
         : 0;
@@ -796,8 +828,8 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
         projected_total: formData.projected_total,
         achieved_total: formData.achieved_total,
         revenue_total: revenue_total,
-        revenue_parts: formData.revenue_parts,
-        revenue_services: formData.revenue_services,
+        revenue_parts: revenueData.parts,
+        revenue_services: revenueData.services,
         average_ticket: average_ticket,
         customer_volume: formData.customer_volume,
         r70_i30: formData.r70_i30,
@@ -2407,7 +2439,7 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
           <RevenueDistributionModal
           open={showDistribution}
           onClose={() => setShowDistribution(false)}
-          revenue={formData.revenue_parts + formData.revenue_services}
+          revenue={getRevenueData().total}
           employees={employees}
           onConfirm={handleDistributionConfirm}
           isLoading={isSaving}
@@ -2424,9 +2456,9 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
           <VendaAtribuicoesModal
             open={showAtribuicoes}
             onClose={() => setShowAtribuicoes(false)}
-            valorTotal={formData.revenue_parts + formData.revenue_services}
-            valorPecas={formData.revenue_parts}
-            valorServicos={formData.revenue_services}
+            valorTotal={getRevenueData().total}
+            valorPecas={getRevenueData().parts}
+            valorServicos={getRevenueData().services}
             employees={employees}
             onConfirm={handleAtribuicoesConfirm}
             existingAtribuicoes={existingAtribuicoes}
