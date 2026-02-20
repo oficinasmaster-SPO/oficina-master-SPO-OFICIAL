@@ -82,19 +82,40 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
   useEffect(() => {
     if (open) {
       loadEmployees();
+      loadTCMP2();
+      
       if (editingRecord) {
-        loadEditingData();
+        // Forçar entityType imediatamente ao abrir edição
+        const type = editingRecord.entity_type || (editingRecord.employee_id ? "employee" : "workshop");
+        setEntityType(type);
         setLoadedFromExisting(true);
         setExistingRecordId(editingRecord.id);
+        loadEditingData();
       } else {
-        loadProjectedGoals();
+        // Resetar para criação
+        if (!selectedEmployee) setEntityType("workshop");
         setLoadedFromExisting(false);
         setExistingRecordId(null);
-        checkExistingRecord(formData.reference_date);
+        loadProjectedGoals();
+        // Apenas verificar existente se não estiver editando e já tiver data
+        if (formData.reference_date) {
+            checkExistingRecord(formData.reference_date);
+        }
       }
-      loadTCMP2();
     }
-  }, [open, entityType, selectedEmployee, editingRecord]);
+  }, [open, editingRecord]);
+
+  // Effect dedicado para vincular funcionário quando a lista carregar
+  useEffect(() => {
+    if (open && editingRecord && (editingRecord.entity_type === 'employee' || editingRecord.employee_id) && employees.length > 0) {
+      const emp = employees.find(e => e.id === editingRecord.employee_id);
+      if (emp) {
+        setSelectedEmployee(emp);
+        // Garantir que o tipo esteja correto
+        setEntityType("employee");
+      }
+    }
+  }, [employees, editingRecord, open]);
 
   const checkExistingRecord = async (date) => {
     if (!date || !workshop) return;
@@ -247,13 +268,9 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
   const loadEditingData = async () => {
     if (!editingRecord) return;
     
-    // Carregar dados do registro para edição
-    setEntityType(editingRecord.entity_type);
-    
-    if (editingRecord.employee_id) {
-      const emp = employees.find(e => e.id === editingRecord.employee_id);
-      setSelectedEmployee(emp);
-    }
+    // Configurar tipo base (o funcionário é configurado pelo useEffect dedicado)
+    const type = editingRecord.entity_type || (editingRecord.employee_id ? "employee" : "workshop");
+    setEntityType(type);
     
     setFormData({
       reference_date: editingRecord.reference_date,
