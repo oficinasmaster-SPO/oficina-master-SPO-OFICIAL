@@ -30,9 +30,16 @@ export default function Organograma() {
         if (assistanceMode && workshopId) {
           workshopToLoad = await base44.entities.Workshop.get(workshopId);
         } else {
-          const workshops = await base44.entities.Workshop.filter({ owner_id: user.id });
-          if (workshops && workshops.length > 0) {
-            workshopToLoad = workshops[0];
+          // Prioridade 2: Employee
+          const employees = await base44.entities.Employee.filter({ user_id: user.id });
+          if (employees.length > 0 && employees[0].workshop_id) {
+            workshopToLoad = await base44.entities.Workshop.get(employees[0].workshop_id);
+          } else {
+            // Prioridade 3: Owner
+            const workshops = await base44.entities.Workshop.filter({ owner_id: user.id });
+            if (workshops && workshops.length > 0) {
+              workshopToLoad = workshops[0];
+            }
           }
         }
         setWorkshop(workshopToLoad);

@@ -36,6 +36,14 @@ export default function CDCList() {
       }
       
       setIsAdminView(false);
+
+      // Prioridade 2: Employee
+      const employees = await base44.entities.Employee.filter({ user_id: user.id });
+      if (employees.length > 0 && employees[0].workshop_id) {
+        return await base44.entities.Workshop.get(employees[0].workshop_id);
+      }
+
+      // Prioridade 3: Owner
       const workshops = await base44.entities.Workshop.filter({ owner_id: user.id });
       return workshops[0];
     },
