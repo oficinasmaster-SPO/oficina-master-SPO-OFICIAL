@@ -319,8 +319,8 @@ export default function RegistroDiario() {
       };
     }).filter(entry => entry.value !== "");
 
-    if (entries.length === 0) {
-      toast.error("Preencha pelo menos uma métrica");
+    if (entries.length === 0 && !notes.trim()) {
+      toast.error("Preencha pelo menos uma métrica ou uma observação");
       return;
     }
 
