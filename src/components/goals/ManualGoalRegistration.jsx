@@ -266,7 +266,7 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
   }, [formData.clients_delivered_base, formData.clients_delivered_mkt, formData.clients_delivered_referral]);
 
   // Função auxiliar para converter valores numéricos com mais segurança
-  const parseValueUnique = (val) => {
+  const parseValue = (val) => {
     if (typeof val === 'number') return val;
     if (!val) return 0;
     if (typeof val === 'string') {
