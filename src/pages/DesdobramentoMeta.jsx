@@ -12,6 +12,8 @@ import { toast } from "sonner";
 import { formatCurrency, formatNumber } from "../components/utils/formatters";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { jsPDF } from "jspdf";
+import "jspdf-autotable";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ServiceGoalsModal from "@/components/goals/ServiceGoalsModal";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -293,6 +295,74 @@ export default function DesdobramentoMeta() {
     }
   };
 
+  const handleExportPDF = () => {
+    try {
+        const doc = new jsPDF();
+
+        // Title
+        doc.setFontSize(18);
+        doc.text("Desdobramento Completo de Metas", 14, 22);
+
+        // Subtitle
+        doc.setFontSize(10);
+        doc.text(`Gerado em: ${new Date().toLocaleDateString()} - ${new Date().toLocaleTimeString()}`, 14, 30);
+        if (workshop) {
+            doc.text(`Oficina: ${workshop.name}`, 14, 35);
+        }
+        doc.text(`Mês Referência: ${config.target_month_date}`, 14, 40);
+        doc.text(`Crescimento Aplicado: ${config.growth_percentage}%`, 14, 45);
+
+        let startY = 55;
+
+        // Iterate through areas
+        Object.keys(tableData).forEach(area => {
+            const rows = tableData[area];
+            if (rows.length === 0) return;
+
+            // Check for page break
+            if (startY > 250) {
+                doc.addPage();
+                startY = 20;
+            }
+
+            // Area Title
+            doc.setFontSize(14);
+            doc.setTextColor(0, 0, 0);
+            const areaName = area.charAt(0).toUpperCase() + area.slice(1);
+            doc.text(`Área: ${areaName}`, 14, startY);
+            startY += 5;
+
+            // Table Columns
+            const tableColumn = ["Colaborador", "Histórico (R$)", "Meta (R$)", "Clientes", "Ticket Médio", "Bônus (R$)"];
+            const tableRows = rows.map(row => [
+                row.name,
+                row.hist_revenue?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) || 'R$ 0,00',
+                row.target_revenue?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) || 'R$ 0,00',
+                row.target_clients || '0',
+                row.target_ticket?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) || 'R$ 0,00',
+                row.bonus_value?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) || 'R$ 0,00'
+            ]);
+
+            doc.autoTable({
+                head: [tableColumn],
+                body: tableRows,
+                startY: startY,
+                styles: { fontSize: 9 },
+                headStyles: { fillColor: [66, 66, 66] },
+                margin: { top: 20 }
+            });
+
+            startY = doc.lastAutoTable.finalY + 15;
+        });
+
+        doc.save(`desdobramento_metas_${config.target_month_date}.pdf`);
+        toast.success("PDF gerado com sucesso!");
+    } catch (error) {
+        console.error("Erro ao gerar PDF:", error);
+        toast.error("Erro ao gerar PDF.");
+    }
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -383,7 +453,7 @@ export default function DesdobramentoMeta() {
                     {isForecasting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Target className="w-4 h-4 mr-2" />}
                     Previsão IA
                 </Button>
-                <Button variant="outline" onClick={() => toast.info("Gerando PDF...")}>
+                <Button variant="outline" onClick={handleExportPDF}>
                     <Download className="w-4 h-4 mr-2" /> PDF
                 </Button>
                 <Button onClick={handleSave} disabled={saving} className="bg-green-600 hover:bg-green-700">
