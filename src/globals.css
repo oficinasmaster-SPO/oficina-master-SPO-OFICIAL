@@ -119,6 +119,37 @@
   }
 }
 
+/* ==================================================================
+   BOTÃO ANIMADO (Efeito de Ouro Brilhando)
+================================================================== */
+@layer components {
+  .btn-gradient-animate {
+    @apply text-primary-foreground relative overflow-hidden transition-all duration-500 ease-in-out rounded-md font-bold;
+    
+    /* Gradiente Dourado */
+    background-image: linear-gradient(
+      to right,
+      hsl(var(--brand-primary)) 0%,
+      hsl(var(--brand-secondary)) 50%,
+      hsl(var(--brand-primary)) 100%
+    );
+    background-size: 200% auto;
+    border: none;
+  }
+
+  .btn-gradient-animate:hover {
+    /* Movimenta o gradiente gerando um brilho metálico */
+    background-position: right center;
+    /* Sombra dourada suave */
+    box-shadow: 0 4px 15px hsla(var(--brand-primary) / 0.4);
+    transform: translateY(-1px);
+  }
+  
+  .btn-gradient-animate svg {
+      @apply text-primary-foreground;
+  }
+}
+
 /* Print Styles - Professional Document Layout A4 */
 @media print {
   /* Hide non-printable elements */
