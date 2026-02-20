@@ -24,10 +24,29 @@ export default function IntelligenciaCliente() {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
-      // Get workshop
-      const ownedWorkshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
-      if (ownedWorkshops && ownedWorkshops.length > 0) {
-        setWorkshop(ownedWorkshops[0]);
+      const urlParams = new URLSearchParams(window.location.search);
+      const adminWorkshopId = urlParams.get('workshop_id');
+      let userWorkshop = null;
+
+      // 1. Prioridade: Admin via URL
+      if (adminWorkshopId && currentUser.role === 'admin') {
+        userWorkshop = await base44.entities.Workshop.get(adminWorkshopId);
+      } else {
+        // 2. Prioridade: Employee
+        const employees = await base44.entities.Employee.filter({ user_id: currentUser.id });
+        if (employees.length > 0 && employees[0].workshop_id) {
+          userWorkshop = await base44.entities.Workshop.get(employees[0].workshop_id);
+        } else {
+          // 3. Prioridade: Owner
+          const ownedWorkshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
+          if (ownedWorkshops && ownedWorkshops.length > 0) {
+            userWorkshop = ownedWorkshops[0];
+          }
+        }
+      }
+
+      if (userWorkshop) {
+        setWorkshop(userWorkshop);
       }
     } catch (error) {
       console.error("Error loading data:", error);

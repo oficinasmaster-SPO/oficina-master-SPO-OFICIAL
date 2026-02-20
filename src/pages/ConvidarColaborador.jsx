@@ -112,9 +112,26 @@ export default function ConvidarColaborador() {
         const currentUser = await base44.auth.me();
         setUser(currentUser);
 
-        // Busca oficina onde o usuário é dono (mais seguro que listar todas)
-        const workshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
-        const userWorkshop = Array.isArray(workshops) && workshops.length > 0 ? workshops[0] : null;
+        const urlParams = new URLSearchParams(window.location.search);
+        const adminWorkshopId = urlParams.get('workshop_id');
+        let userWorkshop = null;
+
+        // 1. Prioridade: Admin via URL
+        if (adminWorkshopId && currentUser.role === 'admin') {
+          userWorkshop = await base44.entities.Workshop.get(adminWorkshopId);
+        } else {
+          // 2. Prioridade: Employee
+          const employees = await base44.entities.Employee.filter({ user_id: currentUser.id });
+          if (employees.length > 0 && employees[0].workshop_id) {
+            userWorkshop = await base44.entities.Workshop.get(employees[0].workshop_id);
+          } else {
+            // 3. Prioridade: Owner
+            const workshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
+            if (workshops && workshops.length > 0) {
+              userWorkshop = workshops[0];
+            }
+          }
+        }
 
         if (userWorkshop) {
           setWorkshop(userWorkshop);
