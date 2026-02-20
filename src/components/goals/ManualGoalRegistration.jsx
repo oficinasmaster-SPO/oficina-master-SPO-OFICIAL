@@ -437,7 +437,50 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
       setIsSaving(true);
       const revenue_total = formData.revenue_parts + formData.revenue_services;
 
+      // Detectar origem e ações baseadas nas atribuições para atualizar contadores
+      const hasMarketing = atribuicoes.some(a => a.equipe === 'marketing' || a.papel === 'gerou_lead');
+      const hasSDR = atribuicoes.some(a => a.equipe === 'sdr_telemarketing' || a.papel === 'agendou');
+      const hasSales = atribuicoes.some(a => a.papel === 'vendeu'); // Alguém vendeu
+
+      // Preparar novos valores incrementando os existentes
+      let updatedFormData = { ...formData };
+
+      if (hasMarketing) {
+        // Origem: Marketing
+        if (hasSDR) updatedFormData.clients_scheduled_mkt = (updatedFormData.clients_scheduled_mkt || 0) + 1;
+        if (hasSales) {
+          updatedFormData.clients_delivered_mkt = (updatedFormData.clients_delivered_mkt || 0) + 1;
+          // Se o valor de vendas marketing estava zerado ou desatualizado, somar este faturamento
+          // Nota: Isso é uma heurística para ajudar, o usuário ainda pode editar manualmente
+          if (updatedFormData.sales_marketing === 0 || updatedFormData.sales_marketing < revenue_total) {
+             updatedFormData.sales_marketing = (updatedFormData.sales_marketing || 0) + revenue_total;
+          }
+        }
+      } else {
+        // Origem: Base (Padrão)
+        if (hasSDR) updatedFormData.clients_scheduled_base = (updatedFormData.clients_scheduled_base || 0) + 1;
+        if (hasSales) {
+          updatedFormData.clients_delivered_base = (updatedFormData.clients_delivered_base || 0) + 1;
+          if (updatedFormData.sales_base === 0 || updatedFormData.sales_base < revenue_total) {
+             updatedFormData.sales_base = (updatedFormData.sales_base || 0) + revenue_total;
+          }
+        }
+      }
+
+      // Recalcular Totais Automáticos
+      updatedFormData.pave_commercial = (updatedFormData.clients_scheduled_base || 0) + (updatedFormData.clients_scheduled_mkt || 0) + (updatedFormData.clients_scheduled_referral || 0);
+      updatedFormData.kit_master = (updatedFormData.clients_delivered_base || 0) + (updatedFormData.clients_delivered_mkt || 0) + (updatedFormData.clients_delivered_referral || 0);
+      
+      // GPS Vendas (normalmente igual ao kit master/entregues)
+      if (hasSales) {
+        updatedFormData.gps_vendas = (updatedFormData.gps_vendas || 0) + 1;
+      }
+
+      // Atualizar o state local também para refletir na UI se o modal não fechar (mas ele fecha)
+      setFormData(updatedFormData);
+
       // 1. Criar registro de venda (FATO)
+      const origemVenda = hasMarketing ? "marketing" : "base_clientes";
       const venda = await base44.entities.VendasServicos.create({
         workshop_id: workshop.id,
         data: formData.reference_date,
@@ -446,7 +489,7 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
         valor_pecas: formData.revenue_parts,
         valor_servicos: formData.revenue_services,
         categoria: "misto",
-        origem: "base_clientes",
+        origem: origemVenda,
         observacao: formData.notes || ""
       });
 
@@ -465,8 +508,8 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
       }
 
       // 3. Atualizar MonthlyGoalHistory (compatibilidade com dashboards antigos)
-      const marketing_cost_per_sale = formData.marketing_data.leads_sold > 0
-        ? formData.marketing_data.invested_value / formData.marketing_data.leads_sold
+      const marketing_cost_per_sale = updatedFormData.marketing_data.leads_sold > 0
+        ? updatedFormData.marketing_data.invested_value / updatedFormData.marketing_data.leads_sold
         : 0;
 
       const recordData = {
@@ -475,36 +518,36 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
         entity_id: entityType === "workshop" ? workshop.id : selectedEmployee?.id,
         employee_id: entityType === "employee" ? selectedEmployee?.id : null,
         employee_role: entityType === "employee" ? selectedEmployee?.job_role : "geral",
-        reference_date: formData.reference_date,
-        month: formData.month,
-        projected_total: formData.projected_total,
-        achieved_total: formData.achieved_total,
+        reference_date: updatedFormData.reference_date,
+        month: updatedFormData.month,
+        projected_total: updatedFormData.projected_total,
+        achieved_total: updatedFormData.achieved_total,
         revenue_total: revenue_total,
-        revenue_parts: formData.revenue_parts,
-        revenue_services: formData.revenue_services,
-        average_ticket: formData.customer_volume > 0 ? revenue_total / formData.customer_volume : 0,
-        customer_volume: formData.customer_volume,
-        r70_i30: formData.r70_i30,
+        revenue_parts: updatedFormData.revenue_parts,
+        revenue_services: updatedFormData.revenue_services,
+        average_ticket: updatedFormData.customer_volume > 0 ? revenue_total / updatedFormData.customer_volume : 0,
+        customer_volume: updatedFormData.customer_volume,
+        r70_i30: updatedFormData.r70_i30,
         tcmp2: tcmp2Value,
-        pave_commercial: formData.pave_commercial,
-        kit_master: formData.kit_master,
-        sales_base: formData.sales_base,
-        sales_marketing: formData.sales_marketing,
-        clients_delivered: formData.clients_delivered,
-        gps_vendas: formData.gps_vendas,
-        clients_scheduled_base: formData.clients_scheduled_base,
-        clients_delivered_base: formData.clients_delivered_base,
-        clients_scheduled_mkt: formData.clients_scheduled_mkt,
-        clients_delivered_mkt: formData.clients_delivered_mkt,
-        clients_scheduled_referral: formData.clients_scheduled_referral,
-        clients_delivered_referral: formData.clients_delivered_referral,
+        pave_commercial: updatedFormData.pave_commercial,
+        kit_master: updatedFormData.kit_master,
+        sales_base: updatedFormData.sales_base,
+        sales_marketing: updatedFormData.sales_marketing,
+        clients_delivered: updatedFormData.clients_delivered,
+        gps_vendas: updatedFormData.gps_vendas,
+        clients_scheduled_base: updatedFormData.clients_scheduled_base,
+        clients_delivered_base: updatedFormData.clients_delivered_base,
+        clients_scheduled_mkt: updatedFormData.clients_scheduled_mkt,
+        clients_delivered_mkt: updatedFormData.clients_delivered_mkt,
+        clients_scheduled_referral: updatedFormData.clients_scheduled_referral,
+        clients_delivered_referral: updatedFormData.clients_delivered_referral,
         marketing_data: {
-          ...formData.marketing_data,
+          ...updatedFormData.marketing_data,
           cost_per_sale: marketing_cost_per_sale
         },
         revenue_distribution: null,
-        rework_count: formData.rework_count,
-        notes: formData.notes
+        rework_count: updatedFormData.rework_count,
+        notes: updatedFormData.notes
       };
 
       if (editingRecord || existingRecordId) {
