@@ -17,6 +17,7 @@ import MetasObjetivosCompleto from "../components/workshop/MetasObjetivosComplet
 import CulturaOrganizacional from "../components/workshop/CulturaOrganizacional";
 import DocumentosProcessos from "../components/workshop/DocumentosProcessos";
 import WorkshopLevelBadge from "../components/gamification/WorkshopLevelBadge";
+import CustomCSSUpload from "../components/workshop/CustomCSSUpload";
 
 import GrowthDashboard from "../components/management/GrowthDashboard";
 import WorkshopMilestones from "../components/management/WorkshopMilestones";
@@ -375,6 +376,10 @@ export default function GestaoOficina() {
               <Trophy className="w-4 h-4 mr-1" />
               <span className="hidden sm:inline">Conquistas</span>
             </TabsTrigger>
+            <TabsTrigger value="customization" className="text-xs md:text-sm bg-gray-50 text-gray-700 data-[state=active]:bg-gray-100 data-[state=active]:text-gray-900">
+              <Settings className="w-4 h-4 mr-1" />
+              <span className="hidden sm:inline">Personalização</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="crescimento">
@@ -383,6 +388,15 @@ export default function GestaoOficina() {
 
           <TabsContent value="conquistas">
             <WorkshopMilestones workshop={workshop} />
+          </TabsContent>
+
+          <TabsContent value="customization" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <CustomCSSUpload 
+                    workshop={workshop} 
+                    onUpdate={(data) => setWorkshop(prev => ({ ...prev, ...data }))} 
+                />
+            </div>
           </TabsContent>
 
           <TabsContent value="dados">
