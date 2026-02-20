@@ -62,7 +62,11 @@ export default function CustomCSSUpload({ workshop, onUpdate }) {
   MODELO DE PERSONALIZAÇÃO VISUAL (CSS)
   --------------------------------------
   Use este arquivo para alterar as cores e estilos do sistema.
-  Os valores de cor usam o formato HSL (Hue, Saturation, Lightness).
+  ⚠️ IMPORTANTE: Os valores de cor DEVEM usar o formato HSL (apenas números).
+  NÃO use códigos HEX (#000000) ou RGB nas variáveis (--primary, etc).
+  
+  Correto: --primary: 222.2 47.4% 11.2%;
+  Errado:  --primary: #0f172a;
   
   Ferramenta para converter cores para HSL: https://www.w3schools.com/colors/colors_converter.asp
 */
