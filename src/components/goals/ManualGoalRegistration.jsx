@@ -90,6 +90,7 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
         loadProjectedGoals();
         setLoadedFromExisting(false);
         setExistingRecordId(null);
+        checkExistingRecord(formData.reference_date);
       }
       loadTCMP2();
     }
