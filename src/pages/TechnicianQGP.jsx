@@ -17,8 +17,6 @@ import { createPageUrl } from "@/utils";
 import { Link } from "react-router-dom";
 
 export default function TechnicianQGP() {
-  const [user, setUser] = useState(null);
-  const [employee, setEmployee] = useState(null);
   const [selectedTask, setSelectedTask] = useState(null);
   const [isPauseDialogOpen, setIsPauseDialogOpen] = useState(false);
   const [pauseReason, setPauseReason] = useState("");
@@ -28,38 +26,50 @@ export default function TechnicianQGP() {
   
   const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const loadUser = async () => {
-      const u = await base44.auth.me();
-      setUser(u);
-      if (u) {
-        const emps = await base44.entities.Employee.filter({ user_id: u.id });
-        if (emps.length > 0) setEmployee(emps[0]);
-      }
-    };
-    loadUser();
-  }, []);
+  const { data: user } = useQuery({
+    queryKey: ['me'],
+    queryFn: () => base44.auth.me(),
+    retry: false
+  });
+
+  const { data: employee } = useQuery({
+    queryKey: ['my-employee', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const emps = await base44.entities.Employee.filter({ user_id: user.id });
+      return emps[0] || null;
+    },
+    enabled: !!user
+  });
 
   const { data: myTasks = [] } = useQuery({
     queryKey: ['my-qgp-tasks', user?.id, employee?.id],
     queryFn: async () => {
       if (!user) return [];
       const allTasks = await base44.entities.Task.list();
-      // Filter tasks assigned to me or where I am the main technician
-      // We check both employee_id (for the technician record) and user.id (for direct assignment)
-      return allTasks.filter(t => 
-        ((employee && t.employee_id === employee.id) || t.assigned_to?.includes(user.id)) &&
-        t.status !== 'concluida' && 
-        t.status !== 'cancelada'
-      ).sort((a, b) => {
-        // Sort: In progress first, then by priority
+      
+      return allTasks.filter(t => {
+        // 1. Check direct assignment to user ID
+        const isAssignedToUser = t.assigned_to?.includes(user.id);
+        
+        // 2. Check assignment to employee record
+        const isAssignedToEmployee = employee && t.employee_id === employee.id;
+        
+        // 3. Fallback: Check if employee_id stores User ID (data inconsistency safe-guard)
+        const isAssignedToUserId = t.employee_id === user.id;
+
+        const isMyTask = isAssignedToUser || isAssignedToEmployee || isAssignedToUserId;
+        const isActiveStatus = t.status !== 'concluida' && t.status !== 'cancelada';
+
+        return isMyTask && isActiveStatus;
+      }).sort((a, b) => {
         if (a.status === 'em_andamento' && b.status !== 'em_andamento') return -1;
         if (a.status !== 'em_andamento' && b.status === 'em_andamento') return 1;
         return 0;
       });
     },
     enabled: !!user,
-    refetchInterval: 10000
+    refetchInterval: 5000
   });
 
   const updateStatusMutation = useMutation({
