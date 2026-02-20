@@ -281,8 +281,7 @@ export default function HistoricoMetas() {
          }}
          workshop={workshop}
          editingRecord={editingRecord}
-         key={`${workshop?.id}-${showModal}`}
-          onSave={async () => {
+         onSave={async () => {
             // Sincronizar após salvar registro
             if (workshop) {
               // 1. Atualizar DRE com valores consolidados dos registros diários

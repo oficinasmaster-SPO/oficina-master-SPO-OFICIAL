@@ -79,28 +79,48 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
     notes: ""
   });
 
+  // Resetar e carregar dados ao abrir ou mudar o registro
   useEffect(() => {
     if (open) {
+      // Carregar dados auxiliares
       loadEmployees();
       loadTCMP2();
-      
+
       if (editingRecord) {
-        // Forçar entityType imediatamente ao abrir edição
+        // MODO EDIÇÃO
+        console.log("Modo Edição ativado:", editingRecord);
         const type = editingRecord.entity_type || (editingRecord.employee_id ? "employee" : "workshop");
         setEntityType(type);
         setLoadedFromExisting(true);
         setExistingRecordId(editingRecord.id);
+
+        // Carregar dados do registro
         loadEditingData();
       } else {
-        // Resetar para criação
-        if (!selectedEmployee) setEntityType("workshop");
+        // MODO CRIAÇÃO (Reset)
+        console.log("Modo Criação ativado");
+        setEntityType(selectedEmployee ? "employee" : "workshop");
         setLoadedFromExisting(false);
         setExistingRecordId(null);
+
+        // Resetar formulário para data atual
+        const today = new Date().toLocaleDateString('en-CA');
+        setFormData(prev => ({
+          ...prev,
+          reference_date: today,
+          month: today.substring(0, 7),
+          achieved_total: 0,
+          revenue_parts: 0,
+          revenue_services: 0,
+          customer_volume: 0,
+          notes: ""
+        }));
+
+        // Carregar metas projetadas
         loadProjectedGoals();
-        // Apenas verificar existente se não estiver editando e já tiver data
-        if (formData.reference_date) {
-            checkExistingRecord(formData.reference_date);
-        }
+
+        // Verificar se já existe registro para hoje (apenas se não estiver editando)
+        checkExistingRecord(today);
       }
     }
   }, [open, editingRecord]);
