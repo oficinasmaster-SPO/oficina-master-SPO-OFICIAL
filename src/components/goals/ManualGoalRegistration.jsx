@@ -644,16 +644,24 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
         notes: updatedFormData.notes
       };
 
-      if (editingRecord || existingRecordId) {
-        const idToUpdate = editingRecord?.id || existingRecordId;
-        await base44.entities.MonthlyGoalHistory.update(idToUpdate, recordData);
-      } else {
-        await base44.entities.MonthlyGoalHistory.create(recordData);
+      // Verificação rigorosa de duplicidade antes de salvar (handleAtribuicoesConfirm)
+      let recordIdToUpdate = editingRecord?.id || existingRecordId;
+
+      if (!recordIdToUpdate) {
+        const checkDuplicity = await base44.entities.MonthlyGoalHistory.filter({
+          workshop_id: workshop.id,
+          reference_date: updatedFormData.reference_date,
+          entity_type: entityType,
+          ...(entityType === "employee" ? { employee_id: selectedEmployee?.id } : {})
+        });
+
+        if (checkDuplicity && checkDuplicity.length > 0) {
+          recordIdToUpdate = checkDuplicity[0].id;
+        }
       }
 
-      if (editingRecord || existingRecordId) {
-        const idToUpdate = editingRecord?.id || existingRecordId;
-        await base44.entities.MonthlyGoalHistory.update(idToUpdate, recordData);
+      if (recordIdToUpdate) {
+        await base44.entities.MonthlyGoalHistory.update(recordIdToUpdate, recordData);
       } else {
         await base44.entities.MonthlyGoalHistory.create(recordData);
       }
@@ -741,8 +749,24 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
         notes: formData.notes
       };
 
-      if (editingRecord) {
-        await base44.entities.MonthlyGoalHistory.update(editingRecord.id, recordData);
+      // Verificação rigorosa de duplicidade antes de salvar (handleSaveDirect)
+      let recordIdToUpdate = editingRecord?.id || existingRecordId;
+
+      if (!recordIdToUpdate) {
+        const checkDuplicity = await base44.entities.MonthlyGoalHistory.filter({
+          workshop_id: workshop.id,
+          reference_date: formData.reference_date,
+          entity_type: entityType,
+          ...(entityType === "employee" ? { employee_id: selectedEmployee?.id } : {})
+        });
+
+        if (checkDuplicity && checkDuplicity.length > 0) {
+          recordIdToUpdate = checkDuplicity[0].id;
+        }
+      }
+
+      if (recordIdToUpdate) {
+        await base44.entities.MonthlyGoalHistory.update(recordIdToUpdate, recordData);
       } else {
         await base44.entities.MonthlyGoalHistory.create(recordData);
       }
@@ -863,9 +887,24 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
         notes: formData.notes
       };
 
-      if (editingRecord || existingRecordId) {
-        const idToUpdate = editingRecord?.id || existingRecordId;
-        await base44.entities.MonthlyGoalHistory.update(idToUpdate, recordData);
+      // Verificação rigorosa de duplicidade antes de salvar (handleDistributionConfirm)
+      let recordIdToUpdate = editingRecord?.id || existingRecordId;
+
+      if (!recordIdToUpdate) {
+        const checkDuplicity = await base44.entities.MonthlyGoalHistory.filter({
+          workshop_id: workshop.id,
+          reference_date: formData.reference_date,
+          entity_type: entityType,
+          ...(entityType === "employee" ? { employee_id: selectedEmployee?.id } : {})
+        });
+
+        if (checkDuplicity && checkDuplicity.length > 0) {
+          recordIdToUpdate = checkDuplicity[0].id;
+        }
+      }
+
+      if (recordIdToUpdate) {
+        await base44.entities.MonthlyGoalHistory.update(recordIdToUpdate, recordData);
       } else {
         await base44.entities.MonthlyGoalHistory.create(recordData);
       }
