@@ -19,39 +19,54 @@
 
 @layer base {
   :root {
+    /* Cores da Logo - Oficinas Master (Dourado) */
+    --brand-primary: 43 74% 49%;   /* Dourado Sólido (Base) */
+    --brand-secondary: 45 84% 68%; /* Dourado Claro (Brilho/Reflexo) */
+
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    
+    /* Cores aplicadas aos elementos primários (Sidebar, Botões Padrão) */
+    --primary: var(--brand-primary);
+    --primary-foreground: 0 0% 0%; /* Texto PRETO nos botões dourados para dar contraste e leitura */
+    
+    --secondary: var(--brand-secondary);
+    --secondary-foreground: 222.2 47.4% 11.2%; 
+    
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
+    --accent: 45 84% 90%; /* Fundo levemente dourado para hover em itens de menu */
     --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --ring: var(--brand-primary);
     --radius: 0.5rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    /* No modo escuro, o dourado ganha ainda mais destaque, igual à sua imagem */
+    --brand-primary: 43 74% 49%;
+    --brand-secondary: 45 84% 68%;
+
+    --background: 222.2 84% 4.9%; /* Fundo quase preto */
     --foreground: 210 40% 98%;
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    
+    --primary: var(--brand-primary);
+    --primary-foreground: 0 0% 0%; /* Mantém o texto preto sobre o dourado */
+    
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
+    
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
     --accent: 217.2 32.6% 17.5%;
@@ -60,7 +75,7 @@
     --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --ring: var(--brand-primary);
   }
 }
 
@@ -70,6 +85,37 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* ==================================================================
+   BOTÃO ANIMADO (Efeito de Ouro Brilhando)
+================================================================== */
+@layer components {
+  .btn-gradient-animate {
+    @apply text-primary-foreground relative overflow-hidden transition-all duration-500 ease-in-out rounded-md font-bold;
+    
+    /* Gradiente Dourado */
+    background-image: linear-gradient(
+      to right,
+      hsl(var(--brand-primary)) 0%,
+      hsl(var(--brand-secondary)) 50%,
+      hsl(var(--brand-primary)) 100%
+    );
+    background-size: 200% auto;
+    border: none;
+  }
+
+  .btn-gradient-animate:hover {
+    /* Movimenta o gradiente gerando um brilho metálico */
+    background-position: right center;
+    /* Sombra dourada suave */
+    box-shadow: 0 4px 15px hsla(var(--brand-primary) / 0.4);
+    transform: translateY(-1px);
+  }
+  
+  .btn-gradient-animate svg {
+      @apply text-primary-foreground;
   }
 }
 
