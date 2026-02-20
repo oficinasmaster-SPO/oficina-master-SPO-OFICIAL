@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Upload, FileCode, Trash2 } from "lucide-react";
+import { Upload, FileCode, Trash2, Download } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 
@@ -43,6 +43,80 @@ export default function CustomCSSUpload({ workshop, onUpdate }) {
     }
   };
 
+  const downloadTemplate = () => {
+    const templateContent = \`/* 
+  MODELO DE PERSONALIZAÇÃO VISUAL (CSS)
+  --------------------------------------
+  Use este arquivo para alterar as cores e estilos do sistema.
+  Os valores de cor usam o formato HSL (Hue, Saturation, Lightness).
+  
+  Ferramenta para converter cores para HSL: https://www.w3schools.com/colors/colors_converter.asp
+*/
+
+:root {
+  /* --- CORES PRINCIPAIS (HSL) --- */
+  
+  /* COR PRIMÁRIA (Botões principais, destaques, links ativos) */
+  /* Exemplo: Azul padrão (222.2 47.4% 11.2%) */
+  --primary: 222.2 47.4% 11.2%; 
+  --primary-foreground: 210 40% 98%; /* Texto dentro do botão primário */
+
+  /* COR SECUNDÁRIA (Botões secundários, fundos alternativos) */
+  --secondary: 210 40% 96.1%;
+  --secondary-foreground: 222.2 47.4% 11.2%;
+
+  /* FUNDO E TEXTO GERAL */
+  --background: 0 0% 100%; /* Fundo da página (0 0% 100% = Branco) */
+  --foreground: 222.2 84% 4.9%; /* Cor do texto principal */
+
+  /* CARTÕES E PAINÉIS */
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+
+  /* BORDAS */
+  --border: 214.3 31.8% 91.4%;
+  --radius: 0.5rem; /* Arredondamento padrão (8px) */
+}
+
+/* --- EXEMPLOS DE CUSTOMIZAÇÃO ESPECÍFICA --- */
+
+/* Forçar cor de fundo do menu lateral (se desejar diferente do padrão) */
+/*
+aside {
+  background-color: #1e293b !important;
+  color: white !important;
+}
+*/
+
+/* Customizar Títulos */
+/*
+h1, .text-3xl {
+  color: #1e40af !important; 
+}
+*/
+
+/* Customizar Botões de Ação (ex: botões azuis para laranjas) */
+/*
+.bg-blue-600 {
+  background-color: #f97316 !important;
+}
+.hover\\:bg-blue-700:hover {
+  background-color: #ea580c !important;
+}
+*/
+\`;
+    
+    const blob = new Blob([templateContent], { type: 'text/css' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'modelo-personalizacao.css';
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -54,6 +128,12 @@ export default function CustomCSSUpload({ workshop, onUpdate }) {
           Faça upload de um arquivo CSS para personalizar cores, fontes e estilos do sistema.
           Isso afetará apenas a visualização da sua oficina.
         </CardDescription>
+        <div className="pt-2">
+            <Button variant="ghost" size="sm" onClick={downloadTemplate} className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-0 h-auto font-normal">
+                <Download className="w-3 h-3 mr-1" />
+                Baixar modelo de exemplo (.css)
+            </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {workshop?.custom_css_url ? (
