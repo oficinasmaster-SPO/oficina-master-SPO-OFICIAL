@@ -114,8 +114,9 @@ export default function RegistroDiario() {
     queryFn: async () => {
       if (!currentUser?.id) return [];
       try {
-        // Busca tarefas recentes para filtrar no cliente (limitação de filtro complexo na API)
-        const allTasks = await base44.entities.Task.list('-created_date', 300);
+        // Busca tarefas recentes por data de atualização para garantir que edições recentes apareçam
+        // Aumentado limite para 1000 e ordenado por atualização
+        const allTasks = await base44.entities.Task.list('-updated_date', 1000);
         const targetDate = format(date, 'yyyy-MM-dd');
         
         return allTasks.filter(task => {
