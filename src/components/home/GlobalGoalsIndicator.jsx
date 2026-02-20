@@ -94,11 +94,31 @@ export default function GlobalGoalsIndicator({ workshop, className = "" }) {
   const projectedServices = (bestMonthHistory.revenue_services || 0) * (1 + growthPercentage / 100);
   const projectedCustomers = Math.round((bestMonthHistory.customer_volume || 0) * (1 + growthPercentage / 100));
 
-  // REALIZADO - vem de workshop.monthly_goals (atualizado pelos registros manuais no PainelMetas)
-  const totalAchieved = monthlyGoals.actual_revenue_achieved || 0;
-  const totalParts = monthlyGoals.revenue_parts || 0;
-  const totalServices = monthlyGoals.revenue_services || 0;
-  const totalCustomers = monthlyGoals.customer_volume || 0;
+  // REALIZADO - Calculado a partir do histórico do mês atual para garantir precisão
+  // Se houver registros no monthlyHistory (filtrado pelo mês corrente), usamos a soma deles.
+  // Caso contrário, verificamos se o consolidado no workshop é do mês atual.
+  
+  let totalAchieved = 0;
+  let totalParts = 0;
+  let totalServices = 0;
+  let totalCustomers = 0;
+
+  if (monthlyHistory && monthlyHistory.length > 0) {
+    // Prioridade: Soma dos registros do mês atual encontrados no banco
+    monthlyHistory.forEach(record => {
+      totalAchieved += record.revenue_total || 0;
+      totalParts += record.revenue_parts || 0;
+      totalServices += record.revenue_services || 0;
+      totalCustomers += record.customer_volume || 0;
+    });
+  } else if (monthlyGoals.month === currentMonth) {
+    // Fallback: Consolidado do workshop, APENAS se for do mês atual
+    totalAchieved = monthlyGoals.actual_revenue_achieved || 0;
+    totalParts = monthlyGoals.revenue_parts || 0;
+    totalServices = monthlyGoals.revenue_services || 0;
+    totalCustomers = monthlyGoals.customer_volume || 0;
+  }
+  // Se não houver histórico do mês e o consolidado for antigo, mantém tudo zerado (início de mês)
 
   // Cálculos de progresso
   const revenueProgress = projectedRevenue > 0 
@@ -230,8 +250,8 @@ export default function GlobalGoalsIndicator({ workshop, className = "" }) {
             Metas Globais do Mês
           </CardTitle>
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="bg-blue-50 text-blue-700">
-              {new Date(currentMonth + '-01').toLocaleDateString('pt-BR', { 
+            <Badge variant="outline" className="bg-blue-50 text-blue-700 capitalize">
+              {new Date(currentMonth + '-01T12:00:00').toLocaleDateString('pt-BR', { 
                 month: 'long', 
                 year: 'numeric' 
               })}
