@@ -141,7 +141,7 @@ export default function TechnicianQGP() {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-xl font-bold text-gray-900">Minha Fila QGP</h1>
-            <p className="text-sm text-gray-500">Olá, {user.full_name?.split(' ')[0]}</p>
+            <p className="text-sm text-gray-500">Olá, {user.full_name?.split(' ')[0] || 'Colaborador'}</p>
           </div>
           <div className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-bold">
             {myTasks.length} serviços
