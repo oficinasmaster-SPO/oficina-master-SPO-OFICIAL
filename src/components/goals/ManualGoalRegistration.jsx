@@ -268,24 +268,33 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
   const loadEditingData = async () => {
     if (!editingRecord) return;
     
-    // Configurar tipo base (o funcionário é configurado pelo useEffect dedicado)
+    // Configurar tipo base
     const type = editingRecord.entity_type || (editingRecord.employee_id ? "employee" : "workshop");
     setEntityType(type);
     
-    setFormData({
-      reference_date: editingRecord.reference_date,
+    // Garantir formatação da data para YYYY-MM-DD
+    let formattedDate = editingRecord.reference_date;
+    if (formattedDate && formattedDate.includes('T')) {
+      formattedDate = formattedDate.split('T')[0];
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      reference_date: formattedDate,
       month: editingRecord.month,
-      projected_total: editingRecord.projected_total || 0,
-      projected_revenue_parts: editingRecord.projected_revenue_parts || 0,
-      projected_revenue_services: editingRecord.projected_revenue_services || 0,
-      projected_customer_volume: editingRecord.projected_customer_volume || 0,
-      projected_average_ticket: editingRecord.projected_average_ticket || 0,
-      projected_pave_commercial: editingRecord.projected_pave_commercial || 0,
-      projected_kit_master: editingRecord.projected_kit_master || 0,
-      projected_sales_base: editingRecord.projected_sales_base || 0,
-      projected_sales_marketing: editingRecord.projected_sales_marketing || 0,
-      projected_clients_delivered: editingRecord.projected_clients_delivered || 0,
-      projected_gps_vendas: editingRecord.projected_gps_vendas || 0,
+      
+      // PREVISTO
+      projected_total: Number(editingRecord.projected_total) || 0,
+      projected_revenue_parts: Number(editingRecord.projected_revenue_parts) || 0,
+      projected_revenue_services: Number(editingRecord.projected_revenue_services) || 0,
+      projected_customer_volume: Number(editingRecord.projected_customer_volume) || 0,
+      projected_average_ticket: Number(editingRecord.projected_average_ticket) || 0,
+      projected_pave_commercial: Number(editingRecord.projected_pave_commercial) || 0,
+      projected_kit_master: Number(editingRecord.projected_kit_master) || 0,
+      projected_sales_base: Number(editingRecord.projected_sales_base) || 0,
+      projected_sales_marketing: Number(editingRecord.projected_sales_marketing) || 0,
+      projected_clients_delivered: Number(editingRecord.projected_clients_delivered) || 0,
+      projected_gps_vendas: Number(editingRecord.projected_gps_vendas) || 0,
       projected_marketing: editingRecord.projected_marketing || {
         leads_generated: 0,
         leads_scheduled: 0,
@@ -295,24 +304,26 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
         invested_value: 0,
         revenue_from_traffic: 0
       },
-      achieved_total: editingRecord.achieved_total || 0,
-      revenue_parts: editingRecord.revenue_parts || 0,
-      revenue_services: editingRecord.revenue_services || 0,
-      customer_volume: editingRecord.customer_volume || 0,
+
+      // REALIZADO
+      achieved_total: Number(editingRecord.achieved_total) || 0,
+      revenue_parts: Number(editingRecord.revenue_parts) || 0,
+      revenue_services: Number(editingRecord.revenue_services) || 0,
+      customer_volume: Number(editingRecord.customer_volume) || 0,
       r70_i30: editingRecord.r70_i30 || { r70: 70, i30: 30 },
-      tcmp2: editingRecord.tcmp2 || 0,
-      pave_commercial: editingRecord.pave_commercial || 0,
-      kit_master: editingRecord.kit_master || 0,
-      sales_base: editingRecord.sales_base || 0,
-      sales_marketing: editingRecord.sales_marketing || 0,
-      clients_delivered: editingRecord.clients_delivered || 0,
-      gps_vendas: editingRecord.gps_vendas || 0,
-      clients_scheduled_base: editingRecord.clients_scheduled_base || 0,
-      clients_delivered_base: editingRecord.clients_delivered_base || 0,
-      clients_scheduled_mkt: editingRecord.clients_scheduled_mkt || 0,
-      clients_delivered_mkt: editingRecord.clients_delivered_mkt || 0,
-      clients_scheduled_referral: editingRecord.clients_scheduled_referral || 0,
-      clients_delivered_referral: editingRecord.clients_delivered_referral || 0,
+      tcmp2: Number(editingRecord.tcmp2) || 0,
+      pave_commercial: Number(editingRecord.pave_commercial) || 0,
+      kit_master: Number(editingRecord.kit_master) || 0,
+      sales_base: Number(editingRecord.sales_base) || 0,
+      sales_marketing: Number(editingRecord.sales_marketing) || 0,
+      clients_delivered: Number(editingRecord.clients_delivered) || 0,
+      gps_vendas: Number(editingRecord.gps_vendas) || 0,
+      clients_scheduled_base: Number(editingRecord.clients_scheduled_base) || 0,
+      clients_delivered_base: Number(editingRecord.clients_delivered_base) || 0,
+      clients_scheduled_mkt: Number(editingRecord.clients_scheduled_mkt) || 0,
+      clients_delivered_mkt: Number(editingRecord.clients_delivered_mkt) || 0,
+      clients_scheduled_referral: Number(editingRecord.clients_scheduled_referral) || 0,
+      clients_delivered_referral: Number(editingRecord.clients_delivered_referral) || 0,
       marketing_data: editingRecord.marketing_data || {
         leads_generated: 0,
         leads_scheduled: 0,
@@ -321,9 +332,9 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
         invested_value: 0,
         revenue_from_traffic: 0
       },
-      rework_count: editingRecord.rework_count || 0,
+      rework_count: Number(editingRecord.rework_count) || 0,
       notes: editingRecord.notes || ""
-    });
+    }));
   };
 
   const loadTCMP2 = async () => {
