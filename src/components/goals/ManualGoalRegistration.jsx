@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Save, Building2, User, Target, TrendingUp } from "lucide-react";
+import { Save, Building2, User, Target, TrendingUp, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import RevenueDistributionModal from "./RevenueDistributionModal";
 import VendaAtribuicoesModal from "./VendaAtribuicoesModal";
@@ -476,12 +476,20 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
   };
 
   const handleSaveAndAnalyze = async () => {
-    // Abre modal de atribuições (novo modelo Fato vs Atribuição)
-    // Carregar atribuições existentes se estiver editando
-    if (editingRecord?.id || existingRecordId) {
-      await loadExistingAtribuicoes();
+    try {
+      setIsSaving(true);
+      // Abre modal de atribuições (novo modelo Fato vs Atribuição)
+      // Carregar atribuições existentes se estiver editando
+      if (editingRecord?.id || existingRecordId) {
+        await loadExistingAtribuicoes();
+      }
+      setShowAtribuicoes(true);
+    } catch (error) {
+      console.error("Erro ao preparar atribuições:", error);
+      toast.error("Erro ao carregar dados para distribuição");
+    } finally {
+      setIsSaving(false);
     }
-    setShowAtribuicoes(true);
   };
 
   const loadExistingAtribuicoes = async () => {
@@ -2429,8 +2437,17 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
               className="flex-1 bg-blue-600 hover:bg-blue-700"
               disabled={isSaving}
             >
-              <Save className="w-4 h-4 mr-2" />
-              Salvar e Distribuir
+              {isSaving ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Carregando...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Salvar e Distribuir
+                </>
+              )}
             </Button>
           </div>
           </div>
@@ -2462,6 +2479,7 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
             employees={employees}
             onConfirm={handleAtribuicoesConfirm}
             existingAtribuicoes={existingAtribuicoes}
+            isLoading={isSaving}
           />
           </Dialog>
           );

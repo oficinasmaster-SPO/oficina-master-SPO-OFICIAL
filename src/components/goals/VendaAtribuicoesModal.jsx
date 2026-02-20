@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Trash2, AlertCircle } from "lucide-react";
+import { Plus, Trash2, AlertCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 const PAPEIS_DISPONIVEIS = [
@@ -29,7 +29,8 @@ export default function VendaAtribuicoesModal({
   valorServicos,
   employees, 
   onConfirm,
-  existingAtribuicoes = []
+  existingAtribuicoes = [],
+  isLoading = false
 }) {
   const [atribuicoes, setAtribuicoes] = useState([]);
 
@@ -297,10 +298,17 @@ export default function VendaAtribuicoesModal({
             </Button>
             <Button 
               onClick={handleConfirm}
-              disabled={!isValid}
+              disabled={!isValid || isLoading}
               className="flex-1 bg-blue-600 hover:bg-blue-700"
             >
-              Salvar Funil de Vendas
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Salvando...
+                </>
+              ) : (
+                "Salvar Funil de Vendas"
+              )}
             </Button>
           </div>
         </div>
