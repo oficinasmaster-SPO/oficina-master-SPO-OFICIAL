@@ -10,6 +10,7 @@ import { base44 } from "@/api/base44Client";
 import { Checkbox } from "@/components/ui/checkbox";
 import SliderWithMax from "@/components/ui/slider-with-max";
 import { toast } from "sonner";
+import LogoUpload from "./LogoUpload";
 
 const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange }, ref) => {
   const [editing, setEditing] = useState(false);
@@ -229,6 +230,17 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Logo Upload Section */}
+          <div className="mb-6 border-b pb-6">
+            <LogoUpload 
+              workshop={workshop} 
+              onUpdate={(data) => {
+                // LogoUpload já atualiza o banco, mas chamamos onUpdate para atualizar o estado local do pai
+                if (onUpdate) onUpdate(data);
+              }} 
+            />
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label>Nome Fantasia *</Label>

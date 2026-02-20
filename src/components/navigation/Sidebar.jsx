@@ -199,7 +199,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       return false;
     }
   });
-  const [hasWorkshop, setHasWorkshop] = React.useState(false);
+  const [userWorkshop, setUserWorkshop] = React.useState(null);
   
   // Controle de acesso Admin Global (SPO)
   const [isGlobalContext, setIsGlobalContext] = React.useState(false);
@@ -236,13 +236,29 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
 
   const loadUserWorkshop = async () => {
     try {
-      const workshops = await base44.entities.Workshop.filter({ 
-        owner_id: user.id 
-      });
-      setHasWorkshop(workshops && workshops.length > 0);
+      // Tentar carregar workshop do usuário (proprietário ou funcionário)
+      let targetWorkshop = null;
+      
+      // 1. Verificar se é proprietário
+      const ownedWorkshops = await base44.entities.Workshop.filter({ owner_id: user.id });
+      if (ownedWorkshops && ownedWorkshops.length > 0) {
+        targetWorkshop = ownedWorkshops[0];
+      } else {
+        // 2. Verificar se é funcionário
+        const employees = await base44.entities.Employee.filter({ user_id: user.id });
+        if (employees && employees.length > 0 && employees[0].workshop_id) {
+          try {
+            targetWorkshop = await base44.entities.Workshop.get(employees[0].workshop_id);
+          } catch (e) {
+            console.error("Erro ao carregar workshop do funcionário:", e);
+          }
+        }
+      }
+      
+      setUserWorkshop(targetWorkshop);
     } catch (error) {
       console.error("Erro ao carregar workshop:", error);
-      setHasWorkshop(false);
+      setUserWorkshop(null);
     }
   };
 
@@ -1084,11 +1100,23 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           ) : (
             <div className="flex items-center justify-between gap-3">
               <Link to={createPageUrl('Home') + queryString} className="flex items-center gap-3 flex-1">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center">
-                  <FileText className="w-6 h-6 text-white" />
-                </div>
+                {userWorkshop?.logo_url ? (
+                  <div className="w-10 h-10 rounded-xl overflow-hidden bg-white border border-gray-200 flex items-center justify-center">
+                    <img 
+                      src={userWorkshop.logo_url} 
+                      alt="Logo" 
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center">
+                    <FileText className="w-6 h-6 text-white" />
+                  </div>
+                )}
                 <div>
-                  <h2 className="font-bold text-gray-900">Oficinas Master</h2>
+                  <h2 className="font-bold text-gray-900 truncate max-w-[140px]" title={userWorkshop?.name || "Oficinas Master"}>
+                    {userWorkshop?.name || "Oficinas Master"}
+                  </h2>
                   <p className="text-xs text-gray-600">Sistema de Aceleração</p>
                 </div>
               </Link>
@@ -1261,7 +1289,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           )}
 
           {/* Item fixo: Escolha seu Plano - Apenas se tem workshop */}
-          {hasWorkshop && (
+          {userWorkshop && (
            <div className="mt-6 border-t border-gray-200 pt-4">
              <Link
                to={createPageUrl('Planos') + queryString}
