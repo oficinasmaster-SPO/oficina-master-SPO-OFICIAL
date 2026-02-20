@@ -41,26 +41,32 @@ export default function HistoricoMetas() {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
-      // Verificar se há workshop_id na URL (admin visualizando)
       const urlParams = new URLSearchParams(location.search);
       const adminWorkshopId = urlParams.get('workshop_id');
 
-      let userWorkshop = null;
-      
+      let resolvedWorkshop = null;
+      let isAdminOverride = false;
+
+      // 1. Prioridade: Admin via URL
       if (adminWorkshopId && currentUser.role === 'admin') {
-        // Admin visualizando oficina específica
-        userWorkshop = await base44.entities.Workshop.get(adminWorkshopId);
-        setIsAdminView(true);
+        resolvedWorkshop = await base44.entities.Workshop.get(adminWorkshopId);
+        isAdminOverride = true;
       } else {
-        // Fluxo normal
-        const workshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
-        if (workshops.length > 0) {
-          userWorkshop = workshops[0];
+        // 2. Prioridade: Employee
+        const employees = await base44.entities.Employee.filter({ user_id: currentUser.id });
+        if (employees.length > 0 && employees[0].workshop_id) {
+          resolvedWorkshop = await base44.entities.Workshop.get(employees[0].workshop_id);
+        } else {
+          // 3. Prioridade: Owner
+          const ownedWorkshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
+          if (ownedWorkshops.length > 0) {
+            resolvedWorkshop = ownedWorkshops[0];
+          }
         }
-        setIsAdminView(false);
       }
       
-      setWorkshop(userWorkshop);
+      setWorkshop(resolvedWorkshop);
+      setIsAdminView(isAdminOverride);
     } catch (error) {
       console.error("Error loading user:", error);
     }
