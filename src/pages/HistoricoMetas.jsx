@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Target } from "lucide-react";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 import ManualGoalRegistration from "../components/goals/ManualGoalRegistration";
 import AdminViewBanner from "../components/shared/AdminViewBanner";
 import { useSyncData } from "../components/hooks/useSyncData";
@@ -122,7 +124,65 @@ export default function HistoricoMetas() {
   });
 
   const handleExport = () => {
-    toast.info("Exportação em desenvolvimento...");
+    if (!goalHistory || goalHistory.length === 0) {
+      toast.error("Não há dados para exportar.");
+      return;
+    }
+
+    const doc = new jsPDF();
+
+    // Title
+    doc.setFontSize(18);
+    doc.text("Histórico de Metas e Produção", 14, 22);
+    
+    // Subtitle
+    doc.setFontSize(10);
+    doc.text(`Gerado em: ${new Date().toLocaleDateString()} - ${new Date().toLocaleTimeString()}`, 14, 30);
+    if (workshop) {
+        doc.text(`Oficina: ${workshop.name}`, 14, 35);
+    }
+    if (filterMonth) {
+        doc.text(`Mês Referência: ${filterMonth}`, 14, 40);
+    }
+
+    // Prepare table data
+    const tableColumn = ["Data", "Colaborador", "Tipo", "Meta", "Realizado", "Faturamento", "T. Médio"];
+    const tableRows = [];
+
+    goalHistory.forEach(record => {
+      // Find employee name if exists, or use entity name/id
+      let name = "N/A";
+      if (record.entity_type === 'workshop') {
+        name = "Oficina (Geral)";
+      } else {
+        const employee = employees.find(e => e.id === record.employee_id);
+        name = employee ? employee.full_name : "Colaborador";
+      }
+
+      const type = record.entity_type === 'workshop' ? 'Oficina' : 'Colaborador';
+      
+      const row = [
+        new Date(record.reference_date).toLocaleDateString(),
+        name,
+        type,
+        record.projected_total?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) || '-',
+        record.achieved_total?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) || '-',
+        record.revenue_total?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) || '-',
+        record.average_ticket?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) || '-'
+      ];
+      tableRows.push(row);
+    });
+
+    doc.autoTable({
+      head: [tableColumn],
+      body: tableRows,
+      startY: 45,
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [66, 66, 66] }
+    });
+
+    doc.save(`historico_metas_${filterMonth || 'geral'}.pdf`);
+    toast.success("Relatório exportado com sucesso!");
   };
 
   const toggleCardExpansion = (recordId) => {
@@ -193,6 +253,7 @@ export default function HistoricoMetas() {
           workshopId={workshop?.id}
           filterMonth={filterMonth}
           onSyncSuccess={handleSyncSuccess}
+          onExport={handleExport}
         />
 
         <HistoricoFilters

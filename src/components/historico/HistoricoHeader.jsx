@@ -11,12 +11,9 @@ export default function HistoricoHeader({
   isFetching,
   workshopId,
   filterMonth,
-  onSyncSuccess
+  onSyncSuccess,
+  onExport
 }) {
-  const handleExport = () => {
-    toast.info("Exportação em desenvolvimento...");
-  };
-
   const handleSyncAll = async () => {
     try {
       toast.info("Sincronizando dados...");
@@ -70,7 +67,7 @@ export default function HistoricoHeader({
           <BarChart3 className="w-4 h-4 mr-2" />
           Gráficos
         </Button>
-        <Button variant="outline" onClick={handleExport}>
+        <Button variant="outline" onClick={onExport}>
           <Download className="w-4 h-4 mr-2" />
           Exportar
         </Button>
