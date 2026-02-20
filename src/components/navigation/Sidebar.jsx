@@ -1109,8 +1109,9 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                     />
                   </div>
                 ) : (
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center">
-                    <FileText className="w-6 h-6 text-white" />
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden relative">
+                    <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--brand-primary))] to-[hsl(var(--brand-secondary))] opacity-90" />
+                    <FileText className="w-6 h-6 text-black z-10 relative" />
                   </div>
                 )}
                 <div>
@@ -1140,8 +1141,8 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all",
                   isActive(createPageUrl('Home'))
-                    ? "bg-blue-50 text-blue-700 font-medium"
-                    : "text-gray-700 hover:bg-gray-100"
+                    ? "bg-accent text-primary font-bold shadow-sm"
+                    : "text-gray-700 hover:bg-accent/50 hover:text-primary transition-colors"
                 )}
               >
                 <Home className="w-5 h-5" />
@@ -1153,8 +1154,8 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all",
                   isActive(createPageUrl('MeuPerfil'))
-                    ? "bg-blue-50 text-blue-700 font-medium"
-                    : "text-gray-700 hover:bg-gray-100"
+                    ? "bg-accent text-primary font-bold shadow-sm"
+                    : "text-gray-700 hover:bg-accent/50 hover:text-primary transition-colors"
                 )}
               >
                 <User className="w-5 h-5" />
@@ -1171,8 +1172,8 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                 className={cn(
                   "p-3 rounded-lg transition-all",
                   isActive(createPageUrl('Home'))
-                    ? "bg-blue-50 text-blue-700"
-                    : "text-gray-700 hover:bg-gray-100"
+                    ? "bg-accent text-primary"
+                    : "text-gray-700 hover:bg-accent/50 hover:text-primary"
                 )}
                 title="Início"
               >
@@ -1184,8 +1185,8 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                 className={cn(
                   "p-3 rounded-lg transition-all",
                   isActive(createPageUrl('MeuPerfil'))
-                    ? "bg-blue-50 text-blue-700"
-                    : "text-gray-700 hover:bg-gray-100"
+                    ? "bg-accent text-primary"
+                    : "text-gray-700 hover:bg-accent/50 hover:text-primary"
                 )}
                 title="Meu Perfil"
               >
@@ -1265,7 +1266,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                                 </div>
 
                                 {active && (
-                                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600 rounded-r" />
+                                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r" />
                                 )}
                               </Link>
                             );

@@ -125,7 +125,7 @@ export default function DashboardOverview() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -182,7 +182,7 @@ export default function DashboardOverview() {
              </Button>
              <Button 
                 onClick={() => navigate(createPageUrl("SelecionarDiagnostico"))}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="btn-gradient-animate shadow-lg hover:scale-105"
              >
                 <Brain className="w-4 h-4 mr-2" />
                 Novo Diagnóstico
@@ -193,10 +193,10 @@ export default function DashboardOverview() {
         {/* Key Metrics Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {/* Entrepreneur Profile Card */}
-          <Card className="shadow-sm hover:shadow-md transition-shadow border-l-4 border-l-blue-500">
+          <Card className="shadow-sm hover:shadow-md transition-shadow border-l-4 border-l-primary">
             <CardHeader className="pb-2">
                 <CardTitle className="text-lg flex items-center gap-2">
-                    <User className="w-5 h-5 text-blue-600" />
+                    <User className="w-5 h-5 text-primary" />
                     Perfil do Empresário
                 </CardTitle>
             </CardHeader>
@@ -212,7 +212,7 @@ export default function DashboardOverview() {
                         <div className="flex gap-2 mt-3">
                             <Button 
                                 variant="link" 
-                                className="p-0 h-auto text-blue-600"
+                                className="p-0 h-auto text-primary hover:text-primary/80 font-semibold"
                                 onClick={() => navigate(createPageUrl("ResultadoEmpresario") + `?id=${entrepreneurDiag.id}`)}
                             >
                                 Ver detalhes <TrendingUp className="w-3 h-3 ml-1" />
@@ -220,7 +220,7 @@ export default function DashboardOverview() {
                             <span className="text-gray-300">|</span>
                             <Button 
                                 variant="link" 
-                                className="p-0 h-auto text-blue-600"
+                                className="p-0 h-auto text-primary hover:text-primary/80 font-semibold"
                                 onClick={() => navigate(createPageUrl("Historico"))}
                             >
                                 Ver todos
