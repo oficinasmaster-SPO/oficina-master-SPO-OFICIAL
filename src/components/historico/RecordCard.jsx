@@ -21,6 +21,12 @@ export default function RecordCard({
   const metaAchieved = achievementPercentage >= 100;
   const hasFaturamento = (record.revenue_total > 0 || record.achieved_total > 0);
 
+  // Parse date as local time to avoid timezone shifts (D-1 issue)
+  const dateParts = (record.reference_date || "").split('T')[0].split('-');
+  const displayDate = dateParts.length >= 3 
+    ? new Date(dateParts[0], dateParts[1] - 1, dateParts[2]) 
+    : new Date(record.reference_date);
+
   return (
     <Card className={`hover:shadow-lg transition-all ${
       !hasFaturamento ? 'border-l-4 border-gray-400 bg-gray-50/30' :
@@ -32,20 +38,20 @@ export default function RecordCard({
             {/* Data */}
             <div className="text-center min-w-[70px]">
               <p className="text-3xl font-bold text-gray-900">
-                {new Date(record.reference_date).getDate()}
+                {displayDate.getDate()}
               </p>
               <p className="text-xs text-gray-500 uppercase">
-                {new Date(record.reference_date).toLocaleDateString('pt-BR', { month: 'short' })}
+                {displayDate.toLocaleDateString('pt-BR', { month: 'short' })}
               </p>
               <p className="text-xs text-gray-400">
-                {new Date(record.reference_date).getFullYear()}
+                {displayDate.getFullYear()}
               </p>
             </div>
 
             {/* Info Principal */}
             <div className="flex-1">
               <p className="font-semibold text-gray-900 mb-1">
-                {new Date(record.reference_date).toLocaleDateString('pt-BR', { 
+                {displayDate.toLocaleDateString('pt-BR', { 
                   weekday: 'long', 
                   day: '2-digit', 
                   month: 'long'

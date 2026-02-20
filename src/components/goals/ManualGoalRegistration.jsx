@@ -25,8 +25,8 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
   const [existingRecordId, setExistingRecordId] = useState(null);
   const [existingAtribuicoes, setExistingAtribuicoes] = useState([]);
   const [formData, setFormData] = useState({
-    reference_date: new Date().toISOString().split('T')[0],
-    month: new Date().toISOString().substring(0, 7),
+    reference_date: new Date().toLocaleDateString('en-CA'), // Local date YYYY-MM-DD
+    month: new Date().toLocaleDateString('en-CA').substring(0, 7),
     // PREVISTO (vem do desdobramento)
     projected_total: 0,
     projected_revenue_parts: 0,
