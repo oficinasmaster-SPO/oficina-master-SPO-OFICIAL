@@ -251,7 +251,7 @@ export default function Layout({ children, currentPageName }) {
                   ) : (
                     <Button
                       onClick={handleLogin}
-                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      className="btn-gradient-animate text-black font-bold shadow-lg hover:scale-105"
                       size="sm"
                     >
                       <LogIn className="w-4 h-4 mr-2" />
@@ -283,13 +283,13 @@ export default function Layout({ children, currentPageName }) {
                 © 2025 Oficinas Master. Todos os direitos reservados.
               </p>
               <div className="flex items-center gap-6">
-                <a href="#" className="text-sm text-gray-600 hover:text-blue-600">
+                <a href="#" className="text-sm text-gray-600 hover:text-primary transition-colors">
                   Termos de Uso
                 </a>
-                <a href="#" className="text-sm text-gray-600 hover:text-blue-600">
+                <a href="#" className="text-sm text-gray-600 hover:text-primary transition-colors">
                   Privacidade
                 </a>
-                <a href="#" className="text-sm text-gray-600 hover:text-blue-600">
+                <a href="#" className="text-sm text-gray-600 hover:text-primary transition-colors">
                   Suporte
                 </a>
               </div>
