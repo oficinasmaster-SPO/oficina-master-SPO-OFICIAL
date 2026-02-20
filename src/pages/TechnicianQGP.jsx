@@ -18,6 +18,7 @@ import { Link } from "react-router-dom";
 
 export default function TechnicianQGP() {
   const [user, setUser] = useState(null);
+  const [employee, setEmployee] = useState(null);
   const [selectedTask, setSelectedTask] = useState(null);
   const [isPauseDialogOpen, setIsPauseDialogOpen] = useState(false);
   const [pauseReason, setPauseReason] = useState("");
@@ -31,18 +32,23 @@ export default function TechnicianQGP() {
     const loadUser = async () => {
       const u = await base44.auth.me();
       setUser(u);
+      if (u) {
+        const emps = await base44.entities.Employee.filter({ user_id: u.id });
+        if (emps.length > 0) setEmployee(emps[0]);
+      }
     };
     loadUser();
   }, []);
 
   const { data: myTasks = [] } = useQuery({
-    queryKey: ['my-qgp-tasks', user?.id],
+    queryKey: ['my-qgp-tasks', user?.id, employee?.id],
     queryFn: async () => {
       if (!user) return [];
       const allTasks = await base44.entities.Task.list();
       // Filter tasks assigned to me or where I am the main technician
+      // We check both employee_id (for the technician record) and user.id (for direct assignment)
       return allTasks.filter(t => 
-        (t.employee_id === user.id || t.assigned_to?.includes(user.id)) &&
+        ((employee && t.employee_id === employee.id) || t.assigned_to?.includes(user.id)) &&
         t.status !== 'concluida' && 
         t.status !== 'cancelada'
       ).sort((a, b) => {
