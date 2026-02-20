@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSyncData } from "@/components/hooks/useSyncData";
@@ -10,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar as CalendarIcon, Save, Loader2, Upload, CheckCircle2, AlertCircle } from "lucide-react";
+import { Calendar as CalendarIcon, Save, Loader2, Upload, CheckCircle2, AlertCircle, Plus } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { toast } from "sonner";
@@ -19,6 +21,7 @@ import { cn } from "@/lib/utils";
 import AdminViewBanner from "../components/shared/AdminViewBanner";
 
 export default function RegistroDiario() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { updateDREFromMonthlyGoals } = useSyncData();
   const [date, setDate] = useState(new Date());
@@ -446,9 +449,20 @@ export default function RegistroDiario() {
                             Tarefas agendadas para vencer ou concluídas em {format(date, "dd/MM/yyyy")}
                         </CardDescription>
                     </div>
-                    <Badge variant="outline" className="text-purple-600 border-purple-200 bg-purple-50">
-                        {dailyTasks.length} tarefa(s)
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-8 text-xs border-purple-200 text-purple-700 hover:bg-purple-50"
+                            onClick={() => navigate(createPageUrl('Tarefas'))}
+                        >
+                            <Plus className="w-3 h-3 mr-1" />
+                            Gerenciar
+                        </Button>
+                        <Badge variant="outline" className="text-purple-600 border-purple-200 bg-purple-50">
+                            {dailyTasks.length} tarefa(s)
+                        </Badge>
+                    </div>
                 </div>
             </CardHeader>
             <CardContent>
