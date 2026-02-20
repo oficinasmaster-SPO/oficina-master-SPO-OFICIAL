@@ -1,3 +1,4 @@
+css
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -50,7 +51,7 @@
   }
 
   .dark {
-    /* No modo escuro, o dourado ganha ainda mais destaque, igual à sua imagem */
+    /* No modo escuro, o dourado ganha ainda mais destaque */
     --brand-primary: 43 74% 49%;
     --brand-secondary: 45 84% 68%;
 
@@ -62,7 +63,7 @@
     --popover-foreground: 210 40% 98%;
     
     --primary: var(--brand-primary);
-    --primary-foreground: 0 0% 0%; /* Mantém o texto preto sobre o dourado */
+    --primary-foreground: 0 0% 0%; 
     
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
