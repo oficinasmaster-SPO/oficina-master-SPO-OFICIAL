@@ -307,6 +307,9 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
       formattedDate = formattedDate.split('T')[0];
     }
 
+    const pm = editingRecord.projected_marketing || {};
+    const md = editingRecord.marketing_data || {};
+
     setFormData(prev => ({
       ...prev,
       reference_date: formattedDate,
@@ -324,14 +327,14 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
       projected_sales_marketing: parseValue(editingRecord.projected_sales_marketing),
       projected_clients_delivered: parseValue(editingRecord.projected_clients_delivered),
       projected_gps_vendas: parseValue(editingRecord.projected_gps_vendas),
-      projected_marketing: editingRecord.projected_marketing || {
-        leads_generated: 0,
-        leads_scheduled: 0,
-        leads_showed_up: 0,
-        leads_sold: 0,
-        cost_per_sale: 0,
-        invested_value: 0,
-        revenue_from_traffic: 0
+      projected_marketing: {
+        leads_generated: parseValue(pm.leads_generated),
+        leads_scheduled: parseValue(pm.leads_scheduled),
+        leads_showed_up: parseValue(pm.leads_showed_up),
+        leads_sold: parseValue(pm.leads_sold),
+        cost_per_sale: parseValue(pm.cost_per_sale),
+        invested_value: parseValue(pm.invested_value),
+        revenue_from_traffic: parseValue(pm.revenue_from_traffic)
       },
 
       // REALIZADO
@@ -353,13 +356,13 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
       clients_delivered_mkt: parseValue(editingRecord.clients_delivered_mkt),
       clients_scheduled_referral: parseValue(editingRecord.clients_scheduled_referral),
       clients_delivered_referral: parseValue(editingRecord.clients_delivered_referral),
-      marketing_data: editingRecord.marketing_data || {
-        leads_generated: 0,
-        leads_scheduled: 0,
-        leads_showed_up: 0,
-        leads_sold: 0,
-        invested_value: 0,
-        revenue_from_traffic: 0
+      marketing_data: {
+        leads_generated: parseValue(md.leads_generated),
+        leads_scheduled: parseValue(md.leads_scheduled),
+        leads_showed_up: parseValue(md.leads_showed_up),
+        leads_sold: parseValue(md.leads_sold),
+        invested_value: parseValue(md.invested_value),
+        revenue_from_traffic: parseValue(md.revenue_from_traffic)
       },
       rework_count: parseValue(editingRecord.rework_count),
       notes: editingRecord.notes || ""
