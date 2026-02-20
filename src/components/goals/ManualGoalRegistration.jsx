@@ -267,13 +267,29 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
 
   // Função auxiliar para converter valores numéricos com mais segurança
   const parseValue = (val) => {
+    if (val === null || val === undefined) return 0;
     if (typeof val === 'number') return val;
-    if (!val) return 0;
     if (typeof val === 'string') {
-      if (val.includes(',') && !val.includes('.')) return parseFloat(val.replace(',', '.')) || 0;
-      if (val.includes('.') && val.includes(',')) return parseFloat(val.replace(/\./g, '').replace(',', '.')) || 0;
+      // Remove "R$" e espaços
+      let clean = val.replace(/^R\$\s?/, '').trim();
+      if (clean === '') return 0;
+
+      // Formato Brasileiro: 1.000,00
+      if (clean.includes(',') && clean.includes('.')) {
+        return parseFloat(clean.replace(/\./g, '').replace(',', '.')) || 0;
+      }
+      // Formato Brasileiro apenas com vírgula: 1000,00
+      if (clean.includes(',')) {
+        return parseFloat(clean.replace(',', '.')) || 0;
+      }
+      // Formato apenas com ponto (pode ser milhar ou decimal, assume decimal se não tiver vírgula)
+      // Mas se for 1.000 (mil), JS entende como 1. 
+      // Se veio do input do usuário ou formatação BRL, ponto é milhar.
+      // Vamos assumir que se tem ponto e parece BRL, remove ponto. 
+      // Mas para segurança, Number() do JS segue padrão internacional.
+      return Number(clean) || 0;
     }
-    return Number(val) || 0;
+    return 0;
   };
 
   const loadEditingData = async () => {
@@ -284,10 +300,9 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
     setEntityType(type);
     
     // Garantir formatação da data para YYYY-MM-DD
-    let formattedDate = editingRecord.reference_date;
-    if (formattedDate && formattedDate.includes('T')) {
-      formattedDate = formattedDate.split('T')[0];
-    }
+    let formattedDate = editingRecord.reference_date 
+      ? (editingRecord.reference_date.includes('T') ? editingRecord.reference_date.split('T')[0] : editingRecord.reference_date)
+      : new Date().toLocaleDateString('en-CA');
 
     const pm = editingRecord.projected_marketing || {};
     const md = editingRecord.marketing_data || {};
