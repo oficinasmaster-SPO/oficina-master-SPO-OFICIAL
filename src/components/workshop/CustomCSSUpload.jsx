@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Upload, FileCode, Trash2, Download } from "lucide-react";
+import { Upload, FileCode, Trash2, Download, RefreshCw } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 
@@ -157,7 +157,14 @@ h1, .text-3xl {
             <div className="flex gap-2">
               <Button variant="outline" onClick={handleRemove} className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50">
                 <Trash2 className="w-4 h-4 mr-2" />
-                Remover Personalização
+                Remover
+              </Button>
+              <Button 
+                onClick={() => window.location.reload()} 
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Aplicar
               </Button>
               <label className="flex-1">
                 <Button variant="outline" className="w-full" disabled={uploading} asChild>
