@@ -557,6 +557,13 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
         await base44.entities.MonthlyGoalHistory.create(recordData);
       }
 
+      if (editingRecord || existingRecordId) {
+        const idToUpdate = editingRecord?.id || existingRecordId;
+        await base44.entities.MonthlyGoalHistory.update(idToUpdate, recordData);
+      } else {
+        await base44.entities.MonthlyGoalHistory.create(recordData);
+      }
+
       // 4. Sincronizar valores mensais - SOMAR TODAS AS VENDAS DO MÊS
       const todasVendasMes = await base44.entities.VendasServicos.filter({
         workshop_id: workshop.id,
