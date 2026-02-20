@@ -107,19 +107,15 @@ export default function VendaAtribuicoesModal({
     setAtribuicoes(novasAtribuicoes);
   };
 
-  // Habilita se houver pelo menos uma atribuição com pessoa selecionada
-  const isValid = atribuicoes.length > 0 && atribuicoes.some(a => a.pessoa_id);
+  const isValid = atribuicoes.length > 0 && atribuicoes.every(a => a.pessoa_id);
 
   const handleConfirm = () => {
-    // Filtra apenas as atribuições completas (com pessoa selecionada)
-    const atribuicoesValidas = atribuicoes.filter(a => a.pessoa_id);
-
-    if (atribuicoesValidas.length === 0) {
-      toast.error("Selecione pelo menos uma pessoa para salvar!");
+    if (!isValid) {
+      toast.error("Selecione pelo menos uma pessoa para cada etapa!");
       return;
     }
 
-    const atribuicoesFinais = atribuicoesValidas.map(a => ({
+    const atribuicoesFinais = atribuicoes.map(a => ({
       ...a,
       percentual_credito: a.percentual_credito / 100,
       valor_credito: a.valor_credito
