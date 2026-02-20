@@ -38,7 +38,26 @@ Deno.serve(async (req) => {
         }
 
         // Buscar dados
-        const workshops = await base44.entities.Workshop.list();
+        let workshops;
+
+        // Tentar identificar a oficina do usuário para filtrar o relatório
+        let userWorkshopId = user.workshop_id;
+
+        // Se não tiver no usuário, busca no cadastro de colaboradores
+        if (!userWorkshopId) {
+            const employees = await base44.entities.Employee.filter({ user_id: user.id });
+            if (employees && employees.length > 0) {
+                userWorkshopId = employees[0].workshop_id;
+            }
+        }
+
+        // Se identificou uma oficina vinculada, filtra apenas ela
+        if (userWorkshopId) {
+            workshops = await base44.entities.Workshop.filter({ id: userWorkshopId });
+        } else {
+            // Caso contrário (admin global sem vínculo), lista todas
+            workshops = await base44.entities.Workshop.list();
+        }
         
         let yPos = 50;
 
