@@ -58,7 +58,10 @@ export default function TechnicianQGP() {
         // 3. Fallback: Check if employee_id stores User ID (data inconsistency safe-guard)
         const isAssignedToUserId = t.employee_id === user.id;
 
-        const isMyTask = isAssignedToUser || isAssignedToEmployee || isAssignedToUserId;
+        // 4. Admin Override: Admins see all tasks to manage the operation
+        const isAdmin = user.role === 'admin';
+
+        const isMyTask = isAssignedToUser || isAssignedToEmployee || isAssignedToUserId || isAdmin;
         const isActiveStatus = t.status !== 'concluida' && t.status !== 'cancelada';
 
         return isMyTask && isActiveStatus;
