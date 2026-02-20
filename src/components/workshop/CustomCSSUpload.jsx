@@ -23,8 +23,11 @@ export default function CustomCSSUpload({ workshop, onUpdate }) {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       await base44.entities.Workshop.update(workshop.id, { custom_css_url: file_url });
       
-      toast.success("CSS personalizado atualizado! Recarregue a página para ver as alterações.");
+      toast.success("CSS atualizado! A página será recarregada para aplicar as mudanças...");
       if (onUpdate) onUpdate({ custom_css_url: file_url });
+      
+      // Forçar reload para garantir que o novo CSS seja carregado e o cache limpo
+      setTimeout(() => window.location.reload(), 2000);
     } catch (error) {
       console.error(error);
       toast.error("Erro ao fazer upload: " + error.message);
@@ -36,8 +39,9 @@ export default function CustomCSSUpload({ workshop, onUpdate }) {
   const handleRemove = async () => {
     try {
       await base44.entities.Workshop.update(workshop.id, { custom_css_url: null });
-      toast.success("CSS personalizado removido! Recarregue a página.");
+      toast.success("CSS removido! Recarregando...");
       if (onUpdate) onUpdate({ custom_css_url: null });
+      setTimeout(() => window.location.reload(), 1500);
     } catch (error) {
       toast.error("Erro: " + error.message);
     }
