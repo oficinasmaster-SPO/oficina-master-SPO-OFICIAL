@@ -283,6 +283,17 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
     return Number(val) || 0;
   };
 
+  // Função auxiliar para converter valores numéricos com mais segurança
+  const parseValue = (val) => {
+    if (typeof val === 'number') return val;
+    if (!val) return 0;
+    if (typeof val === 'string') {
+      if (val.includes(',') && !val.includes('.')) return parseFloat(val.replace(',', '.')) || 0;
+      if (val.includes('.') && val.includes(',')) return parseFloat(val.replace(/\./g, '').replace(',', '.')) || 0;
+    }
+    return Number(val) || 0;
+  };
+
   const loadEditingData = async () => {
     if (!editingRecord) return;
     
