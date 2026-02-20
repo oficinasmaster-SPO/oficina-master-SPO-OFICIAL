@@ -269,24 +269,6 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
   const parseValue = (val) => {
     if (typeof val === 'number') return val;
     if (!val) return 0;
-    // Se for string, tentar limpar formatação brasileira se existir
-    if (typeof val === 'string') {
-      // Se tem vírgula e não tem ponto (ex: 1000,50), troca vírgula por ponto
-      if (val.includes(',') && !val.includes('.')) {
-        return parseFloat(val.replace(',', '.')) || 0;
-      }
-      // Se tem ponto e vírgula (ex: 1.000,50), remove ponto e troca vírgula
-      if (val.includes('.') && val.includes(',')) {
-        return parseFloat(val.replace(/\./g, '').replace(',', '.')) || 0;
-      }
-    }
-    return Number(val) || 0;
-  };
-
-  // Função auxiliar para converter valores numéricos com mais segurança
-  const parseValue = (val) => {
-    if (typeof val === 'number') return val;
-    if (!val) return 0;
     if (typeof val === 'string') {
       if (val.includes(',') && !val.includes('.')) return parseFloat(val.replace(',', '.')) || 0;
       if (val.includes('.') && val.includes(',')) return parseFloat(val.replace(/\./g, '').replace(',', '.')) || 0;
