@@ -94,9 +94,20 @@ css
 ================================================================== */
 @layer components {
   .btn-gradient-animate {
-    @apply text-primary-foreground relative overflow-hidden transition-all duration-500 ease-in-out rounded-md font-bold;
-    
-    /* Gradiente Dourado */
+    @apply text-white relative overflow-hidden transition-all duration-500 ease-in-out rounded-md font-bold;
+    background-color: black;
+    border: none;
+    z-index: 1;
+  }
+
+  /* Pseudo-element for the gradient background */
+  .btn-gradient-animate::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     background-image: linear-gradient(
       to right,
       hsl(var(--brand-primary)) 0%,
@@ -104,19 +115,24 @@ css
       hsl(var(--brand-primary)) 100%
     );
     background-size: 200% auto;
-    border: none;
+    opacity: 0;
+    z-index: -1;
+    transition: opacity 0.5s ease-in-out;
+  }
+
+  .btn-gradient-animate:hover::before {
+    opacity: 1;
+    background-position: right center;
   }
 
   .btn-gradient-animate:hover {
-    /* Movimenta o gradiente gerando um brilho metálico */
-    background-position: right center;
-    /* Sombra dourada suave */
     box-shadow: 0 4px 15px hsla(var(--brand-primary) / 0.4);
     transform: translateY(-1px);
+    color: white;
   }
   
   .btn-gradient-animate svg {
-      @apply text-primary-foreground;
+      @apply text-white;
   }
 }
 
@@ -125,9 +141,20 @@ css
 ================================================================== */
 @layer components {
   .btn-gradient-animate {
-    @apply text-primary-foreground relative overflow-hidden transition-all duration-500 ease-in-out rounded-md font-bold;
-    
-    /* Gradiente Dourado */
+    @apply text-white relative overflow-hidden transition-all duration-500 ease-in-out rounded-md font-bold;
+    background-color: black;
+    border: none;
+    z-index: 1;
+  }
+
+  /* Pseudo-element for the gradient background */
+  .btn-gradient-animate::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     background-image: linear-gradient(
       to right,
       hsl(var(--brand-primary)) 0%,
@@ -135,19 +162,24 @@ css
       hsl(var(--brand-primary)) 100%
     );
     background-size: 200% auto;
-    border: none;
+    opacity: 0;
+    z-index: -1;
+    transition: opacity 0.5s ease-in-out;
+  }
+
+  .btn-gradient-animate:hover::before {
+    opacity: 1;
+    background-position: right center;
   }
 
   .btn-gradient-animate:hover {
-    /* Movimenta o gradiente gerando um brilho metálico */
-    background-position: right center;
-    /* Sombra dourada suave */
     box-shadow: 0 4px 15px hsla(var(--brand-primary) / 0.4);
     transform: translateY(-1px);
+    color: white;
   }
   
   .btn-gradient-animate svg {
-      @apply text-primary-foreground;
+      @apply text-white;
   }
 }
 
