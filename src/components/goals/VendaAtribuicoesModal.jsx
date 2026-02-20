@@ -225,9 +225,7 @@ export default function VendaAtribuicoesModal({
                           value={atrib.valor_credito}
                           onChange={(e) => {
                             const novoValor = parseFloat(e.target.value) || 0;
-                            const novoPercentual = valorTotal > 0 ? (novoValor / valorTotal) * 100 : 0;
                             atualizarAtribuicao(index, "valor_credito", novoValor);
-                            atualizarAtribuicao(index, "percentual_credito", novoPercentual);
                           }}
                           className="h-8 w-28 font-semibold text-sm"
                         />
