@@ -265,6 +265,24 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
     }
   }, [formData.clients_delivered_base, formData.clients_delivered_mkt, formData.clients_delivered_referral]);
 
+  // Função auxiliar para converter valores numéricos com mais segurança
+  const parseValue = (val) => {
+    if (typeof val === 'number') return val;
+    if (!val) return 0;
+    // Se for string, tentar limpar formatação brasileira se existir
+    if (typeof val === 'string') {
+      // Se tem vírgula e não tem ponto (ex: 1000,50), troca vírgula por ponto
+      if (val.includes(',') && !val.includes('.')) {
+        return parseFloat(val.replace(',', '.')) || 0;
+      }
+      // Se tem ponto e vírgula (ex: 1.000,50), remove ponto e troca vírgula
+      if (val.includes('.') && val.includes(',')) {
+        return parseFloat(val.replace(/\./g, '').replace(',', '.')) || 0;
+      }
+    }
+    return Number(val) || 0;
+  };
+
   const loadEditingData = async () => {
     if (!editingRecord) return;
     
@@ -284,17 +302,17 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
       month: editingRecord.month,
       
       // PREVISTO
-      projected_total: Number(editingRecord.projected_total) || 0,
-      projected_revenue_parts: Number(editingRecord.projected_revenue_parts) || 0,
-      projected_revenue_services: Number(editingRecord.projected_revenue_services) || 0,
-      projected_customer_volume: Number(editingRecord.projected_customer_volume) || 0,
-      projected_average_ticket: Number(editingRecord.projected_average_ticket) || 0,
-      projected_pave_commercial: Number(editingRecord.projected_pave_commercial) || 0,
-      projected_kit_master: Number(editingRecord.projected_kit_master) || 0,
-      projected_sales_base: Number(editingRecord.projected_sales_base) || 0,
-      projected_sales_marketing: Number(editingRecord.projected_sales_marketing) || 0,
-      projected_clients_delivered: Number(editingRecord.projected_clients_delivered) || 0,
-      projected_gps_vendas: Number(editingRecord.projected_gps_vendas) || 0,
+      projected_total: parseValue(editingRecord.projected_total),
+      projected_revenue_parts: parseValue(editingRecord.projected_revenue_parts),
+      projected_revenue_services: parseValue(editingRecord.projected_revenue_services),
+      projected_customer_volume: parseValue(editingRecord.projected_customer_volume),
+      projected_average_ticket: parseValue(editingRecord.projected_average_ticket),
+      projected_pave_commercial: parseValue(editingRecord.projected_pave_commercial),
+      projected_kit_master: parseValue(editingRecord.projected_kit_master),
+      projected_sales_base: parseValue(editingRecord.projected_sales_base),
+      projected_sales_marketing: parseValue(editingRecord.projected_sales_marketing),
+      projected_clients_delivered: parseValue(editingRecord.projected_clients_delivered),
+      projected_gps_vendas: parseValue(editingRecord.projected_gps_vendas),
       projected_marketing: editingRecord.projected_marketing || {
         leads_generated: 0,
         leads_scheduled: 0,
@@ -306,24 +324,24 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
       },
 
       // REALIZADO
-      achieved_total: Number(editingRecord.achieved_total) || 0,
-      revenue_parts: Number(editingRecord.revenue_parts) || 0,
-      revenue_services: Number(editingRecord.revenue_services) || 0,
-      customer_volume: Number(editingRecord.customer_volume) || 0,
+      achieved_total: parseValue(editingRecord.achieved_total),
+      revenue_parts: parseValue(editingRecord.revenue_parts),
+      revenue_services: parseValue(editingRecord.revenue_services),
+      customer_volume: parseValue(editingRecord.customer_volume),
       r70_i30: editingRecord.r70_i30 || { r70: 70, i30: 30 },
-      tcmp2: Number(editingRecord.tcmp2) || 0,
-      pave_commercial: Number(editingRecord.pave_commercial) || 0,
-      kit_master: Number(editingRecord.kit_master) || 0,
-      sales_base: Number(editingRecord.sales_base) || 0,
-      sales_marketing: Number(editingRecord.sales_marketing) || 0,
-      clients_delivered: Number(editingRecord.clients_delivered) || 0,
-      gps_vendas: Number(editingRecord.gps_vendas) || 0,
-      clients_scheduled_base: Number(editingRecord.clients_scheduled_base) || 0,
-      clients_delivered_base: Number(editingRecord.clients_delivered_base) || 0,
-      clients_scheduled_mkt: Number(editingRecord.clients_scheduled_mkt) || 0,
-      clients_delivered_mkt: Number(editingRecord.clients_delivered_mkt) || 0,
-      clients_scheduled_referral: Number(editingRecord.clients_scheduled_referral) || 0,
-      clients_delivered_referral: Number(editingRecord.clients_delivered_referral) || 0,
+      tcmp2: parseValue(editingRecord.tcmp2),
+      pave_commercial: parseValue(editingRecord.pave_commercial),
+      kit_master: parseValue(editingRecord.kit_master),
+      sales_base: parseValue(editingRecord.sales_base),
+      sales_marketing: parseValue(editingRecord.sales_marketing),
+      clients_delivered: parseValue(editingRecord.clients_delivered),
+      gps_vendas: parseValue(editingRecord.gps_vendas),
+      clients_scheduled_base: parseValue(editingRecord.clients_scheduled_base),
+      clients_delivered_base: parseValue(editingRecord.clients_delivered_base),
+      clients_scheduled_mkt: parseValue(editingRecord.clients_scheduled_mkt),
+      clients_delivered_mkt: parseValue(editingRecord.clients_delivered_mkt),
+      clients_scheduled_referral: parseValue(editingRecord.clients_scheduled_referral),
+      clients_delivered_referral: parseValue(editingRecord.clients_delivered_referral),
       marketing_data: editingRecord.marketing_data || {
         leads_generated: 0,
         leads_scheduled: 0,
@@ -332,7 +350,7 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
         invested_value: 0,
         revenue_from_traffic: 0
       },
-      rework_count: Number(editingRecord.rework_count) || 0,
+      rework_count: parseValue(editingRecord.rework_count),
       notes: editingRecord.notes || ""
     }));
   };
