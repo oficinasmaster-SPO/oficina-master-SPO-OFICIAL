@@ -157,7 +157,7 @@ h1, .text-3xl {
             <div className="flex gap-2">
               <Button variant="outline" onClick={handleRemove} className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50">
                 <Trash2 className="w-4 h-4 mr-2" />
-                Remover
+                Remover Personalização
               </Button>
               <Button 
                 onClick={() => window.location.reload()} 
