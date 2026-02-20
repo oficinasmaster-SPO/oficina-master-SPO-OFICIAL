@@ -44,7 +44,7 @@ export default function CustomCSSUpload({ workshop, onUpdate }) {
   };
 
   const downloadTemplate = () => {
-    const templateContent = \`/* 
+    const templateContent = `/* 
   MODELO DE PERSONALIZAÇÃO VISUAL (CSS)
   --------------------------------------
   Use este arquivo para alterar as cores e estilos do sistema.
@@ -104,7 +104,7 @@ h1, .text-3xl {
   background-color: #ea580c !important;
 }
 */
-\`;
+`;
     
     const blob = new Blob([templateContent], { type: 'text/css' });
     const url = window.URL.createObjectURL(blob);
