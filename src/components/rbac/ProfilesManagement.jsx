@@ -30,21 +30,21 @@ export default function ProfilesManagement() {
     refetchOnWindowFocus: false,
   });
 
-  const { data: employees = [] } = useQuery({
-    queryKey: ["employees-for-profiles"],
+  // Busca estatísticas de perfis via backend function para contagem correta e escalável
+  const { data: statsData } = useQuery({
+    queryKey: ["profile-stats"],
     queryFn: async () => {
-      const data = await base44.asServiceRole.entities.Employee.list();
-      return data || [];
+      const response = await base44.functions.invoke("getProfileStats");
+      return response.data || { counts: {}, meta: { total_employees: 0, total_users: 0 } };
     },
   });
 
-  const { data: users = [] } = useQuery({
-    queryKey: ["users-for-profiles"],
-    queryFn: async () => {
-      const data = await base44.asServiceRole.entities.User.list();
-      return data || [];
-    },
-  });
+  const profileCounts = statsData?.counts || {};
+  const totalEmployees = statsData?.meta?.total_employees || 0;
+  
+  // Mantemos a query de employees apenas se necessário para outras lógicas, mas limitamos o uso
+  // Se precisarmos da lista completa para edição/detalhes, idealmente deveríamos paginar ou buscar sob demanda.
+  // Por enquanto, vamos manter o count vindo do statsData para os cards e lista.
 
   const totalSystemRoles = systemRoles.reduce((sum, m) => sum + m.roles.length, 0);
 
@@ -83,9 +83,7 @@ export default function ProfilesManagement() {
   });
 
   const getUsersCountByProfile = (profileId) => {
-    const employeesWithProfile = employees.filter(e => e.profile_id === profileId).length;
-    const usersWithProfile = users.filter(u => u.profile_id === profileId).length;
-    return employeesWithProfile + usersWithProfile;
+    return profileCounts[profileId] || 0;
   };
 
   const handleEdit = (profile) => {
@@ -172,7 +170,7 @@ export default function ProfilesManagement() {
           <CardContent className="pt-6">
             <div className="text-center">
               <Users className="w-10 h-10 mx-auto text-purple-600 mb-2" />
-              <p className="text-3xl font-bold">{employees.length}</p>
+              <p className="text-3xl font-bold">{totalEmployees}</p>
               <p className="text-sm text-gray-600">Colaboradores no Sistema</p>
             </div>
           </CardContent>
@@ -203,7 +201,6 @@ export default function ProfilesManagement() {
         title="Perfis Internos"
         subtitle="Consultores, mentores e aceleradores"
         profiles={internalProfiles}
-        employees={employees}
         onEdit={handleEdit}
         onDuplicate={handleDuplicate}
         onToggleStatus={handleToggleStatus}
@@ -216,7 +213,6 @@ export default function ProfilesManagement() {
         title="Perfis Externos"
         subtitle="Clientes e colaboradores de oficinas"
         profiles={externalProfiles}
-        employees={employees}
         onEdit={handleEdit}
         onDuplicate={handleDuplicate}
         onToggleStatus={handleToggleStatus}
@@ -237,7 +233,7 @@ export default function ProfilesManagement() {
   );
 }
 
-function ProfileSection({ title, subtitle, profiles, employees, onEdit, onDuplicate, onToggleStatus, onDelete, onViewDetails, getUsersCount }) {
+function ProfileSection({ title, subtitle, profiles, onEdit, onDuplicate, onToggleStatus, onDelete, onViewDetails, getUsersCount }) {
   return (
     <Card>
       <CardHeader>
