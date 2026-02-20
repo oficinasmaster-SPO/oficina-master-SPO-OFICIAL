@@ -25,6 +25,22 @@ export default function WorkshopSummaryCard({ workshop, goalHistory }) {
   const achievementPercentage = monthlyGoal > 0 ? (actualRevenue / monthlyGoal) * 100 : 0;
   const missingToGoal = Math.max(0, monthlyGoal - actualRevenue);
 
+  // Aggregate sales funnel metrics
+  const totalClientsScheduledBase = currentMonthRecords.reduce((sum, record) => sum + (record.clients_scheduled_base || 0), 0);
+  const totalClientsDeliveredBase = currentMonthRecords.reduce((sum, record) => sum + (record.clients_delivered_base || 0), 0);
+  const totalSalesBase = currentMonthRecords.reduce((sum, record) => sum + (record.sales_base || 0), 0);
+
+  const totalClientsScheduledMkt = currentMonthRecords.reduce((sum, record) => sum + (record.clients_scheduled_mkt || 0), 0);
+  const totalClientsDeliveredMkt = currentMonthRecords.reduce((sum, record) => sum + (record.clients_delivered_mkt || 0), 0);
+  const totalSalesMarketing = currentMonthRecords.reduce((sum, record) => sum + (record.sales_marketing || 0), 0);
+
+  const totalClientsScheduledReferral = currentMonthRecords.reduce((sum, record) => sum + (record.clients_scheduled_referral || 0), 0);
+  const totalClientsDeliveredReferral = currentMonthRecords.reduce((sum, record) => sum + (record.clients_delivered_referral || 0), 0);
+  
+  const totalPaveCommercial = currentMonthRecords.reduce((sum, record) => sum + (record.pave_commercial || 0), 0);
+  const totalKitMaster = currentMonthRecords.reduce((sum, record) => sum + (record.kit_master || 0), 0);
+  const totalGpsVendas = currentMonthRecords.reduce((sum, record) => sum + (record.gps_vendas || 0), 0);
+
   return (
     <Card className="mb-6 shadow-xl border-2 border-blue-300 bg-gradient-to-r from-blue-50 to-indigo-50">
       <CardHeader>
@@ -103,6 +119,83 @@ export default function WorkshopSummaryCard({ workshop, goalHistory }) {
             </p>
           </div>
         </div>
+
+        {/* Sales Funnel Metrics Section */}
+        {(totalPaveCommercial > 0 || totalKitMaster > 0 || totalSalesBase > 0 || totalSalesMarketing > 0) && (
+          <div className="mt-6 pt-6 border-t border-blue-200">
+            <h3 className="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-blue-600" />
+              Funil de Vendas Consolidado
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Base */}
+              <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                <p className="text-xs font-bold text-blue-800 mb-2 uppercase">Base de Clientes</p>
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-600">Agendados:</span>
+                    <span className="font-bold">{totalClientsScheduledBase}</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-600">Entregues:</span>
+                    <span className="font-bold">{totalClientsDeliveredBase}</span>
+                  </div>
+                  <div className="flex justify-between text-xs pt-1 border-t border-blue-200">
+                    <span className="text-gray-600">Vendas:</span>
+                    <span className="font-bold text-blue-700">R$ {formatCurrency(totalSalesBase)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Marketing */}
+              <div className="bg-purple-50 p-3 rounded-lg border border-purple-100">
+                <p className="text-xs font-bold text-purple-800 mb-2 uppercase">Marketing</p>
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-600">Agendados:</span>
+                    <span className="font-bold">{totalClientsScheduledMkt}</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-600">Entregues:</span>
+                    <span className="font-bold">{totalClientsDeliveredMkt}</span>
+                  </div>
+                  <div className="flex justify-between text-xs pt-1 border-t border-purple-200">
+                    <span className="text-gray-600">Vendas:</span>
+                    <span className="font-bold text-purple-700">R$ {formatCurrency(totalSalesMarketing)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Indicação / Indicadores */}
+              <div className="bg-orange-50 p-3 rounded-lg border border-orange-100">
+                <p className="text-xs font-bold text-orange-800 mb-2 uppercase">Indicação & KPIs</p>
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-600">Agendados (Ind):</span>
+                    <span className="font-bold">{totalClientsScheduledReferral}</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-600">Entregues (Ind):</span>
+                    <span className="font-bold">{totalClientsDeliveredReferral}</span>
+                  </div>
+                  <div className="flex justify-between text-xs pt-1 border-t border-orange-200 mt-1">
+                    <span className="text-gray-600 font-semibold">PAVE Comercial:</span>
+                    <span className="font-bold text-indigo-700">{totalPaveCommercial}</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-600 font-semibold">Kit Master:</span>
+                    <span className="font-bold text-yellow-700">{totalKitMaster}</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-600 font-semibold">GPS Vendas:</span>
+                    <span className="font-bold text-cyan-700">{totalGpsVendas}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
