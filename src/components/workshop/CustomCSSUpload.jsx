@@ -19,6 +19,16 @@ export default function CustomCSSUpload({ workshop, onUpdate }) {
 
     setUploading(true);
     try {
+      // Validação básica de conteúdo
+      const text = await file.text();
+      if (text.includes('#') && text.includes('--primary')) {
+        const confirm = window.confirm("⚠️ ALERTA: Detectamos códigos de cor HEX (#) nas variáveis. O sistema requer formato HSL (números separados por espaço) para funcionar corretamente com Tailwind. Deseja continuar mesmo assim?");
+        if (!confirm) {
+          setUploading(false);
+          return;
+        }
+      }
+
       // Usando o mesmo endpoint de upload de arquivo genérico
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       await base44.entities.Workshop.update(workshop.id, { custom_css_url: file_url });
@@ -162,9 +172,10 @@ h1, .text-3xl {
               <Button 
                 onClick={() => window.location.reload()} 
                 className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                title="Recarrega a página para processar o novo CSS"
               >
                 <RefreshCw className="w-4 h-4 mr-2" />
-                Aplicar
+                Aplicar Alterações
               </Button>
               <label className="flex-1">
                 <Button variant="outline" className="w-full" disabled={uploading} asChild>
