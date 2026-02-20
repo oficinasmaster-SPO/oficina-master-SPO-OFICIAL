@@ -427,7 +427,7 @@ export default function Home() {
           <Button 
             onClick={() => navigate(createPageUrl("CadastroPlanos"))}
             size="lg"
-            className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-xl px-12 py-8 rounded-full shadow-2xl"
+            className="btn-gradient-animate text-xl px-12 py-8 rounded-full shadow-2xl hover:scale-105"
           >
             <Rocket className="mr-3 h-6 w-6" />
             Começar Agora - É Grátis!
