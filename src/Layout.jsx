@@ -30,6 +30,7 @@ export default function Layout({ children, currentPageName }) {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const { isAdminMode, getAdminUrl } = useAdminMode();
   const { workshop, workshopId } = useWorkshopContext();
+  const [cssVersion] = useState(Date.now()); // Timestamp fixo por sessão para evitar re-requests
   
   // Rastrear acesso a módulos automaticamente
       useModuleTracking(workshop);
@@ -176,7 +177,7 @@ export default function Layout({ children, currentPageName }) {
       <div className={`${isAuthenticated && !isPublicPage ? 'lg:pl-64' : ''} flex flex-col min-h-screen transition-all duration-300`} style={isAuthenticated && !isPublicPage ? { paddingLeft: 'var(--sidebar-width, 16rem)' } : {}}>
               {/* Injeção de CSS Personalizado por Oficina */}
               {workshop?.custom_css_url && (
-                <link rel="stylesheet" href={`${workshop.custom_css_url}?v=${new Date().getTime()}`} />
+                <link rel="stylesheet" href={`${workshop.custom_css_url}?v=${cssVersion}`} />
               )}
       
       {isAuthenticated && user && <AssistanceModeBanner user={user} />}
