@@ -23,7 +23,6 @@ import AI_PDI_Generator from "../components/rh/AI_PDI_Generator";
 import EmployeeGoals from "../components/employee/EmployeeGoals";
 import PermissoesColaborador from "../components/employee/PermissoesColaborador";
 import JobDescriptionTab from "../components/employee/JobDescriptionTab";
-import DiagnosticChat from "../components/employee/DiagnosticChat";
 
 export default function MeuPerfil() {
   const location = useLocation();
@@ -369,9 +368,6 @@ export default function MeuPerfil() {
           </TabsContent>
         </Tabs>
       </div>
-      
-      {/* Assistente IA Flutuante */}
-      <DiagnosticChat employee={employee} />
     </div>
   );
 }
