@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Save, UserPlus, User, DollarSign, TrendingUp, Plus, Trash2 } from "lucide-react";
+import { Loader2, Save, UserPlus, User, DollarSign, TrendingUp, Plus, Trash2, Shield, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function CadastroColaborador() {
@@ -419,7 +419,7 @@ export default function CadastroColaborador() {
             <CardHeader>
               <CardTitle>Dados da Contratação</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label>Cargo/Função (Descrição) *</Label>
@@ -428,45 +428,6 @@ export default function CadastroColaborador() {
                     onChange={(e) => setFormData({...formData, position: e.target.value})}
                     required
                   />
-                </div>
-                <div>
-                  <Label>Perfil de Usuário</Label>
-                  <Select 
-                    value={formData.user_profile_id} 
-                    onValueChange={(value) => {
-                      const selectedProfile = profiles.find(p => p.id === value);
-                      if (selectedProfile) {
-                        // Se o perfil usa job_role, pegar o primeiro job_role da lista
-                        const newJobRole = selectedProfile.permission_type === 'job_role' && 
-                                          selectedProfile.job_roles?.length > 0 
-                                          ? selectedProfile.job_roles[0] 
-                                          : formData.job_role;
-                        
-                        setFormData({
-                          ...formData, 
-                          user_profile_id: value,
-                          job_role: newJobRole
-                        });
-                      } else {
-                        setFormData({...formData, user_profile_id: value});
-                      }
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o perfil..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={null}>Nenhum perfil</SelectItem>
-                      {profiles.map(profile => (
-                        <SelectItem key={profile.id} value={profile.id}>
-                          {profile.name} ({profile.type})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-gray-500 mt-1">
-                    O perfil define as permissões do colaborador no sistema
-                  </p>
                 </div>
                 <div>
                   <Label>Função do Sistema (job_role)</Label>
@@ -520,26 +481,102 @@ export default function CadastroColaborador() {
                     onChange={(e) => setFormData({...formData, hire_date: e.target.value})}
                   />
                 </div>
+                <div className="md:col-span-2">
+                    <Label>Descrição de Cargo (Opcional)</Label>
+                    <Select 
+                    value={formData.job_description_id} 
+                    onValueChange={(value) => setFormData({...formData, job_description_id: value})}
+                    >
+                    <SelectTrigger>
+                        <SelectValue placeholder="Selecione uma descrição de cargo..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value={null}>Nenhuma</SelectItem>
+                        {jobDescriptions.map(desc => (
+                        <SelectItem key={desc.id} value={desc.id}>
+                            {desc.cargo} - {desc.area}
+                        </SelectItem>
+                        ))}
+                    </SelectContent>
+                    </Select>
+                </div>
               </div>
 
-              <div>
-                <Label>Descrição de Cargo (Opcional)</Label>
-                <Select 
-                  value={formData.job_description_id} 
-                  onValueChange={(value) => setFormData({...formData, job_description_id: value})}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione uma descrição de cargo..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={null}>Nenhuma</SelectItem>
-                    {jobDescriptions.map(desc => (
-                      <SelectItem key={desc.id} value={desc.id}>
-                        {desc.cargo} - {desc.area}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="border-t pt-4">
+                  <Label className="text-lg font-semibold text-gray-900 mb-1 block">Perfil de Acesso</Label>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Selecione o perfil que define as permissões do colaborador no sistema.
+                  </p>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {profiles.map(profile => {
+                      const isSelected = formData.user_profile_id === profile.id;
+                      return (
+                        <div 
+                          key={profile.id}
+                          onClick={() => {
+                            const value = profile.id;
+                            const selectedProfile = profiles.find(p => p.id === value);
+                            if (selectedProfile) {
+                              const newJobRole = selectedProfile.permission_type === 'job_role' && 
+                                                selectedProfile.job_roles?.length > 0 
+                                                ? selectedProfile.job_roles[0] 
+                                                : formData.job_role;
+                              
+                              setFormData({
+                                ...formData, 
+                                user_profile_id: value,
+                                job_role: newJobRole
+                              });
+                            }
+                          }}
+                          className={`
+                            cursor-pointer rounded-xl border-2 p-4 transition-all relative overflow-hidden group
+                            ${isSelected 
+                                ? 'border-blue-600 bg-blue-50/50 shadow-md ring-1 ring-blue-600' 
+                                : 'border-slate-200 bg-white hover:border-blue-300 hover:shadow-sm'
+                            }
+                          `}
+                        >
+                          {isSelected && (
+                            <div className="absolute top-0 right-0 p-2 bg-blue-600 rounded-bl-xl shadow-sm">
+                              <CheckCircle2 className="w-4 h-4 text-white" />
+                            </div>
+                          )}
+                          
+                          <div className="flex items-start gap-3">
+                            <div className={`
+                                p-2.5 rounded-lg shrink-0 transition-colors
+                                ${isSelected ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500 group-hover:bg-blue-50 group-hover:text-blue-600'}
+                            `}>
+                              <Shield className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <h3 className={`font-semibold text-sm mb-1 ${isSelected ? 'text-blue-900' : 'text-slate-900'}`}>
+                                {profile.name}
+                                </h3>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <span className={`text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded
+                                        ${profile.type === 'admin' 
+                                            ? 'bg-purple-100 text-purple-700' 
+                                            : 'bg-emerald-100 text-emerald-700'}
+                                    `}>
+                                        {profile.type === 'admin' ? 'Admin' : 'Usuário'}
+                                    </span>
+                                </div>
+                                {profile.description ? (
+                                    <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">
+                                        {profile.description}
+                                    </p>
+                                ) : (
+                                    <p className="text-xs text-slate-400 italic">Sem descrição</p>
+                                )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
               </div>
             </CardContent>
           </Card>
