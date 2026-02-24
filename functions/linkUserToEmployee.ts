@@ -25,15 +25,15 @@ Deno.serve(async (req) => {
     const employee = employees[0];
     const employeeActiveStatus = employee.tipo_vinculo === 'cliente' ? 'ativo' : 'active';
 
-    // Vincular user_id ao Employee se ainda não tiver
-    if (!employee.user_id) {
+    // Vincular ou CORRIGIR user_id ao Employee (email match is the source of truth)
+    if (employee.user_id !== user.id) {
       await base44.asServiceRole.entities.Employee.update(employee.id, {
         user_id: user.id,
         first_login_at: employee.first_login_at || new Date().toISOString(),
         last_login_at: new Date().toISOString()
       });
 
-      console.log(`✅ User ${user.id} vinculado ao Employee ${employee.id}`);
+      console.log(`✅ User ${user.id} vinculado/corrigido ao Employee ${employee.id}`);
     }
 
     let finalProfileId = employee.profile_id || user.profile_id;

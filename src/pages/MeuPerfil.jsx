@@ -112,15 +112,26 @@ export default function MeuPerfil() {
              const linkResponse = await base44.functions.invoke('linkUserToEmployee');
              if (linkResponse.data && linkResponse.data.success) {
                 console.log("✅ Vínculo realizado via backend!", linkResponse.data);
+                
+                // Aguardar propagação do RLS
+                await new Promise(r => setTimeout(r, 500));
+
                 // Recarregar employee pelo ID retornado
                 if (linkResponse.data.employee_id) {
-                   const freshEmployee = await base44.entities.Employee.get(linkResponse.data.employee_id);
-                   if (freshEmployee) {
-                      employees = [freshEmployee];
-                      // Atualizar usuário localmente se workshop mudou
-                      if (linkResponse.data.workshop_id && user.workshop_id !== linkResponse.data.workshop_id) {
-                          setUser(prev => ({ ...prev, workshop_id: linkResponse.data.workshop_id }));
-                      }
+                   try {
+                     const freshEmployee = await base44.entities.Employee.get(linkResponse.data.employee_id);
+                     if (freshEmployee) {
+                        employees = [freshEmployee];
+                        // Atualizar usuário localmente se workshop mudou
+                        if (linkResponse.data.workshop_id && user.workshop_id !== linkResponse.data.workshop_id) {
+                            setUser(prev => ({ ...prev, workshop_id: linkResponse.data.workshop_id }));
+                        }
+                     }
+                   } catch (getError) {
+                     console.warn("⚠️ Ainda não foi possível ler o employee via API direta (RLS delay?), recarregando página...", getError);
+                     // Se falhar, forçar recarregamento da página para garantir sessão limpa
+                     window.location.reload();
+                     return;
                    }
                 }
              }
