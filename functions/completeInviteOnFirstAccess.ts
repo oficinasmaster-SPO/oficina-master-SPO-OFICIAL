@@ -64,10 +64,11 @@ Deno.serve(async (req) => {
 
     console.log(`✅ EmployeeInviteAcceptance criado: ${acceptance.id}`);
 
-    // Atualizar User com workshop_id e profile_id se não tiver
+    // Forçar atualização do User com workshop_id e profile_id (garantir acesso imediato)
     if (invite.workshop_id || invite.profile_id) {
       const updateData = {};
-      if (invite.workshop_id && !user.workshop_id) {
+      // Atualiza workshop_id mesmo se já tiver (prioriza o do convite atual para acesso imediato)
+      if (invite.workshop_id) {
         updateData.workshop_id = invite.workshop_id;
       }
       if (invite.profile_id && !user.profile_id) {
