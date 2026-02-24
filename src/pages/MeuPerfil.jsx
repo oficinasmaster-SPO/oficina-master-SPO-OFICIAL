@@ -102,19 +102,31 @@ export default function MeuPerfil() {
         if (!employees || employees.length === 0) {
           console.warn("⚠️ Employee não encontrado por ID, tentando por email:", currentUser.email);
           employees = await base44.entities.Employee.filter({ email: currentUser.email });
-          
-          // Auto-correção de vínculo se necessário
-          if (employees && employees.length > 0) {
-             const emp = employees[0];
-             if (!emp.user_id || emp.user_id !== currentUser.id) {
-                console.log("🔗 Vinculando user_id ao employee encontrado por email");
-                try {
-                  await base44.entities.Employee.update(emp.id, { user_id: currentUser.id });
-                } catch (e) {
-                  console.warn("Falha ao auto-vincular user_id (pode ser permissão):", e);
+        }
+
+        // Tentar recuperação via Backend (Service Role) se ainda não encontrou ou para garantir vínculo
+        // Isso resolve problemas de permissão RLS onde o usuário não pode ver/editar o Employee ainda
+        if (!employees || employees.length === 0 || (employees[0] && !employees[0].user_id)) {
+           console.log("🔄 Tentando vincular via backend function...");
+           try {
+             const linkResponse = await base44.functions.invoke('linkUserToEmployee');
+             if (linkResponse.data && linkResponse.data.success) {
+                console.log("✅ Vínculo realizado via backend!", linkResponse.data);
+                // Recarregar employee pelo ID retornado
+                if (linkResponse.data.employee_id) {
+                   const freshEmployee = await base44.entities.Employee.get(linkResponse.data.employee_id);
+                   if (freshEmployee) {
+                      employees = [freshEmployee];
+                      // Atualizar usuário localmente se workshop mudou
+                      if (linkResponse.data.workshop_id && user.workshop_id !== linkResponse.data.workshop_id) {
+                          setUser(prev => ({ ...prev, workshop_id: linkResponse.data.workshop_id }));
+                      }
+                   }
                 }
              }
-          }
+           } catch (e) {
+             console.warn("⚠️ Falha ao tentar vincular via backend:", e);
+           }
         }
       }
       
