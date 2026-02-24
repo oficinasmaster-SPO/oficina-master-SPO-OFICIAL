@@ -119,12 +119,14 @@ Deno.serve(async (req) => {
       console.log(`✅ Workshop ${employee.workshop_id} vinculado ao User ${user.id}`);
     }
 
+    // Retornar o objeto completo para evitar 404 no frontend devido a delay de RLS
     return Response.json({ 
       success: true,
       employee_id: employee.id,
       user_id: user.id,
       workshop_id: employee.workshop_id,
-      profile_assigned: !!employee.profile_id
+      profile_assigned: !!employee.profile_id,
+      employee: employee
     });
   } catch (error) {
     console.error("❌ Erro ao vincular User ao Employee:", error);

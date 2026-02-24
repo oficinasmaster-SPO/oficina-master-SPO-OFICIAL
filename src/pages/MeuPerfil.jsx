@@ -116,22 +116,28 @@ export default function MeuPerfil() {
                 // Aguardar propagação do RLS
                 await new Promise(r => setTimeout(r, 500));
 
-                // Recarregar employee pelo ID retornado
-                if (linkResponse.data.employee_id) {
+                // Usar o objeto retornado pelo backend se disponível (evita 404 por RLS)
+                if (linkResponse.data.employee) {
+                    console.log("✅ Usando dados do employee retornados pelo backend");
+                    employees = [linkResponse.data.employee];
+                    // Atualizar usuário localmente se workshop mudou
+                    if (linkResponse.data.workshop_id && user.workshop_id !== linkResponse.data.workshop_id) {
+                        setUser(prev => ({ ...prev, workshop_id: linkResponse.data.workshop_id }));
+                    }
+                } 
+                // Fallback: Tentar buscar via API se o backend não retornou o objeto completo
+                else if (linkResponse.data.employee_id) {
                    try {
                      const freshEmployee = await base44.entities.Employee.get(linkResponse.data.employee_id);
                      if (freshEmployee) {
                         employees = [freshEmployee];
-                        // Atualizar usuário localmente se workshop mudou
                         if (linkResponse.data.workshop_id && user.workshop_id !== linkResponse.data.workshop_id) {
                             setUser(prev => ({ ...prev, workshop_id: linkResponse.data.workshop_id }));
                         }
                      }
                    } catch (getError) {
-                     console.warn("⚠️ Ainda não foi possível ler o employee via API direta (RLS delay?), recarregando página...", getError);
-                     // Se falhar, forçar recarregamento da página para garantir sessão limpa
-                     window.location.reload();
-                     return;
+                     console.warn("⚠️ Ainda não foi possível ler o employee via API direta (RLS delay?).", getError);
+                     // Não forçar reload imediatamente, deixar o usuário ver o erro ou tentar novamente
                    }
                 }
              }
