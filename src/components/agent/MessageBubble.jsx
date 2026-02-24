@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Button } from "@/components/ui/button";
-import { Copy, CheckCircle2, AlertCircle, Loader2, ChevronRight, Clock } from 'lucide-react';
+import { Copy, CheckCircle2, AlertCircle, Loader2, ChevronRight, Clock, MessageCircle } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
