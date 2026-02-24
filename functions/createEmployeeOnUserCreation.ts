@@ -42,9 +42,47 @@ Deno.serve(async (req) => {
         }
 
         // Verificar se Employee já existe para este usuário
-        const existingEmployee = await base44.asServiceRole.entities.Employee.filter({
-            user_id: invitation.user_id
-        });
+        // Busca aprimorada para garantir vínculo correto com o Employee original do convite
+        let employeesFound = [];
+
+        // 1. Tentar pelo ID do employee original (vinculado ao convite)
+        if (inviteData.employee_id) {
+            try {
+                const emp = await base44.asServiceRole.entities.Employee.get(inviteData.employee_id);
+                if (emp) {
+                    console.log(`✅ Employee original encontrado pelo ID: ${emp.id}`);
+                    employeesFound.push(emp);
+                }
+            } catch (e) {
+                console.warn("⚠️ Employee original não encontrado pelo ID:", inviteData.employee_id);
+            }
+        }
+
+        // 2. Tentar pelo user_id (caso já vinculado anteriormente)
+        if (employeesFound.length === 0) {
+            const byUser = await base44.asServiceRole.entities.Employee.filter({
+                user_id: invitation.user_id
+            });
+            if (byUser.length > 0) {
+                console.log(`✅ Employee encontrado pelo user_id: ${byUser[0].id}`);
+                employeesFound = byUser;
+            }
+        }
+
+        // 3. Tentar pelo Email + Workshop (caso ainda não tenha user_id - cenário comum de convite)
+        if (employeesFound.length === 0 && invitation.email && invitation.workshop_id) {
+             console.log(`🔍 Buscando Employee por email ${invitation.email} na oficina ${invitation.workshop_id}...`);
+             const byEmail = await base44.asServiceRole.entities.Employee.filter({
+                email: invitation.email,
+                workshop_id: invitation.workshop_id
+            });
+            // Filtra para garantir que não pegue um employee já vinculado a OUTRO usuário (segurança)
+            const unlinked = byEmail.filter(e => !e.user_id || e.user_id === invitation.user_id);
+            if (unlinked.length > 0) {
+                console.log(`✅ Employee encontrado por email (não vinculado): ${unlinked[0].id}`);
+                employeesFound = [unlinked[0]];
+            }
+        }
 
         let employee;
         const employeeData = {
@@ -67,15 +105,17 @@ Deno.serve(async (req) => {
             employeeData.profile_id = targetProfileId;
         }
 
-        if (existingEmployee && existingEmployee.length > 0) {
-            // ATUALIZAR Employee existente
-            employee = existingEmployee[0];
-            console.log(`Employee já existe (${employee.id}). Atualizando dados...`);
+        if (employeesFound && employeesFound.length > 0) {
+            // ATUALIZAR Employee existente (Vincular ao usuário)
+            employee = employeesFound[0];
+            console.log(`🔗 Vinculando usuário ${invitation.user_id} ao Employee existente ${employee.id}...`);
 
             const updateData = {
+                user_id: invitation.user_id, // GARANTIR VÍNCULO
                 workshop_id: invitation.workshop_id,
                 user_status: 'ativo',
-                status: 'ativo'
+                status: 'ativo',
+                first_login_at: new Date().toISOString() // Marcar primeiro acesso
             };
 
             // Atualizar profile_id se houver um novo
