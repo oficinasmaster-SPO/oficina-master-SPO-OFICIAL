@@ -596,7 +596,7 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
             <Button 
               className="bg-blue-600 hover:bg-blue-700"
               onClick={() => {
-                if (user?.first_access_completed === false || user?.profile_completed === false) {
+                if (user?.first_access_completed === false || user?.profile_completed === false || !workshop) {
                   toast.error("Por favor, conclua 100% do seu cadastro antes de realizar o diagnóstico.");
                   window.location.href = "https://oficinasmastergtr.com/cadastro";
                 } else {
