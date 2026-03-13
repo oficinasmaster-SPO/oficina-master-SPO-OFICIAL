@@ -447,7 +447,7 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack, on
               <Select 
                 value={formData.profile_id} 
                 onValueChange={(value) => setFormData({ ...formData, profile_id: value })}
-                disabled={!editing}
+                disabled={!editing || !existingEmployee}
               >
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Selecione um perfil" />
