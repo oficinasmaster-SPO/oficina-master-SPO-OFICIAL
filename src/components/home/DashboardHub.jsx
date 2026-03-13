@@ -860,7 +860,16 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Link to={createPageUrl("CulturaOrganizacional")}>
+            <Link 
+              to={createPageUrl("CulturaOrganizacional")}
+              onClick={(e) => {
+                if (user?.first_access_completed === false || user?.profile_completed === false || !workshop) {
+                  e.preventDefault();
+                  toast.error("Por favor, conclua 100% do seu cadastro.");
+                  window.location.href = "https://oficinasmastergtr.com/cadastro";
+                }
+              }}
+            >
               <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-white transition-colors cursor-pointer border border-transparent hover:border-purple-200">
                 <Target className="w-8 h-8 text-purple-600" />
                 <div>
