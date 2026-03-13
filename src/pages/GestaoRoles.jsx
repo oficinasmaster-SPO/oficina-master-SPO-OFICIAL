@@ -24,6 +24,7 @@ export default function GestaoRoles() {
   const [filterActive, setFilterActive] = useState("all");
 
   const roles = [
+    { id: "socio", label: "Sócio", level: "executive" },
     { id: "diretor", label: "Diretor", level: "executive" },
     { id: "supervisor_loja", label: "Supervisor de Loja", level: "management" },
     { id: "gerente", label: "Gerente", level: "management" },
@@ -39,6 +40,9 @@ export default function GestaoRoles() {
     { id: "administrativo", label: "Administrativo", level: "support" },
     { id: "motoboy", label: "Motoboy", level: "support" },
     { id: "lavador", label: "Lavador", level: "support" },
+    { id: "acelerador", label: "Acelerador", level: "consultoria" },
+    { id: "consultor", label: "Consultor", level: "consultoria" },
+    { id: "mentor", label: "Mentor", level: "consultoria" },
     { id: "outros", label: "Outros", level: "support" }
   ];
 
