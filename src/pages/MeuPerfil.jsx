@@ -190,11 +190,22 @@ export default function MeuPerfil() {
   if (!employee) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center space-y-4">
           <p className="text-gray-600 mb-4">Você ainda não possui um perfil de colaborador cadastrado.</p>
-          <Button onClick={() => window.location.href = createPageUrl("Home")}>
-            Voltar ao Início
-          </Button>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Button 
+              className="bg-black text-white hover:bg-gray-800"
+              onClick={() => window.location.href = "https://oficinasmastergtr.com/cadastro"}
+            >
+              Voltar ao Início
+            </Button>
+            <Button 
+              className="bg-blue-600 text-white hover:bg-blue-700"
+              onClick={() => window.location.href = "https://oficinasmastergtr.com/cadastro"}
+            >
+              Fazer diagnóstico agora
+            </Button>
+          </div>
         </div>
       </div>
     );
