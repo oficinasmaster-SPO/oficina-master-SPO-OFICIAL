@@ -470,29 +470,17 @@ export default function CadastroColaborador() {
                   </p>
                 </div>
                 <div>
-                  <Label>Função do Sistema (job_role)</Label>
+                  <Label>Função do Sistema</Label>
                   <Select value={formData.job_role} onValueChange={(value) => setFormData({...formData, job_role: value})}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="socio">Sócio</SelectItem>
-                      <SelectItem value="diretor">Diretor</SelectItem>
-                      <SelectItem value="supervisor_loja">Supervisor de Loja</SelectItem>
-                      <SelectItem value="gerente">Gerente</SelectItem>
-                      <SelectItem value="lider_tecnico">Líder Técnico</SelectItem>
-                      <SelectItem value="financeiro">Financeiro</SelectItem>
-                      <SelectItem value="rh">RH</SelectItem>
-                      <SelectItem value="tecnico">Técnico / Mecânico / Eletricista</SelectItem>
-                      <SelectItem value="funilaria_pintura">Funileiro / Pintor / Chapeador</SelectItem>
-                      <SelectItem value="comercial">Comercial / Telemarketing</SelectItem>
-                      <SelectItem value="consultor_vendas">Consultor de Vendas</SelectItem>
-                      <SelectItem value="marketing">Marketing / Tráfego</SelectItem>
-                      <SelectItem value="estoque">Estoque</SelectItem>
-                      <SelectItem value="administrativo">Administrativo</SelectItem>
-                      <SelectItem value="motoboy">Moto Boy</SelectItem>
-                      <SelectItem value="lavador">Lavador</SelectItem>
-                      <SelectItem value="outros">Outros</SelectItem>
+                      {(user?.role === 'admin' ? jobRoles : jobRoles.filter(role => role.category !== 'interna')).map((role) => (
+                        <SelectItem key={role.value} value={role.value}>
+                          {role.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
