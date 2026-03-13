@@ -80,11 +80,14 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack, on
       // Buscar perfis disponíveis para sócio
       const allProfiles = await base44.entities.UserProfile.list();
       console.log("📊 allProfiles total:", allProfiles.length);
-      console.log("🔍 UserProfiles com type interno:", allProfiles.filter(p => p.type === 'interno'));
       
-      const filtered = allProfiles.filter(p => p.status === 'ativo');
+      // Filtra apenas ativos e garante que não apareçam perfis de outras oficinas
+      const filtered = allProfiles.filter(p => 
+        p.status === 'ativo' && 
+        (!p.workshop_id || p.workshop_id === workshop?.id)
+      );
       setProfiles(filtered);
-      console.log("📊 profiles filtrados (apenas ativos):", filtered.length);
+      console.log("📊 profiles filtrados:", filtered.length);
 
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
