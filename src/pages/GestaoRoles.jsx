@@ -356,6 +356,12 @@ export default function GestaoRoles() {
                 >
                   Operacional
                 </Button>
+                <Button
+                  variant={filterActive === "consultoria" ? "default" : "outline"}
+                  onClick={() => setFilterActive("consultoria")}
+                >
+                  Interno
+                </Button>
               </div>
             </div>
           </CardContent>
