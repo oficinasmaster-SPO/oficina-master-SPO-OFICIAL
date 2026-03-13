@@ -89,6 +89,17 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack, on
       setProfiles(filtered);
       console.log("📊 profiles filtrados:", filtered.length);
 
+      // Auto-selecionar o perfil "Sócio" no primeiro acesso (quando não tem funcionário criado)
+      if (!employees || employees.length === 0) {
+        const socioProfile = filtered.find(p => 
+          p.name.toLowerCase().includes('sócio') || 
+          p.name.toLowerCase().includes('socio')
+        );
+        if (socioProfile) {
+          setFormData(prev => ({ ...prev, profile_id: socioProfile.id }));
+        }
+      }
+
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
     } finally {
