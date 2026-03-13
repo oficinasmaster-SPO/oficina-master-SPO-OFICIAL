@@ -74,7 +74,10 @@ export default function CadastroColaborador() {
       setJobDescriptions(descriptions.filter(d => !userWorkshop || d.workshop_id === userWorkshop.id));
 
       const allProfiles = await base44.entities.UserProfile.list();
-      setProfiles(allProfiles.filter(p => p.status === 'ativo'));
+      setProfiles(allProfiles.filter(p => 
+        p.status === 'ativo' && 
+        (!p.workshop_id || p.workshop_id === userWorkshop?.id)
+      ));
     } catch (error) {
       toast.error("Você precisa estar logado");
       base44.auth.redirectToLogin(createPageUrl("CadastroColaborador"));
