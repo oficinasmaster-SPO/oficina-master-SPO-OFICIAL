@@ -17,6 +17,9 @@ const JOB_ROLE_TO_PROFILE = {
   'consultor_vendas': 'Vendedor - Atendimento ao Cliente',
   'marketing': 'Marketing - Comunicação e Marketing',
   'administrativo': 'Administrativo - Suporte e Administração',
+  'acelerador': 'Acelerador',
+  'consultor': 'Consultor',
+  'mentor': 'Mentor',
   'outros': 'Colaborador Básico'
 };
 
