@@ -881,7 +881,16 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
             
             {/* Descrição de cargo removida da tela inicial do gestor conforme solicitado */}
             
-            <Link to={createPageUrl("MonitoramentoRH")}>
+            <Link 
+              to={createPageUrl("MonitoramentoRH")}
+              onClick={(e) => {
+                if (user?.first_access_completed === false || user?.profile_completed === false || !workshop) {
+                  e.preventDefault();
+                  toast.error("Por favor, conclua 100% do seu cadastro.");
+                  window.location.href = "https://oficinasmastergtr.com/cadastro";
+                }
+              }}
+            >
                 <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-white transition-colors cursor-pointer border border-transparent hover:border-purple-200">
                     <Users className="w-8 h-8 text-indigo-600" />
                     <div>
