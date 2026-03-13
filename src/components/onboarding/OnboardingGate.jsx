@@ -59,14 +59,14 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
       // 1. Verificar Primeiro Acesso do Proprietário (Tenant)
       // Se first_access_completed for explicitamente falso, redirecionar
       if (user.first_access_completed === false) {
-        navigate(createPageUrl("Cadastro"), { replace: true });
+        window.location.href = "https://oficinasmastergtr.com/cadastro";
         return;
       }
 
       // 2. Verificar Perfil do Colaborador
       // Se profile_completed for explicitamente falso, redirecionar
       if (user.profile_completed === false) {
-        navigate(createPageUrl("Cadastro"), { replace: true });
+        window.location.href = "https://oficinasmastergtr.com/cadastro";
         return;
       }
 
