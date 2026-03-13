@@ -593,12 +593,20 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
             <p className="text-gray-600 mb-4">
               Faça seu primeiro diagnóstico para descobrir em qual fase sua oficina está
             </p>
-            <Link to={createPageUrl("Questionario")}>
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                Fazer Diagnóstico Agora
-                <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
-            </Link>
+            <Button 
+              className="bg-blue-600 hover:bg-blue-700"
+              onClick={() => {
+                if (user?.first_access_completed === false || user?.profile_completed === false) {
+                  toast.error("Por favor, conclua 100% do seu cadastro antes de realizar o diagnóstico.");
+                  window.location.href = "https://oficinasmastergtr.com/cadastro";
+                } else {
+                  window.location.href = createPageUrl("Questionario");
+                }
+              }}
+            >
+              Fazer Diagnóstico Agora
+              <ArrowRight className="ml-2 w-4 h-4" />
+            </Button>
           </CardContent>
         </Card>
       )}
