@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import EmailPreview from "@/components/convite/EmailPreview";
 import WhatsAppButton from "@/components/convite/WhatsAppButton";
 import StatusBadge from "@/components/convite/StatusBadge";
-
+import { jobRoles } from "@/components/lib/jobRoles";
 
 export default function ConvidarColaborador() {
   const queryClient = useQueryClient();
@@ -34,28 +34,6 @@ export default function ConvidarColaborador() {
     workshop_id: "",
     role: "user"
   });
-
-  const jobRoles = [
-    { value: "socio", label: "Sócio" },
-    { value: "diretor", label: "Diretor" },
-    { value: "supervisor_loja", label: "Supervisor de Loja" },
-    { value: "gerente", label: "Gerente" },
-    { value: "lider_tecnico", label: "Líder Técnico" },
-    { value: "financeiro", label: "Financeiro" },
-    { value: "rh", label: "Recursos Humanos" },
-    { value: "tecnico", label: "Técnico" },
-    { value: "funilaria_pintura", label: "Funilaria e Pintura" },
-    { value: "comercial", label: "Comercial" },
-    { value: "consultor_vendas", label: "Consultor de Vendas" },
-    { value: "marketing", label: "Marketing" },
-    { value: "estoque", label: "Estoque" },
-    { value: "administrativo", label: "Administrativo" },
-    { value: "motoboy", label: "Motoboy" },
-    { value: "lavador", label: "Lavador" },
-    { value: "acelerador", label: "Acelerador" },
-    { value: "consultor", label: "Consultor" },
-    { value: "outros", label: "Outros" }
-  ];
 
   // Buscar oficinas do usuário (não apenas a principal)
   const { data: userWorkshops = [], isLoading: isLoadingWorkshops } = useQuery({
