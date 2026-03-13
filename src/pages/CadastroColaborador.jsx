@@ -461,9 +461,12 @@ export default function CadastroColaborador() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value={null}>Nenhum perfil</SelectItem>
-                      {profiles.map(profile => (
+                      {(user?.role === 'admin' 
+                        ? profiles 
+                        : profiles.filter(p => p.type !== 'interno' && p.type !== 'sistema')
+                      ).map(profile => (
                         <SelectItem key={profile.id} value={profile.id}>
-                          {profile.name} ({profile.type})
+                          {profile.name} {user?.role === 'admin' && `(${profile.type})`}
                         </SelectItem>
                       ))}
                     </SelectContent>
