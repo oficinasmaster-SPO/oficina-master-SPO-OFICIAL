@@ -817,7 +817,17 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
           {quickActions.map((action, index) => {
             const Icon = action.icon;
             return (
-              <Link key={index} to={action.href}>
+              <Link 
+                key={index} 
+                to={action.href}
+                onClick={(e) => {
+                  if (user?.first_access_completed === false || user?.profile_completed === false || !workshop) {
+                    e.preventDefault();
+                    toast.error("Por favor, conclua 100% do seu cadastro.");
+                    window.location.href = "https://oficinasmastergtr.com/cadastro";
+                  }
+                }}
+              >
                 <Card className="group hover:shadow-xl transition-all cursor-pointer border-2 hover:border-blue-200">
                   <CardContent className="p-6">
                     <div className={cn(
