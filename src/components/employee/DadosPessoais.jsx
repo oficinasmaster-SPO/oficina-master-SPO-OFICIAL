@@ -66,13 +66,7 @@ export default function DadosPessoais({ employee, onUpdate }) {
   // Filtrar perfis disponíveis conforme role do usuário
   const availableJobRoles = currentUser?.role === 'admin' 
     ? jobRoles 
-    : jobRoles.filter(role => role.category !== 'consultoria');
-
-  // LOGS DE VALIDAÇÃO (TEMPORÁRIO)
-  console.log("📊 jobRoles.length (total):", jobRoles.length);
-  console.log("📊 availableJobRoles.length (após filtro):", availableJobRoles.length);
-  console.log("📋 availableJobRoles mapeados:", availableJobRoles.map(r => r.value + ":" + r.category));
-  console.log("🔍 Verificando itens 'consultoria' em jobRoles:", jobRoles.filter(r => r.category === 'consultoria'));
+    : jobRoles.filter(role => role.category !== 'interna');
 
   const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0];
