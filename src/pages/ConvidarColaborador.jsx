@@ -594,20 +594,20 @@ export default function ConvidarColaborador() {
                 </div>
 
                 <div>
-                   <Label htmlFor="job_role">Função do Sistema *</Label>
-                   <Select value={formData.job_role} onValueChange={(value) => setFormData({ ...formData, job_role: value })}>
-                     <SelectTrigger className="bg-gray-50 focus:bg-white transition-colors">
-                       <SelectValue placeholder="Selecione a função" />
-                     </SelectTrigger>
-                     <SelectContent>
-                       {jobRoles.map((role) => (
-                         <SelectItem key={role.value} value={role.value}>
-                           {role.label}
-                         </SelectItem>
-                       ))}
-                     </SelectContent>
-                   </Select>
-                 </div>
+                  <Label htmlFor="job_role">Função do Sistema *</Label>
+                  <Select value={formData.job_role} onValueChange={(value) => setFormData({ ...formData, job_role: value })}>
+                    <SelectTrigger className="bg-gray-50 focus:bg-white transition-colors">
+                      <SelectValue placeholder="Selecione a função" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(user?.role === 'admin' ? jobRoles : jobRoles.filter(role => role.category !== 'interna')).map((role) => (
+                        <SelectItem key={role.value} value={role.value}>
+                          {role.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
                 <div>
                    <Label htmlFor="role">Nível de Acesso *</Label>
