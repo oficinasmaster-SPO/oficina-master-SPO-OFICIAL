@@ -375,7 +375,7 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
                 </Dialog>
             )}
             {workshop && (user.role === 'admin' || user.id === workshop.owner_id) && (
-                 <Link to={createPageUrl("DicasOperacao")}>
+                <Link to={getAdminUrl(createPageUrl("DicasOperacao"))}>
                     <Button variant="ghost" size="icon" className="text-indigo-400 hover:text-indigo-600">
                         <Edit className="w-4 h-4" />
                     </Button>
@@ -485,7 +485,7 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
                   </p>
                 </div>
               </div>
-              <Link to={createPageUrl("SelecionarDiagnostico")}>
+              <Link to={getAdminUrl(createPageUrl("SelecionarDiagnostico"))}>
                 <Button size="lg" className="bg-blue-600 hover:bg-blue-700 shadow-md">
                   <Rocket className="mr-2 w-5 h-5" />
                   Evoluir de Nível
@@ -511,7 +511,7 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
                     </h3>
                     <p className="text-sm text-red-700">Requer atenção imediata</p>
                   </div>
-                  <Link to={createPageUrl("Tarefas")}>
+                  <Link to={getAdminUrl(createPageUrl("Tarefas"))}>
                     <Button size="sm" variant="outline" className="border-red-300 text-red-700 hover:bg-red-100">
                       Ver Tarefas
                     </Button>
@@ -532,7 +532,7 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
                     </h3>
                     <p className="text-sm text-blue-700">Novos alertas e lembretes</p>
                   </div>
-                  <Link to={createPageUrl("Notificacoes")}>
+                  <Link to={getAdminUrl(createPageUrl("Notificacoes"))}>
                     <Button size="sm" variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-100">
                       Ver Notificações
                     </Button>
@@ -576,7 +576,7 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
                   </p>
                 </div>
               </div>
-              <Link to={createPageUrl("Resultado") + `?id=${lastDiagnostic.id}`}>
+              <Link to={getAdminUrl(createPageUrl("Resultado")) + `&id=${lastDiagnostic.id}`}>
                 <Button className="bg-blue-600 hover:bg-blue-700">
                   Ver Resultado
                   <ArrowRight className="ml-2 w-4 h-4" />
