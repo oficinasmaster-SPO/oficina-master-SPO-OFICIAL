@@ -22,10 +22,9 @@ export default function OrganogramaFuncional() {
         const user = await base44.auth.me();
         const params = new URLSearchParams(location.search);
         const workshopId = params.get('workshop_id');
-        const assistanceMode = params.get('assistance_mode') === 'true';
 
         let workshopToLoad = null;
-        if (assistanceMode && workshopId) {
+        if (workshopId && user.role === 'admin') {
           workshopToLoad = await base44.entities.Workshop.get(workshopId);
         } else {
           // Prioridade 2: Employee

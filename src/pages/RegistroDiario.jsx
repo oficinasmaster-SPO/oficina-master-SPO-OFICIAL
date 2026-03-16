@@ -110,18 +110,25 @@ export default function RegistroDiario() {
 
   // Buscar tarefas do dia para o colaborador
   const { data: dailyTasks = [], isLoading: isLoadingTasks } = useQuery({
-    queryKey: ['daily-tasks', date, currentUser?.id],
+    queryKey: ['daily-tasks', date, currentUser?.id, workshop?.id],
     queryFn: async () => {
       if (!currentUser?.id) return [];
       try {
-        // Busca tarefas recentes por data de atualização para garantir que edições recentes apareçam
-        // Aumentado limite para 1000 e ordenado por atualização
-        const allTasks = await base44.entities.Task.list('-updated_date', 1000);
+        const urlParams = new URLSearchParams(window.location.search);
+        const adminWorkshopId = urlParams.get('workshop_id');
+        
+        let allTasks = [];
+        if (adminWorkshopId && currentUser.role === 'admin') {
+          allTasks = await base44.entities.Task.filter({ workshop_id: adminWorkshopId }, '-updated_date', 1000);
+        } else {
+          allTasks = await base44.entities.Task.list('-updated_date', 1000);
+        }
+        
         const targetDate = format(date, 'yyyy-MM-dd');
         
         return allTasks.filter(task => {
-          // Verifica se a tarefa está atribuída ao usuário atual
-          if (!task.assigned_to?.includes(currentUser.id)) return false;
+          const isAdminView = adminWorkshopId && currentUser.role === 'admin';
+          if (!isAdminView && !task.assigned_to?.includes(currentUser.id)) return false;
           
           // Verifica se a tarefa é relevante para a data selecionada:
           // 1. Tem data de vencimento (due_date) igual a data selecionada

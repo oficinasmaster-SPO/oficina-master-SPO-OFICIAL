@@ -36,8 +36,14 @@ export default function Notificacoes() {
     queryFn: async () => {
       if (!user?.id) return [];
       try {
-        // Filter notifications directly by user_id with a larger limit
-        const result = await base44.entities.Notification.filter({ user_id: user.id }, '-created_date', 100);
+        const urlParams = new URLSearchParams(window.location.search);
+        const adminWorkshopId = urlParams.get('workshop_id');
+        let result;
+        if (adminWorkshopId && user.role === 'admin') {
+          result = await base44.entities.Notification.filter({ workshop_id: adminWorkshopId }, '-created_date', 100);
+        } else {
+          result = await base44.entities.Notification.filter({ user_id: user.id }, '-created_date', 100);
+        }
         return Array.isArray(result) ? result : [];
       } catch (error) {
         console.log("Error fetching notifications:", error);
@@ -53,15 +59,21 @@ export default function Notificacoes() {
     queryFn: async () => {
       if (!user?.id) return [];
       try {
-        // Fetch all tasks and filter in frontend to ensure array matching works correctly
-        const allTasks = await base44.entities.Task.list('-created_date', 500);
-        const tasksArray = Array.isArray(allTasks) ? allTasks : [];
-
-        return tasksArray.filter(t => 
-          t.assigned_to && 
-          Array.isArray(t.assigned_to) && 
-          t.assigned_to.includes(user.id)
-        );
+        const urlParams = new URLSearchParams(window.location.search);
+        const adminWorkshopId = urlParams.get('workshop_id');
+        
+        if (adminWorkshopId && user.role === 'admin') {
+          const allTasks = await base44.entities.Task.filter({ workshop_id: adminWorkshopId }, '-created_date', 500);
+          return Array.isArray(allTasks) ? allTasks : [];
+        } else {
+          const allTasks = await base44.entities.Task.list('-created_date', 500);
+          const tasksArray = Array.isArray(allTasks) ? allTasks : [];
+          return tasksArray.filter(t => 
+            t.assigned_to && 
+            Array.isArray(t.assigned_to) && 
+            t.assigned_to.includes(user.id)
+          );
+        }
       } catch (error) {
         console.log("Error fetching tasks:", error);
         return [];

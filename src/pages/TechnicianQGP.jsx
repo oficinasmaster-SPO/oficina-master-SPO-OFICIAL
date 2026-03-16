@@ -46,7 +46,15 @@ export default function TechnicianQGP() {
     queryKey: ['my-qgp-tasks', user?.id, employee?.id],
     queryFn: async () => {
       if (!user) return [];
-      const allTasks = await base44.entities.Task.list();
+      const urlParams = new URLSearchParams(window.location.search);
+      const adminWorkshopId = urlParams.get('workshop_id');
+      
+      let allTasks = [];
+      if (adminWorkshopId && user.role === 'admin') {
+         allTasks = await base44.entities.Task.filter({ workshop_id: adminWorkshopId });
+      } else {
+         allTasks = await base44.entities.Task.list();
+      }
       
       return allTasks.filter(t => {
         // 1. Check direct assignment to user ID
@@ -59,7 +67,7 @@ export default function TechnicianQGP() {
         const isAssignedToUserId = t.employee_id === user.id;
 
         // 4. Admin Override: Admins see all tasks to manage the operation
-        const isAdmin = user.role === 'admin';
+        const isAdmin = user.role === 'admin' && adminWorkshopId;
 
         const isMyTask = isAssignedToUser || isAssignedToEmployee || isAssignedToUserId || isAdmin;
         const isActiveStatus = t.status !== 'concluida' && t.status !== 'cancelada';

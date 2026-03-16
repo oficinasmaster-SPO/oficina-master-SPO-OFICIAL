@@ -77,17 +77,18 @@ export default function Tarefas() {
   };
 
   const { data: tasks = [], isLoading } = useQuery({
-    queryKey: ['tasks'],
+    queryKey: ['tasks', workshop?.id],
     queryFn: async () => {
+      if (!workshop?.id) return [];
       try {
-        const result = await base44.entities.Task.list('-created_date');
+        const result = await base44.entities.Task.filter({ workshop_id: workshop.id }, '-created_date');
         return Array.isArray(result) ? result : [];
       } catch (error) {
         console.log("Error fetching tasks:", error);
         return [];
       }
     },
-    enabled: !!user,
+    enabled: !!workshop?.id,
     retry: 1
   });
 

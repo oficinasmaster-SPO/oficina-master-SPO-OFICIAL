@@ -46,17 +46,17 @@ export default function QGPBoard() {
 
   // Fetch Tasks
   const { data: tasks = [] } = useQuery({
-    queryKey: ['qgp-tasks'],
+    queryKey: ['qgp-tasks', workshop?.id],
     queryFn: async () => {
-      // Filter tasks that are relevant to QGP (not completed or completed today)
-      // For board we want active stuff mainly
-      const allTasks = await base44.entities.Task.list();
+      if (!workshop?.id) return [];
+      const allTasks = await base44.entities.Task.filter({ workshop_id: workshop.id });
       return allTasks.filter(t => 
         t.status !== 'concluida' && 
         t.status !== 'cancelada' &&
         (t.task_type?.startsWith('qgp') || t.priority === 'urgente' || t.task_type === 'geral')
       ).sort((a, b) => new Date(a.created_date) - new Date(b.created_date)); // FIFO mostly
     },
+    enabled: !!workshop?.id,
     refetchInterval: 30000 // Refresh every 30s for "TV" mode
   });
 
@@ -77,15 +77,12 @@ export default function QGPBoard() {
     queryFn: async () => {
       const params = new URLSearchParams(location.search);
       const workshopId = params.get('workshop_id');
-      const assistanceMode = params.get('assistance_mode') === 'true';
-
-      if (assistanceMode && workshopId) {
-        return await base44.entities.Workshop.get(workshopId);
-      }
       
-      // Fallback to user's own workshop if not in assistance mode
       try {
         const user = await base44.auth.me();
+        if (workshopId && user.role === 'admin') {
+          return await base44.entities.Workshop.get(workshopId);
+        }
         const workshops = await base44.entities.Workshop.filter({ owner_id: user.id });
         return workshops[0] || null;
       } catch (e) {
