@@ -12,6 +12,7 @@ import { toast } from "sonner";
 
 export default function CulturaOrganizacional({ workshop }) {
   const navigate = useNavigate();
+  const { getAdminUrl } = useAdminMode();
   const [exportingPDF, setExportingPDF] = useState(false);
 
   const { data: rituals = [], isLoading: loadingRituals } = useQuery({
