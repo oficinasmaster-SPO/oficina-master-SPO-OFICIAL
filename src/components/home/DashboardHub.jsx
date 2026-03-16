@@ -44,6 +44,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
+import { useAdminMode } from "@/components/hooks/useAdminMode";
 
 export default function DashboardHub({ user, workshop: propWorkshop }) {
   const { workshop: contextWorkshop } = useWorkshopContext();
