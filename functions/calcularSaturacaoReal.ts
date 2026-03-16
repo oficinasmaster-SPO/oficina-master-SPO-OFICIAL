@@ -9,12 +9,19 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
     const { startDate, endDate } = await req.json();
 
-    // Buscar employees que são consultores/aceleradores
-    const employees = await base44.asServiceRole.entities.Employee.filter({
+    const filterOptions = {
         job_role: { $in: ['consultor', 'acelerador', 'socio', 'diretor'] }
-    }, null, 1000);
+    };
+    
+    if (user?.data?.workshop_id) {
+        filterOptions.workshop_id = user.data.workshop_id;
+    }
+
+    // Buscar employees que são consultores/aceleradores
+    const employees = await base44.asServiceRole.entities.Employee.filter(filterOptions, null, 1000);
     
     const employeeUserIds = employees
         .filter(e => e.user_id)
