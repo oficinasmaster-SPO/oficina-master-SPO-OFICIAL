@@ -250,8 +250,7 @@ export default function PainelAtendimentosTab({ user }) {
       {/* Dashboard de Estatísticas */}
       <DashboardAtendimentos atendimentos={atendimentosFiltrados} />
 
-      {/* Agenda Google Calendar */}
-      <GoogleCalendarAgenda />
+
 
       {/* Tabela de Atendimentos */}
       <Card>
