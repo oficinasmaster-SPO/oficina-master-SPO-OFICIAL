@@ -47,7 +47,8 @@ import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 import { useAdminMode } from "@/components/hooks/useAdminMode";
 
 export default function DashboardHub({ user, workshop: propWorkshop }) {
-  const { workshop: contextWorkshop } = useWorkshopContext();
+  const { workshop: contextWorkshop, isAdminMode } = useWorkshopContext();
+  const { getAdminUrl } = useAdminMode();
   const workshop = contextWorkshop || propWorkshop;
   
   console.log('🏠 DashboardHub renderizando com workshop:', {
