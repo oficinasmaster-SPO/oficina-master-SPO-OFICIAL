@@ -69,9 +69,8 @@ export default function Colaboradores() {
         
         const urlParams = new URLSearchParams(location.search);
         const adminWorkshopId = urlParams.get('workshop_id');
-        const assistanceMode = urlParams.get('assistance_mode') === 'true';
         
-        if (assistanceMode && adminWorkshopId) {
+        if (adminWorkshopId && user.role === 'admin') {
           return await base44.entities.Workshop.get(adminWorkshopId);
         }
         
