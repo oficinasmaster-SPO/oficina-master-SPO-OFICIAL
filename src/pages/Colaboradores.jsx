@@ -19,6 +19,7 @@ import AdvancedFilter from "@/components/shared/AdvancedFilter";
 import { useProfileAutoAssignment } from "@/components/hooks/useProfileAutoAssignment";
 import { useOnDemandPermission } from "@/components/hooks/useOnDemandPermission";
 import { toast } from "sonner";
+import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 // import ActivityNotificationSettings from "../components/rh/ActivityNotificationSettings"; // Removed
 // import { Settings } from "lucide-react"; // Removed if unused elsewhere
 
