@@ -6,6 +6,7 @@ import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
+import { useAdminMode } from "@/components/hooks/useAdminMode";
 import { Sparkles, Target, Eye, Award, Users, TrendingUp, BookOpen, Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
