@@ -190,6 +190,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
   const location = useLocation();
   const { profile, hasPermission, canAccessPage } = usePermissions();
   const { queryString } = useAssistanceMode();
+  const { workshop: userWorkshop } = useWorkshopContext();
   
   const [expandedGroups, setExpandedGroups] = React.useState([]);
   const [isCollapsed, setIsCollapsed] = React.useState(() => {
@@ -200,7 +201,6 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       return false;
     }
   });
-  const [userWorkshop, setUserWorkshop] = React.useState(null);
   
   // Controle de acesso Admin Global (SPO)
   const [isGlobalContext, setIsGlobalContext] = React.useState(false);
@@ -227,41 +227,6 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
     }
     checkGlobalContext();
   }, [user?.id]);
-
-  // Carregar workshop ao montar o componente
-  React.useEffect(() => {
-    if (user?.id) {
-      loadUserWorkshop();
-    }
-  }, [user?.id]);
-
-  const loadUserWorkshop = async () => {
-    try {
-      // Tentar carregar workshop do usuário (proprietário ou funcionário)
-      let targetWorkshop = null;
-      
-      // 1. Verificar se é proprietário
-      const ownedWorkshops = await base44.entities.Workshop.filter({ owner_id: user.id });
-      if (ownedWorkshops && ownedWorkshops.length > 0) {
-        targetWorkshop = ownedWorkshops[0];
-      } else {
-        // 2. Verificar se é funcionário
-        const employees = await base44.entities.Employee.filter({ user_id: user.id });
-        if (employees && employees.length > 0 && employees[0].workshop_id) {
-          try {
-            targetWorkshop = await base44.entities.Workshop.get(employees[0].workshop_id);
-          } catch (e) {
-            console.error("Erro ao carregar workshop do funcionário:", e);
-          }
-        }
-      }
-      
-      setUserWorkshop(targetWorkshop);
-    } catch (error) {
-      console.error("Erro ao carregar workshop:", error);
-      setUserWorkshop(null);
-    }
-  };
 
   const toggleCollapse = () => {
     const newState = !isCollapsed;
