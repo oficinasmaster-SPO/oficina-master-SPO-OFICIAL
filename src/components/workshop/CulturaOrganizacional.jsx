@@ -98,20 +98,9 @@ export default function CulturaOrganizacional({ workshop }) {
     );
   }
 
-  // Get workshop_id and assistance_mode from URL to pass along navigation
+  // Usar hook de admin para URLs consistentes
   const getColaboradoresUrl = () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const workshopId = urlParams.get('workshop_id');
-    const assistanceMode = urlParams.get('assistance_mode');
-    
-    let url = createPageUrl("Colaboradores");
-    if (workshopId) {
-      url += `?workshop_id=${workshopId}`;
-      if (assistanceMode) {
-        url += `&assistance_mode=${assistanceMode}`;
-      }
-    }
-    return url;
+    return getAdminUrl(createPageUrl("Colaboradores"));
   };
 
   return (
