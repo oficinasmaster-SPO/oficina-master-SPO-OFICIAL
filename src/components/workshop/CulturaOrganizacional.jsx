@@ -151,7 +151,7 @@ export default function CulturaOrganizacional({ workshop }) {
 
           <div className="flex gap-2">
             <Button
-              onClick={() => navigate(createPageUrl("MissaoVisaoValores"))}
+              onClick={() => navigate(getAdminUrl(createPageUrl("MissaoVisaoValores")))}
               className="flex-1 bg-purple-600 hover:bg-purple-700"
             >
               <Sparkles className="w-4 h-4 mr-2" />
