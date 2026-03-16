@@ -884,7 +884,7 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
             {/* Descrição de cargo removida da tela inicial do gestor conforme solicitado */}
             
             <Link 
-              to={createPageUrl("MonitoramentoRH")}
+              to={getAdminUrl(createPageUrl("MonitoramentoRH"))}
               onClick={(e) => {
                 if (user?.first_access_completed === false || user?.profile_completed === false || !workshop) {
                   e.preventDefault();
