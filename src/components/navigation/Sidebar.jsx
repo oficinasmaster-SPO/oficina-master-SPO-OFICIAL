@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { usePermissions } from "@/components/hooks/usePermissions";
 import { useAssistanceMode } from "@/components/hooks/useAssistanceMode";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
+import { useAdminMode } from "@/components/hooks/useAdminMode";
 import { base44 } from "@/api/base44Client";
 import { 
   Home, 
