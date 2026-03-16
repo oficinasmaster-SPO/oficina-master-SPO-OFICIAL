@@ -9,10 +9,16 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    const consultores = await base44.asServiceRole.entities.Employee.filter({
+    const filterOptions = {
       tipo_vinculo: 'interno',
       status: 'ativo'
-    });
+    };
+    
+    if (user?.data?.workshop_id) {
+      filterOptions.workshop_id = user.data.workshop_id;
+    }
+
+    const consultores = await base44.asServiceRole.entities.Employee.filter(filterOptions);
 
     const atendimentos = await base44.asServiceRole.entities.ConsultoriaAtendimento.filter({
       status: { $in: ['agendado', 'confirmado', 'participando', 'reagendado'] }
