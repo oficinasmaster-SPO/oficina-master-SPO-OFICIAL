@@ -42,44 +42,61 @@ export default function CronogramaConsultoria() {
     queryFn: async () => {
       const urlParams = new URLSearchParams(window.location.search);
       const adminWorkshopId = urlParams.get('workshop_id');
-      const assistanceMode = urlParams.get('assistance_mode') === 'true';
       
-      if (assistanceMode && adminWorkshopId) {
+      if (adminWorkshopId && user.role === 'admin') {
         return await base44.entities.Workshop.get(adminWorkshopId);
       }
       
-      return await base44.entities.Workshop.get(user.workshop_id);
+      if (user.workshop_id) {
+        return await base44.entities.Workshop.get(user.workshop_id);
+      } else {
+        const employees = await base44.entities.Employee.filter({ user_id: user.id });
+        if (employees.length > 0) {
+          return await base44.entities.Workshop.get(employees[0].workshop_id);
+        }
+        const workshops = await base44.entities.Workshop.filter({ owner_id: user.id });
+        return workshops[0] || null;
+      }
     },
-    enabled: !!user?.workshop_id
+    enabled: !!user
   });
 
   // Carregar atendimentos
   const { data: allAtendimentos, isLoading } = useQuery({
-    queryKey: ['consultoria-atendimentos', user?.workshop_id],
+    queryKey: ['consultoria-atendimentos', workshop?.id],
     queryFn: async () => {
-      if (user?.role === 'admin') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const adminWorkshopId = urlParams.get('workshop_id');
+
+      if (adminWorkshopId && user?.role === 'admin') {
+        return await base44.entities.ConsultoriaAtendimento.filter({ workshop_id: adminWorkshopId }, '-data_agendada');
+      } else if (user?.role === 'admin') {
         return await base44.entities.ConsultoriaAtendimento.list('-data_agendada');
-      } else {
-        return await base44.entities.ConsultoriaAtendimento.filter({ 
-          workshop_id: user.workshop_id 
-        }, '-data_agendada');
+      } else if (workshop?.id) {
+        return await base44.entities.ConsultoriaAtendimento.filter({ workshop_id: workshop.id }, '-data_agendada');
       }
+      return [];
     },
     enabled: !!user
   });
 
   // Carregar ATAs
   const { data: allAtas } = useQuery({
-    queryKey: ['meeting-minutes'],
+    queryKey: ['meeting-minutes', workshop?.id],
     queryFn: async () => {
-      if (user?.role === 'admin') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const adminWorkshopId = urlParams.get('workshop_id');
+
+      if (adminWorkshopId && user?.role === 'admin') {
+        return await base44.entities.MeetingMinutes.filter({ workshop_id: adminWorkshopId }, '-meeting_date');
+      } else if (user?.role === 'admin') {
         return await base44.entities.MeetingMinutes.list('-meeting_date');
       } else if (workshop?.id) {
         return await base44.entities.MeetingMinutes.filter({ workshop_id: workshop.id }, '-meeting_date');
       }
       return [];
     },
-    enabled: !!user && (user.role === 'admin' || !!workshop?.id)
+    enabled: !!user
   });
 
   const { data: consultores } = useQuery({
