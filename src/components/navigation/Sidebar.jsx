@@ -192,6 +192,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
   const { profile, hasPermission, canAccessPage } = usePermissions();
   const { queryString } = useAssistanceMode();
   const { workshop: userWorkshop } = useWorkshopContext();
+  const { getAdminUrl } = useAdminMode();
   
   const [expandedGroups, setExpandedGroups] = React.useState([]);
   const [isCollapsed, setIsCollapsed] = React.useState(() => {
@@ -1066,7 +1067,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
             </button>
           ) : (
             <div className="flex items-center justify-between gap-3">
-              <Link to={createPageUrl('Home') + queryString} className="flex items-center gap-3 flex-1">
+              <Link to={getAdminUrl(createPageUrl('Home') + queryString)} className="flex items-center gap-3 flex-1">
                 {userWorkshop?.logo_url ? (
                   <div className="w-10 h-10 rounded-xl overflow-hidden bg-white border border-gray-200 flex items-center justify-center">
                     <img 
