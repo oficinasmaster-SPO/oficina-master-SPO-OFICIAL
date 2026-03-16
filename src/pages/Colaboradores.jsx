@@ -63,34 +63,7 @@ export default function Colaboradores() {
     queryFn: () => base44.auth.me()
   });
 
-  const { data: workshop } = useQuery({
-    queryKey: ['userWorkshop', user?.id, location.search],
-    queryFn: async () => {
-        if (!user) return null;
-        
-        const urlParams = new URLSearchParams(location.search);
-        const adminWorkshopId = urlParams.get('workshop_id');
-        
-        if (adminWorkshopId && user.role === 'admin') {
-          return await base44.entities.Workshop.get(adminWorkshopId);
-        }
-        
-        // Fluxo normal - buscar oficina do usuário
-        const ws = await base44.entities.Workshop.filter({ owner_id: user.id });
-        if (ws && ws.length > 0) {
-            return ws[0];
-        }
-
-        // Fallback for employees
-        const employees = await base44.entities.Employee.filter({ user_id: user.id });
-        if (employees && employees.length > 0) {
-            return await base44.entities.Workshop.get(employees[0].workshop_id);
-        }
-        
-        return null;
-    },
-    enabled: !!user
-  });
+  const { workshop } = useWorkshopContext();
 
   const { data: employees = [], isLoading } = useQuery({
     queryKey: ['employees', workshop?.id],
