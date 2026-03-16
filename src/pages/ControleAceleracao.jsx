@@ -38,9 +38,15 @@ export default function ControleAceleracao() {
       const users = await base44.entities.User.list(null, 1000);
       
       // Buscar colaboradores com perfil de consultor
-      const employees = await base44.entities.Employee.filter({
+      const filterOptions = {
         job_role: { $in: ['consultor', 'acelerador', 'socio', 'diretor'] }
-      }, null, 1000);
+      };
+      
+      if (user?.data?.workshop_id) {
+        filterOptions.workshop_id = user.data.workshop_id;
+      }
+      
+      const employees = await base44.entities.Employee.filter(filterOptions, null, 1000);
       
       const employeeUserIds = employees.map(e => e.user_id).filter(Boolean);
       
