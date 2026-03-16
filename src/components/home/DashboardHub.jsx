@@ -631,7 +631,7 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
                   </p>
                 </div>
               </div>
-              <Link to={createPageUrl("Gamificacao")}>
+              <Link to={getAdminUrl(createPageUrl("Gamificacao"))}>
                 <Button variant="outline" className="border-yellow-400 text-yellow-700 hover:bg-yellow-100">
                   Ver Conquistas
                   <Trophy className="ml-2 w-4 h-4" />
@@ -658,7 +658,7 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
                   <div className="p-2 bg-yellow-100 rounded-lg">
                     <Trophy className="w-5 h-5 text-yellow-600" />
                   </div>
-                  <Link to={createPageUrl("RankingBrasil")} className="text-xs text-blue-600 hover:underline">Ver todos</Link>
+                  <Link to={getAdminUrl(createPageUrl("RankingBrasil"))} className="text-xs text-blue-600 hover:underline">Ver todos</Link>
                 </div>
                 <h3 className="text-sm font-medium text-gray-500">Ranking</h3>
                 <div className="mt-2 space-y-2">
@@ -689,7 +689,7 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
                   <div className="p-2 bg-red-100 rounded-lg">
                     <ClipboardList className="w-5 h-5 text-red-600" />
                   </div>
-                  <Link to={createPageUrl("Tarefas")} className="text-xs text-blue-600 hover:underline">Gerenciar</Link>
+                  <Link to={getAdminUrl(createPageUrl("Tarefas"))} className="text-xs text-blue-600 hover:underline">Gerenciar</Link>
                 </div>
                 <h3 className="text-sm font-medium text-gray-500">Tarefas</h3>
                 <div className="mt-1 flex gap-4">
@@ -821,7 +821,7 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
             return (
               <Link 
                 key={index} 
-                to={action.href}
+                to={getAdminUrl(action.href)}
                 onClick={(e) => {
                   if (user?.first_access_completed === false || user?.profile_completed === false || !workshop) {
                     e.preventDefault();
@@ -863,7 +863,7 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Link 
-              to={createPageUrl("CulturaOrganizacional")}
+              to={getAdminUrl(createPageUrl("CulturaOrganizacional"))}
               onClick={(e) => {
                 if (user?.first_access_completed === false || user?.profile_completed === false || !workshop) {
                   e.preventDefault();
