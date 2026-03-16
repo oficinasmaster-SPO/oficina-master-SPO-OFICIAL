@@ -16,7 +16,7 @@ import { format, subDays, subMonths, addMonths } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { toast } from "sonner";
-import GoogleCalendarAgenda from "./GoogleCalendarAgenda";
+
 
 export default function PainelAtendimentosTab({ user }) {
   const navigate = useNavigate();
