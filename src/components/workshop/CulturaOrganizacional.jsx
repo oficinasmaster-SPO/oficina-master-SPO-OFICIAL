@@ -297,7 +297,7 @@ export default function CulturaOrganizacional({ workshop }) {
             Gerenciar Colaboradores
           </Button>
           <Button
-            onClick={() => navigate(createPageUrl("CDCList"))}
+            onClick={() => navigate(getAdminUrl(createPageUrl("CDCList")))}
             variant="outline"
             className="w-full justify-start"
           >
@@ -305,7 +305,7 @@ export default function CulturaOrganizacional({ workshop }) {
             CDC - Conexão e Diagnóstico
           </Button>
           <Button
-            onClick={() => navigate(createPageUrl("COEXList"))}
+            onClick={() => navigate(getAdminUrl(createPageUrl("COEXList")))}
             variant="outline"
             className="w-full justify-start"
           >
