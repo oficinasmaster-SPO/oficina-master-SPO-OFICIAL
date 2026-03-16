@@ -328,10 +328,10 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Bem-vindo, {user.full_name || user.email}!
+          {isAdminMode && workshop ? `Visualizando: ${workshop.name}` : `Bem-vindo, ${user.full_name || user.email}!`}
         </h1>
         <p className="text-gray-600">
-          Aqui está o resumo da sua oficina
+          {isAdminMode ? 'Aqui está o resumo da oficina do cliente' : 'Aqui está o resumo da sua oficina'}
         </p>
       </div>
 
