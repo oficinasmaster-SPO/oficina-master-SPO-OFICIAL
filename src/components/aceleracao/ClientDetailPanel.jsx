@@ -19,7 +19,8 @@ export default function ClientDetailPanel({ client, isOpen, onClose, atendimento
   const handleAcessarOficina = () => {
     if (client) {
       sessionStorage.setItem('admin_workshop_id', client.id);
-      window.location.href = createPageUrl("Home") + `?workshop_id=${client.id}`;
+      // Força a navegação para a home e recarrega os contextos
+      window.location.href = `/Home?workshop_id=${client.id}`;
     }
   };
 
