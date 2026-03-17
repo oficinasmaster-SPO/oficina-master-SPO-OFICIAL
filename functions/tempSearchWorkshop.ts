@@ -5,15 +5,10 @@ Deno.serve(async (req) => {
         const base44 = createClientFromRequest(req);
         
         // Search across all workshops using asServiceRole to bypass RLS
-        const allWorkshops = await base44.asServiceRole.entities.Workshop.list();
+        const matchById = await base44.asServiceRole.entities.Workshop.filter({ id: "69862ef11391ffe854033cca" });
+        const matchByOwner = await base44.asServiceRole.entities.Workshop.filter({ owner_id: "69862ec05ccad4efd4cc4cae" });
         
-        const matches = allWorkshops.filter(w => 
-            w.id === '69862ef11391ffe854033cca' || 
-            (w.name && w.name.toLowerCase().includes('varej')) ||
-            (w.razao_social && w.razao_social.toLowerCase().includes('varej'))
-        );
-        
-        return Response.json({ matches });
+        return Response.json({ matchById, matchByOwner });
     } catch (error) {
         return Response.json({ error: error.message }, { status: 500 });
     }
