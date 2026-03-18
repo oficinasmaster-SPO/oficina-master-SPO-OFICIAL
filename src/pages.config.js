@@ -223,6 +223,8 @@ import TesteOpenAI from './pages/TesteOpenAI';
 import TreinamentoVendas from './pages/TreinamentoVendas';
 import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
+import GestaoTenants from './pages/GestaoTenants';
+import GestaoEmpresas from './pages/GestaoEmpresas';
 import __Layout from './Layout.jsx';
 
 
@@ -403,6 +405,8 @@ export const PAGES = {
     "TreinamentoVendas": TreinamentoVendas,
     "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
+    "GestaoTenants": GestaoTenants,
+    "GestaoEmpresas": GestaoEmpresas,
 }
 
 export const pagesConfig = {

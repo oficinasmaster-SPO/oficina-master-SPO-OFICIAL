@@ -854,9 +854,17 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           name: 'Gestão de Tenants', 
           href: createPageUrl('GestaoTenants'), 
           icon: Building2,
-          description: 'Consultorias e Empresas',
+          description: 'Consultorias e Empresas globais',
           highlight: true,
           globalAdminOnly: true,
+          requiredPermission: 'admin.users'
+        },
+        { 
+          name: 'Minhas Empresas', 
+          href: createPageUrl('GestaoEmpresas'), 
+          icon: Briefcase,
+          description: 'Gerencie empresas da sua consultoria',
+          highlight: true,
           requiredPermission: 'admin.users'
         },
 
