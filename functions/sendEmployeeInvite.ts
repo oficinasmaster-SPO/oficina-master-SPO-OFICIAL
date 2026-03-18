@@ -142,33 +142,7 @@ Deno.serve(async (req) => {
     const contactResult = await contactResponse.json();
     console.log("✅ Contato criado/atualizado:", contactResult.contact.id);
 
-    // 2. Enviar email usando automação/trigger do ActiveCampaign
-    // Adicionar tag ao contato para ativar automação
-    const tagData = {
-      contactTag: {
-        contact: contactResult.contact.id,
-        tag: 'convite-colaborador' // Certifique-se de criar essa tag e automação no AC
-      }
-    };
-
-    const tagResponse = await fetch(`${AC_API_URL}/api/3/contactTags`, {
-      method: 'POST',
-      headers: {
-        'Api-Token': AC_API_KEY,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(tagData)
-    });
-
-    if (!tagResponse.ok) {
-      const errorText = await tagResponse.text();
-      console.error("❌ Erro ao adicionar tag:", errorText);
-      // Não falhar aqui, apenas logar
-    } else {
-      console.log("✅ Tag adicionada ao contato");
-    }
-
-    // 3. Salvar link do convite nas notas do contato
+    // 2. Salvar link do convite nas notas do contato
     const noteData = {
       note: {
         note: `🔑 DADOS DO CONVITE\n\nLink: ${inviteLink}\nSenha Temporária: Oficina@2025\nOficina: ${workshop.name}\nEmail: ${email}\nNome: ${name}`,
@@ -186,8 +160,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify(noteData)
     });
 
-    console.log("✅ Contato adicionado ao ActiveCampaign com tag 'convite-colaborador'");
-    console.log("📧 A automação no ActiveCampaign enviará o email automaticamente");
+    console.log("✅ Contato adicionado ao ActiveCampaign");
 
     // Atualizar status do convite
     await base44.asServiceRole.entities.EmployeeInvite.update(invite.id, {
