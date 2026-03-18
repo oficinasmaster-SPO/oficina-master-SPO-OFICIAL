@@ -120,28 +120,7 @@ Deno.serve(async (req) => {
 
     console.log("✅ Employee criado:", employee.id);
 
-    // Definir senha padrão "Oficina@2026"
-    console.log("🔐 Definindo senha padrão 'Oficina@2026'...");
-    const apiUrl = `https://base44.app/api/apps/${Deno.env.get('BASE44_APP_ID')}/users/${inviteResult.id}/password`;
-    
-    try {
-      const passResponse = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-base44-key': Deno.env.get('BASE44_SERVICE_ROLE_KEY')
-        },
-        body: JSON.stringify({ password: "Oficina@2026" })
-      });
-      
-      if (!passResponse.ok) {
-        console.error("⚠️ Falha ao definir senha:", await passResponse.text());
-      } else {
-        console.log("✅ Senha definida com sucesso");
-      }
-    } catch (e) {
-      console.error("⚠️ Erro ao chamar API de senha:", e);
-    }
+    // A senha será definida pelo usuário no primeiro acesso via Sign up
 
     // Atualizar User com dados customizados usando SERVICE ROLE (não afeta sessão)
     console.log("🔄 Atualizando dados do User...");
@@ -184,7 +163,7 @@ Deno.serve(async (req) => {
           
           <div style="background-color: white; border-left: 4px solid #2563eb; padding: 16px; margin: 16px 0;">
             <p style="margin: 4px 0;"><strong>📧 Email:</strong> ${email}</p>
-            <p style="margin: 4px 0;"><strong>🔑 Senha temporária:</strong> Oficina@2026</p>
+            <p style="margin: 4px 0;"><strong>🔑 Senha:</strong> Você criará sua senha no primeiro acesso (Use a opção Criar conta / Sign up)</p>
             <p style="margin: 4px 0;"><strong>⏰ Validade:</strong> 7 dias</p>
           </div>
           

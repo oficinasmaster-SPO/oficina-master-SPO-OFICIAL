@@ -357,7 +357,7 @@ export default function ConvidarColaborador() {
 
   const copyCredentials = () => {
     if (createdUser) {
-      const text = `Você foi convidado para acessar a plataforma.\nEmail: ${createdUser.email}\nSenha: ${createdUser.temporary_password}\nAcesse: ${createdUser.invite_link}`;
+      const text = `Você foi convidado para acessar a plataforma.\nEmail: ${createdUser.email}\nSenha: Crie sua senha acessando a opção 'Criar conta'\nAcesse: ${createdUser.invite_link}`;
       navigator.clipboard.writeText(text);
       toast.success("✅ Credenciais copiadas!");
     }
@@ -480,7 +480,7 @@ export default function ConvidarColaborador() {
                 <p className="text-xs font-semibold text-gray-700 mb-3">📋 Dados do Colaborador:</p>
                 <div className="space-y-2 text-sm text-gray-600 font-mono">
                   <p><strong>📧 Email:</strong> {createdUser.email}</p>
-                  <p><strong>🔑 Senha temporária:</strong> {createdUser.temporary_password}</p>
+                  <p><strong>🔑 Senha:</strong> (Criada pelo colaborador no primeiro acesso usando Sign up)</p>
                   <p><strong>⏰ Validade do link:</strong> 7 dias</p>
                 </div>
               </div>
@@ -495,14 +495,14 @@ export default function ConvidarColaborador() {
         {/* Email Preview Modal */}
         {workshop && (
           <EmailPreview 
-            isOpen={showEmailPreview}
-            onClose={() => setShowEmailPreview(false)}
-            email={createdUser?.email || formData.email || "email@exemplo.com"}
-            name={createdUser?.email ? (employees.find(e => e.email === createdUser.email)?.full_name || formData.name) : formData.name || "Colaborador"}
-            workshopName={workshop.name}
-            inviteLink={createdUser?.invite_link || `https://[seu-domínio]/PrimeiroAcesso?token=[token-será-gerado]`}
-            temporaryPassword={createdUser?.temporary_password || "Oficina@2026"}
-            isPreview={true}
+          isOpen={showEmailPreview}
+          onClose={() => setShowEmailPreview(false)}
+          email={createdUser?.email || formData.email || "email@exemplo.com"}
+          name={createdUser?.email ? (employees.find(e => e.email === createdUser.email)?.full_name || formData.name) : formData.name || "Colaborador"}
+          workshopName={workshop.name}
+          inviteLink={createdUser?.invite_link || `https://[seu-domínio]/PrimeiroAcesso?token=[token-será-gerado]`}
+          temporaryPassword={"(Crie sua senha via Sign up/Criar Conta)"}
+          isPreview={true}
           />
         )}
 
@@ -523,7 +523,7 @@ export default function ConvidarColaborador() {
                 <div className="flex gap-2 items-start">
                   <Key className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
                   <p className="text-xs text-blue-800">
-                    <strong>🔑 Senha temporária:</strong> Sistema gera senha "Oficina@2026" - colaborador troca no primeiro login
+                    <strong>🔑 Criação de Senha:</strong> O colaborador deverá criar sua própria senha no primeiro acesso utilizando a opção "Criar conta" (Sign up).
                   </p>
                 </div>
               </div>

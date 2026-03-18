@@ -114,10 +114,7 @@ export default function PrimeiroAcesso() {
                     Sua conta já está criada!
                   </p>
                   <p className="text-sm text-blue-700 mb-2">
-                    Na próxima tela, utilize a opção de <strong>LOGIN (Entrar)</strong> com o seu e-mail e a <strong>senha temporária</strong> fornecida pelo gestor.
-                  </p>
-                  <p className="text-sm text-red-600 font-bold mt-2">
-                    ❌ NÃO utilize a opção "Sign up" (Criar conta).
+                    Na próxima tela, utilize a opção <strong>"Criar conta" (Sign up)</strong> com o seu e-mail para definir sua própria senha de acesso.
                   </p>
                 </div>
                 <div className="flex items-center justify-center gap-2 text-gray-500 font-medium">
