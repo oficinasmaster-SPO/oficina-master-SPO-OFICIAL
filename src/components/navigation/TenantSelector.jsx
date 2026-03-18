@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTenant } from '@/components/contexts/TenantContext';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Building2, Briefcase } from 'lucide-react';
+import { Building2, Briefcase, Search } from 'lucide-react';
 
 export default function TenantSelector() {
   const { user, selectedFirmId, changeConsultingFirm, selectedCompanyId, changeCompany } = useTenant();
+  const [searchQuery, setSearchQuery] = useState('');
 
   const { data: firms = [], isLoading: isLoadingFirms } = useQuery({
     queryKey: ['consultingFirms'],
@@ -18,6 +19,10 @@ export default function TenantSelector() {
     queryFn: () => selectedFirmId ? base44.entities.Company.filter({ consulting_firm_id: selectedFirmId }) : [],
     enabled: !!selectedFirmId
   });
+
+  const filteredCompanies = companies.filter(c => 
+    c.name?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   // Apenas admins podem alternar entre tenants livremente por enquanto
   if (user?.role !== 'admin') {
@@ -55,10 +60,27 @@ export default function TenantSelector() {
             <SelectValue placeholder="Selecione Empresa" />
           </SelectTrigger>
           <SelectContent>
+            <div className="flex items-center px-3 pb-2 pt-2 border-b mb-1 sticky top-0 bg-white z-10">
+              <Search className="w-4 h-4 text-gray-400 mr-2" />
+              <input
+                type="text"
+                placeholder="Pesquisar..."
+                className="w-full text-sm outline-none bg-transparent"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
             <SelectItem value="none">Todas Empresas</SelectItem>
-            {companies.map(c => (
+            {filteredCompanies.map(c => (
               <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
             ))}
+            {filteredCompanies.length === 0 && (
+              <div className="px-2 py-4 text-sm text-center text-gray-500">
+                Nenhuma empresa encontrada
+              </div>
+            )}
           </SelectContent>
         </Select>
       </div>
