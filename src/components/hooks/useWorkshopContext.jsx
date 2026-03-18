@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAdminMode } from './useAdminMode';
+import { useTenant } from '@/components/contexts/TenantContext';
 import { base44 } from '@/api/base44Client';
 
 /**
@@ -9,6 +10,7 @@ import { base44 } from '@/api/base44Client';
  */
 export function useWorkshopContext() {
   const { isAdminMode, adminWorkshopId } = useAdminMode();
+  const { selectedFirmId, selectedCompanyId } = useTenant();
   const [workshop, setWorkshop] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -18,6 +20,18 @@ export function useWorkshopContext() {
     const loadWorkshop = async () => {
       try {
         setIsLoading(true);
+
+        // PRIORIDADE 0: TenantContext - Se o admin selecionou uma Empresa específica
+        if (selectedCompanyId) {
+          const workshops = await base44.entities.Workshop.filter({ company_id: selectedCompanyId });
+          if (!cancelled && workshops.length > 0) {
+            console.log('✅ Workshop TenantContext carregado:', workshops[0].id);
+            setWorkshop(workshops[0]);
+          } else if (!cancelled) {
+            setWorkshop(null);
+          }
+          return;
+        }
         
         // PRIORIDADE 1: Modo Admin
         if (isAdminMode && adminWorkshopId) {
