@@ -16,8 +16,8 @@ Deno.serve(async (req) => {
       console.log("Profile ID:", user_data.profile_id);
 
       // Verificar se já existe Employee com este email
-      const allEmployees = await base44.asServiceRole.entities.Employee.list();
-      const existingEmployee = allEmployees.find(e => e.email === email);
+      const employees = await base44.asServiceRole.entities.Employee.filter({ email: email }, '-created_date', 1);
+      const existingEmployee = employees && employees.length > 0 ? employees[0] : null;
       
       if (existingEmployee) {
         console.error("Já existe um colaborador com este email:", email);
@@ -253,8 +253,8 @@ Deno.serve(async (req) => {
     }
 
     // Buscar se já existe User com este email
-    const allUsers = await base44.asServiceRole.entities.User.list();
-    const existingUser = allUsers.find(u => u.email === employee_data.email);
+    const users = await base44.asServiceRole.entities.User.filter({ email: employee_data.email }, '-created_date', 1);
+    const existingUser = users && users.length > 0 ? users[0] : null;
 
     if (existingUser) {
       console.log("User já existe, atualizando:", existingUser.id);

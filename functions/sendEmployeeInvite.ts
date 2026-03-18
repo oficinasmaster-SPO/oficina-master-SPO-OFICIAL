@@ -44,11 +44,17 @@ Deno.serve(async (req) => {
       
       // Criar usuário Base44
       await base44.users.inviteUser(email, role);
-      await new Promise(resolve => setTimeout(resolve, 3000));
       
-      // Buscar usuário criado
-      const users = await base44.asServiceRole.entities.User.filter({ email: email }, '-created_date', 1);
-      const createdUser = users && users.length > 0 ? users[0] : null;
+      // Polling inteligente (espera até 2s pela trigger do Auth)
+      let createdUser = null;
+      for (let i = 0; i < 10; i++) {
+        await new Promise(resolve => setTimeout(resolve, 200));
+        const users = await base44.asServiceRole.entities.User.filter({ email: email }, '-created_date', 1);
+        if (users && users.length > 0) {
+          createdUser = users[0];
+          break;
+        }
+      }
       
       if (createdUser) {
         // Gerar Profile ID automático

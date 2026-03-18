@@ -133,108 +133,27 @@ export default function CadastroColaborador() {
         }
       }
 
-      // Salvar Employee com workshop_id, owner_id e profile_id
-      const newEmployee = await base44.entities.Employee.create({
-        ...formData,
+      // Consolidação da Orquestração: Uma única chamada ao backend
+      const formDataToSend = { ...formData, production_percentage: productionPercentage };
+      
+      const response = await base44.functions.invoke('registerEmployeeComplete', {
+        formData: formDataToSend,
         workshop_id: workshop.id,
-        owner_id: workshop.owner_id,
-        profile_id: formData.user_profile_id || null,
-        production_percentage: productionPercentage,
-        is_partner: isPartner
+        isPartner: isPartner,
+        userRoles: userRoles
       });
 
-      // Se for sócio, adicionar ao array de partner_ids do Workshop
-      if (isPartner && workshop) {
-        const currentPartnerIds = workshop.partner_ids || [];
-        if (!currentPartnerIds.includes(user.id)) {
-          await base44.entities.Workshop.update(workshop.id, {
-            partner_ids: [...currentPartnerIds, user.id]
-          });
-        }
+      if (!response.data.success) {
+        throw new Error(response.data.error || "Erro ao cadastrar colaborador");
       }
 
-      // Criar User no banco de dados
-      let userId = null;
-      try {
-        const userResponse = await base44.functions.invoke('createUserForEmployee', {
-          employee_data: {
-            email: formData.email,
-            full_name: formData.full_name,
-            position: formData.position,
-            job_role: formData.job_role,
-            area: formData.area,
-            telefone: formData.telefone,
-            profile_picture_url: formData.profile_picture_url,
-            hire_date: formData.hire_date,
-            is_partner: isPartner,
-            user_profile_id: formData.user_profile_id,
-            roles: userRoles
-          },
-          workshop_id: workshop.id,
-          employee_id: newEmployee.id
-        });
-
-        if (userResponse.data.success) {
-          userId = userResponse.data.user_id;
-          // Vincular User ao Employee
-          await base44.entities.Employee.update(newEmployee.id, {
-            user_id: userId
-          });
-        }
-      } catch (userError) {
-        console.error("Erro ao criar user:", userError);
-        toast.error("Colaborador criado, mas houve erro ao criar o usuário do sistema");
-      }
-
-      // Criar convite e enviar e-mail
-      try {
-        const inviteToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-        const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + 7);
-
-        const invite = await base44.entities.EmployeeInvite.create({
-          workshop_id: workshop.id,
-          employee_id: newEmployee.id,
-          name: formData.full_name,
-          email: formData.email,
-          position: formData.position,
-          area: formData.area,
-          job_role: formData.job_role,
-          invite_token: inviteToken,
-          expires_at: expiresAt.toISOString(),
-          status: "enviado"
-        });
-
-        // Enviar e-mail de convite
-        const emailResponse = await base44.functions.invoke('sendEmployeeInvite', {
-          name: formData.full_name,
-          email: formData.email,
-          position: formData.position,
-          area: formData.area,
-          job_role: formData.job_role,
-          workshop_id: workshop.id,
-          employee_id: newEmployee.id
-        });
-
-        if (emailResponse.data.success) {
-          toast.success("Colaborador cadastrado e e-mail de convite enviado!");
-        } else {
-          toast.success("Colaborador cadastrado! E-mail não foi enviado, mas convite está disponível.");
-        }
-      } catch (inviteError) {
-        console.log("Erro ao enviar convite:", inviteError);
-        toast.success("Colaborador cadastrado! Mas houve erro ao enviar o e-mail de convite.");
-      }
+      toast.success("Colaborador cadastrado com sucesso!");
       
-      // Perguntar ou redirecionar para convite
-      if (window.confirm("Colaborador cadastrado! Deseja enviar o convite de acesso ao portal agora?")) {
-        const newEmployees = await base44.entities.Employee.filter({ email: formData.email }, '-created_date', 1);
-        if (newEmployees && newEmployees.length > 0) {
-           navigate(createPageUrl("ConvidarColaborador") + `?id=${newEmployees[0].id}`);
-           return;
-        }
+      if (window.confirm("Colaborador cadastrado! Deseja enviar o link de acesso manualmente via WhatsApp agora?")) {
+         navigate(createPageUrl("ConvidarColaborador") + `?id=${response.data.employee_id}`);
+         return;
       }
-      
+
       navigate(createPageUrl("Colaboradores"));
     } catch (error) {
       console.error(error);
