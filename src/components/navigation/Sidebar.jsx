@@ -1119,46 +1119,46 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
 
         <nav className="flex-1 overflow-y-auto p-4">
           {!isCollapsed && (
-            <div className="space-y-1 mb-6">
+            <div className="space-y-2 mb-6">
               <Link
                 to={getAdminUrl(createPageUrl('Home') + queryString)}
                 onClick={onClose}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all",
+                  "flex items-center gap-3 px-4 py-3 rounded-xl transition-all",
                   isActive(createPageUrl('Home'))
-                    ? "bg-accent text-primary font-bold shadow-sm"
-                    : "text-gray-700 hover:bg-accent/50 hover:text-primary transition-colors"
+                    ? "bg-[#E11D48] text-white font-medium shadow-md"
+                    : "text-gray-600 hover:bg-gray-100/80 hover:text-gray-900"
                 )}
               >
-                <Home className="w-5 h-5" />
-                <span>Início</span>
+                <Home className={cn("w-5 h-5", isActive(createPageUrl('Home')) ? "text-white" : "text-gray-500")} />
+                <span className="text-sm">Início</span>
               </Link>
               <Link
                 to={getAdminUrl(createPageUrl('MeuPerfil') + queryString)}
                 onClick={onClose}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all",
+                  "flex items-center gap-3 px-4 py-3 rounded-xl transition-all",
                   isActive(createPageUrl('MeuPerfil'))
-                    ? "bg-accent text-primary font-bold shadow-sm"
-                    : "text-gray-700 hover:bg-accent/50 hover:text-primary transition-colors"
+                    ? "bg-[#E11D48] text-white font-medium shadow-md"
+                    : "text-gray-600 hover:bg-gray-100/80 hover:text-gray-900"
                 )}
               >
-                <User className="w-5 h-5" />
-                <span>Meu Perfil</span>
+                <User className={cn("w-5 h-5", isActive(createPageUrl('MeuPerfil')) ? "text-white" : "text-gray-500")} />
+                <span className="text-sm">Meu Perfil</span>
               </Link>
             </div>
           )}
 
           {isCollapsed && (
-            <div className="flex flex-col items-center gap-4 py-2">
+            <div className="flex flex-col items-center gap-3 py-2">
               <Link
                 to={getAdminUrl(createPageUrl('Home') + queryString)}
                 onClick={onClose}
                 className={cn(
-                  "p-3 rounded-lg transition-all",
+                  "p-3 rounded-xl transition-all",
                   isActive(createPageUrl('Home'))
-                    ? "bg-accent text-primary"
-                    : "text-gray-700 hover:bg-accent/50 hover:text-primary"
+                    ? "bg-[#E11D48] text-white shadow-md"
+                    : "text-gray-500 hover:bg-gray-100/80 hover:text-gray-900"
                 )}
                 title="Início"
               >
@@ -1168,10 +1168,10 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                 to={getAdminUrl(createPageUrl('MeuPerfil') + queryString)}
                 onClick={onClose}
                 className={cn(
-                  "p-3 rounded-lg transition-all",
+                  "p-3 rounded-xl transition-all",
                   isActive(createPageUrl('MeuPerfil'))
-                    ? "bg-accent text-primary"
-                    : "text-gray-700 hover:bg-accent/50 hover:text-primary"
+                    ? "bg-[#E11D48] text-white shadow-md"
+                    : "text-gray-500 hover:bg-gray-100/80 hover:text-gray-900"
                 )}
                 title="Meu Perfil"
               >
@@ -1222,37 +1222,32 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                                 to={getAdminUrl(item.href + queryString)}
                                 onClick={onClose}
                                 className={cn(
-                                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group relative select-none",
+                                  "flex items-center gap-3 px-4 py-3 rounded-xl transition-all group relative select-none",
                                   active 
-                                    ? "bg-blue-50 text-blue-700 font-medium" 
-                                    : "text-gray-700 hover:bg-gray-100 active:bg-gray-200",
-                                  item.highlight && !active && "bg-gradient-to-r from-blue-50/50 to-indigo-50/50 border border-blue-100 hover:border-blue-200"
+                                    ? "bg-[#E11D48] text-white font-medium shadow-md" 
+                                    : "text-gray-600 hover:bg-gray-100/80 hover:text-gray-900"
                                 )}
                               >
                                 <Icon className={cn(
-                                  "w-5 h-5 flex-shrink-0",
-                                  active ? "text-blue-600" : item.highlight ? "text-blue-600" : "text-gray-500 group-hover:text-gray-700"
+                                  "w-5 h-5 flex-shrink-0 transition-colors",
+                                  active ? "text-white" : "text-gray-500 group-hover:text-gray-900"
                                 )} />
                                 
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center justify-between">
                                     <span className="text-sm truncate">{item.name}</span>
                                     {item.badge > 0 && (
-                                      <Badge className="bg-red-500 text-white ml-2 h-5 min-w-5 px-1.5">
+                                      <Badge className={cn("ml-2 h-5 min-w-5 px-1.5", active ? "bg-white text-[#E11D48]" : "bg-[#E11D48] text-white")}>
                                         {item.badge}
                                       </Badge>
                                     )}
                                   </div>
                                   {item.description && !active && (
-                                    <p className="text-xs text-gray-500 mt-0.5 truncate">
+                                    <p className="text-xs text-gray-400 mt-0.5 truncate">
                                       {item.description}
                                     </p>
                                   )}
                                 </div>
-
-                                {active && (
-                                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r" />
-                                )}
                               </Link>
                             );
                           })}
