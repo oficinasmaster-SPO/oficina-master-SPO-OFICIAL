@@ -16,6 +16,7 @@ export default function PrimeiroAcesso() {
   const [invite, setInvite] = useState(null);
   const [workshop, setWorkshop] = useState(null);
   const [error, setError] = useState(null);
+  const [wrongUser, setWrongUser] = useState(null);
   
   const [formData, setFormData] = useState({
     email: "",
@@ -52,6 +53,16 @@ export default function PrimeiroAcesso() {
         // Se já está logado, completar a aceitação do convite
         const isAuthenticated = await base44.auth.isAuthenticated();
         if (isAuthenticated) {
+          const currentUser = await base44.auth.me();
+          
+          // Verificar se o email bate com o convite
+          if (currentUser.email !== response.data.invite.email) {
+            console.error(`❌ Mismatch: logado como ${currentUser.email}, mas convite é para ${response.data.invite.email}`);
+            setWrongUser({ loggedInEmail: currentUser.email, inviteEmail: response.data.invite.email });
+            setLoading(false);
+            return;
+          }
+
           console.log("✅ Usuário já autenticado, completando aceitação...");
           try {
             const completeResponse = await base44.functions.invoke('completeInviteOnFirstAccess', { invite_token: token });
@@ -88,7 +99,7 @@ export default function PrimeiroAcesso() {
 
 
 
-  if (loading || invite) {
+  if (loading || (invite && !wrongUser)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50">
         <Card className="w-full max-w-md shadow-xl">
@@ -126,9 +137,50 @@ export default function PrimeiroAcesso() {
     );
   }
 
+  if (wrongUser) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
+        <Card className="w-full max-w-md shadow-xl border-t-4 border-t-orange-500">
+          <CardHeader className="text-center pb-4">
+            <div className="mx-auto w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
+              <AlertCircle className="w-8 h-8 text-orange-600" />
+            </div>
+            <CardTitle className="text-2xl text-orange-900">Usuário Incorreto</CardTitle>
+          </CardHeader>
+          <CardContent className="text-center">
+            <p className="text-gray-600 mb-4">
+              Você está logado como <strong className="text-gray-900">{wrongUser.loggedInEmail}</strong>.
+            </p>
+            <p className="text-gray-600 mb-6">
+              Este convite pertence a <strong className="text-gray-900">{wrongUser.inviteEmail}</strong>.
+            </p>
+            <div className="space-y-3">
+              <Button
+                onClick={async () => {
+                  await base44.auth.logout();
+                  window.location.reload();
+                }}
+                className="w-full bg-orange-600 hover:bg-orange-700"
+              >
+                Sair desta conta e continuar
+              </Button>
+              <Button
+                onClick={() => window.location.href = createPageUrl("Home")}
+                variant="outline"
+                className="w-full"
+              >
+                Ir para o Início
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
-      <Card className="w-full max-w-md shadow-xl">
+      <Card className="w-full max-w-md shadow-xl border-t-4 border-t-red-500">
         <CardHeader className="text-center pb-4">
           <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
             <AlertCircle className="w-8 h-8 text-red-600" />
