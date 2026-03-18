@@ -204,6 +204,8 @@ export default function Layout({ children, currentPageName }) {
                 <div className="text-lg font-bold text-gray-900">Oficinas Master</div>
               </Link>
 
+              {isAuthenticated && user && <TenantSelector />}
+
               {/* Global Search Bar */}
               {isAuthenticated && workshop && (
                 <div className="hidden md:flex flex-1 items-center justify-center px-6">
