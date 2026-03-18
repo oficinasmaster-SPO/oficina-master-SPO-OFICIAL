@@ -64,21 +64,21 @@ Deno.serve(async (req) => {
 
     console.log(`✅ EmployeeInviteAcceptance criado: ${acceptance.id}`);
 
-    // Forçar atualização do User com workshop_id e profile_id (garantir acesso imediato)
-    if (invite.workshop_id || invite.profile_id) {
-      const updateData = {};
-      // Atualiza workshop_id mesmo se já tiver (prioriza o do convite atual para acesso imediato)
-      if (invite.workshop_id) {
-        updateData.workshop_id = invite.workshop_id;
-      }
-      if (invite.profile_id && !user.profile_id) {
-        updateData.profile_id = invite.profile_id;
-      }
-      if (Object.keys(updateData).length > 0) {
-        await base44.asServiceRole.entities.User.update(user.id, updateData);
-        console.log(`✅ User atualizado com workshop/profile:`, updateData);
-      }
+    // Forçar atualização do User com workshop_id, profile_id e pular onboarding (garantir acesso imediato)
+    const updateData = {};
+    // Colaboradores convidados não precisam passar pelo onboarding de cadastro de oficina
+    updateData.first_access_completed = true;
+    updateData.profile_completed = true;
+
+    if (invite.workshop_id) {
+      updateData.workshop_id = invite.workshop_id;
     }
+    if (invite.profile_id && !user.profile_id) {
+      updateData.profile_id = invite.profile_id;
+    }
+    
+    await base44.asServiceRole.entities.User.update(user.id, updateData);
+    console.log(`✅ User atualizado com workshop/profile e onboarding pulado:`, updateData);
 
     return Response.json({
       success: true,
