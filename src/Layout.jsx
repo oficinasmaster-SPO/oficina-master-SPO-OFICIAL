@@ -21,6 +21,7 @@ import { PermissionsProvider } from "@/components/contexts/PermissionsContext";
 import OnboardingGate from "@/components/onboarding/OnboardingGate";
 import { useModuleTracking } from "@/components/hooks/useModuleTracking";
 import { useNavigationHistory } from "@/components/hooks/useNavigationHistory";
+import TenantSelector from "@/components/navigation/TenantSelector";
 
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
