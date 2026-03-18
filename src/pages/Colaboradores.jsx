@@ -427,18 +427,17 @@ export default function Colaboradores() {
                               
                               if (confirm(`EXCLUIR ${employee.full_name}? Ação irreversível!`)) {
                                 try {
-                                  const validation = await base44.functions.invoke('validateEmployeeDelete', {
+                                  const result = await base44.functions.invoke('deleteEmployeeCascade', {
                                     employee_id: employee.id
                                   });
-                                  
-                                  if (!validation.data?.can_delete) {
-                                    toast.error('Backend negou a exclusão');
+
+                                  if (!result.data?.success) {
+                                    toast.error(result.data?.error || 'Backend negou a exclusão');
                                     return;
                                   }
-                                  
-                                  await base44.entities.Employee.delete(employee.id);
+
                                   queryClient.invalidateQueries({ queryKey: ['employees'] });
-                                  toast.success('Colaborador excluído');
+                                  toast.success('Colaborador e acesso excluídos');
                                 } catch (error) {
                                   toast.error('Erro ao excluir: ' + (error.message || 'desconhecido'));
                                 }
