@@ -51,27 +51,37 @@ Deno.serve(async (req) => {
             }
         }
 
-        // 3. Atualizar todas as oficinas sem consulting_firm_id
+        // 3. Atualizar todas as oficinas sem consulting_firm_id ou sem company_id
         const allWorkshops = await base44.asServiceRole.entities.Workshop.list();
         let workshopsUpdated = 0;
         let companiesCreated = 0;
 
         for (const w of allWorkshops) {
-            if (!w.consulting_firm_id) {
-                const updateData = { consulting_firm_id: masterFirm.id };
-                
-                // Se a oficina não tem empresa associada, cria uma como um grupo daquela oficina
-                if (!w.company_id) {
-                    const company = await base44.asServiceRole.entities.Company.create({
-                        name: `Empresa - ${w.name || 'Sem Nome'}`,
-                        consulting_firm_id: masterFirm.id,
-                        owner_user_id: w.owner_id || masterFirm.owner_user_id
-                    });
-                    updateData.company_id = company.id;
-                    companiesCreated++;
-                    await delay(30);
-                }
+            let needsUpdate = false;
+            const updateData = {};
 
+            if (!w.consulting_firm_id) {
+                updateData.consulting_firm_id = masterFirm.id;
+                needsUpdate = true;
+            }
+
+            // Se a oficina não tem empresa associada, cria uma como um grupo daquela oficina
+            if (!w.company_id) {
+                const firmIdForCompany = updateData.consulting_firm_id || w.consulting_firm_id || masterFirm.id;
+                
+                const company = await base44.asServiceRole.entities.Company.create({
+                    name: `Empresa - ${w.name || 'Sem Nome'}`,
+                    consulting_firm_id: firmIdForCompany,
+                    owner_user_id: w.owner_id || masterFirm.owner_user_id
+                });
+                
+                updateData.company_id = company.id;
+                companiesCreated++;
+                needsUpdate = true;
+                await delay(30);
+            }
+
+            if (needsUpdate) {
                 await base44.asServiceRole.entities.Workshop.update(w.id, updateData);
                 workshopsUpdated++;
                 await delay(30);
