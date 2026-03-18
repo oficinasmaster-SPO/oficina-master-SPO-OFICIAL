@@ -13,6 +13,7 @@ Deno.serve(async (req) => {
         }
 
         const adminEmail = "oficinasmaster@gmail.com";
+        const delay = ms => new Promise(res => setTimeout(res, ms));
 
         // 1. Garantir que a ConsultingFirm Master exista
         const firms = await base44.asServiceRole.entities.ConsultingFirm.list();
@@ -46,6 +47,7 @@ Deno.serve(async (req) => {
             if (!u.consulting_firm_id) {
                 await base44.asServiceRole.entities.User.update(u.id, { consulting_firm_id: masterFirm.id });
                 usersUpdated++;
+                await delay(30);
             }
         }
 
@@ -61,16 +63,18 @@ Deno.serve(async (req) => {
                 // Se a oficina não tem empresa associada, cria uma como um grupo daquela oficina
                 if (!w.company_id) {
                     const company = await base44.asServiceRole.entities.Company.create({
-                        name: `Empresa - ${w.name}`,
+                        name: `Empresa - ${w.name || 'Sem Nome'}`,
                         consulting_firm_id: masterFirm.id,
                         owner_user_id: w.owner_id || masterFirm.owner_user_id
                     });
                     updateData.company_id = company.id;
                     companiesCreated++;
+                    await delay(30);
                 }
 
                 await base44.asServiceRole.entities.Workshop.update(w.id, updateData);
                 workshopsUpdated++;
+                await delay(30);
             }
         }
 
@@ -90,6 +94,7 @@ Deno.serve(async (req) => {
 
                 await base44.asServiceRole.entities.Employee.update(e.id, updateData);
                 employeesUpdated++;
+                await delay(30);
             }
         }
 
