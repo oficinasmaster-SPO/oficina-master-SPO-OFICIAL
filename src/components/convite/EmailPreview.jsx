@@ -5,7 +5,7 @@ import { X, Mail } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 
 export default function EmailPreview({ isOpen, onClose, email, name, workshopName, inviteLink, temporaryPassword = "Oficina@2025", isPreview = true }) {
-  const displayLink = inviteLink && !inviteLink.includes("...") ? inviteLink : "[LINK_DO_CONVITE_SERÁ_GERADO]";
+  const displayLink = inviteLink && !inviteLink.includes("...") && !inviteLink.includes("[seu-domínio]") ? inviteLink : "[LINK_DO_CONVITE_SERÁ_GERADO]";
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
