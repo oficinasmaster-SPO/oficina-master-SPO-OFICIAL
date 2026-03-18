@@ -41,6 +41,19 @@ Deno.serve(async (req) => {
 
     console.log("👤 Convidando usuário:", email);
     
+    // Buscar a oficina para obter a qual consultoria ela pertence (necessário no multi-tenant)
+    let consulting_firm_id = null;
+    let workshop_name = 'Oficinas Master Acelerador';
+    try {
+      const ws = await base44.asServiceRole.entities.Workshop.get(workshop_id);
+      if (ws) {
+        consulting_firm_id = ws.consulting_firm_id || null;
+        if (ws.name) workshop_name = ws.name;
+      }
+    } catch(e) {
+      console.error("⚠️ Aviso: Falha ao buscar dados da oficina:", e.message);
+    }
+    
     // O profile_id enviado é a fonte da verdade para as permissões
     const finalProfileId = profile_id;
 
@@ -59,6 +72,7 @@ Deno.serve(async (req) => {
     // Criar convite com METADADOS SEGUROS (Fonte da verdade)
     const invite = await base44.asServiceRole.entities.EmployeeInvite.create({
       workshop_id: workshop_id,
+      consulting_firm_id: consulting_firm_id,
       name: name,
       email: email,
       telefone: telefone || '',
@@ -75,6 +89,7 @@ Deno.serve(async (req) => {
         role: role,
         company_id: workshop_id, // Alias para workshop_id conforme solicitado
         workshop_id: workshop_id,
+        consulting_firm_id: consulting_firm_id,
         profile_id: finalProfileId,
         invited_at: new Date().toISOString()
       }
@@ -86,6 +101,7 @@ Deno.serve(async (req) => {
     console.log("👥 Criando Employee...");
     const employee = await base44.asServiceRole.entities.Employee.create({
       workshop_id: workshop_id,
+      consulting_firm_id: consulting_firm_id,
       user_id: inviteResult.id,
       full_name: name,
       email: email,
@@ -131,6 +147,7 @@ Deno.serve(async (req) => {
     console.log("🔄 Atualizando dados do User...");
     const userData = {
       workshop_id: workshop_id,
+      consulting_firm_id: consulting_firm_id,
       profile_id: finalProfileId,
       position: position || 'Colaborador',
       job_role: job_role || 'outros',
@@ -154,13 +171,6 @@ Deno.serve(async (req) => {
     // Gerar link de convite com profile_id (sem workshop_id)
     const inviteDomain = `https://oficinasmastergtr.com`;
     const inviteLink = `${inviteDomain}/PrimeiroAcesso?token=${invite.invite_token}&profile_id=${finalProfileId}`;
-
-    // Buscar o nome da oficina para o email
-    let workshop_name = 'Oficinas Master Acelerador';
-    try {
-      const ws = await base44.asServiceRole.entities.Workshop.get(workshop_id);
-      if (ws && ws.name) workshop_name = ws.name;
-    } catch(e) {}
 
     // Disparar o Email Customizado utilizando a integração nativa
     const emailHtml = `
