@@ -10,6 +10,7 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { TenantProvider } from '@/components/contexts/TenantContext';
+import GestaoTenants from '@/pages/GestaoTenants';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -48,6 +49,11 @@ const AuthenticatedApp = () => {
       <Route path="/" element={
         <LayoutWrapper currentPageName={mainPageKey}>
           <MainPage />
+        </LayoutWrapper>
+      } />
+      <Route path="/GestaoTenants" element={
+        <LayoutWrapper currentPageName="GestaoTenants">
+          <GestaoTenants />
         </LayoutWrapper>
       } />
       {Object.entries(Pages).map(([path, Page]) => (

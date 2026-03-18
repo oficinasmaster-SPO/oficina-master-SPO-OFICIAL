@@ -850,6 +850,15 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           globalAdminOnly: true,
           requiredPermission: 'admin.users'
         },
+        { 
+          name: 'Gestão de Tenants', 
+          href: createPageUrl('GestaoTenants'), 
+          icon: Building2,
+          description: 'Consultorias e Empresas',
+          highlight: true,
+          globalAdminOnly: true,
+          requiredPermission: 'admin.users'
+        },
 
         { 
           name: 'Config. Produtividade', 
