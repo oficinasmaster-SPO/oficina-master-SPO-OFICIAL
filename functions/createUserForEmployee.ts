@@ -241,6 +241,17 @@ Deno.serve(async (req) => {
 
     console.log("Criando User para:", employee_data.email);
 
+    // Buscar oficina para obter o consulting_firm_id
+    let consulting_firm_id = null;
+    try {
+      const ws = await base44.asServiceRole.entities.Workshop.get(workshop_id);
+      if (ws) {
+        consulting_firm_id = ws.consulting_firm_id || null;
+      }
+    } catch(e) {
+      console.warn("Aviso: Falha ao buscar oficina para obter consulting_firm_id", e.message);
+    }
+
     // Buscar se já existe User com este email
     const allUsers = await base44.asServiceRole.entities.User.list();
     const existingUser = allUsers.find(u => u.email === employee_data.email);
@@ -251,6 +262,7 @@ Deno.serve(async (req) => {
       // Atualizar dados do usuário existente
       const updatedUser = await base44.asServiceRole.entities.User.update(existingUser.id, {
         workshop_id: workshop_id,
+        consulting_firm_id: consulting_firm_id,
         position: employee_data.position,
         job_role: employee_data.job_role || 'outros',
         area: employee_data.area || 'tecnico',
@@ -273,6 +285,7 @@ Deno.serve(async (req) => {
       full_name: employee_data.full_name,
       role: 'user',
       workshop_id: workshop_id,
+      consulting_firm_id: consulting_firm_id,
       position: employee_data.position,
       job_role: employee_data.job_role || 'outros',
       area: employee_data.area || 'tecnico',
