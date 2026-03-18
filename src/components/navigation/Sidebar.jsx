@@ -1124,26 +1124,26 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                 to={getAdminUrl(createPageUrl('Home') + queryString)}
                 onClick={onClose}
                 className={cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-xl transition-all",
+                  "flex items-center gap-3 px-4 py-3 rounded-xl transition-all group",
                   isActive(createPageUrl('Home'))
                     ? "bg-[#E11D48] text-white font-medium shadow-md"
-                    : "text-gray-600 hover:bg-gray-100/80 hover:text-gray-900"
+                    : "text-gray-600 hover:bg-red-50 hover:text-[#E11D48]"
                 )}
               >
-                <Home className={cn("w-5 h-5", isActive(createPageUrl('Home')) ? "text-white" : "text-gray-500")} />
+                <Home className={cn("w-5 h-5 transition-colors", isActive(createPageUrl('Home')) ? "text-white" : "text-gray-500 group-hover:text-[#E11D48]")} />
                 <span className="text-sm">Início</span>
               </Link>
               <Link
                 to={getAdminUrl(createPageUrl('MeuPerfil') + queryString)}
                 onClick={onClose}
                 className={cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-xl transition-all",
+                  "flex items-center gap-3 px-4 py-3 rounded-xl transition-all group",
                   isActive(createPageUrl('MeuPerfil'))
                     ? "bg-[#E11D48] text-white font-medium shadow-md"
-                    : "text-gray-600 hover:bg-gray-100/80 hover:text-gray-900"
+                    : "text-gray-600 hover:bg-red-50 hover:text-[#E11D48]"
                 )}
               >
-                <User className={cn("w-5 h-5", isActive(createPageUrl('MeuPerfil')) ? "text-white" : "text-gray-500")} />
+                <User className={cn("w-5 h-5 transition-colors", isActive(createPageUrl('MeuPerfil')) ? "text-white" : "text-gray-500 group-hover:text-[#E11D48]")} />
                 <span className="text-sm">Meu Perfil</span>
               </Link>
             </div>
@@ -1155,27 +1155,27 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                 to={getAdminUrl(createPageUrl('Home') + queryString)}
                 onClick={onClose}
                 className={cn(
-                  "p-3 rounded-xl transition-all",
+                  "p-3 rounded-xl transition-all group",
                   isActive(createPageUrl('Home'))
                     ? "bg-[#E11D48] text-white shadow-md"
-                    : "text-gray-500 hover:bg-gray-100/80 hover:text-gray-900"
+                    : "text-gray-500 hover:bg-red-50 hover:text-[#E11D48]"
                 )}
                 title="Início"
               >
-                <Home className="w-5 h-5" />
+                <Home className={cn("w-5 h-5 transition-colors", isActive(createPageUrl('Home')) ? "text-white" : "text-gray-500 group-hover:text-[#E11D48]")} />
               </Link>
               <Link
                 to={getAdminUrl(createPageUrl('MeuPerfil') + queryString)}
                 onClick={onClose}
                 className={cn(
-                  "p-3 rounded-xl transition-all",
+                  "p-3 rounded-xl transition-all group",
                   isActive(createPageUrl('MeuPerfil'))
                     ? "bg-[#E11D48] text-white shadow-md"
-                    : "text-gray-500 hover:bg-gray-100/80 hover:text-gray-900"
+                    : "text-gray-500 hover:bg-red-50 hover:text-[#E11D48]"
                 )}
                 title="Meu Perfil"
               >
-                <User className="w-5 h-5" />
+                <User className={cn("w-5 h-5 transition-colors", isActive(createPageUrl('MeuPerfil')) ? "text-white" : "text-gray-500 group-hover:text-[#E11D48]")} />
               </Link>
             </div>
           )}
@@ -1225,12 +1225,12 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                                   "flex items-center gap-3 px-4 py-3 rounded-xl transition-all group relative select-none",
                                   active 
                                     ? "bg-[#E11D48] text-white font-medium shadow-md" 
-                                    : "text-gray-600 hover:bg-gray-100/80 hover:text-gray-900"
+                                    : "text-gray-600 hover:bg-red-50 hover:text-[#E11D48]"
                                 )}
                               >
                                 <Icon className={cn(
                                   "w-5 h-5 flex-shrink-0 transition-colors",
-                                  active ? "text-white" : "text-gray-500 group-hover:text-gray-900"
+                                  active ? "text-white" : "text-gray-500 group-hover:text-[#E11D48]"
                                 )} />
                                 
                                 <div className="flex-1 min-w-0">
