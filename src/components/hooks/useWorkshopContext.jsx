@@ -106,7 +106,7 @@ export function useWorkshopContext() {
     return () => {
       cancelled = true;
     };
-  }, [isAdminMode, adminWorkshopId]);
+  }, [isAdminMode, adminWorkshopId, selectedCompanyId]);
 
   return {
     workshop,
