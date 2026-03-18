@@ -73,7 +73,7 @@ export default function PrimeiroAcesso() {
           setWorkshop(response.data.workshop);
           setTimeout(() => {
             base44.auth.redirectToLogin(window.location.origin + window.location.pathname + window.location.search);
-          }, 1000);
+          }, 5000); // Dá 5 segundos para o usuário ler as instruções de login
         }
       } else {
         setError(response.data.error || "Convite inválido");
@@ -96,8 +96,23 @@ export default function PrimeiroAcesso() {
             {invite ? (
               <>
                 <CheckCircle2 className="w-12 h-12 text-green-600 mx-auto mb-4" />
-                <p className="text-gray-900 font-semibold text-lg mb-2">Convite Validado!</p>
-                <p className="text-gray-600">Redirecionando para login...</p>
+                <p className="text-gray-900 font-bold text-xl mb-4">Convite Validado!</p>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-left">
+                  <p className="text-blue-800 font-bold mb-2 flex items-center gap-2">
+                    <AlertCircle className="w-5 h-5" /> 
+                    Sua conta já está criada!
+                  </p>
+                  <p className="text-sm text-blue-700 mb-2">
+                    Na próxima tela, utilize a opção de <strong>LOGIN (Entrar)</strong> com o seu e-mail e a <strong>senha temporária</strong> fornecida pelo gestor.
+                  </p>
+                  <p className="text-sm text-red-600 font-bold mt-2">
+                    ❌ NÃO utilize a opção "Sign up" (Criar conta).
+                  </p>
+                </div>
+                <div className="flex items-center justify-center gap-2 text-gray-500 font-medium">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Redirecionando para a tela de acesso...
+                </div>
               </>
             ) : (
               <>
