@@ -332,8 +332,8 @@ export default function ConvidarColaborador() {
     console.log("🏭 Empresa:", workshop?.name);
     console.log("🔗 Associando colaborador à empresa:", workshop?.name, `(ID: ${workshop?.id})`);
     
-    if (!formData.name || !formData.email || !formData.telefone || !formData.position || !formData.area) {
-      toast.error("Preencha todos os campos obrigatórios (*)");
+    if (!formData.name || !formData.email || !formData.position || !formData.area) {
+      toast.error("Preencha os campos obrigatórios (Nome, Email, Cargo e Área)");
       return;
     }
     
@@ -554,7 +554,7 @@ export default function ConvidarColaborador() {
                 </div>
 
                 <div>
-                  <Label htmlFor="telefone">Telefone *</Label>
+                  <Label htmlFor="telefone">Telefone (Opcional)</Label>
                   <Input
                     id="telefone"
                     value={formData.telefone}
