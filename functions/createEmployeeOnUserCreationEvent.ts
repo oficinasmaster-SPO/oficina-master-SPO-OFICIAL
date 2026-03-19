@@ -36,6 +36,7 @@ Deno.serve(async (req) => {
         let invite = null;
         let workshopId = null;
         let profileId = null;
+        let inviteConsultingFirmId = null;
 
         if (user.invite_id) {
             try {
@@ -43,6 +44,7 @@ Deno.serve(async (req) => {
                 if (invite) {
                     workshopId = invite.workshop_id;
                     profileId = invite.profile_id;
+                    inviteConsultingFirmId = invite.consulting_firm_id || invite.metadata?.consulting_firm_id || null;
                     console.log(`✅ EmployeeInvite encontrado: workshop_id=${workshopId}, profile_id=${profileId}`);
                 }
             } catch (e) {
