@@ -300,7 +300,7 @@ export default function RegistrarAtendimento() {
       if (fromAgenda) {
         navigate(-1); // Volta para a página anterior (agenda)
       } else {
-        navigate(createPageUrl('ControleAceleracao'));
+        navigate(`${createPageUrl('ControleAceleracao')}?tab=atendimentos`);
       }
     },
     onError: (error) => {
@@ -1393,7 +1393,7 @@ export default function RegistrarAtendimento() {
               if (fromAgenda) {
                 navigate(-1); // Volta para a agenda
               } else {
-                navigate(createPageUrl('ControleAceleracao'));
+                navigate(`${createPageUrl('ControleAceleracao')}?tab=atendimentos`);
               }
             }}
           >

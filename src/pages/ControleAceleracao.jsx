@@ -17,7 +17,9 @@ import FiltrosControleAceleracao from "@/components/aceleracao/FiltrosControleAc
 
 export default function ControleAceleracao() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("visao-geral");
+  const urlParams = new URLSearchParams(window.location.search);
+  const initialTab = urlParams.get('tab') || "visao-geral";
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [showMassRegistration, setShowMassRegistration] = useState(false);
   const [filtros, setFiltros] = useState({
     consultorId: "todos",
