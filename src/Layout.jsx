@@ -102,7 +102,7 @@ export default function Layout({ children, currentPageName }) {
 
 
   const { data: unreadCount = 0 } = useQuery({
-    queryKey: ['unread-notifications', user?.id],
+    queryKey: ['notifications', user?.id],
     queryFn: async () => {
       try {
         const notifications = await base44.entities.Notification.list();
