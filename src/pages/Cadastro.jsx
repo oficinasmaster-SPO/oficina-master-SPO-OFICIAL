@@ -144,6 +144,30 @@ export default function Cadastro() {
         capacidade_atendimento_dia: 0,
         tempo_medio_servico: 0
       });
+      
+      // Update User with the new workshop_id
+      await base44.auth.updateMe({
+        workshop_id: newWorkshop.id
+      });
+      
+      // Also create an Employee record for the owner since it wasn't created on signup
+      await base44.entities.Employee.create({
+        workshop_id: newWorkshop.id,
+        consulting_firm_id: user.consulting_firm_id || '69bab264d7c3fe5d367c3959',
+        user_id: user.id,
+        full_name: user.full_name || user.email.split('@')[0],
+        email: user.email,
+        position: 'Sócio/Proprietário',
+        job_role: 'socio',
+        area: 'gerencia',
+        tipo_vinculo: 'interno',
+        is_internal: true,
+        is_partner: true,
+        status: 'ativo',
+        user_status: 'ativo',
+        hire_date: new Date().toISOString().split('T')[0]
+      });
+
       setWorkshop(newWorkshop);
       toast.success(`Ambiente criado! Código: ${workshopId}`);
     } catch (error) {
