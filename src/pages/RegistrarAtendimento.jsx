@@ -53,6 +53,7 @@ export default function RegistrarAtendimento() {
     documentos_vinculados: [],
     observacoes_consultor: "",
     proximos_passos: "",
+    proximos_passos_list: [],
     notificacoes_programadas: []
   });
 
