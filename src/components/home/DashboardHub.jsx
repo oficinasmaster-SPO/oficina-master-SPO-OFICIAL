@@ -576,7 +576,7 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
                   </p>
                 </div>
               </div>
-              <Link to={getAdminUrl(createPageUrl("Resultado")) + `&id=${lastDiagnostic.id}`}>
+              <Link to={getAdminUrl(createPageUrl("Resultado") + `?id=${lastDiagnostic.id}`)}>
                 <Button className="bg-blue-600 hover:bg-blue-700">
                   Ver Resultado
                   <ArrowRight className="ml-2 w-4 h-4" />
