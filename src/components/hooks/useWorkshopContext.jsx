@@ -71,8 +71,12 @@ export function useWorkshopContext() {
           let userWorkshop = null;
           
           // Tenta pegar workshop por owner_id
-          const ownedWorkshops = await base44.entities.Workshop.filter({ owner_id: user.id });
-          userWorkshop = Array.isArray(ownedWorkshops) && ownedWorkshops.length > 0 ? ownedWorkshops[0] : null;
+          try {
+            const ownedWorkshops = await base44.entities.Workshop.filter({ owner_id: user.id });
+            userWorkshop = Array.isArray(ownedWorkshops) && ownedWorkshops.length > 0 ? ownedWorkshops[0] : null;
+          } catch(err) {
+            console.warn('Erro ao buscar workshop por owner_id:', err);
+          }
 
           // Se não encontrou, tenta por workshop_id (se salvo no usuário)
           const userWorkshopId = user.data?.workshop_id || user.workshop_id;
@@ -86,20 +90,28 @@ export function useWorkshopContext() {
 
           // Se ainda não encontrou, busca via Employee (colaborador)
           if (!userWorkshop) {
-            // Tenta buscar por ID
-            let employees = await base44.entities.Employee.filter({ user_id: user.id });
-            
-            // Fallback: Tenta buscar por Email se falhar por ID
-            if (!employees || employees.length === 0) {
-              console.log('⚠️ WorkshopContext: Buscando employee por email (fallback)');
-              employees = await base44.entities.Employee.filter({ email: user.email });
-            }
-
-            if (Array.isArray(employees) && employees.length > 0) {
-              const employee = employees[0];
-              if (employee.workshop_id) {
-                userWorkshop = await base44.entities.Workshop.get(employee.workshop_id);
+            try {
+              // Tenta buscar por ID
+              let employees = await base44.entities.Employee.filter({ user_id: user.id });
+              
+              // Fallback: Tenta buscar por Email se falhar por ID
+              if (!employees || employees.length === 0) {
+                console.log('⚠️ WorkshopContext: Buscando employee por email (fallback)');
+                employees = await base44.entities.Employee.filter({ email: user.email });
               }
+
+              if (Array.isArray(employees) && employees.length > 0) {
+                const employee = employees[0];
+                if (employee.workshop_id) {
+                  try {
+                    userWorkshop = await base44.entities.Workshop.get(employee.workshop_id);
+                  } catch(e) {
+                     console.warn(`Workshop do Employee não encontrado: ${employee.workshop_id}`);
+                  }
+                }
+              }
+            } catch(err) {
+              console.warn('Erro ao buscar employee:', err);
             }
           }
 
