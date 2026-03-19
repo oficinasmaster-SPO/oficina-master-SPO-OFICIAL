@@ -84,18 +84,18 @@ export default function GestaoTenants() {
     }
   });
 
-  // Mutations: Companies
+  // Mutations: Companies (Workshops)
   const saveCompanyMutation = useMutation({
     mutationFn: async (data) => {
       if (editingCompany) {
-        return await base44.entities.Company.update(editingCompany.id, data);
+        return await base44.entities.Workshop.update(editingCompany.id, data);
       } else {
-        return await base44.entities.Company.create(data);
+        return await base44.entities.Workshop.create(data);
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-companies'] });
-      toast.success(editingCompany ? "Empresa atualizada com sucesso!" : "Empresa criada com sucesso!");
+      toast.success(editingCompany ? "Oficina atualizada com sucesso!" : "Oficina criada com sucesso!");
       setIsCompanyModalOpen(false);
       resetCompanyForm();
     },
@@ -105,10 +105,10 @@ export default function GestaoTenants() {
   });
 
   const deleteCompanyMutation = useMutation({
-    mutationFn: (id) => base44.entities.Company.delete(id),
+    mutationFn: (id) => base44.entities.Workshop.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-companies'] });
-      toast.success("Empresa removida com sucesso!");
+      toast.success("Oficina removida com sucesso!");
     },
     onError: (err) => {
       toast.error(`Erro ao remover: ${err.message}`);
