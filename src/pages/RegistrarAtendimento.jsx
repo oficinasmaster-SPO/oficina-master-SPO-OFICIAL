@@ -1493,7 +1493,9 @@ export default function RegistrarAtendimento({ isModal = false, onClose }) {
              </button>
           </div>
           <div className="p-6 overflow-y-auto flex-1">
-             {content}
+             <form onSubmit={handleSubmit} className="space-y-6">
+               {content}
+             </form>
           </div>
         </div>
       </div>
@@ -1510,7 +1512,9 @@ export default function RegistrarAtendimento({ isModal = false, onClose }) {
           {formData.id ? 'Atualize as informações do atendimento' : 'Agende e registre informações do atendimento ao cliente'}
         </p>
       </div>
-      {content}
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {content}
+      </form>
     </div>
   );
 }
