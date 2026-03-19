@@ -356,17 +356,18 @@ export const generateAtaPDF = (ata, workshop) => {
         doc.setFont(undefined, 'normal');
       }
       
-      const marginBlock = block.margin || [0, 5]; // [top, bottom] simplificado
-      y += (marginBlock[0] || 0);
+      y += (block.marginTop !== undefined ? block.marginTop : 0);
       
-      const lines = doc.splitTextToSize(block.text, contentWidth);
+      const indent = block.marginLeft || 0;
+      const lines = doc.splitTextToSize(block.text, contentWidth - indent);
+      
       lines.forEach(line => {
         checkPageBreak(6);
-        doc.text(line, margin + (block.margin && block.margin[0] === 10 ? 5 : 0), y); // Indentação simples
+        doc.text(line, margin + indent, y);
         y += 5;
       });
       
-      y += (marginBlock[1] || 5);
+      y += (block.marginBottom !== undefined ? block.marginBottom : 3);
     });
     
     y += 5;

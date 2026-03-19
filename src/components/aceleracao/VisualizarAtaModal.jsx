@@ -18,23 +18,51 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
       try {
         const dados = await base44.entities.MeetingMinutes.get(ata.id);
         
-        // Se ainda faltam dados estruturados mas temos o atendimento, tentar carregar do atendimento
-        if ((!dados.decisoes_tomadas || dados.decisoes_tomadas.length === 0) && atendimento) {
-             dados.decisoes_tomadas = atendimento.decisoes_tomadas || [];
-        }
-        if ((!dados.acoes_geradas || dados.acoes_geradas.length === 0) && atendimento) {
-             dados.acoes_geradas = atendimento.acoes_geradas || [];
-        }
-        if ((!dados.proximos_passos_list || dados.proximos_passos_list.length === 0) && atendimento) {
-             dados.proximos_passos_list = atendimento.proximos_passos_list || [];
+        // Se ainda faltam dados estruturados mas temos o atendimento, carregar fallback convertido
+        if (!dados.pautas && atendimento?.pauta && Array.isArray(atendimento.pauta)) {
+            let pautasTexto = atendimento.pauta
+              .filter(p => p.titulo)
+              .map(p => `• ${p.titulo}${p.descricao ? ': ' + p.descricao : ''}`)
+              .join('\n');
+              
+            if (atendimento.topicos_discutidos?.length > 0) {
+              pautasTexto += (pautasTexto ? '\n\n' : '') + '**Tópicos Discutidos:**\n' + 
+                atendimento.topicos_discutidos.map(t => `• ${t}`).join('\n');
+            }
+            dados.pautas = pautasTexto;
         }
         
-        // Garantir que pautas e objetivos venham estruturados se não estiverem na ATA mas estiverem no atendimento
-        if ((!dados.pauta || dados.pauta.length === 0) && atendimento?.pauta) {
-            dados.pauta = atendimento.pauta;
+        if (!dados.objetivos_atendimento && atendimento?.objetivos && Array.isArray(atendimento.objetivos)) {
+            dados.objetivos_atendimento = atendimento.objetivos
+              .filter(o => o)
+              .map(o => `• ${o}`)
+              .join('\n');
         }
-        if ((!dados.objetivos || dados.objetivos.length === 0) && atendimento?.objetivos) {
-            dados.objetivos = atendimento.objetivos;
+
+        if (!dados.objetivos_consultor && (atendimento?.observacoes_consultor || atendimento?.decisoes_tomadas?.length > 0)) {
+            let objetivosConsultorTexto = atendimento.observacoes_consultor || "";
+            if (atendimento.decisoes_tomadas && atendimento.decisoes_tomadas.length > 0) {
+              objetivosConsultorTexto += (objetivosConsultorTexto ? '\n\n' : '') + '**Decisões Tomadas:**\n' + 
+                atendimento.decisoes_tomadas
+                  .map(d => `• ${d.decisao}${d.responsavel ? ' (Responsável: ' + d.responsavel + ')' : ''}${d.prazo ? ' - Prazo: ' + d.prazo : ''}`)
+                  .join('\n');
+            }
+            dados.objetivos_consultor = objetivosConsultorTexto;
+        }
+
+        if ((!dados.proximos_passos_list || dados.proximos_passos_list.length === 0) && atendimento) {
+             dados.proximos_passos_list = atendimento.proximos_passos_list || [];
+             if (dados.proximos_passos_list.length === 0 && atendimento.acoes_geradas) {
+                 dados.proximos_passos_list = atendimento.acoes_geradas.filter(a => a.acao).map(a => ({
+                     descricao: a.acao,
+                     responsavel: a.responsavel || "",
+                     prazo: a.prazo || ""
+                 }));
+             }
+        }
+        
+        if (!dados.visao_geral_projeto && atendimento?.visao_geral_projeto) {
+            dados.visao_geral_projeto = atendimento.visao_geral_projeto;
         }
 
         setAtaAtualizada(dados);
@@ -201,18 +229,20 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
           <Card>
             <CardContent className="pt-6">
               <h3 className="font-bold text-lg mb-3">4. PRÓXIMOS PASSOS</h3>
-              {Array.isArray(ataAtualizada.proximos_passos) && ataAtualizada.proximos_passos.length > 0 ? (
+              {Array.isArray(ataAtualizada.proximos_passos_list) && ataAtualizada.proximos_passos_list.length > 0 ? (
                 <div className="space-y-2">
-                  {ataAtualizada.proximos_passos.map((passo, i) => (
+                  {ataAtualizada.proximos_passos_list.map((passo, i) => (
                     <div key={i} className="border-l-4 border-blue-600 pl-3">
                       <p className="font-medium">{passo.descricao}</p>
                       <p className="text-sm text-gray-600">
                         Responsável: {passo.responsavel} | 
-                        Prazo: {new Date(passo.prazo).toLocaleDateString('pt-BR')}
+                        Prazo: {passo.prazo ? new Date(passo.prazo).toLocaleDateString('pt-BR') : 'Não definido'}
                       </p>
                     </div>
                   ))}
                 </div>
+              ) : ataAtualizada.proximos_passos ? (
+                <p className="whitespace-pre-wrap">{ataAtualizada.proximos_passos}</p>
               ) : (
                 <p>Nenhum próximo passo definido</p>
               )}

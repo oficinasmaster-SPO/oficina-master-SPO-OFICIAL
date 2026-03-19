@@ -14,7 +14,9 @@ export function parseMarkdownToPdf(content) {
       pdfContent.push({
         text: token.text,
         style: token.depth === 1 ? "header" : "subheader",
-        margin: [0, 10, 0, 5]
+        marginTop: 6,
+        marginBottom: 3,
+        marginLeft: 0
       });
     }
 
@@ -24,7 +26,9 @@ export function parseMarkdownToPdf(content) {
         const cleanText = item.text.replace(/<[^>]*>/g, '');
         pdfContent.push({
           text: "• " + cleanText,
-          margin: [10, 2], // Indent list items
+          marginTop: 1,
+          marginBottom: 1,
+          marginLeft: 5 // Indent list items
         });
       });
     }
@@ -34,7 +38,9 @@ export function parseMarkdownToPdf(content) {
       const cleanText = token.text.replace(/<[^>]*>/g, '');
       pdfContent.push({
         text: cleanText,
-        margin: [0, 5],
+        marginTop: 2,
+        marginBottom: 3,
+        marginLeft: 0
       });
     }
     
@@ -42,7 +48,9 @@ export function parseMarkdownToPdf(content) {
     if (token.type === 'space') {
        pdfContent.push({
         text: ' ',
-        margin: [0, 5],
+        marginTop: 2,
+        marginBottom: 2,
+        marginLeft: 0
       });
     }
   });
