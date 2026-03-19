@@ -69,13 +69,26 @@ Deno.serve(async (req) => {
             console.log(`✅ workshop_id obtido direto do User: ${workshopId}`);
         }
 
+        // Vincular novo usuário via Sign Up à consultoria padrão (Oficinas Master Aceleradora)
+        const defaultConsultingFirmId = '69bab264d7c3fe5d367c3959';
+        let updatedConsultingFirmId = null;
+
+        if (!user.consulting_firm_id && !invite) {
+            console.log(`✅ Atualizando User ${user.id} com consulting_firm_id padrão: ${defaultConsultingFirmId}`);
+            await base44.asServiceRole.entities.User.update(user.id, {
+                consulting_firm_id: defaultConsultingFirmId
+            });
+            updatedConsultingFirmId = defaultConsultingFirmId;
+        }
+
         // Validar workshop_id obrigatório
         if (!workshopId) {
             console.error(`❌ Nenhum workshop_id encontrado para usuário ${user.id}`);
             return Response.json({ 
                 success: false, 
-                message: 'workshop_id não encontrado - Employee não será criado',
+                message: 'workshop_id não encontrado - Employee não será criado, mas usuário foi processado',
                 user_id: user.id,
+                consulting_firm_id: updatedConsultingFirmId || user.consulting_firm_id,
                 details: 'Vincule o usuário a um convite ou workshop válido'
             });
         }
