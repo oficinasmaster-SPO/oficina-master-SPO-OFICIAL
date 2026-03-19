@@ -1466,7 +1466,46 @@ export default function RegistrarAtendimento({ isModal = true, onClose }) {
             });
           }}
         />
-        </form>
+    </form>
+  );
+
+  if (isModal) {
+    return (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}>
+        <div className="absolute inset-0" onClick={handleClose} />
+        <div className="relative bg-white rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.2)] w-full max-w-[800px] max-h-[95vh] flex flex-col z-10 animate-in fade-in zoom-in-95 duration-200">
+          <div className="flex items-center justify-between p-6 border-b shrink-0">
+             <div>
+               <h1 className="text-2xl font-bold text-gray-900">
+                 {formData.id ? 'Editar Atendimento' : 'Registrar Atendimento de Consultoria'}
+               </h1>
+               <p className="text-sm text-gray-600 mt-1">
+                 {formData.id ? 'Atualize as informações do atendimento' : 'Agende e registre informações do atendimento ao cliente'}
+               </p>
+             </div>
+             <button type="button" onClick={handleClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+               <X className="w-5 h-5 text-gray-500" />
+             </button>
+          </div>
+          <div className="p-6 overflow-y-auto flex-1">
+             {content}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">
+          {formData.id ? 'Editar Atendimento' : 'Registrar Atendimento de Consultoria'}
+        </h1>
+        <p className="text-gray-600 mt-2">
+          {formData.id ? 'Atualize as informações do atendimento' : 'Agende e registre informações do atendimento ao cliente'}
+        </p>
+      </div>
+      {content}
     </div>
   );
 }
