@@ -101,25 +101,25 @@ export default function Layout({ children, currentPageName }) {
 
 
 
-  const { data: unreadCount = 0 } = useQuery({
+  const { data: notifications = [] } = useQuery({
     queryKey: ['notifications', user?.id],
     queryFn: async () => {
       try {
-        const notifications = await base44.entities.Notification.list();
-        return Array.isArray(notifications) 
-          ? notifications.filter(n => n.user_id === user?.id && !n.is_read).length 
-          : 0;
+        if (!user?.id) return [];
+        const allNotifications = await base44.entities.Notification.list('-created_date', 50);
+        return Array.isArray(allNotifications) 
+          ? allNotifications.filter(n => n.user_id === user.id && !n.is_read)
+          : [];
       } catch (error) {
         console.log("Error fetching notifications:", error);
-        return 0;
+        return [];
       }
     },
     enabled: !!user?.id && isAuthenticated && !isCheckingAuth,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
     staleTime: 5 * 60 * 1000,
-    retry: 1
   });
+
+  const unreadCount = notifications.length;
 
   const handleLogout = async () => {
     try {
