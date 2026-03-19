@@ -32,14 +32,14 @@ export default function GestaoTenants() {
     branding_logo_url: ''
   });
 
-  // States for Company Form
+  // States for Company Form (now Workshop)
   const [companyFormData, setCompanyFormData] = useState({
     name: '',
     consulting_firm_id: '',
-    owner_user_id: '',
+    owner_id: '',
     cnpj: '',
-    description: '',
-    logo_url: ''
+    city: 'Não informada',
+    state: 'ND'
   });
 
   // Queries
