@@ -52,11 +52,11 @@ export default function Layout({ children, currentPageName }) {
 
     handleSidebarResize();
     window.addEventListener('storage', handleSidebarResize);
-    const interval = setInterval(handleSidebarResize, 500);
+    window.addEventListener('sidebar-toggle', handleSidebarResize);
 
     return () => {
       window.removeEventListener('storage', handleSidebarResize);
-      clearInterval(interval);
+      window.removeEventListener('sidebar-toggle', handleSidebarResize);
     };
   }, []);
 

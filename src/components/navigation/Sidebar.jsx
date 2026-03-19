@@ -235,6 +235,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
     setIsCollapsed(newState);
     try {
       localStorage.setItem('sidebar-collapsed', String(newState));
+      window.dispatchEvent(new CustomEvent('sidebar-toggle'));
     } catch {
       // Ignora erro
     }
