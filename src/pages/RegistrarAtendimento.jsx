@@ -26,7 +26,7 @@ import GoogleMeetIntegration from "@/components/aceleracao/GoogleMeetIntegration
 import { useGoogleMeet } from "@/components/hooks/useGoogleMeet";
 import NextSteps from "@/components/aceleracao/NextSteps";
 
-export default function RegistrarAtendimento({ isModal = true, onClose }) {
+export default function RegistrarAtendimento({ isModal = false, onClose }) {
   const navigate = useNavigate();
   const location = window.location;
   const queryClient = useQueryClient();
