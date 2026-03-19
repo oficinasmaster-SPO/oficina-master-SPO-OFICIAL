@@ -11,6 +11,7 @@ import { Plus, Trash2, Save, FileText, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import ProcessSearchSelect from "@/components/aceleracao/ProcessSearchSelect";
 import AudioTranscriptionField from "@/components/aceleracao/AudioTranscriptionField";
+import NextSteps from "@/components/aceleracao/NextSteps";
 
 export default function GerarAtaModal({ atendimento, workshop, planoAceleracao, onClose, onSaved }) {
   const [loading, setLoading] = useState(false);
@@ -116,13 +117,14 @@ export default function GerarAtaModal({ atendimento, workshop, planoAceleracao, 
         });
       }
 
-      // Incluir próximos passos textuais
-      if (atendimento?.proximos_passos) {
-        proximosPassosIniciais.push({
-          descricao: atendimento.proximos_passos,
-          responsavel: "",
-          prazo: ""
-        });
+      // If atendimento already has proximos_passos_list, use it
+      if (atendimento?.proximos_passos_list && atendimento.proximos_passos_list.length > 0) {
+          atendimento.proximos_passos_list.forEach(p => {
+              // avoid duplicates
+              if (!proximosPassosIniciais.find(x => x.descricao === p.descricao)) {
+                  proximosPassosIniciais.push(p);
+              }
+          });
       }
 
       // Data e hora do atendimento (usar hora real se disponível)
@@ -148,7 +150,8 @@ export default function GerarAtaModal({ atendimento, workshop, planoAceleracao, 
         pautas: pautasTexto,
         objetivos_atendimento: objetivosTexto,
         objetivos_consultor: objetivosConsultorTexto,
-        proximos_passos: proximosPassosIniciais.length > 0 ? proximosPassosIniciais : prev.proximos_passos,
+        proximos_passos_list: proximosPassosIniciais,
+        proximos_passos: typeof atendimento?.proximos_passos === 'string' ? atendimento.proximos_passos : "",
         visao_geral_projeto: planoAceleracao?.plan_data?.overview || planoAceleracao?.plan_data?.executive_summary || ""
       }));
     } catch (error) {
@@ -175,26 +178,6 @@ export default function GerarAtaModal({ atendimento, workshop, planoAceleracao, 
     const updated = [...(formData.participantes || [])];
     updated[index] = {...updated[index], [field]: value};
     setFormData(prev => ({ ...prev, participantes: updated }));
-  };
-
-  const addProximoPasso = () => {
-    setFormData(prev => ({
-      ...prev,
-      proximos_passos: [...(prev.proximos_passos || []), { descricao: "", responsavel: "", prazo: "" }]
-    }));
-  };
-
-  const removeProximoPasso = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      proximos_passos: (prev.proximos_passos || []).filter((_, i) => i !== index)
-    }));
-  };
-
-  const updateProximoPasso = (index, field, value) => {
-    const updated = [...(formData.proximos_passos || [])];
-    updated[index] = {...updated[index], [field]: value};
-    setFormData(prev => ({ ...prev, proximos_passos: updated }));
   };
 
   const handleSave = async (status = "rascunho") => {
@@ -224,7 +207,8 @@ export default function GerarAtaModal({ atendimento, workshop, planoAceleracao, 
         pautas: formData.pautas,
         objetivos_atendimento: formData.objetivos_atendimento,
         objetivos_consultor: formData.objetivos_consultor,
-        proximos_passos: (formData.proximos_passos || []).filter(p => p.descricao),
+        proximos_passos_list: (formData.proximos_passos_list || []).filter(p => p.descricao),
+        proximos_passos: formData.proximos_passos,
         visao_geral_projeto: formData.visao_geral_projeto,
         processos_vinculados: atendimento?.processos_vinculados || formData.processos_vinculados || [],
         videoaulas_vinculadas: atendimento?.videoaulas_vinculadas || [],
@@ -465,38 +449,24 @@ export default function GerarAtaModal({ atendimento, workshop, planoAceleracao, 
 
           <Card>
             <CardContent className="pt-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-lg">4. Próximos Passos</h3>
-                <Button size="sm" onClick={addProximoPasso}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Adicionar
-                </Button>
+              <h3 className="font-semibold text-lg">4. Próximos Passos</h3>
+              <NextSteps 
+                steps={formData.proximos_passos_list || []} 
+                onChange={(steps) => setFormData({ ...formData, proximos_passos_list: steps })} 
+                editable={true} 
+              />
+              
+              {/* Fallback for legacy text */}
+              <div className="mt-6 pt-4 border-t">
+                <Label className="text-sm font-medium text-gray-700">Observações Adicionais (Antigo Próximos Passos)</Label>
+                <Textarea
+                  placeholder="Notas textuais extras caso necessário..."
+                  value={formData.proximos_passos || ""}
+                  onChange={(e) => setFormData({ ...formData, proximos_passos: e.target.value })}
+                  rows={2}
+                  className="mt-2"
+                />
               </div>
-              {(formData.proximos_passos || []).map((passo, index) => (
-                <div key={index} className="flex gap-2">
-                  <Input
-                    placeholder="Descrição da ação"
-                    value={passo.descricao || ""}
-                    onChange={(e) => updateProximoPasso(index, 'descricao', e.target.value)}
-                    className="flex-1"
-                  />
-                  <Input
-                    placeholder="Responsável"
-                    value={passo.responsavel || ""}
-                    onChange={(e) => updateProximoPasso(index, 'responsavel', e.target.value)}
-                    className="w-40"
-                  />
-                  <Input
-                    type="date"
-                    value={passo.prazo || ""}
-                    onChange={(e) => updateProximoPasso(index, 'prazo', e.target.value)}
-                    className="w-40"
-                  />
-                  <Button size="icon" variant="destructive" onClick={() => removeProximoPasso(index)}>
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              ))}
             </CardContent>
           </Card>
 

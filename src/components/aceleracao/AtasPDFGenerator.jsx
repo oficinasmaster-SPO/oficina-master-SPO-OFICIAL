@@ -261,36 +261,62 @@ export const generateAtaPDF = (ata, workshop) => {
     y += 2;
     doc.setLineWidth(0.5);
     doc.line(margin, y, pageWidth - margin, y);
+    y += 8;
+
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'normal');
+    doc.text('Por fim, ficaram definidos como próximos passos:', margin, y);
     y += 10;
 
     ata.proximos_passos_list.forEach((passo, idx) => {
-      checkPageBreak(20);
+      checkPageBreak(15);
       
-      // Box verde para próximos passos
-      doc.setFillColor(240, 253, 244);
-      doc.setDrawColor(22, 163, 74);
-      doc.setLineWidth(1);
-      doc.rect(margin, y - 3, contentWidth, 18, 'FD');
-
-      doc.setFontSize(10);
+      doc.setFontSize(11);
       doc.setFont(undefined, 'bold');
       doc.setTextColor(0, 0, 0);
-      doc.text(`• ${passo.descricao}`, margin + 2, y + 2);
       
-      y += 7;
-      doc.setFont(undefined, 'normal');
-      doc.setFontSize(9);
-      doc.text(`Responsável: ${passo.responsavel}`, margin + 2, y);
-      
-      if (passo.prazo) {
+      const descLines = doc.splitTextToSize(`• ${passo.descricao}`, contentWidth);
+      descLines.forEach((line) => {
+        doc.text(line, margin, y);
         y += 5;
-        doc.setTextColor(100, 100, 100);
-        doc.text(`Prazo: ${format(new Date(passo.prazo), 'dd/MM/yyyy')}`, margin + 2, y);
-        doc.setTextColor(0, 0, 0);
-      }
+      });
 
-      y += 8;
+      doc.setFont(undefined, 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(80, 80, 80);
+      
+      let details = [];
+      if (passo.responsavel) details.push(`Responsável: ${passo.responsavel}`);
+      if (passo.prazo) {
+        try {
+          details.push(`Prazo: ${format(new Date(passo.prazo), 'dd/MM/yyyy')}`);
+        } catch(e) {
+          details.push(`Prazo: ${passo.prazo}`);
+        }
+      }
+      
+      if (details.length > 0) {
+        doc.text(`  ${details.join(' | ')}`, margin, y);
+        y += 8;
+      } else {
+        y += 3;
+      }
+      
+      doc.setTextColor(0, 0, 0);
     });
+    
+    if (ata.proximos_passos) {
+        y += 5;
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'normal');
+        const legacyLines = doc.splitTextToSize(ata.proximos_passos, contentWidth);
+        legacyLines.forEach(line => {
+            checkPageBreak(8);
+            doc.text(line, margin, y);
+            y += 5;
+        });
+    }
+    
     y += 5;
   } else if (ata.proximos_passos) {
     addSection('4', 'PRÓXIMOS PASSOS', ata.proximos_passos);

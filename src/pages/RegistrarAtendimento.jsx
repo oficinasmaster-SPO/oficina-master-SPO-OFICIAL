@@ -24,6 +24,7 @@ import ConflitosHorarioModal from "@/components/aceleracao/ConflitosHorarioModal
 import ClientIntelligenceCapturePanel from "@/components/inteligencia/ClientIntelligenceCapturePanel";
 import GoogleMeetIntegration from "@/components/aceleracao/GoogleMeetIntegration";
 import { useGoogleMeet } from "@/components/hooks/useGoogleMeet";
+import NextSteps from "@/components/aceleracao/NextSteps";
 
 export default function RegistrarAtendimento() {
   const navigate = useNavigate();
@@ -1103,69 +1104,13 @@ export default function RegistrarAtendimento() {
               rows={4}
             />
             <div className="space-y-4 pt-4 border-t">
-              <div className="flex items-center justify-between">
-                <Label className="text-base font-semibold">Próximos Passos (Para ATA)</Label>
-                <Button type="button" variant="outline" size="sm" onClick={addProximoPasso}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Adicionar Passo
-                </Button>
-              </div>
-              <p className="text-sm text-gray-500">Estas ações constarão no rodapé da ATA em formato de lista.</p>
-              
-              {formData.proximos_passos_list?.map((passo, idx) => (
-                <div key={idx} className="flex gap-3 items-start p-3 bg-gray-50 rounded-lg border">
-                  <div className="flex-1 space-y-3">
-                    <div>
-                      <Label className="text-xs mb-1">Descrição da Ação</Label>
-                      <Textarea
-                        placeholder="O que deve ser feito..."
-                        value={passo.descricao}
-                        onChange={(e) => {
-                          const newPassos = [...formData.proximos_passos_list];
-                          newPassos[idx].descricao = e.target.value;
-                          setFormData({ ...formData, proximos_passos_list: newPassos });
-                        }}
-                        rows={2}
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <Label className="text-xs mb-1">Responsável</Label>
-                        <Input
-                          placeholder="Quem fará..."
-                          value={passo.responsavel}
-                          onChange={(e) => {
-                            const newPassos = [...formData.proximos_passos_list];
-                            newPassos[idx].responsavel = e.target.value;
-                            setFormData({ ...formData, proximos_passos_list: newPassos });
-                          }}
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-xs mb-1">Prazo</Label>
-                        <Input
-                          type="date"
-                          value={passo.prazo || ""}
-                          onChange={(e) => {
-                            const newPassos = [...formData.proximos_passos_list];
-                            newPassos[idx].prazo = e.target.value;
-                            setFormData({ ...formData, proximos_passos_list: newPassos });
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="mt-6"
-                    onClick={() => removeProximoPasso(idx)}
-                  >
-                    <Trash2 className="w-4 h-4 text-red-500" />
-                  </Button>
-                </div>
-              ))}
+              <Label className="text-base font-semibold">Próximos Passos (Para ATA)</Label>
+              <p className="text-sm text-gray-500 mb-4">Estas ações constarão no rodapé da ATA em formato de lista estruturada.</p>
+              <NextSteps 
+                steps={formData.proximos_passos_list || []} 
+                onChange={(steps) => setFormData({ ...formData, proximos_passos_list: steps })} 
+                editable={true} 
+              />
             </div>
 
             <AudioTranscriptionField
