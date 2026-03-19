@@ -390,6 +390,20 @@ export default function PainelAtendimentosTab({ user }) {
                             </>
                           )}
 
+                          {!atendimento.ata_id && atendimento.status === ATENDIMENTO_STATUS.REALIZADO && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedAtendimento(atendimento);
+                                setShowGerarAta(true);
+                              }}
+                              title="Gerar ATA"
+                            >
+                              <FilePlus className="w-4 h-4 text-blue-600" />
+                            </Button>
+                          )}
+
                           <Button 
                             variant="ghost" 
                             size="sm"
@@ -419,20 +433,6 @@ export default function PainelAtendimentosTab({ user }) {
                           >
                             <Trash2 className="w-4 h-4 text-red-600" />
                           </Button>
-                          
-                          {!atendimento.ata_id && atendimento.status === ATENDIMENTO_STATUS.REALIZADO && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedAtendimento(atendimento);
-                                setShowGerarAta(true);
-                              }}
-                              title="Gerar ATA"
-                            >
-                              <FilePlus className="w-4 h-4 text-blue-600" />
-                            </Button>
-                          )}
                         </div>
                       </td>
                     </tr>
