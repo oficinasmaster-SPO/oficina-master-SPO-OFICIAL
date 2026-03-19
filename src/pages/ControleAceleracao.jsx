@@ -114,7 +114,7 @@ export default function ControleAceleracao() {
             Registro em Massa
           </Button>
           <Button
-            onClick={() => navigate(createPageUrl('RegistrarAtendimento'))}
+            onClick={() => navigate(`${createPageUrl('ControleAceleracao')}?tab=${activeTab}&modal=atendimento`)}
             className="bg-blue-600 hover:bg-blue-700"
           >
             + Novo Atendimento
