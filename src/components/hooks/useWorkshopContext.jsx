@@ -23,26 +23,30 @@ export function useWorkshopContext() {
 
         // PRIORIDADE 0: TenantContext - Se o admin selecionou uma Empresa específica (que agora é a própria Oficina no seletor)
         if (selectedCompanyId) {
+          let foundWorkshop = null;
           // Tentamos carregar o ID como uma Oficina (Workshop)
           try {
             const ws = await base44.entities.Workshop.get(selectedCompanyId);
-            if (!cancelled && ws) {
-              console.log('✅ Workshop TenantContext carregado:', ws.id);
-              setWorkshop(ws);
-              return;
-            }
+            if (ws) foundWorkshop = ws;
           } catch (e) {
             // Se falhar, tentamos carregar como Company (comportamento legado)
-            const workshops = await base44.entities.Workshop.filter({ company_id: selectedCompanyId });
-            if (!cancelled && workshops.length > 0) {
-              console.log('✅ Workshop TenantContext carregado via Company:', workshops[0].id);
-              setWorkshop(workshops[0]);
-              return;
-            }
+            try {
+              const workshops = await base44.entities.Workshop.filter({ company_id: selectedCompanyId });
+              if (workshops.length > 0) {
+                foundWorkshop = workshops[0];
+              }
+            } catch(err) {}
           }
           
-          if (!cancelled) setWorkshop(null);
-          return;
+          if (foundWorkshop) {
+            if (!cancelled) {
+              console.log('✅ Workshop TenantContext carregado:', foundWorkshop.id);
+              setWorkshop(foundWorkshop);
+            }
+            return;
+          }
+          
+          console.log('⚠️ ID do TenantContext inválido ou não encontrado. Tentando fallback...');
         }
         
         // PRIORIDADE 1: Modo Admin
