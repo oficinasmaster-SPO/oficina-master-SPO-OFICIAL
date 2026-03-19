@@ -286,7 +286,7 @@ export default function GestaoTenants() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Nome da Empresa</TableHead>
+                        <TableHead>Nome da Oficina</TableHead>
                         <TableHead>Consultoria Vinculada</TableHead>
                         <TableHead>CNPJ</TableHead>
                         <TableHead>Admin (Owner ID)</TableHead>
@@ -301,13 +301,13 @@ export default function GestaoTenants() {
                             <TableCell className="font-medium">{company.name}</TableCell>
                             <TableCell>{linkedFirm?.name || <span className="text-gray-400 italic">Desconhecida/Sem Vínculo</span>}</TableCell>
                             <TableCell>{company.cnpj || '-'}</TableCell>
-                            <TableCell className="text-xs text-gray-500 font-mono">{company.owner_user_id}</TableCell>
+                            <TableCell className="text-xs text-gray-500 font-mono">{company.owner_id}</TableCell>
                             <TableCell className="text-right">
                               <Button variant="ghost" size="icon" onClick={() => handleOpenCompanyModal(company)}>
                                 <Pencil className="w-4 h-4" />
                               </Button>
                               <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700" onClick={() => {
-                                if (window.confirm("Tem certeza que deseja remover esta empresa?")) {
+                                if (window.confirm("Tem certeza que deseja remover esta oficina?")) {
                                   deleteCompanyMutation.mutate(company.id);
                                 }
                               }}>
@@ -320,7 +320,7 @@ export default function GestaoTenants() {
                       {(!companies || companies.length === 0) && (
                         <TableRow>
                           <TableCell colSpan={5} className="text-center py-6 text-gray-500">
-                            Nenhuma empresa encontrada.
+                            Nenhuma oficina encontrada.
                           </TableCell>
                         </TableRow>
                       )}
