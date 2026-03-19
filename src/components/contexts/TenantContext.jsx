@@ -44,11 +44,23 @@ export function TenantProvider({ children }) {
              if (!cancelled) setConsultingFirm(null);
           }
           
-          if (selectedCompanyId) {
+          let compIdToLoad = selectedCompanyId;
+          
+          if (!compIdToLoad && currentUser.data?.workshop_id) {
+             compIdToLoad = currentUser.data.workshop_id;
+             setSelectedCompanyId(compIdToLoad);
+             localStorage.setItem('selected_company_id', compIdToLoad);
+          } else if (!compIdToLoad && currentUser.data?.company_id) {
+             compIdToLoad = currentUser.data.company_id;
+             setSelectedCompanyId(compIdToLoad);
+             localStorage.setItem('selected_company_id', compIdToLoad);
+          }
+
+          if (compIdToLoad) {
              // Tenta buscar como Workshop primeiro (novo padrão), se falhar tenta como Company (padrão legado)
-             let compOrWorkshop = await base44.entities.Workshop.get(selectedCompanyId).catch(() => null);
+             let compOrWorkshop = await base44.entities.Workshop.get(compIdToLoad).catch(() => null);
              if (!compOrWorkshop) {
-                 compOrWorkshop = await base44.entities.Company.get(selectedCompanyId).catch(() => null);
+                 compOrWorkshop = await base44.entities.Company.get(compIdToLoad).catch(() => null);
              }
              if (compOrWorkshop && !cancelled) {
                  setCompany(compOrWorkshop);
