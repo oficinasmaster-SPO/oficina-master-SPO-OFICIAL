@@ -159,6 +159,7 @@ Deno.serve(async (req) => {
       invite_id: invite_id,
       profile_id: secureProfileId,  // USANDO ID SEGURO
       workshop_id: secureWorkshopId, // USANDO ID SEGURO
+      consulting_firm_id: secureConsultingFirmId,
       user_status: 'active',
       first_login_at: now,
       last_login_at: now,
