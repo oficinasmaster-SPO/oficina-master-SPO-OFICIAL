@@ -64,6 +64,10 @@ export function TenantProvider({ children }) {
              }
              if (compOrWorkshop && !cancelled) {
                  setCompany(compOrWorkshop);
+             } else if (!compOrWorkshop && !cancelled) {
+                 setCompany(null);
+                 setSelectedCompanyId(null);
+                 localStorage.removeItem('selected_company_id');
              }
           } else {
              if (!cancelled) setCompany(null);
