@@ -14,6 +14,7 @@ import PedidosInternosTab from "@/components/aceleracao/PedidosInternosTab";
 import AgendaVisualTab from "@/components/aceleracao/AgendaVisualTab";
 import RegistroAtendimentoMassaModal from "@/components/aceleracao/RegistroAtendimentoMassaModal";
 import FiltrosControleAceleracao from "@/components/aceleracao/FiltrosControleAceleracao";
+import RegistrarAtendimento from "./RegistrarAtendimento";
 
 export default function ControleAceleracao() {
   const navigate = useNavigate();
