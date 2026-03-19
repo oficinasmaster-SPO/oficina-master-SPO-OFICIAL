@@ -17,6 +17,26 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
     const carregarAtaAtualizada = async () => {
       try {
         const dados = await base44.entities.MeetingMinutes.get(ata.id);
+        
+        // Se ainda faltam dados estruturados mas temos o atendimento, tentar carregar do atendimento
+        if ((!dados.decisoes_tomadas || dados.decisoes_tomadas.length === 0) && atendimento) {
+             dados.decisoes_tomadas = atendimento.decisoes_tomadas || [];
+        }
+        if ((!dados.acoes_geradas || dados.acoes_geradas.length === 0) && atendimento) {
+             dados.acoes_geradas = atendimento.acoes_geradas || [];
+        }
+        if ((!dados.proximos_passos_list || dados.proximos_passos_list.length === 0) && atendimento) {
+             dados.proximos_passos_list = atendimento.proximos_passos_list || [];
+        }
+        
+        // Garantir que pautas e objetivos venham estruturados se não estiverem na ATA mas estiverem no atendimento
+        if ((!dados.pauta || dados.pauta.length === 0) && atendimento?.pauta) {
+            dados.pauta = atendimento.pauta;
+        }
+        if ((!dados.objetivos || dados.objetivos.length === 0) && atendimento?.objetivos) {
+            dados.objetivos = atendimento.objetivos;
+        }
+
         setAtaAtualizada(dados);
       } catch (error) {
         console.error("Erro ao carregar ATA:", error);
@@ -27,7 +47,7 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
     if (ata?.id) {
       carregarAtaAtualizada();
     }
-  }, [ata?.id]);
+  }, [ata?.id, atendimento]);
 
   const handlePrint = () => {
     window.print();

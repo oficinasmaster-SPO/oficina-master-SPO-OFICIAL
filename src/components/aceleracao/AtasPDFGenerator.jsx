@@ -2,6 +2,7 @@ import jsPDF from "jspdf";
 import "jspdf-autotable";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { parseMarkdownToPdf } from "@/utils/markdownPdfParser";
 
 export const generateAtaPDF = (ata, workshop) => {
   const doc = new jsPDF({
@@ -322,9 +323,53 @@ export const generateAtaPDF = (ata, workshop) => {
     addSection('4', 'PRÓXIMOS PASSOS', ata.proximos_passos);
   }
 
-  // 5. RESUMO DA REUNIÃO
+  // 5. RESUMO DA REUNIÃO (COM PARSER MARKDOWN)
   if (ata.ata_ia) {
-    addSection('5', 'RESUMO DA REUNIÃO', ata.ata_ia);
+    checkPageBreak(25);
+    
+    // Título da seção
+    doc.setFontSize(13);
+    doc.setFont(undefined, 'bold');
+    doc.text('5. RESUMO DA REUNIÃO', margin, y);
+    
+    // Linha abaixo do título
+    y += 2;
+    doc.setLineWidth(0.5);
+    doc.setDrawColor(0, 0, 0);
+    doc.line(margin, y, pageWidth - margin, y);
+    
+    y += 8;
+
+    // Usar o parser de markdown
+    const parsedContent = parseMarkdownToPdf(ata.ata_ia);
+    
+    parsedContent.forEach(block => {
+      // Ajustar fonte baseado no estilo
+      if (block.style === 'header') {
+        doc.setFontSize(12);
+        doc.setFont(undefined, 'bold');
+      } else if (block.style === 'subheader') {
+        doc.setFontSize(11);
+        doc.setFont(undefined, 'bold');
+      } else {
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'normal');
+      }
+      
+      const marginBlock = block.margin || [0, 5]; // [top, bottom] simplificado
+      y += (marginBlock[0] || 0);
+      
+      const lines = doc.splitTextToSize(block.text, contentWidth);
+      lines.forEach(line => {
+        checkPageBreak(6);
+        doc.text(line, margin + (block.margin && block.margin[0] === 10 ? 5 : 0), y); // Indentação simples
+        y += 5;
+      });
+      
+      y += (marginBlock[1] || 5);
+    });
+    
+    y += 5;
   }
 
   // 6. DECISÕES TOMADAS
