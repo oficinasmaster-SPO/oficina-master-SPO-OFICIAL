@@ -270,10 +270,10 @@ export default function GestaoTenants() {
 
         <TabsContent value="companies" className="mt-6 space-y-4">
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold text-gray-800">Empresas (Clientes)</h2>
+            <h2 className="text-xl font-semibold text-gray-800">Oficinas (Clientes)</h2>
             <Button onClick={() => handleOpenCompanyModal()}>
               <Plus className="w-4 h-4 mr-2" />
-              Nova Empresa
+              Nova Oficina
             </Button>
           </div>
 
