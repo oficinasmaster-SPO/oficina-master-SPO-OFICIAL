@@ -83,7 +83,8 @@ export default function GlobalSearch({ workshopId }) {
     { value: 'Employee', label: 'Colaboradores' },
     { value: 'Challenge', label: 'Desafios' },
     { value: 'Task', label: 'Tarefas' },
-    { value: 'Goal', label: 'Metas' }
+    { value: 'Goal', label: 'Metas' },
+    { value: 'Workshop', label: 'Oficinas' }
   ];
 
   const icons = {
