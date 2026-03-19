@@ -11,7 +11,7 @@ export default function NotificationListener({ user }) {
   const [lastNotificationId, setLastNotificationId] = React.useState(null);
 
   const { data: notifications = [] } = useQuery({
-    queryKey: ['notifications-listener', user?.id],
+    queryKey: ['notifications', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
       const allNotifications = await base44.entities.Notification.list('-created_date', 50);
@@ -20,7 +20,7 @@ export default function NotificationListener({ user }) {
         : [];
     },
     enabled: !!user?.id,
-    refetchInterval: 30000
+    staleTime: 2 * 60 * 1000,
   });
 
   useEffect(() => {
