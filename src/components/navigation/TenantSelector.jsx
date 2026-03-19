@@ -53,7 +53,6 @@ export default function TenantSelector() {
         <Select 
           value={selectedCompanyId || 'none'} 
           onValueChange={(val) => changeCompany(val === 'none' ? null : val)} 
-          disabled={!selectedFirmId}
         >
           <SelectTrigger className="w-[180px] h-8 text-xs bg-white border-0 shadow-sm">
             <SelectValue placeholder="Selecione Empresa" />
