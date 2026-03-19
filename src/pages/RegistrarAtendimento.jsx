@@ -325,11 +325,7 @@ export default function RegistrarAtendimento({ isModal = true, onClose }) {
       queryClient.invalidateQueries(['meeting-minutes']);
       queryClient.invalidateQueries(['todos-atendimentos']);
       toast.success('Atendimento salvo com sucesso!');
-      if (fromAgenda) {
-        navigate(-1); // Volta para a página anterior (agenda)
-      } else {
-        navigate(`${createPageUrl('ControleAceleracao')}?tab=atendimentos`);
-      }
+      handleClose();
     },
     onError: (error) => {
       console.error("Erro ao salvar:", error);
