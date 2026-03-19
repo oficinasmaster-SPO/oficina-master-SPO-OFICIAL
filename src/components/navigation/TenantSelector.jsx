@@ -15,8 +15,8 @@ export default function TenantSelector() {
   });
 
   const { data: companies = [], isLoading: isLoadingCompanies } = useQuery({
-    queryKey: ['companies', selectedFirmId],
-    queryFn: () => selectedFirmId && selectedFirmId !== 'none' ? base44.entities.Company.filter({ consulting_firm_id: selectedFirmId }) : base44.entities.Company.list()
+    queryKey: ['workshops', selectedFirmId],
+    queryFn: () => selectedFirmId && selectedFirmId !== 'none' ? base44.entities.Workshop.filter({ consulting_firm_id: selectedFirmId }) : base44.entities.Workshop.list()
   });
 
   const filteredCompanies = companies.filter(c => 
