@@ -26,17 +26,17 @@ export function useWorkshopContext() {
           let foundWorkshop = null;
           // Tentamos carregar o ID como uma Oficina (Workshop)
           try {
-            const ws = await base44.entities.Workshop.get(selectedCompanyId);
-            if (ws) foundWorkshop = ws;
-          } catch (e) {
-            // Se falhar, tentamos carregar como Company (comportamento legado)
-            try {
-              const workshops = await base44.entities.Workshop.filter({ company_id: selectedCompanyId });
-              if (workshops.length > 0) {
-                foundWorkshop = workshops[0];
-              }
-            } catch(err) {}
-          }
+            const wsList = await base44.entities.Workshop.filter({ id: selectedCompanyId });
+            if (wsList && wsList.length > 0) {
+               foundWorkshop = wsList[0];
+            } else {
+               // Se falhar, tentamos carregar como Company (comportamento legado)
+               const workshops = await base44.entities.Workshop.filter({ company_id: selectedCompanyId });
+               if (workshops.length > 0) {
+                 foundWorkshop = workshops[0];
+               }
+            }
+          } catch (e) {}
           
           if (foundWorkshop) {
             if (!cancelled) {
