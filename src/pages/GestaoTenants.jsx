@@ -138,10 +138,10 @@ export default function GestaoTenants() {
       setCompanyFormData({
         name: company.name || '',
         consulting_firm_id: company.consulting_firm_id || '',
-        owner_user_id: company.owner_user_id || '',
+        owner_id: company.owner_id || '',
         cnpj: company.cnpj || '',
-        description: company.description || '',
-        logo_url: company.logo_url || ''
+        city: company.city || 'Não informada',
+        state: company.state || 'ND'
       });
     } else {
       resetCompanyForm();
