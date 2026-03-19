@@ -132,6 +132,7 @@ export default function Cadastro() {
       const newWorkshop = await base44.entities.Workshop.create({
         identificador: workshopId,
         owner_id: user.id,
+        consulting_firm_id: user.consulting_firm_id || '69bab264d7c3fe5d367c3959',
         name: "Minha Nova Oficina",
         city: "A Definir",
         state: "UF",
