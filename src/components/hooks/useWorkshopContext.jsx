@@ -99,9 +99,23 @@ export function useWorkshopContext() {
                     const wsFound = await base44.entities.Workshop.filter({ id: employee.workshop_id });
                     if (wsFound && wsFound.length > 0) {
                       userWorkshop = wsFound[0];
+                    } else {
+                      // Fallback: se o RLS bloqueou a busca no front, usa a função de backend
+                      console.log('⚠️ Buscando workshop via backend function (checkWorkshop) devido a RLS...');
+                      const response = await base44.functions.invoke('checkWorkshop', { workshop_id: employee.workshop_id });
+                      if (response.data && response.data.workshopFound) {
+                        userWorkshop = response.data.workshopData;
+                      }
                     }
                   } catch(e) {
                      console.warn(`Workshop do Employee não encontrado: ${employee.workshop_id}`);
+                     // Tenta via backend function em caso de erro também
+                     try {
+                        const response = await base44.functions.invoke('checkWorkshop', { workshop_id: employee.workshop_id });
+                        if (response.data && response.data.workshopFound) {
+                          userWorkshop = response.data.workshopData;
+                        }
+                     } catch (err) {}
                   }
                 }
               }
