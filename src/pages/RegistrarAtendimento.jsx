@@ -87,19 +87,20 @@ export default function RegistrarAtendimento() {
           if (atendimento) {
             const dataAgendada = new Date(atendimento.data_agendada);
             setFormData({
-              ...atendimento,
-              data_agendada: dataAgendada.toISOString().split('T')[0],
-              hora_agendada: dataAgendada.toTimeString().slice(0, 5),
-              participantes: atendimento.participantes || [{ nome: "", cargo: "", email: "" }],
-              pauta: atendimento.pauta || [{ titulo: "", descricao: "", tempo_estimado: 15 }],
-              objetivos: atendimento.objetivos || [""],
-              midias_anexas: atendimento.midias_anexas || [],
-              processos_vinculados: atendimento.processos_vinculados || [],
-              videoaulas_vinculadas: atendimento.videoaulas_vinculadas || [],
-              documentos_vinculados: atendimento.documentos_vinculados || [],
-              topicos_discutidos: atendimento.topicos_discutidos || [],
-              decisoes_tomadas: atendimento.decisoes_tomadas || [],
-              acoes_geradas: atendimento.acoes_geradas || []
+            ...atendimento,
+            data_agendada: dataAgendada.toISOString().split('T')[0],
+            hora_agendada: dataAgendada.toTimeString().slice(0, 5),
+            participantes: atendimento.participantes || [{ nome: "", cargo: "", email: "" }],
+            pauta: atendimento.pauta || [{ titulo: "", descricao: "", tempo_estimado: 15 }],
+            objetivos: atendimento.objetivos || [""],
+            midias_anexas: atendimento.midias_anexas || [],
+            processos_vinculados: atendimento.processos_vinculados || [],
+            videoaulas_vinculadas: atendimento.videoaulas_vinculadas || [],
+            documentos_vinculados: atendimento.documentos_vinculados || [],
+            topicos_discutidos: atendimento.topicos_discutidos || [],
+            decisoes_tomadas: atendimento.decisoes_tomadas || [],
+            acoes_geradas: atendimento.acoes_geradas || [],
+            proximos_passos_list: atendimento.proximos_passos_list || []
             });
             setShowMeetingTimer(atendimento.status === 'participando');
             console.log("Atendimento carregado para edição:", atendimento);
