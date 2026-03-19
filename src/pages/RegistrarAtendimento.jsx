@@ -229,6 +229,7 @@ export default function RegistrarAtendimento() {
         documentos_vinculados: data.documentos_vinculados || [],
         observacoes_consultor: data.observacoes_consultor,
         proximos_passos: data.proximos_passos,
+        proximos_passos_list: (data.proximos_passos_list || []).filter(p => p.descricao),
         notificacoes_programadas: data.notificacoes_programadas || []
       };
 
