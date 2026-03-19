@@ -94,7 +94,10 @@ export function useWorkshopContext() {
                 const employee = employees[0];
                 if (employee.workshop_id) {
                   try {
-                    userWorkshop = await base44.entities.Workshop.get(employee.workshop_id);
+                    const wsFound = await base44.entities.Workshop.filter({ id: employee.workshop_id });
+                    if (wsFound && wsFound.length > 0) {
+                      userWorkshop = wsFound[0];
+                    }
                   } catch(e) {
                      console.warn(`Workshop do Employee não encontrado: ${employee.workshop_id}`);
                   }
