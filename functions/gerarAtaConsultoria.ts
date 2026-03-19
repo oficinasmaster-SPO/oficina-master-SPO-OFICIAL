@@ -119,7 +119,7 @@ Formate em Markdown para fácil leitura. Seja profissional, objetivo e completo.
         objetivos_consultor: atendimento.objetivos_consultor || '', // Se tiver campo específico mapear aqui
         observacoes_consultor: atendimento.observacoes_consultor,
         proximos_passos: atendimento.proximos_passos, // Texto
-        proximos_passos_list: [], // Mapear se tiver estrutura
+        proximos_passos_list: atendimento.proximos_passos_list || [], // Passos estruturados
         decisoes_tomadas: atendimento.decisoes_tomadas || [], // IMPORTANTE: Copiar decisões
         acoes_geradas: atendimento.acoes_geradas || [], // IMPORTANTE: Copiar ações
         client_intelligence: clientIntelligence || [], // IMPORTANTE: Copiar inteligência
