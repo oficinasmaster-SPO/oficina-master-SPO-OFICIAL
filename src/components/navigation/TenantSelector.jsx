@@ -55,14 +55,14 @@ export default function TenantSelector() {
           onValueChange={(val) => changeCompany(val === 'none' ? null : val)} 
         >
           <SelectTrigger className="w-[180px] h-8 text-xs bg-white border-0 shadow-sm">
-            <SelectValue placeholder="Selecione Empresa" />
+            <SelectValue placeholder="Selecione Oficina" />
           </SelectTrigger>
           <SelectContent>
             <div className="flex items-center px-3 pb-2 pt-2 border-b mb-1 sticky top-0 bg-white z-10">
               <Search className="w-4 h-4 text-gray-400 mr-2" />
               <input
                 type="text"
-                placeholder="Pesquisar..."
+                placeholder="Pesquisar oficina..."
                 className="w-full text-sm outline-none bg-transparent"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -70,13 +70,13 @@ export default function TenantSelector() {
                 onClick={(e) => e.stopPropagation()}
               />
             </div>
-            <SelectItem value="none">Todas Empresas</SelectItem>
+            <SelectItem value="none">Todas Oficinas</SelectItem>
             {filteredCompanies.map(c => (
               <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
             ))}
             {filteredCompanies.length === 0 && (
               <div className="px-2 py-4 text-sm text-center text-gray-500">
-                Nenhuma empresa encontrada
+                Nenhuma oficina encontrada
               </div>
             )}
           </SelectContent>
