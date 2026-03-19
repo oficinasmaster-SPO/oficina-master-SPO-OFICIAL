@@ -1399,17 +1399,11 @@ export default function RegistrarAtendimento({ isModal = true, onClose }) {
         )}
 
         {/* Ações */}
-        <div className="flex gap-3 justify-end">
+        <div className="flex gap-3 justify-end sticky bottom-0 bg-white pt-4 pb-2 border-t mt-6 z-20">
           <Button
             type="button"
             variant="outline"
-            onClick={() => {
-              if (fromAgenda) {
-                navigate(-1); // Volta para a agenda
-              } else {
-                navigate(`${createPageUrl('ControleAceleracao')}?tab=atendimentos`);
-              }
-            }}
+            onClick={handleClose}
           >
             Cancelar
           </Button>
