@@ -71,8 +71,9 @@ export function useWorkshopContext() {
           userWorkshop = Array.isArray(ownedWorkshops) && ownedWorkshops.length > 0 ? ownedWorkshops[0] : null;
 
           // Se não encontrou, tenta por workshop_id (se salvo no usuário)
-          if (!userWorkshop && user.workshop_id) {
-            userWorkshop = await base44.entities.Workshop.get(user.workshop_id);
+          const userWorkshopId = user.data?.workshop_id || user.workshop_id;
+          if (!userWorkshop && userWorkshopId) {
+            userWorkshop = await base44.entities.Workshop.get(userWorkshopId);
           }
 
           // Se ainda não encontrou, busca via Employee (colaborador)
