@@ -97,6 +97,7 @@ Deno.serve(async (req) => {
     // Isso garante que estamos usando os dados originais gravados no convite, não manipulados
     let secureProfileId = invite.metadata?.profile_id || invite.profile_id;
     let secureWorkshopId = invite.metadata?.workshop_id || invite.metadata?.company_id || invite.workshop_id;
+    let secureConsultingFirmId = invite.metadata?.consulting_firm_id || invite.consulting_firm_id;
 
     // FALLBACK DE SEGURANÇA PARA LEGADOS (Item 3 do Plano)
     // Se não houver profile_id (convite antigo), atribuir um perfil padrão seguro de menor privilégio
