@@ -120,7 +120,7 @@ export default function RegistrarAtendimento() {
   const { data: workshops } = useQuery({
     queryKey: ['workshops-list'],
     queryFn: async () => {
-      const allWorkshops = await base44.entities.Workshop.list();
+      const allWorkshops = await base44.entities.Workshop.list(null, 2000);
       return allWorkshops.filter(w => w.planoAtual && w.planoAtual !== 'FREE');
     },
     enabled: user?.role === 'admin' || user?.job_role === 'acelerador'
@@ -131,7 +131,7 @@ export default function RegistrarAtendimento() {
     queryKey: ['consultores-list'],
     queryFn: async () => {
       // Busca todos os usuários admin (igual à tela de Saturação)
-      const users = await base44.entities.User.list();
+      const users = await base44.entities.User.list(null, 1000);
       return users.filter(u => u.role === 'admin');
     },
     enabled: user?.role === 'admin'
@@ -145,7 +145,7 @@ export default function RegistrarAtendimento() {
       return await base44.entities.Employee.filter({ 
         workshop_id: formData.workshop_id,
         status: 'ativo'
-      });
+      }, null, 500);
     },
     enabled: !!formData.workshop_id
   });
@@ -157,7 +157,7 @@ export default function RegistrarAtendimento() {
       return await base44.entities.Employee.filter({ 
         tipo_vinculo: 'interno',
         status: 'ativo'
-      });
+      }, null, 500);
     }
   });
 
@@ -165,7 +165,7 @@ export default function RegistrarAtendimento() {
   const { data: processos } = useQuery({
     queryKey: ['processos-disponiveis'],
     queryFn: async () => {
-      return await base44.entities.ProcessDocument.list();
+      return await base44.entities.ProcessDocument.list(null, 1000);
     }
   });
 
@@ -173,7 +173,7 @@ export default function RegistrarAtendimento() {
   const { data: tiposAtendimento = [] } = useQuery({
     queryKey: ['attendance-types'],
     queryFn: async () => {
-      return await base44.entities.AttendanceType.filter({ is_active: true });
+      return await base44.entities.AttendanceType.filter({ is_active: true }, null, 500);
     }
   });
 
@@ -181,7 +181,7 @@ export default function RegistrarAtendimento() {
   const { data: cursos } = useQuery({
     queryKey: ['cursos-treinamento'],
     queryFn: async () => {
-      return await base44.entities.TrainingCourse.list();
+      return await base44.entities.TrainingCourse.list(null, 1000);
     }
   });
 
@@ -189,7 +189,7 @@ export default function RegistrarAtendimento() {
   const { data: todasAulas } = useQuery({
     queryKey: ['todas-aulas-publicadas'],
     queryFn: async () => {
-      const aulas = await base44.entities.CourseLesson.list();
+      const aulas = await base44.entities.CourseLesson.list(null, 2000);
       const cursosPublicados = cursos?.filter(c => c.status === 'published').map(c => c.id) || [];
       return aulas.filter(a => cursosPublicados.includes(a.course_id));
     },
@@ -534,7 +534,7 @@ export default function RegistrarAtendimento() {
                   <Select
                     value={formData.consultor_id || user.id}
                     onValueChange={(value) => {
-                      const consultor = consultores?.find(c => c.user_id === value);
+                      const consultor = consultores?.find(c => c.id === value);
                       setFormData({ 
                         ...formData, 
                         consultor_id: value,
