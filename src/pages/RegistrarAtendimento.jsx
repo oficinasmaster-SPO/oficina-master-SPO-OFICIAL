@@ -1476,7 +1476,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose }) {
 
   if (isModal) {
     return (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}>
+      <div className="fixed inset-0 z-40 flex items-center justify-center p-4 sm:p-6" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}>
         <div className="absolute inset-0" onClick={handleClose} />
         <div className="relative bg-white rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.2)] w-full max-w-[800px] max-h-[95vh] flex flex-col z-10 animate-in fade-in zoom-in-95 duration-200">
           <div className="flex items-center justify-between p-6 border-b shrink-0">
