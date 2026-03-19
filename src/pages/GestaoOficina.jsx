@@ -82,8 +82,24 @@ export default function GestaoOficina() {
             const myEmployeeRecord = employees && employees.length > 0 ? employees[0] : null;
             
             if (myEmployeeRecord && myEmployeeRecord.workshop_id) {
-               const employeeWorkshop = await base44.entities.Workshop.get(myEmployeeRecord.workshop_id);
-               workshopToDisplay = employeeWorkshop;
+              try {
+                const wsFound = await base44.entities.Workshop.filter({ id: myEmployeeRecord.workshop_id });
+                if (wsFound && wsFound.length > 0) {
+                  workshopToDisplay = wsFound[0];
+                } else {
+                  const response = await base44.functions.invoke('checkWorkshop', { workshop_id: myEmployeeRecord.workshop_id });
+                  if (response.data && response.data.workshopFound) {
+                    workshopToDisplay = response.data.workshopData;
+                  }
+                }
+              } catch(e) {
+                 try {
+                    const response = await base44.functions.invoke('checkWorkshop', { workshop_id: myEmployeeRecord.workshop_id });
+                    if (response.data && response.data.workshopFound) {
+                      workshopToDisplay = response.data.workshopData;
+                    }
+                 } catch (err) {}
+              }
             }
           }
         } catch (workshopError) {
