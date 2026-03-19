@@ -50,7 +50,7 @@ export default function GestaoTenants() {
 
   const { data: companies, isLoading: loadingCompanies } = useQuery({
     queryKey: ['admin-companies'],
-    queryFn: () => base44.entities.Company.list(),
+    queryFn: () => base44.entities.Workshop.list(),
   });
 
   // Mutations: Consulting Firms
