@@ -1493,9 +1493,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose }) {
              </button>
           </div>
           <div className="p-6 overflow-y-auto flex-1">
-             <form onSubmit={handleSubmit} className="space-y-6">
-               {content}
-             </form>
+             {content}
           </div>
         </div>
       </div>
