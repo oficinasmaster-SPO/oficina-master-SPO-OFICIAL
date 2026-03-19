@@ -1471,7 +1471,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose }) {
             });
           }}
         />
-        </form>
+        </>
         );
 
   if (isModal) {
