@@ -165,10 +165,10 @@ export default function GestaoTenants() {
     setCompanyFormData({
       name: '',
       consulting_firm_id: '',
-      owner_user_id: '',
+      owner_id: '',
       cnpj: '',
-      description: '',
-      logo_url: ''
+      city: 'Não informada',
+      state: 'ND'
     });
   };
 
