@@ -47,8 +47,13 @@ export default function RegistrarAtendimento({ isModal = true, onClose }) {
   React.useEffect(() => {
     // Redireciona a página isolada para a tela de controle com o modal aberto
     if (!onClose && location.pathname.toLowerCase().includes('registraratendimento')) {
-      const newSearch = location.search ? location.search + '&modal=atendimento' : '?modal=atendimento';
-      navigate(`${createPageUrl('ControleAceleracao')}${newSearch}`, { replace: true });
+      // Fix: Don't redirect if we're already rendering this as a page via routing 
+      // but ensure we navigate cleanly if it was opened incorrectly
+      const isStandaloneMode = !isModal;
+      if (!isStandaloneMode) {
+        const newSearch = location.search ? location.search + '&modal=atendimento' : '?modal=atendimento';
+        navigate(`${createPageUrl('ControleAceleracao')}${newSearch}`, { replace: true });
+      }
     }
   }, [location.pathname, location.search, navigate, onClose]);
 
