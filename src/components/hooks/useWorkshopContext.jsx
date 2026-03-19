@@ -109,7 +109,13 @@ export function useWorkshopContext() {
           const userWorkshopId = user.data?.workshop_id || user.workshop_id;
           if (!userWorkshop && userWorkshopId) {
             try {
-              userWorkshop = await base44.entities.Workshop.get(userWorkshopId);
+              // Buscar workshop silenciosamente sem lançar erro global no catch do base44
+              const found = await base44.entities.Workshop.filter({ id: userWorkshopId });
+              if (found && found.length > 0) {
+                 userWorkshop = found[0];
+              } else {
+                 console.warn(`Workshop com ID ${userWorkshopId} salvo no usuário não encontrado. Tentando próximo método...`);
+              }
             } catch (err) {
               console.warn(`Workshop com ID ${userWorkshopId} salvo no usuário não encontrado. Tentando próximo método...`);
             }
