@@ -197,7 +197,7 @@ export default function Home() {
       return;
     }
     
-    if (!workshop) { // Check 'workshop' state instead of 'hasWorkshop'
+    if (!workshop) {
       navigate(createPageUrl("Cadastro"));
     } else {
       navigate(createPageUrl("Questionario"));
