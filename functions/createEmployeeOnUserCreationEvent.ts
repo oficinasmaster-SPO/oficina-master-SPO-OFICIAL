@@ -101,6 +101,7 @@ Deno.serve(async (req) => {
         // Criar Employee record
         const employeeData = {
             workshop_id: workshopId,
+            consulting_firm_id: inviteConsultingFirmId || updatedConsultingFirmId || user.consulting_firm_id || defaultConsultingFirmId,
             user_id: user.id,
             full_name: user.full_name || user.email.split('@')[0],
             email: user.email,
