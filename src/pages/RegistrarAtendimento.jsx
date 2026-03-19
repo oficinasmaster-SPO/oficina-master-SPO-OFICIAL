@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar as CalendarIcon, Plus, Trash2, Upload, Sparkles, Loader2, Video, Link as LinkIcon, Image, Film, Send, FileText, MessageSquare, Package, Clock, FilePlus } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, Trash2, Upload, Sparkles, Loader2, Video, Link as LinkIcon, Image, Film, Send, FileText, MessageSquare, Package, Clock, FilePlus, X } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import NotificationSchedulerModal from "@/components/aceleracao/NotificationSchedulerModal";
@@ -26,12 +26,40 @@ import GoogleMeetIntegration from "@/components/aceleracao/GoogleMeetIntegration
 import { useGoogleMeet } from "@/components/hooks/useGoogleMeet";
 import NextSteps from "@/components/aceleracao/NextSteps";
 
-export default function RegistrarAtendimento() {
+export default function RegistrarAtendimento({ isModal = true, onClose }) {
   const navigate = useNavigate();
+  const location = window.location;
   const queryClient = useQueryClient();
   const urlParams = new URLSearchParams(window.location.search);
   const fromAgenda = urlParams.get('fromAgenda') === 'true';
   const wasFullscreen = urlParams.get('fullscreen') === 'true';
+
+  const handleClose = () => {
+    if (onClose) {
+      onClose();
+    } else if (fromAgenda) {
+      navigate(-1);
+    } else {
+      navigate(`${createPageUrl('ControleAceleracao')}?tab=atendimentos`);
+    }
+  };
+
+  React.useEffect(() => {
+    // Redireciona a página isolada para a tela de controle com o modal aberto
+    if (!onClose && location.pathname.toLowerCase().includes('registraratendimento')) {
+      const newSearch = location.search ? location.search + '&modal=atendimento' : '?modal=atendimento';
+      navigate(`${createPageUrl('ControleAceleracao')}${newSearch}`, { replace: true });
+    }
+  }, [location.pathname, location.search, navigate, onClose]);
+
+  React.useEffect(() => {
+    if (isModal && (!location.pathname.toLowerCase().includes('registraratendimento'))) {
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = 'unset';
+      };
+    }
+  }, [isModal, location.pathname]);
   
   const [formData, setFormData] = useState({
     workshop_id: "",
