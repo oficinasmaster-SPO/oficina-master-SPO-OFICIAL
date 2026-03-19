@@ -45,9 +45,13 @@ export function TenantProvider({ children }) {
           }
           
           if (selectedCompanyId) {
-             const comp = await base44.entities.Company.get(selectedCompanyId).catch(() => null);
-             if (comp && !cancelled) {
-                 setCompany(comp);
+             // Tenta buscar como Workshop primeiro (novo padrão), se falhar tenta como Company (padrão legado)
+             let compOrWorkshop = await base44.entities.Workshop.get(selectedCompanyId).catch(() => null);
+             if (!compOrWorkshop) {
+                 compOrWorkshop = await base44.entities.Company.get(selectedCompanyId).catch(() => null);
+             }
+             if (compOrWorkshop && !cancelled) {
+                 setCompany(compOrWorkshop);
              }
           } else {
              if (!cancelled) setCompany(null);
