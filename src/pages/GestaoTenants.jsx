@@ -199,7 +199,7 @@ export default function GestaoTenants() {
           </TabsTrigger>
           <TabsTrigger value="companies" className="flex items-center gap-2">
             <Building2 className="w-4 h-4" />
-            Empresas
+            Oficinas
           </TabsTrigger>
         </TabsList>
 
