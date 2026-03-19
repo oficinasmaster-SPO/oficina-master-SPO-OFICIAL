@@ -479,6 +479,18 @@ export default function RegistrarAtendimento() {
     });
   };
 
+  const addProximoPasso = () => {
+    setFormData({
+      ...formData,
+      proximos_passos_list: [...(formData.proximos_passos_list || []), { descricao: "", responsavel: "", prazo: "" }]
+    });
+  };
+
+  const removeProximoPasso = (index) => {
+    const newPassos = formData.proximos_passos_list.filter((_, i) => i !== index);
+    setFormData({ ...formData, proximos_passos_list: newPassos });
+  };
+
   if (!user || user.role !== 'admin') {
     return (
       <div className="text-center py-12">
