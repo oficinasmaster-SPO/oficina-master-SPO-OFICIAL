@@ -10,11 +10,13 @@ import { base44 } from '@/api/base44Client';
  */
 export function useWorkshopContext() {
   const { isAdminMode, adminWorkshopId } = useAdminMode();
-  const { selectedFirmId, selectedCompanyId } = useTenant();
+  const { selectedFirmId, selectedCompanyId, isLoading: isTenantLoading } = useTenant();
   const [workshop, setWorkshop] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (isTenantLoading) return;
+
     let cancelled = false;
     
     const loadWorkshop = async () => {
@@ -148,7 +150,7 @@ export function useWorkshopContext() {
     return () => {
       cancelled = true;
     };
-  }, [isAdminMode, adminWorkshopId, selectedCompanyId]);
+  }, [isAdminMode, adminWorkshopId, selectedCompanyId, isTenantLoading]);
 
   return {
     workshop,

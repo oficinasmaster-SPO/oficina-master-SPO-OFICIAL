@@ -12,7 +12,7 @@ export function TenantProvider({ children }) {
   
   // Company State
   const [company, setCompany] = useState(null);
-  const [selectedCompanyId, setSelectedCompanyId] = useState(() => localStorage.getItem('selected_company_id'));
+  const [selectedCompanyId, setSelectedCompanyId] = useState(null);
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -44,17 +44,35 @@ export function TenantProvider({ children }) {
              if (!cancelled) setConsultingFirm(null);
           }
           
-          let compIdToLoad = selectedCompanyId;
-          
-          if (!compIdToLoad && currentUser.data?.workshop_id) {
-             compIdToLoad = currentUser.data.workshop_id;
-             setSelectedCompanyId(compIdToLoad);
-             localStorage.setItem('selected_company_id', compIdToLoad);
-          } else if (!compIdToLoad && currentUser.data?.company_id) {
-             compIdToLoad = currentUser.data.company_id;
-             setSelectedCompanyId(compIdToLoad);
-             localStorage.setItem('selected_company_id', compIdToLoad);
+          const storedCompanyId = localStorage.getItem('selected_company_id');
+          let compIdToLoad = null;
+
+          if (storedCompanyId) {
+            let validWorkshop = null;
+            try {
+              const wsList = await base44.entities.Workshop.filter({ id: storedCompanyId });
+              if (wsList && wsList.length > 0) validWorkshop = wsList[0];
+              if (!validWorkshop) {
+                const cpList = await base44.entities.Company.filter({ id: storedCompanyId });
+                if (cpList && cpList.length > 0) validWorkshop = cpList[0];
+              }
+            } catch(e) {}
+
+            if (validWorkshop) {
+              compIdToLoad = storedCompanyId;
+            } else {
+              localStorage.removeItem('selected_company_id');
+            }
           }
+
+          if (!compIdToLoad) {
+            compIdToLoad = currentUser.data?.workshop_id || currentUser.data?.company_id || null;
+            if (compIdToLoad) {
+              localStorage.setItem('selected_company_id', compIdToLoad);
+            }
+          }
+          
+          if (!cancelled) setSelectedCompanyId(compIdToLoad);
 
           if (compIdToLoad) {
              // Tenta buscar como Workshop primeiro (novo padrão), se falhar tenta como Company (padrão legado)
