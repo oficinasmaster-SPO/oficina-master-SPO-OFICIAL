@@ -241,7 +241,8 @@ export default function CadastroPlanos() {
         segment: formData.segment,
         planoAtual: selectedPlan,
         dataAssinatura: new Date().toISOString(),
-        owner_id: currentUser.id
+        owner_id: currentUser.id,
+        consulting_firm_id: currentUser.consulting_firm_id || '69bab264d7c3fe5d367c3959'
       };
 
       if (userWorkshop) {
@@ -258,6 +259,24 @@ export default function CadastroPlanos() {
           job_role: 'diretor',
           area: 'gerencia',
           position: 'Proprietário'
+        });
+
+        // Also create an Employee record for the owner since it wasn't created on signup
+        await base44.entities.Employee.create({
+          workshop_id: newWorkshop.id,
+          consulting_firm_id: currentUser.consulting_firm_id || '69bab264d7c3fe5d367c3959',
+          user_id: currentUser.id,
+          full_name: currentUser.full_name || currentUser.email.split('@')[0],
+          email: currentUser.email,
+          position: 'Sócio/Proprietário',
+          job_role: 'diretor',
+          area: 'gerencia',
+          tipo_vinculo: 'interno',
+          is_internal: true,
+          is_partner: true,
+          status: 'ativo',
+          user_status: 'ativo',
+          hire_date: new Date().toISOString().split('T')[0]
         });
 
         // Criar permissões completas para o proprietário
