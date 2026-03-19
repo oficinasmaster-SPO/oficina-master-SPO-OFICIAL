@@ -406,25 +406,25 @@ export default function GestaoTenants() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal Empresa */}
+      {/* Modal Oficina */}
       <Dialog open={isCompanyModalOpen} onOpenChange={(open) => {
         if (!open) resetCompanyForm();
         setIsCompanyModalOpen(open);
       }}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>{editingCompany ? 'Editar Empresa' : 'Nova Empresa'}</DialogTitle>
+            <DialogTitle>{editingCompany ? 'Editar Oficina' : 'Nova Oficina'}</DialogTitle>
             <DialogDescription>
-              Preencha os dados da empresa matriz/cliente.
+              Preencha os dados da oficina (tenant).
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <label className="text-sm font-medium">Nome da Empresa</label>
+              <label className="text-sm font-medium">Nome da Oficina</label>
               <Input 
                 value={companyFormData.name} 
                 onChange={(e) => setCompanyFormData({...companyFormData, name: e.target.value})} 
-                placeholder="Ex: Grupo Auto Center Silva" 
+                placeholder="Ex: Auto Center Silva" 
               />
             </div>
             <div className="grid gap-2">
@@ -443,11 +443,11 @@ export default function GestaoTenants() {
             <div className="grid gap-2">
               <label className="text-sm font-medium">ID do Usuário Dono (Owner)</label>
               <Input 
-                value={companyFormData.owner_user_id} 
-                onChange={(e) => setCompanyFormData({...companyFormData, owner_user_id: e.target.value})} 
+                value={companyFormData.owner_id} 
+                onChange={(e) => setCompanyFormData({...companyFormData, owner_id: e.target.value})} 
                 placeholder="Ex: 60d5ecb..." 
               />
-              <span className="text-xs text-gray-500">O ID do usuário que administra esta empresa (geralmente o empresário dono).</span>
+              <span className="text-xs text-gray-500">O ID do usuário que administra esta oficina (geralmente o empresário dono).</span>
             </div>
             <div className="grid gap-2">
               <label className="text-sm font-medium">CNPJ (Opcional)</label>
@@ -457,12 +457,31 @@ export default function GestaoTenants() {
                 placeholder="00.000.000/0000-00" 
               />
             </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">Cidade</label>
+                <Input 
+                  value={companyFormData.city} 
+                  onChange={(e) => setCompanyFormData({...companyFormData, city: e.target.value})} 
+                  placeholder="Ex: São Paulo" 
+                />
+              </div>
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">Estado (UF)</label>
+                <Input 
+                  value={companyFormData.state} 
+                  onChange={(e) => setCompanyFormData({...companyFormData, state: e.target.value})} 
+                  placeholder="Ex: SP" 
+                  maxLength={2}
+                />
+              </div>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsCompanyModalOpen(false)}>Cancelar</Button>
             <Button 
               onClick={() => saveCompanyMutation.mutate(companyFormData)} 
-              disabled={saveCompanyMutation.isPending || !companyFormData.name || !companyFormData.consulting_firm_id || !companyFormData.owner_user_id}
+              disabled={saveCompanyMutation.isPending || !companyFormData.name || !companyFormData.consulting_firm_id || !companyFormData.owner_id}
             >
               {saveCompanyMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : 'Salvar'}
             </Button>
