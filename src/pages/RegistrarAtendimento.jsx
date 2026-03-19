@@ -530,7 +530,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose }) {
   }
 
   const content = (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <>
         {/* Dados Básicos */}
         <Card>
           <CardHeader>
