@@ -158,7 +158,7 @@ export const TimePicker = React.forwardRef(({ value, onChange, disabled, placeho
             <Wheel options={hours} value={hour} onChange={handleHourChange} />
           </div>
           
-          <div className="text-4xl font-light text-gray-300 pb-1 mt-6 animate-pulse select-none">:</div>
+          <div className="text-3xl font-bold text-gray-400 pb-1 mt-6 select-none opacity-50">:</div>
           
           <div className="flex flex-col items-center">
             <span className="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-widest">Minutos</span>
