@@ -711,48 +711,44 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
             </div>
             <div>
               <Label>Horário de Abertura</Label>
-              <Input
-                type="time"
+              <TimePicker
                 value={formData.horario_funcionamento.abertura}
-                onChange={(e) => setFormData({
+                onChange={(val) => setFormData({
                   ...formData,
-                  horario_funcionamento: { ...formData.horario_funcionamento, abertura: e.target.value }
+                  horario_funcionamento: { ...formData.horario_funcionamento, abertura: val }
                 })}
                 disabled={!editing}
               />
             </div>
             <div>
               <Label>Horário de Fechamento</Label>
-              <Input
-                type="time"
+              <TimePicker
                 value={formData.horario_funcionamento.fechamento}
-                onChange={(e) => setFormData({
+                onChange={(val) => setFormData({
                   ...formData,
-                  horario_funcionamento: { ...formData.horario_funcionamento, fechamento: e.target.value }
+                  horario_funcionamento: { ...formData.horario_funcionamento, fechamento: val }
                 })}
                 disabled={!editing}
               />
             </div>
             <div>
               <Label>Início do Almoço</Label>
-              <Input
-                type="time"
+              <TimePicker
                 value={formData.horario_funcionamento.almoco_inicio || ""}
-                onChange={(e) => setFormData({
+                onChange={(val) => setFormData({
                   ...formData,
-                  horario_funcionamento: { ...formData.horario_funcionamento, almoco_inicio: e.target.value }
+                  horario_funcionamento: { ...formData.horario_funcionamento, almoco_inicio: val }
                 })}
                 disabled={!editing}
               />
             </div>
             <div>
               <Label>Fim do Almoço</Label>
-              <Input
-                type="time"
+              <TimePicker
                 value={formData.horario_funcionamento.almoco_fim || ""}
-                onChange={(e) => setFormData({
+                onChange={(val) => setFormData({
                   ...formData,
-                  horario_funcionamento: { ...formData.horario_funcionamento, almoco_fim: e.target.value }
+                  horario_funcionamento: { ...formData.horario_funcionamento, almoco_fim: val }
                 })}
                 disabled={!editing}
               />
