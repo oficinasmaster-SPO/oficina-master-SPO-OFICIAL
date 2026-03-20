@@ -346,28 +346,28 @@ export default function Cadastro() {
           // Atualizar URL com a aba selecionada
           window.history.replaceState(null, '', `${location.pathname}?step=${newTab}`);
         }} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-6 bg-white shadow-sm p-1 h-auto">
-            <TabsTrigger value="perfil-socio" className="py-3">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-6 bg-white shadow-sm p-1 gap-1 h-auto">
+            <TabsTrigger value="perfil-socio" className="py-3 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg">
               <User className="w-4 h-4 mr-2" />
               Meu Perfil
             </TabsTrigger>
-            <TabsTrigger value="dados" className="py-3">
+            <TabsTrigger value="dados" className="py-3 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg">
               <Building2 className="w-4 h-4 mr-2" />
               Dados
             </TabsTrigger>
-            <TabsTrigger value="servicos" className="py-3">
+            <TabsTrigger value="servicos" className="py-3 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg">
               <Wrench className="w-4 h-4 mr-2" />
               Serviços
             </TabsTrigger>
-            <TabsTrigger value="equipamentos" className="py-3">
+            <TabsTrigger value="equipamentos" className="py-3 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg">
               <Settings className="w-4 h-4 mr-2" />
               Equipamentos
             </TabsTrigger>
-            <TabsTrigger value="terceirizados" className="py-3">
+            <TabsTrigger value="terceirizados" className="py-3 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg">
               <DollarSign className="w-4 h-4 mr-2" />
               Terceirizados
             </TabsTrigger>
-            <TabsTrigger value="metas" className="py-3">
+            <TabsTrigger value="metas" className="py-3 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg">
               <Target className="w-4 h-4 mr-2" />
               Metas
             </TabsTrigger>
