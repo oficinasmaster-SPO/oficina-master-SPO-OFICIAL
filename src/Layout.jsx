@@ -117,12 +117,20 @@ export default function Layout({ children, currentPageName }) {
     window.location.search = '';
   }
 
+  if (isAuthenticated && !isPublicPage && isLoadingWorkshop) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
   return (
     <PermissionsProvider>
       <OnboardingGate user={user} isAuthenticated={isAuthenticated}>
       <div className="min-h-screen bg-gray-50">
 
-        {isAuthenticated && !isPublicPage && (
+        {shouldShowMenus && (
           <Sidebar 
             user={user}
             unreadCount={unreadCount}
