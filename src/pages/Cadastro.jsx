@@ -319,19 +319,24 @@ export default function Cadastro() {
           </p>
         </div>
 
-        <Alert className="mb-6 bg-red-50 border-red-200">
-          <div className="flex items-start gap-3">
-            <div className="p-2 bg-red-100 rounded-full mt-1">
-              <Settings className="w-4 h-4 text-red-600" />
+        <motion.div
+          animate={{ y: [0, -6, 0] }}
+          transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+        >
+          <Alert className="mb-6 bg-red-50 border-red-200 shadow-lg shadow-red-200/50">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-red-100 rounded-full mt-1">
+                <Settings className="w-4 h-4 text-red-600" />
+              </div>
+              <div>
+                <AlertTitle className="text-red-800 font-semibold">Como funciona:</AlertTitle>
+                <AlertDescription className="text-red-700">
+                  Este cadastro utiliza o mesmo layout da gestão completa. Navegue pelas abas abaixo e preencha cada seção. Seus dados são salvos automaticamente ao confirmar a edição em cada cartão.
+                </AlertDescription>
+              </div>
             </div>
-            <div>
-              <AlertTitle className="text-red-800 font-semibold">Como funciona:</AlertTitle>
-              <AlertDescription className="text-red-700">
-                Este cadastro utiliza o mesmo layout da gestão completa. Navegue pelas abas abaixo e preencha cada seção. Seus dados são salvos automaticamente ao confirmar a edição em cada cartão.
-              </AlertDescription>
-            </div>
-          </div>
-        </Alert>
+          </Alert>
+        </motion.div>
 
         {saving && (
           <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center">
