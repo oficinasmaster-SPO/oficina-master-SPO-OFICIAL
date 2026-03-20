@@ -581,22 +581,27 @@ const ServicosEquipamentos = forwardRef(({ workshop, onUpdate, showServicesOnly,
                     )}
                   </div>
                   {editing ? (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 pl-2">
-                      {services.map((option) => (
-                        <div key={option.value} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`service-${option.value}`}
-                            checked={formData.services_offered.includes(option.value)}
-                            onCheckedChange={() => setFormData({
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                      {services.map((option) => {
+                        const isSelected = formData.services_offered.includes(option.value);
+                        return (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => setFormData({
                               ...formData,
                               services_offered: toggleArrayItem(formData.services_offered, option.value)
                             })}
-                          />
-                          <label htmlFor={`service-${option.value}`} className="text-sm cursor-pointer">
+                            className={`flex items-center justify-center text-center px-3 py-2 rounded-lg border transition-all duration-200 text-sm font-medium ${
+                              isSelected 
+                                ? 'bg-slate-900 border-slate-900 text-white shadow-sm' 
+                                : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+                            }`}
+                          >
                             {option.label}
-                          </label>
-                        </div>
-                      ))}
+                          </button>
+                        );
+                      })}
                     </div>
                   ) : (
                     formData.services_offered.length === 0 ? (
