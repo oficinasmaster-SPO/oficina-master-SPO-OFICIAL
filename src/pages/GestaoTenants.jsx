@@ -22,6 +22,7 @@ export default function GestaoTenants() {
   const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
   const [editingConsultingFirm, setEditingConsultingFirm] = useState(null);
   const [editingCompany, setEditingCompany] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // States for Consulting Firm Form
   const [firmFormData, setFirmFormData] = useState({
@@ -50,8 +51,13 @@ export default function GestaoTenants() {
 
   const { data: companies, isLoading: loadingCompanies } = useQuery({
     queryKey: ['admin-companies'],
-    queryFn: () => base44.entities.Workshop.list(),
+    queryFn: () => base44.entities.Workshop.list('-created_date', 1000), // Puxa uma lista maior e recém-criadas primeiro
   });
+
+  const filteredCompanies = companies?.filter(company => 
+    company.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    company.cnpj?.includes(searchQuery)
+  ) || [];
 
   // Mutations: Consulting Firms
   const saveFirmMutation = useMutation({
