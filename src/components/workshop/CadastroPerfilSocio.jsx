@@ -358,7 +358,7 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack, on
                 </label>
               )}
             </div>
-            <p className="text-sm text-gray-500 mt-2">Foto de perfil (opcional)</p>
+            <p className="text-sm text-red-500 font-medium mt-2">Foto de perfil (obrigatória)</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
