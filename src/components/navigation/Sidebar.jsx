@@ -1127,8 +1127,8 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                 className={cn(
                   "flex items-center gap-3 px-4 py-3 rounded-xl transition-all group",
                   isActive(createPageUrl('Home'))
-                    ? "bg-[#E11D48] text-white font-medium shadow-md"
-                    : "text-gray-600 hover:bg-[#E11D48] hover:text-white hover:shadow-md"
+                    ? "bg-[#FF0000] text-white font-medium shadow-md"
+                    : "text-gray-600 hover:bg-[#FF0000] hover:text-white hover:shadow-md"
                 )}
               >
                 <Home className={cn("w-5 h-5 transition-colors", isActive(createPageUrl('Home')) ? "text-white" : "text-gray-500 group-hover:text-white")} />
@@ -1140,8 +1140,8 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                 className={cn(
                   "flex items-center gap-3 px-4 py-3 rounded-xl transition-all group",
                   isActive(createPageUrl('MeuPerfil'))
-                    ? "bg-[#E11D48] text-white font-medium shadow-md"
-                    : "text-gray-600 hover:bg-[#E11D48] hover:text-white hover:shadow-md"
+                    ? "bg-[#FF0000] text-white font-medium shadow-md"
+                    : "text-gray-600 hover:bg-[#FF0000] hover:text-white hover:shadow-md"
                 )}
               >
                 <User className={cn("w-5 h-5 transition-colors", isActive(createPageUrl('MeuPerfil')) ? "text-white" : "text-gray-500 group-hover:text-white")} />
@@ -1158,8 +1158,8 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                 className={cn(
                   "p-3 rounded-xl transition-all group",
                   isActive(createPageUrl('Home'))
-                    ? "bg-[#E11D48] text-white shadow-md"
-                    : "text-gray-500 hover:bg-[#E11D48] hover:text-white hover:shadow-md"
+                    ? "bg-[#FF0000] text-white shadow-md"
+                    : "text-gray-500 hover:bg-[#FF0000] hover:text-white hover:shadow-md"
                 )}
                 title="Início"
               >
@@ -1171,8 +1171,8 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                 className={cn(
                   "p-3 rounded-xl transition-all group",
                   isActive(createPageUrl('MeuPerfil'))
-                    ? "bg-[#E11D48] text-white shadow-md"
-                    : "text-gray-500 hover:bg-[#E11D48] hover:text-white hover:shadow-md"
+                    ? "bg-[#FF0000] text-white shadow-md"
+                    : "text-gray-500 hover:bg-[#FF0000] hover:text-white hover:shadow-md"
                 )}
                 title="Meu Perfil"
               >
@@ -1198,7 +1198,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                     <>
                       <button
                         onClick={() => toggleGroup(group.id)}
-                        className="flex items-center justify-between w-full px-4 py-3 rounded-xl text-xs font-semibold text-gray-500 uppercase tracking-wider hover:bg-[#E11D48] hover:text-white hover:shadow-md transition-all group"
+                        className="flex items-center justify-between w-full px-4 py-3 rounded-xl text-xs font-semibold text-gray-500 uppercase tracking-wider hover:bg-[#FF0000] hover:text-white hover:shadow-md transition-all group"
                       >
                         <div className="flex items-center gap-3">
                           <GroupIcon className="w-5 h-5 text-gray-500 group-hover:text-white transition-colors" />
@@ -1225,8 +1225,8 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                                 className={cn(
                                   "flex items-center gap-3 px-4 py-3 rounded-xl transition-all group relative select-none",
                                   active 
-                                    ? "bg-[#E11D48] text-white font-medium shadow-md" 
-                                    : "text-gray-600 hover:bg-[#E11D48] hover:text-white hover:shadow-md"
+                                    ? "bg-[#FF0000] text-white font-medium shadow-md" 
+                                    : "text-gray-600 hover:bg-[#FF0000] hover:text-white hover:shadow-md"
                                 )}
                               >
                                 <Icon className={cn(
@@ -1238,7 +1238,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                                   <div className="flex items-center justify-between">
                                     <span className="text-sm truncate">{item.name}</span>
                                     {item.badge > 0 && (
-                                      <Badge className={cn("ml-2 h-5 min-w-5 px-1.5", active ? "bg-white text-[#E11D48]" : "bg-white text-[#E11D48]")}>
+                                      <Badge className={cn("ml-2 h-5 min-w-5 px-1.5", active ? "bg-white text-[#FF0000]" : "bg-white text-[#FF0000]")}>
                                         {item.badge}
                                       </Badge>
                                     )}
