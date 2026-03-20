@@ -315,6 +315,7 @@ export default function GestaoTenants() {
                         <TableHead>Consultoria Vinculada</TableHead>
                         <TableHead>CNPJ</TableHead>
                         <TableHead>Admin (Owner ID)</TableHead>
+                        <TableHead>Email Admin</TableHead>
                         <TableHead>Data de Criação</TableHead>
                         <TableHead className="text-right">Ações</TableHead>
                       </TableRow>
@@ -322,12 +323,14 @@ export default function GestaoTenants() {
                     <TableBody>
                       {filteredCompanies.map((company) => {
                         const linkedFirm = consultingFirms?.find(f => f.id === company.consulting_firm_id);
+                        const ownerUser = users?.find(u => u.id === company.owner_id);
                         return (
                           <TableRow key={company.id}>
                             <TableCell className="font-medium">{company.name}</TableCell>
                             <TableCell>{linkedFirm?.name || <span className="text-gray-400 italic">Desconhecida/Sem Vínculo</span>}</TableCell>
                             <TableCell>{company.cnpj || '-'}</TableCell>
                             <TableCell className="text-xs text-gray-500 font-mono">{company.owner_id}</TableCell>
+                            <TableCell>{ownerUser?.email || '-'}</TableCell>
                             <TableCell>{company.created_date ? new Date(company.created_date).toLocaleDateString('pt-BR') : '-'}</TableCell>
                             <TableCell className="text-right">
                               <Button variant="ghost" size="icon" onClick={() => handleOpenCompanyModal(company)}>
