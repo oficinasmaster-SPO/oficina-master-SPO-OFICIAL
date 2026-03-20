@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, CheckCircle2, Building2, Wrench, Settings, DollarSign, Target, ArrowRight, Rocket, PlayCircle, User } from "lucide-react";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { motion } from "framer-motion";
 
 // Importando componentes da Gestão para manter consistência visual e funcional
 import DadosBasicosOficina from "../components/workshop/DadosBasicosOficina";
