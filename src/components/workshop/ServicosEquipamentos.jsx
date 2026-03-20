@@ -341,8 +341,8 @@ const ServicosEquipamentos = forwardRef(({ workshop, onUpdate, showServicesOnly,
                 <div className="flex items-center gap-3">
                   <Settings className="w-6 h-6 text-blue-600" />
                   <div>
-                    <CardTitle>Tipos de Veículos e Combustíveis</CardTitle>
-                    <CardDescription>Defina os tipos de veículos atendidos</CardDescription>
+                    <CardTitle>Veículos, Combustíveis e Categorias</CardTitle>
+                    <CardDescription>Defina o perfil da frota que sua oficina atende</CardDescription>
                   </div>
                 </div>
                 {!editing ? (
