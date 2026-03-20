@@ -18,10 +18,10 @@ import TrackingWrapper from "@/components/shared/TrackingWrapper";
 
 export default function DiagnosticoDISC() {
   const navigate = useNavigate();
+  const { workshop, isLoading: isWorkshopLoading } = useWorkshopContext();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [user, setUser] = useState(null);
-  const [workshop, setWorkshop] = useState(null);
   const [employees, setEmployees] = useState([]);
   
   const [searchParams] = useSearchParams();
@@ -35,38 +35,20 @@ export default function DiagnosticoDISC() {
   const [candidateName, setCandidateName] = useState("");
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (!isWorkshopLoading) {
+      loadData();
+    }
+  }, [isWorkshopLoading, workshop]);
 
   const loadData = async () => {
     try {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
       
-      const params = new URLSearchParams(window.location.search);
-      const urlWorkshopId = params.get('workshop_id');
-
-      let userWorkshop = null;
-      
-      if (urlWorkshopId) {
-        try {
-          userWorkshop = await base44.entities.Workshop.get(urlWorkshopId);
-        } catch (err) {
-          console.error("Erro ao buscar oficina pela URL", err);
-        }
-      }
-
-      if (!userWorkshop) {
-        const workshops = await base44.entities.Workshop.list();
-        userWorkshop = workshops.find(w => w.id === currentUser.workshop_id || w.owner_id === currentUser.id);
-      }
-      
-      setWorkshop(userWorkshop);
-
       let activeEmployees = [];
-      if (userWorkshop) {
+      if (workshop) {
         activeEmployees = await base44.entities.Employee.filter({
-          workshop_id: userWorkshop.id,
+          workshop_id: workshop.id,
           status: "ativo"
         });
       } else {
