@@ -3,7 +3,11 @@ import { useTenant } from '@/components/contexts/TenantContext';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Building2, Briefcase, Search } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { Building2, Briefcase, Search, Check, ChevronsUpDown } from 'lucide-react';
 
 export default function TenantSelector() {
   const { user, selectedFirmId, changeConsultingFirm, selectedCompanyId, changeCompany } = useTenant();
