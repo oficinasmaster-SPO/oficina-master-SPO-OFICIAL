@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
+import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 import { Loader2, Brain, AlertCircle, CheckCircle2, Link as LinkIcon, History, Copy, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { discQuestions } from "../components/disc/DISCQuestions";
