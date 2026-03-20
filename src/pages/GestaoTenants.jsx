@@ -352,8 +352,8 @@ export default function GestaoTenants() {
                                 <Pencil className="w-4 h-4" />
                               </Button>
                               <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700" onClick={() => {
-                                if (window.confirm("Tem certeza que deseja remover esta oficina?")) {
-                                  deleteCompanyMutation.mutate(company.id);
+                                if (window.confirm("Tem certeza que deseja remover esta oficina e o usuário dono vinculado?")) {
+                                  deleteCompanyMutation.mutate(company);
                                 }
                               }}>
                                 <Trash2 className="w-4 h-4" />
