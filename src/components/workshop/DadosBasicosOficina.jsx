@@ -11,6 +11,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { cn } from "@/lib/utils";
 import { base44 } from "@/api/base44Client";
 import { Checkbox } from "@/components/ui/checkbox";
+import { TimePicker } from "@/components/ui/time-picker";
 import { toast } from "sonner";
 import LogoUpload from "./LogoUpload";
 
