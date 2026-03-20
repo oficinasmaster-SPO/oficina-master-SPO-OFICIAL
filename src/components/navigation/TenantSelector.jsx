@@ -50,37 +50,66 @@ export default function TenantSelector() {
 
       <div className="flex items-center gap-2 bg-gray-50 p-1 rounded-lg border border-gray-200">
         <Briefcase className="w-4 h-4 text-gray-500 ml-2" />
-        <Select 
-          value={selectedCompanyId || 'none'} 
-          onValueChange={(val) => changeCompany(val === 'none' ? null : val)} 
-        >
-          <SelectTrigger className="w-[180px] h-8 text-xs bg-white border-0 shadow-sm">
-            <SelectValue placeholder="Selecione Oficina" />
-          </SelectTrigger>
-          <SelectContent>
-            <div className="flex items-center px-3 pb-2 pt-2 border-b mb-1 sticky top-0 bg-white z-10">
-              <Search className="w-4 h-4 text-gray-400 mr-2" />
-              <input
-                type="text"
-                placeholder="Pesquisar oficina..."
-                className="w-full text-sm outline-none bg-transparent"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.stopPropagation()}
-                onClick={(e) => e.stopPropagation()}
-              />
-            </div>
-            <SelectItem value="none">Todas Oficinas</SelectItem>
-            {filteredCompanies.map(c => (
-              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-            ))}
-            {filteredCompanies.length === 0 && (
-              <div className="px-2 py-4 text-sm text-center text-gray-500">
-                Nenhuma oficina encontrada
-              </div>
-            )}
-          </SelectContent>
-        </Select>
+        <Popover open={openCompanyPopover} onOpenChange={setOpenCompanyPopover}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={openCompanyPopover}
+              className="w-[180px] h-8 text-xs bg-white border-0 shadow-sm justify-between px-3 font-normal"
+            >
+              <span className="truncate">
+                {selectedCompanyId && selectedCompanyId !== 'none'
+                  ? companies.find((c) => c.id === selectedCompanyId)?.name || "Todas Oficinas"
+                  : "Todas Oficinas"}
+              </span>
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[200px] p-0" align="start">
+            <Command>
+              <CommandInput placeholder="Pesquisar oficina..." />
+              <CommandList>
+                <CommandEmpty>Nenhuma oficina encontrada.</CommandEmpty>
+                <CommandGroup>
+                  <CommandItem
+                    value="none-Todas Oficinas"
+                    onSelect={() => {
+                      changeCompany(null);
+                      setOpenCompanyPopover(false);
+                    }}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        (!selectedCompanyId || selectedCompanyId === 'none') ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    Todas Oficinas
+                  </CommandItem>
+                  {companies.map((c) => (
+                    <CommandItem
+                      key={c.id}
+                      value={`${c.name} ${c.id}`}
+                      onSelect={() => {
+                        changeCompany(c.id);
+                        setOpenCompanyPopover(false);
+                      }}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          selectedCompanyId === c.id ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      {c.name}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
       </div>
     </div>
   );
