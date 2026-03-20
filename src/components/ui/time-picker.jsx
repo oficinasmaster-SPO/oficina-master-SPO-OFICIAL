@@ -58,8 +58,8 @@ const Wheel = ({ options, value, onChange }) => {
       
       {/* Active selection band */}
       <div 
-        className="absolute left-0 w-full z-10 pointer-events-none border-y border-red-500 bg-red-50/20" 
-        style={{ top: `${OFFSET}px`, height: `${ITEM_HEIGHT}px` }} 
+        className="absolute left-0 w-full z-10 pointer-events-none border-y border-[#E11D48]" 
+        style={{ top: `${OFFSET}px`, height: `${ITEM_HEIGHT}px`, backgroundColor: 'rgba(225, 29, 72, 0.05)' }} 
       />
       
       <div 
