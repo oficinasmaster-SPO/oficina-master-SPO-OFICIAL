@@ -650,10 +650,9 @@ export default function RegistrarAtendimento({ isModal = false, onClose }) {
               </div>
               <div>
                 <Label>Horário *</Label>
-                <Input
-                  type="time"
+                <TimePicker
                   value={formData.hora_agendada}
-                  onChange={(e) => setFormData({ ...formData, hora_agendada: e.target.value })}
+                  onChange={(val) => setFormData({ ...formData, hora_agendada: val })}
                   required
                 />
               </div>
