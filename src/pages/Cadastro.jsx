@@ -145,9 +145,10 @@ export default function Cadastro() {
         tempo_medio_servico: 0
       });
       
-      // Update User with the new workshop_id
+      // Update User with the new workshop_id and mark as onboarding in progress
       await base44.auth.updateMe({
-        workshop_id: newWorkshop.id
+        workshop_id: newWorkshop.id,
+        cadastro_em_andamento: true
       });
       
       // Also create an Employee record for the owner since it wasn't created on signup
