@@ -275,12 +275,26 @@ export default function GestaoTenants() {
         </TabsContent>
 
         <TabsContent value="companies" className="mt-6 space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold text-gray-800">Oficinas (Clientes)</h2>
-            <Button onClick={() => handleOpenCompanyModal()}>
-              <Plus className="w-4 h-4 mr-2" />
-              Nova Oficina
-            </Button>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex items-center gap-3">
+              <h2 className="text-xl font-semibold text-gray-800">Oficinas (Clientes)</h2>
+              <Badge variant="secondary">{filteredCompanies.length}</Badge>
+            </div>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                <Input
+                  placeholder="Buscar oficinas..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <Button onClick={() => handleOpenCompanyModal()}>
+                <Plus className="w-4 h-4 mr-2" />
+                Nova Oficina
+              </Button>
+            </div>
           </div>
 
           <Card>
@@ -296,11 +310,12 @@ export default function GestaoTenants() {
                         <TableHead>Consultoria Vinculada</TableHead>
                         <TableHead>CNPJ</TableHead>
                         <TableHead>Admin (Owner ID)</TableHead>
+                        <TableHead>Data de Criação</TableHead>
                         <TableHead className="text-right">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {companies?.map((company) => {
+                      {filteredCompanies.map((company) => {
                         const linkedFirm = consultingFirms?.find(f => f.id === company.consulting_firm_id);
                         return (
                           <TableRow key={company.id}>
@@ -308,6 +323,7 @@ export default function GestaoTenants() {
                             <TableCell>{linkedFirm?.name || <span className="text-gray-400 italic">Desconhecida/Sem Vínculo</span>}</TableCell>
                             <TableCell>{company.cnpj || '-'}</TableCell>
                             <TableCell className="text-xs text-gray-500 font-mono">{company.owner_id}</TableCell>
+                            <TableCell>{company.created_date ? new Date(company.created_date).toLocaleDateString('pt-BR') : '-'}</TableCell>
                             <TableCell className="text-right">
                               <Button variant="ghost" size="icon" onClick={() => handleOpenCompanyModal(company)}>
                                 <Pencil className="w-4 h-4" />
@@ -323,9 +339,9 @@ export default function GestaoTenants() {
                           </TableRow>
                         );
                       })}
-                      {(!companies || companies.length === 0) && (
+                      {filteredCompanies.length === 0 && (
                         <TableRow>
-                          <TableCell colSpan={5} className="text-center py-6 text-gray-500">
+                          <TableCell colSpan={6} className="text-center py-6 text-gray-500">
                             Nenhuma oficina encontrada.
                           </TableCell>
                         </TableRow>
