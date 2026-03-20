@@ -42,8 +42,11 @@ export default function DiagnosticoDISC() {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
       
+      const params = new URLSearchParams(window.location.search);
+      const urlWorkshopId = params.get('workshop_id');
+
       const workshops = await base44.entities.Workshop.list();
-      const userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
+      const userWorkshop = workshops.find(w => w.id === urlWorkshopId || w.id === currentUser.workshop_id || w.owner_id === currentUser.id);
       setWorkshop(userWorkshop);
 
       const allEmployees = await base44.entities.Employee.list();
