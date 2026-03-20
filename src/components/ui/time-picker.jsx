@@ -152,16 +152,16 @@ export const TimePicker = React.forwardRef(({ value, onChange, disabled, placeho
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-5 bg-white shadow-2xl rounded-2xl border-gray-100" align="center">
-        <div className="flex items-center justify-center gap-6 relative">
+        <div className="flex items-center justify-center gap-4 relative">
           <div className="flex flex-col items-center">
-            <span className="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-widest">Horas</span>
+            <span className="text-xs font-semibold text-gray-400 mb-4 uppercase tracking-widest">Horas</span>
             <Wheel options={hours} value={hour} onChange={handleHourChange} />
           </div>
           
-          <div className="text-3xl font-bold text-gray-400 pb-1 mt-6 select-none opacity-50">:</div>
+          <div className="text-3xl font-extrabold text-[#E11D48] pb-2 mt-8 select-none opacity-70">:</div>
           
           <div className="flex flex-col items-center">
-            <span className="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-widest">Minutos</span>
+            <span className="text-xs font-semibold text-gray-400 mb-4 uppercase tracking-widest">Minutos</span>
             <Wheel options={minutes} value={minute} onChange={handleMinuteChange} />
           </div>
         </div>
