@@ -116,10 +116,25 @@ export default function GestaoTenants() {
   });
 
   const deleteCompanyMutation = useMutation({
-    mutationFn: (id) => base44.entities.Workshop.delete(id),
+    mutationFn: async (company) => {
+      // 1. Deleta a oficina
+      await base44.entities.Workshop.delete(company.id);
+      
+      // 2. Deleta o usuário admin (owner_id) atrelado a ela
+      if (company.owner_id) {
+        try {
+          await base44.entities.User.delete(company.owner_id);
+        } catch (e) {
+          console.error("Erro ao deletar o usuário dono:", e);
+          // Não falhamos a mutation inteira caso o usuário já tenha sido deletado ou haja erro menor
+        }
+      }
+      return company.id;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-companies'] });
-      toast.success("Oficina removida com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      toast.success("Oficina e usuário administrador removidos com sucesso!");
     },
     onError: (err) => {
       toast.error(`Erro ao remover: ${err.message}`);
