@@ -230,18 +230,14 @@ export default function Cadastro() {
 
   const handleFinish = async () => {
     try {
-      // Atualizar flags de onboarding
-      const updates = {};
-      if (user.first_access_completed === false) {
-        updates.first_access_completed = true;
-      }
-      if (user.profile_completed === false) {
-        updates.profile_completed = true;
-      }
+      // Atualizar flags de onboarding para garantir que a finalização foi registrada
+      const updates = {
+        first_access_completed: true,
+        profile_completed: true,
+        cadastro_finalizado: true
+      };
       
-      if (Object.keys(updates).length > 0) {
-        await base44.auth.updateMe(updates);
-      }
+      await base44.auth.updateMe(updates);
     } catch (e) {
       console.error("Erro ao atualizar status do usuário:", e);
     }
