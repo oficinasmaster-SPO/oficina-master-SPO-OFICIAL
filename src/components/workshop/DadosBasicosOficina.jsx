@@ -5,15 +5,81 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Save, Building2, Info, Store, Loader2, Check, ChevronsUpDown } from "lucide-react";
+import { Save, Building2, Info, Store, Loader2, Check, ChevronsUpDown, Minus, Plus } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { base44 } from "@/api/base44Client";
 import { Checkbox } from "@/components/ui/checkbox";
-import SliderWithMax from "@/components/ui/slider-with-max";
 import { toast } from "sonner";
 import LogoUpload from "./LogoUpload";
+
+const CounterInput = ({ value, onChange, disabled, label, min = 0, max = 100, suffix = "" }) => {
+  const handleDecrement = () => {
+    if (disabled) return;
+    const newValue = Math.max(min, (parseInt(value) || 0) - 1);
+    onChange(newValue);
+  };
+
+  const handleIncrement = () => {
+    if (disabled) return;
+    const newValue = Math.min(max, (parseInt(value) || 0) + 1);
+    onChange(newValue);
+  };
+
+  const handleChange = (e) => {
+    let val = parseInt(e.target.value);
+    if (isNaN(val)) val = min;
+    if (val < min) val = min;
+    if (val > max) val = max;
+    onChange(val);
+  };
+
+  return (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      <div className="flex items-center space-x-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="h-10 w-10 shrink-0 rounded-full transition-transform active:scale-95"
+          onClick={handleDecrement}
+          disabled={disabled || value <= min}
+        >
+          <Minus className="h-4 w-4" />
+        </Button>
+        <div className="relative flex-1">
+          <Input
+            type="number"
+            min={min}
+            max={max}
+            step={1}
+            value={value === 0 && min > 0 ? min : value}
+            onChange={handleChange}
+            disabled={disabled}
+            className="text-center h-10 rounded-xl [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          />
+          {suffix && (
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500 pointer-events-none">
+              {suffix}
+            </span>
+          )}
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="h-10 w-10 shrink-0 rounded-full transition-transform active:scale-95"
+          onClick={handleIncrement}
+          disabled={disabled || value >= max}
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+};
 
 const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange }, ref) => {
   const [editing, setEditing] = useState(false);
