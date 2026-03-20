@@ -351,42 +351,53 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
               ) : (
                 <div className="space-y-2">
                   <div className="relative">
-                    <Select 
-                      value={formData.city} 
-                      onValueChange={(value) => setFormData({...formData, city: value})}
-                      onOpenChange={(open) => { if (!open) setCitySearch(""); }}
-                      disabled={!formData.state || loadingCities}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={
-                          loadingCities ? "Carregando cidades..." : 
-                          !formData.state ? "Selecione um estado primeiro" : 
-                          "Selecione a cidade..."
-                        } />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <div className="p-2 sticky top-0 bg-background z-10" onPointerDownCapture={(e) => e.stopPropagation()}>
-                          <Input
-                            placeholder="Buscar cidade..."
-                            value={citySearch}
-                            onChange={(e) => setCitySearch(e.target.value)}
-                            onKeyDown={(e) => e.stopPropagation()}
-                            onPointerDown={(e) => e.stopPropagation()}
-                            className="h-8"
-                            autoFocus
-                          />
-                        </div>
-                        {cities.filter(c => c.toLowerCase().includes(citySearch.toLowerCase())).length === 0 ? (
-                          <div className="p-2 text-sm text-gray-500 text-center">Nenhuma cidade encontrada</div>
-                        ) : (
-                          cities.filter(c => c.toLowerCase().includes(citySearch.toLowerCase())).map(city => (
-                            <SelectItem key={city} value={city}>
-                              {city}
-                            </SelectItem>
-                          ))
-                        )}
-                      </SelectContent>
-                    </Select>
+                    <Popover open={openCityPopover} onOpenChange={setOpenCityPopover}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={openCityPopover}
+                          disabled={!formData.state || loadingCities}
+                          className="w-full justify-between font-normal"
+                        >
+                          <span className="truncate">
+                            {loadingCities ? "Carregando cidades..." :
+                             !formData.state ? "Selecione um estado primeiro" :
+                             formData.city ? formData.city : "Selecione a cidade..."}
+                          </span>
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                        <Command>
+                          <CommandInput placeholder="Buscar cidade..." />
+                          <CommandList>
+                            <CommandEmpty>Nenhuma cidade encontrada.</CommandEmpty>
+                            <CommandGroup>
+                              {cities.map((city) => (
+                                <CommandItem
+                                  key={city}
+                                  value={city}
+                                  onSelect={(currentValue) => {
+                                    const originalCity = cities.find(c => c.toLowerCase() === currentValue) || city;
+                                    setFormData({...formData, city: originalCity});
+                                    setOpenCityPopover(false);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      formData.city === city ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  {city}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                     {loadingCities && (
                       <Loader2 className="w-4 h-4 animate-spin absolute right-10 top-3 text-blue-600" />
                     )}
