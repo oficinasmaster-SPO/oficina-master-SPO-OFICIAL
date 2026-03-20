@@ -156,6 +156,11 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
   }, [workshop]);
 
   const handleSave = async () => {
+    if (!workshop?.logo_url) {
+      toast.error("A logo da empresa é obrigatória para prosseguir.");
+      return;
+    }
+
     setSaving(true);
     try {
       await onUpdate(formData);
