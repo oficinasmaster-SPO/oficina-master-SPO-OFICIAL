@@ -130,6 +130,11 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack, on
       return;
     }
 
+    if (!formData.profile_picture_url) {
+      toast.error("A foto de perfil é obrigatória");
+      return;
+    }
+
     if (!formData.profile_id) {
       setShowAlert(true);
       return;
