@@ -361,11 +361,24 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
                         } />
                       </SelectTrigger>
                       <SelectContent>
-                        {cities.map(city => (
-                          <SelectItem key={city} value={city}>
-                            {city}
-                          </SelectItem>
-                        ))}
+                        <div className="p-2 sticky top-0 bg-background z-10">
+                          <Input
+                            placeholder="Buscar cidade..."
+                            value={citySearch}
+                            onChange={(e) => setCitySearch(e.target.value)}
+                            onKeyDown={(e) => e.stopPropagation()}
+                            className="h-8"
+                          />
+                        </div>
+                        {cities.filter(c => c.toLowerCase().includes(citySearch.toLowerCase())).length === 0 ? (
+                          <div className="p-2 text-sm text-gray-500 text-center">Nenhuma cidade encontrada</div>
+                        ) : (
+                          cities.filter(c => c.toLowerCase().includes(citySearch.toLowerCase())).map(city => (
+                            <SelectItem key={city} value={city}>
+                              {city}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                     {loadingCities && (
