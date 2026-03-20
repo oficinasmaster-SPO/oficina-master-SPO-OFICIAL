@@ -250,7 +250,10 @@ export default function DiagnosticoDISC() {
   const progress = (getFilledQuestions() / 10) * 100;
 
   const handleGenerateInvite = async () => {
-    if (!workshop) {
+    const urlWorkshopId = searchParams.get('workshop_id');
+    const finalWorkshopId = urlWorkshopId || workshop?.id;
+
+    if (!finalWorkshopId) {
       toast.error("Oficina não identificada. Por favor, acesse novamente pela página da oficina.");
       return;
     }
@@ -258,7 +261,7 @@ export default function DiagnosticoDISC() {
     setGeneratingInvite(true);
     try {
       const response = await base44.functions.invoke('generateDiagnosticInvite', {
-        workshop_id: workshop.id,
+        workshop_id: finalWorkshopId,
         employee_id: selectedEmployee || null,
         candidate_name: candidateName || null,
         diagnostic_type: 'DISC'
