@@ -271,18 +271,19 @@ export default function Colaboradores() {
 
                   return (
                     <tr key={employee.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3 text-center">
+                        {employee.profile_picture_url ? (
+                          <img src={employee.profile_picture_url} alt={employee.full_name} className="w-10 h-10 rounded-full object-cover border border-gray-200 mx-auto" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center mx-auto flex-shrink-0">
+                            <User className="w-5 h-5 text-gray-400" />
+                          </div>
+                        )}
+                      </td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          {employee.profile_picture_url ? (
-                            <img src={employee.profile_picture_url} alt={employee.full_name} className="w-10 h-10 rounded-full object-cover border border-gray-200" />
-                          ) : (
-                            <div className="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center flex-shrink-0">
-                              <User className="w-5 h-5 text-gray-400" />
-                            </div>
-                          )}
-                          <div className="flex flex-col">
-                            <div className="flex items-center gap-2">
-                              <p className="font-medium text-gray-900">{employee.full_name}</p>
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-gray-900">{employee.full_name}</p>
                             {employee.identificador && (
                               <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-bold rounded">
                                 {employee.identificador}
@@ -292,7 +293,6 @@ export default function Colaboradores() {
                           {employee.job_role && (
                             <span className="text-xs text-gray-500 capitalize">{employee.job_role.replace('_', ' ')}</span>
                           )}
-                          </div>
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600">{employee.position}</td>
