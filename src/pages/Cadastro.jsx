@@ -321,7 +321,8 @@ export default function Cadastro() {
 
         <motion.div
           animate={{ y: [0, -6, 0] }}
-          transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+          transition={{ repeat: Infinity, duration: 5, ease: "easeInOut", times: [0, 0.5, 1] }}
+          style={{ willChange: "transform" }}
         >
           <Alert className="mb-6 bg-red-50 border-red-200 shadow-lg shadow-red-200/50">
             <div className="flex items-start gap-3">
