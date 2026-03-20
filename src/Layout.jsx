@@ -107,7 +107,12 @@ export default function Layout({ children, currentPageName }) {
     location.pathname.toLowerCase().includes(page.toLowerCase())
   );
 
-  const shouldShowMenus = isAuthenticated && !isPublicPage && (!!workshop || isAdminMode);
+  const isPendingOnboarding = user?.cadastro_em_andamento === true || 
+                              user?.first_access_completed === false || 
+                              user?.profile_completed === false ||
+                              (!user?.workshop_id && user?.role !== 'admin');
+
+  const shouldShowMenus = isAuthenticated && !isPublicPage && !isPendingOnboarding && (!!workshop || isAdminMode);
 
   // IMPORTANTE: Desabilitar modo Admin em páginas de primeiro acesso
   const isFirstAccessPage = location.pathname.toLowerCase().includes('primeiroacesso');
