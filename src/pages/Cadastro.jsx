@@ -44,6 +44,10 @@ export default function Cadastro() {
     loadData();
   }, []);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [activeTab]);
+
   const loadData = async () => {
     try {
       const currentUser = await base44.auth.me();
