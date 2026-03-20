@@ -291,6 +291,7 @@ export default function Colaboradores() {
                           {employee.job_role && (
                             <span className="text-xs text-gray-500 capitalize">{employee.job_role.replace('_', ' ')}</span>
                           )}
+                            </div>
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600">{employee.position}</td>
