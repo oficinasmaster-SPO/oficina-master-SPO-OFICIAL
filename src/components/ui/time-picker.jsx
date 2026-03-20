@@ -43,7 +43,7 @@ const Wheel = ({ options, value, onChange }) => {
   return (
     <div 
       className="relative overflow-hidden bg-white"
-      style={{ height: `${CONTAINER_HEIGHT}px`, width: '70px' }}
+      style={{ height: `${CONTAINER_HEIGHT}px`, width: '45px' }}
     >
       {/* Top fade */}
       <div 
@@ -83,8 +83,8 @@ const Wheel = ({ options, value, onChange }) => {
               className={cn(
                 "flex items-center justify-center snap-center cursor-pointer transition-all duration-300 select-none",
                 isSelected 
-                  ? "text-3xl font-extrabold text-gray-900 opacity-100 tracking-tight" 
-                  : "text-xl font-medium text-gray-400 opacity-30 hover:opacity-60"
+                  ? "text-xl font-bold text-gray-900 opacity-100 tracking-tight" 
+                  : "text-sm font-medium text-gray-400 opacity-30 hover:opacity-60"
               )}
               onClick={() => {
                 onChange(opt);
@@ -151,17 +151,17 @@ export const TimePicker = React.forwardRef(({ value, onChange, disabled, placeho
           {value || placeholder}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-5 bg-white shadow-2xl rounded-2xl border-gray-100" align="center">
-        <div className="flex items-center justify-center gap-4 relative">
+      <PopoverContent className="w-auto p-3 bg-white shadow-2xl rounded-2xl border-gray-100" align="center">
+        <div className="flex items-center justify-center gap-2 relative">
           <div className="flex flex-col items-center">
-            <span className="text-xs font-semibold text-gray-400 mb-4 uppercase tracking-widest">Horas</span>
+            <span className="text-[10px] font-semibold text-gray-400 mb-2 uppercase tracking-widest">Horas</span>
             <Wheel options={hours} value={hour} onChange={handleHourChange} />
           </div>
           
-          <div className="text-3xl font-extrabold text-[#E11D48] pb-2 mt-8 select-none opacity-70">:</div>
+          <div className="text-xl font-bold text-[#E11D48] pb-1 mt-6 select-none opacity-70">:</div>
           
           <div className="flex flex-col items-center">
-            <span className="text-xs font-semibold text-gray-400 mb-4 uppercase tracking-widest">Minutos</span>
+            <span className="text-[10px] font-semibold text-gray-400 mb-2 uppercase tracking-widest">Minutos</span>
             <Wheel options={minutes} value={minute} onChange={handleMinuteChange} />
           </div>
         </div>
