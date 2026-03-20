@@ -238,6 +238,11 @@ export default function DiagnosticoDISC() {
   const progress = (getFilledQuestions() / 10) * 100;
 
   const handleGenerateInvite = async () => {
+    if (!workshop) {
+      toast.error("Oficina não identificada. Por favor, acesse novamente pela página da oficina.");
+      return;
+    }
+    
     setGeneratingInvite(true);
     try {
       const response = await base44.functions.invoke('generateDiagnosticInvite', {
