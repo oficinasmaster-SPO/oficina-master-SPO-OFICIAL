@@ -38,19 +38,26 @@ export default function DiagnosticoDISC() {
     if (!isWorkshopLoading) {
       loadData();
     }
-  }, [isWorkshopLoading, workshop]);
+  }, [isWorkshopLoading, workshop, searchParams]);
 
   const loadData = async () => {
     try {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
       
+      const urlWorkshopId = searchParams.get('workshop_id');
+      const finalWorkshopId = urlWorkshopId || workshop?.id;
+      
       let activeEmployees = [];
-      if (workshop) {
-        activeEmployees = await base44.entities.Employee.filter({
-          workshop_id: workshop.id,
-          status: "ativo"
-        });
+      if (finalWorkshopId) {
+        try {
+          activeEmployees = await base44.entities.Employee.filter({
+            workshop_id: finalWorkshopId,
+            status: "ativo"
+          });
+        } catch (err) {
+          console.error("Erro ao buscar colaboradores da oficina", err);
+        }
       } else {
         const allEmployees = await base44.entities.Employee.list();
         activeEmployees = allEmployees.filter(e => e.status === "ativo");
