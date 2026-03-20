@@ -4,9 +4,9 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { UserPlus, Loader2, Sparkles, Heart, FilePenLine, Eye, UserCheck } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import ModalCadastroColaborador from "@/components/colaborador/ModalCadastroColaborador";
 import { createPageUrl } from "@/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +25,10 @@ import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 
 export default function Colaboradores() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
+  
+  const isCadastroModalOpen = searchParams.get("modal") === "cadastrocolaborador";
   const [statusFilter, setStatusFilter] = useState("all");
   const [maturityFilter, setMaturityFilter] = useState("all");
   const [selectedEmployee, setSelectedEmployee] = useState(null);
@@ -173,7 +176,9 @@ export default function Colaboradores() {
               const allowed = await checkPermission('employees', 'create', {
                 onDenied: () => toast.error('Você não tem permissão para criar colaboradores')
               });
-              if (allowed) navigate(createPageUrl("CadastroColaborador"));
+              if (allowed) {
+                setSearchParams(prev => { prev.set("modal", "cadastrocolaborador"); return prev; });
+              }
             }}
             className="bg-blue-600 hover:bg-blue-700"
             id="btn-novo-colaborador"
@@ -233,7 +238,7 @@ export default function Colaboradores() {
                 Cadastre colaboradores para começar
               </p>
               <Button
-                onClick={() => navigate(createPageUrl("CadastroColaborador"))}
+                onClick={() => setSearchParams(prev => { prev.set("modal", "cadastrocolaborador"); return prev; })}
                 className="bg-blue-600 hover:bg-blue-700"
               >
                 <UserPlus className="w-5 h-5 mr-2" />
@@ -474,6 +479,12 @@ export default function Colaboradores() {
           employee={profileViewerEmployee}
           open={!!profileViewerEmployee}
           onClose={() => setProfileViewerEmployee(null)}
+        />
+
+        <ModalCadastroColaborador
+          isOpen={isCadastroModalOpen}
+          onClose={() => setSearchParams(prev => { prev.delete("modal"); return prev; })}
+          onSuccess={() => queryClient.invalidateQueries({ queryKey: ['employees'] })}
         />
       </div>
     </div>
