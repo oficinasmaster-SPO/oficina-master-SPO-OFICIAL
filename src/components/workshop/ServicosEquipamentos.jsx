@@ -545,11 +545,41 @@ const ServicosEquipamentos = forwardRef(({ workshop, onUpdate, showServicesOnly,
               <CardDescription>Selecione todos os serviços que sua oficina oferece (organizados por categoria)</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {Object.entries(servicesOptions).map(([category, services]) => (
+              {Object.entries(servicesOptions).map(([category, services]) => {
+                const allSelected = services.length > 0 && services.every(s => formData.services_offered.includes(s.value));
+                return (
                 <div key={category} className="space-y-3">
-                  <h3 className="text-sm font-semibold text-blue-900 bg-blue-50 px-3 py-2 rounded-lg">
-                    {category}
-                  </h3>
+                  <div className="flex items-center justify-between bg-blue-50 px-3 py-2 rounded-lg">
+                    <h3 className="text-sm font-semibold text-blue-900">
+                      {category}
+                    </h3>
+                    {editing && (
+                      <div className="flex items-center gap-2">
+                        <Checkbox 
+                          id={`select-all-${category.replace(/\s+/g, '-')}`}
+                          checked={allSelected}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              const newServices = [...formData.services_offered];
+                              services.forEach(s => {
+                                if (!newServices.includes(s.value)) newServices.push(s.value);
+                              });
+                              setFormData({ ...formData, services_offered: newServices });
+                            } else {
+                              const servicesToRemove = services.map(s => s.value);
+                              setFormData({
+                                ...formData,
+                                services_offered: formData.services_offered.filter(s => !servicesToRemove.includes(s))
+                              });
+                            }
+                          }}
+                        />
+                        <label htmlFor={`select-all-${category.replace(/\s+/g, '-')}`} className="text-xs text-blue-900 cursor-pointer font-medium select-none">
+                          Marcar todos
+                        </label>
+                      </div>
+                    )}
+                  </div>
                   {editing ? (
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 pl-2">
                       {services.map((option) => (
