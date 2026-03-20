@@ -45,7 +45,7 @@ export default function LogoUpload({ workshop, onUpdate }) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ImageIcon className="w-5 h-5" />
-          Logo da Empresa
+          Logo da Empresa *
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
