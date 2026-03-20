@@ -21,7 +21,23 @@ export function SharedDataProvider({ children, workshopId, userId }) {
     queryFn: async () => {
       if (!workshopId) return null;
       try {
-        const ws = await base44.entities.Workshop.get(workshopId);
+        let ws = null;
+        try {
+          const wsList = await base44.entities.Workshop.filter({ id: workshopId });
+          if (wsList && wsList.length > 0) ws = wsList[0];
+        } catch(err) {
+          console.warn("RLS bloqueou filter no SharedDataProvider, tentando fallback...");
+        }
+        
+        if (!ws) {
+          const response = await base44.functions.invoke('checkWorkshop', { workshop_id: workshopId });
+          if (response.data && response.data.workshopFound) {
+            ws = response.data.workshopData;
+          }
+        }
+        
+        if (!ws) throw new Error("Oficina não encontrada após fallback");
+
         console.log('📊 SharedDataProvider carregou workshop:', {
           id: ws.id,
           name: ws.name,
