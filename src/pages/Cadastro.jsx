@@ -235,7 +235,8 @@ export default function Cadastro() {
       const updates = {
         first_access_completed: true,
         profile_completed: true,
-        cadastro_finalizado: true
+        cadastro_finalizado: true,
+        cadastro_em_andamento: false
       };
       
       await base44.auth.updateMe(updates);
