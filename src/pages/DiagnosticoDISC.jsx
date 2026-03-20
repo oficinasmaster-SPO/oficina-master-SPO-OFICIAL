@@ -274,7 +274,7 @@ export default function DiagnosticoDISC() {
     toast.success("Link copiado!");
   };
 
-  if (loading) {
+  if (loading || isWorkshopLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
