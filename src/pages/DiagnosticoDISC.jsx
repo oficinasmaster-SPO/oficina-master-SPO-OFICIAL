@@ -147,6 +147,9 @@ export default function DiagnosticoDISC() {
     setSubmitting(true);
 
     try {
+      const urlWorkshopId = searchParams.get('workshop_id');
+      const finalWorkshopId = urlWorkshopId || workshop?.id;
+
       let totalD = 0, totalI = 0, totalS = 0, totalC = 0;
       
       const answersArray = Object.entries(answers).map(([questionId, scores]) => {
@@ -186,7 +189,7 @@ export default function DiagnosticoDISC() {
       const response = await base44.functions.invoke('submitAppForms', {
         form_type: 'manager_disc_diagnostic',
         employee_id: selectedEmployee,
-        workshop_id: workshop?.id || null,
+        workshop_id: finalWorkshopId || null,
         is_leader: isLeader,
         team_name: teamName || null,
         answers: answersArray,
