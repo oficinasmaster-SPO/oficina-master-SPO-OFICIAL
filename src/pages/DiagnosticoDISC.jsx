@@ -45,14 +45,33 @@ export default function DiagnosticoDISC() {
       const params = new URLSearchParams(window.location.search);
       const urlWorkshopId = params.get('workshop_id');
 
-      const workshops = await base44.entities.Workshop.list();
-      const userWorkshop = workshops.find(w => w.id === urlWorkshopId || w.id === currentUser.workshop_id || w.owner_id === currentUser.id);
+      let userWorkshop = null;
+      
+      if (urlWorkshopId) {
+        try {
+          userWorkshop = await base44.entities.Workshop.get(urlWorkshopId);
+        } catch (err) {
+          console.error("Erro ao buscar oficina pela URL", err);
+        }
+      }
+
+      if (!userWorkshop) {
+        const workshops = await base44.entities.Workshop.list();
+        userWorkshop = workshops.find(w => w.id === currentUser.workshop_id || w.owner_id === currentUser.id);
+      }
+      
       setWorkshop(userWorkshop);
 
-      const allEmployees = await base44.entities.Employee.list();
-      const activeEmployees = allEmployees.filter(e => 
-        e.status === "ativo" && (!userWorkshop || e.workshop_id === userWorkshop.id)
-      );
+      let activeEmployees = [];
+      if (userWorkshop) {
+        activeEmployees = await base44.entities.Employee.filter({
+          workshop_id: userWorkshop.id,
+          status: "ativo"
+        });
+      } else {
+        const allEmployees = await base44.entities.Employee.list();
+        activeEmployees = allEmployees.filter(e => e.status === "ativo");
+      }
       setEmployees(activeEmployees);
 
       // Inicializar respostas vazias
