@@ -241,8 +241,8 @@ export default function Layout({ children, currentPageName }) {
             )}
 
             <main className="flex-1">
-              <div className={`${isAuthenticated && !isPublicPage ? 'px-4 sm:px-6 lg:px-8 py-6' : ''}`}>
-                {isAuthenticated && !isPublicPage && <Breadcrumbs />}
+              <div className={`${shouldShowMenus ? 'px-4 sm:px-6 lg:px-8 py-6' : ''}`}>
+                {shouldShowMenus && <Breadcrumbs />}
                 {isAuthenticated && workshopId ? (
                   <SharedDataProvider workshopId={workshopId} userId={user?.id}>
                     {children}
