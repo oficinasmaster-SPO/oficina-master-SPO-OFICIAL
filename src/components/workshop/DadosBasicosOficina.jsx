@@ -570,7 +570,7 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
             </Select>
           </div>
           <div>
-            <SliderWithMax
+            <CounterInput
               value={formData.employees_count}
               onChange={(value) => setFormData({...formData, employees_count: value})}
               disabled={!editing}
@@ -580,12 +580,12 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
             />
           </div>
           <div>
-            <SliderWithMax
+            <CounterInput
               value={formData.years_in_business}
               onChange={(value) => setFormData({...formData, years_in_business: value})}
               disabled={!editing}
-              label="Tempo de Atuação no Mercado (anos)"
-              suffix=" anos"
+              label="Tempo de Atuação no Mercado"
+              suffix="anos"
               min={1}
               max={100}
             />
