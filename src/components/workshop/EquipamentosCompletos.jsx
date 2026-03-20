@@ -311,26 +311,20 @@ const EquipamentosCompletos = forwardRef(({ workshop, onUpdate }, ref) => {
                     return (
                       <div
                         key={equip}
-                        className={`p-3 rounded-lg border-2 transition-all ${
+                        onClick={editing ? () => toggleEquipment(categoryKey, equip, false) : undefined}
+                        className={`p-3 rounded-lg border-2 transition-all ${editing ? 'cursor-pointer' : ''} ${
                           isSelected
                             ? (editing ? 'border-green-500 bg-green-50' : 'border-green-200 bg-green-50')
                             : 'border-gray-200 bg-white hover:border-gray-300'
                         }`}
                       >
                         <div className="flex items-start gap-3">
-                          {editing && (
-                            <Checkbox
-                              checked={isSelected}
-                              onCheckedChange={() => toggleEquipment(categoryKey, equip, false)}
-                              className="mt-1"
-                            />
-                          )}
                           <div className="flex-1">
                             <p className={`text-sm font-medium ${isSelected ? 'text-green-900' : 'text-gray-700'}`}>
                               {equip}
                             </p>
                             {isSelected && editing && (
-                              <div className="grid grid-cols-3 gap-2 mt-2">
+                              <div className="grid grid-cols-3 gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
                                 <Input
                                   type="number"
                                   min="1"
