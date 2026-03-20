@@ -107,6 +107,8 @@ export default function Layout({ children, currentPageName }) {
     location.pathname.toLowerCase().includes(page.toLowerCase())
   );
 
+  const shouldShowMenus = isAuthenticated && !isPublicPage && (!!workshop || isAdminMode);
+
   // IMPORTANTE: Desabilitar modo Admin em páginas de primeiro acesso
   const isFirstAccessPage = location.pathname.toLowerCase().includes('primeiroacesso');
   if (isFirstAccessPage && isAdminMode) {
