@@ -157,10 +157,9 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
 
   const handleSave = async () => {
     if (!workshop?.logo_url) {
-      toast.error("A logo da empresa é obrigatória para prosseguir.");
+      toast.error("A logo da empresa é obrigatória");
       return;
     }
-
     setSaving(true);
     try {
       await onUpdate(formData);
@@ -173,6 +172,23 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
       setSaving(false);
     }
   };
+
+  useImperativeHandle(ref, () => ({
+    saveCurrentData: async () => {
+      if (!workshop?.logo_url) {
+        toast.error("A logo da empresa é obrigatória");
+        return false;
+      }
+      try {
+        await onUpdate(formData);
+        return true;
+      } catch (error) {
+        console.error("Erro ao salvar dados básicos:", error);
+        toast.error("Erro ao salvar dados básicos");
+        return false;
+      }
+    }
+  }));
 
   const handleCEPChange = async (cep) => {
     setFormData({...formData, cep});
