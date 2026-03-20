@@ -29,7 +29,7 @@ export default function Layout({ children, currentPageName }) {
   const { user, isAuthenticated, isLoadingAuth: isCheckingAuth } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { isAdminMode, getAdminUrl } = useAdminMode();
-  const { workshop, workshopId } = useWorkshopContext();
+  const { workshop, workshopId, isLoading: isLoadingWorkshop } = useWorkshopContext();
   const [cssVersion] = useState(Date.now()); // Timestamp fixo por sessão para evitar re-requests
   
   // Rastrear acesso a módulos automaticamente
