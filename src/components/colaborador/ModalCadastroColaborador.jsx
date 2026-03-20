@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Save, UserPlus, User, DollarSign, TrendingUp, Plus, Trash2, X } from "lucide-react";
+import { Loader2, Save, UserPlus, User, DollarSign, TrendingUp, Plus, Trash2, X, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { jobRoles } from "@/components/lib/jobRoles";
 import { motion, AnimatePresence } from "framer-motion";
