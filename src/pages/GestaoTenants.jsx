@@ -54,6 +54,11 @@ export default function GestaoTenants() {
     queryFn: () => base44.entities.Workshop.list('-created_date', 1000), // Puxa uma lista maior e recém-criadas primeiro
   });
 
+  const { data: users } = useQuery({
+    queryKey: ['admin-users'],
+    queryFn: () => base44.entities.User.list(),
+  });
+
   const filteredCompanies = companies?.filter(company => 
     company.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     company.cnpj?.includes(searchQuery)
