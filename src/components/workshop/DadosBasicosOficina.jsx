@@ -351,6 +351,7 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
                     <Select 
                       value={formData.city} 
                       onValueChange={(value) => setFormData({...formData, city: value})}
+                      onOpenChange={(open) => { if (!open) setCitySearch(""); }}
                       disabled={!formData.state || loadingCities}
                     >
                       <SelectTrigger>
