@@ -58,10 +58,10 @@ const CounterInput = ({ value, onChange, disabled, label, min = 0, max = 100, su
             value={value === 0 && min > 0 ? min : value}
             onChange={handleChange}
             disabled={disabled}
-            className="text-center h-10 rounded-xl [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            className="text-center h-10 rounded-xl font-medium [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           />
           {suffix && (
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500 pointer-events-none">
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-500 pointer-events-none">
               {suffix}
             </span>
           )}
