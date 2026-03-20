@@ -362,13 +362,15 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
                         } />
                       </SelectTrigger>
                       <SelectContent>
-                        <div className="p-2 sticky top-0 bg-background z-10">
+                        <div className="p-2 sticky top-0 bg-background z-10" onPointerDownCapture={(e) => e.stopPropagation()}>
                           <Input
                             placeholder="Buscar cidade..."
                             value={citySearch}
                             onChange={(e) => setCitySearch(e.target.value)}
                             onKeyDown={(e) => e.stopPropagation()}
+                            onPointerDown={(e) => e.stopPropagation()}
                             className="h-8"
+                            autoFocus
                           />
                         </div>
                         {cities.filter(c => c.toLowerCase().includes(citySearch.toLowerCase())).length === 0 ? (
