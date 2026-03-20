@@ -28,7 +28,7 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
   const [loadingCities, setLoadingCities] = useState(false);
   const [cities, setCities] = useState([]);
   const [showCityInput, setShowCityInput] = useState(false);
-  const [citySearch, setCitySearch] = useState("");
+  const [openCityPopover, setOpenCityPopover] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     razao_social: "",
