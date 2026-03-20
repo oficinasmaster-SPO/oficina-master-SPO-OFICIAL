@@ -364,7 +364,7 @@ export default function Cadastro() {
             </TabsTrigger>
             <TabsTrigger value="dados" className="py-3 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg">
               <Building2 className="w-4 h-4 mr-2" />
-              Dados
+              Minha Empresa
             </TabsTrigger>
             <TabsTrigger value="servicos" className="py-3 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg">
               <Wrench className="w-4 h-4 mr-2" />
