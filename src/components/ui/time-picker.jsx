@@ -58,8 +58,8 @@ const Wheel = ({ options, value, onChange }) => {
       
       {/* Active selection band */}
       <div 
-        className="absolute left-0 w-full z-10 pointer-events-none border-y border-[#E11D48]" 
-        style={{ top: `${OFFSET}px`, height: `${ITEM_HEIGHT}px`, backgroundColor: 'rgba(225, 29, 72, 0.05)' }} 
+        className="absolute left-0 w-full z-10 pointer-events-none border-y border-[#FF0000]" 
+        style={{ top: `${OFFSET}px`, height: `${ITEM_HEIGHT}px`, backgroundColor: 'rgba(255, 0, 0, 0.05)' }} 
       />
       
       <div 
@@ -158,7 +158,7 @@ export const TimePicker = React.forwardRef(({ value, onChange, disabled, placeho
             <Wheel options={hours} value={hour} onChange={handleHourChange} />
           </div>
           
-          <div className="text-xl font-bold text-[#E11D48] pb-1 mt-6 select-none opacity-70">:</div>
+          <div className="text-xl font-bold text-[#FF0000] pb-1 mt-6 select-none opacity-70">:</div>
           
           <div className="flex flex-col items-center">
             <span className="text-[10px] font-semibold text-gray-400 mb-2 uppercase tracking-widest">Minutos</span>
