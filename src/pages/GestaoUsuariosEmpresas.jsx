@@ -31,6 +31,7 @@ export default function GestaoUsuariosEmpresas() {
   const [resetPasswordDialog, setResetPasswordDialog] = useState({ open: false, password: "" });
   const [expandedRow, setExpandedRow] = useState(null);
   const [aiFormData, setAiFormData] = useState({ cargo: "", area: "" });
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   
   // Filtros avançados
   const [filters, setFilters] = useState({
