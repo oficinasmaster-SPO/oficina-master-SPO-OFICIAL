@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const ITEM_HEIGHT = 48; // 48px para melhor legibilidade/touch (padrão iOS premium)
+const ITEM_HEIGHT = 32; // Reduzido em ~70% do tamanho anterior
 const VISIBLE_ITEMS = 5; // Total de itens visíveis
 const CONTAINER_HEIGHT = ITEM_HEIGHT * VISIBLE_ITEMS;
 const OFFSET = ITEM_HEIGHT * Math.floor(VISIBLE_ITEMS / 2);
