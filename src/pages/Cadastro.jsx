@@ -318,14 +318,14 @@ export default function Cadastro() {
           </p>
         </div>
 
-        <Alert className="mb-6 bg-blue-50 border-blue-200">
+        <Alert className="mb-6 bg-red-50 border-red-200">
           <div className="flex items-start gap-3">
-            <div className="p-2 bg-blue-100 rounded-full mt-1">
-              <Settings className="w-4 h-4 text-blue-600" />
+            <div className="p-2 bg-red-100 rounded-full mt-1">
+              <Settings className="w-4 h-4 text-red-600" />
             </div>
             <div>
-              <AlertTitle className="text-blue-800 font-semibold">Como funciona:</AlertTitle>
-              <AlertDescription className="text-blue-700">
+              <AlertTitle className="text-red-800 font-semibold">Como funciona:</AlertTitle>
+              <AlertDescription className="text-red-700">
                 Este cadastro utiliza o mesmo layout da gestão completa. Navegue pelas abas abaixo e preencha cada seção. Seus dados são salvos automaticamente ao confirmar a edição em cada cartão.
               </AlertDescription>
             </div>
