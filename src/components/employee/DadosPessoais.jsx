@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { TimePicker } from "@/components/ui/time-picker";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -328,37 +329,33 @@ export default function DadosPessoais({ employee, onUpdate }) {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div>
               <Label>Início Expediente</Label>
-              <Input
-                type="time"
+              <TimePicker
                 value={formData.shift_settings?.work_start || ""}
-                onChange={(e) => setFormData({...formData, shift_settings: {...formData.shift_settings, work_start: e.target.value}})}
+                onChange={(val) => setFormData({...formData, shift_settings: {...formData.shift_settings, work_start: val}})}
                 disabled={!editing}
               />
             </div>
             <div>
               <Label>Início Almoço</Label>
-              <Input
-                type="time"
+              <TimePicker
                 value={formData.shift_settings?.lunch_start || ""}
-                onChange={(e) => setFormData({...formData, shift_settings: {...formData.shift_settings, lunch_start: e.target.value}})}
+                onChange={(val) => setFormData({...formData, shift_settings: {...formData.shift_settings, lunch_start: val}})}
                 disabled={!editing}
               />
             </div>
             <div>
               <Label>Fim Almoço</Label>
-              <Input
-                type="time"
+              <TimePicker
                 value={formData.shift_settings?.lunch_end || ""}
-                onChange={(e) => setFormData({...formData, shift_settings: {...formData.shift_settings, lunch_end: e.target.value}})}
+                onChange={(val) => setFormData({...formData, shift_settings: {...formData.shift_settings, lunch_end: val}})}
                 disabled={!editing}
               />
             </div>
             <div>
               <Label>Fim Expediente</Label>
-              <Input
-                type="time"
+              <TimePicker
                 value={formData.shift_settings?.work_end || ""}
-                onChange={(e) => setFormData({...formData, shift_settings: {...formData.shift_settings, work_end: e.target.value}})}
+                onChange={(val) => setFormData({...formData, shift_settings: {...formData.shift_settings, work_end: val}})}
                 disabled={!editing}
               />
             </div>

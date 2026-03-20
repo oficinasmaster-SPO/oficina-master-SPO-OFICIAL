@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { TimePicker } from "@/components/ui/time-picker";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Video } from "lucide-react";
@@ -159,11 +160,9 @@ export default function RegistrarAtendimentoFormMass({ formData, onFormChange, o
             </div>
             <div>
               <Label>Horário *</Label>
-              <Input
-                type="time"
+              <TimePicker
                 value={formData.hora_agendada}
-                onChange={(e) => handleChange("hora_agendada", e.target.value)}
-                required
+                onChange={(val) => handleChange("hora_agendada", val)}
               />
             </div>
             <div>
