@@ -59,9 +59,11 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack, on
         workshop_id: workshop.id 
       });
       
+      let currentProfileId = "";
       if (employees && employees.length > 0) {
         const emp = employees[0];
         setExistingEmployee(emp);
+        currentProfileId = emp.profile_id || "";
         setFormData({
           full_name: emp.full_name || user?.full_name || "",
           email: emp.email || user?.email || "",
@@ -73,7 +75,7 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack, on
           area: emp.area || "gerencia",
           profile_picture_url: emp.profile_picture_url || "",
           is_partner: emp.is_partner ?? true,
-          profile_id: emp.profile_id || ""
+          profile_id: currentProfileId
         });
       }
 
@@ -89,15 +91,14 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack, on
       setProfiles(filtered);
       console.log("📊 profiles filtrados:", filtered.length);
 
-      // Auto-selecionar o perfil "Sócio" no primeiro acesso (quando não tem funcionário criado)
-      if (!employees || employees.length === 0) {
-        const socioProfile = filtered.find(p => 
-          p.name.toLowerCase().includes('sócio') || 
-          p.name.toLowerCase().includes('socio')
-        );
-        if (socioProfile) {
-          setFormData(prev => ({ ...prev, profile_id: socioProfile.id }));
-        }
+      const socioProfile = filtered.find(p => 
+        p.name.toLowerCase().includes('sócio') || 
+        p.name.toLowerCase().includes('socio')
+      );
+
+      // Auto-selecionar o perfil "Sócio" no primeiro acesso ou se o employee foi criado sem perfil
+      if (!currentProfileId && socioProfile) {
+        setFormData(prev => ({ ...prev, profile_id: socioProfile.id }));
       }
 
     } catch (error) {
