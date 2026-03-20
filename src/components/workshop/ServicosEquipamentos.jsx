@@ -615,7 +615,8 @@ const ServicosEquipamentos = forwardRef(({ workshop, onUpdate, showServicesOnly,
                     )
                   )}
                 </div>
-              ))}
+              );
+              })}
               <div className="pt-4 border-t space-y-3">
                 <p className="text-sm font-semibold text-gray-700">
                   Total: {formData.services_offered.length} serviço(s) selecionado(s)
