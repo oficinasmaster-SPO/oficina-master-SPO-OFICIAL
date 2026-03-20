@@ -20,14 +20,36 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
   const [workshop, setWorkshop] = useState(null);
   const [jobDescriptions, setJobDescriptions] = useState([]);
   const [profiles, setProfiles] = useState([]);
+  const [uploadingImage, setUploadingImage] = useState(false);
   
   const [formData, setFormData] = useState({
     workshop_id: "", full_name: "", cpf: "", rg: "", data_nascimento: "", telefone: "", email: "",
     endereco: { rua: "", numero: "", bairro: "", cidade: "", estado: "", cep: "" },
     position: "", job_role: "outros", user_profile_id: "", area: "", hire_date: "",
     salary: 0, commission: 0, bonus: 0, benefits: [], production_parts: 0, production_parts_sales: 0,
-    production_services: 0, status: "ativo", job_description_id: ""
+    production_services: 0, status: "ativo", job_description_id: "", profile_picture_url: ""
   });
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error("Apenas imagens são permitidas");
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setFormData(prev => ({ ...prev, profile_picture_url: file_url }));
+      toast.success("Foto de perfil anexada!");
+    } catch (error) {
+      toast.error("Erro ao fazer upload: " + error.message);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
