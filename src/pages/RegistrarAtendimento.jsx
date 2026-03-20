@@ -25,6 +25,7 @@ import ClientIntelligenceCapturePanel from "@/components/inteligencia/ClientInte
 import GoogleMeetIntegration from "@/components/aceleracao/GoogleMeetIntegration";
 import { useGoogleMeet } from "@/components/hooks/useGoogleMeet";
 import NextSteps from "@/components/aceleracao/NextSteps";
+import { TimePicker } from "@/components/ui/time-picker";
 
 export default function RegistrarAtendimento({ isModal = false, onClose }) {
   const navigate = useNavigate();
