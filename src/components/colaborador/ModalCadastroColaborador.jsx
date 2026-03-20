@@ -123,6 +123,11 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
       return;
     }
 
+    if (!formData.profile_picture_url) {
+      toast.error("A foto de perfil é obrigatória");
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -235,6 +240,34 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-4 pt-4">
+                      <div className="flex flex-col items-center mb-6">
+                        <div className="w-24 h-24 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden relative group">
+                          {formData.profile_picture_url ? (
+                            <img src={formData.profile_picture_url} alt="Perfil" className="w-full h-full object-cover" />
+                          ) : (
+                            <User className="w-8 h-8 text-gray-400" />
+                          )}
+                          <label className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
+                            {uploadingImage ? (
+                              <Loader2 className="w-6 h-6 text-white mb-1 animate-spin" />
+                            ) : (
+                              <>
+                                <Upload className="w-6 h-6 text-white mb-1" />
+                                <span className="text-[10px] text-white font-medium">Alterar</span>
+                              </>
+                            )}
+                            <input 
+                              type="file" 
+                              accept="image/*" 
+                              className="hidden" 
+                              onChange={handleImageUpload}
+                              disabled={uploadingImage}
+                            />
+                          </label>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2">Foto de perfil * (Obrigatória)</p>
+                      </div>
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <Label>Nome Completo *</Label>
