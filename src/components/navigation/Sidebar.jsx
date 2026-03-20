@@ -1198,16 +1198,16 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                     <>
                       <button
                         onClick={() => toggleGroup(group.id)}
-                        className="flex items-center justify-between w-full px-4 py-3 rounded-xl text-xs font-semibold text-gray-500 uppercase tracking-wider hover:bg-[#FF0000] hover:text-white hover:shadow-md transition-all group"
+                        className="flex items-center justify-between w-full px-4 py-3 rounded-xl text-xs font-semibold text-gray-500 uppercase tracking-wider hover:bg-[#FF0000] hover:text-white hover:shadow-md transition-all group text-left"
                       >
-                        <div className="flex items-center gap-3">
-                          <GroupIcon className="w-5 h-5 text-gray-500 group-hover:text-white transition-colors" />
-                          <span>{group.label}</span>
+                        <div className="flex items-center gap-3 flex-1 min-w-0 pr-2">
+                          <GroupIcon className="w-5 h-5 shrink-0 text-gray-500 group-hover:text-white transition-colors" />
+                          <span className="truncate leading-tight whitespace-normal">{group.label}</span>
                         </div>
                         {isExpanded ? (
-                          <ChevronDown className="w-4 h-4 text-gray-500 group-hover:text-white transition-colors" />
+                          <ChevronDown className="w-4 h-4 shrink-0 text-gray-500 group-hover:text-white transition-colors" />
                         ) : (
-                          <ChevronRight className="w-4 h-4 text-gray-500 group-hover:text-white transition-colors" />
+                          <ChevronRight className="w-4 h-4 shrink-0 text-gray-500 group-hover:text-white transition-colors" />
                         )}
                       </button>
 
