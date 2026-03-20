@@ -251,6 +251,7 @@ export default function Colaboradores() {
             <table className="w-full" id="lista-colaboradores">
               <thead className="bg-gray-100 border-b-2 border-gray-300">
                 <tr>
+                  <th className="px-4 py-3 w-16"></th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Nome</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Cargo</th>
                   <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700">Status</th>
