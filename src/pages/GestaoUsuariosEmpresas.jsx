@@ -14,7 +14,7 @@ import {
   UserPlus, Loader2, Mail, Phone, Trash2, UserX, Building2, Eye, Edit, 
   ExternalLink, Filter, X, Users, Key, Copy, CheckCircle, ChevronDown,
   Home, BarChart3, Wrench, Calculator, Target, Brain, Package, FileCheck,
-  GraduationCap, Lightbulb, Briefcase
+  GraduationCap, Lightbulb, Briefcase, ArrowUpDown
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -228,6 +228,7 @@ export default function GestaoUsuariosEmpresas() {
         planStartDate: workshop.dataAssinatura || null,
         planEndDate: workshop.dataRenovacao || null,
         status: workshop.status || "ativo",
+        createdDate: workshop.created_date || null,
         workshop: workshop,
         totalEmployees: workshopEmployees.length,
         employeesWithLogin: employeesWithLogin.length,
@@ -260,7 +261,35 @@ export default function GestaoUsuariosEmpresas() {
       return matchesSearch && matchesEmpresa && matchesPlano && matchesEstado && 
              matchesCidade && matchesStatus && matchesFaturamento && matchesPermission;
     });
-  }, [workshopsWithData, searchTerm, filters, currentUser]);
+
+    if (sortConfig.key) {
+      filtered.sort((a, b) => {
+        let aValue = a[sortConfig.key];
+        let bValue = b[sortConfig.key];
+
+        if (sortConfig.key === 'location') {
+          aValue = `${a.workshopCity} ${a.workshopState}`.trim();
+          bValue = `${b.workshopCity} ${b.workshopState}`.trim();
+        }
+
+        if (!aValue) aValue = '';
+        if (!bValue) bValue = '';
+
+        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+    return filtered;
+  }, [workshopsWithData, searchTerm, filters, currentUser, sortConfig]);
+
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
 
   // Listas únicas para filtros
   const uniqueStates = useMemo(() => {
@@ -444,12 +473,38 @@ export default function GestaoUsuariosEmpresas() {
               <table className="w-full">
                 <thead className="bg-gray-50 border-b-2 border-gray-200">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Empresa</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Localização</th>
+                    <th 
+                      className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase cursor-pointer hover:bg-gray-100"
+                      onClick={() => handleSort('workshopName')}
+                    >
+                      <div className="flex items-center gap-1">Empresa <ArrowUpDown className="w-3 h-3" /></div>
+                    </th>
+                    <th 
+                      className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase cursor-pointer hover:bg-gray-100"
+                      onClick={() => handleSort('location')}
+                    >
+                      <div className="flex items-center gap-1">Localização <ArrowUpDown className="w-3 h-3" /></div>
+                    </th>
                     <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase">Colaboradores</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Plano</th>
+                    <th 
+                      className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase cursor-pointer hover:bg-gray-100"
+                      onClick={() => handleSort('workshopPlan')}
+                    >
+                      <div className="flex items-center gap-1">Plano <ArrowUpDown className="w-3 h-3" /></div>
+                    </th>
+                    <th 
+                      className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase cursor-pointer hover:bg-gray-100"
+                      onClick={() => handleSort('createdDate')}
+                    >
+                      <div className="flex items-center gap-1">Data Criação <ArrowUpDown className="w-3 h-3" /></div>
+                    </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Data Assinatura</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Status</th>
+                    <th 
+                      className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase cursor-pointer hover:bg-gray-100"
+                      onClick={() => handleSort('status')}
+                    >
+                      <div className="flex items-center gap-1">Status <ArrowUpDown className="w-3 h-3" /></div>
+                    </th>
                     <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase">Ações</th>
                   </tr>
                 </thead>
@@ -493,6 +548,11 @@ export default function GestaoUsuariosEmpresas() {
                           <Badge className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
                             {workshop.workshopPlan}
                           </Badge>
+                        </td>
+                        <td className="px-4 py-4">
+                          <p className="text-sm text-gray-700">
+                            {workshop.createdDate ? format(new Date(workshop.createdDate), 'dd/MM/yyyy') : '-'}
+                          </p>
                         </td>
                         <td className="px-4 py-4">
                           <p className="text-sm text-gray-700">
@@ -544,7 +604,7 @@ export default function GestaoUsuariosEmpresas() {
                       
                       {expandedRow === workshop.id && (
                         <tr className="bg-gradient-to-br from-blue-50 to-indigo-50">
-                          <td colSpan="7" className="px-4 py-6">
+                          <td colSpan="8" className="px-4 py-6">
                             <div className="max-w-7xl mx-auto space-y-6">
                               <div className="flex items-center justify-between">
                                 <h4 className="font-bold text-lg text-gray-900 flex items-center gap-2">
