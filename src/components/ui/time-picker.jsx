@@ -83,8 +83,8 @@ const Wheel = ({ options, value, onChange }) => {
               className={cn(
                 "flex items-center justify-center snap-center cursor-pointer transition-all duration-300 select-none",
                 isSelected 
-                  ? "text-[28px] font-bold text-gray-900 opacity-100 tracking-tight" 
-                  : "text-xl font-medium text-gray-400 opacity-40 hover:opacity-70"
+                  ? "text-3xl font-extrabold text-gray-900 opacity-100 tracking-tight" 
+                  : "text-xl font-medium text-gray-400 opacity-30 hover:opacity-60"
               )}
               onClick={() => {
                 onChange(opt);
