@@ -27,6 +27,12 @@ export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
+    if (isAuthenticated && user && !isLoadingWorkshop && !workshop && !isAdminMode) {
+      navigate(createPageUrl("Cadastro"));
+    }
+  }, [isAuthenticated, user, isLoadingWorkshop, workshop, isAdminMode, navigate]);
+
+  useEffect(() => {
     const init = async () => {
       setIsCheckingAuth(true);
       try {
