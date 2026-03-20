@@ -372,102 +372,165 @@ const ServicosEquipamentos = forwardRef(({ workshop, onUpdate, showServicesOnly,
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div>
-                <Label className="text-base font-semibold mb-3 block">Tipos de Veículos</Label>
+              {/* Tipos de Veículos */}
+              <div className="bg-slate-50/50 border border-slate-200 rounded-2xl p-5 shadow-sm transition-all hover:shadow-md">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
+                  <div>
+                    <Label className="text-base font-semibold text-slate-900 block">Tipos de Veículos</Label>
+                    {editing && <span className="text-xs text-slate-500">Selecione os tipos que você atende</span>}
+                  </div>
+                  {editing && (
+                    <div className="flex gap-2">
+                      <Button type="button" variant="outline" size="sm" className="h-8 text-xs bg-white" onClick={() => setFormData({...formData, vehicle_types: ['auto', 'motos']})}>
+                        Mais comuns
+                      </Button>
+                      <Button type="button" variant="ghost" size="sm" className="h-8 text-xs text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => setFormData({...formData, vehicle_types: []})}>
+                        Limpar
+                      </Button>
+                    </div>
+                  )}
+                </div>
                 {editing ? (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {vehicleTypesOptions.map((option) => (
-                      <div key={option.value} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`vehicle-${option.value}`}
-                          checked={formData.vehicle_types.includes(option.value)}
-                          onCheckedChange={() => setFormData({
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {vehicleTypesOptions.map((option) => {
+                      const isSelected = formData.vehicle_types.includes(option.value);
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => setFormData({
                             ...formData,
                             vehicle_types: toggleArrayItem(formData.vehicle_types, option.value)
                           })}
-                        />
-                        <label htmlFor={`vehicle-${option.value}`} className="text-sm cursor-pointer">
+                          className={`flex items-center justify-center text-center px-4 py-3 rounded-xl border transition-all duration-200 text-sm font-medium ${
+                            isSelected 
+                              ? 'bg-slate-900 border-slate-900 text-white shadow-md scale-[1.02]' 
+                              : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+                          }`}
+                        >
                           {option.label}
-                        </label>
-                      </div>
-                    ))}
+                        </button>
+                      );
+                    })}
                   </div>
                 ) : (
                   formData.vehicle_types.length === 0 ? (
-                    <p className="text-sm text-gray-500">Nenhum tipo de veículo selecionado.</p>
+                    <p className="text-sm text-gray-500 italic">Nenhum tipo de veículo selecionado.</p>
                   ) : (
                     <div className="flex flex-wrap gap-2">
                       {formData.vehicle_types.map((value) => {
                         const option = vehicleTypesOptions.find(opt => opt.value === value);
-                        return option ? <Badge key={value} variant="secondary">{option.label}</Badge> : null;
+                        return option ? <Badge key={value} variant="secondary" className="px-3 py-1.5 bg-white border border-slate-200 text-slate-800 shadow-sm rounded-lg">{option.label}</Badge> : null;
                       })}
                     </div>
                   )
                 )}
               </div>
 
-              <div>
-                <Label className="text-base font-semibold mb-3 block">Tipos de Combustível</Label>
+              {/* Tipos de Combustível */}
+              <div className="bg-slate-50/50 border border-slate-200 rounded-2xl p-5 shadow-sm transition-all hover:shadow-md">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
+                  <div>
+                    <Label className="text-base font-semibold text-slate-900 block">Tipos de Combustível</Label>
+                    {editing && <span className="text-xs text-slate-500">Quais motorizações você recebe</span>}
+                  </div>
+                  {editing && (
+                    <div className="flex gap-2">
+                      <Button type="button" variant="outline" size="sm" className="h-8 text-xs bg-white" onClick={() => setFormData({...formData, fuel_types: ['flex', 'etanol', 'ciclo_otto', 'diesel']})}>
+                        Mais comuns
+                      </Button>
+                      <Button type="button" variant="ghost" size="sm" className="h-8 text-xs text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => setFormData({...formData, fuel_types: []})}>
+                        Limpar
+                      </Button>
+                    </div>
+                  )}
+                </div>
                 {editing ? (
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {fuelTypesOptions.map((option) => (
-                      <div key={option.value} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`fuel-${option.value}`}
-                          checked={formData.fuel_types.includes(option.value)}
-                          onCheckedChange={() => setFormData({
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {fuelTypesOptions.map((option) => {
+                      const isSelected = formData.fuel_types.includes(option.value);
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => setFormData({
                             ...formData,
                             fuel_types: toggleArrayItem(formData.fuel_types, option.value)
                           })}
-                        />
-                        <label htmlFor={`fuel-${option.value}`} className="text-sm cursor-pointer">
+                          className={`flex items-center justify-center text-center px-4 py-3 rounded-xl border transition-all duration-200 text-sm font-medium ${
+                            isSelected 
+                              ? 'bg-slate-900 border-slate-900 text-white shadow-md scale-[1.02]' 
+                              : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+                          }`}
+                        >
                           {option.label}
-                        </label>
-                      </div>
-                    ))}
+                        </button>
+                      );
+                    })}
                   </div>
                 ) : (
                   formData.fuel_types.length === 0 ? (
-                    <p className="text-sm text-gray-500">Nenhum tipo de combustível selecionado.</p>
+                    <p className="text-sm text-gray-500 italic">Nenhum tipo de combustível selecionado.</p>
                   ) : (
                     <div className="flex flex-wrap gap-2">
                       {formData.fuel_types.map((value) => {
                         const option = fuelTypesOptions.find(opt => opt.value === value);
-                        return option ? <Badge key={value} variant="secondary">{option.label}</Badge> : null;
+                        return option ? <Badge key={value} variant="secondary" className="px-3 py-1.5 bg-white border border-slate-200 text-slate-800 shadow-sm rounded-lg">{option.label}</Badge> : null;
                       })}
                     </div>
                   )
                 )}
               </div>
 
-              <div>
-                <Label className="text-base font-semibold mb-3 block">Categorias de Veículos</Label>
+              {/* Categorias de Veículos */}
+              <div className="bg-slate-50/50 border border-slate-200 rounded-2xl p-5 shadow-sm transition-all hover:shadow-md">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
+                  <div>
+                    <Label className="text-base font-semibold text-slate-900 block">Categorias de Veículos</Label>
+                    {editing && <span className="text-xs text-slate-500">Qual o perfil da sua frota de clientes</span>}
+                  </div>
+                  {editing && (
+                    <div className="flex gap-2">
+                      <Button type="button" variant="outline" size="sm" className="h-8 text-xs bg-white" onClick={() => setFormData({...formData, vehicle_categories: ['populares', 'intermediarios', 'utilitarios']})}>
+                        Mais comuns
+                      </Button>
+                      <Button type="button" variant="ghost" size="sm" className="h-8 text-xs text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => setFormData({...formData, vehicle_categories: []})}>
+                        Limpar
+                      </Button>
+                    </div>
+                  )}
+                </div>
                 {editing ? (
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {vehicleCategoriesOptions.map((option) => (
-                      <div key={option.value} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`category-${option.value}`}
-                          checked={formData.vehicle_categories.includes(option.value)}
-                          onCheckedChange={() => setFormData({
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {vehicleCategoriesOptions.map((option) => {
+                      const isSelected = formData.vehicle_categories.includes(option.value);
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => setFormData({
                             ...formData,
                             vehicle_categories: toggleArrayItem(formData.vehicle_categories, option.value)
                           })}
-                        />
-                        <label htmlFor={`category-${option.value}`} className="text-sm cursor-pointer">
+                          className={`flex items-center justify-center text-center px-4 py-3 rounded-xl border transition-all duration-200 text-sm font-medium ${
+                            isSelected 
+                              ? 'bg-slate-900 border-slate-900 text-white shadow-md scale-[1.02]' 
+                              : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+                          }`}
+                        >
                           {option.label}
-                        </label>
-                      </div>
-                    ))}
+                        </button>
+                      );
+                    })}
                   </div>
                 ) : (
                   formData.vehicle_categories.length === 0 ? (
-                    <p className="text-sm text-gray-500">Nenhuma categoria de veículo selecionada.</p>
+                    <p className="text-sm text-gray-500 italic">Nenhuma categoria de veículo selecionada.</p>
                   ) : (
                     <div className="flex flex-wrap gap-2">
                       {formData.vehicle_categories.map((value) => {
                         const option = vehicleCategoriesOptions.find(opt => opt.value === value);
-                        return option ? <Badge key={value} variant="secondary">{option.label}</Badge> : null;
+                        return option ? <Badge key={value} variant="secondary" className="px-3 py-1.5 bg-white border border-slate-200 text-slate-800 shadow-sm rounded-lg">{option.label}</Badge> : null;
                       })}
                     </div>
                   )
