@@ -56,15 +56,26 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
 
       // LÓGICA DE ROTEAMENTO (PER USER)
 
-      // 1. Verificar Primeiro Acesso do Proprietário (Tenant)
-      // Se first_access_completed for explicitamente falso, redirecionar
+      // 1. Verificar se está com o cadastro da oficina em andamento
+      if (user.cadastro_em_andamento === true) {
+        navigate(createPageUrl("Cadastro"));
+        return;
+      }
+
+      // 2. Verificar se não possui uma oficina vinculada (e não é admin)
+      const hasWorkshop = !!(user.workshop_id || user.data?.workshop_id);
+      if (!hasWorkshop && user.role !== 'admin') {
+        navigate(createPageUrl("Cadastro"));
+        return;
+      }
+
+      // 3. Verificar Primeiro Acesso do Proprietário (Tenant) legado
       if (user.first_access_completed === false) {
         navigate(createPageUrl("Cadastro"));
         return;
       }
 
-      // 2. Verificar Perfil do Colaborador
-      // Se profile_completed for explicitamente falso, redirecionar
+      // 4. Verificar Perfil do Colaborador legado
       if (user.profile_completed === false) {
         navigate(createPageUrl("Cadastro"));
         return;
