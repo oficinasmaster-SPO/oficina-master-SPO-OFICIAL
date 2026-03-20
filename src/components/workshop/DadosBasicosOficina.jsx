@@ -754,31 +754,77 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
               />
             </div>
           </div>
-          <div>
-            <Label className="mb-3 block">Dias de Funcionamento</Label>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              {diasSemana.map((dia) => (
-                <label key={dia} className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={(formData.horario_funcionamento.dias_semana || []).includes(dia)}
-                    onChange={(e) => {
-                      const dias = formData.horario_funcionamento.dias_semana || [];
-                      const newDias = e.target.checked
-                        ? [...dias, dia]
-                        : dias.filter(d => d !== dia);
-                      setFormData({
-                        ...formData,
-                        horario_funcionamento: { ...formData.horario_funcionamento, dias_semana: newDias }
-                      });
-                    }}
-                    disabled={!editing}
-                    className="rounded"
-                  />
-                  <span className="text-sm">{dia}</span>
-                </label>
-              ))}
+          <div className="p-4 border rounded-xl bg-slate-50/50 space-y-4">
+            <div>
+              <Label className="mb-3 block text-base font-semibold">Dias de Funcionamento</Label>
+              <div className="flex flex-wrap gap-2">
+                {diasSemana.map((dia) => {
+                  const isSelected = (formData.horario_funcionamento.dias_semana || []).includes(dia);
+                  return (
+                    <button
+                      key={dia}
+                      type="button"
+                      disabled={!editing}
+                      onClick={() => {
+                        if (!editing) return;
+                        const dias = formData.horario_funcionamento.dias_semana || [];
+                        const newDias = isSelected
+                          ? dias.filter(d => d !== dia)
+                          : [...dias, dia];
+                        setFormData({
+                          ...formData,
+                          horario_funcionamento: { ...formData.horario_funcionamento, dias_semana: newDias }
+                        });
+                      }}
+                      className={cn(
+                        "px-4 py-2 rounded-full text-sm font-medium transition-all duration-200",
+                        isSelected 
+                          ? "bg-slate-900 text-white shadow-md" 
+                          : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 hover:border-slate-300",
+                        !editing && "opacity-60 cursor-not-allowed"
+                      )}
+                    >
+                      {dia}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
+            
+            {editing && (
+              <div className="flex flex-wrap gap-3 pt-3 border-t border-slate-200 mt-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => {
+                    const diasUteis = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta'];
+                    setFormData({
+                      ...formData,
+                      horario_funcionamento: { ...formData.horario_funcionamento, dias_semana: diasUteis }
+                    });
+                  }}
+                >
+                  Segunda a Sexta
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline"
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => {
+                    const diasUteisESabado = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+                    setFormData({
+                      ...formData,
+                      horario_funcionamento: { ...formData.horario_funcionamento, dias_semana: diasUteisESabado }
+                    });
+                  }}
+                >
+                  Segunda a Sábado
+                </Button>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
