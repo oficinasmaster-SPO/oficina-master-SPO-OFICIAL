@@ -273,9 +273,9 @@ export default function Colaboradores() {
                     <tr key={employee.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-4 py-3 text-center">
                         {employee.profile_picture_url ? (
-                          <img src={employee.profile_picture_url} alt={employee.full_name} className="w-10 h-10 rounded-full object-cover border border-gray-200 mx-auto" />
+                          <img src={employee.profile_picture_url} alt={employee.full_name} className="w-10 h-10 rounded-full object-cover outline outline-2 outline-[#FF0000] mx-auto" />
                         ) : (
-                          <div className="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center mx-auto flex-shrink-0">
+                          <div className="w-10 h-10 rounded-full bg-gray-100 outline outline-2 outline-[#FF0000] flex items-center justify-center mx-auto flex-shrink-0">
                             <User className="w-5 h-5 text-gray-400" />
                           </div>
                         )}
