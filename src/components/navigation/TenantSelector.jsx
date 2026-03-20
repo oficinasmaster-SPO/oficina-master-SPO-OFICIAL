@@ -11,7 +11,7 @@ import { Building2, Briefcase, Search, Check, ChevronsUpDown } from 'lucide-reac
 
 export default function TenantSelector() {
   const { user, selectedFirmId, changeConsultingFirm, selectedCompanyId, changeCompany } = useTenant();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [openCompanyPopover, setOpenCompanyPopover] = useState(false);
 
   const { data: firms = [], isLoading: isLoadingFirms } = useQuery({
     queryKey: ['consultingFirms'],
@@ -22,10 +22,6 @@ export default function TenantSelector() {
     queryKey: ['workshops', selectedFirmId],
     queryFn: () => selectedFirmId && selectedFirmId !== 'none' ? base44.entities.Workshop.filter({ consulting_firm_id: selectedFirmId }) : base44.entities.Workshop.list()
   });
-
-  const filteredCompanies = companies.filter(c => 
-    c.name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   // Apenas admins podem alternar entre tenants livremente por enquanto
   if (user?.role !== 'admin') {
