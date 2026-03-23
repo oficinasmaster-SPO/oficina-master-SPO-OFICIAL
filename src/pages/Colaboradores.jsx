@@ -181,7 +181,7 @@ export default function Colaboradores() {
                 setSearchParams(prev => { prev.set("modal", "cadastrocolaborador"); return prev; });
               }
             }}
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-red-500 hover:bg-red-600 text-white rounded-[10px] shadow-[0_4px_12px_rgba(239,68,68,0.3)] transition-all duration-200 hover:scale-105"
             id="btn-novo-colaborador"
             disabled={checking}
           >
