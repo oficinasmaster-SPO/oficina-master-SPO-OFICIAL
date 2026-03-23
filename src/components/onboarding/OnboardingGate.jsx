@@ -56,6 +56,15 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
 
       // LÓGICA DE ROTEAMENTO (PER USER)
 
+      // LÓGICA DE ROTEAMENTO (PER USER)
+      
+      // Colaboradores que entraram via convite
+      // Eles têm profile_completed = false (forçado pela auth/convite) E first_access_completed = true
+      if (user.profile_completed === false && user.first_access_completed === true) {
+        navigate(createPageUrl("CompletarPerfil"));
+        return;
+      }
+
       // 1. Verificar se está com o cadastro da oficina em andamento
       if (user.cadastro_em_andamento === true) {
         navigate(createPageUrl("Cadastro"));
@@ -75,7 +84,7 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
         return;
       }
 
-      // 4. Verificar Perfil do Colaborador
+      // 4. Verificar Perfil do Colaborador genérico (caso passe das regras acima)
       if (user.profile_completed === false) {
         navigate(createPageUrl("CompletarPerfil"));
         return;
