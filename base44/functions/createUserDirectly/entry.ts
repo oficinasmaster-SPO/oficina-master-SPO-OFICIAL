@@ -184,7 +184,7 @@ Deno.serve(async (req) => {
               </p>
               <!-- BOX INFO -->
               <div style="background:#F9FAFB; padding:16px; border-radius:10px; margin:20px 0;">
-                <p style="margin:6px 0;"><strong>Email:</strong> ${email}</p>
+                <p style="margin:6px 0;"><strong>E-mail:</strong> ${email}</p>
                 <p style="margin:6px 0;"><strong>Acesso inicial:</strong> criar senha no primeiro acesso</p>
                 <p style="margin:6px 0;"><strong>Validade do convite:</strong> 7 dias</p>
               </div>
