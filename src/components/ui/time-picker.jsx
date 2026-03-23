@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { Clock } from "lucide-react";
+import { Clock, ChevronUp, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ITEM_HEIGHT = 32; // Reduzido em ~70% do tamanho anterior
