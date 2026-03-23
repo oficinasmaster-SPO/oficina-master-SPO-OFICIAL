@@ -64,11 +64,12 @@ Deno.serve(async (req) => {
 
     console.log(`✅ EmployeeInviteAcceptance criado: ${acceptance.id}`);
 
-    // Forçar atualização do User com workshop_id, profile_id e pular onboarding (garantir acesso imediato)
+    // Forçar atualização do User com workshop_id, profile_id e pular onboarding de oficina
     const updateData = {};
     // Colaboradores convidados não precisam passar pelo onboarding de cadastro de oficina
     updateData.first_access_completed = true;
-    updateData.profile_completed = true;
+    // Mas PRECISAM completar o próprio perfil (CPF e Telefone)
+    updateData.profile_completed = false;
 
     if (invite.workshop_id) {
       updateData.workshop_id = invite.workshop_id;

@@ -70,7 +70,9 @@ export default function PrimeiroAcesso() {
               console.log("✅ Convite aceito com sucesso!");
               toast.success("Conta vinculada com sucesso! Redirecionando...");
               setTimeout(() => {
-                navigate(createPageUrl("Home")); // OnboardingGate intercepta e joga pra CompletarPerfil
+                // Forçar o reload da página inteira para o AuthContext pegar as informações
+                // novas do usuário (como o workshop_id) antes de passar pelo OnboardingGate
+                window.location.href = createPageUrl("Home"); 
               }, 1500);
             }
           } catch (err) {
