@@ -308,13 +308,13 @@ export default function Colaboradores() {
                           </Badge>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-left text-sm font-medium">
+                      <td className="px-4 py-3 text-right text-sm font-medium">
                         R$ {totalCost.toFixed(2)}
                       </td>
                       <td className="px-4 py-3 text-left text-sm font-medium text-green-600">
                         R$ {totalProduction.toFixed(2)}
                       </td>
-                      <td className="px-4 py-3 text-left">
+                      <td className="px-2 py-3 text-center">
                         <span className={`font-bold ${
                           productivity >= 100 ? 'text-green-600' : 'text-orange-600'
                         }`}>
