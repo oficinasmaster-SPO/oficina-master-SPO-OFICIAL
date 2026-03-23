@@ -649,17 +649,6 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
             />
           </div>
           </div>
-
-          <div>
-            <Label>Endereço Completo</Label>
-            <Textarea
-              value={formData.endereco_completo}
-              onChange={(e) => setFormData({...formData, endereco_completo: e.target.value})}
-              disabled={!editing}
-              placeholder="Rua, número, bairro, CEP..."
-              rows={2}
-            />
-          </div>
         </CardContent>
       </Card>
 
