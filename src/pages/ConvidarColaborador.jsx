@@ -612,7 +612,7 @@ export default function ConvidarColaborador() {
                                 disabled={regenerateLinkMutation.isPending}
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  if (window.confirm("Deseja regerar o link deste colaborador? O link anterior deixará de funcionar.")) {
+                                  if (window.confirm("Deseja reenviar o email com um novo link para este colaborador? O link anterior deixará de funcionar.")) {
                                     regenerateLinkMutation.mutate(emp.id);
                                   }
                                 }}
@@ -620,9 +620,9 @@ export default function ConvidarColaborador() {
                                 {regenerateLinkMutation.isPending ? (
                                   <Loader2 className="w-3 h-3 animate-spin mr-1" />
                                 ) : (
-                                  <RefreshCw className="w-3 h-3 mr-1" />
+                                  <Mail className="w-3 h-3 mr-1" />
                                 )}
-                                Regerar
+                                Reenviar Email
                               </Button>
                             </div>
                           </div>
