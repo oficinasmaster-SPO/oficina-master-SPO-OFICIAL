@@ -250,8 +250,8 @@ export default function Cadastro() {
     }
 
     toast.success("Cadastro finalizado!");
-    // Redirecionar para Home (Dashboard) conforme especificação
-    navigate(createPageUrl("Home"));
+    // Recarregar a página e ir para Home (Dashboard) para atualizar todo o contexto do sistema
+    window.location.href = createPageUrl("Home");
   };
 
   if (loading) {
