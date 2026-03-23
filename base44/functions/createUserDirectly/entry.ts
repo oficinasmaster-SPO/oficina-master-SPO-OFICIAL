@@ -149,7 +149,7 @@ Deno.serve(async (req) => {
 
     // Gerar link de convite com profile_id (sem workshop_id)
     const inviteDomain = `https://oficinasmastergtr.com`;
-    const inviteLink = `${inviteDomain}/PrimeiroAcesso?token=${invite.invite_token}&profile_id=${finalProfileId}`;
+    const inviteLink = `${inviteDomain}/PrimeiroAcesso?token=${inviteToken}&profile_id=${finalProfileId}`;
 
     // Disparar o Email Customizado utilizando a integração nativa
     const emailHtml = `<!DOCTYPE html>
