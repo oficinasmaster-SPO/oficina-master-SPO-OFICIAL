@@ -647,6 +647,15 @@ export default function ConvidarColaborador() {
               )}
             </CardContent>
           </Card>
+          
+          <div className="flex justify-end mt-6">
+            <Button 
+              onClick={() => window.location.href = '/Colaboradores'}
+              className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto h-12 px-8 text-base"
+            >
+              Concluir
+            </Button>
+          </div>
         </div>
       </div>
     </div>
