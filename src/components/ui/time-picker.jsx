@@ -40,27 +40,58 @@ const Wheel = ({ options, value, onChange }) => {
     }, 150);
   };
 
+  const handleUp = () => {
+    const currentIndex = options.indexOf(value);
+    if (currentIndex > 0) {
+      const newIndex = currentIndex - 1;
+      onChange(options[newIndex]);
+      if (containerRef.current) {
+        containerRef.current.scrollTo({ top: newIndex * ITEM_HEIGHT, behavior: 'smooth' });
+      }
+    }
+  };
+
+  const handleDown = () => {
+    const currentIndex = options.indexOf(value);
+    if (currentIndex < options.length - 1) {
+      const newIndex = currentIndex + 1;
+      onChange(options[newIndex]);
+      if (containerRef.current) {
+        containerRef.current.scrollTo({ top: newIndex * ITEM_HEIGHT, behavior: 'smooth' });
+      }
+    }
+  };
+
   return (
-    <div 
-      className="relative overflow-hidden bg-white"
-      style={{ height: `${CONTAINER_HEIGHT}px`, width: '45px' }}
-    >
-      {/* Top fade */}
+    <div className="flex flex-col items-center">
+      <button 
+        type="button" 
+        onClick={handleUp} 
+        disabled={options.indexOf(value) === 0}
+        className="p-1 text-gray-400 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed mb-1"
+      >
+        <ChevronUp className="w-4 h-4" />
+      </button>
       <div 
-        className="absolute top-0 left-0 w-full bg-gradient-to-b from-white via-white/90 to-transparent z-10 pointer-events-none" 
-        style={{ height: `${OFFSET}px` }} 
-      />
-      {/* Bottom fade */}
-      <div 
-        className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-white via-white/90 to-transparent z-10 pointer-events-none" 
-        style={{ height: `${OFFSET}px` }} 
-      />
-      
-      {/* Active selection band */}
-      <div 
-        className="absolute left-0 w-full z-10 pointer-events-none border-y border-[#FF0000]" 
-        style={{ top: `${OFFSET}px`, height: `${ITEM_HEIGHT}px`, backgroundColor: 'rgba(255, 0, 0, 0.05)' }} 
-      />
+        className="relative overflow-hidden bg-white"
+        style={{ height: `${CONTAINER_HEIGHT}px`, width: '45px' }}
+      >
+        {/* Top fade */}
+        <div 
+          className="absolute top-0 left-0 w-full bg-gradient-to-b from-white via-white/90 to-transparent z-10 pointer-events-none" 
+          style={{ height: `${OFFSET}px` }} 
+        />
+        {/* Bottom fade */}
+        <div 
+          className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-white via-white/90 to-transparent z-10 pointer-events-none" 
+          style={{ height: `${OFFSET}px` }} 
+        />
+        
+        {/* Active selection band */}
+        <div 
+          className="absolute left-0 w-full z-10 pointer-events-none border-y border-[#FF0000]" 
+          style={{ top: `${OFFSET}px`, height: `${ITEM_HEIGHT}px`, backgroundColor: 'rgba(255, 0, 0, 0.05)' }} 
+        />
       
       <div 
         ref={containerRef}
