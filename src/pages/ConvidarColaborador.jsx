@@ -510,23 +510,6 @@ export default function ConvidarColaborador() {
           <Button 
             type="button"
             variant="outline"
-            className="text-blue-600 border-blue-200 hover:bg-blue-50"
-            onClick={() => {
-              const empId = createdUser?.employee?.id || (createdUser?.email ? employees.find(e => e.email === createdUser.email)?.id : null);
-              if (empId) {
-                regenerateLinkMutation.mutate(empId);
-              } else {
-                toast.error("Gere um convite ou selecione 'Regerar' na lista abaixo para um colaborador específico.");
-              }
-            }}
-            disabled={regenerateLinkMutation.isPending}
-          >
-            {regenerateLinkMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
-            Reenviar Email
-          </Button>
-          <Button 
-            type="button"
-            variant="outline"
             onClick={() => setShowEmailPreview(true)}
           >
             <Mail className="w-4 h-4 mr-2" />
