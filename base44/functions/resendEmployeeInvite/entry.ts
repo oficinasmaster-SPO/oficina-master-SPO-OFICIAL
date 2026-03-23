@@ -108,10 +108,12 @@ Deno.serve(async (req) => {
 
     // Gerar link de convite com domínio correto + workshop_id para rastreamento
     const inviteDomain = `https://oficinasmastergtr.com`;
-    const inviteLink = `${inviteDomain}/PrimeiroAcesso?token=${invite.invite_token}&workshop_id=${employee.workshop_id}`;
+    // Usa o token que acabou de ser gerado ou o atual do banco
+    const currentToken = invite.invite_token;
+    const inviteLink = `${inviteDomain}/PrimeiroAcesso?token=${currentToken}&workshop_id=${employee.workshop_id}`;
 
     console.log("🔗 Link gerado para reenvio:", inviteLink);
-    console.log("🔑 Token utilizado:", invite.invite_token);
+    console.log("🔑 Token utilizado:", currentToken);
 
     // ⏸️ ENVIO DE EMAIL DESABILITADO - Focar em WhatsApp
     console.log("📱 Link disponível para compartilhar via WhatsApp");
