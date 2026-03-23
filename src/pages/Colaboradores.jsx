@@ -295,34 +295,34 @@ export default function Colaboradores() {
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{employee.position}</td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-4 py-3 text-left text-sm text-gray-600">{employee.position}</td>
+                      <td className="px-4 py-3 text-left">
                         <Badge className={statusColors[employee.status]}>
                           {employee.status}
                         </Badge>
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-4 py-3 text-left">
                         {employee.current_maturity_level && (
                           <Badge className={maturityColors[employee.current_maturity_level] || "bg-gray-100 text-gray-700"}>
                             {maturityLabels[employee.current_maturity_level] || employee.current_maturity_level}
                           </Badge>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-right text-sm font-medium">
+                      <td className="px-4 py-3 text-left text-sm font-medium">
                         R$ {totalCost.toFixed(2)}
                       </td>
-                      <td className="px-4 py-3 text-right text-sm font-medium text-green-600">
+                      <td className="px-4 py-3 text-left text-sm font-medium text-green-600">
                         R$ {totalProduction.toFixed(2)}
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-4 py-3 text-left">
                         <span className={`font-bold ${
                           productivity >= 100 ? 'text-green-600' : 'text-orange-600'
                         }`}>
                           {productivity}%
                         </span>
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center justify-center gap-1.5 flex-nowrap min-w-max">
+                      <td className="px-4 py-3 text-left">
+                        <div className="flex items-center justify-start gap-1.5 flex-nowrap min-w-max">
                           <Button
                             onClick={async () => {
                               const allowed = await checkPermission('employees', 'read', {
