@@ -247,19 +247,19 @@ export default function Colaboradores() {
             </CardContent>
           </Card>
         ) : (
-          <div className="bg-white rounded-lg shadow-lg overflow-x-auto">
-            <table className="w-full" id="lista-colaboradores">
-              <thead className="bg-gray-100 border-b-2 border-gray-300">
-                <tr>
-                  <th className="px-4 py-3 w-16"></th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Nome</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Cargo</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700">Status</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700">Maturidade</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700">Custo Total</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700">Produção</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700">Produtividade</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700">Ações</th>
+          <div className="bg-white rounded-lg shadow-lg overflow-x-auto border border-gray-200">
+            <table className="w-full whitespace-nowrap" id="lista-colaboradores">
+              <thead className="bg-gray-50 border-b-2 border-gray-200">
+                <tr className="divide-x divide-gray-200">
+                  <th className="px-4 py-3 w-16 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"></th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Nome</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Cargo</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Maturidade</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Custo Total</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Produção</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Produtividade</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
