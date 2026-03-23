@@ -130,6 +130,16 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack, on
       return;
     }
 
+    if (!formData.cpf) {
+      toast.error("CPF é obrigatório");
+      return;
+    }
+
+    if (!formData.telefone) {
+      toast.error("Telefone é obrigatório");
+      return;
+    }
+
     if (!formData.profile_picture_url) {
       toast.error("A foto de perfil é obrigatória");
       return;
@@ -208,6 +218,16 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack, on
       // Validação e salvamento sem chamar onComplete
       if (!formData.full_name || !formData.email) {
         toast.error("Nome e email são obrigatórios");
+        return false;
+      }
+
+      if (!formData.cpf) {
+        toast.error("CPF é obrigatório");
+        return false;
+      }
+
+      if (!formData.telefone) {
+        toast.error("Telefone é obrigatório");
         return false;
       }
 
@@ -385,7 +405,7 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack, on
             </div>
 
             <div>
-              <Label htmlFor="cpf">CPF</Label>
+              <Label htmlFor="cpf">CPF *</Label>
               <Input
                 id="cpf"
                 value={formData.cpf}
@@ -408,7 +428,7 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack, on
             </div>
 
             <div>
-              <Label htmlFor="telefone">Telefone</Label>
+              <Label htmlFor="telefone">Telefone *</Label>
               <Input
                 id="telefone"
                 value={formData.telefone}
