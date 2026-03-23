@@ -506,214 +506,25 @@ export default function ConvidarColaborador() {
           />
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Formulário */}
+        <div className="flex justify-end gap-3 mb-6">
+          <Button 
+            type="button"
+            variant="outline"
+            onClick={() => setShowEmailPreview(true)}
+          >
+            <Mail className="w-4 h-4 mr-2" />
+            Pré-visualizar Email
+          </Button>
+          <Button 
+            onClick={() => window.location.href = 'https://oficinasmastergtr.com/colaboradores?modal=cadastrocolaborador'}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            <UserPlus className="w-4 h-4 mr-2" />
+            Cadastrar mais um colaborador
+          </Button>
+        </div>
 
-          <Card className="shadow-md border-t-4 border-t-blue-600">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <UserPlus className="w-5 h-5 text-blue-600" />
-                Criar Colaborador
-              </CardTitle>
-              <CardDescription>
-                Crie o acesso e envie as credenciais para o colaborador
-              </CardDescription>
-
-              <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <div className="flex gap-2 items-start">
-                  <Key className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-xs text-blue-800">
-                    <strong>🔑 Criação de Senha:</strong> O colaborador deverá criar sua própria senha no primeiro acesso utilizando a opção "Criar conta" (Sign up).
-                  </p>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Label htmlFor="name">Nome Completo *</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Nome do colaborador"
-                    className="bg-gray-50 focus:bg-white transition-colors"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="email">E-mail *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="email@exemplo.com"
-                    className="bg-gray-50 focus:bg-white transition-colors"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="telefone">Telefone (Opcional)</Label>
-                  <Input
-                    id="telefone"
-                    value={formData.telefone}
-                    onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
-                    placeholder="(00) 00000-0000"
-                    className="bg-gray-50 focus:bg-white transition-colors"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="position">Cargo *</Label>
-                  <Input
-                    id="position"
-                    value={formData.position}
-                    onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                    placeholder="Ex: Mecânico, Vendedor"
-                    className="bg-gray-50 focus:bg-white transition-colors"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="area">Área *</Label>
-                  <Select value={formData.area} onValueChange={(value) => setFormData({ ...formData, area: value })}>
-                    <SelectTrigger className="bg-gray-50 focus:bg-white transition-colors">
-                      <SelectValue placeholder="Selecione a área" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="vendas">Vendas</SelectItem>
-                      <SelectItem value="comercial">Comercial</SelectItem>
-                      <SelectItem value="marketing">Marketing</SelectItem>
-                      <SelectItem value="tecnico">Técnico</SelectItem>
-                      <SelectItem value="administrativo">Administrativo</SelectItem>
-                      <SelectItem value="financeiro">Financeiro</SelectItem>
-                      <SelectItem value="gerencia">Gerência</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="job_role">Função do Sistema *</Label>
-                  <Select value={formData.job_role} onValueChange={(value) => setFormData({ ...formData, job_role: value })}>
-                    <SelectTrigger className="bg-gray-50 focus:bg-white transition-colors">
-                      <SelectValue placeholder="Selecione a função" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(user?.role === 'admin' ? jobRoles : jobRoles.filter(role => role.category !== 'interna')).map((role) => (
-                        <SelectItem key={role.value} value={role.value}>
-                          {role.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                   <Label htmlFor="role">Nível de Acesso *</Label>
-                   <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value })}>
-                     <SelectTrigger className="bg-gray-50 focus:bg-white transition-colors">
-                       <SelectValue placeholder="Selecione o nível" />
-                     </SelectTrigger>
-                     <SelectContent>
-                       <SelectItem value="user">Usuário (Colaborador)</SelectItem>
-                       <SelectItem value="admin">Admin (Gestor)</SelectItem>
-                     </SelectContent>
-                   </Select>
-                 </div>
-
-                <div>
-                  <Label htmlFor="workshop_id">Oficina *</Label>
-                  <Select value={formData.workshop_id} onValueChange={(value) => setFormData({ ...formData, workshop_id: value })}>
-                    <SelectTrigger className="bg-gray-50 focus:bg-white transition-colors">
-                      <SelectValue placeholder="Selecione a oficina" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {userWorkshops.map((ws) => (
-                        <SelectItem key={ws.id} value={ws.id}>
-                          {ws.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-4">
-                  <Label htmlFor="profile_id" className="text-blue-900 font-bold flex items-center gap-2">
-                    <AlertCircle className="w-5 h-5" />
-                    Perfil de Acesso * (Define Permissões)
-                  </Label>
-                  
-                  {isLoadingProfiles ? (
-                    <div className="mt-2 flex items-center gap-2 text-sm text-gray-600">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Carregando perfis...
-                    </div>
-                  ) : profiles.length === 0 ? (
-                    <div className="mt-2 bg-red-50 border border-red-200 rounded p-3">
-                      <p className="text-sm text-red-800 font-medium mb-2">
-                        ❌ Nenhum perfil de acesso disponível
-                      </p>
-                      <p className="text-xs text-red-700">
-                        Entre em contato com o suporte para configurar perfis de acesso antes de convidar colaboradores.
-                      </p>
-                    </div>
-                  ) : (
-                    <>
-                      <Select value={formData.profile_id} onValueChange={(value) => setFormData({ ...formData, profile_id: value })}>
-                        <SelectTrigger id="profile_id" className="mt-2 bg-white">
-                          <SelectValue placeholder="Selecione o perfil de acesso" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {profiles.map((profile) => (
-                            <SelectItem key={profile.id} value={profile.id}>
-                              {profile.name.length > 25 
-                                ? profile.name.substring(0, 25) + '...' 
-                                : profile.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs text-blue-700 mt-2">
-                        ✅ <strong>Acesso liberado automaticamente</strong> - O colaborador poderá fazer login assim que completar o cadastro
-                      </p>
-                    </>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-blue-600 hover:bg-blue-700 h-11 text-base shadow-sm"
-                    disabled={createUserMutation.isPending || profiles.length === 0}
-                  >
-                    {createUserMutation.isPending ? (
-                      <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Criando Acesso...
-                      </>
-                    ) : (
-                      <>
-                          <UserPlus className="w-4 h-4 mr-2" />
-                          Criar Acesso
-                      </>
-                    )}
-                  </Button>
-                  
-                  <Button 
-                    type="button"
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => setShowEmailPreview(true)}
-                    disabled={!formData.name || !formData.email}
-                  >
-                    <Mail className="w-4 h-4 mr-2" />
-                    Pré-visualizar Email
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-1 gap-6">
 
           {/* Lista de Colaboradores */}
           <Card className="shadow-md h-fit">
