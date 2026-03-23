@@ -321,8 +321,8 @@ export default function Colaboradores() {
                           {productivity}%
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-center">
-                        <div className="flex flex-wrap gap-1 justify-center">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-center gap-1.5 flex-nowrap min-w-max">
                           <Button
                             onClick={async () => {
                               const allowed = await checkPermission('employees', 'read', {
