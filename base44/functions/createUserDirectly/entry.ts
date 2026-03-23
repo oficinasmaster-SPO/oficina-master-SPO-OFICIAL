@@ -153,71 +153,100 @@ Deno.serve(async (req) => {
 
     // Disparar o Email Customizado utilizando a integração nativa
     const emailHtml = `<!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Convite - Oficinas Master</title>
 </head>
+
 <body style="margin:0; padding:0; background:#F4F6F8; font-family:Arial, sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0">
+
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#F4F6F8;">
+  <tr>
+    <td align="center">
+
+  <!-- CONTAINER -->
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px; background:#FFFFFF; border-radius:12px; overflow:hidden;">
+
+    <!-- HEADER -->
     <tr>
-      <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="background:#FFFFFF; border-radius:12px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,0.05);">
-          <!-- HEADER -->
+      <td style="background:linear-gradient(135deg,#0F172A,#1E293B); padding:20px; text-align:center; color:#FFFFFF;">
+        <h2 style="margin:0; font-size:20px;">Oficinas Master</h2>
+        <p style="margin:4px 0 0; font-size:12px; opacity:0.8;">
+          Sistema de Gestão para Oficinas
+        </p>
+      </td>
+    </tr>
+
+    <!-- CONTEÚDO -->
+    <tr>
+      <td style="padding:20px;">
+
+        <h2 style="margin-top:0; color:#111827; font-size:20px;">
+          Seu acesso foi liberado
+        </h2>
+
+        <p style="color:#374151; font-size:14px; margin:10px 0;">
+          Olá <strong>${name}</strong>,
+        </p>
+
+        <p style="color:#374151; font-size:14px; margin:10px 0;">
+          Você foi adicionado à oficina <strong>${workshop_name}</strong>.
+          Para começar, acesse a plataforma e configure sua senha.
+        </p>
+
+        <!-- BOX INFORMAÇÕES -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#F9FAFB; border-radius:10px; margin:20px 0;">
           <tr>
-            <td style="background:linear-gradient(135deg,#0F172A,#1E293B); padding:24px; text-align:center; color:#FFFFFF;">
-              <h2 style="margin:0;">Oficinas Master</h2>
-              <p style="margin:4px 0 0; font-size:13px; opacity:0.8;">Sistema de Gestão para Oficinas</p>
-            </td>
-          </tr>
-          <!-- CONTEÚDO -->
-          <tr>
-            <td style="padding:32px;">
-              <h2 style="margin-top:0; color:#111827;">
-                Você foi convidado para acessar a plataforma
-              </h2>
-              <p style="color:#374151;">
-                Olá <strong>${name}</strong>,
-              </p>
-              <p style="color:#374151;">
-                Seu acesso ao sistema da oficina <strong>${workshop_name}</strong> foi criado com sucesso.
-              </p>
-              <!-- BOX INFO -->
-              <div style="background:#F9FAFB; padding:16px; border-radius:10px; margin:20px 0;">
-                <p style="margin:6px 0;"><strong>E-mail:</strong> ${email}</p>
-                <p style="margin:6px 0;"><strong>Acesso inicial:</strong> criar senha no primeiro acesso</p>
-                <p style="margin:6px 0;"><strong>Validade do convite:</strong> 7 dias</p>
-              </div>
-              <!-- CTA -->
-              <div style="text-align:center; margin:30px 0;">
-                <a href="${inviteLink}" 
-                   style="background:#EF4444; color:#FFFFFF; padding:14px 28px; border-radius:8px; text-decoration:none; font-weight:bold; display:inline-block;">
-                   Acessar Plataforma
-                </a>
-              </div>
-              <p style="font-size:13px; color:#6B7280;">
-                Caso o botão não funcione, copie e cole o link abaixo no seu navegador:
-              </p>
-              <p style="font-size:12px; background:#F3F4F6; padding:10px; border-radius:6px; word-break:break-all;">
-                ${inviteLink}
-              </p>
-              <hr style="border:none; border-top:1px solid #E5E7EB; margin:30px 0;">
-              <p style="font-size:12px; color:#6B7280;">
-                Por segurança, recomendamos alterar sua senha após o primeiro acesso.
-              </p>
-            </td>
-          </tr>
-          <!-- FOOTER -->
-          <tr>
-            <td style="background:#F9FAFB; padding:16px; text-align:center; font-size:12px; color:#6B7280;">
-              © 2026 Oficinas Master • Sistema de Gestão para Oficinas<br>
-              Este é um e-mail automático. Não responda.
+            <td style="padding:14px; font-size:14px; color:#111827;">
+              <p style="margin:6px 0;"><strong>Email:</strong> ${email}</p>
+              <p style="margin:6px 0;"><strong>Acesso inicial:</strong> criar senha no primeiro login</p>
+              <p style="margin:6px 0;"><strong>Validade do convite:</strong> 7 dias</p>
             </td>
           </tr>
         </table>
+
+        <!-- BOTÃO -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin:25px 0;">
+          <tr>
+            <td align="center">
+              <a href="${inviteLink}"
+                 style="display:block; width:100%; max-width:320px; margin:auto; background:#EF4444; color:#FFFFFF; padding:14px; border-radius:8px; text-decoration:none; font-weight:bold; font-size:14px;">
+                 Acessar Plataforma
+              </a>
+            </td>
+          </tr>
+        </table>
+
+        <!-- LINK ALTERNATIVO -->
+        <p style="font-size:12px; color:#6B7280; margin-bottom:6px;">
+          Se o botão não funcionar, copie e cole o link abaixo:
+        </p>
+
+        <p style="font-size:12px; background:#F3F4F6; padding:10px; border-radius:6px; word-break:break-all; color:#111827;">
+          ${inviteLink}
+        </p>
+
+        <!-- AVISO -->
+        <p style="font-size:12px; color:#6B7280; margin-top:20px;">
+          Por segurança, recomendamos alterar sua senha após o primeiro acesso.
+        </p>
       </td>
     </tr>
+    <!-- FOOTER -->
+    <tr>
+        <td style="background:#F9FAFB; padding:16px; text-align:center; font-size:12px; color:#6B7280;">
+          © 2026 Oficinas Master • Sistema de Gestão para Oficinas<br>
+          Este é um e-mail automático. Não responda.
+        </td>
+    </tr>
   </table>
+
+    </td>
+  </tr>
+</table>
+
 </body>
 </html>`;
 
