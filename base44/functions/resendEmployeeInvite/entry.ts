@@ -103,6 +103,9 @@ Deno.serve(async (req) => {
         status: "enviado"
       });
       
+      // Ensure the token is bound correctly for the response
+      invite.invite_token = inviteToken;
+
       console.log("✅ Novo convite criado");
     }
 
