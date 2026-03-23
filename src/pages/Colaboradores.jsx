@@ -36,10 +36,10 @@ export default function Colaboradores() {
   const queryClient = useQueryClient();
   const { checkPermission, checking } = useOnDemandPermission();
   
-  // Hook de atribuição automática de perfis
-  useProfileAutoAssignment(false, (employee, result) => {
-    queryClient.invalidateQueries({ queryKey: ['employees', workshop?.id] });
-  });
+  // Hook de atribuição automática de perfis (Desativado temporariamente para evitar spam de notificações)
+  // useProfileAutoAssignment(false, (employee, result) => {
+  //   queryClient.invalidateQueries({ queryKey: ['employees', workshop?.id] });
+  // });
 
   const assignEmployeeToUserMutation = useMutation({
     mutationFn: async ({ employeeId, email, workshopId }) => {
