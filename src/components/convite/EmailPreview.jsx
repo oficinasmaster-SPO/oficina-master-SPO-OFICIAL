@@ -1,70 +1,113 @@
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { X, Mail } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Mail } from "lucide-react";
 
-export default function EmailPreview({ isOpen, onClose, email, name, workshopName, inviteLink, temporaryPassword = "Oficina@2025", isPreview = true }) {
-  const displayLink = inviteLink && !inviteLink.includes("...") && !inviteLink.includes("[seu-domínio]") ? inviteLink : "[LINK_DO_CONVITE_SERÁ_GERADO]";
+export default function EmailPreview({ isOpen, onClose, email, name, workshopName, inviteLink, isPreview = true }) {
+  const displayLink = inviteLink && !inviteLink.includes("...") && !inviteLink.includes("[seu-domínio]") ? inviteLink : "https://oficinasmastergtr.com/PrimeiroAcesso?token=...";
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <div>
-            <DialogTitle className="flex items-center gap-2">
-              <Mail className="w-5 h-5" />
-              {isPreview ? "Preview do Email de Convite" : "Email Enviado com Sucesso!"}
-            </DialogTitle>
-            {isPreview && (
-              <p className="text-xs text-gray-500 mt-2">Este é um preview de como o email será apresentado</p>
-            )}
-          </div>
-        </DialogHeader>
-
-        <div className="bg-white rounded-lg border-2 border-gray-200 overflow-hidden">
-          <div className="bg-blue-600 text-white p-6 text-center">
-            <h2 className="text-xl font-bold">Bem-vindo à {workshopName}!</h2>
-          </div>
-
-          <div className="bg-gray-50 p-6 space-y-4">
-            <p>Olá <strong>{name}</strong>,</p>
-            <p>Você foi convidado(a) para fazer parte da equipe <strong>{workshopName}</strong>.</p>
-
-            <div className="bg-white border-l-4 border-blue-600 p-4 space-y-2">
-              <p><strong>📧 Email:</strong> {email}</p>
-              <p><strong>🔑 Senha temporária:</strong> {temporaryPassword}</p>
-              <p><strong>⏰ Validade:</strong> 7 dias</p>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 gap-0 border-none bg-transparent shadow-none">
+        {/* Wrapper to center the email preview visually */}
+        <div className="flex justify-center p-4">
+          <div style={{
+            width: '600px',
+            backgroundColor: '#FFFFFF',
+            borderRadius: '12px',
+            overflow: 'hidden',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.05)',
+            fontFamily: 'Arial, sans-serif'
+          }}>
+            {/* HEADER */}
+            <div style={{
+              background: 'linear-gradient(135deg,#0F172A,#1E293B)',
+              padding: '24px',
+              textAlign: 'center',
+              color: '#FFFFFF'
+            }}>
+              <h2 style={{ margin: 0, fontSize: '24px', fontWeight: 'bold' }}>Oficinas Master</h2>
+              <p style={{ margin: '4px 0 0', fontSize: '13px', opacity: 0.8 }}>Sistema de Gestão para Oficinas</p>
             </div>
 
-            <p>Para completar seu cadastro e acessar a plataforma, clique no botão abaixo:</p>
+            {/* CONTEÚDO */}
+            <div style={{ padding: '32px', color: '#374151' }}>
+              <h2 style={{ marginTop: 0, color: '#111827', fontSize: '24px', fontWeight: 'bold', marginBottom: '16px' }}>
+                Você foi convidado para acessar a plataforma
+              </h2>
 
-            <div className="text-center">
-              <Button 
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2"
-                onClick={() => {
-                  if (displayLink && !displayLink.includes("[")) {
-                    window.open(displayLink, "_blank");
-                  }
-                }}
-              >
-                Acessar Plataforma
-              </Button>
-            </div>
+              <p style={{ margin: '16px 0' }}>
+                Olá <strong>{name}</strong>,
+              </p>
 
-            <div className="text-sm text-gray-600 bg-white border border-gray-200 p-4 rounded">
-              <p className="mb-2">Ou copie e cole este link no seu navegador:</p>
-              <p className="text-blue-600 break-all font-mono text-xs bg-gray-50 p-3 rounded border">
+              <p style={{ margin: '16px 0' }}>
+                Seu acesso ao sistema da oficina <strong>{workshopName}</strong> foi criado com sucesso.
+              </p>
+
+              {/* BOX INFO */}
+              <div style={{
+                background: '#F9FAFB',
+                padding: '16px',
+                borderRadius: '10px',
+                margin: '20px 0'
+              }}>
+                <p style={{ margin: '6px 0' }}><strong>Email:</strong> {email}</p>
+                <p style={{ margin: '6px 0' }}><strong>Acesso inicial:</strong> criar senha no primeiro acesso</p>
+                <p style={{ margin: '6px 0' }}><strong>Validade do convite:</strong> 7 dias</p>
+              </div>
+
+              {/* CTA */}
+              <div style={{ textAlign: 'center', margin: '30px 0' }}>
+                <a 
+                  href="#"
+                  onClick={(e) => e.preventDefault()}
+                  style={{
+                    background: '#EF4444',
+                    color: '#FFFFFF',
+                    padding: '14px 28px',
+                    borderRadius: '8px',
+                    textDecoration: 'none',
+                    fontWeight: 'bold',
+                    display: 'inline-block'
+                  }}
+                >
+                  Acessar Plataforma
+                </a>
+              </div>
+
+              <p style={{ fontSize: '13px', color: '#6B7280', margin: '16px 0 8px 0' }}>
+                Caso o botão não funcione, copie e cole o link abaixo no seu navegador:
+              </p>
+
+              <p style={{
+                fontSize: '12px',
+                background: '#F3F4F6',
+                padding: '10px',
+                borderRadius: '6px',
+                wordBreak: 'break-all',
+                fontFamily: 'monospace',
+                margin: 0
+              }}>
                 {displayLink}
+              </p>
+
+              <hr style={{ border: 'none', borderTop: '1px solid #E5E7EB', margin: '30px 0' }} />
+
+              <p style={{ fontSize: '12px', color: '#6B7280', margin: 0 }}>
+                Por segurança, recomendamos alterar sua senha após o primeiro acesso.
               </p>
             </div>
 
-            <p className="text-sm"><strong>Importante:</strong> Por segurança, você deverá alterar sua senha no primeiro acesso.</p>
-          </div>
-
-          <div className="bg-gray-100 text-center py-4 text-xs text-gray-600">
-            <p>Este é um email automático. Em caso de dúvidas, entre em contato com o administrador.</p>
-            <p>&copy; {new Date().getFullYear()} {workshopName}. Todos os direitos reservados.</p>
+            {/* FOOTER */}
+            <div style={{
+              background: '#F9FAFB',
+              padding: '16px',
+              textAlign: 'center',
+              fontSize: '12px',
+              color: '#6B7280'
+            }}>
+              © 2026 Oficinas Master • Sistema de Gestão para Oficinas<br />
+              Este é um email automático. Não responda.
+            </div>
           </div>
         </div>
       </DialogContent>

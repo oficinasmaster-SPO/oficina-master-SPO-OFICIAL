@@ -152,7 +152,7 @@ Deno.serve(async (req) => {
     const inviteLink = `${inviteDomain}/PrimeiroAcesso?token=${invite.invite_token}&profile_id=${finalProfileId}`;
 
     // Disparar o Email Customizado utilizando a integração nativa
-    const emailHtml = \`<!DOCTYPE html>
+    const emailHtml = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
@@ -177,20 +177,20 @@ Deno.serve(async (req) => {
                 Você foi convidado para acessar a plataforma
               </h2>
               <p style="color:#374151;">
-                Olá <strong>\${name}</strong>,
+                Olá <strong>${name}</strong>,
               </p>
               <p style="color:#374151;">
-                Seu acesso ao sistema da oficina <strong>\${workshop_name}</strong> foi criado com sucesso.
+                Seu acesso ao sistema da oficina <strong>${workshop_name}</strong> foi criado com sucesso.
               </p>
               <!-- BOX INFO -->
               <div style="background:#F9FAFB; padding:16px; border-radius:10px; margin:20px 0;">
-                <p style="margin:6px 0;"><strong>Email:</strong> \${email}</p>
+                <p style="margin:6px 0;"><strong>Email:</strong> ${email}</p>
                 <p style="margin:6px 0;"><strong>Acesso inicial:</strong> criar senha no primeiro acesso</p>
                 <p style="margin:6px 0;"><strong>Validade do convite:</strong> 7 dias</p>
               </div>
               <!-- CTA -->
               <div style="text-align:center; margin:30px 0;">
-                <a href="\${inviteLink}" 
+                <a href="${inviteLink}" 
                    style="background:#EF4444; color:#FFFFFF; padding:14px 28px; border-radius:8px; text-decoration:none; font-weight:bold; display:inline-block;">
                    Acessar Plataforma
                 </a>
@@ -199,7 +199,7 @@ Deno.serve(async (req) => {
                 Caso o botão não funcione, copie e cole o link abaixo no seu navegador:
               </p>
               <p style="font-size:12px; background:#F3F4F6; padding:10px; border-radius:6px; word-break:break-all;">
-                \${inviteLink}
+                ${inviteLink}
               </p>
               <hr style="border:none; border-top:1px solid #E5E7EB; margin:30px 0;">
               <p style="font-size:12px; color:#6B7280;">
@@ -219,7 +219,7 @@ Deno.serve(async (req) => {
     </tr>
   </table>
 </body>
-</html>\`;
+</html>`;
 
     try {
       await base44.asServiceRole.integrations.Core.SendEmail({
