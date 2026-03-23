@@ -553,10 +553,7 @@ export default function ConvidarColaborador() {
                     const inviteLink = getInviteLinkForEmployee(emp.id);
                     
                     return (
-                      <div key={emp.id} className="p-4 hover:bg-gray-50 transition-colors" onClick={() => {
-                      fillFormWithEmployee(emp);
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                      }}>
+                      <div key={emp.id} className="p-4 hover:bg-gray-50 transition-colors">
                       <div className="flex items-start justify-between mb-2">
                         <div>
                           <div className="flex items-center gap-2 mb-1">
