@@ -32,6 +32,12 @@ export default function CompletarPerfil() {
         return;
       }
 
+      const workshopId = user.workshop_id || user.data?.workshop_id;
+      if (workshopId) {
+        const ws = await base44.entities.Workshop.get(workshopId);
+        setWorkshop(ws);
+      }
+
       const employees = await base44.entities.Employee.filter({ user_id: user.id });
       if (employees && employees.length > 0) {
         setEmployee(employees[0]);
@@ -40,7 +46,7 @@ export default function CompletarPerfil() {
           telefone: employees[0].telefone || "",
         });
         
-        if (employees[0].workshop_id) {
+        if (!workshopId && employees[0].workshop_id) {
           const ws = await base44.entities.Workshop.get(employees[0].workshop_id);
           setWorkshop(ws);
         }
@@ -94,7 +100,7 @@ export default function CompletarPerfil() {
         profile_completed: true
       });
 
-      toast.success(`Bem-vindo! ${workshop ? workshop.name : ''}`);
+      toast.success(`Bem vindo! "${workshop ? workshop.name : 'Sua Oficina'}"`);
       setTimeout(() => {
         window.location.href = createPageUrl("Home");
       }, 1500);
