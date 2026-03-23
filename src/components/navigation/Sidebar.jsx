@@ -1125,27 +1125,27 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                 to={getAdminUrl(createPageUrl('Home') + queryString)}
                 onClick={onClose}
                 className={cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-xl transition-all group",
+                  "flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all group",
                   isActive(createPageUrl('Home'))
-                    ? "bg-[#FF0000] text-white font-medium shadow-md"
+                    ? "bg-[#FF0000] text-white shadow-md"
                     : "text-gray-600 hover:bg-[#FF0000] hover:text-white hover:shadow-md"
                 )}
               >
                 <Home className={cn("w-5 h-5 transition-colors", isActive(createPageUrl('Home')) ? "text-white" : "text-gray-500 group-hover:text-white")} />
-                <span className="text-sm">Início</span>
+                <span className="truncate">Início</span>
               </Link>
               <Link
                 to={getAdminUrl(createPageUrl('MeuPerfil') + queryString)}
                 onClick={onClose}
                 className={cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-xl transition-all group",
+                  "flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all group",
                   isActive(createPageUrl('MeuPerfil'))
-                    ? "bg-[#FF0000] text-white font-medium shadow-md"
+                    ? "bg-[#FF0000] text-white shadow-md"
                     : "text-gray-600 hover:bg-[#FF0000] hover:text-white hover:shadow-md"
                 )}
               >
                 <User className={cn("w-5 h-5 transition-colors", isActive(createPageUrl('MeuPerfil')) ? "text-white" : "text-gray-500 group-hover:text-white")} />
-                <span className="text-sm">Meu Perfil</span>
+                <span className="truncate">Meu Perfil</span>
               </Link>
             </div>
           )}
