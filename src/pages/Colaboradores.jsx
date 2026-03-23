@@ -11,6 +11,7 @@ import { createPageUrl } from "@/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import AITrainingSuggestions from "../components/rh/AITrainingSuggestions";
 import EmployeeProfileViewer from "../components/employee/EmployeeProfileViewer";
 import DynamicHelpSystem from "../components/help/DynamicHelpSystem";
