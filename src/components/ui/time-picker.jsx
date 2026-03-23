@@ -133,6 +133,15 @@ const Wheel = ({ options, value, onChange }) => {
         })}
       </div>
     </div>
+      <button 
+        type="button" 
+        onClick={handleDown} 
+        disabled={options.indexOf(value) === options.length - 1}
+        className="p-1 text-gray-400 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed mt-1"
+      >
+        <ChevronDown className="w-4 h-4" />
+      </button>
+    </div>
   );
 };
 
