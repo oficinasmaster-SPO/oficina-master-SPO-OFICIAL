@@ -68,9 +68,9 @@ export default function PrimeiroAcesso() {
             const completeResponse = await base44.functions.invoke('completeInviteOnFirstAccess', { invite_token: token });
             if (completeResponse.data.success) {
               console.log("✅ Convite aceito com sucesso!");
-              toast.success("Bem-vindo! Acesso liberado.");
+              toast.success("Conta vinculada com sucesso! Redirecionando...");
               setTimeout(() => {
-                navigate(createPageUrl("MeuPerfil"));
+                navigate(createPageUrl("Home")); // OnboardingGate intercepta e joga pra CompletarPerfil
               }, 1500);
             }
           } catch (err) {

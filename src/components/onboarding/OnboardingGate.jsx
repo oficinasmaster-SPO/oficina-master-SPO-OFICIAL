@@ -48,8 +48,8 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
         return;
       }
 
-      // ✅ Se já está em /cadastro, permitir (é a página de onboarding)
-      if (currentPath.includes('cadastro')) {
+      // ✅ Se já está em /cadastro ou /completarperfil, permitir (é a página de onboarding)
+      if (currentPath.includes('cadastro') || currentPath.includes('completarperfil')) {
         setIsChecking(false);
         return;
       }
@@ -75,9 +75,9 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
         return;
       }
 
-      // 4. Verificar Perfil do Colaborador legado
+      // 4. Verificar Perfil do Colaborador
       if (user.profile_completed === false) {
-        navigate(createPageUrl("Cadastro"));
+        navigate(createPageUrl("CompletarPerfil"));
         return;
       }
 

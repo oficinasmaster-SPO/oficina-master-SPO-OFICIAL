@@ -12,6 +12,7 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { TenantProvider } from '@/components/contexts/TenantContext';
 import GestaoTenants from '@/pages/GestaoTenants';
+import CompletarPerfil from '@/pages/CompletarPerfil';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -55,6 +56,11 @@ const AuthenticatedApp = () => {
       <Route path="/GestaoTenants" element={
         <LayoutWrapper currentPageName="GestaoTenants">
           <GestaoTenants />
+        </LayoutWrapper>
+      } />
+      <Route path="/CompletarPerfil" element={
+        <LayoutWrapper currentPageName="CompletarPerfil">
+          <CompletarPerfil />
         </LayoutWrapper>
       } />
       {Object.entries(Pages).map(([path, Page]) => (
