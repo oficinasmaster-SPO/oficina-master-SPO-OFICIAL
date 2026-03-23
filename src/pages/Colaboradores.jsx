@@ -271,17 +271,17 @@ export default function Colaboradores() {
                   const activeCOEX = getActiveCOEX(employee.id);
 
                   return (
-                    <tr key={employee.id} className="hover:bg-gray-50 transition-colors divide-x divide-gray-100">
-                      <td className="px-4 py-3 text-left">
+                    <tr key={employee.id} className="relative hover:bg-[#F9FAFB] transition-all duration-200 hover:scale-[1.01] hover:shadow-sm hover:z-10 bg-white border-b border-gray-100 last:border-0">
+                      <td className="px-6 py-4 text-left">
                         {employee.profile_picture_url ? (
-                          <img src={employee.profile_picture_url} alt={employee.full_name} className="w-10 h-10 rounded-full object-cover outline outline-2 outline-[#FF0000]" />
+                          <img src={employee.profile_picture_url} alt={employee.full_name} className="w-[44px] h-[44px] rounded-full object-cover border-2 border-white shadow-sm" />
                         ) : (
-                          <div className="w-10 h-10 rounded-full bg-gray-100 outline outline-2 outline-[#FF0000] flex items-center justify-center flex-shrink-0">
+                          <div className="w-[44px] h-[44px] rounded-full bg-gray-100 border-2 border-white shadow-sm flex items-center justify-center flex-shrink-0">
                             <User className="w-5 h-5 text-gray-400" />
                           </div>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-left">
+                      <td className="px-6 py-4 text-left">
                         <div className="flex flex-col">
                           <div className="flex items-center gap-2">
                             <p className="font-medium text-gray-900">{employee.full_name}</p>
@@ -296,34 +296,34 @@ export default function Colaboradores() {
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-left text-sm text-gray-600">{employee.position}</td>
-                      <td className="px-4 py-3 text-left">
-                        <Badge className={statusColors[employee.status]}>
+                      <td className="px-6 py-4 text-left text-sm text-gray-600 font-medium">{employee.position}</td>
+                      <td className="px-6 py-4 text-left">
+                        <Badge className={`${statusColors[employee.status]} font-medium px-2.5 py-1 rounded-md`}>
                           {employee.status}
                         </Badge>
                       </td>
-                      <td className="px-4 py-3 text-left">
+                      <td className="px-6 py-4 text-left">
                         {employee.current_maturity_level && (
-                          <Badge className={maturityColors[employee.current_maturity_level] || "bg-gray-100 text-gray-700"}>
+                          <Badge className={`${maturityColors[employee.current_maturity_level] || "bg-gray-100 text-gray-700"} font-medium px-2.5 py-1 rounded-md`}>
                             {maturityLabels[employee.current_maturity_level] || employee.current_maturity_level}
                           </Badge>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-right text-sm font-medium">
+                      <td className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
                         R$ {totalCost.toFixed(2)}
                       </td>
-                      <td className="px-4 py-3 text-left text-sm font-medium text-green-600">
+                      <td className="px-6 py-4 text-left text-sm font-semibold text-green-600">
                         R$ {totalProduction.toFixed(2)}
                       </td>
-                      <td className="px-2 py-3 text-center">
-                        <span className={`font-bold ${
-                          productivity >= 100 ? 'text-green-600' : 'text-orange-600'
+                      <td className="px-6 py-4 text-center">
+                        <span className={`font-bold text-sm ${
+                          productivity >= 100 ? 'text-green-600' : 'text-orange-500'
                         }`}>
                           {productivity}%
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-left">
-                        <div className="flex items-center justify-start gap-1.5 flex-nowrap min-w-max">
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2 flex-nowrap min-w-max">
                           <Button
                             onClick={async () => {
                               const allowed = await checkPermission('employees', 'read', {
@@ -331,44 +331,76 @@ export default function Colaboradores() {
                               });
                               if (allowed) navigate(createPageUrl("DetalhesColaborador") + `?id=${employee.id}`);
                             }}
+                            className="bg-transparent border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-[10px] transition-all duration-200 shadow-none font-medium"
                             size="sm"
-                            variant="outline"
-                            title="Ver Detalhes"
                             disabled={checking}
                           >
                             Detalhes
                           </Button>
-                          <Button
-                            onClick={async () => {
-                              const allowed = await checkPermission('employees', 'read', {
-                                onDenied: () => toast.error('Sem permissão para ver perfil')
-                              });
-                              if (allowed) setProfileViewerEmployee(employee);
-                            }}
-                            size="sm"
-                            variant="outline"
-                            title="Ver Perfil de Acesso"
-                            disabled={checking}
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            onClick={async () => {
-                              const allowed = await checkPermission('employees', 'create', {
-                                onDenied: () => toast.error('Sem permissão para convidar')
-                              });
-                              if (allowed) navigate(createPageUrl("ConvidarColaborador") + `?id=${employee.id}`);
-                            }}
-                            size="sm"
-                            className="bg-blue-600 hover:bg-blue-700"
-                            title="Convidar para o Portal"
-                            disabled={checking}
-                          >
-                            <UserPlus className="w-4 h-4" />
-                          </Button>
-                          {(!employee.user_id && employee.email) && (
-                            <Button
-                                onClick={async (e) => {
+                          
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-gray-100 transition-colors focus-visible:ring-0 focus-visible:ring-offset-0">
+                                <MoreHorizontal className="w-5 h-5 text-gray-500" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56 rounded-xl shadow-lg border-gray-100 p-1">
+                              <DropdownMenuItem 
+                                onClick={async () => {
+                                  const allowed = await checkPermission('employees', 'read', {
+                                    onDenied: () => toast.error('Sem permissão para ver perfil')
+                                  });
+                                  if (allowed) setProfileViewerEmployee(employee);
+                                }}
+                                className="cursor-pointer rounded-lg text-gray-700 py-2"
+                              >
+                                <Eye className="w-4 h-4 mr-2" />
+                                Visualizar Acesso
+                              </DropdownMenuItem>
+                              
+                              <DropdownMenuItem 
+                                onClick={async () => {
+                                  const allowed = await checkPermission('employees', 'update', {
+                                    onDenied: () => toast.error('Sem permissão para alterar status')
+                                  });
+                                  if (!allowed) return;
+                                  
+                                  if (confirm(`${employee.status === 'ativo' ? 'Inativar' : 'Ativar'} ${employee.full_name}?`)) {
+                                    try {
+                                      await base44.entities.Employee.update(employee.id, {
+                                        status: employee.status === 'ativo' ? 'inativo' : 'ativo'
+                                      });
+                                      queryClient.invalidateQueries({ queryKey: ['employees'] });
+                                      toast.success('Status atualizado');
+                                    } catch (error) {
+                                      toast.error('Erro ao atualizar status');
+                                    }
+                                  }
+                                }}
+                                className="cursor-pointer rounded-lg text-gray-700 py-2"
+                              >
+                                <Power className="w-4 h-4 mr-2" />
+                                {employee.status === 'ativo' ? 'Inativar' : 'Ativar'}
+                              </DropdownMenuItem>
+
+                              <DropdownMenuSeparator className="bg-gray-100" />
+
+                              <DropdownMenuItem 
+                                onClick={async () => {
+                                  const allowed = await checkPermission('employees', 'create', {
+                                    onDenied: () => toast.error('Sem permissão para convidar')
+                                  });
+                                  if (allowed) navigate(createPageUrl("ConvidarColaborador") + `?id=${employee.id}`);
+                                }}
+                                className="cursor-pointer rounded-lg text-gray-700 py-2"
+                              >
+                                <UserPlus className="w-4 h-4 mr-2" />
+                                Convidar Portal
+                              </DropdownMenuItem>
+                              
+                              {(!employee.user_id && employee.email) && (
+                                <DropdownMenuItem 
+                                  onClick={async (e) => {
                                     e.stopPropagation();
                                     const allowed = await checkPermission('employees', 'update', {
                                         onDenied: () => toast.error('Sem permissão para vincular')
@@ -382,89 +414,62 @@ export default function Colaboradores() {
                                             workshopId: workshop.id 
                                         });
                                     }
+                                  }}
+                                  className="cursor-pointer rounded-lg text-gray-700 py-2"
+                                  disabled={assignEmployeeToUserMutation.isPending}
+                                >
+                                  <Link className="w-4 h-4 mr-2" />
+                                  Vincular E-mail Existente
+                                </DropdownMenuItem>
+                              )}
+
+                              <DropdownMenuItem 
+                                onClick={async () => {
+                                  const allowed = await checkPermission('employees', 'update', {
+                                    onDenied: () => toast.error('Sem permissão para usar IA')
+                                  });
+                                  if (allowed) setSelectedEmployee(employee);
                                 }}
-                                size="sm"
-                                className="bg-purple-600 hover:bg-purple-700"
-                                title="Atribuir Colaborador Existente"
-                                disabled={checking || assignEmployeeToUserMutation.isPending}
-                            >
-                                {assignEmployeeToUserMutation.isPending ? (
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : (
-                                    <UserCheck className="w-4 h-4" />
-                                )}
-                            </Button>
-                          )}
-                          <Button
-                            onClick={async () => {
-                              const allowed = await checkPermission('employees', 'update', {
-                                onDenied: () => toast.error('Sem permissão para usar IA')
-                              });
-                              if (allowed) setSelectedEmployee(employee);
-                            }}
-                            size="sm"
-                            className="bg-purple-600 hover:bg-purple-700"
-                            title="Sugestões de IA"
-                            disabled={checking}
-                          >
-                            <Sparkles className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            onClick={async () => {
-                              const allowed = await checkPermission('employees', 'update', {
-                                onDenied: () => toast.error('Sem permissão para alterar status')
-                              });
-                              if (!allowed) return;
-                              
-                              if (confirm(`${employee.status === 'ativo' ? 'Inativar' : 'Ativar'} ${employee.full_name}?`)) {
-                                try {
-                                  await base44.entities.Employee.update(employee.id, {
-                                    status: employee.status === 'ativo' ? 'inativo' : 'ativo'
-                                  });
-                                  queryClient.invalidateQueries({ queryKey: ['employees'] });
-                                  toast.success('Status atualizado');
-                                } catch (error) {
-                                  toast.error('Erro ao atualizar status');
-                                }
-                              }
-                            }}
-                            size="sm"
-                            variant="outline"
-                            disabled={checking}
-                          >
-                            {employee.status === 'ativo' ? 'Inativar' : 'Ativar'}
-                          </Button>
-                          <Button
-                            onClick={async () => {
-                              const allowed = await checkPermission('employees', 'delete', {
-                                onDenied: () => toast.error('Sem permissão para excluir')
-                              });
-                              if (!allowed) return;
-                              
-                              if (confirm(`EXCLUIR ${employee.full_name}? Ação irreversível!`)) {
-                                try {
-                                  const result = await base44.functions.invoke('deleteEmployeeCascade', {
-                                    employee_id: employee.id
-                                  });
+                                className="cursor-pointer rounded-lg text-gray-700 py-2"
+                              >
+                                <Sparkles className="w-4 h-4 mr-2" />
+                                Sugestões de IA
+                              </DropdownMenuItem>
 
-                                  if (!result.data?.success) {
-                                    toast.error(result.data?.error || 'Backend negou a exclusão');
-                                    return;
+                              <DropdownMenuSeparator className="bg-gray-100" />
+
+                              <DropdownMenuItem 
+                                onClick={async () => {
+                                  const allowed = await checkPermission('employees', 'delete', {
+                                    onDenied: () => toast.error('Sem permissão para excluir')
+                                  });
+                                  if (!allowed) return;
+                                  
+                                  if (confirm(`EXCLUIR ${employee.full_name}? Ação irreversível!`)) {
+                                    try {
+                                      const result = await base44.functions.invoke('deleteEmployeeCascade', {
+                                        employee_id: employee.id
+                                      });
+
+                                      if (!result.data?.success) {
+                                        toast.error(result.data?.error || 'Backend negou a exclusão');
+                                        return;
+                                      }
+
+                                      queryClient.invalidateQueries({ queryKey: ['employees'] });
+                                      toast.success('Colaborador e acesso excluídos');
+                                    } catch (error) {
+                                      toast.error('Erro ao excluir: ' + (error.message || 'desconhecido'));
+                                    }
                                   }
-
-                                  queryClient.invalidateQueries({ queryKey: ['employees'] });
-                                  toast.success('Colaborador e acesso excluídos');
-                                } catch (error) {
-                                  toast.error('Erro ao excluir: ' + (error.message || 'desconhecido'));
-                                }
-                              }
-                            }}
-                            size="sm"
-                            variant="destructive"
-                            disabled={checking}
-                          >
-                            Excluir
-                          </Button>
+                                }}
+                                className="cursor-pointer rounded-lg text-red-600 focus:text-red-700 focus:bg-red-50 hover:bg-red-50 py-2 transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Excluir
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </td>
                     </tr>
