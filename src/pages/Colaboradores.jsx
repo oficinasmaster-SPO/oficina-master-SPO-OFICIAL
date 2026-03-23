@@ -163,7 +163,7 @@ export default function Colaboradores() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4">
       <DynamicHelpSystem pageName="Colaboradores" autoStartTour={employees.length === 0} />
       
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-[100rem] mx-auto">
         <QuickTipsBar tips={quickTips} pageName="colaboradores" />
 
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
