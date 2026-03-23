@@ -152,42 +152,74 @@ Deno.serve(async (req) => {
     const inviteLink = `${inviteDomain}/PrimeiroAcesso?token=${invite.invite_token}&profile_id=${finalProfileId}`;
 
     // Disparar o Email Customizado utilizando a integração nativa
-    const emailHtml = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
-        <div style="background-color: #2563eb; color: white; padding: 24px; text-align: center;">
-          <h2 style="margin: 0; font-size: 20px;">Bem-vindo à ${workshop_name}!</h2>
-        </div>
-        <div style="padding: 24px; background-color: #f9fafb; color: #374151;">
-          <p>Olá <strong>${name}</strong>,</p>
-          <p>Você foi convidado(a) para fazer parte da equipe <strong>${workshop_name}</strong>.</p>
-          
-          <div style="background-color: white; border-left: 4px solid #2563eb; padding: 16px; margin: 16px 0;">
-            <p style="margin: 4px 0;"><strong>📧 Email:</strong> ${email}</p>
-            <p style="margin: 4px 0;"><strong>🔑 Senha:</strong> Você criará sua senha no primeiro acesso (Use a opção Criar conta / Sign up)</p>
-            <p style="margin: 4px 0;"><strong>⏰ Validade:</strong> 7 dias</p>
-          </div>
-          
-          <p>Para completar seu cadastro e acessar a plataforma, clique no botão abaixo:</p>
-          
-          <div style="text-align: center; margin: 24px 0;">
-            <a href="${inviteLink}" style="background-color: #2563eb; color: white; padding: 12px 32px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Acessar Plataforma</a>
-          </div>
-          
-          <div style="background-color: white; border: 1px solid #e5e7eb; padding: 16px; border-radius: 6px; font-size: 14px;">
-            <p style="margin-top: 0; margin-bottom: 8px;">Ou copie e cole este link no seu navegador:</p>
-            <p style="margin: 0; color: #2563eb; word-break: break-all; background-color: #f9fafb; padding: 12px; border: 1px solid #e5e7eb; border-radius: 4px; font-family: monospace;">
-              ${inviteLink}
-            </p>
-          </div>
-          
-          <p style="font-size: 14px; margin-top: 24px;"><strong>Importante:</strong> Por segurança, você deverá alterar sua senha no primeiro acesso.</p>
-        </div>
-        <div style="background-color: #f3f4f6; padding: 16px; text-align: center; font-size: 12px; color: #6b7280;">
-          <p style="margin: 4px 0;">Este é um email automático. Em caso de dúvidas, entre em contato com o administrador.</p>
-          <p style="margin: 4px 0;">&copy; ${new Date().getFullYear()} ${workshop_name}. Todos os direitos reservados.</p>
-        </div>
-      </div>
-    `;
+    const emailHtml = \`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Convite - Oficinas Master</title>
+</head>
+<body style="margin:0; padding:0; background:#F4F6F8; font-family:Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background:#FFFFFF; border-radius:12px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,0.05);">
+          <!-- HEADER -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#0F172A,#1E293B); padding:24px; text-align:center; color:#FFFFFF;">
+              <h2 style="margin:0;">Oficinas Master</h2>
+              <p style="margin:4px 0 0; font-size:13px; opacity:0.8;">Sistema de Gestão para Oficinas</p>
+            </td>
+          </tr>
+          <!-- CONTEÚDO -->
+          <tr>
+            <td style="padding:32px;">
+              <h2 style="margin-top:0; color:#111827;">
+                Você foi convidado para acessar a plataforma
+              </h2>
+              <p style="color:#374151;">
+                Olá <strong>\${name}</strong>,
+              </p>
+              <p style="color:#374151;">
+                Seu acesso ao sistema da oficina <strong>\${workshop_name}</strong> foi criado com sucesso.
+              </p>
+              <!-- BOX INFO -->
+              <div style="background:#F9FAFB; padding:16px; border-radius:10px; margin:20px 0;">
+                <p style="margin:6px 0;"><strong>Email:</strong> \${email}</p>
+                <p style="margin:6px 0;"><strong>Acesso inicial:</strong> criar senha no primeiro acesso</p>
+                <p style="margin:6px 0;"><strong>Validade do convite:</strong> 7 dias</p>
+              </div>
+              <!-- CTA -->
+              <div style="text-align:center; margin:30px 0;">
+                <a href="\${inviteLink}" 
+                   style="background:#EF4444; color:#FFFFFF; padding:14px 28px; border-radius:8px; text-decoration:none; font-weight:bold; display:inline-block;">
+                   Acessar Plataforma
+                </a>
+              </div>
+              <p style="font-size:13px; color:#6B7280;">
+                Caso o botão não funcione, copie e cole o link abaixo no seu navegador:
+              </p>
+              <p style="font-size:12px; background:#F3F4F6; padding:10px; border-radius:6px; word-break:break-all;">
+                \${inviteLink}
+              </p>
+              <hr style="border:none; border-top:1px solid #E5E7EB; margin:30px 0;">
+              <p style="font-size:12px; color:#6B7280;">
+                Por segurança, recomendamos alterar sua senha após o primeiro acesso.
+              </p>
+            </td>
+          </tr>
+          <!-- FOOTER -->
+          <tr>
+            <td style="background:#F9FAFB; padding:16px; text-align:center; font-size:12px; color:#6B7280;">
+              © 2026 Oficinas Master • Sistema de Gestão para Oficinas<br>
+              Este é um email automático. Não responda.
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>\`;
 
     try {
       await base44.asServiceRole.integrations.Core.SendEmail({
