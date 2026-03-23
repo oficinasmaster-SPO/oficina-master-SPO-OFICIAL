@@ -181,12 +181,36 @@ Deno.serve(async (req) => {
 </html>`;
 
     try {
-      await base44.asServiceRole.integrations.Core.SendEmail({
-        to: employee.email,
-        subject: `Convite de Acesso - ${workshop_name}`,
-        body: emailHtml
-      });
-      console.log("✅ Email HTML customizado enviado com sucesso no reenvio!");
+      const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+      if (RESEND_API_KEY) {
+        const response = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${RESEND_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            from: 'Oficinas Master <onboarding@resend.dev>',
+            to: [employee.email],
+            subject: `Convite de Acesso - ${workshop_name}`,
+            html: emailHtml
+          })
+        });
+        
+        const data = await response.json();
+        if (!response.ok) {
+          console.error("❌ Erro Resend:", data);
+        } else {
+          console.log("✅ Email HTML enviado com sucesso via Resend! ID:", data.id);
+        }
+      } else {
+        console.warn("⚠️ RESEND_API_KEY não configurada. Usando Core.SendEmail...");
+        await base44.asServiceRole.integrations.Core.SendEmail({
+          to: employee.email,
+          subject: `Convite de Acesso - ${workshop_name}`,
+          body: emailHtml
+        });
+      }
     } catch (e) {
       console.error("⚠️ Erro ao enviar email HTML no reenvio:", e);
     }
