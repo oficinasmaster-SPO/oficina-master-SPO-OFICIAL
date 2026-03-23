@@ -4,7 +4,7 @@ import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, User, FileText, MessageSquare, AlertTriangle, Award, TrendingUp, FileCheck, Heart, Activity, GraduationCap, BarChart3, Rocket, Target, Shield, BookOpen } from "lucide-react";
+import { Loader2, User, FileText, MessageSquare, AlertTriangle, Award, TrendingUp, FileCheck, Heart, Activity, GraduationCap, BarChart3, Rocket, Target, Shield, BookOpen, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import DadosPessoais from "../components/employee/DadosPessoais";
 import RemuneracaoProducao from "../components/employee/RemuneracaoProducao";
