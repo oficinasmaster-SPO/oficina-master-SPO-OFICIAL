@@ -113,13 +113,83 @@ Deno.serve(async (req) => {
     const inviteDomain = `https://oficinasmastergtr.com`;
     // Usa o token que acabou de ser gerado ou o atual do banco
     const currentToken = invite.invite_token;
-    const inviteLink = `${inviteDomain}/PrimeiroAcesso?token=${currentToken}&workshop_id=${employee.workshop_id}`;
+    const inviteLink = `${inviteDomain}/PrimeiroAcesso?token=${currentToken}&profile_id=${employee.profile_id}`;
 
     console.log("🔗 Link gerado para reenvio:", inviteLink);
     console.log("🔑 Token utilizado:", currentToken);
 
-    // ⏸️ ENVIO DE EMAIL DESABILITADO - Focar em WhatsApp
-    console.log("📱 Link disponível para compartilhar via WhatsApp");
+    let workshop_name = 'Oficinas Master Acelerador';
+    try {
+      const ws = await base44.asServiceRole.entities.Workshop.get(employee.workshop_id);
+      if (ws && ws.name) workshop_name = ws.name;
+    } catch(e) {}
+
+    const emailHtml = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Convite - Oficinas Master</title>
+</head>
+<body style="margin:0; padding:0; background:#F4F6F8; font-family:Arial, sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#F4F6F8;">
+  <tr>
+    <td align="center">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px; background:#FFFFFF; border-radius:12px; overflow:hidden;">
+    <tr>
+      <td style="background:linear-gradient(135deg,#0F172A,#1E293B); padding:20px; text-align:center; color:#FFFFFF;">
+        <h2 style="margin:0; font-size:20px;">Oficinas Master</h2>
+        <p style="margin:4px 0 0; font-size:12px; opacity:0.8;">Sistema de Gestão para Oficinas</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:20px;">
+        <h2 style="margin-top:0; color:#111827; font-size:20px;">Seu acesso foi liberado</h2>
+        <p style="color:#374151; font-size:14px; margin:10px 0;">Olá <strong>${employee.full_name || employee.name}</strong>,</p>
+        <p style="color:#374151; font-size:14px; margin:10px 0;">Você foi adicionado à oficina <strong>${workshop_name}</strong>. Para começar, acesse a plataforma e configure sua senha.</p>
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#F9FAFB; border-radius:10px; margin:20px 0;">
+          <tr>
+            <td style="padding:14px; font-size:14px; color:#111827;">
+              <p style="margin:6px 0;"><strong>Email:</strong> ${employee.email}</p>
+              <p style="margin:6px 0;"><strong>Acesso inicial:</strong> criar senha no primeiro login</p>
+              <p style="margin:6px 0;"><strong>Validade do convite:</strong> 7 dias</p>
+            </td>
+          </tr>
+        </table>
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin:25px 0;">
+          <tr>
+            <td align="center">
+              <a href="${inviteLink}" style="display:block; width:100%; max-width:320px; margin:auto; background:#EF4444; color:#FFFFFF; padding:14px; border-radius:8px; text-decoration:none; font-weight:bold; font-size:14px;">Acessar Plataforma</a>
+            </td>
+          </tr>
+        </table>
+        <p style="font-size:12px; color:#6B7280; margin-bottom:6px;">Se o botão não funcionar, copie e cole o link abaixo:</p>
+        <p style="font-size:12px; background:#F3F4F6; padding:10px; border-radius:6px; word-break:break-all; color:#111827;">${inviteLink}</p>
+        <p style="font-size:12px; color:#6B7280; margin-top:20px;">Por segurança, recomendamos alterar sua senha após o primeiro acesso.</p>
+      </td>
+    </tr>
+    <tr>
+        <td style="background:#F9FAFB; padding:16px; text-align:center; font-size:12px; color:#6B7280;">
+          © 2026 Oficinas Master • Sistema de Gestão para Oficinas<br>Este é um e-mail automático. Não responda.
+        </td>
+    </tr>
+  </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>`;
+
+    try {
+      await base44.asServiceRole.integrations.Core.SendEmail({
+        to: employee.email,
+        subject: `Convite de Acesso - ${workshop_name}`,
+        body: emailHtml
+      });
+      console.log("✅ Email HTML customizado enviado com sucesso no reenvio!");
+    } catch (e) {
+      console.error("⚠️ Erro ao enviar email HTML no reenvio:", e);
+    }
 
     return Response.json({ 
       success: true,
