@@ -92,6 +92,27 @@ export const AuthProvider = ({ children }) => {
       // Now check if the user is authenticated
       setIsLoadingAuth(true);
       const currentUser = await base44.auth.me();
+      
+      if (currentUser.role !== 'admin') {
+        try {
+          const employees = await base44.entities.Employee.filter({ user_id: currentUser.id });
+          if (employees && employees.length > 0) {
+            const hasActiveEmployee = employees.some(emp => emp.status !== 'inativo');
+            if (!hasActiveEmployee) {
+              setAuthError({
+                type: 'account_inactive',
+                message: 'Seu usuário está inativado no sistema. Por favor, procure o administrador da sua empresa para reativar seu acesso.'
+              });
+              setIsLoadingAuth(false);
+              setIsAuthenticated(false);
+              return;
+            }
+          }
+        } catch (err) {
+          console.error('Error checking employee status:', err);
+        }
+      }
+
       setUser(currentUser);
       setIsAuthenticated(true);
       setIsLoadingAuth(false);

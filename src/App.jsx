@@ -23,7 +23,7 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
   : <>{children}</>;
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated, navigateToLogin } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated, navigateToLogin, logout } = useAuth();
 
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
@@ -42,6 +42,26 @@ const AuthenticatedApp = () => {
       // Redirect to login automatically
       navigateToLogin();
       return null;
+    } else if (authError.type === 'account_inactive') {
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
+          <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full text-center border border-gray-100">
+            <div className="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8V7z" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Acesso Bloqueado</h2>
+            <p className="text-gray-600 mb-6">{authError.message}</p>
+            <button 
+              onClick={() => logout(true)}
+              className="bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors w-full font-medium"
+            >
+              Sair e Voltar ao Login
+            </button>
+          </div>
+        </div>
+      );
     }
   }
 
