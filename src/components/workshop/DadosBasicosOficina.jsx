@@ -129,6 +129,22 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
         toast.error("A logo da empresa é obrigatória para prosseguir.");
         return false;
       }
+      if (!formData.razao_social) {
+        toast.error("Razão Social é obrigatória.");
+        return false;
+      }
+      if (!formData.cnpj) {
+        toast.error("CNPJ é obrigatório.");
+        return false;
+      }
+      if (!formData.telefone) {
+        toast.error("Telefone é obrigatório.");
+        return false;
+      }
+      if (!formData.email) {
+        toast.error("E-mail é obrigatório.");
+        return false;
+      }
       return true;
     }
   }));
@@ -168,6 +184,22 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
   const handleSave = async () => {
     if (!workshop?.logo_url) {
       toast.error("A logo da empresa é obrigatória para prosseguir.");
+      return;
+    }
+    if (!formData.razao_social) {
+      toast.error("Razão Social é obrigatória.");
+      return;
+    }
+    if (!formData.cnpj) {
+      toast.error("CNPJ é obrigatório.");
+      return;
+    }
+    if (!formData.telefone) {
+      toast.error("Telefone é obrigatório.");
+      return;
+    }
+    if (!formData.email) {
+      toast.error("E-mail é obrigatório.");
       return;
     }
 
@@ -337,7 +369,7 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
               />
             </div>
             <div>
-              <Label>Razão Social</Label>
+              <Label>Razão Social *</Label>
               <Input
                 value={formData.razao_social}
                 onChange={(e) => setFormData({...formData, razao_social: e.target.value})}
@@ -345,7 +377,7 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
               />
             </div>
             <div>
-              <Label>CNPJ</Label>
+              <Label>CNPJ *</Label>
               <Input
                 value={formData.cnpj || ''}
                 onChange={(e) => setFormData({...formData, cnpj: e.target.value})}
@@ -354,7 +386,7 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
               />
             </div>
             <div>
-              <Label>Telefone Principal</Label>
+              <Label>Telefone Principal *</Label>
               <Input
                 value={formData.telefone || ''}
                 onChange={(e) => setFormData({...formData, telefone: e.target.value})}
@@ -363,7 +395,7 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
               />
             </div>
             <div>
-              <Label>E-mail Principal</Label>
+              <Label>E-mail Principal *</Label>
               <Input
                 type="email"
                 value={formData.email || ''}
