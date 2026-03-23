@@ -211,7 +211,7 @@ Deno.serve(async (req) => {
           <tr>
             <td style="background:#F9FAFB; padding:16px; text-align:center; font-size:12px; color:#6B7280;">
               © 2026 Oficinas Master • Sistema de Gestão para Oficinas<br>
-              Este é um email automático. Não responda.
+              Este é um e-mail automático. Não responda.
             </td>
           </tr>
         </table>

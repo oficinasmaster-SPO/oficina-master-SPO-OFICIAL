@@ -106,7 +106,7 @@ export default function EmailPreview({ isOpen, onClose, email, name, workshopNam
               color: '#6B7280'
             }}>
               © 2026 Oficinas Master • Sistema de Gestão para Oficinas<br />
-              Este é um email automático. Não responda.
+              Este é um e-mail automático. Não responda.
             </div>
           </div>
         </div>
