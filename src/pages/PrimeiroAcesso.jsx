@@ -4,25 +4,14 @@ import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Loader2, CheckCircle2, AlertCircle, Lock } from "lucide-react";
+import { Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 export default function PrimeiroAcesso() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [invite, setInvite] = useState(null);
-  const [workshop, setWorkshop] = useState(null);
+  const [step, setStep] = useState("validating"); // validating, login_redirect, completing, success, error, wrong_user
   const [error, setError] = useState(null);
   const [wrongUser, setWrongUser] = useState(null);
-  
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    confirmPassword: ""
-  });
 
   useEffect(() => {
     validateToken();
@@ -32,126 +21,127 @@ export default function PrimeiroAcesso() {
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const token = urlParams.get('token');
-      const profileId = urlParams.get('profile_id');
 
       if (!token) {
         setError("Link de convite inválido. Token não encontrado.");
-        setLoading(false);
+        setStep("error");
         return;
       }
 
       console.log("🔍 Validando token:", token);
-      console.log("👤 Profile ID:", profileId);
 
       const response = await base44.functions.invoke('validateInviteToken', { token });
 
-      console.log("📦 Resposta validação:", response.data);
-
       if (response.data.success) {
         console.log("✅ Convite válido");
+        const inviteData = response.data.invite;
 
-        // Se já está logado, completar a aceitação do convite
         const isAuthenticated = await base44.auth.isAuthenticated();
         if (isAuthenticated) {
           const currentUser = await base44.auth.me();
           
-          // Verificar se o email bate com o convite
-          if (currentUser.email !== response.data.invite.email) {
-            console.error(`❌ Mismatch: logado como ${currentUser.email}, mas convite é para ${response.data.invite.email}`);
-            setWrongUser({ loggedInEmail: currentUser.email, inviteEmail: response.data.invite.email });
-            setLoading(false);
+          if (currentUser.email !== inviteData.email) {
+            setWrongUser({ loggedInEmail: currentUser.email, inviteEmail: inviteData.email });
+            setStep("wrong_user");
             return;
           }
 
-          console.log("✅ Usuário já autenticado, completando aceitação...");
+          setStep("completing");
           try {
             const completeResponse = await base44.functions.invoke('completeInviteOnFirstAccess', { invite_token: token });
             if (completeResponse.data.success) {
-              console.log("✅ Convite aceito com sucesso!");
-              toast.success("Conta vinculada com sucesso! Redirecionando...");
+              setStep("success");
               setTimeout(() => {
-                // Forçar o reload da página inteira para o AuthContext pegar as informações
-                // novas do usuário (como o workshop_id) antes de passar pelo OnboardingGate
                 window.location.href = createPageUrl("Home"); 
               }, 1500);
+            } else {
+              throw new Error(completeResponse.data.error || "Erro desconhecido");
             }
           } catch (err) {
-            console.error("❌ Erro ao completar convite:", err);
-            toast.error("Erro ao processar convite: " + err.message);
-            setError(err.response?.data?.error || "Erro ao processar convite");
+            setError(err.response?.data?.error || err.message || "Erro ao processar convite");
+            setStep("error");
           }
         } else {
-          console.log("🔄 Redirecionando para login...");
-          setInvite(response.data.invite);
-          setWorkshop(response.data.workshop);
+          setStep("login_redirect");
           setTimeout(() => {
             base44.auth.redirectToLogin(window.location.origin + window.location.pathname + window.location.search);
-          }, 5000); // Dá 5 segundos para o usuário ler as instruções de login
+          }, 4000);
         }
       } else {
         setError(response.data.error || "Convite inválido");
+        setStep("error");
       }
     } catch (err) {
       console.error("❌ Erro ao validar token:", err);
       setError(err.response?.data?.error || "Erro ao validar convite");
-    } finally {
-      setLoading(false);
+      setStep("error");
     }
   };
 
+  const renderContent = () => {
+    switch (step) {
+      case "validating":
+        return (
+          <div className="text-center">
+            <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
+            <p className="text-gray-600">Validando convite...</p>
+          </div>
+        );
+      
+      case "login_redirect":
+        return (
+          <div className="text-center">
+            <CheckCircle2 className="w-12 h-12 text-green-600 mx-auto mb-4" />
+            <p className="text-gray-900 font-bold text-xl mb-4">Convite Validado!</p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-left">
+              <p className="text-blue-800 font-bold mb-2 flex items-center gap-2">
+                <AlertCircle className="w-5 h-5" /> 
+                Acesso Liberado
+              </p>
+              <p className="text-sm text-blue-700 mb-2">
+                Na próxima tela, utilize a opção <strong>"Criar conta" (Sign up)</strong> com o seu e-mail para definir sua senha de acesso.
+              </p>
+            </div>
+            <div className="flex items-center justify-center gap-2 text-gray-500 font-medium">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Redirecionando para tela de acesso...
+            </div>
+          </div>
+        );
 
+      case "completing":
+        return (
+          <div className="text-center">
+            <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
+            <p className="text-gray-900 font-bold text-xl mb-2">Vinculando sua conta...</p>
+            <p className="text-gray-600">Aguarde um momento.</p>
+          </div>
+        );
 
-  if (loading || (invite && !wrongUser)) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50">
-        <Card className="w-full max-w-md shadow-xl">
-          <CardContent className="p-12 text-center">
-            {invite ? (
-              <>
-                <CheckCircle2 className="w-12 h-12 text-green-600 mx-auto mb-4" />
-                <p className="text-gray-900 font-bold text-xl mb-4">Convite Validado!</p>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-left">
-                  <p className="text-blue-800 font-bold mb-2 flex items-center gap-2">
-                    <AlertCircle className="w-5 h-5" /> 
-                    Sua conta já está criada!
-                  </p>
-                  <p className="text-sm text-blue-700 mb-2">
-                    Na próxima tela, utilize a opção <strong>"Criar conta" (Sign up)</strong> com o seu e-mail para definir sua própria senha de acesso.
-                  </p>
-                </div>
-                <div className="flex items-center justify-center gap-2 text-gray-500 font-medium">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Redirecionando para a tela de acesso...
-                </div>
-              </>
-            ) : (
-              <>
-                <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
-                <p className="text-gray-600">Validando convite...</p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+      case "success":
+        return (
+          <div className="text-center">
+            <CheckCircle2 className="w-12 h-12 text-green-600 mx-auto mb-4" />
+            <p className="text-gray-900 font-bold text-xl mb-2">Conta vinculada com sucesso!</p>
+            <div className="flex items-center justify-center gap-2 text-gray-500 font-medium mt-4">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Entrando no sistema...
+            </div>
+          </div>
+        );
 
-  if (wrongUser) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
-        <Card className="w-full max-w-md shadow-xl border-t-4 border-t-orange-500">
-          <CardHeader className="text-center pb-4">
+      case "wrong_user":
+        return (
+          <div className="text-center">
             <div className="mx-auto w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
               <AlertCircle className="w-8 h-8 text-orange-600" />
             </div>
-            <CardTitle className="text-2xl text-orange-900">Usuário Incorreto</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center">
+            <h2 className="text-2xl font-bold text-orange-900 mb-4">Usuário Incorreto</h2>
             <p className="text-gray-600 mb-4">
-              Você está logado como <strong className="text-gray-900">{wrongUser.loggedInEmail}</strong>.
+              Você está logado como <strong className="text-gray-900">{wrongUser?.loggedInEmail}</strong>.
             </p>
             <p className="text-gray-600 mb-6">
-              Este convite pertence a <strong className="text-gray-900">{wrongUser.inviteEmail}</strong>.
+              Este convite pertence a <strong className="text-gray-900">{wrongUser?.inviteEmail}</strong>.
             </p>
             <div className="space-y-3">
               <Button
@@ -171,30 +161,42 @@ export default function PrimeiroAcesso() {
                 Ir para o Início
               </Button>
             </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+          </div>
+        );
+
+      case "error":
+        return (
+          <div className="text-center">
+            <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+              <AlertCircle className="w-8 h-8 text-red-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-red-900 mb-4">Convite Inválido</h2>
+            <p className="text-gray-600 mb-6">{error}</p>
+            <Button
+              onClick={() => window.location.href = createPageUrl("Home")}
+              variant="outline"
+              className="w-full"
+            >
+              Voltar ao Início
+            </Button>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
-      <Card className="w-full max-w-md shadow-xl border-t-4 border-t-red-500">
-        <CardHeader className="text-center pb-4">
-          <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
-            <AlertCircle className="w-8 h-8 text-red-600" />
-          </div>
-          <CardTitle className="text-2xl text-red-900">Convite Inválido</CardTitle>
-        </CardHeader>
-        <CardContent className="text-center">
-          <p className="text-gray-600 mb-6">{error}</p>
-          <Button
-            onClick={() => window.location.href = createPageUrl("Home")}
-            variant="outline"
-            className="w-full"
-          >
-            Voltar ao Início
-          </Button>
+      <Card className={`w-full max-w-md shadow-xl border-t-4 ${
+        step === 'error' ? 'border-t-red-500' : 
+        step === 'wrong_user' ? 'border-t-orange-500' : 
+        step === 'success' ? 'border-t-green-500' :
+        'border-t-blue-500'
+      }`}>
+        <CardContent className="p-8">
+          {renderContent()}
         </CardContent>
       </Card>
     </div>
