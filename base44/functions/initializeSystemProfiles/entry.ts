@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
         description: "Proprietário/Sócio com acesso total à gestão da oficina",
         is_system: true,
         status: "ativo",
-        job_roles: ["socio", "diretor"],
+        job_roles: ["socio", "socio_interno", "diretor"],
         permission_type: "job_role",
         roles: [
           "dashboard.view", "dashboard.edit", "dashboard.export",
