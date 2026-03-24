@@ -18,6 +18,7 @@ import DescricaoCargos from '@/pages/DescricaoCargos';
 import CentralAvaliacoes from '@/pages/CentralAvaliacoes';
 import MatrizDesempenho from '@/pages/MatrizDesempenho';
 import PublicNPS from '@/pages/PublicNPS';
+import PublicDISC from '@/pages/PublicDISC';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -117,6 +118,7 @@ const AuthenticatedApp = () => {
         </LayoutWrapper>
       } />
       <Route path="/PublicNPS" element={<PublicNPS />} />
+      <Route path="/PublicDISC" element={<PublicDISC />} />
       {Object.entries(Pages).map(([path, Page]) => (
         <Route
           key={path}

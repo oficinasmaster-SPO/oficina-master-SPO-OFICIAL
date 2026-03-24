@@ -1,53 +1,77 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, Brain, AlertCircle, CheckCircle2 } from "lucide-react";
-import { toast } from "sonner";
+import { Loader2, CheckCircle2, Brain, AlertCircle, ArrowRight, ArrowLeft } from "lucide-react";
 import { discQuestions, profileInfo } from "@/components/disc/DISCQuestions";
 
 export default function PublicDISC() {
   const [searchParams] = useSearchParams();
-  const token = searchParams.get('token');
-  
+  const token = searchParams.get("token");
+
   const [session, setSession] = useState(null);
+  const [workshop, setWorkshop] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [step, setStep] = useState(1); // 1 = Info, 2 = Teste, 3 = Resultado
+  
+  const [formData, setFormData] = useState({
+    name: "",
+    phone: "",
+    email: ""
+  });
   
   const [answers, setAnswers] = useState({});
+  const [result, setResult] = useState(null);
 
   useEffect(() => {
     if (!token) {
       setLoading(false);
       return;
     }
-    
-    const fetchSession = async () => {
+
+    const loadSession = async () => {
       try {
-        const res = await base44.entities.DISCPublicSession.filter({ token });
-        if (res && res.length > 0) {
-          setSession(res[0]);
+        const sessions = await base44.entities.DISCPublicSession.filter({ token });
+        if (sessions.length > 0) {
+          const currentSession = sessions[0];
+          setSession(currentSession);
+          
+          if (currentSession.candidate_name) {
+            setFormData(prev => ({...prev, name: currentSession.candidate_name}));
+          }
+
+          if (currentSession.status === "concluido") {
+            setStep(3); // Mostra que já foi feito
+          } else {
+             // Iniciar respostas vazias
+             const initialAnswers = {};
+             discQuestions.forEach(q => {
+               initialAnswers[q.id] = { d: "", i: "", s: "", c: "" };
+             });
+             setAnswers(initialAnswers);
+          }
+
+          const workshopData = await base44.entities.Workshop.get(currentSession.workshop_id);
+          setWorkshop(workshopData);
         }
-      } catch (err) {
-        console.error(err);
+      } catch (error) {
+        console.error(error);
       } finally {
         setLoading(false);
       }
     };
-    fetchSession();
-    
-    const initialAnswers = {};
-    discQuestions.forEach(q => {
-      initialAnswers[q.id] = { d: "", i: "", s: "", c: "" };
-    });
-    setAnswers(initialAnswers);
+
+    loadSession();
   }, [token]);
 
   const updateAnswer = (questionId, profile, value) => {
     if (value !== "" && (isNaN(value) || parseInt(value) < 1 || parseInt(value) > 4)) return;
+
     const currentAnswers = answers[questionId] || {};
     const usedNumbers = Object.entries(currentAnswers)
       .filter(([key]) => key !== profile)
@@ -55,7 +79,7 @@ export default function PublicDISC() {
       .filter(v => v !== "");
 
     if (value !== "" && usedNumbers.includes(value)) {
-      toast.error(`Número ${value} já foi usado neste conjunto. Escolha outro.`);
+      alert(`Número ${value} já foi usado neste conjunto. Escolha outro.`);
       return;
     }
 
@@ -76,42 +100,22 @@ export default function PublicDISC() {
     return uniqueValues.size === 4 && values.every(v => ['1', '2', '3', '4'].includes(v));
   };
 
-  const validateAnswers = () => {
-    for (let i = 1; i <= discQuestions.length; i++) {
-      if (!isQuestionComplete(i)) {
-        toast.error(`Conjunto ${i}: Preencha todos os campos com números de 1 a 4`);
-        return false;
-      }
-    }
-    return true;
+  const getFilledQuestions = () => {
+    return Object.keys(answers).filter(key => isQuestionComplete(parseInt(key))).length;
   };
 
-  const getRecommendedRoles = (scores) => {
-    const roles = [];
-    const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
-    const top1 = sorted[0][0];
-    const top2 = sorted[1][0];
-
-    if (top1 === "executor_d" || top2 === "executor_d") {
-      if (scores.executor_d > 30) roles.push("Gerente Geral", "Líder de Equipe", "Coordenador de Produção");
-    }
-    if (top1 === "comunicador_i" || top2 === "comunicador_i") {
-      if (scores.comunicador_i > 30) roles.push("Consultor de Vendas", "Atendimento ao Cliente", "Marketing");
-    }
-    if (top1 === "planejador_s" || top2 === "planejador_s") {
-      if (scores.planejador_s > 30) roles.push("Coordenador Administrativo", "Supervisor de Processos");
-    }
-    if (top1 === "analista_c" || top2 === "analista_c") {
-      if (scores.analista_c > 30) roles.push("Analista de Qualidade", "Controlador Financeiro");
-    }
-    return roles.length > 0 ? roles : ["Função a definir conforme necessidade da oficina"];
-  };
-
-  const handleSubmit = async (e) => {
+  const handleSubmitInfo = (e) => {
     e.preventDefault();
-    if (!validateAnswers()) return;
-    setSubmitting(true);
+    setStep(2);
+  };
 
+  const handleSubmitTest = async () => {
+    if (getFilledQuestions() < discQuestions.length) {
+      alert("Preencha todas as questões corretamente antes de enviar.");
+      return;
+    }
+
+    setSubmitting(true);
     try {
       let totalD = 0, totalI = 0, totalS = 0, totalC = 0;
       const answersArray = Object.entries(answers).map(([questionId, scores]) => {
@@ -132,180 +136,219 @@ export default function PublicDISC() {
       };
 
       const dominant = Object.keys(profileScores).reduce((a, b) => profileScores[a] > profileScores[b] ? a : b);
-      const recommendedRoles = getRecommendedRoles(profileScores);
 
-      const discEntry = await base44.entities.DISCDiagnostic.create({
+      // Create diagnostic via API/Function or direct insert
+      const diagData = {
         workshop_id: session.workshop_id,
-        employee_id: session.employee_id,
-        candidate_id: session.candidate_id || null,
-        candidate_name: session.candidate_name,
+        candidate_name: formData.name,
         evaluation_type: 'self',
         answers: answersArray,
         profile_scores: profileScores,
         dominant_profile: dominant,
-        recommended_roles: recommendedRoles,
         completed: true,
         invite_id: session.id
-      });
+      };
+      
+      if (session.employee_id) diagData.employee_id = session.employee_id;
+      else diagData.candidate_id = "external_candidate";
 
-      if (session.candidate_id) {
-        try {
-          const profileMap = {
-            'executor_d': 'Executor (D)',
-            'comunicador_i': 'Comunicador (I)',
-            'planejador_s': 'Planejador (S)',
-            'analista_c': 'Analista (C)'
-          };
-          await base44.entities.Candidate.update(session.candidate_id, {
-            disc_status: 'concluido',
-            disc_result_id: discEntry.id,
-            disc_profile: profileMap[dominant] || dominant
-          });
-        } catch (e) {
-          console.error("Erro ao atualizar candidato:", e);
-        }
-      }
+      const diag = await base44.entities.DISCDiagnostic.create(diagData);
 
+      // Update session
       await base44.entities.DISCPublicSession.update(session.id, {
-        status: 'completed',
-        result_id: discEntry.id
+        status: "concluido",
+        completed_at: new Date().toISOString(),
+        candidate_name: formData.name,
+        candidate_phone: formData.phone,
+        candidate_email: formData.email,
+        result_id: diag.id
       });
 
-      setSession({ ...session, status: 'completed' });
-      toast.success("Teste concluído com sucesso!");
-    } catch (err) {
-      console.error(err);
-      toast.error("Erro ao enviar avaliação.");
+      setResult({ profileScores, dominant });
+      setStep(3);
+    } catch (error) {
+      console.error(error);
+      alert("Erro ao processar o teste. Tente novamente.");
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center bg-gray-50"><Loader2 className="w-8 h-8 animate-spin text-blue-600" /></div>;
-  }
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><Loader2 className="w-8 h-8 animate-spin text-indigo-600" /></div>;
 
-  if (!session) {
+  if (!session || !workshop) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-        <Card className="max-w-md w-full">
-          <CardContent className="pt-6 text-center text-gray-600">
-            Link inválido ou não encontrado.
-          </CardContent>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+        <Card className="w-full max-w-md text-center py-8">
+          <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+          <CardTitle>Link Inválido</CardTitle>
+          <CardDescription className="mt-2">Este link de teste DISC não é válido ou expirou.</CardDescription>
         </Card>
       </div>
     );
   }
 
-  if (session.status === 'completed') {
+  if (session.status === "concluido" && !result) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-        <Card className="max-w-md w-full text-center py-8">
-          <CardContent>
-            <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Avaliação Concluída</h2>
-            <p className="text-gray-600">Este teste já foi respondido. Obrigado!</p>
-          </CardContent>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+        <Card className="w-full max-w-md text-center py-10 shadow-lg border-t-4 border-t-indigo-500">
+          <CheckCircle2 className="w-16 h-16 mx-auto mb-6 text-green-500" />
+          <CardTitle className="text-2xl mb-2">Teste já realizado!</CardTitle>
+          <CardDescription className="text-base px-6">Você já completou este teste DISC. Agradecemos sua participação.</CardDescription>
         </Card>
       </div>
     );
   }
-
-  const filledCount = Object.keys(answers).filter(key => isQuestionComplete(parseInt(key))).length;
-  const progress = (filledCount / discQuestions.length) * 100;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 py-12 px-4">
+    <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-indigo-100 rounded-full mb-3">
-            <Brain className="w-6 h-6 text-indigo-600" />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900">Teste Comportamental DISC</h1>
-          <p className="text-gray-600 mt-2">
-            Olá, {session.candidate_name || "Colaborador"}! Responda ao teste abaixo com sinceridade.
-          </p>
+          {workshop.logo_url ? (
+            <img src={workshop.logo_url} alt="Logo" className="h-16 mx-auto mb-4 object-contain rounded" />
+          ) : (
+            <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Brain className="w-8 h-8 text-indigo-600" />
+            </div>
+          )}
+          <h1 className="text-3xl font-bold text-gray-900">Mapeamento de Perfil Comportamental</h1>
+          <p className="text-gray-600 mt-2">{workshop.name}</p>
         </div>
 
-        <Card className="bg-amber-50 border-2 border-amber-300 mb-6">
-          <CardContent className="p-4">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-amber-900">
-                <strong>⚠️ IMPORTANTE:</strong> Em cada conjunto, use os números de <strong>1 a 4 apenas UMA VEZ cada</strong>:
-                <br />• <strong>4</strong> = Característica que MAIS se identifica com você
-                <br />• <strong>3</strong> = Segunda característica
-                <br />• <strong>2</strong> = Terceira característica
-                <br />• <strong>1</strong> = Característica que MENOS se identifica
+        {step === 1 && (
+          <Card className="max-w-md mx-auto shadow-lg border-2 border-indigo-100">
+            <CardHeader className="bg-indigo-50/50 border-b border-indigo-100">
+              <CardTitle>Identificação</CardTitle>
+              <CardDescription>Confirme seus dados para iniciar o teste</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <form onSubmit={handleSubmitInfo} className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Nome Completo</Label>
+                  <Input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label>WhatsApp</Label>
+                  <Input required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="(00) 00000-0000" />
+                </div>
+                <div className="space-y-2">
+                  <Label>E-mail</Label>
+                  <Input type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                </div>
+                <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 mt-4">
+                  Iniciar Teste <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        )}
+
+        {step === 2 && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 sticky top-4 z-10">
+              <div className="flex justify-between text-sm font-medium text-slate-700 mb-2">
+                <span>Progresso: {getFilledQuestions()} de {discQuestions.length}</span>
+                <span>{((getFilledQuestions() / discQuestions.length) * 100).toFixed(0)}%</span>
+              </div>
+              <Progress value={(getFilledQuestions() / discQuestions.length) * 100} className="h-3" />
+              
+              <div className="mt-4 p-4 bg-amber-50 rounded-lg border border-amber-200 text-sm text-amber-900">
+                <strong>Regra Importante:</strong> Em cada conjunto, dê notas de <strong>1 a 4</strong> para as alternativas. 
+                Use cada número apenas UMA vez por conjunto (4 = Mais parece com você, 1 = Menos parece).
               </div>
             </div>
-          </CardContent>
-        </Card>
 
-        <div className="bg-white rounded-lg p-4 border-2 border-indigo-200 mb-6 sticky top-0 z-10 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700">Progresso: {filledCount}/{discQuestions.length} conjuntos</span>
-            <span className="text-sm text-gray-600">{progress.toFixed(0)}%</span>
+            <div className="space-y-6">
+              {discQuestions.map((q, idx) => {
+                 const isComplete = isQuestionComplete(q.id);
+                 return (
+                   <Card key={q.id} className={`border-2 transition-colors ${isComplete ? 'border-green-300' : 'border-slate-200 hover:border-indigo-300'}`}>
+                     <CardHeader className="bg-slate-50 border-b border-slate-100 pb-4">
+                       <CardTitle className="text-base flex justify-between">
+                         <span>{idx + 1}. {q.question}</span>
+                         {isComplete && <CheckCircle2 className="w-5 h-5 text-green-500" />}
+                       </CardTitle>
+                     </CardHeader>
+                     <CardContent className="pt-4">
+                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                         {[
+                           { key: 'd', traits: q.traits.d },
+                           { key: 'i', traits: q.traits.i },
+                           { key: 's', traits: q.traits.s },
+                           { key: 'c', traits: q.traits.c }
+                         ].map((opt, i) => (
+                           <div key={opt.key} className="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                             <div className="font-semibold text-slate-700 text-sm mb-2">Opção {String.fromCharCode(65 + i)}</div>
+                             <p className="text-xs text-slate-600 mb-3 min-h-[40px]">{opt.traits}</p>
+                             <Input
+                               type="number"
+                               min="1" max="4"
+                               placeholder="1-4"
+                               className="text-center font-bold"
+                               value={answers[q.id]?.[opt.key] || ""}
+                               onChange={(e) => updateAnswer(q.id, opt.key, e.target.value)}
+                             />
+                           </div>
+                         ))}
+                       </div>
+                     </CardContent>
+                   </Card>
+                 )
+              })}
+            </div>
+
+            <div className="flex justify-between pt-4">
+              <Button variant="outline" onClick={() => setStep(1)}><ArrowLeft className="w-4 h-4 mr-2" /> Voltar</Button>
+              <Button 
+                onClick={handleSubmitTest} 
+                disabled={submitting || getFilledQuestions() < discQuestions.length}
+                className="bg-indigo-600 hover:bg-indigo-700 px-8"
+              >
+                {submitting ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : "Finalizar Teste"}
+              </Button>
+            </div>
           </div>
-          <Progress value={progress} className="h-2" />
-        </div>
+        )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {discQuestions.map((question) => {
-            const isComplete = isQuestionComplete(question.id);
-            return (
-              <Card key={question.id} className={`border-2 ${isComplete ? 'border-green-300 bg-green-50' : 'border-gray-300'}`}>
-                <CardHeader className={`${isComplete ? 'bg-gradient-to-r from-green-50 to-emerald-50' : 'bg-gradient-to-r from-indigo-50 to-purple-50'}`}>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">Conjunto {question.id}</CardTitle>
-                    {isComplete && (
-                      <div className="flex items-center gap-1 text-green-600">
-                        <CheckCircle2 className="w-5 h-5" />
-                        <span className="text-sm font-semibold">Completo</span>
+        {step === 3 && result && (
+          <div className="animate-in zoom-in-95 duration-500">
+            <Card className="max-w-2xl mx-auto overflow-hidden shadow-2xl border-0">
+              <div className="bg-indigo-600 p-10 text-center text-white">
+                <CheckCircle2 className="w-16 h-16 mx-auto mb-4 text-green-300" />
+                <h2 className="text-3xl font-bold mb-2">Teste Concluído!</h2>
+                <p className="text-indigo-100">Obrigado pela sua participação, {formData.name}.</p>
+              </div>
+              <CardContent className="p-8">
+                <div className="text-center mb-8">
+                  <h3 className="text-lg text-slate-500 font-medium uppercase tracking-wider mb-2">Seu Perfil Predominante é</h3>
+                  <div className="text-4xl font-black text-indigo-900 inline-block px-6 py-2 bg-indigo-50 rounded-xl border-2 border-indigo-100">
+                    {profileInfo[result.dominant].title}
+                  </div>
+                  <p className="mt-4 text-slate-600 text-sm leading-relaxed max-w-lg mx-auto">
+                    {profileInfo[result.dominant].description}
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-slate-700">Distribuição do seu Perfil:</h4>
+                  {Object.entries(result.profileScores)
+                    .sort((a,b) => b[1] - a[1])
+                    .map(([key, score]) => (
+                    <div key={key}>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="font-medium text-slate-700">{profileInfo[key].title}</span>
+                        <span className="font-bold">{score.toFixed(1)}%</span>
                       </div>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {[
-                      { key: 'd', text: question.traits.d, label: 'Opção A', color: 'red' },
-                      { key: 'i', text: question.traits.i, label: 'Opção B', color: 'yellow' },
-                      { key: 's', text: question.traits.s, label: 'Opção C', color: 'green' },
-                      { key: 'c', text: question.traits.c, label: 'Opção D', color: 'blue' }
-                    ].map((trait, index) => {
-                      const bgColors = { red: 'bg-red-100', yellow: 'bg-yellow-100', green: 'bg-green-100', blue: 'bg-blue-100' };
-                      const badgeColors = { red: 'bg-red-500', yellow: 'bg-yellow-500', green: 'bg-green-500', blue: 'bg-blue-500' };
-                      return (
-                        <div key={index} className={`${bgColors[trait.color]} rounded-lg p-4 border-2 border-gray-300`}>
-                          <div className="flex items-center gap-2 mb-3">
-                            <div className={`w-8 h-8 ${badgeColors[trait.color]} rounded-full flex items-center justify-center text-white font-bold text-sm`}>
-                              {String.fromCharCode(65 + index)}
-                            </div>
-                            <span className="font-semibold text-gray-900 text-sm">{trait.label}</span>
-                          </div>
-                          <p className="text-xs text-gray-700 mb-3 min-h-[48px] leading-tight">{trait.text}</p>
-                          <Input
-                            type="number" min="1" max="4" placeholder="1-4"
-                            value={answers[question.id]?.[trait.key] || ""}
-                            onChange={(e) => updateAnswer(question.id, trait.key, e.target.value)}
-                            className="text-center text-xl font-bold h-12"
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-          
-          <div className="flex justify-center pt-6">
-            <Button type="submit" disabled={submitting || filledCount < discQuestions.length} className="bg-indigo-600 hover:bg-indigo-700 text-lg px-12 py-6 rounded-full shadow-lg">
-              {submitting ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Processando...</> : <><Brain className="w-5 h-5 mr-2" /> Finalizar Teste DISC</>}
-            </Button>
+                      <Progress value={score} className="h-2" style={{
+                         '--progress-background': profileInfo[key].color
+                      }} />
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </form>
+        )}
       </div>
     </div>
   );

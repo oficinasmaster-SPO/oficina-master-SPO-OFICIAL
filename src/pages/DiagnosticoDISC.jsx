@@ -275,8 +275,10 @@ export default function DiagnosticoDISC() {
         workshop_id: finalWorkshopId,
         employee_id: selectedEmployee || null,
         candidate_name: candidateName || null,
+        session_type: selectedEmployee ? "colaborador_interno" : "candidato_externo",
         token: uuid,
-        status: 'pending'
+        status: 'pendente',
+        created_at: new Date().toISOString()
       });
       
       const link = `${window.location.origin}/PublicDISC?token=${uuid}`;
@@ -330,9 +332,12 @@ export default function DiagnosticoDISC() {
               <History className="w-4 h-4 mr-2" />
               Histórico
             </Button>
-            <Button onClick={() => setIsInviteModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-700">
-              <LinkIcon className="w-4 h-4 mr-2" />
-              Gerar Link
+            <Button onClick={generateInviteLink} disabled={isGeneratingLink} className="bg-indigo-600 hover:bg-indigo-700">
+              {isGeneratingLink ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <LinkIcon className="w-4 h-4 mr-2" />}
+              Gerar Link Rápido
+            </Button>
+            <Button onClick={() => setIsInviteModalOpen(true)} variant="secondary">
+              Convite Específico
             </Button>
           </div>
         </div>
