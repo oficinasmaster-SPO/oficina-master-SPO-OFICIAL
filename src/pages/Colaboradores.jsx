@@ -436,38 +436,42 @@ export default function Colaboradores() {
                                 Sugestões de IA
                               </DropdownMenuItem>
 
-                              <DropdownMenuSeparator className="bg-gray-100" />
+                              {employee.user_id !== workshop?.owner_id && (
+                                <>
+                                  <DropdownMenuSeparator className="bg-gray-100" />
 
-                              <DropdownMenuItem 
-                                onClick={async () => {
-                                  const allowed = await checkPermission('employees', 'delete', {
-                                    onDenied: () => toast.error('Sem permissão para excluir')
-                                  });
-                                  if (!allowed) return;
-                                  
-                                  if (confirm(`EXCLUIR ${employee.full_name}? Ação irreversível!`)) {
-                                    try {
-                                      const result = await base44.functions.invoke('deleteEmployeeCascade', {
-                                        employee_id: employee.id
+                                  <DropdownMenuItem 
+                                    onClick={async () => {
+                                      const allowed = await checkPermission('employees', 'delete', {
+                                        onDenied: () => toast.error('Sem permissão para excluir')
                                       });
+                                      if (!allowed) return;
+                                      
+                                      if (confirm(`EXCLUIR ${employee.full_name}? Ação irreversível!`)) {
+                                        try {
+                                          const result = await base44.functions.invoke('deleteEmployeeCascade', {
+                                            employee_id: employee.id
+                                          });
 
-                                      if (!result.data?.success) {
-                                        toast.error(result.data?.error || 'Backend negou a exclusão');
-                                        return;
+                                          if (!result.data?.success) {
+                                            toast.error(result.data?.error || 'Backend negou a exclusão');
+                                            return;
+                                          }
+
+                                          queryClient.invalidateQueries({ queryKey: ['employees'] });
+                                          toast.success('Colaborador e acesso excluídos');
+                                        } catch (error) {
+                                          toast.error('Erro ao excluir: ' + (error.message || 'desconhecido'));
+                                        }
                                       }
-
-                                      queryClient.invalidateQueries({ queryKey: ['employees'] });
-                                      toast.success('Colaborador e acesso excluídos');
-                                    } catch (error) {
-                                      toast.error('Erro ao excluir: ' + (error.message || 'desconhecido'));
-                                    }
-                                  }
-                                }}
-                                className="cursor-pointer rounded-lg text-red-600 focus:text-red-700 focus:bg-red-50 hover:bg-red-50 py-2 transition-colors"
-                              >
-                                <Trash2 className="w-4 h-4 mr-2" />
-                                Excluir
-                              </DropdownMenuItem>
+                                    }}
+                                    className="cursor-pointer rounded-lg text-red-600 focus:text-red-700 focus:bg-red-50 hover:bg-red-50 py-2 transition-colors"
+                                  >
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    Excluir
+                                  </DropdownMenuItem>
+                                </>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
