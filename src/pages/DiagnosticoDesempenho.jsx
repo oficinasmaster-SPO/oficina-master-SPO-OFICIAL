@@ -11,6 +11,8 @@ import { Loader2, User, Award, Brain, History } from "lucide-react";
 import { technicalCriteria, emotionalCriteria, calculateClassification } from "../components/performance/PerformanceCriteria";
 import { toast } from "sonner";
 import TrackingWrapper from "@/components/shared/TrackingWrapper";
+import EvaluationGate from "@/components/evaluations/EvaluationGate";
+import { useEvaluationPermissions } from "@/components/hooks/useEvaluationPermissions";
 
 export default function DiagnosticoDesempenho() {
   const navigate = useNavigate();
@@ -29,6 +31,7 @@ export default function DiagnosticoDesempenho() {
   const [emotionalScores, setEmotionalScores] = useState(
     Object.fromEntries(emotionalCriteria.map(c => [c.id, 5]))
   );
+  const { canEvaluate, isLeader, currentUserEmployee } = useEvaluationPermissions();
 
   useEffect(() => {
     loadData();
@@ -69,6 +72,10 @@ export default function DiagnosticoDesempenho() {
       toast.error("Selecione um colaborador");
       return;
     }
+    if (!canEvaluate(selectedEmployee)) {
+      toast.error("Acesso negado: Você não tem permissão para avaliar este colaborador.");
+      return;
+    }
 
     setSubmitting(true);
 
@@ -91,6 +98,7 @@ export default function DiagnosticoDesempenho() {
         emotional_average: Number(emotionalAvg.toFixed(2)),
         classification: classification,
         recommendation: recommendation,
+        evaluation_type: (currentUserEmployee && currentUserEmployee.id === selectedEmployee) ? 'self' : 'manager',
         completed: true
       });
 
@@ -152,27 +160,10 @@ export default function DiagnosticoDesempenho() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
-                <Label>Colaborador *</Label>
-                <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Escolha um colaborador..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {employees.length === 0 ? (
-                      <SelectItem value="none" disabled>
-                        Nenhum colaborador cadastrado
-                      </SelectItem>
-                    ) : (
-                      employees.map((emp) => (
-                        <SelectItem key={emp.id} value={emp.id}>
-                          {emp.full_name} - {emp.position}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
+              <EvaluationGate 
+                selectedEmployee={selectedEmployee} 
+                onSelectEmployee={setSelectedEmployee} 
+              />
 
               <div className="bg-indigo-50 rounded-lg p-4 space-y-2">
                 <h3 className="font-semibold text-indigo-900">Como funciona a avaliação:</h3>

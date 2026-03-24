@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, BarChart3, Users, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import OrganizationalClimateAnalyzer from "@/components/rh/OrganizationalClimateAnalyzer";
+import RestrictedAccess from "@/components/auth/RestrictedAccess";
 import AITrainingSuggestions from "@/components/rh/AITrainingSuggestions";
 import NPSDashboard from "@/components/nps/NPSDashboard";
 
@@ -67,8 +68,9 @@ export default function AnalisesRH() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-8 px-4">
-      <div className="max-w-7xl mx-auto">
+    <RestrictedAccess allowedRoles={['socio', 'socio_interno', 'diretor', 'supervisor_loja', 'gerente', 'rh']}>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-8 px-4">
+        <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Análises Inteligentes de RH</h1>
           <p className="text-gray-600">Insights gerados por IA para decisões estratégicas</p>

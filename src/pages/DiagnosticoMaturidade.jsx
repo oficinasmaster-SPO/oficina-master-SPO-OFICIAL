@@ -13,6 +13,8 @@ import { Input } from "@/components/ui/input";
 import { maturityQuestions, answerMapping } from "../components/maturity/MaturityQuestions";
 import { toast } from "sonner";
 import TrackingWrapper from "@/components/shared/TrackingWrapper";
+import EvaluationGate from "@/components/evaluations/EvaluationGate";
+import { useEvaluationPermissions } from "@/components/hooks/useEvaluationPermissions";
 
 export default function DiagnosticoMaturidade() {
   const navigate = useNavigate();
@@ -29,6 +31,8 @@ export default function DiagnosticoMaturidade() {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [generatingInvite, setGeneratingInvite] = useState(false);
   const [candidateName, setCandidateName] = useState("");
+  
+  const { canEvaluate, isLeader, currentUserEmployee } = useEvaluationPermissions();
 
   useEffect(() => {
     loadData();
@@ -126,6 +130,10 @@ export default function DiagnosticoMaturidade() {
   };
 
   const handleSubmit = async () => {
+    if (!canEvaluate(selectedEmployee)) {
+      toast.error("Acesso negado: Você não tem permissão para avaliar este colaborador.");
+      return;
+    }
     setIsSubmitting(true);
     try {
       const scores = { bebe: 0, crianca: 0, adolescente: 0, adulto: 0 };
@@ -151,7 +159,7 @@ export default function DiagnosticoMaturidade() {
         answers: answersArray,
         maturity_level: dominantLevel,
         maturity_scores: scores,
-        evaluation_type: 'manager',
+        evaluation_type: (currentUserEmployee && currentUserEmployee.id === selectedEmployee) ? 'self' : 'manager',
         completed: true
       });
       
@@ -314,27 +322,13 @@ export default function DiagnosticoMaturidade() {
                 </div>
                 <div className="flex-1">
                   <Label className="text-lg font-semibold text-gray-900 mb-3 block">
-                    Selecione o(a) Colaborador(a) para Avaliar
+                    Configuração da Avaliação
                   </Label>
-                  <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Escolha um colaborador..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {employees.length === 0 ? (
-                        <SelectItem value="none" disabled>
-                          Nenhum colaborador cadastrado
-                        </SelectItem>
-                      ) : (
-                        employees.map((emp) => (
-                          <SelectItem key={emp.id} value={emp.id}>
-                            {emp.full_name} - {emp.position}
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-sm text-gray-500 mt-2">
+                  <EvaluationGate 
+                    selectedEmployee={selectedEmployee} 
+                    onSelectEmployee={setSelectedEmployee} 
+                  />
+                  <p className="text-sm text-gray-500 mt-4">
                     Esta avaliação ajudará a identificar o nível de maturidade profissional e definir a melhor forma de gestão.
                   </p>
                 </div>

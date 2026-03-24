@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import ActionPlanCard from "../components/diagnostics/ActionPlanCard";
 import ActionPlanDetails from "../components/diagnostics/ActionPlanDetails";
 import ActionPlanFeedbackModal from "../components/diagnostics/ActionPlanFeedbackModal";
+import { useEvaluationPermissions } from "@/components/hooks/useEvaluationPermissions";
 
 export default function ResultadoDISC() {
   const navigate = useNavigate();
@@ -22,6 +23,7 @@ export default function ResultadoDISC() {
   const [showActionPlanDetails, setShowActionPlanDetails] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const queryClient = useQueryClient();
+  const { isLeader, currentUserEmployee, loading: permissionsLoading } = useEvaluationPermissions();
 
   const { data: actionPlan } = useQuery({
     queryKey: ['action-plan', diagnostic?.id],
@@ -103,6 +105,8 @@ export default function ResultadoDISC() {
       const employees = await base44.entities.Employee.list();
       const emp = employees.find(e => e.id === currentDiagnostic.employee_id);
       setEmployee(emp);
+      
+      // Verification of access happens in the render block when permissions finish loading
 
       // Carregar comparação de equipe se tiver team_name
       if (currentDiagnostic.team_name) {
@@ -154,7 +158,7 @@ export default function ResultadoDISC() {
     }
   };
 
-  if (loading) {
+  if (loading || permissionsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
@@ -163,6 +167,20 @@ export default function ResultadoDISC() {
   }
 
   if (!diagnostic) return null;
+
+  // Security Check: Only leaders or the evaluated person themselves can see the result
+  if (!isLeader && currentUserEmployee?.id !== diagnostic.employee_id) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center p-4">
+        <Card className="max-w-md w-full border-red-200 bg-red-50">
+          <CardContent className="pt-6 flex flex-col items-center text-center">
+            <h2 className="text-xl font-bold text-red-900 mb-2">Acesso Restrito</h2>
+            <p className="text-red-700">Você não tem permissão para ver o resultado de outros colaboradores.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const scores = diagnostic.profile_scores;
   const dominantProfile = profileInfo[diagnostic.dominant_profile];

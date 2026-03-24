@@ -15,6 +15,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { discQuestions } from "../components/disc/DISCQuestions";
 import { toast } from "sonner";
 import TrackingWrapper from "@/components/shared/TrackingWrapper";
+import EvaluationGate from "@/components/evaluations/EvaluationGate";
+import { useEvaluationPermissions } from "@/components/hooks/useEvaluationPermissions";
 
 export default function DiagnosticoDISC() {
   const navigate = useNavigate();
@@ -33,6 +35,8 @@ export default function DiagnosticoDISC() {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [generatingInvite, setGeneratingInvite] = useState(false);
   const [candidateName, setCandidateName] = useState("");
+
+  const { canEvaluate, isLeader: hasLeaderPerms, currentUserEmployee } = useEvaluationPermissions();
 
   useEffect(() => {
     if (!isWorkshopLoading) {
@@ -144,6 +148,11 @@ export default function DiagnosticoDISC() {
       return;
     }
 
+    if (!canEvaluate(selectedEmployee)) {
+      toast.error("Acesso negado: Você não tem permissão para avaliar este colaborador.");
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -192,6 +201,7 @@ export default function DiagnosticoDISC() {
         workshop_id: finalWorkshopId || null,
         is_leader: isLeader,
         team_name: teamName || null,
+        evaluation_type: (currentUserEmployee && currentUserEmployee.id === selectedEmployee) ? 'self' : 'manager',
         answers: answersArray,
         profile_scores: profileScores,
         dominant_profile: dominant,
@@ -425,40 +435,36 @@ export default function DiagnosticoDISC() {
               <CardDescription>Selecione o colaborador e defina se é líder</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label>Colaborador *</Label>
-                  <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o colaborador..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {employees.map((emp) => (
-                        <SelectItem key={emp.id} value={emp.id}>
-                          {emp.full_name} - {emp.position}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Nome da Equipe (opcional)</Label>
-                  <Input
-                    placeholder="Ex: Equipe de Vendas"
-                    value={teamName}
-                    onChange={(e) => setTeamName(e.target.value)}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                <div className="md:col-span-2">
+                  <EvaluationGate 
+                    selectedEmployee={selectedEmployee} 
+                    onSelectEmployee={setSelectedEmployee} 
                   />
                 </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="is-leader"
-                  checked={isLeader}
-                  onCheckedChange={setIsLeader}
-                />
-                <Label htmlFor="is-leader" className="font-normal">
-                  Este colaborador é líder de equipe
-                </Label>
+                
+                {hasLeaderPerms && (
+                  <>
+                    <div className="mt-4">
+                      <Label>Nome da Equipe (opcional)</Label>
+                      <Input
+                        placeholder="Ex: Equipe de Vendas"
+                        value={teamName}
+                        onChange={(e) => setTeamName(e.target.value)}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 pb-2 mt-4">
+                      <Checkbox
+                        id="is-leader"
+                        checked={isLeader}
+                        onCheckedChange={setIsLeader}
+                      />
+                      <Label htmlFor="is-leader" className="font-normal cursor-pointer">
+                        Este colaborador é líder de equipe
+                      </Label>
+                    </div>
+                  </>
+                )}
               </div>
             </CardContent>
           </Card>
