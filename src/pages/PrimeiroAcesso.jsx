@@ -82,7 +82,7 @@ export default function PrimeiroAcesso() {
     switch (step) {
       case "validating":
         return (
-          <div className="text-center animate-in fade-in duration-300">
+          <div className="text-center animate-in fade-in duration-500 delay-150 fill-mode-both">
             <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
             <p className="text-gray-900 font-bold text-xl mb-2">Validando convite...</p>
             <p className="text-gray-600">Aguarde um momento.</p>
