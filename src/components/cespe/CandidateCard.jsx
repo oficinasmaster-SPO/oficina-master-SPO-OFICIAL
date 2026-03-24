@@ -91,11 +91,18 @@ export default function CandidateCard({ candidate }) {
       {/* Nome */}
       <div className="w-[180px]">
         <div className="flex items-center gap-2 mb-1">
-          <h3 className="font-semibold text-gray-900 text-sm">{candidate.full_name}</h3>
+          <h3 className="font-semibold text-gray-900 text-sm truncate" title={candidate.full_name}>{candidate.full_name}</h3>
         </div>
-        <Badge className={`${statusColors[candidate.status]} text-xs`}>
-          {statusLabels[candidate.status]}
-        </Badge>
+        <div className="flex gap-1 flex-wrap">
+          <Badge className={`${statusColors[candidate.status]} text-[10px] px-1.5 py-0`}>
+            {statusLabels[candidate.status]}
+          </Badge>
+          {candidate.disc_status === 'concluido' && (
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-green-200 text-green-700 bg-green-50" title={`DISC: ${candidate.disc_profile}`}>
+              DISC ✓
+            </Badge>
+          )}
+        </div>
       </div>
 
       {/* Cargo */}

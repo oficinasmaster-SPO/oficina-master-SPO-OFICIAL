@@ -137,6 +137,7 @@ export default function PublicDISC() {
       const discEntry = await base44.entities.DISCDiagnostic.create({
         workshop_id: session.workshop_id,
         employee_id: session.employee_id,
+        candidate_id: session.candidate_id || null,
         candidate_name: session.candidate_name,
         evaluation_type: 'self',
         answers: answersArray,
@@ -146,6 +147,24 @@ export default function PublicDISC() {
         completed: true,
         invite_id: session.id
       });
+
+      if (session.candidate_id) {
+        try {
+          const profileMap = {
+            'executor_d': 'Executor (D)',
+            'comunicador_i': 'Comunicador (I)',
+            'planejador_s': 'Planejador (S)',
+            'analista_c': 'Analista (C)'
+          };
+          await base44.entities.Candidate.update(session.candidate_id, {
+            disc_status: 'concluido',
+            disc_result_id: discEntry.id,
+            disc_profile: profileMap[dominant] || dominant
+          });
+        } catch (e) {
+          console.error("Erro ao atualizar candidato:", e);
+        }
+      }
 
       await base44.entities.DISCPublicSession.update(session.id, {
         status: 'completed',
