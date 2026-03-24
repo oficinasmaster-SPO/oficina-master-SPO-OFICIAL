@@ -240,7 +240,7 @@ export default function DiagnosticoDISC() {
     
     if (top1 === "planejador_s" || top2 === "planejador_s") {
       if (scores.planejador_s > 30) {
-        roles.push("Coordenador Administrativo", "Supervisor de Processos", "Planejador");
+        roles.push("Coordenador Administrativo", "Supervisor de Processos", "Planejador", "Gestor de Qualidade");
       }
     }
     
