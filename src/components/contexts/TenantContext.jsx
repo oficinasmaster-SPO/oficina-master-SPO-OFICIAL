@@ -92,8 +92,8 @@ export function TenantProvider({ children }) {
                  setCompany(compOrWorkshop);
              } else if (!compOrWorkshop && !cancelled) {
                  setCompany(null);
-                 setSelectedCompanyId(null);
-                 localStorage.removeItem('selected_company_id');
+                 // Não removemos do localStorage nem setamos null no state
+                 // para evitar loop infinito caso o Workshop não seja retornado (ex: RLS, falha de rede)
              }
           } else {
              if (!cancelled) setCompany(null);
