@@ -27,11 +27,8 @@ export default function ConvidarColaborador() {
     name: "",
     email: "",
     telefone: "",
-    position: "",
-    area: "",
-    job_role: "outros",
+    job_role: "",
     profile_id: "",
-    workshop_id: "",
     role: "user"
   });
 
@@ -74,11 +71,8 @@ export default function ConvidarColaborador() {
       name: employee.full_name || "",
       email: employee.email || "",
       telefone: employee.telefone || "",
-      position: employee.position || "",
-      area: employee.area || "",
       job_role: employee.job_role || "outros",
       profile_id: employee.profile_id || "",
-      workshop_id: employee.workshop_id || workshop?.id || "",
       role: "user"
     });
   };
