@@ -3,6 +3,7 @@
 export const jobRoles = [
   // Gestão
   { value: "socio", label: "Sócio", category: "gestao", level: "executive" },
+  { value: "socio_interno", label: "Sócio Interno", category: "gestao", level: "executive" },
   { value: "diretor", label: "Diretor", category: "gestao", level: "executive" },
   { value: "supervisor_loja", label: "Supervisor de Loja", category: "gestao", level: "management" },
   { value: "gerente", label: "Gerente", category: "gestao", level: "management" },
