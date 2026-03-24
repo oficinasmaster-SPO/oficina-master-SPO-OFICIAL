@@ -67,7 +67,7 @@ export const sidebarStructure = [
       { name: "IA Analytics", description: "Previsões e recomendações" },
       { name: "Treinamento de Vendas", description: "Cenários com IA" },
       { name: "Diagnóstico Comercial", description: "Processos comerciais" },
-      { name: "Selecionar Diagnóstico", description: "Central" },
+      { name: "Central de Avaliações", description: "Central" },
       { name: "Histórico", description: "Todos diagnósticos" },
     ],
   },

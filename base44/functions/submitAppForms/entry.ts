@@ -52,12 +52,14 @@ Deno.serve(async (req) => {
     }
 
     if (form_type === 'workload_diagnostic') {
-        const { workshop_id, answers, overall_health, average_score } = body;
+        const { workshop_id, answers, overall_health, average_score, workload_data } = body;
 
-        const workload_data = [
+        const default_workload = [
              { position_title: "Mecânico", weekly_hours_worked: 45, ideal_weekly_hours: 44 },
              { position_title: "Gerente", weekly_hours_worked: 50, ideal_weekly_hours: 40 }
         ];
+
+        const final_workload = workload_data || default_workload;
 
         const diagnostic = await base44.asServiceRole.entities.WorkloadDiagnostic.create({
             workshop_id,
@@ -65,7 +67,7 @@ Deno.serve(async (req) => {
             period_end: new Date().toISOString(),
             overall_health,
             average_score,
-            workload_data,
+            workload_data: final_workload,
             analysis_results: {
                 overloaded_employees: [],
                 underutilized_employees: [],

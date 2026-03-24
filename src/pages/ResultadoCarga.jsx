@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import ActionPlanCard from "../components/diagnostics/ActionPlanCard";
 import ActionPlanDetails from "../components/diagnostics/ActionPlanDetails";
 import ActionPlanFeedbackModal from "../components/diagnostics/ActionPlanFeedbackModal";
+import OrgChartCarga from "../components/diagnostics/OrgChartCarga";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function ResultadoCarga() {
   const navigate = useNavigate();
@@ -204,54 +206,75 @@ export default function ResultadoCarga() {
           </CardContent>
         </Card>
 
-        {/* Gráfico de Utilização */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Taxa de Utilização por Colaborador</CardTitle>
-            <CardDescription>Comparação entre horas trabalhadas e capacidade ideal</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={400}>
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
-                <YAxis label={{ value: 'Utilização (%)', angle: -90, position: 'insideLeft' }} />
-                <Tooltip 
-                  formatter={(value, name) => {
-                    if (name === "utilizacao") return [`${value.toFixed(1)}%`, "Utilização"];
-                    if (name === "ideal") return [`${value}%`, "Ideal"];
-                    return [value, name];
-                  }}
-                />
-                <Legend />
-                <Bar dataKey="ideal" fill="#94a3b8" name="Capacidade Ideal (100%)" />
-                <Bar dataKey="utilizacao" name="Utilização Atual">
-                  {chartData.map((entry, index) => (
-                    <Cell 
-                      key={`cell-${index}`}
-                      fill={entry.utilizacao > 110 ? "#ef4444" : entry.utilizacao < 70 ? "#3b82f6" : "#22c55e"}
+        {/* Tabs de Visões */}
+        <Tabs defaultValue="grafico" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-6 shadow-sm border border-slate-200">
+            <TabsTrigger value="grafico" className="data-[state=active]:bg-orange-100 data-[state=active]:text-orange-900">Visão Gráfica</TabsTrigger>
+            <TabsTrigger value="organograma" className="data-[state=active]:bg-orange-100 data-[state=active]:text-orange-900">Organograma de Carga</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="grafico">
+            <Card>
+              <CardHeader>
+                <CardTitle>Taxa de Utilização por Colaborador</CardTitle>
+                <CardDescription>Comparação entre horas trabalhadas e capacidade ideal</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={400}>
+                  <BarChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
+                    <YAxis label={{ value: 'Utilização (%)', angle: -90, position: 'insideLeft' }} />
+                    <Tooltip 
+                      formatter={(value, name) => {
+                        if (name === "utilizacao") return [`${value.toFixed(1)}%`, "Utilização"];
+                        if (name === "ideal") return [`${value}%`, "Ideal"];
+                        return [value, name];
+                      }}
                     />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+                    <Legend />
+                    <Bar dataKey="ideal" fill="#94a3b8" name="Capacidade Ideal (100%)" />
+                    <Bar dataKey="utilizacao" name="Utilização Atual">
+                      {chartData.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`}
+                          fill={entry.utilizacao > 110 ? "#ef4444" : entry.utilizacao < 70 ? "#3b82f6" : "#22c55e"}
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
 
-            <div className="flex flex-wrap gap-4 mt-4 justify-center">
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-green-500 rounded" />
-                <span className="text-sm">Equilibrado (70-110%)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-red-500 rounded" />
-                <span className="text-sm">Sobrecarregado (&gt;110%)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-blue-500 rounded" />
-                <span className="text-sm">Subutilizado (&lt;70%)</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+                <div className="flex flex-wrap gap-4 mt-4 justify-center">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-green-500 rounded" />
+                    <span className="text-sm">Equilibrado (70-110%)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-red-500 rounded" />
+                    <span className="text-sm">Sobrecarregado (&gt;110%)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-blue-500 rounded" />
+                    <span className="text-sm">Subutilizado (&lt;70%)</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="organograma">
+            <Card>
+              <CardHeader>
+                <CardTitle>Organograma de Saturação</CardTitle>
+                <CardDescription>Visão hierárquica baseada nas informações do cadastro da oficina</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <OrgChartCarga employees={employees} diagnosticData={diagnostic} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
 
         {/* Colaboradores Sobrecarregados */}
         {diagnostic.analysis_results?.overloaded_employees?.length > 0 && (

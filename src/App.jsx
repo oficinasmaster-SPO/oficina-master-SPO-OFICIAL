@@ -15,6 +15,8 @@ import { TenantProvider } from '@/components/contexts/TenantContext';
 import GestaoTenants from '@/pages/GestaoTenants';
 import CompletarPerfil from '@/pages/CompletarPerfil';
 import DescricaoCargos from '@/pages/DescricaoCargos';
+import CentralAvaliacoes from '@/pages/CentralAvaliacoes';
+import MatrizDesempenho from '@/pages/MatrizDesempenho';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -101,6 +103,16 @@ const AuthenticatedApp = () => {
       <Route path="/DescricaoCargos" element={
         <LayoutWrapper currentPageName="DescricaoCargos">
           <DescricaoCargos />
+        </LayoutWrapper>
+      } />
+      <Route path="/CentralAvaliacoes" element={
+        <LayoutWrapper currentPageName="CentralAvaliacoes">
+          <CentralAvaliacoes />
+        </LayoutWrapper>
+      } />
+      <Route path="/MatrizDesempenho" element={
+        <LayoutWrapper currentPageName="MatrizDesempenho">
+          <MatrizDesempenho />
         </LayoutWrapper>
       } />
       {Object.entries(Pages).map(([path, Page]) => (
