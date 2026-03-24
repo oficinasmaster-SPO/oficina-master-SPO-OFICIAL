@@ -166,7 +166,7 @@ export default function PrimeiroAcesso() {
 
       case "error":
         return (
-          <div className="text-center">
+          <div className="text-center animate-in fade-in zoom-in duration-500 delay-150 fill-mode-both">
             <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
               <AlertCircle className="w-8 h-8 text-red-600" />
             </div>
