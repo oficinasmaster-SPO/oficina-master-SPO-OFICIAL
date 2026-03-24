@@ -56,9 +56,27 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
       if (user.role !== 'admin') {
         try {
           const invites = await base44.entities.EmployeeInvite.filter({ email: user.email });
-          const pendingInvite = invites.find(inv => inv.status === 'pendente' || inv.status === 'enviado');
           
-          if (pendingInvite) {
+          // Filtrar convites válidos (pendentes e não expirados)
+          const pendingInvites = invites.filter(inv => {
+            const isPending = inv.status === 'pendente' || inv.status === 'enviado';
+            if (!isPending) return false;
+            
+            // Verificar se não expirou
+            if (inv.expires_at) {
+              const expiresAt = new Date(inv.expires_at);
+              if (expiresAt < new Date()) {
+                return false; // Expirou, ignorar
+              }
+            }
+            return true;
+          });
+          
+          if (pendingInvites.length > 0) {
+            // Pegar o convite mais recente
+            pendingInvites.sort((a, b) => new Date(b.created_date || 0) - new Date(a.created_date || 0));
+            const pendingInvite = pendingInvites[0];
+            
             // Se tem convite pendente, força o fluxo de aceite de convite (PrimeiroAcesso) e trava o resto
             console.log("🚨 Detectado convite pendente. Redirecionando para PrimeiroAcesso", pendingInvite);
             window.location.href = `/PrimeiroAcesso?token=${pendingInvite.invite_token}&profile_id=${pendingInvite.profile_id || pendingInvite.metadata?.profile_id || ''}`;
