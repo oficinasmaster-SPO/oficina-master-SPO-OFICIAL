@@ -141,10 +141,10 @@ export default function DashboardOverview() {
   });
   
   const maturityChartData = [
-    { name: 'Bebê', value: maturityCounts.bebe, color: '#fbbf24' },
-    { name: 'Criança', value: maturityCounts.crianca, color: '#60a5fa' },
-    { name: 'Adolescente', value: maturityCounts.adolescente, color: '#a78bfa' },
-    { name: 'Adulto', value: maturityCounts.adulto, color: '#34d399' },
+    { name: 'Júnior', value: maturityCounts.bebe, color: '#fbbf24' },
+    { name: 'Pleno', value: maturityCounts.crianca, color: '#60a5fa' },
+    { name: 'Sênior', value: maturityCounts.adolescente, color: '#a78bfa' },
+    { name: 'Master', value: maturityCounts.adulto, color: '#34d399' },
   ].filter(d => d.value > 0);
 
   // COEX Expirations (Next 90 days)
