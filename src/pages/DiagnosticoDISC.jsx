@@ -123,7 +123,7 @@ export default function DiagnosticoDISC() {
   };
 
   const validateAnswers = () => {
-    for (let i = 1; i <= 10; i++) {
+    for (let i = 1; i <= discQuestions.length; i++) {
       if (!isQuestionComplete(i)) {
         toast.error(`Conjunto ${i}: Preencha todos os campos com números de 1 a 4`);
         return false;
@@ -247,7 +247,7 @@ export default function DiagnosticoDISC() {
     return Object.keys(answers).filter(key => isQuestionComplete(parseInt(key))).length;
   };
 
-  const progress = (getFilledQuestions() / 10) * 100;
+  const progress = (getFilledQuestions() / discQuestions.length) * 100;
 
   const handleGenerateInvite = async () => {
     const urlWorkshopId = searchParams.get('workshop_id');
@@ -260,20 +260,18 @@ export default function DiagnosticoDISC() {
     
     setGeneratingInvite(true);
     try {
-      const response = await base44.functions.invoke('generateDiagnosticInvite', {
+      const uuid = crypto.randomUUID();
+      await base44.entities.DISCPublicSession.create({
         workshop_id: finalWorkshopId,
         employee_id: selectedEmployee || null,
         candidate_name: candidateName || null,
-        diagnostic_type: 'DISC'
+        token: uuid,
+        status: 'pending'
       });
-
-      if (response.data.success) {
-        const link = `${window.location.origin}/${response.data.path}?token=${response.data.invite_token}`;
-        setInviteLink(link);
-        setIsInviteModalOpen(true);
-      } else {
-        toast.error("Erro ao gerar link");
-      }
+      
+      const link = `${window.location.origin}/PublicDISC?token=${uuid}`;
+      setInviteLink(link);
+      setIsInviteModalOpen(true);
     } catch (error) {
       console.error(error);
       toast.error("Erro ao gerar link");
@@ -468,7 +466,7 @@ export default function DiagnosticoDISC() {
           <div className="bg-white rounded-lg p-4 border-2 border-indigo-200">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-gray-700">
-                Progresso: {getFilledQuestions()}/10 conjuntos preenchidos
+                Progresso: {getFilledQuestions()}/{discQuestions.length} conjuntos preenchidos
               </span>
               <span className="text-sm text-gray-600">{progress.toFixed(0)}%</span>
             </div>
@@ -566,7 +564,7 @@ export default function DiagnosticoDISC() {
           <div className="flex justify-center pt-6">
             <Button
               type="submit"
-              disabled={submitting || getFilledQuestions() < 10}
+              disabled={submitting || getFilledQuestions() < discQuestions.length}
               className="bg-indigo-600 hover:bg-indigo-700 text-lg px-12 py-6 rounded-full shadow-lg"
             >
               {submitting ? (

@@ -225,6 +225,8 @@ import UsuariosAdmin from './pages/UsuariosAdmin';
 import VisualizarProcesso from './pages/VisualizarProcesso';
 import GestaoTenants from './pages/GestaoTenants';
 import GestaoEmpresas from './pages/GestaoEmpresas';
+import PublicNPS from './pages/PublicNPS';
+import PublicDISC from './pages/PublicDISC';
 import __Layout from './Layout.jsx';
 
 
@@ -406,6 +408,8 @@ export const PAGES = {
     "VisualizarProcesso": VisualizarProcesso,
     "GestaoTenants": GestaoTenants,
     "GestaoEmpresas": GestaoEmpresas,
+    "PublicNPS": PublicNPS,
+    "PublicDISC": PublicDISC,
 }
 
 export const pagesConfig = {

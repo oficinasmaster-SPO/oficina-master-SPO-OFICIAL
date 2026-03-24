@@ -6,6 +6,7 @@ import { Loader2, BarChart3, Users, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import OrganizationalClimateAnalyzer from "@/components/rh/OrganizationalClimateAnalyzer";
 import AITrainingSuggestions from "@/components/rh/AITrainingSuggestions";
+import NPSDashboard from "@/components/nps/NPSDashboard";
 
 export default function AnalisesRH() {
   const [loading, setLoading] = useState(true);
@@ -83,10 +84,18 @@ export default function AnalisesRH() {
               <TrendingUp className="w-4 h-4 mr-2" />
               Recomendação de Treinamentos
             </TabsTrigger>
+            <TabsTrigger value="nps">
+              <TrendingUp className="w-4 h-4 mr-2" />
+              Painel NPS
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="clima">
             <OrganizationalClimateAnalyzer workshopId={workshop.id} />
+          </TabsContent>
+
+          <TabsContent value="nps">
+            <NPSDashboard workshopId={workshop.id} />
           </TabsContent>
 
           <TabsContent value="treinamentos">

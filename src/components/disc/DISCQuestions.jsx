@@ -88,6 +88,132 @@ export const discQuestions = [
       s: "Conciliador, Observador, Diplomata",
       c: "Regulador, Especialista, Orientador"
     }
+  },
+  {
+    id: 11,
+    traits: {
+      d: "Aventureiro, Firme, Ousado",
+      i: "Sociável, Expressivo, Entusiástico",
+      s: "Paciente, Previsível, Estável",
+      c: "Metódico, Analítico, Preciso"
+    }
+  },
+  {
+    id: 12,
+    traits: {
+      d: "Competitivo, Decidido, Direto",
+      i: "Alegre, Comunicativo, Animado",
+      s: "Leal, Apoiador, Confiável",
+      c: "Perfeccionista, Detalhista, Cuidadoso"
+    }
+  },
+  {
+    id: 13,
+    traits: {
+      d: "Inovador, Autossuficiente, Vigoroso",
+      i: "Brincalhão, Cativante, Espontâneo",
+      s: "Compreensivo, Tranquilo, Metódico",
+      c: "Crítico, Exigente, Sistemático"
+    }
+  },
+  {
+    id: 14,
+    traits: {
+      d: "Proativo, Intrépido, Resolve",
+      i: "Popular, Otimista, Estimulante",
+      s: "Previsível, Constante, Sereno",
+      c: "Rigoroso, Estruturado, Cumpridor"
+    }
+  },
+  {
+    id: 15,
+    traits: {
+      d: "Desafiador, Líder, Enfático",
+      i: "Inspirador, Conversador, Amável",
+      s: "Moderado, Satisfeito, Protetor",
+      c: "Convencional, Reflexivo, Lógico"
+    }
+  },
+  {
+    id: 16,
+    traits: {
+      d: "Agressivo, Determinado, Pioneiro",
+      i: "Impulsivo, Cativante, Charmoso",
+      s: "Harmonioso, Submisso, Adaptável",
+      c: "Investigador, Cuidadoso, Correto"
+    }
+  },
+  {
+    id: 17,
+    traits: {
+      d: "Ativo, Controlador, Confrontador",
+      i: "Extrovertido, Franco, Jovial",
+      s: "Sistemático, Conciliador, Seguro",
+      c: "Exato, Organizado, Reservado"
+    }
+  },
+  {
+    id: 18,
+    traits: {
+      d: "Resultados, Direcionador, Exigente",
+      i: "Persuasivo, Animado, Sociável",
+      s: "Pacífico, Rotineiro, Amigável",
+      c: "Analítico, Racional, Cauteloso"
+    }
+  },
+  {
+    id: 19,
+    traits: {
+      d: "Firme, Corajoso, Independente",
+      i: "Participativo, Alegre, Divertido",
+      s: "Consistente, Calmo, Acolhedor",
+      c: "Regrado, Minucioso, Prudente"
+    }
+  },
+  {
+    id: 20,
+    traits: {
+      d: "Obstinado, Audacioso, Produtivo",
+      i: "Carismático, Descontraído, Entusiasmado",
+      s: "Paciente, Tolerante, Cooperativo",
+      c: "Disciplinado, Sensato, Formal"
+    }
+  },
+  {
+    id: 21,
+    traits: {
+      d: "Autoritário, Assertivo, Realizador",
+      i: "Influenciador, Comunicador, Otimista",
+      s: "Estável, Cuidadoso, Constante",
+      c: "Sistemático, Lógico, Pensador"
+    }
+  },
+  {
+    id: 22,
+    traits: {
+      d: "Intenso, Resoluto, Líder",
+      i: "Expressivo, Extrovertido, Popular",
+      s: "Comedido, Leal, Ponderado",
+      c: "Observador, Avaliador, Criterioso"
+    }
+  },
+  {
+    id: 23,
+    traits: {
+      d: "Focado, Energético, Pragmático",
+      i: "Simpático, Entusiasta, Relacional",
+      s: "Rotineiro, Agradável, Companheiro",
+      c: "Detalhista, Ordenado, Exato"
+    }
+  },
+  {
+    id: 24,
+    traits: {
+      d: "Ousado, Independente, Direto",
+      i: "Articulado, Festivo, Encantador",
+      s: "Fiel, Conselheiro, Tradicional",
+      c: "Perfeccionista, Questionador, Preparado"
+    }
   }
 ];
 
