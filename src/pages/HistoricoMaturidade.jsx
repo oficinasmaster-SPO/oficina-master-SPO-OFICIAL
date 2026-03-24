@@ -45,6 +45,13 @@ export default function HistoricoMaturidade() {
     return employees.find(e => e.id === id)?.full_name || "Candidato/Externo";
   };
 
+  const maturityLabels = {
+    bebe: "Júnior",
+    crianca: "Pleno",
+    adolescente: "Sênior",
+    adulto: "Master"
+  };
+
   const filteredDiagnostics = diagnostics.filter(d => {
     const name = d.employee_id ? getEmployeeName(d.employee_id) : d.candidate_name;
     return name?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -110,7 +117,7 @@ export default function HistoricoMaturidade() {
                   </TableCell>
                   <TableCell>
                     <span className="capitalize font-bold text-purple-600">
-                      {diag.maturity_level}
+                      {maturityLabels[diag.maturity_level] || diag.maturity_level}
                     </span>
                   </TableCell>
                   <TableCell>
