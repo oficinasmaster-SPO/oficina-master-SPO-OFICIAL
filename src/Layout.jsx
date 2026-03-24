@@ -122,7 +122,19 @@ export default function Layout({ children, currentPageName }) {
     window.location.search = '';
   }
 
+  const [showLoading, setShowLoading] = useState(false);
+  useEffect(() => {
+    let timeout;
+    if (isAuthenticated && !isPublicPage && isLoadingWorkshop) {
+      timeout = setTimeout(() => setShowLoading(true), 300); // 300ms delay to prevent flashes
+    } else {
+      setShowLoading(false);
+    }
+    return () => clearTimeout(timeout);
+  }, [isAuthenticated, isPublicPage, isLoadingWorkshop]);
+
   if (isAuthenticated && !isPublicPage && isLoadingWorkshop) {
+    if (!showLoading) return <div className="min-h-screen bg-gray-50" />; // Empty state
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
