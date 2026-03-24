@@ -65,6 +65,23 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
         return;
       }
 
+      // 0. Verificar se o usuário possui um convite pendente antes de deixá-lo criar uma oficina
+      const hasWorkshop = !!(user.workshop_id || user.data?.workshop_id);
+      if (!hasWorkshop && user.role !== 'admin') {
+        try {
+          const invites = await base44.entities.EmployeeInvite.filter({ email: user.email });
+          const pendingInvite = invites.find(inv => inv.status === 'pendente' || inv.status === 'enviado');
+          
+          if (pendingInvite) {
+            // Se tem convite pendente, força o fluxo de aceite de convite (PrimeiroAcesso)
+            window.location.href = `/PrimeiroAcesso?token=${pendingInvite.invite_token}&profile_id=${pendingInvite.profile_id || pendingInvite.metadata?.profile_id || ''}`;
+            return;
+          }
+        } catch (e) {
+          console.error("Erro ao checar convites:", e);
+        }
+      }
+
       // 1. Verificar se está com o cadastro da oficina em andamento
       if (user.cadastro_em_andamento === true) {
         navigate(createPageUrl("Cadastro"));
@@ -72,7 +89,6 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
       }
 
       // 2. Verificar se não possui uma oficina vinculada (e não é admin)
-      const hasWorkshop = !!(user.workshop_id || user.data?.workshop_id);
       if (!hasWorkshop && user.role !== 'admin') {
         navigate(createPageUrl("Cadastro"));
         return;
