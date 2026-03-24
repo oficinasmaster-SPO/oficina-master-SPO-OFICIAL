@@ -19,7 +19,13 @@ Deno.serve(async (req) => {
     console.log("🔄 Reenviando convite para:", employee_id);
 
     // Buscar Employee
-    const employee = await base44.asServiceRole.entities.Employee.get(employee_id);
+    let employee;
+    try {
+      employee = await base44.asServiceRole.entities.Employee.get(employee_id);
+    } catch (err) {
+      console.error("Erro ao buscar Employee:", err.message);
+      return Response.json({ error: 'Colaborador não encontrado' }, { status: 404 });
+    }
     
     if (!employee) {
       return Response.json({ error: 'Colaborador não encontrado' }, { status: 404 });
@@ -224,6 +230,8 @@ Deno.serve(async (req) => {
 
     try {
       const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+      let resendFailed = false;
+
       if (RESEND_API_KEY) {
         const response = await fetch('https://api.resend.com/emails', {
           method: 'POST',
@@ -242,11 +250,14 @@ Deno.serve(async (req) => {
         const data = await response.json();
         if (!response.ok) {
           console.error("❌ Erro Resend:", data);
+          resendFailed = true;
         } else {
           console.log("✅ Email HTML enviado com sucesso via Resend! ID:", data.id);
         }
-      } else {
-        console.warn("⚠️ RESEND_API_KEY não configurada. Usando Core.SendEmail...");
+      }
+      
+      if (!RESEND_API_KEY || resendFailed) {
+        console.warn("⚠️ Fallback: Usando Core.SendEmail...");
         await base44.asServiceRole.integrations.Core.SendEmail({
           to: employee.email,
           subject: `Convite de Acesso - ${workshop_name}`,
