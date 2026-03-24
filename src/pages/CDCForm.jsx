@@ -55,7 +55,7 @@ export default function CDCForm() {
     enabled: !!employeeId,
   });
 
-  const { data: planLimits, isLoading: loadingLimits } = usePlanLimits(workshop?.id, 'cdc', employeeId);
+  const { data: planLimits, isLoading: loadingLimits } = usePlanLimits(workshop?.id);
 
   const { data: discDiagnostic } = useQuery({
     queryKey: ['disc-diagnostic', employeeId],

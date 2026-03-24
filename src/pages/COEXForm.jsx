@@ -83,7 +83,7 @@ export default function COEXForm() {
     select: (data) => data[0]
   });
 
-  const { data: planLimits, isLoading: loadingLimits } = usePlanLimits(workshop?.id, 'coex', employeeId);
+  const { data: planLimits, isLoading: loadingLimits } = usePlanLimits(workshop?.id);
 
   const { data: contract, isLoading: loadingContract } = useQuery({
     queryKey: ['coex-contract', contractId],
