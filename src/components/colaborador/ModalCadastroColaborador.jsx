@@ -164,7 +164,21 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
 
       toast.success("Colaborador cadastrado com sucesso!");
       
-      if (window.confirm("Colaborador cadastrado! Deseja enviar o link de acesso manualmente via WhatsApp agora?")) {
+      if (window.confirm("Colaborador cadastrado! Deseja gerar e copiar o link do teste comportamental DISC para ele agora?")) {
+         const uuid = crypto.randomUUID();
+         await base44.entities.DISCPublicSession.create({
+            workshop_id: workshop.id,
+            employee_id: response.data.employee_id,
+            candidate_name: formDataToSendToSend?.full_name || formData.full_name,
+            token: uuid,
+            status: 'pending'
+         });
+         const link = `${window.location.origin}/PublicDISC?token=${uuid}`;
+         navigator.clipboard.writeText(link);
+         toast.success("Link do DISC copiado para a área de transferência!");
+      }
+
+      if (window.confirm("Deseja enviar o link de acesso ao sistema manualmente via WhatsApp agora?")) {
          onClose();
          navigate(createPageUrl("ConvidarColaborador") + `?id=${response.data.employee_id}`);
          return;
