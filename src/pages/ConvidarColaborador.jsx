@@ -241,26 +241,22 @@ export default function ConvidarColaborador() {
         name: data.name,
         email: data.email,
         telefone: data.telefone,
-        position: data.position,
-        area: data.area,
         job_role: data.job_role,
         profile_id: data.profile_id,
         workshop_id: workshop.id
       });
 
-      const selectedJobRole = jobRoles.find(jr => jr.value === data.job_role);
+      const selectedJobRole = jobRoles.find(jr => jr.id === data.job_role);
       const derivedPosition = selectedJobRole ? selectedJobRole.label : "Colaborador";
-      const derivedArea = selectedJobRole ? selectedJobRole.category : "operacional";
 
       const response = await base44.functions.invoke('createUserDirectly', {
         name: data.name,
         email: data.email,
         telefone: data.telefone,
         position: derivedPosition,
-        area: derivedArea,
         job_role: data.job_role,
         profile_id: data.profile_id,
-        workshop_id: data.workshop_id || workshop.id,
+        workshop_id: workshop.id,
         role: "user"
       });
 
@@ -305,11 +301,8 @@ export default function ConvidarColaborador() {
         name: "", 
         email: "", 
         telefone: "",
-        position: "", 
-        area: "", 
-        job_role: "outros",
+        job_role: "",
         profile_id: "",
-        workshop_id: workshop?.id || "",
         role: "user"
       });
     },
