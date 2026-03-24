@@ -450,6 +450,68 @@ export default function CESPEEntrevista() {
           </div>
         </div>
 
+        <Card className="p-6 border-indigo-200 bg-indigo-50">
+          <div className="flex justify-between items-center">
+            <div>
+              <h3 className="font-semibold text-indigo-900 text-lg">Mapeamento Comportamental (DISC)</h3>
+              {candidate.disc_status === "concluido" ? (
+                <p className="text-sm text-indigo-700">
+                  Teste Concluído. Perfil Predominante: <strong>{candidate.disc_profile}</strong>
+                </p>
+              ) : candidate.disc_status === "enviado" ? (
+                <p className="text-sm text-indigo-700">
+                  Link enviado. Aguardando candidato responder o teste.
+                </p>
+              ) : (
+                <p className="text-sm text-indigo-700">
+                  O candidato ainda não realizou o teste DISC.
+                </p>
+              )}
+            </div>
+            
+            <Button 
+              variant={candidate.disc_status === "concluido" ? "outline" : "default"}
+              className={candidate.disc_status !== "concluido" ? "bg-indigo-600 hover:bg-indigo-700 text-white" : "border-indigo-300 text-indigo-700 bg-white"}
+              onClick={async () => {
+                if (candidate.disc_status === "concluido") {
+                  navigate(createPageUrl("ResultadoDISC") + `?id=${candidate.disc_result_id}`);
+                  return;
+                }
+                
+                try {
+                  const token = crypto.randomUUID();
+                  await base44.entities.DISCPublicSession.create({
+                    workshop_id: workshop?.id,
+                    session_type: "candidato_externo",
+                    candidate_name: candidate.full_name,
+                    candidate_phone: candidate.phone,
+                    candidate_email: candidate.email,
+                    process_id: candidate.id,
+                    token: token,
+                    status: "pendente",
+                    created_at: new Date().toISOString()
+                  });
+                  
+                  await base44.entities.Candidate.update(candidate.id, {
+                    disc_status: "enviado",
+                    disc_public_token: token
+                  });
+
+                  queryClient.invalidateQueries({ queryKey: ['candidate', candidateId] });
+
+                  const link = `${window.location.origin}/PublicDISC?token=${token}`;
+                  navigator.clipboard.writeText(link);
+                  toast.success("Link gerado e copiado para a área de transferência!");
+                } catch(err) {
+                  toast.error("Erro ao gerar link DISC");
+                }
+              }}
+            >
+              {candidate.disc_status === "concluido" ? "Ver Resultado" : "Gerar e Copiar Link DISC"}
+            </Button>
+          </div>
+        </Card>
+
         <AttachedFormsList
           attachedForms={attachedForms}
           currentFormId={currentForm?.form_id}
