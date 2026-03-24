@@ -48,11 +48,9 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
         return;
       }
 
-      // 0. Verificar se o usuário possui um convite pendente ANTES de deixá-lo acessar o /cadastro
-      const hasWorkshop = !!(user.workshop_id || user.data?.workshop_id);
-      
       // REGRA: Mesmo que ele não tenha workshop, ou tenha tentado ir pro /cadastro, 
       // se existir um convite PENDENTE/ENVIADO com o email dele, NUNCA deixa ele criar oficina. Leva pro PrimeiroAcesso.
+      const hasWorkshop = !!(user.workshop_id || user.data?.workshop_id);
       if (user.role !== 'admin') {
         try {
           const invites = await base44.entities.EmployeeInvite.filter({ email: user.email });
