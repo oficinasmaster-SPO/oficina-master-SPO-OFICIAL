@@ -168,6 +168,34 @@ Deno.serve(async (req) => {
 
     console.log("✅ Contato adicionado ao ActiveCampaign");
 
+    // Enviar email via Resend
+    try {
+      const emailBody = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
+          <h2 style="color: #2563eb;">Você foi convidado para a oficina ${workshop.name}</h2>
+          <p>Olá ${name},</p>
+          <p>Você recebeu um convite para acessar a plataforma do sistema SPO.</p>
+          <div style="background-color: #f8fafc; padding: 15px; border-radius: 6px; margin: 20px 0;">
+            <p style="margin: 0; font-weight: bold; color: #1e293b;">Seus dados de acesso:</p>
+            <p style="margin: 5px 0;"><strong>Email:</strong> ${email}</p>
+            <p style="margin: 5px 0;"><strong>Senha:</strong> Crie sua senha acessando a opção 'Criar conta'</p>
+          </div>
+          <a href="${inviteLink}" style="display: inline-block; background-color: #2563eb; color: white; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; margin: 10px 0;">Acessar Plataforma</a>
+          <p style="color: #64748b; font-size: 14px; margin-top: 20px;">Próximos passos: Clique no link acima, registre sua senha e acesse seu painel.</p>
+          <p style="color: #64748b; font-size: 14px; word-break: break-all;">Link direto: ${inviteLink}</p>
+        </div>
+      `;
+
+      await base44.asServiceRole.integrations.Core.SendEmail({
+        to: email,
+        subject: `Você foi convidado para ${workshop.name}`,
+        body: emailBody
+      });
+      console.log("✅ Email enviado via Base44 SendEmail");
+    } catch (emailErr) {
+      console.error("⚠️ Erro ao enviar email via Base44:", emailErr);
+    }
+
     // Atualizar status do convite
     await base44.asServiceRole.entities.EmployeeInvite.update(invite.id, {
       status: 'enviado',

@@ -254,16 +254,20 @@ export default function ConvidarColaborador() {
         workshop_id: workshop.id
       });
 
+      const selectedJobRole = jobRoles.find(jr => jr.value === data.job_role);
+      const derivedPosition = selectedJobRole ? selectedJobRole.label : "Colaborador";
+      const derivedArea = selectedJobRole ? selectedJobRole.category : "operacional";
+
       const response = await base44.functions.invoke('createUserDirectly', {
         name: data.name,
         email: data.email,
         telefone: data.telefone,
-        position: data.position,
-        area: data.area,
+        position: derivedPosition,
+        area: derivedArea,
         job_role: data.job_role,
         profile_id: data.profile_id,
         workshop_id: data.workshop_id || workshop.id,
-        role: data.role
+        role: "user"
       });
 
       console.log("📦 RESPONSE STATUS:", response.status);
@@ -332,8 +336,8 @@ export default function ConvidarColaborador() {
     console.log("🏭 Empresa:", workshop?.name);
     console.log("🔗 Associando colaborador à empresa:", workshop?.name, `(ID: ${workshop?.id})`);
     
-    if (!formData.name || !formData.email || !formData.position || !formData.area) {
-      toast.error("Preencha os campos obrigatórios (Nome, Email, Cargo e Área)");
+    if (!formData.name || !formData.email || !formData.telefone || !formData.job_role || !formData.profile_id) {
+      toast.error("Preencha todos os campos obrigatórios");
       return;
     }
     
@@ -506,25 +510,61 @@ export default function ConvidarColaborador() {
           />
         )}
 
-        <div className="flex justify-end gap-3 mb-6">
-          <Button 
-            type="button"
-            variant="outline"
-            onClick={() => setShowEmailPreview(true)}
-          >
-            <Mail className="w-4 h-4 mr-2" />
-            Pré-visualizar Email
-          </Button>
-          <Button 
-            onClick={() => window.location.href = 'https://oficinasmastergtr.com/colaboradores?modal=cadastrocolaborador'}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            <UserPlus className="w-4 h-4 mr-2" />
-            Cadastrar mais um colaborador
-          </Button>
-        </div>
-
-        <div className="grid grid-cols-1 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Formulário Novo */}
+          <Card className="shadow-md h-fit">
+            <CardHeader className="border-b bg-gray-50/50 flex flex-row items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <UserPlus className="w-5 h-5 text-gray-500" />
+                Novo Colaborador
+              </CardTitle>
+              <Button type="button" variant="ghost" size="sm" onClick={() => setShowEmailPreview(true)}>
+                <Mail className="w-4 h-4 mr-2" /> Pré-visualizar Email
+              </Button>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <Label>Nome Completo *</Label>
+                  <Input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required />
+                </div>
+                <div>
+                  <Label>Email *</Label>
+                  <Input type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} required />
+                </div>
+                <div>
+                  <Label>Telefone *</Label>
+                  <Input value={formData.telefone} onChange={e => setFormData({...formData, telefone: e.target.value})} required />
+                </div>
+                <div>
+                  <Label>Cargo *</Label>
+                  <Select value={formData.job_role} onValueChange={v => setFormData({...formData, job_role: v})}>
+                    <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                    <SelectContent>
+                      {jobRoles.map(role => (
+                        <SelectItem key={role.value} value={role.value}>{role.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Perfil de Acesso *</Label>
+                  <Select value={formData.profile_id} onValueChange={v => setFormData({...formData, profile_id: v})}>
+                    <SelectTrigger><SelectValue placeholder="Selecione o perfil..." /></SelectTrigger>
+                    <SelectContent>
+                      {profiles.map(profile => (
+                        <SelectItem key={profile.id} value={profile.id}>{profile.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button type="submit" disabled={createUserMutation.isPending} className="w-full bg-blue-600 hover:bg-blue-700 mt-2">
+                  {createUserMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
+                  Enviar Convite
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
 
           {/* Lista de Colaboradores */}
           <Card className="shadow-md h-fit">

@@ -14,6 +14,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { TenantProvider } from '@/components/contexts/TenantContext';
 import GestaoTenants from '@/pages/GestaoTenants';
 import CompletarPerfil from '@/pages/CompletarPerfil';
+import DescricaoCargos from '@/pages/DescricaoCargos';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -95,6 +96,11 @@ const AuthenticatedApp = () => {
       <Route path="/CompletarPerfil" element={
         <LayoutWrapper currentPageName="CompletarPerfil">
           <CompletarPerfil />
+        </LayoutWrapper>
+      } />
+      <Route path="/DescricaoCargos" element={
+        <LayoutWrapper currentPageName="DescricaoCargos">
+          <DescricaoCargos />
         </LayoutWrapper>
       } />
       {Object.entries(Pages).map(([path, Page]) => (
