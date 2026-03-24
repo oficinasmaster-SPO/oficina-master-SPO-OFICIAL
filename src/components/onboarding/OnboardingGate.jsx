@@ -50,13 +50,17 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
 
       // 0. Verificar se o usuário possui um convite pendente ANTES de deixá-lo acessar o /cadastro
       const hasWorkshop = !!(user.workshop_id || user.data?.workshop_id);
-      if (!hasWorkshop && user.role !== 'admin') {
+      
+      // REGRA: Mesmo que ele não tenha workshop, ou tenha tentado ir pro /cadastro, 
+      // se existir um convite PENDENTE/ENVIADO com o email dele, NUNCA deixa ele criar oficina. Leva pro PrimeiroAcesso.
+      if (user.role !== 'admin') {
         try {
           const invites = await base44.entities.EmployeeInvite.filter({ email: user.email });
           const pendingInvite = invites.find(inv => inv.status === 'pendente' || inv.status === 'enviado');
           
           if (pendingInvite) {
-            // Se tem convite pendente, força o fluxo de aceite de convite (PrimeiroAcesso)
+            // Se tem convite pendente, força o fluxo de aceite de convite (PrimeiroAcesso) e trava o resto
+            console.log("🚨 Detectado convite pendente. Redirecionando para PrimeiroAcesso", pendingInvite);
             window.location.href = `/PrimeiroAcesso?token=${pendingInvite.invite_token}&profile_id=${pendingInvite.profile_id || pendingInvite.metadata?.profile_id || ''}`;
             return;
           }
