@@ -7,6 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import TrackingWrapper from "@/components/shared/TrackingWrapper";
 
 export default function DiagnosticoCarga() {
@@ -47,7 +51,12 @@ export default function DiagnosticoCarga() {
       activeEmployees.forEach(emp => {
         initialData[emp.id] = {
           weekly_hours_worked: 44,
-          ideal_weekly_hours: 44
+          ideal_weekly_hours: 44,
+          os_per_week: 0,
+          frequent_overtime: false,
+          subjective_load: "3", // 1 to 5
+          bottlenecks: "",
+          missing_resources: ""
         };
       });
       setWorkloadData(initialData);
@@ -63,7 +72,7 @@ export default function DiagnosticoCarga() {
       ...prev,
       [empId]: {
         ...prev[empId],
-        [field]: Number(value)
+        [field]: value
       }
     }));
   };
@@ -74,8 +83,13 @@ export default function DiagnosticoCarga() {
       const dataArray = employees.map(emp => ({
         employee_id: emp.id,
         position_title: emp.position || "Sem cargo",
-        weekly_hours_worked: workloadData[emp.id].weekly_hours_worked,
-        ideal_weekly_hours: workloadData[emp.id].ideal_weekly_hours
+        weekly_hours_worked: Number(workloadData[emp.id].weekly_hours_worked),
+        ideal_weekly_hours: Number(workloadData[emp.id].ideal_weekly_hours),
+        os_per_week: Number(workloadData[emp.id].os_per_week),
+        frequent_overtime: workloadData[emp.id].frequent_overtime,
+        subjective_load: Number(workloadData[emp.id].subjective_load),
+        bottlenecks: workloadData[emp.id].bottlenecks,
+        missing_resources: workloadData[emp.id].missing_resources
       }));
 
       // Calcula overall_health baseado na média de saturação
@@ -132,40 +146,108 @@ export default function DiagnosticoCarga() {
               {employees.length === 0 ? (
                  <div className="text-center p-6 text-gray-500">Nenhum colaborador ativo encontrado na oficina.</div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {employees.map(emp => {
-                    const data = workloadData[emp.id] || { weekly_hours_worked: 44, ideal_weekly_hours: 44 };
+                    const data = workloadData[emp.id] || { 
+                      weekly_hours_worked: 44, ideal_weekly_hours: 44, os_per_week: 0, 
+                      frequent_overtime: false, subjective_load: "3", bottlenecks: "", missing_resources: "" 
+                    };
                     const saturation = data.ideal_weekly_hours > 0 ? (data.weekly_hours_worked / data.ideal_weekly_hours) * 100 : 0;
+                    
                     return (
-                      <div key={emp.id} className="flex flex-col md:flex-row gap-4 items-center p-4 border rounded-lg bg-white">
-                        <div className="flex-1 w-full">
-                          <p className="font-semibold truncate">{emp.full_name}</p>
-                          <p className="text-sm text-gray-500 truncate">{emp.position}</p>
+                      <div key={emp.id} className="flex flex-col gap-4 p-5 border border-slate-200 rounded-xl bg-white shadow-sm">
+                        <div className="flex flex-col md:flex-row gap-4 items-center justify-between border-b border-slate-100 pb-4">
+                          <div className="flex-1 w-full">
+                            <p className="font-bold text-lg text-slate-800">{emp.full_name}</p>
+                            <p className="text-sm text-slate-500">{emp.position}</p>
+                          </div>
+                          <div className="flex gap-4 items-center">
+                            <div className="w-32">
+                              <label className="text-xs font-semibold text-slate-600 mb-1 block">Horas Realizadas/sem.</label>
+                              <Input 
+                                type="number" 
+                                min="0" max="168"
+                                value={data.weekly_hours_worked} 
+                                onChange={(e) => handleInputChange(emp.id, 'weekly_hours_worked', e.target.value)} 
+                              />
+                            </div>
+                            <div className="w-32">
+                              <label className="text-xs font-semibold text-slate-600 mb-1 block">Capacidade Ideal</label>
+                              <Input 
+                                type="number"
+                                min="1" max="168"
+                                value={data.ideal_weekly_hours} 
+                                onChange={(e) => handleInputChange(emp.id, 'ideal_weekly_hours', e.target.value)} 
+                              />
+                            </div>
+                            <div className="w-24 text-right flex flex-col justify-center">
+                              <label className="text-xs text-slate-400 mb-1 block">Saturação</label>
+                              <span className={`text-lg font-black ${saturation > 110 ? 'text-red-600' : saturation < 80 ? 'text-blue-600' : 'text-green-600'}`}>
+                                {saturation.toFixed(0)}%
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                        <div className="w-full md:w-32">
-                          <label className="text-xs text-gray-500 mb-1 block">Horas Trabalhadas/sem.</label>
-                          <Input 
-                            type="number" 
-                            min="0"
-                            max="168"
-                            value={data.weekly_hours_worked} 
-                            onChange={(e) => handleInputChange(emp.id, 'weekly_hours_worked', e.target.value)} 
-                          />
-                        </div>
-                        <div className="w-full md:w-32">
-                          <label className="text-xs text-gray-500 mb-1 block">Capacidade Ideal</label>
-                          <Input 
-                            type="number"
-                            min="1" 
-                            max="168"
-                            value={data.ideal_weekly_hours} 
-                            onChange={(e) => handleInputChange(emp.id, 'ideal_weekly_hours', e.target.value)} 
-                          />
-                        </div>
-                        <div className="w-full md:w-24 text-right">
-                          <span className={`text-sm font-bold ${saturation > 110 ? 'text-red-600' : saturation < 80 ? 'text-blue-600' : 'text-green-600'}`}>
-                            {saturation.toFixed(0)}%
-                          </span>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          <div className="space-y-4">
+                            <div>
+                              <label className="text-xs font-semibold text-slate-600 mb-1 block">Média de O.S. por semana</label>
+                              <Input 
+                                type="number" 
+                                min="0"
+                                placeholder="0"
+                                value={data.os_per_week} 
+                                onChange={(e) => handleInputChange(emp.id, 'os_per_week', e.target.value)} 
+                              />
+                            </div>
+                            <div>
+                              <label className="text-xs font-semibold text-slate-600 mb-1 block">Percepção de Carga</label>
+                              <Select value={String(data.subjective_load)} onValueChange={(val) => handleInputChange(emp.id, 'subjective_load', val)}>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecione" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="1">1 - Muito leve</SelectItem>
+                                  <SelectItem value="2">2 - Tranquila</SelectItem>
+                                  <SelectItem value="3">3 - Adequada</SelectItem>
+                                  <SelectItem value="4">4 - Pesada</SelectItem>
+                                  <SelectItem value="5">5 - Insuportável</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="flex items-center space-x-2 pt-2">
+                              <Checkbox 
+                                id={`overtime-${emp.id}`} 
+                                checked={data.frequent_overtime}
+                                onCheckedChange={(checked) => handleInputChange(emp.id, 'frequent_overtime', checked)}
+                              />
+                              <Label htmlFor={`overtime-${emp.id}`} className="text-sm font-medium text-slate-700 cursor-pointer">
+                                Faz hora extra frequentemente?
+                              </Label>
+                            </div>
+                          </div>
+
+                          <div className="md:col-span-2 space-y-4">
+                            <div>
+                              <label className="text-xs font-semibold text-slate-600 mb-1 block">Principais Gargalos / Obstáculos</label>
+                              <Textarea 
+                                placeholder="Descreva o que atrasa ou trava o trabalho..."
+                                value={data.bottlenecks}
+                                onChange={(e) => handleInputChange(emp.id, 'bottlenecks', e.target.value)}
+                                className="resize-none h-20"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-xs font-semibold text-slate-600 mb-1 block">Recursos Faltantes (Ferramentas, Pessoas, etc)</label>
+                              <Textarea 
+                                placeholder="Ex: Falta elevador, scanner travando..."
+                                value={data.missing_resources}
+                                onChange={(e) => handleInputChange(emp.id, 'missing_resources', e.target.value)}
+                                className="resize-none h-20"
+                              />
+                            </div>
+                          </div>
                         </div>
                       </div>
                     )

@@ -5,11 +5,13 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, Loader2, Sparkles, Printer } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createPageUrl } from "@/utils";
+import { useNavigate } from "react-router-dom";
 
 export default function MatrizDesempenho() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const workshopId = user?.data?.workshop_id || user?.workshop_id;
   const [filterArea, setFilterArea] = useState('all');
@@ -71,9 +73,14 @@ export default function MatrizDesempenho() {
             <h1 className="text-3xl font-bold text-gray-900">Matriz de Desempenho (Nine-Box)</h1>
             <p className="text-gray-600 mt-1">Visão integrada de Potencial (DISC) e Desempenho (Competências)</p>
           </div>
-          <Link to={createPageUrl("CentralAvaliacoes")}>
-            <Button variant="outline"><ArrowLeft className="mr-2 h-4 w-4" /> Voltar</Button>
-          </Link>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => window.print()} className="print:hidden">
+              <Printer className="mr-2 h-4 w-4" /> Exportar PDF
+            </Button>
+            <Link to={createPageUrl("CentralAvaliacoes")} className="print:hidden">
+              <Button variant="outline"><ArrowLeft className="mr-2 h-4 w-4" /> Voltar</Button>
+            </Link>
+          </div>
         </div>
 
         <div className="mb-6 flex gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-200">
@@ -102,21 +109,21 @@ export default function MatrizDesempenho() {
 
           <div className="flex flex-col h-full gap-4">
             <div className="grid grid-cols-3 gap-4 flex-1">
-              <Box title="Acompanhamento" employees={getBoxEmployees(1, 3)} color="bg-orange-50 border-orange-200" titleColor="text-orange-800" />
-              <Box title="Talento Promissor" employees={getBoxEmployees(2, 3)} color="bg-blue-50 border-blue-200" titleColor="text-blue-800" />
-              <Box title="Alto Potencial (Estrela)" employees={getBoxEmployees(3, 3)} color="bg-green-50 border-green-300" titleColor="text-green-800" icon={<Sparkles className="w-4 h-4 text-green-600"/>} />
+              <Box title="Acompanhamento" employees={getBoxEmployees(1, 3)} color="bg-orange-50 border-orange-200" titleColor="text-orange-800" navigate={navigate} />
+              <Box title="Talento Promissor" employees={getBoxEmployees(2, 3)} color="bg-blue-50 border-blue-200" titleColor="text-blue-800" navigate={navigate} />
+              <Box title="Alto Potencial (Estrela)" employees={getBoxEmployees(3, 3)} color="bg-green-50 border-green-300" titleColor="text-green-800" icon={<Sparkles className="w-4 h-4 text-green-600"/>} navigate={navigate} />
             </div>
             
             <div className="grid grid-cols-3 gap-4 flex-1">
-              <Box title="Desempenho Inferior" employees={getBoxEmployees(1, 2)} color="bg-red-50 border-red-200" titleColor="text-red-800" />
-              <Box title="Essencial" employees={getBoxEmployees(2, 2)} color="bg-yellow-50 border-yellow-200" titleColor="text-yellow-800" />
-              <Box title="Alto Desempenho" employees={getBoxEmployees(3, 2)} color="bg-blue-50 border-blue-200" titleColor="text-blue-800" />
+              <Box title="Desempenho Inferior" employees={getBoxEmployees(1, 2)} color="bg-red-50 border-red-200" titleColor="text-red-800" navigate={navigate} />
+              <Box title="Essencial" employees={getBoxEmployees(2, 2)} color="bg-yellow-50 border-yellow-200" titleColor="text-yellow-800" navigate={navigate} />
+              <Box title="Alto Desempenho" employees={getBoxEmployees(3, 2)} color="bg-blue-50 border-blue-200" titleColor="text-blue-800" navigate={navigate} />
             </div>
 
             <div className="grid grid-cols-3 gap-4 flex-1">
-              <Box title="Risco Retenção" employees={getBoxEmployees(1, 1)} color="bg-red-100 border-red-300" titleColor="text-red-900" />
-              <Box title="Efetivo" employees={getBoxEmployees(2, 1)} color="bg-orange-50 border-orange-200" titleColor="text-orange-800" />
-              <Box title="Profissional Maduro" employees={getBoxEmployees(3, 1)} color="bg-yellow-50 border-yellow-200" titleColor="text-yellow-800" />
+              <Box title="Risco Retenção" employees={getBoxEmployees(1, 1)} color="bg-red-100 border-red-300" titleColor="text-red-900" navigate={navigate} />
+              <Box title="Efetivo" employees={getBoxEmployees(2, 1)} color="bg-orange-50 border-orange-200" titleColor="text-orange-800" navigate={navigate} />
+              <Box title="Profissional Maduro" employees={getBoxEmployees(3, 1)} color="bg-yellow-50 border-yellow-200" titleColor="text-yellow-800" navigate={navigate} />
             </div>
 
             <div className="grid grid-cols-3 gap-4 mt-2">
@@ -132,7 +139,7 @@ export default function MatrizDesempenho() {
   );
 }
 
-function Box({ title, employees, color, titleColor, icon }) {
+function Box({ title, employees, color, titleColor, icon, navigate }) {
   return (
     <Card className={`h-full overflow-y-auto border-2 ${color} transition-all hover:shadow-md`}>
       <CardHeader className="p-3 pb-2 flex flex-row items-center justify-between">
@@ -143,9 +150,13 @@ function Box({ title, employees, color, titleColor, icon }) {
         <div className="flex flex-col gap-2 mt-2">
           {employees.length === 0 && <span className="text-xs text-gray-400 italic">Vazio</span>}
           {employees.map((d, i) => (
-            <div key={i} className="bg-white px-3 py-2 rounded-lg text-xs shadow-sm font-medium border border-gray-200 hover:border-gray-300 cursor-default transition-colors">
+            <button
+              key={i}
+              onClick={() => navigate(createPageUrl("DetalhesColaborador") + `?id=${d.employee.id}`)}
+              className="text-left w-full bg-white px-3 py-2 rounded-lg text-xs shadow-sm font-medium border border-gray-200 hover:border-blue-300 hover:text-blue-700 cursor-pointer transition-colors"
+            >
               {d.employee.full_name}
-            </div>
+            </button>
           ))}
         </div>
       </CardContent>
