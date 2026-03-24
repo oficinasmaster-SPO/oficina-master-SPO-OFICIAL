@@ -3,8 +3,8 @@ import { useAuth } from "@/lib/AuthContext";
 export function useEvaluationPermissions(employee) {
   const { user } = useAuth();
   
-  if (!user || !employee) {
-    return { canSelfEvaluate: false, canEvaluateOthers: false };
+  if (!user) {
+    return { canSelfEvaluate: false, canEvaluateOthers: false, currentUserEmployee: null };
   }
 
   // Verifica liderança
@@ -12,10 +12,22 @@ export function useEvaluationPermissions(employee) {
   const isAdmin = user.role === "admin";
   
   // É o próprio colaborador logado
-  const isSelf = employee.email === user.email || employee.user_id === user.id;
+  let isSelf = false;
+  if (employee) {
+    isSelf = employee.email === user.email || employee.user_id === user.id;
+  }
+
+  const canEvaluate = (targetEmployeeId) => {
+    if (isAdmin || isLeader) return true;
+    if (employee && employee.id === targetEmployeeId) return true;
+    return false;
+  };
 
   return {
     canSelfEvaluate: isSelf,
-    canEvaluateOthers: isAdmin || isLeader
+    canEvaluateOthers: isAdmin || isLeader,
+    canEvaluate,
+    isLeader,
+    currentUserEmployee: employee
   };
 }
