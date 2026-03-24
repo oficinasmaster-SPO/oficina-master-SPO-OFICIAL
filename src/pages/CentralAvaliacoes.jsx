@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import NPSLinkGenerator from "@/components/nps/NPSLinkGenerator";
+import RestrictedAccess from "@/components/auth/RestrictedAccess";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
@@ -11,10 +13,13 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 
+import { useEvaluationPermissions } from "@/components/hooks/useEvaluationPermissions";
+
 export default function CentralAvaliacoes() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const workshop_id = user?.data?.workshop_id || user?.workshop_id;
+  const { canEvaluateOthers } = useEvaluationPermissions(user);
 
   const { data: statusDiagnosticos, isLoading } = useQuery({
     queryKey: ['status-diagnosticos', workshop_id],
@@ -174,9 +179,10 @@ export default function CentralAvaliacoes() {
           title: "Gerar Link NPS",
           description: "Copiar link da pesquisa de satisfação para clientes",
           icon: Users,
-          href: createPageUrl("PublicNPS"),
+          href: "",
           color: "bg-gray-100 text-gray-700",
-          iconColor: "text-gray-600"
+          iconColor: "text-gray-600",
+          customComponent: <NPSLinkGenerator />
         }
       ]
     }
@@ -188,6 +194,10 @@ export default function CentralAvaliacoes() {
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
       </div>
     );
+  }
+
+  if (!canEvaluateOthers) {
+    return <RestrictedAccess />;
   }
 
   return (
@@ -236,16 +246,23 @@ export default function CentralAvaliacoes() {
                       </CardHeader>
                       <CardContent className="flex-1">
                         <p className="text-gray-600 text-sm">{item.description}</p>
+                        {item.customComponent && (
+                          <div className="mt-4" onClick={(e) => e.stopPropagation()}>
+                            {item.customComponent}
+                          </div>
+                        )}
                       </CardContent>
-                      <CardFooter>
-                        <Button 
-                          className="w-full" 
-                          variant={isCompleted ? "outline" : "default"}
-                          onClick={() => navigate(item.href)}
-                        >
-                          {isCompleted ? "Acessar Novamente" : "Iniciar"}
-                        </Button>
-                      </CardFooter>
+                      {!item.customComponent && (
+                        <CardFooter>
+                          <Button 
+                            className="w-full" 
+                            variant={isCompleted ? "outline" : "default"}
+                            onClick={() => navigate(item.href)}
+                          >
+                            {isCompleted ? "Acessar Novamente" : "Iniciar"}
+                          </Button>
+                        </CardFooter>
+                      )}
                     </Card>
                   );
                 })}
