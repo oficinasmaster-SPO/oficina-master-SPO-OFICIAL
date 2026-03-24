@@ -138,7 +138,7 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
   useEffect(() => {
     let timeout;
     if (isChecking) {
-      timeout = setTimeout(() => setShowLoading(true), 300); // 300ms delay before showing loader
+      timeout = setTimeout(() => setShowLoading(true), 400); // 400ms delay before showing loader
     } else {
       setShowLoading(false);
     }
