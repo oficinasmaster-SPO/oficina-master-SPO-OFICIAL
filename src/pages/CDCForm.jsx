@@ -440,7 +440,7 @@ export default function CDCForm() {
 
         <PlanLimitWarning limitData={planLimits} resourceName="CDC" />
 
-        <form onSubmit={handleSubmit} className={`space-y-6 ${planLimits?.isLimitReached ? 'opacity-50 pointer-events-none' : ''}`}>
+        <form onSubmit={handleSubmit} className={`space-y-6 ${(planLimits && !planLimits.canUseCDC) ? 'opacity-50 pointer-events-none' : ''}`}>
           <Card id="cdc-personal-info">
             <CardHeader>
               <CardTitle>Informações Pessoais</CardTitle>
@@ -705,7 +705,7 @@ export default function CDCForm() {
             <Button
               type="submit"
               className="flex-1 bg-blue-600 hover:bg-blue-700"
-              disabled={saveMutation.isPending || isGeneratingReport || planLimits?.isLimitReached}
+              disabled={saveMutation.isPending || isGeneratingReport || (planLimits && !planLimits.canUseCDC)}
             >
               {saveMutation.isPending || isGeneratingReport ? (
                 <>

@@ -420,7 +420,7 @@ export default function COEXForm() {
           </p>
         </div>
 
-        <PlanLimitWarning limitData={planLimits} resourceName="COEX" />
+        {workshop && <PlanLimitWarning workshopId={workshop.id} type="coex" />}
 
         {coexRestriction.restricted && (
           <div className="mb-6 bg-orange-50 border-l-4 border-orange-500 p-4">
@@ -439,7 +439,7 @@ export default function COEXForm() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className={`space-y-6 ${(coexRestriction.restricted || planLimits?.isLimitReached) ? 'opacity-50 pointer-events-none' : ''}`}>
+        <form onSubmit={handleSubmit} className={`space-y-6 ${(coexRestriction.restricted || (planLimits && !planLimits.canUseCOEX)) ? 'opacity-50 pointer-events-none' : ''}`}>
           <Card>
             <CardHeader>
               <CardTitle>Informações do Contrato</CardTitle>
@@ -590,7 +590,7 @@ export default function COEXForm() {
             <Button
               type="submit"
               className="flex-1 bg-red-600 hover:bg-red-700"
-              disabled={saveMutation.isPending || planLimits?.isLimitReached}
+              disabled={saveMutation.isPending || (planLimits && !planLimits.canUseCOEX)}
             >
               {saveMutation.isPending ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
