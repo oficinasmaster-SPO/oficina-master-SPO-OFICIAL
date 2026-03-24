@@ -48,24 +48,7 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
         return;
       }
 
-      // ✅ Se já está em /cadastro ou /completarperfil, permitir (é a página de onboarding)
-      if (currentPath.includes('cadastro') || currentPath.includes('completarperfil')) {
-        setIsChecking(false);
-        return;
-      }
-
-      // LÓGICA DE ROTEAMENTO (PER USER)
-
-      // LÓGICA DE ROTEAMENTO (PER USER)
-      
-      // Colaboradores que entraram via convite
-      // Eles têm profile_completed = false (forçado pela auth/convite) E first_access_completed = true
-      if (user.profile_completed === false && user.first_access_completed === true) {
-        navigate(createPageUrl("CompletarPerfil"));
-        return;
-      }
-
-      // 0. Verificar se o usuário possui um convite pendente antes de deixá-lo criar uma oficina
+      // 0. Verificar se o usuário possui um convite pendente ANTES de deixá-lo acessar o /cadastro
       const hasWorkshop = !!(user.workshop_id || user.data?.workshop_id);
       if (!hasWorkshop && user.role !== 'admin') {
         try {
@@ -80,6 +63,21 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
         } catch (e) {
           console.error("Erro ao checar convites:", e);
         }
+      }
+
+      // ✅ Se já está em /cadastro ou /completarperfil, permitir (é a página de onboarding)
+      if (currentPath.includes('cadastro') || currentPath.includes('completarperfil')) {
+        setIsChecking(false);
+        return;
+      }
+
+      // LÓGICA DE ROTEAMENTO (PER USER)
+      
+      // Colaboradores que entraram via convite
+      // Eles têm profile_completed = false (forçado pela auth/convite) E first_access_completed = true
+      if (user.profile_completed === false && user.first_access_completed === true) {
+        navigate(createPageUrl("CompletarPerfil"));
+        return;
       }
 
       // 1. Verificar se está com o cadastro da oficina em andamento
