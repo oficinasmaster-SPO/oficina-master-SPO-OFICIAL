@@ -13,6 +13,8 @@ import { Loader2, Save, Download, Users, Printer, CheckCircle2, AlertCircle, Spa
 import { toast } from "sonner";
 import GuidedTour from "../components/help/GuidedTour";
 import HelpButton from "../components/help/HelpButton";
+import { usePlanLimits } from "@/components/limits/usePlanLimits";
+import PlanLimitWarning from "@/components/limits/PlanLimitWarning";
 
 export default function CDCForm() {
   const navigate = useNavigate();
@@ -52,6 +54,8 @@ export default function CDCForm() {
     },
     enabled: !!employeeId,
   });
+
+  const { data: planLimits, isLoading: loadingLimits } = usePlanLimits(workshop?.id, 'cdc', employeeId);
 
   const { data: discDiagnostic } = useQuery({
     queryKey: ['disc-diagnostic', employeeId],
@@ -407,7 +411,7 @@ export default function CDCForm() {
     ]
   };
 
-  const isLoading = loadingEmployee;
+  const isLoading = loadingEmployee || loadingLimits;
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -434,7 +438,9 @@ export default function CDCForm() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <PlanLimitWarning limitData={planLimits} resourceName="CDC" />
+
+        <form onSubmit={handleSubmit} className={`space-y-6 ${planLimits?.isLimitReached ? 'opacity-50 pointer-events-none' : ''}`}>
           <Card id="cdc-personal-info">
             <CardHeader>
               <CardTitle>Informações Pessoais</CardTitle>
@@ -699,7 +705,7 @@ export default function CDCForm() {
             <Button
               type="submit"
               className="flex-1 bg-blue-600 hover:bg-blue-700"
-              disabled={saveMutation.isPending || isGeneratingReport}
+              disabled={saveMutation.isPending || isGeneratingReport || planLimits?.isLimitReached}
             >
               {saveMutation.isPending || isGeneratingReport ? (
                 <>

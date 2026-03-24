@@ -13,6 +13,8 @@ import { differenceInMonths, addMonths, format } from "date-fns";
 import { toast } from "sonner";
 import GuidedTour from "../components/help/GuidedTour";
 import HelpButton from "../components/help/HelpButton";
+import { usePlanLimits } from "@/components/limits/usePlanLimits";
+import PlanLimitWarning from "@/components/limits/PlanLimitWarning";
 
 export default function COEXForm() {
   const navigate = useNavigate();
@@ -80,6 +82,8 @@ export default function COEXForm() {
     enabled: !!employeeId,
     select: (data) => data[0]
   });
+
+  const { data: planLimits, isLoading: loadingLimits } = usePlanLimits(workshop?.id, 'coex', employeeId);
 
   const { data: contract, isLoading: loadingContract } = useQuery({
     queryKey: ['coex-contract', contractId],
@@ -388,7 +392,7 @@ export default function COEXForm() {
     ]
   };
 
-  const isLoading = loadingEmployee || loadingContract;
+  const isLoading = loadingEmployee || loadingContract || loadingLimits;
 
   if (isLoading) {
     return (
@@ -416,6 +420,8 @@ export default function COEXForm() {
           </p>
         </div>
 
+        <PlanLimitWarning limitData={planLimits} resourceName="COEX" />
+
         {coexRestriction.restricted && (
           <div className="mb-6 bg-orange-50 border-l-4 border-orange-500 p-4">
             <div className="flex items-start">
@@ -433,7 +439,7 @@ export default function COEXForm() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className={`space-y-6 ${coexRestriction.restricted ? 'opacity-50 pointer-events-none' : ''}`}>
+        <form onSubmit={handleSubmit} className={`space-y-6 ${(coexRestriction.restricted || planLimits?.isLimitReached) ? 'opacity-50 pointer-events-none' : ''}`}>
           <Card>
             <CardHeader>
               <CardTitle>Informações do Contrato</CardTitle>
@@ -584,7 +590,7 @@ export default function COEXForm() {
             <Button
               type="submit"
               className="flex-1 bg-red-600 hover:bg-red-700"
-              disabled={saveMutation.isPending}
+              disabled={saveMutation.isPending || planLimits?.isLimitReached}
             >
               {saveMutation.isPending ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
