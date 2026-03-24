@@ -82,15 +82,16 @@ export default function PrimeiroAcesso() {
     switch (step) {
       case "validating":
         return (
-          <div className="text-center">
+          <div className="text-center animate-in fade-in duration-300">
             <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
-            <p className="text-gray-600">Validando convite...</p>
+            <p className="text-gray-900 font-bold text-xl mb-2">Validando convite...</p>
+            <p className="text-gray-600">Aguarde um momento.</p>
           </div>
         );
       
       case "login_redirect":
         return (
-          <div className="text-center">
+          <div className="text-center animate-in fade-in zoom-in duration-300">
             <CheckCircle2 className="w-12 h-12 text-green-600 mx-auto mb-4" />
             <p className="text-gray-900 font-bold text-xl mb-4">Convite Validado!</p>
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-left">
@@ -111,7 +112,7 @@ export default function PrimeiroAcesso() {
 
       case "completing":
         return (
-          <div className="text-center">
+          <div className="text-center animate-in fade-in duration-300">
             <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
             <p className="text-gray-900 font-bold text-xl mb-2">Vinculando sua conta...</p>
             <p className="text-gray-600">Aguarde um momento.</p>
@@ -120,7 +121,7 @@ export default function PrimeiroAcesso() {
 
       case "success":
         return (
-          <div className="text-center">
+          <div className="text-center animate-in fade-in zoom-in duration-300">
             <CheckCircle2 className="w-12 h-12 text-green-600 mx-auto mb-4" />
             <p className="text-gray-900 font-bold text-xl mb-2">Conta vinculada com sucesso!</p>
             <div className="flex items-center justify-center gap-2 text-gray-500 font-medium mt-4">
@@ -132,7 +133,7 @@ export default function PrimeiroAcesso() {
 
       case "wrong_user":
         return (
-          <div className="text-center">
+          <div className="text-center animate-in fade-in zoom-in duration-300">
             <div className="mx-auto w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
               <AlertCircle className="w-8 h-8 text-orange-600" />
             </div>
