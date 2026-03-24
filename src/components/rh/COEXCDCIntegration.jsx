@@ -10,9 +10,13 @@ import { createPageUrl } from "@/utils";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import COEXFeedbackList from "./COEXFeedbackList";
+import { usePlanLimits } from "@/components/limits/usePlanLimits";
 
 export default function COEXCDCIntegration({ employee }) {
   const navigate = useNavigate();
+  
+  const { data: cdcLimits } = usePlanLimits(employee.workshop_id, 'cdc', employee.id);
+  const { data: coexLimits } = usePlanLimits(employee.workshop_id, 'coex', employee.id);
 
   const { data: coexContracts = [] } = useQuery({
     queryKey: ['coex-contracts', employee.id],
@@ -131,9 +135,10 @@ export default function COEXCDCIntegration({ employee }) {
               <Button
                 onClick={() => navigate(createPageUrl("CDCForm") + `?employeeId=${employee.id}`)}
                 className="w-full bg-pink-600 hover:bg-pink-700"
+                disabled={cdcLimits?.isLimitReached}
               >
                 <Heart className="w-4 h-4 mr-2" />
-                Iniciar CDC
+                {cdcLimits?.isLimitReached ? "Limite do Plano Atingido" : "Iniciar CDC"}
               </Button>
             </div>
           )}
@@ -232,9 +237,10 @@ export default function COEXCDCIntegration({ employee }) {
               <Button
                 onClick={() => navigate(createPageUrl("COEXForm") + `?employeeId=${employee.id}`)}
                 className="w-full bg-blue-600 hover:bg-blue-700"
+                disabled={coexLimits?.isLimitReached}
               >
                 <FileText className="w-4 h-4 mr-2" />
-                Criar COEX
+                {coexLimits?.isLimitReached ? "Limite do Plano Atingido" : "Criar COEX"}
               </Button>
             </div>
           )}
