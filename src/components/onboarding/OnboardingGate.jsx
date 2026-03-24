@@ -135,11 +135,23 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
     }
   };
 
+  // Delaying loading screen to avoid flashes on quick verifications
+  const [showLoading, setShowLoading] = useState(false);
+  useEffect(() => {
+    let timeout;
+    if (isChecking) {
+      timeout = setTimeout(() => setShowLoading(true), 300); // 300ms delay before showing loader
+    } else {
+      setShowLoading(false);
+    }
+    return () => clearTimeout(timeout);
+  }, [isChecking]);
+
   // Mostrar loading apenas enquanto verifica (não em /cadastro ou em páginas base para evitar flash)
   const isAuthOrOnboardingPage = location.pathname.toLowerCase().includes('cadastro') || 
                                location.pathname.toLowerCase().includes('primeiroacesso');
                                
-  if (isChecking && !isAuthOrOnboardingPage) {
+  if (isChecking && !isAuthOrOnboardingPage && showLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50">
         <div className="flex flex-col items-center gap-4 animate-in fade-in duration-300">
@@ -148,6 +160,9 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
         </div>
       </div>
     );
+  } else if (isChecking && !isAuthOrOnboardingPage && !showLoading) {
+    // Return empty state while waiting for the 300ms timeout
+    return <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50" />;
   }
 
   // Render normal
