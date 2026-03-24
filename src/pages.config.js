@@ -237,7 +237,6 @@ export const PAGES = {
     "AdminNotificacoes": AdminNotificacoes,
     "AdminProdutividade": AdminProdutividade,
     "AnalisesRH": AnalisesRH,
-    "AprovarColaboradores": AprovarColaboradores,
     "AssistirAula": AssistirAula,
     "AssistirCurso": AssistirCurso,
     "AuditLogs": AuditLogs,
