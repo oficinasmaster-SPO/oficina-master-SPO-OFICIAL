@@ -44,6 +44,9 @@ const emotionalCriteria = [
   { key: "trabalho_equipe", label: "Trabalho em equipe" }
 ];
 
+import { useEvaluationPermissions } from "@/components/hooks/useEvaluationPermissions";
+import RestrictedAccess from "@/components/auth/RestrictedAccess";
+
 export default function AutoavaliacaoDesempenho() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -52,6 +55,7 @@ export default function AutoavaliacaoDesempenho() {
   const [employee, setEmployee] = useState(null);
   const [technicalScores, setTechnicalScores] = useState({});
   const [emotionalScores, setEmotionalScores] = useState({});
+  const { canSelfEvaluate } = useEvaluationPermissions(employee);
 
   useEffect(() => {
     loadData();
@@ -127,6 +131,10 @@ export default function AutoavaliacaoDesempenho() {
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
       </div>
     );
+  }
+
+  if (!canSelfEvaluate) {
+    return <RestrictedAccess message="Apenas o próprio colaborador pode realizar esta autoavaliação." />;
   }
 
   return (
