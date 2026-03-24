@@ -358,30 +358,32 @@ export default function Colaboradores() {
                                 Visualizar Acesso
                               </DropdownMenuItem>
                               
-                              <DropdownMenuItem 
-                                onClick={async () => {
-                                  const allowed = await checkPermission('employees', 'update', {
-                                    onDenied: () => toast.error('Sem permissão para alterar status')
-                                  });
-                                  if (!allowed) return;
-                                  
-                                  if (confirm(`${employee.status === 'ativo' ? 'Inativar' : 'Ativar'} ${employee.full_name}?`)) {
-                                    try {
-                                      await base44.entities.Employee.update(employee.id, {
-                                        status: employee.status === 'ativo' ? 'inativo' : 'ativo'
-                                      });
-                                      queryClient.invalidateQueries({ queryKey: ['employees'] });
-                                      toast.success('Status atualizado');
-                                    } catch (error) {
-                                      toast.error('Erro ao atualizar status');
+                              {employee.user_id !== workshop?.owner_id && (
+                                <DropdownMenuItem 
+                                  onClick={async () => {
+                                    const allowed = await checkPermission('employees', 'update', {
+                                      onDenied: () => toast.error('Sem permissão para alterar status')
+                                    });
+                                    if (!allowed) return;
+                                    
+                                    if (confirm(`${employee.status === 'ativo' ? 'Inativar' : 'Ativar'} ${employee.full_name}?`)) {
+                                      try {
+                                        await base44.entities.Employee.update(employee.id, {
+                                          status: employee.status === 'ativo' ? 'inativo' : 'ativo'
+                                        });
+                                        queryClient.invalidateQueries({ queryKey: ['employees'] });
+                                        toast.success('Status atualizado');
+                                      } catch (error) {
+                                        toast.error('Erro ao atualizar status');
+                                      }
                                     }
-                                  }
-                                }}
-                                className="cursor-pointer rounded-lg text-gray-700 py-2"
-                              >
-                                <Power className="w-4 h-4 mr-2" />
-                                {employee.status === 'ativo' ? 'Inativar' : 'Ativar'}
-                              </DropdownMenuItem>
+                                  }}
+                                  className="cursor-pointer rounded-lg text-gray-700 py-2"
+                                >
+                                  <Power className="w-4 h-4 mr-2" />
+                                  {employee.status === 'ativo' ? 'Inativar' : 'Ativar'}
+                                </DropdownMenuItem>
+                              )}
 
                               <DropdownMenuSeparator className="bg-gray-100" />
 
