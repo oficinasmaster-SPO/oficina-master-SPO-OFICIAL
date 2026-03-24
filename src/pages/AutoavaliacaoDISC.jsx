@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { discQuestions } from "@/components/disc/DISCQuestions";
+import { useEvaluationPermissions } from "@/components/hooks/useEvaluationPermissions";
+import RestrictedAccess from "@/components/auth/RestrictedAccess";
 
 export default function AutoavaliacaoDISC() {
   const navigate = useNavigate();
@@ -15,6 +17,8 @@ export default function AutoavaliacaoDISC() {
   const [employee, setEmployee] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState([]);
+
+  const { canSelfEvaluate } = useEvaluationPermissions(employee);
 
   useEffect(() => {
     loadData();
@@ -101,6 +105,10 @@ export default function AutoavaliacaoDISC() {
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
       </div>
     );
+  }
+
+  if (!canSelfEvaluate) {
+    return <RestrictedAccess message="Apenas o próprio colaborador pode realizar esta autoavaliação." />;
   }
 
   const question = discQuestions[currentQuestion];
