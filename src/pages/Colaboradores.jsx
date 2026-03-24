@@ -114,10 +114,10 @@ export default function Colaboradores() {
   };
 
   const maturityLabels = {
-  bebe: "Bebê",
-  crianca: "Criança",
-  adolescente: "Adolescente",
-  adulto: "Adulto"
+  bebe: "Júnior",
+  crianca: "Pleno",
+  adolescente: "Sênior",
+  adulto: "Master"
   };
 
   const filteredEmployees = Array.isArray(employees) ? employees.filter((employee) => {
@@ -218,10 +218,10 @@ export default function Colaboradores() {
                     defaultValue: "all",
                     options: [
                         { value: "all", label: "Todas" },
-                        { value: "bebe", label: "Bebê" },
-                        { value: "crianca", label: "Criança" },
-                        { value: "adolescente", label: "Adolescente" },
-                        { value: "adulto", label: "Adulto" }
+                        { value: "bebe", label: "Júnior" },
+                        { value: "crianca", label: "Pleno" },
+                        { value: "adolescente", label: "Sênior" },
+                        { value: "adulto", label: "Master" }
                     ]
                 }
             ]}

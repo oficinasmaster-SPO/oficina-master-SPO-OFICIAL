@@ -137,17 +137,17 @@ export default function ResultadoMaturidade() {
   const levelInfo = maturityLevels[diagnostic?.maturity_level] || maturityLevels.bebe;
   
   const chartData = [
-    { name: "Auxiliar (Direção)", value: diagnostic?.maturity_scores?.bebe || 0, color: "#ef4444" },
-    { name: "Júnior (Orientação)", value: diagnostic?.maturity_scores?.crianca || 0, color: "#f59e0b" },
-    { name: "Pleno (Apoio)", value: diagnostic?.maturity_scores?.adolescente || 0, color: "#3b82f6" },
-    { name: "Sênior (Delegação)", value: diagnostic?.maturity_scores?.adulto || 0, color: "#10b981" }
+    { name: "Júnior (Direção)", value: diagnostic?.maturity_scores?.bebe || 0, color: "#ef4444" },
+    { name: "Pleno (Orientação)", value: diagnostic?.maturity_scores?.crianca || 0, color: "#f59e0b" },
+    { name: "Sênior (Apoio)", value: diagnostic?.maturity_scores?.adolescente || 0, color: "#3b82f6" },
+    { name: "Master (Delegação)", value: diagnostic?.maturity_scores?.adulto || 0, color: "#10b981" }
   ];
 
   const barData = [
-    { name: "Auxiliar", value: diagnostic?.maturity_scores?.bebe || 0, fill: "#ef4444" },
-    { name: "Júnior", value: diagnostic?.maturity_scores?.crianca || 0, fill: "#f59e0b" },
-    { name: "Pleno", value: diagnostic?.maturity_scores?.adolescente || 0, fill: "#3b82f6" },
-    { name: "Sênior", value: diagnostic?.maturity_scores?.adulto || 0, fill: "#10b981" }
+    { name: "Júnior", value: diagnostic?.maturity_scores?.bebe || 0, fill: "#ef4444" },
+    { name: "Pleno", value: diagnostic?.maturity_scores?.crianca || 0, fill: "#f59e0b" },
+    { name: "Sênior", value: diagnostic?.maturity_scores?.adolescente || 0, fill: "#3b82f6" },
+    { name: "Master", value: diagnostic?.maturity_scores?.adulto || 0, fill: "#10b981" }
   ];
 
   return (

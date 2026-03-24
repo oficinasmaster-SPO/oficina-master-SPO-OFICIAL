@@ -10,22 +10,22 @@ import { base44 } from "@/api/base44Client";
 
 const nivelLabels = {
   bebe: { 
-    nome: "Auxiliar", 
+    nome: "Júnior", 
     cor: "bg-red-100 text-red-700 border-red-300",
     descricao: "Nível inicial - necessita desenvolvimento básico"
   },
   crianca: { 
-    nome: "Júnior", 
+    nome: "Pleno", 
     cor: "bg-orange-100 text-orange-700 border-orange-300",
     descricao: "Nível intermediário - em desenvolvimento"
   },
   adolescente: { 
-    nome: "Pleno", 
+    nome: "Sênior", 
     cor: "bg-blue-100 text-blue-700 border-blue-300",
     descricao: "Nível avançado - quase autônomo"
   },
   adulto: { 
-    nome: "Sênior", 
+    nome: "Master", 
     cor: "bg-green-100 text-green-700 border-green-300",
     descricao: "Nível máximo - totalmente autônomo"
   }
