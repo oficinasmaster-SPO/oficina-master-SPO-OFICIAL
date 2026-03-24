@@ -164,6 +164,21 @@ export default function CentralAvaliacoes() {
           iconColor: "text-pink-600"
         }
       ]
+    },
+    {
+      title: "Ferramentas",
+      description: "Links externos e compartilhamentos",
+      items: [
+        {
+          id: "nps_link",
+          title: "Gerar Link NPS",
+          description: "Copiar link da pesquisa de satisfação para clientes",
+          icon: Users,
+          href: createPageUrl("PublicNPS"),
+          color: "bg-gray-100 text-gray-700",
+          iconColor: "text-gray-600"
+        }
+      ]
     }
   ];
 
