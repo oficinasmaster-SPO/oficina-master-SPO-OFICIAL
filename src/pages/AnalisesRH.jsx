@@ -127,6 +127,7 @@ export default function AnalisesRH() {
         </Tabs>
       </div>
     </div>
+    </RestrictedAccess>
   );
 }
 
