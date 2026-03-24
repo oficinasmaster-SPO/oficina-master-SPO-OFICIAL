@@ -50,13 +50,17 @@ Deno.serve(async (req) => {
     });
     console.log(`📝 EmployeeInvite status atualizado para 'acessado'`);
 
+    // EXTRAÇÃO SEGURA DE DADOS (Fonte da verdade: Metadata)
+    const secureProfileId = invite.metadata?.profile_id || invite.profile_id;
+    const secureWorkshopId = invite.metadata?.workshop_id || invite.metadata?.company_id || invite.workshop_id;
+
     // Criar EmployeeInviteAcceptance para disparar automação
     console.log(`📝 Criando EmployeeInviteAcceptance...`);
     const acceptance = await base44.asServiceRole.entities.EmployeeInviteAcceptance.create({
       user_id: user.id,
       invite_id: invite.id,
-      workshop_id: invite.workshop_id,
-      profile_id: invite.profile_id,
+      workshop_id: secureWorkshopId,
+      profile_id: secureProfileId,
       email: invite.email,
       full_name: invite.name || user.full_name,
       processed: false
@@ -71,11 +75,11 @@ Deno.serve(async (req) => {
     // Mas PRECISAM completar o próprio perfil (CPF e Telefone)
     updateData.profile_completed = false;
 
-    if (invite.workshop_id) {
-      updateData.workshop_id = invite.workshop_id;
+    if (secureWorkshopId) {
+      updateData.workshop_id = secureWorkshopId;
     }
-    if (invite.profile_id && !user.profile_id) {
-      updateData.profile_id = invite.profile_id;
+    if (secureProfileId && !user.profile_id) {
+      updateData.profile_id = secureProfileId;
     }
     
     await base44.asServiceRole.entities.User.update(user.id, updateData);
