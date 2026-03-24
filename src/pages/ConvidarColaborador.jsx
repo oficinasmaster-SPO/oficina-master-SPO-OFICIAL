@@ -529,7 +529,7 @@ export default function ConvidarColaborador() {
                     <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                     <SelectContent>
                       {jobRoles.map(role => (
-                        <SelectItem key={role.value} value={role.value}>{role.label}</SelectItem>
+                        <SelectItem key={role.id || role.value} value={role.id || role.value}>{role.label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
