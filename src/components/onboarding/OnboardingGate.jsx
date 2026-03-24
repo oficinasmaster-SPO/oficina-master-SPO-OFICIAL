@@ -135,11 +135,14 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
     }
   };
 
-  // Mostrar loading apenas enquanto verifica (não em /cadastro para evitar flash)
-  if (isChecking && !location.pathname.toLowerCase().includes('cadastro')) {
+  // Mostrar loading apenas enquanto verifica (não em /cadastro ou em páginas base para evitar flash)
+  const isAuthOrOnboardingPage = location.pathname.toLowerCase().includes('cadastro') || 
+                               location.pathname.toLowerCase().includes('primeiroacesso');
+                               
+  if (isChecking && !isAuthOrOnboardingPage) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50">
-        <div className="flex flex-col items-center gap-4">
+        <div className="flex flex-col items-center gap-4 animate-in fade-in duration-300">
           <Loader2 className="w-12 h-12 animate-spin text-blue-600" />
           <p className="text-gray-600 font-medium">Verificando acesso...</p>
         </div>
