@@ -271,7 +271,8 @@ export const profileInfo = {
       "Supervisor de Processos",
       "Gerente de Qualidade",
       "Planejador de Manutenção",
-      "Assistente Administrativo"
+      "Assistente Administrativo",
+      "Planejador"
     ],
     description: "Perfil voltado para processos, organização e manutenção da estabilidade operacional."
   },
