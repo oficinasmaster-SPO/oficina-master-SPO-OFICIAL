@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import ActionPlanCard from "../components/diagnostics/ActionPlanCard";
 import ActionPlanDetails from "../components/diagnostics/ActionPlanDetails";
 import ActionPlanFeedbackModal from "../components/diagnostics/ActionPlanFeedbackModal";
+import { useEvaluationPermissions } from "@/components/hooks/useEvaluationPermissions";
 
 export default function ResultadoMaturidade() {
   const navigate = useNavigate();
@@ -23,6 +24,7 @@ export default function ResultadoMaturidade() {
   const [showActionPlanDetails, setShowActionPlanDetails] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const queryClient = useQueryClient();
+  const { isLeader, currentUserEmployee, loading: permissionsLoading } = useEvaluationPermissions();
 
   const { data: actionPlan } = useQuery({
     queryKey: ['action-plan', diagnostic?.id],
@@ -124,7 +126,7 @@ export default function ResultadoMaturidade() {
     }
   };
 
-  if (loading) {
+  if (loading || permissionsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
@@ -133,6 +135,19 @@ export default function ResultadoMaturidade() {
   }
 
   if (!diagnostic || !employee) return null;
+
+  if (!isLeader && currentUserEmployee?.id !== diagnostic.employee_id) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center p-4">
+        <Card className="max-w-md w-full border-red-200 bg-red-50">
+          <CardContent className="pt-6 flex flex-col items-center text-center">
+            <h2 className="text-xl font-bold text-red-900 mb-2">Acesso Restrito</h2>
+            <p className="text-red-700">Você não tem permissão para ver o resultado de outros colaboradores.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const levelInfo = maturityLevels[diagnostic?.maturity_level] || maturityLevels.bebe;
   
