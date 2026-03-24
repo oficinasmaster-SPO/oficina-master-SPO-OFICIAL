@@ -25,9 +25,9 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated, navigateToLogin, logout } = useAuth();
-  const [showLoading, setShowLoading] = React.useState(false);
+  const [showLoading, setShowLoading] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     let timeout;
     if (isLoadingPublicSettings || isLoadingAuth) {
       timeout = setTimeout(() => setShowLoading(true), 400); // 400ms delay to prevent flashes on fast loads
