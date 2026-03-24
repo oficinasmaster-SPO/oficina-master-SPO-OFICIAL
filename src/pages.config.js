@@ -55,7 +55,7 @@ import AdminMensagens from './pages/AdminMensagens';
 import AdminNotificacoes from './pages/AdminNotificacoes';
 import AdminProdutividade from './pages/AdminProdutividade';
 import AnalisesRH from './pages/AnalisesRH';
-import AprovarColaboradores from './pages/AprovarColaboradores';
+
 import AssistirAula from './pages/AssistirAula';
 import AssistirCurso from './pages/AssistirCurso';
 import AuditLogs from './pages/AuditLogs';
