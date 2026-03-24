@@ -54,15 +54,18 @@ export default function DescricaoCargos() {
   };
 
   const handleSave = (baseRoleValue, customRoleId, category, level) => {
-    saveCustomRoleMutation.mutate({
-      id: customRoleId,
+    const payload = {
       workshop_id: workshopId,
       base_role_value: baseRoleValue,
       custom_label: editForm.custom_label,
       custom_description: editForm.custom_description,
-      category,
-      level
-    });
+      category: category || "outros",
+      level: level || "support"
+    };
+    if (customRoleId) {
+      payload.id = customRoleId;
+    }
+    saveCustomRoleMutation.mutate(payload);
   };
 
   const handleDuplicate = (role) => {
