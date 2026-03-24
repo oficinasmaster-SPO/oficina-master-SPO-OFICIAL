@@ -24,11 +24,24 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated, navigateToLogin, logout } = useAuth();
+  const [showLoading, setShowLoading] = React.useState(false);
 
-  // Show loading spinner while checking app public settings or auth
+  React.useEffect(() => {
+    let timeout;
+    if (isLoadingPublicSettings || isLoadingAuth) {
+      timeout = setTimeout(() => setShowLoading(true), 400); // 400ms delay to prevent flashes on fast loads
+    } else {
+      setShowLoading(false);
+    }
+    return () => clearTimeout(timeout);
+  }, [isLoadingPublicSettings, isLoadingAuth]);
+
+  // Show loading spinner while checking app public settings or auth, with delay
   if (isLoadingPublicSettings || isLoadingAuth) {
+    if (!showLoading) return <div className="fixed inset-0 bg-gray-50" />; // Empty state during delay
+    
     return (
-      <div className="fixed inset-0 flex items-center justify-center">
+      <div className="fixed inset-0 flex items-center justify-center bg-gray-50">
         <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
       </div>
     );
