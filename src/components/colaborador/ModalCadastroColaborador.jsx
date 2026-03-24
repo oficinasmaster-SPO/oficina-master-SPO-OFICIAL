@@ -169,7 +169,7 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
          await base44.entities.DISCPublicSession.create({
             workshop_id: workshop.id,
             employee_id: response.data.employee_id,
-            candidate_name: formDataToSendToSend?.full_name || formData.full_name,
+            candidate_name: formDataToSend.full_name || formData.full_name,
             token: uuid,
             status: 'pending'
          });
