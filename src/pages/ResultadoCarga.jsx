@@ -13,6 +13,7 @@ import ActionPlanDetails from "../components/diagnostics/ActionPlanDetails";
 import ActionPlanFeedbackModal from "../components/diagnostics/ActionPlanFeedbackModal";
 import OrgChartCarga from "../components/diagnostics/OrgChartCarga";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export default function ResultadoCarga() {
   const navigate = useNavigate();
@@ -160,8 +161,39 @@ export default function ResultadoCarga() {
   const currentHealth = healthConfig[diagnostic.overall_health] || healthConfig.atencao;
   const HealthIcon = currentHealth.icon;
 
+  // Cálculos do Resumo Executivo
+  const workloadList = diagnostic?.workload_data || [];
+  const totalEmployees = workloadList.length;
+  
+  let ociosoCount = 0;
+  let normalCount = 0;
+  let sobrecarregadoCount = 0;
+  let criticoCount = 0;
+  let mostOverloaded = null;
+  let maxSaturation = -1;
+
+  workloadList.forEach(emp => {
+    const saturation = emp.ideal_weekly_hours > 0 ? (emp.weekly_hours_worked / emp.ideal_weekly_hours) * 100 : 0;
+    
+    if (saturation < 70) ociosoCount++;
+    else if (saturation <= 90) normalCount++;
+    else if (saturation <= 110) sobrecarregadoCount++;
+    else criticoCount++;
+
+    if (saturation > maxSaturation) {
+      maxSaturation = saturation;
+      mostOverloaded = { ...emp, saturation };
+    }
+  });
+
+  const sortedGargalos = [...workloadList].sort((a, b) => {
+    const satA = a.ideal_weekly_hours > 0 ? (a.weekly_hours_worked / a.ideal_weekly_hours) : 0;
+    const satB = b.ideal_weekly_hours > 0 ? (b.weekly_hours_worked / b.ideal_weekly_hours) : 0;
+    return satB - satA;
+  });
+
   // Preparar dados para o gráfico
-  const chartData = (diagnostic?.workload_data || []).map(emp => {
+  const chartData = workloadList.map(emp => {
     const employee = employees.find(e => e?.id === emp?.employee_id);
     const utilization = emp?.ideal_weekly_hours > 0 ? (emp.weekly_hours_worked / emp.ideal_weekly_hours) * 100 : 0;
     
@@ -207,12 +239,71 @@ export default function ResultadoCarga() {
         </Card>
 
         {/* Tabs de Visões */}
-        <Tabs defaultValue="grafico" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6 shadow-sm border border-slate-200">
-            <TabsTrigger value="grafico" className="data-[state=active]:bg-orange-100 data-[state=active]:text-orange-900">Visão Gráfica</TabsTrigger>
-            <TabsTrigger value="organograma" className="data-[state=active]:bg-orange-100 data-[state=active]:text-orange-900">Organograma de Carga</TabsTrigger>
+        <Tabs defaultValue="resumo" className="w-full">
+          <TabsList className="grid w-full grid-cols-1 md:grid-cols-4 mb-6 shadow-sm border border-slate-200 h-auto">
+            <TabsTrigger value="resumo" className="data-[state=active]:bg-orange-100 data-[state=active]:text-orange-900 py-2">Resumo Executivo</TabsTrigger>
+            <TabsTrigger value="grafico" className="data-[state=active]:bg-orange-100 data-[state=active]:text-orange-900 py-2">Visão Gráfica</TabsTrigger>
+            <TabsTrigger value="organograma" className="data-[state=active]:bg-orange-100 data-[state=active]:text-orange-900 py-2">Organograma</TabsTrigger>
+            <TabsTrigger value="gargalos" className="data-[state=active]:bg-orange-100 data-[state=active]:text-orange-900 py-2">Tabela de Gargalos</TabsTrigger>
           </TabsList>
           
+          <TabsContent value="resumo" className="space-y-6 mt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-slate-500">Equipe Analisada</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">{totalEmployees}</div>
+                  <p className="text-xs text-slate-500 mt-1">colaboradores</p>
+                </CardContent>
+              </Card>
+              <Card className="border-b-4 border-b-blue-500">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-slate-500">Subutilizados (&lt;70%)</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-blue-600">{ociosoCount}</div>
+                  <p className="text-xs text-slate-500 mt-1">{totalEmployees ? ((ociosoCount / totalEmployees) * 100).toFixed(0) : 0}% da equipe</p>
+                </CardContent>
+              </Card>
+              <Card className="border-b-4 border-b-green-500">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-slate-500">Normal (70-110%)</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-green-600">{normalCount}</div>
+                  <p className="text-xs text-slate-500 mt-1">{totalEmployees ? ((normalCount / totalEmployees) * 100).toFixed(0) : 0}% da equipe</p>
+                </CardContent>
+              </Card>
+              <Card className="border-b-4 border-b-red-500">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-slate-500">Crítico (&gt;110%)</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-red-600">{sobrecarregadoCount + criticoCount}</div>
+                  <p className="text-xs text-slate-500 mt-1">{totalEmployees ? (((sobrecarregadoCount + criticoCount) / totalEmployees) * 100).toFixed(0) : 0}% da equipe</p>
+                </CardContent>
+              </Card>
+            </div>
+            
+            {mostOverloaded && (
+              <Card className="bg-red-50 border-red-200">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4">
+                    <AlertTriangle className="w-8 h-8 text-red-600" />
+                    <div>
+                      <h3 className="font-bold text-red-900 text-lg">Ponto Mais Crítico</h3>
+                      <p className="text-red-700">
+                        <strong>{getEmployeeName(mostOverloaded.employee_id)}</strong> está com a maior carga de trabalho ({mostOverloaded.saturation.toFixed(0)}% de saturação). Ação prioritária recomendada.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
           <TabsContent value="grafico">
             <Card>
               <CardHeader>
@@ -271,6 +362,52 @@ export default function ResultadoCarga() {
               </CardHeader>
               <CardContent>
                 <OrgChartCarga employees={employees} diagnosticData={diagnostic} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="gargalos">
+            <Card>
+              <CardHeader>
+                <CardTitle>Tabela de Gargalos e Saturação</CardTitle>
+                <CardDescription>Lista de todos os colaboradores ordenada pelos mais sobrecarregados</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-md border overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Colaborador</TableHead>
+                        <TableHead>Saturação</TableHead>
+                        <TableHead>Horas (Trab/Ideal)</TableHead>
+                        <TableHead>OS/Semana</TableHead>
+                        <TableHead>Percepção</TableHead>
+                        <TableHead className="w-[300px]">Gargalos Relatados</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {sortedGargalos.map((emp, idx) => {
+                        const saturation = emp.ideal_weekly_hours > 0 ? (emp.weekly_hours_worked / emp.ideal_weekly_hours) * 100 : 0;
+                        return (
+                          <TableRow key={idx}>
+                            <TableCell className="font-medium">{getEmployeeName(emp.employee_id)}</TableCell>
+                            <TableCell>
+                              <span className={`font-bold px-2 py-1 rounded-full text-xs ${saturation > 110 ? 'bg-red-100 text-red-700' : saturation < 70 ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
+                                {saturation.toFixed(0)}%
+                              </span>
+                            </TableCell>
+                            <TableCell>{emp.weekly_hours_worked} / {emp.ideal_weekly_hours}</TableCell>
+                            <TableCell>{emp.os_per_week || '-'}</TableCell>
+                            <TableCell>{emp.subjective_load ? `${emp.subjective_load}/5` : '-'}</TableCell>
+                            <TableCell className="text-xs text-slate-600">
+                              {emp.bottlenecks || <span className="italic opacity-50">Não informado</span>}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

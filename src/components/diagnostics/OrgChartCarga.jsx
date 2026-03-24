@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Users, AlertTriangle, CheckCircle, TrendingUp } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export default function OrgChartCarga({ employees, diagnosticData }) {
   const workloadMap = {};
@@ -25,21 +26,37 @@ export default function OrgChartCarga({ employees, diagnosticData }) {
     const info = getSaturationInfo(saturation);
     
     return (
-      <div key={employee.id} className={`p-4 rounded-xl border-2 shadow-sm min-w-[220px] max-w-[250px] text-center transition-all hover:shadow-md relative ${info.bg}`}>
-        <div className="absolute top-2 right-2">
-           {info.icon}
-        </div>
-        <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center mx-auto mb-3 shadow-sm border border-gray-100">
-           <Users className="w-6 h-6 text-gray-400" />
-        </div>
-        <div className="font-bold truncate" title={employee.full_name}>{employee.full_name}</div>
-        <div className="text-xs opacity-80 mb-3 truncate">{employee.position || 'Sem cargo'}</div>
-        
-        <div className="bg-white/60 rounded-lg p-2 flex justify-between items-center mt-2">
-            <span className="text-xs font-semibold">Saturação:</span>
-            <span className="text-base font-black">{saturation.toFixed(0)}%</span>
-        </div>
-      </div>
+      <TooltipProvider key={employee.id}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className={`p-4 rounded-xl border-2 shadow-sm min-w-[220px] max-w-[250px] text-center transition-all hover:shadow-md relative cursor-help ${info.bg}`}>
+              <div className="absolute top-2 right-2">
+                 {info.icon}
+              </div>
+              <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center mx-auto mb-3 shadow-sm border border-gray-100">
+                 <Users className="w-6 h-6 text-gray-400" />
+              </div>
+              <div className="font-bold truncate">{employee.full_name}</div>
+              <div className="text-xs opacity-80 mb-3 truncate">{employee.position || 'Sem cargo'}</div>
+              
+              <div className="bg-white/60 rounded-lg p-2 flex justify-between items-center mt-2">
+                  <span className="text-xs font-semibold">Saturação:</span>
+                  <span className="text-base font-black">{saturation.toFixed(0)}%</span>
+              </div>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent className="w-64 p-4 space-y-2 bg-white text-slate-800 border border-slate-200 shadow-xl">
+            <div className="font-bold text-sm border-b pb-2 mb-2">{employee.full_name}</div>
+            <div className="text-xs space-y-1">
+              <p><strong>Horas/Semana:</strong> {wd?.weekly_hours_worked || 0} de {wd?.ideal_weekly_hours || 0}</p>
+              <p><strong>Média OS/Semana:</strong> {wd?.os_per_week || 0}</p>
+              <p><strong>Hora Extra Frequente:</strong> {wd?.frequent_overtime ? "Sim" : "Não"}</p>
+              <p><strong>Percepção (1-5):</strong> {wd?.subjective_load || "N/A"}</p>
+              {wd?.bottlenecks && <p className="pt-2"><strong>Gargalos:</strong> {wd.bottlenecks}</p>}
+            </div>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     );
   };
 
