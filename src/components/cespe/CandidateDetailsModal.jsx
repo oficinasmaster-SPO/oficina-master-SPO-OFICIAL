@@ -8,6 +8,7 @@ import { User, Briefcase, Phone, Mail, Calendar, Star, FileText, MessageSquare, 
 import { toast } from "sonner";
 import { createPageUrl } from "@/utils";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 export default function CandidateDetailsModal({ open, onClose, candidate }) {
   const queryClient = useQueryClient();
