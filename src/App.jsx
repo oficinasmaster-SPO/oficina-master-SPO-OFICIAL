@@ -17,6 +17,7 @@ import CompletarPerfil from '@/pages/CompletarPerfil';
 import DescricaoCargos from '@/pages/DescricaoCargos';
 import CentralAvaliacoes from '@/pages/CentralAvaliacoes';
 import MatrizDesempenho from '@/pages/MatrizDesempenho';
+import PublicNPS from '@/pages/PublicNPS';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -115,6 +116,7 @@ const AuthenticatedApp = () => {
           <MatrizDesempenho />
         </LayoutWrapper>
       } />
+      <Route path="/PublicNPS" element={<PublicNPS />} />
       {Object.entries(Pages).map(([path, Page]) => (
         <Route
           key={path}

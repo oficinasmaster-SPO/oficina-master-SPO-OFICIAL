@@ -1,181 +1,219 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, CheckCircle2 } from "lucide-react";
-import { toast } from "sonner";
+import { Loader2, CheckCircle2, Heart, Meh, Frown } from "lucide-react";
 
 export default function PublicNPS() {
   const [searchParams] = useSearchParams();
-  const wid = searchParams.get('wid');
-  
+  const wid = searchParams.get("wid");
+  const ctx = searchParams.get("ctx") || "cliente";
+  const cid = searchParams.get("cid");
+
   const [workshop, setWorkshop] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [completed, setCompleted] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   
   const [score, setScore] = useState(null);
-  const [comment, setComment] = useState("");
-  const [customerName, setCustomerName] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
+  const [formData, setFormData] = useState({
+    name: "",
+    phone: "",
+    email: "",
+    comment: ""
+  });
 
   useEffect(() => {
-    if (!wid) {
+    if (wid) {
+      base44.entities.Workshop.get(wid)
+        .then(data => {
+          setWorkshop(data);
+          setLoading(false);
+        })
+        .catch(() => setLoading(false));
+    } else {
       setLoading(false);
-      return;
     }
-    
-    const fetchWorkshop = async () => {
-      try {
-        const res = await base44.functions.invoke('getPublicWorkshopInfo', { workshop_id: wid });
-        if (res.data && !res.data.error) {
-          setWorkshop(res.data);
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchWorkshop();
   }, [wid]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (score === null) {
-      toast.error("Por favor, selecione uma nota.");
-      return;
-    }
+    if (score === null) return;
     
     setSubmitting(true);
     try {
       await base44.entities.NPSResponse.create({
         workshop_id: wid,
-        score,
-        comment,
-        customer_name: customerName,
-        customer_phone: customerPhone
+        context_type: ctx,
+        context_id: cid,
+        respondent_name: formData.name,
+        respondent_phone: formData.phone,
+        respondent_email: formData.email,
+        score: score,
+        comment: formData.comment,
+        submitted_at: new Date().toISOString()
       });
-      setCompleted(true);
-    } catch (err) {
-      console.error(err);
-      toast.error("Erro ao enviar avaliação.");
+      setSubmitted(true);
+    } catch (error) {
+      console.error(error);
+      alert("Erro ao enviar avaliação. Tente novamente.");
     } finally {
       setSubmitting(false);
     }
   };
 
+  const getScoreColor = (value) => {
+    if (value <= 6) return "bg-red-100 hover:bg-red-200 text-red-700 border-red-300";
+    if (value <= 8) return "bg-yellow-100 hover:bg-yellow-200 text-yellow-700 border-yellow-300";
+    return "bg-green-100 hover:bg-green-200 text-green-700 border-green-300";
+  };
+
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center bg-gray-50"><Loader2 className="w-8 h-8 animate-spin text-blue-600" /></div>;
+    return <div className="min-h-screen flex items-center justify-center bg-slate-50"><Loader2 className="w-8 h-8 animate-spin text-blue-600" /></div>;
   }
 
-  if (!wid || !workshop) {
+  if (!workshop) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-        <Card className="max-w-md w-full">
-          <CardContent className="pt-6 text-center text-gray-600">
-            Página não encontrada ou link inválido.
-          </CardContent>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+        <Card className="w-full max-w-md text-center py-8">
+          <Frown className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+          <CardTitle>Link Inválido</CardTitle>
+          <CardDescription className="mt-2">Não foi possível encontrar a empresa para esta avaliação.</CardDescription>
         </Card>
       </div>
     );
   }
 
-  if (completed) {
+  if (submitted) {
+    let FeedbackIcon = Heart;
+    let feedbackColor = "text-green-500";
+    let title = "Obrigado por avaliar!";
+    let desc = "Ficamos muito felizes com sua avaliação. Continuaremos trabalhando para entregar o melhor serviço.";
+
+    if (score <= 6) {
+      FeedbackIcon = Frown;
+      feedbackColor = "text-red-500";
+      title = "Sentimos muito...";
+      desc = "Agradecemos a sinceridade. Usaremos seu feedback para melhorar imediatamente nossos processos.";
+    } else if (score <= 8) {
+      FeedbackIcon = Meh;
+      feedbackColor = "text-yellow-500";
+      title = "Agradecemos o feedback!";
+      desc = "Sua opinião é valiosa para continuarmos evoluindo.";
+    }
+
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-        <Card className="max-w-md w-full text-center py-8">
-          <CardContent>
-            <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Obrigado!</h2>
-            <p className="text-gray-600">Sua avaliação foi registrada com sucesso.</p>
-          </CardContent>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+        <Card className="w-full max-w-md text-center py-10 shadow-lg border-t-4 border-t-blue-500">
+          <FeedbackIcon className={`w-16 h-16 mx-auto mb-6 ${feedbackColor}`} />
+          <CardTitle className="text-2xl mb-2">{title}</CardTitle>
+          <CardDescription className="text-base px-6">{desc}</CardDescription>
         </Card>
       </div>
     );
   }
+
+  const contextLabels = {
+    cliente: "nosso serviço",
+    imersao: "nossa imersão",
+    treinamento: "o treinamento",
+    mentoria: "a mentoria",
+    monitoria: "a monitoria"
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <Card className="max-w-xl w-full">
-        <CardHeader className="text-center">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 py-12">
+      <Card className="w-full max-w-xl shadow-xl border-0 ring-1 ring-slate-200">
+        <div className="bg-blue-600 p-8 rounded-t-xl text-center text-white">
           {workshop.logo_url && (
-            <img src={workshop.logo_url} alt={workshop.name} className="h-16 object-contain mx-auto mb-4" />
+            <img src={workshop.logo_url} alt="Logo" className="h-16 mx-auto mb-4 object-contain bg-white rounded p-2" />
           )}
-          <CardTitle className="text-2xl">Avaliação de Atendimento</CardTitle>
-          <CardDescription>
-            Como você avalia sua experiência com a <strong>{workshop.name}</strong>?
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <Label className="text-center block mb-4">
-                Em uma escala de 0 a 10, o quanto você recomendaria nossos serviços?
-              </Label>
-              <div className="flex justify-between gap-1 sm:gap-2 flex-wrap">
-                {[0,1,2,3,4,5,6,7,8,9,10].map(num => (
+          <h1 className="text-2xl font-bold">{workshop.name}</h1>
+          <p className="opacity-90 mt-2">Pesquisa de Satisfação</p>
+        </div>
+
+        <CardContent className="p-6 sm:p-8">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-center">
+                De 0 a 10, o quanto você recomendaria {contextLabels[ctx] || "nossa empresa"} para um amigo ou colega?
+              </h2>
+              
+              <div className="flex flex-wrap justify-center gap-2">
+                {[0,1,2,3,4,5,6,7,8,9,10].map(val => (
                   <button
-                    key={num}
+                    key={val}
                     type="button"
-                    onClick={() => setScore(num)}
-                    className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full font-bold transition-all ${
-                      score === num 
-                        ? 'bg-blue-600 text-white shadow-lg transform scale-110' 
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
+                    onClick={() => setScore(val)}
+                    className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg font-bold transition-all border-2 flex items-center justify-center
+                      ${score === val ? 'ring-2 ring-blue-600 ring-offset-2 scale-110 shadow-md ' + getScoreColor(val) : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'}
+                    `}
                   >
-                    {num}
+                    {val}
                   </button>
                 ))}
               </div>
-              <div className="flex justify-between text-xs text-gray-500 mt-2 px-1">
-                <span>0 - Não recomendaria</span>
+              <div className="flex justify-between text-xs text-slate-500 font-medium px-2">
+                <span>0 - Nunca recomendaria</span>
                 <span>10 - Com certeza recomendaria</span>
               </div>
             </div>
 
-            <div>
-              <Label htmlFor="comment">Gostaria de deixar um comentário? (Opcional)</Label>
-              <Textarea 
-                id="comment" 
-                placeholder="Conte-nos o motivo da sua nota..." 
-                value={comment}
-                onChange={e => setComment(e.target.value)}
-                className="mt-1"
-                rows={3}
-              />
-            </div>
+            {score !== null && (
+              <div className="space-y-4 animate-in fade-in slide-in-from-top-4 pt-4 border-t border-slate-100">
+                <div className="space-y-2">
+                  <Label>Nome Completo *</Label>
+                  <Input 
+                    required 
+                    value={formData.name} 
+                    onChange={e => setFormData({...formData, name: e.target.value})} 
+                    placeholder="Seu nome"
+                  />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>WhatsApp *</Label>
+                    <Input 
+                      required 
+                      value={formData.phone} 
+                      onChange={e => setFormData({...formData, phone: e.target.value})} 
+                      placeholder="(00) 00000-0000"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>E-mail *</Label>
+                    <Input 
+                      type="email" 
+                      required 
+                      value={formData.email} 
+                      onChange={e => setFormData({...formData, email: e.target.value})} 
+                      placeholder="seu@email.com"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>
+                    {score <= 6 ? "O que aconteceu? Como podemos melhorar?" : 
+                     score <= 8 ? "O que faltou para a nota ser 10?" : 
+                     "O que você mais gostou?"} (Opcional)
+                  </Label>
+                  <Textarea 
+                    value={formData.comment} 
+                    onChange={e => setFormData({...formData, comment: e.target.value})} 
+                    placeholder="Deixe seu comentário..."
+                    className="h-24"
+                  />
+                </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="name">Seu Nome (Opcional)</Label>
-                <Input 
-                  id="name" 
-                  value={customerName}
-                  onChange={e => setCustomerName(e.target.value)}
-                  className="mt-1"
-                />
+                <Button type="submit" className="w-full h-12 text-lg bg-blue-600 hover:bg-blue-700" disabled={submitting}>
+                  {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Enviar Avaliação"}
+                </Button>
               </div>
-              <div>
-                <Label htmlFor="phone">Seu Telefone (Opcional)</Label>
-                <Input 
-                  id="phone" 
-                  value={customerPhone}
-                  onChange={e => setCustomerPhone(e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-            </div>
-
-            <Button type="submit" className="w-full" disabled={submitting}>
-              {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-              Enviar Avaliação
-            </Button>
+            )}
           </form>
         </CardContent>
       </Card>
