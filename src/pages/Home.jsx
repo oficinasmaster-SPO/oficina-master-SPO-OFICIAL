@@ -10,6 +10,7 @@ import OnboardingTour from "../components/onboarding/OnboardingTour";
 import OnboardingChecklist from "../components/onboarding/OnboardingChecklist";
 import ContextualTips from "../components/onboarding/ContextualTips"; // This will be removed from authenticated view
 import DashboardHub from "../components/home/DashboardHub";
+import WheelLoader from "@/components/ui/WheelLoader";
 import DynamicHelpSystem from "@/components/help/DynamicHelpSystem";
 import QuickTipsBar from "@/components/help/QuickTipsBar";
 import AdminViewBanner from "../components/shared/AdminViewBanner";
@@ -239,7 +240,7 @@ export default function Home() {
   if (isCheckingAuth || isLoadingProgress) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-12 h-12 animate-spin text-blue-600" />
+        <WheelLoader size="xl" />
       </div>
     );
   }
