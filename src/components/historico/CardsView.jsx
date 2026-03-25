@@ -2,7 +2,7 @@ import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, Calendar, CheckCircle2, Clock } from "lucide-react";
+import { Eye, Calendar, CheckCircle2, Clock, Building, User } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -33,6 +33,18 @@ export default function CardsView({ items, onViewDetails, getTypeIcon }) {
                       <Badge variant="secondary" className="font-normal">
                         {item.typeName}
                       </Badge>
+                      {item.workshopName && (
+                        <Badge variant="outline" className="font-normal bg-slate-100 text-slate-700 border-slate-200">
+                          <Building className="w-3 h-3 mr-1" />
+                          {item.workshopName}
+                        </Badge>
+                      )}
+                      {item.employeeName && (
+                        <Badge variant="outline" className="font-normal bg-slate-100 text-slate-700 border-slate-200">
+                          <User className="w-3 h-3 mr-1" />
+                          {item.employeeName}
+                        </Badge>
+                      )}
                       {getStatusBadge(item.status)}
                       <span className="text-xs text-gray-500 flex items-center">
                         <Calendar className="w-3 h-3 mr-1" />

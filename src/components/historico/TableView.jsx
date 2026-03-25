@@ -3,7 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, Calendar, CheckCircle2, Clock } from "lucide-react";
+import { Eye, Calendar, CheckCircle2, Clock, Building, User } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -47,7 +47,23 @@ export default function TableView({ items, onViewDetails, getTypeIcon }) {
                         {item.typeName}
                       </Badge>
                     </TableCell>
-                    <TableCell className="font-medium">{item.title}</TableCell>
+                    <TableCell>
+                      <div className="font-medium mb-1">{item.title}</div>
+                      <div className="flex flex-wrap gap-1">
+                        {item.workshopName && (
+                          <Badge variant="outline" className="text-[10px] py-0 px-1.5 h-4 font-normal bg-slate-100 text-slate-700 border-slate-200">
+                            <Building className="w-3 h-3 mr-1" />
+                            {item.workshopName}
+                          </Badge>
+                        )}
+                        {item.employeeName && (
+                          <Badge variant="outline" className="text-[10px] py-0 px-1.5 h-4 font-normal bg-slate-100 text-slate-700 border-slate-200">
+                            <User className="w-3 h-3 mr-1" />
+                            {item.employeeName}
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell>
                       {item.score ? (
                         <span className="text-sm font-medium text-gray-700">{item.score}</span>
