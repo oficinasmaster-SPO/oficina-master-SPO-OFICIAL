@@ -83,25 +83,6 @@ export default function QGPBoard() {
     return emp ? emp.full_name.split(' ')[0] : 'N/A';
   };
 
-  // Workshop data query already defined above
-    queryKey: ['workshop-qgp', location.search],
-    queryFn: async () => {
-      const params = new URLSearchParams(location.search);
-      const workshopId = params.get('workshop_id');
-      
-      try {
-        const user = await base44.auth.me();
-        if (workshopId && user.role === 'admin') {
-          return await base44.entities.Workshop.get(workshopId);
-        }
-        const workshops = await base44.entities.Workshop.filter({ owner_id: user.id });
-        return workshops[0] || null;
-      } catch (e) {
-        return null;
-      }
-    }
-  });
-
   // Calculate Predicted End Time with Lunch Logic
   const calculatePredictedEnd = (task) => {
     if (!task.predicted_time_minutes) return null;
