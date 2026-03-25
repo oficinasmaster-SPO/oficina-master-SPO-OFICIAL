@@ -15,10 +15,12 @@ import EmailPreview from "@/components/convite/EmailPreview";
 import WhatsAppButton from "@/components/convite/WhatsAppButton";
 import StatusBadge from "@/components/convite/StatusBadge";
 import { jobRoles } from "@/components/lib/jobRoles";
+import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 
 export default function ConvidarColaborador() {
   const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
+  const { workshop: activeWorkshop } = useWorkshopContext();
   const [workshop, setWorkshop] = useState(null);
   const [createdUser, setCreatedUser] = useState(null);
   const [showEmailPreview, setShowEmailPreview] = useState(false);
