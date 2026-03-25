@@ -108,10 +108,12 @@ export default function Layout({ children, currentPageName }) {
     location.pathname.toLowerCase().includes(page.toLowerCase())
   );
 
-  const isPendingOnboarding = user?.cadastro_em_andamento === true || 
+  const isPendingOnboarding = user?.role !== 'admin' && (
+                              user?.cadastro_em_andamento === true || 
                               user?.first_access_completed === false || 
                               user?.profile_completed === false ||
-                              (!user?.workshop_id && user?.role !== 'admin');
+                              !user?.workshop_id
+                            );
 
   const shouldShowMenus = isAuthenticated && !isPublicPage && !isPendingOnboarding && (!!workshop || isAdminMode);
 
