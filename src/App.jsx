@@ -21,6 +21,7 @@ import CentralAvaliacoes from '@/pages/CentralAvaliacoes';
 import MatrizDesempenho from '@/pages/MatrizDesempenho';
 import PublicNPS from '@/pages/PublicNPS';
 import PublicDISC from '@/pages/PublicDISC';
+import WheelLoader from '@/components/ui/WheelLoader';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -54,7 +55,7 @@ const AuthenticatedApp = () => {
     
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-gray-50">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
+        <WheelLoader size="xl" />
       </div>
     );
   }

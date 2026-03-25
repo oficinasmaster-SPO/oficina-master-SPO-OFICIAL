@@ -24,6 +24,7 @@ import { useModuleTracking } from "@/components/hooks/useModuleTracking";
 import { useNavigationHistory } from "@/components/hooks/useNavigationHistory";
 import TenantSelector from "@/components/navigation/TenantSelector";
 import { useAuth } from "@/lib/AuthContext";
+import WheelLoader from "@/components/ui/WheelLoader";
 
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
@@ -286,7 +287,7 @@ export default function Layout({ children, currentPageName }) {
                 {shouldShowMenus && <Breadcrumbs />}
                 {isAuthenticated && !isPublicPage && isLoadingWorkshop ? (
                   <div className="min-h-[60vh] flex items-center justify-center">
-                    {showLoading ? <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div> : null}
+                    {showLoading ? <WheelLoader size="lg" text="Carregando dados..." /> : null}
                   </div>
                 ) : (
                   isAuthenticated && workshopId ? (
