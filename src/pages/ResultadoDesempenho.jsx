@@ -222,13 +222,13 @@ export default function ResultadoDesempenho() {
             <CardContent>
               <div className="text-center">
                 <div className="text-5xl font-bold text-blue-600 mb-2">
-                  {diagnostic.technical_average.toFixed(1)}
+                  {(diagnostic.technical_average || 0).toFixed(1)}
                 </div>
                 <div className="text-sm text-gray-600">de 10,0 pontos</div>
                 <div className="mt-4 h-3 bg-gray-200 rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-blue-600 rounded-full transition-all"
-                    style={{ width: `${(diagnostic.technical_average / 10) * 100}%` }}
+                    style={{ width: `${((diagnostic.technical_average || 0) / 10) * 100}%` }}
                   />
                 </div>
               </div>
