@@ -16,7 +16,7 @@ export default function PageAccessControl({
   blockedJobRoles = [],
   adminOnly = false 
 }) {
-  const { user, hasPermission, loading } = usePermissions();
+  const { user, currentRole, hasPermission, loading } = usePermissions();
   const navigate = useNavigate();
 
   if (loading) {
@@ -36,13 +36,15 @@ export default function PageAccessControl({
     return <AccessDenied navigate={navigate} reason="apenas_admin" />;
   }
 
-  // Verificar job_roles bloqueadas
-  if (blockedJobRoles.length > 0 && blockedJobRoles.includes(user.job_role)) {
-    return <AccessDenied navigate={navigate} reason="perfil_bloqueado" jobRole={user.job_role} />;
+  // Verificar job_roles bloqueadas baseadas na oficina atual
+  const effectiveRole = currentRole || user.job_role;
+  
+  if (blockedJobRoles.length > 0 && blockedJobRoles.includes(effectiveRole)) {
+    return <AccessDenied navigate={navigate} reason="perfil_bloqueado" jobRole={effectiveRole} />;
   }
 
-  // Verificar job_roles necessárias
-  if (requiredJobRoles.length > 0 && !requiredJobRoles.includes(user.job_role) && user.role !== 'admin') {
+  // Verificar job_roles necessárias baseadas na oficina atual
+  if (requiredJobRoles.length > 0 && !requiredJobRoles.includes(effectiveRole) && user.role !== 'admin') {
     return <AccessDenied navigate={navigate} reason="perfil_insuficiente" />;
   }
 
