@@ -286,6 +286,10 @@ export default function Historico() {
       }
     }
 
+    if (filterEmployee !== "all") {
+      filtered = filtered.filter(item => item.employeeName === filterEmployee);
+    }
+
     return filtered;
   };
 
