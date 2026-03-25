@@ -241,7 +241,7 @@ export default function Layout({ children, currentPageName }) {
                               {workshopsDisponiveis.map((ws) => (
                                 <DropdownMenuItem 
                                   key={ws.id} 
-                                  className="flex items-center justify-between cursor-pointer hover:bg-[#FF0000] hover:text-white"
+                                  className="flex items-center justify-between cursor-pointer hover:!bg-[#FF0000] hover:!text-white focus:!bg-[#FF0000] focus:!text-white"
                                   onClick={() => setCurrentWorkshop(ws.id)}
                                 >
                                   <span className="truncate">{ws.name}</span>
