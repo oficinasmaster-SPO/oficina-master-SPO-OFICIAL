@@ -39,8 +39,7 @@ export default function ResultadoDesempenho() {
         return;
       }
 
-      const diagnostics = await base44.entities.PerformanceMatrixDiagnostic.list();
-      const currentDiagnostic = diagnostics.find(d => d.id === diagnosticId);
+      const currentDiagnostic = await base44.entities.PerformanceMatrixDiagnostic.filter({ id: diagnosticId }).then(res => res[0]);
 
       if (!currentDiagnostic) {
         toast.error("Diagnóstico não encontrado");
@@ -50,9 +49,13 @@ export default function ResultadoDesempenho() {
 
       setDiagnostic(currentDiagnostic);
 
-      const employees = await base44.entities.Employee.list();
-      const currentEmployee = employees.find(e => e.id === currentDiagnostic.employee_id);
-      setEmployee(currentEmployee);
+      const currentEmployee = await base44.entities.Employee.filter({ id: currentDiagnostic.employee_id }).then(res => res[0]);
+      
+      setEmployee(currentEmployee || { 
+        id: currentDiagnostic.employee_id, 
+        full_name: "Colaborador Removido ou Não Encontrado", 
+        position: "N/A" 
+      });
     } catch (error) {
       console.error(error);
       toast.error("Erro ao carregar resultado");
