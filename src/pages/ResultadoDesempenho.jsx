@@ -136,7 +136,12 @@ export default function ResultadoDesempenho() {
     );
   }
 
-  const classificationInfo = classificationRules[diagnostic.classification];
+  const classificationInfo = classificationRules[diagnostic.classification] || {
+    title: diagnostic.classification || "Não Classificado",
+    color: "blue",
+    description: "Sem descrição disponível.",
+    recommendation: "Recomendação não disponível."
+  };
   
   const colorMap = {
     red: "#ef4444",
@@ -157,8 +162,8 @@ export default function ResultadoDesempenho() {
   };
 
   const matrixData = [{
-    x: diagnostic.technical_average,
-    y: diagnostic.emotional_average,
+    x: diagnostic.technical_average || 0,
+    y: diagnostic.emotional_average || 0,
     z: 300
   }];
 
@@ -167,8 +172,8 @@ export default function ResultadoDesempenho() {
       return (
         <div className="bg-white p-3 rounded-lg shadow-lg border">
           <p className="font-semibold">{employee?.full_name}</p>
-          <p className="text-sm">Técnica: {payload[0].value.toFixed(1)}</p>
-          <p className="text-sm">Emocional: {payload[1].value.toFixed(1)}</p>
+          <p className="text-sm">Técnica: {(payload[0].value || 0).toFixed(1)}</p>
+          <p className="text-sm">Emocional: {(payload[1].value || 0).toFixed(1)}</p>
         </div>
       );
     }
