@@ -45,7 +45,8 @@ export default function FiliaisWorkshop({ workshop }) {
         city: newFilial.city,
         state: newFilial.state,
         company_id: workshop.id,
-        owner_id: user.id
+        owner_id: user.id,
+        consulting_firm_id: workshop.consulting_firm_id
       });
       
       setFiliais([...filiais, filial]);
