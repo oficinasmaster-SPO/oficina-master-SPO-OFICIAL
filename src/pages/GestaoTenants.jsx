@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { Building2, Briefcase, Plus, Pencil, Trash2, Loader2, ShieldAlert, Search, Users } from 'lucide-react';
+import { Building2, Briefcase, Plus, Pencil, Trash2, Loader2, ShieldAlert, Search, Users, User as UserIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 export default function GestaoTenants() {
