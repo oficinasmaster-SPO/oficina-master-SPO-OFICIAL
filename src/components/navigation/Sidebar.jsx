@@ -269,7 +269,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
   const navigationGroups = [
     {
       id: 'dashboard',
-      label: 'Dashboard & Rankings',
+      label: 'Empresa',
       icon: BarChart3,
       items: [
         { 
