@@ -197,7 +197,7 @@ function UserProfileSection({ user, collapsed }) {
 
 export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
   const location = useLocation();
-  const { profile, hasPermission, canAccessPage } = usePermissions();
+  const { profile, currentRole, hasPermission, canAccessPage } = usePermissions();
   const { queryString } = useAssistanceMode();
   const { workshop: userWorkshop } = useWorkshopContext();
   const { getAdminUrl } = useAdminMode();
@@ -262,8 +262,9 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
     setExpandedGroups([]);
   }, [location.pathname]);
 
-  // Verificar se o usuário é acelerador
-  const isAcelerador = user?.job_role === 'acelerador' || user?.role === 'admin';
+  // Verificar se o usuário é acelerador baseado na role da oficina atual
+  const effectiveRole = currentRole || user?.job_role;
+  const isAcelerador = effectiveRole === 'acelerador' || user?.role === 'admin';
 
   const navigationGroups = [
     {
