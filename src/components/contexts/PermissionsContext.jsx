@@ -139,6 +139,16 @@ export function PermissionsProvider({ children }) {
     if (!user) return false;
     if (user.role === 'admin' && isAdminMode) return true;
     
+    // Se é o dono/sócio da filial, dar acesso total
+    if (workshopId) {
+      try {
+        const ws = await base44.entities.Workshop.get(workshopId);
+        if (ws && (ws.owner_id === user.id || (ws.partner_ids && ws.partner_ids.includes(user.id)))) {
+          return true;
+        }
+      } catch (err) {}
+    }
+
     try {
       const settings = await base44.entities.SystemSetting.filter({ key: 'granular_permissions' });
       if (!settings || settings.length === 0) return false;
