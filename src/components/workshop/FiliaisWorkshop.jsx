@@ -49,7 +49,13 @@ export default function FiliaisWorkshop({ workshop }) {
         state: newFilial.state,
         company_id: workshop.id,
         owner_id: user.id,
-        consulting_firm_id: workshop.consulting_firm_id
+        consulting_firm_id: workshop.consulting_firm_id,
+        segment: workshop.segment || "",
+        segment_auto: workshop.segment_auto || "",
+        tax_regime: workshop.tax_regime || "",
+        employees_count: 1,
+        units_count_category: "unidade_solo",
+        horario_funcionamento: workshop.horario_funcionamento || {}
       });
       
       setFiliais([...filiais, filial]);
