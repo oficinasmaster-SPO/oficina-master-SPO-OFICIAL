@@ -1,10 +1,13 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { systemRoles } from "@/components/lib/systemRoles";
+import { pagePermissions } from "@/components/lib/pagePermissions";
+import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 
 const PermissionsContext = createContext(null);
 
 export function PermissionsProvider({ children }) {
+  const { workshopId, isAdminMode } = useWorkshopContext();
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [customRole, setCustomRole] = useState(null);
@@ -16,33 +19,62 @@ export function PermissionsProvider({ children }) {
 
     const loadPermissions = async () => {
       try {
-        const currentUser = await base44.auth.me();
+        setLoading(true);
+        const currentUser = await base44.auth.me().catch(() => null);
         if (!mounted) return;
         
         setUser(currentUser);
         let aggregatedPermissions = [];
 
         if (currentUser) {
-          if (currentUser.role === 'admin') {
+          if (currentUser.role === 'admin' && isAdminMode) {
+            // Admin mode gives full access
             aggregatedPermissions = systemRoles.flatMap(m => m.roles.map(r => r.id));
+          } else if (currentUser.role === 'admin' && !workshopId) {
+             // Admin outside workshop
+             aggregatedPermissions = systemRoles.flatMap(m => m.roles.map(r => r.id));
           } else {
-            const profileId = currentUser.profile_id;
+            // Normal user or admin viewing their own workshop -> check Employee profile
+            let activeProfileId = currentUser.profile_id;
             
-            if (profileId) {
+            // If workshop is selected, find the Employee record for this specific workshop
+            if (workshopId) {
+              const employees = await base44.entities.Employee.filter({ 
+                user_id: currentUser.id,
+                workshop_id: workshopId
+              });
+              if (employees && employees.length > 0 && employees[0].profile_id) {
+                activeProfileId = employees[0].profile_id;
+              } else {
+                // Se o owner_id da oficina é este usuário, garantir permissão total na oficina
+                try {
+                  const ws = await base44.entities.Workshop.get(workshopId);
+                  if (ws && (ws.owner_id === currentUser.id || (ws.partner_ids && ws.partner_ids.includes(currentUser.id)))) {
+                    // Owner/Partner gets full access
+                    aggregatedPermissions = systemRoles.flatMap(m => m.roles.map(r => r.id));
+                  }
+                } catch(e) {}
+              }
+            }
+            
+            if (activeProfileId) {
               try {
-                const userProfile = await base44.entities.UserProfile.get(profileId);
+                const userProfile = await base44.entities.UserProfile.get(activeProfileId);
                 if (!mounted) return;
                 
                 if (userProfile && userProfile.id) {
                   setProfile(userProfile);
-                  aggregatedPermissions = [...aggregatedPermissions, ...(userProfile.roles || [])];
+                  const profileRoles = userProfile.data?.roles || userProfile.roles || [];
+                  aggregatedPermissions = [...aggregatedPermissions, ...profileRoles];
                   
-                  if (userProfile.custom_role_ids && userProfile.custom_role_ids.length > 0) {
-                    for (const roleId of userProfile.custom_role_ids) {
+                  const customRoleIds = userProfile.data?.custom_role_ids || userProfile.custom_role_ids || [];
+                  if (customRoleIds && customRoleIds.length > 0) {
+                    for (const roleId of customRoleIds) {
                       try {
                         const role = await base44.entities.CustomRole.get(roleId);
-                        if (mounted && role && role.system_roles) {
-                          aggregatedPermissions = [...aggregatedPermissions, ...(role.system_roles || [])];
+                        const roleSysRoles = role.data?.system_roles || role.system_roles || [];
+                        if (mounted && roleSysRoles.length > 0) {
+                          aggregatedPermissions = [...aggregatedPermissions, ...roleSysRoles];
                         }
                       } catch (e) {
                         console.warn("CustomRole não encontrada:", roleId);
@@ -60,7 +92,8 @@ export function PermissionsProvider({ children }) {
                 const role = await base44.entities.CustomRole.get(currentUser.custom_role_id);
                 if (!mounted) return;
                 setCustomRole(role);
-                aggregatedPermissions = [...aggregatedPermissions, ...(role.system_roles || [])];
+                const roleSysRoles = role.data?.system_roles || role.system_roles || [];
+                aggregatedPermissions = [...aggregatedPermissions, ...roleSysRoles];
               } catch (e) {
                 console.error("Erro ao carregar CustomRole:", e);
               }
@@ -89,7 +122,91 @@ export function PermissionsProvider({ children }) {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [workshopId, isAdminMode]);
+
+  const hasPermission = (permissionId) => {
+    if (!user) return false;
+    if (user.role === 'admin' && isAdminMode) return true;
+    return permissions.includes(permissionId);
+  };
+
+  const hasGranularPermission = async (resourceId, actionId) => {
+    if (!user) return false;
+    if (user.role === 'admin' && isAdminMode) return true;
+    
+    try {
+      const settings = await base44.entities.SystemSetting.filter({ key: 'granular_permissions' });
+      if (!settings || settings.length === 0) return false;
+      
+      const granularConfig = JSON.parse(settings[0].value || '{}');
+      
+      if (profile?.job_roles && profile.job_roles.length > 0) {
+        for (const jobRole of profile.job_roles) {
+          const roleConfig = granularConfig[jobRole];
+          if (roleConfig && roleConfig.resources && roleConfig.resources[resourceId]) {
+            const actions = roleConfig.resources[resourceId].actions || [];
+            if (actions.includes(actionId)) return true;
+          }
+        }
+      }
+      
+      if (profile?.job_roles?.includes('socio') && resourceId === 'employees') return true;
+      if ((profile?.job_roles?.includes('diretor') || profile?.job_roles?.includes('gerente')) && resourceId === 'employees') {
+        if (actionId === 'read' || actionId === 'create' || actionId === 'update') return true;
+      }
+      
+      if (profile?.module_permissions) {
+        const moduleAccess = profile.module_permissions[resourceId];
+        if (moduleAccess === 'total') return true;
+        if (moduleAccess === 'visualizacao' && actionId === 'read') return true;
+      }
+      
+      return false;
+    } catch (error) {
+      return false;
+    }
+  };
+
+  const canAccessPage = (pageName) => {
+    try {
+      if (!user) return false;
+      if (user.role === 'admin' && isAdminMode) return true;
+
+      const isPublicPage = pagePermissions[pageName] === null;
+      if (isPublicPage) return true;
+
+      const requiredPermission = pagePermissions[pageName];
+      if (!requiredPermission) return true;
+      if (requiredPermission === "public_authenticated") return !!user;
+
+      return hasPermission(requiredPermission);
+    } catch (error) {
+      return user?.role === 'admin';
+    }
+  };
+
+  const canPerform = (action) => {
+    if (!user) return false;
+    if (user.role === 'admin' && isAdminMode) return true;
+
+    const actionPermissions = {
+      'criar_usuario': ['user_create', 'admin_full'],
+      'editar_usuario': ['user_update', 'admin_full'],
+      'deletar_usuario': ['user_delete', 'admin_full'],
+      'gerenciar_roles': ['roles_manage', 'admin_full'],
+      'gerenciar_planos': ['plans_manage', 'admin_full'],
+      'aprovar_usuarios': ['user_approve', 'admin_full'],
+      'ver_dashboard': ['dashboard_view', 'admin_full'],
+      'gerenciar_oficina': ['workshop_manage', 'admin_full'],
+    };
+
+    const requiredPerms = actionPermissions[action] || [];
+    return requiredPerms.some(perm => permissions.includes(perm));
+  };
+
+  const isInternal = () => {
+    return user?.is_internal === true || user?.tipo_vinculo === 'interno';
+  };
 
   const value = {
     user: user || null,
@@ -97,16 +214,11 @@ export function PermissionsProvider({ children }) {
     customRole: customRole || null,
     permissions: permissions || [],
     loading,
-    hasPermission: (permissionId) => {
-      if (!user) return false;
-      if (user.role === 'admin') return true;
-      return permissions.includes(permissionId);
-    },
-    canAccessPage: (pageName) => {
-      if (!user) return false;
-      if (user.role === 'admin') return true;
-      return true;
-    },
+    hasPermission,
+    hasGranularPermission,
+    canAccessPage,
+    canPerform,
+    isInternal,
   };
 
   return (
