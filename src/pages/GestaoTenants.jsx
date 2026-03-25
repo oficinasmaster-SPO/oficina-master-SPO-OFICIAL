@@ -54,10 +54,20 @@ export default function GestaoTenants() {
     queryFn: () => base44.entities.Workshop.list('-created_date', 1000), // Puxa uma lista maior e recém-criadas primeiro
   });
 
-  const { data: users } = useQuery({
+  const { data: users, isLoading: loadingUsers } = useQuery({
     queryKey: ['admin-users'],
     queryFn: () => base44.entities.User.list(),
   });
+
+  const { data: employees } = useQuery({
+    queryKey: ['admin-employees'],
+    queryFn: () => base44.entities.Employee.list(),
+  });
+
+  const filteredUsers = users?.filter(u => 
+    u.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    u.email?.toLowerCase().includes(searchQuery.toLowerCase())
+  ) || [];
 
   const filteredCompanies = companies?.filter(company => 
     company.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -141,6 +151,27 @@ export default function GestaoTenants() {
     }
   });
 
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userToDelete) => {
+      const employee = employees?.find(e => e.user_id === userToDelete.id || e.email === userToDelete.email);
+      if (employee) {
+        try {
+          await base44.entities.Employee.delete(employee.id);
+        } catch (e) {
+          console.error("Erro ao deletar employee associado:", e);
+        }
+      }
+      return await base44.entities.User.delete(userToDelete.id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      toast.success("Usuário removido com sucesso!");
+    },
+    onError: (err) => {
+      toast.error(`Erro ao remover: ${err.message}`);
+    }
+  });
+
   // Handlers
   const handleOpenFirmModal = (firm = null) => {
     if (firm) {
@@ -218,7 +249,7 @@ export default function GestaoTenants() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:w-[400px]">
+        <TabsList className="grid w-full grid-cols-3 md:w-[500px]">
           <TabsTrigger value="consulting-firms" className="flex items-center gap-2">
             <Briefcase className="w-4 h-4" />
             Consultorias
@@ -226,6 +257,10 @@ export default function GestaoTenants() {
           <TabsTrigger value="companies" className="flex items-center gap-2">
             <Building2 className="w-4 h-4" />
             Oficinas
+          </TabsTrigger>
+          <TabsTrigger value="users" className="flex items-center gap-2">
+            <Users className="w-4 h-4" />
+            Usuários
           </TabsTrigger>
         </TabsList>
 
@@ -366,6 +401,91 @@ export default function GestaoTenants() {
                         <TableRow>
                           <TableCell colSpan={6} className="text-center py-6 text-gray-500">
                             Nenhuma oficina encontrada.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="users" className="mt-6 space-y-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex items-center gap-3">
+              <h2 className="text-xl font-semibold text-gray-800">Usuários Cadastrados</h2>
+              <Badge variant="secondary">{filteredUsers.length}</Badge>
+            </div>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                <Input
+                  placeholder="Buscar usuários..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+            </div>
+          </div>
+
+          <Card>
+            <CardContent className="p-0">
+              {loadingUsers ? (
+                <div className="flex justify-center p-8"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Telefone</TableHead>
+                        <TableHead>CPF</TableHead>
+                        <TableHead>Oficina / Empresa</TableHead>
+                        <TableHead>Data de Criação</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredUsers.map((usr) => {
+                        const employee = employees?.find(e => e.user_id === usr.id || e.email === usr.email);
+                        const linkedWorkshop = companies?.find(w => w.id === employee?.workshop_id || w.owner_id === usr.id);
+                        
+                        return (
+                          <TableRow key={usr.id}>
+                            <TableCell className="font-medium">{usr.full_name || employee?.full_name || '-'}</TableCell>
+                            <TableCell>{usr.email}</TableCell>
+                            <TableCell>{employee?.telefone || '-'}</TableCell>
+                            <TableCell>{employee?.cpf || '-'}</TableCell>
+                            <TableCell>
+                              {linkedWorkshop ? linkedWorkshop.name : <span className="text-gray-400 italic">Sem Oficina</span>}
+                            </TableCell>
+                            <TableCell>{usr.created_date ? new Date(usr.created_date).toLocaleDateString('pt-BR') : '-'}</TableCell>
+                            <TableCell className="text-right">
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="text-red-500 hover:text-red-700" 
+                                onClick={() => {
+                                  if (window.confirm("Tem certeza que deseja excluir este usuário permanentemente do sistema?")) {
+                                    deleteUserMutation.mutate(usr);
+                                  }
+                                }}
+                                disabled={deleteUserMutation.isPending}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                      {filteredUsers.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={7} className="text-center py-6 text-gray-500">
+                            Nenhum usuário encontrado.
                           </TableCell>
                         </TableRow>
                       )}
