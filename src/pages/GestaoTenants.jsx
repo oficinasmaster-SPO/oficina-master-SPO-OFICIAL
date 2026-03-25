@@ -23,6 +23,11 @@ export default function GestaoTenants() {
   const [editingConsultingFirm, setEditingConsultingFirm] = useState(null);
   const [editingCompany, setEditingCompany] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Delete User with Workshop Warning state
+  const [userToDelete, setUserToDelete] = useState(null);
+  const [userDeleteWorkshopAlert, setUserDeleteWorkshopAlert] = useState(null);
+  const [isDeleteUserDialogOpen, setIsDeleteUserDialogOpen] = useState(false);
 
   // States for Consulting Firm Form
   const [firmFormData, setFirmFormData] = useState({
