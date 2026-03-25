@@ -11,9 +11,11 @@ import { Loader2, Save, UserPlus, User, DollarSign, TrendingUp, Plus, Trash2, X,
 import { toast } from "sonner";
 import { jobRoles } from "@/components/lib/jobRoles";
 import { motion, AnimatePresence } from "framer-motion";
+import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 
 export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess }) {
   const navigate = useNavigate();
+  const { workshop: activeWorkshop } = useWorkshopContext();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [user, setUser] = useState(null);
