@@ -55,6 +55,7 @@ export function PermissionsProvider({ children }) {
                   if (ws && (ws.owner_id === currentUser.id || (ws.partner_ids && ws.partner_ids.includes(currentUser.id)))) {
                     // Owner/Partner gets full access
                     aggregatedPermissions = systemRoles.flatMap(m => m.roles.map(r => r.id));
+                    activeRole = 'socio';
                   }
                 } catch(e) {}
               }
