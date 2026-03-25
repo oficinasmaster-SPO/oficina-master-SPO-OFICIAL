@@ -13,23 +13,32 @@ export default function WheelLoader({ className, size = 'md', text = "Carregando
     <div className={cn("flex flex-col items-center justify-center gap-4", className)}>
       <style>
         {`
-          @keyframes wheel-drive {
-            0% { transform: translateX(-5px) translateY(0px) rotate(0deg); }
-            25% { transform: translateX(0px) translateY(-2px) rotate(1deg); }
-            50% { transform: translateX(5px) translateY(0px) rotate(0deg); }
-            75% { transform: translateX(0px) translateY(2px) rotate(-1deg); }
-            100% { transform: translateX(-5px) translateY(0px) rotate(0deg); }
+          @keyframes wheel-bounce {
+            0% { transform: translateX(-5px) translateY(0px); }
+            25% { transform: translateX(0px) translateY(-2px); }
+            50% { transform: translateX(5px) translateY(0px); }
+            75% { transform: translateX(0px) translateY(2px); }
+            100% { transform: translateX(-5px) translateY(0px); }
           }
-          .animate-wheel {
-            animation: wheel-drive 0.4s ease-in-out infinite;
+          @keyframes wheel-spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+          .animate-wheel-bounce {
+            animation: wheel-bounce 0.4s ease-in-out infinite;
+          }
+          .animate-wheel-spin {
+            animation: wheel-spin 0.6s linear infinite;
           }
         `}
       </style>
-      <img 
-        src="https://media.base44.com/images/public/69540822472c4a70b54d47aa/d6da73d80_corrida.png" 
-        alt="Carregando..." 
-        className={cn(sizeClasses[size], "animate-wheel opacity-80")}
-      />
+      <div className={cn(sizeClasses[size], "animate-wheel-bounce opacity-80")}>
+        <img 
+          src="https://media.base44.com/images/public/69540822472c4a70b54d47aa/d6da73d80_corrida.png" 
+          alt="Carregando..." 
+          className="w-full h-full animate-wheel-spin object-contain"
+        />
+      </div>
       {text && (
         <div className="flex items-center gap-1">
           <span className="text-sm font-semibold text-slate-600 uppercase tracking-widest">{text}</span>
