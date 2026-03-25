@@ -68,6 +68,7 @@ import {
 import { cn } from "@/lib/utils";
 
 function UserProfileSection({ user, collapsed }) {
+  const { workshopId } = useWorkshopContext();
   const [employee, setEmployee] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -75,11 +76,18 @@ function UserProfileSection({ user, collapsed }) {
     if (user?.id) {
       loadEmployee();
     }
-  }, [user?.id]);
+  }, [user?.id, workshopId]);
 
   const loadEmployee = async () => {
     try {
-      let employees = await base44.entities.Employee.filter({ user_id: user.id });
+      let employees = [];
+      if (workshopId) {
+        employees = await base44.entities.Employee.filter({ user_id: user.id, workshop_id: workshopId });
+      }
+      
+      if (!employees || employees.length === 0) {
+        employees = await base44.entities.Employee.filter({ user_id: user.id });
+      }
       
       // Fallback: tentar por email se não encontrar por ID
       if (!employees || employees.length === 0) {
