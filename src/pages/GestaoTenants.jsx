@@ -677,6 +677,36 @@ export default function GestaoTenants() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal Exclusão de Usuário Owner Admin */}
+      <Dialog open={isDeleteUserDialogOpen} onOpenChange={setIsDeleteUserDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="text-red-600 flex items-center gap-2">
+              <ShieldAlert className="w-5 h-5" />
+              Atenção: Usuário Administrador de Oficina
+            </DialogTitle>
+            <DialogDescription className="pt-4 text-base text-gray-700">
+              O usuário <strong>{userToDelete?.full_name || userToDelete?.email}</strong> é dono da oficina <strong>{userDeleteWorkshopAlert?.name}</strong>.
+              <br /><br />
+              Se você prosseguir com a exclusão deste usuário, a oficina <strong>{userDeleteWorkshopAlert?.name}</strong> também será <strong>permanentemente excluída</strong> do sistema, incluindo todos os seus dados.
+              <br /><br />
+              Tem certeza que deseja continuar com a exclusão?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-6">
+            <Button variant="outline" onClick={() => setIsDeleteUserDialogOpen(false)}>Cancelar</Button>
+            <Button 
+              variant="destructive"
+              onClick={() => deleteUserMutation.mutate({ userToDelete, workshopToDelete: userDeleteWorkshopAlert })} 
+              disabled={deleteUserMutation.isPending}
+            >
+              {deleteUserMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
+              Sim, Excluir Usuário e Oficina
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
