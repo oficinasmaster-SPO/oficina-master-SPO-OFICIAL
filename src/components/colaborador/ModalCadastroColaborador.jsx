@@ -79,8 +79,8 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
       const currentUser = await base44.auth.me();
       setUser(currentUser);
       
-      const workshops = await base44.entities.Workshop.list();
-      const userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
+      // Utilizar a filial atualmente selecionada no contexto do usuário
+      const userWorkshop = activeWorkshop;
       
       if (userWorkshop) {
         setWorkshop(userWorkshop);
