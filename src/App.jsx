@@ -95,7 +95,9 @@ const AuthenticatedApp = () => {
     <Routes>
       <Route path="/" element={
         <LayoutWrapper currentPageName={mainPageKey}>
-          <MainPage />
+          <PageAccessControl requiredPermissions={pagePermissions[mainPageKey] && pagePermissions[mainPageKey] !== "public_authenticated" ? [pagePermissions[mainPageKey]] : []}>
+            <MainPage />
+          </PageAccessControl>
         </LayoutWrapper>
       } />
       <Route path="/GestaoTenants" element={
