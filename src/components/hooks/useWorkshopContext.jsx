@@ -10,8 +10,9 @@ import { base44 } from '@/api/base44Client';
  */
 export function useWorkshopContext() {
   const { isAdminMode, adminWorkshopId } = useAdminMode();
-  const { selectedFirmId, selectedCompanyId, isLoading: isTenantLoading } = useTenant();
+  const { selectedFirmId, selectedCompanyId, changeCompany, isLoading: isTenantLoading } = useTenant();
   const [workshop, setWorkshop] = useState(null);
+  const [workshopsDisponiveis, setWorkshopsDisponiveis] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -71,16 +72,56 @@ export function useWorkshopContext() {
         const user = await base44.auth.me();
         if (user && !cancelled) {
           let userWorkshop = null;
+          let available = [];
           
-          // Tenta pegar workshop por owner_id
+          // Busca oficinas onde o usuário é owner ou partner
           try {
-            const ownedWorkshops = await base44.entities.Workshop.filter({ owner_id: user.id });
-            userWorkshop = Array.isArray(ownedWorkshops) && ownedWorkshops.length > 0 ? ownedWorkshops[0] : null;
+            const owned = await base44.entities.Workshop.filter({ owner_id: user.id });
+            if (owned && owned.length > 0) available = [...owned];
+            
+            const partner = await base44.entities.Workshop.filter({ partner_ids: user.id });
+            if (partner && partner.length > 0) {
+              partner.forEach(p => {
+                if (!available.find(a => a.id === p.id)) available.push(p);
+              });
+            }
           } catch(err) {
-            console.warn('Erro ao buscar workshop por owner_id:', err);
+            console.warn('Erro ao buscar workshops do usuário:', err);
+          }
+          
+          // Se ainda não achou nenhuma, tenta buscar as que ele é employee
+          if (available.length === 0) {
+            try {
+              let employees = await base44.entities.Employee.filter({ user_id: user.id });
+              if (!employees || employees.length === 0) {
+                employees = await base44.entities.Employee.filter({ email: user.email });
+              }
+              if (employees && employees.length > 0) {
+                for (const emp of employees) {
+                  if (emp.workshop_id) {
+                    try {
+                      const wsFound = await base44.entities.Workshop.filter({ id: emp.workshop_id });
+                      if (wsFound && wsFound.length > 0 && !available.find(a => a.id === wsFound[0].id)) {
+                        available.push(wsFound[0]);
+                      }
+                    } catch(e) {}
+                  }
+                }
+              }
+            } catch(e) {}
           }
 
-          // Se ainda não encontrou, busca via Employee (colaborador)
+          if (!cancelled) setWorkshopsDisponiveis(available);
+
+          // Define a oficina atual priorizando a selecionada via TenantContext
+          if (selectedCompanyId) {
+            userWorkshop = available.find(w => w.id === selectedCompanyId);
+          }
+          if (!userWorkshop && available.length > 0) {
+            userWorkshop = available[0];
+          }
+
+          // Fallback para lógica legada via Employee caso available esteja vazio (devido ao RLS)
           if (!userWorkshop) {
             try {
               // Tenta buscar por ID
@@ -166,9 +207,17 @@ export function useWorkshopContext() {
     };
   }, [isAdminMode, adminWorkshopId, selectedCompanyId, isTenantLoading]);
 
+  const setCurrentWorkshop = (id) => {
+    if (changeCompany) {
+      changeCompany(id);
+    }
+  };
+
   return {
     workshop,
     workshopId: workshop?.id || null,
+    workshopsDisponiveis,
+    setCurrentWorkshop,
     isLoading,
     isAdminMode
   };

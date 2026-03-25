@@ -18,6 +18,7 @@ import CulturaOrganizacional from "../components/workshop/CulturaOrganizacional"
 import DocumentosProcessos from "../components/workshop/DocumentosProcessos";
 import WorkshopLevelBadge from "../components/gamification/WorkshopLevelBadge";
 import CustomCSSUpload from "../components/workshop/CustomCSSUpload";
+import FiliaisWorkshop from "../components/workshop/FiliaisWorkshop";
 
 import GrowthDashboard from "../components/management/GrowthDashboard";
 import WorkshopMilestones from "../components/management/WorkshopMilestones";
@@ -380,6 +381,10 @@ export default function GestaoOficina() {
               <BarChart3 className="w-4 h-4 mr-1" />
               <span className="hidden sm:inline">Relatórios</span>
             </TabsTrigger>
+            <TabsTrigger value="filiais" className="text-xs md:text-sm">
+              <Building2 className="w-4 h-4 mr-1" />
+              <span className="hidden sm:inline">Filiais</span>
+            </TabsTrigger>
             <TabsTrigger value="aceleracao" className="text-xs md:text-sm bg-purple-50 text-purple-700 data-[state=active]:bg-purple-100 data-[state=active]:text-purple-900">
               <Briefcase className="w-4 h-4 mr-1" />
               <span className="hidden sm:inline">Aceleração</span>
@@ -441,6 +446,10 @@ export default function GestaoOficina() {
 
           <TabsContent value="processos">
             <DocumentosProcessos workshop={workshop} onUpdate={handleUpdate} />
+          </TabsContent>
+
+          <TabsContent value="filiais">
+            <FiliaisWorkshop workshop={workshop} />
           </TabsContent>
 
           <TabsContent value="relatorios">

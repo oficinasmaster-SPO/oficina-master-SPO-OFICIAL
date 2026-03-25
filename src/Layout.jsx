@@ -2,9 +2,10 @@ import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
-import { Bell, LogOut, Menu, X, LogIn, AlertCircle, LogOutIcon } from "lucide-react";
+import { Bell, LogOut, Menu, X, LogIn, AlertCircle, LogOutIcon, ChevronDown, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useQuery } from "@tanstack/react-query";
 import Sidebar from "@/components/navigation/Sidebar";
 import Breadcrumbs from "@/components/navigation/Breadcrumbs";
@@ -29,7 +30,7 @@ export default function Layout({ children, currentPageName }) {
   const { user, isAuthenticated, isLoadingAuth: isCheckingAuth } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { isAdminMode, getAdminUrl } = useAdminMode();
-  const { workshop, workshopId, isLoading: isLoadingWorkshop } = useWorkshopContext();
+  const { workshop, workshopId, workshopsDisponiveis, setCurrentWorkshop, isLoading: isLoadingWorkshop } = useWorkshopContext();
   const [cssVersion] = useState(Date.now()); // Timestamp fixo por sessão para evitar re-requests
   
   // Rastrear acesso a módulos automaticamente
@@ -223,12 +224,42 @@ export default function Layout({ children, currentPageName }) {
                   ) : isAuthenticated && user ? (
                     <>
                       <div className="hidden md:block text-right">
-                        <p className="text-sm font-medium text-gray-900">
-                          {workshop?.name || 'Oficina'}
-                        </p>
-                        <p className="text-xs text-gray-600">
-                          {workshop?.segment || workshop?.segment_auto || 'Automotiva'}
-                        </p>
+                        {workshopsDisponiveis && workshopsDisponiveis.length > 1 ? (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger className="flex items-center gap-2 hover:bg-gray-50 p-2 rounded-md transition-colors focus:outline-none">
+                              <div className="text-right">
+                                <p className="text-sm font-medium text-gray-900">
+                                  {workshop?.name || 'Oficina'}
+                                </p>
+                                <p className="text-xs text-gray-600">
+                                  {workshop?.segment || workshop?.segment_auto || 'Automotiva'}
+                                </p>
+                              </div>
+                              <ChevronDown className="w-4 h-4 text-gray-500" />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-64">
+                              {workshopsDisponiveis.map((ws) => (
+                                <DropdownMenuItem 
+                                  key={ws.id} 
+                                  className="flex items-center justify-between cursor-pointer hover:bg-[#FF0000] hover:text-white"
+                                  onClick={() => setCurrentWorkshop(ws.id)}
+                                >
+                                  <span className="truncate">{ws.name}</span>
+                                  {workshop?.id === ws.id && <Check className="w-4 h-4 flex-shrink-0" />}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        ) : (
+                          <>
+                            <p className="text-sm font-medium text-gray-900">
+                              {workshop?.name || 'Oficina'}
+                            </p>
+                            <p className="text-xs text-gray-600">
+                              {workshop?.segment || workshop?.segment_auto || 'Automotiva'}
+                            </p>
+                          </>
+                        )}
                       </div>
                       <Button
                         variant="outline"
