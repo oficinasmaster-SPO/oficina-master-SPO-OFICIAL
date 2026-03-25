@@ -105,6 +105,7 @@ export function PermissionsProvider({ children }) {
         }
 
         if (mounted) {
+          setCurrentRole(activeRole);
           setPermissions([...new Set(aggregatedPermissions)]);
           setLoading(false);
         }
@@ -114,6 +115,7 @@ export function PermissionsProvider({ children }) {
           setUser(null);
           setProfile(null);
           setCustomRole(null);
+          setCurrentRole(null);
           setPermissions([]);
           setLoading(false);
         }
@@ -215,6 +217,7 @@ export function PermissionsProvider({ children }) {
     user: user || null,
     profile: profile || null,
     customRole: customRole || null,
+    currentRole: currentRole || null,
     permissions: permissions || [],
     loading,
     hasPermission,
