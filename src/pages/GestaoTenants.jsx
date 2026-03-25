@@ -487,8 +487,15 @@ export default function GestaoTenants() {
                                 size="icon" 
                                 className="text-red-500 hover:text-red-700" 
                                 onClick={() => {
-                                  if (window.confirm("Tem certeza que deseja excluir este usuário permanentemente do sistema?")) {
-                                    deleteUserMutation.mutate(usr);
+                                  const ownedWorkshop = companies?.find(w => w.owner_id === usr.id);
+                                  if (ownedWorkshop) {
+                                    setUserToDelete(usr);
+                                    setUserDeleteWorkshopAlert(ownedWorkshop);
+                                    setIsDeleteUserDialogOpen(true);
+                                  } else {
+                                    if (window.confirm("Tem certeza que deseja excluir este usuário permanentemente do sistema?")) {
+                                      deleteUserMutation.mutate({ userToDelete: usr, workshopToDelete: null });
+                                    }
                                   }
                                 }}
                                 disabled={deleteUserMutation.isPending}
