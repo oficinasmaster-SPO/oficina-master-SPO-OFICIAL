@@ -4,6 +4,7 @@ import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import WheelLoader from "@/components/ui/WheelLoader";
 
 /**
  * Wrapper para controle de acesso de páginas inteiras
@@ -22,7 +23,7 @@ export default function PageAccessControl({
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+        <WheelLoader size="lg" />
       </div>
     );
   }

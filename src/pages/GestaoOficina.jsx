@@ -19,6 +19,7 @@ import DocumentosProcessos from "../components/workshop/DocumentosProcessos";
 import WorkshopLevelBadge from "../components/gamification/WorkshopLevelBadge";
 import CustomCSSUpload from "../components/workshop/CustomCSSUpload";
 import FiliaisWorkshop from "../components/workshop/FiliaisWorkshop";
+import WheelLoader from "@/components/ui/WheelLoader";
 
 import GrowthDashboard from "../components/management/GrowthDashboard";
 import WorkshopMilestones from "../components/management/WorkshopMilestones";
@@ -208,7 +209,7 @@ export default function GestaoOficina() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        <WheelLoader size="xl" />
       </div>
     );
   }

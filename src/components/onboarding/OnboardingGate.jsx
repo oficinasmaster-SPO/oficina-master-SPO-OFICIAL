@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Loader2 } from "lucide-react";
+import WheelLoader from "@/components/ui/WheelLoader";
 
 /**
  * OnboardingGate: Controla o acesso baseado no status de onboarding do usuário.
@@ -152,9 +153,8 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
   if (isChecking && !isAuthOrOnboardingPage && showLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50">
-        <div className="flex flex-col items-center gap-4 animate-in fade-in duration-300">
-          <Loader2 className="w-12 h-12 animate-spin text-blue-600" />
-          <p className="text-gray-600 font-medium">Verificando acesso...</p>
+        <div className="animate-in fade-in duration-300">
+          <WheelLoader size="xl" text="Verificando acesso..." />
         </div>
       </div>
     );

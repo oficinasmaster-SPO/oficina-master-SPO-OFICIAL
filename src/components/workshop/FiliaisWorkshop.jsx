@@ -7,6 +7,7 @@ import { Plus, Building2, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/AuthContext";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import WheelLoader from "@/components/ui/WheelLoader";
 
 export default function FiliaisWorkshop({ workshop }) {
   const { user } = useAuth();
@@ -103,7 +104,7 @@ export default function FiliaisWorkshop({ workshop }) {
   if (loading) {
     return (
       <div className="flex justify-center p-8">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+        <WheelLoader size="lg" />
       </div>
     );
   }
