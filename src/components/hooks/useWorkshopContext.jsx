@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useAdminMode } from './useAdminMode';
 import { useTenant } from '@/components/contexts/TenantContext';
 import { base44 } from '@/api/base44Client';
@@ -10,24 +11,19 @@ import { base44 } from '@/api/base44Client';
  */
 export function useWorkshopContext() {
   const { isAdminMode, adminWorkshopId } = useAdminMode();
-  const { selectedFirmId, selectedCompanyId, changeCompany, isLoading: isTenantLoading } = useTenant();
-  const [workshop, setWorkshop] = useState(null);
-  const [workshopsDisponiveis, setWorkshopsDisponiveis] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { selectedFirmId, selectedCompanyId, changeCompany, isLoading: isTenantLoading, user: tenantUser } = useTenant();
 
-  useEffect(() => {
-    if (isTenantLoading) return;
-
-    let cancelled = false;
-    
-    const loadWorkshop = async () => {
+  const { data, isLoading } = useQuery({
+    queryKey: ['workshop-context', isAdminMode, adminWorkshopId, selectedCompanyId],
+    queryFn: async () => {
+      let available = [];
+      let userWorkshop = null;
+      
       try {
-        setIsLoading(true);
-        const user = await base44.auth.me();
-        let available = [];
+        const user = tenantUser || await base44.auth.me().catch(() => null);
 
         // 1. Sempre carrega as oficinas disponíveis para o dropdown
-        if (user && !cancelled) {
+        if (user) {
           try {
             const owned = await base44.entities.Workshop.filter({ owner_id: user.id });
             if (owned && owned.length > 0) available = [...owned];
@@ -62,10 +58,7 @@ export function useWorkshopContext() {
               }
             } catch(e) {}
           }
-          if (!cancelled) setWorkshopsDisponiveis(available);
         }
-
-        let userWorkshop = null;
 
         // PRIORIDADE 0: TenantContext - Se selecionou uma Empresa específica via seletor
         if (selectedCompanyId) {
@@ -142,28 +135,17 @@ export function useWorkshopContext() {
           } catch (err) {}
         }
 
-        if (!cancelled) {
-          setWorkshop(userWorkshop);
-        }
+        return { workshop: userWorkshop, workshopsDisponiveis: available };
 
       } catch (error) {
         console.error('❌ Erro ao carregar workshop context:', error);
-        if (!cancelled) {
-          setWorkshop(null);
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
+        return { workshop: null, workshopsDisponiveis: [] };
       }
-    };
-
-    loadWorkshop();
-    
-    return () => {
-      cancelled = true;
-    };
-  }, [isAdminMode, adminWorkshopId, selectedCompanyId, isTenantLoading]);
+    },
+    enabled: !isTenantLoading,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000
+  });
 
   const setCurrentWorkshop = (id) => {
     if (changeCompany) {
@@ -171,12 +153,15 @@ export function useWorkshopContext() {
     }
   };
 
+  const workshop = data?.workshop || null;
+  const workshopsDisponiveis = data?.workshopsDisponiveis || [];
+
   return {
     workshop,
     workshopId: workshop?.id || null,
     workshopsDisponiveis,
     setCurrentWorkshop,
-    isLoading,
+    isLoading: isTenantLoading || isLoading,
     isAdminMode
   };
 }
