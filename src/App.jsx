@@ -12,6 +12,8 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { TenantProvider } from '@/components/contexts/TenantContext';
+import PageAccessControl from '@/components/auth/PageAccessControl';
+import { pagePermissions } from '@/components/lib/pagePermissions';
 import GestaoTenants from '@/pages/GestaoTenants';
 import CompletarPerfil from '@/pages/CompletarPerfil';
 import DescricaoCargos from '@/pages/DescricaoCargos';
@@ -123,17 +125,30 @@ const AuthenticatedApp = () => {
       } />
       <Route path="/PublicNPS" element={<PublicNPS />} />
       <Route path="/PublicDISC" element={<PublicDISC />} />
-      {Object.entries(Pages).map(([path, Page]) => (
-        <Route
-          key={path}
-          path={`/${path}`}
-          element={
-            <LayoutWrapper currentPageName={path}>
-              <Page />
-            </LayoutWrapper>
-          }
-        />
-      ))}
+      {Object.entries(Pages).map(([path, Page]) => {
+        const reqPerm = pagePermissions[path];
+        const isPublic = reqPerm === null;
+
+        return (
+          <Route
+            key={path}
+            path={`/${path}`}
+            element={
+              <LayoutWrapper currentPageName={path}>
+                {!isPublic ? (
+                  <PageAccessControl 
+                    requiredPermissions={reqPerm && reqPerm !== "public_authenticated" ? [reqPerm] : []}
+                  >
+                    <Page />
+                  </PageAccessControl>
+                ) : (
+                  <Page />
+                )}
+              </LayoutWrapper>
+            }
+          />
+        );
+      })}
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
