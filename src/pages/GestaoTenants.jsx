@@ -470,10 +470,23 @@ export default function GestaoTenants() {
                       {filteredUsers.map((usr) => {
                         const employee = employees?.find(e => e.user_id === usr.id || e.email === usr.email);
                         const linkedWorkshop = companies?.find(w => w.id === employee?.workshop_id || w.owner_id === usr.id);
+                        const isOwner = companies?.some(w => w.owner_id === usr.id);
                         
                         return (
                           <TableRow key={usr.id}>
-                            <TableCell className="font-medium">{usr.full_name || employee?.full_name || '-'}</TableCell>
+                            <TableCell className="font-medium">
+                              <div className="flex items-center gap-2">
+                                {isOwner && (
+                                  <img 
+                                    src="https://media.base44.com/images/public/69540822472c4a70b54d47aa/1647fae0c_coroa.png" 
+                                    alt="Dono" 
+                                    className="w-4 h-4 object-contain"
+                                    title="Dono de Oficina"
+                                  />
+                                )}
+                                <span>{usr.full_name || employee?.full_name || '-'}</span>
+                              </div>
+                            </TableCell>
                             <TableCell>{usr.email}</TableCell>
                             <TableCell>{employee?.telefone || '-'}</TableCell>
                             <TableCell>{employee?.cpf || '-'}</TableCell>
