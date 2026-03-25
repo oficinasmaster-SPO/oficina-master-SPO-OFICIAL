@@ -299,7 +299,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
     },
     {
       id: 'cadastros',
-      label: 'Cadastros (Base de Dados)',
+      label: 'Empresa',
       icon: Database,
       items: [
         { 
