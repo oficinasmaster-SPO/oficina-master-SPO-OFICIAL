@@ -367,6 +367,24 @@ export default function Historico() {
 
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  <User className="w-4 h-4" />
+                  Usuário
+                </label>
+                <Select value={filterEmployee} onValueChange={setFilterEmployee}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os Usuários</SelectItem>
+                    {uniqueEmployees.map(name => (
+                      <SelectItem key={name} value={name}>{name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4" />
                   Status
                 </label>
