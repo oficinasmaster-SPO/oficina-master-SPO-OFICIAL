@@ -122,9 +122,17 @@ export function TenantProvider({ children }) {
     changeCompany(null);
   };
 
-  const changeCompany = (compId) => {
+  const changeCompany = async (compId) => {
     if (compId) {
       localStorage.setItem('selected_company_id', compId);
+      // Sync to user metadata for backend RLS
+      try {
+        if (user && compId !== user.data?.workshop_id) {
+          await base44.auth.updateMe({ data: { ...user.data, workshop_id: compId } });
+        }
+      } catch (err) {
+        console.error("Erro ao sincronizar workshop no backend:", err);
+      }
     } else {
       localStorage.removeItem('selected_company_id');
     }
