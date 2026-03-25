@@ -284,11 +284,17 @@ export default function Layout({ children, currentPageName }) {
             <main className="flex-1">
               <div className={`${shouldShowMenus ? 'px-4 sm:px-6 lg:px-8 py-6' : ''}`}>
                 {shouldShowMenus && <Breadcrumbs />}
-                {isAuthenticated && workshopId ? (
-                  <SharedDataProvider workshopId={workshopId} userId={user?.id}>
-                    {children}
-                  </SharedDataProvider>
-                ) : children}
+                {isAuthenticated && !isPublicPage && isLoadingWorkshop ? (
+                  <div className="min-h-[60vh] flex items-center justify-center">
+                    {showLoading ? <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div> : null}
+                  </div>
+                ) : (
+                  isAuthenticated && workshopId ? (
+                    <SharedDataProvider workshopId={workshopId} userId={user?.id}>
+                      {children}
+                    </SharedDataProvider>
+                  ) : children
+                )}
             </div>
             </main>
 
