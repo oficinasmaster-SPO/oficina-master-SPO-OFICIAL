@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { useAuth } from "@/lib/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -18,6 +19,7 @@ import AIInsightsButton from "@/components/historico/AIInsightsButton";
 
 export default function Historico() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [filterType, setFilterType] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterPeriod, setFilterPeriod] = useState("all");
@@ -26,8 +28,18 @@ export default function Historico() {
 
   // Combine all queries
   const { data: allAssessments = [], isLoading } = useQuery({
-    queryKey: ['all-assessments'],
+    queryKey: ['all-assessments', user?.id],
+    enabled: !!user?.id,
     queryFn: async () => {
+      const safeList = async (entity) => {
+        try {
+          return await entity.list('-created_date', 500);
+        } catch (e) {
+          console.error('Error fetching data for an entity:', e);
+          return [];
+        }
+      };
+
       const [
         diagnostics, 
         processAssessments, 
@@ -41,17 +53,17 @@ export default function Historico() {
         workshops,
         employees
       ] = await Promise.all([
-        base44.entities.Diagnostic.list(),
-        base44.entities.ProcessAssessment.list(),
-        base44.entities.EntrepreneurDiagnostic.list(),
-        base44.entities.ProductivityDiagnostic.list(),
-        base44.entities.DebtAnalysis.list(),
-        base44.entities.PerformanceMatrixDiagnostic.list(),
-        base44.entities.DISCDiagnostic.list(),
-        base44.entities.CollaboratorMaturityDiagnostic.list(),
-        base44.entities.CommercialDiagnostic.list(),
-        base44.entities.Workshop.list(),
-        base44.entities.Employee.list()
+        safeList(base44.entities.Diagnostic),
+        safeList(base44.entities.ProcessAssessment),
+        safeList(base44.entities.EntrepreneurDiagnostic),
+        safeList(base44.entities.ProductivityDiagnostic),
+        safeList(base44.entities.DebtAnalysis),
+        safeList(base44.entities.PerformanceMatrixDiagnostic),
+        safeList(base44.entities.DISCDiagnostic),
+        safeList(base44.entities.CollaboratorMaturityDiagnostic),
+        safeList(base44.entities.CommercialDiagnostic),
+        safeList(base44.entities.Workshop),
+        safeList(base44.entities.Employee)
       ]);
 
       const workshopMap = (workshops || []).reduce((acc, w) => ({ ...acc, [w.id]: w.name }), {});
@@ -182,8 +194,7 @@ export default function Historico() {
         ...normalizedMaturity,
         ...normalizedCommercial
       ].sort((a, b) => new Date(b.date) - new Date(a.date));
-    },
-    initialData: []
+    }
   });
 
   const filterItems = () => {
@@ -335,7 +346,7 @@ export default function Historico() {
         </Card>
 
         {/* Content */}
-        {isLoading ? (
+        {isLoading || !user?.id ? (
           <div className="text-center py-12">
             <p className="text-gray-600">Carregando histórico...</p>
           </div>
