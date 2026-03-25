@@ -32,11 +32,20 @@ export default function WheelLoader({ className, size = 'md', text = "Carregando
           }
         `}
       </style>
-      <div className={cn(sizeClasses[size], "animate-wheel-bounce opacity-80")}>
+      {/* Container com trepidação */}
+      <div className={cn(sizeClasses[size], "animate-wheel-bounce opacity-80 relative")}>
+        {/* Camada estática para as linhas ficarem paradas na horizontal */}
+        <img 
+          src="https://media.base44.com/images/public/69540822472c4a70b54d47aa/d6da73d80_corrida.png" 
+          alt="" 
+          className="w-full h-full object-contain absolute inset-0"
+        />
+        {/* Camada que gira, isolada com uma máscara redonda focada na roda central */}
         <img 
           src="https://media.base44.com/images/public/69540822472c4a70b54d47aa/d6da73d80_corrida.png" 
           alt="Carregando..." 
-          className="w-full h-full animate-wheel-spin object-contain"
+          className="w-full h-full animate-wheel-spin object-contain absolute inset-0"
+          style={{ clipPath: 'circle(40% at 50% 50%)' }}
         />
       </div>
       {text && (
