@@ -1232,7 +1232,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                                 to={getAdminUrl(item.href + queryString)}
                                 onClick={onClose}
                                 className={cn(
-                                  "flex items-center gap-3 px-4 py-3 rounded-xl transition-all group relative select-none",
+                                  "flex items-center gap-3 pr-4 pl-10 py-3 rounded-xl transition-all group relative select-none",
                                   active 
                                     ? "bg-[#FF0000] text-white font-medium shadow-md" 
                                     : "text-gray-600 hover:bg-[#FF0000] hover:text-white hover:shadow-md"
