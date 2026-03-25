@@ -28,7 +28,9 @@ export default function Home() {
 
   useEffect(() => {
     if (isAuthenticated && user && !isLoadingWorkshop && !workshop && !isAdminMode) {
-      navigate(createPageUrl("Cadastro"));
+      if (user.role !== 'admin') {
+        navigate(createPageUrl("Cadastro"));
+      }
     }
   }, [isAuthenticated, user, isLoadingWorkshop, workshop, isAdminMode, navigate]);
 

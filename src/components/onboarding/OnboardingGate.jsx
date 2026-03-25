@@ -101,7 +101,7 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
       }
 
       // 1. Verificar se está com o cadastro da oficina em andamento
-      if (user.cadastro_em_andamento === true) {
+      if (user.cadastro_em_andamento === true && user.role !== 'admin') {
         navigate(createPageUrl("Cadastro"));
         return;
       }
@@ -113,7 +113,7 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
       }
 
       // 3. Verificar Primeiro Acesso do Proprietário (Tenant) legado
-      if (user.first_access_completed === false) {
+      if (user.first_access_completed === false && user.role !== 'admin') {
         navigate(createPageUrl("Cadastro"));
         return;
       }

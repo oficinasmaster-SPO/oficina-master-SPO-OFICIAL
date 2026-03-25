@@ -127,8 +127,8 @@ export function TenantProvider({ children }) {
       localStorage.setItem('selected_company_id', compId);
       // Sync to user metadata for backend RLS
       try {
-        if (user && compId !== user.data?.workshop_id) {
-          await base44.auth.updateMe({ data: { ...user.data, workshop_id: compId } });
+        if (user && compId !== user.data?.workshop_id && compId !== user.workshop_id) {
+          await base44.auth.updateMe({ workshop_id: compId });
         }
       } catch (err) {
         console.error("Erro ao sincronizar workshop no backend:", err);
