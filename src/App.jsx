@@ -100,7 +100,9 @@ const AuthenticatedApp = () => {
       } />
       <Route path="/GestaoTenants" element={
         <LayoutWrapper currentPageName="GestaoTenants">
-          <GestaoTenants />
+          <PageAccessControl adminOnly={true}>
+            <GestaoTenants />
+          </PageAccessControl>
         </LayoutWrapper>
       } />
       <Route path="/CompletarPerfil" element={
@@ -110,17 +112,23 @@ const AuthenticatedApp = () => {
       } />
       <Route path="/DescricaoCargos" element={
         <LayoutWrapper currentPageName="DescricaoCargos">
-          <DescricaoCargos />
+          <PageAccessControl requiredPermissions={pagePermissions['DescricaoCargos'] ? [pagePermissions['DescricaoCargos']] : []}>
+            <DescricaoCargos />
+          </PageAccessControl>
         </LayoutWrapper>
       } />
       <Route path="/CentralAvaliacoes" element={
         <LayoutWrapper currentPageName="CentralAvaliacoes">
-          <CentralAvaliacoes />
+          <PageAccessControl requiredPermissions={pagePermissions['CentralAvaliacoes'] ? [pagePermissions['CentralAvaliacoes']] : []}>
+            <CentralAvaliacoes />
+          </PageAccessControl>
         </LayoutWrapper>
       } />
       <Route path="/MatrizDesempenho" element={
         <LayoutWrapper currentPageName="MatrizDesempenho">
-          <MatrizDesempenho />
+          <PageAccessControl requiredPermissions={pagePermissions['MatrizDesempenho'] ? [pagePermissions['MatrizDesempenho']] : []}>
+            <MatrizDesempenho />
+          </PageAccessControl>
         </LayoutWrapper>
       } />
       <Route path="/PublicNPS" element={<PublicNPS />} />
