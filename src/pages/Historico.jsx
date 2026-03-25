@@ -244,6 +244,11 @@ export default function Historico() {
     }
   });
 
+  const uniqueEmployees = React.useMemo(() => {
+    const names = allAssessments.map(item => item.employeeName).filter(Boolean);
+    return [...new Set(names)].sort();
+  }, [allAssessments]);
+
   const filterItems = () => {
     let filtered = [...allAssessments];
 
@@ -251,9 +256,11 @@ export default function Historico() {
     if (searchTerm) {
       const search = searchTerm.toLowerCase();
       filtered = filtered.filter(item => 
-        item.title.toLowerCase().includes(search) ||
-        item.typeName.toLowerCase().includes(search) ||
-        (item.score && String(item.score).toLowerCase().includes(search))
+        item.title?.toLowerCase().includes(search) ||
+        item.typeName?.toLowerCase().includes(search) ||
+        (item.score && String(item.score).toLowerCase().includes(search)) ||
+        item.employeeName?.toLowerCase().includes(search) ||
+        item.workshopName?.toLowerCase().includes(search)
       );
     }
 
