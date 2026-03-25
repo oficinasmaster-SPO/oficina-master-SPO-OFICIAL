@@ -62,17 +62,41 @@ export default function Historico() {
         safeList(base44.entities.DISCDiagnostic),
         safeList(base44.entities.CollaboratorMaturityDiagnostic),
         safeList(base44.entities.CommercialDiagnostic),
-        safeList(base44.entities.Workshop),
-        safeList(base44.entities.Employee)
       ]);
+
+      // Collect unique IDs to avoid fetching entire collections if they are huge
+      const allItems = [
+        ...(diagnostics || []),
+        ...(processAssessments || []),
+        ...(entrepreneurDiagnostics || []),
+        ...(productivityDiagnostics || []),
+        ...(debtAnalyses || []),
+        ...(performanceDiagnostics || []),
+        ...(discDiagnostics || []),
+        ...(maturityDiagnostics || []),
+        ...(commercialDiagnostics || [])
+      ];
+
+      const wIds = [...new Set(allItems.map(i => i.workshop_id).filter(Boolean))];
+      const eIds = [...new Set(allItems.map(i => i.employee_id).filter(Boolean))];
+
+      // Fetch only what we need in chunks, or just fetch the list if we can't filter easily by multiple IDs.
+      // But we can filter by ID using $in operator or just fetch the list. Let's try fetching the whole list securely.
+      const workshops = await safeList(base44.entities.Workshop);
+      const employees = await safeList(base44.entities.Employee);
 
       const workshopMap = (workshops || []).reduce((acc, w) => ({ ...acc, [w.id]: w.name }), {});
       const employeeMap = (employees || []).reduce((acc, e) => ({ ...acc, [e.id]: e.full_name }), {});
 
-      const getNames = (item) => ({
-        workshopName: item.workshop_id ? workshopMap[item.workshop_id] : null,
-        employeeName: item.employee_id ? employeeMap[item.employee_id] : (item.candidate_name || null)
-      });
+      const getNames = (item) => {
+        let eName = item.employee_id ? employeeMap[item.employee_id] : null;
+        if (!eName && item.candidate_name) eName = item.candidate_name;
+        
+        return {
+          workshopName: item.workshop_id ? workshopMap[item.workshop_id] : null,
+          employeeName: eName
+        };
+      };
 
       // Normalize data
       const normalizedDiagnostics = (diagnostics || []).map(d => ({
