@@ -11,6 +11,7 @@ export function PermissionsProvider({ children }) {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [customRole, setCustomRole] = useState(null);
+  const [currentRole, setCurrentRole] = useState(null);
   const [permissions, setPermissions] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -25,6 +26,7 @@ export function PermissionsProvider({ children }) {
         
         setUser(currentUser);
         let aggregatedPermissions = [];
+        let activeRole = currentUser?.role === 'admin' ? 'admin' : (currentUser?.job_role || 'outros');
 
         if (currentUser) {
           if (currentUser.role === 'admin' && isAdminMode) {
@@ -43,8 +45,9 @@ export function PermissionsProvider({ children }) {
                 user_id: currentUser.id,
                 workshop_id: workshopId
               });
-              if (employees && employees.length > 0 && employees[0].profile_id) {
-                activeProfileId = employees[0].profile_id;
+              if (employees && employees.length > 0) {
+                if (employees[0].profile_id) activeProfileId = employees[0].profile_id;
+                if (employees[0].job_role) activeRole = employees[0].job_role;
               } else {
                 // Se o owner_id da oficina é este usuário, garantir permissão total na oficina
                 try {
