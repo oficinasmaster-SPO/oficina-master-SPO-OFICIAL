@@ -40,29 +40,34 @@ export default function Historico() {
         }
       };
 
-      const [
-        diagnostics, 
-        processAssessments, 
-        entrepreneurDiagnostics,
-        productivityDiagnostics,
-        debtAnalyses,
-        performanceDiagnostics,
-        discDiagnostics,
-        maturityDiagnostics,
-        commercialDiagnostics,
-        workshops,
-        employees
-      ] = await Promise.all([
+      // Fetch em lotes menores para evitar sobrecarga no banco e falhas silenciosas
+      const batch1 = await Promise.all([
         safeList(base44.entities.Diagnostic),
         safeList(base44.entities.ProcessAssessment),
-        safeList(base44.entities.EntrepreneurDiagnostic),
+        safeList(base44.entities.EntrepreneurDiagnostic)
+      ]);
+      const batch2 = await Promise.all([
         safeList(base44.entities.ProductivityDiagnostic),
         safeList(base44.entities.DebtAnalysis),
-        safeList(base44.entities.PerformanceMatrixDiagnostic),
+        safeList(base44.entities.PerformanceMatrixDiagnostic)
+      ]);
+      const batch3 = await Promise.all([
         safeList(base44.entities.DISCDiagnostic),
         safeList(base44.entities.CollaboratorMaturityDiagnostic),
-        safeList(base44.entities.CommercialDiagnostic),
+        safeList(base44.entities.CommercialDiagnostic)
       ]);
+
+      const diagnostics = batch1[0];
+      const processAssessments = batch1[1];
+      const entrepreneurDiagnostics = batch1[2];
+
+      const productivityDiagnostics = batch2[0];
+      const debtAnalyses = batch2[1];
+      const performanceDiagnostics = batch2[2];
+
+      const discDiagnostics = batch3[0];
+      const maturityDiagnostics = batch3[1];
+      const commercialDiagnostics = batch3[2];
 
       // Collect unique IDs to avoid fetching entire collections if they are huge
       const allItems = [
@@ -80,8 +85,6 @@ export default function Historico() {
       const wIds = [...new Set(allItems.map(i => i.workshop_id).filter(Boolean))];
       const eIds = [...new Set(allItems.map(i => i.employee_id).filter(Boolean))];
 
-      // Fetch only what we need in chunks, or just fetch the list if we can't filter easily by multiple IDs.
-      // But we can filter by ID using $in operator or just fetch the list. Let's try fetching the whole list securely.
       // Fetch only needed workshops and employees using filter $in to reduce payload
       const fetchInChunks = async (entity, ids) => {
         if (!ids.length) return [];
