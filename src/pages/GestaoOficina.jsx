@@ -450,9 +450,11 @@ export default function GestaoOficina() {
             <DocumentosProcessos workshop={workshop} onUpdate={handleUpdate} />
           </TabsContent>
 
-          <TabsContent value="filiais">
-            <FiliaisWorkshop workshop={workshop} />
-          </TabsContent>
+          {!workshop.company_id && (
+            <TabsContent value="filiais">
+              <FiliaisWorkshop workshop={workshop} />
+            </TabsContent>
+          )}
 
           <TabsContent value="relatorios">
             <div className="bg-white rounded-lg shadow-lg p-6">
