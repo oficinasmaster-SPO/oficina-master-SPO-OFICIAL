@@ -14,7 +14,7 @@ export function useWorkshopContext() {
   const { selectedFirmId, selectedCompanyId, changeCompany, isLoading: isTenantLoading, user: tenantUser } = useTenant();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['workshop-context', isAdminMode, adminWorkshopId, selectedCompanyId],
+    queryKey: ['workshop-context', isAdminMode, adminWorkshopId, selectedCompanyId, tenantUser?.id],
     queryFn: async () => {
       let available = [];
       let userWorkshop = null;
