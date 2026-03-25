@@ -476,13 +476,15 @@ export default function GestaoTenants() {
                           <TableRow key={usr.id}>
                             <TableCell className="font-medium">
                               <div className="flex items-center gap-2">
-                                {isOwner && (
+                                {isOwner ? (
                                   <img 
                                     src="https://media.base44.com/images/public/69540822472c4a70b54d47aa/1647fae0c_coroa.png" 
                                     alt="Dono" 
                                     className="w-4 h-4 object-contain"
                                     title="Dono de Oficina"
                                   />
+                                ) : usr.role !== 'admin' && (
+                                  <UserIcon className="w-4 h-4 text-gray-500" title="Usuário" />
                                 )}
                                 <span>{usr.full_name || employee?.full_name || '-'}</span>
                               </div>
