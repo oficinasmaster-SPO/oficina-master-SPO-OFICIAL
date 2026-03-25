@@ -44,8 +44,13 @@ export default function GestaoOficina() {
   // Sincronizar aba com URL ao carregar
   useEffect(() => {
     const tabFromUrl = new URLSearchParams(location.search).get('tab') || 'dados';
+    if (tabFromUrl === "filiais" && workshop && workshop.company_id) {
+      setActiveTab("dados");
+      navigate("?tab=dados", { replace: true });
+      return;
+    }
     setActiveTab(tabFromUrl);
-  }, [location.search]);
+  }, [location.search, workshop]);
 
   const loadData = async () => {
     setLoading(true);
