@@ -37,7 +37,9 @@ export default function Historico() {
         performanceDiagnostics,
         discDiagnostics,
         maturityDiagnostics,
-        commercialDiagnostics
+        commercialDiagnostics,
+        workshops,
+        employees
       ] = await Promise.all([
         base44.entities.Diagnostic.list(),
         base44.entities.ProcessAssessment.list(),
@@ -47,11 +49,22 @@ export default function Historico() {
         base44.entities.PerformanceMatrixDiagnostic.list(),
         base44.entities.DISCDiagnostic.list(),
         base44.entities.CollaboratorMaturityDiagnostic.list(),
-        base44.entities.CommercialDiagnostic.list()
+        base44.entities.CommercialDiagnostic.list(),
+        base44.entities.Workshop.list(),
+        base44.entities.Employee.list()
       ]);
+
+      const workshopMap = (workshops || []).reduce((acc, w) => ({ ...acc, [w.id]: w.name }), {});
+      const employeeMap = (employees || []).reduce((acc, e) => ({ ...acc, [e.id]: e.full_name }), {});
+
+      const getNames = (item) => ({
+        workshopName: item.workshop_id ? workshopMap[item.workshop_id] : null,
+        employeeName: item.employee_id ? employeeMap[item.employee_id] : (item.candidate_name || null)
+      });
 
       // Normalize data
       const normalizedDiagnostics = (diagnostics || []).map(d => ({
+        ...getNames(d),
         ...d,
         type: 'diagnostic',
         typeName: 'Diagnóstico de Fase',
@@ -64,6 +77,7 @@ export default function Historico() {
 
       const normalizedProcess = (processAssessments || []).map(p => ({
         ...p,
+        ...getNames(p),
         type: 'process',
         typeName: 'Autoavaliação de Processos',
         title: assessmentCriteria[p.assessment_type]?.title || p.assessment_type,
@@ -75,6 +89,7 @@ export default function Historico() {
 
       const normalizedEntrepreneur = (entrepreneurDiagnostics || []).map(e => ({
         ...e,
+        ...getNames(e),
         type: 'entrepreneur',
         typeName: 'Perfil do Empresário',
         title: e.dominant_profile ? e.dominant_profile.charAt(0).toUpperCase() + e.dominant_profile.slice(1) : 'Perfil',
@@ -86,6 +101,7 @@ export default function Historico() {
 
       const normalizedProductivity = (productivityDiagnostics || []).map(p => ({
         ...p,
+        ...getNames(p),
         type: 'productivity',
         typeName: 'Produção vs Salário',
         title: `${p.employee_role} - ${p.period_month}`,
@@ -97,6 +113,7 @@ export default function Historico() {
 
       const normalizedDebt = (debtAnalyses || []).map(d => ({
         ...d,
+        ...getNames(d),
         type: 'debt',
         typeName: 'Endividamento',
         title: `Análise Financeira`,
@@ -108,6 +125,7 @@ export default function Historico() {
 
       const normalizedPerformance = (performanceDiagnostics || []).map(p => ({
         ...p,
+        ...getNames(p),
         type: 'performance',
         typeName: 'Desempenho (Matriz)',
         title: p.classification,
@@ -119,6 +137,7 @@ export default function Historico() {
 
       const normalizedDISC = (discDiagnostics || []).map(d => ({
         ...d,
+        ...getNames(d),
         type: 'disc',
         typeName: 'DISC',
         title: d.dominant_profile ? d.dominant_profile.toUpperCase() : 'Perfil',
@@ -130,6 +149,7 @@ export default function Historico() {
 
       const normalizedMaturity = (maturityDiagnostics || []).map(m => ({
         ...m,
+        ...getNames(m),
         type: 'maturity',
         typeName: 'Maturidade Profissional',
         title: m.maturity_level ? m.maturity_level.toUpperCase() : 'Nível',
@@ -141,6 +161,7 @@ export default function Historico() {
 
       const normalizedCommercial = (commercialDiagnostics || []).map(c => ({
         ...c,
+        ...getNames(c),
         type: 'commercial',
         typeName: 'Diagnóstico Comercial',
         title: c.diagnostic_type,
