@@ -26,7 +26,11 @@ export function useWorkshopContext() {
         if (user) {
           try {
             const owned = await base44.entities.Workshop.filter({ owner_id: user.id });
-            if (owned && owned.length > 0) available = [...owned];
+            if (owned && owned.length > 0) {
+              const matrizes = owned.filter(w => !w.company_id);
+              const filiaisOwned = owned.filter(w => !!w.company_id);
+              available = [...matrizes, ...filiaisOwned];
+            }
             
             const partner = await base44.entities.Workshop.filter({ partner_ids: user.id });
             if (partner && partner.length > 0) {
@@ -87,7 +91,7 @@ export function useWorkshopContext() {
 
         // PRIORIDADE 2: Oficina do usuário logado (caso não tenha escolhido nenhuma no TenantContext)
         if (!userWorkshop && available.length > 0) {
-          userWorkshop = available[0];
+          userWorkshop = available.find(w => !w.company_id) || available[0];
         }
 
         // Fallback para lógica legada via Employee caso available esteja vazio (devido ao RLS)
