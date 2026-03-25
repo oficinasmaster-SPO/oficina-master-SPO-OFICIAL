@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Plus, Building2, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/AuthContext";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 export default function FiliaisWorkshop({ workshop }) {
   const { user } = useAuth();
@@ -13,6 +14,7 @@ export default function FiliaisWorkshop({ workshop }) {
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
   const [newFilial, setNewFilial] = useState({ name: "", city: "", state: "" });
+  const [filialParaDeletar, setFilialParaDeletar] = useState(null);
 
   useEffect(() => {
     loadFiliais();
@@ -74,15 +76,17 @@ export default function FiliaisWorkshop({ workshop }) {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm("Tem certeza que deseja remover esta filial? A ação não poderá ser desfeita.")) return;
+  const confirmarDelete = async () => {
+    if (!filialParaDeletar) return;
     try {
-      await base44.entities.Workshop.delete(id);
-      setFiliais(filiais.filter((f) => f.id !== id));
+      await base44.entities.Workshop.delete(filialParaDeletar);
+      setFiliais(filiais.filter((f) => f.id !== filialParaDeletar));
       toast.success("Filial removida!");
     } catch (error) {
       console.error(error);
       toast.error("Erro ao remover filial");
+    } finally {
+      setFilialParaDeletar(null);
     }
   };
 
@@ -166,7 +170,7 @@ export default function FiliaisWorkshop({ workshop }) {
                 </div>
               </div>
               <div className="md:mt-5">
-                <Button variant="ghost" size="icon" onClick={() => handleDelete(filial.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50" title="Remover filial">
+                <Button variant="ghost" size="icon" onClick={() => setFilialParaDeletar(filial.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50" title="Remover filial">
                   <Trash2 className="w-5 h-5" />
                 </Button>
               </div>
@@ -180,6 +184,21 @@ export default function FiliaisWorkshop({ workshop }) {
           )}
         </div>
       </CardContent>
+
+      <AlertDialog open={!!filialParaDeletar} onOpenChange={() => setFilialParaDeletar(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover Filial</AlertDialogTitle>
+            <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmarDelete} className="bg-red-600 hover:bg-red-700 text-white">
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
