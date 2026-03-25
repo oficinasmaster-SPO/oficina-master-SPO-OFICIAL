@@ -157,7 +157,15 @@ export default function GestaoTenants() {
   });
 
   const deleteUserMutation = useMutation({
-    mutationFn: async (userToDelete) => {
+    mutationFn: async ({ userToDelete, workshopToDelete }) => {
+      if (workshopToDelete) {
+        try {
+          await base44.entities.Workshop.delete(workshopToDelete.id);
+        } catch (e) {
+          console.error("Erro ao deletar workshop associada:", e);
+        }
+      }
+
       const employee = employees?.find(e => e.user_id === userToDelete.id || e.email === userToDelete.email);
       if (employee) {
         try {
@@ -170,6 +178,10 @@ export default function GestaoTenants() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-companies'] });
+      setIsDeleteUserDialogOpen(false);
+      setUserToDelete(null);
+      setUserDeleteWorkshopAlert(null);
       toast.success("Usuário removido com sucesso!");
     },
     onError: (err) => {
