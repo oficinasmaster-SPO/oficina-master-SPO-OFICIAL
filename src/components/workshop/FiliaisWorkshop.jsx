@@ -15,6 +15,7 @@ export default function FiliaisWorkshop({ workshop }) {
   const [isAdding, setIsAdding] = useState(false);
   const [newFilial, setNewFilial] = useState({ name: "", city: "", state: "" });
   const [filialParaDeletar, setFilialParaDeletar] = useState(null);
+  const [atualizando, setAtualizando] = useState({});
 
   useEffect(() => {
     loadFiliais();
@@ -67,12 +68,15 @@ export default function FiliaisWorkshop({ workshop }) {
     const currentFilial = filiais.find(f => f.id === id);
     if (currentFilial && currentFilial[field] === value) return;
 
+    setAtualizando(prev => ({ ...prev, [id]: true }));
     try {
       await base44.entities.Workshop.update(id, { [field]: value });
       setFiliais(filiais.map(f => f.id === id ? { ...f, [field]: value } : f));
       toast.success("Filial atualizada!");
     } catch (error) {
       toast.error("Erro ao atualizar filial");
+    } finally {
+      setAtualizando(prev => ({ ...prev, [id]: false }));
     }
   };
 
@@ -152,6 +156,8 @@ export default function FiliaisWorkshop({ workshop }) {
                   <Input 
                     defaultValue={filial.name} 
                     onBlur={(e) => handleUpdateFilial(filial.id, 'name', e.target.value)}
+                    disabled={!!atualizando[filial.id]}
+                    className={atualizando[filial.id] ? "opacity-60 cursor-wait" : ""}
                   />
                 </div>
                 <div>
@@ -159,6 +165,8 @@ export default function FiliaisWorkshop({ workshop }) {
                   <Input 
                     defaultValue={filial.city} 
                     onBlur={(e) => handleUpdateFilial(filial.id, 'city', e.target.value)}
+                    disabled={!!atualizando[filial.id]}
+                    className={atualizando[filial.id] ? "opacity-60 cursor-wait" : ""}
                   />
                 </div>
                 <div>
@@ -166,6 +174,8 @@ export default function FiliaisWorkshop({ workshop }) {
                   <Input 
                     defaultValue={filial.state} 
                     onBlur={(e) => handleUpdateFilial(filial.id, 'state', e.target.value)}
+                    disabled={!!atualizando[filial.id]}
+                    className={atualizando[filial.id] ? "opacity-60 cursor-wait" : ""}
                   />
                 </div>
               </div>
