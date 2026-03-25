@@ -166,7 +166,7 @@ export default function QGPBoard() {
             {isFullScreen ? <Minimize2 className="w-4 h-4 mr-2" /> : <Maximize2 className="w-4 h-4 mr-2" />}
             {isFullScreen ? 'Sair Tela Cheia' : 'Tela Cheia'}
           </Button>
-          <Link to={createPageUrl('TechnicianQGP')}>
+          <Link to="/TechnicianQGP">
             <Button className="bg-blue-600 hover:bg-blue-700">
               <User className="w-4 h-4 mr-2" />
               Visão Técnico
