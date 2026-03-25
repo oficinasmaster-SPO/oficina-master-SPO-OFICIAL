@@ -8,15 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { AlertCircle, CheckCircle2, Clock, Timer, Play, Pause, Square, RotateCcw, MoreVertical, Truck, User, AlertTriangle, Search, Maximize2, Minimize2 } from "lucide-react";
 import { format, differenceInMinutes, addMinutes, isWithinInterval, parse, set } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { createPageUrl } from "@/utils";
 import { Link, useLocation } from "react-router-dom";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
