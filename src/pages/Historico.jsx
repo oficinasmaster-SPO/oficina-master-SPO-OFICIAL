@@ -82,8 +82,27 @@ export default function Historico() {
 
       // Fetch only what we need in chunks, or just fetch the list if we can't filter easily by multiple IDs.
       // But we can filter by ID using $in operator or just fetch the list. Let's try fetching the whole list securely.
-      const workshops = await safeList(base44.entities.Workshop);
-      const employees = await safeList(base44.entities.Employee);
+      // Fetch only needed workshops and employees using filter $in to reduce payload
+      const fetchInChunks = async (entity, ids) => {
+        if (!ids.length) return [];
+        const chunkSize = 50;
+        let results = [];
+        for (let i = 0; i < ids.length; i += chunkSize) {
+          const chunk = ids.slice(i, i + chunkSize);
+          try {
+            const data = await entity.filter({ id: { $in: chunk } });
+            results = [...results, ...data];
+          } catch (e) {
+            console.error(`Error fetching chunk for ${entity.name}`, e);
+          }
+        }
+        return results;
+      };
+
+      const [workshops, employees] = await Promise.all([
+        fetchInChunks(base44.entities.Workshop, wIds),
+        fetchInChunks(base44.entities.Employee, eIds)
+      ]);
 
       const workshopMap = (workshops || []).reduce((acc, w) => ({ ...acc, [w.id]: w.name }), {});
       const employeeMap = (employees || []).reduce((acc, e) => ({ ...acc, [e.id]: e.full_name }), {});
