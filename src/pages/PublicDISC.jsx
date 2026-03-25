@@ -36,9 +36,9 @@ export default function PublicDISC() {
 
     const loadSession = async () => {
       try {
-        const sessions = await base44.entities.DISCPublicSession.filter({ token });
-        if (sessions.length > 0) {
-          const currentSession = sessions[0];
+        const res = await base44.functions.invoke('publicEndpoints', { action: 'getDiscSession', data: { token } });
+        if (res.data && res.data.session) {
+          const currentSession = res.data.session;
           setSession(currentSession);
           
           if (currentSession.candidate_name) {
@@ -56,8 +56,7 @@ export default function PublicDISC() {
              setAnswers(initialAnswers);
           }
 
-          const workshopData = await base44.entities.Workshop.get(currentSession.workshop_id);
-          setWorkshop(workshopData);
+          setWorkshop(res.data.workshop);
         }
       } catch (error) {
         console.error(error);
@@ -152,16 +151,17 @@ export default function PublicDISC() {
       if (session.employee_id) diagData.employee_id = session.employee_id;
       else diagData.candidate_id = "external_candidate";
 
-      const diag = await base44.entities.DISCDiagnostic.create(diagData);
-
-      // Update session
-      await base44.entities.DISCPublicSession.update(session.id, {
-        status: "concluido",
-        completed_at: new Date().toISOString(),
-        candidate_name: formData.name,
-        candidate_phone: formData.phone,
-        candidate_email: formData.email,
-        result_id: diag.id
+      await base44.functions.invoke('publicEndpoints', {
+        action: 'submitDisc',
+        data: {
+          session_id: session.id,
+          diagData,
+          candidateData: {
+            candidate_name: formData.name,
+            candidate_phone: formData.phone,
+            candidate_email: formData.email
+          }
+        }
       });
 
       setResult({ profileScores, dominant });

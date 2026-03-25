@@ -29,9 +29,9 @@ export default function PublicNPS() {
 
   useEffect(() => {
     if (wid) {
-      base44.entities.Workshop.get(wid)
-        .then(data => {
-          setWorkshop(data);
+      base44.functions.invoke('publicEndpoints', { action: 'getWorkshopInfo', data: { workshop_id: wid } })
+        .then(res => {
+          setWorkshop(res.data);
           setLoading(false);
         })
         .catch(() => setLoading(false));
@@ -46,16 +46,19 @@ export default function PublicNPS() {
     
     setSubmitting(true);
     try {
-      await base44.entities.NPSResponse.create({
-        workshop_id: wid,
-        context_type: ctx,
-        context_id: cid,
-        respondent_name: formData.name,
-        respondent_phone: formData.phone,
-        respondent_email: formData.email,
-        score: score,
-        comment: formData.comment,
-        submitted_at: new Date().toISOString()
+      await base44.functions.invoke('publicEndpoints', {
+        action: 'submitNps',
+        data: {
+          workshop_id: wid,
+          context_type: ctx,
+          context_id: cid,
+          respondent_name: formData.name,
+          respondent_phone: formData.phone,
+          respondent_email: formData.email,
+          score: score,
+          comment: formData.comment,
+          submitted_at: new Date().toISOString()
+        }
       });
       setSubmitted(true);
     } catch (error) {
