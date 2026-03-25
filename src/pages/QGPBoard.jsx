@@ -36,6 +36,26 @@ export default function QGPBoard() {
     }
   };
 
+  // Workshop data for lunch settings
+  const { data: workshop } = useQuery({
+    queryKey: ['workshop-qgp', location.search],
+    queryFn: async () => {
+      const params = new URLSearchParams(location.search);
+      const workshopId = params.get('workshop_id');
+      
+      try {
+        const user = await base44.auth.me();
+        if (workshopId && user.role === 'admin') {
+          return await base44.entities.Workshop.get(workshopId);
+        }
+        const workshops = await base44.entities.Workshop.filter({ owner_id: user.id });
+        return workshops[0] || null;
+      } catch (e) {
+        return null;
+      }
+    }
+  });
+
   // Fetch Tasks
   const { data: tasks = [] } = useQuery({
     queryKey: ['qgp-tasks', workshop?.id],
@@ -63,8 +83,7 @@ export default function QGPBoard() {
     return emp ? emp.full_name.split(' ')[0] : 'N/A';
   };
 
-  // Workshop data for lunch settings
-  const { data: workshop } = useQuery({
+  // Workshop data query already defined above
     queryKey: ['workshop-qgp', location.search],
     queryFn: async () => {
       const params = new URLSearchParams(location.search);
