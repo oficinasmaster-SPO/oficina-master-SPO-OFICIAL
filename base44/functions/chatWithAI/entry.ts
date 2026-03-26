@@ -5,6 +5,49 @@ const openai = new OpenAI({
     apiKey: Deno.env.get("OPENAI_API_KEY_SECONDARY"),
 });
 
+// Controle de Rate Limit em memória
+const userRateLimits = new Map();
+const tenantRateLimits = new Map();
+
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minuto
+const MAX_REQUESTS_PER_USER = 10;
+const MAX_REQUESTS_PER_TENANT = 50;
+
+function checkRateLimit(map, key, maxRequests) {
+    if (!key) return true;
+    const now = Date.now();
+    const record = map.get(key);
+    
+    if (!record) {
+        map.set(key, { count: 1, timestamp: now });
+        return true;
+    }
+    
+    if (now - record.timestamp > RATE_LIMIT_WINDOW_MS) {
+        map.set(key, { count: 1, timestamp: now });
+        return true;
+    }
+    
+    if (record.count >= maxRequests) {
+        return false;
+    }
+    
+    record.count += 1;
+    map.set(key, record);
+    return true;
+}
+
+// Limpeza em background para evitar vazamento de memória
+setInterval(() => {
+    const now = Date.now();
+    for (const [key, record] of userRateLimits.entries()) {
+        if (now - record.timestamp > RATE_LIMIT_WINDOW_MS) userRateLimits.delete(key);
+    }
+    for (const [key, record] of tenantRateLimits.entries()) {
+        if (now - record.timestamp > RATE_LIMIT_WINDOW_MS) tenantRateLimits.delete(key);
+    }
+}, 5 * 60 * 1000);
+
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
@@ -12,6 +55,19 @@ Deno.serve(async (req) => {
 
         if (!user) {
             return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        // Rate Limit por Usuário (10 req / min)
+        if (!checkRateLimit(userRateLimits, user.id, MAX_REQUESTS_PER_USER)) {
+            console.warn(`Rate limit excedido para usuário ${user.id}`);
+            return Response.json({ error: 'Too Many Requests' }, { status: 429 });
+        }
+
+        // Rate Limit por Tenant/Oficina (não confia no payload, usa o dado seguro do token)
+        const workshopId = user.data?.workshop_id;
+        if (workshopId && !checkRateLimit(tenantRateLimits, workshopId, MAX_REQUESTS_PER_TENANT)) {
+            console.warn(`Rate limit excedido para tenant ${workshopId}`);
+            return Response.json({ error: 'Too Many Requests' }, { status: 429 });
         }
 
         const { message, context, includeWorkshopData } = await req.json();
