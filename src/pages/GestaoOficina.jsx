@@ -38,6 +38,9 @@ export default function GestaoOficina() {
   
   const [activeTab, setActiveTab] = useState('dados');
 
+  // Uma oficina é considerada Matriz se o company_id for vazio, nulo, a string "null", ou for igual ao seu próprio ID
+  const isMatriz = !workshop?.company_id || workshop?.company_id === workshop?.id || workshop?.company_id === 'null' || workshop?.company_id === '';
+
   useEffect(() => {
     loadData();
   }, []);
@@ -46,13 +49,13 @@ export default function GestaoOficina() {
   useEffect(() => {
     if (loading) return;
     const tabFromUrl = new URLSearchParams(location.search).get('tab') || 'dados';
-    if (tabFromUrl === "filiais" && workshop?.company_id) {
+    if (tabFromUrl === "filiais" && !isMatriz) {
       setActiveTab("dados");
       navigate("?tab=dados", { replace: true });
       return;
     }
     setActiveTab(tabFromUrl);
-  }, [location.search, workshop, loading]);
+  }, [location.search, workshop, loading, isMatriz]);
 
   const loadData = async () => {
     setLoading(true);
@@ -388,7 +391,7 @@ export default function GestaoOficina() {
               <BarChart3 className="w-4 h-4 mr-1" />
               <span className="hidden sm:inline">Relatórios</span>
             </TabsTrigger>
-            {!workshop.company_id && (
+            {isMatriz && (
               <TabsTrigger value="filiais" className="text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white transition-colors">
                 <Building2 className="w-4 h-4 mr-1" />
                 <span className="hidden sm:inline">Filiais</span>
@@ -457,7 +460,7 @@ export default function GestaoOficina() {
             <DocumentosProcessos workshop={workshop} onUpdate={handleUpdate} />
           </TabsContent>
 
-          {!workshop.company_id && (
+          {isMatriz && (
             <TabsContent value="filiais">
               <FiliaisWorkshop workshop={workshop} />
             </TabsContent>
