@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { 
   CreditCard, Calendar, TrendingUp, Download, 
-  CheckCircle2, XCircle, Loader2, ArrowUpCircle, History
+  CheckCircle2, XCircle, Loader2, ArrowUpCircle, History, AlertCircle
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -34,8 +34,14 @@ export default function MeuPlano() {
   const workshop = workshops[0];
 
   const { data: plans = [], isLoading: isPlansLoading } = useQuery({
-    queryKey: ['plans'],
-    queryFn: () => base44.entities.Plan.list('ordem')
+    queryKey: ['platform-plans'],
+    queryFn: () => base44.entities.PlatformPlan.list()
+  });
+
+  const { data: tenantUsages = [], isLoading: isUsagesLoading } = useQuery({
+    queryKey: ['tenant-usage', workshop?.id],
+    queryFn: () => base44.entities.TenantUsage.filter({ tenant_id: workshop?.id }),
+    enabled: !!workshop
   });
 
   const { data: paymentHistory = [], isLoading: loadingHistory } = useQuery({
@@ -46,7 +52,11 @@ export default function MeuPlano() {
     enabled: !!workshop
   });
 
-  const currentPlan = plans.find(p => p.nome === (workshop?.planoAtual || 'FREE'));
+  const currentPlan = plans.find(p => p.internal_id?.toLowerCase() === (workshop?.planId?.toLowerCase() || 'free')) || {
+    name: workshop?.planId || 'Free',
+    limits: null,
+    price: 0
+  };
 
   const meuPlanoTips = [
     "Monitore o uso dos seus recursos para evitar atingir os limites do plano",
@@ -56,8 +66,53 @@ export default function MeuPlano() {
   ];
 
   const getUsagePercentage = (used, limit) => {
-    if (limit === -1) return 0; // ilimitado
+    if (!limit || limit === Infinity || limit === -1) return 0;
     return Math.min((used / limit) * 100, 100);
+  };
+
+  const formatLimit = (limit) => {
+    if (limit === null || limit === undefined || limit === Infinity || limit === -1) return '∞';
+    return limit;
+  };
+
+  const getResourceUsage = (resourceName) => {
+    const usage = tenantUsages.find(u => u.resource === resourceName);
+    return usage ? usage.count : 0;
+  };
+
+  const PLAN_LIMITS_FALLBACK = {
+    free: { clientes: 10, usuarios: 1, reports: 5, integrations: 1, whatsappMessages: 100 },
+    pro: { clientes: 100, usuarios: 5, reports: 50, integrations: 5, whatsappMessages: 1000 },
+    elite: { clientes: Infinity, usuarios: Infinity, reports: Infinity, integrations: Infinity, whatsappMessages: Infinity },
+    start: { clientes: 100, usuarios: 5, reports: 20, integrations: 2, whatsappMessages: 500 },
+    bronze: { clientes: Infinity, usuarios: 10, reports: 50, integrations: 5, whatsappMessages: 2000 },
+    prata: { clientes: Infinity, usuarios: 20, reports: 100, integrations: 10, whatsappMessages: 5000 },
+    gold: { clientes: Infinity, usuarios: 50, reports: Infinity, integrations: Infinity, whatsappMessages: 10000 },
+    iom: { clientes: Infinity, usuarios: Infinity, reports: Infinity, integrations: Infinity, whatsappMessages: Infinity },
+    millions: { clientes: Infinity, usuarios: Infinity, reports: Infinity, integrations: Infinity, whatsappMessages: Infinity },
+  };
+
+  const getLimit = (resourceName) => {
+    if (currentPlan.limits && currentPlan.limits[resourceName] !== undefined) {
+      return currentPlan.limits[resourceName];
+    }
+    const fallbackId = (workshop?.planId || 'free').toLowerCase();
+    const fallbackLimits = PLAN_LIMITS_FALLBACK[fallbackId] || PLAN_LIMITS_FALLBACK['free'];
+    return fallbackLimits[resourceName] !== undefined ? fallbackLimits[resourceName] : Infinity;
+  };
+
+  const translateStatus = (status) => {
+    if (status === 'active') return 'Ativo';
+    if (status === 'trial') return 'Em Teste (Trial)';
+    if (status === 'canceled') return 'Cancelado';
+    if (!status) return 'Inativo';
+    return status.charAt(0).toUpperCase() + status.slice(1);
+  };
+
+  const getStatusColorBadge = (status) => {
+    if (status === 'active') return 'bg-green-600 text-white';
+    if (status === 'trial') return 'bg-blue-600 text-white';
+    return 'bg-red-600 text-white';
   };
 
   const getStatusColor = (status) => {
@@ -83,7 +138,7 @@ export default function MeuPlano() {
   };
 
   // Determine overall loading state for initial data
-  const isLoading = isUserLoading || isWorkshopsLoading || isPlansLoading;
+  const isLoading = isUserLoading || isWorkshopsLoading || isPlansLoading || isUsagesLoading;
 
   if (isLoading) {
     return (
@@ -99,27 +154,7 @@ export default function MeuPlano() {
     return null;
   }
 
-  // ❌ Bloquear acesso se não tem plano válido
-  if (!currentPlan) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 p-6">
-        <div className="max-w-md text-center">
-          <AlertCircle className="w-12 h-12 text-yellow-600 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-3">Plano não encontrado</h2>
-          <p className="text-gray-600 mb-6">Não conseguimos carregar as informações do seu plano.</p>
-          <button
-            onClick={() => navigate(createPageUrl("Home"))}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Voltar ao Início
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const limites = currentPlan.limites;
-  const utilizados = workshop.limitesUtilizados || { diagnosticosMes: 0, colaboradores: 0, filiais: 0 };
+  const isInactive = workshop.planStatus !== 'active' && workshop.planStatus !== 'trial';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4">
@@ -133,59 +168,87 @@ export default function MeuPlano() {
           <p className="text-gray-600">Gerencie sua assinatura e acompanhe o uso de recursos</p>
         </div>
 
-        <div className="flex items-center justify-between mb-8">
-          {/* This div was holding the h1 and p tags before, now moved outside this container */}
+        {isInactive && (
+          <div className="mb-8 bg-red-50 border border-red-200 rounded-xl p-6 shadow-sm flex items-start gap-4">
+            <AlertCircle className="w-8 h-8 text-red-600 flex-shrink-0" />
+            <div>
+              <h2 className="text-lg font-bold text-red-800 mb-1">Acesso Suspenso - Plano Inativo</h2>
+              <p className="text-red-700 mb-4">
+                O plano da sua oficina está inativo, suspenso ou cancelado. As funcionalidades do sistema estão bloqueadas.
+                Por favor, regularize sua assinatura via Kiwify para continuar acessando.
+              </p>
+              <Button 
+                onClick={() => navigate(createPageUrl("Planos"))}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Ver Planos e Assinar
+              </Button>
+            </div>
+          </div>
+        )}
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div></div> 
           <Button 
             onClick={() => navigate(createPageUrl("Planos"))}
-            className="bg-blue-600 hover:bg-blue-700"
+            size="lg"
+            className="bg-blue-600 hover:bg-blue-700 font-bold shadow-md"
           >
-            <ArrowUpCircle className="w-4 h-4 mr-2" />
-            Fazer Upgrade
+            <ArrowUpCircle className="w-5 h-5 mr-2" />
+            Fazer Upgrade / Mudar Plano
           </Button>
         </div>
 
         {/* Plano Atual */}
-        <Card className="mb-6 shadow-lg border-2 border-blue-500">
-          <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-lg">
+        <Card className={`mb-6 shadow-lg border-2 ${isInactive ? 'border-red-500' : 'border-blue-500'}`}>
+          <CardHeader className={`rounded-t-lg ${isInactive ? 'bg-gradient-to-r from-red-600 to-red-700' : 'bg-gradient-to-r from-blue-600 to-blue-700'} text-white`}>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-2xl mb-2">Plano {currentPlan.nome}</CardTitle>
-                <p className="text-blue-100">{currentPlan.descricao}</p>
+                <CardTitle className="text-2xl mb-2 flex items-center gap-3">
+                  Plano: <span className="uppercase">{currentPlan.name}</span>
+                  <Badge className={`ml-2 ${getStatusColorBadge(workshop.planStatus)} border-0 text-sm py-1`}>
+                    {translateStatus(workshop.planStatus)}
+                  </Badge>
+                </CardTitle>
+                <p className="text-blue-100 opacity-90">
+                  Gerenciado via integração Kiwify
+                </p>
               </div>
-              {currentPlan.preco && (
-                <div className="text-right">
-                  <div className="text-3xl font-bold">R$ {currentPlan.preco.toFixed(2)}</div>
-                  <div className="text-blue-100">por mês</div>
-                </div>
-              )}
             </div>
           </CardHeader>
           <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              {workshop.dataAssinatura && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+              {workshop.billingCycleStart && (
                 <div className="flex items-center gap-3">
-                  <Calendar className="w-5 h-5 text-blue-600" />
+                  <Calendar className={`w-5 h-5 ${isInactive ? 'text-red-600' : 'text-blue-600'}`} />
                   <div>
-                    <div className="text-sm text-gray-600">Data de Assinatura</div>
+                    <div className="text-sm text-gray-600">Início do Ciclo</div>
                     <div className="font-medium">
-                      {format(new Date(workshop.dataAssinatura), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                      {format(new Date(workshop.billingCycleStart), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                     </div>
                   </div>
                 </div>
               )}
-              {workshop.dataRenovacao && (
+              {workshop.billingCycleEnd && (
                 <div className="flex items-center gap-3">
-                  <Calendar className="w-5 h-5 text-blue-600" />
+                  <Calendar className={`w-5 h-5 ${isInactive ? 'text-red-600' : 'text-blue-600'}`} />
                   <div>
-                    <div className="text-sm text-gray-600">Próxima Renovação</div>
+                    <div className="text-sm text-gray-600">Fim do Ciclo / Próxima Renovação</div>
                     <div className="font-medium">
-                      {format(new Date(workshop.dataRenovacao), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                      {format(new Date(workshop.billingCycleEnd), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                     </div>
                   </div>
                 </div>
               )}
             </div>
+            {workshop.trialEndsAt && workshop.planStatus === 'trial' && (
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100 flex items-center gap-2 text-blue-800">
+                <AlertCircle className="w-5 h-5" />
+                <span>
+                  Seu período de teste (trial) expira em <strong>{format(new Date(workshop.trialEndsAt), "dd/MM/yyyy", { locale: ptBR })}</strong>.
+                </span>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -194,133 +257,97 @@ export default function MeuPlano() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-blue-600" />
-              Uso dos Recursos
+              Uso de Recursos (Consolidado)
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
             <div>
               <div className="flex justify-between mb-2">
-                <span className="text-sm font-medium">Diagnósticos este mês</span>
+                <span className="text-sm font-medium">Clientes</span>
                 <span className="text-sm text-gray-600">
-                  {utilizados.diagnosticosMes} / {limites.diagnosticosMes === -1 ? '∞' : limites.diagnosticosMes}
+                  {getResourceUsage('clientes')} / {formatLimit(getLimit('clientes'))}
                 </span>
               </div>
               <Progress 
-                value={getUsagePercentage(utilizados.diagnosticosMes, limites.diagnosticosMes)} 
+                value={getUsagePercentage(getResourceUsage('clientes'), getLimit('clientes'))} 
                 className="h-2"
               />
             </div>
 
             <div>
               <div className="flex justify-between mb-2">
-                <span className="text-sm font-medium">Colaboradores cadastrados</span>
+                <span className="text-sm font-medium">Usuários / Colaboradores</span>
                 <span className="text-sm text-gray-600">
-                  {utilizados.colaboradores} / {limites.colaboradores === -1 ? '∞' : limites.colaboradores}
+                  {getResourceUsage('usuarios')} / {formatLimit(getLimit('usuarios'))}
                 </span>
               </div>
               <Progress 
-                value={getUsagePercentage(utilizados.colaboradores, limites.colaboradores)} 
+                value={getUsagePercentage(getResourceUsage('usuarios'), getLimit('usuarios'))} 
                 className="h-2"
               />
             </div>
 
             <div>
               <div className="flex justify-between mb-2">
-                <span className="text-sm font-medium">Filiais</span>
+                <span className="text-sm font-medium">Mensagens WhatsApp</span>
                 <span className="text-sm text-gray-600">
-                  {utilizados.filiais} / {limites.filiais === -1 ? '∞' : limites.filiais}
+                  {getResourceUsage('whatsappMessages')} / {formatLimit(getLimit('whatsappMessages'))}
                 </span>
               </div>
               <Progress 
-                value={getUsagePercentage(utilizados.filiais, limites.filiais)} 
+                value={getUsagePercentage(getResourceUsage('whatsappMessages'), getLimit('whatsappMessages'))} 
+                className="h-2"
+              />
+            </div>
+
+            <div>
+              <div className="flex justify-between mb-2">
+                <span className="text-sm font-medium">Relatórios</span>
+                <span className="text-sm text-gray-600">
+                  {getResourceUsage('reports')} / {formatLimit(getLimit('reports'))}
+                </span>
+              </div>
+              <Progress 
+                value={getUsagePercentage(getResourceUsage('reports'), getLimit('reports'))} 
+                className="h-2"
+              />
+            </div>
+
+            <div>
+              <div className="flex justify-between mb-2">
+                <span className="text-sm font-medium">Integrações Ativas</span>
+                <span className="text-sm text-gray-600">
+                  {getResourceUsage('integrations')} / {formatLimit(getLimit('integrations'))}
+                </span>
+              </div>
+              <Progress 
+                value={getUsagePercentage(getResourceUsage('integrations'), getLimit('integrations'))} 
                 className="h-2"
               />
             </div>
           </CardContent>
         </Card>
 
-        {/* Recursos Disponíveis */}
-        <Card className="mb-6 shadow-lg">
-          <CardHeader>
-            <CardTitle>Recursos Disponíveis no Seu Plano</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {limites.exportarPDF && (
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle2 className="w-4 h-4 text-green-600" />
-                  Exportar PDF
-                </div>
-              )}
-              {limites.rhCompleto && (
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle2 className="w-4 h-4 text-green-600" />
-                  RH Completo
-                </div>
-              )}
-              {limites.cdc && (
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle2 className="w-4 h-4 text-green-600" />
-                  CDC
-                </div>
-              )}
-              {limites.coex && (
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle2 className="w-4 h-4 text-green-600" />
-                  COEX
-                </div>
-              )}
-              {limites.iaBasica && (
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle2 className="w-4 h-4 text-green-600" />
-                  IA Básica
-                </div>
-              )}
-              {limites.iaIntermediaria && (
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle2 className="w-4 h-4 text-green-600" />
-                  IA Intermediária
-                </div>
-              )}
-              {limites.iaPreditiva && (
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle2 className="w-4 h-4 text-green-600" />
-                  IA Preditiva
-                </div>
-              )}
-              {limites.iaCoach && (
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle2 className="w-4 h-4 text-green-600" />
-                  IA Coach
-                </div>
-              )}
-              {limites.multilojas && (
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle2 className="w-4 h-4 text-green-600" />
-                  Multilojas
-                </div>
-              )}
-              {limites.treinamentosPremium && (
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle2 className="w-4 h-4 text-green-600" />
-                  Treinamentos Premium
-                </div>
-              )}
-              {limites.rankingNacional && (
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle2 className="w-4 h-4 text-green-600" />
-                  Ranking Nacional
-                </div>
-              )}
-              {limites.gamificacao && (
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle2 className="w-4 h-4 text-green-600" />
-                  Gamificação
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        {/* Features Booleanas do Plano */}
+        {currentPlan.features && Object.keys(currentPlan.features).length > 0 && (
+          <Card className="mb-6 shadow-lg">
+            <CardHeader>
+              <CardTitle>Recursos Habilitados</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {Object.entries(currentPlan.features).map(([featureName, isEnabled]) => (
+                  isEnabled && (
+                    <div key={featureName} className="flex items-center gap-2 text-sm capitalize">
+                      <CheckCircle2 className="w-4 h-4 text-green-600" />
+                      {featureName.replace(/_/g, ' ')}
+                    </div>
+                  )
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
 
 
