@@ -62,7 +62,22 @@ Deno.serve(async (req) => {
     const { prompt, response_json_schema = null } = payload;
     console.log("📝 Prompt recebido, tamanho:", prompt?.length || 0);
 
-    const tenantId = req.headers.get("x-tenant-id") || payload.tenantId || payload.workshop_id || user.data?.workshop_id || "default";
+    // Ignorar tenantId ou workshop_id do payload/headers e obter APENAS do usuário autenticado
+    const workshop_id = user.data?.workshop_id;
+
+    if (!workshop_id) {
+      console.error("❌ Usuário sem workshop_id tentando usar IA");
+      return Response.json({ error: 'Forbidden: Usuário não vinculado a um tenant' }, { status: 403 });
+    }
+
+    // Bloquear divergências se o frontend tentar enviar algo diferente
+    const payloadWorkshopId = payload.workshop_id || payload.tenantId;
+    const headerTenantId = req.headers.get("x-tenant-id");
+
+    if ((payloadWorkshopId && payloadWorkshopId !== workshop_id) || (headerTenantId && headerTenantId !== workshop_id)) {
+       console.error("❌ Tentativa de burla de tenant (divergência entre token e request)");
+       return Response.json({ error: 'Forbidden: Tenant mismatch detectado' }, { status: 403 });
+    }
 
     // Verificação de Rate Limit (Usuário)
     if (!checkRateLimit(userLimits, user.id, USER_MAX_PER_MINUTE)) {
@@ -70,9 +85,9 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Too Many Requests: Limite de uso de IA por usuário excedido. Aguarde 1 minuto.' }, { status: 429 });
     }
 
-    // Verificação de Rate Limit (Tenant)
-    if (tenantId !== "default" && !checkRateLimit(tenantLimits, tenantId, TENANT_MAX_PER_MINUTE)) {
-      console.error(`❌ Rate limit excedido para a oficina: ${tenantId}`);
+    // Verificação de Rate Limit (Tenant) - Usando apenas o valor seguro
+    if (!checkRateLimit(tenantLimits, workshop_id, TENANT_MAX_PER_MINUTE)) {
+      console.error(`❌ Rate limit excedido para a oficina: ${workshop_id}`);
       return Response.json({ error: 'Too Many Requests: Limite de uso de IA por oficina excedido. Aguarde 1 minuto.' }, { status: 429 });
     }
 
