@@ -38,6 +38,25 @@ Deno.serve(async (req) => {
       }, { status: 403 });
     }
 
+    // Validação de Trial
+    if (tenant.planStatus === 'trial') {
+      let trialEndDate;
+      if (tenant.trialEndsAt) {
+        trialEndDate = new Date(tenant.trialEndsAt);
+      } else {
+        // Fallback: 14 dias a partir da criação da oficina
+        trialEndDate = new Date(tenant.created_date || new Date());
+        trialEndDate.setDate(trialEndDate.getDate() + 14);
+      }
+
+      if (new Date() > trialEndDate) {
+        return Response.json({ 
+          success: false, 
+          error: { code: 'TRIAL_EXPIRED', message: 'Seu período de teste expirou. Faça um upgrade para continuar acessando os recursos.' } 
+        }, { status: 403 });
+      }
+    }
+
     const planId = tenant.planId || 'free';
 
     // Buscar as definições do plano
