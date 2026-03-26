@@ -95,7 +95,22 @@ Deno.serve(async (req) => {
       }
     }
 
-    const planId = tenant.planId || 'free';
+    let planId = tenant.planId || 'free';
+    const planStatus = tenant.planStatus || 'trial';
+
+    // Validação de Integridade do Plano (Anti-Bypass do Frontend)
+    if (planId !== 'free' && planId !== 'trial') {
+        const tokenSecret = Deno.env.get("KIWIFY_CLIENT_SECRET") || "fallback_token_for_tests";
+        const encoder = new TextEncoder();
+        const key = await crypto.subtle.importKey("raw", encoder.encode(tokenSecret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+        const hashBuffer = await crypto.subtle.sign("HMAC", key, encoder.encode(planId + tenant.id + planStatus));
+        const expectedHash = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+
+        if (tenant.billing_secure_hash !== expectedHash) {
+            console.warn(`[SECURITY] Fraude detectada no Workshop ${tenant.id}. Assinatura HMAC inválida! Downgrade automático para FREE.`);
+            planId = 'free'; // Força o downgrade para a checagem de limites e funcionalidades
+        }
+    }
 
     // Buscar as definições do plano
     const plans = await base44.asServiceRole.entities.PlatformPlan.filter({ internal_id: planId });

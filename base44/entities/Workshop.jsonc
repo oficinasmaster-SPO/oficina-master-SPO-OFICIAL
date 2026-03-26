@@ -825,6 +825,10 @@
       "default": "trial",
       "description": "Status da assinatura do plano"
     },
+    "billing_secure_hash": {
+      "type": "string",
+      "description": "HMAC usado para validar a integridade do plano"
+    },
     "trialEndsAt": {
       "type": "string",
       "format": "date-time"
