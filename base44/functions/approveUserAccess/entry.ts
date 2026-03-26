@@ -103,8 +103,6 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('Erro ao aprovar:', error);
-    return Response.json({ 
-      error: error.message 
-    }, { status: 500 });
+    return Response.json({ error: 'Erro interno no servidor' }, { status: 500 });
   }
 });

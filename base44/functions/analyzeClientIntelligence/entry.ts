@@ -127,6 +127,6 @@ Seja objetivo e prático. As sugestões devem ser acionáveis.`,
     );
   } catch (error) {
     console.error("Erro na função:", error);
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    return new Response(JSON.stringify({ error: 'Erro interno no servidor' }), { status: 500 });
   }
 });

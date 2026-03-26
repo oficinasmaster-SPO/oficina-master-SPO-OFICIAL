@@ -158,9 +158,6 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('❌ Erro no webhook Evolution:', error);
-    return Response.json({ 
-      error: error.message,
-      stack: error.stack 
-    }, { status: 500 });
+    return Response.json({ error: 'Erro interno no servidor' }, { status: 500 });
   }
 });

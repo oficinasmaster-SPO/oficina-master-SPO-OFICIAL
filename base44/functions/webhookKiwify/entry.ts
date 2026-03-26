@@ -151,7 +151,7 @@ Deno.serve(async (req) => {
     return Response.json({ 
       success: true,
       message: 'Webhook received with errors',
-      error: error.message 
+      error: 'Erro interno no servidor' 
     }, { status: 200 });
   }
 });

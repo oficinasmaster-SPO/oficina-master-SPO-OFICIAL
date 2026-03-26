@@ -32,15 +32,6 @@ Deno.serve(async (req) => {
                 }
 
                 if (workshop) {
-                    // Buscar dados complementares
-                    const [diagnostics, monthlyGoals, dreRecords, employees, feedbacks] = await Promise.all([
-                        base44.entities.Diagnostic.filter({ workshop_id: workshop.id }).catch(() => []),
-                        base44.entities.MonthlyGoalHistory.filter({ workshop_id: workshop.id }).catch(() => []),
-                        base44.entities.DREMonthly.filter({ workshop_id: workshop.id }).catch(() => []),
-                        base44.entities.Employee.filter({ workshop_id: workshop.id }).catch(() => []),
-                        base44.entities.EmployeeFeedback.filter({ workshop_id: workshop.id }).catch(() => [])
-                    ]);
-
                     // Buscar dados complementares com mais detalhes
                     const [
                         diagnostics, 
@@ -247,32 +238,7 @@ Quer que eu detalhe alguma dessas estratégias?"
 
 ${context || ''}`;
 
-        const response = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
-            messages: [
-                {
-                    role: "system",
-                    content: systemPrompt + workshopContext
-                },
-                {
-                    role: "user",
-                    content: message
-                }
-            ],
-            temperature: 0.7,
-            max_tokens: 3000
-        });
 
-=== OBSERVAÇÕES ===
-${workshop.observacoes_gerais || 'Nenhuma observação registrada'}
-`;
-                }
-            } catch (error) {
-                console.error('Erro ao buscar dados do workshop:', error);
-            }
-        }
-
-        const systemPrompt = context || "Você é um consultor especializado em gestão de oficinas automotivas. Analise os dados fornecidos e dê recomendações práticas, diretas e acionáveis.";
 
         const response = await openai.chat.completions.create({
             model: "gpt-4o-mini",
@@ -302,9 +268,6 @@ ${workshop.observacoes_gerais || 'Nenhuma observação registrada'}
 
     } catch (error) {
         console.error('Error in chatWithAI:', error);
-        return Response.json({ 
-            error: 'Erro ao processar chat',
-            details: error.message 
-        }, { status: 500 });
+        return Response.json({ error: 'Erro interno no servidor' }, { status: 500 });
     }
 });

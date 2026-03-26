@@ -72,8 +72,6 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('Error processing ASAS webhook:', error);
-    return Response.json({ 
-      error: error.message || 'Erro ao processar webhook'
-    }, { status: 500 });
+    return Response.json({ error: 'Erro interno no servidor' }, { status: 500 });
   }
 });

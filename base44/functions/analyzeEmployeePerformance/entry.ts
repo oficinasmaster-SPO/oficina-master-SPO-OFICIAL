@@ -75,6 +75,6 @@ Forneça:
 
   } catch (error) {
     console.error("Error analyzing performance:", error);
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: 'Erro interno no servidor' }, { status: 500 });
   }
 });
