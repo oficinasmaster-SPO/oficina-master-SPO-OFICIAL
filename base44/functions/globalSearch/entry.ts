@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 // Helper functions for formatting results
 function getTitle(type, item) {
@@ -65,6 +65,19 @@ Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
         
+        let user;
+        try {
+            user = await base44.auth.me();
+        } catch (e) {
+            return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        if (!user || !user.data || !user.data.workshop_id) {
+            return Response.json({ error: 'Unauthorized or missing workshop_id' }, { status: 401 });
+        }
+
+        const secureWorkshopId = user.data.workshop_id;
+        
         let body;
         try {
             body = await req.json();
@@ -73,8 +86,8 @@ Deno.serve(async (req) => {
             return Response.json({ results: [], error: "Invalid JSON" });
         }
 
-        const { query, workshop_id, skip = 0, limit = 50, entity_types = [] } = body;
-        console.log("🔍 Busca iniciada:", { query, workshop_id, skip, limit, entity_types });
+        const { query, skip = 0, limit = 50, entity_types = [] } = body;
+        console.log("🔍 Busca iniciada:", { query, secureWorkshopId, skip, limit, entity_types });
 
         if (!query || typeof query !== 'string' || query.length < 2) {
              console.log("⚠️ Query muito curta");
@@ -85,9 +98,6 @@ Deno.serve(async (req) => {
         const searchTerms = searchTerm.split(' ').filter(t => t.length > 1);
         console.log("🔎 Termos de busca:", searchTerms);
 
-        // Entities to search in
-        // Note: For large datasets, this in-memory filtering of 'list' results 
-        // is a temporary optimization. Ideal solution would be database full-text search.
         const entitiesToSearch = [
             { name: 'Employee', fields: ['full_name', 'position', 'email'] },
             { name: 'Task', fields: ['title', 'description', 'os_number'] },
@@ -106,30 +116,29 @@ Deno.serve(async (req) => {
             .filter(entity => entity_types.length === 0 || entity_types.includes(entity.name))
             .map(async (entity) => {
              try {
-                 console.log(`📋 Buscando em ${entity.name}...`);
+                 console.log(`📋 Buscando em ${entity.name} para o tenant ${secureWorkshopId}...`);
                  let items = [];
                  
                  try {
-                     items = await base44.asServiceRole.entities[entity.name].list('-updated_date', 500);
-                     console.log(`✅ ${entity.name}: ${items?.length || 0} itens encontrados`);
+                     if (entity.name === 'Workshop') {
+                         // Para o Workshop em si, a consulta busca o ID igual ao workshop_id
+                         items = await base44.asServiceRole.entities.Workshop.filter({ id: secureWorkshopId }, '-updated_date', 500);
+                     } else {
+                         // Para todas as outras entidades vinculadas, aplica o filtro direto no banco
+                         items = await base44.asServiceRole.entities[entity.name].filter({ workshop_id: secureWorkshopId }, '-updated_date', 500);
+                     }
+                     console.log(`✅ ${entity.name}: ${items?.length || 0} itens retornados do BD para o tenant`);
                  } catch (listError) {
                      console.error(`❌ Error listing ${entity.name}:`, listError.message);
                      return [];
                  }
 
                  if (!Array.isArray(items)) {
-                     console.log(`⚠️ ${entity.name} não retornou array`);
                      return [];
                  }
 
-                 // Busca por múltiplas palavras-chave
+                 // Busca in-memory APENAS pelos termos (Isolamento de tenant já garantido via banco)
                  const matches = items.filter(item => {
-                     const workshopMatch = !workshop_id || 
-                                          !item.workshop_id || 
-                                          item.workshop_id === workshop_id;
-                     
-                     if (!workshopMatch) return false;
-
                      // Se tiver múltiplos termos, todos devem estar presentes
                      return searchTerms.every(term => 
                          entity.fields.some(field => {
@@ -139,7 +148,7 @@ Deno.serve(async (req) => {
                      );
                  });
                  
-                 console.log(`🎯 ${entity.name}: ${matches.length} matches encontrados`);
+                 console.log(`🎯 ${entity.name}: ${matches.length} matches após filtro textual`);
 
                  return matches.map(item => ({
                      id: item.id,
