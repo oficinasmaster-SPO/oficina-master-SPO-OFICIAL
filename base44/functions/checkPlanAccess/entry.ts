@@ -1,5 +1,36 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
+// Rate Limit Global em Memória
+const rateLimits = new Map();
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minuto
+const MAX_REQUESTS_PER_USER = 120; // 120 requests por minuto
+
+function checkRateLimit(key) {
+  if (!key) return true;
+  const now = Date.now();
+  const record = rateLimits.get(key);
+  
+  if (!record || (now - record.timestamp > RATE_LIMIT_WINDOW)) {
+    rateLimits.set(key, { count: 1, timestamp: now });
+    return true;
+  }
+  
+  if (record.count >= MAX_REQUESTS_PER_USER) {
+    return false;
+  }
+  
+  record.count += 1;
+  return true;
+}
+
+// Limpeza de memória do rate limit
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, record] of rateLimits.entries()) {
+    if (now - record.timestamp > RATE_LIMIT_WINDOW) rateLimits.delete(key);
+  }
+}, 5 * 60 * 1000);
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -8,6 +39,11 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) {
       return Response.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Não autenticado' } }, { status: 401 });
+    }
+
+    // Rate Limiting Global por Usuário
+    if (!checkRateLimit(user.id)) {
+      return Response.json({ success: false, error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Muitas requisições. Tente novamente em um minuto.' } }, { status: 429 });
     }
 
     const body = await req.json();
